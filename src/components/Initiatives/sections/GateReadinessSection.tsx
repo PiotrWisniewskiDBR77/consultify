@@ -210,6 +210,13 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   const canRequestApproval =
     nextGateConfig && !pendingApprovals.some((a) => a.gateType === nextGate);
 
+  // G5 (STATUS_ROLE_CTA_MATRIX) — AI is gated per status by the backend
+  // capabilities. Disable the AI CTA + explain when AI is explicitly disallowed
+  // for the current status. Only block when the backend actually sent the
+  // capability (ctaBar present) so legacy payloads without it are not regressed.
+  const ctaBarCaps = gateReadiness?.capabilities?.ctaBar;
+  const aiBlockedForStatus = ctaBarCaps ? ctaBarCaps.canUseAi === false : false;
+
   const [isAIProposing, setIsAIProposing] = useState(false);
   const [aiProposal, setAiProposal] = useState<AIGatesProposal | null>(null);
   const [showAIModal, setShowAIModal] = useState(false);
@@ -1044,10 +1051,18 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
             whileTap={{ scale: 0.95 }}
             onClick={(e) => {
               e.stopPropagation();
+              if (aiBlockedForStatus) return;
               requestGatesAi();
             }}
-            disabled={!!gatesAiRequest}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 text-xs font-medium transition-colors disabled:opacity-50"
+            disabled={!!gatesAiRequest || aiBlockedForStatus}
+            title={
+              aiBlockedForStatus
+                ? isPolish
+                  ? 'AI niedostępne dla tego statusu inicjatywy'
+                  : 'AI is not available for this initiative status'
+                : undefined
+            }
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {gatesAiRequest ? (
               <Loader2 size={14} className="animate-spin" />

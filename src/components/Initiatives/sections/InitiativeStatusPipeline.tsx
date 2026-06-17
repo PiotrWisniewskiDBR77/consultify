@@ -75,12 +75,28 @@ export const InitiativeStatusPipeline: React.FC = () => {
     return 'ready';
   }, [gateReadiness]);
 
-  // Whether ANY transition is executable by the current user (display hint only,
-  // not a gate — the real gating lives in the Status strip / workflow table).
-  const userCanAdvance = useMemo(
-    () => (gateReadiness?.availableTransitions || []).some((t) => t.canCurrentUserExecute),
-    [gateReadiness]
-  );
+  // The happy-path status immediately after the current one (null when off-path
+  // or terminal). Used to tie "can advance" to the SPECIFIC next gate shown in
+  // the footer, not just "any" transition.
+  const nextHappyStatus = useMemo<InitiativeStatus | null>(() => {
+    if (!isOnHappyPath) return null;
+    const idx = HAPPY_PATH.indexOf(status);
+    return idx >= 0 && idx < HAPPY_PATH.length - 1 ? HAPPY_PATH[idx + 1] : null;
+  }, [status, isOnHappyPath]);
+
+  // Whether the current user can execute the SPECIFIC next happy-path gate (the
+  // one named in the footer), matched by canonical targetStatus to avoid gate-name
+  // drift. Falls back to "any executable transition" only when off the happy path
+  // (e.g. BLOCKED→EXECUTING). Display hint only — the real gating lives in the
+  // Status strip / workflow table.
+  const userCanAdvance = useMemo(() => {
+    const transitions = gateReadiness?.availableTransitions || [];
+    if (nextHappyStatus) {
+      const match = transitions.find((t) => t.targetStatus === nextHappyStatus);
+      if (match) return match.canCurrentUserExecute;
+    }
+    return transitions.some((t) => t.canCurrentUserExecute);
+  }, [gateReadiness, nextHappyStatus]);
 
   const offPathLabel = (() => {
     switch (status) {
