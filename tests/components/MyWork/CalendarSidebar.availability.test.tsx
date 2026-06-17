@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -11,11 +12,24 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
+const navigateMock = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
 import { CalendarSidebar } from '../../../src/components/MyWork/Calendar/CalendarSidebar';
+
+const renderSidebar = (ui: React.ReactElement) =>
+  render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('CalendarSidebar external source availability', () => {
   it('keeps unavailable external calendars honest and points the user to Integrations', () => {
-    render(
+    navigateMock.mockClear();
+    renderSidebar(
       <CalendarSidebar
         filter={{ sources: ['task', 'initiative', 'decision', 'consultify', 'google', 'outlook'] }}
         onFilterChange={vi.fn()}
@@ -46,14 +60,17 @@ describe('CalendarSidebar external source availability', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Start reauthorization in Integrations.')).toBeInTheDocument();
 
-    expect(screen.getByText('Google Calendar').closest('button')).toBeDisabled();
-    expect(screen.getByText('Outlook').closest('button')).toBeDisabled();
+    // L-07 CTA: unavailable external sources are NOT dead — they deep-link to Integrations.
+    expect(screen.getAllByText('Connect in Integrations →').length).toBeGreaterThanOrEqual(2);
+
+    fireEvent.click(screen.getByText('Google Calendar'));
+    expect(navigateMock).toHaveBeenCalledWith('/settings/integrations');
   });
 
   it('allows toggling an external source once the integration is active', () => {
     const onFilterChange = vi.fn();
 
-    render(
+    renderSidebar(
       <CalendarSidebar
         filter={{ sources: ['task'] }}
         onFilterChange={onFilterChange}
@@ -85,7 +102,7 @@ describe('CalendarSidebar external source availability', () => {
   it('updates ownership filter in sidebar', () => {
     const onFilterChange = vi.fn();
 
-    render(
+    renderSidebar(
       <CalendarSidebar
         filter={{ sources: ['task'], ownership: 'any' }}
         onFilterChange={onFilterChange}
@@ -103,7 +120,7 @@ describe('CalendarSidebar external source availability', () => {
   });
 
   it('shows workload guidance for the selected day', () => {
-    render(
+    renderSidebar(
       <CalendarSidebar
         filter={{ sources: ['task'] }}
         onFilterChange={vi.fn()}
