@@ -3,6 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
+import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 import { useAppStore } from '../../store/useAppStore';
 import { cn } from '../../utils/cn';
 import { OwnershipManagementView } from '../../views/admin/OwnershipManagementView';
@@ -53,6 +56,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const [generatedInviteRole, setGeneratedInviteRole] = useState<RoleOption>('MEMBER');
   const [generatedInviteMaxUses, setGeneratedInviteMaxUses] = useState(50);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [memberFilters, setMemberFilters] = useState<FilterChip[]>([]);
 
   const orgId = currentOrganization?.id;
   const viewerMembership = useMemo(
@@ -190,6 +194,68 @@ export const AdminMembersRolesPanel: React.FC = () => {
     }
   };
 
+  const memberColumns: TableColumn[] = [
+    {
+      id: 'name',
+      label: 'Member',
+      width: '200px',
+      render: (row) => (
+        <span className="font-medium text-slate-900 dark:text-white">{row.name}</span>
+      ),
+    },
+    {
+      id: 'email',
+      label: 'Email',
+      width: '220px',
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.email}</span>
+      ),
+    },
+    {
+      id: 'role',
+      label: 'Role',
+      width: '200px',
+      filterable: true,
+      filterOptions: [
+        { value: 'OWNER', label: 'Owner' },
+        { value: 'ADMIN', label: 'Admin' },
+        { value: 'MEMBER', label: 'Member' },
+        { value: 'GUEST', label: 'Guest' },
+      ],
+      render: (row) => {
+        const isBusy = savingMemberId === row.memberId;
+        const ownerProtected = row.role === 'OWNER';
+        return (
+          <select
+            value={row.role}
+            disabled={isBusy || ownerProtected}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(event) =>
+              void handleRoleChange(row.memberId, event.target.value as RoleOption)
+            }
+            className={cn(
+              'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white',
+              (isBusy || ownerProtected) && 'opacity-60'
+            )}
+          >
+            <option value="OWNER" disabled>Owner</option>
+            <option value="ADMIN">Admin</option>
+            <option value="MEMBER">Member</option>
+            <option value="GUEST">Guest</option>
+          </select>
+        );
+      },
+    },
+    {
+      id: 'memberStatus',
+      label: 'Status',
+      width: '120px',
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.memberStatus}</span>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -256,93 +322,48 @@ export const AdminMembersRolesPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-5 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                <th className="py-3 pr-4">Member</th>
-                <th className="py-3 pr-4">Email</th>
-                <th className="py-3 pr-4">Role</th>
-                <th className="py-3 pr-4">Status</th>
-                <th className="py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    Loading members...
-                  </td>
-                </tr>
-              ) : members.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    No members found for this workspace.
-                  </td>
-                </tr>
-              ) : (
-                members.map((member) => {
-                  const memberRole = String(member.role || 'MEMBER').toUpperCase() as RoleOption;
-                  const memberName =
-                    `${member.first_name || ''} ${member.last_name || ''}`.trim() ||
-                    member.email?.split('@')[0] ||
-                    'Unknown member';
-                  const isBusy = savingMemberId === member.user_id;
-                  const ownerProtected = memberRole === 'OWNER';
-                  const selfProtected = member.user_id === currentUser?.id;
-
-                  return (
-                    <tr key={member.user_id || member.id}>
-                      <td className="py-3 pr-4 font-medium text-slate-900 dark:text-white">
-                        {memberName}
-                      </td>
-                      <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
-                        {member.email}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <select
-                          value={memberRole}
-                          disabled={isBusy || ownerProtected}
-                          onChange={(event) =>
-                            void handleRoleChange(member.user_id, event.target.value as RoleOption)
-                          }
-                          className={cn(
-                            'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white',
-                            (isBusy || ownerProtected) && 'opacity-60'
-                          )}
-                        >
-                          <option value="OWNER" disabled>
-                            Owner
-                          </option>
-                          <option value="ADMIN">Admin</option>
-                          <option value="MEMBER">Member</option>
-                          <option value="GUEST">Guest</option>
-                        </select>
-                      </td>
-                      <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
-                        {member.status || 'ACTIVE'}
-                      </td>
-                      <td className="py-3 text-right">
-                        <button
-                          onClick={() => void handleRemove(member.user_id)}
-                          disabled={isBusy || ownerProtected || selfProtected}
-                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-300"
-                        >
-                          {isBusy ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        {loading ? (
+          <div className="mt-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            Loading members...
+          </div>
+        ) : (
+          <div className="mt-5">
+            <FilterableTable
+              columns={memberColumns}
+              data={members.map((member) => ({
+                id: member.user_id || member.id,
+                memberId: member.user_id,
+                name:
+                  `${member.first_name || ''} ${member.last_name || ''}`.trim() ||
+                  member.email?.split('@')[0] ||
+                  'Unknown member',
+                email: member.email,
+                role: String(member.role || 'MEMBER').toUpperCase(),
+                memberStatus: member.status || 'ACTIVE',
+              }))}
+              getRowActions={(row) => {
+                const ownerProtected = row.role === 'OWNER';
+                const selfProtected = row.memberId === currentUser?.id;
+                const isBusy = savingMemberId === row.memberId;
+                if (ownerProtected || selfProtected || isBusy) return [];
+                return [
+                  {
+                    id: 'remove',
+                    label: 'Remove',
+                    icon: Trash2,
+                    variant: 'danger' as const,
+                    onClick: () => void handleRemove(row.memberId),
+                  },
+                ];
+              }}
+              activeFilters={memberFilters}
+              onFilterChange={setMemberFilters}
+              emptyMessage="No members found for this workspace."
+              persistKey="admin-members-table"
+              canvasClassName=""
+            />
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">

@@ -3,6 +3,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
+import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 
 export const AdminAuditLogPanel: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
@@ -21,6 +24,7 @@ export const AdminAuditLogPanel: React.FC = () => {
   const [riskSummary, setRiskSummary] = useState<any>(null);
   const [complianceSummary, setComplianceSummary] = useState<any>(null);
   const [retentionDays, setRetentionDays] = useState(730);
+  const [auditFilters, setAuditFilters] = useState<FilterChip[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -91,6 +95,70 @@ export const AdminAuditLogPanel: React.FC = () => {
       toast.error(error?.message || 'Failed to update retention');
     }
   };
+
+  const auditColumns: TableColumn[] = [
+    {
+      id: 'action',
+      label: 'Action',
+      width: '260px',
+      render: (row) => (
+        <div>
+          <div className="font-medium text-slate-900 dark:text-white">{row.action}</div>
+          {row.metadata ? (
+            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{row.metadata}</div>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      id: 'actor',
+      label: 'Actor',
+      width: '180px',
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.actor}</span>
+      ),
+    },
+    {
+      id: 'risk',
+      label: 'Risk',
+      width: '160px',
+      filterable: true,
+      filterOptions: [
+        { value: 'low', label: 'Low' },
+        { value: 'medium', label: 'Medium' },
+        { value: 'high', label: 'High' },
+        { value: 'critical', label: 'Critical' },
+      ],
+      render: (row) => (
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
+          <ShieldAlert className="h-3.5 w-3.5" />
+          {row.risk}
+        </span>
+      ),
+    },
+    {
+      id: 'logStatus',
+      label: 'Status',
+      width: '120px',
+      filterable: true,
+      filterOptions: [
+        { value: 'RESOLVED', label: 'Resolved' },
+        { value: 'OPEN', label: 'Open' },
+        { value: 'PENDING', label: 'Pending' },
+      ],
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.logStatus}</span>
+      ),
+    },
+    {
+      id: 'createdAt',
+      label: 'Created',
+      width: '180px',
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.createdAt}</span>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -201,58 +269,32 @@ export const AdminAuditLogPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-5 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                <th className="py-3 pr-4">Action</th>
-                <th className="py-3 pr-4">Actor</th>
-                <th className="py-3 pr-4">Risk</th>
-                <th className="py-3 pr-4">Status</th>
-                <th className="py-3">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    Loading audit logs...
-                  </td>
-                </tr>
-              ) : logs.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    No audit events found for this workspace.
-                  </td>
-                </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr key={log.id}>
-                    <td className="py-3 pr-4">
-                      <div className="font-medium text-slate-900 dark:text-white">
-                        {String(log.action_type || '').replaceAll('_', ' ')}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        {String(log.metadata_json || '').slice(0, 120)}
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">{log.admin_id}</td>
-                    <td className="py-3 pr-4">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
-                        <ShieldAlert className="h-3.5 w-3.5" />
-                        {log.risk_level} ({log.risk_score})
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">{log.status}</td>
-                    <td className="py-3 text-slate-600 dark:text-slate-300">
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {loading ? (
+          <div className="mt-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            Loading audit logs...
+          </div>
+        ) : (
+          <div className="mt-5">
+            <FilterableTable
+              columns={auditColumns}
+              data={logs.map((log) => ({
+                id: log.id,
+                action: String(log.action_type || '').replaceAll('_', ' '),
+                metadata: String(log.metadata_json || '').slice(0, 120),
+                actor: log.admin_id,
+                risk: log.risk_level ? `${log.risk_level} (${log.risk_score})` : '-',
+                logStatus: log.status || '-',
+                createdAt: log.created_at ? new Date(log.created_at).toLocaleString() : '-',
+              }))}
+              hideRowActions
+              activeFilters={auditFilters}
+              onFilterChange={setAuditFilters}
+              emptyMessage="No audit events found for this workspace."
+              persistKey="admin-audit-table"
+              canvasClassName=""
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { cn } from '../../utils/cn';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
+import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 
 type TabId = 'summary' | 'plan' | 'payments' | 'invoices' | 'controls';
 
@@ -74,6 +77,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   const [planOptions, setPlanOptions] = useState<PlanOption[]>([]);
   const [planForm, setPlanForm] = useState<PlanAssignmentForm>(EMPTY_PLAN_FORM);
   const [savingPlan, setSavingPlan] = useState(false);
+  const [invoiceFilters, setInvoiceFilters] = useState<FilterChip[]>([]);
+  const [paymentFilters, setPaymentFilters] = useState<FilterChip[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -203,6 +208,83 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
       toast.error(error?.message || 'Failed to update billing tax settings');
     }
   };
+
+  const invoiceColumns: TableColumn[] = [
+    {
+      id: 'invoiceNumber',
+      label: 'Invoice',
+      width: '180px',
+      render: (row) => (
+        <span className="text-slate-900 dark:text-white">{row.invoiceNumber}</span>
+      ),
+    },
+    {
+      id: 'invoiceStatus',
+      label: 'Status',
+      width: '120px',
+      filterable: true,
+      filterOptions: [
+        { value: 'paid', label: 'Paid' },
+        { value: 'open', label: 'Open' },
+        { value: 'draft', label: 'Draft' },
+        { value: 'void', label: 'Void' },
+        { value: 'uncollectible', label: 'Uncollectible' },
+      ],
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.invoiceStatus}</span>
+      ),
+    },
+    {
+      id: 'amountDue',
+      label: 'Amount due',
+      width: '140px',
+      align: 'right',
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.amountDue}</span>
+      ),
+    },
+    {
+      id: 'amountPaid',
+      label: 'Amount paid',
+      width: '140px',
+      align: 'right',
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.amountPaid}</span>
+      ),
+    },
+    {
+      id: 'dueDate',
+      label: 'Due date',
+      width: '140px',
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">{row.dueDate}</span>
+      ),
+    },
+  ];
+
+  const paymentColumns: TableColumn[] = [
+    {
+      id: 'cardInfo',
+      label: 'Card',
+      width: '220px',
+      render: (row) => (
+        <div>
+          <div className="font-medium text-slate-900 dark:text-white">{row.cardInfo}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">{row.expiry}</div>
+        </div>
+      ),
+    },
+    {
+      id: 'isDefault',
+      label: 'Default',
+      width: '120px',
+      render: (row) => (
+        <span className="text-slate-600 dark:text-slate-300">
+          {row.isDefault ? 'Yes' : '—'}
+        </span>
+      ),
+    },
+  ];
 
   const renderTab = () => {
     if (activeTab === 'plan') {
@@ -423,82 +505,60 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               Add method
             </button>
           </div>
-          <div className="space-y-3">
-            {paymentMethods.map((method) => (
-              <div
-                key={method.id}
-                className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between"
-              >
-                <div>
-                  <div className="font-medium text-slate-900 dark:text-white">
-                    {method.brand || 'Card'} ending in {method.last4}
-                  </div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
-                    Expires {method.exp_month}/{method.exp_year}{' '}
-                    {method.is_default ? '| Default' : ''}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {!method.is_default && (
-                    <button
-                      onClick={() => void setDefaultPaymentMethod(method.id)}
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10"
-                    >
-                      Make default
-                    </button>
-                  )}
-                  {!method.is_default && (
-                    <button
-                      onClick={() => void removePaymentMethod(method.id)}
-                      className="rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-600 dark:border-rose-500/20 dark:text-rose-300"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <FilterableTable
+            columns={paymentColumns}
+            data={paymentMethods.map((method) => ({
+              id: method.id,
+              cardInfo: `${method.brand || 'Card'} ending in ${method.last4}`,
+              expiry: `Expires ${method.exp_month}/${method.exp_year}`,
+              isDefault: Boolean(method.is_default),
+            }))}
+            getRowActions={(row) => {
+              const method = paymentMethods.find((m) => m.id === row.id);
+              if (!method || method.is_default) return [];
+              return [
+                {
+                  id: 'make-default',
+                  label: 'Make default',
+                  onClick: () => void setDefaultPaymentMethod(row.id),
+                },
+                {
+                  id: 'remove',
+                  label: 'Remove',
+                  variant: 'danger' as const,
+                  onClick: () => void removePaymentMethod(row.id),
+                },
+              ];
+            }}
+            activeFilters={paymentFilters}
+            onFilterChange={setPaymentFilters}
+            emptyMessage="No payment methods added yet."
+            persistKey="admin-payments-table"
+            canvasClassName=""
+          />
         </div>
       );
     }
 
     if (activeTab === 'invoices') {
       return (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                <th className="py-3 pr-4">Invoice</th>
-                <th className="py-3 pr-4">Status</th>
-                <th className="py-3 pr-4">Amount due</th>
-                <th className="py-3 pr-4">Amount paid</th>
-                <th className="py-3">Due date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-              {invoices.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    No invoices yet for this workspace.
-                  </td>
-                </tr>
-              ) : (
-                invoices.map((invoice) => (
-                  <tr key={invoice.id}>
-                    <td className="py-3 pr-4 text-slate-900 dark:text-white">
-                      {invoice.invoice_number || invoice.id}
-                    </td>
-                    <td className="py-3 pr-4">{invoice.status || '-'}</td>
-                    <td className="py-3 pr-4">{invoice.amount_due || 0}</td>
-                    <td className="py-3 pr-4">{invoice.amount_paid || 0}</td>
-                    <td className="py-3">{invoice.due_date || '-'}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <FilterableTable
+          columns={invoiceColumns}
+          data={invoices.map((invoice) => ({
+            id: invoice.id,
+            invoiceNumber: invoice.invoice_number || invoice.id,
+            invoiceStatus: invoice.status || '-',
+            amountDue: invoice.amount_due || 0,
+            amountPaid: invoice.amount_paid || 0,
+            dueDate: invoice.due_date || '-',
+          }))}
+          hideRowActions
+          activeFilters={invoiceFilters}
+          onFilterChange={setInvoiceFilters}
+          emptyMessage="No invoices yet for this workspace."
+          persistKey="admin-invoices-table"
+          canvasClassName=""
+        />
       );
     }
 
