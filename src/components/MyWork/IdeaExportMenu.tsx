@@ -28,6 +28,18 @@ import {
 } from './canvas/diagramInterop';
 import type { IdeaWorkspaceImportPayload } from './ideaSelectionTypes';
 
+/**
+ * L-05 / D-01 / DP-5 — Server-side idea export is a STUB:
+ * `POST /v4-final/ideas/:id/export` only records a row in `idea_exports`; no worker
+ * ever produces a downloadable file (no `completeExport` caller). Per decision DP-5 we do
+ * NOT build a server export worker — instead the server-export path is gated behind an
+ * OFF-by-default flag. When off, no stub request is fired and no "server export" affordance
+ * is presented as a working action. All genuinely-working CLIENT-side exports (PNG/SVG/PDF/
+ * Markdown/JSON/package/mapping/share + report/presentation conversion) remain fully functional.
+ */
+export const IDEA_SERVER_EXPORT_ENABLED =
+  import.meta.env.VITE_ENABLE_IDEA_SERVER_EXPORT === 'true';
+
 interface ExportFormat {
   id: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
@@ -502,6 +514,9 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
 
   const recordExportRequest = useCallback(
     (formatId: string) => {
+      // L-05 / DP-5: server export is a stub (records only, never produces a file).
+      // Skip the request entirely unless the OFF-by-default flag is enabled.
+      if (!IDEA_SERVER_EXPORT_ENABLED) return;
       Api.ideaRequestExport(ideaId, {
         exportType: 'whiteboard',
         exportFormat: formatId,
