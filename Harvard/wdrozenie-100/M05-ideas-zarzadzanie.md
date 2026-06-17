@@ -146,7 +146,7 @@ Scenariusze S1-S6 + plan + bezpieczeństwo: karta §0/§2/§6.
 | L-03 | Wielu writerów / samowywołane 409 (4 narzędzia) | W-01 | `useTablePersistence.ts:111`, `IdeaProcessFlowTool.tsx:531`, `IdeaWhiteboardTool.tsx:645` | P1 | 3 | **NAPRAWIONA `ab0eb2fb0c` (2026-06-17)** — `globalIdeaVersions` moduł-level Map; wszystkie tool-instancje dla tego samego ideaId dzielą wersję; L-03 test (1/1) |
 | L-04 | Brak flusha przy unmount (<800ms utrata) | W-01 | `useIdeaMapSync.ts:375-381` | P1 | 3 | **NAPRAWIONA `ab0eb2fb0c` (2026-06-17)** — cleanup useEffect persystuje `queuedPayloadRef.current` do localStorage; primeServerVersion() odczytuje przy mount; L-04 testy (2/2) |
 | L-05 | Eksport serwerowy = rejestr bez pliku (STUB) | W-01 | `final-batch.routes.ts:32`, `IdeaExportMenu.tsx:498-509` | INTEGRACJA | 3 | **D-01** |
-| L-06 | Szablon nadpisuje graf bez confirm; notatki efemeryczne; `canvasLocked` hardcode; 4× console.log | W-01 | `IdeaTemplateGallery.tsx:1886`, `IdeaContextPanel.tsx:141`, `IdeaMapWorkspace.tsx:373,433` | P2 | 3 | **częściowo FALSE POSITIVE** (2026-06-17): 4× console.log = JUŻ USUNIĘTE (brak w kodzie); `canvasLocked` = ŚWIADOMA DECYZJA (komentarz `:375`); **REALNE**: szablon overwrite bez confirm (`handleApply` `:1965` — brak dialog gdy nodes>0); notatki efemeryczne (do weryfikacji) |
+| L-06 | Szablon nadpisuje graf bez confirm; notatki efemeryczne; `canvasLocked` hardcode; 4× console.log | W-01 | `IdeaTemplateGallery.tsx:1886`, `IdeaContextPanel.tsx:141`, `IdeaMapWorkspace.tsx:373,433` | P2 | 3 | **ZAMKNIĘTA `1f8be9b961` (2026-06-17)** — confirm overwrite: `useConfirmDialog` w `handleApply`, gate gdy `existingNodeCount>0` ("Zastąpić istniejące elementy?" PL/EN), `existingNodeCount` z `IdeaMapWorkspace`; test `IdeaTemplateGallery.l06.test.tsx` (4/4 PASS). FALSE POSITIVE (potwierdzone): 4× console.log = USUNIĘTE; `canvasLocked` = ŚWIADOMA DECYZJA (komentarz `:375`). Notatki efemeryczne = pozostają (poza zakresem confirm; osobna delta jeśli realne) |
 | L-07 | Split-brain `versions` vs `snapshots` | W-01,W-04 | mig. 622 vs 20260611 | P2 | 3 | **D-02** |
 | L-08 | Brak testów S2/S3/S5/S6 + E2E poza tier0 + CI bez `Londyn` | W-01 | `tests/integration/mywork/my-work.map-sync.contract.test.ts` | P0-test | 1+4 | **NAPRAWIONA — S2+S3+S6 (11/11), S5 (6/6) (2026-06-17)** `my-work.map-sync.contract.test.ts` + `my-work.convert.contract.test.ts`; CI Londyn = już skonfigurowane (`test-suite.yml`) |
 
@@ -159,7 +159,7 @@ Scenariusze S1-S6 + plan + bezpieczeństwo: karta §0/§2/§6.
 
 ### 05 · Flagi/rollout — beta Ideas (per-user); brak gating-rola dla zarządzania. **DP-3:** jeśli M09 przebuduje `my_idea_maps` na shared+membership, M05 musi dostosować scope (`user_id` → membership) — koordynacja wspólnej migracji snapshots/activity z M06.
 ### 06 · Ryzyka — migracja 20260611 może nie być na prod (centerbeam ~2026-05-18) → snapshoty 503 mimo poprawnego pliku; dev `.env` → Railway PROD (ostrożnie z zapisami). Split-brain wersjonowania może mylić użytkownika.
-### 07 · Log — 2026-06-13: zweryfikowano L-01 (conflict refresh realny), L-02 (migracja plik-present). Audyt 2026-06-12: ocena 60/100. Re-ocena po FAZA 1 + sesji żywej (R6).
+### 07 · Log — 2026-06-13: zweryfikowano L-01 (conflict refresh realny), L-02 (migracja plik-present). Audyt 2026-06-12: ocena 60/100. Re-ocena po FAZA 1 + sesji żywej (R6). 2026-06-17 (Harvard 2): L-06 ZAMKNIĘTA `1f8be9b961` — confirm przed overwrite szablonu. Wszystkie luki P0/P1/P2 z rejestru zamknięte lub D-decyzja (L-05=D-01/DP-5, L-07=D-02); pozostaje tylko R6 (sesja żywa).
 
 ---
 
