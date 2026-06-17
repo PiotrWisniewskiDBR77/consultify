@@ -894,6 +894,155 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
     expect(kpiUpdate?.[1]).toEqual([5, 'kpi-x', ORG_A]);
   });
 
+  // ── RESPONSE-LEAK: GET /results-v4/kpi-connectors must not return raw secrets ──
+
+  it('GET /results-v4/kpi-connectors redacts secret-bearing config keys (no credential leak)', async () => {
+    // The stored connector config holds credentials in a free-form blob. The GET
+    // response must replace each secret with the "__set__" placeholder (mirroring
+    // mcp.routes redactProviderConfig) while leaving non-secret operational config
+    // (baseUrl, defaultValue, staticPayloads) intact.
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'conn-1',
+        connector_name: 'IRIS prod',
+        connector_type: 'api',
+        config: JSON.stringify({
+          baseUrl: 'https://iris.example.com',
+          apiKey: 'sk-live-SUPERSECRET',
+          token: 'bearer-abc-123',
+          password: 'hunter2',
+          client_secret: 'cs-zzz',
+          defaultValue: 42,
+          headers: { Authorization: 'Bearer leak-me', 'X-Api-Token': 'tok-leak' },
+        }),
+        target_kpi_ids: JSON.stringify(['kpi-1']),
+        schedule_cron: null,
+        last_run_at: null,
+        last_run_status: null,
+        last_run_message: null,
+        next_run_at: null,
+        is_active: 1,
+      },
+    ]);
+    const app = await buildResultsEnterpriseApp();
+    const res = await request(app).get('/api/results-v4/kpi-connectors');
+
+    expect(res.status).toBe(200);
+    const cfg = res.body?.connectors?.[0]?.config ?? {};
+    const serialized = JSON.stringify(res.body);
+    // No raw secret value anywhere in the payload.
+    expect(serialized).not.toContain('sk-live-SUPERSECRET');
+    expect(serialized).not.toContain('bearer-abc-123');
+    expect(serialized).not.toContain('hunter2');
+    expect(serialized).not.toContain('cs-zzz');
+    expect(serialized).not.toContain('Bearer leak-me');
+    expect(serialized).not.toContain('tok-leak');
+    // Secret keys carry the placeholder; non-secret config survives untouched.
+    expect(cfg.apiKey).toBe('__set__');
+    expect(cfg.token).toBe('__set__');
+    expect(cfg.password).toBe('__set__');
+    expect(cfg.client_secret).toBe('__set__');
+    // All auth-header values are redacted (headers commonly carry bearer tokens).
+    expect(cfg.headers?.Authorization).toBe('__set__');
+    expect(cfg.headers?.['X-Api-Token']).toBe('__set__');
+    expect(cfg.baseUrl).toBe('https://iris.example.com');
+    expect(cfg.defaultValue).toBe(42);
+  });
+
+  // ── SEC-3: results-v4 ROI evidence parent-ownership precheck ──
+
+  it('POST /results-v4/roi-evidence → 404 for a foreign-org initiative (no roi_evidence INSERT)', async () => {
+    // Parent ownership lookup (queryOne → mockQueryFirst) returns null → not owned.
+    mockQueryFirst.mockResolvedValue(null);
+    const app = await buildResultsEnterpriseApp();
+    const res = await request(app)
+      .post('/api/results-v4/roi-evidence')
+      .send({ initiativeId: 'init-from-org-b', value: 1000, period: '2026-01' });
+
+    expect(res.status).toBe(404);
+    // The parent SELECT ran org-scoped against the caller's org.
+    const ownershipCall = mockQueryFirst.mock.calls.find(
+      (c) =>
+        /FROM\s+initiatives\s+WHERE\s+id\s*=\s*\?\s+AND\s+organization_id\s*=\s*\?/i.test(
+          String(c?.[0])
+        )
+    );
+    expect(ownershipCall?.[1]).toEqual(['init-from-org-b', ORG_A]);
+    // No evidence row was written.
+    const insert = mockQueryRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+roi_evidence/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('POST /results-v4/roi-evidence → 201 + org-scoped INSERT when every parent is owned', async () => {
+    // Each parent ownership SELECT resolves under the caller's org.
+    mockQueryFirst.mockResolvedValue({ id: 'owned' });
+    const app = await buildResultsEnterpriseApp();
+    const res = await request(app).post('/api/results-v4/roi-evidence').send({
+      initiativeId: 'init-owned',
+      benefitId: 'benefit-owned',
+      financeModelId: 'model-owned',
+      value: 1000,
+      period: '2026-01',
+    });
+
+    expect(res.status).toBe(201);
+    const insert = mockQueryRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+roi_evidence/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeTruthy();
+    // organization_id is the 2nd column param (id, organization_id, …).
+    expect(insert?.[1]?.[1]).toBe(ORG_A);
+    // All three parents were ownership-checked (initiatives, benefits, financial_models).
+    const tables = mockQueryFirst.mock.calls
+      .map((c) => String(c?.[0]).match(/FROM\s+(initiatives|benefits|financial_models)\s/i)?.[1])
+      .filter(Boolean);
+    expect(tables).toEqual(
+      expect.arrayContaining(['initiatives', 'benefits', 'financial_models'])
+    );
+  });
+
+  // ── SEC-3: results-v4 wallboard-alert parent-ownership precheck ──
+
+  it('POST /results-v4/wallboards/:id/alerts → 404 for a foreign-org wallboard (no alert INSERT)', async () => {
+    // Wallboard ownership lookup returns null → not owned.
+    mockQueryFirst.mockResolvedValue(null);
+    const app = await buildResultsEnterpriseApp();
+    const res = await request(app)
+      .post('/api/results-v4/wallboards/wb-from-org-b/alerts')
+      .send({ kpiId: 'kpi-x', thresholdValue: 10, currentValue: 5 });
+
+    expect(res.status).toBe(404);
+    const ownershipCall = mockQueryFirst.mock.calls.find((c) =>
+      /FROM\s+kpi_wallboards\s+WHERE\s+id\s*=\s*\?\s+AND\s+organization_id\s*=\s*\?/i.test(
+        String(c?.[0])
+      )
+    );
+    expect(ownershipCall?.[1]).toEqual(['wb-from-org-b', ORG_A]);
+    const insert = mockQueryRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_wallboard_alerts/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('POST /results-v4/wallboards/:id/alerts → 201 + org-scoped INSERT when the wallboard is owned', async () => {
+    mockQueryFirst.mockResolvedValue({ id: 'wb-owned' });
+    const app = await buildResultsEnterpriseApp();
+    const res = await request(app)
+      .post('/api/results-v4/wallboards/wb-owned/alerts')
+      .send({ kpiId: 'kpi-x', thresholdValue: 10, currentValue: 5 });
+
+    expect(res.status).toBe(201);
+    const insert = mockQueryRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_wallboard_alerts/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeTruthy();
+    // organization_id is the 2nd column param (id, organization_id, wallboard_id, …).
+    expect(insert?.[1]?.[1]).toBe(ORG_A);
+    expect(insert?.[1]?.[2]).toBe('wb-owned');
+  });
+
   // ── HOLE-5: benefits IRIS refresh current_value UPDATE org-scope (static guard) ──
 
   it('benefits IRIS refresh current_value UPDATE carries an org filter (source guard)', async () => {

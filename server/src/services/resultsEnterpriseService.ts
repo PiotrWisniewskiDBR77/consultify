@@ -78,7 +78,14 @@ class ResultsEnterpriseService {
       id: r.id,
       connectorName: r.connector_name,
       connectorType: r.connector_type,
-      config: safeJson(r.config),
+      // SEC (response-leak): the connector `config` blob (z.record(z.unknown())) is
+      // where api/database/webhook connectors store credentials — api keys, tokens,
+      // passwords, connection strings, auth headers. Returning it verbatim on GET
+      // discloses those secrets to any authed org member over the wire. Mirror the
+      // mcp.routes redactProviderConfig pattern (utils — SECRET_CONFIG_KEYS deny-list)
+      // and replace secret-bearing values with a "__set__" placeholder so the UI can
+      // show "configured" without ever receiving the raw credential.
+      config: redactConnectorConfig(r.config),
       targetKpiIds: safeJsonArray(r.target_kpi_ids),
       scheduleCron: r.schedule_cron,
       lastRunAt: r.last_run_at,
@@ -264,6 +271,12 @@ class ResultsEnterpriseService {
       financeModelId?: string;
     }
   ) {
+    // SEC-3: each referenced parent (initiative, benefit, finance model) must belong to the
+    // caller's org. Without this, a request could pin ROI evidence to a foreign-org id and
+    // pollute that org's evidence joins / portfolio rollups. The route maps 'not found' → 404.
+    await this.assertParentOwned(orgId, 'initiatives', data.initiativeId);
+    await this.assertParentOwned(orgId, 'benefits', data.benefitId);
+    await this.assertParentOwned(orgId, 'financial_models', data.financeModelId);
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO roi_evidence (id, organization_id, initiative_id, benefit_id, evidence_type, value, currency, period, source_description, provenance_assumptions, finance_model_id, created_by)
@@ -603,6 +616,16 @@ class ResultsEnterpriseService {
       severity?: string;
     }
   ) {
+    // SEC-3: the wallboard must belong to the caller's org before an alert is pinned to it.
+    // Otherwise a foreign-org wallboardId from the path would attach an alert that surfaces
+    // in that org's wallboard feed. The route maps 'not found' → 404.
+    const ownedWallboard = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM kpi_wallboards WHERE id = ? AND organization_id = ?`,
+      [data.wallboardId, orgId]
+    );
+    if (!ownedWallboard?.id) {
+      throw new Error('Wallboard not found');
+    }
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO kpi_wallboard_alerts (id, organization_id, wallboard_id, kpi_id, alert_type, threshold_value, current_value, severity)
@@ -637,6 +660,24 @@ class ResultsEnterpriseService {
       acknowledgedBy: r.acknowledged_by,
       acknowledgedAt: r.acknowledged_at,
     }));
+  }
+
+  // SEC-3: org-scope an optional parent reference. A null/undefined id is a no-op (the
+  // column is nullable); a non-null id that does not resolve under the caller's org throws
+  // 'not found', which the route maps → 404. Mirrors assertModelOwned in financeEnterpriseService.
+  private async assertParentOwned(
+    orgId: string,
+    table: 'initiatives' | 'benefits' | 'financial_models',
+    id?: string | null
+  ) {
+    if (!id) return;
+    const owned = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM ${table} WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
+    );
+    if (!owned?.id) {
+      throw new Error('Parent not found');
+    }
   }
 
   private async getRawConnector(orgId: string, connectorId: string) {
@@ -942,6 +983,59 @@ function safeJson(val: unknown): Record<string, unknown> {
   } catch {
     return {};
   }
+}
+
+/**
+ * Secret-bearing keys inside a connector `config` blob. Mirrors SECRET_CONFIG_KEYS
+ * in routes/mcp.routes.ts — these hold credentials that must never be returned to
+ * the client over the wire (even to admins).
+ */
+const SECRET_CONNECTOR_CONFIG_KEYS = new Set([
+  'mes_api_token',
+  'marketplace_token',
+  'token',
+  'apiKey',
+  'api_key',
+  'secret',
+  'clientSecret',
+  'client_secret',
+  'password',
+  'passphrase',
+  'privateKey',
+  'private_key',
+  'connectionString',
+  'connection_string',
+  'accessToken',
+  'access_token',
+  'refreshToken',
+  'refresh_token',
+]);
+
+const REDACTED_PLACEHOLDER = '__set__';
+
+/**
+ * Redact secret-bearing keys (and all auth-header values) within a connector config
+ * for client-facing responses. Mirrors redactProviderConfig in routes/mcp.routes.ts:
+ * a non-empty secret becomes the "__set__" placeholder so the UI can show
+ * "configured" without exposing the value; non-secret config (baseUrl, staticPayloads,
+ * defaultValue, …) passes through untouched.
+ */
+function redactConnectorConfig(val: unknown): Record<string, unknown> {
+  const obj = safeJson(val);
+  for (const key of Object.keys(obj)) {
+    if (SECRET_CONNECTOR_CONFIG_KEYS.has(key) && obj[key]) {
+      obj[key] = REDACTED_PLACEHOLDER;
+    }
+  }
+  // Auth headers (e.g. Authorization: Bearer …) are secrets too.
+  const headers = obj.headers;
+  if (headers && typeof headers === 'object' && !Array.isArray(headers)) {
+    const h = headers as Record<string, unknown>;
+    for (const hk of Object.keys(h)) {
+      if (typeof h[hk] === 'string' && h[hk]) h[hk] = REDACTED_PLACEHOLDER;
+    }
+  }
+  return obj;
 }
 function safeJsonArray(val: unknown): unknown[] {
   if (!val) return [];
