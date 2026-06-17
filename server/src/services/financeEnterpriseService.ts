@@ -340,6 +340,13 @@ class FinanceEnterpriseService {
       consolidationRules?: Record<string, unknown>;
     }
   ): Promise<{ id: string }> {
+    // IDOR guard: every source model id must belong to this org before we
+    // persist it as a child row — otherwise org A could consolidate org B's
+    // models (cross-org FK injection). Loop the same ownership assertion the
+    // sibling create* methods use; throws 'Model not found' → route maps 404.
+    for (const modelId of data.sourceModelIds) {
+      await this.assertModelOwned(orgId, modelId);
+    }
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO financial_consolidations (id, organization_id, name, source_model_ids, consolidation_rules, created_by)

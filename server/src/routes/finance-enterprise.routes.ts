@@ -211,12 +211,21 @@ router.post(
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const cons = await financeEnterpriseService.createConsolidation(
-      identity.orgId,
-      identity.userId,
-      parsed.data
-    );
-    res.status(201).json(cons);
+    try {
+      const cons = await financeEnterpriseService.createConsolidation(
+        identity.orgId,
+        identity.userId,
+        parsed.data
+      );
+      res.status(201).json(cons);
+    } catch (error: any) {
+      // SEC: any foreign-org (or missing) id in sourceModelIds is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Model not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
