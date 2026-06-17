@@ -245,6 +245,17 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     id: 'initiatives',
     name: 'Initiatives',
     namePL: 'Inicjatywy',
+    // M13 SSOT reconciliation (2026-06-17): this `statuses` list is the NARROW
+    // "planning-phase" set matching docs (INITIATIVE_STATUS_ROLE_CTA_MATRIX +
+    // initiative.ts header). It is REFERENCE-ONLY on the server — no consumer in
+    // server/src reads `getStatusesForModule('initiatives')` to filter the API
+    // list. The RUNTIME source of truth for what the Initiatives module shows is
+    // the FRONTEND `src/services/initiativeLifecycle.ts` MODULES.initiatives,
+    // which deliberately lists ALL 13 statuses (D1.2 "complete visibility",
+    // consumed at InitiativesHub.tsx:110). Do NOT "reconcile" the FE down to these
+    // 5 — that would hide EXECUTING/BLOCKED/DONE/TRACKING/CANCELLED/ARCHIVED
+    // initiatives from the hub (a regression). Keep this narrow list as the
+    // documented phase-ownership reference only.
     route: '/initiatives',
     statuses: [
       InitiativeStatus.REVIEW,
