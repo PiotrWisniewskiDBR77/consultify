@@ -178,6 +178,8 @@ export interface V8NotebookClassification {
   suggestedType: string;
   reason: string;
   maturity?: string | null;
+  /** L-06: classification is rule-based keyword scoring, NOT an LLM. */
+  method?: 'heuristic';
 }
 
 export interface V8NotebookAIProposal {

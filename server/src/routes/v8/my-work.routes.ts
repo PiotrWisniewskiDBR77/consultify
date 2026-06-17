@@ -1526,6 +1526,9 @@ router.post(
         pageId,
         ...suggestion,
         maturity: page.maturity ?? null,
+        // L-06: keyword-scoring, NOT an LLM — declare the method so no consumer
+        // (incl. the FE that calls this V8 path first) presents it as "AI".
+        method: 'heuristic' as const,
       },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });

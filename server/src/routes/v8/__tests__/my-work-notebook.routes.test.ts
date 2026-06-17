@@ -647,6 +647,8 @@ describe('V8 My Work notebook routes', () => {
       suggestedType: 'idea',
       reason: 'Contains exploratory/idea language',
       maturity: 'mature',
+      // L-06: contract declares the suggestion is rule-based, not an LLM.
+      method: 'heuristic',
     });
   });
 
