@@ -1748,11 +1748,19 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const packId = String(req.params.id);
     const statementId = String(req.params.statementId);
-    await assignStatementToExistingPack({
-      organizationId: orgId,
-      packId,
-      statementId,
-    });
+    try {
+      await assignStatementToExistingPack({
+        organizationId: orgId,
+        packId,
+        statementId,
+      });
+    } catch (e: any) {
+      const message = String(e?.message || '');
+      if (/not found/i.test(message)) {
+        return res.status(404).json({ error: message });
+      }
+      throw e;
+    }
     const pack = await getStatementPackDetail(orgId, packId);
     res.json({ success: true, pack });
   })

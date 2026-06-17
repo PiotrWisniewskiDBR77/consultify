@@ -130,6 +130,11 @@ class FinanceEnterpriseService {
     userId: string,
     data: { modelId: string; scenarioLabel?: string; parentVersionId?: string }
   ): Promise<ModelVersion> {
+    // Parent-model ownership: org-scoped reads below return null for a foreign model,
+    // but the INSERT would still graft a version row onto another org's model_id.
+    // Mirror the 7 sibling child-writes (assertModelOwned throws 'Model not found').
+    await this.assertModelOwned(orgId, data.modelId);
+
     const id = uuidv4();
     const now = new Date().toISOString();
 

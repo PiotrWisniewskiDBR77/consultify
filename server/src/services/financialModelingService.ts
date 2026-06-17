@@ -1030,6 +1030,26 @@ export async function createModel(params: {
   sourceStatementPackId?: string;
 }): Promise<string> {
   const id = uuidv4();
+
+  // Cross-org FK-injection guard: a caller must not graft another org's
+  // project/initiative onto a model in its own org. Verify ownership of any
+  // supplied FK before the INSERT (same convention as assertModelOwned in
+  // financeEnterpriseService — throws 'not found', which the route maps → 404).
+  if (params.projectId) {
+    const ownedProject = await dbGet<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [params.projectId, params.organizationId]
+    );
+    if (!ownedProject?.id) throw new Error('Source project not found');
+  }
+  if (params.initiativeId) {
+    const ownedInitiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [params.initiativeId, params.organizationId]
+    );
+    if (!ownedInitiative?.id) throw new Error('Source initiative not found');
+  }
+
   const seeded =
     params.sourceStatementPackId && params.organizationId
       ? await buildSeededAssumptionsFromPack(params.organizationId, params.sourceStatementPackId)

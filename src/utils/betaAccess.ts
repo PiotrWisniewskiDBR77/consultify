@@ -36,9 +36,9 @@ export const BETA_ADMINS_EXEMPT = true;
  * Keep this list in sync with the `badge: 'beta'` entries in menuConfig.ts.
  */
 export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
-  MODULE_BENEFITS: 'open', // Results
-  MODULE_ECONOMICS: 'open', // Finance
-  MODULE_AUDITS: 'open', // Audits
+  MODULE_BENEFITS: 'closed', // Results
+  MODULE_ECONOMICS: 'closed', // Finance
+  MODULE_AUDITS: 'closed', // Audits
   MODULE_PRESENTATIONS: 'open', // Documents (Outputs library)
   MODULE_DOCUMENT_STUDIO: 'open', // Document Studio
   MODULE_PREZENTACJE_GEN: 'open', // Presentation Studio

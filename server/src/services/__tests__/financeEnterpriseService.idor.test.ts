@@ -35,7 +35,12 @@ describe('financeEnterpriseService.createModelVersion — cross-org parent read'
   it('scopes the parent-version snapshot read to the caller org', async () => {
     // version-number lookup, then the parent snapshot lookup (returns null:
     // foreign-org parent is invisible).
-    queryOne.mockResolvedValueOnce({ maxV: 0 }).mockResolvedValueOnce(null);
+    // 1) assertModelOwned (parent model is owned), 2) version-number lookup,
+    // 3) parent-snapshot lookup (foreign-org parent → null, invisible).
+    queryOne
+      .mockResolvedValueOnce({ id: 'model-1' })
+      .mockResolvedValueOnce({ maxV: 0 })
+      .mockResolvedValueOnce(null);
 
     await financeEnterpriseService.createModelVersion(ORG, 'user-1', {
       modelId: 'model-1',
@@ -53,7 +58,12 @@ describe('financeEnterpriseService.createModelVersion — cross-org parent read'
   });
 
   it('does NOT copy a foreign-org parent snapshot into the new version', async () => {
-    queryOne.mockResolvedValueOnce({ maxV: 0 }).mockResolvedValueOnce(null);
+    // 1) assertModelOwned (parent model is owned), 2) version-number lookup,
+    // 3) parent-snapshot lookup (foreign-org parent → null, invisible).
+    queryOne
+      .mockResolvedValueOnce({ id: 'model-1' })
+      .mockResolvedValueOnce({ maxV: 0 })
+      .mockResolvedValueOnce(null);
 
     await financeEnterpriseService.createModelVersion(ORG, 'user-1', {
       modelId: 'model-1',
@@ -188,6 +198,14 @@ describe('financeEnterpriseService child-writes — parent model ownership gate'
     const [sql, params] = call as [string, unknown[]];
     expect(sql).toMatch(/organization_id\s*=\s*\?/i);
     expect(params).toEqual([FOREIGN_MODEL, ORG]);
+    noInsertHappened();
+  });
+
+  it('createModelVersion rejects a foreign-org modelId and writes nothing', async () => {
+    await expect(
+      financeEnterpriseService.createModelVersion(ORG, 'user-1', { modelId: FOREIGN_MODEL })
+    ).rejects.toThrow(/not found/i);
+    modelOwnershipReadIsOrgScoped();
     noInsertHappened();
   });
 });

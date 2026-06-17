@@ -245,6 +245,11 @@ router.post(
         name,
       });
       const message = String(e?.message || 'Model creation failed');
+      // Cross-org FK / missing-seed references → 404 (the referenced
+      // project/initiative/statement is not visible to the caller's org).
+      if (/not found/i.test(message)) {
+        return res.status(404).json({ error: message });
+      }
       if (
         message.includes('Statement') ||
         message.includes('critical lines') ||
