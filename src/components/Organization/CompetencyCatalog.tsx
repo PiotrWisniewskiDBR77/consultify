@@ -5,6 +5,9 @@ import { useTranslation } from 'react-i18next';
 
 import { API_URL, fetchWithRetry, getHeaders, handleResponse } from '../../services/api/baseClient';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
+import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 import { EmptyState } from '../ui/composed/EmptyState';
 import { LoadingState } from '../ui/primitives';
 
@@ -56,6 +59,7 @@ export const CompetencyCatalog: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [competencyFilters, setCompetencyFilters] = useState<FilterChip[]>([]);
 
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddCompetency, setShowAddCompetency] = useState(false);
@@ -173,6 +177,58 @@ export const CompetencyCatalog: React.FC = () => {
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       (c.description || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  // §27 — canonical FilterableTable columns (replaces the raw <table>). Preserves
+  // the prior columns/rendering: Competency (name + description), Category chip,
+  // and centered Initiatives / Users counts.
+  const competencyColumns: TableColumn[] = [
+    {
+      id: 'name',
+      label: t('competency.table.name', 'Competency'),
+      width: '320px',
+      render: (row) => (
+        <div className="min-w-0">
+          <div className="font-medium text-navy-900 dark:text-white truncate">{row.name}</div>
+          {row.description && (
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+              {row.description}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'categoryName',
+      label: t('competency.table.category', 'Category'),
+      width: '180px',
+      render: (row) =>
+        row.categoryName ? (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-navy-700/60">
+            {row.categoryName}
+          </span>
+        ) : (
+          <span className="text-xs text-slate-600">—</span>
+        ),
+    },
+    {
+      id: 'initiativeCount',
+      label: t('competency.table.initiatives', 'Initiatives'),
+      width: '120px',
+      align: 'center',
+      render: (row) => (
+        <span className="text-xs text-slate-600 dark:text-slate-400">{row.initiativeCount}</span>
+      ),
+    },
+    {
+      id: 'userCount',
+      label: t('competency.table.users', 'Users'),
+      width: '120px',
+      align: 'center',
+      render: (row) => (
+        <span className="text-xs text-slate-600 dark:text-slate-400">{row.userCount}</span>
+      ),
+    },
+  ];
 
   if (loading) {
     return <LoadingState variant="spinner" />;
@@ -379,74 +435,24 @@ export const CompetencyCatalog: React.FC = () => {
             </div>
           )}
 
-          {/* Competencies table */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {t('competency.table.name', 'Competency')}
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {t('competency.table.category', 'Category')}
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {t('competency.table.initiatives', 'Initiatives')}
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {t('competency.table.users', 'Users')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCompetencies.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="text-center py-8 text-slate-600 dark:text-slate-500 text-sm"
-                    >
-                      {t('competency.table.empty', 'No competencies found')}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredCompetencies.map((comp) => (
-                    <tr
-                      key={comp.id}
-                      className="border-b border-slate-200 dark:border-navy-800 last:border-0 hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-navy-900 dark:text-white">{comp.name}</div>
-                        {comp.description && (
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-xs">
-                            {comp.description}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {comp.categoryName ? (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-navy-700/60">
-                            {comp.categoryName}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-slate-600">—</span>
-                        )}
-                      </td>
-                      <td className="text-center px-4 py-3">
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
-                          {comp.initiativeCount}
-                        </span>
-                      </td>
-                      <td className="text-center px-4 py-3">
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
-                          {comp.userCount}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* Competencies table (§27 — canonical FilterableTable) */}
+          <FilterableTable
+            columns={competencyColumns}
+            data={filteredCompetencies.map((comp) => ({
+              id: comp.id,
+              name: comp.name,
+              description: comp.description || '',
+              categoryName: comp.categoryName || '',
+              initiativeCount: comp.initiativeCount,
+              userCount: comp.userCount,
+            }))}
+            hideRowActions
+            activeFilters={competencyFilters}
+            onFilterChange={setCompetencyFilters}
+            emptyMessage={t('competency.table.empty', 'No competencies found')}
+            persistKey="org-competency-catalog-table"
+            canvasClassName=""
+          />
         </>
       )}
     </div>
