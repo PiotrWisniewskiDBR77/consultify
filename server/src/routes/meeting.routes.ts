@@ -21,7 +21,27 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 interface AuthRequest extends Request {
-  user?: { id: string; organizationId: string };
+  user?: { id: string; organizationId: string; role?: string };
+  userRole?: string;
+}
+
+// L-04: role gate on destructive/administrative operations. Org-scope (404)
+// already isolates data cross-org, but every org member had full CRUD. Mirror
+// the established pattern from document-studio.routes.ts:623 — read/create stay
+// open to all members; DELETE + status change require admin/owner/superadmin.
+const PRIVILEGED_MEETING_ROLES = ['admin', 'owner', 'superadmin'];
+
+function getMeetingUserRole(req: AuthRequest): string {
+  return String(req.userRole || req.user?.role || '');
+}
+
+function requireMeetingAdmin(req: AuthRequest, res: Response): boolean {
+  const role = getMeetingUserRole(req).toLowerCase();
+  if (!PRIVILEGED_MEETING_ROLES.includes(role)) {
+    res.status(403).json({ error: 'Admin or owner role required' });
+    return false;
+  }
+  return true;
 }
 
 router.use(verifyToken);
@@ -119,6 +139,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!requireMeetingAdmin(req, res)) return;
     const deleted = await deleteMeeting({
       organizationId: orgId,
       meetingId: String(req.params.id),
@@ -133,6 +154,7 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!requireMeetingAdmin(req, res)) return;
     const status = String(req.body?.status || '')
       .trim()
       .toLowerCase();

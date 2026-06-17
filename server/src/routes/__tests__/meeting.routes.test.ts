@@ -25,9 +25,14 @@ vi.mock('../../services/meetingService.js', () => ({
   updateMeetingFollowUpStatus: (...a: unknown[]) => mockUpdateFollowUpStatus(...a),
 }));
 
+// Auth mock reads an `x-test-role` header so a single app instance can simulate
+// any membership role (defaults to admin so the existing destructive-op tests
+// keep exercising the happy path after the L-04 role gate was added).
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
-    req.user = { id: 'user-1', organizationId: 'org-1' };
+    const role = String(req.headers['x-test-role'] || 'admin');
+    req.user = { id: 'user-1', organizationId: 'org-1', role };
+    req.userRole = role;
     next();
   },
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
@@ -168,5 +173,70 @@ describe('meeting routes', () => {
       .send({ title: 'Recap', owner: 'Bob' });
     expect(res.status).toBe(201);
     expect(res.body.meeting.followUps).toHaveLength(1);
+  });
+
+  // L-04: role gate on destructive/administrative operations. Org-scope alone
+  // let any member DELETE / change status; now only admin/owner/superadmin may.
+  describe('L-04 role gate', () => {
+    it('DELETE /:id returns 403 for a non-admin member', async () => {
+      const res = await request(createApp())
+        .delete('/api/meeting/meeting-1')
+        .set('x-test-role', 'team_member');
+      expect(res.status).toBe(403);
+      expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it('DELETE /:id is allowed for an admin', async () => {
+      mockDelete.mockResolvedValue(true);
+      const res = await request(createApp())
+        .delete('/api/meeting/meeting-1')
+        .set('x-test-role', 'admin');
+      expect(res.status).toBe(200);
+      expect(mockDelete).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        meetingId: 'meeting-1',
+      });
+    });
+
+    it('DELETE /:id is allowed for an owner', async () => {
+      mockDelete.mockResolvedValue(true);
+      const res = await request(createApp())
+        .delete('/api/meeting/meeting-1')
+        .set('x-test-role', 'owner');
+      expect(res.status).toBe(200);
+    });
+
+    it('PATCH /:id/status returns 403 for a non-admin member', async () => {
+      const res = await request(createApp())
+        .patch('/api/meeting/meeting-1/status')
+        .set('x-test-role', 'team_member')
+        .send({ status: 'completed' });
+      expect(res.status).toBe(403);
+      expect(mockUpdateStatus).not.toHaveBeenCalled();
+    });
+
+    it('PATCH /:id/status is allowed for an admin', async () => {
+      mockUpdateStatus.mockResolvedValue({ ...sampleMeeting, status: 'completed' });
+      const res = await request(createApp())
+        .patch('/api/meeting/meeting-1/status')
+        .set('x-test-role', 'admin')
+        .send({ status: 'completed' });
+      expect(res.status).toBe(200);
+      expect(res.body.meeting.status).toBe('completed');
+    });
+
+    it('read (GET) and create (POST) stay open to non-admin members', async () => {
+      mockList.mockResolvedValue([sampleMeeting]);
+      mockCreate.mockResolvedValue(sampleMeeting);
+      const listRes = await request(createApp())
+        .get('/api/meeting')
+        .set('x-test-role', 'team_member');
+      expect(listRes.status).toBe(200);
+      const createRes = await request(createApp())
+        .post('/api/meeting')
+        .set('x-test-role', 'team_member')
+        .send({ title: 'Kickoff', startAt: '2026-07-01T10:00:00.000Z' });
+      expect(createRes.status).toBe(201);
+    });
   });
 });
