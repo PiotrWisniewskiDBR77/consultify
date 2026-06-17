@@ -603,8 +603,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
   const canViewManager = isAdmin || isManager || isSuperAdmin;
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
-  // Beta gating: Ideas is a closed beta. BETA_ADMINS_EXEMPT=false means everyone
-  // is blocked (isBetaLockedForRole always returns true). Plate shown to all roles.
+  // Beta gating for the Ideas tab. Locked only when BOTH:
+  //   (1) MYWORK_IDEAS is marked 'closed' in betaAccess.BETA_SUBAREA_STATUS, and
+  //   (2) the role is not exempt — with BETA_ADMINS_EXEMPT=true only non-admins
+  //       are blocked; flip it to false to block everyone (including admins).
+  // Current config: MYWORK_IDEAS='open' + BETA_ADMINS_EXEMPT=true → nobody locked.
+  // The product decision of open vs closed lives in betaAccess.ts (SSOT), not here.
   const ideasBetaLocked =
     isBetaSubareaClosed('MYWORK_IDEAS') && isBetaLockedForRole(currentUser?.role);
 
