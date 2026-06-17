@@ -12,8 +12,14 @@
  */
 
 import { resolveCname } from 'dns/promises';
+import createDOMPurify from 'dompurify';
 import { NextFunction, Response, Router } from 'express';
 import fs from 'fs';
+// jsdom ships no bundled types and we deliberately avoid adding @types/jsdom as a
+// dependency; the only structural shape we use is `new JSDOM('').window`.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error -- no type declarations for 'jsdom' (intentionally not adding @types/jsdom)
+import { JSDOM } from 'jsdom';
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -53,6 +59,74 @@ const brandingUpload = multer({
     }
   },
 });
+
+// ===========================================
+// SVG SANITIZATION (stored-XSS hardening — M23 L-09)
+// ===========================================
+//
+// Uploaded SVGs are served same-origin from /uploads/branding/* and can be
+// opened directly (or inlined), so an attacker-supplied <script>, on* handler,
+// <foreignObject>, javascript:/data: URI, or external <use href> would execute
+// in our origin. We sanitize the file contents on upload with DOMPurify (SVG
+// profile) and fail closed (delete the file) if sanitization is unavailable.
+// A second defense layer (CSP + nosniff on /uploads responses) lives in
+// server/src/index.ts.
+
+const SVG_MIME_TYPES = new Set(['image/svg+xml']);
+const SVG_EXTENSIONS = new Set(['.svg', '.svgz']);
+
+// DOMPurify needs a DOM. On the server we back it with a JSDOM window.
+// The server tsconfig has no DOM lib, so the global `Window` type is
+// unavailable; createDOMPurify only needs a structurally compatible window, so
+// we cast through its own first-parameter type.
+const purifyWindow = new JSDOM('').window;
+const svgPurifier = createDOMPurify(
+  purifyWindow as unknown as Parameters<typeof createDOMPurify>[0]
+);
+
+/**
+ * Returns sanitized SVG markup with all script-execution vectors removed:
+ * <script>, <foreignObject>, on* event handlers, javascript:/data: URIs, and
+ * external <use href>/<image>.
+ */
+const sanitizeSvgMarkup = (raw: string): string =>
+  svgPurifier.sanitize(raw, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    // Defense in depth: even though the SVG profile drops most of these, we
+    // forbid scripting/foreign-content vectors explicitly in case the profile
+    // config ever loosens, and strip href/xlink:href so no external or
+    // javascript: reference survives.
+    FORBID_TAGS: ['script', 'foreignObject', 'iframe', 'a', 'use', 'image'],
+    FORBID_ATTR: ['xlink:href', 'href'],
+  });
+
+const isSvgUpload = (mimetype: string | undefined, filename: string | undefined): boolean => {
+  const ext = path.extname(filename || '').toLowerCase();
+  return SVG_MIME_TYPES.has(String(mimetype || '').toLowerCase()) || SVG_EXTENSIONS.has(ext);
+};
+
+/**
+ * Reads the just-written upload; if it is an SVG, rewrites it with sanitized
+ * markup. Deletes the file and throws on any failure so we never persist
+ * unsanitized SVG. Non-SVG files are left untouched.
+ */
+const sanitizeUploadedFileIfSvg = async (file: Express.Multer.File): Promise<void> => {
+  if (!isSvgUpload(file.mimetype, file.originalname || file.filename)) return;
+
+  try {
+    const raw = await fs.promises.readFile(file.path, 'utf8');
+    const clean = sanitizeSvgMarkup(raw);
+    await fs.promises.writeFile(file.path, clean, 'utf8');
+  } catch (err) {
+    // Fail closed: remove the file we could not sanitize.
+    try {
+      await fs.promises.unlink(file.path);
+    } catch {
+      /* best-effort cleanup */
+    }
+    throw err;
+  }
+};
 
 // ===========================================
 // ENSURE BRANDING TABLE EXISTS
@@ -217,6 +291,16 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    // Stored-XSS hardening (M23 L-09): strip scripts/handlers from SVG uploads
+    // before they become same-origin servable assets. Fails closed (file
+    // removed) on error.
+    try {
+      await sanitizeUploadedFileIfSvg(req.file);
+    } catch (err: any) {
+      logger.error(`[branding] SVG sanitization failed for org ${orgId}:`, err);
+      return res.status(400).json({ error: 'Uploaded SVG could not be sanitized' });
+    }
 
     const filename = req.file.filename;
     const url = `/uploads/branding/${orgId}/${filename}`;

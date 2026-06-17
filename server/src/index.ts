@@ -930,7 +930,33 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   return jsonParser(req, res, next);
 });
 app.use(cookieParser()); // Required for CSRF protection
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, '../uploads'), {
+    // Stored-XSS hardening (M23 L-09) for user-uploaded assets (e.g. branding
+    // SVG logos). Even if a malicious SVG slipped past upload-time
+    // sanitization, these response headers prevent any embedded
+    // <script>/on*-handler from executing in our origin when the file is
+    // opened directly: the sandbox CSP runs the document in a unique opaque
+    // origin with scripts disabled, and nosniff stops MIME-confusion attacks.
+    setHeaders: (res: Response, filePath: string) => {
+      const ext = path.extname(filePath).toLowerCase();
+      if (
+        ext === '.svg' ||
+        ext === '.svgz' ||
+        ext === '.xml' ||
+        ext === '.html' ||
+        ext === '.htm'
+      ) {
+        res.setHeader(
+          'Content-Security-Policy',
+          "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+        );
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+      }
+    },
+  })
+);
 const kbStaticCandidates = [
   path.join(__dirname, '../../public/kb'),
   path.join(__dirname, '../public/kb'),
