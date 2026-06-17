@@ -128,7 +128,7 @@ Scenariusze S1–S7 + pokrycie + pułapka CI: karta §0/§2 (633 PASS/23 FAIL lo
 | L-05 | feed-forward M14→M15 martwy (dziura w kręgosłupie) | W-03,W-05 | `ExecutionHub.tsx:945`; brak `?initiativeId=` export | P1 | 2 | **DP-6: preview teraz; realny odbiór = D-01** |
 | L-06 | 5 tabel Rollout poza §27 + bulk-bar Portfel bez akcji + Manager lanes grid | W-01,W-05 | `RolloutTab.tsx` RegisterTable (2 raw `<table>` pokrywa 5 rej.), `ExecutionHub.tsx:4855-4870` | P1 | 4 | otwarta (DP-9 sweep) |
 | L-07 | ~141 kluczy PL brak + hardkody presetów raportów | W-01 | `translation.json` (inline-fallback), `:3338-3343` (5 inline `isPolish`) | P2 | 4 | **NAPRAWIONA — `1dbca1d245` (101 kluczy execution.* PL+EN; koniec inline-fallback)** | 2026-06-16 |
-| L-08 | testy: `rollout.routes` BE (S5), kanban-DnD (S2), raporty (S6); env-drift | W-01 | brak `rollout.routes.test.ts`; role „iris", `localhost:3005` | P0-test | 2/4 | **CZĘŚCIOWO** — `rollout.routes.test.ts` gotowy, 13/13 PASS (persist, org-scope, L-01 gating); kanban-DnD + raporty nie pokryte (S2/S6) |
+| L-08 | testy: `rollout.routes` BE (S5), kanban-DnD (S2), raporty (S6); env-drift | W-01 | brak `rollout.routes.test.ts`; role „iris", `localhost:3005` | P0-test | 2/4 | **ZAMKNIĘTA — S5: `rollout.routes.test.ts` 13/13; S2: `executionInitiativesKanban.dnd.test.tsx` 5/5 (onStatusChange, readOnly, card-on-card); S6: `reportContentGenerator.liveData.test.ts` 10/10 (live ctx, RAG, table-rows)** | 2026-06-17 |
 | L-09 | cross-org write budżetu + task_dependencies | W-01 | `executionBudgetService.ts:413`; `v8/execution-control.routes.ts:1138-1151` | P0 | — | **NAPRAWIONA `b9f2dee9d2`+`9974596da7` (R3: commity zweryfikowane w git; read-only proof cross-org = Faza 4)** |
 
 ### 04 · Rejestr decyzji (R5)
