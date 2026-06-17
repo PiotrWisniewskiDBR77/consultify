@@ -2700,7 +2700,9 @@
     "hub": {
       "failedToLoad": "Failed to load execution initiatives.",
       "retry": "Retry",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "loadErrorTitle": "Failed to load implementation data",
+      "transportBlockedTitle": "Requests temporarily blocked"
     },
     "demo": {
       "label": "Demo",
@@ -2854,8 +2856,10 @@
         "rejectedBadge": "REJECTED"
       },
       "ai": {
-        "suggest": "AI — How to manage this?"
-      }
+        "suggest": "AI — How to manage this?",
+        "analyzing": "AI is analyzing your data…"
+      },
+      "v8Degraded": "Manager cockpit requires V8"
     },
     "rollout": {
       "tabLabel": "Rollout",
@@ -2894,6 +2898,11 @@
           "probability": "Probability",
           "impact": "Impact",
           "status": "Status"
+        },
+        "status": {
+          "closed": "Closed",
+          "mitigated": "Mitigated",
+          "open": "Open"
         }
       },
       "change": {
@@ -2905,6 +2914,12 @@
           "title": "Title",
           "type": "Type",
           "status": "Status"
+        },
+        "status": {
+          "approved": "Approved",
+          "implemented": "Implemented",
+          "proposed": "Proposed",
+          "rejected": "Rejected"
         }
       },
       "closure": {
@@ -2912,7 +2927,10 @@
         "subtitle": "Handover, sign-off, and project closure actions.",
         "add": "Add Item",
         "empty": "No closure items yet."
-      }
+      },
+      "addClosureItem": "Add Item",
+      "addKpi": "Add KPI",
+      "addRisk": "Add Risk"
     },
     "reporting": {
       "tasksTitle": "Tasks",
@@ -2933,14 +2951,17 @@
       "weeklyPackHint": "One copy-ready snapshot for the weekly execution review.",
       "copy": "Copy",
       "copied": "Weekly pack copied",
-      "copyFailed": "Copy failed"
+      "copyFailed": "Copy failed",
+      "newReport": "New Report",
+      "workloadPreview": "Workload preview"
     },
     "tasks": {
       "subtitle": "Overdue, due soon, and upcoming tasks for initiatives in execution.",
       "openInitiative": "Open related initiative",
       "overdue": "Overdue",
       "due7": "Due in 7 days",
-      "upcoming": "Upcoming (8–30d)"
+      "upcoming": "Upcoming (8–30d)",
+      "failed": "Tasks unavailable"
     },
     "decisionsBuckets": {
       "subtitle": "Buckets by due horizon to keep governance fast and explicit.",
@@ -2949,7 +2970,8 @@
       "due7": "Due ≤7d",
       "due14": "Due 8–14d",
       "due30": "Due 15–30d",
-      "more": "30d+ / No date"
+      "more": "30d+ / No date",
+      "failed": "Decisions unavailable"
     },
     "table": {
       "type": "Type",
@@ -2962,7 +2984,11 @@
       "tasks": "Tasks",
       "deadline": "Deadline",
       "unassigned": "Unassigned",
-      "noDeadline": "No deadline"
+      "noDeadline": "No deadline",
+      "initiative": "Initiative",
+      "selectAll": "Select all",
+      "selectRow": "Select row",
+      "selectedCount": "{{count}} selected"
     },
     "badges": {
       "done": "Done",
@@ -3056,7 +3082,8 @@
       "due": "Due",
       "decision": "Decision",
       "risk": "Risk",
-      "task": "Task"
+      "task": "Task",
+      "failed": "Action queue unavailable"
     },
     "attention": {
       "blocked": "Blocked",
@@ -3070,12 +3097,25 @@
       "active": "Active",
       "all": "All",
       "activeHint": "Scheduled → Executing → Blocked",
-      "allHint": "Include Done / Cancelled / Archived"
+      "allHint": "Include Done / Cancelled / Archived",
+      "aria": "Scope"
     },
     "toast": {
       "taskMoved": "Task moved to {{column}}",
       "taskStatusError": "Failed to update task status",
-      "initiativeNotFound": "Related initiative not found"
+      "initiativeNotFound": "Related initiative not found",
+      "budgetEntryAddFailed": "Failed to add budget entry",
+      "budgetEntryAdded": "Budget entry added",
+      "budgetLoadFailed": "Failed to load budget",
+      "invalidTransition": "Invalid status change",
+      "mitigationSaveFailed": "Failed to save mitigation",
+      "notAuthenticated": "Not authenticated",
+      "statusChanged": "Status changed to {{status}}",
+      "statusUpdateError": "Failed to update status",
+      "statusUpdateFailed": "Failed to update status",
+      "statusUpdated": "Status updated",
+      "taskUpdateError": "Failed to update task",
+      "timelineUpdateFailed": "Failed to update timeline"
     },
     "timeline": {
       "title": "Timeline",
@@ -3093,7 +3133,28 @@
       "showCriticalPath": "Show critical path",
       "scheduleWarning": "Schedule Warning",
       "warnings": "warnings",
-      "warning": "warning"
+      "warning": "warning",
+      "deps": {
+        "add": "Add",
+        "createFailed": "Failed to create",
+        "created": "Dependency created",
+        "current": "Current dependencies",
+        "deleteFailed": "Failed to delete",
+        "deleted": "Dependency removed",
+        "empty": "No dependencies",
+        "loading": "Loading...",
+        "manage": "Manage dependencies",
+        "predecessor": "Predecessor",
+        "remove": "Remove",
+        "select": "Select",
+        "self": "Cannot create self-dependency",
+        "successor": "Successor",
+        "title": "Dependencies"
+      },
+      "filters": {
+        "hide": "Hide filters",
+        "show": "Show filters"
+      }
     },
     "warnings": {
       "title": "Top Warnings",
@@ -3139,7 +3200,8 @@
       "statusAccepted": "Accepted",
       "statusClosed": "Closed",
       "save": "Save Mitigation",
-      "saved": "Mitigation updated"
+      "saved": "Mitigation updated",
+      "ownerIdPlaceholder": "Owner ID"
     },
     "auditLog": {
       "title": "Audit Log",
@@ -3172,7 +3234,9 @@
         "LATE_FINISH_RISK": "Late Finish Risk",
         "DEADLINE_RISK": "Deadline Risk",
         "OVERDUE": "Overdue"
-      }
+      },
+      "dismissFailed": "Failed to dismiss",
+      "loadFailed": "Failed to load"
     },
     "budget": {
       "title": "Budget Control",
@@ -3201,6 +3265,73 @@
         "red": "Over Budget"
       },
       "viewInResults": "View in Results"
+    },
+    "actionCenter": {
+      "actionQueue": "Action queue",
+      "kpiNoPlan": "KPI deviation without plan",
+      "missingPlan": "Missing-plan handling"
+    },
+    "bulk": {
+      "confirmStatusTitle": "Change status of selected initiatives?",
+      "setStatus": "Change status:",
+      "statusPartial": "Changed {{success}}, failed: {{failed}}",
+      "statusUpdated": "Updated status of {{count}} initiative(s)"
+    },
+    "controlTower": {
+      "failed": "Control tower signals unavailable"
+    },
+    "executiveHealth": {
+      "failed": "Executive health signals unavailable"
+    },
+    "healthSnapshot": {
+      "failed": "PMO health snapshot unavailable"
+    },
+    "reportCatalog": {
+      "cadence": {
+        "biweekly": "Bi-weekly",
+        "monthly": "Monthly",
+        "onDemand": "On demand",
+        "weekly": "Weekly"
+      },
+      "col": {
+        "cadence": "Cadence",
+        "data": "Live Data",
+        "sections": "Sections",
+        "title": "Report"
+      },
+      "generateError": "Failed to generate report",
+      "generating": "Generating \"{{title}}\"…",
+      "noData": "No execution data yet",
+      "openGlobal": "Global Reports →"
+    },
+    "reportPanel": {
+      "copied": "Report copied to clipboard",
+      "copy": "Copy as Markdown",
+      "copyFailed": "Copy failed",
+      "exportDeck": "Open presentation builder",
+      "exportPdf": "Download PDF",
+      "generate": "Generate with AI",
+      "generateAI": "Generate with AI",
+      "generateInWordy": "Generate in Wordy",
+      "methodology": "Report configuration & methodology",
+      "pdfExported": "PDF downloaded",
+      "pdfFailed": "PDF export failed",
+      "presentationOpened": "Opening presentation generator…"
+    },
+    "statusChange": {
+      "confirmPrompt": "Are you sure you want to proceed?",
+      "reasonPlaceholder": "Enter reason...",
+      "reasonPrompt": "Please provide a reason for this change."
+    },
+    "whyRed": {
+      "decisions": "Decisions",
+      "decisionsCount": "{{count}} decision(s)",
+      "overdue": "Overdue",
+      "risks": "Risks",
+      "risksCount": "{{count}} risk(s)",
+      "signals": "Signals",
+      "tasks": "Tasks",
+      "tasksCount": "{{count}} task(s)"
     }
   },
   "benefits": {
@@ -7615,6 +7746,17 @@
       "period": "Period",
       "variants": "Variants",
       "analyticalDepth": "Analytical depth"
+    },
+    "empty": {
+      "statements": "No statements in the current view. Ready items go to the working set, recoverable items go to Recovery Queue, and rejected ones stay outside downstream flows.",
+      "readyStatements": "No ready statements in the working set. Imports that are not ready stay in Recovery Queue or Rejected Imports.",
+      "recoveryQueue": "Recovery Queue is empty. Imports that still need remap, re-validation, or scale fixes will appear here.",
+      "rejectedImports": "Rejected Imports is empty. Documents that fail the minimum recognition contract will appear here.",
+      "models": "No models yet. Add your first financial model.",
+      "analysis": "No analyses yet. Create your first analysis.",
+      "prediction": "No prediction data. Create a model first.",
+      "valuation": "No valuations yet. Create your first valuation.",
+      "investment": "No investment case studies yet. Create your first investment analysis."
     },
     "teresa": {
       "explainModel": "Explain this financial model: its assumptions, the key drivers, and what the NPV/ROI/payback results mean for the client.",

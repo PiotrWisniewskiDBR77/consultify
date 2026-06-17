@@ -1957,7 +1957,9 @@
     "hub": {
       "failedToLoad": "Nie udało się załadować inicjatyw realizacyjnych.",
       "retry": "Spróbuj ponownie",
-      "dismiss": "Zamknij"
+      "dismiss": "Zamknij",
+      "loadErrorTitle": "Nie udało się załadować danych wdrożenia",
+      "transportBlockedTitle": "Żądania chwilowo zablokowane"
     },
     "demo": {
       "label": "Demo",
@@ -2111,8 +2113,10 @@
         "rejectedBadge": "ODRZUCONA"
       },
       "ai": {
-        "suggest": "AI — jak tym zarządzić?"
-      }
+        "suggest": "AI — jak tym zarządzić?",
+        "analyzing": "AI analizuje Twoje dane…"
+      },
+      "v8Degraded": "Kokpit menedżera wymaga V8"
     },
     "rollout": {
       "tabLabel": "Wdrożenie",
@@ -2151,6 +2155,11 @@
           "probability": "Prawdopodobieństwo",
           "impact": "Wpływ",
           "status": "Status"
+        },
+        "status": {
+          "closed": "Zamknięte",
+          "mitigated": "Złagodzone",
+          "open": "Otwarte"
         }
       },
       "change": {
@@ -2162,6 +2171,12 @@
           "title": "Tytuł",
           "type": "Typ",
           "status": "Status"
+        },
+        "status": {
+          "approved": "Zatwierdzona",
+          "implemented": "Wdrożona",
+          "proposed": "Zaproponowana",
+          "rejected": "Odrzucona"
         }
       },
       "closure": {
@@ -2169,7 +2184,10 @@
         "subtitle": "Przekazanie, akceptacja i działania zamknięcia projektu.",
         "add": "Dodaj pozycję",
         "empty": "Brak pozycji zamknięcia."
-      }
+      },
+      "addClosureItem": "Dodaj pozycję",
+      "addKpi": "Dodaj KPI",
+      "addRisk": "Dodaj ryzyko"
     },
     "reporting": {
       "tasksTitle": "Zadania",
@@ -2190,14 +2208,17 @@
       "weeklyPackHint": "Jedno, gotowe do skopiowania podsumowanie na tygodniowy przegląd realizacji.",
       "copy": "Kopiuj",
       "copied": "Pakiet tygodniowy skopiowany",
-      "copyFailed": "Nie udało się skopiować"
+      "copyFailed": "Nie udało się skopiować",
+      "newReport": "Nowy raport",
+      "workloadPreview": "Podgląd obciążenia"
     },
     "tasks": {
       "subtitle": "Zadania przeterminowane, nadchodzące i zbliżające się dla inicjatyw w realizacji.",
       "openInitiative": "Otwórz powiązaną inicjatywę",
       "overdue": "Przeterminowane",
       "due7": "Termin ≤ 7 dni",
-      "upcoming": "Nadchodzące (8–30 dni)"
+      "upcoming": "Nadchodzące (8–30 dni)",
+      "failed": "Zadania niedostępne"
     },
     "decisionsBuckets": {
       "subtitle": "Bucket’y wg horyzontu terminu, żeby governance było szybkie i jednoznaczne.",
@@ -2206,7 +2227,8 @@
       "due7": "Termin ≤ 7 dni",
       "due14": "Termin 8–14 dni",
       "due30": "Termin 15–30 dni",
-      "more": "30+ dni / brak terminu"
+      "more": "30+ dni / brak terminu",
+      "failed": "Decyzje niedostępne"
     },
     "table": {
       "type": "Typ",
@@ -2219,7 +2241,11 @@
       "tasks": "Zadania",
       "deadline": "Termin",
       "unassigned": "Nieprzypisany",
-      "noDeadline": "Brak terminu"
+      "noDeadline": "Brak terminu",
+      "initiative": "Inicjatywa",
+      "selectAll": "Zaznacz wszystko",
+      "selectRow": "Zaznacz wiersz",
+      "selectedCount": "Zaznaczono: {{count}}"
     },
     "badges": {
       "done": "Ukończone",
@@ -2313,7 +2339,8 @@
       "due": "Termin",
       "decision": "Decyzja",
       "risk": "Ryzyko",
-      "task": "Zadanie"
+      "task": "Zadanie",
+      "failed": "Kolejka działań niedostępna"
     },
     "attention": {
       "blocked": "Zablokowane",
@@ -2327,12 +2354,25 @@
       "active": "Aktywne",
       "all": "Wszystkie",
       "activeHint": "Zaplanowane → W realizacji → Zablokowane",
-      "allHint": "W tym ukończone / anulowane / zarchiwizowane"
+      "allHint": "W tym ukończone / anulowane / zarchiwizowane",
+      "aria": "Zakres"
     },
     "toast": {
       "taskMoved": "Zadanie przeniesione do {{column}}",
       "taskStatusError": "Nie udało się zaktualizować statusu zadania",
-      "initiativeNotFound": "Nie znaleziono powiązanej inicjatywy"
+      "initiativeNotFound": "Nie znaleziono powiązanej inicjatywy",
+      "budgetEntryAddFailed": "Nie udało się dodać pozycji budżetu",
+      "budgetEntryAdded": "Pozycja budżetu dodana",
+      "budgetLoadFailed": "Nie udało się załadować budżetu",
+      "invalidTransition": "Nieprawidłowa zmiana statusu",
+      "mitigationSaveFailed": "Nie udało się zapisać działania łagodzącego",
+      "notAuthenticated": "Brak uwierzytelnienia",
+      "statusChanged": "Status zmieniony na {{status}}",
+      "statusUpdateError": "Nie udało się zaktualizować statusu",
+      "statusUpdateFailed": "Nie udało się zaktualizować statusu",
+      "statusUpdated": "Status zaktualizowany",
+      "taskUpdateError": "Nie udało się zaktualizować zadania",
+      "timelineUpdateFailed": "Nie udało się zaktualizować osi czasu"
     },
     "timeline": {
       "title": "Oś czasu",
@@ -2350,7 +2390,28 @@
       "showCriticalPath": "Pokaż ścieżkę krytyczną",
       "scheduleWarning": "Ostrzeżenie harmonogramu",
       "warnings": "ostrzeżeń",
-      "warning": "ostrzeżenie"
+      "warning": "ostrzeżenie",
+      "deps": {
+        "add": "Dodaj",
+        "createFailed": "Nie udało się utworzyć",
+        "created": "Zależność utworzona",
+        "current": "Bieżące zależności",
+        "deleteFailed": "Nie udało się usunąć",
+        "deleted": "Zależność usunięta",
+        "empty": "Brak zależności",
+        "loading": "Ładowanie...",
+        "manage": "Zarządzaj zależnościami",
+        "predecessor": "Poprzednik",
+        "remove": "Usuń",
+        "select": "Wybierz",
+        "self": "Nie można utworzyć zależności od samej siebie",
+        "successor": "Następnik",
+        "title": "Zależności"
+      },
+      "filters": {
+        "hide": "Ukryj filtry",
+        "show": "Pokaż filtry"
+      }
     },
     "warnings": {
       "title": "Najważniejsze ostrzeżenia",
@@ -2396,7 +2457,8 @@
       "statusAccepted": "Zaakceptowane",
       "statusClosed": "Zamknięte",
       "save": "Zapisz łagodzenie",
-      "saved": "Łagodzenie zaktualizowane"
+      "saved": "Łagodzenie zaktualizowane",
+      "ownerIdPlaceholder": "ID właściciela"
     },
     "auditLog": {
       "title": "Dziennik zmian",
@@ -2429,7 +2491,9 @@
         "LATE_FINISH_RISK": "Ryzyko opóźnienia zakończenia",
         "DEADLINE_RISK": "Ryzyko terminu",
         "OVERDUE": "Zaległe"
-      }
+      },
+      "dismissFailed": "Nie udało się odrzucić",
+      "loadFailed": "Nie udało się załadować"
     },
     "budget": {
       "title": "Kontrola budżetu",
@@ -2458,6 +2522,73 @@
         "red": "Przekroczony budżet"
       },
       "viewInResults": "Zobacz w Rezultatach"
+    },
+    "actionCenter": {
+      "actionQueue": "Kolejka działań",
+      "kpiNoPlan": "Odchylenie KPI bez planu",
+      "missingPlan": "Obsługa braku planu"
+    },
+    "bulk": {
+      "confirmStatusTitle": "Zmienić status zaznaczonych inicjatyw?",
+      "setStatus": "Zmień status:",
+      "statusPartial": "Zmieniono {{success}}, błędów: {{failed}}",
+      "statusUpdated": "Zaktualizowano status {{count}} inicjatyw"
+    },
+    "controlTower": {
+      "failed": "Sygnały wieży kontrolnej niedostępne"
+    },
+    "executiveHealth": {
+      "failed": "Sygnały kondycji zarządczej niedostępne"
+    },
+    "healthSnapshot": {
+      "failed": "Migawka kondycji PMO niedostępna"
+    },
+    "reportCatalog": {
+      "cadence": {
+        "biweekly": "Co dwa tygodnie",
+        "monthly": "Miesięcznie",
+        "onDemand": "Na żądanie",
+        "weekly": "Co tydzień"
+      },
+      "col": {
+        "cadence": "Częstotliwość",
+        "data": "Dane na żywo",
+        "sections": "Sekcje",
+        "title": "Raport"
+      },
+      "generateError": "Nie udało się wygenerować raportu",
+      "generating": "Generowanie „{{title}}”…",
+      "noData": "Brak danych wdrożenia",
+      "openGlobal": "Raporty globalne →"
+    },
+    "reportPanel": {
+      "copied": "Raport skopiowany do schowka",
+      "copy": "Kopiuj jako Markdown",
+      "copyFailed": "Kopiowanie nie powiodło się",
+      "exportDeck": "Otwórz kreator prezentacji",
+      "exportPdf": "Pobierz PDF",
+      "generate": "Generuj z AI",
+      "generateAI": "Generuj z AI",
+      "generateInWordy": "Generuj w Wordy",
+      "methodology": "Konfiguracja i metodyka raportu",
+      "pdfExported": "PDF pobrany",
+      "pdfFailed": "Eksport PDF nie powiódł się",
+      "presentationOpened": "Otwieranie generatora prezentacji…"
+    },
+    "statusChange": {
+      "confirmPrompt": "Czy na pewno chcesz kontynuować?",
+      "reasonPlaceholder": "Podaj powód...",
+      "reasonPrompt": "Podaj powód tej zmiany."
+    },
+    "whyRed": {
+      "decisions": "Decyzje",
+      "decisionsCount": "Decyzje: {{count}}",
+      "overdue": "Po terminie",
+      "risks": "Ryzyka",
+      "risksCount": "Ryzyka: {{count}}",
+      "signals": "Sygnały",
+      "tasks": "Zadania",
+      "tasksCount": "Zadania: {{count}}"
     }
   },
   "benefits": {
@@ -8134,6 +8265,17 @@
       "period": "Okres",
       "variants": "Warianty",
       "analyticalDepth": "Głębokość analizy"
+    },
+    "empty": {
+      "statements": "Brak sprawozdań w bieżącym widoku. Gotowe pozycje trafiają do zestawu roboczego, naprawialne do Kolejki naprawczej, a odrzucone pozostają poza dalszymi przepływami.",
+      "readyStatements": "Brak gotowych sprawozdań w zestawie roboczym. Importy, które nie są gotowe, pozostają w Kolejce naprawczej lub Odrzuconych importach.",
+      "recoveryQueue": "Kolejka naprawcza jest pusta. Importy wymagające remapowania, ponownej walidacji lub korekty skali pojawią się tutaj.",
+      "rejectedImports": "Odrzucone importy są puste. Dokumenty, które nie spełniają minimalnego kontraktu rozpoznania, pojawią się tutaj.",
+      "models": "Brak modeli. Dodaj pierwszy model finansowy.",
+      "analysis": "Brak analiz. Utwórz pierwszą analizę.",
+      "prediction": "Brak danych do predykcji. Najpierw utwórz model.",
+      "valuation": "Brak wycen. Utwórz pierwszą wycenę.",
+      "investment": "Brak case studies inwestycyjnych. Utwórz pierwszą analizę inwestycyjną."
     },
     "teresa": {
       "explainModel": "Wyjaśnij ten model finansowy: jego założenia, kluczowe czynniki oraz co wyniki NPV/ROI/okres zwrotu oznaczają dla klienta.",
