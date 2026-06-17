@@ -59,7 +59,7 @@ Każdy moduł przechodzi pełną pętlę; pętla chodzi samodzielnie, pauzuje ty
 |---|---|---|---|
 | M07 | V8 mirror ID mismatch (serwer UUID ≠ klient) → DELETE/GET martwe; decyzja: napraw kontrakt vs wytnij | **P0 struct** | `M07-ideas-process-flow.md` |
 | M09 | per-user dokument (`my_idea_maps` keyed user) → multiplayer niemożliwy (2. uczestnik 404); brak commitu | **P0 struct** | `M09-ideas-whiteboard.md` |
-| M10 | **PROD P0**: głos w wywiadzie nie zapisuje (VTS żywy); FE-fix niezacommitowany + server STT do weryfikacji | **P0 prod** | `M10-wywiad.md` |
+| M10 | **PROD P0**: głos w wywiadzie nie zapisuje (VTS żywy); FE-fix **ZACOMMITOWANY `1522f3de32`**; **BLOKUJĄCE: server STT = OPENAI_API_KEY na Railway centerbeam (wymaga zgody Piotra)** | **P0 prod** | `M10-wywiad.md` |
 
 ### 2b. DO WERYFIKACJI ŻYWEJ (kod naprawiony — potwierdzić apply/runtime)
 | Moduł | Stan | WP |

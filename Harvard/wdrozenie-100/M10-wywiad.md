@@ -128,18 +128,18 @@ Scenariusze S1–S6 + pułapka CI (test-suite tylko main/develop): karta §0/§2
 | W-06 | `CARD_CONTENT_FORMULA.md` + inference service | — | formuła treści wniosków/inicjatyw | jakość treści (poza M10) |
 | W-07 | Feedback prod (`finding_interview_voice_stt_bug`, `project_vts_survey_wave2`) | 2026-06-13 | VTS żywy ~131 osób; server STT do potwierdzenia | L-01 |
 
-### 02 · Stan obecny (prawda kodu) — karta §1 (REALNE 13 · MOCK 0 · ZEPSUTE 0 · UKRYTE-celowo 1 · CZĘŚCIOWE 1). Naprawione: `b9f2dee9d2` (get/delete wniosku org-scope), `ea77dc678c` (martwy import, 26 testów S5), `7ab1b8aace` (cross-org testy). W TOKU Londyn: `30c06e51d6` (per-question hint), `b4586a7c16` (voice-echo), `7ee1fb481d` (inline record/attachments), **`InterviewSingleQuestionRuntime.tsx` NIEZACOMMITOWANY** (`git status` = `M`; interim-flush głosu #12).
+### 02 · Stan obecny (prawda kodu) — karta §1 (REALNE 13 · MOCK 0 · ZEPSUTE 0 · UKRYTE-celowo 1 · CZĘŚCIOWE 1). Naprawione: `b9f2dee9d2` (get/delete wniosku org-scope), `ea77dc678c` (martwy import, 26 testów S5), `7ab1b8aace` (cross-org testy). W TOKU Londyn: `30c06e51d6` (per-question hint), `b4586a7c16` (voice-echo), `7ee1fb481d` (inline record/attachments), **`1522f3de32` (`InterviewSingleQuestionRuntime.tsx` — `liveInterimRef` interim-flush głosu #12 ZACOMMITOWANY)**. Testy 273/273 PASS (weryfikacja 2026-06-16).
 
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | głos nie zapisuje odpowiedzi (FE interim + server STT) | W-02,W-05,W-07 | `InterviewSingleQuestionRuntime.tsx:838-839,903` + `VoiceService.ts:23-66` | **P0 PROD** | 1 | **FE-fix WDROŻONY (niezacommitowany — `M`; niezweryf. live); DP-1=OPENAI env do potwierdzenia (R3)** |
-| L-02 | 9 FAIL drift testów (Hub `__private__`, barrel, i18n, InsightCreator ×3, PATCH 404 ×2, worksheets) | W-01 | f2_tests_report | P1-test | 2 | otwarta |
+| L-01 | głos nie zapisuje odpowiedzi (FE interim + server STT) | W-02,W-05,W-07 | `InterviewSingleQuestionRuntime.tsx:838-839,903` + `VoiceService.ts:23-66` | **P0 PROD** | 1 | **FE-fix ZACOMMITOWANY `1522f3de32` (`liveInterimRef` interim-flush); DP-1=OPENAI env do potwierdzenia na Railway centerbeam (wymaga zgody Piotra — prod caution)** |
+| L-02 | ~~9 FAIL drift testów~~ | W-01 | f2_tests_report | P1-test | 2 | **NAPRAWIONA — 273/273 PASS (2026-06-16); drift zamknięty przez poprzednie commity** |
 | L-03 | brak unitów S4 (konwersacyjny) | W-01 | `interviewTranscriptService`/`interviewInferenceService` | P1-test | 2 | otwarta |
 | L-04 | korupcja „rose" w status-chipach | W-01 | `InterviewHub.tsx:4772-4778` (**21×** grep) | P1 | 4 | otwarta |
 | L-05 | brak `persistKey` (4 tabele) + i18n inline | W-01 | `src/components/Interview/` (**2090** i18n grep) | P1 | 4 | otwarta |
 | L-06 | RC-5 surowe `<table>` | W-01 | **7×** w `src/components/Interview/` (grep) | P2 | 4 | otwarta |
-| L-07 | flow + bramka oceny niewyegzekwowana/nieuwidoczniona | W-03,W-04 | `InterviewController.ts:3485,3536,3592,3682` | P1-design | 2 | **otwarta; decyzje SPEC_13 §5 ZATWIERDZONE → budowa odblokowana** |
+| L-07 | flow + bramka oceny niewyegzekwowana/nieuwidoczniona | W-03,W-04 | `InterviewController.ts:3485,3536,3592,3682` | P1-design | 2 | **NAPRAWIONA (R3: audyt 2026-06-13 nieaktualny — overstate). Zweryfikowane 2026-06-17:** (1) hard gate submit `OBJECTIVE_INSUFFICIENCY` 422 + FE bypass-proof (`InterviewWorkspace.tsx:1386-1397`); (2) score persisted+shown (`InterviewWorkspace.tsx:2033`, `InterviewHub.tsx:10146`); (3) notyfikacja ze score+rekomendacją (`InterviewController.ts:3638-3664`); (4) pipeline ①-⑥ (`InterviewHub.tsx:2673-2688`); (5) Approve/SendBack buttons w reviewer-mode (`InterviewWorkspace.tsx:1888-1895`). Pozostaje: dedykowany inbox ④ Dopuszczenia (PREVIEW per komentarz `:2678`) = osobna fala |
 | L-08 | schema-drift `CREATE TABLE IF NOT EXISTS tool_sessions` runtime | W-01 | runtime eksportu | P2 | 3 | otwarta (potwierdzić prod) |
 | L-09 | stepper 4-krok niezbudowany / `pending_review` ukryty | W-01 | `InterviewHub.tsx:2631,2688` | P-design | 4 | D-03/D-04 |
 
@@ -161,6 +161,7 @@ Brak dedykowanych flag blokujących core (moduł otwarty). **VTS wave 2 żywy na
 - Deploy Londyn→prod = osobna jawna zgoda. Dev `.env` → Railway PROD (VTS żywy) — maksymalna ostrożność z zapisami.
 
 ### 07 · Log wdrożenia + re-ocena
+- 2026-06-17: **R3 korekta masowa — audyt 2026-06-13 nieaktualny (overstate):** L-01 FE-fix ZACOMMITOWANY (`1522f3de32` — `liveInterimRef` interim-flush); L-02 drift NAPRAWIONY (273/273 PASS); L-07 NAPRAWIONA — SPEC_13 F1/F2/F3 zaimplementowane w `1522f3de32` + poprzednich commitach (hard gate, score, notyfikacja, pipeline ①-⑥, reviewer buttons). Server STT (OPENAI_API_KEY Railway centerbeam) = jedyny blokujący prod task, wymaga zgody Piotra.
 - 2026-06-13: pogłębienie teczki; #12 FE interim-flush wdrożony (niezacommitowany); #13 SPEC_13 sporządzony, **decyzje §5 zatwierdzone (D-01/D-02 rozstrzygnięte)**; **D-05 rozstrzygnięta DP-1=OPENAI**; DoD przeliczone grepem (i18n 2090, table 7, hex 15, rose 21).
 - Audyt 2026-06-11: 60/100; `b9f2dee9d2`, `ea77dc678c`. Re-ocena D/G po Fazie 1 (głos) i 4 + żywy smoke głosu VTS (R6).
 
