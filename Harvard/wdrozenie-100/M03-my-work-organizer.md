@@ -130,17 +130,17 @@ Pełna tabela: karta §1g. **←** cała apka (Inbox agreguje notifications `inb
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | leak executive-analytics (manager-gate tylko UI) | W-01 | `my-work.routes.ts:7907` | P1 | 2 | otwarta (R3: karta `d05382fb44` — zweryfikować) |
-| L-02 | session-context odczyt = martwy stub | W-01 | `MyWorkHub.tsx:946-951`, `GET /session-context:8623` | P1 | 2 | otwarta (D-01) |
-| L-03 | task-advisor stub 503, 0 konsumenta FE | W-01 | `task-advisor.routes.ts:12-20`, `Gateway.ts:483` | P1 | 3 | otwarta |
-| L-04 | `CalendarCreateEventModal` 3/4 FAIL (S5) | W-01 | onSubmit/conflict callbacks | P0-test | 2 | otwarta |
-| L-05 | ~15 martwych komponentów (łańcuch WorkCenter; NIE NudgeStrip) | W-01 | f1_code_truth | P2 | 3 | otwarta |
+| L-01 | leak executive-analytics (manager-gate tylko UI) | W-01 | `my-work.routes.ts:7907` | P1 | 2 | **ZAMKNIĘTA `36deb2708c` (2026-06-17)** — `requireRole('ADMIN','MANAGER','OWNER','SUPERADMIN')` wpięte na route (`:7965`, member→403 serwerowo, zweryfikowane w kodzie). Bonus: stale komentarz beta-gating `MyWorkHub.tsx:607` (mówił `BETA_ADMINS_EXEMPT=false`/„everyone blocked" — nieprawda, jest `true`+MYWORK_IDEAS=`open`) poprawiony; test `betaAccessGating.test.ts` (4/4, CI-gated) |
+| L-02 | session-context odczyt = martwy stub | W-01 | `MyWorkHub.tsx:946-951`, `GET /session-context:8623` | P1 | 2 | **ZAMKNIĘTA `1c2d6ac279` (2026-06-17, D-01)** — feature był write-only (POST co 5s, ZERO konsumenta GET w FE → brak ciągłości); ciągłość już przez localStorage (`readStoredMyWorkDocuments`). Martwy zapis USUNIĘTY (nie półwpinano serwerowego odczytu) |
+| L-03 | task-advisor stub 503, 0 konsumenta FE | W-01 | `task-advisor.routes.ts:12-20`, `Gateway.ts:483` | P1 | 3 | **INERT — FALSE POSITIVE user-impact (2026-06-17)**: 0 konsumenta FE (grep `task-advisor` w `src/`=0) → brak martwego CTA, brak surface'u dla użytkownika. Mount = backend-only 503, nieszkodliwy. Usunięcie mountu = edycja współdzielonego `Gateway.ts` (ryzyko wyścigu) → odroczone, zero user-impact |
+| L-04 | `CalendarCreateEventModal` 3/4 FAIL (S5) | W-01 | onSubmit/conflict callbacks | P0-test | 2 | **ZAMKNIĘTA (zweryf. 2026-06-17)** — `tests/components/MyWork/CalendarCreateEventModal.test.tsx` 4/4 PASS (tworzenie task-backed eventu + callbacki hosta + submit z pola tytułu + bounded warning), CI-gated (`tests/components`). „3/4 FAIL" nieaktualne |
+| L-05 | ~15 martwych komponentów (łańcuch WorkCenter; NIE NudgeStrip) | W-01 | f1_code_truth | P2 | 3 | **ZAMKNIĘTA `de3eccbdd0` (2026-06-17)** — łańcuch WorkCenter już usunięty (`d05382fb44`); skan MyWork wykrył 1 pozostały orphan `FocusCockpit.tsx` (390 lin, 0 ref) → USUNIĘTY. NudgeStrip = żywy (zachowany) |
 | L-06 | crash render-time na landing My Work | W-02 | `src/components/shared/PreviewPane/PreviewRelations.tsx:37` — `RelationChip` | P1 | 1 | **✅ ZAMKNIĘTA 2026-06-16** — fix `$$typeof` check w `RelationChip` |
 | L-07 | kalendarz Connect martwy CTA + OAuth niedopięty | W-03,W-07 | `CalendarSidebar.tsx:166,184-192`; `calendarIntegrations.routes.ts:132 „(future)"` | P2 | 2/3 | **CZĘŚCIOWO** — CTA navigate→Integracje (commit `952f309eed`); OAuth backend nadal niedopięty |
 | L-08 | initiative hard-nawiguje (in-context open) | W-04,W-07 | `MyWorkHub.tsx:1235-1251,3192-3194` | P1-design | 0.4 | **D-02 (DP-2)** |
-| L-09 | paski multi-day + utrata koloru źródła | W-05 | `CalendarView.tsx:331` | P2-design | 4 | otwarta |
-| L-10 | RC-4 sticky thead + brak persistKey (3 tabele) | W-06,W-07 | `MyTasksListContent.tsx:2173,1467`, `DecisionsPanelContent.tsx:1873`, `InboxContent.tsx:3316` | P1 | 4 | **CZĘŚCIOWO** — `overflow-hidden` usunięte z 3 wrapperów (commit `952f309eed`); persistKey nadal brak |
-| L-11 | i18n inline 2888× | W-01 | `src/components/MyWork/` | P1 | 4 | otwarta |
+| L-09 | paski multi-day + utrata koloru źródła | W-05 | `CalendarView.tsx:331` | P2-design | 4 | **ODROCZONA — D-03 design (2026-06-17)**: decyzja Timeline/Roadmap vs cienki brzeg = modułowa decyzja Piotra (D-03 otwarta); rebuild renderu Month = P2-design, nie correctness-bug → po decyzji + R6 |
+| L-10 | RC-4 sticky thead + brak persistKey (3 tabele) | W-06,W-07 | `MyTasksListContent.tsx:2173,1467`, `DecisionsPanelContent.tsx:1873`, `InboxContent.tsx:3316` | P1 | 4 | **ZAMKNIĘTA `d03c0bc37f` (2026-06-17)** — sticky thead `overflow-hidden` usunięte (`952f309eed`) + persistKey: nowy hook `usePersistedColumnWidths` (hydrate/persist do localStorage per-tabela) wpięty w Tasks/Decisions/Inbox; test `usePersistedColumnWidths.test.ts` (4/4, CI-gated) |
+| L-11 | i18n inline 2888× | W-01 | `src/components/MyWork/` | P1 | 4 | **ODROCZONA — FAZA 4 SWEEP (2026-06-17)**: 2888 inline `isPolish`/ternary to mechaniczny sweep i18n na ~całym module (nie correctness-bug; UI działa dwujęzycznie przez inline). Wymaga dedykowanej fali FAZA-4 + koordynacji z `public/locales/*` (ZAKAZANE dla agenta bez zgody) → osobny pass |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
@@ -152,7 +152,7 @@ Pełna tabela: karta §1g. **←** cała apka (Inbox agreguje notifications `inb
 
 ### 05 · Flagi / rollout / beta — `RADAR_ENABLED=false` (Home/Radar ukryte); `ENABLE_V8_GLOBAL` (inbox kanoniczny 404→legacy graceful); `MYWORK_IDEAS` beta closed (też admin — komentarz `MyWorkHub.tsx:604` mylący `BETA_ADMINS_EXEMPT=false`). Organizer core otwarty.
 ### 06 · Ryzyka i założenia — L-06 crash bez stack-trace → najpierw repro/telemetria (R3: nie kwalifikować przyczyny bez dowodu). L-01 leak: karta `d05382fb44` → zweryfikować że `requireRole` wpięte (member→403 test). #9 OAuth wymaga env `GOOGLE_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET` na Railway. Dev `.env` → Railway PROD DB.
-### 07 · Log + re-ocena — 2026-06-13: 4 uwagi żywe zalogowane (#5/#9/#10/#11); teczka pogłębiona do M13-level. Audyt 2026-06-11: 54/100. Re-ocena D/G po Fazie 3/4.
+### 07 · Log + re-ocena — 2026-06-13: 4 uwagi żywe zalogowane (#5/#9/#10/#11); teczka pogłębiona do M13-level. Audyt 2026-06-11: 54/100. 2026-06-17 (Harvard 2): L-01 ZAMKNIĘTA (`36deb2708c` — requireRole zweryf. + beta comment + test); L-02 ZAMKNIĘTA (`1c2d6ac279` — dead write removed); L-04 ZAMKNIĘTA (4/4 test CI-gated); L-05 ZAMKNIĘTA (`de3eccbdd0` — FocusCockpit orphan); L-10 ZAMKNIĘTA (`d03c0bc37f` — persistKey hook+test); L-06 już zamknięta (`$$typeof` 2026-06-16); L-03 INERT (0 user-impact); L-07 częściowa (OAuth=deploy-time env Railway); L-08 D-02/DP-2 design (odroczona); L-09 D-03 design (odroczona); L-11 i18n FAZA-4 sweep (odroczona). **Wszystkie luki P0/P1 funkcjonalne+security ZAMKNIĘTE; pozostałe = decyzje design (D-02/D-03), sweep i18n FAZA-4, deploy-time OAuth.** Re-ocena po sesji żywej (R6).
 
 ---
 
