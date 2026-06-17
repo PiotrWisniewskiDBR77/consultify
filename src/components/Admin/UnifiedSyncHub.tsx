@@ -71,6 +71,7 @@ import {
   type V8SyncRefreshSecretRef,
   type V8SyncRefreshTimingPolicy,
   type V8SyncRunRecord,
+  type V8SyncWorkflowPolicyData,
   type V8SyncWorkflowRecord,
 } from '@/services/api/v8/sync';
 
@@ -463,6 +464,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [v8WorkspaceBinding, setV8WorkspaceBinding] = useState<V8MultiplayerRoomBinding | null>(
     null
   );
+  const [v8WorkspacePresenceFailed, setV8WorkspacePresenceFailed] = useState(false);
   const [v8WorkspacePresence, setV8WorkspacePresence] = useState<V8MultiplayerSurfacePresence[]>(
     []
   );
@@ -511,6 +513,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [connectionLogLimit, setConnectionLogLimit] = useState<number>(50);
   const [connectionLogOffset, setConnectionLogOffset] = useState<number>(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [v8WorkflowPolicies, setV8WorkflowPolicies] = useState<
+    Record<string, V8SyncWorkflowPolicyData>
+  >({});
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showComingSoonCatalog, setShowComingSoonCatalog] = useState(false);
@@ -776,9 +781,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         ]);
         setV8WorkspacePresence(presenceData.presence || []);
         setV8WorkspaceLocks(locksData.locks || []);
+        setV8WorkspacePresenceFailed(false);
       } catch {
         setV8WorkspacePresence([]);
         setV8WorkspaceLocks([]);
+        setV8WorkspacePresenceFailed(true);
       }
     },
     [fetchV8WorkspaceBinding]
@@ -937,6 +944,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     loadAllRef.current();
     trackFunnelEvent('integration_sync_hub_viewed');
   }, []);
+
+  useEffect(() => {
+    if (!expandedId) return;
+    void (async () => {
+      try {
+        const policy = await V8SyncApi.getWorkflowPolicy(expandedId);
+        setV8WorkflowPolicies((prev) => ({ ...prev, [expandedId]: policy }));
+      } catch {
+        // non-fatal — policy gate section stays hidden
+      }
+    })();
+  }, [expandedId]);
 
   useEffect(() => {
     if (activeTab !== 'health') return;
@@ -2921,6 +2940,26 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   </div>
                 )}
 
+                {/* Workflow policy gate */}
+                {v8WorkflowPolicies[int.id] && (
+                  <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3 text-xs">
+                    <div className="font-medium text-violet-200 mb-1">
+                      {t('integrations.syncHub.workflowPolicyGate', 'Workflow policy gate')}
+                    </div>
+                    <div className="text-violet-100/70">
+                      {t('integrations.syncHub.workflowPolicyLabel', 'Policy')}:{' '}
+                      <span className="text-violet-100">
+                        {v8WorkflowPolicies[int.id].workflowPolicy}
+                      </span>
+                      {v8WorkflowPolicies[int.id].isPaused && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300">
+                          {t('integrations.syncHub.workflowPolicyPaused', 'paused')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex items-center gap-2 pt-1">
                   {int.status === 'requires_reauth' && (
@@ -3590,15 +3629,20 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         ) : null}
         {v8WorkspacePresence.length === 0 ? (
           <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
-            {v8WorkspaceBinding
+            {v8WorkspacePresenceFailed
               ? t(
-                  'integrations.syncHub.v8NoWorkspacePresence',
-                  'No governed workspace presence is active.'
+                  'integrations.syncHub.v8WorkspacePresenceFailed',
+                  'Workspace presence unavailable. Presence bridge read failed.'
                 )
-              : t(
-                  'integrations.syncHub.v8NoWorkspaceBinding',
-                  'No governed workspace room binding is available.'
-                )}
+              : v8WorkspaceBinding
+                ? t(
+                    'integrations.syncHub.v8NoWorkspacePresence',
+                    'No governed workspace presence is active.'
+                  )
+                : t(
+                    'integrations.syncHub.v8NoWorkspaceBinding',
+                    'No governed workspace room binding is available.'
+                  )}
           </div>
         ) : (
           <div className="space-y-2">

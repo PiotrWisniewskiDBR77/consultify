@@ -121,9 +121,8 @@ describe('RegionalSettings honest UI', () => {
       expect(toast.success).toHaveBeenCalledWith('Regional preferences saved');
     });
 
-    expect(onUpdateUser).toHaveBeenCalledWith({
-      timezone: 'Europe/Warsaw',
-      units: 'metric',
-    });
+    // onUpdateUser is intentionally NOT called — timezone/units are personal display
+    // preferences only and do not need to be mirrored onto the user object.
+    expect(onUpdateUser).not.toHaveBeenCalled();
   });
 });

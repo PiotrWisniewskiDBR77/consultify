@@ -67,7 +67,11 @@ describe('ConnectedAppsSettings honest UI', () => {
       'fetch',
       vi
         .fn()
+        // mount useEffect: GET /api/settings/integrations/oauth/status
         .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        // handleDisconnect: POST /api/settings/integrations/slack/oauth-disconnect
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        // fetchIntegrationSnapshot: GET /api/settings/integrations (read-back still active)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
