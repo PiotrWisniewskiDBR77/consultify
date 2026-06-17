@@ -3189,6 +3189,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         activeTool={activeTool}
         onApplied={() => setMapRefreshToken((v) => v + 1)}
         baseVersion={graphRuntime.graph.version}
+        existingNodeCount={graphNodes.length}
       />
 
       <IdeaExportMenu

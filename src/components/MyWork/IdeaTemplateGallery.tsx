@@ -24,6 +24,7 @@ import { Api } from '@/services/api';
 
 import type { CanvasTemplateGovernanceMeta } from './canvas/canvasOsContract';
 import type { CanvasToolType } from './ideaSelectionTypes';
+import { useConfirmDialog } from './shared/ConfirmDialog';
 
 // ── Template types ───────────────────────────────────────────────────────────
 
@@ -1933,6 +1934,8 @@ interface IdeaTemplateGalleryProps {
   activeTool: CanvasToolType;
   onApplied: () => void;
   baseVersion?: number;
+  /** Liczba węzłów aktualnie na kanwie — gdy >0, zastosowanie szablonu wymaga potwierdzenia (L-06). */
+  existingNodeCount?: number;
 }
 
 export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
@@ -1942,9 +1945,11 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
   activeTool,
   onApplied,
   baseVersion,
+  existingNodeCount = 0,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const { dialog: confirmDialog, confirm } = useConfirmDialog();
   const [applying, setApplying] = useState<string | null>(null);
   const [aiFilling, setAiFilling] = useState<string | null>(null);
   const [scopeFilter, setScopeFilter] = useState<'all' | CanvasTemplateGovernanceMeta['scope']>(
@@ -1964,6 +1969,25 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
 
   const handleApply = useCallback(
     async (template: TemplateDefinition, withAIFill = false) => {
+      // L-06: szablon nadpisuje cały graf (Api.syncMyIdeaMap zastępuje nodes/edges).
+      // Gdy kanwa ma już elementy — wymagaj świadomego potwierdzenia, by nie utracić pracy.
+      if (existingNodeCount > 0) {
+        const proceed = await confirm({
+          title: isPl ? 'Zastąpić istniejące elementy?' : 'Replace existing elements?',
+          description: isPl
+            ? `Na kanwie znajduje się ${existingNodeCount} ${
+                existingNodeCount === 1 ? 'element' : 'elementów'
+              }. Zastosowanie szablonu nadpisze całą zawartość. Tej operacji nie można cofnąć.`
+            : `The canvas contains ${existingNodeCount} ${
+                existingNodeCount === 1 ? 'element' : 'elements'
+              }. Applying a template will overwrite all content. This cannot be undone.`,
+          confirmLabel: isPl ? 'Zastąp' : 'Replace',
+          cancelLabel: isPl ? 'Anuluj' : 'Cancel',
+          variant: 'warning',
+        });
+        if (!proceed) return;
+      }
+
       setApplying(template.id);
       try {
         await applyIdeaTemplate({
@@ -2025,12 +2049,24 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
         setApplying(null);
       }
     },
-    [activeTool, baseVersion, i18n.language, ideaId, isPl, onApplied, onClose]
+    [
+      activeTool,
+      baseVersion,
+      confirm,
+      existingNodeCount,
+      i18n.language,
+      ideaId,
+      isPl,
+      onApplied,
+      onClose,
+    ]
   );
 
   if (!open) return null;
 
   return (
+    <>
+      {confirmDialog}
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-navy-700/60 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
@@ -2166,6 +2202,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
         </div>
       </div>
     </div>
+    </>
   );
 };
 
