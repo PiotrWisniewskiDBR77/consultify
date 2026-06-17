@@ -11,7 +11,6 @@ import {
   Maximize,
   Search,
   Share2,
-  Webhook,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
@@ -124,13 +123,6 @@ const ALL_TOOLS: ToolItem[] = [
     iconEl: Share2,
     labelPl: 'Udostępnij',
     labelEn: 'Share',
-    category: 'collab',
-  },
-  {
-    action: 'mm_webhooks',
-    iconEl: Webhook,
-    labelPl: 'Webhook/integracje',
-    labelEn: 'Webhooks/Integrations',
     category: 'collab',
   },
   {
