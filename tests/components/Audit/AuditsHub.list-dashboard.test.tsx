@@ -6,7 +6,7 @@
  * obsługa błędu ładowania, otwieranie kreatora, kasowanie programu.
  */
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -36,13 +36,58 @@ vi.mock('../../../src/components/Audit/AuditOrchestratorWizard', () => ({
     ) : null,
 }));
 
-// ModuleHub: passthrough shell — just render children + the new-item CTA.
+// ModuleHub: passthrough shell + a functional FilterableTable stub. AuditsHub was
+// refactored (M12 L-05/L-06) to the canonical §27 surface: ModuleHub shell +
+// FilterableTable rows (one column-render per cell) inside TableWithPreviewLayout.
+// The stub renders each column's render(row) so name/status/objective/count cells
+// appear, plus a per-row select button and the row-actions menu (Generate/Delete).
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
   ModuleHub: ({ children, onNewItem, newItemLabel, rightControls }: any) => (
     <div data-testid="module-hub">
       <button onClick={onNewItem}>{newItemLabel}</button>
       {rightControls}
       {children}
+    </div>
+  ),
+  FilterableTable: ({ data, columns, onRowClick, getRowActions, emptyMessage }: any) => {
+    if (!data || data.length === 0) {
+      return <div data-testid="ft-empty">{emptyMessage}</div>;
+    }
+    return (
+      <div data-testid="ft-table">
+        {data.map((row: any) => (
+          <div key={row.id} data-testid={`ft-row-${row.id}`}>
+            <button data-testid={`ft-select-${row.id}`} onClick={() => onRowClick?.(row)}>
+              {columns.map((col: any) => (
+                <span key={col.id}>{col.render ? col.render(row) : String(row[col.id] ?? '')}</span>
+              ))}
+            </button>
+            {(getRowActions?.(row) ?? []).map((a: any) => (
+              <button
+                key={a.id}
+                aria-label={a.label}
+                disabled={a.disabled}
+                onClick={a.onClick}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  },
+}));
+
+// TableWithPreviewLayout: render the table (children) and, when a row is selected,
+// the preview pane (renderPreview(selectedItem)) — the per-program dashboard.
+vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
+  TableWithPreviewLayout: ({ children, selectedItem, renderPreview }: any) => (
+    <div data-testid="table-preview-layout">
+      {children}
+      {selectedItem ? (
+        <div data-testid="preview-pane">{renderPreview(selectedItem)}</div>
+      ) : null}
     </div>
   ),
 }));
@@ -158,15 +203,23 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
 
   it('shows template and assignee counts per program', async () => {
     mockListPrograms.mockResolvedValue({
-      programs: [makeProgram({ templateIds: ['t-1', 't-2'], assigneeIds: ['u-1', 'u-2', 'u-3'] })],
+      programs: [
+        makeProgram({
+          id: 'prog-counts',
+          templateIds: ['t-1', 't-2'],
+          assigneeIds: ['u-1', 'u-2', 'u-3'],
+        }),
+      ],
       total: 1,
       limit: 50,
       offset: 0,
     });
     renderHub();
+    // §27 columns render the bare counts in dedicated cells (templates=2, assignees=3).
     await waitFor(() => {
-      expect(screen.getByText(/2\s*(templates|szablonów)/i)).toBeInTheDocument();
-      expect(screen.getByText(/3\s*(assignees|osób)/i)).toBeInTheDocument();
+      const row = screen.getByTestId('ft-row-prog-counts');
+      expect(within(row).getByText('2')).toBeInTheDocument();
+      expect(within(row).getByText('3')).toBeInTheDocument();
     });
   });
 
@@ -239,29 +292,23 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     });
   });
 
-  it('selects a program by clicking its card — dashboard header appears', async () => {
-    const prog = makeProgram({ name: 'Clickable Program' });
+  it('selects a program by clicking its row — dashboard preview appears', async () => {
+    const prog = makeProgram({ id: 'prog-click', name: 'Clickable Program' });
     mockListPrograms.mockResolvedValue({ programs: [prog], total: 1, limit: 50, offset: 0 });
 
     renderHub();
     await waitFor(() => screen.getByText('Clickable Program'));
 
-    // The dashboard panel initially shows "Select a program" placeholder
-    expect(
-      screen.getByText(/select a program to see its dashboard/i)
-    ).toBeInTheDocument();
+    // Before selection the preview pane (per-program dashboard) is not mounted.
+    expect(screen.queryByTestId('preview-pane')).not.toBeInTheDocument();
 
-    const card = screen.getByText('Clickable Program').closest('button')!;
-    fireEvent.click(card);
+    fireEvent.click(screen.getByTestId('ft-select-prog-click'));
 
-    // After selection the placeholder is replaced by the program dashboard header
+    // After selection the preview pane renders the dashboard with the program name.
     await waitFor(() => {
-      expect(
-        screen.queryByText(/select a program to see its dashboard/i)
-      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('preview-pane')).toBeInTheDocument();
     });
-    // Dashboard h3 shows program name
-    expect(screen.getAllByText('Clickable Program').length).toBeGreaterThan(0);
+    expect(within(screen.getByTestId('preview-pane')).getByText('Clickable Program')).toBeInTheDocument();
   });
 
   it('shows "surveys generated" badge when surveysGenerated=true', async () => {

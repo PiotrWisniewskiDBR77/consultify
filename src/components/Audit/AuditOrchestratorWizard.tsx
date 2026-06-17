@@ -286,7 +286,9 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
           maxReachableIndex={maxReachableIndex}
           onStepChange={handleStepChange}
           isPolish={isPolish}
-          accentColor="#3b82f6"
+          // Visual Standard token (matches the wizard's primary-500 CTAs); was a
+          // hardcoded legacy-blue #3b82f6 that clashed with the crimson buttons.
+          accentColor="rgb(var(--color-primary-500, 168 45 73))"
         />
 
         {/* Body */}
