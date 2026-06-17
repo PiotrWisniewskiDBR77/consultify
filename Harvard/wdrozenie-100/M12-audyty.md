@@ -116,8 +116,8 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 |----|------|---------|--------------------|-------|------|--------|---------|
 | L-01 | edycja programu = martwy FE (PATCH bez ekranu) | W-01,W-05 | `audit-programs.routes.ts:122` (`updateProgram`) bez wołającego FE | P3 | 3 | otwarta (D-01) | 2026-06-13 |
 | L-02 | search/filter kliencki (gubi spoza strony) | W-01 | `AuditsHub.tsx:154` (TODO serwerowy) | P3 | 3 | otwarta | — |
-| L-03 | nieaktualny baner kreatora „MVP" | W-01 | `AuditOrchestratorWizard.tsx:467-473` | P3 | 3 | **otwarta — R3: re-audit twierdzi tekst poprawiony; zweryfikować runtime** | — |
-| L-04 | beta-lock tylko nawigacyjny (direct URL omija) | W-01 | `AppRoutes.tsx:1198` bez beta-guarda | P3 | 3 | otwarta | — |
+| L-03 | nieaktualny baner kreatora „MVP" | W-01 | `AuditOrchestratorWizard.tsx:467-473` | P3 | 3 | **NAPRAWIONA — grep 2026-06-17: zero „MVP"/„generowanie nie jest zautomatyzowane" w `AuditOrchestratorWizard.tsx`; komentarz :23 potwierdza realna architektura (nie nieukończone MVP)** | 2026-06-17 |
+| L-04 | beta-lock tylko nawigacyjny (direct URL omija) | W-01 | `AppRoutes.tsx:1198` bez beta-guarda | P3 | 3 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_AUDITS">` owija `/audit-programs` route (`AppRoutes.tsx:1191-1201`); zweryfikowane grepem** | 2026-06-17 |
 | L-05 | brak `ModuleHub` (self-contained layout) | W-01 | `AuditsHub.tsx:235-283` | P3 | 3/4 | otwarta | 2026-06-13 |
 | L-06 | lista = karty `<ul>/<li>`, nie §27 | W-01 | `AuditsHub.tsx:343-462` (0 `<table>`) | P3 | 3/4 | otwarta | 2026-06-13 |
 | L-07 | i18n inline `isPolish`+`tr(en,pl)` | W-01,W-05 | Wizard 45 + Hub 48 + presets 3 = **~96** (grep) | P3 | 4 | otwarta (DP-10/M15) | 2026-06-13 |

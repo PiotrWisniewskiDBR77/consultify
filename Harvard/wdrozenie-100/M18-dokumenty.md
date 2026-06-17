@@ -127,7 +127,7 @@ Karta wewnętrznie sprzeczna (§1c „fasada in-memory" vs re-audit „write-thr
 | L-03 | S6 bramka testowana na serwisie, nie route 403 | W-01 | `document-studio.routes.ts:3386,3394`, grep `qa_blocking` w testach=0 | P0-test | 1 | otwarta |  |
 | L-04 | Mode3 wymusza `useLlm:false` → placeholder | W-01 | `documentStudioService` | P2 | 2 | otwarta (**D-02**) |  |
 | L-05 | template approve/deprecate bez roli serwerowo | W-01 | `document-studio.routes.ts:616,642`→`documentTemplateService.ts:429-475` | P2 | 3 | otwarta |  |
-| L-06 | beta-lock nawigacyjny + brak rate-limit share + over-disclosure `organizationId` | W-01 | `AppRoutes.tsx:2082`; `/share-links/resolve`; consumer | P2/P3 | 3 | otwarta |  |
+| L-06 | beta-lock nawigacyjny + brak rate-limit share + over-disclosure `organizationId` | W-01 | `AppRoutes.tsx:2082`; `/share-links/resolve`; consumer | P2/P3 | 3 | **CZĘŚCIOWO — beta-lock NAPRAWIONA: `<BetaGate moduleId="MODULE_DOCUMENT_STUDIO">` owija `/document-studio` (`AppRoutes.tsx:2105`); brak rate-limit/revoke + over-disclosure `organizationId` = pozostałe sub-luki Faza 3** | 2026-06-17 |
 | L-07 | `DocumentStudioView` nie używa MELS (ręczny header) | W-01 | `DocumentStudioView.tsx:193-219` | P2 | 3 | otwarta |  |
 | L-08 | lista szablonów ad-hoc `<ul>` + silent-fail | W-01 | `DocumentStudioTemplateArchitectView.tsx:302` | P3 | 4 | otwarta |  |
 | L-09 | i18n EN-only (`useTranslation` w 2 plikach) | W-01 | `DocumentStudio/*` (grep `useTranslation`=2) | P2 | 4 | otwarta |  |

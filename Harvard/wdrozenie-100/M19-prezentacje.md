@@ -101,7 +101,7 @@ Scenariusze S1–S8: karta §0/§2 (293 PASS/0 FAIL, ale **15/21 integracyjnych 
 |----|------|---------|--------------------|-------|------|-----------|---------|
 | L-01 | collaborate „Invite by email" = no-op UI | W-01 | `Presentations/DeckBuilder/ShareModal.tsx:134-171` | P3 | 3 | otwarta (**D-01 = DP-5: ukryj za flagą**) |  |
 | L-02 | override quality-gate „bez roli" | W-01,W-04 | `presentations.routes.ts:1465,1607,1925,5779` + `:366` | P2 (był) | 1 | **STALE-zweryfikowane** (już role-gated; tylko test regresji) | 2026-06-13 |
-| L-03 | beta-lock nawigacyjny + share bez rate-limit/revoke | W-01 | `/shared/:token` | P2 | 3 | otwarta |  |
+| L-03 | beta-lock nawigacyjny + share bez rate-limit/revoke | W-01 | `/shared/:token` | P2 | 3 | **CZĘŚCIOWO — beta-lock NAPRAWIONA: `<BetaGate moduleId="MODULE_PRESENTATIONS">` owija `/presentations` (`AppRoutes.tsx:1989`); share bez rate-limit/revoke = pozostałe sub-luki Faza 3** | 2026-06-17 |
 | L-04 | analytics-beacon cross-org (`WHERE id=?` bez org) | W-01 | `presentations.routes.ts:5923` | P3 | 3 | otwarta |  |
 | L-05 | DeckBuilder 25× `isPolish` (grep całość 30×) | W-01 | `Presentations/*` (grep 2026-06-13=30) | P2 | 4 | otwarta |  |
 | L-06 | hardkody kolorów (127 hex grep — część legitna render) | W-01 | `Presentations/*` (grep=127) | P3 | 4 | otwarta |  |

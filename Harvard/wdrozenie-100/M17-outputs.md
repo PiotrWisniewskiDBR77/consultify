@@ -105,7 +105,7 @@ Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY 
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
 | L-01 | bramka aprobaty eksportu tylko UI (publish-approval) | W-01,W-04 | `OutputsAggregateTabContent.tsx:1000-1004` (FE-only) | P2 | 3 | otwarta (**zależna od M18**) | 2026-06-13 |
-| L-02 | beta-lock tylko nawigacyjny | W-01 | `Sidebar.tsx:156` vs route bez beta-guarda | P2 | 3 | otwarta |  |
+| L-02 | beta-lock tylko nawigacyjny | W-01 | `Sidebar.tsx:156` vs route bez beta-guarda | P2 | 3 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_PRESENTATIONS">` owija `/presentations` route (`AppRoutes.tsx:1989`); zweryfikowane grepem 2026-06-17** | 2026-06-17 |
 | L-03 | share decku bez rate-limit/revoke; expired→404 nie 410 | W-01 | `/presentations/shared/:token` | P2 | 3 | otwarta |  |
 | L-04 | brak testu serwerowej bramki aprobaty (T4) | W-01 | `evidence/f2_tests_report.md` (S3 quality-only) | P0-test | 2 | otwarta |  |
 | L-05 | 25 stale testów middleware + mock-drift i18n + viewer RAP | W-01 | `v8FeatureGate.middleware.test.ts` (vs cofnięty `9b794bb7f0`) | P0-test | 2 | otwarta (**D-01**) |  |
