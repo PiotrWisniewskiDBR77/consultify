@@ -189,3 +189,76 @@ describe('L-04 — unmount persists queued payload to localStorage', () => {
     expect(draft).toBeNull(); // nothing queued → nothing written
   });
 });
+
+// ── L-05: teardown flush uses fetch keepalive (survives page unload) ───────────
+describe('L-05 — teardown flush is sent with keepalive', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    try { window.localStorage.clear(); } catch { /* ignore */ }
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('flushNow forwards keepalive to Api.syncMyIdeaMap when requested', async () => {
+    syncMyIdeaMap.mockResolvedValue({ version: 2 });
+    const { result } = renderHook(() =>
+      useIdeaMapSync({ ideaId: 'l05-idea', tool: 'mindmap', open: true })
+    );
+
+    await act(async () => {
+      await result.current.flushNow(
+        { nodes: [{ id: 'n1', data: {} }], edges: [] },
+        { reason: 'draft', keepalive: true }
+      );
+    });
+
+    const [, body] = syncMyIdeaMap.mock.calls[0];
+    expect(body.keepalive).toBe(true);
+  });
+
+  it('visibilitychange→hidden flushes a queued payload with keepalive', async () => {
+    syncMyIdeaMap.mockResolvedValue({ version: 2 });
+    const { result } = renderHook(() =>
+      useIdeaMapSync({ ideaId: 'l05-vis-idea', tool: 'mindmap', open: true })
+    );
+
+    act(() => {
+      result.current.queueSync({ nodes: [{ id: 'n1', data: {} }], edges: [] });
+    });
+
+    await act(async () => {
+      Object.defineProperty(document, 'visibilityState', {
+        value: 'hidden',
+        configurable: true,
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+      await Promise.resolve();
+    });
+
+    expect(syncMyIdeaMap).toHaveBeenCalled();
+    const [, body] = syncMyIdeaMap.mock.calls[syncMyIdeaMap.mock.calls.length - 1];
+    expect(body.keepalive).toBe(true);
+  });
+
+  it('beforeunload flushes a queued payload with keepalive', async () => {
+    syncMyIdeaMap.mockResolvedValue({ version: 2 });
+    const { result } = renderHook(() =>
+      useIdeaMapSync({ ideaId: 'l05-unload-idea', tool: 'mindmap', open: true })
+    );
+
+    act(() => {
+      result.current.queueSync({ nodes: [{ id: 'n1', data: {} }], edges: [] });
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event('beforeunload'));
+      await Promise.resolve();
+    });
+
+    expect(syncMyIdeaMap).toHaveBeenCalled();
+    const [, body] = syncMyIdeaMap.mock.calls[syncMyIdeaMap.mock.calls.length - 1];
+    expect(body.keepalive).toBe(true);
+  });
+});

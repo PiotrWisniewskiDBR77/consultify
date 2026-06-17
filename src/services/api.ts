@@ -4549,14 +4549,34 @@ export const Api = {
       extensions?: Record<string, unknown>;
       fromAI?: boolean;
       reason?: 'draft' | 'manual' | 'semantic' | 'ai';
+      /**
+       * M06 L-05: when flushing on page teardown (visibilitychange→hidden,
+       * beforeunload, unmount) use keepalive so the request survives the
+       * document unloading. keepalive (unlike sendBeacon) still sends the
+       * Authorization header from getHeaders(). Single-shot — no retry.
+       */
+      keepalive?: boolean;
     }
   ): Promise<any> => {
+    const { keepalive, ...body } = payload;
+    if (keepalive) {
+      const res = await fetch(
+        `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/sync`,
+        {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify(body),
+          keepalive: true,
+        }
+      );
+      return handleResponse(res, 'Failed to sync idea map');
+    }
     const res = await fetchWithRetry(
       `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/sync`,
       {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(payload),
+        body: JSON.stringify(body),
       }
     );
     return handleResponse(res, 'Failed to sync idea map');
@@ -16715,6 +16735,8 @@ export const Api = {
     suggestedType: string;
     reason: string;
     maturity?: string | null;
+    /** L-06: classification is rule-based keyword scoring, NOT an LLM. */
+    method?: 'heuristic';
   }> => {
     try {
       return await V8MyWorkApi.classifyNotebookPage(id);

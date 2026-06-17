@@ -51,6 +51,8 @@ interface FlushSyncOpts {
   reason?: 'draft' | 'manual' | 'semantic' | 'ai';
   createSnapshot?: boolean;
   snapshotLabel?: string;
+  /** M06 L-05: send with fetch keepalive so the flush survives page teardown. */
+  keepalive?: boolean;
 }
 
 const DEFAULT_IDLE_MS = 60_000;
@@ -249,6 +251,7 @@ export function useIdeaMapSync({
           ...payload,
           baseVersion: serverVersionRef.current,
           reason: opts?.reason || 'draft',
+          ...(opts?.keepalive ? { keepalive: true } : {}),
         });
         const nextVersion = Number(response?.version || serverVersionRef.current || 1);
         serverVersionRef.current = nextVersion;
@@ -346,7 +349,8 @@ export function useIdeaMapSync({
     if (!open) return;
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && queuedPayloadRef.current) {
-        void flushNow(null, { reason: 'draft' }).catch(() => null);
+        // M06 L-05: page may be backgrounded/closed — keepalive so the flush lands.
+        void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
       }
     };
     const handleOnline = () => {
@@ -356,7 +360,8 @@ export function useIdeaMapSync({
     };
     const handleBeforeUnload = () => {
       if (queuedPayloadRef.current) {
-        void flushNow(null, { reason: 'draft' }).catch(() => null);
+        // M06 L-05: document is unloading — a plain fetch would be cancelled; keepalive survives.
+        void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
       }
     };
     const handleKeyDown = (e: KeyboardEvent) => {
