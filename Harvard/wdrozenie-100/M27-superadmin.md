@@ -111,12 +111,12 @@ REALNE ~95% z 60+ zakładek (Tenant Ops, AI Operations 27 pod-zakł., System, Go
 | L-02 | virtual-workers przepuszcza org-admina (global persony) | W-01,W-03,W-04 | `virtual-workers.routes.ts:22` → `requireRole('super_admin')` only | P0 sec | — | **ZAMKNIĘTA 2026-06-17 `91c8245559` — ZWERYFIKOWANE w kodzie 2026-06-17** |
 | L-03 | llm purposes global writes (verifyAdmin) | W-01 | `llm.routes.ts:1479` (`/purposes/:purpose/assignments`) + `:1704` (`/org/:id/policy`) | P1 sec | 3 | **ZAMKNIĘTA 2026-06-17 `698b004ff0` (verifyAdmin→verifySuperAdmin; POST /purposes już był OK)** |
 | L-04 | llm market global writes (verifyToken/verifyAdmin) | W-01 | `llm.routes.ts:1970` (`/market/openrouter/sync`) + `:2012` (`/market/inbox/:id`) | P1 sec | 3 | **ZAMKNIĘTA 2026-06-17 `698b004ff0` (verifyAdmin→verifySuperAdmin)** |
-| L-05 | martwy płaski `AIPlatformModule.tsx` + orphan `IAMModuleView` | W-01 | `views/superadmin/AIPlatformModule.tsx` (152 l., 0 importów); `iam/IAMModuleView.tsx` (70 l., 0 API) | P2 | 3 | otwarta |
-| L-06 | i18n hardkod EN ~114/124 plików | W-01,W-05 | ~150/165 tsx bez `t()` (zmierzone 2026-06-13) | P2 | 4 | otwarta → **DP-10 (świadomy dług internal, udokumentować)** |
-| L-07 | 70 hex literałów | W-01,W-05 | 70 w surface (zmierzone 2026-06-13) | P3 | 4 | otwarta (DP-8 palety legalne) |
+| L-05 | martwy płaski `AIPlatformModule.tsx` + orphan `IAMModuleView` | W-01 | usunięte (0 importerów potw. grep); folder `AIPlatformModule/` żyje | P2 | 3 | **ZAMKNIĘTA 2026-06-17 (usunięte; deletion w historii via wip-snapshot `chore(wip)`)** |
+| L-06 | i18n hardkod EN ~114/124 plików | W-01,W-05 | ~150/165 tsx bez `t()` (zmierzone 2026-06-13) | P2 | 4 | **ODROCZONA-Faza4 → Harvard 2 (DP-10 świadomy dług internal)** |
+| L-07 | 70 hex literałów | W-01,W-05 | 70 w surface (zmierzone 2026-06-13) | P3 | 4 | **ODROCZONA-DP8 (palety/brand legalne — udokumentowane, nie blokuje v1)** |
 | L-08 | brak E2E non-superadmin→403; asercje `[401,403,404]` maskują | W-01 | `tests/integration/llm-superadmin-gate.test.ts` 8/8 pass | P0-test | 3 | **ZAMKNIĘTA 2026-06-17 `698b004ff0` (8 testów: 4×org-admin→403, 4×superadmin→nie-403)** |
-| L-09 | FeedbackBacklog secret-path leak + SSO crash | W-03 | `SuperAdminFeedbackBacklogView`; `SSOConfigurationView.tsx:484` | P0-bug | — | **NAPRAWIONE** `69ffc1fd86` (live-verify 🟦 pending) |
-| L-10 | feedback 500 (pulse/feature) | W-06 | `feedback.routes.ts:158/177/466` | P1 | 3 | **NAPRAWIONE w kodzie** `36ceb52c60` (live-verify deploy pending) |
+| L-09 | FeedbackBacklog secret-path leak + SSO crash | W-03 | `SuperAdminFeedbackBacklogView:50-54` (generic err); `SSOConfigurationView.tsx:484` (`?? ''` guard) | P0-bug | — | **ZAMKNIĘTA 2026-06-17 `69ffc1fd86` — ZWERYFIKOWANE w kodzie + test regresji `superadmin-l09-regression.test.tsx` 2/2 (`79bf75ce06`)** |
+| L-10 | feedback 500 (pulse/feature) | W-06 | `feedback.routes.ts:158/177/466` | P1 | 3 | **NAPRAWIONE w kodzie `36ceb52c60` — 🟦 live-verify deploy pending (wymaga konta superadmin + deploy)** |
 | L-11 | realna persyst. testy maskowane (mock-gate/mock-DB) + stale-import + brak `<Router>` | W-01 | `*.test.js`; `OverviewModule.root-closure`; Feedback/Analytics | P1-test | 3/4 | otwarta |
 
 ### 04 · Rejestr decyzji (R5)
