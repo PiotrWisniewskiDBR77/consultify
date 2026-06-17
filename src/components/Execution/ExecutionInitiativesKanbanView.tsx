@@ -263,7 +263,19 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
 
     const dragged = initiatives.find((i) => i.id === active.id);
     if (!dragged) return;
-    const newStatus = columns.find((c) => c.id === over.id)?.id;
+    // `over.id` is the column status when dropped on empty column space, but
+    // when dropped on another card (the common case in a populated column) it is
+    // that card's initiative id. Resolve the target column in both cases —
+    // otherwise card-on-card drops silently no-op (mirrors the task kanban in
+    // ExecutionHub.handleDragEnd).
+    const overId = over.id as string;
+    let newStatus = columns.find((c) => c.id === overId)?.id;
+    if (!newStatus) {
+      const overInitiative = initiatives.find((i) => i.id === overId);
+      if (overInitiative) {
+        newStatus = columns.find((c) => c.id === overInitiative.status)?.id;
+      }
+    }
     if (newStatus && newStatus !== dragged.status) {
       onStatusChange(active.id as string, newStatus);
     }
