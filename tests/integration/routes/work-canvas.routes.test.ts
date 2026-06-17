@@ -26,6 +26,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: (...args: any[]) => dbRunMock(...args),
 }));
 
+// SEC-M02-3 (L-10a): canvas capability checks now resolve through
+// effectiveAccessService (the SSOT the panel consults), not legacy req.can.
+// Default-allow; individual tests drive `hasEffectiveCapability` to deny.
+const hasEffectiveCapabilityMock = vi.fn((_access: any, _capability: string) => true);
+vi.mock('../../../server/src/services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: [] })),
+  hasEffectiveCapability: (...args: any[]) => hasEffectiveCapabilityMock(...args),
+}));
+
 const tableColumns: Record<string, string[]> = {
   my_ideas: [
     'id',
@@ -172,6 +181,7 @@ describe('work canvas routes', () => {
     dbGetMock.mockResolvedValue(draftRow);
     dbAllMock.mockResolvedValue([]);
     dbRunMock.mockResolvedValue({ changes: 1 });
+    hasEffectiveCapabilityMock.mockReturnValue(true);
   });
 
   it('persists researchSessionId when creating a research Canvas draft', async () => {
@@ -353,12 +363,16 @@ describe('work canvas routes', () => {
     );
   });
 
-  it('enforces proposal requiredCapability before approving', async () => {
+  it('enforces proposal requiredCapability before approving (effective access — SEC-M02-3)', async () => {
     dbGetMock.mockResolvedValueOnce(proposalRow);
+    // Deny ONLY the proposal's required capability via the effective-access SSOT
+    // (not the legacy req.can role-fallback). Approval must 403 before mutating.
+    hasEffectiveCapabilityMock.mockImplementation(
+      (_access: any, capability: string) => capability !== 'canvas.convert.idea'
+    );
 
     const response = await request(app)
       .post('/api/work-canvas/proposals/proposal-1/approve')
-      .set('x-deny-capability', 'canvas.convert.idea')
       .send({})
       .expect(403);
 
@@ -367,6 +381,10 @@ describe('work canvas routes', () => {
       recoverable: true,
       requiredCapability: 'canvas.convert.idea',
     });
+    expect(hasEffectiveCapabilityMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'canvas.convert.idea'
+    );
     expect(dbRunMock).not.toHaveBeenCalled();
   });
 
@@ -1042,6 +1060,39 @@ describe('work canvas routes', () => {
         token: shareToken,
       },
     });
+  });
+
+  // S6 (M02/L-15): once a share is revoked, provenance no longer carries a
+  // `share` object — the public viewer must resolve to 404, not leak the draft.
+  it('returns 404 for a revoked share token (S6 revoke)', async () => {
+    const shareToken = 'a1b2c3d4e5f600112233445566778899';
+    // A draft that matched the LIKE scan but whose share was revoked (removed).
+    dbAllMock.mockResolvedValueOnce([
+      { ...draftRow, provenance_json: JSON.stringify({ materializedTo: [] }) },
+    ]);
+
+    await request(app).get(`/api/work-canvas/shared/${shareToken}`).expect(404);
+  });
+
+  // S6 (M02/L-15): an active share whose window has passed resolves to 410.
+  it('returns 410 for an expired share token (S6 expiry)', async () => {
+    const shareToken = 'b1b2c3d4e5f600112233445566778899';
+    dbAllMock.mockResolvedValueOnce([
+      {
+        ...draftRow,
+        provenance_json: JSON.stringify({
+          share: {
+            token: shareToken,
+            url: `/work-canvas/shared/${shareToken}`,
+            title: 'Canvas Strategy',
+            createdAt: '2020-01-01T00:00:00.000Z',
+            expiresAt: '2020-01-08T00:00:00.000Z',
+          },
+        }),
+      },
+    ]);
+
+    await request(app).get(`/api/work-canvas/shared/${shareToken}`).expect(410);
   });
 
   it('creates and resumes a governed Canvas workflow ledger without losing context', async () => {

@@ -475,26 +475,16 @@ function authContext(req: AuthRequest) {
   };
 }
 
-function canUseWorkCanvasCapability(req: AuthRequest, capability: string): boolean {
-  if (!capability.trim()) return true;
-  if (typeof req.can === 'function') return req.can(capability);
-
-  const role = String(req.userRole || req.user?.role || '').toUpperCase();
-  return ['SUPERADMIN', 'OWNER', 'ADMIN', 'ADMINISTRATOR'].includes(role);
-}
-
 /**
- * P0-2 — server-side enforcement of the same `canvas.*` capability the panel
- * resolves via GET /api/access/effective (effectiveAccessService is the SSOT
- * the UI consults, so we enforce against it rather than the legacy req.can /
- * PermissionService path). Returns true when allowed; otherwise writes a 403
- * in the same shape access/roles routes use and returns false.
+ * SEC-M02-3 (L-10a) — single source of truth for `canvas.*` capability checks.
+ * Resolves the SAME effective access the panel consults via GET
+ * /api/access/effective (effectiveAccessService), NOT the legacy req.can /
+ * PermissionService role-fallback. An empty capability means "no extra gate".
+ * Returns a boolean so callers can shape their own 403 (e.g. proposal approval
+ * keeps its CANVAS_PROPOSAL_CAPABILITY_REQUIRED contract).
  */
-async function requireCanvasCapability(
-  req: AuthRequest,
-  res: Response,
-  capability: string
-): Promise<boolean> {
+async function hasCanvasCapability(req: AuthRequest, capability: string): Promise<boolean> {
+  if (!capability.trim()) return true;
   const { userId, organizationId } = authContext(req);
   const access = await resolveEffectiveAccess({
     userId,
@@ -502,15 +492,26 @@ async function requireCanvasCapability(
     applicationRole: req.userRole || req.user?.role,
     isImpersonating: Boolean(req.user?.impersonatorId),
   });
-  if (!hasEffectiveCapability(access, capability)) {
-    res.status(403).json({
-      error: 'Canvas permission required',
-      code: 'CANVAS_CAPABILITY_REQUIRED',
-      required: capability,
-    });
-    return false;
-  }
-  return true;
+  return hasEffectiveCapability(access, capability);
+}
+
+/**
+ * P0-2 — server-side enforcement of the same `canvas.*` capability the panel
+ * resolves via GET /api/access/effective. Returns true when allowed; otherwise
+ * writes a 403 in the same shape access/roles routes use and returns false.
+ */
+async function requireCanvasCapability(
+  req: AuthRequest,
+  res: Response,
+  capability: string
+): Promise<boolean> {
+  if (await hasCanvasCapability(req, capability)) return true;
+  res.status(403).json({
+    error: 'Canvas permission required',
+    code: 'CANVAS_CAPABILITY_REQUIRED',
+    required: capability,
+  });
+  return false;
 }
 
 function envelope<T>(data: T, extra: Record<string, unknown> = {}) {
@@ -3582,7 +3583,7 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
   if (!proposal || proposal.organizationId !== authContext(req).organizationId) {
     return res.status(404).json({ error: 'Canvas proposal not found' });
   }
-  if (!canUseWorkCanvasCapability(req, proposal.requiredCapability)) {
+  if (!(await hasCanvasCapability(req, proposal.requiredCapability))) {
     logger.warn('[work-canvas] canvas.proposal.capability_denied', {
       proposalId: proposal.id,
       requiredCapability: proposal.requiredCapability,
