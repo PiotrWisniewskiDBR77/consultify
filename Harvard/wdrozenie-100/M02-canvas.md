@@ -132,7 +132,7 @@ Pełna tabela: karta §1g. **→** M17 Outputs (rejestracja/eksport), M03 (Decyz
 | L-12 | ~34 surowych util palety w panelu | W-01 | `WorkCanvasDocumentPanel.tsx` | P3 | 4 | otwarta | 2026-06-13 |
 | L-13 | martwy `commitProposalToDomain` duplikat materializera | W-01 | `workCanvasService.ts:938,1119` | MARTWY | 4 | **FALSE POSITIVE 2026-06-17** (NIE martwy — wywoływany w ścieżce approve-proposal `workCanvasService.ts:1119` `const readBack = await commitProposalToDomain(...)`; aktywny kod) | 2026-06-17 |
 | L-14 | mock `UnifiedChatPanel.test.tsx` 14 FAIL (brak `setConversationChatLanguage`) | W-01 | `tests/components/AIChat/UnifiedChatPanel.test.tsx` | P0-test | — | **ZAMKNIĘTA 2026-06-17** (R3 — mock naprawiony, **29/29 PASS** w tym test „derives chat language from explicit preference"; naprawione przy commitach L-08/steering) | 2026-06-17 |
-| L-15 | brak testów S6 (viewer/revoke) + S7 (cross-org 403) | W-01 | brak regresji | P0-test | — | otwarta | — |
+| L-15 | brak testów S6 (viewer/revoke) + S7 (cross-org 403) | W-01 | `canvasMaterializeCrossOrg.test.ts`; `work-canvas.routes.test.ts` | P0-test | — | **CZĘŚCIOWO ZAMKNIĘTA 2026-06-17** — **S7 cross-org 403 ZALOCKOWANY** (`canvasMaterializeCrossOrg.test.ts` 3/3: projectId/ownerId/taskAssignee cross-org → 403 `CANVAS_CROSS_ORG_REFERENCE`); **S6 viewer** pokryty (`work-canvas.routes.test.ts` „resolves a shared draft token"). Residual: S6 revoke→404 (minor, do dopisania) | 2026-06-17 |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
