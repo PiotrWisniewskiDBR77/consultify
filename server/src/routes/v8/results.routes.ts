@@ -20,6 +20,7 @@ import {
 } from '../../services/results/kpiReportSnapshotService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
+  getReconciliationOverview,
   getResultsDashboard,
   getResultsKpiCatalog,
   getResultsKpiDrawerDetail,
@@ -309,6 +310,57 @@ router.get(
     }
     return res.json({
       data: { snapshot },
+      meta: resultsMeta(),
+    });
+  })
+);
+
+/**
+ * GET /api/v8/results/reconciliations
+ * Org-scoped KPI–Finance reconciliation overview for the Results ROI surface.
+ * Finance (M16) writes reconciliation rows; Results (M15) reads status +
+ * projected-vs-realized variance here. Optional `initiativeId` / `kpiId` narrow.
+ */
+router.get(
+  '/reconciliations',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
+    const kpiId =
+      typeof req.query.kpiId === 'string' && req.query.kpiId.trim()
+        ? req.query.kpiId.trim()
+        : undefined;
+
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+
+    let overview;
+    try {
+      overview = await getReconciliationOverview(organizationId, { initiativeId, kpiId });
+    } catch (err) {
+      logger.error(`[V8:Results] Reconciliation overview read failed: ${String(err)}`);
+      return res.status(500).json({
+        error: 'Failed to load reconciliation overview',
+        code: 'RESULTS_RECONCILIATION_READ_FAILED',
+      });
+    }
+
+    return res.json({
+      data: overview,
       meta: resultsMeta(),
     });
   })

@@ -107,6 +107,16 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
     category: '',
     description: '',
   });
+  // M14 → M15 feed-forward: record a human-entered realized benefit value that
+  // Results (M15) reads back via its ROI portfolio rollup.
+  const [showRealization, setShowRealization] = useState(false);
+  const [isSavingRealization, setIsSavingRealization] = useState(false);
+  const [realizationForm, setRealizationForm] = useState({
+    valueType: 'SAVINGS' as 'SAVINGS' | 'REVENUE' | 'COST',
+    amount: '',
+    period: new Date().toISOString().slice(0, 7), // YYYY-MM
+    notes: '',
+  });
   const effectiveOverspendSignals = controlledOverspendSignals ?? overspendSignals;
   const effectiveLoading = controlledLoading ?? isLoading;
 
@@ -214,6 +224,72 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
     }
   }, [initiativeId, entryForm, loadData, onSaved]);
 
+  const handleRecordRealization = useCallback(async () => {
+    if (!initiativeId || !realizationForm.amount) return;
+    const parsedAmount = parseFloat(realizationForm.amount);
+    if (!Number.isFinite(parsedAmount)) {
+      toast.error(t('execution.realization.invalidAmount', 'Enter a valid amount'));
+      return;
+    }
+    setIsSavingRealization(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error(t('execution.toast.notAuthenticated', 'Not authenticated'));
+        return;
+      }
+      // period is an input[type=month] (YYYY-MM); roi_realized_values.period_month
+      // is a DATE → normalize to the first day of the month.
+      const periodMonth = `${realizationForm.period}-01`;
+      const payload = {
+        initiativeId,
+        periodMonth,
+        realizedRevenueDelta: realizationForm.valueType === 'REVENUE' ? parsedAmount : null,
+        realizedCostDelta: realizationForm.valueType === 'COST' ? parsedAmount : null,
+        realizedSavings: realizationForm.valueType === 'SAVINGS' ? parsedAmount : null,
+        varianceNotes: realizationForm.notes || undefined,
+      };
+      const res = await V8ExecutionControlApi.recordRealization(payload)
+        .then(() => ({ ok: true, json: async () => ({}) }))
+        .catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return fetch('/api/execution-control/realizations', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        });
+      if (res.ok) {
+        setShowRealization(false);
+        setRealizationForm({
+          valueType: 'SAVINGS',
+          amount: '',
+          period: new Date().toISOString().slice(0, 7),
+          notes: '',
+        });
+        loadData();
+        onSaved?.();
+        trackFunnelEvent('roi_realized_value_updated', { initiativeId, source: 'execution' });
+        toast.success(t('execution.realization.recorded', 'Realization recorded'));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(
+          (err as any)?.error ||
+            (err as any)?.message ||
+            t('execution.realization.recordFailed', 'Failed to record realization')
+        );
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.message || t('execution.realization.recordFailed', 'Failed to record realization')
+      );
+    } finally {
+      setIsSavingRealization(false);
+    }
+  }, [initiativeId, realizationForm, loadData, onSaved, t]);
+
   const formatCurrency = (amount: number, currency: string) => {
     return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
@@ -232,7 +308,9 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             {!isBetaClosed('MODULE_BENEFITS') && (
               <button
                 type="button"
-                onClick={() => navigate(`/benefits?initiativeId=${encodeURIComponent(initiativeId)}`)}
+                onClick={() =>
+                  navigate(`/benefits?initiativeId=${encodeURIComponent(initiativeId)}`)
+                }
                 className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-blue-500 hover:text-blue-400 transition-colors"
                 title={t('execution.budget.viewInResults', 'View in Results')}
               >
@@ -382,6 +460,94 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             </button>
           </div>
         )}
+
+        {/* Record Realization (M14 → M15 feed-forward) */}
+        <div className="pt-2 border-t border-slate-200 dark:border-navy-700/50">
+          {!showRealization ? (
+            <button
+              type="button"
+              onClick={() => setShowRealization(true)}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-green-500 border border-dashed border-green-500/30 rounded-lg hover:bg-green-500/10 transition-colors"
+            >
+              <TrendingUp size={14} />
+              {t('execution.realization.record', 'Record realization')}
+            </button>
+          ) : (
+            <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3 bg-white dark:bg-navy-900 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                  {t('execution.realization.title', 'Record realized value')}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowRealization(false)}
+                  className="text-slate-600 hover:text-slate-300"
+                  aria-label={t('common.close', 'Close')}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <p className="text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                {t(
+                  'execution.realization.helper',
+                  'Manually recorded value flows into Results (ROI). Never derived from task %.'
+                )}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={realizationForm.valueType}
+                  onChange={(e) =>
+                    setRealizationForm((p) => ({
+                      ...p,
+                      valueType: e.target.value as 'SAVINGS' | 'REVENUE' | 'COST',
+                    }))
+                  }
+                  className="text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300"
+                  aria-label={t('execution.realization.valueType', 'Value type')}
+                >
+                  <option value="SAVINGS">{t('execution.realization.savings', 'Savings')}</option>
+                  <option value="REVENUE">
+                    {t('execution.realization.revenueDelta', 'Revenue Δ')}
+                  </option>
+                  <option value="COST">{t('execution.realization.costDelta', 'Cost Δ')}</option>
+                </select>
+                <input
+                  type="number"
+                  value={realizationForm.amount}
+                  onChange={(e) => setRealizationForm((p) => ({ ...p, amount: e.target.value }))}
+                  placeholder={t('execution.realization.amountPlaceholder', 'Realized value')}
+                  className="text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300"
+                  aria-label={t('execution.realization.amount', 'Realized value')}
+                />
+              </div>
+              <input
+                type="month"
+                value={realizationForm.period}
+                onChange={(e) => setRealizationForm((p) => ({ ...p, period: e.target.value }))}
+                className="w-full text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300"
+                aria-label={t('execution.realization.period', 'Period')}
+              />
+              <input
+                type="text"
+                value={realizationForm.notes}
+                onChange={(e) => setRealizationForm((p) => ({ ...p, notes: e.target.value }))}
+                placeholder={t('execution.realization.notesPlaceholder', 'Note (optional)')}
+                className="w-full text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300"
+                aria-label={t('execution.realization.notes', 'Note')}
+              />
+              <button
+                type="button"
+                onClick={handleRecordRealization}
+                disabled={!realizationForm.amount || !realizationForm.period || isSavingRealization}
+                className="w-full py-1.5 text-xs font-medium bg-green-600 text-white rounded hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSavingRealization
+                  ? t('execution.realization.saving', 'Saving…')
+                  : t('execution.realization.save', 'Record')}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

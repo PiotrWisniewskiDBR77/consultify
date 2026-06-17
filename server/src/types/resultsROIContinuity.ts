@@ -662,6 +662,51 @@ export interface ReconciliationHealthSummary {
   averageResolutionHours: number | null;
 }
 
+/**
+ * One reconciliation row enriched with the projected (KPI target) vs realized
+ * (summed ROI realization entries) values and the computed variance. This is the
+ * read seam M15 Results uses to DISPLAY finance reconciliations (M16 writes them).
+ */
+export interface ReconciliationVarianceItem {
+  reconciliationId: string;
+  kpiId: string;
+  kpiName: string | null;
+  initiativeId: string | null;
+  financeRef: string;
+  reconciliationStatus: ReconciliationStatus;
+  initiatedBy: ReconciliationInitiator;
+  /** KPI target_value — the projected benefit. Null when the KPI has no target. */
+  projectedValue: number | null;
+  /** Sum of ROI realization entries for this KPI. Null when none recorded. */
+  realizedValue: number | null;
+  /** realizedValue − projectedValue; null when either side is missing. */
+  varianceAbsolute: number | null;
+  /** Percentage variance vs |projected|; null when projected is 0/missing. */
+  variancePercent: number | null;
+  /** True when projected and realized are both known and differ beyond rounding. */
+  hasMismatch: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Org-scoped reconciliation overview for the Results ROI surface: per-KPI
+ * reconciliation status + projected-vs-realized variance, plus status rollup.
+ */
+export interface ReconciliationVarianceOverview {
+  organizationId: string;
+  initiativeId: string | null;
+  items: ReconciliationVarianceItem[];
+  summary: {
+    total: number;
+    byStatus: Partial<Record<ReconciliationStatus, number>>;
+    /** Count of items where projected and realized are both known and differ. */
+    mismatchCount: number;
+    /** pending + disputed + escalated. */
+    unresolvedCount: number;
+  };
+}
+
 export interface ResultsDashboardSnapshot {
   organizationId: string;
   kpiScorecard: KPIScorecardSummary;

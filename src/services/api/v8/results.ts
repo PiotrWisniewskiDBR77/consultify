@@ -78,6 +78,37 @@ export interface V8ResultsRoiPortfolioSummary {
   };
 }
 
+export type V8ReconciliationStatus = 'pending' | 'reconciled' | 'disputed' | 'escalated';
+
+export interface V8ResultsReconciliationItem {
+  reconciliationId: string;
+  kpiId: string;
+  kpiName: string | null;
+  initiativeId: string | null;
+  financeRef: string;
+  reconciliationStatus: V8ReconciliationStatus;
+  initiatedBy: 'results' | 'finance';
+  projectedValue: number | null;
+  realizedValue: number | null;
+  varianceAbsolute: number | null;
+  variancePercent: number | null;
+  hasMismatch: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface V8ResultsReconciliationOverview {
+  organizationId: string;
+  initiativeId: string | null;
+  items: V8ResultsReconciliationItem[];
+  summary: {
+    total: number;
+    byStatus: Partial<Record<V8ReconciliationStatus, number>>;
+    mismatchCount: number;
+    unresolvedCount: number;
+  };
+}
+
 export interface V8ResultsRoiInitiativeDetail {
   organizationId: string;
   initiativeId: string;
@@ -497,6 +528,16 @@ export const V8ResultsApi = {
   getRoiInitiativeDetail: (initiativeId: string) =>
     v8Get<V8ResultsRoiInitiativeDetail>(
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/detail`
+    ),
+  getReconciliationOverview: (options?: { initiativeId?: string; kpiId?: string }) =>
+    v8Get<V8ResultsReconciliationOverview>(
+      '/results/reconciliations',
+      options?.initiativeId || options?.kpiId
+        ? {
+            ...(options?.initiativeId ? { initiativeId: options.initiativeId } : {}),
+            ...(options?.kpiId ? { kpiId: options.kpiId } : {}),
+          }
+        : undefined
     ),
   createKpi: (payload: V8ResultsCreateKpiPayload) =>
     v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),

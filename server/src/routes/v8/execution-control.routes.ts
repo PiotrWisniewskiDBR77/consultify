@@ -28,6 +28,7 @@ import {
   getPortfolioBudgetSummary,
 } from '../../services/executionBudgetService.js';
 import { getTimelineWarningsSnapshot } from '../../services/executionControlReadService.js';
+import { recordExecutionRealization } from '../../services/executionRealizationService.js';
 import { detectRiskSignals } from '../../services/riskDetectionService.js';
 import {
   applyManagerSuggestion,
@@ -110,6 +111,34 @@ const CreateBudgetEntrySchema = z.object({
   periodYear: z.number().optional(),
   source: z.string().optional(),
 });
+
+// M14 → M15 feed-forward: record a HUMAN-ENTERED realized benefit value from the
+// Execution context into `roi_realized_values` (the table Results M15 reads via
+// getROIPortfolioSummary). At least one realized delta must be supplied so we never
+// persist an empty/auto-fabricated entry.
+const RecordRealizationSchema = z
+  .object({
+    initiativeId: z.string().min(1),
+    // ISO date string for the realization period (first day of the period).
+    periodMonth: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'periodMonth must be an ISO date (YYYY-MM-DD)'),
+    realizedRevenueDelta: z.number().finite().nullable().optional(),
+    realizedCostDelta: z.number().finite().nullable().optional(),
+    realizedSavings: z.number().finite().nullable().optional(),
+    varianceNotes: z.string().max(2000).optional(),
+  })
+  .refine(
+    (b) =>
+      typeof b.realizedRevenueDelta === 'number' ||
+      typeof b.realizedCostDelta === 'number' ||
+      typeof b.realizedSavings === 'number',
+    {
+      message:
+        'Provide at least one realized value (realizedRevenueDelta, realizedCostDelta, or realizedSavings)',
+      path: ['realizedRevenueDelta'],
+    }
+  );
 
 const MitigationUpdateSchema = z.object({
   raidItemId: z.string().min(1),
@@ -597,6 +626,82 @@ router.get(
     return res.json({
       data: { signals, count: signals.length },
       meta: executionControlMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/execution-control/realizations
+ * M14 → M15 feed-forward. Records a HUMAN-ENTERED realized benefit value for an
+ * initiative (source='execution') into `roi_realized_values`, the table Results
+ * (M15) reads via getROIPortfolioSummary. Role-gated (write access), org-scoped,
+ * and 404s on a foreign-org initiative id (mirrors /budget/entries).
+ */
+router.post(
+  '/realizations',
+  validateBody(RecordRealizationSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to record a realization.',
+      });
+    }
+    const { organizationId, userId } = getV8Context(req);
+    const body = req.body as z.infer<typeof RecordRealizationSchema>;
+    const initiativeId = body.initiativeId.trim();
+
+    // Same-org integrity (mirrors /budget/entries): verify the initiative exists in
+    // the caller's org before writing, so a foreign-org id cannot attach realized
+    // data to another org's initiative — 404 instead of a silent cross-org write.
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: `Initiative ${initiativeId} not found`,
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
+
+    // Pass only schema-validated fields plus the server-derived recordedBy/org —
+    // no `...req.body` spread, so a client cannot smuggle protected columns.
+    const entry = await recordExecutionRealization({
+      organizationId,
+      initiativeId,
+      periodMonth: body.periodMonth,
+      realizedRevenueDelta: body.realizedRevenueDelta ?? null,
+      realizedCostDelta: body.realizedCostDelta ?? null,
+      realizedSavings: body.realizedSavings ?? null,
+      varianceNotes: body.varianceNotes ?? null,
+      recordedBy: userId,
+    });
+
+    await auditLog(
+      organizationId,
+      initiativeId,
+      'realization_recorded',
+      null,
+      JSON.stringify({
+        id: entry.id,
+        periodMonth: entry.periodMonth,
+        realizedRevenueDelta: entry.realizedRevenueDelta,
+        realizedCostDelta: entry.realizedCostDelta,
+        realizedSavings: entry.realizedSavings,
+      }),
+      'Realization recorded from execution context',
+      userId
+    );
+
+    return res.json({
+      data: { success: true, entry },
+      meta: executionControlMutationMeta(),
     });
   })
 );

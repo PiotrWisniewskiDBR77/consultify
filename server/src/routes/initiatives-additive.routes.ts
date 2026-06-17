@@ -22,6 +22,7 @@ import { z } from 'zod';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
+import { getLinkagesByInitiative } from '../services/v8/financeIntegrationService.js';
 import { proposeCandidates as runPropose } from '../services/initiative/proposeEngineService.js';
 import {
   createSuggestedChange,
@@ -172,6 +173,61 @@ router.patch(
       return;
     }
     res.json({ change });
+  })
+);
+
+// ==========================================
+// FEATURE 3 — ECONOMICS LINKAGES (M16 → M13 display)
+// ==========================================
+
+/**
+ * GET /api/initiatives/:initiativeId/economics-links
+ *
+ * Read-side of the M16 Finance → M13 Initiatives integration. M16 finance WRITES
+ * rows into v8_initiative_economics_linkages (finance_model_ref, linkage_type,
+ * status) but nothing on the M13 surface ever READ them — the linkages were
+ * write-only / dead. This exposes them, strictly org-scoped, so the initiative
+ * detail can display which finance models an initiative is linked to.
+ *
+ * Org isolation: getLinkagesByInitiative() filters on (initiative_id, organization_id);
+ * we additionally 404 when the initiative itself is not in the caller's org, so a
+ * foreign org can never confirm existence or read another org's linkages.
+ */
+router.get(
+  '/:initiativeId/economics-links',
+  requireOrgRole('user'),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const initiativeId = String(req.params.initiativeId || '');
+    if (!initiativeId) {
+      res.status(400).json({ error: 'initiativeId is required' });
+      return;
+    }
+    if (!(await initiativeExistsInOrg(initiativeId, orgId))) {
+      res.status(404).json({ error: 'Initiative not found' });
+      return;
+    }
+
+    const linkages = await getLinkagesByInitiative(initiativeId, orgId);
+
+    // Shape for the FE detail surface: the linkage row IS the display record
+    // (finance_model_ref is the model identifier; linkage_type + status carry the
+    // semantics). No cross-module finance-model table is guaranteed to exist, so we
+    // do not over-couple — we surface exactly what M16 wrote, org-scoped.
+    const links = linkages.map((l) => ({
+      linkageId: l.linkageId,
+      financeModelRef: l.financeModelRef,
+      linkageType: l.linkageType,
+      status: l.status,
+      createdAt: l.createdAt,
+      updatedAt: l.updatedAt,
+    }));
+
+    res.json({ links, items: links });
   })
 );
 

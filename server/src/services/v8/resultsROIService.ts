@@ -27,6 +27,8 @@ import type {
   KPITrendPoint,
   ReconciliationHealthSummary,
   ReconciliationStatus,
+  ReconciliationVarianceItem,
+  ReconciliationVarianceOverview,
   RecordDeviationParams,
   RecordROIRealizationParams,
   ResultsDashboardSnapshot,
@@ -2050,6 +2052,142 @@ export async function getReconciliationHealth(
     byStatus,
     unresolvedCount,
     averageResolutionHours: resolvedCount > 0 ? sumHours / resolvedCount : null,
+  };
+}
+
+interface ReconciliationVarianceRow {
+  reconciliation_id: string;
+  kpi_id: string;
+  finance_ref: string;
+  reconciliation_status: string;
+  initiated_by: string;
+  created_at: string;
+  updated_at: string;
+  kpi_name: string | null;
+  initiative_id: string | null;
+  projected_value: number | null;
+  realized_value: number | null;
+}
+
+/** Rounds to 2 decimals; treats |x| < 1e-9 as 0 to avoid float noise. */
+function round2(value: number): number {
+  const r = Math.round(value * 100) / 100;
+  return Math.abs(r) < 1e-9 ? 0 : r;
+}
+
+/**
+ * Reconciliation overview for the Results ROI surface (M16 → M15 read seam).
+ *
+ * Each `v8_kpi_finance_reconciliations` row is enriched with the KPI's
+ * `target_value` (projected benefit) and the summed `v8_roi_realization_entries`
+ * realized value, then a variance (realized − projected) is computed. This is the
+ * DISPLAY path: Finance writes the reconciliation status; Results reads status +
+ * variance here. Org-scoping is enforced via the `organization_id` predicate;
+ * optional `initiativeId` / `kpiId` narrow the set.
+ */
+export async function getReconciliationOverview(
+  organizationId: string,
+  options?: { initiativeId?: string; kpiId?: string }
+): Promise<ReconciliationVarianceOverview> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
+  const kpiId = options?.kpiId?.trim() || undefined;
+
+  const filters: string[] = [];
+  const params: unknown[] = [organizationId];
+  if (initiativeId) {
+    filters.push(' AND k.initiative_id = ?');
+    params.push(initiativeId);
+  }
+  if (kpiId) {
+    filters.push(' AND r.kpi_id = ?');
+    params.push(kpiId);
+  }
+
+  // LEFT JOIN to the KPI definition (projected = target_value) and a correlated
+  // subquery sum of realized entries. All joins are org-scoped so a foreign-org
+  // KPI/realization can never bleed into another org's variance.
+  const rows = await dbAll<ReconciliationVarianceRow>(
+    `SELECT
+       r.reconciliation_id,
+       r.kpi_id,
+       r.finance_ref,
+       r.reconciliation_status,
+       r.initiated_by,
+       r.created_at,
+       r.updated_at,
+       k.name AS kpi_name,
+       k.initiative_id AS initiative_id,
+       k.target_value AS projected_value,
+       (
+         SELECT SUM(e.realized_value)
+         FROM v8_roi_realization_entries e
+         WHERE e.organization_id = r.organization_id AND e.kpi_id = r.kpi_id
+       ) AS realized_value
+     FROM v8_kpi_finance_reconciliations r
+     LEFT JOIN v8_kpi_definitions k
+       ON k.kpi_id = r.kpi_id AND k.organization_id = r.organization_id
+     WHERE r.organization_id = ?${filters.join('')}
+     ORDER BY r.created_at DESC`,
+    params,
+    { fallback: true }
+  );
+
+  const byStatus = emptyReconciliationStatusCounts();
+  let mismatchCount = 0;
+
+  const items: ReconciliationVarianceItem[] = (rows || []).map((row) => {
+    const projectedValue = row.projected_value != null ? Number(row.projected_value) : null;
+    const realizedValue = row.realized_value != null ? Number(row.realized_value) : null;
+
+    let varianceAbsolute: number | null = null;
+    let variancePercent: number | null = null;
+    let hasMismatch = false;
+    if (projectedValue != null && realizedValue != null) {
+      varianceAbsolute = round2(realizedValue - projectedValue);
+      variancePercent =
+        projectedValue !== 0
+          ? round2((varianceAbsolute / Math.abs(projectedValue)) * 100)
+          : null;
+      hasMismatch = varianceAbsolute !== 0;
+    }
+    if (hasMismatch) mismatchCount += 1;
+
+    const status = row.reconciliation_status as ReconciliationStatus;
+    if (ReconciliationStatusValues.includes(status)) {
+      byStatus[status] = (byStatus[status] ?? 0) + 1;
+    }
+
+    return {
+      reconciliationId: row.reconciliation_id,
+      kpiId: row.kpi_id,
+      kpiName: row.kpi_name ?? null,
+      initiativeId: row.initiative_id ?? null,
+      financeRef: row.finance_ref,
+      reconciliationStatus: status,
+      initiatedBy: row.initiated_by as ReconciliationVarianceItem['initiatedBy'],
+      projectedValue,
+      realizedValue,
+      varianceAbsolute,
+      variancePercent,
+      hasMismatch,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  });
+
+  const unresolvedCount =
+    (byStatus.pending ?? 0) + (byStatus.disputed ?? 0) + (byStatus.escalated ?? 0);
+
+  return {
+    organizationId,
+    initiativeId: initiativeId ?? null,
+    items,
+    summary: {
+      total: items.length,
+      byStatus,
+      mismatchCount,
+      unresolvedCount,
+    },
   };
 }
 

@@ -27,6 +27,7 @@ import {
 } from '@/services/api/v8/results';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import { ReconciliationPanel } from './ReconciliationPanel';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
 
 export type ROIStatus = 'on-track' | 'below' | 'above';
@@ -587,6 +588,9 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
           </table>
         </div>
       </div>
+
+      {/* M16 → M15: Finance reconciliation status + projected-vs-realized variance */}
+      <ReconciliationPanel refreshNonce={refreshNonce} />
 
       {drawerInitiativeId && (
         <ROIDetailDrawer

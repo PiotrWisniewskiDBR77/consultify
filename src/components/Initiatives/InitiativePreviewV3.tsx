@@ -17,6 +17,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { ROUTES } from '@/routes/routeConfig';
 import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
+import { type InitiativeEconomicsLink, InitiativeApi } from '@/services/api/initiatives.api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
@@ -260,6 +261,138 @@ export const InitiativePreviewV3Body: React.FC<{
   );
 };
 
+/** Human label + chip tone for a linkage status (M16 Finance vocabulary). */
+function getLinkageStatusMeta(
+  status: InitiativeEconomicsLink['status'],
+  isPolish: boolean
+): { label: string; tone: string } {
+  switch (status) {
+    case 'linked_to_finance_model':
+      return {
+        label: isPolish ? 'Powiązano z modelem' : 'Linked to model',
+        tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+      };
+    case 'linked_to_finance_scenario':
+      return {
+        label: isPolish ? 'Powiązano ze scenariuszem' : 'Linked to scenario',
+        tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+      };
+    case 'linked_to_roi_tracking':
+      return {
+        label: isPolish ? 'Śledzenie ROI' : 'ROI tracking',
+        tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+      };
+    case 'stale_vs_finance_model':
+      return {
+        label: isPolish ? 'Nieaktualne vs model' : 'Stale vs model',
+        tone: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+      };
+    case 'local_only':
+      return {
+        label: isPolish ? 'Tylko lokalnie' : 'Local only',
+        tone: 'bg-slate-500/10 text-slate-500 dark:text-slate-400',
+      };
+    default:
+      return {
+        label: isPolish ? 'Nie rozpoczęto' : 'Not started',
+        tone: 'bg-slate-500/10 text-slate-500 dark:text-slate-400',
+      };
+  }
+}
+
+function getLinkageTypeLabel(
+  type: InitiativeEconomicsLink['linkageType'],
+  isPolish: boolean
+): string {
+  const map: Record<InitiativeEconomicsLink['linkageType'], [string, string]> = {
+    budget: ['Budżet', 'Budget'],
+    forecast: ['Prognoza', 'Forecast'],
+    actual: ['Wykonanie', 'Actual'],
+    variance: ['Odchylenie', 'Variance'],
+  };
+  const pair = map[type];
+  return pair ? (isPolish ? pair[0] : pair[1]) : type;
+}
+
+/**
+ * Inline "Powiązane modele finansowe / Linked finance models" list.
+ * Reads the M16-written economics linkages for this initiative (org-scoped on the
+ * server) and renders name (finance model ref) + type + status, with an action to
+ * open the model in /economics. Renders nothing when there are no linkages so the
+ * card stays clean for initiatives without a finance link.
+ */
+const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId }) => {
+  const { i18n } = useTranslation();
+  const navigate = useNavigate();
+  const isPolish = i18n.language === 'pl';
+  const [links, setLinks] = useState<InitiativeEconomicsLink[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    InitiativeApi.getEconomicsLinks(initiativeId)
+      .then((rows) => {
+        if (!cancelled) setLinks(rows);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initiativeId]);
+
+  // Quiet states: nothing to show until we have at least one linkage.
+  if (loading || links.length === 0) return null;
+
+  return (
+    <div className="mb-3 pb-3 border-b border-slate-200/70 dark:border-white/[0.08]">
+      <div className="flex items-center gap-2 mb-2">
+        <Link2 size={12} className="text-slate-400 shrink-0" />
+        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          {isPolish ? 'Powiązane modele finansowe' : 'Linked finance models'}
+        </span>
+        <span className="text-[10px] text-slate-400">({links.length})</span>
+      </div>
+      <div className="space-y-1.5">
+        {links.map((link) => {
+          const statusMeta = getLinkageStatusMeta(link.status, isPolish);
+          return (
+            <button
+              key={link.linkageId}
+              onClick={() =>
+                navigate(
+                  `/economics?tab=analysis&initiativeId=${encodeURIComponent(
+                    initiativeId
+                  )}&modelRef=${encodeURIComponent(link.financeModelRef)}`
+                )
+              }
+              className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition group"
+              title={isPolish ? 'Otwórz w module Finanse' : 'Open in Finance'}
+            >
+              <ExternalLink size={12} className="text-primary-500 shrink-0" />
+              <span className="flex-1 min-w-0">
+                <span className="block text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+                  {link.financeModelRef}
+                </span>
+                <span className="block text-[10px] text-slate-400">
+                  {getLinkageTypeLabel(link.linkageType, isPolish)}
+                </span>
+              </span>
+              <span
+                className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-medium ${statusMeta.tone}`}
+              >
+                {statusMeta.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeId }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -273,6 +406,7 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
           {t('initiatives.preview.financialAnalysis', 'Financial Analysis')}
         </span>
       </div>
+      <LinkedFinanceModels initiativeId={initiativeId} />
       <div className="space-y-1.5">
         <button
           onClick={() => navigate(`/economics?tab=analysis&initiativeId=${initiativeId}`)}

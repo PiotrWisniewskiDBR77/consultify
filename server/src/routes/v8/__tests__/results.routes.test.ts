@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { V8_RESULTS_READ_CONTRACT, V8_RESULTS_WRITE_CONTRACT } from '../results.routes.js';
 
 const mockGetResultsDashboard = vi.fn();
+const mockGetReconciliationOverview = vi.fn();
 const mockGetROIPortfolioSummary = vi.fn();
 const mockGetROIInitiativeDetail = vi.fn();
 const mockGetResultsKpiCatalog = vi.fn();
@@ -29,6 +30,7 @@ const mockHandleTimeSeriesRecorded = vi.fn();
 
 vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsDashboard: (...args: unknown[]) => mockGetResultsDashboard(...args),
+  getReconciliationOverview: (...args: unknown[]) => mockGetReconciliationOverview(...args),
   getResultsKpiCatalog: (...args: unknown[]) => mockGetResultsKpiCatalog(...args),
   getResultsKpiDrawerDetail: (...args: unknown[]) => mockGetResultsKpiDrawerDetail(...args),
   getROIPortfolioSummary: (...args: unknown[]) => mockGetROIPortfolioSummary(...args),
@@ -169,6 +171,29 @@ describe('V8 results read-only routes', () => {
         averageResolutionHours: null,
       },
       recentReviewPacks: [],
+    });
+    mockGetReconciliationOverview.mockResolvedValue({
+      organizationId: ORG,
+      initiativeId: null,
+      items: [
+        {
+          reconciliationId: 'rec-1',
+          kpiId: KPI_UUID,
+          kpiName: 'Annual Savings',
+          initiativeId: 'init-1',
+          financeRef: `finance:${KPI_UUID}`,
+          reconciliationStatus: 'disputed',
+          initiatedBy: 'finance',
+          projectedValue: 100000,
+          realizedValue: 80000,
+          varianceAbsolute: -20000,
+          variancePercent: -20,
+          hasMismatch: true,
+          createdAt: '2026-03-31T00:00:00.000Z',
+          updatedAt: '2026-03-31T01:00:00.000Z',
+        },
+      ],
+      summary: { total: 1, byStatus: { disputed: 1 }, mismatchCount: 1, unresolvedCount: 1 },
     });
     mockGetROIPortfolioSummary.mockResolvedValue({
       organizationId: ORG,
@@ -355,6 +380,56 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(500);
     expect(res.body.code).toBe('RESULTS_DASHBOARD_READ_FAILED');
     expect(res.body.error).toBe('Failed to load results dashboard');
+  });
+
+  it('GET /api/v8/results/reconciliations returns envelope and delegates to getReconciliationOverview (M16→M15)', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/reconciliations');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
+    expect(res.body.data?.organizationId).toBe(ORG);
+    expect(res.body.data?.items?.[0]?.varianceAbsolute).toBe(-20000);
+    expect(res.body.data?.summary?.mismatchCount).toBe(1);
+    expect(mockGetReconciliationOverview).toHaveBeenCalledWith(ORG, {
+      initiativeId: undefined,
+      kpiId: undefined,
+    });
+  });
+
+  it('GET /api/v8/results/reconciliations forwards initiativeId + kpiId scope when provided', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/reconciliations')
+      .query({ initiativeId: 'init-1', kpiId: KPI_UUID });
+
+    expect(res.status).toBe(200);
+    expect(mockGetReconciliationOverview).toHaveBeenCalledWith(ORG, {
+      initiativeId: 'init-1',
+      kpiId: KPI_UUID,
+    });
+  });
+
+  it('GET /api/v8/results/reconciliations returns 404 for invalid initiativeId scope (no cross-org leak)', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/reconciliations')
+      .query({ initiativeId: 'missing-init' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockGetReconciliationOverview).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/v8/results/reconciliations returns 500 with code when service rejects', async () => {
+    mockGetReconciliationOverview.mockRejectedValueOnce(new Error('recon down'));
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/reconciliations');
+
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('RESULTS_RECONCILIATION_READ_FAILED');
   });
 
   it('GET /api/v8/results/roi/portfolio-summary returns envelope and delegates to getROIPortfolioSummary', async () => {

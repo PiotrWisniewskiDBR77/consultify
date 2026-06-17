@@ -33,6 +33,26 @@ export interface InitiativeKPI {
   unit: string;
 }
 
+/**
+ * A finance-model linkage written by M16 (Finance) against this initiative.
+ * Surfaced read-only on the M13 detail so the economics relationship is visible
+ * instead of being write-only/dead.
+ */
+export interface InitiativeEconomicsLink {
+  linkageId: string;
+  financeModelRef: string;
+  linkageType: 'budget' | 'forecast' | 'actual' | 'variance';
+  status:
+    | 'not_started'
+    | 'local_only'
+    | 'linked_to_finance_model'
+    | 'linked_to_finance_scenario'
+    | 'linked_to_roi_tracking'
+    | 'stale_vs_finance_model';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const InitiativeApi = {
   // ==========================================
   // INITIATIVES CRUD
@@ -98,5 +118,28 @@ export const InitiativeApi = {
     });
     if (!response.ok) throw new Error('Enrichment failed');
     return response.json();
+  },
+
+  // ==========================================
+  // ECONOMICS LINKAGES (M16 Finance → M13 display)
+  // ==========================================
+
+  /**
+   * Fetch the finance-model linkages M16 wrote for this initiative (org-scoped on
+   * the server). Returns [] on 404 (initiative not in org) or any error so the
+   * detail surface degrades gracefully instead of throwing.
+   */
+  getEconomicsLinks: async (id: string): Promise<InitiativeEconomicsLink[]> => {
+    try {
+      const res = await fetch(`${API_URL}/initiatives/${id}/economics-links`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const links = data?.links ?? data?.items ?? [];
+      return Array.isArray(links) ? (links as InitiativeEconomicsLink[]) : [];
+    } catch {
+      return [];
+    }
   },
 };

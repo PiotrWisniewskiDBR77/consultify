@@ -197,6 +197,31 @@ export interface V8ExecutionBudgetEntryPayload {
   source?: string;
 }
 
+// M14 → M15 feed-forward: record a human-entered realized benefit value for an
+// initiative from the Execution context. Flows into Results (M15) ROI portfolio.
+export interface V8ExecutionRealizationPayload {
+  initiativeId: string;
+  /** ISO date (YYYY-MM-DD) for the realization period. */
+  periodMonth: string;
+  realizedRevenueDelta?: number | null;
+  realizedCostDelta?: number | null;
+  realizedSavings?: number | null;
+  varianceNotes?: string;
+}
+
+export interface V8ExecutionRealizationEntry {
+  id: string;
+  initiativeId: string;
+  organizationId: string;
+  periodMonth: string;
+  realizedRevenueDelta: number | null;
+  realizedCostDelta: number | null;
+  realizedSavings: number | null;
+  source: 'execution';
+  varianceNotes: string | null;
+  recordedBy: string;
+}
+
 export interface V8ExecutionRaidMitigationPayload {
   raidItemId: string;
   mitigationPlan?: string;
@@ -374,6 +399,14 @@ export const V8ExecutionControlApi = {
 
   createBudgetEntry: (payload: V8ExecutionBudgetEntryPayload) =>
     v8Post<{ success: boolean; id: string }>('/execution-control/budget/entries', payload),
+
+  // M14 → M15 feed-forward: persist a human-entered realized benefit value that
+  // Results (M15) reads back via its ROI portfolio rollup.
+  recordRealization: (payload: V8ExecutionRealizationPayload) =>
+    v8Post<{ success: boolean; entry: V8ExecutionRealizationEntry }>(
+      '/execution-control/realizations',
+      payload
+    ),
 
   // ── Manager Lane Analysis (6-Lane Cockpit) ──────────────────────────────
 
