@@ -6,7 +6,8 @@ import { IntegrationHealthDashboard } from '@/components/settings/integrations/I
 import { Api } from '@/services/api';
 import { V8SyncApi } from '@/services/api/v8/sync';
 
-const tMock = (_key: string, fallback: string) => fallback;
+const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
 
 vi.mock('@/components/shared/InfoButton', () => ({
   InfoButton: () => null,

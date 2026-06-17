@@ -6,8 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DataControlsSettings } from '@/components/settings/DataControlsSettings';
 import { Api } from '@/services/api';
 
-const tMock = (_key: string, fallback: string) => fallback;
-
 vi.mock('@/services/api', () => ({
   Api: {
     get: vi.fn(),
@@ -25,12 +23,6 @@ vi.mock('react-hot-toast', () => ({
     error: vi.fn(),
     success: vi.fn(),
   },
-}));
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: tMock,
-  }),
 }));
 
 const consents = {

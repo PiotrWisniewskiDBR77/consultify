@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EmailDigestSettings } from '@/components/settings/EmailDigestSettings';
 import { Api } from '@/services/api';
 
-const tMock = (_key: string, fallback: string) => fallback;
+const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
 
 vi.mock('@/services/api', () => ({
   Api: {

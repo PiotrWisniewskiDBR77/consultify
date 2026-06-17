@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Api } from '@/services/api';
 import { AIPromptLibrarySettings } from '@/components/settings/AIPromptLibrarySettings';
 
-const tMock = (_key: string, fallback: string) => fallback;
+const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
 
 vi.mock('@/services/api', () => ({
   Api: {

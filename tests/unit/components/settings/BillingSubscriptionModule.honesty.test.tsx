@@ -6,7 +6,8 @@ import { BillingSubscriptionModule } from '@/components/settings/modules/Billing
 import { Api } from '@/services/api';
 
 const refreshPolicy = vi.fn();
-const tMock = (key: string, fallback?: string) => fallback ?? key;
+const tMock = (key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key);
 
 vi.mock('@/components/shared/InfoButton', () => ({
   InfoButton: () => null,

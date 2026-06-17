@@ -5,7 +5,8 @@ import { EmailSignaturesSettings } from '@/components/settings/EmailSignaturesSe
 import { Api } from '@/services/api';
 
 const toastMock = vi.fn();
-const tMock = (_key: string, fallback: string) => fallback;
+const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
 
 vi.mock('@/hooks/useDemoSession', () => ({
   useDemoSession: () => ({ isDemo: false }),

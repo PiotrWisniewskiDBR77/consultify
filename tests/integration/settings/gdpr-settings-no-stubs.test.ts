@@ -145,28 +145,31 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     expect(row?.status).toBeTruthy();
   });
 
-  it('POST /api/settings/request-deletion creates a real request', async () => {
+  it('POST /api/settings/gdpr/deletion-request creates a real request', async () => {
     if (!canRunIsolatedSqlite) return;
 
+    // The passwordless duplicate POST /api/settings/request-deletion was removed
+    // (M25 L-02). The canonical bcrypt-gated endpoint writes to gdpr_requests.
     const res = await request(makeApp())
-      .post('/api/settings/request-deletion')
+      .post('/api/settings/gdpr/deletion-request')
       .set('Authorization', `Bearer ${makeToken()}`)
       .send({ reason: 'test', password: userPassword });
-    expect(res.status).toBe(202);
+    expect(res.status).toBe(200);
     expect(res.body).toEqual(
       expect.objectContaining({
         success: true,
         request: expect.objectContaining({
           id: expect.any(String),
           status: expect.any(String),
-          scheduledFor: expect.any(String),
+          scheduledAt: expect.any(String),
         }),
       })
     );
 
-    const row = await db.get(`SELECT id, status FROM account_deletion_requests WHERE user_id = ?`, [
-      userId,
-    ]);
+    const row = await db.get(
+      `SELECT id, status FROM gdpr_requests WHERE user_id = ? AND type = 'deletion'`,
+      [userId]
+    );
     expect(row?.id).toBeTruthy();
     expect(row?.status).toBeTruthy();
   });

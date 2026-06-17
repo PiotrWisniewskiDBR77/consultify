@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsHistory } from '@/components/settings/advanced/SettingsHistory';
 import { Api } from '@/services/api';
 
-const tMock = (_key: string, fallback?: string) => fallback ?? _key;
+const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
 
 vi.mock('@/components/shared/InfoButton', () => ({
   InfoButton: () => null,

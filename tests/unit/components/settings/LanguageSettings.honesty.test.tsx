@@ -37,7 +37,8 @@ vi.mock('react-i18next', () => ({
       language: 'en',
       resolvedLanguage: 'en',
     },
-    t: (_key: string, fallback: string) => fallback,
+    t: (_key: string, fallback?: string | { defaultValue?: string }) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
   }),
 }));
 

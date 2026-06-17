@@ -6,7 +6,8 @@ import { ThemeSettings } from '@/components/settings/ThemeSettings';
 import Api from '@/services/api';
 
 const toggleTheme = vi.fn();
-const tMock = (_key: string, fallback: string) => fallback;
+const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
 
 vi.mock('@/services/api', () => ({
   default: {

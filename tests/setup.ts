@@ -153,6 +153,24 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // --------------------------------------------------------
+// Global Mock for react-router-dom (useNavigate safety)
+// --------------------------------------------------------
+// Many component tests render a router-aware component directly (no <Router>
+// wrapper). When such a component calls useNavigate(), react-router throws
+// "useNavigate() may be used only in the context of a <Router> component".
+// Provide a no-op useNavigate fallback while keeping every real export
+// (MemoryRouter, Routes, Route, Link, useLocation, useParams, …) intact so
+// tests that DO wrap in a router still behave normally. A test that needs to
+// assert navigation can override this with its own per-file vi.mock.
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+  };
+});
+
+// --------------------------------------------------------
 // Global Mock for AIContext
 // --------------------------------------------------------
 const mockAIContext = {

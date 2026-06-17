@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MappingDriftPanel from '@/components/settings/integrations/MappingDriftPanel';
 import { V8SyncApi } from '@/services/api/v8/sync';
 
-const tMock = (_key: string, fallback: string) => fallback;
+const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
 
 vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),

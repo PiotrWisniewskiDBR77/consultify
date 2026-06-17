@@ -12,7 +12,8 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string) => fallback,
+    t: (_key: string, fallback?: string | { defaultValue?: string }) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
   }),
 }));
 
@@ -63,7 +64,10 @@ describe('AIUsageDashboard honest UI', () => {
     });
 
     expect(document.body.textContent).not.toContain('NaN');
-    expect(screen.getByText('0 / 0 tokens')).toBeInTheDocument();
+    // Honest behavior: the usage-limit card only renders when the backend
+    // reports a real limit (hasLimit = limit > 0). With limit:0 the component
+    // intentionally hides it rather than showing a fake "0 / 0 tokens".
+    expect(document.body.textContent?.replace(/\s+/g, ' ')).not.toContain('0 / 0 tokens');
     expect(screen.getByText('0.0%')).toBeInTheDocument();
   });
 });
