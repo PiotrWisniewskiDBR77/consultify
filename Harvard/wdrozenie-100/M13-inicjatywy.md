@@ -90,7 +90,7 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 | ID | Opis | Wejście | Dowód | Klasa | Faza | Status |
 |----|------|---------|-------|-------|------|--------|
 | L-01 | create-from-hub disabled | W-01 | `InitiativesHub.tsx:1985-1997,1943-1952,1953-1962` | P1 | 2 | **ZAMKNIĘTA 2026-06-16** — pilot dostaje locked CTA (grayed button + pilotAccessBlocked) zamiast undefined; server guard dopięty (L-06) |
-| L-02 | bulk Tag/Due/Delete (brak BE) | W-01 | hub bulk-bar | P3 | 4 | otwarta |
+| L-02 | bulk Tag/Due/Delete (brak BE) | W-01 | hub bulk-bar | P3 | 4 | **NAPRAWIONA — DP-5 zrealizowane: `showBulkStubActions = isInitiativesBulkStubEnabled()` (OFF default); Tag/ChangeDueDate ukryte (`InitiativesHub.tsx:1781,1808,1820`)** | 2026-06-16 |
 | L-03 | system statusów/bramek/preview/menu (#14) | W-04,W-06 | `stageGateService.ts` + `STATUS_ROLE_CTA_MATRIX.md` + UI | P1-design | 2 | otwarta |
 | L-04 | AI-fill wg formuły McKinsey (#16) | W-05,W-07 | `initiativeGenerationService.ts`, `InitiativeDocumentView.tsx` | P1-design | 2 | otwarta |
 | L-05 | cicha degradacja V8 bez banera | W-01 | chip V8 (vs Finance/Results) | P1 | 2 | **ZAMKNIĘTA** — `v8PlanningDegraded` state + Banner już w InitiativesHub.tsx:234,1979-1993 (L-05 comment in code) |
