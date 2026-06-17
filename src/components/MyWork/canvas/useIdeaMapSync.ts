@@ -195,6 +195,10 @@ export function formatIdeaMapSyncLabel(
   return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
 }
 
+// L-03: module-level version registry — shared across all tool instances for the same ideaId
+// so switching from Table→Whiteboard starts from the current server version, not v=1.
+const globalIdeaVersions = new Map<string, number>();
+
 export function useIdeaMapSync({
   ideaId,
   tool,
@@ -208,7 +212,7 @@ export function useIdeaMapSync({
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [syncState, setSyncState] = useState<IdeaMapSyncState>('idle');
 
-  const serverVersionRef = useRef(1);
+  const serverVersionRef = useRef(globalIdeaVersions.get(ideaId) ?? 1);
   const queuedPayloadRef = useRef<IdeaMapSyncPayload | null>(null);
   const draftTimerRef = useRef<number | null>(null);
   const syncTimerRef = useRef<number | null>(null);
@@ -248,6 +252,7 @@ export function useIdeaMapSync({
         });
         const nextVersion = Number(response?.version || serverVersionRef.current || 1);
         serverVersionRef.current = nextVersion;
+        globalIdeaVersions.set(ideaId, nextVersion); // L-03
         queuedPayloadRef.current = null;
         setLastSavedAt(Date.now());
         setSyncState('saved');
@@ -264,6 +269,7 @@ export function useIdeaMapSync({
         if (err?.status === 409) {
           const serverVersion = Number(err?.data?.currentVersion || serverVersionRef.current || 1);
           serverVersionRef.current = serverVersion;
+          globalIdeaVersions.set(ideaId, serverVersion); // L-03
           setSyncState('conflict');
           onConflict?.(serverVersion, err?.data?.map || null);
         } else if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -316,6 +322,7 @@ export function useIdeaMapSync({
   const primeServerVersion = useCallback(
     (version: number | null | undefined) => {
       serverVersionRef.current = Math.max(1, Number(version || 1));
+      globalIdeaVersions.set(ideaId, serverVersionRef.current); // L-03
       const draft = readIdeaMapDraft(ideaId);
       if (draft?.pending) {
         queuedPayloadRef.current = draft.payload;
@@ -377,7 +384,22 @@ export function useIdeaMapSync({
       if (draftTimerRef.current) window.clearTimeout(draftTimerRef.current);
       if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
       if (idleWriteRef.current) cancelIdleTask(idleWriteRef.current);
+      // L-04: persist queued changes to localStorage on unmount so next mount recovers them.
+      // ideaId/tool are stable for the hook's lifetime; refs always hold current values.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const payload = queuedPayloadRef.current;
+      if (payload) {
+        writeIdeaMapDraft(ideaId, {
+          tool,
+          payload,
+          baseVersion: serverVersionRef.current,
+          pending: true,
+          updatedAt: Date.now(),
+          lastSavedAt: null,
+        });
+      }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const syncLabel = useMemo(
