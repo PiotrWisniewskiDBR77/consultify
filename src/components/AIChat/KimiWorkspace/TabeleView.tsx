@@ -165,10 +165,11 @@ export const TabeleView: React.FC = () => {
       }
 
       const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
+      let previewLoadError: unknown = null;
       const fullPreview = await loadTabelePreviewByTableId(resolvedTableId, {
         titleFallback: t('tabele.defaultTitle', 'Operational table'),
         ...(workspaceIdForProposals ? { workspaceIdForProposals } : {}),
-      }).catch(() => null);
+      }).catch((err: unknown) => { previewLoadError = err; return null; });
 
       if (cancelled) return;
 
@@ -176,11 +177,14 @@ export const TabeleView: React.FC = () => {
       if (fullPreview) {
         setReopenPreview(fullPreview);
       } else {
+        const is503 = (previewLoadError as any)?.status === 503 || (previewLoadError as any)?.statusCode === 503;
         setReopenPreview({
           type: 'tabele',
           title: t('tabele.defaultTitle', 'Operational table'),
           fileName: 'table.csv',
-          summary: t('tabele.loadPreviewFailed', 'Could not load table preview.'),
+          summary: is503
+            ? t('tabele.loadPreviewUnavailable', 'Table platform is not available in your plan.')
+            : t('tabele.loadPreviewFailed', 'Could not load table preview.'),
           kpiItems: [],
           tableId: resolvedTableId,
           tableData: { columns: [], rows: [] },
