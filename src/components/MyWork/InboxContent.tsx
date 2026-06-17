@@ -83,6 +83,7 @@ import {
   type RowActionSection,
   RowActionsMenu,
 } from '@/components/shared/RowActionsMenu';
+import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
 import { ErrorState } from '@/components/ui/primitives';
 import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
@@ -1638,7 +1639,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const tableRef = useRef<HTMLDivElement>(null);
 
   // Column widths
-  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
+  const [columnWidths, setColumnWidths] = usePersistedColumnWidths(
+    'mywork:inbox:column-widths',
+    getDefaultColumnWidths
+  ); // M03 L-10
 
   // View settings (Columns) — persisted via TableSettingsPopover (canon §16)
   const [hiddenColumns, setHiddenColumns] = useState<string[]>(loadInboxHiddenColumns);

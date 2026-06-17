@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
 import {
@@ -946,7 +947,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Column widths state (for resizable columns)
-  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
+  const [columnWidths, setColumnWidths] = usePersistedColumnWidths(
+    'mywork:decisions:column-widths',
+    getDefaultColumnWidths
+  ); // M03 L-10
 
   // Filter state (session only)
   const [tableFilters, setTableFilters] = useState<TableFilters>({});

@@ -77,6 +77,7 @@ import { Task } from '@/types';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { usePersistedColumnWidths } from './shared/usePersistedColumnWidths';
 import { BulkDatePicker, BulkPriorityPicker } from './shared/BulkEditPopovers';
 import { type ColumnConfig, ColumnConfigMenu } from './shared/ColumnConfigMenu';
 import { useConfirmDialog } from './shared/ConfirmDialog';
@@ -1010,7 +1011,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Column widths state (for resizable columns)
-  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
+  const [columnWidths, setColumnWidths] = usePersistedColumnWidths(
+    'mywork:tasks:column-widths',
+    getDefaultColumnWidths
+  ); // M03 L-10
 
   // Filter state (session only)
   const [tableFilters, setTableFilters] = useState<TableFilters>({});
