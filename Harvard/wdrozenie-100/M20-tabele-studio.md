@@ -140,12 +140,12 @@ Otwarte: share_password (L-03), test realnej `tp_records` (L-07). ZAMKNIĘTE w t
 |----|------|---------|--------------------|-------|------|-----------|---------|
 | L-01 | cross-org IDOR record-templates/form-submissions/row-policies/governed-models | W-01 | `:256, 2824, 3441/3473/3507, 4485-4575` | P0 (był) | 1 | **NAPRAWIONA + TEST** `e9c6cb9c0a` + `tests/integration/routes/table-platform.idor.regression.test.ts` (9/9 PASS 2026-06-17) | 2026-06-17 |
 | L-02 | SSO config + webhook hmac plaintext at rest | W-01 | `SSOService.ts:47-63` · `WebhookDispatcherService.ts:37,182` | P1 | 1 | **NAPRAWIONA** — SSO już szyfrowane; webhook `hmac_secret`: `encryptSecret` przed INSERT + `decryptSecret` przed HMAC (2026-06-17) | 2026-06-17 |
-| L-03 | `share_password` zapisywane, NIGDY nieweryfikowane | W-01 | `MetadataService.ts:1279` | P2 | 1 | otwarta |  |
+| L-03 | `share_password` zapisywane, NIGDY nieweryfikowane | W-01 | `MetadataService.ts:1279` | P2 | 1 | **FALSE POSITIVE** (2026-06-17) — weryfikacja ISTNIEJE w `table-platform.routes.ts:4078-4080` i `:4103-4105` (`x-share-password` header → 401); problem = plaintext (nie bcrypt), ale to share-link nie auth-hasło; decyzja Piotra czy hashować |  |
 | L-04 | kręgosłup czat→sheet (generacja z czatu) | W-02 | `SPEC_ZADANIE_01` | P0-program | 0 | zależność (śledzona w SPEC_01) |  |
 | L-05 | governed sync STUB (log-only, 0 czytelników M15/M16) | W-01,W-03,W-04 | `ModuleSyncService.ts:57-110,90` | P1→preview | 3 | otwarta (**D-01 = DP-6 preview**) |  |
 | L-06 | rozjazd 4 flag komentarz↔runtime | W-01 | `FeatureFlags.ts:83-84` (SSOT spójny) + `…ai-editor.routes.ts:36` (stary komentarz) | **P3-doc** (był P2) | 3 | **częściowo ZAMKNIĘTA R3** — uspójnić 1 komentarz route-header | 2026-06-13 |
 | L-07 | fundament Records API w 100% zmockowany (0 dot. real `tp_records`) | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | otwarta |  |
-| L-08 | cicha degradacja flag-OFF (`catch→null`, brak 503/404) | W-01 | `TabeleView.tsx:122,171,361` | P2 | 3 | otwarta |  |
+| L-08 | cicha degradacja flag-OFF (`catch→null`, brak 503/404) | W-01 | `TabeleView.tsx:122,171,361` | P2 | 3 | **NAPRAWIONA `a8f0e5dd0f` (2026-06-17)** — TabeleView preview fallback wyróżnia 503/404 zamiast cichego null | 2026-06-17 |
 | L-09 | PublicViewPage EN-only | W-01 | `PublicViewPage` (`'Failed to load shared view'`) | P3 | 4 | otwarta |  |
 | L-10 | 322 hex w data-grid (poza zmierzonym `TabeleView`) | W-01,W-05 | `GridView`/`CellRenderer` | P3 | 4 | otwarta (DP-8: palety legalne; zmierzyć cały footprint) |  |
 | L-11 | kolizja migracji 725×2/726×2 | W-01 | migracje 725/726 | P1 | — | **NAPRAWIONA** (→777/778, test 5/5 PASS) | 2026-06-11 |
