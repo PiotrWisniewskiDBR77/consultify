@@ -128,7 +128,7 @@
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
 | L-01 | V8 mirror ID mismatch (DELETE NOT_FOUND, GET martwy, wiszące krawędzie) | W-01,W-04 | `processFlowService.ts:390`, `IdeaProcessFlowTool.tsx:1008,1060,1383`; jedyny ext-konsument `my-work.routes.ts:36,6031-6089` (`develop` readback) | P0-B | 1 | **NAPRAWIONA — DP-7 CUT:** usunięto `processFlowService.ts`+`processFlowCanon.ts`+`processFlow.routes.ts`+3 testy (−2103 linii); `my-work.routes.ts` import pfService → blob `my_idea_maps.nodes_json`; `v8/index.ts` route wyrejestrowany | 2026-06-17 |
-| L-02 | WS resource-auth gap | W-01 | `ideaCollabWs.gateway.ts:237-242` | P1 | 1 | **NAPRAWIONA (zweryf. w kodzie 2026-06-13)** — domknąć testem |
+| L-02 | WS resource-auth gap | W-01 | `ideaCollabWs.gateway.ts:237-242` | P1 | 1 | **NAPRAWIONA + TEST** `tests/integration/gateways/ideaCollabWs.orgscope.test.ts` (6/6 PASS 2026-06-17) |
 | L-03 | AI Proposal STUB; `MessageFlowEdge` martwy; `viewState` hardkod | W-01 | `processFlow.routes.ts:411-437`, `:748`, `:652` | INTEGR/P1/P2 | 3 | NIEAKTUALNA po L-01 CUT (processFlow.routes.ts usunięty; FE AI Proposal = D-02 → DP-5 hidden) |
 | L-04 | Edge UX (orthogonal/waypoints/typy) + swimlane containers | W-01 | edytor diagramów | P2 | 3 | otwarta |
 | L-05 | Migracja V8 process_flow nie na staging | W-01,W-04 | `20260603_v8_process_flow.sql` | INTEGR | 1/5 | NIEAKTUALNA — DP-7 CUT; migracja w repozytorium zachowana (może być apply na envach); usunięcie niepotrzebne |
