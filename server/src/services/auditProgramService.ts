@@ -430,6 +430,22 @@ export async function generateSurveys(
     : [];
   const assigneeIds = validatedRows.map((r) => r.user_id);
 
+  // SEC-3 (templates): mirror the assignee guard — validate every templateId is
+  // accessible to THIS org (own-org or system/global) before fan-out, else a crafted
+  // PATCH config.templateIds=[<foreign-org template>] would create assignments
+  // referencing another org's interview template. Foreign org/private templates are
+  // silently dropped (not faned out).
+  const validatedTemplateRows = templateIds.length
+    ? await dbAll<{ id: string }>(
+        `SELECT id FROM interview_library_templates WHERE id IN (${templateIds
+          .map(() => '?')
+          .join(',')}) AND (organization_id = ? OR organization_id IS NULL OR template_scope = 'system')`,
+        [...templateIds, organizationId],
+        { fallback: true }
+      )
+    : [];
+  const validatedTemplateIds = validatedTemplateRows.map((r) => r.id);
+
   // Idempotency: don't re-fan-out a program that already generated surveys.
   if (program.config.surveysGenerated === true) {
     return {
@@ -447,7 +463,7 @@ export async function generateSurveys(
   const dueAt = (program.config.dueAt as string) || defaultDueAt();
   let requested = 0;
 
-  for (const templateId of templateIds) {
+  for (const templateId of validatedTemplateIds) {
     for (const assigneeId of assigneeIds) {
       requested += 1;
       try {

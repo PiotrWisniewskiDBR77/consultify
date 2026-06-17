@@ -328,7 +328,9 @@ describe('audit-programs generate-surveys fan-out', () => {
       .mockResolvedValueOnce(baseRow()) // 1: initial getProgram
       .mockResolvedValueOnce(baseRow()) // 2: updateProgram existence check
       .mockResolvedValueOnce(updatedRow()); // 3: post-update getProgram return
-    mockDbAll.mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]); // org_members check
+    mockDbAll
+      .mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]) // org_members check
+      .mockResolvedValueOnce([{ id: TMPL_ID }]); // template org-validation (SEC-3 templates)
 
     const app = await makeApp(ORG_A);
     const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
@@ -353,7 +355,9 @@ describe('audit-programs generate-surveys fan-out', () => {
       .mockResolvedValueOnce(rowWithForeign) // 2: updateProgram exist-check
       .mockResolvedValueOnce(updatedRow()); // 3: post-update return
     // org_members: only OWN_ASSIGNEE is a member (foreign filtered)
-    mockDbAll.mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]);
+    mockDbAll
+      .mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]) // org_members
+      .mockResolvedValueOnce([{ id: TMPL_ID }]); // template org-validation
 
     const app = await makeApp(ORG_A);
     const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
@@ -365,6 +369,54 @@ describe('audit-programs generate-surveys fan-out', () => {
     expect(callArg.assigneeUserIds).not.toContain(FOREIGN_ASSIGNEE);
   });
 
+  it('SEC-3 (templates): filters foreign templates — no assignment for a non-org template', async () => {
+    const rowWithForeignTemplate = baseRow({
+      config: JSON.stringify({
+        templateIds: [TMPL_ID, 'tmpl-foreign-org'],
+        assigneeIds: [OWN_ASSIGNEE],
+      }),
+    });
+
+    mockDbGet
+      .mockResolvedValueOnce(rowWithForeignTemplate) // 1: getProgram
+      .mockResolvedValueOnce(rowWithForeignTemplate) // 2: updateProgram exist-check
+      .mockResolvedValueOnce(updatedRow()); // 3: post-update return
+    mockDbAll
+      .mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]) // org_members
+      // template org-validation: only the own-org template survives; foreign dropped
+      .mockResolvedValueOnce([{ id: TMPL_ID }]);
+
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(200);
+    // Exactly one assignment — only the org's own template fanned out
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ templateId: TMPL_ID }));
+    expect(mockCreate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ templateId: 'tmpl-foreign-org' })
+    );
+  });
+
+  it('SEC-3 (templates): no assignments when the only template is foreign', async () => {
+    const rowAllForeignTemplate = baseRow({
+      config: JSON.stringify({
+        templateIds: ['tmpl-foreign-org'],
+        assigneeIds: [OWN_ASSIGNEE],
+      }),
+    });
+
+    mockDbGet.mockResolvedValueOnce(rowAllForeignTemplate);
+    mockDbAll
+      .mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]) // org_members
+      .mockResolvedValueOnce([]); // template org-validation: foreign template not accessible
+
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(200);
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(res.body.created).toBe(0);
+  });
+
   it('SEC-3: no assignments created when all assignees are foreign', async () => {
     const rowWithForeign = baseRow({
       config: JSON.stringify({
@@ -374,8 +426,9 @@ describe('audit-programs generate-surveys fan-out', () => {
     });
 
     mockDbGet.mockResolvedValueOnce(rowWithForeign);
-    // org_members: empty — foreign user is not a member
-    mockDbAll.mockResolvedValueOnce([]);
+    mockDbAll
+      .mockResolvedValueOnce([]) // org_members: empty — foreign user is not a member
+      .mockResolvedValueOnce([{ id: TMPL_ID }]); // template is valid — isolates the assignee filter
 
     const app = await makeApp(ORG_A);
     const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
