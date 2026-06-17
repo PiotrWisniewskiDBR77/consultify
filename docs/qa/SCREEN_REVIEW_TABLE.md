@@ -64,15 +64,20 @@
 |---|---|---|
 | **30** | Finance → Statements | • **Mieszane PL/EN** w zakładkach: „Analiza inwestycyjna" wśród angielskich (Statements/Models/Analysis/Prediction) + „Importuj statement" (P2-i18n). • Tabela statement czysta. |
 | **31** | Audits | • Ogląd odłożony — moduł „nie gotowy" (poza scope priorytetu); zrzut w archiwum. |
-| **32** | Documents | • jw. — poza scope, zrzut w archiwum. |
-| **33** | Document Studio | • jw. |
+| **32** | Documents / Outputs (hub) | • **Mieszane PL/EN** (taby EN: All/Mine/Documents/Presentations/Sheets; chipy PL: Szkic/Wygenerowana/Edycja/Gotowa) (P2-i18n). • Stan błędu „Real presentations source needs attention" (registry nie załadował) — **UI błędu poprawny/honest** (amber callout, jasny komunikat, „verify DB" — zgodny §4.1). Dane nie ładują (nie gotowy/staging). „New presentation" navy OK. |
+| **33** | Document Studio | • Poza scope (nie gotowy); zrzut w archiwum. Wzorzec mixed-lang/empty prawdopodobny (jak #30/#32). |
 | **34** | Presentation Studio | • jw. |
 | **35** | Table Studio | • jw. |
 | **36** | Meeting | • jw. |
 
-## Dark mode (przekrojowo)
+> **Wzorzec below-KPI:** mieszane PL/EN (#30 Finance, #32 Documents) + stany empty/error (dane nie ładują na staging) + **honest-error UI** (poprawny). Deep-review odłożony do gotowości modułów (decyzja Piotra). Główny wspólny fix: **i18n zakładek/chipów**.
 
-**Dotąd głównie PASS.** Systemowe findingi light (`VIS-001` badge-fill, `VIS-009` selekcja-rose, crimson-leak) **nie występują w dark** lub są mniej dotkliwe — dark był bazą projektową. Dedykowany pass dark = po fixach light (re-sweep ratchetem). Wyjątki do sprawdzenia w dark: `VIS-003` composer (występuje w obu), `VIS-013` crash (niezależny od motywu).
+## Dark mode (przekrojowo) — spot-checked
+
+**PASS-dominant, potwierdzone.** Dark był bazą projektową → systemowe findingi light (`VIS-001` badge-fill, `VIS-009` selekcja-rose) **nie występują w dark** (badge/selekcja mają fill). Spot-check KPI-dark: czysty, spójny strukturalnie z light.
+- **Cross-theme (w OBU motywach, NIE light-specyficzne):** KPI „Initiative" crimson + Current-red + „Below…" truncate identyczne dark/light → crimson-Initiative = spójny styling link=primary (nie light-leak); truncate = realny P3 w obu.
+- **Niezależne od motywu:** `VIS-003` composer pustka, `VIS-013` Inbox crash, `VIS-006` CTA, `VIS-010` truncate.
+- **Dedykowany pełny dark re-sweep** = po fixach light (ratchet) — wtedy mierzony, nie tylko spot.
 
 ---
 
@@ -94,4 +99,10 @@
 
 **ODRZUCONE pomiarem/oglądem (NIE bug):** `VIS-008` Execution separatory (=loading); daty-aging (intencjonalny sygnał); Notebook lista (czysta); Initiatives Analysis (semantyka kolorów poprawna); dark głównie PASS.
 
-> **Status: KOMPLET #01–#36 + dark + lista akcji.** In-scope (do KPI) przeanalizowane gruntownie; poniżej-KPI = scope-deferred (nie gotowe). Następny krok: fixy wg priorytetu (P0 crash → P1 → P2), z pomiarem before/after gdy serwer auth.
+> **✅ AUDYT KOMPLETNY (2026-06-16).** #01–#36 light + dark spot-checked + skonsolidowana lista akcji.
+> - **In-scope (do KPI) #01–29** — gruntownie, część zmierzona.
+> - **Below-KPI #30–36** — „nie gotowe" (decyzja Piotra): Finance/Documents konkretnie (mixed-lang+empty), reszta scope-deferred.
+> - **Dark** — PASS-dominant, spot-checked; pełny mierzony re-sweep po fixach light.
+> - **Wymaga żywego serwera (auth padł):** `VIS-013` crash-diagnoza (stack), pomiar before/after fixów.
+>
+> **NASTĘPNY ETAP (po audycie, wg decyzji Piotra): całościowe poprawki** wg „Skonsolidowanej listy akcji" — P0 crash → P1 (badge/notebook) → P2 (selekcja/CTA/composer/calendar/i18n) → P3. Loci gotowe. Kontekst zachowany w tym dokumencie + `MASTER_VISUAL_QA_CATALOG.md`.
