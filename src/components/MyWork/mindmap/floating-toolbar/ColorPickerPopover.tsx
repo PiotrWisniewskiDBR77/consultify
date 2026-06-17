@@ -14,17 +14,22 @@ interface ColorPickerPopoverProps {
   onClose: () => void;
 }
 
-const RECOMMENDED_COLORS = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#f43f5e',
-  '#6366f1',
-  '#ec4899',
-  '#3b82f6',
-];
+// M06 L-06: de-duped — repeated hex values caused React duplicate-key warnings
+// (key={c}) and redundant swatches. Set keeps first occurrence, preserves order.
+export const RECOMMENDED_COLORS = Array.from(
+  new Set([
+    '#3b82f6',
+    '#10b981',
+    '#f59e0b',
+    '#f43f5e',
+    '#6366f1',
+    '#ec4899',
+    '#3b82f6',
+  ])
+);
 
-const PALETTE = [
+export const PALETTE = Array.from(
+  new Set([
   '#1e293b',
   '#334155',
   '#475569',
@@ -70,7 +75,8 @@ const PALETTE = [
   '#67e8f9',
   '#7dd3fc',
   '#93c5fd',
-];
+  ])
+);
 
 const LINE_STYLES: Array<{ id: 'solid' | 'dashed' | 'dotted'; label: string; dash: string }> = [
   { id: 'solid', label: '━━━', dash: '' },
