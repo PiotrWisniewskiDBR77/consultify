@@ -4077,7 +4077,8 @@ publicFormRouter.get('/public/views/:token', async (req: Request, res: Response)
     if (!result) return res.status(404).json({ error: 'Shared view not found or expired' });
     if (result._sharePassword) {
       const provided = req.headers['x-share-password'] as string | undefined;
-      if (!provided || provided !== result._sharePassword) {
+      const ok = await MetadataService.verifySharePassword(provided ?? '', result._sharePassword);
+      if (!ok) {
         return res.status(401).json({
           error: 'Password required',
           code: 'VIEW_PASSWORD_REQUIRED',
@@ -4102,7 +4103,8 @@ publicFormRouter.get('/public/views/:token/records', async (req: Request, res: R
     if (!viewData) return res.status(404).json({ error: 'Shared view not found or expired' });
     if (viewData._sharePassword) {
       const provided = req.headers['x-share-password'] as string | undefined;
-      if (!provided || provided !== viewData._sharePassword) {
+      const ok = await MetadataService.verifySharePassword(provided ?? '', viewData._sharePassword);
+      if (!ok) {
         return res.status(401).json({
           error: 'Password required',
           code: 'VIEW_PASSWORD_REQUIRED',

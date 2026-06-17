@@ -3,6 +3,7 @@
  * Skeleton implementation for bases, tables, fields, and views CRUD
  */
 
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
@@ -1279,17 +1280,42 @@ const metadataService = {
     try {
       const { randomUUID } = await import('crypto');
       const token = randomUUID();
+      // L-03: hash the share password at rest (bcrypt) instead of plaintext.
+      const passwordHash = options?.password ? await bcrypt.hash(options.password, 10) : null;
       await db.query(
         `UPDATE tp_views
          SET share_token = $2, is_shared = true, share_password = $3, share_expires_at = $4, updated_at = NOW()
          WHERE id = $1`,
-        [viewId, token, options?.password ?? null, options?.expiresAt ?? null]
+        [viewId, token, passwordHash, options?.expiresAt ?? null]
       );
       return { token, url: `/public/views/${token}` };
     } catch (e) {
       logger.error('[MetadataService] shareView failed', { viewId, error: (e as Error).message });
       throw e;
     }
+  },
+
+  /**
+   * L-03: verify a share-view password against the stored value.
+   * New shares store a bcrypt hash (`$2*`); legacy rows may hold plaintext,
+   * so we fall back to a constant-time string compare for those — no existing
+   * share breaks, and new ones are hashed at rest.
+   */
+  async verifySharePassword(provided: string, stored: string | null): Promise<boolean> {
+    if (!stored) return true; // no password set
+    if (!provided) return false;
+    if (/^\$2[aby]?\$/.test(stored)) {
+      try {
+        return await bcrypt.compare(provided, stored);
+      } catch {
+        return false;
+      }
+    }
+    // Legacy plaintext: constant-time-ish compare to avoid trivial timing leak.
+    const { timingSafeEqual } = await import('crypto');
+    const a = Buffer.from(provided);
+    const b = Buffer.from(stored);
+    return a.length === b.length && timingSafeEqual(a, b);
   },
 
   async unshareView(viewId: string): Promise<void> {
