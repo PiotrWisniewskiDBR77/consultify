@@ -595,8 +595,20 @@ async function enforceNoLegalHold(res: Response, organizationId: string, operati
   }
 }
 
+// L-03 (M17): throttle the unauthenticated public viewer to blunt token
+// brute-force / scraping. Defined here (before use) to avoid a TDZ on the
+// shareRateLimiter declared further below for the authenticated mint/revoke.
+const publicViewerLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many requests' },
+});
+
 router.get(
   '/shared/:token',
+  publicViewerLimiter,
   asyncHandler(async (req, res) => {
     const row = (await dbGet(
       `SELECT *
@@ -606,6 +618,9 @@ router.get(
       [req.params.token]
     )) as any;
 
+    // Single 404 surface for missing / revoked (token nulled) / expired — a
+    // deliberate anti-enumeration choice (no 410), consistent with the M18
+    // share design. A revoked link (DELETE /decks/:id/share) lands here as 404.
     if (!row) {
       return res.status(404).json({ success: false, error: 'Shared presentation not found' });
     }

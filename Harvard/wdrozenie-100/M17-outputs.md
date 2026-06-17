@@ -104,10 +104,10 @@ Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY 
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | bramka aprobaty eksportu tylko UI (publish-approval) | W-01,W-04 | `OutputsAggregateTabContent.tsx:1000-1004` (FE-only) | P2 | 3 | otwarta (**zależna od M18**) | 2026-06-13 |
+| L-01 | bramka aprobaty eksportu tylko UI (publish-approval) | W-01,W-04 | `OutputsAggregateTabContent.tsx:1000-1004` (FE-only) | P2 | 3 | **WYMAGA DECYZJI (D-02)** — endpointy eksportu są WSPÓŁDZIELONE authoring(DeckBuilder, eksport draftów legalny)↔governed-delivery; hardcode publish-state gate zepsułby authoring export. Potrzeba: osobna ścieżka delivery-export LUB potwierdzenie polityki (które stany blokują). NIE implementuję bramki łamiącej authoring | 2026-06-17 |
 | L-02 | beta-lock tylko nawigacyjny | W-01 | `Sidebar.tsx:156` vs route bez beta-guarda | P2 | 3 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_PRESENTATIONS">` owija `/presentations` route (`AppRoutes.tsx:1989`); zweryfikowane grepem 2026-06-17** | 2026-06-17 |
-| L-03 | share decku bez rate-limit/revoke; expired→404 nie 410 | W-01 | `/presentations/shared/:token` | P2 | 3 | otwarta |  |
-| L-04 | brak testu serwerowej bramki aprobaty (T4) | W-01 | `evidence/f2_tests_report.md` (S3 quality-only) | P0-test | 2 | otwarta |  |
+| L-03 | share decku bez rate-limit/revoke; expired→404 nie 410 | W-01 | `presentations.routes.ts` (viewer+mint+revoke) | P2 | 3 | **ZAMKNIĘTA** — rate-limit na publicznym viewerze `/shared/:token` (`publicViewerLimiter` 60/min) + mint (`shareRateLimiter` 30/min) + **revoke `DELETE /decks/:id/share`** (nuluje token→viewer 404). **expired→410 świadomie ODRZUCONE**: single-404 surface = anty-enumeracja (spójne z M18; 410 leakowałoby istnienie tokenu) | 2026-06-17 |
+| L-04 | brak testu serwerowej bramki aprobaty (T4) | W-01 | `evidence/f2_tests_report.md` (S3 quality-only) | P0-test | 2 | otwarta (zależna od L-01/D-02 — bez polityki nie ma czego testować; quality-gate 422 pokryty `export-quality-gate.regression.test.ts`) |  |
 | L-05 | 25 stale testów middleware + mock-drift i18n + viewer RAP | W-01 | `v8FeatureGate.middleware.test.ts` (vs cofnięty `9b794bb7f0`) | P0-test | 2 | otwarta (**D-01**) |  |
 | L-06 | §27 brak persistKey + sort-persist | W-01 | `OutputsAggregateTabContent.tsx:1020` | P3 | 4 | otwarta |  |
 | L-07 | §27 brak `EntityStatusChip` + klasy koloru + bulk nieużyty | W-01 | `OutputsAggregateTabContent.tsx:311-374` | P2 | 4 | otwarta |  |
@@ -121,6 +121,7 @@ Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY 
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
 | D-01 | 25 stale testów middleware (`v8FeatureGate`) | skasować / przywrócić hardening cofnięty `9b794bb7f0` | Piotr | TBD | otwarta (modułowa) |
+| D-02 | bramka aprobaty eksportu (L-01) | osobna ścieżka delivery-export z publish-gate / potwierdzić które stany blokują na współdzielonym endpoincie / zostawić FE-only | Piotr | TBD | **otwarta** — endpointy eksportu współdzielone authoring↔delivery; gate na wspólnym endpoincie łamie eksport draftów w DeckBuilder; wymaga rozdzielenia ścieżek |
 
 ### 05 · Flagi / rollout — `ENABLE_V8_GLOBAL` OFF→404 (decyduje czy moduł żyje czy = panel błędu — udokumentować wartość na staging/prod); `ENABLE_DELIVERABLES_LIGHT`+`VITE_` dla Teresa→Outputs. Beta-guard route = nawigacyjny (direct URL omija plate; API org-gated).
 ### 06 · Ryzyka — krok 1 (bramka aprobaty) WYMAGA trwałego publish M18 → kolejność MASTER §5; 25 stale testów middleware = dług decyzyjny (D-01); `ENABLE_V8_GLOBAL` na prod nieznana (decyduje o życiu modułu); dev `.env` → Railway PROD.
