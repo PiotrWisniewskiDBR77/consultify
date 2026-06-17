@@ -407,24 +407,22 @@ describe('work canvas routes', () => {
   });
 
   it('keeps an honest placeholder when approving a non-materializable target', async () => {
+    // Route now returns an honest 422 (CANVAS_TARGET_NOT_YET_SUPPORTED) instead of a
+    // silent 200+placeholder, letting the client surface "not available yet" inline.
     dbGetMock.mockResolvedValueOnce({ ...proposalRow, target: 'project_brief' });
 
     const response = await request(app)
       .post('/api/work-canvas/proposals/proposal-1/approve')
       .send({})
-      .expect(200);
+      .expect(422);
 
-    expect(response.body.data).toMatchObject({
-      status: 'approved',
-      targetObjectId: null,
-      readBack: expect.objectContaining({
-        target: 'project_brief',
-        status: 'approved_with_placeholder',
-        entityStatus: 'placeholder_pending_conversion',
-        targetObjectId: null,
-      }),
+    expect(response.body).toMatchObject({
+      error: 'target_not_yet_supported',
+      code: 'CANVAS_TARGET_NOT_YET_SUPPORTED',
+      target: 'project_brief',
+      recoverable: true,
     });
-    // No entity table was written for a placeholder target.
+    // No entity table was written for an unsupported target.
     expect(dbRunMock).not.toHaveBeenCalledWith(
       expect.stringContaining('my_ideas'),
       expect.any(Array),
@@ -1003,7 +1001,8 @@ describe('work canvas routes', () => {
       .expect(200);
 
     expect(response.body.data.share.token).toEqual(expect.any(String));
-    expect(response.body.data.share.url).toContain('/work-canvas/shared/');
+    // Share URL migrated to /public/artifacts/:token (canonical artifact viewer route).
+    expect(response.body.data.share.url).toContain('/public/artifacts/');
     expect(response.body.data.share.expiresAt).toEqual(expect.any(String));
     expect(dbRunMock).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE work_canvas_drafts'),
@@ -1152,7 +1151,9 @@ describe('work canvas routes', () => {
             sourceClass: 'work_canvas',
             draftId: 'draft-1',
             outputResourceType: 'report',
-            outputResourceId: runResponse.body.data.outputResource.id,
+            // outputResourceId tracks the output work_canvas_drafts row id (not the
+            // report_builder_reports id returned as outputResource.id — different uuid).
+            outputResourceId: expect.any(String),
           }),
         ],
       },
