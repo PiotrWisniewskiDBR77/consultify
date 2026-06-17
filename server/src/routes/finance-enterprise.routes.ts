@@ -19,11 +19,18 @@ router.use(verifyToken);
 
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
-  const orgId =
-    req.user?.organizationId ||
-    req.organizationId ||
-    (req.headers['x-organization-id'] as string) ||
-    (req.query.organizationId as string);
+  // SECURITY (RESPONSE-LEAK / AUTH-COVERAGE sweep — M16 Finance): the org MUST come
+  // ONLY from the auth-middleware-validated context (req.user.organizationId /
+  // req.organizationId). This previously fell back to the raw `x-organization-id`
+  // header / `?organizationId` query param when both were empty. That fallback was
+  // unvalidated: verifyToken admits a token with no resolvable ACTIVE org
+  // (req.organizationId === ''), at which point an attacker could assert ANY org id
+  // via the header/query and financeEnterpriseService would faithfully filter every
+  // read/write by that asserted victim org — a cross-org data exposure. Service-layer
+  // re-filtering does NOT help when the filter value is attacker-controlled. Trust only
+  // the validated context; verifyToken already promotes a legitimate UI-selected
+  // `x-organization-id` (membership-checked) into req.organizationId.
+  const orgId = req.user?.organizationId || req.organizationId;
   if (!userId || !orgId) {
     res.status(401).json({ error: 'Authentication required' });
     return null;
@@ -159,11 +166,20 @@ router.post(
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const alloc = await financeEnterpriseService.createAllocation(identity.orgId, {
-      modelId: req.params.modelId,
-      ...parsed.data,
-    });
-    res.status(201).json(alloc);
+    try {
+      const alloc = await financeEnterpriseService.createAllocation(identity.orgId, {
+        modelId: req.params.modelId,
+        ...parsed.data,
+      });
+      res.status(201).json(alloc);
+    } catch (error: any) {
+      // SEC: foreign-org (or missing) modelId is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Model not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -234,12 +250,21 @@ router.post(
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const budget = await financeEnterpriseService.createBudgetVersion(
-      identity.orgId,
-      identity.userId,
-      { modelId: req.params.modelId, ...parsed.data }
-    );
-    res.status(201).json(budget);
+    try {
+      const budget = await financeEnterpriseService.createBudgetVersion(
+        identity.orgId,
+        identity.userId,
+        { modelId: req.params.modelId, ...parsed.data }
+      );
+      res.status(201).json(budget);
+    } catch (error: any) {
+      // SEC: foreign-org (or missing) modelId is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Model not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -313,11 +338,20 @@ router.post(
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const cycle = await financeEnterpriseService.createForecastCycle(identity.orgId, {
-      modelId: req.params.modelId,
-      ...parsed.data,
-    });
-    res.status(201).json(cycle);
+    try {
+      const cycle = await financeEnterpriseService.createForecastCycle(identity.orgId, {
+        modelId: req.params.modelId,
+        ...parsed.data,
+      });
+      res.status(201).json(cycle);
+    } catch (error: any) {
+      // SEC: foreign-org (or missing) modelId is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Model not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -434,12 +468,21 @@ router.post(
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const snapshot = await financeEnterpriseService.createValuationSnapshot(
-      identity.orgId,
-      identity.userId,
-      { modelId: req.params.modelId, ...parsed.data }
-    );
-    res.status(201).json(snapshot);
+    try {
+      const snapshot = await financeEnterpriseService.createValuationSnapshot(
+        identity.orgId,
+        identity.userId,
+        { modelId: req.params.modelId, ...parsed.data }
+      );
+      res.status(201).json(snapshot);
+    } catch (error: any) {
+      // SEC: foreign-org (or missing) modelId is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Model not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -490,11 +533,20 @@ router.post(
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const assumption = await financeEnterpriseService.createAIAssumption(identity.orgId, {
-      modelId: req.params.modelId,
-      ...parsed.data,
-    });
-    res.status(201).json(assumption);
+    try {
+      const assumption = await financeEnterpriseService.createAIAssumption(identity.orgId, {
+        modelId: req.params.modelId,
+        ...parsed.data,
+      });
+      res.status(201).json(assumption);
+    } catch (error: any) {
+      // SEC: foreign-org (or missing) modelId is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Model not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -548,11 +600,20 @@ router.post(
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const link = await financeEnterpriseService.createROILink(identity.orgId, {
-      modelId: req.params.modelId,
-      ...parsed.data,
-    });
-    res.status(201).json(link);
+    try {
+      const link = await financeEnterpriseService.createROILink(identity.orgId, {
+        modelId: req.params.modelId,
+        ...parsed.data,
+      });
+      res.status(201).json(link);
+    } catch (error: any) {
+      // SEC: foreign-org (or missing) modelId is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Model not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 

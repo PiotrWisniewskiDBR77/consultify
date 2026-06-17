@@ -4592,9 +4592,28 @@ export const InterviewController = {
       params.push(notes);
     }
     if (assigneeUserId !== undefined && (existing as any).status === 'assigned') {
-      // Can only reassign if not started
+      // Can only reassign if not started.
+      // V-A (reassign) — cross-org assignee IDOR guard. Mirror createAssignment's
+      // org-membership check: the new assignee MUST belong to the caller's org,
+      // otherwise a manager could reassign an interview to a foreign-org user id.
+      const newAssigneeId = String(assigneeUserId || '').trim();
+      if (!newAssigneeId) {
+        res.status(400).json({ error: 'assigneeUserId must be a non-empty user id' });
+        return;
+      }
+      const assigneeMember = await queryHelpers.queryOne(
+        `SELECT user_id FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+        [user.organizationId, newAssigneeId]
+      );
+      if (!assigneeMember) {
+        res.status(404).json({
+          error: 'Assignee is not a member of your organization.',
+          code: 'ASSIGNEE_NOT_IN_ORG',
+        });
+        return;
+      }
       updates.push('assignee_user_id = ?');
-      params.push(assigneeUserId);
+      params.push(newAssigneeId);
     }
 
     if (updates.length === 0) {
