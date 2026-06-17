@@ -300,6 +300,18 @@ type StreamOptions = {
       proposal?: TeresaChatProposal | null;
     }
   ) => void;
+  /**
+   * SPEC_01 (Tryb A): the chat backend created a deliverable via the
+   * generate_deliverable tool and asks the FE to mount it in the canvas.
+   * Payload mirrors the existing intent-intercept mount sequence (Tryb B).
+   */
+  onDeliverable?: (payload: {
+    draftId: string;
+    generationId: string;
+    kind: 'doc' | 'sheet' | 'deck';
+    format?: string;
+    title?: string;
+  }) => void;
 };
 
 export type UseAIStreamReturn = {
@@ -824,6 +836,26 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       const handleEvent = (evt: any) => {
         if (abortRef.current.aborted) return;
         if (!evt || typeof evt !== 'object') return;
+
+        // SPEC_01 (Tryb A): the model called generate_deliverable server-side and
+        // a draft was created. Hand the mount off to the chat panel, which runs
+        // the same canvas-mount sequence as the front-end intent intercept.
+        if (evt.type === 'deliverable') {
+          const draftId = String((evt as any).draftId || (evt as any).generationId || '').trim();
+          const kindRaw = String((evt as any).kind || 'doc');
+          const kind: 'doc' | 'sheet' | 'deck' =
+            kindRaw === 'sheet' ? 'sheet' : kindRaw === 'deck' ? 'deck' : 'doc';
+          if (draftId) {
+            options.onDeliverable?.({
+              draftId,
+              generationId: String((evt as any).generationId || draftId),
+              kind,
+              format: (evt as any).format,
+              title: (evt as any).title,
+            });
+          }
+          return;
+        }
 
         // Native model reasoning channel — real chain-of-thought tokens streamed
         // as `{type:'reasoning',delta}` events, interleaved with content. We

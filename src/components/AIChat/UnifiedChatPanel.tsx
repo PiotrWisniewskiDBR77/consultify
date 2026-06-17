@@ -1690,6 +1690,29 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         } as any);
       });
     },
+    // SPEC_01 (Tryb A): the chat backend created a deliverable via the
+    // generate_deliverable function-call and asks us to mount it in the canvas.
+    // Mirror the front-end intent-intercept mount sequence (Tryb B) so the
+    // resulting artifact is identical regardless of which path triggered it.
+    onDeliverable: (payload) => {
+      const draftId = String(payload?.draftId || payload?.generationId || '').trim();
+      if (!draftId) return;
+      const kind = payload.kind === 'sheet' ? 'sheet' : payload.kind === 'deck' ? 'deck' : 'doc';
+      const title =
+        payload.title || (kind === 'sheet' ? 'Arkusz' : kind === 'deck' ? 'Prezentacja' : 'Dokument');
+      if (kind === 'deck') {
+        setRequestedCanvasDraftId(null);
+        setRequestedCanvasDeckId(draftId);
+        setRequestedCanvasStarterId('presentation');
+      } else {
+        setRequestedCanvasDeckId(null);
+        setRequestedCanvasDraftId(draftId);
+        setRequestedCanvasStarterId('document');
+      }
+      setIsWorkPanelOpen(true);
+      registerChatDeliverable(kind, draftId, title);
+      announceDeliverableDraftReady(draftId);
+    },
   });
 
   // =========================================================================
