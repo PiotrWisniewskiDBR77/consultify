@@ -4,9 +4,12 @@
  * Smoke tests for RolloutTab (Module 06 Realizacja — rollout consolidation).
  *
  * Verifies the rollout sub-resources are backed by real /api/rollout/* calls
- * (not the retired in-memory fullSession writes):
- *  - KPI add POSTs to /rollout/kpis and renders the returned row
- *  - KPI delete calls DELETE /rollout/kpis/:id
+ * (not the retired in-memory fullSession writes), AND that the canon §27 refactor
+ * (M14/L-06, `5cdf90acdc`) behaves correctly — rows are read-only, edits route
+ * through the kebab → modal, deletes through the kebab → confirm dialog:
+ *  - KPI add POSTs to /rollout/kpis and renders the returned row as read-only text
+ *  - KPI edit opens RolloutRegisterEditModal and PATCHes the minimal diff
+ *  - KPI delete goes kebab → confirm → DELETE /rollout/kpis/:id
  *  - load failure surfaces the HubWorkAreaLoadError retry state
  */
 
@@ -80,7 +83,7 @@ describe('RolloutTab smoke', () => {
     expect(apiGet).toHaveBeenCalledWith(expect.stringContaining('/rollout/risks'));
   });
 
-  it('add KPI POSTs to /rollout/kpis and shows the returned row', async () => {
+  it('add KPI POSTs to /rollout/kpis and shows the returned row as read-only text', async () => {
     emptyLists();
     apiPost.mockResolvedValue({
       data: {
@@ -97,12 +100,15 @@ describe('RolloutTab smoke', () => {
     await waitFor(() => {
       expect(apiPost).toHaveBeenCalledWith('/rollout/kpis', { projectId: 'proj-1' });
     });
+    // Canon §27: the name now renders as a read-only table cell (text), NOT an
+    // editable <input> — so there is no display value, just visible text.
     await waitFor(() => {
-      expect(screen.getByDisplayValue('NPS')).toBeInTheDocument();
+      expect(screen.getByText('NPS')).toBeInTheDocument();
     });
+    expect(screen.queryByDisplayValue('NPS')).not.toBeInTheDocument();
   });
 
-  it('delete KPI calls DELETE /rollout/kpis/:id', async () => {
+  const seededKpiList = () => {
     apiGet.mockImplementation((url: string) => {
       if (url.includes('/rollout/kpis'))
         return Promise.resolve({
@@ -117,12 +123,52 @@ describe('RolloutTab smoke', () => {
       if (url.includes('/rollout/closures')) return Promise.resolve({ data: { closures: [] } });
       return Promise.resolve({ data: {} });
     });
+  };
+
+  it('edit KPI opens the modal and PATCHes the minimal diff to /rollout/kpis/:id', async () => {
+    seededKpiList();
+    apiPatch.mockResolvedValue({
+      data: {
+        kpi: { id: 'k1', name: 'NPS v2', baseline: 0, target: 100, current_value: 20, unit: '%' },
+      },
+    });
+
+    render(<RolloutTab projectId="proj-1" initiatives={[]} />);
+    await waitFor(() => expect(screen.getByText('NPS')).toBeInTheDocument());
+
+    // Canon §27: edit is behind the row kebab → "Edit" → modal.
+    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(await screen.findByText('Edit'));
+
+    // Modal opens, seeded from the row (name is now an editable input inside it).
+    const nameInput = await screen.findByDisplayValue('NPS');
+    fireEvent.change(nameInput, { target: { value: 'NPS v2' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    // Only the changed field is sent (minimal diff).
+    await waitFor(() => {
+      expect(apiPatch).toHaveBeenCalledWith('/rollout/kpis/k1', { name: 'NPS v2' });
+    });
+  });
+
+  it('delete KPI goes kebab → confirm dialog → DELETE /rollout/kpis/:id', async () => {
+    seededKpiList();
     apiDelete.mockResolvedValue({ data: { success: true } });
 
     render(<RolloutTab projectId="proj-1" initiatives={[]} />);
-    await waitFor(() => expect(screen.getByDisplayValue('NPS')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('NPS')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByText('Delete'));
+    // Canon §27: delete is behind the kebab and guarded by a confirm dialog.
+    fireEvent.click(screen.getByLabelText('Row actions'));
+    fireEvent.click(await screen.findByText('Delete'));
+
+    // Confirm dialog appears; nothing deleted until the user confirms.
+    const confirmDialogTitle = await screen.findByText('Delete this item?');
+    expect(confirmDialogTitle).toBeInTheDocument();
+    expect(apiDelete).not.toHaveBeenCalled();
+
+    // The dialog's confirm button carries the common.delete label.
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     await waitFor(() => {
       expect(apiDelete).toHaveBeenCalledWith('/rollout/kpis/k1');
