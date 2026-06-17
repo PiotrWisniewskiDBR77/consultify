@@ -123,7 +123,10 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       audience: audienceList.length > 0 ? audienceList : undefined,
     };
     void onSubmit(intake, {
-      useLlm: inTemplateMode ? false : useLlm,
+      // M18/L-04: Mode3 (template) now uses LLM to fill content — template provides
+      // structure, LLM generates the actual text (same as Mode1). Previously hardcoded
+      // to false which bypassed LLM entirely even when a template was selected.
+      useLlm: inTemplateMode ? true : useLlm,
       templateId: inTemplateMode ? selectedTemplateId : null,
     });
   };
