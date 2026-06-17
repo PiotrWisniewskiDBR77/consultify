@@ -4,7 +4,5 @@
  */
 export { BenefitsTracker } from './BenefitsTracker';
 export { BudgetControlPanel } from './BudgetControlPanel';
-export { DelayDetectionPanel } from './DelayDetectionPanel';
 export { ExecutionHub } from './ExecutionHub';
 export { MitigationPanel } from './MitigationPanel';
-export { RiskSignalsPanel } from './RiskSignalsPanel';
