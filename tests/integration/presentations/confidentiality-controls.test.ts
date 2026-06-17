@@ -5,11 +5,22 @@
  * Covers: confidential decks block export for unprivileged callers, non-public decks
  * block share for project_manager, and public decks allow share for any authorized role.
  *
- * Behavior:
- * - All assertions are best-effort. If the backend is not reachable or the seed/create
- *   fails, every test in the suite returns early to avoid spurious failures in CI.
- * - We never assert that the backend echoes confidentiality; we only verify error codes
- *   and HTTP statuses for the policy gates.
+ * ── L-07 STATUS: SKIPPED (caboose required) ──────────────────────────────────
+ * All 3 tests require a live API server at $API_URL (default
+ * http://localhost:3001/api) AND a seeded staging database (caboose).
+ * The original tests were doubly vacuous: they bailed out on
+ * `if (!backendReachable || !confidentialDeckId) { expect(true).toBe(true); return; }`
+ * AND on status mismatch with `if (status !== 403) { expect(true).toBe(true); return; }` —
+ * always passing regardless of server state.
+ *
+ * S7 (share/confidentiality enforcement) is logged as [P1] backlog in the M19
+ * evidence file (f2_tests_report.md §5 item 5). The intended replacement is a
+ * supertest in-process test against presentationStudio.routes (which already has
+ * 71 RBAC tests in server/src/routes/__tests__/presentationStudio.routes.test.ts).
+ *
+ * These live-server tests are preserved as skip() so their intent is visible and
+ * they can be re-enabled by running against caboose (§06):
+ *   API_URL=https://caboose.railway.app/api npx vitest run tests/integration/presentations/confidentiality-controls.test.ts
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -81,17 +92,15 @@ async function tryCreateDeck(meta: Record<string, any> = {}): Promise<string | n
   }
 }
 
-describe('P20-K confidentiality controls — contract', () => {
+describe('P20-K confidentiality controls — contract (SKIPPED: requires caboose §06)', () => {
   let confidentialDeckId: string | null = null;
   let internalDeckId: string | null = null;
   let publicDeckId: string | null = null;
-  let backendReachable = false;
 
   beforeAll(async () => {
     confidentialDeckId = await tryCreateDeck({ confidentiality: 'confidential' });
     internalDeckId = await tryCreateDeck({});
     publicDeckId = await tryCreateDeck({});
-    backendReachable = Boolean(confidentialDeckId || internalDeckId || publicDeckId);
 
     if (publicDeckId) {
       try {
@@ -104,62 +113,35 @@ describe('P20-K confidentiality controls — contract', () => {
     }
   });
 
-  it('blocks export of confidential deck for unprivileged caller (HTTP 403, code CONFIDENTIALITY_POLICY_BLOCKED)', async () => {
-    if (!backendReachable || !confidentialDeckId) {
-      expect(true).toBe(true);
-      return;
-    }
+  it.skip('blocks export of confidential deck for unprivileged caller (HTTP 403, code CONFIDENTIALITY_POLICY_BLOCKED) [caboose]', async () => {
+    expect(confidentialDeckId).toBeTruthy();
     const { status, data } = await apiGet(
       `/presentations/decks/${confidentialDeckId}/download`,
       { 'X-Test-Role': 'USER' },
     );
-    if (status !== 403) {
-      // Test infra may not honor X-Test-Role; treat as informational pass.
-      expect(true).toBe(true);
-      return;
-    }
     expect(status).toBe(403);
     expect(data?.code || data?.error?.code).toBe('CONFIDENTIALITY_POLICY_BLOCKED');
     expect(data?.action || data?.error?.action).toBe('export');
   });
 
-  it('blocks share for non-public deck for project_manager (HTTP 403, code CONFIDENTIALITY_SHARE_REQUIRES_ADMIN)', async () => {
-    if (!backendReachable || !internalDeckId) {
-      expect(true).toBe(true);
-      return;
-    }
+  it.skip('blocks share for non-public deck for project_manager (HTTP 403, code CONFIDENTIALITY_SHARE_REQUIRES_ADMIN) [caboose]', async () => {
+    expect(internalDeckId).toBeTruthy();
     const { status, data } = await apiPost(
       `/presentations/decks/${internalDeckId}/share`,
       { expiresInDays: 7 },
       { 'X-Test-Role': 'PROJECT_MANAGER' },
     );
-    if (status !== 403) {
-      // Test infra may not honor X-Test-Role; treat as informational pass.
-      expect(true).toBe(true);
-      return;
-    }
     expect(status).toBe(403);
     expect(data?.code || data?.error?.code).toBe('CONFIDENTIALITY_SHARE_REQUIRES_ADMIN');
   });
 
-  it('allows share for public deck for any authorized role (HTTP 200, contains shareToken)', async () => {
-    if (!backendReachable || !publicDeckId) {
-      expect(true).toBe(true);
-      return;
-    }
+  it.skip('allows share for public deck for any authorized role (HTTP 200, contains shareToken) [caboose]', async () => {
+    expect(publicDeckId).toBeTruthy();
     const { status, data } = await apiPost(
       `/presentations/decks/${publicDeckId}/share`,
       { expiresInDays: 7 },
     );
-    // Best-effort: if PATCH to public was unsupported, deck may still be internal -> 403.
-    if (status === 200) {
-      expect(data?.data?.shareToken || data?.shareToken).toBeTruthy();
-      return;
-    }
-    if (status === 403) {
-      expect(true).toBe(true);
-      return;
-    }
-    expect([200, 403]).toContain(status);
+    expect(status).toBe(200);
+    expect(data?.data?.shareToken || data?.shareToken).toBeTruthy();
   });
 });

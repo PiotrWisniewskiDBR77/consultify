@@ -7,6 +7,19 @@
  * - Failed export records ledger entry with status=failed
  * - Retry after failure succeeds with same deck identity
  * - No new deck artifact created on failure
+ *
+ * ── L-07 STATUS: SKIPPED (caboose required) ──────────────────────────────────
+ * Both tests require a live API server at $API_URL (default
+ * http://localhost:3001/api) AND a seeded staging database (caboose).
+ * The original tests bailed out with `if (createRes.status !== 201) return`
+ * without asserting anything when no server is running — vacuous green.
+ *
+ * S5 (quality-gate 422 for canExport=false) is now covered deterministically
+ * (no network) by: tests/integration/presentations/export-quality-gate.regression.test.ts
+ *
+ * These live-server tests are preserved as skip() so their intent is visible and
+ * they can be re-enabled by running against caboose (§06):
+ *   API_URL=https://caboose.railway.app/api npx vitest run tests/integration/presentations/p20-export-resilience.test.ts
  */
 
 import { describe, it, expect } from 'vitest';
@@ -14,8 +27,8 @@ import { describe, it, expect } from 'vitest';
 const API_URL = process.env.API_URL || 'http://localhost:3001/api';
 const AUTH_HEADER = { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' };
 
-describe('P20 Export Resilience', () => {
-  it('export limits: more than 60 slides returns 422 EXPORT_LIMIT_EXCEEDED', async () => {
+describe('P20 Export Resilience (SKIPPED: requires caboose §06)', () => {
+  it.skip('export limits: more than 60 slides returns 422 EXPORT_LIMIT_EXCEEDED [caboose]', async () => {
     const slides = Array.from({ length: 65 }, (_, i) => ({
       type: 'content',
       content: { text: `Slide ${i + 1}` },
@@ -32,9 +45,9 @@ describe('P20 Export Resilience', () => {
       }),
     });
 
-    if (createRes.status !== 201) return;
+    expect(createRes.status).toBe(201);
     const deckId = (await createRes.json())?.data?.id;
-    if (!deckId) return;
+    expect(deckId).toBeTruthy();
 
     const autosaveBody = {
       deck_id: deckId,
@@ -61,7 +74,7 @@ describe('P20 Export Resilience', () => {
     expect(errBody.code).toBe('EXPORT_LIMIT_EXCEEDED');
   });
 
-  it('export failure does not create ghost deck', async () => {
+  it.skip('export failure does not create ghost deck [caboose]', async () => {
     const createRes = await fetch(`${API_URL}/presentations/decks`, {
       method: 'POST',
       headers: AUTH_HEADER,
@@ -72,8 +85,9 @@ describe('P20 Export Resilience', () => {
         source: 'test',
       }),
     });
-    if (createRes.status !== 201) return;
+    expect(createRes.status).toBe(201);
     const deckId = (await createRes.json())?.data?.id;
+    expect(deckId).toBeTruthy();
 
     const downloadRes = await fetch(`${API_URL}/presentations/decks/${deckId}/download`, {
       headers: AUTH_HEADER,
