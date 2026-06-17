@@ -6,6 +6,7 @@
 import crypto from 'crypto';
 
 import { getDatabase } from '../../database/Database.js';
+import { decryptSecret, encryptSecret } from '../../utils/secretEncryption.js';
 import logger from '../../utils/Logger.js';
 
 export interface WebhookEvent {
@@ -38,7 +39,7 @@ export class WebhookDispatcherService {
     const result = await db.query(
       `INSERT INTO tp_webhooks (base_id, notification_url, specification, hmac_secret, created_by)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [baseId, notificationUrl, JSON.stringify(specification), hmacSecret, createdBy ?? null]
+      [baseId, notificationUrl, JSON.stringify(specification), encryptSecret(hmacSecret), createdBy ?? null]
     );
     const webhook = result.rows[0] as Record<string, unknown>;
     return {
@@ -179,7 +180,8 @@ export class WebhookDispatcherService {
     };
 
     if (webhook.hmac_secret) {
-      const hmac = crypto.createHmac('sha256', webhook.hmac_secret as string);
+      const secret = decryptSecret(webhook.hmac_secret as string);
+      const hmac = crypto.createHmac('sha256', secret);
       hmac.update(body);
       headers['X-Airtable-Content-MAC'] = `hmac-sha256=${hmac.digest('hex')}`;
     }
