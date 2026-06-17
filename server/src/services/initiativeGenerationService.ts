@@ -393,6 +393,17 @@ export class InitiativeGenerationService {
     organizationId?: string,
     options?: { withReview?: boolean }
   ): Promise<GenerationResult> {
+    // 0. Fail fast when LLM is not configured — no placeholders, honest 503.
+    const llmEarly = await getLLMServiceInstance();
+    if (!llmEarly) {
+      throw new AppError(
+        'AI generation requires a configured LLM provider',
+        503,
+        'FEATURE_UNAVAILABLE',
+        { hint: 'Set OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY.' }
+      );
+    }
+
     // 1. Get section type definition (with prompt template)
     let sectionType: any = null;
     try {
@@ -403,7 +414,12 @@ export class InitiativeGenerationService {
     } catch (err: unknown) {
       const msg = (err as Error)?.message || String(err);
       // If schema/migrations are missing, do not 500 — be explicit and honest.
-      if (msg.includes('no such table') || msg.includes('SQLITE_ERROR')) {
+      if (
+        msg.includes('no such table') ||
+        msg.includes('SQLITE_ERROR') ||
+        msg.includes('does not exist') ||
+        msg.includes('relation')
+      ) {
         throw new AppError(
           'Initiative section types are not available (schema missing)',
           503,
@@ -450,21 +466,7 @@ export class InitiativeGenerationService {
     const isPolish = lang === 'pl' || lang === 'polish';
     const systemPrompt = isPolish ? DOCTRINE_SYSTEM_PROMPT : DOCTRINE_SYSTEM_PROMPT_EN;
 
-    const llm = await getLLMServiceInstance();
-    if (!llm) {
-      const name = context.initiativeName || 'Initiative';
-      const content = isPolish
-          ? `Uzupełnij sekcję "${sectionKey}" dla inicjatywy "${name}". (Placeholder — moduł AI/LLM nie jest skonfigurowany lub niedostępny.)`
-          : `Fill in section "${sectionKey}" for initiative "${name}". (Placeholder — AI/LLM is not configured or unavailable.)`;
-
-      return {
-        content,
-        isJson: false,
-        parsedContent: undefined,
-        tokensUsed: 0,
-        model: 'placeholder',
-      };
-    }
+    const llm = llmEarly;
 
     try {
       // Use the PREMIUM tier (resolves to the best configured provider — latest
@@ -663,23 +665,12 @@ export class InitiativeGenerationService {
   ): Promise<{ key: string; reason: string; priority: 'high' | 'medium' | 'low' }[]> {
     const llm = await getLLMServiceInstance();
     if (!llm) {
-      return [
-        {
-          key: 'overview',
-          reason: 'Core summary for stakeholders and context',
-          priority: 'high',
-        },
-        {
-          key: 'tasks',
-          reason: 'Concrete execution plan and ownership',
-          priority: 'medium',
-        },
-        {
-          key: 'decisions',
-          reason: 'Key decisions and approvals required to proceed',
-          priority: 'medium',
-        },
-      ];
+      throw new AppError(
+        'AI section suggestions require a configured LLM provider',
+        503,
+        'FEATURE_UNAVAILABLE',
+        { hint: 'Set OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY.' }
+      );
     }
 
     // Get all available section types
@@ -690,7 +681,12 @@ export class InitiativeGenerationService {
       );
     } catch (err: unknown) {
       const msg = (err as Error)?.message || String(err);
-      if (msg.includes('no such table') || msg.includes('SQLITE_ERROR')) {
+      if (
+        msg.includes('no such table') ||
+        msg.includes('SQLITE_ERROR') ||
+        msg.includes('does not exist') ||
+        msg.includes('relation')
+      ) {
         throw new AppError(
           'Initiative section types are not available (schema missing)',
           503,

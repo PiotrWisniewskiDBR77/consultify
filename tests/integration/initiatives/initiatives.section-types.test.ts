@@ -7,11 +7,13 @@ import { makeInitiativesApp } from './_helpers/makeInitiativesApp';
 const {
   mockSectionTypeDelete,
   mockSectionTypeDuplicate,
+  mockSectionTypeGetById,
   mockInitiativeController,
   mockTemplateService,
 } = vi.hoisted(() => ({
   mockSectionTypeDelete: vi.fn(),
   mockSectionTypeDuplicate: vi.fn(),
+  mockSectionTypeGetById: vi.fn(),
   mockInitiativeController: new Proxy(
     {},
     {
@@ -31,6 +33,7 @@ vi.mock('../../../../server/src/services/initiativeSectionTypeService.js', () =>
   default: {
     deleteSectionType: (...args: any[]) => mockSectionTypeDelete(...args),
     duplicateSectionType: (...args: any[]) => mockSectionTypeDuplicate(...args),
+    getSectionTypeById: (...args: any[]) => mockSectionTypeGetById(...args),
   },
 }));
 
@@ -79,6 +82,11 @@ describe('Initiatives routes: /section-types (REAL integration)', () => {
   });
 
   it('DELETE /section-types/:id returns success', async () => {
+    mockSectionTypeGetById.mockResolvedValueOnce({
+      id: 'abc',
+      isSystem: false,
+      organizationId: 'test-org-id',
+    });
     mockSectionTypeDelete.mockResolvedValueOnce(undefined);
     const app = await makeInitiativesApp();
     const res = await request(app).delete('/api/initiatives/section-types/abc');
@@ -87,7 +95,11 @@ describe('Initiatives routes: /section-types (REAL integration)', () => {
   });
 
   it('DELETE /section-types/:id returns 403 when system section is blocked', async () => {
-    mockSectionTypeDelete.mockRejectedValueOnce(new Error('system sections cannot be deleted'));
+    mockSectionTypeGetById.mockResolvedValueOnce({
+      id: 'system',
+      isSystem: true,
+      organizationId: null,
+    });
     const app = await makeInitiativesApp();
     const res = await request(app).delete('/api/initiatives/section-types/system');
     expect(res.status).toBe(403);
@@ -95,21 +107,25 @@ describe('Initiatives routes: /section-types (REAL integration)', () => {
   });
 
   it('DELETE /section-types/:id returns 500 on other errors', async () => {
-    mockSectionTypeDelete.mockRejectedValueOnce(new Error('boom'));
+    mockSectionTypeGetById.mockRejectedValueOnce(new Error('boom'));
     const app = await makeInitiativesApp();
     const res = await request(app).delete('/api/initiatives/section-types/abc');
     expect(res.status).toBe(500);
     expect(res.body).toEqual(expect.objectContaining({ error: 'Failed to delete section type' }));
   });
 
-  it('POST /section-types/:id/duplicate returns 401 when org is missing', async () => {
+  it('POST /section-types/:id/duplicate returns 403 when org is missing', async () => {
     const app = await makeInitiativesApp({ user: { organizationId: '' } });
     const res = await request(app).post('/api/initiatives/section-types/abc/duplicate').send({});
-    expect(res.status).toBe(401);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'Unauthorized' }));
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(expect.objectContaining({ error: 'Organization access required' }));
   });
 
   it('POST /section-types/:id/duplicate returns 201 and passes orgId + userId', async () => {
+    mockSectionTypeGetById.mockResolvedValueOnce({
+      id: 'abc',
+      organizationId: null,
+    });
     mockSectionTypeDuplicate.mockResolvedValueOnce({ id: 'dup-1' });
     const app = await makeInitiativesApp({ user: { id: 'u-1', organizationId: 'org-1' } });
     const res = await request(app).post('/api/initiatives/section-types/abc/duplicate').send({});

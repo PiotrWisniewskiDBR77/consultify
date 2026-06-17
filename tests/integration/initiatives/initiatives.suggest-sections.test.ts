@@ -78,13 +78,13 @@ describe('Initiatives routes: POST /suggest-sections (REAL integration)', () => 
     vi.clearAllMocks();
   });
 
-  it('returns 401 when organizationId is missing', async () => {
+  it('returns 403 when organizationId is missing', async () => {
     const app = await makeInitiativesApp({ user: { organizationId: '' } });
     const res = await request(app).post('/api/initiatives/suggest-sections').send({
       initiativeName: 'X',
     });
-    expect(res.status).toBe(401);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'Unauthorized' }));
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(expect.objectContaining({ error: 'Organization access required' }));
   });
 
   it('defaults language to en', async () => {
@@ -125,7 +125,10 @@ describe('Initiatives routes: POST /suggest-sections (REAL integration)', () => 
     });
     expect(res.status).toBe(500);
     expect(res.body).toEqual(
-      expect.objectContaining({ error: 'Failed to suggest sections', message: 'boom' })
+      expect.objectContaining({
+        status: 'error',
+        error: expect.objectContaining({ code: 'PMO_INITIATIVES_SUGGEST_SECTIONS_FAILED' }),
+      })
     );
   });
 

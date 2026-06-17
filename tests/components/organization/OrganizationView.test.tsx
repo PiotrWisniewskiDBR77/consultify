@@ -34,6 +34,7 @@ vi.mock('../../../src/store/useAppStore', () => ({
   useAppStore: () => ({
     setCurrentView: h.setCurrentViewMock,
     currentOrganization: h.currentOrganization,
+    currentUser: { id: 'u-1', role: 'admin', isAuthenticated: true },
   }),
 }));
 

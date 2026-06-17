@@ -78,14 +78,16 @@ describe('Initiatives routes: POST /generate-section (REAL integration)', () => 
     vi.clearAllMocks();
   });
 
-  it('returns 401 when organizationId is missing', async () => {
+  it('returns 403 when organizationId is missing', async () => {
     const app = await makeInitiativesApp({ user: { organizationId: '' } });
     const res = await request(app).post('/api/initiatives/generate-section').send({
       sectionKey: 'overview',
       initiativeName: 'X',
     });
-    expect(res.status).toBe(401);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'Unauthorized' }));
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(
+      expect.objectContaining({ error: 'Organization access required' })
+    );
   });
 
   it('returns 400 when sectionKey is missing', async () => {
@@ -108,7 +110,8 @@ describe('Initiatives routes: POST /generate-section (REAL integration)', () => 
     expect(mockGenerateSectionContent).toHaveBeenCalledWith(
       'overview',
       expect.objectContaining({ initiativeName: 'X', language: 'en' }),
-      'org-1'
+      'org-1',
+      expect.objectContaining({ withReview: false })
     );
   });
 
@@ -124,7 +127,8 @@ describe('Initiatives routes: POST /generate-section (REAL integration)', () => 
     expect(mockGenerateSectionContent).toHaveBeenCalledWith(
       'overview',
       expect.objectContaining({ language: 'pl' }),
-      'org-2'
+      'org-2',
+      expect.objectContaining({ withReview: false })
     );
   });
 
@@ -137,7 +141,10 @@ describe('Initiatives routes: POST /generate-section (REAL integration)', () => 
     });
     expect(res.status).toBe(500);
     expect(res.body).toEqual(
-      expect.objectContaining({ error: 'Failed to generate section content', message: 'boom' })
+      expect.objectContaining({
+        status: 'error',
+        error: expect.objectContaining({ code: 'PMO_INITIATIVES_SECTION_GENERATION_FAILED' }),
+      })
     );
   });
 });

@@ -35,7 +35,12 @@ describe('Initiatives AI generation (honest 503; no placeholder content)', () =>
     });
 
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        error: expect.objectContaining({ code: 'PMO_INITIATIVES_SERVICE_NOT_CONFIGURED' }),
+      })
+    );
   });
 
   it('POST /api/initiatives/suggest-sections returns 503 FEATURE_UNAVAILABLE when LLM is not usable', async () => {
@@ -49,6 +54,11 @@ describe('Initiatives AI generation (honest 503; no placeholder content)', () =>
     });
 
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        error: expect.objectContaining({ code: 'PMO_INITIATIVES_SERVICE_NOT_CONFIGURED' }),
+      })
+    );
   });
 });

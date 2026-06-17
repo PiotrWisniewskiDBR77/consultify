@@ -39,7 +39,7 @@ describe('Management reports export (dependency missing is explicit)', () => {
     const res = await request(makeApp()).get(`${basePath}/any-report-id/pptx`);
     expect(res.status).toBe(503);
     expect(res.body).toEqual(
-      expect.objectContaining({ success: false, error: expect.stringContaining('schema missing') })
+      expect.objectContaining({ statusCode: 503, status: false, type: 'not_configured' })
     );
   });
 });

@@ -88,12 +88,12 @@ describe('Initiatives routes: POST /readiness-analysis (REAL integration)', () =
     vi.clearAllMocks();
   });
 
-  it('returns 401 when organizationId is missing', async () => {
+  it('returns 403 when organizationId is missing', async () => {
     const app = await makeInitiativesApp({ user: { organizationId: '' } });
     const res = await request(app).post('/api/initiatives/readiness-analysis').send({
       initiativeId: 'i-1',
     });
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(403);
   });
 
   it('returns 400 when initiativeId is missing', async () => {

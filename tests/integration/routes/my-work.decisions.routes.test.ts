@@ -48,6 +48,10 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     req.user = { id: 'u-1', organizationId: 'org-1', role: 'ADMIN' };
     next();
   },
+  requireRole:
+    (..._roles: string[]) =>
+    (_req: any, _res: any, next: any) =>
+      next(),
 }));
 
 vi.mock('../../../server/src/utils/dbSchema.js', () => ({

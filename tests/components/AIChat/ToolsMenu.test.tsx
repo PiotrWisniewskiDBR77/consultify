@@ -276,7 +276,7 @@ describe('ToolsMenu (L2)', () => {
     expect(screen.getByText(/1000\/1000/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /reset/i }));
-    expect(setAIConfigMock).toHaveBeenCalledWith({ responseStyle: 'normal' });
+    expect(setAIConfigMock).toHaveBeenCalledWith({ responseStyle: 'normal', customInstructions: '' });
     expect((textbox as HTMLTextAreaElement).value).toBe('');
   });
 

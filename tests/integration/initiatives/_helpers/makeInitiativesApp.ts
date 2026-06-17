@@ -5,7 +5,7 @@ export async function loadInitiativesRouter(): Promise<any> {
 }
 
 export async function makeInitiativesApp(opts?: {
-  user?: { id?: string; organizationId?: string };
+  user?: { id?: string; organizationId?: string; role?: string };
 }): Promise<import('express').Express> {
   const router = await loadInitiativesRouter();
   return makeTestApp({
@@ -16,6 +16,7 @@ export async function makeInitiativesApp(opts?: {
         (req as any).user = {
           id: opts?.user?.id ?? 'test-user-id',
           organizationId: opts?.user?.organizationId ?? 'test-org-id',
+          role: opts?.user?.role ?? 'ADMIN',
         };
         (req as any).userId = (req as any).user.id;
         (req as any).organizationId = (req as any).user.organizationId;

@@ -61,7 +61,7 @@ describe('useDocs V8 featured bridge', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/categories?lang=en');
+    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/categories?lang=en&site=consultify');
     expect(result.current.data?.[0].slug).toBe('guides');
   });
 
@@ -92,7 +92,7 @@ describe('useDocs V8 featured bridge', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/featured?lang=en&limit=6');
+    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/featured?lang=en&limit=6&site=consultify');
     expect(result.current.data?.[0].slug).toBe('featured-v8');
     expect(V8KnowledgeBaseApi.getFeaturedArticles).not.toHaveBeenCalled();
   });
@@ -129,7 +129,7 @@ describe('useDocs V8 featured bridge', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/public/kb-v8/articles?lang=en&category=guides&limit=12&offset=4'
+      '/api/public/kb-v8/articles?lang=en&category=guides&limit=12&offset=4&site=consultify'
     );
     expect(result.current.data?.articles[0].slug).toBe('intro');
     expect(V8KnowledgeBaseApi.getArticles).not.toHaveBeenCalled();
@@ -165,7 +165,7 @@ describe('useDocs V8 featured bridge', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/articles/deep-dive?lang=en');
+    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/articles/deep-dive?lang=en&site=consultify');
     expect(result.current.data?.slug).toBe('deep-dive');
     expect(V8KnowledgeBaseApi.getArticleBySlug).not.toHaveBeenCalled();
   });
@@ -199,7 +199,7 @@ describe('useDocs V8 featured bridge', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/search?q=search&lang=en');
+    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/search?q=search&lang=en&site=consultify');
     expect(result.current.data?.[0].slug).toBe('search-hit');
     expect(V8KnowledgeBaseApi.searchArticles).not.toHaveBeenCalled();
   });
@@ -245,7 +245,7 @@ describe('useDocs V8 featured bridge', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetch).toHaveBeenNthCalledWith(1, '/api/public/kb-v8/categories?lang=en');
+    expect(mockFetch).toHaveBeenNthCalledWith(1, '/api/public/kb-v8/categories?lang=en&site=consultify');
     expect(mockFetch).toHaveBeenNthCalledWith(2, '/api/kb/categories?lang=en');
     expect(result.current.data?.[0].slug).toBe('academy');
   });
@@ -282,7 +282,7 @@ describe('useDocs V8 featured bridge', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetch).toHaveBeenNthCalledWith(1, '/api/public/kb-v8/articles?lang=en&category=academy&limit=5');
+    expect(mockFetch).toHaveBeenNthCalledWith(1, '/api/public/kb-v8/articles?lang=en&category=academy&limit=5&site=consultify');
     expect(mockFetch).toHaveBeenNthCalledWith(2, '/api/kb/articles?lang=en&category=academy&limit=5');
     expect(result.current.data?.articles[0].slug).toBe('academy-intro');
   });
