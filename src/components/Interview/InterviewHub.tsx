@@ -110,6 +110,7 @@ import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
+import { isInterviewPipelineStepperEnabled } from '@/utils/interviewPipelineStepperFlag';
 
 import {
   type FilterChip,
@@ -131,6 +132,10 @@ import {
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
 import { InterviewInitiativePreviewFooter } from './InterviewInitiativePreview';
+import {
+  type InterviewPipelineStep,
+  InterviewPipelineStepper,
+} from './InterviewPipelineStepper';
 import {
   InterviewInsightPreviewBody,
   InterviewInsightPreviewFooter,
@@ -198,6 +203,27 @@ const INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-initi
 const INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-initiatives-show-row-description';
 const INTERVIEW_CREATE_SESSION_TOAST_ID = 'interview-create-session';
+
+// L-07 / D-03 — canonical pipeline stage numerals ①–⑥ over the flat tabs. Lifted
+// to module scope so both the `tabs` labels (withStep) and the `pipelineSteps`
+// stepper (D-03) derive from one source. Sessions has no numeral (side view).
+const INTERVIEW_PIPELINE_NUMERAL: Record<string, string> = {
+  templates: '①',
+  managed: '②',
+  my_assignments: '③',
+  pending_review: '④',
+  insights: '⑤',
+  initiatives: '⑥',
+};
+// Pipeline stage order (left→right) for the D-03 stepper.
+const INTERVIEW_PIPELINE_STAGE_ORDER = [
+  'templates',
+  'managed',
+  'my_assignments',
+  'pending_review',
+  'insights',
+  'initiatives',
+] as const;
 
 // V-B — column-width persistence storage keys (one per resizable table).
 const INTERVIEW_INBOX_COL_WIDTHS_KEY = 'consultify-interview-inbox-col-widths';
@@ -2678,16 +2704,8 @@ export const InterviewHub: React.FC = () => {
     // PREVIEW: the numbering is an advisory ordering over the existing flat tabs;
     // a dedicated ④ "Dopuszczenie" inbox is not yet a standalone backed view, so
     // the review stage is reached via the Przydzielone tab's approve/send-back.
-    const PIPELINE_NUMERAL: Record<string, string> = {
-      templates: '①',
-      managed: '②',
-      my_assignments: '③',
-      pending_review: '④',
-      insights: '⑤',
-      initiatives: '⑥',
-    };
     const withStep = (id: string, label: string): string =>
-      PIPELINE_NUMERAL[id] ? `${PIPELINE_NUMERAL[id]} ${label}` : label;
+      INTERVIEW_PIPELINE_NUMERAL[id] ? `${INTERVIEW_PIPELINE_NUMERAL[id]} ${label}` : label;
 
     const baseTabs: Array<{
       id: ModuleTab;
@@ -2778,6 +2796,23 @@ export const InterviewHub: React.FC = () => {
     canViewTemplates,
     canReviewInsights,
   ]);
+
+  // D-03 — pipeline stepper steps, DERIVED from the visible `tabs` so permission
+  // gating + the ④ pending-review flag stay in one source of truth. Only the
+  // numbered pipeline stages appear (Sessions is a side view, excluded); labels
+  // are stripped of the numeral prefix the tab bar adds (the pill shows it).
+  const pipelineSteps = useMemo<InterviewPipelineStep[]>(() => {
+    return INTERVIEW_PIPELINE_STAGE_ORDER.map((id) => {
+      const tab = tabs.find((t) => t.id === id);
+      if (!tab) return null;
+      return {
+        id: tab.id,
+        numeral: INTERVIEW_PIPELINE_NUMERAL[id] ?? '',
+        label: tab.label.replace(/^[①②③④⑤⑥]\s*/, ''),
+        count: tab.count,
+      };
+    }).filter((s): s is InterviewPipelineStep => s !== null);
+  }, [tabs]);
 
   const ensureProjectId = useCallback(async (): Promise<string | null> => {
     if (currentProjectId) return currentProjectId;
@@ -13061,6 +13096,17 @@ Return ONLY the answer text (no markdown fences).`;
         availableViewModes={['table']}
         showTabCounts={false}
       >
+        {/* D-03 — top-level numbered pipeline stepper (flag-gated, default OFF).
+            Hidden while a document/detail is open (activeDocumentId) so it doesn't
+            compete with the in-document chrome. */}
+        {isInterviewPipelineStepperEnabled() && !activeDocumentId && pipelineSteps.length > 0 ? (
+          <InterviewPipelineStepper
+            steps={pipelineSteps}
+            activeTab={activeTab as ModuleTab}
+            onStepChange={handleMainTabChange}
+            isPolish={isPolish}
+          />
+        ) : null}
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
