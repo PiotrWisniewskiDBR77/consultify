@@ -109,6 +109,7 @@ import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
+import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
 
 import {
   type FilterChip,
@@ -2681,6 +2682,7 @@ export const InterviewHub: React.FC = () => {
       templates: '①',
       managed: '②',
       my_assignments: '③',
+      pending_review: '④',
       insights: '⑤',
       initiatives: '⑥',
     };
@@ -2728,6 +2730,21 @@ export const InterviewHub: React.FC = () => {
     }
 
     if (canViewInsights) {
+      // ④ Dopuszczenie (pending review) — D-04 (DP-5): the stage is fully built
+      // (selector `pendingReviewInsights` + the `activeTab === 'pending_review'`
+      // render branch). The dedicated tab is hidden by default before client
+      // delivery and surfaced only when `isInterviewPendingReviewTabEnabled()`
+      // (flag default OFF). When OFF, ④ is still reached via Przydzielone's
+      // approve/send-back — identical to current prod behaviour.
+      if (isInterviewPendingReviewTabEnabled()) {
+        baseTabs.push({
+          id: 'pending_review' as ModuleTab,
+          label: withStep('pending_review', isPolish ? 'Dopuszczenie' : 'Pending review'),
+          icon: <CheckCircle2 size={16} />,
+          count: pendingReviewInsights.length,
+        });
+      }
+
       baseTabs.push({
         id: 'insights' as ModuleTab,
         label: withStep('insights', isPolish ? 'Wnioski' : 'Insights'),
@@ -2743,7 +2760,8 @@ export const InterviewHub: React.FC = () => {
       });
     }
 
-    // "Pending review" top tab intentionally hidden before client delivery.
+    // ④ "Pending review" tab is gated above by isInterviewPendingReviewTabEnabled()
+    // (D-04 / DP-5) — default OFF, formalizing the previously bare "hidden" comment.
 
     return baseTabs;
   }, [
@@ -2754,6 +2772,7 @@ export const InterviewHub: React.FC = () => {
     templates.length,
     myAssignments,
     managedAssignments,
+    pendingReviewInsights.length,
     canViewInsights,
     canViewManaged,
     canViewTemplates,
