@@ -360,12 +360,22 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:component -- --reporter=junit --outputFile=junit-component.xml
 
+      # M08 L-05: My Work co-located component tests live under src/**/__tests__ and
+      # are NOT matched by `vitest run tests/components` (explicit path overrides the
+      # config include). Run them here so the ~195 cases (table cells/provenance/forms,
+      # ideas canvas, etc.) actually gate merges to main/develop.
+      - name: Run My Work co-located tests (M08 L-05)
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: npx vitest run src/components/MyWork --reporter=junit --outputFile=junit-mywork-colocated.xml
+
       - name: Upload test results
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: component-test-results
-          path: junit-component.xml
+          path: |
+            junit-component.xml
+            junit-mywork-colocated.xml
           retention-days: 30
       - name: Job duration
         if: always()
