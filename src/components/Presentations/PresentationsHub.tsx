@@ -438,7 +438,7 @@ export const PresentationsHub: React.FC = () => {
     async (deck: PresentationDeck) => {
       if (
         !window.confirm(
-          t('presentations.deleteConfirm', `Delete "${deck.title}"? This cannot be undone.`)
+          t('presentations.deleteConfirm', { title: deck.title })
         )
       )
         return;

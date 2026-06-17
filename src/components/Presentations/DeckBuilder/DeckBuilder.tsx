@@ -564,9 +564,7 @@ export const DeckBuilder: React.FC = () => {
             serverVersionRef.current = conflictPayload.serverVersion;
           }
           toast.error(
-            isPolish
-              ? 'Wykryto konflikt wersji. Odświeżam deck do najnowszej wersji.'
-              : 'Version conflict detected. Refreshing deck to latest version.'
+            t('presentations.versionConflictDetectedRefreshingDeckTo')
           );
           const latest = (await Api.get(`/presentations/decks/${deckForAutosave.deckId}`)) as any;
           const latestPayload =
@@ -726,11 +724,7 @@ export const DeckBuilder: React.FC = () => {
       if (!deck) return;
       try {
         await exportPresentationDeck({ deckId: deck.deck_id, title: deck.title, format });
-        toast.success(
-          isPolish
-            ? `Wyeksportowano jako ${format.toUpperCase()}`
-            : `Exported as ${format.toUpperCase()}`
-        );
+        toast.success(t('presentations.exportedAs', { format: format.toUpperCase() }));
       } catch (err: any) {
         if (err instanceof PresentationExportError && err.code === 'QUALITY_GATE_BLOCKED') {
           setQualityGatesOpen(true);
@@ -746,7 +740,7 @@ export const DeckBuilder: React.FC = () => {
             setActiveCardIndex(firstBlocker.cardIndex);
           }
         }
-        const message = err?.message || (isPolish ? 'Eksport nie powiódł się' : 'Export failed');
+        const message = err?.message || (t('presentations.exportFailed'));
         toast.error(message);
       }
     },
@@ -759,15 +753,15 @@ export const DeckBuilder: React.FC = () => {
         const restored = await restoreVersion(versionId);
         if (restored) {
           setDeck(restored);
-          toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
+          toast.success(t('presentations.versionRestored'));
         } else {
           toast.error(
-            isPolish ? 'Nie udało się przywrócić wersji' : 'Could not restore that version'
+            t('presentations.couldNotRestoreThatVersion')
           );
         }
       } catch {
         toast.error(
-          isPolish ? 'Nie udało się przywrócić wersji' : 'Could not restore that version'
+          t('presentations.couldNotRestoreThatVersion')
         );
       }
     },
@@ -789,7 +783,7 @@ export const DeckBuilder: React.FC = () => {
       } else {
         setDeck(pendingAgentEdit.deck);
       }
-      toast.success(isPolish ? 'Zmiany zastosowane i zapisane' : 'Changes applied and saved');
+      toast.success(t('presentations.changesAppliedAndSaved'));
     }
     setPendingAgentEdit(null);
   }, [pendingAgentEdit, setDeck, isPolish, deck?.deck_id]);
@@ -801,7 +795,7 @@ export const DeckBuilder: React.FC = () => {
         {}
       ).catch(() => null);
     }
-    toast(isPolish ? 'Zmiany odrzucone' : 'Changes rejected');
+    toast(t('presentations.changesRejected'));
     setPendingAgentEdit(null);
   }, [isPolish, pendingAgentEdit?.operationId, deck?.deck_id]);
 
@@ -816,9 +810,7 @@ export const DeckBuilder: React.FC = () => {
       const nextDeck = payload?.deck;
       const reply =
         payload?.reply ||
-        (isPolish
-          ? 'Zastosowałem zmiany w decku.'
-          : 'I applied the requested changes to the deck.');
+        (t('presentations.iAppliedTheRequestedChangesTo'));
       const actions = Array.isArray(payload?.appliedActions) ? payload.appliedActions : [];
       if (nextDeck) {
         setPendingAgentEdit({
@@ -840,7 +832,7 @@ export const DeckBuilder: React.FC = () => {
       view: AppView.PREZENTACJE_GEN,
       type: 'presentation',
       entityId: deck.deck_id,
-      entityName: deck.title || (isPolish ? 'Deck prezentacji' : 'Presentation deck'),
+      entityName: deck.title || (t('presentations.presentationDeck')),
       entityData: {
         moduleKey: 'deckBuilder',
         artifactKind: 'deck',
@@ -861,9 +853,7 @@ export const DeckBuilder: React.FC = () => {
         response && typeof response === 'object' && 'reply' in response
           ? String((response as { reply?: unknown }).reply || '')
           : '';
-      const fallbackReply = isPolish
-        ? 'Teresa przygotowała propozycję zmian w decku. Sprawdź pasek propozycji i zaakceptuj albo odrzuć zmianę.'
-        : 'Teresa prepared a deck change proposal. Review the proposal banner and accept or reject the change.';
+      const fallbackReply = t('presentations.teresaPreparedADeckChangeProposal');
       toast.success(reply || fallbackReply);
       return { handled: true, reply: reply || fallbackReply };
     },
@@ -875,10 +865,10 @@ export const DeckBuilder: React.FC = () => {
       if (!deckId) return;
       try {
         await PresentationStudioApi.regenerateSlide(deckId, cardIndex);
-        toast.success(isPolish ? 'Slajd odświeżony.' : 'Slide regenerated.', { duration: 2000 });
+        toast.success(t('presentations.slideRegenerated'), { duration: 2000 });
         setDeckReloadKey((k) => k + 1);
       } catch (err) {
-        toast.error(isPolish ? 'Nie udało się odświeżyć slajdu.' : 'Failed to regenerate slide.');
+        toast.error(t('presentations.failedToRegenerateSlide'));
       }
     },
     [deckId, isPolish]
@@ -1045,14 +1035,14 @@ export const DeckBuilder: React.FC = () => {
                   onClick={handleAcceptAgentEdit}
                   className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
                 >
-                  {isPolish ? 'Zastosuj' : 'Accept'}
+                  {t('presentations.accept')}
                 </button>
                 <button
                   type="button"
                   onClick={handleRejectAgentEdit}
                   className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                 >
-                  {isPolish ? 'Odrzuć' : 'Reject'}
+                  {t('presentations.reject')}
                 </button>
               </div>
             ) : null
@@ -1186,7 +1176,7 @@ export const DeckBuilder: React.FC = () => {
           >
             {deckBacklinks.length === 0 && !deckBacklinksLoading ? (
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Brak powiązań' : 'No links yet'}
+                {t('presentations.noLinksYet')}
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -1227,9 +1217,11 @@ export const DeckBuilder: React.FC = () => {
               )}
               {pendingAgentEdit.diff && (
                 <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
-                  {isPolish
-                    ? `diff: +${pendingAgentEdit.diff.cardsAdded || 0}/-${pendingAgentEdit.diff.cardsRemoved || 0}, zmienione ${pendingAgentEdit.diff.changedCards || 0}`
-                    : `diff: +${pendingAgentEdit.diff.cardsAdded || 0}/-${pendingAgentEdit.diff.cardsRemoved || 0}, changed ${pendingAgentEdit.diff.changedCards || 0}`}
+                  {t('presentations.deckDiff', {
+                    added: pendingAgentEdit.diff.cardsAdded || 0,
+                    removed: pendingAgentEdit.diff.cardsRemoved || 0,
+                    changed: pendingAgentEdit.diff.changedCards || 0,
+                  })}
                 </span>
               )}
             </span>
@@ -1238,14 +1230,14 @@ export const DeckBuilder: React.FC = () => {
               onClick={handleAcceptAgentEdit}
               className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
             >
-              {isPolish ? 'Zastosuj' : 'Accept'}
+              {t('presentations.accept')}
             </button>
             <button
               type="button"
               onClick={handleRejectAgentEdit}
               className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
             >
-              {isPolish ? 'Odrzuć' : 'Reject'}
+              {t('presentations.reject')}
             </button>
           </div>
         )}
