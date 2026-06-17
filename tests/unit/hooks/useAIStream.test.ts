@@ -398,6 +398,59 @@ describe('useAIStream', () => {
     });
   });
 
+  it('SPEC_01 Tryb A: routes a deliverable SSE event to onDeliverable with mapped kind', async () => {
+    const mockOnDeliverable = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onThinking?.({
+          type: 'deliverable',
+          draftId: 'gen-777',
+          generationId: 'gen-777',
+          kind: 'sheet',
+          format: 'sheet',
+          title: 'Tabela kosztów',
+        });
+        onChunk('Utworzyłem arkusz i otworzyłem go w canvasie.');
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onDeliverable: mockOnDeliverable }));
+
+    await act(async () => {
+      await result.current.startStream('chcę to mieć w canvasie z boku', []);
+    });
+
+    expect(mockOnDeliverable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftId: 'gen-777',
+        generationId: 'gen-777',
+        kind: 'sheet',
+        title: 'Tabela kosztów',
+      })
+    );
+  });
+
+  it('SPEC_01 Tryb A: ignores a deliverable event without a draft id', async () => {
+    const mockOnDeliverable = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onThinking?.({ type: 'deliverable', kind: 'doc' });
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onDeliverable: mockOnDeliverable }));
+
+    await act(async () => {
+      await result.current.startStream('zrób coś', []);
+    });
+
+    expect(mockOnDeliverable).not.toHaveBeenCalled();
+  });
+
   it('should reset state when starting new stream', async () => {
     vi.mocked(Api.chatWithAIStream).mockImplementation(
       async (message, history, onChunk, onDone) => {
