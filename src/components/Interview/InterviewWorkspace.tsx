@@ -395,8 +395,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     },
     sent_back: {
       label: { en: 'Sent back', pl: 'Do poprawy' },
-      color: 'bg-rose-500',
-      textColor: 'text-rose-600 dark:text-rose-400',
+      color: 'bg-c-danger',
+      textColor: 'text-c-danger',
     },
     approved: {
       label: { en: 'Approved', pl: 'Zatwierdzony' },
@@ -1766,7 +1766,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   if (loadError) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
-        <CircleAlert className="w-12 h-12 text-rose-500 mb-4" />
+        <CircleAlert className="w-12 h-12 text-c-danger mb-4" />
         <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
           {loadError.isTransportBlock
             ? isPolish
@@ -2544,7 +2544,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               key={gap.id}
               className={`p-3 rounded-xl border ${
                 gap.priority === 'high'
-                  ? 'border-rose-500/20 bg-rose-500/5 dark:bg-rose-500/10'
+                  ? 'border-c-danger/20 bg-c-danger/5 dark:bg-c-danger/10'
                   : gap.priority === 'medium'
                     ? 'border-amber-500/20 bg-amber-500/5 dark:bg-amber-500/10'
                     : 'border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40'
@@ -2699,7 +2699,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <div
                 className={`p-2 rounded-xl shrink-0 ${
                   gateHasHardBlock
-                    ? 'bg-rose-500/15 text-rose-500'
+                    ? 'bg-c-danger/15 text-c-danger'
                     : 'bg-amber-500/15 text-amber-500'
                 }`}
               >
@@ -2739,7 +2739,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       <span
                         className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${
                           hard
-                            ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                            ? 'bg-c-danger/15 text-c-danger'
                             : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                         }`}
                       >
@@ -2752,7 +2752,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                         <p
                           className={`text-xs ${
                             hard
-                              ? 'text-rose-600 dark:text-rose-400'
+                              ? 'text-c-danger'
                               : 'text-amber-600 dark:text-amber-400'
                           }`}
                         >

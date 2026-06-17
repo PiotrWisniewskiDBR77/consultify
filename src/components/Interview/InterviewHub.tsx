@@ -4830,9 +4830,9 @@ export const InterviewHub: React.FC = () => {
       sent_back: {
         label: { en: 'Sent Back', pl: 'Do poprawy' },
         bgColor:
-          'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
-        textColor: 'text-rose-800 dark:text-rose-100',
-        dotColor: 'bg-rose-500 dark:bg-rose-300',
+          'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
+        textColor: 'text-c-danger',
+        dotColor: 'bg-c-danger',
       },
       approved: {
         label: { en: 'Approved', pl: 'Zatwierdzony' },
@@ -5991,7 +5991,7 @@ export const InterviewHub: React.FC = () => {
                           : workflowStatus === 'submitted'
                             ? 'text-amber-600 dark:text-amber-400'
                             : workflowStatus === 'sent_back'
-                              ? 'text-rose-600 dark:text-rose-400'
+                              ? 'text-c-danger'
                               : 'text-slate-500 dark:text-slate-400'
                     }
                   />
@@ -8645,7 +8645,7 @@ export const InterviewHub: React.FC = () => {
         return 'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100';
       case 'sent_back':
       case 'rejected':
-        return 'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100';
+        return 'border-c-danger/30 bg-c-danger/[0.08] text-c-danger';
       case 'accepted':
       case 'approved':
       case 'completed':
@@ -8718,7 +8718,7 @@ export const InterviewHub: React.FC = () => {
             ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
             : `${absDays}d overdue`,
           colorClass:
-            'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
+            'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
       }
       if (days === 0) {
@@ -8726,7 +8726,7 @@ export const InterviewHub: React.FC = () => {
           days,
           label: isPolish ? 'Dziś!' : 'Today!',
           colorClass:
-            'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
+            'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
       }
       if (days <= 3) {
@@ -9279,7 +9279,7 @@ Return ONLY the answer text (no markdown fences).`;
     const getPriorityColor = (priority: string) => {
       switch (priority) {
         case 'urgent':
-          return 'text-rose-400';
+          return 'text-c-danger';
         case 'high':
           return 'text-amber-400';
         case 'medium':
@@ -9316,7 +9316,7 @@ Return ONLY the answer text (no markdown fences).`;
             ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
             : `${absDays}d overdue`,
           colorClass:
-            'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
+            'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
       }
       if (days === 0) {
@@ -9324,7 +9324,7 @@ Return ONLY the answer text (no markdown fences).`;
           days,
           label: isPolish ? 'Dziś!' : 'Today!',
           colorClass:
-            'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
+            'border-c-danger/30 bg-c-danger/[0.08] text-c-danger',
         };
       }
       if (days <= 3) {
@@ -10153,7 +10153,7 @@ Return ONLY the answer text (no markdown fences).`;
                             ? 'text-emerald-600 dark:text-emerald-300'
                             : pct >= 50
                               ? 'text-amber-600 dark:text-amber-300'
-                              : 'text-rose-600 dark:text-rose-300';
+                              : 'text-c-danger';
                         return (
                           <span
                             className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
@@ -10656,8 +10656,8 @@ Return ONLY the answer text (no markdown fences).`;
               },
               failed: {
                 label: { en: 'Failed', pl: 'Błąd' },
-                bg: 'bg-rose-500/20',
-                text: 'text-rose-700 dark:text-rose-300',
+                bg: 'bg-c-danger/20',
+                text: 'text-c-danger',
               },
             };
             const sc = statusConfig[status] || statusConfig.completed;
@@ -13230,13 +13230,13 @@ Return ONLY the answer text (no markdown fences).`;
                 {isPolish ? (
                   <>
                     Wpisz{' '}
-                    <span className="font-semibold text-rose-600 dark:text-rose-400">DELETE</span>,
+                    <span className="font-semibold text-c-danger">DELETE</span>,
                     aby potwierdzić
                   </>
                 ) : (
                   <>
                     Type{' '}
-                    <span className="font-semibold text-rose-600 dark:text-rose-400">DELETE</span>{' '}
+                    <span className="font-semibold text-c-danger">DELETE</span>{' '}
                     to confirm
                   </>
                 )}
@@ -13247,7 +13247,7 @@ Return ONLY the answer text (no markdown fences).`;
                 onChange={(e) => setSessionDeleteConfirmText(e.target.value)}
                 autoFocus
                 placeholder="DELETE"
-                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/40"
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-danger/40"
               />
               <div className="flex gap-3">
                 <button
@@ -13265,7 +13265,7 @@ Return ONLY the answer text (no markdown fences).`;
                     sessionDeleteConfirmText.trim().toUpperCase() !== 'DELETE' ||
                     sessionLifecycleBusy
                   }
-                  className="flex-1 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 rounded-lg bg-c-danger hover:bg-c-danger/90 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 size={16} className="inline mr-2" />
                   {isPolish ? 'Usuń na stałe' : 'Delete forever'}
@@ -13330,7 +13330,7 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-c-danger hover:bg-c-danger/90 text-white font-medium transition-colors"
                 >
                   <RotateCcw size={16} className="inline mr-2" />
                   {isPolish ? 'Zwróć' : 'Send Back'}
@@ -13408,7 +13408,7 @@ Return ONLY the answer text (no markdown fences).`;
                               ? 'text-emerald-600 dark:text-emerald-300'
                               : pct >= 50
                                 ? 'text-amber-600 dark:text-amber-300'
-                                : 'text-rose-600 dark:text-rose-300'
+                                : 'text-c-danger'
                           }`}
                         >
                           {pct}/100
@@ -13459,7 +13459,7 @@ Return ONLY the answer text (no markdown fences).`;
                     setShowApproveModal(false);
                     handleOpenSendBackModal(selectedAssignment);
                   }}
-                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-rose-300 dark:border-rose-400/30 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-medium transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-c-danger/40 text-c-danger hover:bg-c-danger/[0.08] font-medium transition-colors"
                 >
                   <RotateCcw size={16} className="inline mr-2" />
                   {isPolish ? 'Zwróć do poprawy' : 'Send back'}
@@ -13620,7 +13620,7 @@ Return ONLY the answer text (no markdown fences).`;
                     </div>
                   </div>
                   <div>
-                    <div className="text-xl font-bold text-rose-400">
+                    <div className="text-xl font-bold text-c-danger">
                       {overdueAssignments.length}
                     </div>
                     <div className="text-xs text-slate-500">

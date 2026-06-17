@@ -28,8 +28,15 @@ import { ClipboardList, Loader2, Send, ShieldCheck, Trash2, Users } from 'lucide
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ModuleHub } from '@/components/shared/ModuleHub';
+import {
+  FilterableTable,
+  type FilterChip,
+  ModuleHub,
+  type TableColumn,
+} from '@/components/shared/ModuleHub';
 import type { ModuleTab, ViewMode } from '@/components/shared/ModuleHub/types';
+import type { RowAction } from '@/components/shared/RowActionsMenu';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 
 import {
@@ -86,6 +93,9 @@ export const AuditsHub: React.FC = () => {
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPresetId, setWizardPresetId] = useState<string | null>(null);
+  // FilterableTable owns the (unused-here) column filter chips. Search + status
+  // remain SERVER-SIDE via ModuleHub (load()); these stay empty by design.
+  const [tableFilters, setTableFilters] = useState<FilterChip[]>([]);
 
   // Load the first page (resets the list). Used on mount, after mutations, and
   // whenever the server-side search/status filter changes.
@@ -156,9 +166,29 @@ export const AuditsHub: React.FC = () => {
     return map[s];
   };
 
-  const selected = useMemo(
-    () => programs.find((p) => p.id === selectedId) ?? null,
-    [programs, selectedId]
+  // §27 — FilterableTable is the canonical list surface. The table consumes
+  // PreviewableItem rows ({ id, title, ... }) so it also feeds the right-side
+  // TableWithPreviewLayout. We keep the AuditProgram on the row so row actions
+  // (generate / delete) and the preview dashboard can read the full record.
+  type AuditRow = AuditProgram & {
+    title: string;
+    templateCount: number;
+    assigneeCount: number;
+    generatedCount: number;
+    surveysGenerated: boolean;
+  };
+
+  const rows = useMemo<AuditRow[]>(
+    () =>
+      programs.map((p) => ({
+        ...p,
+        title: p.name,
+        templateCount: p.config.templateIds?.length ?? 0,
+        assigneeCount: p.config.assigneeIds?.length ?? 0,
+        generatedCount: p.config.generation?.created ?? 0,
+        surveysGenerated: p.config.surveysGenerated === true,
+      })),
+    [programs]
   );
 
   const handleDelete = async (id: string) => {
@@ -225,6 +255,100 @@ export const AuditsHub: React.FC = () => {
     setWizardPresetId(presetId);
     setWizardOpen(true);
   };
+
+  // §27 columns: name (+status chip), objective, templates / assignees counts,
+  // surveys-generated indicator. Counts are right-aligned per canon §3.3.
+  const columns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'name',
+        label: tr('Program', 'Program'),
+        render: (row: AuditRow) => (
+          <div className="flex items-center gap-2">
+            <span className="truncate font-medium text-slate-900 dark:text-white">{row.name}</span>
+            <EntityStatusChip
+              status={STATUS_PILL_ALIAS[row.status]}
+              label={statusLabel(row.status)}
+              hideDot
+            />
+          </div>
+        ),
+      },
+      {
+        id: 'objective',
+        label: tr('Objective', 'Cel'),
+        render: (row: AuditRow) => (
+          <span className="line-clamp-1 text-sm text-slate-500">{row.objective || '—'}</span>
+        ),
+      },
+      {
+        id: 'templates',
+        label: tr('Templates', 'Szablony'),
+        align: 'right',
+        render: (row: AuditRow) => (
+          <span className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
+            <ClipboardList className="h-3.5 w-3.5" />
+            {row.templateCount}
+          </span>
+        ),
+      },
+      {
+        id: 'assignees',
+        label: tr('Assignees', 'Przypisani'),
+        align: 'right',
+        render: (row: AuditRow) => (
+          <span className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
+            <Users className="h-3.5 w-3.5" />
+            {row.assigneeCount}
+          </span>
+        ),
+      },
+      {
+        id: 'surveys',
+        label: tr('Surveys', 'Ankiety'),
+        align: 'right',
+        render: (row: AuditRow) =>
+          row.surveysGenerated ? (
+            <span className="inline-flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400">
+              <Send className="h-3.5 w-3.5" />
+              {row.generatedCount}
+            </span>
+          ) : (
+            <span className="text-sm text-slate-300 dark:text-white/30">—</span>
+          ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isPolish]
+  );
+
+  // Row actions menu (canon §9): generate surveys + delete. Generate is disabled
+  // once surveys exist (idempotency) or while a generation run is in flight.
+  const buildRowActions = useCallback(
+    (row: AuditRow): RowAction[] => {
+      const isGenerating = generatingId === row.id;
+      return [
+        {
+          id: 'generate',
+          label: row.surveysGenerated
+            ? tr('Surveys generated', 'Ankiety wygenerowane')
+            : tr('Generate surveys', 'Generuj ankiety'),
+          icon: Send,
+          disabled: row.surveysGenerated || isGenerating,
+          onClick: () => void handleGenerate(row),
+        },
+        {
+          id: 'delete',
+          label: tr('Delete', 'Usuń'),
+          icon: Trash2,
+          variant: 'danger',
+          onClick: () => void handleDelete(row.id),
+        },
+      ];
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [generatingId, isPolish]
+  );
 
   // L-05: adopt the canonical ModuleHub shell (standard header / search / tabs /
   // view-mode / primary CTA / filter controls), the same shell Results &
@@ -298,151 +422,56 @@ export const AuditsHub: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* List */}
-            <div className="lg:col-span-2">
-              {loading ? (
-                <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-12 text-sm text-slate-400 dark:border-white/[0.08] dark:bg-navy-900">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {tr('Loading…', 'Ładowanie…')}
-                </div>
-              ) : programs.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-300 bg-white py-12 text-center dark:border-white/[0.1] dark:bg-navy-900">
-                  <ClipboardList className="mx-auto mb-2 h-8 w-8 text-slate-300" />
-                  <p className="text-sm text-slate-500">
-                    {query.trim() || statusFilter !== 'all'
-                      ? tr(
-                          'No programs match your filters.',
-                          'Brak programów pasujących do filtrów.'
-                        )
-                      : tr('No audit programs yet.', 'Brak programów audytu.')}
-                  </p>
-                </div>
-              ) : (
-                <ul className="space-y-2">
-                  {programs.map((p) => {
-                    const templateCount = p.config.templateIds?.length ?? 0;
-                    const assigneeCount = p.config.assigneeIds?.length ?? 0;
-                    const generated = p.config.surveysGenerated === true;
-                    const generatedCount = p.config.generation?.created ?? 0;
-                    const pairs = templateCount * assigneeCount;
-                    const isGenerating = generatingId === p.id;
-                    return (
-                      <li key={p.id}>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedId(p.id)}
-                          className={`w-full rounded-xl border bg-white p-4 text-left transition-colors dark:bg-navy-900 ${
-                            selectedId === p.id
-                              ? 'border-primary-500'
-                              : 'border-slate-200 hover:border-slate-300 dark:border-white/[0.08]'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="truncate font-medium text-slate-900 dark:text-white">
-                                  {p.name}
-                                </span>
-                                <EntityStatusChip
-                                  status={STATUS_PILL_ALIAS[p.status]}
-                                  label={statusLabel(p.status)}
-                                  hideDot
-                                />
-                              </div>
-                              {p.objective && (
-                                <p className="mt-1 line-clamp-1 text-xs text-slate-500">
-                                  {p.objective}
-                                </p>
-                              )}
-                              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                                <span className="inline-flex items-center gap-1">
-                                  <ClipboardList className="h-3.5 w-3.5" />
-                                  {templateCount} {tr('templates', 'szablonów')}
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                  <Users className="h-3.5 w-3.5" />
-                                  {assigneeCount} {tr('assignees', 'osób')}
-                                </span>
-                                {generated && (
-                                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                                    <Send className="h-3.5 w-3.5" />
-                                    {generatedCount} {tr('surveys', 'ankiet')}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span
-                                role="button"
-                                tabIndex={generated || isGenerating ? -1 : 0}
-                                aria-disabled={generated || isGenerating}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (generated || isGenerating) return;
-                                  void handleGenerate(p);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (
-                                    (e.key === 'Enter' || e.key === ' ') &&
-                                    !generated &&
-                                    !isGenerating
-                                  ) {
-                                    e.stopPropagation();
-                                    void handleGenerate(p);
-                                  }
-                                }}
-                                aria-label={
-                                  generated
-                                    ? tr('Surveys generated', 'Ankiety wygenerowane')
-                                    : tr('Generate surveys', 'Generuj ankiety')
-                                }
-                                title={
-                                  generated
-                                    ? tr('Surveys already generated', 'Ankiety już wygenerowane')
-                                    : tr(`Generate ${pairs} survey(s)`, `Generuj ${pairs} ankiet`)
-                                }
-                                className={`rounded-lg p-1.5 ${
-                                  generated || isGenerating
-                                    ? 'cursor-not-allowed text-slate-200 dark:text-white/20'
-                                    : 'text-slate-300 hover:bg-primary-50 hover:text-primary-500 dark:hover:bg-primary-500/10'
-                                }`}
-                              >
-                                {isGenerating ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                              </span>
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void handleDelete(p.id);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    e.stopPropagation();
-                                    void handleDelete(p.id);
-                                  }
-                                }}
-                                aria-label={tr('Delete', 'Usuń')}
-                                className="rounded-lg p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </span>
-                            </div>
-                          </div>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-12 text-sm text-slate-400 dark:border-white/[0.08] dark:bg-navy-900">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {tr('Loading…', 'Ładowanie…')}
+            </div>
+          ) : (
+            <>
+              {/* §27 — canonical FilterableTable + preview. Single click selects a
+                  row and opens the per-program dashboard in the preview pane. Row
+                  actions (⋮) carry Generate surveys / Delete. */}
+              <div className="rounded-xl border border-slate-200 bg-white dark:border-white/[0.08] dark:bg-navy-900">
+                <TableWithPreviewLayout<AuditRow>
+                  selectedId={selectedId}
+                  selectedItem={rows.find((r) => r.id === selectedId) ?? null}
+                  onSelect={setSelectedId}
+                  itemIds={rows.map((r) => r.id)}
+                  getItemById={(id) => rows.find((r) => r.id === id) ?? null}
+                  renderPreview={(item) => (
+                    <ProgramDashboard program={item} isPolish={isPolish} tr={tr} />
+                  )}
+                >
+                  <FilterableTable
+                    columns={columns}
+                    data={rows}
+                    selectedRowId={selectedId}
+                    persistKey="audits-programs"
+                    onRowClick={(row) => setSelectedId(String(row.id))}
+                    getRowActions={(row) => {
+                      const r = rows.find((x) => x.id === row.id);
+                      return r ? buildRowActions(r) : [];
+                    }}
+                    activeFilters={tableFilters}
+                    onFilterChange={setTableFilters}
+                    emptyMessage={
+                      query.trim() || statusFilter !== 'all'
+                        ? tr(
+                            'No programs match your filters.',
+                            'Brak programów pasujących do filtrów.'
+                          )
+                        : tr('No audit programs yet.', 'Brak programów audytu.')
+                    }
+                    canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+                    density="compact"
+                  />
+                </TableWithPreviewLayout>
+              </div>
+
               {/* Load more (#19e server-side pagination). Only when more rows exist
                 AND the user isn't narrowing the current page via search/status. */}
-              {!loading && programs.length < total && (
+              {programs.length < total && (
                 <div className="mt-3 flex flex-col items-center gap-1">
                   <button
                     type="button"
@@ -461,22 +490,8 @@ export const AuditsHub: React.FC = () => {
                   </span>
                 </div>
               )}
-            </div>
-
-            {/* Dashboard panel */}
-            <div className="lg:col-span-1">
-              {selected ? (
-                <ProgramDashboard program={selected} isPolish={isPolish} tr={tr} />
-              ) : (
-                <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-400 dark:border-white/[0.1] dark:bg-navy-900">
-                  {tr(
-                    'Select a program to see its dashboard.',
-                    'Wybierz program, aby zobaczyć panel.'
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </ModuleHub>
 
