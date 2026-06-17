@@ -89,6 +89,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
+import { resolveOpenItemRoute } from './openItemRouting';
 import {
   dispatchBetaAccessBlocked,
   isBetaLockedForRole,
@@ -147,6 +148,11 @@ const DecisionDetailView = lazyWithRetry(() =>
 );
 const NotificationDetailView = lazyWithRetry(() =>
   import('./NotificationDetailView').then((m) => ({ default: m.NotificationDetailView }))
+);
+// L-08 (DP-2 IDE-tabs): initiatives open IN-CONTEXT in the document overlay
+// using the same self-fetching full view the Initiatives module uses.
+const InitiativeFullView = lazyWithRetry(() =>
+  import('../Initiatives/InitiativeFullView').then((m) => ({ default: m.InitiativeFullView }))
 );
 const ExecutiveDashboard = lazyWithRetry(() =>
   import('./Executive/ExecutiveDashboard').then((m) => ({ default: m.ExecutiveDashboard }))
@@ -342,7 +348,7 @@ interface DecisionFilterCounts {
 // Open Document interface for dynamic tabs
 interface OpenDocument {
   id: string;
-  type: 'task' | 'idea' | 'decision' | 'notification';
+  type: 'task' | 'idea' | 'decision' | 'notification' | 'initiative';
   name: string;
   status: ItemStatus;
   data?: any;
@@ -360,7 +366,8 @@ function isOpenDocument(value: unknown): value is OpenDocument {
     (doc.type === 'task' ||
       doc.type === 'idea' ||
       doc.type === 'decision' ||
-      doc.type === 'notification')
+      doc.type === 'notification' ||
+      doc.type === 'initiative')
   );
 }
 
@@ -409,6 +416,10 @@ function getDocumentTab(type: OpenDocument['type']): ModuleTab {
       return 'decisions';
     case 'notification':
       return 'inbox';
+    // Initiatives have no dedicated MyWork list tab; the in-context document
+    // overlay (DP-2 IDE-tabs) renders on top of the Tasks surface as host.
+    case 'initiative':
+      return 'tasks';
   }
 }
 
@@ -1222,20 +1233,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         })();
         return;
       }
-      if (
-        [
-          'initiative',
-          'assessment',
-          'report',
-          'presentation',
-          'meeting',
-          'financial_model',
-          'budget',
-          'valuation',
-          'analysis',
-          'tool',
-        ].includes(type)
-      ) {
+      // DP-2 (IDE-tabs doc, L-08): light work items — initiative/task/decision/
+      // idea/notebook/notification — open IN-CONTEXT via the dynamic document
+      // overlay instead of hard-navigating away from My Work. Only the heavy
+      // artifact types still navigate to their own module (deck/doc → Canvas,
+      // budget/valuation/report → full module). SSOT: resolveOpenItemRoute.
+      if (resolveOpenItemRoute(type) === 'navigate') {
         navigate(getArtifactPath(type as any, String(id)));
         return;
       }
@@ -1245,6 +1248,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         idea: 'ideas',
         notification: 'inbox',
         notebook: 'notebook',
+        initiative: 'tasks',
       };
       if (tabMap[type]) setActiveTab(tabMap[type]);
       if (type === 'notebook') {
@@ -1254,7 +1258,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (type !== 'notebook') {
         handleOpenDocument({
           id,
-          type: type as 'task' | 'idea' | 'decision' | 'notification',
+          type: type as 'task' | 'idea' | 'decision' | 'notification' | 'initiative',
           name: name || type,
           status:
             type === 'notification'
@@ -1263,7 +1267,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 ? ('pending' as const)
                 : type === 'idea'
                   ? ('idea' as const)
-                  : ('todo' as const),
+                  : type === 'initiative'
+                    ? ('in_progress' as const)
+                    : ('todo' as const),
         });
       }
     };
@@ -1703,6 +1709,21 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         name: notificationData?.title || 'Notification',
         status: notificationData?.isRead ? 'read' : 'unread',
         data: notificationData,
+      });
+    },
+    [handleOpenDocument]
+  );
+
+  // Initiative handler — L-08 (DP-2): open IN-CONTEXT in the document overlay
+  // (parallel to task/decision) instead of hard-navigating to the M13 module.
+  const handleInitiativeClick = useCallback(
+    (initiativeId: string, initiativeData?: any) => {
+      handleOpenDocument({
+        id: String(initiativeId),
+        type: 'initiative',
+        name: initiativeData?.name || initiativeData?.title || 'Initiative',
+        status: 'in_progress',
+        data: initiativeData,
       });
     },
     [handleOpenDocument]
@@ -2320,6 +2341,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   {doc.type === 'idea' && <Lightbulb size={14} />}
                   {doc.type === 'decision' && <Scale size={14} />}
                   {doc.type === 'notification' && <Bell size={14} />}
+                  {doc.type === 'initiative' && <Rocket size={14} />}
 
                   {/* Name (truncated) */}
                   <span className="max-w-[150px] truncate">{doc.name}</span>
@@ -3163,6 +3185,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             />
           </React.Suspense>
         );
+      case 'initiative':
+        return (
+          <React.Suspense fallback={lazyFallback}>
+            <InitiativeFullView
+              initiativeId={activeDoc.id}
+              onBack={() => handleCloseDocument(activeDoc.id)}
+              onStatusChange={() => setRefreshTrigger((n) => n + 1)}
+            />
+          </React.Suspense>
+        );
       default:
         return null;
     }
@@ -3226,9 +3258,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               createRequestId={calendarCreateReqId}
               onTaskClick={handleTaskClick}
               onDecisionClick={handleDecisionClick}
-              onInitiativeClick={(initiativeId) => {
-                navigate(getArtifactPath('initiative', String(initiativeId)));
-              }}
+              onInitiativeClick={(initiativeId) => handleInitiativeClick(String(initiativeId))}
             />
           </React.Suspense>
         );
