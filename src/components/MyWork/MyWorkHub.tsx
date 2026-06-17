@@ -1182,31 +1182,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     clearMyWorkIntent();
   }, [activeTab, myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
 
-  // L7: Save session context for cross-session continuity
-  useEffect(() => {
-    const saveContext = () => {
-      const lastViewedItems = openDocuments.map((d) => ({
-        type: d.type,
-        id: d.id,
-        name: d.name,
-      }));
-      try {
-        const token = localStorage.getItem('token');
-        fetch('/api/my-work/session-context', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ lastViewedItems, activeTab }),
-        }).catch(() => {});
-      } catch {
-        /* ignore */
-      }
-    };
-    const timer = setTimeout(saveContext, 5000);
-    return () => clearTimeout(timer);
-  }, [activeTab, openDocuments]);
+  // M03 L-02 (D-01): the server session-context was write-only — this POST fired
+  // every 5s but nothing ever read it back (no GET consumer anywhere in the FE),
+  // so it never provided continuity. Cross-session restore is already handled
+  // locally via readStoredMyWorkDocuments() (openDocuments from localStorage).
+  // Removed the dead write rather than half-wire a server read nobody asked for.
 
   // F1: EventBus — refresh tabs when cross-tab events fire
   useEffect(() => {
