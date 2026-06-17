@@ -92,8 +92,15 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     ? `<iframe src="${window.location.origin}/presentations/embed/${shareToken}" width="100%" height="480" frameborder="0" allowfullscreen></iframe>`
     : '';
 
+  // L-01 / DP-5: "Collaborate · Invite by email" has no backend handler in v1.
+  // Hide it behind a flag (default OFF) rather than ship a dead control. Re-enable
+  // by setting VITE_ENABLE_DECK_COLLABORATE=true once invite handlers exist.
+  const collaborateEnabled = import.meta.env.VITE_ENABLE_DECK_COLLABORATE === 'true';
+
   const tabs: { id: ShareTab; labelKey: string }[] = [
-    { id: 'collaborate', labelKey: 'presentations.builder.share.collaborate' },
+    ...(collaborateEnabled
+      ? [{ id: 'collaborate' as const, labelKey: 'presentations.builder.share.collaborate' }]
+      : []),
     { id: 'share', labelKey: 'presentations.builder.share.shareLink' },
     { id: 'export', labelKey: 'presentations.builder.share.export' },
     { id: 'embed', labelKey: 'presentations.builder.share.embed' },

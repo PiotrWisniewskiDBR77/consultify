@@ -99,13 +99,13 @@ Scenariusze S1–S8: karta §0/§2 (293 PASS/0 FAIL, ale **15/21 integracyjnych 
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | collaborate „Invite by email" = no-op UI | W-01 | `Presentations/DeckBuilder/ShareModal.tsx:134-171` | P3 | 3 | otwarta (**D-01 = DP-5: ukryj za flagą**) |  |
-| L-02 | override quality-gate „bez roli" | W-01,W-04 | `presentations.routes.ts:1465,1607,1925,5779` + `:366` | P2 (był) | 1 | **STALE-zweryfikowane** (już role-gated; tylko test regresji) | 2026-06-13 |
-| L-03 | beta-lock nawigacyjny + share bez rate-limit/revoke | W-01 | `/shared/:token` | P2 | 3 | **CZĘŚCIOWO — beta-lock NAPRAWIONA: `<BetaGate moduleId="MODULE_PRESENTATIONS">` owija `/presentations` (`AppRoutes.tsx:1989`); share bez rate-limit/revoke = pozostałe sub-luki Faza 3** | 2026-06-17 |
-| L-04 | analytics-beacon cross-org (`WHERE id=?` bez org) | W-01 | `presentations.routes.ts:5923` | P3 | 3 | otwarta |  |
-| L-05 | DeckBuilder 25× `isPolish` (grep całość 30×) | W-01 | `Presentations/*` (grep 2026-06-13=30) | P2 | 4 | otwarta |  |
-| L-06 | hardkody kolorów (127 hex grep — część legitna render) | W-01 | `Presentations/*` (grep=127) | P3 | 4 | otwarta |  |
-| L-07 | 15/21 testów p20 fałszywa zieleń + S4/S5 niezweryfikowane | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | otwarta |  |
+| L-01 | collaborate „Invite by email" = no-op UI | W-01 | `Presentations/DeckBuilder/ShareModal.tsx:95-107` | P3 | 3 | **ZAMKNIĘTA (DP-5)** — zakładka „Collaborate" ukryta za `VITE_ENABLE_DECK_COLLABORATE` (default OFF); martwa kontrolka nie renderuje się; re-enable flagą gdy powstaną handlery invite | 2026-06-17 |
+| L-02 | override quality-gate „bez roli" | W-01,W-04 | `presentationExportGate.ts` (`canOverrideQualityGate`) | P2 (był) | 1 | **ZAMKNIĘTA** — predykat role-gate wydzielony (behaviour-identyczny, 4 call-site DRY) + test regresji: nie-admin+param → 422 nie omija; `export-quality-gate.regression.test.ts` (10/10 PASS) | 2026-06-17 |
+| L-03 | beta-lock nawigacyjny + share bez rate-limit/revoke | W-01 | `presentations.routes.ts` (share POST/DELETE) | P2 | 3 | **ZAMKNIĘTA** — beta-lock (`<BetaGate MODULE_PRESENTATIONS>` `AppRoutes.tsx:1989`) + **rate-limit 30/min** na share + **`DELETE /decks/:id/share` revoke** (nuluje `share_token` → viewer `WHERE share_token=?` martwy, org-scoped+audited) | 2026-06-17 |
+| L-04 | analytics-beacon cross-org (`WHERE id=?` bez org) | W-01 | `presentations.routes.ts:5919-5925` | P3 | 3 | **STALE/NAPRAWIONE** — beacon już org-scoped (`WHERE id=? AND organization_id=?` → 404; komentarz „SEC M17 wave-5"); teczka cytowała stary stan | 2026-06-17 |
+| L-05 | DeckBuilder 25× `isPolish` (grep całość 30×) | W-01 | `Presentations/*` (grep 2026-06-13=30) | P2 | 4 | otwarta (Fala 4 i18n sweep — wymaga edycji `public/locales/*` ZAKAZANEJ w Fali 1) |  |
+| L-06 | hardkody kolorów (127 hex grep — część legitna render) | W-01 | `Presentations/*` (grep=127) | P3 | 4 | otwarta (Fala 4 token sweep; część legitna w render data-viz) |  |
+| L-07 | 15/21 testów p20 fałszywa zieleń + S4/S5 niezweryfikowane | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | **CZĘŚCIOWO — S5 ZAMKNIĘTE** deterministycznie (`export-quality-gate.regression.test.ts` 422-gate, bez live serwera). S4 (DB round-trip `presentation_deck_versions`) + naprawa 15 vacuous network-testów p20 = wymaga live serwera/caboose (bloker udokumentowany) | 2026-06-17 |
 | L-08 | kręgosłup czat→deck (auto-trigger z czatu) | W-02 | `SPEC_ZADANIE_01` | P0-program | 0 | zależność (śledzona w SPEC_01) |  |
 | L-09 | public viewer over-disclosure | W-01 | `normalizeDeckRow` | P1 | — | **NAPRAWIONA `1b67579d7a`** | 2026-06-11 |
 
@@ -114,7 +114,7 @@ Scenariusze S1–S8: karta §0/§2 (293 PASS/0 FAIL, ale **15/21 integracyjnych 
 |----|---------|-------|------------|--------|--------|
 | D-01 | collaborate „Invite by email" | wpiąć handlery+permisje / ukryć zakładkę w v1 | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj Invite-by-email** (stub za flagą + label, nie półbuduj) |
 
-### 05 · Flagi / rollout — beta-closed; `ENABLE_V8_GLOBAL` OFF→404 tylko pipeline generacji (reszta nie-za-flagą); `melsDeckBuilder` default ON. Beta-guard route = nawigacyjny (direct URL omija plate; API org-gated).
+### 05 · Flagi / rollout — beta-closed; **`ENABLE_V8_GLOBAL` default=false (OFF) w `FeatureFlags.ts:31`** → pipeline generacji „z czatu zrób deck" martwy bez ustawienia env var na Railway (bloker programowy = L-08 kręgosłup; reszta modułu NIE za flagą, działa); `melsDeckBuilder` default ON; `VITE_ENABLE_DECK_COLLABORATE` default OFF (L-01 DP-5). Beta-guard route = nawigacyjny (direct URL omija plate; API org-gated).
 ### 06 · Ryzyka — 15 vacuous testów dają fałszywą pewność (0,68s bez serwera); S4/S5 trwałość/422 niezweryfikowane testem mimo realnego kodu; override role-gate bez testu regresji → możliwy nawrót przy refaktorze; dev `.env` → Railway PROD.
 ### 07 · Log — 2026-06-11: re-audit F:5→6 (`1b67579d7a` public viewer), 56/100. 2026-06-13 (teczka pogłębiona): R3 — (1) override JUŻ role-gated (`:1465,:366`) → L-02 STALE; (2) public viewer naprawiony → L-09; C rozbite na model snapshotów/wersji (mig.752/641/610) + override role-gate + enum 71 endpointów; F na Gherkin. Re-ocena C po naprawie 15 vacuous testów.
 

@@ -4,6 +4,7 @@
  */
 
 import { type NextFunction, type Request, type Response, Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import fs from 'fs';
 import path from 'path';
 import PDFDocument from 'pdfkit';
@@ -12,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { send as sendNotification } from '../services/notificationService.js';
@@ -353,33 +355,6 @@ async function recordPresentationRuntimeEvent(params: {
       logger.warn('[Presentations] Could not record runtime event', error);
     }
   }
-}
-
-async function enforceQualityGateForExport(params: {
-  organizationId: string;
-  deckId: string;
-  format: 'pdf' | 'pptx' | 'png' | 'html';
-  allowOverride?: boolean;
-}) {
-  const { checkDeckQualityGates } = await import('../services/presentationQualityGatesService.js');
-  const report = await checkDeckQualityGates(params.organizationId, params.deckId);
-  if (!report.canExport && !params.allowOverride) {
-    return {
-      ok: false,
-      status: 422,
-      report,
-      payload: {
-        success: false,
-        error: 'Deck is blocked by quality gates.',
-        code: 'QUALITY_GATE_BLOCKED',
-        result: report.result,
-        scorecard: report.scorecard,
-        gates: report.gates,
-        format: params.format,
-      },
-    };
-  }
-  return { ok: true, report };
 }
 
 function enforceExportLimits(deck: any, cards: any[]): { ok: boolean; error?: string } {
@@ -1464,7 +1439,7 @@ router.get(
       organizationId: orgId,
       deckId: String(req.params.id || ''),
       format: 'pptx',
-      allowOverride: ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(req.user?.role || req.userRole || '') && String(req.query.overrideQualityGate || '') === 'true',
+      allowOverride: canOverrideQualityGate(req),
     });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
@@ -1606,7 +1581,7 @@ router.get(
       organizationId: orgId,
       deckId: String(deckId || ''),
       format: 'pdf',
-      allowOverride: ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(req.user?.role || req.userRole || '') && String(req.query.overrideQualityGate || '') === 'true',
+      allowOverride: canOverrideQualityGate(req),
     });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
@@ -1810,9 +1785,19 @@ router.delete(
   })
 );
 
+// L-03: throttle share-link mint/revoke to blunt token-churn / enumeration abuse.
+const shareRateLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many share operations, slow down.' },
+});
+
 // Share link
 router.post(
   '/decks/:id/share',
+  shareRateLimiter,
   requireAudit,
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_share')) return;
@@ -1862,6 +1847,40 @@ router.post(
       actionUrl: `/presentations/builder/${req.params.id}`,
     }).catch(() => null);
     res.json({ success: true, data: { shareToken: token, expiresAt } });
+  })
+);
+
+// L-03: revoke a deck's public share link. Nulls share_token so the
+// `/shared/:token` viewer (WHERE share_token = ?) stops matching — the link
+// goes dead immediately. Org-scoped + audited; idempotent (no token → 200).
+router.delete(
+  '/decks/:id/share',
+  shareRateLimiter,
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_share')) return;
+    const orgId = getOrgId(req);
+    const before = (await dbGet(
+      `SELECT id, title, share_token, share_expires_at FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!before) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    await dbRun(
+      `UPDATE presentation_decks SET share_token = NULL, share_expires_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    );
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'share_revoke',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      before: { shareToken: before.share_token, shareExpiresAt: before.share_expires_at },
+      after: { shareToken: null, shareExpiresAt: null },
+      metadata: { organizationId: orgId, title: before.title },
+    });
+    res.json({ success: true, data: { revoked: true } });
   })
 );
 
@@ -1924,7 +1943,7 @@ router.post(
       organizationId: orgId,
       deckId: String(deckId || ''),
       format: 'html',
-      allowOverride: ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(req.user?.role || req.userRole || '') && String(req.query.overrideQualityGate || '') === 'true',
+      allowOverride: canOverrideQualityGate(req),
     });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
@@ -5778,7 +5797,7 @@ router.post(
       organizationId: orgId,
       deckId: String(deckId || ''),
       format: 'png',
-      allowOverride: ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(req.user?.role || req.userRole || '') && String(req.query.overrideQualityGate || '') === 'true',
+      allowOverride: canOverrideQualityGate(req),
     });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
