@@ -21,6 +21,9 @@ const mockGetBudget = vi.fn();
 const mockUpdateBudgetLine = vi.fn();
 const mockUpdateScenarioAdjustments = vi.fn();
 const mockDbGet = vi.fn();
+const mockDbRun = vi.fn();
+const mockNormalizeFinancialData = vi.fn();
+const mockCalculateFinancialMetrics = vi.fn();
 
 vi.mock('../../services/financialAnalysisService.js', () => ({
   getAnalysisRatios: (...a: unknown[]) => mockGetAnalysisRatios(...a),
@@ -48,16 +51,16 @@ vi.mock('../../services/valuationExportService.js', () => ({ exportValuationPptx
 vi.mock('../../services/decisionService.js', () => ({ default: {} }));
 vi.mock('../../services/economicsFinancials.js', () => ({
   applyScenarioAdjustments: vi.fn(),
-  calculateFinancialMetrics: vi.fn(),
+  calculateFinancialMetrics: (...a: unknown[]) => mockCalculateFinancialMetrics(...a),
   defaultFinancialData: {},
-  normalizeFinancialData: vi.fn(),
+  normalizeFinancialData: (...a: unknown[]) => mockNormalizeFinancialData(...a),
   validateFinancialData: vi.fn(),
 }));
 
 vi.mock('../../utils/DbPromise.js', () => ({
   get: (...a: unknown[]) => mockDbGet(...a),
   all: vi.fn().mockResolvedValue([]),
-  run: vi.fn(),
+  run: (...a: unknown[]) => mockDbRun(...a),
 }));
 
 vi.mock('../../utils/pgFlags.js', () => ({ flagOn: () => false, parseMaybeJson: (v: unknown) => v }));
@@ -130,6 +133,50 @@ describe('economics routes — cross-org IDOR', () => {
     expect(res.status).toBe(404);
     expect(mockGetBudget).toHaveBeenCalledWith(ATTACKER_ORG, FOREIGN_BUDGET);
     expect(mockUpdateScenarioAdjustments).not.toHaveBeenCalled();
+  });
+
+  it('POST /analyses/:id/scenarios → 404, does NOT upsert into foreign analysis', async () => {
+    // Parent analysis lookup is org-scoped → foreign id resolves to nothing.
+    mockDbGet.mockResolvedValue(undefined);
+    const res = await request(createApp())
+      .post(`/api/economics/analyses/${FOREIGN_ANALYSIS}/scenarios`)
+      .send({ scenarioType: 'OPTIMISTIC', name: 'pwn' });
+    expect(res.status).toBe(404);
+    // First (and only) lookup is the org-scoped parent guard.
+    const [, params] = mockDbGet.mock.calls[0] as [string, unknown[]];
+    expect(params).toEqual([FOREIGN_ANALYSIS, ATTACKER_ORG]);
+    // No scenario_type lookup and, crucially, no UPDATE/INSERT.
+    expect(mockDbGet).toHaveBeenCalledTimes(1);
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /analyses/:id/scenarios (same org) inserts scoped to the caller org', async () => {
+    // Parent guard: analysis belongs to attacker org. Then: no existing scenario.
+    mockDbGet
+      .mockResolvedValueOnce({ id: FOREIGN_ANALYSIS })
+      .mockResolvedValueOnce(undefined);
+    mockNormalizeFinancialData.mockReturnValue({ assumptions: [] });
+    mockCalculateFinancialMetrics.mockReturnValue({
+      npv: 0,
+      irr: 0,
+      roi: 0,
+      paybackPeriod: 0,
+      cashFlows: [],
+    });
+    mockDbRun.mockResolvedValue(undefined);
+
+    const res = await request(createApp())
+      .post(`/api/economics/analyses/${FOREIGN_ANALYSIS}/scenarios`)
+      .send({ scenarioType: 'BASE' });
+
+    expect(res.status).toBe(200);
+    // Parent guard scoped to caller org.
+    expect(mockDbGet.mock.calls[0][1]).toEqual([FOREIGN_ANALYSIS, ATTACKER_ORG]);
+    // existing-scenario lookup carries org filter too.
+    expect(mockDbGet.mock.calls[1][1]).toEqual([FOREIGN_ANALYSIS, 'BASE', ATTACKER_ORG]);
+    // INSERT persisted under the caller org.
+    const [, insertParams] = mockDbRun.mock.calls[0] as [string, unknown[]];
+    expect(insertParams).toContain(ATTACKER_ORG);
   });
 
   it('same-org budget mutation still reaches the service (no false 404)', async () => {

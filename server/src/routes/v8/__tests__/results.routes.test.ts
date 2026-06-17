@@ -988,6 +988,30 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('POST /api/v8/results/kpis/:kpiId/time-series returns 404 when KPI is outside org scope', async () => {
+    // First dbGet is the SEC-3 ownership precheck (SELECT k.id ... COALESCE org). A
+    // foreign-org kpiId resolves to null there and must 404 before any INSERT runs.
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/results/kpis/kpi-foreign/time-series')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        value: 24,
+        periodStart: '2026-03-01',
+        notes: 'March value',
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
+    expect(mockDbGet).toHaveBeenCalledWith(expect.stringContaining('SELECT k.id'), [
+      'kpi-foreign',
+      ORG,
+    ]);
+    expect(mockDbRun).not.toHaveBeenCalled();
+    expect(mockHandleTimeSeriesRecorded).not.toHaveBeenCalled();
+  });
+
   it('PUT /api/v8/results/roi/initiative/:initiativeId/assumptions saves governed ROI assumptions', async () => {
     mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
     const app = createApp();

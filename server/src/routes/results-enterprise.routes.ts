@@ -149,9 +149,18 @@ router.post(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    res
-      .status(201)
-      .json(await resultsEnterpriseService.createROIEvidence(id.orgId, id.userId, p.data));
+    try {
+      res
+        .status(201)
+        .json(await resultsEnterpriseService.createROIEvidence(id.orgId, id.userId, p.data));
+    } catch (error: any) {
+      // SEC-3: a foreign-org (or missing) parent reference is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Referenced parent not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
@@ -353,12 +362,21 @@ router.post(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    res.status(201).json(
-      await resultsEnterpriseService.createWallboardAlert(id.orgId, {
-        wallboardId: req.params.wallboardId,
-        ...p.data,
-      })
-    );
+    try {
+      res.status(201).json(
+        await resultsEnterpriseService.createWallboardAlert(id.orgId, {
+          wallboardId: req.params.wallboardId,
+          ...p.data,
+        })
+      );
+    } catch (error: any) {
+      // SEC-3: a foreign-org (or missing) wallboard is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Wallboard not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 

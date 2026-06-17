@@ -3475,6 +3475,10 @@ router.post('/:id/export/notion', async (req: Request, res: Response) => {
     const reportData = await ReportBuilderService.getReport(id, organizationId);
     if (!reportData) return res.status(404).json({ error: 'Report not found' });
 
+    // Notion is an external publish target — apply the same export-readiness gate
+    // enforced for pdf/doc/docx/pptx so un-vetted reports cannot leak outside.
+    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
+
     const notionConfig = await getNotionConfigForUser(userId);
     if (!notionConfig) {
       return res.status(400).json({
@@ -3665,7 +3669,10 @@ const exportDocx = async (req: Request, res: Response) => {
       status: 'failed',
     }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting Word (.docx):', err);
-    return res.status(500).json({ error: 'Failed to export Word', message: err.message });
+    // INFO-DISCLOSURE guard: log the real error above; never echo raw err.message to the client.
+    return res
+      .status(500)
+      .json({ error: 'Failed to export Word', code: 'EXPORT_DOCX_FAILED' });
   }
 };
 
@@ -3895,7 +3902,10 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       status: 'failed',
     }).catch(() => null);
     logger.error('[ReportBuilder] Error exporting PPTX:', err);
-    return res.status(500).json({ error: 'Failed to export PPTX', message: err.message });
+    // INFO-DISCLOSURE guard: log the real error above; never echo raw err.message to the client.
+    return res
+      .status(500)
+      .json({ error: 'Failed to export PPTX', code: 'EXPORT_PPTX_FAILED' });
   }
 });
 
@@ -4152,7 +4162,10 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
       }).catch(() => null);
     }
     logger.error('[ReportBuilder] Error publishing to cloud:', err);
-    return res.status(500).json({ error: 'Failed to publish to cloud', message: err.message });
+    // INFO-DISCLOSURE guard: log the real error above; never echo raw err.message to the client.
+    return res
+      .status(500)
+      .json({ error: 'Failed to publish to cloud', code: 'CLOUD_PUBLISH_FAILED' });
   }
 });
 

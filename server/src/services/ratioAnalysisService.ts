@@ -137,7 +137,10 @@ const safe = (
 ): number | null => {
   if (a === undefined || b === undefined || !Number.isFinite(a) || !Number.isFinite(b)) return null;
   if (op === div && b === 0) return null;
-  return op(a, b);
+  // Guard non-finite results for ALL ops, not just `div`: percentage ratios use an
+  // inline `(a, b) => (a / b) * 100` op which previously leaked Infinity on b === 0.
+  const result = op(a, b);
+  return Number.isFinite(result) ? result : null;
 };
 
 const div = (a: number, b: number) => a / b;

@@ -1753,13 +1753,13 @@ export const FinanceHub: React.FC = () => {
                   'finance.empty.statements',
                   'No statements in the current view. Ready items go to the working set, recoverable items go to Recovery Queue, and rejected ones stay outside downstream flows.'
                 ),
-      models: t('finance.empty.models', 'Brak modeli. Dodaj pierwszy model finansowy.'),
-      analysis: t('finance.empty.analysis', 'Brak analiz. Utwórz pierwszą analizę.'),
-      prediction: t('finance.empty.prediction', 'Brak danych do predykcji. Najpierw utwórz model.'),
-      valuation: t('finance.empty.valuation', 'Brak wycen. Utwórz pierwszą wycenę.'),
+      models: t('finance.empty.models', 'No models yet. Add your first financial model.'),
+      analysis: t('finance.empty.analysis', 'No analyses yet. Create your first analysis.'),
+      prediction: t('finance.empty.prediction', 'No prediction data. Create a model first.'),
+      valuation: t('finance.empty.valuation', 'No valuations yet. Create your first valuation.'),
       investment: t(
         'finance.empty.investment',
-        'Brak case studies inwestycyjnych. Utwórz pierwszą analizę inwestycyjną.'
+        'No investment case studies yet. Create your first investment analysis.'
       ),
     };
     const currentKind = (activeTab === 'investment' ? 'investment' : activeTab) as

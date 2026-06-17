@@ -309,7 +309,12 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
     const draggedInitiative = initiatives.find((i) => i.id === active.id);
     if (!draggedInitiative) return;
 
-    const newStatus = columns.find((col) => col.id === over.id)?.id;
+    const overId = over.id as string;
+    let newStatus = columns.find((col) => col.id === overId)?.id;
+    if (!newStatus) {
+      const overInitiative = initiatives.find((i) => i.id === overId);
+      if (overInitiative) newStatus = columns.find((col) => col.id === overInitiative.status)?.id;
+    }
     if (newStatus && newStatus !== draggedInitiative.status) {
       onStatusChange(active.id as string, newStatus);
     }

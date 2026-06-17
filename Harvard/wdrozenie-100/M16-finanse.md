@@ -111,12 +111,12 @@ Scenariusze S1–S8: karta §0 (510 PASS/14 FAIL drift). Bezpieczeństwo: karta 
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | beta-lock tylko nawigacyjny (`/finance`/`/economics` direct URL omija) | W-01 | `Sidebar.tsx:152` + `RouterSyncProvider` bez guarda | P1 | 2 | otwarta | — |
-| L-02 | obliczenia finansowe częściowo testowane / fałszywa zieleń (test definiuje własny kalkulator) | W-01 | `tests/unit/backend/financialCalculatorService.test.js:83` (inline kalkulator, brak importu produkcji) | P0-test | 2 | otwarta | 2026-06-13 |
-| L-03 | 14 FAIL drift (label/schema/mock-sekwencja p05) | W-01 | testy finance p05 (8×404), FinanceHub label, economicsFlow env | P0-test | 2 | otwarta | — |
-| L-04 | empty-messages mieszane PL/EN (literały) | W-01 | `FinanceHub.tsx:1739` EN vs `:1763-1771` PL | P3 | 3 | otwarta | 2026-06-13 |
-| L-05 | brak `EntityStatusChip` (własne chipy) | W-01 | `FinanceHub.tsx:1609,1034` | P3 | 3 | otwarta | — |
-| L-06 | sync-from-M20 STUB (M20 pisze log, Finance nie odbiera) | W-01,W-04 | `ModuleSyncService:57` (0 konsumentów) | INTEGRACJA | 2 | **DP-6: preview teraz; realny odbiór = D-01** | — |
+| L-01 | beta-lock tylko nawigacyjny (`/finance`/`/economics` direct URL omija) | W-01 | `Sidebar.tsx:152` + `RouterSyncProvider` bez guarda | P1 | 2 | **NAPRAWIONA — `AppRoutes.tsx:1755`/`:1771` owinięte `<BetaGate moduleId="MODULE_ECONOMICS">` (R3: audyt zawyżał — guard już istniał)** | 2026-06-16 |
+| L-02 | obliczenia finansowe częściowo testowane / fałszywa zieleń (test definiuje własny kalkulator) | W-01 | `tests/unit/backend/financialCalculatorService.test.js:83` (inline kalkulator, brak importu produkcji) | P0-test | 2 | **NAPRAWIONA — B1 (test→realne serwisy) + B2 (DCF hand-derived) + B3 (`ratioAnalysisService.test.ts`, +fix bug Infinity-leak); 149/149 PASS** | 2026-06-16 |
+| L-03 | 14 FAIL drift (label/schema/mock-sekwencja p05) | W-01 | testy finance p05 (8×404), FinanceHub label, economicsFlow env | P0-test | 2 | **NAPRAWIONA — finance-suite zielony (p05-finance-lane + Economics 82/82)** | 2026-06-16 |
+| L-04 | empty-messages mieszane PL/EN (literały) | W-01 | `FinanceHub.tsx:1739` EN vs `:1763-1771` PL | P3 | 3 | **NAPRAWIONA — 9 empty-messages przez klucze `finance.empty` (PL+EN walidne). Uwaga: masowa migracja ~125 ternarów `isPl?:` świadomie odłożona (osobna fala, wysokoregresyjna)** | 2026-06-16 |
+| L-05 | brak `EntityStatusChip` (własne chipy) | W-01 | `FinanceHub.tsx:1609,1034` | P3 | 3 | **N/D — premisa nieaktualna: chipy statusu już kanoniczne via `FilterableTable.tsx:570`; `MetaChip:1034` = metadana typu (Budżet/Model), nie status** | 2026-06-16 |
+| L-06 | sync-from-M20 STUB (M20 pisze log, Finance nie odbiera) | W-01,W-04 | `ModuleSyncService:57` (0 konsumentów) | INTEGRACJA | 2 | **DP-6 ZREALIZOWANE — `b074760074` wyłączył kłamiący przycisk sync (disabled „Wkrótce/Coming soon", zero fałszywego success). Realny odbiór = D-01 osobna fala** | 2026-06-16 |
 | L-07 | cross-org IDOR legacy `getModel` | W-01,W-03 | `/api/financial-modeling` by-id `:1107` (przed fix) | P0 | — | **NAPRAWIONA `e3945bc7fc` (R3: commit zweryfikowany w git; read-only proof cross-org 404 = Faza 4)** | 2026-06-13 |
 
 *(Korekta staleności WP: „i18n inline 19× `isPolish`" → grep `Economics/` = **0** już naprawione; `EconomicsViewPlaceholder.tsx` martwy już USUNIĘTY `b5de79ef03`.)*

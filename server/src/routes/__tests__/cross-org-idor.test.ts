@@ -1048,8 +1048,10 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
   it('benefits IRIS refresh current_value UPDATE carries an org filter (source guard)', async () => {
     // Static guarantee: the only current_value UPDATE in benefits.routes is org-scoped.
     const fs = await import('node:fs');
-    const url = await import('node:url');
-    const path = url.fileURLToPath(new URL('../benefits.routes.ts', import.meta.url));
+    const nodePath = await import('node:path');
+    // Resolve from repo root (cwd) — `new URL(..., import.meta.url)` is unreliable under the
+    // vitest transform ("not a valid instance of Location") and crashed before this assertion ran.
+    const path = nodePath.resolve(process.cwd(), 'server/src/routes/benefits.routes.ts');
     const src = fs.readFileSync(path, 'utf8');
     const updates = src.match(/UPDATE initiative_kpis SET current_value[\s\S]*?WHERE[^\n]*/g) || [];
     expect(updates.length).toBeGreaterThan(0);

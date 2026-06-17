@@ -1211,6 +1211,15 @@ router.post(
       return res.status(400).json({ error: 'scenarioType is required' });
     }
 
+    const analysis = await dbGet<any>(
+      'SELECT id FROM digitization_analyses WHERE id = ? AND organization_id = ?',
+      [id, orgId]
+    );
+
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
     const scenarioData = rawFinancialData
       ? normalizeFinancialData(rawFinancialData)
       : normalizeFinancialData({});
@@ -1218,15 +1227,15 @@ router.post(
     const now = new Date().toISOString();
 
     const existing = await dbGet<any>(
-      `SELECT id FROM analysis_financial_scenarios WHERE analysis_id = ? AND scenario_type = ?`,
-      [id, scenarioType]
+      `SELECT id FROM analysis_financial_scenarios WHERE analysis_id = ? AND scenario_type = ? AND organization_id = ?`,
+      [id, scenarioType, orgId]
     );
 
     if (existing) {
       await dbRun(
         `UPDATE analysis_financial_scenarios SET
           name = ?, assumptions = ?, financial_data = ?, metrics = ?, updated_at = ?
-         WHERE id = ?`,
+         WHERE id = ? AND organization_id = ?`,
         [
           name || scenarioType,
           JSON.stringify(scenarioData.assumptions || []),
@@ -1240,6 +1249,7 @@ router.post(
           }),
           now,
           existing.id,
+          orgId,
         ]
       );
       return res.json({ success: true, scenarioId: existing.id });

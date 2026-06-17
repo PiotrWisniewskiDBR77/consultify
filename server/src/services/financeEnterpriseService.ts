@@ -103,6 +103,24 @@ class FinanceEnterpriseService {
     return this.db;
   }
 
+  /**
+   * SEC: verify the parent financial model belongs to the caller's org before
+   * any child-row write (budget/allocation/forecast/valuation/assumption/ROI).
+   * Reads are already org-scoped, but the create* paths previously trusted the
+   * route's `modelId` blindly — letting org A graft child rows onto org B's
+   * model (integrity / FK-injection). Throws 'Model not found'; the route maps
+   * that message → 404 (same convention as resultsEnterpriseService).
+   */
+  private async assertModelOwned(orgId: string, modelId: string): Promise<void> {
+    const owned = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM financial_models WHERE id = ? AND organization_id = ?`,
+      [modelId, orgId]
+    );
+    if (!owned?.id) {
+      throw new Error('Model not found');
+    }
+  }
+
   // ──────────────────────────────────────────────
   // V4-FINC-01: Model versioning + scenarios
   // ──────────────────────────────────────────────
@@ -275,6 +293,7 @@ class FinanceEnterpriseService {
       period?: string;
     }
   ): Promise<{ id: string }> {
+    await this.assertModelOwned(orgId, data.modelId);
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO financial_allocations (id, organization_id, model_id, source_dimension_id, target_dimension_id, allocation_method, allocation_rules, amount, period)
@@ -370,6 +389,7 @@ class FinanceEnterpriseService {
       plannedData: Record<string, unknown>;
     }
   ): Promise<BudgetVersion> {
+    await this.assertModelOwned(orgId, data.modelId);
     const id = uuidv4();
     const now = new Date().toISOString();
     await queryHelpers.queryRun(
@@ -465,6 +485,7 @@ class FinanceEnterpriseService {
       forecastHorizonMonths?: number;
     }
   ): Promise<{ id: string }> {
+    await this.assertModelOwned(orgId, data.modelId);
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO financial_forecast_cycles (id, organization_id, model_id, cycle_name, cycle_type, forecast_horizon_months)
@@ -630,6 +651,7 @@ class FinanceEnterpriseService {
       outputs: Record<string, unknown>;
     }
   ): Promise<ValuationSnapshot> {
+    await this.assertModelOwned(orgId, data.modelId);
     const id = uuidv4();
     const now = new Date().toISOString();
     const assumptionsHash = crypto
@@ -727,6 +749,7 @@ class FinanceEnterpriseService {
       aiModelUsed?: string;
     }
   ): Promise<AIAssumption> {
+    await this.assertModelOwned(orgId, data.modelId);
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO financial_ai_assumptions (id, organization_id, model_id, assumption_key, assumption_value, confidence, source_citations, ai_model_used)
@@ -791,6 +814,7 @@ class FinanceEnterpriseService {
       assumptionIds?: string[];
     }
   ): Promise<ROILink> {
+    await this.assertModelOwned(orgId, data.modelId);
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO financial_roi_links (id, organization_id, model_id, initiative_id, benefit_id, assumption_ids)

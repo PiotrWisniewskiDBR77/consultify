@@ -89,12 +89,12 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód | Klasa | Faza | Status |
 |----|------|---------|-------|-------|------|--------|
-| L-01 | create-from-hub disabled | W-01 | `InitiativesHub.tsx:1985-1997,1943-1952,1953-1962` | P1 | 2 | otwarta |
+| L-01 | create-from-hub disabled | W-01 | `InitiativesHub.tsx:1985-1997,1943-1952,1953-1962` | P1 | 2 | **ZAMKNIĘTA 2026-06-16** — pilot dostaje locked CTA (grayed button + pilotAccessBlocked) zamiast undefined; server guard dopięty (L-06) |
 | L-02 | bulk Tag/Due/Delete (brak BE) | W-01 | hub bulk-bar | P3 | 4 | otwarta |
 | L-03 | system statusów/bramek/preview/menu (#14) | W-04,W-06 | `stageGateService.ts` + `STATUS_ROLE_CTA_MATRIX.md` + UI | P1-design | 2 | otwarta |
 | L-04 | AI-fill wg formuły McKinsey (#16) | W-05,W-07 | `initiativeGenerationService.ts`, `InitiativeDocumentView.tsx` | P1-design | 2 | otwarta |
-| L-05 | cicha degradacja V8 bez banera | W-01 | chip V8 (vs Finance/Results) | P1 | 2 | otwarta |
-| L-06 | gating pilota tylko klient | W-01,W-08 | `createInitiative`/bulk/generator | P1 | 2 | otwarta |
+| L-05 | cicha degradacja V8 bez banera | W-01 | chip V8 (vs Finance/Results) | P1 | 2 | **ZAMKNIĘTA** — `v8PlanningDegraded` state + Banner już w InitiativesHub.tsx:234,1979-1993 (L-05 comment in code) |
+| L-06 | gating pilota tylko klient | W-01,W-08 | `createInitiative`/bulk/generator | P1 | 2 | **ZAMKNIĘTA 2026-06-16** — `requireInitiativeWriteAccess()` dodane do POST/PUT/DELETE `/api/initiatives` (initiatives.routes.ts); PMO routes i generator już miały guard |
 | L-07 | in-context open (nawiguje do modułu) | W-03 | `MyWorkHub.tsx:1249,3193` | P1-design | 0.4 | **D-01** |
 | L-08 | brak CTA „Otwórz" board-preview | W-02 | `InitiativePreviewV3.tsx:399` | P1-TOP | — | **NAPRAWIONA `18ed3e44f7`** |
 | L-09 | cross-org governance IDOR | W-01 | `initiativeGovernanceService` | P0 | — | naprawiona `b9f2dee9d2` (R3: test) |
@@ -113,7 +113,7 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 
 ### 05 · Flagi/rollout — V8 Planning (env, degraduje); pilot VTS (rola, gating→serwer); beta core (otwarty); demo Atelier Toys (jawny toggle).
 ### 06 · Ryzyka — SSOT statusów (~15 dok.) może być rozjechany z `stageGateService.ts` → #14 najpierw pogodzić docs↔kod. Governance IDOR (`b9f2dee9d2`) wymaga testu cross-org. Dev `.env` → Railway PROD.
-### 07 · Log — 2026-06-13: L-08 (`18ed3e44f7`). Audyt 2026-06-11/12: L-09/L-10 naprawione; ocena 54/100. Re-ocena D po Fazie 2/4.
+### 07 · Log — 2026-06-16: L-01+L-05+L-06 zamknięte (EPIK 1 gotowy). 2026-06-13: L-08 (`18ed3e44f7`). Audyt 2026-06-11/12: L-09/L-10 naprawione; ocena 54/100. Re-ocena D po Fazie 2/4.
 
 ---
 

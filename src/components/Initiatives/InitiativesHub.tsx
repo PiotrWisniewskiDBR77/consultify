@@ -1954,7 +1954,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         primaryCta={
-          isPilotParticipant ? undefined : (
+          isPilotParticipant ? (
+            <button
+              type="button"
+              onClick={() => dispatchPilotAccessBlocked({ href: '/initiatives' })}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-white/30 cursor-not-allowed"
+              title={t('initiatives.pilot.createLocked', 'Available in the next project phase')}
+            >
+              <span>{t('initiatives.form.newInitiative')}</span>
+            </button>
+          ) : (
             <button
               type="button"
               onClick={() => setShowInitiativeWizard(true)}

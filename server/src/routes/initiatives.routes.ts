@@ -6,6 +6,7 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/index.js';
+import { requireInitiativeWriteAccess } from '../services/initiative/initiativeGovernanceGuard.js';
 import logger from '../utils/Logger.js';
 import { requireRequestOrganizationId } from '../utils/requestOrganization.js';
 
@@ -148,7 +149,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 // ============================================
 // POST /api/initiatives — create initiative
 // ============================================
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', requireInitiativeWriteAccess(), async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
     const organizationId = requireRequestOrganizationId(req, res);
@@ -223,7 +224,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 // ============================================
 // PUT /api/initiatives/:id — update initiative
 // ============================================
-router.put('/:id', async (req: AuthRequest, res: Response) => {
+router.put('/:id', requireInitiativeWriteAccess(), async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
     const organizationId = requireRequestOrganizationId(req, res);
@@ -300,7 +301,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 // ============================================
 // DELETE /api/initiatives/:id — delete initiative
 // ============================================
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
+router.delete('/:id', requireInitiativeWriteAccess(), async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
     const organizationId = requireRequestOrganizationId(req, res);

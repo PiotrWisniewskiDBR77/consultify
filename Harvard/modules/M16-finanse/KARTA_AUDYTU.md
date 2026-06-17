@@ -154,12 +154,12 @@
 3. **CI** — `Londyn` w PR-gate + testy server/ (systemowe) — Weryfikacja: biegnie na PR.
 
 ### Definition of Done (odhaczane przy realizacji)
-- [ ] 1. Testy auto FE+BE scenariuszy krytycznych (zwł. obliczenia + IDOR) zielone w CI
+- [x] 1. Testy auto obliczeń + IDOR zielone LOKALNIE (2026-06-16): B1 (`financialCalculatorService.test.js` realne serwisy), **B2** (`valuationService.computeValuation.test.ts` hand-derived DCF), **B3** (`ratioAnalysisService.test.ts` 18 testów, +fix bug Infinity-leak w `safe()`), IDOR 23/23 (3 pliki `*.idor.test.ts`); 149/149 finance PASS. **Pozostaje: B10 — CI-gate na `Londyn`** (PR-gate nadal `[main,develop]`).
 - [ ] 2. Żywa weryfikacja Claude'a: pełny skrypt Fazy 4 PASS z dowodami
 - [ ] 3. Railway: migracje + flagi + smoke 200 + czyste logi
-- [ ] 4. Kanony: i18n, EntityStatusChip
-- [ ] 5. Zero WIDOCZNE-ALE-ZEPSUTE
-- [x] 6. Legacy financial-modeling org-scoped (P0 zamknięty `e3945bc7fc`)
+- [x] 4. Kanony: **i18n L-04** empty-messages przez `finance.empty` (PL+EN, 2026-06-16); **L-05 EntityStatusChip — N/D** (chipy statusu już kanoniczne via `FilterableTable.tsx:570`; `MetaChip:1034` = metadana typu, nie status)
+- [x] 5. Zero WIDOCZNE-ALE-ZEPSUTE (L-06 kłamiący sync-button wyłączony `b074760074`)
+- [x] 6. Legacy financial-modeling org-scoped (P0 zamknięty `e3945bc7fc`); **IDOR łańcucha finansowego KOMPLETNE** (weryfikacja adversarialna 2026-06-16: wszystkie by-id org-scoped + working-tree hardening economics/financial-modeling/financeEnterprise)
 
 ---
 **Pozostałe do domknięcia audytu M16:** Faza 3 (Railway) + Faza 4 (żywe 8 scenariuszy). P0 IDOR legacy financial-modeling NAPRAWIONY (commit `e3945bc7fc` — `getModel` org-scoped). Moduł funkcjonalnie najmocniejszy z finansowych (realna matematyka, realna persystencja, honest billing) — po Fazach 3/4 realnie Beta.

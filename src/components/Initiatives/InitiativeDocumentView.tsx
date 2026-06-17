@@ -153,6 +153,7 @@ import {
   type SortOrder,
 } from '../shared/NModeSections';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
+import { upsertFinancialBlock } from './financialNarrativeBlocks';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
 import {
   extractInitiativeKpiRows,
@@ -234,6 +235,14 @@ const toKpiNumber = (value?: string | null): number => {
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 };
+
+/**
+ * Mirror of the server's CARD_CONTENT_FORMULA §B4 PASS threshold (≥ 90). Kept as a
+ * local FE constant so we don't import server code into the client bundle; it only
+ * labels the advisory verdict chip and must stay in sync with the service value
+ * (server/src/services/initiativeGenerationService.ts → REVIEW_PASS_THRESHOLD).
+ */
+const REVIEW_PASS_THRESHOLD = 90;
 
 interface ExpandableNarrativeFieldProps {
   value: string;
@@ -568,6 +577,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [suggestedChangesLoading, setSuggestedChangesLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
+  // Advisory quality verdict from the adversarial reviewer (§B4, PASS ≥ 90),
+  // keyed by section id. Surfaced as a small chip next to the financial sections
+  // so the human sees a quality signal BEFORE saving (M13 #2). ADVISORY only —
+  // it never blocks the save. We opt into withReview ONLY for the financial
+  // sections (highest data-quality risk), keeping the default generate path cheap.
+  const [sectionReview, setSectionReview] = useState<
+    Record<string, { score: number; verdict: 'PASS' | 'FAIL'; gaps: string[]; degraded: boolean }>
+  >({});
   // Slot 9 — canonical artifact-level AI Consultant right panel (POZIOM 3).
   // Toggled by the solid-teal toolbar button; replaces the old one-shot generate.
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
@@ -4234,7 +4251,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           module: initiative?.module || '',
           status: getWorkflowStatusForInitiative(initiative as any),
           language: aiLanguage,
+          // Opt into the advisory adversarial review for financial sections — the
+          // sizing/ROI numbers are the highest-risk content to ship unchecked.
+          withReview: true,
         });
+
+        // Capture the advisory verdict (if the backend ran the second pass) so the
+        // chip can render. Never blocks — purely informational.
+        const review = result?.review;
+        if (review && typeof review === 'object') {
+          setSectionReview((prev) => ({
+            ...prev,
+            [section]: {
+              score: Number(review.score) || 0,
+              verdict: review.verdict === 'PASS' ? 'PASS' : 'FAIL',
+              gaps: Array.isArray(review.qualityGaps) ? review.qualityGaps.slice(0, 4) : [],
+              degraded: !!review.degraded,
+            },
+          }));
+        }
 
         // Normalize: financial prompts may return JSON (sizing object) or prose.
         let text = '';
@@ -4267,12 +4302,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           return;
         }
 
-        // PROPOSE → REVIEW: surface in the editable draft. If the section already
-        // had content, prepend the proposal so the human compares, not clobbers.
-        setMarketContextDraft((prev) => {
-          const existing = String(prev || '').trim();
-          return existing ? `${text}\n\n${existing}` : text;
-        });
+        // PROPOSE → REVIEW: surface in the editable draft. Both financial sections
+        // share the single `market_context` field, so we upsert THIS section's
+        // labeled block (M13 #1) — re-generating one section replaces only its own
+        // block and never clobbers the other's content.
+        setMarketContextDraft((prev) => upsertFinancialBlock(prev, section, text, isPolish));
         toast.success(
           isPolish
             ? 'AI wygenerował propozycję finansową — przejrzyj i zapisz.'
@@ -7205,6 +7239,45 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                     {heading}
                   </span>
+                  {(() => {
+                    // Advisory quality verdict chip (M13 #2). Renders only after an
+                    // AI-fill that ran the review pass. PASS ≥ 90 = green; otherwise
+                    // amber with the top gaps in the tooltip. Never blocks the save.
+                    const rv = sectionReview[section.id];
+                    if (!rv) return null;
+                    const pass = rv.verdict === 'PASS';
+                    const label = pass
+                      ? isPolish
+                        ? 'Jakość OK'
+                        : 'Quality OK'
+                      : isPolish
+                        ? 'Do poprawy'
+                        : 'Needs work';
+                    const tip = [
+                      `${isPolish ? 'Ocena jakości' : 'Quality score'}: ${rv.score}/100 (PASS ≥ ${REVIEW_PASS_THRESHOLD})`,
+                      rv.degraded
+                        ? isPolish
+                          ? 'Wynik heurystyczny (bez LLM) — zweryfikuj ręcznie.'
+                          : 'Heuristic score (no LLM) — verify manually.'
+                        : '',
+                      ...rv.gaps.map((g) => `• ${g}`),
+                    ]
+                      .filter(Boolean)
+                      .join('\n');
+                    return (
+                      <span
+                        title={tip}
+                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                          pass
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300'
+                            : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
+                        }`}
+                      >
+                        {pass ? <CheckCircle2 size={11} /> : <AlertTriangle size={11} />}
+                        {label} · {rv.score}
+                      </span>
+                    );
+                  })()}
                 </div>
                 {canUseAi && (
                   <button
