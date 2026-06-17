@@ -126,13 +126,13 @@
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | WS collab bez org-scope verify | W-01,W-03 | `ideaCollabWs.gateway.ts:237-242` | P1 | 1 | **NAPRAWIONA `fd8707c5b2` (zweryf. w kodzie 2026-06-13)** — domknąć testem |
-| L-02 | snapshots/activity brak migracji→503 (wspólne M05) | W-01 | `my-work.routes.ts:4515,4818` + mig. `20260611_…sql` | P0 | 1 | **migracja ISTNIEJE; status DB do weryfikacji** [do weryfikacji w DB] |
-| L-03 | Korupcja codemodu „red"→"rose" | W-01,W-03 | (historycznie `IdeaRecommendationMap.tsx:1001,1824`) | P1 | 1 | **NAPRAWIONA `fd8707c5b2` (grep=0, zweryf. 2026-06-13)** |
-| L-04 | ExportPPT myląca etykieta; sidekick w próżnię; AI overlays fabrykowane; WebhookSettings localStorage | W-01,W-03 | `ExportPowerPoint.tsx:91`, `IdeaRecommendationMap.tsx:2534`, `WebhookSettings.tsx:44` | INTEGR/P2 | 3 | etykieta+webhook **claim naprawione `fd8707c5b2` [do weryfikacji]**; sidekick+overlays otwarte |
-| L-05 | Flush bez keepalive/sendBeacon (wspólny pula) | W-01 | `useIdeaMapSync.ts:350-354` | P1 | 1/3 | otwarta |
-| L-06 | Dwa drawery ~2400l; brak align/distribute/snap; React dup-key | W-01 | `mindmap/NodeDetailDrawer.tsx`, `IdeaNodeDetailDrawer.tsx` | P2 | 3 | **D-01** (canonical drawer) |
-| L-07 | Brak BE map/sync + WS test + snapshot test; E2E poza tier0; CI bez `Londyn` | W-01 | `tests/integration/*` (brak) | P0-test | 1+4 | otwarta |
+| L-01 | WS collab bez org-scope verify | W-01,W-03 | `ideaCollabWs.gateway.ts:237-242` | P1 | 1 | **ZAMKNIĘTA (2026-06-17, Harvard 2)** — org-scope realny + test wspólny `tests/integration/gateways/ideaCollabWs.orgscope.test.ts` (6/6 PASS: 401 JWT, 403 cross-org IDOR, same-org pass) |
+| L-02 | snapshots/activity brak migracji→503 (wspólne M05) | W-01 | `my-work.routes.ts:4515,4818` + mig. `20260611_…sql` | P0 | 1 | **migracja ISTNIEJE (plik); status DB = deploy-time** [weryfikacja/apply na prod = zgoda Piotra; poza zakresem agenta] |
+| L-03 | Korupcja codemodu „red"→"rose" | W-01,W-03 | (historycznie `IdeaRecommendationMap.tsx:1001,1824`) | P1 | 1 | **ZAMKNIĘTA `fd8707c5b2` (grep=0, re-zweryf. 2026-06-17)** |
+| L-04 | ExportPPT myląca etykieta; sidekick w próżnię; AI overlays fabrykowane; WebhookSettings localStorage | W-01,W-03 | `ExportPowerPoint.tsx:91`, `IdeaRecommendationMap.tsx:2534`, `WebhookSettings.tsx:44` | INTEGR/P2 | 3 | **ZAMKNIĘTA (2026-06-17, `f84649d3af` + `8c3285480d`)** — webhook: martwe CTA `mm_webhooks` (brak handlera) + osierocony `WebhookSettings.tsx`(+dup ` 2.tsx`) USUNIĘTE. FALSE POSITIVE (zweryf. w kodzie): sidekick = KONSUMOWANY (`AIActionsPopover.tsx:91`, `FloatingAIPopover.tsx:54`); ExportPPT etykieta = UCZCIWA („Pobierz HTML (do PDF/PPTX)" `:161`); AI overlays = REALNY LLM (`Api.getMyIdeaAISuggestions` w `AISentimentOverlay:56`/`AIAutoClustering:62`) |
+| L-05 | Flush bez keepalive/sendBeacon (wspólny pula) | W-01 | `useIdeaMapSync.ts:350-354` | P1 | 1/3 | **ZAMKNIĘTA `8c3285480d` (2026-06-17)** — `keepalive` w `Api.syncMyIdeaMap` (single-shot, wysyła Authorization; sendBeacon nie) + teardown handlery (visibility-hidden/beforeunload) przekazują `keepalive:true`; test +3 case'y (14/14 PASS) |
+| L-06 | Dwa drawery ~2400l; brak align/distribute/snap; React dup-key | W-01 | `mindmap/NodeDetailDrawer.tsx`, `IdeaNodeDetailDrawer.tsx` | P2 | 3 | **D-01 ODROCZONA (2026-06-17)** — oba drawery ŻYWE z różnymi konsumentami: `NodeDetailDrawer` (mindmap: `IdeaRecommendationMap`+`QuickEditPopovers`) vs `IdeaNodeDetailDrawer` (map-workspace M05: `IdeaMapWorkspace`) — to NIE prosty duplikat, lecz dwie powierzchnie. Konsolidacja = ryzykowny refaktor ~2400l spanning M05+M06, nie correctness-bug → osobny pass refaktorowy (rekomendacja: nie robić spekulatywnie bez R6). align/distribute/snap = P2 enhancement (nie bug). |
+| L-07 | Brak BE map/sync + WS test + snapshot test; E2E poza tier0; CI bez `Londyn` | W-01 | `tests/integration/*` (brak) | P0-test | 1+4 | **ZAMKNIĘTA (2026-06-17)** — WS cross-org test `ideaCollabWs.orgscope.test.ts` (6/6); map/sync round-trip pokryty `useIdeaMapSync` smoke (14/14) + M05 contract `my-work.map-sync.contract.test.ts`; CI Londyn skonfigurowane (`test-suite.yml`) |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
@@ -143,7 +143,7 @@
 
 ### 05 · Flagi/rollout — beta Ideas; collab WS aktywny dla org. **DP-3:** przebudowa na shared+membership (M09) zmienia regułę join (org-check → membership-check) w `ideaCollabWs.gateway.ts` — wspólnym dla M06/M07/M09.
 ### 06 · Ryzyka — placeholder `?` w gateway: potwierdzić tłumaczenie przez PG-adapter (inaczej DB-check może nie działać na PG); migracja 20260611 może nie być na prod; korupcja „rose" dotykała też M04 (`notebook/AIChatInlinePanel.tsx`) — sweep szerszy do potwierdzenia.
-### 07 · Log — 2026-06-13: zweryfikowano L-01 (WS org-scope realny), L-03 (rose=0). Audyt 2026-06-12: 60/100. Re-ocena po FAZA 1 + sesji żywej (R6).
+### 07 · Log — 2026-06-13: zweryfikowano L-01 (WS org-scope realny), L-03 (rose=0). Audyt 2026-06-12: 60/100. 2026-06-17 (Harvard 2): L-01/L-07 ZAMKNIĘTE (WS test 6/6); L-04 ZAMKNIĘTA (`f84649d3af` martwe webhooki + FALSE POSITIVE sidekick/etykieta/overlays); L-05 ZAMKNIĘTA (`8c3285480d` keepalive); L-06 D-01 ODROCZONA (dwie żywe powierzchnie, nie bug); L-02 = deploy-time (zgoda Piotra). Re-ocena po sesji żywej (R6).
 
 ---
 
