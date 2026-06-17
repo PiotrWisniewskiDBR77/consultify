@@ -2776,14 +2776,15 @@ router.post(
       const orgId = req.user!.organizationId;
       const id = uuidv4();
 
-      // Accept either Stripe-ish id or raw card details (dev/demo mode)
+      // Accept Stripe-ish id or demo-mode identifiers; never accept raw card number (PCI, DP-11)
       const paymentMethodId: string | undefined = (req.body as any)?.paymentMethodId;
-      const cardNumber: string | undefined = (req.body as any)?.cardNumber;
       const expiryMonth: number | undefined = (req.body as any)?.expiryMonth;
       const expiryYear: number | undefined = (req.body as any)?.expiryYear;
       const cardholderName: string | undefined = (req.body as any)?.cardholderName;
 
-      const last4 = (cardNumber || '').replace(/\s/g, '').slice(-4) || '4242';
+      // last4 is cosmetic only (mock billing); derive from PM id suffix, never from raw card number
+      const pmId = paymentMethodId || `pm_${id.slice(0, 8)}`;
+      const last4 = pmId.slice(-4) || '0000';
       const brand = 'Visa';
       const expMonth = expiryMonth || 12;
       const expYear = expiryYear || new Date().getFullYear() + 1;
@@ -2803,7 +2804,7 @@ router.post(
         [
           id,
           orgId,
-          paymentMethodId || `pm_${id.slice(0, 8)}`,
+          pmId,
           brand,
           last4,
           expMonth,

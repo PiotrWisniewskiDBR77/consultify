@@ -1039,8 +1039,8 @@ async function readBillingPaymentMethods(orgId: string) {
 async function createBillingPaymentMethod(orgId: string, body: Record<string, unknown>) {
   const id = uuidv4();
   const paymentMethodId = String(body.paymentMethodId || `pm_${id.slice(0, 8)}`);
-  const cardNumber = String(body.cardNumber || '');
-  const last4 = cardNumber.replace(/\s/g, '').slice(-4) || '4242';
+  // PCI: never accept raw card number; last4 is cosmetic only (mock billing, DP-11)
+  const last4 = paymentMethodId.slice(-4) || '0000';
   const expMonth = Number(body.expiryMonth || 12);
   const expYear = Number(body.expiryYear || new Date().getFullYear() + 1);
   const holder = String(body.cardholderName || 'Card Holder');

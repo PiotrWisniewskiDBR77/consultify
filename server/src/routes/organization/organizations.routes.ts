@@ -17,7 +17,6 @@ import logger from '../../utils/Logger.js';
 import {
   AddMemberSchema,
   CreateOrganizationSchema,
-  InviteMemberSchema,
   UpdateMemberRoleSchema,
   UpdateOrganizationSchema,
 } from '../../validators/organization.validators.js';
