@@ -92,10 +92,28 @@ const ALLOWED: GovernanceGuardDecision = {
 };
 
 /**
+ * Delivery/staff roles that fall in the USER band by normalization but are NOT
+ * pilot respondents — they operate the platform (create/run initiatives). Genuine
+ * pilot respondents (bare USER, MEMBER/TEAM_MEMBER, GUEST/VIEWER/CLIENT) stay
+ * restricted. Keep in sync with `STAFF_EXEMPT_FROM_PILOT` on the frontend
+ * (src/utils/roleGuards.ts).
+ */
+const STAFF_EXEMPT_FROM_PILOT: ReadonlySet<string> = new Set([
+  'PROJECT_MANAGER',
+  'MANAGER',
+  'CONSULTANT',
+]);
+
+/**
  * Pilot participants are the application "USER"/"GUEST" band (TEAM_MEMBER,
- * MEMBER, VIEWER, CLIENT, …). Mirrors `isPilotRestrictedRole` on the frontend.
+ * MEMBER, VIEWER, CLIENT, …) MINUS the delivery/staff roles above. Mirrors
+ * `isPilotRestrictedRole` on the frontend.
  */
 export function isPilotRestrictedSystemRole(role: string | null | undefined): boolean {
+  const raw = String(role || '')
+    .trim()
+    .toUpperCase();
+  if (STAFF_EXEMPT_FROM_PILOT.has(raw)) return false;
   const band = normalizeApplicationRole(role);
   return band === 'USER' || band === 'GUEST';
 }

@@ -42,7 +42,20 @@ export function isAdminOwnerOrSuperAdminRole(role: string | null | undefined): b
   return normalized === 'ADMIN' || normalized === 'OWNER' || normalized === 'SUPERADMIN';
 }
 
+/**
+ * Delivery/staff roles that normalize to the USER band but are NOT pilot
+ * respondents — they operate the platform (create/run initiatives, full app).
+ * Genuine pilot respondents (bare USER, MEMBER/TEAM_MEMBER, GUEST/VIEWER/CLIENT)
+ * stay restricted. Keep in sync with the server guard
+ * (server/src/services/initiative/initiativeGovernanceGuard.ts → STAFF_EXEMPT_FROM_PILOT).
+ */
+const STAFF_EXEMPT_FROM_PILOT = new Set(['PROJECT_MANAGER', 'MANAGER', 'CONSULTANT']);
+
 export function isPilotRestrictedRole(role: string | null | undefined): boolean {
+  const raw = String(role || '')
+    .trim()
+    .toUpperCase();
+  if (STAFF_EXEMPT_FROM_PILOT.has(raw)) return false;
   const normalized = normalizeAppRole(role);
   return normalized === 'USER' || normalized === 'GUEST';
 }

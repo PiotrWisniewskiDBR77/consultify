@@ -242,6 +242,18 @@ describe('initiatives CRUD routes', () => {
     expect(res.body.code).toBe('INITIATIVE_PILOT_WRITE_FORBIDDEN');
   });
 
+  it('POST / is ALLOWED for delivery/staff roles (PROJECT_MANAGER) — not a pilot respondent', async () => {
+    currentRole = 'project_manager';
+    mockQueryRun.mockResolvedValue({ changes: 1, lastID: 1 });
+
+    const res = await request(app)
+      .post('/api/initiatives')
+      .send({ title: 'PM creates an initiative', priority: 'HIGH' });
+
+    expect([200, 201]).toContain(res.status);
+    expect(res.body.id).toBeTruthy();
+  });
+
   it('GET /:id returns 200 when initiative exists', async () => {
     const fixture = {
       id: INITIATIVE_ID,
