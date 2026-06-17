@@ -148,7 +148,7 @@ Scenariusze S1-S6 + plan + bezpieczeństwo: karta §0/§2/§6.
 | L-05 | Eksport serwerowy = rejestr bez pliku (STUB) | W-01 | `final-batch.routes.ts:32`, `IdeaExportMenu.tsx:498-509` | INTEGRACJA | 3 | **D-01** |
 | L-06 | Szablon nadpisuje graf bez confirm; notatki efemeryczne; `canvasLocked` hardcode; 4× console.log | W-01 | `IdeaTemplateGallery.tsx:1886`, `IdeaContextPanel.tsx:141`, `IdeaMapWorkspace.tsx:373,433` | P2 | 3 | **częściowo FALSE POSITIVE** (2026-06-17): 4× console.log = JUŻ USUNIĘTE (brak w kodzie); `canvasLocked` = ŚWIADOMA DECYZJA (komentarz `:375`); **REALNE**: szablon overwrite bez confirm (`handleApply` `:1965` — brak dialog gdy nodes>0); notatki efemeryczne (do weryfikacji) |
 | L-07 | Split-brain `versions` vs `snapshots` | W-01,W-04 | mig. 622 vs 20260611 | P2 | 3 | **D-02** |
-| L-08 | Brak testów S2/S3/S5/S6 + E2E poza tier0 + CI bez `Londyn` | W-01 | `tests/integration/mywork/my-work.map-sync.contract.test.ts` | P0-test | 1+4 | **NAPRAWIONA — S2+S3+S6 (11/11 PASS 2026-06-17)** `tests/integration/mywork/my-work.map-sync.contract.test.ts` |
+| L-08 | Brak testów S2/S3/S5/S6 + E2E poza tier0 + CI bez `Londyn` | W-01 | `tests/integration/mywork/my-work.map-sync.contract.test.ts` | P0-test | 1+4 | **NAPRAWIONA — S2+S3+S6 (11/11), S5 (6/6) (2026-06-17)** `my-work.map-sync.contract.test.ts` + `my-work.convert.contract.test.ts`; CI Londyn = już skonfigurowane (`test-suite.yml`) |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
