@@ -114,15 +114,15 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | edycja programu = martwy FE (PATCH bez ekranu) | W-01,W-05 | `audit-programs.routes.ts:122` (`updateProgram`) bez wołającego FE | P3 | 3 | otwarta (D-01) | 2026-06-13 |
-| L-02 | search/filter kliencki (gubi spoza strony) | W-01 | `AuditsHub.tsx:154` (TODO serwerowy) | P3 | 3 | otwarta | — |
+| L-01 | edycja programu = martwy FE (PATCH bez ekranu) | W-01,W-05 | `audit-programs.routes.ts:122` (`updateProgram`) bez wołającego FE | P3 | 3 | **NAPRAWIONA (DP-5) — kill-switch `src/utils/auditProgramEditStubFlag.ts` (`isAuditProgramEditEnabled()`, default OFF) gatuje przyszły ekran edycji; `updateProgram` wrapper jawnie udokumentowany jako gated orphan (`auditApi.ts:158-170`). Zero półbudowy.** | 2026-06-17 |
+| L-02 | search/filter kliencki (gubi spoza strony) | W-01 | `AuditsHub.tsx:154` (TODO serwerowy) | P3 | 3 | **NAPRAWIONA — search+status SERWEROWE: klient `listPrograms({search,status})` (`auditApi.ts:129-146`) → route `?search/?q + ?status` (`audit-programs.routes.ts:62-83`) → serwis LIKE name/objective/description nad PEŁNYM org-zbiorem (`auditProgramService.ts:226-280`); zweryf. kodem** | 2026-06-17 |
 | L-03 | nieaktualny baner kreatora „MVP" | W-01 | `AuditOrchestratorWizard.tsx:467-473` | P3 | 3 | **NAPRAWIONA — grep 2026-06-17: zero „MVP"/„generowanie nie jest zautomatyzowane" w `AuditOrchestratorWizard.tsx`; komentarz :23 potwierdza realna architektura (nie nieukończone MVP)** | 2026-06-17 |
 | L-04 | beta-lock tylko nawigacyjny (direct URL omija) | W-01 | `AppRoutes.tsx:1198` bez beta-guarda | P3 | 3 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_AUDITS">` owija `/audit-programs` route (`AppRoutes.tsx:1191-1201`); zweryfikowane grepem** | 2026-06-17 |
-| L-05 | brak `ModuleHub` (self-contained layout) | W-01 | `AuditsHub.tsx:235-283` | P3 | 3/4 | otwarta | 2026-06-13 |
-| L-06 | lista = karty `<ul>/<li>`, nie §27 | W-01 | `AuditsHub.tsx:343-462` (0 `<table>`) | P3 | 3/4 | otwarta | 2026-06-13 |
-| L-07 | i18n inline `isPolish`+`tr(en,pl)` | W-01,W-05 | Wizard 45 + Hub 48 + presets 3 = **~96** (grep) | P3 | 4 | otwarta (DP-10/M15) | 2026-06-13 |
-| L-08 | hardkod `accentColor="#3b82f6"` | W-01 | `AuditOrchestratorWizard.tsx:285` (1× grep) | P3 | 4 | otwarta | 2026-06-13 |
-| L-09 | brak FE/E2E (S1-S7) | W-01 | brak testów FE (17 BE PASS) | P2-test | — | **NAPRAWIONA — T5 `AuditOrchestratorWizard.4step.test.tsx` (8 testów: guard nazwy, 4-krok nawigacja, create/error/close/back) + T6 `AuditsHub.list-dashboard.test.tsx` (12 testów: loading/empty/lista/obiektyw/counts/error/wizard-CTA/ISO-CTA/close/delete/select/generate-badge) = 20/20 PASS** | 2026-06-17 |
+| L-05 | brak `ModuleHub` (self-contained layout) | W-01 | `AuditsHub.tsx:235-283` | P3 | 3/4 | **NAPRAWIONA — `ModuleHub` shell przyjęty (`AuditsHub.tsx:384`): header/search/tabs/view-mode/CTA/status-filters; zweryf. kodem. (wyprzedził DP-9 — zrobione end-to-end)** | 2026-06-17 |
+| L-06 | lista = karty `<ul>/<li>`, nie §27 | W-01 | `AuditsHub.tsx:343-462` (0 `<table>`) | P3 | 3/4 | **NAPRAWIONA — `FilterableTable` §27 (5 kolumn: name+chip/objective/templates/assignees/surveys) w `TableWithPreviewLayout` (preview = per-program dashboard) (`AuditsHub.tsx:436-469`); row-actions ⋮ Generuj/Usuń** | 2026-06-17 |
+| L-07 | i18n inline `isPolish`+`tr(en,pl)` | W-01,W-05 | Wizard 45 + Hub 48 + presets 3 = **~96** (grep) | P3 | 4 | otwarta (DP-10/M15 — dług spójności, NIE błąd: pełne PL+EN bez braków) | 2026-06-13 |
+| L-08 | hardkod `accentColor="#3b82f6"` | W-01 | `AuditOrchestratorWizard.tsx:285` (1× grep) | P3 | 4 | **NAPRAWIONA `bc30513f50` — token `rgb(var(--color-primary-500, 168 45 73))` (matchuje crimson CTAs; wzorzec WizardModal/ReportGenerator)** | 2026-06-17 |
+| L-09 | brak FE/E2E (S1-S7) | W-01 | brak testów FE (17 BE PASS) | P2-test | — | **NAPRAWIONA `bc30513f50` — T5 `AuditOrchestratorWizard.4step.test.tsx` (8) + T6 `AuditsHub.list-dashboard.test.tsx` (12, POGODZONY z §27 surface — mock ModuleHub+FilterableTable+TableWithPreviewLayout; poprzednia wersja testowała stary UI kartowy i 11/30 failowała po refaktorze L-05/L-06) + `__tests__/` (10) = 30/30 PASS** | 2026-06-17 |
 | L-10 | cross-org assignment injection | W-01,W-03 | `auditProgramService.ts:388-401` | P1 | — | **NAPRAWIONA `7df4b22d6d` (R3: commit zweryf. w git; test SEC-3 w Bramce D)** | 2026-06-13 |
 
 ### 04 · Rejestr decyzji (R5)
@@ -140,6 +140,7 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 - Baner MVP (L-03) — R3: zweryfikować runtime, bo re-audit twierdzi poprawiony, a karta wciąż go listuje (`finding_gap_reports_overstate`).
 
 ### 07 · Log wdrożenia + re-ocena
+- **2026-06-17 (Harvard 3): reconciliation teczka↔kod.** Stwierdzono że teczka §03 była nieaktualna względem kodu — L-01/L-02/L-05/L-06 były już zaimplementowane w kodzie (kill-switch DP-5, search serwerowy, ModuleHub, FilterableTable §27), tylko teczka tego nie odnotowała. Domknięte realnie: **L-08** (token zamiast `#3b82f6`) + **L-09** (T6 pogodzony z §27 surface — poprzedni test failował 11/30 po refaktorze L-05/L-06; teraz 30/30 PASS) — `bc30513f50`. Pozostaje OTWARTA tylko **L-07** (i18n inline = dług spójności DP-10, NIE błąd). Stray junk `src/utils/auditProgramEditStubFlag 2.ts` (kopia z równoległej sesji git) — do usunięcia poza scope.
 - 2026-06-13: pogłębienie teczki; **R3: `7df4b22d6d` zweryfikowany w git log** (cross-org assignment injection naprawiony, Bramka D tests); enumeracja 7 endpointów + serwisu; DoD przeliczone grepem (**i18n ~96 — korekta zaniżenia karty „19"**; hex 1; table 0). 17 BE testów PASS.
 - Audyt 2026-06-11: 55/100. Re-ocena po Fazie 3/4 + sesji żywej (R6).
 
