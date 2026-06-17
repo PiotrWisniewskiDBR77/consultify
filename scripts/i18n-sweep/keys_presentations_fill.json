@@ -1,0 +1,12 @@
+{
+  "exportSuccess": { "pl": "Rozpoczęto eksport", "en": "Export started" },
+  "renamePlaceholder": { "pl": "Tytuł prezentacji", "en": "Deck title" },
+  "loading": { "pl": "Ładowanie prezentacji...", "en": "Loading decks..." },
+  "empty": { "pl": "Brak prezentacji.", "en": "No presentations yet." },
+  "renameSuccess": { "pl": "Zmieniono nazwę", "en": "Renamed" },
+  "deleteSuccess": { "pl": "Usunięto prezentację", "en": "Deck deleted" },
+  "deleteFailed": { "pl": "Nie udało się usunąć prezentacji", "en": "Failed to delete deck" },
+  "openEditor": { "pl": "Otwórz edytor", "en": "Open Editor" },
+  "deckPreview": { "pl": "Podgląd prezentacji", "en": "Deck preview" },
+  "deleteConfirm": { "pl": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.", "en": "Delete \"{{title}}\"? This cannot be undone." }
+}

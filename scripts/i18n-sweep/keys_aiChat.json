@@ -1,0 +1,998 @@
+{
+  "whatShouldTeresaDoWithThis": {
+    "pl": "Co Teresa ma zrobić z tym tekstem?",
+    "en": "What should Teresa do with this text?"
+  },
+  "explanation": {
+    "pl": "Wyjaśnienie",
+    "en": "Explanation"
+  },
+  "close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "teresaIsExplaining": {
+    "pl": "Teresa wyjaśnia...",
+    "en": "Teresa is explaining..."
+  },
+  "couldNotGetAnExplanationPlease": {
+    "pl": "Nie udało się pobrać wyjaśnienia. Spróbuj ponownie.",
+    "en": "Could not get an explanation. Please try again."
+  },
+  "askTeresa": {
+    "pl": "Zapytaj Teresę",
+    "en": "Ask Teresa"
+  },
+  "askAi": {
+    "pl": "Teresa",
+    "en": "Ask AI"
+  },
+  "condenseSelection40": {
+    "pl": "Skróć zaznaczenie ~40%",
+    "en": "Condense selection ~40%"
+  },
+  "condense": {
+    "pl": "Skróć",
+    "en": "Condense"
+  },
+  "expandSelectionMax2x": {
+    "pl": "Rozwiń zaznaczenie (maks. 2x)",
+    "en": "Expand selection (max 2x)"
+  },
+  "expand": {
+    "pl": "Rozwiń",
+    "en": "Expand"
+  },
+  "changeTone": {
+    "pl": "Zmień ton tekstu",
+    "en": "Change tone"
+  },
+  "tone": {
+    "pl": "Ton",
+    "en": "Tone"
+  },
+  "explainSelectionDoesNotModifyThe": {
+    "pl": "Wyjaśnij zaznaczenie (nie zmienia dokumentu)",
+    "en": "Explain selection (does not modify the document)"
+  },
+  "explain": {
+    "pl": "Wyjaśnij",
+    "en": "Explain"
+  },
+  "quickActions": {
+    "pl": "Szybkie akcje",
+    "en": "Quick actions"
+  },
+  "actions": {
+    "pl": "Akcje",
+    "en": "Actions"
+  },
+  "teresaSuggestion": {
+    "pl": "Propozycja Teresy",
+    "en": "Teresa suggestion"
+  },
+  "accept": {
+    "pl": "Akceptuj",
+    "en": "Accept"
+  },
+  "reject": {
+    "pl": "Odrzuć",
+    "en": "Reject"
+  },
+  "teresaIsWriting": {
+    "pl": "Teresa pisze...",
+    "en": "Teresa is writing..."
+  },
+  "savedToMyIdeas": {
+    "pl": "Zapisano do My Ideas",
+    "en": "Saved to My Ideas"
+  },
+  "saveFailed": {
+    "pl": "Nie udało się zapisać",
+    "en": "Save failed"
+  },
+  "savedToNotebook": {
+    "pl": "Zapisano do Notebook",
+    "en": "Saved to Notebook"
+  },
+  "signalSnoozed": {
+    "pl": "Wyciszono sygnał",
+    "en": "Signal snoozed"
+  },
+  "snoozeFailed": {
+    "pl": "Nie udało się wyciszyć",
+    "en": "Snooze failed"
+  },
+  "mutedSignalType": {
+    "pl": "Wyciszono typ sygnału",
+    "en": "Muted signal type"
+  },
+  "muteFailed": {
+    "pl": "Nie udało się wyciszyć",
+    "en": "Mute failed"
+  },
+  "dismissFailed": {
+    "pl": "Nie udało się ukryć",
+    "en": "Dismiss failed"
+  },
+  "reportsBriefsAnalysesArticlesAndBusiness": {
+    "pl": "Raporty, briefy, analizy, artykuły i dokumenty biznesowe",
+    "en": "Reports, briefs, analyses, articles and business documents"
+  },
+  "budgetsFinancialModelsTimelinesRiskMatri": {
+    "pl": "Budżety, modele finansowe, harmonogramy, matryce ryzyk",
+    "en": "Budgets, financial models, timelines, risk matrices"
+  },
+  "operationalTablesMasterDataRegistersLogs": {
+    "pl": "Tabele operacyjne, master data, rejestry, logi, OKR-y, decyzje",
+    "en": "Operational tables, master data, registers, logs, OKRs, decisions"
+  },
+  "executiveDecksPitchStatusUpdatesWorkshop": {
+    "pl": "Decki zarządcze, pitch, status update, prezentacje warsztatowe",
+    "en": "Executive decks, pitch, status updates, workshop presentations"
+  },
+  "documents": {
+    "pl": "Dokumenty",
+    "en": "Documents"
+  },
+  "tables": {
+    "pl": "Tabele",
+    "en": "Tables"
+  },
+  "tableStudio": {
+    "pl": "Tabele Studio",
+    "en": "Table Studio"
+  },
+  "presentations": {
+    "pl": "Prezentacje",
+    "en": "Presentations"
+  },
+  "templates": {
+    "pl": "Wzorce",
+    "en": "Templates"
+  },
+  "recent": {
+    "pl": "Ostatnie",
+    "en": "Recent"
+  },
+  "saved": {
+    "pl": "Zapisane",
+    "en": "Saved"
+  },
+  "startNew": {
+    "pl": "Zacznij nowy",
+    "en": "Start new"
+  },
+  "noRecentDocuments": {
+    "pl": "Brak ostatnich dokumentów",
+    "en": "No recent documents"
+  },
+  "noSavedDocuments": {
+    "pl": "Brak zapisanych dokumentów",
+    "en": "No saved documents"
+  },
+  "enUs": {
+    "pl": "pl-PL",
+    "en": "en-US"
+  },
+  "output": {
+    "pl": "Wynik",
+    "en": "Output"
+  },
+  "autoTeresaRoutesTheOutputTo": {
+    "pl": "Auto: Teresa sama wybiera format wyniku (Dokument/Tabela/Prezentacja), gdy pasuje. To NIE jest wybór modelu.",
+    "en": "Auto: Teresa routes the output to a Document/Table/Presentation when relevant. This is NOT model selection."
+  },
+  "titleAndContentAreRequired": {
+    "pl": "Tytuł i treść są wymagane.",
+    "en": "Title and content are required."
+  },
+  "generationPromptIsRequired": {
+    "pl": "Polecenie generowania jest wymagane.",
+    "en": "Generation prompt is required."
+  },
+  "artifactsUnavailable": {
+    "pl": "Artefakty niedostępne",
+    "en": "Artifacts unavailable"
+  },
+  "retry": {
+    "pl": "Spróbuj ponownie",
+    "en": "Retry"
+  },
+  "wave5ArtifactRuntime": {
+    "pl": "Środowisko artefaktów — Wave 5",
+    "en": "Wave 5 Artifact Runtime"
+  },
+  "firstClassArtifactsWithMutationProposals": {
+    "pl": "Artefakty pierwszej klasy z propozycjami mutacji, podglądem różnic, zatwierdzaniem, historią wersji, wypełnianiem dokumentów i manifestami proweniencji.",
+    "en": "First-class artifacts with mutation proposals, diff preview, approval, version lineage, document filling and provenance manifests."
+  },
+  "generateOutput": {
+    "pl": "Generuj dokument wyjściowy",
+    "en": "Generate Output"
+  },
+  "createReportDeckOrTableAs": {
+    "pl": "Utwórz raport, prezentację lub tabelę jako artefakt pierwszej klasy.",
+    "en": "Create report, deck or table as a first-class artifact."
+  },
+  "executiveReport": {
+    "pl": "Raport zarządczy",
+    "en": "Executive report"
+  },
+  "boardDeck": {
+    "pl": "Prezentacja dla zarządu",
+    "en": "Board deck"
+  },
+  "kpiTable": {
+    "pl": "Tabela KPI",
+    "en": "KPI table"
+  },
+  "describeTheArtifactToGenerate": {
+    "pl": "Opisz artefakt do wygenerowania",
+    "en": "Describe the artifact to generate"
+  },
+  "generateArtifact": {
+    "pl": "Generuj artefakt",
+    "en": "Generate artifact"
+  },
+  "createArtifact": {
+    "pl": "Utwórz artefakt",
+    "en": "Create Artifact"
+  },
+  "artifactTitle": {
+    "pl": "Tytuł artefaktu",
+    "en": "Artifact title"
+  },
+  "artifactContent": {
+    "pl": "Treść artefaktu",
+    "en": "Artifact content"
+  },
+  "createDraftArtifact": {
+    "pl": "Utwórz szkic artefaktu",
+    "en": "Create draft artifact"
+  },
+  "documentFilling": {
+    "pl": "Wypełnianie dokumentu",
+    "en": "Document Filling"
+  },
+  "missingFieldsReturnQuestionsNotGuesses": {
+    "pl": "Brakujące pola zwracają pytania, nie domysły.",
+    "en": "Missing fields return questions, not guesses."
+  },
+  "fillTemplate": {
+    "pl": "Wypełnij szablon",
+    "en": "Fill template"
+  },
+  "artifacts": {
+    "pl": "Artefakty",
+    "en": "Artifacts"
+  },
+  "refresh": {
+    "pl": "Odśwież",
+    "en": "Refresh"
+  },
+  "noWave5ArtifactsYet": {
+    "pl": "Brak artefaktów Wave 5.",
+    "en": "No Wave 5 artifacts yet."
+  },
+  "selectOrCreateAnArtifact": {
+    "pl": "Wybierz lub utwórz artefakt.",
+    "en": "Select or create an artifact."
+  },
+  "version": {
+    "pl": "wersja",
+    "en": "version"
+  },
+  "exportManifest": {
+    "pl": "Eksportuj manifest",
+    "en": "Export manifest"
+  },
+  "proposeMutation": {
+    "pl": "Zaproponuj mutację",
+    "en": "Propose Mutation"
+  },
+  "newArtifactContentThisCreatesA": {
+    "pl": "Nowa treść artefaktu. Tworzy porównanie zmian i oczekuje na zatwierdzenie.",
+    "en": "New artifact content. This creates a diff and waits for approval."
+  },
+  "createMutationProposal": {
+    "pl": "Utwórz propozycję mutacji",
+    "en": "Create mutation proposal"
+  },
+  "mutationProposals": {
+    "pl": "Propozycje mutacji",
+    "en": "Mutation Proposals"
+  },
+  "noMutationsYet": {
+    "pl": "Brak propozycji mutacji.",
+    "en": "No mutations yet."
+  },
+  "commit": {
+    "pl": "Zatwierdź",
+    "en": "Commit"
+  },
+  "versionLineage": {
+    "pl": "Historia wersji",
+    "en": "Version Lineage"
+  },
+  "provenanceFooter": {
+    "pl": "Stopka proweniencji",
+    "en": "Provenance Footer"
+  },
+  "wave6ContextAndLearning": {
+    "pl": "Wave 6 — Kontekst i uczenie",
+    "en": "Wave 6 Context and Learning"
+  },
+  "showsWhatAiKnowsWhereIt": {
+    "pl": "Pokazuje co AI wie, skąd pochodzi ta wiedza i które wspomnienia wymagają jawnej akceptacji.",
+    "en": "Shows what AI knows, where it came from, and which memories need explicit approval."
+  },
+  "contextControls": {
+    "pl": "Ustawienia kontekstu",
+    "en": "Context Controls"
+  },
+  "projectScope": {
+    "pl": "Zakres projektu",
+    "en": "Project scope"
+  },
+  "optionalProjectId": {
+    "pl": "Opcjonalne ID projektu",
+    "en": "Optional project id"
+  },
+  "snapshotScope": {
+    "pl": "Zakres migawki",
+    "en": "Snapshot scope"
+  },
+  "userWorkProfileSnapshot": {
+    "pl": "Migawka profilu użytkownika",
+    "en": "User work profile snapshot"
+  },
+  "organizationSnapshot": {
+    "pl": "Migawka organizacji",
+    "en": "Organization snapshot"
+  },
+  "projectSnapshot": {
+    "pl": "Migawka projektu",
+    "en": "Project snapshot"
+  },
+  "privateModeBlocksLearningWrites": {
+    "pl": "Tryb prywatny blokuje zapis wiedzy",
+    "en": "Private mode blocks learning writes"
+  },
+  "captureContextSnapshot": {
+    "pl": "Zrób migawkę kontekstu",
+    "en": "Capture context snapshot"
+  },
+  "memoryCandidate": {
+    "pl": "Kandydat do pamięci",
+    "en": "Memory Candidate"
+  },
+  "assistantScope": {
+    "pl": "Zakres asystenta",
+    "en": "Assistant scope"
+  },
+  "teresaTenantMemory": {
+    "pl": "Pamięć Teresy (tenant)",
+    "en": "Teresa tenant memory"
+  },
+  "annaPublicProductMemory": {
+    "pl": "Publiczna pamięć produktu Anny",
+    "en": "Anna public product memory"
+  },
+  "memoryScope": {
+    "pl": "Zakres pamięci",
+    "en": "Memory scope"
+  },
+  "user": {
+    "pl": "Użytkownik",
+    "en": "User"
+  },
+  "project": {
+    "pl": "Projekt",
+    "en": "Project"
+  },
+  "organization": {
+    "pl": "Organizacja",
+    "en": "Organization"
+  },
+  "tenant": {
+    "pl": "Tenant",
+    "en": "Tenant"
+  },
+  "publicProduct": {
+    "pl": "Produkt publiczny",
+    "en": "Public product"
+  },
+  "memoryKey": {
+    "pl": "Klucz pamięci",
+    "en": "Memory key"
+  },
+  "memoryValue": {
+    "pl": "Wartość pamięci",
+    "en": "Memory value"
+  },
+  "whatShouldAiRememberExampleI": {
+    "pl": "Co AI powinno zapamiętać? Przykład: Wolę zwięzłe notatki implementacyjne z krokami weryfikacji.",
+    "en": "What should AI remember? Example: I prefer concise implementation notes with verification steps."
+  },
+  "createMemoryCandidate": {
+    "pl": "Utwórz kandydata do pamięci",
+    "en": "Create memory candidate"
+  },
+  "whatAiKnows": {
+    "pl": "Co wie AI",
+    "en": "What AI Knows"
+  },
+  "snapshot": {
+    "pl": "migawka",
+    "en": "snapshot"
+  },
+  "fresh": {
+    "pl": "Aktualność",
+    "en": "Fresh"
+  },
+  "unknown": {
+    "pl": "nieznana",
+    "en": "unknown"
+  },
+  "noDisplayableFactsForThisSnapshot": {
+    "pl": "Brak danych do wyświetlenia dla tej migawki.",
+    "en": "No displayable facts for this snapshot."
+  },
+  "noContextSnapshotsYet": {
+    "pl": "Brak migawek kontekstu.",
+    "en": "No context snapshots yet."
+  },
+  "memoryStewardshipQueue": {
+    "pl": "Kolejka zarządzania pamięcią",
+    "en": "Memory Stewardship Queue"
+  },
+  "source": {
+    "pl": "źródło",
+    "en": "source"
+  },
+  "unknown2": {
+    "pl": "nieznane",
+    "en": "unknown"
+  },
+  "approveAndRetain": {
+    "pl": "Zatwierdź i zachowaj",
+    "en": "Approve and retain"
+  },
+  "markApplied": {
+    "pl": "Oznacz jako zastosowane",
+    "en": "Mark applied"
+  },
+  "expire": {
+    "pl": "Wygaś",
+    "en": "Expire"
+  },
+  "noMemoryCandidatesYet": {
+    "pl": "Brak kandydatów do pamięci.",
+    "en": "No memory candidates yet."
+  },
+  "wave7ConnectorAdmin": {
+    "pl": "Wave 7 — Panel administracyjny konektorów",
+    "en": "Wave 7 Connector Admin"
+  },
+  "permissionAwareConnectorRegistryOauthSes": {
+    "pl": "Rejestr konektorów z kontrolą uprawnień, cykl życia OAuth/sesji, ślad źródłowy i bezpieczne wykonywanie narzędzi.",
+    "en": "Permission-aware connector registry, OAuth/session lifecycle, source trace and safe tool execution."
+  },
+  "registerConnector": {
+    "pl": "Rejestruj konektor",
+    "en": "Register Connector"
+  },
+  "connected": {
+    "pl": "Połączony",
+    "en": "Connected"
+  },
+  "stale": {
+    "pl": "Przestarzały",
+    "en": "Stale"
+  },
+  "disconnected": {
+    "pl": "Odłączony",
+    "en": "Disconnected"
+  },
+  "failed": {
+    "pl": "Błąd",
+    "en": "Failed"
+  },
+  "optionalProjectAclIdsCommaSeparated": {
+    "pl": "Opcjonalne ID projektów ACL, oddzielone przecinkami",
+    "en": "Optional project ACL ids, comma separated"
+  },
+  "registerConnector2": {
+    "pl": "Zarejestruj konektor",
+    "en": "Register connector"
+  },
+  "toolExecutionTest": {
+    "pl": "Test wykonania narzędzia",
+    "en": "Tool Execution Test"
+  },
+  "selectConnector": {
+    "pl": "Wybierz konektor",
+    "en": "Select connector"
+  },
+  "read": {
+    "pl": "Odczyt",
+    "en": "Read"
+  },
+  "search": {
+    "pl": "Wyszukiwanie",
+    "en": "Search"
+  },
+  "writeRequiresAirun": {
+    "pl": "Zapis (wymaga AIRun)",
+    "en": "Write (requires AIRun)"
+  },
+  "destructiveRequiresAirun": {
+    "pl": "Destrukcyjne (wymaga AIRun)",
+    "en": "Destructive (requires AIRun)"
+  },
+  "connectorQuery": {
+    "pl": "Zapytanie konektora",
+    "en": "Connector query"
+  },
+  "airunIdForWriteDestructiveTools": {
+    "pl": "ID AIRun dla narzędzi zapisu/destrukcyjnych",
+    "en": "AIRun id for write/destructive tools"
+  },
+  "executeGovernedTool": {
+    "pl": "Wykonaj kontrolowane narzędzie",
+    "en": "Execute governed tool"
+  },
+  "realSourceBinding": {
+    "pl": "Powiązanie z realnym źródłem",
+    "en": "Real Source Binding"
+  },
+  "existingTpConnectorsId": {
+    "pl": "Istniejące ID tp_connectors",
+    "en": "Existing tp_connectors id"
+  },
+  "link": {
+    "pl": "Powiąż",
+    "en": "Link"
+  },
+  "reindex": {
+    "pl": "Reindeksuj",
+    "en": "Reindex"
+  },
+  "disconnect": {
+    "pl": "Odłącz",
+    "en": "Disconnect"
+  },
+  "oauthSessionLifecycle": {
+    "pl": "Cykl życia sesji OAuth",
+    "en": "OAuth Session Lifecycle"
+  },
+  "markReconnected": {
+    "pl": "Oznacz jako ponownie połączony",
+    "en": "Mark reconnected"
+  },
+  "markAccessRevoked": {
+    "pl": "Oznacz dostęp jako cofnięty",
+    "en": "Mark access revoked"
+  },
+  "connectorHealth": {
+    "pl": "Stan konektorów",
+    "en": "Connector Health"
+  },
+  "total": {
+    "pl": "Łącznie",
+    "en": "Total"
+  },
+  "connected2": {
+    "pl": "Połączone",
+    "en": "Connected"
+  },
+  "stale2": {
+    "pl": "Przestarzałe",
+    "en": "Stale"
+  },
+  "failed2": {
+    "pl": "Błędy",
+    "en": "Failed"
+  },
+  "status": {
+    "pl": "Status",
+    "en": "Status"
+  },
+  "freshnessAge": {
+    "pl": "wiek aktualności",
+    "en": "freshness age"
+  },
+  "unknown3": {
+    "pl": "nieznany",
+    "en": "unknown"
+  },
+  "oauthAccess": {
+    "pl": "Dostęp OAuth",
+    "en": "OAuth access"
+  },
+  "tokenExpiry": {
+    "pl": "wygaśnięcie tokenu",
+    "en": "token expiry"
+  },
+  "notRecorded": {
+    "pl": "nie zarejestrowano",
+    "en": "not recorded"
+  },
+  "reconnectRequired": {
+    "pl": "Wymagane ponowne połączenie",
+    "en": "Reconnect required"
+  },
+  "tokenExpired": {
+    "pl": "; token wygasł",
+    "en": "; token expired"
+  },
+  "sourceBinding": {
+    "pl": "Powiązanie źródła",
+    "en": "Source binding"
+  },
+  "registryOnly": {
+    "pl": "tylko rejestr",
+    "en": "registry only"
+  },
+  "failure": {
+    "pl": "Błąd",
+    "en": "Failure"
+  },
+  "noWave7ConnectorsYet": {
+    "pl": "Brak konektorów Wave 7.",
+    "en": "No Wave 7 connectors yet."
+  },
+  "connectorrunAudit": {
+    "pl": "Audyt uruchomień konektora",
+    "en": "ConnectorRun Audit"
+  },
+  "freshness": {
+    "pl": "aktualność",
+    "en": "freshness"
+  },
+  "fresh2": {
+    "pl": "aktualne",
+    "en": "fresh"
+  },
+  "notTracked": {
+    "pl": "nie śledzono",
+    "en": "not tracked"
+  },
+  "error": {
+    "pl": "Błąd",
+    "en": "Error"
+  },
+  "noRunsYet": {
+    "pl": "Brak uruchomień.",
+    "en": "No runs yet."
+  },
+  "wave8AgentCatalog": {
+    "pl": "Wave 8 — Katalog agentów",
+    "en": "Wave 8 Agent Catalog"
+  },
+  "specializedAgentsWithRolePromptsTool": {
+    "pl": "Wyspecjalizowani agenci z promptami ról, zakresami narzędzi, schematami wyjść i audytem zaplanowanych zadań.",
+    "en": "Specialized agents with role prompts, tool scopes, output schemas and scheduled work audit."
+  },
+  "launchAgent": {
+    "pl": "Uruchom agenta",
+    "en": "Launch Agent"
+  },
+  "requestedToolsCommaSeparated": {
+    "pl": "Żądane narzędzia, oddzielone przecinkami",
+    "en": "Requested tools, comma separated"
+  },
+  "runNow": {
+    "pl": "Uruchom teraz",
+    "en": "Run now"
+  },
+  "scheduleDaily": {
+    "pl": "Zaplanuj codziennie",
+    "en": "Schedule daily"
+  },
+  "scheduleWeekly": {
+    "pl": "Zaplanuj co tydzień",
+    "en": "Schedule weekly"
+  },
+  "approvedAirunIdForExecutionAgents": {
+    "pl": "Zatwierdzone ID AIRun dla agentów wykonawczych",
+    "en": "Approved AIRun id for execution agents"
+  },
+  "budgetGateApproved": {
+    "pl": "Zatwierdzony budżet",
+    "en": "Budget gate approved"
+  },
+  "registerEvalRunHook": {
+    "pl": "Zarejestruj hook ewaluacyjny",
+    "en": "Register eval run hook"
+  },
+  "swarmMode": {
+    "pl": "Tryb roju",
+    "en": "Swarm mode"
+  },
+  "approvalGranted": {
+    "pl": "Zgoda udzielona",
+    "en": "Approval granted"
+  },
+  "launchGovernedAgent": {
+    "pl": "Uruchom kontrolowanego agenta",
+    "en": "Launch governed agent"
+  },
+  "governedToolExecution": {
+    "pl": "Kontrolowane wykonanie narzędzia",
+    "en": "Governed Tool Execution"
+  },
+  "usesApiAiAgentsToolTo": {
+    "pl": "Używa `/api/ai-agents/tool` do weryfikacji dozwolonych narzędzi, wymagań AIRun i bramek budżetowych przed wykonaniem.",
+    "en": "Uses `/api/ai-agents/tool` to verify allowed tools, AIRun requirements and budget gates before execution."
+  },
+  "toolName": {
+    "pl": "Nazwa narzędzia",
+    "en": "Tool name"
+  },
+  "approvedAirunIdWhenRequired": {
+    "pl": "Zatwierdzone ID AIRun, gdy wymagane",
+    "en": "Approved AIRun id when required"
+  },
+  "budgetGateApprovedForHighCost": {
+    "pl": "Zatwierdzony budżet dla narzędzi wysokiego kosztu/zarządzania",
+    "en": "Budget gate approved for high-cost/governance tools"
+  },
+  "executeScopedTool": {
+    "pl": "Wykonaj narzędzie w zakresie",
+    "en": "Execute scoped tool"
+  },
+  "definitionSource": {
+    "pl": "Źródło definicji",
+    "en": "Definition source"
+  },
+  "code": {
+    "pl": "kod",
+    "en": "code"
+  },
+  "editable": {
+    "pl": "edytowalne",
+    "en": "editable"
+  },
+  "no": {
+    "pl": "nie",
+    "en": "no"
+  },
+  "yes": {
+    "pl": "tak",
+    "en": "yes"
+  },
+  "persona": {
+    "pl": "Persona",
+    "en": "Persona"
+  },
+  "allowedTools": {
+    "pl": "Dozwolone narzędzia",
+    "en": "Allowed tools"
+  },
+  "outputSchema": {
+    "pl": "Schemat wyjścia",
+    "en": "Output schema"
+  },
+  "adminEditableAgentdefinition": {
+    "pl": "Edytowalna definicja agenta (admin)",
+    "en": "Admin-editable AgentDefinition"
+  },
+  "savesAnOrganizationOverrideThroughApi": {
+    "pl": "Zapisuje nadpisanie organizacyjne przez `/api/ai-agents/definitions`.",
+    "en": "Saves an organization override through `/api/ai-agents/definitions`."
+  },
+  "blockedTools": {
+    "pl": "Zablokowane narzędzia",
+    "en": "Blocked tools"
+  },
+  "saveAgentdefinitionOverride": {
+    "pl": "Zapisz nadpisanie definicji agenta",
+    "en": "Save AgentDefinition override"
+  },
+  "catalog": {
+    "pl": "Katalog",
+    "en": "Catalog"
+  },
+  "policy": {
+    "pl": "Polityka",
+    "en": "Policy"
+  },
+  "cost": {
+    "pl": "koszt",
+    "en": "cost"
+  },
+  "scheduledAgents": {
+    "pl": "Zaplanowani agenci",
+    "en": "Scheduled Agents"
+  },
+  "processDueSchedulesManualSweep": {
+    "pl": "Przetwórz zaległe harmonogramy (ręczne wywołanie)",
+    "en": "Process due schedules (manual sweep)"
+  },
+  "scheduler": {
+    "pl": "Harmonogram",
+    "en": "Scheduler"
+  },
+  "next": {
+    "pl": "następne",
+    "en": "next"
+  },
+  "onDemand": {
+    "pl": "na żądanie",
+    "en": "on demand"
+  },
+  "noSchedulesYet": {
+    "pl": "Brak harmonogramów.",
+    "en": "No schedules yet."
+  },
+  "agentrunAudit": {
+    "pl": "Audyt uruchomień agenta",
+    "en": "AgentRun Audit"
+  },
+  "tool": {
+    "pl": "Narzędzie",
+    "en": "Tool"
+  },
+  "swarm": {
+    "pl": "rój",
+    "en": "swarm"
+  },
+  "approval": {
+    "pl": "akceptacja",
+    "en": "approval"
+  },
+  "evalHook": {
+    "pl": "hook eval",
+    "en": "eval hook"
+  },
+  "notRequested": {
+    "pl": "nie_żądany",
+    "en": "not_requested"
+  },
+  "notifications": {
+    "pl": "Powiadomienia",
+    "en": "Notifications"
+  },
+  "delivery": {
+    "pl": "Dostarczenie",
+    "en": "Delivery"
+  },
+  "noNotificationsYet": {
+    "pl": "Brak powiadomień.",
+    "en": "No notifications yet."
+  },
+  "outcomeKpiRoiContractCreatedWith": {
+    "pl": "Kontrakt KPI/ROI wyniku utworzony ze zweryfikowanymi dowodami i odwołaniami do źródeł.",
+    "en": "Outcome KPI/ROI contract created with verified evidence and source refs."
+  },
+  "providerFailureAndRollbackIncidentRecord": {
+    "pl": "Awaria dostawcy i incydent wycofania zostały zarejestrowane.",
+    "en": "Provider failure and rollback incident recorded."
+  },
+  "goldenPromptEvalRecordedAsPass": {
+    "pl": "Ewaluacja wzorcowego promptu zarejestrowana jako ZALICZONA.",
+    "en": "Golden prompt eval recorded as PASS."
+  },
+  "wave9OutcomeAiOps": {
+    "pl": "Wave 9 — Wyniki i AI Ops",
+    "en": "Wave 9 Outcome & AI Ops"
+  },
+  "kpiRoiContractsCfoScenariosExecutive": {
+    "pl": "Kontrakty KPI/ROI, scenariusze CFO, raporty zarządcze, stan dostawców AI, incydenty i akceptacja końcowa.",
+    "en": "KPI/ROI contracts, CFO scenarios, executive reports, provider health, incidents and final acceptance."
+  },
+  "kpiRoiContract": {
+    "pl": "Kontrakt KPI / ROI",
+    "en": "KPI / ROI Contract"
+  },
+  "createAnOutcomeOnlyWhenThe": {
+    "pl": "Twórz wynik tylko wtedy, gdy KPI jest zakorzeniony w zweryfikowanych odwołaniach do źródeł i przypisanych identyfikatorach zadań.",
+    "en": "Create an outcome only when the KPI is grounded in verified source refs and mapped task IDs."
+  },
+  "initiativeIdForTheVerifiedOutcome": {
+    "pl": "Identyfikator inicjatywy dla zweryfikowanego wyniku",
+    "en": "Initiative ID for the verified outcome"
+  },
+  "taskIdsLinkedToThisKpi": {
+    "pl": "Identyfikatory zadań powiązanych z tym KPI, oddzielone przecinkami",
+    "en": "Task IDs linked to this KPI, comma separated"
+  },
+  "kpiNameShownInReports": {
+    "pl": "Nazwa KPI widoczna w raportach",
+    "en": "KPI name shown in reports"
+  },
+  "verifiedSourceRefsOnePerLine": {
+    "pl": "Zweryfikowane odwołania do źródeł, jedno w wierszu jako typ:id:tytuł",
+    "en": "Verified source refs, one per line as type:id:title"
+  },
+  "createKpiRoiOutcome": {
+    "pl": "Utwórz wynik KPI/ROI",
+    "en": "Create KPI/ROI outcome"
+  },
+  "outcomes": {
+    "pl": "Wyniki",
+    "en": "Outcomes"
+  },
+  "baseline": {
+    "pl": "bazowy",
+    "en": "baseline"
+  },
+  "target": {
+    "pl": "cel",
+    "en": "target"
+  },
+  "confidence": {
+    "pl": "pewność",
+    "en": "confidence"
+  },
+  "riskAdjusted": {
+    "pl": "skorygowany o ryzyko",
+    "en": "risk-adjusted"
+  },
+  "missing": {
+    "pl": "brak danych",
+    "en": "missing"
+  },
+  "noOutcomesYet": {
+    "pl": "Brak wyników.",
+    "en": "No outcomes yet."
+  },
+  "reports": {
+    "pl": "Raporty",
+    "en": "Reports"
+  },
+  "assumptions": {
+    "pl": "założenia",
+    "en": "assumptions"
+  },
+  "aiOpsDashboard": {
+    "pl": "Panel AI Ops",
+    "en": "AI Ops Dashboard"
+  },
+  "providers": {
+    "pl": "Dostawcy",
+    "en": "Providers"
+  },
+  "cost2": {
+    "pl": "Koszt",
+    "en": "Cost"
+  },
+  "evalGate": {
+    "pl": "Bramka ewaluacji",
+    "en": "Eval gate"
+  },
+  "acceptanceRunsRegistered": {
+    "pl": "Zarejestrowane przebiegi akceptacyjne",
+    "en": "Acceptance runs registered"
+  },
+  "recordGoldenEvalPass": {
+    "pl": "Zapisz wynik ewaluacji: ZALICZONA",
+    "en": "Record golden eval PASS"
+  },
+  "simulateProviderUnavailable": {
+    "pl": "Symuluj niedostępność dostawcy",
+    "en": "Simulate provider unavailable"
+  },
+  "finalAcceptance": {
+    "pl": "Akceptacja końcowa",
+    "en": "Final Acceptance"
+  },
+  "runFinalAcceptance": {
+    "pl": "Uruchom akceptację końcową",
+    "en": "Run final acceptance"
+  },
+  "decision": {
+    "pl": "Decyzja",
+    "en": "Decision"
+  },
+  "linkedRuns": {
+    "pl": "Powiązane przebiegi",
+    "en": "Linked runs"
+  },
+  "none": {
+    "pl": "brak",
+    "en": "none"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "versionConflictDetectedRefreshingDeckTo": {
+    "pl": "Wykryto konflikt wersji. Odświeżam deck do najnowszej wersji.",
+    "en": "Version conflict detected. Refreshing deck to latest version."
+  },
+  "exportFailed": {
+    "pl": "Eksport nie powiódł się",
+    "en": "Export failed"
+  },
+  "versionRestored": {
+    "pl": "Przywrócono wersję",
+    "en": "Version restored"
+  },
+  "couldNotRestoreThatVersion": {
+    "pl": "Nie udało się przywrócić wersji",
+    "en": "Could not restore that version"
+  },
+  "changesAppliedAndSaved": {
+    "pl": "Zmiany zastosowane i zapisane",
+    "en": "Changes applied and saved"
+  },
+  "changesRejected": {
+    "pl": "Zmiany odrzucone",
+    "en": "Changes rejected"
+  },
+  "iAppliedTheRequestedChangesTo": {
+    "pl": "Zastosowałem zmiany w decku.",
+    "en": "I applied the requested changes to the deck."
+  },
+  "presentationDeck": {
+    "pl": "Deck prezentacji",
+    "en": "Presentation deck"
+  },
+  "teresaPreparedADeckChangeProposal": {
+    "pl": "Teresa przygotowała propozycję zmian w decku. Sprawdź pasek propozycji i zaakceptuj albo odrzuć zmianę.",
+    "en": "Teresa prepared a deck change proposal. Review the proposal banner and accept or reject the change."
+  },
+  "slideRegenerated": {
+    "pl": "Slajd odświeżony.",
+    "en": "Slide regenerated."
+  },
+  "failedToRegenerateSlide": {
+    "pl": "Nie udało się odświeżyć slajdu.",
+    "en": "Failed to regenerate slide."
+  },
+  "accept": {
+    "pl": "Zastosuj",
+    "en": "Accept"
+  },
+  "reject": {
+    "pl": "Odrzuć",
+    "en": "Reject"
+  },
+  "noLinksYet": {
+    "pl": "Brak powiązań",
+    "en": "No links yet"
+  }
+}

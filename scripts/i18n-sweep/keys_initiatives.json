@@ -1,0 +1,1230 @@
+{
+  "english2": {
+    "pl": "Polish",
+    "en": "English"
+  },
+  "aiFoundNoChangeSuggestionsThe3": {
+    "pl": "AI nie znalazło sugestii zmian — RAID wygląda OK.",
+    "en": "AI found no change suggestions — the RAID log looks good."
+  },
+  "failedToAnalyzeRaid2": {
+    "pl": "Nie udało się przeanalizować RAID",
+    "en": "Failed to analyze RAID"
+  },
+  "noSelectedChanges2": {
+    "pl": "Brak wybranych zmian",
+    "en": "No selected changes"
+  },
+  "appliedAiSuggestions2": {
+    "pl": "Zastosowano sugestie AI",
+    "en": "Applied AI suggestions"
+  },
+  "failedToApplySuggestions2": {
+    "pl": "Nie udało się zastosować sugestii",
+    "en": "Failed to apply suggestions"
+  },
+  "failedToSaveSectionStatus2": {
+    "pl": "Nie udało się zapisać statusu sekcji",
+    "en": "Failed to save section status"
+  },
+  "saveFailed2": {
+    "pl": "Nie udało się zapisać",
+    "en": "Save failed"
+  },
+  "selectAKpiFromTheList2": {
+    "pl": "Wybierz KPI z listy",
+    "en": "Select a KPI from the list"
+  },
+  "kpiNameIsRequired2": {
+    "pl": "Nazwa KPI jest wymagana",
+    "en": "KPI name is required"
+  },
+  "kpiLinkedToInitiative2": {
+    "pl": "KPI podłączone do inicjatywy",
+    "en": "KPI linked to initiative"
+  },
+  "kpiAddedToInitiative2": {
+    "pl": "KPI dodane do inicjatywy",
+    "en": "KPI added to initiative"
+  },
+  "failedToAddKpi2": {
+    "pl": "Nie udało się dodać KPI",
+    "en": "Failed to add KPI"
+  },
+  "kpiUpdated2": {
+    "pl": "KPI zaktualizowane",
+    "en": "KPI updated"
+  },
+  "failedToSaveKpi2": {
+    "pl": "Nie udało się zapisać KPI",
+    "en": "Failed to save KPI"
+  },
+  "copy2": {
+    "pl": "kopia",
+    "en": "copy"
+  },
+  "kpiDuplicated2": {
+    "pl": "KPI zduplikowane",
+    "en": "KPI duplicated"
+  },
+  "failedToDuplicateKpi2": {
+    "pl": "Nie udało się zduplikować KPI",
+    "en": "Failed to duplicate KPI"
+  },
+  "kpiRemoved2": {
+    "pl": "KPI usunięte",
+    "en": "KPI removed"
+  },
+  "failedToRemoveKpi2": {
+    "pl": "Nie udało się usunąć KPI",
+    "en": "Failed to remove KPI"
+  },
+  "initiativeNotFound2": {
+    "pl": "Nie znaleziono inicjatywy",
+    "en": "Initiative not found"
+  },
+  "restoredLocalDraft2": {
+    "pl": "Przywrócono lokalny szkic",
+    "en": "Restored local draft"
+  },
+  "statusUpdated2": {
+    "pl": "Status zaktualizowany",
+    "en": "Status updated"
+  },
+  "stoppedWatching2": {
+    "pl": "Przestałeś obserwować",
+    "en": "Stopped watching"
+  },
+  "nowWatching2": {
+    "pl": "Obserwujesz inicjatywę",
+    "en": "Now watching"
+  },
+  "saved2": {
+    "pl": "Zapisano",
+    "en": "Saved"
+  },
+  "youDoNotHaveEditPermissions2": {
+    "pl": "Nie masz uprawnień do edycji na tym etapie inicjatywy.",
+    "en": "You do not have edit permissions at this initiative stage."
+  },
+  "taskCreated2": {
+    "pl": "Zadanie utworzone",
+    "en": "Task created"
+  },
+  "decisionCreated2": {
+    "pl": "Decyzja utworzona",
+    "en": "Decision created"
+  },
+  "decisionRemoved2": {
+    "pl": "Decyzja usunięta",
+    "en": "Decision removed"
+  },
+  "failedToRemoveDecision2": {
+    "pl": "Nie udało się usunąć decyzji",
+    "en": "Failed to remove decision"
+  },
+  "raidItemAdded2": {
+    "pl": "Element RAID dodany",
+    "en": "RAID item added"
+  },
+  "raidItemRemoved2": {
+    "pl": "Element RAID usunięty",
+    "en": "RAID item removed"
+  },
+  "resourceAdded2": {
+    "pl": "Zasób dodany",
+    "en": "Resource added"
+  },
+  "failedToAddResource2": {
+    "pl": "Nie udało się dodać zasobu",
+    "en": "Failed to add resource"
+  },
+  "resourceRemoved2": {
+    "pl": "Zasób usunięty",
+    "en": "Resource removed"
+  },
+  "budgetItemAdded2": {
+    "pl": "Pozycja budżetowa dodana",
+    "en": "Budget item added"
+  },
+  "failedToAddBudgetItem2": {
+    "pl": "Nie udało się dodać pozycji",
+    "en": "Failed to add budget item"
+  },
+  "budgetItemRemoved2": {
+    "pl": "Pozycja usunięta",
+    "en": "Budget item removed"
+  },
+  "toolAdded2": {
+    "pl": "Narzędzie dodane",
+    "en": "Tool added"
+  },
+  "failedToAddTool2": {
+    "pl": "Nie udało się dodać narzędzia",
+    "en": "Failed to add tool"
+  },
+  "toolRemoved2": {
+    "pl": "Narzędzie usunięte",
+    "en": "Tool removed"
+  },
+  "intangibleAssetAdded2": {
+    "pl": "Zasób niematerialny dodany",
+    "en": "Intangible asset added"
+  },
+  "failedToAddAsset2": {
+    "pl": "Nie udało się dodać",
+    "en": "Failed to add asset"
+  },
+  "assetRemoved2": {
+    "pl": "Zasób niematerialny usunięty",
+    "en": "Asset removed"
+  },
+  "thisItemIsAlreadyLinked2": {
+    "pl": "Ten element jest już powiązany",
+    "en": "This item is already linked"
+  },
+  "noTargetLinkAvailable2": {
+    "pl": "Brak docelowego linku",
+    "en": "No target link available"
+  },
+  "initiativePermalinkCopied2": {
+    "pl": "Link do inicjatywy skopiowany",
+    "en": "Initiative permalink copied"
+  },
+  "failedToCopyLink2": {
+    "pl": "Nie udało się skopiować linku",
+    "en": "Failed to copy link"
+  },
+  "pdfExportComingSoon2": {
+    "pl": "Eksport PDF — wkrótce dostępny",
+    "en": "PDF export — coming soon"
+  },
+  "problem2": {
+    "pl": "Problem",
+    "en": "Problem"
+  },
+  "proposedSolution2": {
+    "pl": "Opis rozwiązania",
+    "en": "Proposed Solution"
+  },
+  "costOfInaction2": {
+    "pl": "Koszt bezczynności",
+    "en": "Cost of Inaction"
+  },
+  "marketContext2": {
+    "pl": "Kontekst rynkowy",
+    "en": "Market Context"
+  },
+  "inScopeList2": {
+    "pl": "W zakresie (lista)",
+    "en": "In Scope (list)"
+  },
+  "outOfScopeList2": {
+    "pl": "Poza zakresem (lista)",
+    "en": "Out of Scope (list)"
+  },
+  "killCriteriaList2": {
+    "pl": "Kryteria rezygnacji (lista)",
+    "en": "Kill Criteria (list)"
+  },
+  "scopeGeneratedByAi2": {
+    "pl": "Scope wygenerowany przez AI",
+    "en": "Scope generated by AI"
+  },
+  "generateScopeFailed2": {
+    "pl": "Generowanie scope nie powiodło się",
+    "en": "Generate scope failed"
+  },
+  "descriptionGeneratedByAi2": {
+    "pl": "Opis wygenerowany przez AI",
+    "en": "Description generated by AI"
+  },
+  "aiGeneratedNoRaidItems2": {
+    "pl": "AI nie wygenerował elementów RAID",
+    "en": "AI generated no RAID items"
+  },
+  "failedToParseAiResponse2": {
+    "pl": "Nie udało się sparsować odpowiedzi AI",
+    "en": "Failed to parse AI response"
+  },
+  "aiAnalysis2": {
+    "pl": "🤖 Analiza AI",
+    "en": "🤖 AI Analysis"
+  },
+  "aiAddedComment2": {
+    "pl": "AI dodał komentarz",
+    "en": "AI added comment"
+  },
+  "aiReturnedNoResults2": {
+    "pl": "AI nie zwróciło wyników",
+    "en": "AI returned no results"
+  },
+  "aiIsUnavailableBecauseYouHave2": {
+    "pl": "AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.",
+    "en": "AI is unavailable because you have no edit permissions in this context."
+  },
+  "revenueImpact2": {
+    "pl": "Wpływ na przychody",
+    "en": "Revenue impact"
+  },
+  "costSavings2": {
+    "pl": "Oszczędności",
+    "en": "Cost savings"
+  },
+  "benefitsRealization2": {
+    "pl": "Realizacja korzyści",
+    "en": "Benefits realization"
+  },
+  "aiGeneratedAFinancialDraftReview2": {
+    "pl": "AI wygenerował propozycję finansową — przejrzyj i zapisz.",
+    "en": "AI generated a financial draft — review and save."
+  },
+  "approvalRequestSent2": {
+    "pl": "Wysłano prośbę o zatwierdzenie",
+    "en": "Approval request sent"
+  },
+  "thisDemoTaskIsPresentedInside2": {
+    "pl": "To zadanie demo jest pokazane w kontekście inicjatywy.",
+    "en": "This demo task is presented inside the initiative view."
+  },
+  "task2": {
+    "pl": "Zadanie",
+    "en": "Task"
+  },
+  "thisDemoDecisionIsPresentedInside2": {
+    "pl": "Ta decyzja demo jest pokazana w kontekście inicjatywy.",
+    "en": "This demo decision is presented inside the initiative view."
+  },
+  "decision2": {
+    "pl": "Decyzja",
+    "en": "Decision"
+  },
+  "areYouSureYouWantTo3": {
+    "pl": "Czy na pewno chcesz zarchiwizować tę inicjatywę?",
+    "en": "Are you sure you want to archive this initiative?"
+  },
+  "initiativeArchived2": {
+    "pl": "Inicjatywa zarchiwizowana",
+    "en": "Initiative archived"
+  },
+  "onlyDraftsCanBeDeleted2": {
+    "pl": "Można usunąć tylko szkice",
+    "en": "Only drafts can be deleted"
+  },
+  "areYouSureYouWantTo4": {
+    "pl": "Czy na pewno chcesz usunąć tę inicjatywę?",
+    "en": "Are you sure you want to delete this initiative?"
+  },
+  "initiativeDeleted2": {
+    "pl": "Inicjatywa usunięta",
+    "en": "Initiative deleted"
+  },
+  "changeStatus2": {
+    "pl": "Zmień status",
+    "en": "Change status"
+  },
+  "noStatusChangesAvailable2": {
+    "pl": "Brak dostępnych zmian statusu",
+    "en": "No status changes available"
+  },
+  "previewPhaseList2": {
+    "pl": "Podgląd listy faz",
+    "en": "Preview phase list"
+  },
+  "previewPossibleNextGates2": {
+    "pl": "Podgląd możliwych kolejnych bram",
+    "en": "Preview possible next gates"
+  },
+  "youCannotEditPriorityAtThis2": {
+    "pl": "Nie masz uprawnień do edycji priorytetu na tym etapie.",
+    "en": "You cannot edit priority at this stage."
+  },
+  "youCannotEditOwnerAtThis2": {
+    "pl": "Nie masz uprawnień do edycji właściciela na tym etapie.",
+    "en": "You cannot edit owner at this stage."
+  },
+  "select2": {
+    "pl": "— Wybierz —",
+    "en": "— Select —"
+  },
+  "youCannotEditTargetDateAt2": {
+    "pl": "Nie masz uprawnień do edycji terminu na tym etapie.",
+    "en": "You cannot edit target date at this stage."
+  },
+  "fromInsight2": {
+    "pl": "Z Insightu: ",
+    "en": "From Insight: "
+  },
+  "fromReadout2": {
+    "pl": "Z readoutu: ",
+    "en": "From readout: "
+  },
+  "requiresImmediateAttention2": {
+    "pl": "Wymagana natychmiastowa uwaga",
+    "en": "Requires immediate attention"
+  },
+  "informationalComment2": {
+    "pl": "Informacyjny komentarz",
+    "en": "Informational comment"
+  },
+  "standardComment2": {
+    "pl": "Standardowy komentarz",
+    "en": "Standard comment"
+  },
+  "aiFoundNoChangeSuggestionsThe4": {
+    "pl": "AI nie znalazło sugestii zmian — wątek komentarzy wygląda OK.",
+    "en": "AI found no change suggestions — the comments thread looks good."
+  },
+  "failedToAnalyzeComments2": {
+    "pl": "Nie udało się przeanalizować komentarzy",
+    "en": "Failed to analyze comments"
+  },
+  "unknownEvent2": {
+    "pl": "Nieznane zdarzenie",
+    "en": "Unknown event"
+  },
+  "created2": {
+    "pl": "Utworzono",
+    "en": "Created"
+  },
+  "statusChange2": {
+    "pl": "Zmiana statusu",
+    "en": "Status change"
+  },
+  "update2": {
+    "pl": "Aktualizacja",
+    "en": "Update"
+  },
+  "edit3": {
+    "pl": "Edycja",
+    "en": "Edit"
+  },
+  "comment2": {
+    "pl": "Komentarz",
+    "en": "Comment"
+  },
+  "assignment2": {
+    "pl": "Przypisanie",
+    "en": "Assignment"
+  },
+  "taskAdded2": {
+    "pl": "Zadanie",
+    "en": "Task added"
+  },
+  "decisionAdded2": {
+    "pl": "Decyzja",
+    "en": "Decision added"
+  },
+  "riskAdded2": {
+    "pl": "Ryzyko",
+    "en": "Risk added"
+  },
+  "stakeholder2": {
+    "pl": "Interesariusz",
+    "en": "Stakeholder"
+  },
+  "gateReview2": {
+    "pl": "Przegląd bramki",
+    "en": "Gate review"
+  },
+  "deadline2": {
+    "pl": "Termin",
+    "en": "Deadline"
+  },
+  "priority3": {
+    "pl": "Priorytet",
+    "en": "Priority"
+  },
+  "escalation2": {
+    "pl": "Eskalacja",
+    "en": "Escalation"
+  },
+  "descriptionContext2": {
+    "pl": "Opis i kontekst",
+    "en": "Description & Context"
+  },
+  "whatProblemDoesThisInitiativeSolve2": {
+    "pl": "Jaki problem rozwiązuje ta inicjatywa",
+    "en": "What problem does this initiative solve"
+  },
+  "whatProblemAreWeSolvingWhat2": {
+    "pl": "Jaki problem rozwiązujemy? Co jest nie tak?",
+    "en": "What problem are we solving? What is wrong?"
+  },
+  "proposedApproachAndImplementationMethod2": {
+    "pl": "Proponowane podejście i sposób realizacji",
+    "en": "Proposed approach and implementation method"
+  },
+  "whatSolutionDoWeProposeWhat2": {
+    "pl": "Jakie rozwiązanie proponujemy? Jakie podejście?",
+    "en": "What solution do we propose? What approach?"
+  },
+  "consequencesOfNotTakingAction2": {
+    "pl": "Konsekwencje braku działania",
+    "en": "Consequences of not taking action"
+  },
+  "whatHappensIfWeDoNothing2": {
+    "pl": "Co się stanie jeśli nie podejmiemy działań?",
+    "en": "What happens if we do nothing?"
+  },
+  "marketEnvironmentCompetitionAndTrends2": {
+    "pl": "Otoczenie rynkowe, konkurencja i trendy",
+    "en": "Market environment, competition and trends"
+  },
+  "marketContextCompetitionTrends2": {
+    "pl": "Kontekst rynkowy, konkurencja, trendy...",
+    "en": "Market context, competition, trends..."
+  },
+  "addItem2": {
+    "pl": "Dodaj",
+    "en": "Add item"
+  },
+  "noItemsYet3": {
+    "pl": "Brak pozycji",
+    "en": "No items yet"
+  },
+  "successCriteria3": {
+    "pl": "Kryteria sukcesu",
+    "en": "Success Criteria"
+  },
+  "scopeKillCriteria2": {
+    "pl": "Zakres i ograniczenia",
+    "en": "Scope & Kill Criteria"
+  },
+  "inScope3": {
+    "pl": "W zakresie",
+    "en": "In Scope"
+  },
+  "elementsProcessesAndAreasIncludedIn2": {
+    "pl": "Elementy, procesy i obszary objęte inicjatywą",
+    "en": "Elements, processes and areas included in this initiative"
+  },
+  "scopeItem2": {
+    "pl": "Element zakresu...",
+    "en": "Scope item..."
+  },
+  "inScopeListItem2": {
+    "pl": "W zakresie — element listy",
+    "en": "In Scope — list item"
+  },
+  "noItemsYet4": {
+    "pl": "Brak elementów",
+    "en": "No items yet"
+  },
+  "outOfScope3": {
+    "pl": "Poza zakresem",
+    "en": "Out of Scope"
+  },
+  "exclusionsAndBoundariesNotCovered2": {
+    "pl": "Wykluczenia i ograniczenia poza zakresem",
+    "en": "Exclusions and boundaries not covered"
+  },
+  "exclusion2": {
+    "pl": "Wykluczenie...",
+    "en": "Exclusion..."
+  },
+  "outOfScopeListItem2": {
+    "pl": "Poza zakresem — element listy",
+    "en": "Out of Scope — list item"
+  },
+  "killCriteria5": {
+    "pl": "Kryteria rezygnacji (Kill Criteria)",
+    "en": "Kill Criteria"
+  },
+  "conditionsThatTriggerImmediateInitiative2": {
+    "pl": "Warunki, których spełnienie oznacza natychmiastowe zatrzymanie inicjatywy",
+    "en": "Conditions that trigger immediate initiative termination"
+  },
+  "killCriteria6": {
+    "pl": "Kryteria rezygnacji",
+    "en": "Kill Criteria"
+  },
+  "killCriteria7": {
+    "pl": "Kryterium rezygnacji...",
+    "en": "Kill criteria..."
+  },
+  "killCriteriaListItem2": {
+    "pl": "Kryteria rezygnacji — element listy",
+    "en": "Kill Criteria — list item"
+  },
+  "noCriteriaYet2": {
+    "pl": "Brak kryteriów",
+    "en": "No criteria yet"
+  },
+  "effortProfile2": {
+    "pl": "Profil wysiłku",
+    "en": "Effort Profile"
+  },
+  "financialAnalysisSizingRoi2": {
+    "pl": "Analiza finansowa (sizing + ROI)",
+    "en": "Financial analysis (sizing + ROI)"
+  },
+  "financialImpact2": {
+    "pl": "Wpływ finansowy",
+    "en": "Financial impact"
+  },
+  "qualityOk2": {
+    "pl": "Jakość OK",
+    "en": "Quality OK"
+  },
+  "needsWork2": {
+    "pl": "Do poprawy",
+    "en": "Needs work"
+  },
+  "qualityScore2": {
+    "pl": "Ocena jakości",
+    "en": "Quality score"
+  },
+  "heuristicScoreNoLlmVerifyManually2": {
+    "pl": "Wynik heurystyczny (bez LLM) — zweryfikuj ręcznie.",
+    "en": "Heuristic score (no LLM) — verify manually."
+  },
+  "generateAnAiDraftSizingRoi2": {
+    "pl": "Wygeneruj propozycję AI (sizing + ROI) — przejrzyj i zapisz",
+    "en": "Generate an AI draft (sizing + ROI) — review and save"
+  },
+  "generating2": {
+    "pl": "Generowanie…",
+    "en": "Generating…"
+  },
+  "generateWithAi2": {
+    "pl": "Wygeneruj z AI",
+    "en": "Generate with AI"
+  },
+  "emptyUseGenerateWithAiOr3": {
+    "pl": "Brak treści. Użyj „Wygeneruj z AI\" lub wpisz sizing, założenia i ROI.",
+    "en": "Empty. Use “Generate with AI”, or type sizing, assumptions and ROI."
+  },
+  "emptyUseGenerateWithAiOr4": {
+    "pl": "Brak treści. Użyj „Wygeneruj z AI\" lub opisz wpływ na przychody/koszty.",
+    "en": "Empty. Use “Generate with AI”, or describe revenue/cost impact."
+  },
+  "sizingCurrencyDaysExplicitAssumptionRoi2": {
+    "pl": "Sizing (zł/%/dni) + jawne założenie + ROI…",
+    "en": "Sizing (currency/%/days) + explicit assumption + ROI…"
+  },
+  "revenueImpactCostSavingsBenefitsRealizat2": {
+    "pl": "Wpływ na przychody, oszczędności, realizacja korzyści…",
+    "en": "Revenue impact, cost savings, benefits realization…"
+  },
+  "convertedFrom2": {
+    "pl": "Konwersja z",
+    "en": "Converted from"
+  },
+  "gates2": {
+    "pl": "Bramy",
+    "en": "Gates"
+  },
+  "suggestedChanges2": {
+    "pl": "Sugerowane zmiany",
+    "en": "Suggested changes"
+  },
+  "loading2": {
+    "pl": "Wczytywanie…",
+    "en": "Loading…"
+  },
+  "proposedCommentChangesAi2": {
+    "pl": "Propozycje zmian w komentarzach (AI)",
+    "en": "Proposed comment changes (AI)"
+  },
+  "selectItemsToAddRemoveThen2": {
+    "pl": "Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.",
+    "en": "Select items to add/remove, then click “Apply”."
+  },
+  "close2": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "ai2": {
+    "pl": "AI",
+    "en": "AI"
+  },
+  "toRemove2": {
+    "pl": "Do wywalenia",
+    "en": "To remove"
+  },
+  "selectAll2": {
+    "pl": "Zaznacz wszystko",
+    "en": "Select all"
+  },
+  "noRemovalSuggestionsFromAi2": {
+    "pl": "AI nie zasugerowało usunięć.",
+    "en": "No removal suggestions from AI."
+  },
+  "ifTheThreadLooksGoodAi2": {
+    "pl": "Jeśli wątek wygląda dobrze, AI może nie proponować destrukcyjnych zmian.",
+    "en": "If the thread looks good, AI may avoid destructive changes."
+  },
+  "toAdd2": {
+    "pl": "Do dodania",
+    "en": "To add"
+  },
+  "noAdditionsProposed2": {
+    "pl": "Brak propozycji do dodania.",
+    "en": "No additions proposed."
+  },
+  "ifTheThreadIsCompleteAi2": {
+    "pl": "Jeśli wątek jest kompletny, AI może nie dodawać komentarzy.",
+    "en": "If the thread is complete, AI may not add new comments."
+  },
+  "plan2": {
+    "pl": "Plan",
+    "en": "Plan"
+  },
+  "cancel2": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "apply2": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "kpisBenefits2": {
+    "pl": "KPI i korzyści",
+    "en": "KPIs & Benefits"
+  },
+  "addAManualKpiOrLink2": {
+    "pl": "Dodaj KPI ręcznie albo podłącz istniejące KPI do tej inicjatywy i ustaw oczekiwania dla realizacji oraz okresu po wdrożeniu.",
+    "en": "Add a manual KPI or link an existing KPI to this initiative and set expectations for realization and post-implementation."
+  },
+  "manualKpi2": {
+    "pl": "Ręczne KPI",
+    "en": "Manual KPI"
+  },
+  "linkExisting2": {
+    "pl": "Podłącz istniejące",
+    "en": "Link existing"
+  },
+  "loadingKpiCatalog2": {
+    "pl": "Ładowanie katalogu KPI...",
+    "en": "Loading KPI catalog..."
+  },
+  "selectKpiFromCatalog2": {
+    "pl": "Wybierz KPI z katalogu",
+    "en": "Select KPI from catalog"
+  },
+  "kpiName2": {
+    "pl": "Nazwa KPI",
+    "en": "KPI name"
+  },
+  "unit2": {
+    "pl": "Jednostka",
+    "en": "Unit"
+  },
+  "category2": {
+    "pl": "Kategoria",
+    "en": "Category"
+  },
+  "realizationOnly2": {
+    "pl": "Tylko realizacja",
+    "en": "Realization only"
+  },
+  "postImplementationOnly2": {
+    "pl": "Tylko po wdrożeniu",
+    "en": "Post-implementation only"
+  },
+  "bothPhases2": {
+    "pl": "Obie fazy",
+    "en": "Both phases"
+  },
+  "realizationTarget2": {
+    "pl": "Cel realizacja",
+    "en": "Realization target"
+  },
+  "postImplementationTarget2": {
+    "pl": "Cel po wdrożeniu",
+    "en": "Post-implementation target"
+  },
+  "linkKpi2": {
+    "pl": "Podłącz KPI",
+    "en": "Link KPI"
+  },
+  "addKpi2": {
+    "pl": "Dodaj KPI",
+    "en": "Add KPI"
+  },
+  "current2": {
+    "pl": "Obecnie",
+    "en": "Current"
+  },
+  "saveChanges2": {
+    "pl": "Zapisz zmiany",
+    "en": "Save changes"
+  },
+  "kpi2": {
+    "pl": "KPI",
+    "en": "KPI"
+  },
+  "phase2": {
+    "pl": "Faza",
+    "en": "Phase"
+  },
+  "baseline2": {
+    "pl": "Baza",
+    "en": "Baseline"
+  },
+  "tracking2": {
+    "pl": "Tracking",
+    "en": "Tracking"
+  },
+  "noKpisDefinedYetClickNew2": {
+    "pl": "Brak KPI. Kliknij \"+ Nowy\", aby dodać pierwszy KPI.",
+    "en": "No KPIs defined yet. Click \"+ New\" to add the first KPI."
+  },
+  "linked2": {
+    "pl": "z katalogu",
+    "en": "linked"
+  },
+  "manual2": {
+    "pl": "ręczne",
+    "en": "manual"
+  },
+  "both2": {
+    "pl": "Obie",
+    "en": "Both"
+  },
+  "realization2": {
+    "pl": "Realizacja",
+    "en": "Realization"
+  },
+  "postImplementation2": {
+    "pl": "Po wdrożeniu",
+    "en": "Post-implementation"
+  },
+  "kpiActions2": {
+    "pl": "Akcje KPI",
+    "en": "KPI actions"
+  },
+  "edit4": {
+    "pl": "Edytuj",
+    "en": "Edit"
+  },
+  "duplicate2": {
+    "pl": "Duplikuj",
+    "en": "Duplicate"
+  },
+  "deleteThisKpi2": {
+    "pl": "Usunąć to KPI?",
+    "en": "Delete this KPI?"
+  },
+  "delete2": {
+    "pl": "Usuń",
+    "en": "Delete"
+  },
+  "watchers2": {
+    "pl": "Obserwatorzy",
+    "en": "Watchers"
+  },
+  "noWatchersForThisInitiativeYet2": {
+    "pl": "Brak obserwatorów dla tej inicjatywy.",
+    "en": "No watchers for this initiative yet."
+  },
+  "usedInBacklinks2": {
+    "pl": "Użyte w (powiązania)",
+    "en": "Used in (backlinks)"
+  },
+  "noLinksYet2": {
+    "pl": "Brak powiązań",
+    "en": "No links yet"
+  },
+  "presentation2": {
+    "pl": "Prezentacja",
+    "en": "Presentation"
+  },
+  "sheet2": {
+    "pl": "Arkusz",
+    "en": "Sheet"
+  },
+  "document3": {
+    "pl": "Dokument",
+    "en": "Document"
+  },
+  "artifacts2": {
+    "pl": "Artefakty",
+    "en": "Artifacts"
+  },
+  "noArtifactsYet2": {
+    "pl": "Brak artefaktów",
+    "en": "No artifacts yet"
+  },
+  "openInWorkspace2": {
+    "pl": "Otwórz w module",
+    "en": "Open in workspace"
+  },
+  "deliverablesMilestones2": {
+    "pl": "Produkty i kamienie milowe",
+    "en": "Deliverables & Milestones"
+  },
+  "addDeliverable2": {
+    "pl": "Dodaj produkt",
+    "en": "Add deliverable"
+  },
+  "noDeliverablesYetAddTheInitiative2": {
+    "pl": "Brak produktów. Dodaj kluczowe rezultaty inicjatywy; kamienie milowe znajdziesz w sekcji Harmonogram.",
+    "en": "No deliverables yet. Add the initiative’s key outputs; milestones live in the Timeline section."
+  },
+  "deliverable2": {
+    "pl": "Opis produktu…",
+    "en": "Deliverable…"
+  },
+  "changeLog2": {
+    "pl": "Dziennik zmian",
+    "en": "Change Log"
+  },
+  "describeAChangePressEnter2": {
+    "pl": "Opisz zmianę i naciśnij Enter…",
+    "en": "Describe a change, press Enter…"
+  },
+  "add2": {
+    "pl": "Dodaj",
+    "en": "Add"
+  },
+  "noStrategicChangesRecordedYet2": {
+    "pl": "Brak zarejestrowanych zmian strategicznych.",
+    "en": "No strategic changes recorded yet."
+  },
+  "objective2": {
+    "pl": "Cel (Objective)…",
+    "en": "Objective…"
+  },
+  "addObjective2": {
+    "pl": "Dodaj cel",
+    "en": "Add objective"
+  },
+  "noOkrsYetAddAnObjective2": {
+    "pl": "Brak celów OKR. Dodaj cel i kluczowe rezultaty (Key Results).",
+    "en": "No OKRs yet. Add an objective and its key results."
+  },
+  "low2": {
+    "pl": "Niska",
+    "en": "Low"
+  },
+  "medium2": {
+    "pl": "Średnia",
+    "en": "Medium"
+  },
+  "high2": {
+    "pl": "Wysoka",
+    "en": "High"
+  },
+  "keyResultsOnePerLine2": {
+    "pl": "Kluczowe rezultaty (po jednym w wierszu)…",
+    "en": "Key results (one per line)…"
+  },
+  "hypothesis2": {
+    "pl": "Hipoteza",
+    "en": "Hypothesis"
+  },
+  "theValueHypothesisWhatWeBelieve2": {
+    "pl": "Wartościowa hipoteza inicjatywy — co zakładamy, że osiągniemy i dlaczego.",
+    "en": "The value hypothesis — what we believe this initiative will achieve and why."
+  },
+  "weBelieveThatBecauseWeWill2": {
+    "pl": "Wierzymy, że… ponieważ… Zmierzymy to przez…",
+    "en": "We believe that… because… We will measure this by…"
+  },
+  "businessOwner2": {
+    "pl": "Właściciel biznesowy",
+    "en": "Business Owner"
+  },
+  "executionOwner2": {
+    "pl": "Właściciel wykonawczy",
+    "en": "Execution Owner"
+  },
+  "workstreamOwners2": {
+    "pl": "Właściciele strumieni",
+    "en": "Workstream Owners"
+  },
+  "noOwnersAssignedAssignThemIn2": {
+    "pl": "Brak przypisanych właścicieli. Przypisz w sekcji Zespół.",
+    "en": "No owners assigned. Assign them in the Team section."
+  },
+  "lessonsLearned2": {
+    "pl": "Wnioski i lekcje",
+    "en": "Lessons Learned"
+  },
+  "whatWorkedWhatDidnTWhat2": {
+    "pl": "Co zadziałało, co nie, co zrobimy inaczej następnym razem…",
+    "en": "What worked, what didn’t, what we’d do differently next time…"
+  },
+  "newObjective2": {
+    "pl": "Nowy cel",
+    "en": "New objective"
+  },
+  "inScope4": {
+    "pl": "W zakresie",
+    "en": "In scope"
+  },
+  "outOfScope4": {
+    "pl": "Poza zakresem",
+    "en": "Out of scope"
+  },
+  "killCriteria8": {
+    "pl": "Kryteria zatrzymania",
+    "en": "Kill criteria"
+  },
+  "successCriteria4": {
+    "pl": "Kryteria sukcesu",
+    "en": "Success criteria"
+  },
+  "targetState2": {
+    "pl": "Stan docelowy",
+    "en": "Target state"
+  },
+  "noContent3": {
+    "pl": "_(brak treści)_",
+    "en": "_(no content)_"
+  },
+  "markdownDownloaded2": {
+    "pl": "Pobrano Markdown",
+    "en": "Markdown downloaded"
+  },
+  "exportFailed2": {
+    "pl": "Eksport nie powiódł się",
+    "en": "Export failed"
+  },
+  "pdfExportFailed2": {
+    "pl": "Eksport PDF nie powiódł się",
+    "en": "PDF export failed"
+  },
+  "pdfExported2": {
+    "pl": "Wyeksportowano PDF",
+    "en": "PDF exported"
+  },
+  "savedToNotebook2": {
+    "pl": "Zapisano w Notatniku",
+    "en": "Saved to Notebook"
+  },
+  "failedToSaveToNotebook2": {
+    "pl": "Nie udało się zapisać w Notatniku",
+    "en": "Failed to save to Notebook"
+  },
+  "initiativeForked2": {
+    "pl": "Inicjatywa sklonowana",
+    "en": "Initiative forked"
+  },
+  "failedToFork2": {
+    "pl": "Nie udało się sklonować",
+    "en": "Failed to fork"
+  },
+  "proposedRaidChangesAi2": {
+    "pl": "Propozycje zmian w RAID (AI)",
+    "en": "Proposed RAID changes (AI)"
+  },
+  "ifTheRaidLogIsAlready2": {
+    "pl": "Jeśli RAID jest OK, AI może nie zaproponować zmian.",
+    "en": "If the RAID log is already good, AI may suggest no changes."
+  },
+  "aiMayReturnOnlyRemovalsOr2": {
+    "pl": "AI może zwrócić tylko usunięcia lub brak zmian.",
+    "en": "AI may return only removals or no changes."
+  },
+  "removeSelectedRaidItems2": {
+    "pl": "Usuń zaznaczone elementy RAID: ",
+    "en": "Remove selected RAID items: "
+  },
+  "addSelectedRaidItems2": {
+    "pl": "Dodaj zaznaczone elementy RAID: ",
+    "en": "Add selected RAID items: "
+  },
+  "noEditPermissionAtThisInitiative2": {
+    "pl": "Brak uprawnień do edycji na tym etapie inicjatywy.",
+    "en": "No edit permission at this initiative stage."
+  },
+  "statusDrift2": {
+    "pl": "Drift statusu",
+    "en": "Status drift"
+  },
+  "thisViewUsesNormalizedStatusAligned2": {
+    "pl": "Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.",
+    "en": "This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator."
+  },
+  "other2": {
+    "pl": "Pozostałe",
+    "en": "Other"
+  },
+  "sections2": {
+    "pl": "Sekcje",
+    "en": "Sections"
+  },
+  "empty3": {
+    "pl": "brak",
+    "en": "empty"
+  },
+  "restoreDefaults2": {
+    "pl": "Przywróć domyślne",
+    "en": "Restore defaults"
+  },
+  "noCreateActionsAvailableInThis2": {
+    "pl": "Brak akcji tworzenia w tym stanie",
+    "en": "No create actions available in this state"
+  },
+  "new2": {
+    "pl": "Nowy",
+    "en": "New"
+  },
+  "export2": {
+    "pl": "Eksport",
+    "en": "Export"
+  },
+  "aiGenerationNotAvailableForThis2": {
+    "pl": "Generowanie AI niedostępne dla tej sekcji",
+    "en": "AI generation not available for this section yet"
+  },
+  "noPermissionToUseAiIn2": {
+    "pl": "Brak uprawnień do użycia AI w tym kontekście.",
+    "en": "No permission to use AI in this context."
+  },
+  "aiForThisSection2": {
+    "pl": "AI dla tej sekcji",
+    "en": "AI for this section"
+  },
+  "aiSection2": {
+    "pl": "AI sekcja",
+    "en": "AI section"
+  },
+  "fork2": {
+    "pl": "Forkuj",
+    "en": "Fork"
+  },
+  "present2": {
+    "pl": "Prezentuj",
+    "en": "Present"
+  },
+  "more2": {
+    "pl": "Więcej",
+    "en": "More"
+  },
+  "aiConsultant3": {
+    "pl": "Asystent AI",
+    "en": "AI Consultant"
+  },
+  "aiConsultant4": {
+    "pl": "AI Konsultant",
+    "en": "AI Consultant"
+  },
+  "markSectionAsNotComplete2": {
+    "pl": "Oznacz sekcję jako niegotową",
+    "en": "Mark section as not complete"
+  },
+  "markSectionAsComplete2": {
+    "pl": "Oznacz sekcję jako gotową",
+    "en": "Mark section as complete"
+  },
+  "reopen2": {
+    "pl": "Otwórz ponownie",
+    "en": "Reopen"
+  },
+  "markComplete2": {
+    "pl": "Oznacz gotowe",
+    "en": "Mark complete"
+  },
+  "exportInitiative2": {
+    "pl": "Eksportuj inicjatywę",
+    "en": "Export initiative"
+  },
+  "sectionsToExport2": {
+    "pl": "Sekcje do eksportu",
+    "en": "Sections to export"
+  },
+  "all2": {
+    "pl": "Wszystkie",
+    "en": "All"
+  },
+  "none2": {
+    "pl": "Żadne",
+    "en": "None"
+  },
+  "format2": {
+    "pl": "Format",
+    "en": "Format"
+  },
+  "reportPdf2": {
+    "pl": "Raport (PDF)",
+    "en": "Report (PDF)"
+  },
+  "deck2": {
+    "pl": "Prezentacja",
+    "en": "Deck"
+  },
+  "notebook2": {
+    "pl": "Notatnik",
+    "en": "Notebook"
+  },
+  "noContent4": {
+    "pl": "(brak treści)",
+    "en": "(no content)"
+  },
+  "copied2": {
+    "pl": "Skopiowano",
+    "en": "Copied"
+  },
+  "copyFailed2": {
+    "pl": "Nie udało się skopiować",
+    "en": "Copy failed"
+  },
+  "initiative2": {
+    "pl": "Inicjatywa",
+    "en": "Initiative"
+  },
+  "axis3": {
+    "pl": "Oś",
+    "en": "Axis"
+  },
+  "priority4": {
+    "pl": "Pilność",
+    "en": "Priority"
+  },
+  "collapse2": {
+    "pl": "Zwiń",
+    "en": "Collapse"
+  },
+  "expand2": {
+    "pl": "Rozwiń",
+    "en": "Expand"
+  },
+  "summarize2": {
+    "pl": "Podsumuj",
+    "en": "Summarize"
+  },
+  "makeADocumentFromThis2": {
+    "pl": "Zrób z tego dokument",
+    "en": "Make a document from this"
+  },
+  "copyAsMarkdown2": {
+    "pl": "Kopiuj jako Markdown",
+    "en": "Copy as Markdown"
+  },
+  "copyForSlack2": {
+    "pl": "Kopiuj dla Slack",
+    "en": "Copy for Slack"
+  },
+  "lastModified2": {
+    "pl": "Ostatnia zmiana",
+    "en": "Last modified"
+  },
+  "interviewInsightLineage2": {
+    "pl": "Pochodzenie z Interview Insight",
+    "en": "Interview Insight lineage"
+  },
+  "openSourceInsight2": {
+    "pl": "Otwórz źródłowy insight",
+    "en": "Open source insight"
+  },
+  "ratioAnalysis2": {
+    "pl": "Analiza wskaźnikowa",
+    "en": "Ratio Analysis"
+  },
+  "companyValuation2": {
+    "pl": "Wycena przedsiębiorstwa",
+    "en": "Company Valuation"
+  },
+  "budgetPrediction2": {
+    "pl": "Budżet i predykcja",
+    "en": "Budget & Prediction"
+  },
+  "resultsKpiReports2": {
+    "pl": "Wyniki i raporty KPI",
+    "en": "Results & KPI reports"
+  }
+}

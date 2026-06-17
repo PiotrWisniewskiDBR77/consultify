@@ -1,0 +1,13 @@
+src/components/AIChat/CanvasEditor/CanvasAIFloatingMenu.tsx:318 nonStringTernary
+src/components/AIChat/CanvasEditor/CanvasAIFloatingMenu.tsx:334 nonStringTernary
+src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:488 nonStringTernary
+src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:489 nonStringTernary
+src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:491 nonStringTernary
+src/components/AIChat/KimiWorkspace/KimiWorkspaceShell.tsx:396 nonStringTernary
+src/components/AIChat/KimiWorkspace/KimiWorkspaceShell.tsx:844 nonStringTernary
+src/components/AIChat/KimiWorkspace/tabelePreview/TabeleProvenanceColumn.tsx:35 nonStringTernary
+src/components/AIChat/OutputToolSelector.tsx:69 nonStringTernary
+src/components/AIChat/Wave5ArtifactRuntimePanel.tsx:260 nonStringTernary
+src/components/AIChat/Wave7ConnectorAdminPanel.tsx:462 nonStringTernary
+src/components/AIChat/Wave9OutcomeAIOpsPanel.tsx:34 nonStringTernary
+src/components/AIChat/Wave9OutcomeAIOpsPanel.tsx:483 nonStringTernary

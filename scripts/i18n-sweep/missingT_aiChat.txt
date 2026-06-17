@@ -1,0 +1,8 @@
+src/components/AIChat/CanvasEditor/CanvasAIFloatingMenu.tsx
+src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx
+src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx
+src/components/AIChat/Wave5ArtifactRuntimePanel.tsx
+src/components/AIChat/Wave6ContextLearningPanel.tsx
+src/components/AIChat/Wave7ConnectorAdminPanel.tsx
+src/components/AIChat/Wave8AgentCatalogPanel.tsx
+src/components/AIChat/Wave9OutcomeAIOpsPanel.tsx

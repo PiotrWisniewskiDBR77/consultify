@@ -1,0 +1,2970 @@
+{
+  "attachmentsSection.attachmentsAdded": {
+    "pl": "Załączniki dodane",
+    "en": "Attachments added"
+  },
+  "attachmentsSection.attachmentRemoved": {
+    "pl": "Załącznik usunięty",
+    "en": "Attachment removed"
+  },
+  "controlSection.control": {
+    "pl": "Sterowanie",
+    "en": "Control"
+  },
+  "controlSection.currentModule": {
+    "pl": "Aktualny moduł",
+    "en": "Current Module"
+  },
+  "controlSection.goTo": {
+    "pl": "Przejdź →",
+    "en": "Go to →"
+  },
+  "controlSection.priority": {
+    "pl": "Priorytet",
+    "en": "Priority"
+  },
+  "decisionsSection.missingInitiativeId": {
+    "pl": "Brak ID inicjatywy",
+    "en": "Missing initiative ID"
+  },
+  "decisionsSection.decisionCreated": {
+    "pl": "Decyzja utworzona",
+    "en": "Decision created"
+  },
+  "decisionsSection.failedToCreateDecision": {
+    "pl": "Nie udało się utworzyć decyzji",
+    "en": "Failed to create decision"
+  },
+  "decisionsSection.copy": {
+    "pl": " (kopia)",
+    "en": " (copy)"
+  },
+  "decisionsSection.decisionDuplicated": {
+    "pl": "Decyzja zduplikowana",
+    "en": "Decision duplicated"
+  },
+  "decisionsSection.failedToDuplicateDecision": {
+    "pl": "Nie udało się zduplikować decyzji",
+    "en": "Failed to duplicate decision"
+  },
+  "decisionsSection.english": {
+    "pl": "Polish",
+    "en": "English"
+  },
+  "decisionsSection.aiReturnedNoDecisionTitle": {
+    "pl": "AI nie zwróciło tytułu decyzji",
+    "en": "AI returned no decision title"
+  },
+  "decisionsSection.failedToProposeADecision": {
+    "pl": "Nie udało się zaproponować decyzji",
+    "en": "Failed to propose a decision"
+  },
+  "decisionsSection.aiFoundNoChangeSuggestionsThe": {
+    "pl": "AI nie znalazło sugestii zmian — log decyzji wygląda OK.",
+    "en": "AI found no change suggestions — the decisions log looks good."
+  },
+  "decisionsSection.failedToAnalyzeDecisions": {
+    "pl": "Nie udało się przeanalizować decyzji",
+    "en": "Failed to analyze decisions"
+  },
+  "decisionsSection.appliedAiSuggestions": {
+    "pl": "Zastosowano sugestie AI",
+    "en": "Applied AI suggestions"
+  },
+  "decisionsSection.failedToApplyAiSuggestions": {
+    "pl": "Nie udało się zastosować sugestii AI",
+    "en": "Failed to apply AI suggestions"
+  },
+  "decisionsSection.decisions": {
+    "pl": "Decyzje",
+    "en": "Decisions"
+  },
+  "decisionsSection.aiWorking": {
+    "pl": "AI pracuje...",
+    "en": "AI working..."
+  },
+  "decisionsSection.addDecision": {
+    "pl": "Dodaj decyzję",
+    "en": "Add decision"
+  },
+  "decisionsSection.ai": {
+    "pl": "AI",
+    "en": "AI"
+  },
+  "decisionsSection.aiAddDecision": {
+    "pl": "AI: dodaj decyzję",
+    "en": "AI: add decision"
+  },
+  "decisionsSection.proposedDecisionChangesAi": {
+    "pl": "Propozycje zmian w decyzjach (AI)",
+    "en": "Proposed decision changes (AI)"
+  },
+  "decisionsSection.selectItemsToAddRemoveThen": {
+    "pl": "Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.",
+    "en": "Select items to add/remove, then click “Apply”."
+  },
+  "decisionsSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "decisionsSection.toRemove": {
+    "pl": "Do wywalenia",
+    "en": "To remove"
+  },
+  "decisionsSection.selectAll": {
+    "pl": "Zaznacz wszystko",
+    "en": "Select all"
+  },
+  "decisionsSection.noRemovalSuggestionsFromAi": {
+    "pl": "AI nie zasugerowało usunięć.",
+    "en": "No removal suggestions from AI."
+  },
+  "decisionsSection.ifTheDecisionsLogIsAlready": {
+    "pl": "Jeśli log decyzji jest OK, AI może zaproponować tylko dodania lub kolejność.",
+    "en": "If the decisions log is already good, AI may propose only additions or ordering."
+  },
+  "decisionsSection.toAdd": {
+    "pl": "Do dodania",
+    "en": "To add"
+  },
+  "decisionsSection.noAdditionsProposed": {
+    "pl": "Brak propozycji do dodania.",
+    "en": "No additions proposed."
+  },
+  "decisionsSection.aiMayReturnOnlyRemovalsOr": {
+    "pl": "AI może zwrócić tylko usunięcia lub kolejność.",
+    "en": "AI may return only removals or ordering."
+  },
+  "decisionsSection.suggestedOrder": {
+    "pl": "Proponowana kolejność",
+    "en": "Suggested order"
+  },
+  "decisionsSection.applyOrder": {
+    "pl": "Zastosuj kolejność",
+    "en": "Apply order"
+  },
+  "decisionsSection.noOrderingSuggestion": {
+    "pl": "Brak sugestii kolejności.",
+    "en": "No ordering suggestion."
+  },
+  "decisionsSection.aiMayReturnOnlyAdditionsRemovals": {
+    "pl": "AI może zwrócić tylko dodania/usunięcia bez re-order.",
+    "en": "AI may return only additions/removals without re-ordering."
+  },
+  "decisionsSection.plan": {
+    "pl": "Plan",
+    "en": "Plan"
+  },
+  "decisionsSection.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "decisionsSection.apply": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "decisionsSection.decision": {
+    "pl": "Decyzja",
+    "en": "Decision"
+  },
+  "decisionsSection.type": {
+    "pl": "Typ",
+    "en": "Type"
+  },
+  "decisionsSection.status": {
+    "pl": "Status",
+    "en": "Status"
+  },
+  "decisionsSection.owner": {
+    "pl": "Decydent",
+    "en": "Owner"
+  },
+  "decisionsSection.due": {
+    "pl": "Termin",
+    "en": "Due"
+  },
+  "decisionsSection.priority": {
+    "pl": "Priorytet",
+    "en": "Priority"
+  },
+  "decisionsSection.untitled": {
+    "pl": "Bez nazwy",
+    "en": "Untitled"
+  },
+  "decisionsSection.overdue": {
+    "pl": "PRZETERMIN.",
+    "en": "OVERDUE"
+  },
+  "decisionsSection.actions": {
+    "pl": "Akcje",
+    "en": "Actions"
+  },
+  "decisionsSection.openDecision": {
+    "pl": "Otwórz decyzję",
+    "en": "Open decision"
+  },
+  "decisionsSection.duplicate": {
+    "pl": "Duplikuj",
+    "en": "Duplicate"
+  },
+  "decisionsSection.delete": {
+    "pl": "Usuń",
+    "en": "Delete"
+  },
+  "decisionsSection.noDecisionsYet": {
+    "pl": "Brak decyzji",
+    "en": "No decisions yet"
+  },
+  "decisionsSection.addGateOrOperationalDecisions": {
+    "pl": "Dodaj decyzje bramkowe lub operacyjne",
+    "en": "Add gate or operational decisions"
+  },
+  "decisionsSection.newDecision": {
+    "pl": "Nowa decyzja",
+    "en": "New decision"
+  },
+  "decisionsSection.title": {
+    "pl": "Tytuł",
+    "en": "Title"
+  },
+  "decisionsSection.eGApproveBudgetAllocation": {
+    "pl": "Np. Zatwierdź budżet",
+    "en": "E.g. Approve budget allocation"
+  },
+  "decisionsSection.contextNotes": {
+    "pl": "Kontekst / notatki",
+    "en": "Context / notes"
+  },
+  "decisionsSection.low": {
+    "pl": "Niski",
+    "en": "Low"
+  },
+  "decisionsSection.medium": {
+    "pl": "Średni",
+    "en": "Medium"
+  },
+  "decisionsSection.high": {
+    "pl": "Wysoki",
+    "en": "High"
+  },
+  "decisionsSection.critical": {
+    "pl": "Krytyczny",
+    "en": "Critical"
+  },
+  "decisionsSection.owner2": {
+    "pl": "Owner",
+    "en": "Owner"
+  },
+  "decisionsSection.none": {
+    "pl": "— Brak —",
+    "en": "— None —"
+  },
+  "decisionsSection.creating": {
+    "pl": "Tworzenie...",
+    "en": "Creating..."
+  },
+  "decisionsSection.createDecision": {
+    "pl": "Utwórz decyzję",
+    "en": "Create decision"
+  },
+  "decisionsSection.approved": {
+    "pl": "zatwierdzonych",
+    "en": "approved"
+  },
+  "dependenciesSection.english": {
+    "pl": "Polish",
+    "en": "English"
+  },
+  "dependenciesSection.aiFoundNoChangeSuggestionsDependencies": {
+    "pl": "AI nie znalazło sugestii zmian — zależności wyglądają OK.",
+    "en": "AI found no change suggestions — dependencies look good."
+  },
+  "dependenciesSection.aiAnalysisFailed": {
+    "pl": "Nie udało się przeanalizować zależności",
+    "en": "AI analysis failed"
+  },
+  "dependenciesSection.noSelectedChanges": {
+    "pl": "Brak wybranych zmian",
+    "en": "No selected changes"
+  },
+  "dependenciesSection.failedToApplyProposals": {
+    "pl": "Nie udało się zastosować propozycji",
+    "en": "Failed to apply proposals"
+  },
+  "dependenciesSection.proposedDependencyChangesAi": {
+    "pl": "Propozycje zmian w zależnościach (AI)",
+    "en": "Proposed dependency changes (AI)"
+  },
+  "dependenciesSection.selectItemsToAddRemoveThen": {
+    "pl": "Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.",
+    "en": "Select items to add/remove, then click “Apply”."
+  },
+  "dependenciesSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "dependenciesSection.toRemove": {
+    "pl": "Do usunięcia",
+    "en": "To remove"
+  },
+  "dependenciesSection.selectAll": {
+    "pl": "Zaznacz wszystko",
+    "en": "Select all"
+  },
+  "dependenciesSection.from": {
+    "pl": "Z",
+    "en": "From"
+  },
+  "dependenciesSection.to": {
+    "pl": "Do",
+    "en": "To"
+  },
+  "dependenciesSection.type": {
+    "pl": "Typ",
+    "en": "Type"
+  },
+  "dependenciesSection.lag": {
+    "pl": "Lag",
+    "en": "Lag"
+  },
+  "dependenciesSection.reason": {
+    "pl": "Powód",
+    "en": "Reason"
+  },
+  "dependenciesSection.noRemovalSuggestions": {
+    "pl": "Brak propozycji usunięć.",
+    "en": "No removal suggestions."
+  },
+  "dependenciesSection.toAdd": {
+    "pl": "Do dodania",
+    "en": "To add"
+  },
+  "dependenciesSection.notesRationale": {
+    "pl": "Notatki / Uzasadnienie",
+    "en": "Notes / Rationale"
+  },
+  "dependenciesSection.noAdditionsProposed": {
+    "pl": "Brak propozycji do dodania.",
+    "en": "No additions proposed."
+  },
+  "dependenciesSection.onApplyWeWillAddRemove": {
+    "pl": "Po akceptacji dodamy/usuniemy wybrane zależności przez API (bez wymyślania nowych zadań).",
+    "en": "On apply we will add/remove the selected dependency links via API (no new tasks invented)."
+  },
+  "dependenciesSection.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "dependenciesSection.apply": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "financialAnalysisSection.financialAnalysis": {
+    "pl": "Analiza finansowa",
+    "en": "Financial Analysis"
+  },
+  "financialAnalysisSection.capitalExpenditure": {
+    "pl": "Nakłady inwestycyjne",
+    "en": "Capital expenditure"
+  },
+  "financialAnalysisSection.operatingExpenditure": {
+    "pl": "Koszty operacyjne",
+    "en": "Operating expenditure"
+  },
+  "financialAnalysisSection.payback": {
+    "pl": "Zwrot",
+    "en": "Payback"
+  },
+  "financialImpactSection.financialImpact": {
+    "pl": "Wpływ na wynik finansowy",
+    "en": "Financial Impact"
+  },
+  "financialImpactSection.pLImpact": {
+    "pl": "Wpływ na P&L",
+    "en": "P&L Impact"
+  },
+  "financialImpactSection.forecast": {
+    "pl": "Prognoza",
+    "en": "Forecast"
+  },
+  "financialImpactSection.revenue": {
+    "pl": "Przychody",
+    "en": "Revenue"
+  },
+  "financialImpactSection.costSavings": {
+    "pl": "Oszczędności",
+    "en": "Cost Savings"
+  },
+  "financialImpactSection.benefitsRealization": {
+    "pl": "Realizacja korzyści",
+    "en": "Benefits Realization"
+  },
+  "gateReadinessSection.aiAnalysisFailed": {
+    "pl": "AI analiza nie powiodła się",
+    "en": "AI analysis failed"
+  },
+  "gateReadinessSection.missingInitiativeId": {
+    "pl": "Brak ID inicjatywy",
+    "en": "Missing initiative ID"
+  },
+  "gateReadinessSection.english": {
+    "pl": "Polish",
+    "en": "English"
+  },
+  "gateReadinessSection.aiFoundNoChangeSuggestionsThe": {
+    "pl": "AI nie znalazło sugestii zmian — bramki wyglądają OK.",
+    "en": "AI found no change suggestions — the gates look good."
+  },
+  "gateReadinessSection.failedToAnalyzeGates": {
+    "pl": "Nie udało się przeanalizować bramek",
+    "en": "Failed to analyze gates"
+  },
+  "gateReadinessSection.selectChangesToApply": {
+    "pl": "Zaznacz zmiany do zastosowania",
+    "en": "Select changes to apply"
+  },
+  "gateReadinessSection.appliedAiSuggestions": {
+    "pl": "Zastosowano sugestie AI",
+    "en": "Applied AI suggestions"
+  },
+  "gateReadinessSection.failedToApply": {
+    "pl": "Nie udało się zastosować zmian",
+    "en": "Failed to apply"
+  },
+  "gateReadinessSection.gateReadinessTimeline": {
+    "pl": "Gotowość bramki i harmonogram",
+    "en": "Gate Readiness & Timeline"
+  },
+  "gateReadinessSection.next": {
+    "pl": "Następna",
+    "en": "Next"
+  },
+  "gateReadinessSection.request": {
+    "pl": "Wyślij",
+    "en": "Request"
+  },
+  "gateReadinessSection.aiIsNotAvailableForThis": {
+    "pl": "AI niedostępne dla tego statusu inicjatywy",
+    "en": "AI is not available for this initiative status"
+  },
+  "gateReadinessSection.aiNoSuggestions": {
+    "pl": "AI: brak sugestii",
+    "en": "AI: no suggestions"
+  },
+  "gateReadinessSection.aiGatesReview": {
+    "pl": "AI: przegląd bramek",
+    "en": "AI: gates review"
+  },
+  "gateReadinessSection.nothingIsAppliedAutomaticallySelectAnd": {
+    "pl": "Zmiany nie są stosowane automatycznie — wybierz i zaakceptuj.",
+    "en": "Nothing is applied automatically — select and accept changes."
+  },
+  "gateReadinessSection.aiNote": {
+    "pl": "Notatka AI",
+    "en": "AI note"
+  },
+  "gateReadinessSection.initiativeTopBar": {
+    "pl": "Inicjatywa (top bar)",
+    "en": "Initiative (top bar)"
+  },
+  "gateReadinessSection.noTopBarChanges": {
+    "pl": "Brak zmian w top bar",
+    "en": "No top-bar changes"
+  },
+  "gateReadinessSection.aiSuggestsNoOwnerSponsorDate": {
+    "pl": "AI nie sugeruje zmian owner/sponsor/termin/prioritet.",
+    "en": "AI suggests no owner/sponsor/date/priority changes."
+  },
+  "gateReadinessSection.owner": {
+    "pl": "Owner",
+    "en": "Owner"
+  },
+  "gateReadinessSection.sponsor": {
+    "pl": "Sponsor",
+    "en": "Sponsor"
+  },
+  "gateReadinessSection.targetDateEnd": {
+    "pl": "Termin (end)",
+    "en": "Target date (end)"
+  },
+  "gateReadinessSection.priority": {
+    "pl": "Priorytet",
+    "en": "Priority"
+  },
+  "gateReadinessSection.gateRoles": {
+    "pl": "Role bramkowe",
+    "en": "Gate roles"
+  },
+  "gateReadinessSection.noGateRoleChanges": {
+    "pl": "Brak zmian ról bramkowych",
+    "en": "No gate role changes"
+  },
+  "gateReadinessSection.aiSuggestsNoRoleAddsRemoves": {
+    "pl": "AI nie sugeruje przypisań/usunięć ról.",
+    "en": "AI suggests no role adds/removes."
+  },
+  "gateReadinessSection.toAdd": {
+    "pl": "Do dodania",
+    "en": "To add"
+  },
+  "gateReadinessSection.selectAll": {
+    "pl": "Zaznacz wszystko",
+    "en": "Select all"
+  },
+  "gateReadinessSection.toRemove": {
+    "pl": "Do usunięcia",
+    "en": "To remove"
+  },
+  "gateReadinessSection.gateDecisions": {
+    "pl": "Decyzje bramkowe",
+    "en": "Gate decisions"
+  },
+  "gateReadinessSection.noDecisionUpdates": {
+    "pl": "Brak aktualizacji decyzji",
+    "en": "No decision updates"
+  },
+  "gateReadinessSection.aiSuggestsNoUpdatesForExisting": {
+    "pl": "AI nie sugeruje zmian dla istniejących decyzji bramkowych.",
+    "en": "AI suggests no updates for existing gate decisions."
+  },
+  "gateReadinessSection.due": {
+    "pl": "Due",
+    "en": "Due"
+  },
+  "gateReadinessSection.note": {
+    "pl": "Note",
+    "en": "Note"
+  },
+  "gateReadinessSection.tasks": {
+    "pl": "Zadania",
+    "en": "Tasks"
+  },
+  "gateReadinessSection.noTaskUpdates": {
+    "pl": "Brak aktualizacji zadań",
+    "en": "No task updates"
+  },
+  "gateReadinessSection.aiSuggestsNoAssigneeDueStatus": {
+    "pl": "AI nie sugeruje zmian assignee/due/status.",
+    "en": "AI suggests no assignee/due/status changes."
+  },
+  "gateReadinessSection.status": {
+    "pl": "Status",
+    "en": "Status"
+  },
+  "gateReadinessSection.raid": {
+    "pl": "RAID",
+    "en": "RAID"
+  },
+  "gateReadinessSection.noRaidUpdates": {
+    "pl": "Brak aktualizacji RAID",
+    "en": "No RAID updates"
+  },
+  "gateReadinessSection.aiSuggestsNoChangesToExisting": {
+    "pl": "AI nie sugeruje zmian dla istniejących ryzyk/issue.",
+    "en": "AI suggests no changes to existing risks/issues."
+  },
+  "gateReadinessSection.severity": {
+    "pl": "Severity",
+    "en": "Severity"
+  },
+  "gateReadinessSection.title": {
+    "pl": "Title",
+    "en": "Title"
+  },
+  "gateReadinessSection.desc": {
+    "pl": "Desc",
+    "en": "Desc"
+  },
+  "gateReadinessSection.analysisResult": {
+    "pl": "Wynik analizy",
+    "en": "Analysis result"
+  },
+  "gateReadinessSection.aiDidNotProposeAnyChanges": {
+    "pl": "AI nie zaproponowało żadnych zmian do wprowadzenia.",
+    "en": "AI did not propose any changes to apply."
+  },
+  "gateReadinessSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "gateReadinessSection.applySelected": {
+    "pl": "Zastosuj zaznaczone",
+    "en": "Apply selected"
+  },
+  "gateReadinessSection.gateTimeline": {
+    "pl": "Przebieg bramek",
+    "en": "Gate Timeline"
+  },
+  "gateReadinessSection.currentGate": {
+    "pl": "Aktualna bramka",
+    "en": "Current Gate"
+  },
+  "gateReadinessSection.readinessSystem": {
+    "pl": "Gotowość (system)",
+    "en": "Readiness (system)"
+  },
+  "gateReadinessSection.blockingMissing": {
+    "pl": "Blokujące braki",
+    "en": "Blocking missing"
+  },
+  "gateReadinessSection.ok": {
+    "pl": "OK",
+    "en": "OK"
+  },
+  "gateReadinessSection.youCanTProgressYet": {
+    "pl": "Nie możesz przejść dalej",
+    "en": "You can't progress yet"
+  },
+  "gateReadinessSection.fillMissingBlockingItemsThenRetry": {
+    "pl": "Uzupełnij brakujące elementy (blokujące), a następnie ponów akcję gate.",
+    "en": "Fill missing blocking items, then retry the gate action."
+  },
+  "gateReadinessSection.suggestedAction": {
+    "pl": "Sugerowana akcja",
+    "en": "Suggested action"
+  },
+  "gateReadinessSection.youCanViewButYouLack": {
+    "pl": "Masz podgląd, ale brak uprawnień do edycji na tym etapie.",
+    "en": "You can view, but you lack edit permission at this stage."
+  },
+  "gateReadinessSection.fix": {
+    "pl": "Napraw",
+    "en": "Fix"
+  },
+  "gateReadinessSection.aiReadinessAnalysis": {
+    "pl": "Analiza gotowości AI",
+    "en": "AI Readiness Analysis"
+  },
+  "gateReadinessSection.askAi": {
+    "pl": "Zapytaj AI",
+    "en": "Ask AI"
+  },
+  "gateReadinessSection.aiIsAnalyzingReadiness": {
+    "pl": "AI analizuje gotowość...",
+    "en": "AI is analyzing readiness..."
+  },
+  "gateReadinessSection.score": {
+    "pl": "Ocena",
+    "en": "Score"
+  },
+  "gateReadinessSection.summary": {
+    "pl": "Podsumowanie",
+    "en": "Summary"
+  },
+  "gateReadinessSection.aiFindings": {
+    "pl": "Wnioski AI",
+    "en": "AI Findings"
+  },
+  "gateReadinessSection.action": {
+    "pl": "Akcja",
+    "en": "Action"
+  },
+  "gateReadinessSection.aiFoundNoAdditionalIssues": {
+    "pl": "AI nie znalazło dodatkowych problemów.",
+    "en": "AI found no additional issues."
+  },
+  "gateReadinessSection.requirementsChecklist": {
+    "pl": "Lista kontrolna wymagań",
+    "en": "Requirements Checklist"
+  },
+  "gateReadinessSection.readiness": {
+    "pl": "Gotowość",
+    "en": "Readiness"
+  },
+  "gateReadinessSection.requiredApproval": {
+    "pl": "Wymagana aprobata",
+    "en": "Required approval"
+  },
+  "gateReadinessSection.requiredApprovalsForStatus": {
+    "pl": "Wymagane zatwierdzenia dla statusu",
+    "en": "Required approvals for status"
+  },
+  "gateReadinessSection.notRequested": {
+    "pl": "Nie zgłoszono",
+    "en": "Not requested"
+  },
+  "gateReadinessSection.allGatesPassed": {
+    "pl": "Wszystkie bramki przejdzone!",
+    "en": "All gates passed!"
+  },
+  "historySection.activityLog": {
+    "pl": "Historia aktywności",
+    "en": "Activity Log"
+  },
+  "historySection.noActivityHistoryYet": {
+    "pl": "Brak historii aktywności",
+    "en": "No activity history yet"
+  },
+  "historySection.activityHistoryWillAppearHereAfter": {
+    "pl": "Historia zmian pojawi się tutaj po zapisaniu inicjatywy lub wykonaniu akcji (np. zmiana statusu, dodanie zadania)",
+    "en": "Activity history will appear here after saving the initiative or performing actions (e.g. status change, adding tasks)"
+  },
+  "initiativeGatesWorkflowTable.assignAGateApproverFirst": {
+    "pl": "Przypisz najpierw osobę decyzyjną",
+    "en": "Assign a gate approver first"
+  },
+  "initiativeGatesWorkflowTable.blockingRequirementsMissing": {
+    "pl": "Brakuje wymagań blokujących",
+    "en": "Blocking requirements missing"
+  },
+  "initiativeGatesWorkflowTable.failed": {
+    "pl": "Nie udało się",
+    "en": "Failed"
+  },
+  "initiativeGatesWorkflowTable.gateRolesSaved": {
+    "pl": "Role bramkowe zapisane",
+    "en": "Gate roles saved"
+  },
+  "initiativeGatesWorkflowTable.failedToSaveRoles": {
+    "pl": "Błąd zapisu ról",
+    "en": "Failed to save roles"
+  },
+  "initiativeGatesWorkflowTable.stage": {
+    "pl": "Etap",
+    "en": "Stage"
+  },
+  "initiativeGatesWorkflowTable.gateDecision": {
+    "pl": "Bramka",
+    "en": "Gate Decision"
+  },
+  "initiativeGatesWorkflowTable.approver": {
+    "pl": "Decydent",
+    "en": "Approver"
+  },
+  "initiativeGatesWorkflowTable.readiness": {
+    "pl": "Gotowość",
+    "en": "Readiness"
+  },
+  "initiativeGatesWorkflowTable.edit": {
+    "pl": "Edytuj",
+    "en": "Edit"
+  },
+  "initiativeGatesWorkflowTable.deleteDecision": {
+    "pl": "Usuń decyzję",
+    "en": "Delete decision"
+  },
+  "initiativeGatesWorkflowTable.deleteLinkedDecision": {
+    "pl": "Usunąć powiązaną decyzję?",
+    "en": "Delete linked decision?"
+  },
+  "initiativeGatesWorkflowTable.deleted": {
+    "pl": "Usunięto",
+    "en": "Deleted"
+  },
+  "initiativeGatesWorkflowTable.error": {
+    "pl": "Błąd",
+    "en": "Error"
+  },
+  "initiativeGatesWorkflowTable.now": {
+    "pl": "teraz",
+    "en": "now"
+  },
+  "initiativeGatesWorkflowTable.open": {
+    "pl": "Otwórz",
+    "en": "Open"
+  },
+  "initiativeGatesWorkflowTable.notAssigned": {
+    "pl": "Nie przypisano",
+    "en": "Not assigned"
+  },
+  "initiativeGatesWorkflowTable.block": {
+    "pl": "blok",
+    "en": "block"
+  },
+  "initiativeGatesWorkflowTable.warn": {
+    "pl": "uwag",
+    "en": "warn"
+  },
+  "initiativeGatesWorkflowTable.notAssigned2": {
+    "pl": "nie przypisano",
+    "en": "not assigned"
+  },
+  "initiativeGatesWorkflowTable.openDecision": {
+    "pl": "Otwórz decyzję",
+    "en": "Open decision"
+  },
+  "initiativeGatesWorkflowTable.editGate": {
+    "pl": "Edycja bramki",
+    "en": "Edit Gate"
+  },
+  "initiativeGatesWorkflowTable.gateRoles": {
+    "pl": "Role bramkowe",
+    "en": "Gate Roles"
+  },
+  "initiativeGatesWorkflowTable.notAssigned3": {
+    "pl": "— nie przypisano —",
+    "en": "— not assigned —"
+  },
+  "initiativeGatesWorkflowTable.decisionDeadline": {
+    "pl": "Termin decyzji",
+    "en": "Decision deadline"
+  },
+  "initiativeGatesWorkflowTable.note": {
+    "pl": "Notatka",
+    "en": "Note"
+  },
+  "initiativeGatesWorkflowTable.addGateContext": {
+    "pl": "Dodaj kontekst do bramki…",
+    "en": "Add gate context…"
+  },
+  "initiativeGatesWorkflowTable.requirements": {
+    "pl": "Wymagania",
+    "en": "Requirements"
+  },
+  "initiativeGatesWorkflowTable.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "initiativeGatesWorkflowTable.saved": {
+    "pl": "Zapisano",
+    "en": "Saved"
+  },
+  "initiativeGatesWorkflowTable.draftSaved": {
+    "pl": "Zapisano draft",
+    "en": "Draft saved"
+  },
+  "initiativeGatesWorkflowTable.save": {
+    "pl": "Zapisz",
+    "en": "Save"
+  },
+  "initiativeStatusPipeline.pendingReview": {
+    "pl": "Oczekuje na przegląd",
+    "en": "Pending review"
+  },
+  "initiativeStatusPipeline.blocked": {
+    "pl": "Zablokowana",
+    "en": "Blocked"
+  },
+  "initiativeStatusPipeline.cancelled": {
+    "pl": "Anulowana",
+    "en": "Cancelled"
+  },
+  "initiativeStatusPipeline.archived": {
+    "pl": "Zarchiwizowana",
+    "en": "Archived"
+  },
+  "initiativeStatusPipeline.ready": {
+    "pl": "Gotowa",
+    "en": "Ready"
+  },
+  "initiativeStatusPipeline.warnings": {
+    "pl": "Ostrzeżenia",
+    "en": "Warnings"
+  },
+  "initiativeStatusPipeline.blockingGaps": {
+    "pl": "Braki blokujące",
+    "en": "Blocking gaps"
+  },
+  "initiativeStatusPipeline.noData": {
+    "pl": "Brak danych",
+    "en": "No data"
+  },
+  "initiativeStatusPipeline.lifecycleStatus": {
+    "pl": "Cykl życia (status)",
+    "en": "Lifecycle (status)"
+  },
+  "initiativeStatusPipeline.preview": {
+    "pl": "podgląd",
+    "en": "preview"
+  },
+  "initiativeStatusPipeline.nextGateReadinessFromSystemGate": {
+    "pl": "Gotowość następnej bramki — wg systemu (gate-readiness-check)",
+    "en": "Next-gate readiness — from system (gate-readiness-check)"
+  },
+  "initiativeStatusPipeline.now": {
+    "pl": "teraz",
+    "en": "now"
+  },
+  "initiativeStatusPipeline.nextGate": {
+    "pl": "Następna bramka",
+    "en": "Next gate"
+  },
+  "initiativeStatusPipeline.approver": {
+    "pl": "Decydent",
+    "en": "Approver"
+  },
+  "initiativeStatusPipeline.whetherYourRoleCanExecuteThe": {
+    "pl": "Czy Twoja rola może wykonać przejście (z gate-readiness-check)",
+    "en": "Whether your role can execute the transition (from gate-readiness-check)"
+  },
+  "initiativeStatusPipeline.yourRoleCanAdvance": {
+    "pl": "Twoja rola może przejść dalej",
+    "en": "Your role can advance"
+  },
+  "initiativeStatusPipeline.viewOnlyForYourRole": {
+    "pl": "Tylko podgląd dla Twojej roli",
+    "en": "View-only for your role"
+  },
+  "initiativeTeamSection.initiativeIdIsMissing": {
+    "pl": "Brak ID inicjatywy",
+    "en": "Initiative ID is missing"
+  },
+  "initiativeTeamSection.failedToCreateProject": {
+    "pl": "Nie udało się utworzyć projektu",
+    "en": "Failed to create project"
+  },
+  "initiativeTeamSection.consultantRoleUpdated": {
+    "pl": "Zaktualizowano rolę konsultanta",
+    "en": "Consultant role updated"
+  },
+  "initiativeTeamSection.updateFailed": {
+    "pl": "Nie udało się zaktualizować roli",
+    "en": "Update failed"
+  },
+  "initiativeTeamSection.revokeConsultantAccessToThisProject": {
+    "pl": "Cofnąć dostęp konsultanta do projektu?",
+    "en": "Revoke consultant access to this project?"
+  },
+  "initiativeTeamSection.accessRevoked": {
+    "pl": "Cofnięto dostęp",
+    "en": "Access revoked"
+  },
+  "initiativeTeamSection.revokeFailed": {
+    "pl": "Nie udało się cofnąć dostępu",
+    "en": "Revoke failed"
+  },
+  "initiativeTeamSection.copied": {
+    "pl": "Skopiowano",
+    "en": "Copied"
+  },
+  "initiativeTeamSection.copyFailed": {
+    "pl": "Nie udało się skopiować",
+    "en": "Copy failed"
+  },
+  "initiativeTeamSection.teamMemberAdded": {
+    "pl": "Dodano członka zespołu",
+    "en": "Team member added"
+  },
+  "initiativeTeamSection.roleUpdated": {
+    "pl": "Zaktualizowano rolę",
+    "en": "Role updated"
+  },
+  "initiativeTeamSection.teamMemberRemoved": {
+    "pl": "Usunięto członka zespołu",
+    "en": "Team member removed"
+  },
+  "initiativeTeamSection.aiHasNoTeamChangesTo": {
+    "pl": "AI nie proponuje zmian w zespole na podstawie dostępnego kontekstu.",
+    "en": "AI has no team changes to propose based on available context."
+  },
+  "initiativeTeamSection.aiFailedToPropose": {
+    "pl": "AI: nie udało się przygotować propozycji",
+    "en": "AI: failed to propose"
+  },
+  "initiativeTeamSection.appliedAiProposals": {
+    "pl": "Zastosowano propozycje AI",
+    "en": "Applied AI proposals"
+  },
+  "initiativeTeamSection.failedToApplyAiProposals": {
+    "pl": "Nie udało się zastosować propozycji AI",
+    "en": "Failed to apply AI proposals"
+  },
+  "initiativeTeamSection.aiWorking": {
+    "pl": "AI pracuje...",
+    "en": "AI working..."
+  },
+  "initiativeTeamSection.loading": {
+    "pl": "Ładuję...",
+    "en": "Loading..."
+  },
+  "initiativeTeamSection.composeTeam": {
+    "pl": "Kompozycja zespołu",
+    "en": "Compose team"
+  },
+  "initiativeTeamSection.consultantsPending": {
+    "pl": "Konsultanci (pending)",
+    "en": "Consultants (pending)"
+  },
+  "initiativeTeamSection.invitedButNotAcceptedYetOr": {
+    "pl": "Zaproszeni, ale jeszcze niezaakceptowani lub bez pełnego konta.",
+    "en": "Invited but not accepted yet, or without a full account."
+  },
+  "initiativeTeamSection.code": {
+    "pl": "kod",
+    "en": "code"
+  },
+  "initiativeTeamSection.projectRole": {
+    "pl": "Rola w projekcie",
+    "en": "Project role"
+  },
+  "initiativeTeamSection.copyCode": {
+    "pl": "Kopiuj kod",
+    "en": "Copy code"
+  },
+  "initiativeTeamSection.revokeAccess": {
+    "pl": "Cofnij dostęp",
+    "en": "Revoke access"
+  },
+  "initiativeTeamSection.proposedTeamChangesAi": {
+    "pl": "Proponowane zmiany zespołu (AI)",
+    "en": "Proposed team changes (AI)"
+  },
+  "initiativeTeamSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "initiativeTeamSection.plan": {
+    "pl": "Plan",
+    "en": "Plan"
+  },
+  "initiativeTeamSection.add": {
+    "pl": "Dodajemy:",
+    "en": "Add:"
+  },
+  "initiativeTeamSection.updateRoles": {
+    "pl": "Zmieniamy role:",
+    "en": "Update roles:"
+  },
+  "initiativeTeamSection.remove": {
+    "pl": "Usuwamy:",
+    "en": "Remove:"
+  },
+  "initiativeTeamSection.toRemove": {
+    "pl": "Do usunięcia",
+    "en": "To remove"
+  },
+  "initiativeTeamSection.noRemovalsSuggested": {
+    "pl": "Brak propozycji usunięć.",
+    "en": "No removals suggested."
+  },
+  "initiativeTeamSection.goodSign": {
+    "pl": "To dobry znak.",
+    "en": "Good sign."
+  },
+  "initiativeTeamSection.toAdd": {
+    "pl": "Do dodania",
+    "en": "To add"
+  },
+  "initiativeTeamSection.noAdditionsSuggested": {
+    "pl": "Brak propozycji dodania.",
+    "en": "No additions suggested."
+  },
+  "initiativeTeamSection.teamSeemsSufficient": {
+    "pl": "Zespół jest już wystarczający.",
+    "en": "Team seems sufficient."
+  },
+  "initiativeTeamSection.toChange": {
+    "pl": "Do zmiany",
+    "en": "To change"
+  },
+  "initiativeTeamSection.noChangesSuggested": {
+    "pl": "Brak propozycji zmian.",
+    "en": "No changes suggested."
+  },
+  "initiativeTeamSection.rolesLookConsistent": {
+    "pl": "Role wyglądają spójnie.",
+    "en": "Roles look consistent."
+  },
+  "initiativeTeamSection.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "initiativeTeamSection.apply": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "kpisSection.failedToLoadKpis": {
+    "pl": "Nie udało się pobrać KPI",
+    "en": "Failed to load KPIs"
+  },
+  "kpisSection.english": {
+    "pl": "Polish",
+    "en": "English"
+  },
+  "kpisSection.aiFoundNoChangeSuggestionsThe": {
+    "pl": "AI nie znalazło sugestii zmian — zestaw KPI wygląda OK.",
+    "en": "AI found no change suggestions — the KPI set looks good."
+  },
+  "kpisSection.aiProposalFailed": {
+    "pl": "Nie udało się wygenerować propozycji AI",
+    "en": "AI proposal failed"
+  },
+  "kpisSection.noSelectedChanges": {
+    "pl": "Brak wybranych zmian",
+    "en": "No selected changes"
+  },
+  "kpisSection.failedToApplyProposals": {
+    "pl": "Nie udało się zastosować propozycji",
+    "en": "Failed to apply proposals"
+  },
+  "kpisSection.targetMustBeDifferentFromBaseline": {
+    "pl": "Target musi być różny od baseline",
+    "en": "Target must be different from baseline"
+  },
+  "kpisSection.kpiCreated": {
+    "pl": "KPI dodane",
+    "en": "KPI created"
+  },
+  "kpisSection.failedToCreateKpi": {
+    "pl": "Nie udało się dodać KPI",
+    "en": "Failed to create KPI"
+  },
+  "kpisSection.kpiUpdated": {
+    "pl": "KPI zaktualizowane",
+    "en": "KPI updated"
+  },
+  "kpisSection.copy": {
+    "pl": "kopia",
+    "en": "copy"
+  },
+  "kpisSection.kpiDuplicated": {
+    "pl": "KPI zduplikowane",
+    "en": "KPI duplicated"
+  },
+  "kpisSection.failedToDuplicateKpi": {
+    "pl": "Nie udało się zduplikować KPI",
+    "en": "Failed to duplicate KPI"
+  },
+  "kpisSection.kpiDeleted": {
+    "pl": "KPI usunięte",
+    "en": "KPI deleted"
+  },
+  "kpisSection.kpi": {
+    "pl": "KPI",
+    "en": "KPI"
+  },
+  "kpisSection.unit": {
+    "pl": "Jednostka",
+    "en": "Unit"
+  },
+  "kpisSection.current": {
+    "pl": "Obecnie",
+    "en": "Current"
+  },
+  "kpisSection.tracking": {
+    "pl": "Tracking",
+    "en": "Tracking"
+  },
+  "kpisSection.onTrack": {
+    "pl": "On track",
+    "en": "On track"
+  },
+  "kpisSection.needsAttention": {
+    "pl": "Do poprawy",
+    "en": "Needs attention"
+  },
+  "kpisSection.kpiActions": {
+    "pl": "Akcje KPI",
+    "en": "KPI actions"
+  },
+  "kpisSection.edit": {
+    "pl": "Edytuj",
+    "en": "Edit"
+  },
+  "kpisSection.duplicate": {
+    "pl": "Duplikuj",
+    "en": "Duplicate"
+  },
+  "kpisSection.deleteThisKpi": {
+    "pl": "Usunąć to KPI?",
+    "en": "Delete this KPI?"
+  },
+  "kpisSection.delete": {
+    "pl": "Usuń",
+    "en": "Delete"
+  },
+  "kpisSection.proposedKpiChangesAi": {
+    "pl": "Propozycje zmian w KPI (AI)",
+    "en": "Proposed KPI changes (AI)"
+  },
+  "kpisSection.selectItemsToAddRemoveThen": {
+    "pl": "Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.",
+    "en": "Select items to add/remove, then click “Apply”."
+  },
+  "kpisSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "kpisSection.ai": {
+    "pl": "AI",
+    "en": "AI"
+  },
+  "kpisSection.toRemove": {
+    "pl": "Do wywalenia",
+    "en": "To remove"
+  },
+  "kpisSection.selectAll": {
+    "pl": "Zaznacz wszystko",
+    "en": "Select all"
+  },
+  "kpisSection.noRemovalSuggestionsFromAi": {
+    "pl": "AI nie zasugerowało usunięć.",
+    "en": "No removal suggestions from AI."
+  },
+  "kpisSection.ifYourKpisAreAlreadyGood": {
+    "pl": "Jeśli KPI są OK, AI może zaproponować tylko dodania.",
+    "en": "If your KPIs are already good, AI may propose only additions."
+  },
+  "kpisSection.toAdd": {
+    "pl": "Do dodania",
+    "en": "To add"
+  },
+  "kpisSection.noAdditionsProposed": {
+    "pl": "Brak propozycji do dodania.",
+    "en": "No additions proposed."
+  },
+  "kpisSection.ifTheKpiSetIsComplete": {
+    "pl": "Jeśli zestaw KPI jest kompletny, AI może nie dodać nic.",
+    "en": "If the KPI set is complete, AI may propose nothing."
+  },
+  "kpisSection.plan": {
+    "pl": "Plan",
+    "en": "Plan"
+  },
+  "kpisSection.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "kpisSection.apply": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "kpisSection.kpisBenefits": {
+    "pl": "KPI i korzyści",
+    "en": "KPIs & Benefits"
+  },
+  "kpisSection.aiWorking": {
+    "pl": "AI pracuje...",
+    "en": "AI working..."
+  },
+  "kpisSection.new": {
+    "pl": "Nowy",
+    "en": "New"
+  },
+  "kpisSection.kpiName": {
+    "pl": "Nazwa KPI...",
+    "en": "KPI name..."
+  },
+  "kpisSection.kpiName2": {
+    "pl": "KPI — nazwa",
+    "en": "KPI — name"
+  },
+  "kpisSection.kpiUnit": {
+    "pl": "KPI — jednostka",
+    "en": "KPI — unit"
+  },
+  "kpisSection.adding": {
+    "pl": "Dodawanie...",
+    "en": "Adding..."
+  },
+  "kpisSection.addKpi": {
+    "pl": "Dodaj KPI",
+    "en": "Add KPI"
+  },
+  "kpisSection.save": {
+    "pl": "Zapisz",
+    "en": "Save"
+  },
+  "kpisSection.noKpisDefinedYet": {
+    "pl": "Brak zdefiniowanych KPI",
+    "en": "No KPIs defined yet"
+  },
+  "kpisSection.addYourFirstKpiForThis": {
+    "pl": "Dodaj pierwszy KPI dla tej inicjatywy.",
+    "en": "Add your first KPI for this initiative."
+  },
+  "kpisSection.newKpi": {
+    "pl": "Nowy KPI",
+    "en": "New KPI"
+  },
+  "kpisSection.noKpis": {
+    "pl": "Brak KPI",
+    "en": "No KPIs"
+  },
+  "linkedItemsSection.itemLinked": {
+    "pl": "Element powiązany",
+    "en": "Item linked"
+  },
+  "linkedItemsSection.linkRemoved": {
+    "pl": "Powiązanie usunięte",
+    "en": "Link removed"
+  },
+  "overviewSection.initiativeDescription": {
+    "pl": "Opis inicjatywy",
+    "en": "Initiative Description"
+  },
+  "overviewSection.generateAiDescription": {
+    "pl": "Wygeneruj opis AI",
+    "en": "Generate AI description"
+  },
+  "overviewSection.describeInitiativeGoalAndScope": {
+    "pl": "Opisz cel i zakres inicjatywy...",
+    "en": "Describe initiative goal and scope..."
+  },
+  "pilotSection.pilotStatus": {
+    "pl": "Status pilotu",
+    "en": "Pilot Status"
+  },
+  "pilotSection.hypothesesToVerify": {
+    "pl": "Hipotezy do zweryfikowania",
+    "en": "Hypotheses to Verify"
+  },
+  "pilotSection.addHypothesis": {
+    "pl": "Dodaj hipotezę...",
+    "en": "Add hypothesis..."
+  },
+  "pilotSection.pilotSuccessCriteria": {
+    "pl": "Kryteria sukcesu pilotu",
+    "en": "Pilot Success Criteria"
+  },
+  "pilotSection.whenIsThePilotSuccessful": {
+    "pl": "Kiedy pilot jest sukcesem?",
+    "en": "When is the pilot successful?"
+  },
+  "pilotSection.failureCriteria": {
+    "pl": "Kryteria porażki",
+    "en": "Failure Criteria"
+  },
+  "pilotSection.whenIsThePilotAFailure": {
+    "pl": "Kiedy pilot jest porażką?",
+    "en": "When is the pilot a failure?"
+  },
+  "pilotSection.pilotResults": {
+    "pl": "Wyniki pilotu",
+    "en": "Pilot Results"
+  },
+  "pilotSection.describePilotResults": {
+    "pl": "Opisz wyniki pilotu...",
+    "en": "Describe pilot results..."
+  },
+  "problemDefinitionSection.problemDefinition": {
+    "pl": "Definicja problemu",
+    "en": "Problem Definition"
+  },
+  "problemDefinitionSection.noProblemDefinitionYet": {
+    "pl": "Brak zdefiniowanego problemu",
+    "en": "No problem definition yet"
+  },
+  "problemDefinitionSection.describeTheSymptomRootCauseAnd": {
+    "pl": "Opisz symptom, przyczynę źródłową i koszt bezczynności — lub użyj AI, aby wygenerować analizę",
+    "en": "Describe the symptom, root cause, and cost of inaction — or use AI to generate the analysis"
+  },
+  "problemDefinitionSection.generateWithAi": {
+    "pl": "Wygeneruj z AI",
+    "en": "Generate with AI"
+  },
+  "problemDefinitionSection.symptomWhatIsObserved": {
+    "pl": "Symptom / Co obserwujemy",
+    "en": "Symptom / What is observed"
+  },
+  "problemDefinitionSection.problemDefinitionSymptom": {
+    "pl": "Definicja problemu — symptom",
+    "en": "Problem Definition — symptom"
+  },
+  "problemDefinitionSection.describeVisibleSymptomsWhatUsersReport": {
+    "pl": "Opisz widoczne objawy problemu - co zgłaszają użytkownicy, jakie metryki spadają",
+    "en": "Describe visible symptoms - what users report, which metrics are declining"
+  },
+  "problemDefinitionSection.eGApiResponseTimeHas": {
+    "pl": "Np. Czas odpowiedzi API wzrósł o 40% w ciągu ostatniego kwartału...",
+    "en": "E.g. API response time has increased by 40% over the last quarter..."
+  },
+  "problemDefinitionSection.rootCause": {
+    "pl": "Przyczyna źródłowa",
+    "en": "Root Cause"
+  },
+  "problemDefinitionSection.problemDefinitionRootCause": {
+    "pl": "Definicja problemu — przyczyna źródłowa",
+    "en": "Problem Definition — root cause"
+  },
+  "problemDefinitionSection.identifyWhyTheProblemOccurs5": {
+    "pl": "Zidentyfikuj dlaczego problem występuje - analiza 5 Why, diagram Ishikawy",
+    "en": "Identify why the problem occurs - 5 Whys analysis, Ishikawa diagram"
+  },
+  "problemDefinitionSection.eGDatabaseIsNotOptimized": {
+    "pl": "Np. Baza danych nie jest zoptymalizowana pod kątem rosnącego wolumenu transakcji...",
+    "en": "E.g. Database is not optimized for growing transaction volume..."
+  },
+  "problemDefinitionSection.costOfInaction": {
+    "pl": "Koszt bezczynności",
+    "en": "Cost of Inaction"
+  },
+  "problemDefinitionSection.problemDefinitionCostOfInaction": {
+    "pl": "Definicja problemu — koszt bezczynności",
+    "en": "Problem Definition — cost of inaction"
+  },
+  "problemDefinitionSection.whatHappensIfWeDoNothing": {
+    "pl": "Co się stanie jeśli nie podejmiemy działań? Jakie są konsekwencje biznesowe?",
+    "en": "What happens if we do nothing? What are the business consequences?"
+  },
+  "problemDefinitionSection.eGRiskOfLosing15": {
+    "pl": "Np. Ryzyko utraty 15% klientów enterprise w ciągu 6 miesięcy...",
+    "en": "E.g. Risk of losing 15% of enterprise clients within 6 months..."
+  },
+  "problemDefinitionSection.definitionCompleteness": {
+    "pl": "Kompletność definicji",
+    "en": "Definition Completeness"
+  },
+  "raidSection.convertedFrom": {
+    "pl": "Konwersja z",
+    "en": "Converted from"
+  },
+  "raidSection.riskRaid": {
+    "pl": "Ryzyko i RAID",
+    "en": "Risk & RAID"
+  },
+  "raidSection.crit": {
+    "pl": "kryt.",
+    "en": "crit."
+  },
+  "resourcesSection.ai": {
+    "pl": "AI",
+    "en": "AI"
+  },
+  "resourcesSection.english": {
+    "pl": "Polish",
+    "en": "English"
+  },
+  "resourcesSection.aiSuggestedNoAdditionsForThis": {
+    "pl": "AI nie zaproponowało dodatków dla tej tabeli.",
+    "en": "AI suggested no additions for this table."
+  },
+  "resourcesSection.aiResponseHasInvalidFormatCannot": {
+    "pl": "Odpowiedź AI ma nieprawidłowy format (nie można zastosować).",
+    "en": "AI response has invalid format (cannot apply)."
+  },
+  "resourcesSection.aiSuggestedNoMissingResourcesTo": {
+    "pl": "AI nie zaproponowało brakujących zasobów do dodania.",
+    "en": "AI suggested no missing resources to add."
+  },
+  "resourcesSection.proposedResourcesAi": {
+    "pl": "Propozycje zasobów (AI)",
+    "en": "Proposed resources (AI)"
+  },
+  "resourcesSection.selectItemsToAddThenClick": {
+    "pl": "Zaznacz elementy do dodania, a następnie kliknij „Zastosuj”. (AI nie usuwa pozycji w zasobach)",
+    "en": "Select items to add, then click “Apply”. (AI never removes resource rows)"
+  },
+  "resourcesSection.qualityChecksBeforeAdding": {
+    "pl": "Kontrola jakości (przed dodaniem)",
+    "en": "Quality checks (before adding)"
+  },
+  "resourcesSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "resourcesSection.budgetToAdd": {
+    "pl": "Budżet — do dodania",
+    "en": "Budget — to add"
+  },
+  "resourcesSection.selectAll": {
+    "pl": "Zaznacz wszystko",
+    "en": "Select all"
+  },
+  "resourcesSection.teamFteToAdd": {
+    "pl": "FTE — do dodania",
+    "en": "Team / FTE — to add"
+  },
+  "resourcesSection.toolsToAdd": {
+    "pl": "Narzędzia — do dodania",
+    "en": "Tools — to add"
+  },
+  "resourcesSection.intangiblesToAdd": {
+    "pl": "Licencje/szkolenia — do dodania",
+    "en": "Intangibles — to add"
+  },
+  "resourcesSection.provider": {
+    "pl": "Dostawca",
+    "en": "Provider"
+  },
+  "resourcesSection.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "resourcesSection.apply": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "resourcesSection.budget": {
+    "pl": "Budżet",
+    "en": "Budget"
+  },
+  "resourcesSection.addItem": {
+    "pl": "Dodaj",
+    "en": "Add item"
+  },
+  "resourcesSection.category": {
+    "pl": "Kategoria",
+    "en": "Category"
+  },
+  "resourcesSection.type": {
+    "pl": "Typ",
+    "en": "Type"
+  },
+  "resourcesSection.amount": {
+    "pl": "Kwota",
+    "en": "Amount"
+  },
+  "resourcesSection.currency": {
+    "pl": "Waluta",
+    "en": "Currency"
+  },
+  "resourcesSection.description": {
+    "pl": "Opis",
+    "en": "Description"
+  },
+  "resourcesSection.delete": {
+    "pl": "Usuń",
+    "en": "Delete"
+  },
+  "resourcesSection.save": {
+    "pl": "Zapisz",
+    "en": "Save"
+  },
+  "resourcesSection.noBudgetItemsYet": {
+    "pl": "Brak pozycji budżetowych",
+    "en": "No budget items yet"
+  },
+  "resourcesSection.total": {
+    "pl": "Razem",
+    "en": "Total"
+  },
+  "resourcesSection.teamFteAllocation": {
+    "pl": "Zespół / Alokacja FTE",
+    "en": "Team / FTE Allocation"
+  },
+  "resourcesSection.name": {
+    "pl": "Nazwa",
+    "en": "Name"
+  },
+  "resourcesSection.role": {
+    "pl": "Rola",
+    "en": "Role"
+  },
+  "resourcesSection.alloc": {
+    "pl": "Alokacja",
+    "en": "Alloc."
+  },
+  "resourcesSection.end": {
+    "pl": "Koniec",
+    "en": "End"
+  },
+  "resourcesSection.notes": {
+    "pl": "Notatki",
+    "en": "Notes"
+  },
+  "resourcesSection.namePosition": {
+    "pl": "Imię / Stanowisko",
+    "en": "Name / Position"
+  },
+  "resourcesSection.noTeamMembersAssigned": {
+    "pl": "Brak przypisanych zasobów",
+    "en": "No team members assigned"
+  },
+  "resourcesSection.totalFte": {
+    "pl": "Łączne FTE",
+    "en": "Total FTE"
+  },
+  "resourcesSection.toolsInfrastructure": {
+    "pl": "Narzędzia i infrastruktura",
+    "en": "Tools & Infrastructure"
+  },
+  "resourcesSection.vendor": {
+    "pl": "Dostawca",
+    "en": "Vendor"
+  },
+  "resourcesSection.cost": {
+    "pl": "Koszt",
+    "en": "Cost"
+  },
+  "resourcesSection.license": {
+    "pl": "Licencja",
+    "en": "License"
+  },
+  "resourcesSection.noToolsAddedYet": {
+    "pl": "Brak narzędzi",
+    "en": "No tools added yet"
+  },
+  "resourcesSection.totalLicenseCost": {
+    "pl": "Łączny koszt licencji",
+    "en": "Total license cost"
+  },
+  "resourcesSection.licensesTrainingIntangibleAssets": {
+    "pl": "Licencje, szkolenia i wartości niematerialne",
+    "en": "Licenses, Training & Intangible Assets"
+  },
+  "resourcesSection.validFrom": {
+    "pl": "Ważne od",
+    "en": "Valid from"
+  },
+  "resourcesSection.validUntil": {
+    "pl": "Ważne do",
+    "en": "Valid until"
+  },
+  "resourcesSection.noIntangibleAssetsYet": {
+    "pl": "Brak wartości niematerialnych",
+    "en": "No intangible assets yet"
+  },
+  "resourcesSection.totalCost": {
+    "pl": "Łączny koszt",
+    "en": "Total cost"
+  },
+  "scopeSection.scopeKillCriteria": {
+    "pl": "Zakres i kryteria rezygnacji",
+    "en": "Scope & Kill Criteria"
+  },
+  "scopeSection.inScope": {
+    "pl": "W zakresie",
+    "en": "In Scope"
+  },
+  "scopeSection.elementsProcessesAndAreasIncludedIn": {
+    "pl": "Elementy, procesy i obszary objęte inicjatywą",
+    "en": "Elements, processes and areas included in this initiative"
+  },
+  "scopeSection.addItem": {
+    "pl": "Dodaj",
+    "en": "Add item"
+  },
+  "scopeSection.scopeItem": {
+    "pl": "Element zakresu...",
+    "en": "Scope item..."
+  },
+  "scopeSection.inScopeListItem": {
+    "pl": "W zakresie — element listy",
+    "en": "In Scope — list item"
+  },
+  "scopeSection.noItemsYet": {
+    "pl": "Brak elementów",
+    "en": "No items yet"
+  },
+  "scopeSection.outOfScope": {
+    "pl": "Poza zakresem",
+    "en": "Out of Scope"
+  },
+  "scopeSection.exclusionsAndBoundariesNotCovered": {
+    "pl": "Wykluczenia i ograniczenia poza zakresem",
+    "en": "Exclusions and boundaries not covered"
+  },
+  "scopeSection.exclusion": {
+    "pl": "Wykluczenie...",
+    "en": "Exclusion..."
+  },
+  "scopeSection.outOfScopeListItem": {
+    "pl": "Poza zakresem — element listy",
+    "en": "Out of Scope — list item"
+  },
+  "scopeSection.killCriteria": {
+    "pl": "Kryteria rezygnacji (Kill Criteria)",
+    "en": "Kill Criteria"
+  },
+  "scopeSection.conditionsThatTriggerImmediateInitiative": {
+    "pl": "Warunki, których spełnienie oznacza natychmiastowe zatrzymanie inicjatywy",
+    "en": "Conditions that trigger immediate initiative termination"
+  },
+  "scopeSection.killCriteria2": {
+    "pl": "Kryterium rezygnacji...",
+    "en": "Kill criteria..."
+  },
+  "scopeSection.killCriteriaListItem": {
+    "pl": "Kryteria rezygnacji — element listy",
+    "en": "Kill Criteria — list item"
+  },
+  "scopeSection.noCriteriaYet": {
+    "pl": "Brak kryteriów",
+    "en": "No criteria yet"
+  },
+  "stakeholdersSection.stakeholderAdded": {
+    "pl": "Dodano interesariusza",
+    "en": "Stakeholder added"
+  },
+  "stakeholdersSection.failedToAddStakeholder": {
+    "pl": "Nie udało się dodać interesariusza",
+    "en": "Failed to add stakeholder"
+  },
+  "stakeholdersSection.stakeholderRemoved": {
+    "pl": "Usunięto interesariusza",
+    "en": "Stakeholder removed"
+  },
+  "tagsSection.tags": {
+    "pl": "Tagi",
+    "en": "Tags"
+  },
+  "tagsSection.newTag": {
+    "pl": "Nowy tag...",
+    "en": "New tag..."
+  },
+  "targetStateSection.english": {
+    "pl": "Polish",
+    "en": "English"
+  },
+  "targetStateSection.aiDidNotFindMeaningfulChanges": {
+    "pl": "AI nie znalazło sensownych zmian do zaproponowania dla tego modułu.",
+    "en": "AI did not find meaningful changes to propose for this module."
+  },
+  "targetStateSection.aiAnalysisFailed": {
+    "pl": "Analiza AI nie powiodła się",
+    "en": "AI analysis failed"
+  },
+  "targetStateSection.successCriteria": {
+    "pl": "Kryteria sukcesu",
+    "en": "Success Criteria"
+  },
+  "targetStateSection.ai": {
+    "pl": "AI",
+    "en": "AI"
+  },
+  "targetStateSection.proposedSuccessCriteriaChangesAi": {
+    "pl": "Propozycje zmian w kryteriach sukcesu (AI)",
+    "en": "Proposed Success Criteria changes (AI)"
+  },
+  "targetStateSection.selectItemsToAddRemoveThen": {
+    "pl": "Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.",
+    "en": "Select items to add/remove, then click “Apply”."
+  },
+  "targetStateSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "targetStateSection.note": {
+    "pl": "Notatka",
+    "en": "Note"
+  },
+  "targetStateSection.toRemove": {
+    "pl": "Do wywalenia",
+    "en": "To remove"
+  },
+  "targetStateSection.selectAll": {
+    "pl": "Zaznacz wszystko",
+    "en": "Select all"
+  },
+  "targetStateSection.noRemovalSuggestionsFromAi": {
+    "pl": "AI nie zasugerowało usunięć.",
+    "en": "No removal suggestions from AI."
+  },
+  "targetStateSection.toAdd": {
+    "pl": "Do dodania",
+    "en": "To add"
+  },
+  "targetStateSection.noAdditionsProposed": {
+    "pl": "Brak propozycji do dodania.",
+    "en": "No additions proposed."
+  },
+  "targetStateSection.suggestedOrder": {
+    "pl": "Proponowana kolejność",
+    "en": "Suggested order"
+  },
+  "targetStateSection.applyOrder": {
+    "pl": "Zastosuj kolejność",
+    "en": "Apply order"
+  },
+  "targetStateSection.noOrderingSuggestion": {
+    "pl": "Brak sugestii kolejności.",
+    "en": "No ordering suggestion."
+  },
+  "targetStateSection.deliverables": {
+    "pl": "Produkty",
+    "en": "Deliverables"
+  },
+  "targetStateSection.plan": {
+    "pl": "Plan",
+    "en": "Plan"
+  },
+  "targetStateSection.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "targetStateSection.apply": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "targetStateSection.targetState": {
+    "pl": "Stan docelowy",
+    "en": "Target State"
+  },
+  "targetStateSection.describeTheDesiredEndStateAfter": {
+    "pl": "Opisz pożądany stan końcowy po wdrożeniu inicjatywy",
+    "en": "Describe the desired end state after initiative completion"
+  },
+  "targetStateSection.targetStateDescription": {
+    "pl": "Stan docelowy — opis",
+    "en": "Target State — description"
+  },
+  "targetStateSection.edit": {
+    "pl": "Edytuj",
+    "en": "Edit"
+  },
+  "targetStateSection.describeTheDesiredEndState": {
+    "pl": "Opisz pożądany stan końcowy...",
+    "en": "Describe the desired end state..."
+  },
+  "targetStateSection.noDescriptionClickEditOrAi": {
+    "pl": "Brak opisu. Kliknij „Edytuj\" lub „AI\" aby dodać.",
+    "en": "No description. Click \"Edit\" or \"AI\" to add."
+  },
+  "targetStateSection.measurableConditionsForConsideringTheIni": {
+    "pl": "Mierzalne warunki uznania inicjatywy za zakończoną sukcesem",
+    "en": "Measurable conditions for considering the initiative successful"
+  },
+  "targetStateSection.successCriteriaList": {
+    "pl": "Kryteria sukcesu — lista",
+    "en": "Success Criteria — list"
+  },
+  "targetStateSection.addItem": {
+    "pl": "Dodaj",
+    "en": "Add item"
+  },
+  "targetStateSection.addSuccessCriteria": {
+    "pl": "Dodaj kryterium sukcesu...",
+    "en": "Add success criteria..."
+  },
+  "targetStateSection.specificOutputsAndResultsToBe": {
+    "pl": "Konkretne produkty i rezultaty do dostarczenia",
+    "en": "Specific outputs and results to be delivered"
+  },
+  "targetStateSection.deliverablesList": {
+    "pl": "Produkty — lista",
+    "en": "Deliverables — list"
+  },
+  "targetStateSection.addDeliverable": {
+    "pl": "Dodaj produkt...",
+    "en": "Add deliverable..."
+  },
+  "tasksMilestonesSection.english": {
+    "pl": "Polish",
+    "en": "English"
+  },
+  "tasksMilestonesSection.aiReturnedNoTaskTitle": {
+    "pl": "AI nie zwróciło tytułu taska",
+    "en": "AI returned no task title"
+  },
+  "tasksMilestonesSection.failedToProposeATask": {
+    "pl": "Nie udało się zaproponować taska",
+    "en": "Failed to propose a task"
+  },
+  "tasksMilestonesSection.aiFoundNoChangeSuggestionsThe": {
+    "pl": "AI nie znalazło sugestii zmian — backlog wygląda OK.",
+    "en": "AI found no change suggestions — the backlog looks good."
+  },
+  "tasksMilestonesSection.aiProposalFailed": {
+    "pl": "Nie udało się wygenerować propozycji AI",
+    "en": "AI proposal failed"
+  },
+  "tasksMilestonesSection.newTask": {
+    "pl": "Nowe zadanie",
+    "en": "New task"
+  },
+  "tasksMilestonesSection.failedToCreateTask": {
+    "pl": "Nie udało się utworzyć zadania",
+    "en": "Failed to create task"
+  },
+  "tasksMilestonesSection.taskRemoved": {
+    "pl": "Zadanie usunięte",
+    "en": "Task removed"
+  },
+  "tasksMilestonesSection.failedToRemove": {
+    "pl": "Nie udało się usunąć",
+    "en": "Failed to remove"
+  },
+  "tasksMilestonesSection.copy": {
+    "pl": "(kopia)",
+    "en": "(copy)"
+  },
+  "tasksMilestonesSection.taskDuplicated": {
+    "pl": "Task zduplikowany",
+    "en": "Task duplicated"
+  },
+  "tasksMilestonesSection.failedToDuplicateTask": {
+    "pl": "Nie udało się zduplikować taska",
+    "en": "Failed to duplicate task"
+  },
+  "tasksMilestonesSection.noSelectedChanges": {
+    "pl": "Brak wybranych zmian",
+    "en": "No selected changes"
+  },
+  "tasksMilestonesSection.failedToApplyProposals": {
+    "pl": "Nie udało się zastosować propozycji",
+    "en": "Failed to apply proposals"
+  },
+  "tasksMilestonesSection.tasks": {
+    "pl": "Tasks",
+    "en": "Tasks"
+  },
+  "tasksMilestonesSection.aiWorking": {
+    "pl": "AI pracuje...",
+    "en": "AI working..."
+  },
+  "tasksMilestonesSection.addTask": {
+    "pl": "Dodaj task",
+    "en": "Add task"
+  },
+  "tasksMilestonesSection.ai": {
+    "pl": "AI",
+    "en": "AI"
+  },
+  "tasksMilestonesSection.aiAddTask": {
+    "pl": "AI: dodaj task",
+    "en": "AI: add task"
+  },
+  "tasksMilestonesSection.proposedTaskBacklogAi": {
+    "pl": "Propozycja backlogu tasków (AI)",
+    "en": "Proposed task backlog (AI)"
+  },
+  "tasksMilestonesSection.proposedTaskChangesAi": {
+    "pl": "Propozycje zmian w taskach (AI)",
+    "en": "Proposed task changes (AI)"
+  },
+  "tasksMilestonesSection.selectItemsToAddRemoveThen": {
+    "pl": "Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.",
+    "en": "Select items to add/remove, then click “Apply”."
+  },
+  "tasksMilestonesSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "tasksMilestonesSection.toRemove": {
+    "pl": "Do wywalenia",
+    "en": "To remove"
+  },
+  "tasksMilestonesSection.selectAll": {
+    "pl": "Zaznacz wszystko",
+    "en": "Select all"
+  },
+  "tasksMilestonesSection.generateModeNoRemovals": {
+    "pl": "Tryb generowania: brak usuwania.",
+    "en": "Generate mode: no removals."
+  },
+  "tasksMilestonesSection.noRemovalSuggestionsFromAi": {
+    "pl": "AI nie zasugerowało usunięć.",
+    "en": "No removal suggestions from AI."
+  },
+  "tasksMilestonesSection.ifTheBacklogIsAlreadyGood": {
+    "pl": "Jeśli backlog jest OK, AI może zaproponować tylko dodania lub kolejność.",
+    "en": "If the backlog is already good, AI may propose only additions or ordering."
+  },
+  "tasksMilestonesSection.toAdd": {
+    "pl": "Do dodania",
+    "en": "To add"
+  },
+  "tasksMilestonesSection.noAdditionsProposed": {
+    "pl": "Brak propozycji do dodania.",
+    "en": "No additions proposed."
+  },
+  "tasksMilestonesSection.ifTheBacklogIsCompleteAi": {
+    "pl": "Jeśli backlog jest kompletny, AI może zaproponować tylko kolejność.",
+    "en": "If the backlog is complete, AI may propose only an ordering."
+  },
+  "tasksMilestonesSection.suggestedOrder": {
+    "pl": "Proponowana kolejność",
+    "en": "Suggested order"
+  },
+  "tasksMilestonesSection.applyOrder": {
+    "pl": "Zastosuj kolejność",
+    "en": "Apply order"
+  },
+  "tasksMilestonesSection.noOrderingSuggestion": {
+    "pl": "Brak sugestii kolejności.",
+    "en": "No ordering suggestion."
+  },
+  "tasksMilestonesSection.aiMayReturnOnlyAdditionsRemovals": {
+    "pl": "AI może zwrócić tylko dodania/usunięcia bez re-order.",
+    "en": "AI may return only additions/removals without re-ordering."
+  },
+  "tasksMilestonesSection.plan": {
+    "pl": "Plan",
+    "en": "Plan"
+  },
+  "tasksMilestonesSection.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "tasksMilestonesSection.apply": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "tasksMilestonesSection.task": {
+    "pl": "Task",
+    "en": "Task"
+  },
+  "tasksMilestonesSection.status": {
+    "pl": "Status",
+    "en": "Status"
+  },
+  "tasksMilestonesSection.priority": {
+    "pl": "Priority",
+    "en": "Priority"
+  },
+  "tasksMilestonesSection.owner": {
+    "pl": "Owner",
+    "en": "Owner"
+  },
+  "tasksMilestonesSection.due": {
+    "pl": "Due",
+    "en": "Due"
+  },
+  "tasksMilestonesSection.source": {
+    "pl": "Source",
+    "en": "Source"
+  },
+  "tasksMilestonesSection.filter": {
+    "pl": "Filtruj...",
+    "en": "Filter..."
+  },
+  "tasksMilestonesSection.all": {
+    "pl": "Wszystkie",
+    "en": "All"
+  },
+  "tasksMilestonesSection.all2": {
+    "pl": "Wszyscy",
+    "en": "All"
+  },
+  "tasksMilestonesSection.unassigned": {
+    "pl": "Bez ownera",
+    "en": "Unassigned"
+  },
+  "tasksMilestonesSection.upcoming": {
+    "pl": "Nadchodzące",
+    "en": "Upcoming"
+  },
+  "tasksMilestonesSection.overdue": {
+    "pl": "Po terminie",
+    "en": "Overdue"
+  },
+  "tasksMilestonesSection.noDueDate": {
+    "pl": "Bez terminu",
+    "en": "No due date"
+  },
+  "tasksMilestonesSection.manual": {
+    "pl": "Manualne",
+    "en": "Manual"
+  },
+  "tasksMilestonesSection.untitled": {
+    "pl": "Bez nazwy",
+    "en": "Untitled"
+  },
+  "tasksMilestonesSection.actions": {
+    "pl": "Akcje",
+    "en": "Actions"
+  },
+  "tasksMilestonesSection.openTask": {
+    "pl": "Otwórz task",
+    "en": "Open task"
+  },
+  "tasksMilestonesSection.duplicate": {
+    "pl": "Duplikuj",
+    "en": "Duplicate"
+  },
+  "tasksMilestonesSection.delete": {
+    "pl": "Usuń",
+    "en": "Delete"
+  },
+  "tasksMilestonesSection.noTasksYet": {
+    "pl": "Brak tasków",
+    "en": "No tasks yet"
+  },
+  "tasksMilestonesSection.noResultsForCurrentFilters": {
+    "pl": "Brak wyników dla aktualnych filtrów",
+    "en": "No results for current filters"
+  },
+  "tasksMilestonesSection.newTask2": {
+    "pl": "Nowy task",
+    "en": "New task"
+  },
+  "tasksMilestonesSection.title": {
+    "pl": "Tytuł",
+    "en": "Title"
+  },
+  "tasksMilestonesSection.eGPrepareRolloutReport": {
+    "pl": "Np. Przygotuj raport wdrożenia",
+    "en": "E.g. Prepare rollout report"
+  },
+  "tasksMilestonesSection.assumptionsNotes": {
+    "pl": "Założenia / notatki",
+    "en": "Assumptions / notes"
+  },
+  "tasksMilestonesSection.none": {
+    "pl": "— Brak —",
+    "en": "— None —"
+  },
+  "tasksMilestonesSection.creating": {
+    "pl": "Tworzenie...",
+    "en": "Creating..."
+  },
+  "tasksMilestonesSection.createTask": {
+    "pl": "Utwórz task",
+    "en": "Create task"
+  },
+  "tasksMilestonesSection.done": {
+    "pl": "ukończone",
+    "en": "done"
+  },
+  "teamSection.team": {
+    "pl": "Zespół",
+    "en": "Team"
+  },
+  "teamSection.owner": {
+    "pl": "Właściciel",
+    "en": "Owner"
+  },
+  "teamSection.responsibleForInitiativeDeliveryMakesOpe": {
+    "pl": "Odpowiada za realizację inicjatywy, podejmuje decyzje operacyjne i raportuje postępy.",
+    "en": "Responsible for initiative delivery, makes operational decisions and reports progress."
+  },
+  "teamSection.youCannotEditOwnerAtThis": {
+    "pl": "Nie masz uprawnień do edycji właściciela na tym etapie.",
+    "en": "You cannot edit owner at this stage."
+  },
+  "teamSection.selectOwner": {
+    "pl": "Wybierz właściciela...",
+    "en": "Select owner..."
+  },
+  "teamSection.businessSponsorProvidesResourcesAndSuppo": {
+    "pl": "Sponsor biznesowy, zapewnia zasoby i wsparcie, usuwa przeszkody organizacyjne.",
+    "en": "Business sponsor, provides resources and support, removes organizational obstacles."
+  },
+  "teamSection.youCannotEditSponsorAtThis": {
+    "pl": "Nie masz uprawnień do edycji sponsora na tym etapie.",
+    "en": "You cannot edit sponsor at this stage."
+  },
+  "teamSection.selectSponsor": {
+    "pl": "Wybierz sponsora...",
+    "en": "Select sponsor..."
+  },
+  "timelinePlanner.initiativeStart": {
+    "pl": "Start inicjatywy",
+    "en": "Initiative Start"
+  },
+  "timelinePlanner.initiativeFinish": {
+    "pl": "Koniec inicjatywy",
+    "en": "Initiative Finish"
+  },
+  "timelinePlanner.whatDoYouWantToAdd": {
+    "pl": "Co chcesz dodać?",
+    "en": "What do you want to add?"
+  },
+  "timelinePlanner.back": {
+    "pl": "Wróć",
+    "en": "Back"
+  },
+  "timelinePlanner.name": {
+    "pl": "Nazwa",
+    "en": "Name"
+  },
+  "timelinePlanner.itemName": {
+    "pl": "Nazwa elementu...",
+    "en": "Item name..."
+  },
+  "timelinePlanner.selectTaskFromInitiativeTaskList": {
+    "pl": "Wybierz zadanie z listy inicjatywy",
+    "en": "Select task from initiative task list"
+  },
+  "timelinePlanner.selectTask": {
+    "pl": "Wybierz zadanie",
+    "en": "Select task"
+  },
+  "timelinePlanner.selectDecisionFromInitiativeList": {
+    "pl": "Wybierz decyzję z listy inicjatywy",
+    "en": "Select decision from initiative list"
+  },
+  "timelinePlanner.selectDecision": {
+    "pl": "Wybierz decyzję",
+    "en": "Select decision"
+  },
+  "timelinePlanner.selectMilestoneFromList": {
+    "pl": "Wybierz kamień milowy z listy",
+    "en": "Select milestone from list"
+  },
+  "timelinePlanner.selectMilestone": {
+    "pl": "Wybierz kamień milowy",
+    "en": "Select milestone"
+  },
+  "timelinePlanner.startTrigger": {
+    "pl": "Trigger startu",
+    "en": "Start trigger"
+  },
+  "timelinePlanner.fromDependencySystem": {
+    "pl": "Z dependency (system)",
+    "en": "From dependency (system)"
+  },
+  "timelinePlanner.manualDate": {
+    "pl": "Data ręczna",
+    "en": "Manual date"
+  },
+  "timelinePlanner.eventTrigger": {
+    "pl": "Zdarzenie",
+    "en": "Event trigger"
+  },
+  "timelinePlanner.dependsOn": {
+    "pl": "Zależy od",
+    "en": "Depends on"
+  },
+  "timelinePlanner.date": {
+    "pl": "Data",
+    "en": "Date"
+  },
+  "timelinePlanner.eventName": {
+    "pl": "Nazwa zdarzenia",
+    "en": "Event name"
+  },
+  "timelinePlanner.eGGateApprovalSystemSignal": {
+    "pl": "np. Zatwierdzenie gate / sygnał z systemu",
+    "en": "e.g. Gate approval / system signal"
+  },
+  "timelinePlanner.endTrigger": {
+    "pl": "Trigger końca",
+    "en": "End trigger"
+  },
+  "timelinePlanner.fromDuration": {
+    "pl": "Z czasu trwania",
+    "en": "From duration"
+  },
+  "timelinePlanner.fromSuccessor": {
+    "pl": "Z sukcesora",
+    "en": "From successor"
+  },
+  "timelinePlanner.selectSuccessor": {
+    "pl": "Wybierz sukcesora",
+    "en": "Select successor"
+  },
+  "timelinePlanner.calendarWindowDays": {
+    "pl": "Okres realizacji (dni)",
+    "en": "Calendar window (days)"
+  },
+  "timelinePlanner.teamEffortH": {
+    "pl": "Nakład pracy zespołu (h)",
+    "en": "Team effort (h)"
+  },
+  "timelinePlanner.calendarWindowAffectsScheduleEndDate": {
+    "pl": "Okres wpływa na harmonogram i datę końca inicjatywy. Effort służy do heatmapy obciążenia zespołu.",
+    "en": "Calendar window affects schedule/end date. Effort is used for team workload heatmaps."
+  },
+  "timelinePlanner.blocksNextTasks": {
+    "pl": "Blokuje następne zadania?",
+    "en": "Blocks next tasks?"
+  },
+  "timelinePlanner.eventMode": {
+    "pl": "Tryb wydarzenia",
+    "en": "Event mode"
+  },
+  "timelinePlanner.cyclicalMeeting": {
+    "pl": "Spotkanie cykliczne",
+    "en": "Cyclical meeting"
+  },
+  "timelinePlanner.onSpecificDate": {
+    "pl": "W konkretnej dacie",
+    "en": "On specific date"
+  },
+  "timelinePlanner.afterEvent": {
+    "pl": "Po zdarzeniu",
+    "en": "After event"
+  },
+  "timelinePlanner.cadence": {
+    "pl": "Cykliczność",
+    "en": "Cadence"
+  },
+  "timelinePlanner.daily": {
+    "pl": "Codziennie",
+    "en": "Daily"
+  },
+  "timelinePlanner.weekly": {
+    "pl": "Co tydzień",
+    "en": "Weekly"
+  },
+  "timelinePlanner.biweekly": {
+    "pl": "Co 2 tygodnie",
+    "en": "Biweekly"
+  },
+  "timelinePlanner.monthly": {
+    "pl": "Co miesiąc",
+    "en": "Monthly"
+  },
+  "timelinePlanner.custom": {
+    "pl": "Niestandardowo",
+    "en": "Custom"
+  },
+  "timelinePlanner.afterWhichEvent": {
+    "pl": "Po jakim zdarzeniu?",
+    "en": "After which event?"
+  },
+  "timelinePlanner.eGAfterGoGateApproval": {
+    "pl": "np. Po akceptacji gate GO",
+    "en": "e.g. After GO gate approval"
+  },
+  "timelinePlanner.provideTheEventNameThatShould": {
+    "pl": "Uzupełnij nazwę zdarzenia, po którym ma wystąpić ten event.",
+    "en": "Provide the event name that should trigger this event."
+  },
+  "timelinePlanner.forOnSpecificDateModeChoose": {
+    "pl": "Dla trybu \"W konkretnej dacie\" wybierz datę startu.",
+    "en": "For \"On specific date\" mode, choose a start date."
+  },
+  "timelinePlanner.audience": {
+    "pl": "Odbiorcy",
+    "en": "Audience"
+  },
+  "timelinePlanner.eGSteeringCommittee": {
+    "pl": "np. Steering Committee",
+    "en": "e.g. Steering Committee"
+  },
+  "timelinePlanner.whoShouldAttend": {
+    "pl": "Kto powinien być?",
+    "en": "Who should attend?"
+  },
+  "timelinePlanner.group": {
+    "pl": "Grupa",
+    "en": "Group"
+  },
+  "timelinePlanner.person": {
+    "pl": "Osoba",
+    "en": "Person"
+  },
+  "timelinePlanner.selectPerson": {
+    "pl": "Wybierz osobę",
+    "en": "Select person"
+  },
+  "timelinePlanner.selectAPersonWhoShouldAttend": {
+    "pl": "Wybierz osobę odpowiedzialną za udział w wydarzeniu.",
+    "en": "Select a person who should attend this event."
+  },
+  "timelinePlanner.materialSourceRequired": {
+    "pl": "Źródło materiału (wymagane)",
+    "en": "Material source (required)"
+  },
+  "timelinePlanner.internalReport": {
+    "pl": "Raport wewnętrzny",
+    "en": "Internal report"
+  },
+  "timelinePlanner.generatedPresentation": {
+    "pl": "Prezentacja wygenerowana",
+    "en": "Generated presentation"
+  },
+  "timelinePlanner.externalLink": {
+    "pl": "Link zewnętrzny",
+    "en": "External link"
+  },
+  "timelinePlanner.other": {
+    "pl": "Inne",
+    "en": "Other"
+  },
+  "timelinePlanner.noReportsInLibraryCreateA": {
+    "pl": "Brak raportów w bibliotece. Utwórz raport w module Raporty.",
+    "en": "No reports in library. Create a report in the Reports module."
+  },
+  "timelinePlanner.provideTheRequiredMaterialSourceFor": {
+    "pl": "Uzupełnij wymagane źródło materiału dla tego wydarzenia.",
+    "en": "Provide the required material source for this event."
+  },
+  "timelinePlanner.selectReport": {
+    "pl": "Wybierz raport",
+    "en": "Select report"
+  },
+  "timelinePlanner.materialUrl": {
+    "pl": "URL materiału",
+    "en": "Material URL"
+  },
+  "timelinePlanner.materialLabel": {
+    "pl": "Nazwa materiału",
+    "en": "Material label"
+  },
+  "timelinePlanner.eGDeckSprintReview": {
+    "pl": "np. Deck: Sprint Review",
+    "en": "e.g. Deck: Sprint Review"
+  },
+  "timelinePlanner.templates": {
+    "pl": "Szablony",
+    "en": "Templates"
+  },
+  "timelinePlanner.recipientType": {
+    "pl": "Odbiorca",
+    "en": "Recipient type"
+  },
+  "timelinePlanner.selectGroup": {
+    "pl": "Wybierz grupę",
+    "en": "Select group"
+  },
+  "timelinePlanner.notificationMode": {
+    "pl": "Tryb notyfikacji",
+    "en": "Notification mode"
+  },
+  "timelinePlanner.eventBased": {
+    "pl": "Zdarzeniowa",
+    "en": "Event-based"
+  },
+  "timelinePlanner.cyclical": {
+    "pl": "Cykliczna",
+    "en": "Cyclical"
+  },
+  "timelinePlanner.eventTrigger2": {
+    "pl": "Wyzwalacz zdarzenia",
+    "en": "Event trigger"
+  },
+  "timelinePlanner.onStart": {
+    "pl": "Przy starcie",
+    "en": "On start"
+  },
+  "timelinePlanner.onComplete": {
+    "pl": "Przy zakończeniu",
+    "en": "On complete"
+  },
+  "timelinePlanner.beforeNextAction": {
+    "pl": "Przed kolejnym działaniem",
+    "en": "Before next action"
+  },
+  "timelinePlanner.manualGateEvent": {
+    "pl": "Po ręcznym gate",
+    "en": "Manual gate event"
+  },
+  "timelinePlanner.leadTimeDays": {
+    "pl": "Wyprzedzenie (dni)",
+    "en": "Lead time (days)"
+  },
+  "timelinePlanner.channel": {
+    "pl": "Kanał",
+    "en": "Channel"
+  },
+  "timelinePlanner.meeting": {
+    "pl": "Spotkanie",
+    "en": "Meeting"
+  },
+  "timelinePlanner.other2": {
+    "pl": "Inny",
+    "en": "Other"
+  },
+  "timelinePlanner.communicationRule": {
+    "pl": "Reguła komunikacji",
+    "en": "Communication rule"
+  },
+  "timelinePlanner.eGEveryTuesday0900": {
+    "pl": "np. Co wtorek 09:00 do Steering Committee",
+    "en": "e.g. Every Tuesday 09:00 to Steering Committee"
+  },
+  "timelinePlanner.notificationContent": {
+    "pl": "Treść notyfikacji",
+    "en": "Notification content"
+  },
+  "timelinePlanner.enterMessageContentToBeSent": {
+    "pl": "Wpisz treść, która ma być wysłana do odbiorcy...",
+    "en": "Enter message content to be sent to recipient..."
+  },
+  "timelinePlanner.automaticNotificationSendingByAi": {
+    "pl": "Automatyczna wysyłka notyfikacji przez AI",
+    "en": "Automatic notification sending by AI"
+  },
+  "timelinePlanner.aiInstructionToneLengthRequiredMessage": {
+    "pl": "Instrukcja dla AI: ton, długość, wymagane elementy wiadomości...",
+    "en": "AI instruction: tone, length, required message elements..."
+  },
+  "timelinePlanner.meetingCadence": {
+    "pl": "Cykliczność spotkania",
+    "en": "Meeting cadence"
+  },
+  "timelinePlanner.meetingChannel": {
+    "pl": "Forma spotkania",
+    "en": "Meeting channel"
+  },
+  "timelinePlanner.online": {
+    "pl": "Online",
+    "en": "Online"
+  },
+  "timelinePlanner.onsite": {
+    "pl": "Stacjonarnie",
+    "en": "Onsite"
+  },
+  "timelinePlanner.hybrid": {
+    "pl": "Hybrydowo",
+    "en": "Hybrid"
+  },
+  "timelinePlanner.meetingAgenda": {
+    "pl": "Agenda spotkania",
+    "en": "Meeting agenda"
+  },
+  "timelinePlanner.briefMeetingPurposeAgenda": {
+    "pl": "Krótki cel/agenda spotkania...",
+    "en": "Brief meeting purpose/agenda..."
+  },
+  "timelinePlanner.pauseReason": {
+    "pl": "Powód pauzy",
+    "en": "Pause reason"
+  },
+  "timelinePlanner.eGReleaseFreezeMaintenance": {
+    "pl": "np. okno wdrożeniowe / freeze",
+    "en": "e.g. release freeze / maintenance"
+  },
+  "timelinePlanner.explainWhyExecutionIsPausedThis": {
+    "pl": "Wyjaśnij przyczynę postoju. Ta informacja będzie widoczna w harmonogramie i pomoże ocenić wpływ na kolejne kroki.",
+    "en": "Explain why execution is paused. This note is shown in the timeline and helps evaluate impact on next steps."
+  },
+  "timelinePlanner.escalationLevel": {
+    "pl": "Poziom eskalacji",
+    "en": "Escalation level"
+  },
+  "timelinePlanner.select": {
+    "pl": "Wybierz",
+    "en": "Select"
+  },
+  "timelinePlanner.board": {
+    "pl": "Zarząd",
+    "en": "Board"
+  },
+  "timelinePlanner.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "timelinePlanner.add": {
+    "pl": "Dodaj",
+    "en": "Add"
+  },
+  "timelinePlanner.editItem": {
+    "pl": "Edytuj element",
+    "en": "Edit item"
+  },
+  "timelinePlanner.sourceTask": {
+    "pl": "Zadanie źródłowe",
+    "en": "Source task"
+  },
+  "timelinePlanner.sourceDecision": {
+    "pl": "Decyzja źródłowa",
+    "en": "Source decision"
+  },
+  "timelinePlanner.sourceMilestone": {
+    "pl": "Kamień milowy źródłowy",
+    "en": "Source milestone"
+  },
+  "timelinePlanner.windowDays": {
+    "pl": "Okres (dni)",
+    "en": "Window (days)"
+  },
+  "timelinePlanner.effortH": {
+    "pl": "Effort (h)",
+    "en": "Effort (h)"
+  },
+  "timelinePlanner.blocksNext": {
+    "pl": "Blokuje następne?",
+    "en": "Blocks next?"
+  },
+  "timelinePlanner.decisionOutcome": {
+    "pl": "Wynik decyzji",
+    "en": "Decision outcome"
+  },
+  "timelinePlanner.pending": {
+    "pl": "Oczekuje",
+    "en": "Pending"
+  },
+  "timelinePlanner.escalate": {
+    "pl": "Eskalacja",
+    "en": "Escalate"
+  },
+  "timelinePlanner.messageContentToSend": {
+    "pl": "Treść, która ma zostać wysłana...",
+    "en": "Message content to send..."
+  },
+  "timelinePlanner.automaticSendingByAi": {
+    "pl": "Automatyczna wysyłka przez AI",
+    "en": "Automatic sending by AI"
+  },
+  "timelinePlanner.instructionForAi": {
+    "pl": "Instrukcja dla AI...",
+    "en": "Instruction for AI..."
+  },
+  "timelinePlanner.days": {
+    "pl": "Dni",
+    "en": "Days"
+  },
+  "timelinePlanner.eGDeploymentFreeze": {
+    "pl": "np. freeze wdrożeniowy",
+    "en": "e.g. deployment freeze"
+  },
+  "timelinePlanner.level": {
+    "pl": "Poziom",
+    "en": "Level"
+  },
+  "timelinePlanner.save": {
+    "pl": "Zapisz",
+    "en": "Save"
+  },
+  "timelinePlanner.typ": {
+    "pl": "Typ",
+    "en": "Typ"
+  },
+  "timelinePlanner.end": {
+    "pl": "Koniec",
+    "en": "End"
+  },
+  "timelinePlanner.window": {
+    "pl": "Okres",
+    "en": "Window"
+  },
+  "timelinePlanner.effortH2": {
+    "pl": "Effort h",
+    "en": "Effort h"
+  },
+  "timelinePlanner.dep": {
+    "pl": "Zależy",
+    "en": "Dep"
+  },
+  "timelinePlanner.clickToName": {
+    "pl": "Kliknij aby nazwać...",
+    "en": "Click to name..."
+  },
+  "timelinePlanner.report": {
+    "pl": "Raport",
+    "en": "Report"
+  },
+  "timelinePlanner.externalLink2": {
+    "pl": "Link zewn.",
+    "en": "External link"
+  },
+  "timelinePlanner.presentation": {
+    "pl": "Prezentacja",
+    "en": "Presentation"
+  },
+  "timelinePlanner.cyclical2": {
+    "pl": "Cykliczne",
+    "en": "Cyclical"
+  },
+  "timelinePlanner.onDate": {
+    "pl": "W dacie",
+    "en": "On date"
+  },
+  "timelinePlanner.projectTeam": {
+    "pl": "Zespół projektu",
+    "en": "Project team"
+  },
+  "timelinePlanner.steering": {
+    "pl": "Komitet",
+    "en": "Steering"
+  },
+  "timelinePlanner.sponsors": {
+    "pl": "Sponsorzy",
+    "en": "Sponsors"
+  },
+  "timelinePlanner.stakeholders": {
+    "pl": "Stakeholderzy",
+    "en": "Stakeholders"
+  },
+  "timelinePlanner.customGroup": {
+    "pl": "Grupa własna",
+    "en": "Custom group"
+  },
+  "timelinePlanner.startFromDependency": {
+    "pl": "Start z dependency",
+    "en": "Start from dependency"
+  },
+  "timelinePlanner.startOnEvent": {
+    "pl": "Start po zdarzeniu",
+    "en": "Start on event"
+  },
+  "timelinePlanner.startFromDate": {
+    "pl": "Start z daty",
+    "en": "Start from date"
+  },
+  "timelinePlanner.startSettings": {
+    "pl": "Ustawienia startu",
+    "en": "Start settings"
+  },
+  "timelinePlanner.howToDetermineStart": {
+    "pl": "Jak wyznaczyć start",
+    "en": "How to determine start"
+  },
+  "timelinePlanner.dependency": {
+    "pl": "Dependency",
+    "en": "Dependency"
+  },
+  "timelinePlanner.event": {
+    "pl": "Zdarzenie",
+    "en": "Event"
+  },
+  "timelinePlanner.selectDependency": {
+    "pl": "Wybierz dependency",
+    "en": "Select dependency"
+  },
+  "timelinePlanner.eventName2": {
+    "pl": "Nazwa zdarzenia...",
+    "en": "Event name..."
+  },
+  "timelinePlanner.rowOptions": {
+    "pl": "Opcje wiersza",
+    "en": "Row options"
+  },
+  "timelinePlanner.edit": {
+    "pl": "Edytuj",
+    "en": "Edit"
+  },
+  "timelinePlanner.copy": {
+    "pl": "Kopiuj",
+    "en": "Copy"
+  },
+  "timelinePlanner.delete": {
+    "pl": "Usuń",
+    "en": "Delete"
+  },
+  "timelinePlanner.table": {
+    "pl": "Tabela",
+    "en": "Table"
+  },
+  "timelinePlanner.tasks": {
+    "pl": "zadań",
+    "en": "tasks"
+  },
+  "timelinePlanner.milestones": {
+    "pl": "kamieni",
+    "en": "milestones"
+  },
+  "timelinePlanner.decisions": {
+    "pl": "decyzji",
+    "en": "decisions"
+  },
+  "timelinePlanner.events": {
+    "pl": "zdarzeń",
+    "en": "events"
+  },
+  "timelinePlanner.notifications": {
+    "pl": "notyfikacji",
+    "en": "notifications"
+  },
+  "timelinePlanner.pauses": {
+    "pl": "pauz",
+    "en": "pauses"
+  },
+  "timelinePlanner.planned": {
+    "pl": "planowane",
+    "en": "planned"
+  },
+  "timelinePlanner.totalDays": {
+    "pl": "dni łącznie",
+    "en": "total days"
+  },
+  "timelineSection.today": {
+    "pl": "Dziś",
+    "en": "Today"
+  },
+  "timelineSection.onTime": {
+    "pl": "W terminie",
+    "en": "On time"
+  },
+  "timelineSection.variance": {
+    "pl": "Odchylenie",
+    "en": "Variance"
+  },
+  "timelineSection.milestones": {
+    "pl": "Kamienie",
+    "en": "Milestones"
+  },
+  "timelineSection.openRisks": {
+    "pl": "Otwarte ryzyka",
+    "en": "Open risks"
+  },
+  "timelineSection.timelineIsLockedBaseline": {
+    "pl": "Harmonogram jest zamrożony (baseline).",
+    "en": "Timeline is locked (baseline)."
+  },
+  "timelineSection.failedToParseAiResponse": {
+    "pl": "Nie udało się sparsować odpowiedzi AI.",
+    "en": "Failed to parse AI response."
+  },
+  "timelineSection.aiReturnedAnUnsupportedFormatMissing": {
+    "pl": "AI zwróciło nieobsługiwany format (brak version=timeline_proposal_v1).",
+    "en": "AI returned an unsupported format (missing version=timeline_proposal_v1)."
+  },
+  "timelineSection.aiAnalysisFailed": {
+    "pl": "Analiza AI nie powiodła się",
+    "en": "AI analysis failed"
+  },
+  "timelineSection.noValidAiProposal": {
+    "pl": "Brak poprawnej propozycji AI.",
+    "en": "No valid AI proposal."
+  },
+  "timelineSection.appliedAiProposal": {
+    "pl": "Zastosowano propozycję AI",
+    "en": "Applied AI proposal"
+  },
+  "timelineSection.proposedTimelinePlanAi": {
+    "pl": "Propozycja harmonogramu (AI)",
+    "en": "Proposed timeline plan (AI)"
+  },
+  "timelineSection.selectWhatToApplyDependenciesCritical": {
+    "pl": "Zaznacz, co zastosować. Zależności/ścieżka krytyczna zostaną ustawione dopiero po akceptacji.",
+    "en": "Select what to apply. Dependencies / critical path are applied only after acceptance."
+  },
+  "timelineSection.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "timelineSection.invalidAiProposalFormat": {
+    "pl": "Nieprawidłowy format propozycji AI.",
+    "en": "Invalid AI proposal format."
+  },
+  "timelineSection.applyStartEndDates": {
+    "pl": "Zastosuj daty start/koniec",
+    "en": "Apply start/end dates"
+  },
+  "timelineSection.applyPhases": {
+    "pl": "Zastosuj fazy",
+    "en": "Apply phases"
+  },
+  "timelineSection.applyMilestones": {
+    "pl": "Zastosuj kamienie milowe",
+    "en": "Apply milestones"
+  },
+  "timelineSection.applyRowsOrderDependencies": {
+    "pl": "Zastosuj wiersze (kolejność + zależności)",
+    "en": "Apply rows (order + dependencies)"
+  },
+  "timelineSection.phases": {
+    "pl": "Fazy",
+    "en": "Phases"
+  },
+  "timelineSection.rows": {
+    "pl": "Wiersze",
+    "en": "Rows"
+  },
+  "timelineSection.dependencies": {
+    "pl": "Zależności",
+    "en": "Dependencies"
+  },
+  "timelineSection.criticalPathAi": {
+    "pl": "Ścieżka krytyczna (AI)",
+    "en": "Critical path (AI)"
+  },
+  "timelineSection.lockChain": {
+    "pl": "Zablokuj łańcuch",
+    "en": "Lock chain"
+  },
+  "timelineSection.noCriticalPathProvided": {
+    "pl": "Brak ścieżki krytycznej w propozycji.",
+    "en": "No critical path provided."
+  },
+  "timelineSection.startsAfterPrevious": {
+    "pl": "Start po poprzednim",
+    "en": "Starts after previous"
+  },
+  "timelineSection.dependenciesPrimary": {
+    "pl": "Zależności (Primary)",
+    "en": "Dependencies (Primary)"
+  },
+  "timelineSection.primaryOnly": {
+    "pl": "Tylko primary",
+    "en": "Primary only"
+  },
+  "timelineSection.noDependencyCandidatesProvided": {
+    "pl": "Brak kandydatów zależności w propozycji.",
+    "en": "No dependency candidates provided."
+  },
+  "timelineSection.none": {
+    "pl": "Brak (None)",
+    "en": "None"
+  },
+  "timelineSection.someCriticalPathStepsAreUnchecked": {
+    "pl": "Część kroków ścieżki krytycznej jest odznaczona — łańcuch może być nieciągły.",
+    "en": "Some critical path steps are unchecked — the chain may be discontinuous."
+  },
+  "timelineSection.warnings": {
+    "pl": "Ostrzeżenia",
+    "en": "Warnings"
+  },
+  "timelineSection.timelineRowsAi": {
+    "pl": "Wiersze harmonogramu (AI)",
+    "en": "Timeline rows (AI)"
+  },
+  "timelineSection.linkedTask": {
+    "pl": "powiązany task",
+    "en": "linked task"
+  },
+  "timelineSection.cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "timelineSection.apply": {
+    "pl": "Zastosuj",
+    "en": "Apply"
+  },
+  "timelineSection.timeline": {
+    "pl": "Harmonogram",
+    "en": "Timeline"
+  },
+  "timelineSection.overdue": {
+    "pl": "po terminie",
+    "en": "overdue"
+  },
+  "timelineSection.left": {
+    "pl": "do końca",
+    "en": "left"
+  },
+  "timelineSection.addItem": {
+    "pl": "Dodaj",
+    "en": "Add item"
+  },
+  "timelineSection.duration": {
+    "pl": "Czas trwania",
+    "en": "Duration"
+  },
+  "timelineSection.days": {
+    "pl": "dni",
+    "en": "days"
+  },
+  "timelineSection.quarter": {
+    "pl": "Kwartał",
+    "en": "Quarter"
+  },
+  "timelineSection.timelineAwaitingPmoApprovalScheduleLock": {
+    "pl": "Harmonogram czeka na zatwierdzenie PMO (Schedule Lock). Po zatwierdzeniu daty zostaną zamrożone jako baseline.",
+    "en": "Timeline awaiting PMO approval (Schedule Lock). After approval, dates will be frozen as baseline."
+  },
+  "timelineSection.startDate": {
+    "pl": "Data startu",
+    "en": "Start date"
+  },
+  "timelineSection.endDate": {
+    "pl": "Data końca",
+    "en": "End date"
+  },
+  "timelineSection.milestones2": {
+    "pl": "Kamienie milowe",
+    "en": "Milestones"
+  },
+  "timelineSection.scheduleReadiness": {
+    "pl": "Gotowość harmonogramu",
+    "en": "Schedule Readiness"
+  },
+  "timelineSection.baselineVsActual": {
+    "pl": "Baseline vs Rzeczywistość",
+    "en": "Baseline vs Actual"
+  },
+  "timelineSection.planned": {
+    "pl": "Planowane",
+    "en": "Planned"
+  },
+  "timelineSection.actual": {
+    "pl": "Rzeczywiste",
+    "en": "Actual"
+  },
+  "timelineSection.start": {
+    "pl": "Początek",
+    "en": "Start"
+  },
+  "timelineSection.end": {
+    "pl": "Koniec",
+    "en": "End"
+  },
+  "timelineSection.ongoing": {
+    "pl": " (w toku)",
+    "en": " (ongoing)"
+  },
+  "timelineSection.timeProgress": {
+    "pl": "Postęp czasu",
+    "en": "Time Progress"
+  },
+  "timelineSection.milestoneTracking": {
+    "pl": "Śledzenie kamieni milowych",
+    "en": "Milestone Tracking"
+  },
+  "timelineSection.executionSummary": {
+    "pl": "Podsumowanie realizacji",
+    "en": "Execution Summary"
+  },
+  "timelineSection.milestonesFinal": {
+    "pl": "Kamienie milowe — wynik",
+    "en": "Milestones — Final"
+  },
+  "timelineSection.daysEarly": {
+    "pl": "dni wcześniej",
+    "en": "days early"
+  },
+  "timelineSection.delayed": {
+    "pl": "Opóźnione",
+    "en": "Delayed"
+  },
+  "timelineSection.completed": {
+    "pl": "Zakończone",
+    "en": "Completed"
+  }
+}

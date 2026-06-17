@@ -1,0 +1,4 @@
+{
+  "exportedAs": { "pl": "Wyeksportowano jako {{format}}", "en": "Exported as {{format}}" },
+  "deckDiff": { "pl": "diff: +{{added}}/-{{removed}}, zmienione {{changed}}", "en": "diff: +{{added}}/-{{removed}}, changed {{changed}}" }
+}

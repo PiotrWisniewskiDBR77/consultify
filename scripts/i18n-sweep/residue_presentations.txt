@@ -1,0 +1,2 @@
+src/components/Presentations/DeckBuilder/DeckBuilder.tsx:730 nonStringTernary
+src/components/Presentations/DeckBuilder/DeckBuilder.tsx:1230 nonStringTernary

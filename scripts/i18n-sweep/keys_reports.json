@@ -1,0 +1,186 @@
+{
+  "downloadedSpreadsheetXlsx": {
+    "pl": "Pobrano arkusz (.xlsx)",
+    "en": "Downloaded spreadsheet (.xlsx)"
+  },
+  "couldNotDownloadSpreadsheet": {
+    "pl": "Nie udało się pobrać arkusza",
+    "en": "Could not download spreadsheet"
+  },
+  "helpMeGenerateTheFirstReport": {
+    "pl": "Pomóż mi wygenerować pierwszy raport/prezentację dla tej organizacji. Zaproponuj typ outputu (raport zarządu, decyzyjny, analiza ROI, prezentacja inicjatyw), dobierz format (PDF/PPTX/XLSX) i strukturę sekcji opartą na danych organizacji.",
+    "en": "Help me generate the first report/presentation for this organization. Propose the output type (board report, decision memo, ROI analysis, initiatives deck), pick the format (PDF/PPTX/XLSX), and outline sections grounded in the organization context."
+  },
+  "draft": {
+    "pl": "Szkic",
+    "en": "Draft"
+  },
+  "generated": {
+    "pl": "Wygenerowana",
+    "en": "Generated"
+  },
+  "editing": {
+    "pl": "Edycja",
+    "en": "Editing"
+  },
+  "ready": {
+    "pl": "Gotowy",
+    "en": "Ready"
+  },
+  "exported": {
+    "pl": "Wyeksportowany",
+    "en": "Exported"
+  },
+  "shared": {
+    "pl": "Udostępniony",
+    "en": "Shared"
+  },
+  "archived": {
+    "pl": "Zarchiwizowany",
+    "en": "Archived"
+  },
+  "creatingACopy": {
+    "pl": "Tworzę kopię…",
+    "en": "Creating a copy…"
+  },
+  "createdAnEditableCopy": {
+    "pl": "Utworzono kopię do edycji",
+    "en": "Created an editable copy"
+  },
+  "couldNotCreateACopy": {
+    "pl": "Nie udało się utworzyć kopii",
+    "en": "Could not create a copy"
+  },
+  "newTemplateName": {
+    "pl": "Nazwa nowego wzorca:",
+    "en": "New template name:"
+  },
+  "descriptionOptional": {
+    "pl": "Opis (opcjonalnie):",
+    "en": "Description (optional):"
+  },
+  "shouldThisBeAnOrganizationTemplate": {
+    "pl": "Czy to ma być wzorzec organizacji (wymaga review)?",
+    "en": "Should this be an organization template (requires review)?"
+  },
+  "savedAsTemplate": {
+    "pl": "Zapisano jako wzorzec",
+    "en": "Saved as template"
+  },
+  "failed": {
+    "pl": "Błąd zapisu wzorca",
+    "en": "Failed"
+  },
+  "published": {
+    "pl": "Opublikowano",
+    "en": "Published"
+  },
+  "publishFailed": {
+    "pl": "Błąd publikacji",
+    "en": "Publish failed"
+  },
+  "tool": {
+    "pl": "Narzędzie",
+    "en": "Tool"
+  },
+  "assessment": {
+    "pl": "Ocena",
+    "en": "Assessment"
+  },
+  "finance": {
+    "pl": "Finanse",
+    "en": "Finance"
+  },
+  "upload": {
+    "pl": "Przesłane",
+    "en": "Upload"
+  },
+  "ready2": {
+    "pl": "Gotowa",
+    "en": "Ready"
+  },
+  "shared2": {
+    "pl": "Udostępniona",
+    "en": "Shared"
+  },
+  "archived2": {
+    "pl": "Zarchiwizowana",
+    "en": "Archived"
+  },
+  "slides": {
+    "pl": "slajdów",
+    "en": "slides"
+  },
+  "weeklyExecution": {
+    "pl": "Weekly Execution",
+    "en": "Weekly Execution"
+  },
+  "steeringCommittee": {
+    "pl": "Steering Committee",
+    "en": "Steering Committee"
+  },
+  "benefitsTracking": {
+    "pl": "Benefits Tracking",
+    "en": "Benefits Tracking"
+  },
+  "portfolioOverview": {
+    "pl": "Portfolio Overview",
+    "en": "Portfolio Overview"
+  },
+  "report": {
+    "pl": "Raport",
+    "en": "Report"
+  },
+  "sheet": {
+    "pl": "Tabela",
+    "en": "Sheet"
+  },
+  "presentation": {
+    "pl": "Prezentacja",
+    "en": "Presentation"
+  },
+  "personal": {
+    "pl": "Osobisty",
+    "en": "Personal"
+  },
+  "application": {
+    "pl": "System",
+    "en": "Application"
+  },
+  "organization": {
+    "pl": "Organizacja",
+    "en": "Organization"
+  },
+  "active": {
+    "pl": "Aktywny",
+    "en": "Active"
+  },
+  "deprecated": {
+    "pl": "Wycofany",
+    "en": "Deprecated"
+  },
+  "executiveSteering": {
+    "pl": "Executive Steering",
+    "en": "Executive Steering"
+  },
+  "governanceReportsAndSteeringCommitteePre": {
+    "pl": "Raporty zarządcze i prezentacje dla komitetu sterującego",
+    "en": "Governance reports and steering committee presentations"
+  },
+  "transformationStatus": {
+    "pl": "Status Transformacji",
+    "en": "Transformation Status"
+  },
+  "weeklyStatusReportsAndProgressReviews": {
+    "pl": "Cotygodniowe raporty statusowe i przeglądy postępów",
+    "en": "Weekly status reports and progress reviews"
+  },
+  "diagnosticAssessment": {
+    "pl": "Diagnostyka i Ocena",
+    "en": "Diagnostic & Assessment"
+  },
+  "diagnosticReportsAuditFindingsAndMaturit": {
+    "pl": "Raporty diagnostyczne, wyniki audytów i oceny dojrzałości",
+    "en": "Diagnostic reports, audit findings and maturity assessments"
+  }
+}
