@@ -133,7 +133,7 @@ Scenariusze S1–S7: karta §0 (239 PASS/5 FAIL drift). Bezpieczeństwo: karta �
 
 ### 05 · Flagi/rollout — V8 Results (env, degraduje→legacy `/api/benefits/*`); showcase (jawny toggle); beta CLOSED. `/benefits` tylko `ProductionModuleGate` (beta-guard = L-03).
 ### 06 · Ryzyka — **WZORZEC SYSTEMOWY** `x-kpi-role` (autoryzacja z nagłówka klienta) → audyt innych v8-routerów cross-module. Zapis KPI na PROD ostrożnie (dev `.env` może wskazywać PROD). sync-from-M20 wspólne z M20/M16 (DP-6). Brak uwag żywych → re-ocena D wymaga Fazy 4.
-### 07 · Log — 2026-06-16: L-01..L-04+L-06+L-08..L-10 NAPRAWIONE/N/D (grepem); L-05 DP-6; L-07 DP-9 Faza 4; 32/32 tests PASS. 2026-06-13: brak uwag żywych (jawnie); teczka pogłębiona do M13-level. **R3: `91c8245559` zweryfikowany** (oba P0). i18n najzdrowszy (0× isPolish, 0 hex). Re-ocena D po Fazie 4.
+### 07 · Log — 2026-06-17 (Harvard 4 runda 3) **AUDYT DEAD-CODE (gotowy, read-only-verified):** `src/components/Results/ResultsSummaryView.tsx` (0 ref kodu; jedyna wzmianka = stary komentarz `server/scripts/seed-results-module.ts:62`) + `OperationalAnalysisView.tsx` (ref tylko z `Results/index.ts` barrel, który ma 0 zewn. konsumentów — live importy idą ścieżką względną z `ResultsHub`). Do usunięcia: oba pliki + porządek barrela `index.ts`. Wykonanie = osobny commit z bramką full-tsc. Testy Results genuine; showcase poprawnie gated (`shouldAllowDemoData`). — 2026-06-16: L-01..L-04+L-06+L-08..L-10 NAPRAWIONE/N/D (grepem); L-05 DP-6; L-07 DP-9 Faza 4; 32/32 tests PASS. 2026-06-13: brak uwag żywych (jawnie); teczka pogłębiona do M13-level. **R3: `91c8245559` zweryfikowany** (oba P0). i18n najzdrowszy (0× isPolish, 0 hex). Re-ocena D po Fazie 4.
 
 ---
 
