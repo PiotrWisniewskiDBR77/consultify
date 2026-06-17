@@ -104,7 +104,7 @@ Pełna tabela: karta §1g. **WEJŚCIE ←** M01 Czat (generacja tabeli z czatu, 
 | # | Kryterium | Miara M20 |
 |---|-----------|-----------|
 | 1 | Front↔back | governed sync = jawnie „preview" + przyciski ukryte (DP-6); Records CRUD trwały po reload (real `tp_*`); **4 flagi: komentarz=runtime — R3 częściowo ZAMKNIĘTE** (patrz niżej) |
-| 2 | Bezpieczeństwo | 4 ścieżki IDOR → cross-org 403/404 (**kod NAPRAWIONY `e9c6cb9c0a`**, guards `:256/2824/3441/3473/3507/4485+` zweryfikowane — brak testu regresji = jedyna luka); SSO/webhook AES (L-02); `share_password` weryfikowane (L-03) |
+| 2 | Bezpieczeństwo | 4 ścieżki IDOR → cross-org 403/404 (**NAPRAWIONE `e9c6cb9c0a` + TEST regresji 9/9 PASS** `table-platform.idor.regression.test.ts` 2026-06-17); SSO/webhook AES (L-02); `share_password` weryfikowane (L-03) |
 | 3 | i18n | **0 z 0** `isPolish` w `TabeleView`+`tabele*` (grep 2026-06-13 = **0** — najlepszy w audycie); dług = PublicViewPage EN-only (poza zmierzonym katalogiem, L-09) |
 | 4 | Tokeny | **0 hex** w zmierzonym `TabeleView`+`tabele*`; karta raportuje **322 hex** w szerszym footprincie data-grida (`GridView`/`CellRenderer`) — **zmierzyć cały footprint** przed sweepem (DP-8: palety wykresów/grafów legalne, chrome→token) |
 | 5 | §27 | **0** surowych `<table>` w zmierzonym katalogu; grid = świadomie inny wzorzec → **grid-canon (D-04)**; listy baz/automatyzacji → §27 sweep (DP-9) |
@@ -138,7 +138,7 @@ Otwarte: SSO plaintext (L-02), share_password (L-03), test regresji IDOR, test r
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | cross-org IDOR record-templates/form-submissions/row-policies/governed-models | W-01 | `:256, 2824, 3441/3473/3507, 4485-4575` | P0 (był) | 1 | **NAPRAWIONA `e9c6cb9c0a`** (R3: brak testu regresji → dodać) | 2026-06-13 |
+| L-01 | cross-org IDOR record-templates/form-submissions/row-policies/governed-models | W-01 | `:256, 2824, 3441/3473/3507, 4485-4575` | P0 (był) | 1 | **NAPRAWIONA + TEST** `e9c6cb9c0a` + `tests/integration/routes/table-platform.idor.regression.test.ts` (9/9 PASS 2026-06-17) | 2026-06-17 |
 | L-02 | SSO config + webhook hmac plaintext at rest | W-01 | `SSOService.ts:47-63` | P1 | 1 | otwarta (AES, wzorzec M25) |  |
 | L-03 | `share_password` zapisywane, NIGDY nieweryfikowane | W-01 | `MetadataService.ts:1279` | P2 | 1 | otwarta |  |
 | L-04 | kręgosłup czat→sheet (generacja z czatu) | W-02 | `SPEC_ZADANIE_01` | P0-program | 0 | zależność (śledzona w SPEC_01) |  |
