@@ -1387,7 +1387,9 @@ router.post(
       res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
     } catch (error: any) {
       logger.error('[presentations] Failed to create deck:', error);
-      res.status(500).json({ success: false, error: error?.message || 'Failed to create deck' });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to create deck', code: 'DECK_CREATE_FAILED' });
     }
   })
 );

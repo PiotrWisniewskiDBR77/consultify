@@ -12,6 +12,7 @@ import { hasPermission } from '../services/permissionService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   evaluateDoDGates,
@@ -1523,19 +1524,31 @@ export class ToolController {
           initiatives,
           userId: user.id,
         });
-      } catch (genError: any) {
+      } catch (genError: unknown) {
+        // ERR-LEAK (M11): log the real error server-side; never reflect raw
+        // err.message / DB-driver text back to the client. The persisted
+        // failure_reason is surfaced to the org owner via getToolSession, so it
+        // is kept generic too.
+        logger.error('Tool initiative generation failed', {
+          toolId,
+          batchId,
+          orgId: user.organizationId,
+          error: genError instanceof Error ? genError.message : String(genError),
+        });
+        const FAILURE_REASON = 'Initiative generation failed';
         // P27-B: Set FAILED state on generation error
         await queryHelpers.queryRun(
           `UPDATE tool_sessions SET status = 'FAILED', failure_reason = ?, updated_at = ? WHERE id = ?`,
-          [genError?.message || 'Initiative generation failed', now, toolId]
+          [FAILURE_REASON, now, toolId]
         );
         await logAudit(user.organizationId, user.id, 'tool_generation_failed', toolId, {
           batchId,
-          error: genError?.message,
         });
+        // Shape preserved: error / failureReason / batchId / status top-level keys.
         res.status(500).json({
-          error: 'Initiative generation failed',
-          failureReason: genError?.message || 'Unknown error',
+          error: FAILURE_REASON,
+          failureReason: FAILURE_REASON,
+          code: 'TOOL_GENERATION_FAILED',
           batchId,
           status: 'FAILED',
         });

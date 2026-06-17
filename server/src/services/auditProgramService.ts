@@ -390,8 +390,13 @@ export interface GenerateSurveysResult {
   requested: number;
   created: number;
   failed: number;
-  /** Per-pair failures, for honest reporting. */
-  errors: Array<{ templateId: string; assigneeId: string; message: string }>;
+  /**
+   * Per-pair failures, for honest reporting. `message` is a CLIENT-SAFE generic
+   * string + `code` is a stable identifier; the real error text is logged
+   * server-side only (never returned) to avoid leaking internal schema/driver
+   * detail to the client. Shape is preserved for the FE contract.
+   */
+  errors: Array<{ templateId: string; assigneeId: string; message: string; code: string }>;
   /** True when nothing was generated because it was already done. */
   alreadyGenerated: boolean;
 }
@@ -481,13 +486,21 @@ export async function generateSurveys(
         });
         createdAssignmentIds.push(assignment.id);
       } catch (error) {
-        const message = String((error as Error)?.message || error || 'unknown error');
-        errors.push({ templateId, assigneeId, message });
+        // INFO-DISCLOSURE: never return raw error text (may carry DB-driver /
+        // schema detail) to the client. Push a generic, client-safe message +
+        // stable code; log the real error server-side only.
+        const realMessage = String((error as Error)?.message || error || 'unknown error');
+        errors.push({
+          templateId,
+          assigneeId,
+          message: 'Failed to generate survey for this template/assignee',
+          code: 'AUDIT_SURVEY_PAIR_FAILED',
+        });
         logger.error('[audit-programs] generateSurveys pair failed', {
           programId: program.id,
           templateId,
           assigneeId,
-          error: message,
+          error: realMessage,
         });
       }
     }

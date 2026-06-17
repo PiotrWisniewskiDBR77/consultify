@@ -100,7 +100,7 @@ export interface GenerateSurveysResult {
   requested: number;
   created: number;
   failed: number;
-  errors: Array<{ templateId: string; assigneeId: string; message: string }>;
+  errors: Array<{ templateId: string; assigneeId: string; message: string; code?: string }>;
   alreadyGenerated: boolean;
 }
 

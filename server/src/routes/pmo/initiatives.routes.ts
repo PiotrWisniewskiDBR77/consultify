@@ -41,6 +41,7 @@ import {
   getCapacityTimeline,
   getInitiativeCapacity,
 } from '../../services/workloadCapacityService.js';
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   CreateInitiativeSchema,
@@ -71,6 +72,28 @@ function buildPmoInitiativesFailClosedError(
     },
     correlationId: resolvePmoInitiativesCorrelationId(req),
   };
+}
+
+/**
+ * INFO-DISCLOSURE GUARD (M13): legacy handlers in this file historically echoed
+ * raw `err.message` into 500 bodies (`{ error, message: err.message }`), leaking
+ * DB/driver/schema internals to clients. This helper preserves the EXACT legacy
+ * response shape the frontend expects (`{ error, message, code }`) but swaps the
+ * leaky raw value for a stable generic message + code, and logs the real error
+ * server-side instead of returning it.
+ */
+function failInitiative500(
+  res: Response,
+  errorLabel: string,
+  code: string,
+  err: unknown
+) {
+  logger.error(`[M13 Initiatives] ${errorLabel} (${code})`, err);
+  return res.status(500).json({
+    error: errorLabel,
+    message: 'An internal error occurred. Please try again later.',
+    code,
+  });
 }
 
 const notConfigured = (req: any, res: Response) =>
@@ -813,7 +836,7 @@ router.post('/programs', requireOrgRole('user'), async (req: any, res: any) => {
       updatedAt: now,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to create program', message: err.message });
+    return failInitiative500(res, 'Failed to create program', 'PROGRAM_CREATE_FAILED', err);
   }
 });
 
@@ -880,7 +903,7 @@ router.get('/programs/:programId', async (req: any, res: any) => {
       })),
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch program', message: err.message });
+    return failInitiative500(res, 'Failed to fetch program', 'PROGRAM_FETCH_FAILED', err);
   }
 });
 
@@ -956,7 +979,7 @@ router.put('/programs/:programId', requireOrgRole('user'), async (req: any, res:
       updatedAt: updated.updated_at,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to update program', message: err.message });
+    return failInitiative500(res, 'Failed to update program', 'PROGRAM_UPDATE_FAILED', err);
   }
 });
 
@@ -999,7 +1022,7 @@ router.delete('/programs/:programId', requireOrgRole('user'), async (req: any, r
 
     return res.json({ success: true });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to delete program', message: err.message });
+    return failInitiative500(res, 'Failed to delete program', 'PROGRAM_DELETE_FAILED', err);
   }
 });
 
@@ -1085,7 +1108,7 @@ router.post('/:id/duplicate', async (req: any, res: any) => {
 
     return res.status(201).json({ id: newId });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to duplicate initiative', message: err.message });
+    return failInitiative500(res, 'Failed to duplicate initiative', 'INITIATIVE_DUPLICATE_FAILED', err);
   }
 });
 
@@ -1106,7 +1129,7 @@ router.get('/templates', async (req: any, res: any) => {
     });
     return res.json({ templates });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch templates', message: err.message });
+    return failInitiative500(res, 'Failed to fetch templates', 'TEMPLATES_FETCH_FAILED', err);
   }
 });
 
@@ -1127,7 +1150,7 @@ router.get('/templates/:templateId', async (req: any, res: any) => {
     }
     return res.json({ template: tpl });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch template', message: err.message });
+    return failInitiative500(res, 'Failed to fetch template', 'TEMPLATE_FETCH_FAILED', err);
   }
 });
 
@@ -1147,7 +1170,7 @@ router.post('/templates', async (req: any, res: any) => {
     );
     return res.status(201).json({ template });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to create template', message: err.message });
+    return failInitiative500(res, 'Failed to create template', 'TEMPLATE_CREATE_FAILED', err);
   }
 });
 
@@ -1177,7 +1200,7 @@ router.put('/templates/:templateId', async (req: any, res: any) => {
     );
     return res.json({ template: updated });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to update template', message: err.message });
+    return failInitiative500(res, 'Failed to update template', 'TEMPLATE_UPDATE_FAILED', err);
   }
 });
 
@@ -1203,7 +1226,7 @@ router.delete('/templates/:templateId', async (req: any, res: any) => {
     await initiativeTemplateService.deleteTemplate(String(templateId));
     return res.json({ success: true });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to delete template', message: err.message });
+    return failInitiative500(res, 'Failed to delete template', 'TEMPLATE_DELETE_FAILED', err);
   }
 });
 
@@ -1244,7 +1267,7 @@ router.post('/templates/:templateId/duplicate', async (req: any, res: any) => {
     );
     return res.status(201).json({ template: duplicate });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to duplicate template', message: err.message });
+    return failInitiative500(res, 'Failed to duplicate template', 'TEMPLATE_DUPLICATE_FAILED', err);
   }
 });
 
@@ -1309,7 +1332,7 @@ router.get('/templates/:templateId/wbs', async (req: any, res: any) => {
     const tree = await blueprintService.getWbsTree(String(templateId));
     return res.json({ wbs: tree });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch WBS', message: err.message });
+    return failInitiative500(res, 'Failed to fetch WBS', 'WBS_FETCH_FAILED', err);
   }
 });
 
@@ -1350,7 +1373,7 @@ router.post('/templates/:templateId/wbs', requireOrgRole('user'), async (req: an
     });
     return res.status(201).json({ item });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to add WBS item', message: err.message });
+    return failInitiative500(res, 'Failed to add WBS item', 'WBS_ADD_FAILED', err);
   }
 });
 
@@ -1374,7 +1397,7 @@ router.put(
       if (!item) return res.status(404).json({ error: 'WBS item not found' });
       return res.json({ item });
     } catch (err: any) {
-      return res.status(500).json({ error: 'Failed to update WBS item', message: err.message });
+      return failInitiative500(res, 'Failed to update WBS item', 'WBS_UPDATE_FAILED', err);
     }
   }
 );
@@ -1395,7 +1418,7 @@ router.delete(
       if (!deleted) return res.status(404).json({ error: 'WBS item not found' });
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: 'Failed to delete WBS item', message: err.message });
+      return failInitiative500(res, 'Failed to delete WBS item', 'WBS_DELETE_FAILED', err);
     }
   }
 );
@@ -1420,7 +1443,7 @@ router.post(
       await blueprintService.reorderWbsItems(String(templateId), items);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(500).json({ error: 'Failed to reorder WBS items', message: err.message });
+      return failInitiative500(res, 'Failed to reorder WBS items', 'WBS_REORDER_FAILED', err);
     }
   }
 );
@@ -1437,7 +1460,7 @@ router.get('/templates/:templateId/validate', async (req: any, res: any) => {
     const validation = await blueprintService.validateBlueprint(String(templateId));
     return res.json(validation);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to validate blueprint', message: err.message });
+    return failInitiative500(res, 'Failed to validate blueprint', 'BLUEPRINT_VALIDATE_FAILED', err);
   }
 });
 
@@ -1463,7 +1486,7 @@ router.post('/templates/:templateId/clone', requireOrgRole('user'), async (req: 
     );
     return res.status(201).json(result);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to clone blueprint', message: err.message });
+    return failInitiative500(res, 'Failed to clone blueprint', 'BLUEPRINT_CLONE_FAILED', err);
   }
 });
 
@@ -1506,7 +1529,12 @@ router.patch(
         initiativeTemplateId: templateId ? String(templateId) : null,
       });
     } catch (err: any) {
-      return res.status(500).json({ error: 'Failed to update template', message: err.message });
+      return failInitiative500(
+        res,
+        'Failed to update template',
+        'INITIATIVE_TEMPLATE_ASSIGN_FAILED',
+        err
+      );
     }
   }
 );
@@ -1750,7 +1778,7 @@ router.post('/:id/apply-template', async (req: any, res: any) => {
       created,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to apply template', message: err.message });
+    return failInitiative500(res, 'Failed to apply template', 'TEMPLATE_APPLY_FAILED', err);
   }
 });
 
@@ -1814,7 +1842,7 @@ router.post('/:id/apply-blueprint', requireOrgRole('user'), async (req: any, res
       },
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to apply blueprint', message: err.message });
+    return failInitiative500(res, 'Failed to apply blueprint', 'BLUEPRINT_APPLY_FAILED', err);
   }
 });
 
@@ -1843,7 +1871,7 @@ router.get('/section-types', async (req: any, res: any) => {
     if (isMissingInitiativeSectionTypesTable(err)) {
       return res.json([]);
     }
-    return res.status(500).json({ error: 'Failed to fetch section types', message: err.message });
+    return failInitiative500(res, 'Failed to fetch section types', 'SECTION_TYPES_FETCH_FAILED', err);
   }
 });
 
@@ -1865,7 +1893,7 @@ router.get('/section-types/:id', async (req: any, res: any) => {
     }
     return res.json(sectionType);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch section type', message: err.message });
+    return failInitiative500(res, 'Failed to fetch section type', 'SECTION_TYPE_FETCH_FAILED', err);
   }
 });
 
@@ -1885,7 +1913,7 @@ router.post('/section-types', async (req: any, res: any) => {
     });
     return res.status(201).json(created);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to create section type', message: err.message });
+    return failInitiative500(res, 'Failed to create section type', 'SECTION_TYPE_CREATE_FAILED', err);
   }
 });
 
@@ -1916,7 +1944,7 @@ router.put('/section-types/:id', async (req: any, res: any) => {
     if (err.message?.includes('system')) {
       return res.status(403).json({ error: err.message });
     }
-    return res.status(500).json({ error: 'Failed to update section type', message: err.message });
+    return failInitiative500(res, 'Failed to update section type', 'SECTION_TYPE_UPDATE_FAILED', err);
   }
 });
 
@@ -1947,7 +1975,7 @@ router.delete('/section-types/:id', async (req: any, res: any) => {
     if (err.message?.includes('system')) {
       return res.status(403).json({ error: err.message });
     }
-    return res.status(500).json({ error: 'Failed to delete section type', message: err.message });
+    return failInitiative500(res, 'Failed to delete section type', 'SECTION_TYPE_DELETE_FAILED', err);
   }
 });
 
@@ -1975,9 +2003,12 @@ router.post('/section-types/:id/duplicate', async (req: any, res: any) => {
     );
     return res.status(201).json(duplicated);
   } catch (err: any) {
-    return res
-      .status(500)
-      .json({ error: 'Failed to duplicate section type', message: err.message });
+    return failInitiative500(
+      res,
+      'Failed to duplicate section type',
+      'SECTION_TYPE_DUPLICATE_FAILED',
+      err
+    );
   }
 });
 
@@ -2391,9 +2422,14 @@ router.get('/:id/capacity', async (req: any, res: any) => {
     const capacity = await getInitiativeCapacity(String(orgId), String(req.params.id));
     return res.json(capacity);
   } catch (err: any) {
+    logger.error('[M13 Initiatives] Failed to fetch initiative capacity (INITIATIVE_CAPACITY_FETCH_FAILED)', err);
     return res
       .status(500)
-      .json({ error: 'Failed to fetch initiative capacity', message: err.message });
+      .json({
+        error: 'Failed to fetch initiative capacity',
+        message: 'An internal error occurred. Please try again later.',
+        code: 'INITIATIVE_CAPACITY_FETCH_FAILED',
+      });
   }
 });
 
@@ -2404,9 +2440,14 @@ router.get('/:id/capacity/timeline', async (req: any, res: any) => {
     const timeline = await getCapacityTimeline(String(orgId), String(req.params.id));
     return res.json({ weeks: timeline });
   } catch (err: any) {
+    logger.error('[M13 Initiatives] Failed to fetch capacity timeline (CAPACITY_TIMELINE_FETCH_FAILED)', err);
     return res
       .status(500)
-      .json({ error: 'Failed to fetch capacity timeline', message: err.message });
+      .json({
+        error: 'Failed to fetch capacity timeline',
+        message: 'An internal error occurred. Please try again later.',
+        code: 'CAPACITY_TIMELINE_FETCH_FAILED',
+      });
   }
 });
 

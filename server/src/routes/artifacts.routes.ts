@@ -51,6 +51,39 @@ function getAuthContext(req: any): {
   };
 }
 
+/**
+ * Wave5 runtime services throw plain `Error('...')` for not-found / conflict
+ * conditions, which otherwise fall through asyncHandler to the global error
+ * handler and surface as a generic HTTP 500. This maps the known, controlled
+ * runtime messages to the correct HTTP status + stable code while keeping the
+ * existing `{ success: false, error }` response shape. Unknown errors are
+ * re-thrown so the global handler still returns a generic 500 (no raw-text leak).
+ */
+function respondWave5RuntimeError(res: Response, error: unknown): void {
+  const message = error instanceof Error ? error.message : '';
+
+  if (message === 'Artifact not found' || message === 'Mutation proposal not found') {
+    res.status(404).json({ success: false, error: message });
+    return;
+  }
+  if (
+    message.startsWith('Artifact already has active mutation proposal') ||
+    message.startsWith('Mutation is ')
+  ) {
+    res.status(409).json({ success: false, error: message });
+    return;
+  }
+  if (message.startsWith('Unsupported artifact type')) {
+    res.status(400).json({ success: false, error: message });
+    return;
+  }
+
+  logger.error('[artifacts] Unexpected wave5 runtime error', { message });
+  res
+    .status(500)
+    .json({ success: false, error: 'An unexpected error occurred. Please try again later.' });
+}
+
 function canManageArtifactAccess(params: {
   userId: string;
   roleKey: string | null;
@@ -422,26 +455,31 @@ router.post(
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {
     const { organizationId, userId } = getAuthContext(req);
-    const artifact = await createWave5Artifact({
-      organizationId,
-      userId,
-      artifactType: req.body.artifactType,
-      title: String(req.body.title || 'Untitled artifact'),
-      content: String(req.body.content || ''),
-      canonicalFormat: req.body.canonicalFormat,
-      contentMd: req.body.contentMd,
-      contentJson: req.body.contentJson,
-      contentSchemaVersion: req.body.contentSchemaVersion,
-      projectId: req.body.projectId || null,
-      conversationId: req.body.conversationId || null,
-      researchSessionId: req.body.researchSessionId || null,
-      aiRunId: req.body.aiRunId || null,
-      trustBundleId: req.body.trustBundleId || null,
-      citations: Array.isArray(req.body.citations) ? req.body.citations : [],
-      sourceRefs: Array.isArray(req.body.sourceRefs) ? req.body.sourceRefs : [],
-      metadata: req.body.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
-    });
-    return res.status(201).json({ success: true, artifact });
+    try {
+      const artifact = await createWave5Artifact({
+        organizationId,
+        userId,
+        artifactType: req.body.artifactType,
+        title: String(req.body.title || 'Untitled artifact'),
+        content: String(req.body.content || ''),
+        canonicalFormat: req.body.canonicalFormat,
+        contentMd: req.body.contentMd,
+        contentJson: req.body.contentJson,
+        contentSchemaVersion: req.body.contentSchemaVersion,
+        projectId: req.body.projectId || null,
+        conversationId: req.body.conversationId || null,
+        researchSessionId: req.body.researchSessionId || null,
+        aiRunId: req.body.aiRunId || null,
+        trustBundleId: req.body.trustBundleId || null,
+        citations: Array.isArray(req.body.citations) ? req.body.citations : [],
+        sourceRefs: Array.isArray(req.body.sourceRefs) ? req.body.sourceRefs : [],
+        metadata:
+          req.body.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
+      });
+      return res.status(201).json({ success: true, artifact });
+    } catch (error) {
+      return respondWave5RuntimeError(res, error);
+    }
   })
 );
 
@@ -521,16 +559,21 @@ router.post(
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {
     const { organizationId, userId } = getAuthContext(req);
-    const mutation = await proposeWave5Mutation({
-      organizationId,
-      userId,
-      artifactId: String(req.params.artifactId),
-      proposedContent: String(req.body.proposedContent || ''),
-      summary: req.body.summary || null,
-      mutationType: req.body.mutationType || null,
-      metadata: req.body.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
-    });
-    return res.status(201).json({ success: true, mutation });
+    try {
+      const mutation = await proposeWave5Mutation({
+        organizationId,
+        userId,
+        artifactId: String(req.params.artifactId),
+        proposedContent: String(req.body.proposedContent || ''),
+        summary: req.body.summary || null,
+        mutationType: req.body.mutationType || null,
+        metadata:
+          req.body.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
+      });
+      return res.status(201).json({ success: true, mutation });
+    } catch (error) {
+      return respondWave5RuntimeError(res, error);
+    }
   })
 );
 
@@ -539,12 +582,16 @@ router.post(
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {
     const { organizationId, userId } = getAuthContext(req);
-    const mutation = await rejectWave5Mutation({
-      mutationId: String(req.params.mutationId),
-      organizationId,
-      userId,
-    });
-    return res.json({ success: true, mutation });
+    try {
+      const mutation = await rejectWave5Mutation({
+        mutationId: String(req.params.mutationId),
+        organizationId,
+        userId,
+      });
+      return res.json({ success: true, mutation });
+    } catch (error) {
+      return respondWave5RuntimeError(res, error);
+    }
   })
 );
 
@@ -553,12 +600,16 @@ router.post(
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {
     const { organizationId, userId } = getAuthContext(req);
-    const mutation = await approveWave5Mutation({
-      mutationId: String(req.params.mutationId),
-      organizationId,
-      userId,
-    });
-    return res.json({ success: true, mutation });
+    try {
+      const mutation = await approveWave5Mutation({
+        mutationId: String(req.params.mutationId),
+        organizationId,
+        userId,
+      });
+      return res.json({ success: true, mutation });
+    } catch (error) {
+      return respondWave5RuntimeError(res, error);
+    }
   })
 );
 
@@ -567,12 +618,16 @@ router.post(
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {
     const { organizationId, userId } = getAuthContext(req);
-    const artifact = await commitWave5Mutation({
-      mutationId: String(req.params.mutationId),
-      organizationId,
-      userId,
-    });
-    return res.json({ success: true, artifact });
+    try {
+      const artifact = await commitWave5Mutation({
+        mutationId: String(req.params.mutationId),
+        organizationId,
+        userId,
+      });
+      return res.json({ success: true, artifact });
+    } catch (error) {
+      return respondWave5RuntimeError(res, error);
+    }
   })
 );
 
@@ -581,12 +636,16 @@ router.post(
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {
     const { organizationId, userId } = getAuthContext(req);
-    const artifact = await approveAndCommitWave5Mutation({
-      mutationId: String(req.params.mutationId),
-      organizationId,
-      userId,
-    });
-    return res.json({ success: true, artifact });
+    try {
+      const artifact = await approveAndCommitWave5Mutation({
+        mutationId: String(req.params.mutationId),
+        organizationId,
+        userId,
+      });
+      return res.json({ success: true, artifact });
+    } catch (error) {
+      return respondWave5RuntimeError(res, error);
+    }
   })
 );
 
@@ -594,8 +653,15 @@ router.get(
   '/wave5/:artifactId/export-manifest',
   asyncHandler(async (req: Request, res: Response) => {
     const { organizationId } = getAuthContext(req);
-    const manifest = await buildWave5ExportManifest(String(req.params.artifactId), organizationId);
-    return res.json({ success: true, manifest });
+    try {
+      const manifest = await buildWave5ExportManifest(
+        String(req.params.artifactId),
+        organizationId
+      );
+      return res.json({ success: true, manifest });
+    } catch (error) {
+      return respondWave5RuntimeError(res, error);
+    }
   })
 );
 
@@ -604,8 +670,15 @@ router.post(
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {
     const { organizationId } = getAuthContext(req);
-    const artifact = await markWave5ArtifactExported(String(req.params.artifactId), organizationId);
-    return res.json({ success: true, artifact });
+    try {
+      const artifact = await markWave5ArtifactExported(
+        String(req.params.artifactId),
+        organizationId
+      );
+      return res.json({ success: true, artifact });
+    } catch (error) {
+      return respondWave5RuntimeError(res, error);
+    }
   })
 );
 

@@ -437,6 +437,42 @@ describe('audit-programs generate-surveys fan-out', () => {
     expect(res.body.created).toBe(0);
   });
 
+  // ── INFO-DISCLOSURE: per-pair failures must not leak raw error text ──────────
+  // When the shared interviewAssignmentService.create() throws an error whose
+  // message carries internal schema / DB-driver detail, the generate-surveys
+  // result's errors[] entry must surface a GENERIC client-safe message + a
+  // STABLE code — never the raw text. The real error is logged server-side only.
+  it('does not leak raw assignment-service error text in generate-surveys errors[]', async () => {
+    const LEAKY = 'duplicate key value violates unique constraint "interview_assignments_pkey"';
+    mockCreate.mockRejectedValueOnce(new Error(LEAKY));
+
+    mockDbGet
+      .mockResolvedValueOnce(baseRow()) // 1: initial getProgram
+      .mockResolvedValueOnce(baseRow()) // 2: updateProgram existence check
+      .mockResolvedValueOnce(updatedRow()); // 3: post-update getProgram return
+    mockDbAll
+      .mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]) // org_members check
+      .mockResolvedValueOnce([{ id: TMPL_ID }]); // template org-validation
+
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.failed).toBe(1);
+    // Shape preserved: errors[] with { templateId, assigneeId, message } + new code.
+    expect(Array.isArray(res.body.errors)).toBe(true);
+    expect(res.body.errors).toHaveLength(1);
+    const entry = res.body.errors[0];
+    expect(entry.templateId).toBe(TMPL_ID);
+    expect(entry.assigneeId).toBe(OWN_ASSIGNEE);
+    // Generic message + stable code — and crucially NO raw driver/schema text.
+    expect(entry.code).toBe('AUDIT_SURVEY_PAIR_FAILED');
+    expect(entry.message).toBe('Failed to generate survey for this template/assignee');
+    const serialized = JSON.stringify(res.body);
+    expect(serialized).not.toContain('unique constraint');
+    expect(serialized).not.toContain('interview_assignments_pkey');
+  });
+
   it('idempotent: returns alreadyGenerated=true on second call', async () => {
     const generated = baseRow({
       config: JSON.stringify({

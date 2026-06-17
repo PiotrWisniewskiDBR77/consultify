@@ -5035,7 +5035,7 @@ export const InterviewController = {
         return;
       }
       logger.error('[InterviewController] useTemplate error:', err);
-      res.status(500).json({ error: msg });
+      res.status(500).json({ error: 'Failed to use template', code: 'INTERVIEW_USE_TEMPLATE_FAILED' });
     }
   }),
 

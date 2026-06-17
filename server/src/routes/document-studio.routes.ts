@@ -353,6 +353,19 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+
+/**
+ * Generic client-facing message for unexpected 5xx failures.
+ *
+ * INFO-DISCLOSURE guard: handlers MUST NOT echo raw `err.message` / `String(err)`
+ * (which can carry DB-driver text, file paths, or internal structure) in 5xx
+ * response bodies. The real error is logged server-side; the client receives this
+ * stable, opaque message plus the handler's stable `error` code. Field-level 4xx
+ * validation messages and typed domain-error codes (e.g. DocumentCommentError.code)
+ * are intentionally preserved.
+ */
+const GENERIC_5XX_MESSAGE = 'An unexpected error occurred. Please try again later.';
+
 const logoUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: DOCUMENT_ASSET_MAX_BYTES },
@@ -508,7 +521,7 @@ router.post(
       const status = message === 'template_not_usable' ? 400 : 500;
       res.status(status).json({
         error: status === 400 ? 'template_not_usable' : 'generate_failed',
-        message,
+        message: status === 400 ? message : GENERIC_5XX_MESSAGE,
       });
     }
   })
@@ -798,6 +811,23 @@ function mapServiceErrorToStatus(message: string): number {
   return 500;
 }
 
+/**
+ * Shape-preserving error responder for the source-pack family.
+ *
+ * Known service errors map to a 4xx with their stable code echoed (validation-style).
+ * Anything that maps to 5xx is an unexpected failure: the real message is already
+ * logged by the caller, and the client receives a stable `service_error` code plus a
+ * generic opaque message — never the raw `err.message` (INFO-DISCLOSURE guard).
+ */
+function respondServiceError(res: Response, message: string, fallbackCode: string): void {
+  const status = mapServiceErrorToStatus(message);
+  if (status >= 500) {
+    res.status(status).json({ error: fallbackCode, message: GENERIC_5XX_MESSAGE });
+    return;
+  }
+  res.status(status).json({ error: message, message });
+}
+
 /** Epic E5 — map DocumentLifecycleTransitionError codes to HTTP. */
 function mapLifecycleErrorToStatus(code: DocumentLifecycleTransitionError['code']): number {
   switch (code) {
@@ -1082,9 +1112,8 @@ router.post(
         return;
       }
       const message = err instanceof Error ? err.message : 'source_pack_item_failed';
-      const status = mapServiceErrorToStatus(message);
       logger.warn('[DocumentStudio] source pack item add failed', { message });
-      res.status(status).json({ error: message, message });
+      respondServiceError(res, message, 'source_pack_item_failed');
     }
   })
 );
@@ -1108,8 +1137,8 @@ router.delete(
       res.json({ pack });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'source_pack_item_remove_failed';
-      const status = mapServiceErrorToStatus(message);
-      res.status(status).json({ error: message, message });
+      logger.warn('[DocumentStudio] source pack item remove failed', { message });
+      respondServiceError(res, message, 'source_pack_item_remove_failed');
     }
   })
 );
@@ -1133,8 +1162,8 @@ router.post(
       res.json({ pack });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'source_pack_ready_failed';
-      const status = mapServiceErrorToStatus(message);
-      res.status(status).json({ error: message, message });
+      logger.warn('[DocumentStudio] source pack ready failed', { message });
+      respondServiceError(res, message, 'source_pack_ready_failed');
     }
   })
 );
@@ -1158,8 +1187,8 @@ router.post(
       res.json({ pack });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'source_pack_archive_failed';
-      const status = mapServiceErrorToStatus(message);
-      res.status(status).json({ error: message, message });
+      logger.warn('[DocumentStudio] source pack archive failed', { message });
+      respondServiceError(res, message, 'source_pack_archive_failed');
     }
   })
 );
@@ -1234,9 +1263,8 @@ router.post(
         return;
       }
       const message = err instanceof Error ? err.message : 'chat_create_from_sources_failed';
-      const status = mapServiceErrorToStatus(message);
       logger.warn('[DocumentStudio] chat-first creation failed', { message });
-      res.status(status).json({ error: message, message });
+      respondServiceError(res, message, 'chat_create_from_sources_failed');
     }
   })
 );
@@ -1265,8 +1293,8 @@ router.post(
       res.json({ pack: result.pack, sourceRefs: result.sourceRefs });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'source_pack_attach_failed';
-      const status = mapServiceErrorToStatus(message);
-      res.status(status).json({ error: message, message });
+      logger.warn('[DocumentStudio] source pack attach failed', { message });
+      respondServiceError(res, message, 'source_pack_attach_failed');
     }
   })
 );
@@ -2717,7 +2745,7 @@ router.post(
       }
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] status transition failed', { message });
-      res.status(500).json({ error: 'transition_failed', message });
+      res.status(500).json({ error: 'transition_failed', message: GENERIC_5XX_MESSAGE });
     }
   })
 );
@@ -2773,11 +2801,11 @@ router.post(
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (message === 'document_not_found') {
-        res.status(404).json({ error: 'document_not_found', message });
+        res.status(404).json({ error: 'document_not_found', message: 'document_not_found' });
         return;
       }
       logger.warn('[DocumentStudio] snapshot capture failed', { message });
-      res.status(500).json({ error: 'snapshot_failed', message });
+      res.status(500).json({ error: 'snapshot_failed', message: GENERIC_5XX_MESSAGE });
     }
   })
 );
@@ -2885,7 +2913,7 @@ router.post(
       }
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] rollback failed', { message });
-      res.status(500).json({ error: 'rollback_failed', message });
+      res.status(500).json({ error: 'rollback_failed', message: GENERIC_5XX_MESSAGE });
     }
   })
 );
@@ -3024,7 +3052,7 @@ router.post(
       }
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] create comment failed', { message });
-      res.status(500).json({ error: 'create_comment_failed', message });
+      res.status(500).json({ error: 'create_comment_failed', message: GENERIC_5XX_MESSAGE });
     }
   })
 );
@@ -3086,7 +3114,7 @@ router.post(
       }
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] reply comment failed', { message });
-      res.status(500).json({ error: 'reply_comment_failed', message });
+      res.status(500).json({ error: 'reply_comment_failed', message: GENERIC_5XX_MESSAGE });
     }
   })
 );
@@ -3120,7 +3148,7 @@ router.post(
       }
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] resolve comment failed', { message });
-      res.status(500).json({ error: 'resolve_comment_failed', message });
+      res.status(500).json({ error: 'resolve_comment_failed', message: GENERIC_5XX_MESSAGE });
     }
   })
 );
@@ -3154,7 +3182,7 @@ router.post(
       }
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] reopen comment failed', { message });
-      res.status(500).json({ error: 'reopen_comment_failed', message });
+      res.status(500).json({ error: 'reopen_comment_failed', message: GENERIC_5XX_MESSAGE });
     }
   })
 );
@@ -3186,7 +3214,7 @@ router.delete(
       }
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] delete comment failed', { message });
-      res.status(500).json({ error: 'delete_comment_failed', message });
+      res.status(500).json({ error: 'delete_comment_failed', message: GENERIC_5XX_MESSAGE });
     }
   })
 );
@@ -3414,8 +3442,13 @@ router.get(
           .catch(() => null);
       }
       const message = err instanceof Error ? err.message : 'Failed to export document';
-      const status = message.toLowerCase().includes('not found') ? 404 : 500;
-      res.status(status).json({ error: 'export_failed', message });
+      logger.error('[DocumentStudio] export failed', { message });
+      const notFound = message.toLowerCase().includes('not found');
+      const status = notFound ? 404 : 500;
+      res.status(status).json({
+        error: notFound ? 'document_not_found' : 'export_failed',
+        message: notFound ? 'Document not found' : GENERIC_5XX_MESSAGE,
+      });
     }
   })
 );
