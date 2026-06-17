@@ -21,18 +21,18 @@ describe('AI memory metrics routes (honest 503 when unavailable)', () => {
   it('GET /memory/metrics returns 503 when service is unavailable (no 500)', async () => {
     const res = await request(await mount()).get(`${basePath}/memory/metrics?period=7`);
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' }));
+    expect(res.body).toEqual(expect.objectContaining({ statusCode: 503, status: false, type: 'not_configured' }));
   });
 
   it('GET /memory/current returns 503 when service is unavailable (no 500)', async () => {
     const res = await request(await mount()).get(`${basePath}/memory/current`);
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' }));
+    expect(res.body).toEqual(expect.objectContaining({ statusCode: 503, status: false, type: 'not_configured' }));
   });
 
   it('GET /memory/latency returns 503 when service is unavailable (no 500)', async () => {
     const res = await request(await mount()).get(`${basePath}/memory/latency?hours=24`);
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' }));
+    expect(res.body).toEqual(expect.objectContaining({ statusCode: 503, status: false, type: 'not_configured' }));
   });
 });

@@ -80,7 +80,7 @@ describe('useKnowledge V8 read bridge', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/public?lang=en&limit=3');
+    expect(mockFetch).toHaveBeenCalledWith('/api/public/kb-v8/public?lang=en&limit=3&site=consultify');
     expect(result.current.data?.[0].slug).toBe('landing-preview');
     expect(V8KnowledgeBaseApi.getPublicPreview).not.toHaveBeenCalled();
   });
@@ -117,7 +117,7 @@ describe('useKnowledge V8 read bridge', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(V8KnowledgeBaseApi.getFeaturedArticles).toHaveBeenCalledWith('en', 4);
-    expect(mockFetch).toHaveBeenNthCalledWith(1, '/api/public/kb-v8/featured?lang=en&limit=4');
+    expect(mockFetch).toHaveBeenNthCalledWith(1, '/api/public/kb-v8/featured?lang=en&limit=4&site=consultify');
     expect(mockFetch).toHaveBeenNthCalledWith(2, '/api/kb/featured?lang=en&limit=4');
     expect(result.current.data?.[0].slug).toBe('featured-fallback');
   });

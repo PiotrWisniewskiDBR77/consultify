@@ -17,8 +17,8 @@ import {
 
 describe('P04 KPI Closed-Loop Workflow', () => {
   describe('Signal types', () => {
-    it('has exactly 5 signal types per canon', () => {
-      expect(KpiSignalTypeValues).toHaveLength(5);
+    it('has exactly 6 signal types per canon', () => {
+      expect(KpiSignalTypeValues).toHaveLength(6);
     });
     it.each([...KpiSignalTypeValues])(
       'signal type "%s" is a valid closed-loop trigger',
