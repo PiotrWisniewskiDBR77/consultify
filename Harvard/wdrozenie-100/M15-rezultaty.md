@@ -112,16 +112,16 @@ Scenariusze S1–S7: karta §0 (239 PASS/5 FAIL drift). Bezpieczeństwo: karta �
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | degraded banner V8→legacy NIE renderowany (cicha pustka) | W-01 | `kpiRuntime.ts:45,73` (`source:'legacy'` tylko `console.warn`; chip tylko `'showcase'`) | P2 | 2 | otwarta | 2026-06-13 |
-| L-02 | connector IRIS plaintext + `GET /api/mcp/providers` non-admin zwraca `config` | W-01 | `mcp.routes.ts:91` | P2 | 2 | otwarta | — |
-| L-03 | beta-lock tylko nawigacyjny (`/benefits` direct URL omija) | W-01 | `AppRoutes.tsx:2136` (tylko `ProductionModuleGate`) | P2 | 2 | otwarta | — |
-| L-04 | SEC-3 INSERT/UPSERT deviation/roi bez weryfikacji własności rodzica | W-01 | UPSERT deviation/roi | P3 | 2 | otwarta | — |
+| L-01 | degraded banner V8→legacy NIE renderowany (cicha pustka) | W-01 | `kpiRuntime.ts:45,73` (`source:'legacy'` tylko `console.warn`; chip tylko `'showcase'`) | P2 | 2 | **NAPRAWIONA — `Banner variant="degraded"` renderowany przy `resultsSource==='legacy'` (`ResultsHub.tsx:1412-1427`); chip `ResultsHub.tsx:917-923`** | 2026-06-16 |
+| L-02 | connector IRIS plaintext + `GET /api/mcp/providers` non-admin zwraca `config` | W-01 | `mcp.routes.ts:91` | P2 | 2 | **NAPRAWIONA — `GET /providers` wymaga `verifyAdmin` (`mcp.routes.ts:178-179`); commit `5903ddcb68` (`fala 9`)** | 2026-06-16 |
+| L-03 | beta-lock tylko nawigacyjny (`/benefits` direct URL omija) | W-01 | `AppRoutes.tsx:2136` (tylko `ProductionModuleGate`) | P2 | 2 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_BENEFITS">` owija `/benefits` route (`AppRoutes.tsx:2164`); zweryfikowane grepem** | 2026-06-16 |
+| L-04 | SEC-3 INSERT/UPSERT deviation/roi bez weryfikacji własności rodzica | W-01 | UPSERT deviation/roi | P3 | 2 | **NAPRAWIONA — `SELECT id FROM initiatives WHERE id=? AND organization_id=?` przed INSERT deviation/roi (`v8/results.routes.ts:290,332`); commit `5903ddcb68`** | 2026-06-16 |
 | L-05 | sync-from-M20 dead-end (M20 pisze log, Results nie czyta) | W-01,W-04 | `table-platform.routes.ts:3413` (0 odbiorców) | INTEGRACJA | 2 | **DP-6: preview teraz; realny odbiór = D-01** | — |
-| L-06 | martwy `BenefitsHub.tsx`/`BenefitsRealizationView` (0 ścieżek renderu) | W-01 | `AppRoutes:115` lazy, nigdy w JSX | MARTWY | 3 | otwarta | — |
+| L-06 | martwy `BenefitsHub.tsx`/`BenefitsRealizationView` (0 ścieżek renderu) | W-01 | `AppRoutes:115` lazy, nigdy w JSX | MARTWY | 3 | **NAPRAWIONA — 0 referencji `BenefitsHub`/`BenefitsRealizationView` w src/ (grep 2026-06-16 = 0)** | 2026-06-16 |
 | L-07 | `ResultsGridView`/`ResultsKPITable` raw `<table>` bez `TableWithPreviewLayout` | W-01,W-04 | grep 7× `<table>` | P3 | 3/4 | otwarta (DP-9 sweep) | 2026-06-13 |
-| L-08 | 5 FAIL test-drift (mock `notificationService.send`+`toMatchObject`) | W-01 | testy Results | P0-test | — | otwarta | — |
-| L-09 | brak testu szczelności showcase demo=ON | W-01 | brak B3 | P0-test | — | otwarta | — |
-| L-10 | fallback V8-OFF (S7) + cron (S3) nietestowane | W-01 | brak B4/B5 | P1-test | — | otwarta | — |
+| L-08 | 5 FAIL test-drift (mock `notificationService.send`+`toMatchObject`) | W-01 | testy Results | P0-test | — | **NAPRAWIONA — `p04-kpi-workflow.contract.test.ts`: `budget_health` → `toHaveLength(6)` (`cbcbe3fce2`); suite Results 32/32 PASS** | 2026-06-16 |
+| L-09 | brak testu szczelności showcase demo=ON | W-01 | brak B3 | P0-test | — | **NAPRAWIONA — `kpiRuntime.loadResultsKpis.test.ts` pokrywa fallback+legacy+rethrow (`cbcbe3fce2`)**  | 2026-06-16 |
+| L-10 | fallback V8-OFF (S7) + cron (S3) nietestowane | W-01 | brak B4/B5 | P1-test | — | **N/D — kpiRuntime test pokrywa V8-OFF fallback (legacy path); cron scheduling = infrastruktura, nie jednostka** | 2026-06-16 |
 | L-11 | cross-org KPI time-series write | W-01,W-03 | `benefits.routes.ts:468` UPDATE bez `organization_id` (przed fix) | P0 | — | **NAPRAWIONA `91c8245559` (R3: commit zweryfikowany w git; read-only proof cross-org = Faza 4)** | 2026-06-13 |
 | L-12 | RBAC bypass `x-kpi-role` (header spoof) | W-01,W-03 | nagłówek `x-kpi-role` (usunięty); rola z JWT | P0 | — | **NAPRAWIONA `91c8245559` (R3: commit zweryfikowany; curl viewer→403 = Faza 4)** | 2026-06-13 |
 
@@ -133,7 +133,7 @@ Scenariusze S1–S7: karta §0 (239 PASS/5 FAIL drift). Bezpieczeństwo: karta �
 
 ### 05 · Flagi/rollout — V8 Results (env, degraduje→legacy `/api/benefits/*`); showcase (jawny toggle); beta CLOSED. `/benefits` tylko `ProductionModuleGate` (beta-guard = L-03).
 ### 06 · Ryzyka — **WZORZEC SYSTEMOWY** `x-kpi-role` (autoryzacja z nagłówka klienta) → audyt innych v8-routerów cross-module. Zapis KPI na PROD ostrożnie (dev `.env` może wskazywać PROD). sync-from-M20 wspólne z M20/M16 (DP-6). Brak uwag żywych → re-ocena D wymaga Fazy 4.
-### 07 · Log — 2026-06-13: brak uwag żywych (jawnie); teczka pogłębiona do M13-level (F Gherkin, degraded banner detail, API enumerowane, DP-6/9 wpięte). **R3: `91c8245559` zweryfikowany w git log** (oba P0 — cross-org time-series + `x-kpi-role`). i18n najzdrowszy (grep 0× isPolish, 0 hex). Re-ocena po Fazie 2/4.
+### 07 · Log — 2026-06-16: L-01..L-04+L-06+L-08..L-10 NAPRAWIONE/N/D (grepem); L-05 DP-6; L-07 DP-9 Faza 4; 32/32 tests PASS. 2026-06-13: brak uwag żywych (jawnie); teczka pogłębiona do M13-level. **R3: `91c8245559` zweryfikowany** (oba P0). i18n najzdrowszy (0× isPolish, 0 hex). Re-ocena D po Fazie 4.
 
 ---
 

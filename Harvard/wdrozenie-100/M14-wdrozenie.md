@@ -122,12 +122,12 @@ Scenariusze S1–S7 + pokrycie + pułapka CI: karta §0/§2 (633 PASS/23 FAIL lo
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
 | L-01 | gating pilota tylko klient (serwer przepuszcza CRUD) | W-01 | Rollout CRUD `requireOrgRole('user')` (`rollout.routes.ts`, 17 verbs) | P1 | 2 | **ZAMKNIĘTA** — `requireRolloutWrite = requireOrgRole('admin')` na 17 verbów (`rollout.routes.ts:47,104,135,185,254,284,325,373,401,443,491,519,559`); 13/13 testów PASS |
-| L-02 | cicha degradacja `catch→[]` PMO health/action-queue | W-01 | `ExecutionHub.tsx:1301,1317` | P2 | 2 | otwarta (Manager+control tower = naprawione banerem) |
-| L-03 | `ON CONFLICT (id) DO UPDATE` bez org-guard (dismiss tamper) | W-01 | `v8/execution-control.routes.ts:128-132,410-418` | P3 | 3 | otwarta |
+| L-02 | cicha degradacja `catch→[]` PMO health/action-queue | W-01 | `ExecutionHub.tsx:1301,1317` | P2 | 2 | **NAPRAWIONA — `Callout variant="warning"` renderowany przy `healthSnapshotFailed` (`:2960`) i `actionQueueFailed` (`:3718`); zweryfikowane grep** | 2026-06-16 |
+| L-03 | `ON CONFLICT (id) DO UPDATE` bez org-guard (dismiss tamper) | W-01 | `v8/execution-control.routes.ts:128-132,410-418` | P3 | 3 | **NAPRAWIONA — `WHERE risk_signal_alerts.organization_id = ?` w DO UPDATE (`:157`); `WHERE delay_signals.organization_id = ?` (`:424`); komentarz L-03 w kodzie** | 2026-06-16 |
 | L-04 | martwy kod (`ImplementationView`/`views/ExecutionView`/`ExecutionDetailPanel`) + 4 kandydaci | W-01 | importowany nieren./hardcode `projectId="default"` | P2 | 3 | **CZĘŚCIOWO** — `views/ExecutionView.tsx` + `views/ImplementationView.tsx` usunięte (commit `2d5bbc17dd`); 4 kandydaci (D-02 DP-7) pozostają |
 | L-05 | feed-forward M14→M15 martwy (dziura w kręgosłupie) | W-03,W-05 | `ExecutionHub.tsx:945`; brak `?initiativeId=` export | P1 | 2 | **DP-6: preview teraz; realny odbiór = D-01** |
 | L-06 | 5 tabel Rollout poza §27 + bulk-bar Portfel bez akcji + Manager lanes grid | W-01,W-05 | `RolloutTab.tsx` RegisterTable (2 raw `<table>` pokrywa 5 rej.), `ExecutionHub.tsx:4855-4870` | P1 | 4 | otwarta (DP-9 sweep) |
-| L-07 | ~141 kluczy PL brak + hardkody presetów raportów | W-01 | `translation.json` (inline-fallback), `:3338-3343` (5 inline `isPolish`) | P2 | 4 | otwarta |
+| L-07 | ~141 kluczy PL brak + hardkody presetów raportów | W-01 | `translation.json` (inline-fallback), `:3338-3343` (5 inline `isPolish`) | P2 | 4 | **NAPRAWIONA — `1dbca1d245` (101 kluczy execution.* PL+EN; koniec inline-fallback)** | 2026-06-16 |
 | L-08 | testy: `rollout.routes` BE (S5), kanban-DnD (S2), raporty (S6); env-drift | W-01 | brak `rollout.routes.test.ts`; role „iris", `localhost:3005` | P0-test | 2/4 | **CZĘŚCIOWO** — `rollout.routes.test.ts` gotowy, 13/13 PASS (persist, org-scope, L-01 gating); kanban-DnD + raporty nie pokryte (S2/S6) |
 | L-09 | cross-org write budżetu + task_dependencies | W-01 | `executionBudgetService.ts:413`; `v8/execution-control.routes.ts:1138-1151` | P0 | — | **NAPRAWIONA `b9f2dee9d2`+`9974596da7` (R3: commity zweryfikowane w git; read-only proof cross-org = Faza 4)** |
 
@@ -140,7 +140,7 @@ Scenariusze S1–S7 + pokrycie + pułapka CI: karta §0/§2 (633 PASS/23 FAIL lo
 
 ### 05 · Flagi/rollout — `ENABLE_V8_GLOBAL` (OFF default; Manager lanes + osiągalność v8 ścieżek; degraduje banerem); pilot (rola, gating→serwer L-01); beta core otwarty; migracja `20260608_rollout_tables.sql` zastosowana (potwierdzić na środowiskach — Faza 3).
 ### 06 · Ryzyka — feed-forward (L-05) celuje w beta-closed M15 → DP-6 preview, domknąć realny odbiór po otwarciu bety. `ENABLE_V8_GLOBAL` na staging/prod decyduje o Manager lanes — zweryfikować w Fazie 3. Dev `.env` → Railway PROD — ostrożność z zapisami przy smoke. Brak uwag żywych → re-ocena D wymaga Fazy 4 (nie ma sygnału obniżającego z testów żywych, ale też nie ma dowodu D).
-### 07 · Log — 2026-06-16: L-01+L-04(częściowo)+L-08(częściowo) zamknięte; martwy kod views wyciągnięty. 2026-06-13: brak uwag żywych (jawnie); teczka pogłębiona do M13-level (F Gherkin, C API enumerowane, DP-6/8/9 wpięte). Audyt 2026-06-11/12: ocena 52/100; `b9f2dee9d2`, `9974596da7`, `84757dc672`, `229cb35565`, `2fe1c81be3`. Re-ocena D/G po Fazie 3/4.
+### 07 · Log — 2026-06-16: L-01+L-02+L-03+L-04(częściowo)+L-07+L-08(częściowo) zamknięte; martwy kod views wyciągnięty; bannery degradacji zweryfikowane grepem. 2026-06-13: brak uwag żywych (jawnie); teczka pogłębiona do M13-level (F Gherkin, C API enumerowane, DP-6/8/9 wpięte). Audyt 2026-06-11/12: ocena 52/100; `b9f2dee9d2`, `9974596da7`, `84757dc672`, `229cb35565`, `2fe1c81be3`. Re-ocena D/G po Fazie 3/4.
 
 ---
 
