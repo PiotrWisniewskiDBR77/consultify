@@ -649,15 +649,44 @@ router.post(
   })
 );
 
+const EXPORTABLE_STATES = ['approved', 'published'] as const;
+
+async function assertArtifactExportable(
+  req: Request,
+  res: Response,
+  artifactId: string
+): Promise<{ organizationId: string } | null> {
+  const { organizationId, userId, roleKey } = getAuthContext(req);
+  const artifact = await artifactRegistryService.getArtifactForUser({
+    organizationId,
+    artifactId,
+    userId,
+    roleKey,
+  });
+  if (!artifact) {
+    res.status(404).json({ success: false, error: 'Artifact not found' });
+    return null;
+  }
+  if (!(EXPORTABLE_STATES as readonly string[]).includes(artifact.publishState)) {
+    res.status(403).json({
+      success: false,
+      error: 'Artifact must be approved before export',
+      code: 'EXPORT_NOT_APPROVED',
+      publishState: artifact.publishState,
+    });
+    return null;
+  }
+  return { organizationId };
+}
+
 router.get(
   '/wave5/:artifactId/export-manifest',
   asyncHandler(async (req: Request, res: Response) => {
-    const { organizationId } = getAuthContext(req);
+    const artifactId = String(req.params.artifactId);
+    const ctx = await assertArtifactExportable(req, res, artifactId);
+    if (!ctx) return;
     try {
-      const manifest = await buildWave5ExportManifest(
-        String(req.params.artifactId),
-        organizationId
-      );
+      const manifest = await buildWave5ExportManifest(artifactId, ctx.organizationId);
       return res.json({ success: true, manifest });
     } catch (error) {
       return respondWave5RuntimeError(res, error);
@@ -669,12 +698,11 @@ router.post(
   '/wave5/:artifactId/exported',
   requireAudit,
   asyncHandler(async (req: Request, res: Response) => {
-    const { organizationId } = getAuthContext(req);
+    const artifactId = String(req.params.artifactId);
+    const ctx = await assertArtifactExportable(req, res, artifactId);
+    if (!ctx) return;
     try {
-      const artifact = await markWave5ArtifactExported(
-        String(req.params.artifactId),
-        organizationId
-      );
+      const artifact = await markWave5ArtifactExported(artifactId, ctx.organizationId);
       return res.json({ success: true, artifact });
     } catch (error) {
       return respondWave5RuntimeError(res, error);
