@@ -6,6 +6,7 @@ import logger from '../../../utils/Logger.js';
 import { mcpServer } from '../mcpServer.js';
 import { calculateRoiDraft } from './calculateRoiDraft.js';
 import { createInitiative } from './createInitiative.js';
+import { generateDeliverable } from './generateDeliverable.js';
 import { getInitiative } from './getInitiativeCard.js';
 import { getProjectDetails } from './getProjectDetails.js';
 import { searchInsights } from './searchInsights.js';
@@ -24,6 +25,8 @@ export function registerAllTools(): void {
   mcpServer.registerHandler('search_org_notes', searchOrgNotes as any);
   mcpServer.registerHandler('search_insights', searchInsights as any);
   mcpServer.registerHandler('get_initiative', getInitiative as any);
+  // SPEC_01 kręgosłup czat→deliverable (Tryb A) — self-gate na flagę + rolę.
+  mcpServer.registerHandler('generate_deliverable', generateDeliverable as any);
 
   logger.info('[MCP] Registered tools:', Array.from(mcpServer.tools.keys()).join(', '));
 }

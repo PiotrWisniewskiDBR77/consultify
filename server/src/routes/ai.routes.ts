@@ -11,6 +11,8 @@ import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { featureFlags } from '../config/FeatureFlags.js';
+import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import {
   validateBody,
   validateParams,
@@ -4213,6 +4215,42 @@ router.post(
         status: 'in_progress',
         label: 'Generating response based on gathered context…',
       });
+
+      // SPEC_01 (Tryb A): enable the deliverable function-calling tool for the
+      // standard Teresa chat. The model can call generate_deliverable to create
+      // + open an artifact; the tool's onDeliverable emit becomes an SSE
+      // `{type:'deliverable'}` event the FE consumes to mount the canvas panel.
+      // Gated: flag ON + caller can generate + not a deep-research run.
+      try {
+        const generateRole = String(req.user?.role || req.userRole || 'VIEWER');
+        const deliverableToolsEnabled =
+          featureFlags.ENABLE_DELIVERABLES_LIGHT &&
+          hasPresentationCapability(generateRole, 'presentation_create') &&
+          !aiModes?.deepResearch;
+        if (deliverableToolsEnabled) {
+          (pipelineRequest as any).options = {
+            ...((pipelineRequest as any).options || {}),
+            deliverableTools: {
+              enabled: true,
+              context: {
+                organizationId: req.organizationId,
+                userId: req.userId,
+                conversationId: conversationId || null,
+                language: langCode,
+                role: generateRole,
+                onDeliverable: (payload: Record<string, unknown>) =>
+                  emitSSE({ type: 'deliverable', ...payload }),
+              },
+            },
+          };
+        }
+      } catch (toolWireErr) {
+        logger.warn(
+          `[AI Stream] deliverable tool wiring skipped: ${String(
+            (toolWireErr as Error)?.message || toolWireErr
+          ).slice(0, 160)}`
+        );
+      }
 
       const aiPipeline = await getAIPipeline();
       const response = await (aiPipeline as any).process(

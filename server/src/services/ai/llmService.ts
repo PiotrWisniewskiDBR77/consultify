@@ -1041,6 +1041,29 @@ export class LLMService {
     );
     const wantsReasoning = !!onReasoning && !!params.reasoning;
 
+    // SPEC_01 (Tryb A): optional function-calling on the streaming chat path.
+    // When the caller supplies `tools`, register them so the model can invoke
+    // them mid-stream (e.g. generate_deliverable → opens a canvas draft). The
+    // SDK auto-runs each tool's `execute` server-side and continues generation
+    // (maxSteps), so the visible answer stream is unchanged for the user; the
+    // tool's side effects (and its onDeliverable emit) fire during execution.
+    // Reasoning models (deepseek-reasoner) don't support tools, so AIPipeline
+    // only passes tools when reasoning is OFF — guarded again here for safety.
+    let streamToolDefinitions: Record<string, ReturnType<typeof tool>> | undefined;
+    if (params.tools?.length && !wantsReasoning) {
+      const mcpModule = await import('./mcpServer.js');
+      const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
+      await import('./tools/index.js').catch(() => {});
+      streamToolDefinitions = {};
+      for (const def of params.tools) {
+        streamToolDefinitions[def.name] = tool({
+          description: def.description,
+          parameters: jsonSchema(def.parameters as any),
+          execute: async (args: unknown) => mcpServer.execute(def.name, args, params.context as any),
+        } as any);
+      }
+    }
+
     const circuitCheck = await circuitBreaker.canExecute(providerId);
     if (!circuitCheck.allowed) {
       // Feedback #a9fcdd99 / #3b6c0287 — see matching block in callWithToolsStream.
@@ -1065,6 +1088,14 @@ export class LLMService {
             ...(typeof params.temperature === 'number' ? { temperature: params.temperature } : {}),
             ...(typeof params.maxTokens === 'number' ? { maxOutputTokens: params.maxTokens } : {}),
             ...(providerOptions ? { providerOptions: providerOptions as any } : {}),
+            // SPEC_01 (Tryb A): function-calling on streaming chat. maxSteps lets
+            // the SDK continue generating a confirmation turn AFTER the tool runs
+            // (without it the stream could end on the tool call with no text →
+            // EMPTY_STREAM). Only set when tools are present — normal chat path
+            // is byte-for-byte unchanged.
+            ...(streamToolDefinitions
+              ? { tools: streamToolDefinitions, maxSteps: params.maxIterations ?? 4 }
+              : {}),
             // Reasoning ON: include raw provider chunks so we can read OpenAI-
             // compatible reasoning fields the SDK chat parser drops. DeepSeek-R1
             // (deepseek-reasoner) streams its trace in delta.reasoning_content,

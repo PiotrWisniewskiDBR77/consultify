@@ -101,6 +101,39 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
       message: z.string(),
     }),
   },
+  // ── SPEC_01 kręgosłup czat→deliverable (Tryb A function-calling) ──
+  // READ (auto-exec): tworzy SZKIELET draftu (odwracalny, lifecycle='draft') i
+  // odpala generację w tle. Approval dotyczy dopiero eksportu (M17 L-01), nie
+  // utworzenia draftu — dlatego NIE MUTATION (która by wymagała zgody i nie
+  // wykonała się). Handler self-gate'uje na ENABLE_DELIVERABLES_LIGHT + roli.
+  generate_deliverable: {
+    name: 'generate_deliverable',
+    description:
+      'Create a deliverable artifact (document, spreadsheet, or presentation) from the user request and open it in the canvas on the right. ' +
+      'Use this WHENEVER the user wants something written, drafted, generated, prepared, turned into a document/sheet/deck, or shown/saved in the canvas — including loose phrasings like "I want this in the canvas", "show it on the side", "put this together for me". ' +
+      'After the tool returns, briefly confirm what was created in one sentence. Do NOT claim you created anything unless this tool returned ok:true.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      type: z
+        .enum(['document', 'sheet', 'presentation'])
+        .describe(
+          'The artifact kind: "document" for prose/report/memo/brief, "sheet" for a table/spreadsheet, "presentation" for slides/deck.'
+        ),
+      intent: z
+        .string()
+        .describe(
+          'A clear restatement of what the user wants in the artifact (topic, scope, key points). Use the user language.'
+        ),
+      title: z.string().optional().describe('Optional title; if omitted one is derived from intent.'),
+    }),
+    returns: z.object({
+      ok: z.boolean(),
+      kind: z.string().optional(),
+      title: z.string().optional(),
+      generationId: z.string().optional(),
+      message: z.string(),
+    }),
+  },
   // ── Teresa org-content retrieval (ff_teresaRetrieval / ENABLE_TERESA_RETRIEVAL) ──
   search_org_notes: {
     name: 'search_org_notes',

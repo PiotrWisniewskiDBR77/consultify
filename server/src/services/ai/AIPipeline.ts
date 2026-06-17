@@ -330,6 +330,30 @@ export class AIPipeline {
         const streamAiModes = (request.options as any)?.aiModes || (request.context as any)?.aiModes;
         const showReasoning = streamAiModes?.showReasoning === true;
 
+        // SPEC_01 (Tryb A): function-calling on the chat stream. The route opts
+        // in via options.deliverableTools = { enabled, context: { ..., onDeliverable } }.
+        // Disabled when reasoning is on (deepseek-reasoner has no tool support).
+        const deliverableTools = (request.options as any)?.deliverableTools;
+        const enableDeliverableTools = deliverableTools?.enabled === true && !showReasoning;
+        let deliverableToolDefs:
+          | Array<{ name: string; description: string; parameters: Record<string, unknown> }>
+          | undefined;
+        if (enableDeliverableTools) {
+          try {
+            const mcpModule = await import('./mcpServer.js');
+            const mcp = (mcpModule.mcpServer || mcpModule.default) as any;
+            await import('./tools/index.js').catch(() => {});
+            const def = mcp
+              .getToolDefinitions()
+              .find((d: { name: string }) => d.name === 'generate_deliverable');
+            if (def) deliverableToolDefs = [def];
+          } catch (e: any) {
+            logger.warn(
+              `[AIPipeline] deliverable tool wiring skipped: ${String(e?.message || e).slice(0, 160)}`
+            );
+          }
+        }
+
         // Try primary model, with automatic cross-provider fallback on failure.
         // Important: having multiple API keys (e.g. OpenAI + Gemini) must actually enable failover.
         const tierForFallback = ((request.options as any)?.selectedTier || 'STANDARD') as any;
@@ -412,6 +436,16 @@ export class AIPipeline {
               // capture the deltas. No-ops on providers without reasoning support.
               ...(showReasoning
                 ? { reasoning: { effort: 'medium' as const }, onReasoning: onReasoningDelta }
+                : {}),
+              // SPEC_01 (Tryb A): pass the deliverable tool + emit context when
+              // enabled. callStream registers it and the model can call it to
+              // create+open an artifact mid-stream.
+              ...(deliverableToolDefs
+                ? {
+                    tools: deliverableToolDefs,
+                    context: deliverableTools?.context,
+                    maxIterations: 4,
+                  }
                 : {}),
             });
 
