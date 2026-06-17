@@ -101,15 +101,15 @@ REALNE: connection/connect, referrals (tools/analytics/campaign-links), earnings
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
 | L-01 | silent earnings fallback (hardcoded commissionRate:15) | W-01,W-03,W-04 | `partners.routes.ts:966-977` → 503 DB_ERROR (`:967`) | P2 | — | **ZAMKNIĘTA 2026-06-17 `7cf315b4b9` — ZWERYFIKOWANE w kodzie 2026-06-17** |
-| L-02 | brak E2E happy-path S1 connect→dashboard | W-01 | `tests/integration/partners/` brak | P1-test | 3 | otwarta |
-| L-03 | brak testu payout lifecycle S3 | W-01 | brak earn→payout transition | P1-test | 3 | otwarta |
-| L-04 | brak testu legacy earnings silent-fallback | W-01 | — | P2-test | 4 | otwarta |
-| L-05 | §27 niezastosowany (4 `<table>`) | W-01 | tabele listowe `PartnerPortalView.tsx` | P2 | 4 | otwarta |
-| L-06 | resource download bez partner-org scope | W-01 | `partners.routes.ts:2120-2126` (shared catalog, tier-check OK) | P2 | 3 | otwarta (udokumentować+audit log, D-03) |
-| L-07 | duplikat API surface legacy vs v8 earnings | W-01 | `/api/partners/earnings` vs `/api/v8/partner/earnings-summary` | P2 | 3/4 | otwarta (deprecate legacy po migracji FE) |
-| L-08 | schema drift na prod (5 migracji partner) | W-01,W-06 | prod 2026-05-18 < `726/730_partner_users`, `20260327/0331/0411` | P1 env | 3 | otwarta (migrate+verify przed otwarciem) |
-| L-09 | `PARTNER_SELF_CONNECT_ENABLED` default false | W-01 | flaga | decyzja | 3 | **D-02** |
-| L-10 | 5+ stubów Client Management | W-01,W-05 | `partners.routes.ts:1354,1367,1420,1437,1454,1903,2195` | decyzja | 1/3 | **D-01 (rekom DP-5)** |
+| L-02 | brak E2E happy-path S1 connect→dashboard | W-01 | `tests/integration/partners/` | P1-test | 3 | **ZAMKNIĘTA 2026-06-17 `d574ccac14`** — `partners.happy-path-and-fallback.test.ts` S1 connect→dashboard (connected:true+org / false bez org). 6/6, w CI (glob `tests/integration`). |
+| L-03 | brak testu payout lifecycle S3 | W-01 | `partners.routes.ts` /payouts/request | P1-test | 3 | **ZAMKNIĘTA 2026-06-17 `d574ccac14`** — POST /payouts/request → 201+payout (scope partnerOrgId) + 400 gdy brak payable. |
+| L-04 | brak testu legacy earnings silent-fallback | W-01 | — | P2-test | 4 | **ZAMKNIĘTA 2026-06-17 `d574ccac14`** — GET /earnings → 503 DB_ERROR, ZERO `commissionRate:15`; + happy-path 200. |
+| L-05 | §27 niezastosowany (4 `<table>`) | W-01 | `PartnerPortalView`,`EarningsSection`,`ReferralToolsSection`,`ClientAccessView` | P2 | 4 | **NAPRAWIONA 2026-06-17 `60ca5b0ce4`** — 4 tabele → `FilterableTable` (align §3.3, `EntityStatusChip`, filtry, `persistKey`, Copy/Delete→`RowActionsMenu` §9, empty/loading kanon). Zero `<table>`. Weryf.: tsc 0, Vite 200 ESM, 0 błędów konsoli. Render wizualny portalu pending (auth). i18n dla H2: `partner.clients.col.*`/`.status.*`, `partner.earnings.col.*`/`.status.*`, `partner.referrals.copyLink`, `partner.clientAccess.col.status`. |
+| L-06 | resource download bez partner-org scope | W-01 | `partners.routes.ts` resource download | P2 | 3 | **ZAMKNIĘTA 2026-06-17 `d574ccac14`** (D-03) — shared-catalog by design; gate `requirePartnerOrgId`+`min_partner_tier`; audit z `partner_org_id`+`user_id` już obecny; udokumentowane komentarzem. |
+| L-07 | duplikat API surface legacy vs v8 earnings | W-01 | `/api/partners/earnings` vs `/api/v8/partner/earnings-summary` | P2 | 3/4 | **NAPRAWIONA 2026-06-17 `d574ccac14`** — legacy `@deprecated` + nagłówki `Deprecation`/`Link`→v8 (RFC 8594). Usunięcie po migracji 2 callerów FE (`PartnerRuntimeSummaryStrip:86`,`EarningsSection:304`). |
+| L-08 | schema drift na prod (5 migracji partner) | W-01,W-06 | prod 2026-05-18 < migracje partner | P1 env | 3 | **UDOKUMENTOWANE 2026-06-17** — runbook `M26_SCHEMA_DRIFT_RUNBOOK.md` (dry-run→verify→apply→verify). Migracja prod = Piotr (centerbeam, za zgodą), NIE agent. |
+| L-09 | `PARTNER_SELF_CONNECT_ENABLED` default false | W-01 | flaga | decyzja | 3 | **D-02 — opcje+rekom `_DECYZJE_RUNDA3.md` #10 (rekom: OFF w v1)** |
+| L-10 | 5+ stubów Client Management | W-01,W-05 | `partners.routes.ts:1354,1367,1420,1437,1454,1903,2195` | decyzja | 1/3 | **D-01 — opcje+rekom `_DECYZJE_RUNDA3.md` #9 (rekom: DP-5 flaga+„wkrótce")** |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |

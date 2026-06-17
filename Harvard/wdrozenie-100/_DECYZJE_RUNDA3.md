@@ -65,3 +65,20 @@ Zbiorczy rejestr 8 luk decyzyjnych (D-01/D-02) wymagających rozstrzygnięcia pr
 - Plik: `ModuleSyncService.ts:57-110,90`
 - **DECYZJA: DP-6 preview** (wspólne z #4-5). Flip → PODGLĄD-DP6 (realny odbiór = backlog v1.1).
 - Wykonawca: **Harvard 5**.
+
+---
+
+## M26 Portal Partnerski — decyzje do rozstrzygnięcia (Harvard 1, 2026-06-17)
+
+### 9. M26 L-10 (D-01) — 5+ stubów Client Management → **rekom: DP-5 (ukryj za flagą + „wkrótce")** 🟡 czeka na potwierdzenie
+- Pliki: `partners.routes.ts:1354/1367/1420/1437/1454/1903/2195` — dziś `FEATURE_NOT_AVAILABLE` 503; FE chowa akcje na `code==='FEATURE_NOT_AVAILABLE'`.
+- **Opcje:** A (rekom) DP-5: zostaw honest-stub 503, ukryj wejścia FE za flagą `PARTNER_CLIENT_MGMT_ENABLED` (OFF) + label „wkrótce" (koszt ~0). B: zbuduj pełny Client Management (duży zakres, poza v1). C: usuń z UI (ryzyko niespójności z materiałami sprzedażowymi).
+- **Rekomendacja CTO: A** — honest-stub już wdrożony i poprawny; brakuje tylko flagi+labelu. Budowę (B) → backlog v1.1 z decyzją produktową o zakresie.
+
+### 10. M26 L-09 (D-02) — `PARTNER_SELF_CONNECT_ENABLED` na prod → **rekom: OFF w v1** 🟡 czeka na potwierdzenie
+- Flaga default false; `/connection` już reflektuje flagę → FE chowa „Connect" gdy OFF.
+- **Opcje:** A (rekom) OFF: partnerzy zakładani ręcznie (SuperAdmin/sprzedaż), zero niezweryfikowanych org/abuse, kontrola jakości; portal w pełni działa dla już-połączonych. B: ON (self-connect) — wymaga moderacji/akceptacji/anty-abuse/KYC partnera, przedwczesne dla Alpha.
+- **Rekomendacja CTO: A (OFF) w v1** — self-connect bez warstwy moderacji to ryzyko jakości/abuse; włączyć w v1.1 z procesem akceptacji. Decyzja flagowa (env), odwracalna.
+
+### 11. M26 L-06 (D-03) — resource shared-catalog → **ROZSTRZYGNIĘTE: zostaw shared + audit** ✅
+- **DECYZJA CTO (techniczna):** `partner_resources` to wspólny toolkit; SELECT bez `partner_org_id` zamierzony, dostęp bramkuje `requirePartnerOrgId`+`min_partner_tier`, pobranie audytowane z `partner_org_id`+`user_id`. Udokumentowane w kodzie. Per-tier ograniczenie katalogu → opcjonalny backlog.
