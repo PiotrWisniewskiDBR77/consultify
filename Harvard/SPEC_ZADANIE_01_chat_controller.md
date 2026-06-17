@@ -1,5 +1,7 @@
 # ZADANIE #1 (SYSTEMOWE / P0-program) — Czat jako sterownik aplikacji (Teresa → Canvas)
 
+> **STATUS 2026-06-17 (Harvard 1, Fala 3):** Tryb B **ZAMKNIĘTY** (montaż deterministyczny + handoff event, commity `8a0e64b866`/`5278114d71`). Tryb A uczciwość persony + reasoning realny **ZROBIONE** (`persona.ts:303-319`; `AIPipeline.ts:331-413` natywny reasoning). **Tryb A function-calling ZBUDOWANY** (`a6aea8d2d5`+`e7bd755b04`): narzędzie `generate_deliverable` (doc/sheet/deck) → `plan/start` in-process → SSE `{type:'deliverable'}` → montaż canvasa; testy kontraktowe 6/6; **żywe S-A E2E (zalogowana sesja + LLM na staging) PENDING**. Tryb C (konsolidacja silników artefaktów) **NIE RUSZONY** — pozostaje Fala 3/post-BETA. Mapowanie linii w §2/§5 jest sprzed naprawy (podryfowało) — patrz teczki M01/M17/M18/M19/M20.
+
 > Pełny work-package dla Uwagi #1 z `UWAGI_TESTY_2026-06-13.md`. Klasa: SYSTEMOWE — dotyczy wspólnej warstwy sterującej, nie modułu M02. Sporządzono 2026-06-13 na podstawie 2 równoległych rozpoznań kodu (binding lifecycle + tool contract). Każde twierdzenie z dowodem `plik:linia`. Status: ZDIAGNOZOWANE, fix nie rozpoczęty.
 
 ---
