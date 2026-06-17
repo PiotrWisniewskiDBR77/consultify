@@ -118,20 +118,20 @@ Pełna tabela: karta §1g. **→** M17 Outputs (rejestracja/eksport), M03 (Decyz
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | dwa rozłączne silniki artefaktów (store↔panel) | W-02,W-03 | `SplitLayout.tsx:461` vs `UnifiedChatPanel.tsx:5905`; `core.ts:2248` | INTEGRACJA-program | 0/Tryb C | otwarta (D-01) | 2026-06-13 |
-| L-02 | zerwana więź po `draft-ready` (panel nie przełącza) | W-02,W-03 | `WorkCanvasDocumentPanel.tsx:1035-1070,704-726` | P0-program | 0/Fala1-B | otwarta | 2026-06-13 |
-| L-03 | halucynowane „dodałem" bez tool-calla | W-02,W-03 | brak komunikatu w kodzie; `persona.ts:303-319` | P1-program | 0/Fala2-A | otwarta | 2026-06-13 |
+| L-01 | dwa rozłączne silniki artefaktów (store↔panel) | W-02,W-03 | `SplitLayout.tsx:461` vs `UnifiedChatPanel.tsx:5905`; `core.ts:2248` | INTEGRACJA-program | 0/Tryb C | **ODROCZONA (Fala 3 BETA)** — Tryb C konsolidacji silników, świadomie poza ścieżką krytyczną (SPEC_01 §5 Fala 3); czeka na D-01. = M01/L-09 Tryb C | 2026-06-13 |
+| L-02 | zerwana więź po `draft-ready` (panel nie przełącza) | W-02,W-03 | `WorkCanvasDocumentPanel.tsx:704-747` | P0-program | 0/Fala1-B | **ZAMKNIĘTA 2026-06-17** (R3 — montaż deterministyczny `:722-747` + N-5 guard; commity `8a0e64b866`+`5278114d71`; testy `WorkCanvasDocumentPanel.test.tsx` 33/33) | 2026-06-17 |
+| L-03 | halucynowane „dodałem" bez tool-calla | W-02,W-03 | `persona.ts:306/315` (honesty); `documentIntentDetector.ts` | P1-program | 0/Fala2-A | **CZĘŚCIOWO** — Tryb A: persona honesty contract obecny (`persona.ts:306/315`) + steering (`:598-611`) + intent detector rozszerzony (N-4/N-12); **odroczone:** function-calling `tool_generate_deliverable` = Fala 2 (AI-layer, staging+zgoda). P0 live-blocker zneutralizowany przez Tryb B. = M01/L-09 Tryb A | 2026-06-17 |
 | L-04 | cicha degradacja flaga OFF (legacy redirect bez banera) | W-01,W-06 | `VITE_ENABLE_DELIVERABLES_LIGHT` OFF | P3 | 3 | otwarta | — |
-| L-05 | `POST /:id/generate` default 'deck' | W-01 | `deliverablesGenerations.routes.ts:198` | P3 | 3 | otwarta | — |
-| L-06 | `regenerateSlide` STUB | W-01 | `presentationGeneratorService.ts:1656-1672` | P2 | 3 | **otwarta — R3: `36a6f240ff` istnieje, zakres do potwierdzenia runtime** | 2026-06-13 |
+| L-05 | `POST /:id/generate` default 'deck' | W-01 | `deliverablesGenerations.routes.ts:198-209` | P3 | 3 | **ZAMKNIĘTA 2026-06-17** (brak/zły format → 400 zamiast cichego 'deck'; FE zawsze wysyła jawny format; test `deliverablesGenerations.generate-format.test.ts` 3/3) | 2026-06-17 |
+| L-06 | `regenerateSlide` STUB | W-01 | `presentationGeneratorService.ts:1660-1727` | P2 | 3 | **ZAMKNIĘTA 2026-06-17** (R3 PASS — NIE stub: org-scope query + Narrative Engine `generateNarrative` + post-check gate + surgical deck_json rebuild; commit `36a6f240ff`. D-03/DP-5 „hide" bezprzedmiotowe — realnie działa) | 2026-06-17 |
 | L-07 | brak pickera sourceRefs | W-01 | `docGenerationRuntime.ts:115-187` | P2 | 3 | otwarta | — |
 | L-08 | 8/9 capabilities `canvas.*` martwe serwerowo | W-01 | `work-canvas.routes.ts:3915,3943` | P2 | 3 | otwarta | — |
 | L-09 | GUEST może tworzyć/edytować/materializować | W-01 | RBAC (org-scoped, nie IDOR) | P2-design | 3 | **D-02** | — |
-| L-10 | SEC-M02-3/4 (legacy capability check; share token shape) | W-01 | accept-proposal; `/shared/:token` | P3 | 3 | otwarta | — |
+| L-10 | SEC-M02-3/4 (legacy capability check; share token shape) | W-01 | accept-proposal; `/shared/:token` | P3 | 3 | **CZĘŚCIOWO 2026-06-17** — **L-10b SEC-M02-4 ZAMKNIĘTA** (token-shape `^[0-9a-f]{32}$` walidowany PRZED LIKE-scan w `work-canvas.routes.ts:3959-3966`; test `work-canvas.routes.test.ts` +2). **L-10a SEC-M02-3 OTWARTA** (accept-proposal `:3585` używa legacy `canUseWorkCanvasCapability` zamiast async `requireCanvasCapability`/effective-access — do utwardzenia, P3) | 2026-06-17 |
 | L-11 | panel `WorkCanvasDocumentPanel` bez `useTranslation`, hardkody PL/EN | W-01 | grep: 0× `useTranslation` | P2 | 3/4 | otwarta | 2026-06-13 |
 | L-12 | ~34 surowych util palety w panelu | W-01 | `WorkCanvasDocumentPanel.tsx` | P3 | 4 | otwarta | 2026-06-13 |
-| L-13 | martwy `commitProposalToDomain` duplikat materializera | W-01 | `workCanvasService.ts` | MARTWY | 4 | otwarta | — |
-| L-14 | mock `UnifiedChatPanel.test.tsx` 14 FAIL (brak `setConversationChatLanguage`) | W-01 | test `:90-108`; prod `:3030` | P0-test | — | otwarta | — |
+| L-13 | martwy `commitProposalToDomain` duplikat materializera | W-01 | `workCanvasService.ts:938,1119` | MARTWY | 4 | **FALSE POSITIVE 2026-06-17** (NIE martwy — wywoływany w ścieżce approve-proposal `workCanvasService.ts:1119` `const readBack = await commitProposalToDomain(...)`; aktywny kod) | 2026-06-17 |
+| L-14 | mock `UnifiedChatPanel.test.tsx` 14 FAIL (brak `setConversationChatLanguage`) | W-01 | `tests/components/AIChat/UnifiedChatPanel.test.tsx` | P0-test | — | **ZAMKNIĘTA 2026-06-17** (R3 — mock naprawiony, **29/29 PASS** w tym test „derives chat language from explicit preference"; naprawione przy commitach L-08/steering) | 2026-06-17 |
 | L-15 | brak testów S6 (viewer/revoke) + S7 (cross-org 403) | W-01 | brak regresji | P0-test | — | otwarta | — |
 
 ### 04 · Rejestr decyzji (R5)
@@ -143,7 +143,15 @@ Pełna tabela: karta §1g. **→** M17 Outputs (rejestracja/eksport), M03 (Decyz
 
 ### 05 · Flagi / rollout / beta — `ENABLE_DELIVERABLES_LIGHT` strict `=== 'true'` (OFF→404 backend / legacy redirect FE); `ENABLE_TERESA_RETRIEVAL` (cicha pustka READ-tooli); beta core otwarty.
 ### 06 · Ryzyka i założenia — kręgosłup #1 dotyka M18/M19/M20 (re-ocena D po fixie). Inwentarz/brief STALE (4/6 czerwonych flag obalonych). Dev `.env` → Railway PROD (flagi decydują czy triada żyje). `regenerateSlide` — R3: nie kwalifikować „naprawione" bez potwierdzenia runtime.
-### 07 · Log + re-ocena — 2026-06-13: teczka pogłębiona + spięta z SPEC_01; triada live-proven 06-10; org-scope wzorcowy potwierdzony (2 agentów + osobiście). Re-ocena D po naprawie kręgosłupa (Faza 0).
+### 07 · Log + re-ocena — **2026-06-17 (Harvard 1) — R3 rekonsyliacja + 2 naprawy:**
+> Teczka była nieaktualna (wzorzec jak M01). Zweryfikowane w runtime + testy zielone:
+> - **ZAMKNIĘTE:** L-02 (Tryb B montaż deterministyczny, 33/33) · L-05 (generate→400, 3/3) · L-06 (regenerateSlide realny, R3) · L-10b SEC-M02-4 (token-shape walidacja, +2) · L-14 (mock 29/29).
+> - **FALSE POSITIVE:** L-13 (commitProposalToDomain żywy `:1119`).
+> - **CZĘŚCIOWO/ODROCZONE:** L-01 (Tryb C → Fala 3 BETA) · L-03 (Tryb A honesty done, function-call → Fala 2) · L-10a SEC-M02-3 (legacy cap check, P3).
+> - **OTWARTE (udokumentowane):** L-04 (cichy redirect flaga-OFF, P3 — banner do dodania) · L-07 (sourceRefs picker UI, P2) · L-08 (8/9 capabilities `canvas.*` nieegzekwowane serwerowo, P2 — wymaga decyzji zakresowej) · L-09 (D-02 GUEST, decyzja Piotra) · L-11 (panel bez `useTranslation` — ZABLOKOWANE: locale keys zakazane dla H1) · L-12 (~168 palette → Visual Standard, P3 — nakłada się na program Visual Quality) · L-15 (testy S6/S7 canvas, P0-test — do napisania).
+> - **DEBLOKER #1:** instrukcja flagi Railway dla Piotra → `M02_RAILWAY_DELIVERABLES_FLAG_INSTRUKCJA.md` (VITE_ENABLE_DELIVERABLES_LIGHT build-time + ENABLE_DELIVERABLES_LIGHT runtime). Kod gotowy, deploy czeka na Piotra.
+>
+> 2026-06-13: teczka pogłębiona + spięta z SPEC_01; triada live-proven 06-10; org-scope wzorcowy potwierdzony. Re-ocena D po naprawie kręgosłupa (Faza 0).
 
 ---
 

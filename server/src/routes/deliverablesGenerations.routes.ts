@@ -195,7 +195,17 @@ router.post('/:id/generate', aiRateLimiter, async (req: any, res: Response) => {
   const body = (req.body || {}) as Partial<StartGenerationRequest> & {
     format?: DeliverableFormat;
   };
-  const format = body.format && VALID_FORMATS.includes(body.format) ? body.format : 'deck';
+  // L-05 (M02): an absent/invalid format must FAIL LOUDLY, not silently default
+  // to 'deck'. A missing format means a miswired caller — generating a deck for
+  // a doc/sheet request is a worse outcome than a 400. All live FE callers send
+  // an explicit format ('deck' | 'doc' | 'sheet'), so this only rejects bugs.
+  if (!body.format || !VALID_FORMATS.includes(body.format)) {
+    return res.status(400).json({
+      success: false,
+      error: `format is required and must be one of: ${VALID_FORMATS.join(', ')}`,
+    });
+  }
+  const format = body.format;
   const setup = parseSetupOrRespond(res, format, body.setup);
   if (!setup) return;
   try {

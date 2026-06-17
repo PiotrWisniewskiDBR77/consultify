@@ -3956,6 +3956,14 @@ router.get('/shared/:token', async (req: AuthRequest, res) => {
   const { organizationId } = authContext(req);
   const token = String(req.params.token || '').trim();
   if (!token) return res.status(400).json({ error: 'Share token is required' });
+  // SEC-M02-4 (L-10): canvas share tokens are 32-char hex (randomUUID without
+  // dashes — see POST /drafts/:draftId/share). Reject malformed tokens BEFORE
+  // the `provenance_json LIKE '%<token>%'` scan: an unconstrained, user-shaped
+  // LIKE pattern (e.g. '%' or a short fragment) would match unrelated drafts and
+  // let a caller probe the org's share corpus. Same 404 as "not found" — no oracle.
+  if (!/^[0-9a-f]{32}$/i.test(token)) {
+    return res.status(404).json({ error: 'Shared Canvas draft not found' });
+  }
   const rows = await dbAll<DraftRow>(
     `SELECT * FROM work_canvas_drafts
      WHERE organization_id = ? AND provenance_json LIKE ?

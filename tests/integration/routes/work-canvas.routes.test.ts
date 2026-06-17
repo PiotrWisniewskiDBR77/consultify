@@ -1012,7 +1012,9 @@ describe('work canvas routes', () => {
   });
 
   it('resolves a shared draft token when link is active', async () => {
-    const shareToken = 'shared-token-1';
+    // Real canvas share tokens are 32-char hex (randomUUID without dashes);
+    // SEC-M02-4 rejects anything else before the lookup, so use a valid shape.
+    const shareToken = 'a1b2c3d4e5f600112233445566778899';
     dbAllMock.mockResolvedValueOnce([
       {
         ...draftRow,
@@ -1368,5 +1370,28 @@ describe('work canvas routes', () => {
       expect.arrayContaining(['# Restored Strategy\n\nRecovered context.']),
       expect.any(Object)
     );
+  });
+
+  // SEC-M02-4 (M02/L-10): GET /shared/:token must reject malformed tokens with a
+  // 404 BEFORE running the `provenance_json LIKE '%<token>%'` scan, so a caller
+  // cannot probe the org share corpus with a wildcard or fragment.
+  it('rejects a malformed share token before the LIKE scan (SEC-M02-4)', async () => {
+    for (const bad of ['%', 'abc', 'not-a-token', 'g'.repeat(32), 'a'.repeat(31), 'a'.repeat(33)]) {
+      dbAllMock.mockClear();
+      await request(app)
+        .get(`/api/work-canvas/shared/${encodeURIComponent(bad)}`)
+        .expect(404);
+      // The DB LIKE scan must never run for a malformed token.
+      expect(dbAllMock).not.toHaveBeenCalled();
+    }
+  });
+
+  it('runs the lookup for a well-formed 32-hex token (then 404 on no match)', async () => {
+    dbAllMock.mockClear();
+    dbAllMock.mockResolvedValue([]);
+    const goodToken = 'a'.repeat(32);
+    await request(app).get(`/api/work-canvas/shared/${goodToken}`).expect(404);
+    // A valid-shape token passes the guard and reaches the lookup.
+    expect(dbAllMock).toHaveBeenCalled();
   });
 });
