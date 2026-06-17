@@ -1,0 +1,290 @@
+/**
+ * @vitest-environment jsdom
+ *
+ * T6 — AuditsHub: lista programów + panel dashboardu.
+ * Weryfikuje: loading state, empty state, lista z kartami, wybór programu,
+ * obsługa błędu ładowania, otwieranie kreatora, kasowanie programu.
+ */
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { I18nextProvider } from 'react-i18next';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import i18n from '../../../src/i18n';
+
+// ── Mocks ───────────────────────────────────────────────────────────────────
+
+const mockListPrograms = vi.fn();
+const mockDeleteProgram = vi.fn();
+const mockGenerateSurveys = vi.fn();
+const mockGetCompletion = vi.fn();
+
+vi.mock('../../../src/components/Audit/auditApi', () => ({
+  listPrograms: (...args: unknown[]) => mockListPrograms(...args),
+  deleteProgram: (...args: unknown[]) => mockDeleteProgram(...args),
+  generateSurveys: (...args: unknown[]) => mockGenerateSurveys(...args),
+  getCompletion: (...args: unknown[]) => mockGetCompletion(...args),
+}));
+
+// Stub the wizard — just assert it gets opened, don't test its internals here.
+vi.mock('../../../src/components/Audit/AuditOrchestratorWizard', () => ({
+  AuditOrchestratorWizard: ({ open, onClose }: any) =>
+    open ? (
+      <div data-testid="audit-wizard">
+        <button onClick={onClose}>close-wizard</button>
+      </div>
+    ) : null,
+}));
+
+// ModuleHub: passthrough shell — just render children + the new-item CTA.
+vi.mock('../../../src/components/shared/ModuleHub', () => ({
+  ModuleHub: ({ children, onNewItem, newItemLabel, rightControls }: any) => (
+    <div data-testid="module-hub">
+      <button onClick={onNewItem}>{newItemLabel}</button>
+      {rightControls}
+      {children}
+    </div>
+  ),
+}));
+
+// EntityStatusChip: render label as text.
+vi.mock('../../../src/components/ui/primitives/chips', () => ({
+  EntityStatusChip: ({ label }: any) => <span data-testid="status-chip">{label}</span>,
+}));
+
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+function makeProgram(overrides: Partial<{
+  id: string;
+  name: string;
+  status: string;
+  objective: string | null;
+  templateIds: string[];
+  assigneeIds: string[];
+  surveysGenerated: boolean;
+}> = {}) {
+  return {
+    id: overrides.id ?? 'prog-1',
+    organizationId: 'org-1',
+    name: overrides.name ?? 'ISO 27001 Audit',
+    description: null,
+    objective: overrides.objective ?? 'Ensure compliance',
+    status: overrides.status ?? 'active',
+    preset: null,
+    config: {
+      templateIds: overrides.templateIds ?? ['t-1'],
+      assigneeIds: overrides.assigneeIds ?? ['u-1'],
+      surveysGenerated: overrides.surveysGenerated ?? false,
+    },
+    createdBy: 'u-1',
+    createdAt: '2026-06-17T00:00:00Z',
+    updatedAt: '2026-06-17T00:00:00Z',
+  };
+}
+
+const COMPLETION = { generated: false, total: 1, done: 0, percent: 0, byStatus: {} };
+
+function renderHub() {
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <AuditsHubUnderTest />
+    </I18nextProvider>
+  );
+}
+
+// Import AFTER mocks are registered.
+import { AuditsHub as AuditsHubUnderTest } from '../../../src/components/Audit/AuditsHub';
+
+// ── Tests ────────────────────────────────────────────────────────────────────
+
+describe('AuditsHub — lista + dashboard (T6)', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    mockGetCompletion.mockResolvedValue(COMPLETION);
+    mockDeleteProgram.mockResolvedValue(undefined);
+    mockGenerateSurveys.mockResolvedValue({
+      program: makeProgram({ surveysGenerated: true }),
+      requested: 1,
+      created: 1,
+      failed: 0,
+      errors: [],
+      alreadyGenerated: false,
+    });
+  });
+
+  it('shows loading spinner on initial fetch', async () => {
+    // Never resolves during this test — spinner persists
+    mockListPrograms.mockReturnValue(new Promise(() => {}));
+    renderHub();
+    expect(screen.getByTestId('audits-hub')).toBeInTheDocument();
+    expect(screen.getByText(/ładowanie|loading/i)).toBeInTheDocument();
+  });
+
+  it('shows empty state when no programs', async () => {
+    mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
+    renderHub();
+    await waitFor(() => {
+      expect(screen.getByText(/brak programów audytu|no audit programs yet/i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders program list with name and status chip', async () => {
+    mockListPrograms.mockResolvedValue({
+      programs: [makeProgram({ name: 'Security Audit Q2', status: 'active' })],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    renderHub();
+    await waitFor(() => {
+      expect(screen.getByText('Security Audit Q2')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('status-chip')).toBeInTheDocument();
+  });
+
+  it('renders objective text under program name', async () => {
+    mockListPrograms.mockResolvedValue({
+      programs: [makeProgram({ objective: 'Reduce attack surface' })],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    renderHub();
+    await waitFor(() => {
+      expect(screen.getByText('Reduce attack surface')).toBeInTheDocument();
+    });
+  });
+
+  it('shows template and assignee counts per program', async () => {
+    mockListPrograms.mockResolvedValue({
+      programs: [makeProgram({ templateIds: ['t-1', 't-2'], assigneeIds: ['u-1', 'u-2', 'u-3'] })],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    renderHub();
+    await waitFor(() => {
+      expect(screen.getByText(/2\s*(templates|szablonów)/i)).toBeInTheDocument();
+      expect(screen.getByText(/3\s*(assignees|osób)/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows error on load failure', async () => {
+    mockListPrograms.mockRejectedValue(new Error('DB connection failed'));
+    renderHub();
+    await waitFor(() => {
+      expect(screen.getByText(/db connection failed/i)).toBeInTheDocument();
+    });
+  });
+
+  it('opens wizard on "New audit program" CTA', async () => {
+    mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
+    renderHub();
+    await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
+
+    const newBtn = screen.getByRole('button', { name: /new audit program|nowy program audytu/i });
+    fireEvent.click(newBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('audit-wizard')).toBeInTheDocument();
+    });
+  });
+
+  it('opens ISO 27001 wizard via right-controls button', async () => {
+    mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
+    renderHub();
+    await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
+
+    const isoBtn = screen.getByRole('button', { name: /iso 27001/i });
+    fireEvent.click(isoBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('audit-wizard')).toBeInTheDocument();
+    });
+  });
+
+  it('closes wizard when wizard fires onClose', async () => {
+    mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
+    renderHub();
+    await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
+
+    fireEvent.click(screen.getByRole('button', { name: /new audit program|nowy program audytu/i }));
+    await waitFor(() => screen.getByTestId('audit-wizard'));
+
+    fireEvent.click(screen.getByText('close-wizard'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('audit-wizard')).not.toBeInTheDocument();
+    });
+  });
+
+  it('calls deleteProgram and reloads list on confirm delete', async () => {
+    const prog = makeProgram({ id: 'prog-del', name: 'To Delete' });
+    mockListPrograms
+      .mockResolvedValueOnce({ programs: [prog], total: 1, limit: 50, offset: 0 })
+      .mockResolvedValueOnce({ programs: [], total: 0, limit: 50, offset: 0 });
+
+    renderHub();
+    await waitFor(() => screen.getByText('To Delete'));
+
+    // Delete button: aria-label="Delete" (EN) / "Usuń" (PL)
+    const delBtn = screen.getByRole('button', { name: /^delete$|^usuń$/i });
+    fireEvent.click(delBtn);
+
+    await waitFor(() => {
+      expect(mockDeleteProgram).toHaveBeenCalledWith('prog-del');
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('To Delete')).not.toBeInTheDocument();
+    });
+  });
+
+  it('selects a program by clicking its card — dashboard header appears', async () => {
+    const prog = makeProgram({ name: 'Clickable Program' });
+    mockListPrograms.mockResolvedValue({ programs: [prog], total: 1, limit: 50, offset: 0 });
+
+    renderHub();
+    await waitFor(() => screen.getByText('Clickable Program'));
+
+    // The dashboard panel initially shows "Select a program" placeholder
+    expect(
+      screen.getByText(/select a program to see its dashboard/i)
+    ).toBeInTheDocument();
+
+    const card = screen.getByText('Clickable Program').closest('button')!;
+    fireEvent.click(card);
+
+    // After selection the placeholder is replaced by the program dashboard header
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/select a program to see its dashboard/i)
+      ).not.toBeInTheDocument();
+    });
+    // Dashboard h3 shows program name
+    expect(screen.getAllByText('Clickable Program').length).toBeGreaterThan(0);
+  });
+
+  it('shows "surveys generated" badge when surveysGenerated=true', async () => {
+    mockListPrograms.mockResolvedValue({
+      programs: [
+        makeProgram({
+          surveysGenerated: true,
+          templateIds: ['t-1'],
+          assigneeIds: ['u-1'],
+        }),
+      ],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    renderHub();
+    await waitFor(() => {
+      // The generated count text (0 from fixture creation.created=undefined → 0)
+      // or the send icon badge — find the aria-label
+      const genBtn = screen.getByRole('button', {
+        name: /surveys generated|ankiety wygenerowane/i,
+      });
+      expect(genBtn).toBeInTheDocument();
+    });
+  });
+});

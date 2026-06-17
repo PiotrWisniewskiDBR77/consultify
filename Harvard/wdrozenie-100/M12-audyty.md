@@ -122,7 +122,7 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 | L-06 | lista = karty `<ul>/<li>`, nie §27 | W-01 | `AuditsHub.tsx:343-462` (0 `<table>`) | P3 | 3/4 | otwarta | 2026-06-13 |
 | L-07 | i18n inline `isPolish`+`tr(en,pl)` | W-01,W-05 | Wizard 45 + Hub 48 + presets 3 = **~96** (grep) | P3 | 4 | otwarta (DP-10/M15) | 2026-06-13 |
 | L-08 | hardkod `accentColor="#3b82f6"` | W-01 | `AuditOrchestratorWizard.tsx:285` (1× grep) | P3 | 4 | otwarta | 2026-06-13 |
-| L-09 | brak FE/E2E (S1-S7) | W-01 | brak testów FE (17 BE PASS) | P2-test | — | otwarta | — |
+| L-09 | brak FE/E2E (S1-S7) | W-01 | brak testów FE (17 BE PASS) | P2-test | — | **NAPRAWIONA — T5 `AuditOrchestratorWizard.4step.test.tsx` (8 testów: guard nazwy, 4-krok nawigacja, create/error/close/back) + T6 `AuditsHub.list-dashboard.test.tsx` (12 testów: loading/empty/lista/obiektyw/counts/error/wizard-CTA/ISO-CTA/close/delete/select/generate-badge) = 20/20 PASS** | 2026-06-17 |
 | L-10 | cross-org assignment injection | W-01,W-03 | `auditProgramService.ts:388-401` | P1 | — | **NAPRAWIONA `7df4b22d6d` (R3: commit zweryf. w git; test SEC-3 w Bramce D)** | 2026-06-13 |
 
 ### 04 · Rejestr decyzji (R5)
