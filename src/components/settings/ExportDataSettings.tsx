@@ -7,9 +7,8 @@
  * - Export history
  * - Data retention info
  *
- * Backend endpoints exist in server/routes/settings.js:
- * - POST /api/settings/export-data
- * - POST /api/settings/request-deletion
+ * Backend endpoint: POST /api/settings/export-data
+ * Account deletion: POST /api/settings/gdpr/deletion-request (bcrypt-gated, canonical)
  */
 
 import {
