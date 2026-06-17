@@ -1,6 +1,10 @@
 import { ClipboardCheck } from 'lucide-react';
 import React from 'react';
 
+import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
+import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
+
 const gateRows = [
   ['Wave 0', 'Runtime truth, owners, flags, test data', 'PASS', 'AI OS gate report in hub'],
   ['Wave 1', 'Unified chat, citations, TrustBundleV1', 'PASS', 'chat/trust tests'],
@@ -14,7 +18,52 @@ const gateRows = [
   ['Wave 9', 'Outcomes, KPI/ROI and AI Ops', 'PASS', 'acceptance runtime tests'],
 ];
 
+const gateColumns: TableColumn[] = [
+  {
+    id: 'wave',
+    label: 'Wave',
+    width: '120px',
+    render: (row) => (
+      <span className="font-medium text-slate-900 dark:text-white">{row.wave}</span>
+    ),
+  },
+  {
+    id: 'scope',
+    label: 'Scope',
+    width: '320px',
+    render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.scope}</span>,
+  },
+  {
+    id: 'gate',
+    label: 'Gate',
+    width: '100px',
+    render: (row) => (
+      <span className="font-semibold text-slate-500 dark:text-slate-400">{row.gate}</span>
+    ),
+  },
+  {
+    id: 'evidence',
+    label: 'Evidence',
+    width: '320px',
+    render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.evidence}</span>,
+  },
+];
+
 export const AIOSWave0GateReport: React.FC = () => {
+  const [gateFilters, setGateFilters] = React.useState<FilterChip[]>([]);
+
+  const gateData = React.useMemo(
+    () =>
+      gateRows.map(([wave, scope, gate, evidence]) => ({
+        id: wave,
+        wave,
+        scope,
+        gate,
+        evidence,
+      })),
+    []
+  );
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-navy-900">
       <div className="flex items-start justify-between gap-4">
@@ -36,29 +85,18 @@ export const AIOSWave0GateReport: React.FC = () => {
           static
         </span>
       </div>
-      <div className="mt-4 overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
-          <thead className="text-xs uppercase text-slate-500">
-            <tr>
-              <th className="py-2 pr-4">Wave</th>
-              <th className="py-2 pr-4">Scope</th>
-              <th className="py-2 pr-4">Gate</th>
-              <th className="py-2 pr-4">Evidence</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
-            {gateRows.map(([wave, scope, gate, evidence]) => (
-              <tr key={wave}>
-                <td className="py-2 pr-4 font-medium text-slate-900 dark:text-white">{wave}</td>
-                <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{scope}</td>
-                <td className="py-2 pr-4 font-semibold text-slate-500 dark:text-slate-400">
-                  {gate}
-                </td>
-                <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{evidence}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mt-4">
+        <FilterableTable
+          columns={gateColumns}
+          data={gateData}
+          hideRowActions
+          enableColumnSettings={false}
+          density="compact"
+          activeFilters={gateFilters}
+          onFilterChange={setGateFilters}
+          emptyMessage="No build milestones to display."
+          canvasClassName=""
+        />
       </div>
     </section>
   );
