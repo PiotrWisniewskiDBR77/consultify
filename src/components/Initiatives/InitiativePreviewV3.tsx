@@ -100,16 +100,16 @@ export const InitiativePreviewV3Body: React.FC<{
     try {
       const title = String(initiative.name || initiative.title || '').trim();
       await navigator.clipboard.writeText([title, '', detailsText].filter(Boolean).join('\n'));
-      toast.success(isPolish ? 'Skopiowano' : 'Copied');
+      toast.success(t('initiatives.copied2'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+      toast.error(t('initiatives.copyFailed2'));
     }
   }, [detailsText, initiative.name, initiative.title, isPolish]);
 
   const metaPills = useMemo((): MetaPill[] => {
     const pillClass = 'bg-slate-500/10 text-slate-700 dark:text-slate-200';
     const pills: MetaPill[] = [
-      { label: isPolish ? 'Inicjatywa' : 'Initiative', className: pillClass },
+      { label: t('initiatives.initiative2'), className: pillClass },
       { label: status.replace(/_/g, ' '), className: pillClass },
     ];
     if (progress != null) {
@@ -120,13 +120,13 @@ export const InitiativePreviewV3Body: React.FC<{
     }
     if (axis) {
       pills.push({
-        label: `${isPolish ? 'Oś' : 'Axis'}: ${axis}`,
+        label: `${t('initiatives.axis3')}: ${axis}`,
         className: pillClass,
       });
     }
     if (priority) {
       pills.push({
-        label: `${isPolish ? 'Pilność' : 'Priority'}: ${priority}`,
+        label: `${t('initiatives.priority4')}: ${priority}`,
         className: pillClass,
       });
     }
@@ -138,12 +138,12 @@ export const InitiativePreviewV3Body: React.FC<{
     const actions: DetailsAction[] = [
       {
         id: 'toggle',
-        label: expanded ? (isPolish ? 'Zwiń' : 'Collapse') : isPolish ? 'Rozwiń' : 'Expand',
+        label: expanded ? (t('initiatives.collapse2')) : t('initiatives.expand2'),
         onClick: toggleExpanded,
       },
       {
         id: 'summarize',
-        label: isPolish ? 'Podsumuj' : 'Summarize',
+        label: t('initiatives.summarize2'),
         onClick: async () => {
           await onSummarize?.();
         },
@@ -152,7 +152,7 @@ export const InitiativePreviewV3Body: React.FC<{
         ? [
             {
               id: 'make-document',
-              label: isPolish ? 'Zrób z tego dokument' : 'Make a document from this',
+              label: t('initiatives.makeADocumentFromThis2'),
               onClick: async () => {
                 await onMakeDocument();
               },
@@ -169,13 +169,13 @@ export const InitiativePreviewV3Body: React.FC<{
       },
       {
         id: 'copy-md',
-        label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+        label: t('initiatives.copyAsMarkdown2'),
         onClick: () =>
           void copyAsMarkdown({ title, status, description: detailsText }, isPolish ? 'pl' : 'en'),
       },
       {
         id: 'copy-slack',
-        label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+        label: t('initiatives.copyForSlack2'),
         onClick: () =>
           void copyForSlack({ title, status, description: detailsText }, isPolish ? 'pl' : 'en'),
       },
@@ -200,13 +200,13 @@ export const InitiativePreviewV3Body: React.FC<{
         <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
           <div>
             <div className="text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Utworzono' : 'Created'}
+              {t('initiatives.created2')}
             </div>
             <div className="text-slate-900 dark:text-white">{createdAt}</div>
           </div>
           <div className="text-right">
             <div className="text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Ostatnia zmiana' : 'Last modified'}
+              {t('initiatives.lastModified2')}
             </div>
             <div className="text-slate-900 dark:text-white">{updatedAt}</div>
           </div>
@@ -231,7 +231,7 @@ export const InitiativePreviewV3Body: React.FC<{
           <div className="flex items-center gap-2 mb-2">
             <Link2 size={14} className="text-primary-500" />
             <span className="text-[11px] font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wider">
-              {isPolish ? 'Pochodzenie z Interview Insight' : 'Interview Insight lineage'}
+              {t('initiatives.interviewInsightLineage2')}
             </span>
           </div>
           <div className="space-y-1.5 text-xs text-primary-800 dark:text-primary-200">
@@ -246,7 +246,7 @@ export const InitiativePreviewV3Body: React.FC<{
                 className="flex items-center gap-2 hover:underline"
               >
                 <ExternalLink size={12} />
-                {isPolish ? 'Otwórz źródłowy insight' : 'Open source insight'}
+                {t('initiatives.openSourceInsight2')}
               </button>
             ) : null}
             {lineage.map((item) => (
@@ -413,21 +413,21 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
           <ExternalLink size={12} className="text-primary-500 shrink-0" />
-          {isPolish ? 'Analiza wskaźnikowa' : 'Ratio Analysis'}
+          {t('initiatives.ratioAnalysis2')}
         </button>
         <button
           onClick={() => navigate(`/economics?tab=valuation&initiativeId=${initiativeId}`)}
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
           <ExternalLink size={12} className="text-primary-500 shrink-0" />
-          {isPolish ? 'Wycena przedsiębiorstwa' : 'Company Valuation'}
+          {t('initiatives.companyValuation2')}
         </button>
         <button
           onClick={() => navigate(`/economics?tab=prediction&initiativeId=${initiativeId}`)}
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
           <ExternalLink size={12} className="text-primary-500 shrink-0" />
-          {isPolish ? 'Budżet i predykcja' : 'Budget & Prediction'}
+          {t('initiatives.budgetPrediction2')}
         </button>
         <button
           onClick={() =>
@@ -438,7 +438,7 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
           <ExternalLink size={12} className="text-primary-500 shrink-0" />
-          {isPolish ? 'Wyniki i raporty KPI' : 'Results & KPI reports'}
+          {t('initiatives.resultsKpiReports2')}
         </button>
       </div>
     </div>

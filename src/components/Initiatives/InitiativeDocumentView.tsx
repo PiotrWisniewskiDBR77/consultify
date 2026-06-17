@@ -915,7 +915,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setRaidAiNoSuggestionsMessage(null);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.english2');
       const existingIds = new Set((raidItems || []).map((r: any) => String(r?.id || '')));
       const removalCandidates = buildRaidRemovalCandidates();
 
@@ -1026,9 +1026,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       if (proposal.add.length === 0 && proposal.remove.length === 0) {
         setRaidAiNoSuggestionsMessage(
-          isPolish
-            ? 'AI nie znalazło sugestii zmian — RAID wygląda OK.'
-            : 'AI found no change suggestions — the RAID log looks good.'
+          t('initiatives.aiFoundNoChangeSuggestionsThe3')
         );
       }
 
@@ -1042,7 +1040,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowRaidAIModal(true);
     } catch (e: any) {
       toast.error(
-        e?.message || (isPolish ? 'Nie udało się przeanalizować RAID' : 'Failed to analyze RAID')
+        e?.message || (t('initiatives.failedToAnalyzeRaid2'))
       );
     } finally {
       setIsRaidAIProposing(false);
@@ -1067,7 +1065,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const toRemove = raidAiProposal.remove.filter((r) => !!raidAiSelectedRemoveIds[r.raidId]);
 
     if (toAdd.length === 0 && toRemove.length === 0) {
-      toast(isPolish ? 'Brak wybranych zmian' : 'No selected changes');
+      toast(t('initiatives.noSelectedChanges2'));
       return;
     }
 
@@ -1133,12 +1131,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // best-effort
       }
 
-      toast.success(isPolish ? 'Zastosowano sugestie AI' : 'Applied AI suggestions');
+      toast.success(t('initiatives.appliedAiSuggestions2'));
       closeRaidAIModal();
     } catch (e: any) {
       toast.error(
         e?.message ||
-          (isPolish ? 'Nie udało się zastosować sugestii' : 'Failed to apply suggestions')
+          (t('initiatives.failedToApplySuggestions2'))
       );
     } finally {
       setIsRaidAIProposing(false);
@@ -1260,7 +1258,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           section_completions: prevMap,
         }));
         toast.error(
-          isPolish ? 'Nie udało się zapisać statusu sekcji' : 'Failed to save section status'
+          t('initiatives.failedToSaveSectionStatus2')
         );
       }
     },
@@ -1313,7 +1311,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         await saveInitiativeWriteTruth(initiativeId, patch);
       } catch {
         setInitiative((prev: any) => ({ ...prev, ...snapshot }));
-        toast.error(isPolish ? 'Nie udało się zapisać' : 'Save failed');
+        toast.error(t('initiatives.saveFailed2'));
       }
     },
     [initiativeId, isPolish]
@@ -1557,11 +1555,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const createKpi = useCallback(async () => {
     if (!initiativeId) return;
     if (createKpiMode === 'linked' && !createKpiLibraryId) {
-      toast.error(isPolish ? 'Wybierz KPI z listy' : 'Select a KPI from the list');
+      toast.error(t('initiatives.selectAKpiFromTheList2'));
       return;
     }
     if (createKpiMode === 'manual' && !createKpiName.trim()) {
-      toast.error(isPolish ? 'Nazwa KPI jest wymagana' : 'KPI name is required');
+      toast.error(t('initiatives.kpiNameIsRequired2'));
       return;
     }
 
@@ -1629,17 +1627,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       ]);
       toast.success(
         createKpiMode === 'linked'
-          ? isPolish
-            ? 'KPI podłączone do inicjatywy'
-            : 'KPI linked to initiative'
-          : isPolish
-            ? 'KPI dodane do inicjatywy'
-            : 'KPI added to initiative'
+          ? t('initiatives.kpiLinkedToInitiative2')
+          : t('initiatives.kpiAddedToInitiative2')
       );
       resetCreateKpiDraft();
       setShowCreateKpi(false);
     } catch {
-      toast.error(isPolish ? 'Nie udało się dodać KPI' : 'Failed to add KPI');
+      toast.error(t('initiatives.failedToAddKpi2'));
     } finally {
       setIsMutating(false);
     }
@@ -1713,10 +1707,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             : k
         )
       );
-      toast.success(isPolish ? 'KPI zaktualizowane' : 'KPI updated');
+      toast.success(t('initiatives.kpiUpdated2'));
       cancelEditKpi();
     } catch {
-      toast.error(isPolish ? 'Nie udało się zapisać KPI' : 'Failed to save KPI');
+      toast.error(t('initiatives.failedToSaveKpi2'));
     } finally {
       setIsMutating(false);
     }
@@ -1741,7 +1735,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         const baselineValue = toKpiNumber(kpi.baseline);
         const targetValue = toKpiNumber(kpi.target);
         const res = await Api.post(`/initiatives/${initiativeId}/kpis`, {
-          name: `${kpi.name} (${isPolish ? 'kopia' : 'copy'})`,
+          name: `${kpi.name} (${t('initiatives.copy2')})`,
           category: String(kpi.category || 'benefits'),
           unit: kpi.unit || '%',
           description: null,
@@ -1768,16 +1762,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             : {
                 ...kpi,
                 id: `kpi-${Date.now()}`,
-                name: `${kpi.name} (${isPolish ? 'kopia' : 'copy'})`,
+                name: `${kpi.name} (${t('initiatives.copy2')})`,
                 baseline: String(baselineValue),
                 target: String(targetValue),
                 current: String(baselineValue),
               },
           ...prev,
         ]);
-        toast.success(isPolish ? 'KPI zduplikowane' : 'KPI duplicated');
+        toast.success(t('initiatives.kpiDuplicated2'));
       } catch {
-        toast.error(isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI');
+        toast.error(t('initiatives.failedToDuplicateKpi2'));
       } finally {
         setIsMutating(false);
       }
@@ -1793,9 +1787,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         await Api.delete(`/initiatives/${initiativeId}/kpis/${kpiId}`);
         setLocalKpis((prev) => prev.filter((k) => k.id !== kpiId));
         if (editingKpiId === kpiId) cancelEditKpi();
-        toast.success(isPolish ? 'KPI usunięte' : 'KPI removed');
+        toast.success(t('initiatives.kpiRemoved2'));
       } catch {
-        toast.error(isPolish ? 'Nie udało się usunąć KPI' : 'Failed to remove KPI');
+        toast.error(t('initiatives.failedToRemoveKpi2'));
       } finally {
         setIsMutating(false);
       }
@@ -2011,7 +2005,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               (item: any) => String(item?.id) === String(initiativeId)
             );
             if (!interviewInitiative) {
-              throw new Error(isPolish ? 'Nie znaleziono inicjatywy' : 'Initiative not found');
+              throw new Error(t('initiatives.initiativeNotFound2'));
             }
             return interviewInitiative;
           })
@@ -2190,7 +2184,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
             if (restoredAny) {
               definitionDraftRestoredRef.current = true;
-              toast.success(isPolish ? 'Przywrócono lokalny szkic' : 'Restored local draft');
+              toast.success(t('initiatives.restoredLocalDraft2'));
             }
           }
         } catch {
@@ -2788,7 +2782,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setStatusHistory(truth.statusHistory as any);
       setHistory(truth.history as any);
       onStatusChange?.(action.targetStatus);
-      toast.success(isPolish ? 'Status zaktualizowany' : 'Status updated');
+      toast.success(t('initiatives.statusUpdated2'));
     } catch (e: any) {
       toast.error(
         e?.message ||
@@ -2806,13 +2800,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         const myWatch = watchers.find((w) => w.userId === currentUserId);
         if (myWatch) await Api.delete(`/initiatives/${initiativeId}/watchers/${myWatch.id}`);
         setWatchers((prev) => prev.filter((w) => w.userId !== currentUserId));
-        toast.success(isPolish ? 'Przestałeś obserwować' : 'Stopped watching');
+        toast.success(t('initiatives.stoppedWatching2'));
       } else {
         const res = await Api.post(`/initiatives/${initiativeId}/watchers`, {
           userId: currentUserId,
         });
         setWatchers((prev) => [...prev, res]);
-        toast.success(isPolish ? 'Obserwujesz inicjatywę' : 'Now watching');
+        toast.success(t('initiatives.nowWatching2'));
       }
     } catch (e: any) {
       toast.error(
@@ -2952,7 +2946,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       }
 
       if (!silent) {
-        toast.success(isPolish ? 'Zapisano' : 'Saved');
+        toast.success(t('initiatives.saved2'));
       }
     } catch (e: any) {
       if (!silent) {
@@ -3121,9 +3115,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleCreateTask = async () => {
     if (!canEditCards) {
       toast.error(
-        isPolish
-          ? 'Nie masz uprawnień do edycji na tym etapie inicjatywy.'
-          : 'You do not have edit permissions at this initiative stage.'
+        t('initiatives.youDoNotHaveEditPermissions2')
       );
       return;
     }
@@ -3162,7 +3154,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setNewTaskIsMilestone(false);
       setNewTaskMilestoneDate('');
       setShowCreateTask(false);
-      toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
+      toast.success(t('initiatives.taskCreated2'));
     } catch (e: any) {
       toast.error(
         e?.message || t('initiatives.toast.createTaskError', 'Nie udało się utworzyć zadania')
@@ -3175,9 +3167,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleCreateDecision = async () => {
     if (!canEditCards) {
       toast.error(
-        isPolish
-          ? 'Nie masz uprawnień do edycji na tym etapie inicjatywy.'
-          : 'You do not have edit permissions at this initiative stage.'
+        t('initiatives.youDoNotHaveEditPermissions2')
       );
       return;
     }
@@ -3210,7 +3200,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setDecisions((prev) => [...prev, mapped]);
       setNewDecisionTitle('');
       setShowCreateDecision(false);
-      toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
+      toast.success(t('initiatives.decisionCreated2'));
     } catch (e: any) {
       toast.error(
         e?.message || t('initiatives.toast.createDecisionError', 'Nie udało się utworzyć decyzji')
@@ -3224,18 +3214,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     try {
       await Api.delete(`/decisions/${id}`);
       setDecisions((prev) => prev.filter((d) => d.id !== id));
-      toast.success(isPolish ? 'Decyzja usunięta' : 'Decision removed');
+      toast.success(t('initiatives.decisionRemoved2'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się usunąć decyzji' : 'Failed to remove decision');
+      toast.error(t('initiatives.failedToRemoveDecision2'));
     }
   };
 
   const handleCreateRaid = async () => {
     if (!canEditCards) {
       toast.error(
-        isPolish
-          ? 'Nie masz uprawnień do edycji na tym etapie inicjatywy.'
-          : 'You do not have edit permissions at this initiative stage.'
+        t('initiatives.youDoNotHaveEditPermissions2')
       );
       return;
     }
@@ -3253,7 +3241,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setNewRaidTitle('');
       setNewRaidDescription('');
       setShowCreateRaid(false);
-      toast.success(isPolish ? 'Element RAID dodany' : 'RAID item added');
+      toast.success(t('initiatives.raidItemAdded2'));
     } catch (e: any) {
       toast.error(
         e?.message || t('initiatives.toast.createRaidError', 'Nie udało się dodać elementu RAID')
@@ -3270,7 +3258,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleDeleteRaid = useCallback(
     async (id: string) => {
       setRaidItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success(isPolish ? 'Element RAID usunięty' : 'RAID item removed');
+      toast.success(t('initiatives.raidItemRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/raid/${id}`);
       } catch {
@@ -3298,10 +3286,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           ...prev,
           { ...data, id: newItem.id || `res-${Date.now()}` },
         ]);
-        toast.success(isPolish ? 'Zasób dodany' : 'Resource added');
+        toast.success(t('initiatives.resourceAdded2'));
       } catch (e: any) {
         toast.error(
-          e?.message || (isPolish ? 'Nie udało się dodać zasobu' : 'Failed to add resource')
+          e?.message || (t('initiatives.failedToAddResource2'))
         );
       }
     },
@@ -3325,7 +3313,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleDeleteResource = useCallback(
     async (id: string) => {
       setApiResourceItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success(isPolish ? 'Zasób usunięty' : 'Resource removed');
+      toast.success(t('initiatives.resourceRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/resources/${id}`);
       } catch {
@@ -3341,10 +3329,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         const res = await Api.post(`/initiatives/${initiativeId}/budget-items`, data);
         const newItem = res?.budgetItem || res;
         setApiBudgetItems((prev) => [...prev, { ...data, id: newItem.id || `bi-${Date.now()}` }]);
-        toast.success(isPolish ? 'Pozycja budżetowa dodana' : 'Budget item added');
+        toast.success(t('initiatives.budgetItemAdded2'));
       } catch (e: any) {
         toast.error(
-          e?.message || (isPolish ? 'Nie udało się dodać pozycji' : 'Failed to add budget item')
+          e?.message || (t('initiatives.failedToAddBudgetItem2'))
         );
       }
     },
@@ -3368,7 +3356,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleDeleteBudgetItem = useCallback(
     async (id: string) => {
       setApiBudgetItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success(isPolish ? 'Pozycja usunięta' : 'Budget item removed');
+      toast.success(t('initiatives.budgetItemRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/budget-items/${id}`);
       } catch {
@@ -3384,10 +3372,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         const res = await Api.post(`/initiatives/${initiativeId}/tools`, data);
         const newItem = res?.tool || res;
         setApiToolItems((prev) => [...prev, { ...data, id: newItem.id || `tool-${Date.now()}` }]);
-        toast.success(isPolish ? 'Narzędzie dodane' : 'Tool added');
+        toast.success(t('initiatives.toolAdded2'));
       } catch (e: any) {
         toast.error(
-          e?.message || (isPolish ? 'Nie udało się dodać narzędzia' : 'Failed to add tool')
+          e?.message || (t('initiatives.failedToAddTool2'))
         );
       }
     },
@@ -3409,7 +3397,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleDeleteTool = useCallback(
     async (id: string) => {
       setApiToolItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success(isPolish ? 'Narzędzie usunięte' : 'Tool removed');
+      toast.success(t('initiatives.toolRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/tools/${id}`);
       } catch {
@@ -3429,9 +3417,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           ...prev,
           { ...data, id: newItem.id || `ia-${Date.now()}` },
         ]);
-        toast.success(isPolish ? 'Zasób niematerialny dodany' : 'Intangible asset added');
+        toast.success(t('initiatives.intangibleAssetAdded2'));
       } catch (e: any) {
-        toast.error(e?.message || (isPolish ? 'Nie udało się dodać' : 'Failed to add asset'));
+        toast.error(e?.message || (t('initiatives.failedToAddAsset2')));
       }
     },
     [initiativeId, isPolish]
@@ -3454,7 +3442,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleDeleteIntangibleAsset = useCallback(
     async (id: string) => {
       setApiIntangibleAssets((prev) => prev.filter((item) => item.id !== id));
-      toast.success(isPolish ? 'Zasób niematerialny usunięty' : 'Asset removed');
+      toast.success(t('initiatives.assetRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/intangible-assets/${id}`);
       } catch {
@@ -3519,7 +3507,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     async (item: LinkedItem) => {
       const isDuplicate = linkedItems.some((li) => li.id === item.id && li.type === item.type);
       if (isDuplicate) {
-        toast(isPolish ? 'Ten element jest już powiązany' : 'This item is already linked', {
+        toast(t('initiatives.thisItemIsAlreadyLinked2'), {
           icon: '⚠️',
         });
         return;
@@ -3757,7 +3745,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         : null;
       const target = explicitUrl || fallbackPath;
       if (!target) {
-        toast(isPolish ? 'Brak docelowego linku' : 'No target link available', { icon: 'ℹ️' });
+        toast(t('initiatives.noTargetLinkAvailable2'), { icon: 'ℹ️' });
         return;
       }
       window.open(target, '_blank', 'noopener,noreferrer');
@@ -3769,17 +3757,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     navigator.clipboard
       .writeText(buildArtifactPermalink('initiative', initiativeId))
       .then(() => {
-        toast.success(isPolish ? 'Link do inicjatywy skopiowany' : 'Initiative permalink copied');
+        toast.success(t('initiatives.initiativePermalinkCopied2'));
       })
       .catch(() => {
-        toast.error(isPolish ? 'Nie udało się skopiować linku' : 'Failed to copy link');
+        toast.error(t('initiatives.failedToCopyLink2'));
       })
       .finally(() => {
         setShowMoreMenu(false);
       });
   };
   const handleExportPDF = () => {
-    toast(isPolish ? 'Eksport PDF — wkrótce dostępny' : 'PDF export — coming soon', {
+    toast(t('initiatives.pdfExportComingSoon2'), {
       icon: '📄',
     });
     setShowMoreMenu(false);
@@ -3788,7 +3776,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleGenerateScopeCard = async (): Promise<void> => {
     setIsGeneratingAI('scope');
     const aiLanguage = isPolish ? 'pl' : 'en';
-    const targetLanguageName = isPolish ? 'Polish' : 'English';
+    const targetLanguageName = t('initiatives.english2');
 
     const buildParagraphSystemInstruction = (
       fieldLabel: string,
@@ -3908,9 +3896,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     try {
       // 1) Fill the Description & Context fields (generate if empty, improve if present)
       const [problem, solution, cost, market] = await Promise.all([
-        refineOrGenerate(isPolish ? 'Problem' : 'Problem', symptomDraft, 'paragraph'),
+        refineOrGenerate(t('initiatives.problem2'), symptomDraft, 'paragraph'),
         refineOrGenerate(
-          isPolish ? 'Opis rozwiązania' : 'Proposed Solution',
+          t('initiatives.proposedSolution2'),
           rootCauseDraft,
           'paragraph'
         ),
@@ -3920,7 +3908,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           const mode: 'generate' | 'improve' = String(current || '').trim()
             ? 'improve'
             : 'generate';
-          const fieldLabel = isPolish ? 'Koszt bezczynności' : 'Cost of Inaction';
+          const fieldLabel = t('initiatives.costOfInaction2');
           const systemInstruction = buildParagraphSystemInstruction(fieldLabel, mode, {
             minSentences: 2,
             sentenceRangeHint: '2–6 sentences',
@@ -3960,7 +3948,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           return String(aiRes?.text || '').trim();
         })(),
         refineOrGenerate(
-          isPolish ? 'Kontekst rynkowy' : 'Market Context',
+          t('initiatives.marketContext2'),
           marketContextDraft,
           'paragraph'
         ),
@@ -4007,17 +3995,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       } else {
         const [inScopeText, outScopeText, killText] = await Promise.all([
           refineOrGenerate(
-            isPolish ? 'W zakresie (lista)' : 'In Scope (list)',
+            t('initiatives.inScopeList2'),
             safeInScope.filter(Boolean).join('\n'),
             'list'
           ),
           refineOrGenerate(
-            isPolish ? 'Poza zakresem (lista)' : 'Out of Scope (list)',
+            t('initiatives.outOfScopeList2'),
             safeOutScope.filter(Boolean).join('\n'),
             'list'
           ),
           refineOrGenerate(
-            isPolish ? 'Kryteria rezygnacji (lista)' : 'Kill Criteria (list)',
+            t('initiatives.killCriteriaList2'),
             safeKillCriteria.filter(Boolean).join('\n'),
             'list'
           ),
@@ -4028,10 +4016,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         if (killText) setKillCriteriaItems(normalizeStringList(killText));
       }
 
-      toast.success(isPolish ? 'Scope wygenerowany przez AI' : 'Scope generated by AI');
+      toast.success(t('initiatives.scopeGeneratedByAi2'));
     } catch (e: any) {
       toast.error(
-        e?.message || (isPolish ? 'Generowanie scope nie powiodło się' : 'Generate scope failed')
+        e?.message || (t('initiatives.generateScopeFailed2'))
       );
     } finally {
       setIsGeneratingAI(null);
@@ -4042,7 +4030,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setIsGeneratingAI(section);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.english2');
       const context = {
         sectionKey: section,
         initiativeId,
@@ -4118,7 +4106,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             });
           }
 
-          toast.success(isPolish ? 'Opis wygenerowany przez AI' : 'Description generated by AI');
+          toast.success(t('initiatives.descriptionGeneratedByAi2'));
         } else if (section === 'raid') {
           // Parse RAID JSON and insert items into state
           const parsed =
@@ -4178,18 +4166,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               );
             } else {
               toast.error(
-                isPolish ? 'AI nie wygenerował elementów RAID' : 'AI generated no RAID items'
+                t('initiatives.aiGeneratedNoRaidItems2')
               );
             }
           } else {
             toast.error(
-              isPolish ? 'Nie udało się sparsować odpowiedzi AI' : 'Failed to parse AI response'
+              t('initiatives.failedToParseAiResponse2')
             );
           }
         } else if (section === 'comments') {
           const aiComment: Comment = {
             id: `ai-${Date.now()}`,
-            content: result.content || (isPolish ? '🤖 Analiza AI' : '🤖 AI Analysis'),
+            content: result.content || (t('initiatives.aiAnalysis2')),
             authorId: 'ai-assistant',
             authorName: 'AI Assistant',
             createdAt: new Date().toISOString(),
@@ -4197,7 +4185,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             likedByMe: false,
           };
           setComments((prev) => [aiComment, ...prev]);
-          toast.success(isPolish ? 'AI dodał komentarz' : 'AI added comment');
+          toast.success(t('initiatives.aiAddedComment2'));
         } else {
           // For structured sections, the result is returned to the calling component
           toast.success(
@@ -4208,7 +4196,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
         return result;
       } else {
-        toast.error(isPolish ? 'AI nie zwróciło wyników' : 'AI returned no results');
+        toast.error(t('initiatives.aiReturnedNoResults2'));
         return null;
       }
     } catch (e: any) {
@@ -4232,9 +4220,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     async (section: 'financial-analysis' | 'financial-impact'): Promise<void> => {
       if (!canUseAi) {
         toast.error(
-          isPolish
-            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-            : 'AI is unavailable because you have no edit permissions in this context.'
+          t('initiatives.aiIsUnavailableBecauseYouHave2')
         );
         return;
       }
@@ -4288,17 +4274,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           const cost = pick('costSavings', 'cost_savings');
           const benefits = pick('benefitsRealization', 'benefits_realization');
           if (sizing) parts.push(sizing);
-          if (revenue) parts.push(`${isPolish ? 'Wpływ na przychody' : 'Revenue impact'}: ${revenue}`);
-          if (cost) parts.push(`${isPolish ? 'Oszczędności' : 'Cost savings'}: ${cost}`);
+          if (revenue) parts.push(`${t('initiatives.revenueImpact2')}: ${revenue}`);
+          if (cost) parts.push(`${t('initiatives.costSavings2')}: ${cost}`);
           if (benefits)
-            parts.push(`${isPolish ? 'Realizacja korzyści' : 'Benefits realization'}: ${benefits}`);
+            parts.push(`${t('initiatives.benefitsRealization2')}: ${benefits}`);
           text = parts.join('\n\n').trim() || JSON.stringify(result.parsedContent, null, 2);
         } else {
           text = String(result?.content || '').trim();
         }
 
         if (!text) {
-          toast.error(isPolish ? 'AI nie zwróciło wyników' : 'AI returned no results');
+          toast.error(t('initiatives.aiReturnedNoResults2'));
           return;
         }
 
@@ -4308,9 +4294,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // block and never clobbers the other's content.
         setMarketContextDraft((prev) => upsertFinancialBlock(prev, section, text, isPolish));
         toast.success(
-          isPolish
-            ? 'AI wygenerował propozycję finansową — przejrzyj i zapisz.'
-            : 'AI generated a financial draft — review and save.'
+          t('initiatives.aiGeneratedAFinancialDraftReview2')
         );
       } catch (e: any) {
         toast.error(
@@ -4351,7 +4335,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         deciderId: targetUserId,
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       });
-      toast.success(isPolish ? 'Wysłano prośbę o zatwierdzenie' : 'Approval request sent');
+      toast.success(t('initiatives.approvalRequestSent2'));
       fetchAll();
     } catch (e: any) {
       toast.error(
@@ -4383,9 +4367,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     (taskId: string) => {
       if (isShowcaseArtifactId(taskId)) {
         toast(
-          isPolish
-            ? 'To zadanie demo jest pokazane w kontekście inicjatywy.'
-            : 'This demo task is presented inside the initiative view.'
+          t('initiatives.thisDemoTaskIsPresentedInside2')
         );
         return;
       }
@@ -4399,7 +4381,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         open: {
           type: 'task',
           id: taskId,
-          name: isPolish ? 'Zadanie' : 'Task',
+          name: t('initiatives.task2'),
         },
       });
       setCurrentView(AppView.MY_WORK);
@@ -4411,9 +4393,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     (decisionId: string) => {
       if (isShowcaseArtifactId(decisionId)) {
         toast(
-          isPolish
-            ? 'Ta decyzja demo jest pokazana w kontekście inicjatywy.'
-            : 'This demo decision is presented inside the initiative view.'
+          t('initiatives.thisDemoDecisionIsPresentedInside2')
         );
         return;
       }
@@ -4427,7 +4407,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         open: {
           type: 'decision',
           id: decisionId,
-          name: isPolish ? 'Decyzja' : 'Decision',
+          name: t('initiatives.decision2'),
         },
       });
       setCurrentView(AppView.MY_WORK);
@@ -4438,16 +4418,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleArchive = async () => {
     if (
       !confirm(
-        isPolish
-          ? 'Czy na pewno chcesz zarchiwizować tę inicjatywę?'
-          : 'Are you sure you want to archive this initiative?'
+        t('initiatives.areYouSureYouWantTo3')
       )
     )
       return;
     setIsMutating(true);
     try {
       await Api.post(`/initiatives/${initiativeId}/archive`, {});
-      toast.success(isPolish ? 'Inicjatywa zarchiwizowana' : 'Initiative archived');
+      toast.success(t('initiatives.initiativeArchived2'));
       setShowMoreMenu(false);
       fetchAll();
     } catch (e: any) {
@@ -4459,21 +4437,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleDelete = async () => {
     if (status !== 'DRAFT') {
-      toast.error(isPolish ? 'Można usunąć tylko szkice' : 'Only drafts can be deleted');
+      toast.error(t('initiatives.onlyDraftsCanBeDeleted2'));
       return;
     }
     if (
       !confirm(
-        isPolish
-          ? 'Czy na pewno chcesz usunąć tę inicjatywę?'
-          : 'Are you sure you want to delete this initiative?'
+        t('initiatives.areYouSureYouWantTo4')
       )
     )
       return;
     setIsMutating(true);
     try {
       await Api.delete(`/initiatives/${initiativeId}`);
-      toast.success(isPolish ? 'Inicjatywa usunięta' : 'Initiative deleted');
+      toast.success(t('initiatives.initiativeDeleted2'));
       setShowMoreMenu(false);
       onBack?.();
     } catch (e: any) {
@@ -5337,12 +5313,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default"
                 title={
                   canChangeStatus
-                    ? isPolish
-                      ? 'Zmień status'
-                      : 'Change status'
-                    : isPolish
-                      ? 'Brak dostępnych zmian statusu'
-                      : 'No status changes available'
+                    ? t('initiatives.changeStatus2')
+                    : t('initiatives.noStatusChangesAvailable2')
                 }
               >
                 {/* Current status — always present so the select reflects state */}
@@ -5379,7 +5351,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               value={currentModule}
               onChange={() => {}}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              title={isPolish ? 'Podgląd listy faz' : 'Preview phase list'}
+              title={t('initiatives.previewPhaseList2')}
             >
               {phaseOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -5409,7 +5381,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               value={gateValue}
               onChange={() => {}}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              title={isPolish ? 'Podgląd możliwych kolejnych bram' : 'Preview possible next gates'}
+              title={t('initiatives.previewPossibleNextGates2')}
             >
               {gateOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -5433,9 +5405,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             className="relative"
             title={
               !canEditPriority
-                ? isPolish
-                  ? 'Nie masz uprawnień do edycji priorytetu na tym etapie.'
-                  : 'You cannot edit priority at this stage.'
+                ? t('initiatives.youCannotEditPriorityAtThis2')
                 : undefined
             }
           >
@@ -5484,14 +5454,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             disabled={!canEditOwner}
             title={
               !canEditOwner
-                ? isPolish
-                  ? 'Nie masz uprawnień do edycji właściciela na tym etapie.'
-                  : 'You cannot edit owner at this stage.'
+                ? t('initiatives.youCannotEditOwnerAtThis2')
                 : undefined
             }
             className="w-full h-8 px-2.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
           >
-            <option value="">{isPolish ? '— Wybierz —' : '— Select —'}</option>
+            <option value="">{t('initiatives.select2')}</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.firstName} {u.lastName}
@@ -5516,9 +5484,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             disabled={!canEditTargetDate}
             title={
               !canEditTargetDate
-                ? isPolish
-                  ? 'Nie masz uprawnień do edycji terminu na tym etapie.'
-                  : 'You cannot edit target date at this stage.'
+                ? t('initiatives.youCannotEditTargetDateAt2')
                 : undefined
             }
             className="w-full h-8 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors disabled:opacity-60"
@@ -5556,12 +5522,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           normalizedSourceType === 'interview_insight' ||
           normalizedSourceType === 'insight' ||
           normalizedSourceType === 'conclusion'
-            ? isPolish
-              ? 'Z Insightu: '
-              : 'From Insight: '
-            : isPolish
-              ? 'Z readoutu: '
-              : 'From readout: ';
+            ? t('initiatives.fromInsight2')
+            : t('initiatives.fromReadout2');
         return [
           {
             id: 'sourceInsight',
@@ -5663,16 +5625,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Normal';
   const getCommentPriorityHint = (p: CommentPriority) =>
     p === 'high'
-      ? isPolish
-        ? 'Wymagana natychmiastowa uwaga'
-        : 'Requires immediate attention'
+      ? t('initiatives.requiresImmediateAttention2')
       : p === 'low'
-        ? isPolish
-          ? 'Informacyjny komentarz'
-          : 'Informational comment'
-        : isPolish
-          ? 'Standardowy komentarz'
-          : 'Standard comment';
+        ? t('initiatives.informationalComment2')
+        : t('initiatives.standardComment2');
 
   const handleNModeSubmitComment = () => {
     if (!nCommentDraft.trim()) return;
@@ -5780,7 +5736,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setIsCommentsAIProposing(true);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.english2');
       const existingIds = new Set(comments.map((c) => String((c as any)?.id || '')));
       const removalCandidates = buildCommentRemovalCandidates();
 
@@ -5886,9 +5842,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       const hasAny = proposal.add.length > 0 || proposal.remove.length > 0;
       if (!hasAny && !proposal.note) {
-        proposal.note = isPolish
-          ? 'AI nie znalazło sugestii zmian — wątek komentarzy wygląda OK.'
-          : 'AI found no change suggestions — the comments thread looks good.';
+        proposal.note = t('initiatives.aiFoundNoChangeSuggestionsThe4');
       }
 
       setCommentsAiProposal(proposal);
@@ -5908,7 +5862,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     } catch (e: any) {
       toast.error(
         e?.message ||
-          (isPolish ? 'Nie udało się przeanalizować komentarzy' : 'Failed to analyze comments')
+          (t('initiatives.failedToAnalyzeComments2'))
       );
     } finally {
       setIsCommentsAIProposing(false);
@@ -5932,7 +5886,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     );
 
     if (toAdd.length === 0 && toRemove.length === 0) {
-      toast(isPolish ? 'Brak wybranych zmian' : 'No selected changes');
+      toast(t('initiatives.noSelectedChanges2'));
       return;
     }
 
@@ -5961,7 +5915,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       closeCommentsAIModal();
     } catch {
-      toast.error(isPolish ? 'Nie udało się zastosować sugestii' : 'Failed to apply suggestions');
+      toast.error(t('initiatives.failedToApplySuggestions2'));
     } finally {
       setIsCommentsAIProposing(false);
     }
@@ -6008,9 +5962,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               : 'unknown_event';
           const eventTypeLabel =
             eventType === 'unknown_event'
-              ? isPolish
-                ? 'Nieznane zdarzenie'
-                : 'Unknown event'
+              ? t('initiatives.unknownEvent2')
               : eventType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
           const description = notes || eventTypeLabel;
           return {
@@ -6047,77 +5999,77 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       const MAP: Record<string, ActivityTypeMeta> = {
         created: {
           icon: <Plus size={12} />,
-          label: isPolish ? 'Utworzono' : 'Created',
+          label: t('initiatives.created2'),
           style: 'text-emerald-500 bg-emerald-500/10 border-emerald-400/30',
         },
         status_change: {
           icon: <CheckCircle size={12} />,
-          label: isPolish ? 'Zmiana statusu' : 'Status change',
+          label: t('initiatives.statusChange2'),
           style: 'text-blue-500 bg-blue-500/10 border-blue-400/30',
         },
         update: {
           icon: <Edit3 size={12} />,
-          label: isPolish ? 'Aktualizacja' : 'Update',
+          label: t('initiatives.update2'),
           style: 'text-blue-500 bg-blue-500/10 border-blue-400/30',
         },
         field_change: {
           icon: <Edit3 size={12} />,
-          label: isPolish ? 'Edycja' : 'Edit',
+          label: t('initiatives.edit3'),
           style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
         },
         edit: {
           icon: <Edit3 size={12} />,
-          label: isPolish ? 'Edycja' : 'Edit',
+          label: t('initiatives.edit3'),
           style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
         },
         comment: {
           icon: <MessageSquare size={12} />,
-          label: isPolish ? 'Komentarz' : 'Comment',
+          label: t('initiatives.comment2'),
           style: 'text-indigo-500 bg-indigo-500/10 border-indigo-400/30',
         },
         assignment: {
           icon: <User size={12} />,
-          label: isPolish ? 'Przypisanie' : 'Assignment',
+          label: t('initiatives.assignment2'),
           style: 'text-primary-500 bg-primary-500/10 border-primary-400/30',
         },
         task_added: {
           icon: <CheckSquare size={12} />,
-          label: isPolish ? 'Zadanie' : 'Task added',
+          label: t('initiatives.taskAdded2'),
           style: 'text-sky-500 bg-sky-500/10 border-sky-400/30',
         },
         decision_added: {
           icon: <Scale size={12} />,
-          label: isPolish ? 'Decyzja' : 'Decision added',
+          label: t('initiatives.decisionAdded2'),
           style: 'text-primary-500 bg-primary-500/10 border-primary-400/30',
         },
         risk_added: {
           icon: <AlertTriangle size={12} />,
-          label: isPolish ? 'Ryzyko' : 'Risk added',
+          label: t('initiatives.riskAdded2'),
           style: 'text-amber-500 bg-amber-500/10 border-amber-400/30',
         },
         stakeholder_added: {
           icon: <Users size={12} />,
-          label: isPolish ? 'Interesariusz' : 'Stakeholder',
+          label: t('initiatives.stakeholder2'),
           style: 'text-sky-500 bg-sky-500/10 border-sky-400/30',
         },
         gate_review: {
           icon: <ShieldCheck size={12} />,
-          label: isPolish ? 'Przegląd bramki' : 'Gate review',
+          label: t('initiatives.gateReview2'),
           style: 'text-emerald-500 bg-emerald-500/10 border-emerald-400/30',
         },
         deadline: {
           icon: <Calendar size={12} />,
-          label: isPolish ? 'Termin' : 'Deadline',
+          label: t('initiatives.deadline2'),
           style: 'text-rose-500 bg-rose-500/10 border-rose-400/30',
         },
         priority: {
           icon: <Flag size={12} />,
-          label: isPolish ? 'Priorytet' : 'Priority',
+          label: t('initiatives.priority3'),
           style: 'text-amber-500 bg-amber-500/10 border-amber-400/30',
         },
         escalated: {
           icon: <AlertTriangle size={12} />,
-          label: isPolish ? 'Eskalacja' : 'Escalation',
+          label: t('initiatives.escalation2'),
           style: 'text-amber-500 bg-amber-500/10 border-amber-400/30',
         },
       };
@@ -6146,7 +6098,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Opis i kontekst' : 'Description & Context'}
+                  {t('initiatives.descriptionContext2')}
                 </h2>
               </div>
 
@@ -6155,17 +6107,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      {isPolish ? 'Problem' : 'Problem'}
+                      {t('initiatives.problem2')}
                     </label>
                     <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                      {isPolish
-                        ? 'Jaki problem rozwiązuje ta inicjatywa'
-                        : 'What problem does this initiative solve'}
+                      {t('initiatives.whatProblemDoesThisInitiativeSolve2')}
                     </p>
                   </div>
                   <AIFieldEnhancer
                     fieldKey="initiative-problem"
-                    sectionLabel={isPolish ? 'Problem' : 'Problem'}
+                    sectionLabel={t('initiatives.problem2')}
                     currentValue={symptomDraft}
                     onApply={setSymptomDraft}
                     artifactContext={{
@@ -6181,9 +6131,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onChange={setSymptomDraft}
                   isPolish={isPolish}
                   placeholder={
-                    isPolish
-                      ? 'Jaki problem rozwiązujemy? Co jest nie tak?'
-                      : 'What problem are we solving? What is wrong?'
+                    t('initiatives.whatProblemAreWeSolvingWhat2')
                   }
                 />
               </div>
@@ -6193,17 +6141,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      {isPolish ? 'Opis rozwiązania' : 'Proposed Solution'}
+                      {t('initiatives.proposedSolution2')}
                     </label>
                     <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                      {isPolish
-                        ? 'Proponowane podejście i sposób realizacji'
-                        : 'Proposed approach and implementation method'}
+                      {t('initiatives.proposedApproachAndImplementationMethod2')}
                     </p>
                   </div>
                   <AIFieldEnhancer
                     fieldKey="initiative-proposed-solution"
-                    sectionLabel={isPolish ? 'Opis rozwiązania' : 'Proposed Solution'}
+                    sectionLabel={t('initiatives.proposedSolution2')}
                     currentValue={rootCauseDraft}
                     onApply={setRootCauseDraft}
                     artifactContext={{
@@ -6219,9 +6165,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onChange={setRootCauseDraft}
                   isPolish={isPolish}
                   placeholder={
-                    isPolish
-                      ? 'Jakie rozwiązanie proponujemy? Jakie podejście?'
-                      : 'What solution do we propose? What approach?'
+                    t('initiatives.whatSolutionDoWeProposeWhat2')
                   }
                 />
               </div>
@@ -6231,17 +6175,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      {isPolish ? 'Koszt bezczynności' : 'Cost of Inaction'}
+                      {t('initiatives.costOfInaction2')}
                     </label>
                     <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                      {isPolish
-                        ? 'Konsekwencje braku działania'
-                        : 'Consequences of not taking action'}
+                      {t('initiatives.consequencesOfNotTakingAction2')}
                     </p>
                   </div>
                   <AIFieldEnhancer
                     fieldKey="initiative-cost-of-inaction"
-                    sectionLabel={isPolish ? 'Koszt bezczynności' : 'Cost of Inaction'}
+                    sectionLabel={t('initiatives.costOfInaction2')}
                     currentValue={costOfInactionDraft}
                     onApply={setCostOfInactionDraft}
                     artifactContext={{
@@ -6257,9 +6199,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onChange={setCostOfInactionDraft}
                   isPolish={isPolish}
                   placeholder={
-                    isPolish
-                      ? 'Co się stanie jeśli nie podejmiemy działań?'
-                      : 'What happens if we do nothing?'
+                    t('initiatives.whatHappensIfWeDoNothing2')
                   }
                 />
               </div>
@@ -6269,17 +6209,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      {isPolish ? 'Kontekst rynkowy' : 'Market Context'}
+                      {t('initiatives.marketContext2')}
                     </label>
                     <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                      {isPolish
-                        ? 'Otoczenie rynkowe, konkurencja i trendy'
-                        : 'Market environment, competition and trends'}
+                      {t('initiatives.marketEnvironmentCompetitionAndTrends2')}
                     </p>
                   </div>
                   <AIFieldEnhancer
                     fieldKey="initiative-market-context"
-                    sectionLabel={isPolish ? 'Kontekst rynkowy' : 'Market Context'}
+                    sectionLabel={t('initiatives.marketContext2')}
                     currentValue={marketContextDraft}
                     onApply={setMarketContextDraft}
                     artifactContext={{
@@ -6295,9 +6233,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onChange={setMarketContextDraft}
                   isPolish={isPolish}
                   placeholder={
-                    isPolish
-                      ? 'Kontekst rynkowy, konkurencja, trendy...'
-                      : 'Market context, competition, trends...'
+                    t('initiatives.marketContextCompetitionTrends2')
                   }
                 />
               </div>
@@ -6427,7 +6363,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-primary-500 transition-colors"
                   >
                     <Plus size={12} />
-                    {isPolish ? 'Dodaj' : 'Add item'}
+                    {t('initiatives.addItem2')}
                   </button>
                   <AIFieldEnhancer
                     fieldKey={aiFieldKey}
@@ -6456,7 +6392,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="min-h-[56px] border-b border-slate-200/70 dark:border-navy-700/60 pb-2">
                 {items.length === 0 ? (
                   <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
-                    {isPolish ? 'Brak pozycji' : 'No items yet'}
+                    {t('initiatives.noItemsYet3')}
                   </p>
                 ) : (
                   items.map((item) =>
@@ -6478,7 +6414,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Kryteria sukcesu' : 'Success Criteria'}
+                  {t('initiatives.successCriteria3')}
                 </h2>
               </div>
               {renderChecklistCard(
@@ -6634,7 +6570,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                   >
                     <Plus size={14} />
-                    {isPolish ? 'Dodaj' : 'Add item'}
+                    {t('initiatives.addItem2')}
                   </button>
                   <AIFieldEnhancer
                     fieldKey={aiFieldKey}
@@ -6675,7 +6611,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Kryteria sukcesu' : 'Success Criteria'}
+                  {t('initiatives.successCriteria3')}
                 </h2>
               </div>
 
@@ -6797,7 +6733,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Zakres i ograniczenia' : 'Scope & Kill Criteria'}
+                  {t('initiatives.scopeKillCriteria2')}
                 </h2>
               </div>
 
@@ -6810,12 +6746,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" />
                       <div>
                         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                          {isPolish ? 'W zakresie' : 'In Scope'}
+                          {t('initiatives.inScope3')}
                         </label>
                         <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                          {isPolish
-                            ? 'Elementy, procesy i obszary objęte inicjatywą'
-                            : 'Elements, processes and areas included in this initiative'}
+                          {t('initiatives.elementsProcessesAndAreasIncludedIn2')}
                         </p>
                       </div>
                     </div>
@@ -6825,11 +6759,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                       >
                         <Plus size={14} />
-                        {isPolish ? 'Dodaj' : 'Add item'}
+                        {t('initiatives.addItem2')}
                       </button>
                       <AIFieldEnhancer
                         fieldKey="initiative-scope-in"
-                        sectionLabel={isPolish ? 'W zakresie' : 'In Scope'}
+                        sectionLabel={t('initiatives.inScope3')}
                         currentValue={inScopeItems.filter(Boolean).join('\n')}
                         onApply={(val) => {
                           const lines = val.split('\n').filter((l: string) => l.trim());
@@ -6853,13 +6787,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         updateInScope,
                         removeInScope,
                         'emerald',
-                        isPolish ? 'Element zakresu...' : 'Scope item...',
-                        isPolish ? 'W zakresie — element listy' : 'In Scope — list item'
+                        t('initiatives.scopeItem2'),
+                        t('initiatives.inScopeListItem2')
                       )
                     )}
                     {inScopeItems.length === 0 && (
                       <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
-                        {isPolish ? 'Brak elementów' : 'No items yet'}
+                        {t('initiatives.noItemsYet4')}
                       </p>
                     )}
                   </div>
@@ -6875,12 +6809,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <span className="w-3 h-3 rounded-full bg-rose-400 shrink-0" />
                       <div>
                         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                          {isPolish ? 'Poza zakresem' : 'Out of Scope'}
+                          {t('initiatives.outOfScope3')}
                         </label>
                         <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                          {isPolish
-                            ? 'Wykluczenia i ograniczenia poza zakresem'
-                            : 'Exclusions and boundaries not covered'}
+                          {t('initiatives.exclusionsAndBoundariesNotCovered2')}
                         </p>
                       </div>
                     </div>
@@ -6890,11 +6822,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                       >
                         <Plus size={14} />
-                        {isPolish ? 'Dodaj' : 'Add item'}
+                        {t('initiatives.addItem2')}
                       </button>
                       <AIFieldEnhancer
                         fieldKey="initiative-scope-out"
-                        sectionLabel={isPolish ? 'Poza zakresem' : 'Out of Scope'}
+                        sectionLabel={t('initiatives.outOfScope3')}
                         currentValue={outScopeItems.filter(Boolean).join('\n')}
                         onApply={(val) => {
                           const lines = val.split('\n').filter((l: string) => l.trim());
@@ -6918,13 +6850,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         updateOutScope,
                         removeOutScope,
                         'red',
-                        isPolish ? 'Wykluczenie...' : 'Exclusion...',
-                        isPolish ? 'Poza zakresem — element listy' : 'Out of Scope — list item'
+                        t('initiatives.exclusion2'),
+                        t('initiatives.outOfScopeListItem2')
                       )
                     )}
                     {outScopeItems.length === 0 && (
                       <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
-                        {isPolish ? 'Brak elementów' : 'No items yet'}
+                        {t('initiatives.noItemsYet4')}
                       </p>
                     )}
                   </div>
@@ -6941,12 +6873,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <span className="w-3 h-3 rounded-full bg-rose-500 shrink-0" />
                     <div>
                       <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        {isPolish ? 'Kryteria rezygnacji (Kill Criteria)' : 'Kill Criteria'}
+                        {t('initiatives.killCriteria5')}
                       </label>
                       <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                        {isPolish
-                          ? 'Warunki, których spełnienie oznacza natychmiastowe zatrzymanie inicjatywy'
-                          : 'Conditions that trigger immediate initiative termination'}
+                        {t('initiatives.conditionsThatTriggerImmediateInitiative2')}
                       </p>
                     </div>
                   </div>
@@ -6956,11 +6886,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                     >
                       <Plus size={14} />
-                      {isPolish ? 'Dodaj' : 'Add item'}
+                      {t('initiatives.addItem2')}
                     </button>
                     <AIFieldEnhancer
                       fieldKey="initiative-kill-criteria"
-                      sectionLabel={isPolish ? 'Kryteria rezygnacji' : 'Kill Criteria'}
+                      sectionLabel={t('initiatives.killCriteria6')}
                       currentValue={killCriteriaItems.filter(Boolean).join('\n')}
                       onApply={(val) => {
                         const lines = val.split('\n').filter((l: string) => l.trim());
@@ -6984,16 +6914,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         type="text"
                         value={item}
                         onChange={(e) => updateKill(i, e.target.value)}
-                        placeholder={isPolish ? 'Kryterium rezygnacji...' : 'Kill criteria...'}
+                        placeholder={t('initiatives.killCriteria7')}
                         autoFocus={!item}
                         className="flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-700 dark:text-slate-300"
                       />
                       <AIFieldEnhancer
                         fieldKey={`initiative.scope.killCriteria.${i}`}
                         sectionLabel={
-                          isPolish
-                            ? 'Kryteria rezygnacji — element listy'
-                            : 'Kill Criteria — list item'
+                          t('initiatives.killCriteriaListItem2')
                         }
                         currentValue={item}
                         onApply={(v) => updateKill(i, v)}
@@ -7016,7 +6944,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   ))}
                   {killCriteriaItems.length === 0 && (
                     <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
-                      {isPolish ? 'Brak kryteriów' : 'No criteria yet'}
+                      {t('initiatives.noCriteriaYet2')}
                     </p>
                   )}
                 </div>
@@ -7039,7 +6967,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               {initiative?.effortProfile && (
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
-                    {isPolish ? 'Profil wysiłku' : 'Effort Profile'}
+                    {t('initiatives.effortProfile2')}
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     {Object.entries(initiative.effortProfile).map(([key, val]) => (
@@ -7225,12 +7153,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           const FinIcon = isAnalysis ? Calculator : TrendingUp;
           const busy = isGeneratingAI === section.id;
           const heading = isAnalysis
-            ? isPolish
-              ? 'Analiza finansowa (sizing + ROI)'
-              : 'Financial analysis (sizing + ROI)'
-            : isPolish
-              ? 'Wpływ finansowy'
-              : 'Financial impact';
+            ? t('initiatives.financialAnalysisSizingRoi2')
+            : t('initiatives.financialImpact2');
           component = (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -7247,18 +7171,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     if (!rv) return null;
                     const pass = rv.verdict === 'PASS';
                     const label = pass
-                      ? isPolish
-                        ? 'Jakość OK'
-                        : 'Quality OK'
-                      : isPolish
-                        ? 'Do poprawy'
-                        : 'Needs work';
+                      ? t('initiatives.qualityOk2')
+                      : t('initiatives.needsWork2');
                     const tip = [
-                      `${isPolish ? 'Ocena jakości' : 'Quality score'}: ${rv.score}/100 (PASS ≥ ${REVIEW_PASS_THRESHOLD})`,
+                      `${t('initiatives.qualityScore2')}: ${rv.score}/100 (PASS ≥ ${REVIEW_PASS_THRESHOLD})`,
                       rv.degraded
-                        ? isPolish
-                          ? 'Wynik heurystyczny (bez LLM) — zweryfikuj ręcznie.'
-                          : 'Heuristic score (no LLM) — verify manually.'
+                        ? t('initiatives.heuristicScoreNoLlmVerifyManually2')
                         : '',
                       ...rv.gaps.map((g) => `• ${g}`),
                     ]
@@ -7289,32 +7207,22 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       )
                     }
                     title={
-                      isPolish
-                        ? 'Wygeneruj propozycję AI (sizing + ROI) — przejrzyj i zapisz'
-                        : 'Generate an AI draft (sizing + ROI) — review and save'
+                      t('initiatives.generateAnAiDraftSizingRoi2')
                     }
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-500/40 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Sparkles size={13} />
                     {busy
-                      ? isPolish
-                        ? 'Generowanie…'
-                        : 'Generating…'
-                      : isPolish
-                        ? 'Wygeneruj z AI'
-                        : 'Generate with AI'}
+                      ? t('initiatives.generating2')
+                      : t('initiatives.generateWithAi2')}
                   </button>
                 )}
               </div>
               {!marketContextDraft.trim() && !busy && (
                 <p className="text-xs text-slate-600 dark:text-slate-500">
                   {isAnalysis
-                    ? isPolish
-                      ? 'Brak treści. Użyj „Wygeneruj z AI" lub wpisz sizing, założenia i ROI.'
-                      : 'Empty. Use “Generate with AI”, or type sizing, assumptions and ROI.'
-                    : isPolish
-                      ? 'Brak treści. Użyj „Wygeneruj z AI" lub opisz wpływ na przychody/koszty.'
-                      : 'Empty. Use “Generate with AI”, or describe revenue/cost impact.'}
+                    ? t('initiatives.emptyUseGenerateWithAiOr3')
+                    : t('initiatives.emptyUseGenerateWithAiOr4')}
                 </p>
               )}
               <ExpandableNarrativeField
@@ -7323,12 +7231,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 isPolish={isPolish}
                 placeholder={
                   isAnalysis
-                    ? isPolish
-                      ? 'Sizing (zł/%/dni) + jawne założenie + ROI…'
-                      : 'Sizing (currency/%/days) + explicit assumption + ROI…'
-                    : isPolish
-                      ? 'Wpływ na przychody, oszczędności, realizacja korzyści…'
-                      : 'Revenue impact, cost savings, benefits realization…'
+                    ? t('initiatives.sizingCurrencyDaysExplicitAssumptionRoi2')
+                    : t('initiatives.revenueImpactCostSavingsBenefitsRealizat2')
                 }
               />
             </div>
@@ -7410,7 +7314,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       ...item,
                       type: 'issue',
                       status: 'OPEN',
-                      source: `${isPolish ? 'Konwersja z' : 'Converted from'} ${item.type}: ${item.title}`,
+                      source: `${t('initiatives.convertedFrom2')} ${item.type}: ${item.title}`,
                     };
                   })
                 );
@@ -7468,7 +7372,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Bramy' : 'Gates'}
+                  {t('initiatives.gates2')}
                 </h2>
               </div>
 
@@ -7483,11 +7387,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           component = (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                {isPolish ? 'Sugerowane zmiany' : 'Suggested changes'}
+                {t('initiatives.suggestedChanges2')}
               </h2>
               {suggestedChangesLoading ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                  {t('initiatives.loading2')}
                 </p>
               ) : (
                 <div className="min-h-[200px]">
@@ -7549,20 +7453,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
                       <div>
                         <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                          {isPolish
-                            ? 'Propozycje zmian w komentarzach (AI)'
-                            : 'Proposed comment changes (AI)'}
+                          {t('initiatives.proposedCommentChangesAi2')}
                         </h3>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          {isPolish
-                            ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
-                            : 'Select items to add/remove, then click “Apply”.'}
+                          {t('initiatives.selectItemsToAddRemoveThen2')}
                         </p>
                       </div>
                       <button
                         onClick={closeCommentsAIModal}
                         className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                        title={isPolish ? 'Zamknij' : 'Close'}
+                        title={t('initiatives.close2')}
                         disabled={isCommentsAIProposing}
                       >
                         <X size={16} />
@@ -7571,7 +7471,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
                     <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
                       {commentsAiProposal.note ? (
-                        <Callout variant="purple" compact title={isPolish ? 'AI' : 'AI'}>
+                        <Callout variant="purple" compact title={t('initiatives.ai2')}>
                           {commentsAiProposal.note}
                         </Callout>
                       ) : null}
@@ -7580,7 +7480,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                            {isPolish ? 'Do wywalenia' : 'To remove'} (
+                            {t('initiatives.toRemove2')} (
                             {commentsAiProposal.remove.length})
                           </span>
                           {commentsAiProposal.remove.length > 0 && (
@@ -7595,7 +7495,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                               disabled={isCommentsAIProposing}
                             >
-                              {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                              {t('initiatives.selectAll2')}
                             </button>
                           )}
                         </div>
@@ -7606,14 +7506,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             dashed={false}
                             className="p-5"
                             message={
-                              isPolish
-                                ? 'AI nie zasugerowało usunięć.'
-                                : 'No removal suggestions from AI.'
+                              t('initiatives.noRemovalSuggestionsFromAi2')
                             }
                             hint={
-                              isPolish
-                                ? 'Jeśli wątek wygląda dobrze, AI może nie proponować destrukcyjnych zmian.'
-                                : 'If the thread looks good, AI may avoid destructive changes.'
+                              t('initiatives.ifTheThreadLooksGoodAi2')
                             }
                           />
                         ) : (
@@ -7661,7 +7557,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                            {isPolish ? 'Do dodania' : 'To add'} ({commentsAiProposal.add.length})
+                            {t('initiatives.toAdd2')} ({commentsAiProposal.add.length})
                           </span>
                           {commentsAiProposal.add.length > 0 && (
                             <button
@@ -7675,7 +7571,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                               disabled={isCommentsAIProposing}
                             >
-                              {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                              {t('initiatives.selectAll2')}
                             </button>
                           )}
                         </div>
@@ -7686,12 +7582,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             dashed={false}
                             className="p-5"
                             message={
-                              isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'
+                              t('initiatives.noAdditionsProposed2')
                             }
                             hint={
-                              isPolish
-                                ? 'Jeśli wątek jest kompletny, AI może nie dodawać komentarzy.'
-                                : 'If the thread is complete, AI may not add new comments.'
+                              t('initiatives.ifTheThreadIsCompleteAi2')
                             }
                           />
                         ) : (
@@ -7732,7 +7626,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {/* Plan (bottom) */}
                       <Callout
                         variant="purple"
-                        title={isPolish ? 'Plan' : 'Plan'}
+                        title={t('initiatives.plan2')}
                         compact
                         className="rounded-xl"
                       >
@@ -7757,7 +7651,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         disabled={isCommentsAIProposing}
                         className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
                       >
-                        {isPolish ? 'Anuluj' : 'Cancel'}
+                        {t('initiatives.cancel2')}
                       </button>
                       <button
                         onClick={() => void applyCommentsAIProposal()}
@@ -7767,7 +7661,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         {isCommentsAIProposing ? (
                           <Loader2 size={13} className="animate-spin" />
                         ) : null}
-                        {isPolish ? 'Zastosuj' : 'Apply'}
+                        {t('initiatives.apply2')}
                       </button>
                     </div>
                   </div>
@@ -7794,7 +7688,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'KPI i korzyści' : 'KPIs & Benefits'}
+                  {t('initiatives.kpisBenefits2')}
                 </h2>
                 <div className="inline-flex items-center gap-2">
                   <button
@@ -7809,9 +7703,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-4 py-3 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-sm text-slate-600 dark:text-slate-300">
-                      {isPolish
-                        ? 'Dodaj KPI ręcznie albo podłącz istniejące KPI do tej inicjatywy i ustaw oczekiwania dla realizacji oraz okresu po wdrożeniu.'
-                        : 'Add a manual KPI or link an existing KPI to this initiative and set expectations for realization and post-implementation.'}
+                      {t('initiatives.addAManualKpiOrLink2')}
                     </p>
                     <div className="inline-flex rounded-xl border border-slate-200 dark:border-navy-700/60 p-1 bg-white/80 dark:bg-navy-900/80">
                       <button
@@ -7822,7 +7714,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                         }`}
                       >
-                        {isPolish ? 'Ręczne KPI' : 'Manual KPI'}
+                        {t('initiatives.manualKpi2')}
                       </button>
                       <button
                         onClick={() => setCreateKpiMode('linked')}
@@ -7832,7 +7724,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                         }`}
                       >
-                        {isPolish ? 'Podłącz istniejące' : 'Link existing'}
+                        {t('initiatives.linkExisting2')}
                       </button>
                     </div>
                   </div>
@@ -7846,12 +7738,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         >
                           <option value="">
                             {createKpiLibraryLoading
-                              ? isPolish
-                                ? 'Ładowanie katalogu KPI...'
-                                : 'Loading KPI catalog...'
-                              : isPolish
-                                ? 'Wybierz KPI z katalogu'
-                                : 'Select KPI from catalog'}
+                              ? t('initiatives.loadingKpiCatalog2')
+                              : t('initiatives.selectKpiFromCatalog2')}
                           </option>
                           {createKpiLibraryOptions.map((option) => (
                             <option key={option.id} value={option.id}>
@@ -7865,21 +7753,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <input
                       value={createKpiName}
                       onChange={(e) => setCreateKpiName(e.target.value)}
-                      placeholder={isPolish ? 'Nazwa KPI' : 'KPI name'}
+                      placeholder={t('initiatives.kpiName2')}
                       disabled={createKpiMode === 'linked'}
                       className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
                     />
                     <input
                       value={createKpiUnit}
                       onChange={(e) => setCreateKpiUnit(e.target.value)}
-                      placeholder={isPolish ? 'Jednostka' : 'Unit'}
+                      placeholder={t('initiatives.unit2')}
                       disabled={createKpiMode === 'linked'}
                       className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
                     />
                     <input
                       value={createKpiCategory}
                       onChange={(e) => setCreateKpiCategory(e.target.value)}
-                      placeholder={isPolish ? 'Kategoria' : 'Category'}
+                      placeholder={t('initiatives.category2')}
                       className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                     />
                     <input
@@ -7909,23 +7797,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                     >
                       <option value="realization">
-                        {isPolish ? 'Tylko realizacja' : 'Realization only'}
+                        {t('initiatives.realizationOnly2')}
                       </option>
                       <option value="post-implementation">
-                        {isPolish ? 'Tylko po wdrożeniu' : 'Post-implementation only'}
+                        {t('initiatives.postImplementationOnly2')}
                       </option>
-                      <option value="both">{isPolish ? 'Obie fazy' : 'Both phases'}</option>
+                      <option value="both">{t('initiatives.bothPhases2')}</option>
                     </select>
                     <input
                       value={createKpiRealizationTarget}
                       onChange={(e) => setCreateKpiRealizationTarget(e.target.value)}
-                      placeholder={isPolish ? 'Cel realizacja' : 'Realization target'}
+                      placeholder={t('initiatives.realizationTarget2')}
                       className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                     />
                     <input
                       value={createKpiPostImplementationTarget}
                       onChange={(e) => setCreateKpiPostImplementationTarget(e.target.value)}
-                      placeholder={isPolish ? 'Cel po wdrożeniu' : 'Post-implementation target'}
+                      placeholder={t('initiatives.postImplementationTarget2')}
                       className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                     />
                   </div>
@@ -7937,7 +7825,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       }}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                     >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
+                      {t('initiatives.cancel2')}
                     </button>
                     <button
                       onClick={() => {
@@ -7950,12 +7838,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       className="px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 text-xs font-medium disabled:opacity-50"
                     >
                       {createKpiMode === 'linked'
-                        ? isPolish
-                          ? 'Podłącz KPI'
-                          : 'Link KPI'
-                        : isPolish
-                          ? 'Dodaj KPI'
-                          : 'Add KPI'}
+                        ? t('initiatives.linkKpi2')
+                        : t('initiatives.addKpi2')}
                     </button>
                   </div>
                 </div>
@@ -7965,13 +7849,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <input
                     value={editKpiName}
                     onChange={(e) => setEditKpiName(e.target.value)}
-                    placeholder={isPolish ? 'Nazwa KPI' : 'KPI name'}
+                    placeholder={t('initiatives.kpiName2')}
                     className="md:col-span-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
                     value={editKpiUnit}
                     onChange={(e) => setEditKpiUnit(e.target.value)}
-                    placeholder={isPolish ? 'Jednostka' : 'Unit'}
+                    placeholder={t('initiatives.unit2')}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
@@ -7983,7 +7867,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <input
                     value={editKpiCurrent}
                     onChange={(e) => setEditKpiCurrent(e.target.value)}
-                    placeholder={isPolish ? 'Obecnie' : 'Current'}
+                    placeholder={t('initiatives.current2')}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
@@ -7997,14 +7881,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       onClick={cancelEditKpi}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                     >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
+                      {t('initiatives.cancel2')}
                     </button>
                     <button
                       onClick={saveEditKpi}
                       disabled={!editKpiName.trim() || !editKpiUnit.trim()}
                       className="px-3 py-1.5 rounded-lg border border-indigo-400/50 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-500/10 text-xs font-medium disabled:opacity-50"
                     >
-                      {isPolish ? 'Zapisz zmiany' : 'Save changes'}
+                      {t('initiatives.saveChanges2')}
                     </button>
                   </div>
                 </div>
@@ -8015,18 +7899,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       FilterableTable would drop the inline edit-form + AI-add). */}
                   <thead className="sticky top-0 z-10 bg-white dark:bg-navy-900">
                     <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
-                      <th className="text-left py-2 pr-2">{isPolish ? 'KPI' : 'KPI'}</th>
-                      <th className="text-left py-2 pr-2">{isPolish ? 'Faza' : 'Phase'}</th>
-                      <th className="text-left py-2 pr-2">{isPolish ? 'Jednostka' : 'Unit'}</th>
-                      <th className="text-left py-2 pr-2">{isPolish ? 'Baza' : 'Baseline'}</th>
-                      <th className="text-left py-2 pr-2">{isPolish ? 'Obecnie' : 'Current'}</th>
+                      <th className="text-left py-2 pr-2">{t('initiatives.kpi2')}</th>
+                      <th className="text-left py-2 pr-2">{t('initiatives.phase2')}</th>
+                      <th className="text-left py-2 pr-2">{t('initiatives.unit2')}</th>
+                      <th className="text-left py-2 pr-2">{t('initiatives.baseline2')}</th>
+                      <th className="text-left py-2 pr-2">{t('initiatives.current2')}</th>
                       <th className="text-left py-2 pr-2">
-                        {isPolish ? 'Cel realizacja' : 'Realization target'}
+                        {t('initiatives.realizationTarget2')}
                       </th>
                       <th className="text-left py-2 pr-2">
-                        {isPolish ? 'Cel po wdrożeniu' : 'Post-implementation target'}
+                        {t('initiatives.postImplementationTarget2')}
                       </th>
-                      <th className="text-right py-2">{isPolish ? 'Tracking' : 'Tracking'}</th>
+                      <th className="text-right py-2">{t('initiatives.tracking2')}</th>
                       <th className="text-right py-2 w-10" />
                     </tr>
                   </thead>
@@ -8037,9 +7921,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           colSpan={9}
                           className="py-8 text-center text-xs text-slate-500 dark:text-slate-400"
                         >
-                          {isPolish
-                            ? 'Brak KPI. Kliknij "+ Nowy", aby dodać pierwszy KPI.'
-                            : 'No KPIs defined yet. Click "+ New" to add the first KPI.'}
+                          {t('initiatives.noKpisDefinedYetClickNew2')}
                         </td>
                       </tr>
                     ) : (
@@ -8050,27 +7932,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               <span>{toEnglishKpiName(kpi.name, isPolish)}</span>
                               <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-navy-700/60 px-1.5 py-0.5 text-[10px] text-slate-500 dark:text-slate-400">
                                 {kpi.definitionSource === 'library'
-                                  ? isPolish
-                                    ? 'z katalogu'
-                                    : 'linked'
-                                  : isPolish
-                                    ? 'ręczne'
-                                    : 'manual'}
+                                  ? t('initiatives.linked2')
+                                  : t('initiatives.manual2')}
                               </span>
                             </div>
                           </td>
                           <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
                             {kpi.observationPhase === 'both'
-                              ? isPolish
-                                ? 'Obie'
-                                : 'Both'
+                              ? t('initiatives.both2')
                               : kpi.observationPhase === 'realization'
-                                ? isPolish
-                                  ? 'Realizacja'
-                                  : 'Realization'
-                                : isPolish
-                                  ? 'Po wdrożeniu'
-                                  : 'Post-implementation'}
+                                ? t('initiatives.realization2')
+                                : t('initiatives.postImplementation2')}
                           </td>
                           <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
                             {kpi.unit || '—'}
@@ -8099,7 +7971,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 setKpiMenuId((prev) => (prev === kpi.id ? null : kpi.id));
                               }}
                               className="inline-flex items-center justify-center p-1 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
-                              title={isPolish ? 'Akcje KPI' : 'KPI actions'}
+                              title={t('initiatives.kpiActions2')}
                             >
                               <MoreVertical size={14} />
                             </button>
@@ -8113,7 +7985,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                                 >
                                   <Edit3 size={13} />
-                                  {isPolish ? 'Edytuj' : 'Edit'}
+                                  {t('initiatives.edit4')}
                                 </button>
                                 <button
                                   onClick={() => {
@@ -8123,21 +7995,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                                 >
                                   <Copy size={13} />
-                                  {isPolish ? 'Duplikuj' : 'Duplicate'}
+                                  {t('initiatives.duplicate2')}
                                 </button>
                                 <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
                                     const ok = window.confirm(
-                                      isPolish ? 'Usunąć to KPI?' : 'Delete this KPI?'
+                                      t('initiatives.deleteThisKpi2')
                                     );
                                     if (ok) removeKpi(kpi.id);
                                   }}
                                   className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                                 >
                                   <Trash2 size={13} />
-                                  {isPolish ? 'Usuń' : 'Delete'}
+                                  {t('initiatives.delete2')}
                                 </button>
                               </div>
                             )}
@@ -8158,7 +8030,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Obserwatorzy' : 'Watchers'}
+                  {t('initiatives.watchers2')}
                 </h2>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {watchers.length}
@@ -8166,9 +8038,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
               {watchers.length === 0 ? (
                 <div className="p-5 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak obserwatorów dla tej inicjatywy.'
-                    : 'No watchers for this initiative yet.'}
+                  {t('initiatives.noWatchersForThisInitiativeYet2')}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -8238,7 +8108,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           };
           component = (
             <EmbeddedView
-              title={isPolish ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
+              title={t('initiatives.usedInBacklinks2')}
               count={initiativeBacklinks.length}
               loading={initiativeBacklinksLoading}
               readOnly
@@ -8246,7 +8116,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             >
               {initiativeBacklinks.length === 0 && !initiativeBacklinksLoading ? (
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {isPolish ? 'Brak powiązań' : 'No links yet'}
+                  {t('initiatives.noLinksYet2')}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -8281,13 +8151,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // ── C7: Artefakty — Outputs-registry artifacts linked via sourceInitiativeId ──
         case 'artifacts': {
           const artifactTypeLabel = (outputType: string): string => {
-            if (outputType === 'presentation') return isPolish ? 'Prezentacja' : 'Presentation';
-            if (outputType === 'sheet') return isPolish ? 'Arkusz' : 'Sheet';
-            return isPolish ? 'Dokument' : 'Document';
+            if (outputType === 'presentation') return t('initiatives.presentation2');
+            if (outputType === 'sheet') return t('initiatives.sheet2');
+            return t('initiatives.document3');
           };
           component = (
             <EmbeddedView
-              title={isPolish ? 'Artefakty' : 'Artifacts'}
+              title={t('initiatives.artifacts2')}
               count={relatedArtifacts.length}
               loading={relatedArtifactsLoading}
               readOnly
@@ -8295,7 +8165,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             >
               {relatedArtifacts.length === 0 && !relatedArtifactsLoading ? (
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {isPolish ? 'Brak artefaktów' : 'No artifacts yet'}
+                  {t('initiatives.noArtifactsYet2')}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -8329,7 +8199,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             )
                           }
                           className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
-                          title={isPolish ? 'Otwórz w module' : 'Open in workspace'}
+                          title={t('initiatives.openInWorkspace2')}
                         >
                           <ExternalLink size={12} />
                         </button>
@@ -8363,7 +8233,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Produkty i kamienie milowe' : 'Deliverables & Milestones'}
+                  {t('initiatives.deliverablesMilestones2')}
                 </h2>
                 {canEditCards && (
                   <button
@@ -8375,15 +8245,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
                   >
-                    <Plus size={13} /> {isPolish ? 'Dodaj produkt' : 'Add deliverable'}
+                    <Plus size={13} /> {t('initiatives.addDeliverable2')}
                   </button>
                 )}
               </div>
               {deliverableItems.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak produktów. Dodaj kluczowe rezultaty inicjatywy; kamienie milowe znajdziesz w sekcji Harmonogram.'
-                    : 'No deliverables yet. Add the initiative’s key outputs; milestones live in the Timeline section.'}
+                  {t('initiatives.noDeliverablesYetAddTheInitiative2')}
                 </p>
               ) : (
                 <ul className="space-y-2">
@@ -8415,7 +8283,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             )
                           )
                         }
-                        placeholder={isPolish ? 'Opis produktu…' : 'Deliverable…'}
+                        placeholder={t('initiatives.deliverable2')}
                         className="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none"
                       />
                       {canEditCards && (
@@ -8441,7 +8309,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           component = (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                {isPolish ? 'Dziennik zmian' : 'Change Log'}
+                {t('initiatives.changeLog2')}
               </h2>
               {canEditCards && (
                 <div className="flex items-center gap-2">
@@ -8455,9 +8323,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       }
                     }}
                     placeholder={
-                      isPolish
-                        ? 'Opisz zmianę i naciśnij Enter…'
-                        : 'Describe a change, press Enter…'
+                      t('initiatives.describeAChangePressEnter2')
                     }
                     className="flex-1 rounded-lg border border-slate-300/50 dark:border-navy-600/60 bg-transparent px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400"
                   />
@@ -8470,15 +8336,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
                   >
-                    <Plus size={13} /> {isPolish ? 'Dodaj' : 'Add'}
+                    <Plus size={13} /> {t('initiatives.add2')}
                   </button>
                 </div>
               )}
               {changeLogItems.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak zarejestrowanych zmian strategicznych.'
-                    : 'No strategic changes recorded yet.'}
+                  {t('initiatives.noStrategicChangesRecordedYet2')}
                 </p>
               ) : (
                 <ul className="space-y-2">
@@ -8533,7 +8397,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         setOkrDraft('');
                       }
                     }}
-                    placeholder={isPolish ? 'Cel (Objective)…' : 'Objective…'}
+                    placeholder={t('initiatives.objective2')}
                     className="flex-1 rounded-lg border border-slate-300/50 dark:border-navy-600/60 bg-transparent px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400"
                   />
                   <button
@@ -8545,15 +8409,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
                   >
-                    <Plus size={13} /> {isPolish ? 'Dodaj cel' : 'Add objective'}
+                    <Plus size={13} /> {t('initiatives.addObjective2')}
                   </button>
                 </div>
               )}
               {okrItems.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak celów OKR. Dodaj cel i kluczowe rezultaty (Key Results).'
-                    : 'No OKRs yet. Add an objective and its key results.'}
+                  {t('initiatives.noOkrsYetAddAnObjective2')}
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -8575,9 +8437,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           onChange={(e) => updateOkr(o.id, { confidence: e.target.value })}
                           className="text-[11px] rounded-md bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5"
                         >
-                          <option value="LOW">{isPolish ? 'Niska' : 'Low'}</option>
-                          <option value="MEDIUM">{isPolish ? 'Średnia' : 'Medium'}</option>
-                          <option value="HIGH">{isPolish ? 'Wysoka' : 'High'}</option>
+                          <option value="LOW">{t('initiatives.low2')}</option>
+                          <option value="MEDIUM">{t('initiatives.medium2')}</option>
+                          <option value="HIGH">{t('initiatives.high2')}</option>
                         </select>
                         {canEditCards && (
                           <button
@@ -8601,9 +8463,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         }
                         rows={2}
                         placeholder={
-                          isPolish
-                            ? 'Kluczowe rezultaty (po jednym w wierszu)…'
-                            : 'Key results (one per line)…'
+                          t('initiatives.keyResultsOnePerLine2')
                         }
                         className="w-full bg-transparent text-xs text-slate-600 dark:text-slate-300 focus:outline-none resize-none border-t border-slate-100 dark:border-navy-700/40 pt-2"
                       />
@@ -8620,12 +8480,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           component = (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                {isPolish ? 'Hipoteza' : 'Hypothesis'}
+                {t('initiatives.hypothesis2')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? 'Wartościowa hipoteza inicjatywy — co zakładamy, że osiągniemy i dlaczego.'
-                  : 'The value hypothesis — what we believe this initiative will achieve and why.'}
+                {t('initiatives.theValueHypothesisWhatWeBelieve2')}
               </p>
               <textarea
                 value={hypothesisDraft}
@@ -8634,9 +8492,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onBlur={saveHypothesis}
                 rows={5}
                 placeholder={
-                  isPolish
-                    ? 'Wierzymy, że… ponieważ… Zmierzymy to przez…'
-                    : 'We believe that… because… We will measure this by…'
+                  t('initiatives.weBelieveThatBecauseWeWill2')
                 }
                 className="w-full rounded-lg border border-slate-200/60 dark:border-navy-700/50 bg-transparent px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400 resize-y"
               />
@@ -8648,13 +8504,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         case 'workstream-owners': {
           const owners = [
             {
-              role: isPolish ? 'Właściciel biznesowy' : 'Business Owner',
+              role: t('initiatives.businessOwner2'),
               name:
                 (initiative as any)?.ownerBusinessName ||
                 `${(initiative as any)?.ob_first_name || ''} ${(initiative as any)?.ob_last_name || ''}`.trim(),
             },
             {
-              role: isPolish ? 'Właściciel wykonawczy' : 'Execution Owner',
+              role: t('initiatives.executionOwner2'),
               name:
                 (initiative as any)?.ownerExecutionName ||
                 `${(initiative as any)?.oe_first_name || ''} ${(initiative as any)?.oe_last_name || ''}`.trim(),
@@ -8663,13 +8519,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           component = (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                {isPolish ? 'Właściciele strumieni' : 'Workstream Owners'}
+                {t('initiatives.workstreamOwners2')}
               </h2>
               {owners.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak przypisanych właścicieli. Przypisz w sekcji Zespół.'
-                    : 'No owners assigned. Assign them in the Team section.'}
+                  {t('initiatives.noOwnersAssignedAssignThemIn2')}
                 </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -8697,7 +8551,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           component = (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                {isPolish ? 'Wnioski i lekcje' : 'Lessons Learned'}
+                {t('initiatives.lessonsLearned2')}
               </h2>
               <textarea
                 value={lessonsDraft}
@@ -8706,9 +8560,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onBlur={saveLessons}
                 rows={6}
                 placeholder={
-                  isPolish
-                    ? 'Co zadziałało, co nie, co zrobimy inaczej następnym razem…'
-                    : 'What worked, what didn’t, what we’d do differently next time…'
+                  t('initiatives.whatWorkedWhatDidnTWhat2')
                 }
                 className="w-full rounded-lg border border-slate-200/60 dark:border-navy-700/50 bg-transparent px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400 resize-y"
               />
@@ -8786,7 +8638,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             cta: {
               label: { en: 'Add objective', pl: 'Dodaj cel' },
               onClick: () => {
-                addOkr(isPolish ? 'Nowy cel' : 'New objective');
+                addOkr(t('initiatives.newObjective2'));
               },
             },
           },
@@ -9042,13 +8894,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               : '',
             (summary || initiative?.summary || initiative?.description || '').toString().trim(),
             inScopeItems.length
-              ? `\n_${isPolish ? 'W zakresie' : 'In scope'}_\n${strLines(inScopeItems)}`
+              ? `\n_${t('initiatives.inScope4')}_\n${strLines(inScopeItems)}`
               : '',
             outScopeItems.length
-              ? `\n_${isPolish ? 'Poza zakresem' : 'Out of scope'}_\n${strLines(outScopeItems)}`
+              ? `\n_${t('initiatives.outOfScope4')}_\n${strLines(outScopeItems)}`
               : '',
             killCriteriaItems.length
-              ? `\n_${isPolish ? 'Kryteria zatrzymania' : 'Kill criteria'}_\n${strLines(killCriteriaItems)}`
+              ? `\n_${t('initiatives.killCriteria8')}_\n${strLines(killCriteriaItems)}`
               : '',
           ]
             .filter(Boolean)
@@ -9057,10 +8909,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           return targetStateItems.length || successCriteriaItems.length
             ? [
                 successCriteriaItems.length
-                  ? `_${isPolish ? 'Kryteria sukcesu' : 'Success criteria'}_\n${lines(successCriteriaItems)}`
+                  ? `_${t('initiatives.successCriteria4')}_\n${lines(successCriteriaItems)}`
                   : '',
                 targetStateItems.length
-                  ? `_${isPolish ? 'Stan docelowy' : 'Target state'}_\n${lines(targetStateItems)}`
+                  ? `_${t('initiatives.targetState2')}_\n${lines(targetStateItems)}`
                   : '',
               ]
                 .filter(Boolean)
@@ -9136,7 +8988,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         if (!sectionIds.has(section.id)) continue;
         const body = buildSectionBody(section.id);
         parts.push(`## ${sectionLabel(section)}`);
-        parts.push(body.trim() ? body : isPolish ? '_(brak treści)_' : '_(no content)_');
+        parts.push(body.trim() ? body : t('initiatives.noContent3'));
         parts.push('');
       }
       return parts.join('\n');
@@ -9252,10 +9104,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success(isPolish ? 'Pobrano Markdown' : 'Markdown downloaded');
+      toast.success(t('initiatives.markdownDownloaded2'));
       setShowExportDialog(false);
     } catch {
-      toast.error(isPolish ? 'Eksport nie powiódł się' : 'Export failed');
+      toast.error(t('initiatives.exportFailed2'));
     } finally {
       setIsExporting(null);
     }
@@ -9269,13 +9121,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         .slice(0, 80);
       const ok = await exportReportToPDF('initiative-export-printable', safeName || 'initiative');
       if (ok === false) {
-        toast.error(isPolish ? 'Eksport PDF nie powiódł się' : 'PDF export failed');
+        toast.error(t('initiatives.pdfExportFailed2'));
       } else {
-        toast.success(isPolish ? 'Wyeksportowano PDF' : 'PDF exported');
+        toast.success(t('initiatives.pdfExported2'));
         setShowExportDialog(false);
       }
     } catch {
-      toast.error(isPolish ? 'Eksport PDF nie powiódł się' : 'PDF export failed');
+      toast.error(t('initiatives.pdfExportFailed2'));
     } finally {
       setIsExporting(null);
     }
@@ -9301,10 +9153,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           sectionIds: Array.from(effectiveExportSelection),
         },
       });
-      toast.success(isPolish ? 'Zapisano w Notatniku' : 'Saved to Notebook');
+      toast.success(t('initiatives.savedToNotebook2'));
       setShowExportDialog(false);
     } catch {
-      toast.error(isPolish ? 'Nie udało się zapisać w Notatniku' : 'Failed to save to Notebook');
+      toast.error(t('initiatives.failedToSaveToNotebook2'));
     } finally {
       setIsExporting(null);
     }
@@ -9317,14 +9169,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     try {
       const forked = await V8PlanningApi.forkInitiative(initiativeId);
       const newId = String((forked as any)?.id || '');
-      toast.success(isPolish ? 'Inicjatywa sklonowana' : 'Initiative forked');
+      toast.success(t('initiatives.initiativeForked2'));
       if (newId) {
         window.location.assign(
           `${window.location.origin}/initiatives?open=${encodeURIComponent(newId)}&mode=doc`
         );
       }
     } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Nie udało się sklonować' : 'Failed to fork'));
+      toast.error(e?.message || (t('initiatives.failedToFork2')));
     } finally {
       setIsForking(false);
     }
@@ -9447,9 +9299,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const runActiveSectionAi = useCallback(async () => {
     if (!canUseAi) {
       toast.error(
-        isPolish
-          ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-          : 'AI is unavailable because you have no edit permissions in this context.'
+        t('initiatives.aiIsUnavailableBecauseYouHave2')
       );
       return;
     }
@@ -9666,18 +9516,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Propozycje zmian w RAID (AI)' : 'Proposed RAID changes (AI)'}
+                  {t('initiatives.proposedRaidChangesAi2')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish
-                    ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
-                    : 'Select items to add/remove, then click “Apply”.'}
+                  {t('initiatives.selectItemsToAddRemoveThen2')}
                 </p>
               </div>
               <button
                 onClick={closeRaidAIModal}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPolish ? 'Zamknij' : 'Close'}
+                title={t('initiatives.close2')}
               >
                 <X size={16} />
               </button>
@@ -9685,7 +9533,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
             <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
               {raidAiNoSuggestionsMessage ? (
-                <Callout variant="purple" compact title={isPolish ? 'AI' : 'AI'}>
+                <Callout variant="purple" compact title={t('initiatives.ai2')}>
                   {raidAiNoSuggestionsMessage}
                 </Callout>
               ) : null}
@@ -9693,7 +9541,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do wywalenia' : 'To remove'} ({raidAiProposal.remove.length})
+                    {t('initiatives.toRemove2')} ({raidAiProposal.remove.length})
                   </span>
                   {raidAiProposal.remove.length > 0 && (
                     <button
@@ -9706,7 +9554,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.selectAll2')}
                     </button>
                   )}
                 </div>
@@ -9717,12 +9565,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     dashed={false}
                     className="p-5"
                     message={
-                      isPolish ? 'AI nie zasugerowało usunięć.' : 'No removal suggestions from AI.'
+                      t('initiatives.noRemovalSuggestionsFromAi2')
                     }
                     hint={
-                      isPolish
-                        ? 'Jeśli RAID jest OK, AI może nie zaproponować zmian.'
-                        : 'If the RAID log is already good, AI may suggest no changes.'
+                      t('initiatives.ifTheRaidLogIsAlready2')
                     }
                   />
                 ) : (
@@ -9765,7 +9611,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do dodania' : 'To add'} ({raidAiProposal.add.length})
+                    {t('initiatives.toAdd2')} ({raidAiProposal.add.length})
                   </span>
                   {raidAiProposal.add.length > 0 && (
                     <button
@@ -9778,7 +9624,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.selectAll2')}
                     </button>
                   )}
                 </div>
@@ -9788,11 +9634,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     icon={Plus}
                     dashed={false}
                     className="p-5"
-                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                    message={t('initiatives.noAdditionsProposed2')}
                     hint={
-                      isPolish
-                        ? 'AI może zwrócić tylko usunięcia lub brak zmian.'
-                        : 'AI may return only removals or no changes.'
+                      t('initiatives.aiMayReturnOnlyRemovalsOr2')
                     }
                   />
                 ) : (
@@ -9846,22 +9690,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
               <Callout
                 variant="purple"
-                title={isPolish ? 'Plan' : 'Plan'}
+                title={t('initiatives.plan2')}
                 compact
                 className="rounded-xl"
               >
                 <ul className="list-disc pl-4 space-y-1">
                   <li>
-                    {(isPolish
-                      ? 'Usuń zaznaczone elementy RAID: '
-                      : 'Remove selected RAID items: ') +
+                    {(t('initiatives.removeSelectedRaidItems2')) +
                       raidAiProposal.remove.reduce(
                         (sum, r) => sum + (raidAiSelectedRemoveIds[r.raidId] ? 1 : 0),
                         0
                       )}
                   </li>
                   <li>
-                    {(isPolish ? 'Dodaj zaznaczone elementy RAID: ' : 'Add selected RAID items: ') +
+                    {(t('initiatives.addSelectedRaidItems2')) +
                       raidAiProposal.add.reduce(
                         (sum, _x, idx) => sum + (raidAiSelectedAddIdx[idx] ? 1 : 0),
                         0
@@ -9877,7 +9719,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 disabled={isRaidAIProposing}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.cancel2')}
               </button>
               <button
                 onClick={() => void applyRaidAIProposal()}
@@ -9885,14 +9727,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                 title={
                   !canEditCards
-                    ? isPolish
-                      ? 'Brak uprawnień do edycji na tym etapie inicjatywy.'
-                      : 'No edit permission at this initiative stage.'
+                    ? t('initiatives.noEditPermissionAtThisInitiative2')
                     : undefined
                 }
               >
                 {isRaidAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
-                {isPolish ? 'Zastosuj' : 'Apply'}
+                {t('initiatives.apply2')}
               </button>
             </div>
           </div>
@@ -9930,11 +9770,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <Callout
                     variant="warning"
                     compact
-                    title={isPolish ? 'Drift statusu' : 'Status drift'}
+                    title={t('initiatives.statusDrift2')}
                   >
-                    {isPolish
-                      ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
-                      : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}
+                    {t('initiatives.thisViewUsesNormalizedStatusAligned2')}
                   </Callout>
                 ) : null}
 
@@ -9954,7 +9792,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     // Grouped section list for the Sections dropdown (mirrors left nav).
                     const sectionGroups: { group: string; sections: NModeSection[] }[] = [];
                     for (const s of nModeSectionsWithContent) {
-                      const g = s.group || (isPolish ? 'Pozostałe' : 'Other');
+                      const g = s.group || (t('initiatives.other2'));
                       let bucket = sectionGroups.find((x) => x.group === g);
                       if (!bucket) {
                         bucket = { group: g, sections: [] };
@@ -9971,7 +9809,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             onClick={() => setShowSectionsMenu((v) => !v)}
                             aria-expanded={showSectionsMenu}
                           >
-                            <span>{isPolish ? 'Sekcje' : 'Sections'}</span>
+                            <span>{t('initiatives.sections2')}</span>
                             <ChevronDown size={12} className="opacity-60" />
                           </ToolbarGhostButton>
                           {showSectionsMenu && (
@@ -10023,7 +9861,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           </span>
                                           {isEmpty && (
                                             <span className="shrink-0 rounded bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-400">
-                                              {isPolish ? 'brak' : 'empty'}
+                                              {t('initiatives.empty3')}
                                             </span>
                                           )}
                                         </button>
@@ -10040,7 +9878,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     >
                                       <RotateCcw size={13} className="shrink-0" />
                                       <span>
-                                        {isPolish ? 'Przywróć domyślne' : 'Restore defaults'}
+                                        {t('initiatives.restoreDefaults2')}
                                       </span>
                                     </button>
                                   </div>
@@ -10059,13 +9897,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             aria-expanded={showNewMenu}
                             title={
                               newMenuActions.length === 0
-                                ? isPolish
-                                  ? 'Brak akcji tworzenia w tym stanie'
-                                  : 'No create actions available in this state'
+                                ? t('initiatives.noCreateActionsAvailableInThis2')
                                 : undefined
                             }
                           >
-                            <span>{isPolish ? 'Nowy' : 'New'}</span>
+                            <span>{t('initiatives.new2')}</span>
                             <ChevronDown size={12} className="opacity-60" />
                           </ToolbarSubtleButton>
                           {showNewMenu && newMenuActions.length > 0 && (
@@ -10101,7 +9937,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             onClick={() => setShowExportMenu((v) => !v)}
                             aria-expanded={showExportMenu}
                           >
-                            <span>{isPolish ? 'Eksport' : 'Export'}</span>
+                            <span>{t('initiatives.export2')}</span>
                             <ChevronDown size={12} className="opacity-60" />
                           </ToolbarGhostButton>
                           {showExportMenu && (
@@ -10183,16 +10019,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             }
                             title={
                               activeSectionAiUnavailable
-                                ? isPolish
-                                  ? 'Generowanie AI niedostępne dla tej sekcji'
-                                  : 'AI generation not available for this section yet'
+                                ? t('initiatives.aiGenerationNotAvailableForThis2')
                                 : !canUseAi
-                                  ? isPolish
-                                    ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                    : 'No permission to use AI in this context.'
-                                  : isPolish
-                                    ? 'AI dla tej sekcji'
-                                    : 'AI for this section'
+                                  ? t('initiatives.noPermissionToUseAiIn2')
+                                  : t('initiatives.aiForThisSection2')
                             }
                             icon={
                               activeSectionAiBusy ? (
@@ -10202,7 +10032,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               )
                             }
                           >
-                            <span>{isPolish ? 'AI sekcja' : 'AI section'}</span>
+                            <span>{t('initiatives.aiSection2')}</span>
                           </ToolbarAISplitButton>
                         )}
 
@@ -10212,12 +10042,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         {/* Slot 6/7 — Fork · Present */}
                         <ToolbarIconButton
                           icon={<GitFork size={14} />}
-                          tooltip={isPolish ? 'Forkuj' : 'Fork'}
+                          tooltip={t('initiatives.fork2')}
                           onClick={() => void handleFork()}
                         />
                         <ToolbarIconButton
                           icon={<Monitor size={14} />}
-                          tooltip={isPolish ? 'Prezentuj' : 'Present'}
+                          tooltip={t('initiatives.present2')}
                           onClick={() => setPresentOpen(true)}
                         />
 
@@ -10226,7 +10056,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           <div className="relative">
                             <ToolbarIconButton
                               icon={<MoreVertical size={14} />}
-                              tooltip={isPolish ? 'Więcej' : 'More'}
+                              tooltip={t('initiatives.more2')}
                               onClick={() => setShowToolbarKebab((v) => !v)}
                               aria-expanded={showToolbarKebab}
                             />
@@ -10272,20 +10102,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           onClick={() => {
                             if (!canUseAi) {
                               toast.error(
-                                isPolish
-                                  ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                  : 'AI is unavailable because you have no edit permissions in this context.'
+                                t('initiatives.aiIsUnavailableBecauseYouHave2')
                               );
                               return;
                             }
                             setAiPanelOpen((v) => !v);
                           }}
                           disabled={!canUseAi}
-                          title={isPolish ? 'Asystent AI' : 'AI Consultant'}
+                          title={t('initiatives.aiConsultant3')}
                           aria-expanded={aiPanelOpen}
                           icon={<Sparkles size={14} />}
                         >
-                          <span>{isPolish ? 'AI Konsultant' : 'AI Consultant'}</span>
+                          <span>{t('initiatives.aiConsultant4')}</span>
                         </ToolbarAISolidButton>
                       </div>
                     );
@@ -10312,12 +10140,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           onClick={() => handleToggleSectionComplete(activeNSection)}
                           title={
                             sectionCompletions[activeNSection]
-                              ? isPolish
-                                ? 'Oznacz sekcję jako niegotową'
-                                : 'Mark section as not complete'
-                              : isPolish
-                                ? 'Oznacz sekcję jako gotową'
-                                : 'Mark section as complete'
+                              ? t('initiatives.markSectionAsNotComplete2')
+                              : t('initiatives.markSectionAsComplete2')
                           }
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                             sectionCompletions[activeNSection]
@@ -10332,12 +10156,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           )}
                           <span>
                             {sectionCompletions[activeNSection]
-                              ? isPolish
-                                ? 'Otwórz ponownie'
-                                : 'Reopen'
-                              : isPolish
-                                ? 'Oznacz gotowe'
-                                : 'Mark complete'}
+                              ? t('initiatives.reopen2')
+                              : t('initiatives.markComplete2')}
                           </span>
                         </button>
                       </div>
@@ -10377,13 +10197,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
               <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                {isPolish ? 'Eksportuj inicjatywę' : 'Export initiative'}
+                {t('initiatives.exportInitiative2')}
               </h2>
               <button
                 type="button"
                 onClick={() => setShowExportDialog(false)}
                 className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
-                aria-label={isPolish ? 'Zamknij' : 'Close'}
+                aria-label={t('initiatives.close2')}
               >
                 <X size={18} />
               </button>
@@ -10393,7 +10213,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="px-5 py-4 overflow-y-auto">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Sekcje do eksportu' : 'Sections to export'}
+                  {t('initiatives.sectionsToExport2')}
                 </p>
                 <div className="flex gap-2 text-xs">
                   <button
@@ -10403,7 +10223,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       setExportSelectedSectionIds(new Set(exportableSections.map((s) => s.id)))
                     }
                   >
-                    {isPolish ? 'Wszystkie' : 'All'}
+                    {t('initiatives.all2')}
                   </button>
                   <span className="text-slate-300 dark:text-navy-600">·</span>
                   <button
@@ -10411,7 +10231,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                     onClick={() => setExportSelectedSectionIds(new Set())}
                   >
-                    {isPolish ? 'Żadne' : 'None'}
+                    {t('initiatives.none2')}
                   </button>
                 </div>
               </div>
@@ -10441,7 +10261,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             {/* Targets */}
             <div className="px-5 py-4 border-t border-slate-200 dark:border-navy-700 space-y-2">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Format' : 'Format'}
+                {t('initiatives.format2')}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -10468,7 +10288,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   ) : (
                     <FileDown size={15} />
                   )}
-                  {isPolish ? 'Raport (PDF)' : 'Report (PDF)'}
+                  {t('initiatives.reportPdf2')}
                 </button>
                 <button
                   type="button"
@@ -10477,7 +10297,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
                 >
                   <Presentation size={15} />
-                  {isPolish ? 'Prezentacja' : 'Deck'}
+                  {t('initiatives.deck2')}
                 </button>
                 <button
                   type="button"
@@ -10490,7 +10310,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   ) : (
                     <NotebookPen size={15} />
                   )}
-                  {isPolish ? 'Notatnik' : 'Notebook'}
+                  {t('initiatives.notebook2')}
                 </button>
               </div>
             </div>
@@ -10532,7 +10352,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {sectionLabel(section)}
                     </h2>
                     <div style={{ fontSize: '13px', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-                      {body.trim() || (isPolish ? '(brak treści)' : '(no content)')}
+                      {body.trim() || (t('initiatives.noContent4'))}
                     </div>
                   </div>
                 );
