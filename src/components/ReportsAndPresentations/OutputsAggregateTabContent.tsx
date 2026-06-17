@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button, ErrorState, LoadingState } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
@@ -131,6 +132,8 @@ interface OutputsAggregateTabContentProps {
   rows: UnifiedOutputRow[];
   loading: boolean;
   error?: string | null;
+  /** L-08: registry routes 404 because ENABLE_V8_GLOBAL is OFF → module disabled. */
+  moduleDisabled?: boolean;
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
   initialArtifactId?: string | null;
@@ -144,6 +147,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   rows,
   loading,
   error,
+  moduleDisabled = false,
   onRefresh,
   actions,
   initialArtifactId,
@@ -299,6 +303,27 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     return data;
   }, [tableRows, searchQuery, activeFilters, translate]);
 
+  // Localized status label kept stable with the filter dropdown options; the
+  // EntityStatusChip owns the colored dot (tone), this only supplies the text.
+  const statusLabel = useCallback(
+    (statusKey: string | null | undefined): string => {
+      const key = String(statusKey || '').trim().toLowerCase();
+      const labels: Record<string, [string, string]> = {
+        draft: ['Szkic', 'Draft'],
+        generated: ['Wygenerowana', 'Generated'],
+        editing: ['Edycja', 'Editing'],
+        ready: ['Gotowy', 'Ready'],
+        exported: ['Wyeksportowany', 'Exported'],
+        shared: ['Udostępniony', 'Shared'],
+        archived: ['Zarchiwizowany', 'Archived'],
+      };
+      const pair = labels[key];
+      if (pair) return isPolish ? pair[0] : pair[1];
+      return formatLabel(statusKey);
+    },
+    [isPolish]
+  );
+
   const columns: TableColumn[] = useMemo(
     () => [
       {
@@ -307,12 +332,14 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         width: '280px',
         render: (row: AggregateRow) => (
           <div className="flex items-center gap-2 min-w-0">
+            {/* L-07 (§27): neutral type icons — color is a signal owned by the
+                status chip, not ad-hoc icon tints (TABLE_AND_PREVIEW_CANON §4.1). */}
             {row.kind === 'document' ? (
-              <FileText size={16} className="shrink-0 text-blue-400" />
+              <FileText size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
             ) : row.kind === 'presentation' ? (
-              <Presentation size={16} className="shrink-0 text-blue-400" />
+              <Presentation size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
             ) : (
-              <FileSpreadsheet size={16} className="shrink-0 text-emerald-400" />
+              <FileSpreadsheet size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
             )}
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
               {row.title}
@@ -378,10 +405,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             color: 'bg-slate-500',
           },
         ],
+        // L-07 (§27): canonical EntityStatusChip (semantic dot tone) instead of a
+        // raw text/colored-class status. Localized label kept; tone is derived
+        // from the raw statusKey by the chip's statusChipTone() mapping.
         render: (row: AggregateRow) => (
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-300 capitalize">
-            {formatLabel(row.statusKey)}
-          </span>
+          <EntityStatusChip status={row.statusKey} label={statusLabel(row.statusKey)} />
         ),
       },
       {
@@ -448,7 +476,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         },
       },
     ],
-    [t, isPolish]
+    [t, isPolish, statusLabel]
   );
 
   const openRow = (row: UnifiedOutputRow) => {
@@ -697,6 +725,27 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
 
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
+  }
+
+  // L-08: ENABLE_V8_GLOBAL OFF → registry 404. Dedicated "module disabled"
+  // banner instead of the generic "failed to load" error, so operators can tell
+  // a turned-off flag apart from an actual backend failure.
+  if (moduleDisabled) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <div className="w-full max-w-xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-8 text-center">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('rap.moduleDisabled.title', 'Outputs library is turned off')}
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            {t(
+              'rap.moduleDisabled.body',
+              'This workspace does not have the outputs library enabled. Contact your administrator to turn it on.'
+            )}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (error && rows.length === 0 && !searchQuery && activeFilters.length === 0) {
@@ -1028,6 +1077,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           onFilterChange={onFilterChange}
           emptyMessage={t('rap.empty.outputs', 'Brak outputów')}
           canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+          // L-06 (§27): persist column widths/visibility/order across reload —
+          // canonical FilterableTable localStorage path, one key for this table.
+          persistKey="rap.outputs.aggregate"
         />
       </TableWithPreviewLayout>
     </div>

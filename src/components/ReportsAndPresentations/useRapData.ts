@@ -584,12 +584,17 @@ export function useArtifactOutputsList(view: ArtifactOutputsRegistryView | null)
   const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // L-08: distinguish "module disabled" (ENABLE_V8_GLOBAL OFF → 404 on the
+  // artifact registry routes) from a generic load failure, so the UI can show a
+  // dedicated "module turned off" banner instead of a "failed to load" error.
+  const [moduleDisabled, setModuleDisabled] = useState(false);
 
   const fetchOutputs = useCallback(async () => {
     if (!view) {
       setRows([]);
       setLoading(false);
       setError(null);
+      setModuleDisabled(false);
       return;
     }
     setLoading(true);
@@ -600,7 +605,16 @@ export function useArtifactOutputsList(view: ArtifactOutputsRegistryView | null)
       const res = await fetch(`${API_URL}/artifacts?${qs.toString()}`, { headers: getHeaders() });
       if (!res.ok) {
         setRows([]);
-        setError('Canonical artifact registry failed to load outputs.');
+        // The whole module sits behind ENABLE_V8_GLOBAL; when OFF the registry
+        // routes 404 (pre/post-auth). Treat 404 as "module disabled", everything
+        // else as a generic failure.
+        if (res.status === 404) {
+          setModuleDisabled(true);
+          setError(null);
+        } else {
+          setModuleDisabled(false);
+          setError('Canonical artifact registry failed to load outputs.');
+        }
         return;
       }
       const data = await res.json();
@@ -610,8 +624,10 @@ export function useArtifactOutputsList(view: ArtifactOutputsRegistryView | null)
         .filter((x: UnifiedOutputRow | null): x is UnifiedOutputRow => !!x);
       setRows(mapped);
       setError(null);
+      setModuleDisabled(false);
     } catch {
       setRows([]);
+      setModuleDisabled(false);
       setError('Canonical artifact registry failed to load outputs.');
     } finally {
       setLoading(false);
@@ -622,7 +638,7 @@ export function useArtifactOutputsList(view: ArtifactOutputsRegistryView | null)
     void fetchOutputs();
   }, [fetchOutputs]);
 
-  return { rows, loading, error, refetch: fetchOutputs };
+  return { rows, loading, error, moduleDisabled, refetch: fetchOutputs };
 }
 
 export function useMyWorkArtifactOutputs(limit = 8) {

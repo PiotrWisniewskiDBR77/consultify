@@ -129,6 +129,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     rows: artifactOutputRows,
     loading: artifactOutputsLoading,
     error: artifactOutputsError,
+    moduleDisabled: artifactOutputsModuleDisabled,
     refetch: refetchArtifactOutputs,
   } = useArtifactOutputsList(libraryView);
   const {
@@ -983,6 +984,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             rows={artifactOutputRows}
             loading={artifactOutputsLoading}
             error={artifactOutputsError}
+            moduleDisabled={artifactOutputsModuleDisabled}
             onRefresh={refetchArtifactOutputs}
             actions={actions}
             initialArtifactId={initialArtifactId}
