@@ -11,9 +11,10 @@
  */
 
 import { Layers, Sparkles } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
 import { LoadingState } from '@/components/ui/primitives';
 
 import {
@@ -43,6 +44,7 @@ export const DocumentStudioView: React.FC = () => {
   const [useLlm, setUseLlm] = useState(true);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [approvedTemplates, setApprovedTemplates] = useState<DocumentTemplate[]>([]);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [artifactId, setArtifactId] = useState<string | null>(null);
   const [schema, setSchema] = useState<DocumentSchema | null>(null);
   const [planning, setPlanning] = useState(false);
@@ -54,9 +56,18 @@ export const DocumentStudioView: React.FC = () => {
     try {
       const list = await listDocumentStudioTemplates({ status: 'approved' });
       setApprovedTemplates(list);
-    } catch {
-      // Tab list is a soft enhancement; the plain Mode 1 flow stays available.
+      setTemplatesError(null);
+    } catch (err) {
+      // L-08: the approved-template picker is a soft enhancement (Mode 3) and
+      // the plain Mode 1 flow stays available — but the failure must be visible
+      // instead of silently swallowed, so the user knows the picker is missing
+      // because of an error rather than because no templates exist.
       setApprovedTemplates([]);
+      setTemplatesError(
+        err instanceof Error
+          ? `Approved templates could not be loaded (${err.message}). You can still generate without a template.`
+          : 'Approved templates could not be loaded. You can still generate without a template.'
+      );
     }
   }, []);
 
@@ -181,42 +192,52 @@ export const DocumentStudioView: React.FC = () => {
     setError(null);
   };
 
-  const tabClass = (tab: Tab): string =>
-    `inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-      activeTab === tab
-        ? 'border-primary-500 text-navy-900 dark:text-white'
-        : 'border-transparent text-slate-500 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white'
-    }`;
+  // L-07: the tab strip is expressed as MELS TopBar toggle chips so Document
+  // Studio shares the same canonical chrome as the other executive modules
+  // (Wordy / Tabele / Prezentacje). In the `document` phase the rendered
+  // artifact owns its own full ExecutiveModuleShell (with its own TopBar), so
+  // the View-level TopBar is intentionally suppressed there to avoid a double bar.
+  const showDocumentShell = activeTab === 'generate' && phase === 'document';
+
+  const tabChips = useMemo<TopBarChipDescriptor[]>(
+    () => [
+      {
+        id: 'generate',
+        label: 'Generate',
+        icon: Sparkles,
+        kind: 'toggle',
+        active: activeTab === 'generate',
+        onClick: () => setActiveTab('generate'),
+        tooltip: 'Mode 1 / Mode 3 — intake → outline → document.',
+      },
+      {
+        id: 'templates',
+        label: 'Plan template',
+        icon: Layers,
+        kind: 'toggle',
+        active: activeTab === 'templates',
+        onClick: () => setActiveTab('templates'),
+        tooltip: 'Mode 2 — Document Template Architect.',
+      },
+    ],
+    [activeTab]
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-slate-50 dark:bg-navy-950">
-      <header className="border-b border-slate-200 bg-white px-6 pt-4 dark:border-navy-700 dark:bg-navy-900">
-        <h1 className="text-base font-semibold text-navy-900 dark:text-white">
-          <span className="inline-flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-sky-500" />
-            Consultify Document Studio
-          </span>
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          AI Document Artifact Engine · Modes 1, 2, 3 · Word/PDF artifact runtime
-        </p>
-        <nav className="mt-3 flex gap-2" aria-label="Document Studio modes">
-          <button
-            type="button"
-            onClick={() => setActiveTab('generate')}
-            className={tabClass('generate')}
-          >
-            <Sparkles className="h-4 w-4" /> Generate
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('templates')}
-            className={tabClass('templates')}
-          >
-            <Layers className="h-4 w-4" /> Plan template
-          </button>
-        </nav>
-      </header>
+      {showDocumentShell ? null : (
+        <TopBar
+          moduleLabel="Document Studio"
+          title="Consultify Document Studio"
+          chips={tabChips}
+          respectMelsOrder={false}
+          presenceSlot={
+            <span className="hidden text-[11px] text-slate-500 dark:text-slate-400 lg:inline">
+              Modes 1, 2, 3 · Word/PDF artifact runtime
+            </span>
+          }
+        />
+      )}
 
       <main className="flex h-full min-h-0 flex-col">
         {activeTab === 'templates' ? (
@@ -233,6 +254,7 @@ export const DocumentStudioView: React.FC = () => {
             loading={planning || generating}
             error={phase === 'intake' ? error : null}
             approvedTemplates={approvedTemplates}
+            templatesNotice={phase === 'intake' ? templatesError : null}
           />
         ) : phase === 'outline' && outline ? (
           <DocumentStudioOutlinePanel

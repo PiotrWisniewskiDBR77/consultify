@@ -65,6 +65,9 @@ interface DocumentStudioIntakeFormProps {
   /** Approved templates available for Mode 3. When provided, a template picker
    *  becomes available; selecting one switches the form into Mode 3. */
   approvedTemplates?: DocumentTemplate[];
+  /** Non-blocking notice when the approved-template list could not be loaded.
+   *  Mode 1 (free generation) stays fully available; the picker is just hidden. */
+  templatesNotice?: string | null;
 }
 
 export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> = ({
@@ -72,6 +75,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
   loading,
   error,
   approvedTemplates,
+  templatesNotice,
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -139,6 +143,15 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             : 'Describe the document you need. Document Studio will plan an outline and a deterministic first draft. No hallucinated facts: missing inputs are flagged as assumptions.'}
         </p>
       </div>
+
+      {templatesNotice ? (
+        <div
+          role="status"
+          className="rounded-lg border border-warning-500/30 bg-warning-500/10 px-3 py-2 text-xs text-warning-700 dark:text-warning-400"
+        >
+          {templatesNotice}
+        </div>
+      ) : null}
 
       {hasTemplates ? (
         <label className="flex flex-col gap-1 text-sm">

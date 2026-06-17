@@ -9,9 +9,16 @@
  * Governance contract is enforced server-side. This view is a thin client.
  */
 
-import { CheckCircle2, ChevronRight, Loader2, Plus, ShieldAlert } from 'lucide-react';
+import { Archive, CheckCircle2, Loader2, Plus, ShieldAlert } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import {
+  FilterableTable,
+  type FilterChip,
+  type TableColumn,
+  type TableRow,
+} from '@/components/shared/ModuleHub';
+import { type RowAction } from '@/components/shared/RowActionsMenu';
 import Button from '@/components/ui/primitives/Button';
 
 import {
@@ -20,12 +27,7 @@ import {
   listDocumentStudioTemplates,
   planDocumentStudioTemplate,
 } from './api';
-import type {
-  DocumentTemplate,
-  DocumentTypeKey,
-  TemplateDraftInput,
-  TemplateStatus,
-} from './types';
+import type { DocumentTemplate, DocumentTypeKey, TemplateDraftInput } from './types';
 
 const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey; label: string }[] = [
   { value: 'executive_memo', label: 'Executive Memo' },
@@ -44,12 +46,6 @@ const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey; label: string }[] = [
   { value: 'generic_document', label: 'Generic document' },
 ];
 
-const STATUS_BADGE_CLASS: Record<TemplateStatus, string> = {
-  draft: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
-  approved: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
-  deprecated: 'bg-slate-400/10 text-slate-600 dark:text-slate-400 border-slate-400/30',
-};
-
 interface DocumentStudioTemplateArchitectViewProps {
   onTemplateApproved?: (template: DocumentTemplate) => void;
 }
@@ -63,6 +59,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   const [busyTemplateId, setBusyTemplateId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
 
   const [name, setName] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -76,6 +73,68 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     () => templates.find((t) => t.templateId === selectedTemplateId) ?? null,
     [templates, selectedTemplateId]
   );
+
+  // L-08 — canonical §27 table. Columns map to FilterableTable's conventions:
+  // the `status` column auto-renders <EntityStatusChip>, and approve/deprecate
+  // live in the per-row actions menu via `getRowActions`.
+  const tableColumns = useMemo<TableColumn[]>(
+    () => [
+      { id: 'name', label: 'Template', width: '260px' },
+      { id: 'documentType', label: 'Type' },
+      { id: 'meta', label: 'Sections', align: 'right', width: '120px' },
+      {
+        id: 'status',
+        label: 'Status',
+        width: '140px',
+        filterable: true,
+        filterOptions: [
+          { value: 'draft', label: 'Draft' },
+          { value: 'approved', label: 'Approved' },
+          { value: 'deprecated', label: 'Deprecated' },
+        ],
+      },
+    ],
+    []
+  );
+
+  const tableRows = useMemo<TableRow[]>(
+    () =>
+      templates.map((template) => ({
+        id: template.templateId,
+        name: template.name,
+        documentType: template.documentType.replace(/_/g, ' '),
+        meta: `v${template.version} · ${template.sectionBlueprint.length}`,
+        status: template.status,
+      })),
+    [templates]
+  );
+
+  const getRowActions = (row: TableRow): RowAction[] => {
+    const template = templates.find((t) => t.templateId === row.id);
+    if (!template) return [];
+    const isBusy = busyTemplateId === template.templateId;
+    const actions: RowAction[] = [];
+    if (template.status === 'draft') {
+      actions.push({
+        id: 'approve',
+        label: isBusy ? 'Approving…' : 'Approve',
+        icon: CheckCircle2,
+        variant: 'primary',
+        onClick: () => void handleApprove(template.templateId),
+      });
+    }
+    if (template.status !== 'deprecated') {
+      actions.push({
+        id: 'deprecate',
+        label: isBusy ? 'Working…' : 'Deprecate',
+        icon: Archive,
+        variant: 'danger',
+        divider: actions.length > 0,
+        onClick: () => void handleDeprecate(template.templateId),
+      });
+    }
+    return actions;
+  };
 
   const refresh = async (): Promise<void> => {
     setLoadingList(true);
@@ -297,83 +356,19 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             {loadingList ? 'Refreshing…' : 'Refresh'}
           </Button>
         </div>
-        <ul className="mt-3 divide-y divide-slate-200 text-sm dark:divide-navy-700">
-          {templates.length === 0 ? (
-            <li className="py-3 text-slate-500 dark:text-slate-400">No templates yet.</li>
-          ) : (
-            templates.map((template) => {
-              const isSelected = template.templateId === selectedTemplateId;
-              const isBusy = busyTemplateId === template.templateId;
-              return (
-                <li
-                  key={template.templateId}
-                  className={`flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between ${
-                    isSelected ? 'bg-primary-500/5 px-2 rounded' : ''
-                  }`}
-                >
-                  <div className="flex flex-1 items-start gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTemplateId(template.templateId)}
-                      className="mt-1"
-                      aria-label="Select template"
-                    >
-                      <ChevronRight
-                        className={`h-4 w-4 ${
-                          isSelected ? 'rotate-90 text-primary-600' : 'text-slate-600'
-                        }`}
-                      />
-                    </button>
-                    <div>
-                      <div className="font-medium text-navy-900 dark:text-white">
-                        {template.name}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {template.documentType.replace(/_/g, ' ')} · v{template.version} ·{' '}
-                        {template.sectionBlueprint.length} sections
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${
-                        STATUS_BADGE_CLASS[template.status]
-                      }`}
-                    >
-                      {template.status}
-                    </span>
-                    {template.status === 'draft' ? (
-                      <Button
-                        type="button"
-                        variant="primary"
-                        onClick={() => void handleApprove(template.templateId)}
-                        disabled={isBusy}
-                      >
-                        {isBusy ? (
-                          'Approving…'
-                        ) : (
-                          <span className="inline-flex items-center gap-1">
-                            <CheckCircle2 className="h-4 w-4" /> Approve
-                          </span>
-                        )}
-                      </Button>
-                    ) : null}
-                    {template.status !== 'deprecated' ? (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => void handleDeprecate(template.templateId)}
-                        disabled={isBusy}
-                      >
-                        {isBusy ? 'Working…' : 'Deprecate'}
-                      </Button>
-                    ) : null}
-                  </div>
-                </li>
-              );
-            })
-          )}
-        </ul>
+        <FilterableTable
+          columns={tableColumns}
+          data={tableRows}
+          selectedRowId={selectedTemplateId}
+          onRowClick={(row) => setSelectedTemplateId(row.id)}
+          getRowActions={getRowActions}
+          activeFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+          emptyMessage={loadingList ? 'Loading templates…' : 'No templates yet.'}
+          canvasClassName="mt-3"
+          density="compact"
+          persistKey="documentStudio.templates"
+        />
 
         {selectedTemplate ? (
           <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-navy-700 dark:bg-navy-950">

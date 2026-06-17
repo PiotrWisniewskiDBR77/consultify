@@ -283,18 +283,18 @@ function SourceListPanel({
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                     used
-                      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                      ? 'bg-success-500/10 text-success-700 dark:text-emerald-300'
                       : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
                   }`}
                 >
                   {used ? 'used' : 'skipped'}
                 </span>
                 {ref.sourceVersion ? (
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                  <span className="rounded-full bg-success-500/10 px-2 py-0.5 text-[10px] font-medium text-success-700 dark:text-emerald-300">
                     version {ref.sourceVersion}
                   </span>
                 ) : (
-                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                  <span className="rounded-full bg-warning-500/10 px-2 py-0.5 text-[10px] font-medium text-warning-700 dark:text-amber-300">
                     unpinned
                   </span>
                 )}
@@ -306,9 +306,9 @@ function SourceListPanel({
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                     connector.tone === 'success'
-                      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                      ? 'bg-success-500/10 text-success-700 dark:text-emerald-300'
                       : connector.tone === 'warning'
-                        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                        ? 'bg-warning-500/10 text-warning-700 dark:text-amber-300'
                         : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -674,7 +674,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
           {submitting ? 'Creating…' : 'Create link'}
         </Button>
         {createdToken ? (
-          <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs text-emerald-700 dark:text-emerald-300">
+          <div className="mt-3 rounded-lg border border-success-500/30 bg-success-500/10 p-2 text-xs text-success-700 dark:text-emerald-300">
             Token: <span className="break-all font-mono">{createdToken}</span>
           </div>
         ) : null}
@@ -877,7 +877,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
             ))}
           </div>
           {changedSections.length === 0 ? (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300">
+            <div className="rounded-lg border border-success-500/30 bg-success-500/10 p-3 text-xs text-success-700 dark:text-emerald-300">
               Live schema matches the selected snapshot structurally.
             </div>
           ) : (
@@ -972,7 +972,7 @@ function ManifestGatePanel(): React.ReactElement {
           <div
             className={`rounded-lg border p-3 text-xs ${
               result.ok
-                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                ? 'border-success-500/30 bg-success-500/10 text-success-700 dark:text-emerald-300'
                 : 'border-danger-500/30 bg-danger-500/10 text-danger-700 dark:text-danger-300'
             }`}
           >
@@ -1344,7 +1344,7 @@ function ContentLibraryPanel({
         </div>
       ) : null}
       {instantiatedBlock ? (
-        <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300">
+        <div className="mb-3 rounded-lg border border-success-500/30 bg-success-500/10 p-3 text-xs text-success-700 dark:text-emerald-300">
           <div className="mb-1 font-semibold">
             {lastInsertedBlockId === instantiatedBlock.blockId
               ? 'Inserted block read-back'

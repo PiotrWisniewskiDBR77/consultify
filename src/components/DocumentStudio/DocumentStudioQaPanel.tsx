@@ -34,8 +34,8 @@ const SEVERITY_STYLES: Record<DocumentQaSeverity, string> = {
 };
 
 function scoreColor(score: number): string {
-  if (score >= 90) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 70) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 90) return 'text-success-600 dark:text-emerald-400';
+  if (score >= 70) return 'text-warning-600 dark:text-amber-400';
   return 'text-danger-600 dark:text-danger-400';
 }
 
@@ -54,7 +54,7 @@ function CategoryReportView({
           {report.blocking ? (
             <AlertTriangle className="h-4 w-4 text-danger-500" aria-hidden />
           ) : (
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden />
+            <CheckCircle2 className="h-4 w-4 text-success-500" aria-hidden />
           )}
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white">{categoryLabel}</h4>
         </div>
@@ -137,7 +137,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
             report.anyBlocking ? (
               <ShieldQuestion className="h-4 w-4 text-danger-500" aria-hidden />
             ) : (
-              <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden />
+              <ShieldCheck className="h-4 w-4 text-success-600" aria-hidden />
             )
           ) : (
             <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden />
@@ -183,7 +183,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
                 {t('documentStudio.qa.attention', 'Attention required')}
               </span>
             ) : (
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+              <span className="rounded-full bg-success-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-success-700 dark:text-emerald-300">
                 {t('documentStudio.qa.allClear', 'All clear')}
               </span>
             )}
