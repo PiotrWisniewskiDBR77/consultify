@@ -8,7 +8,7 @@
 import { Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
 import { OrganizationAdminPanel } from '../components/Organization/OrganizationAdminPanel';
@@ -188,7 +188,15 @@ export const OrganizationView: React.FC = () => {
 
   const renderContent = useCallback(() => {
     if (ADMIN_SECTIONS.includes(activeSection)) {
-      if (!isOrgAdmin) return null;
+      // M23 L-04 (P1 security): view-level role gate for admin sections.
+      // Defense-in-depth layer 2 — even if the URL-redirect useEffect above has not
+      // yet fired (first render) or is bypassed, a non-admin member must never see
+      // OrganizationAdminPanel (which fetches org members / billing / branding data).
+      // Explicit <Navigate replace> instead of a bare `null` so the protection is
+      // intentional, testable and never a silent blank screen.
+      if (!isOrgAdmin) {
+        return <Navigate to={ROUTES.AI_CHAT} replace />;
+      }
       return <OrganizationAdminPanel section={activeSection} />;
     }
     switch (activeSection) {
@@ -203,7 +211,7 @@ export const OrganizationView: React.FC = () => {
       default:
         return <OrganizationProfileModule />;
     }
-  }, [activeSection]);
+  }, [activeSection, isOrgAdmin]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-navy-950">
