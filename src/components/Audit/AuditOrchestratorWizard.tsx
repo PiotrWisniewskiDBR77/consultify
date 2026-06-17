@@ -66,9 +66,8 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
   onCreated,
   initialPresetId = null,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const tr = (en: string, pl: string) => (isPolish ? pl : en);
 
   const [stepIndex, setStepIndex] = useState(0);
   const [name, setName] = useState('');
@@ -187,11 +186,7 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
       onCreated?.(program);
       onClose();
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : tr('Failed to create program', 'Nie udało się utworzyć programu')
-      );
+      setError(e instanceof Error ? e.message : t('audit.failedToCreateProgram'));
     } finally {
       setSubmitting(false);
     }
@@ -260,19 +255,16 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-white/[0.08]">
           <div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {tr('New audit program', 'Nowy program audytu')}
+              {t('audit.newAuditProgram')}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {tr(
-                'Define the objective, what to ask, and who fills it.',
-                'Określ cel, o co pytać i kto wypełnia.'
-              )}
+              {t('audit.defineObjectiveWhatToAsk')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label={tr('Close', 'Zamknij')}
+            aria-label={t('audit.close')}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06]"
           >
             <X className="h-5 w-5" />
@@ -297,20 +289,20 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {tr('Program name', 'Nazwa programu')} *
+                  {t('audit.programName')} *
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={tr('e.g. ISO 27001 readiness', 'np. Gotowość ISO 27001')}
+                  placeholder={t('audit.egIso27001Readiness')}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/40 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {tr('Start from a preset', 'Zacznij od szablonu')}
+                  {t('audit.startFromAPreset')}
                 </label>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <button
@@ -323,10 +315,10 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
                     }`}
                   >
                     <span className="font-medium text-slate-800 dark:text-slate-100">
-                      {tr('Custom', 'Własny')}
+                      {t('audit.custom')}
                     </span>
                     <span className="mt-0.5 block text-xs text-slate-500">
-                      {tr('Start blank', 'Zacznij od zera')}
+                      {t('audit.startBlank')}
                     </span>
                   </button>
                   {AUDIT_PRESETS.map((p) => (
@@ -353,16 +345,13 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {tr('Objective', 'Cel')}
+                  {t('audit.objective')}
                 </label>
                 <textarea
                   value={objective}
                   onChange={(e) => setObjective(e.target.value)}
                   rows={3}
-                  placeholder={tr(
-                    'What is this audit trying to assess?',
-                    'Co ma ocenić ten audyt?'
-                  )}
+                  placeholder={t('audit.whatIsThisAuditAssessing')}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/40 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white"
                 />
               </div>
@@ -371,14 +360,11 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
                 <div className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-3">
                   <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-300">
                     <Sparkles className="h-3.5 w-3.5" />
-                    {tr('Suggested plan (who fills what)', 'Sugerowany plan (kto co wypełnia)')}
+                    {t('audit.suggestedPlanWhoFillsWhat')}
                   </div>
                   {/* #19b enhancement boundary: heuristic, not AI. */}
                   <p className="mb-2 text-[11px] text-slate-500">
-                    {tr(
-                      'Heuristic suggestion. AI-generated planning from org context is a planned enhancement.',
-                      'Sugestia heurystyczna. Planowanie generowane przez AI z kontekstu organizacji to planowane rozszerzenie.'
-                    )}
+                    {t('audit.heuristicSuggestionAiPlanning')}
                   </p>
                   <ul className="space-y-1">
                     {plan.map((row) => (
@@ -396,25 +382,22 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
           {step === 'templates' && (
             <div className="space-y-3">
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                {tr(
-                  'Pick the interview templates this audit will ask.',
-                  'Wybierz szablony wywiadów, o które ten audyt zapyta.'
-                )}
+                {t('audit.pickInterviewTemplates')}
               </p>
               {loadingLookups ? (
                 <div className="flex items-center gap-2 text-sm text-slate-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {tr('Loading templates…', 'Ładowanie szablonów…')}
+                  {t('audit.loadingTemplates')}
                 </div>
               ) : (
                 <MultiSelect
                   values={selectedTemplateIds}
                   onChange={setSelectedTemplateIds}
                   options={templateMultiOptions}
-                  placeholder={tr('Select templates…', 'Wybierz szablony…')}
-                  searchPlaceholder={tr('Search templates', 'Szukaj szablonów')}
-                  emptyLabel={tr('No templates found', 'Nie znaleziono szablonów')}
-                  aria-label={tr('Templates', 'Szablony')}
+                  placeholder={t('audit.selectTemplates')}
+                  searchPlaceholder={t('audit.searchTemplates')}
+                  emptyLabel={t('audit.noTemplatesFound')}
+                  aria-label={t('audit.templates')}
                 />
               )}
             </div>
@@ -423,25 +406,22 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
           {step === 'assignees' && (
             <div className="space-y-3">
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                {tr(
-                  'Pick the people who will fill the surveys.',
-                  'Wybierz osoby, które wypełnią ankiety.'
-                )}
+                {t('audit.pickPeopleWhoFillSurveys')}
               </p>
               {loadingLookups ? (
                 <div className="flex items-center gap-2 text-sm text-slate-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {tr('Loading people…', 'Ładowanie osób…')}
+                  {t('audit.loadingPeople')}
                 </div>
               ) : (
                 <MultiSelect
                   values={selectedAssigneeIds}
                   onChange={setSelectedAssigneeIds}
                   options={userMultiOptions}
-                  placeholder={tr('Select assignees…', 'Wybierz przypisanych…')}
-                  searchPlaceholder={tr('Search people', 'Szukaj osób')}
-                  emptyLabel={tr('No people found', 'Nie znaleziono osób')}
-                  aria-label={tr('Assignees', 'Przypisani')}
+                  placeholder={t('audit.selectAssignees')}
+                  searchPlaceholder={t('audit.searchPeople')}
+                  emptyLabel={t('audit.noPeopleFound')}
+                  aria-label={t('audit.assignees')}
                 />
               )}
             </div>
@@ -449,32 +429,23 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
 
           {step === 'review' && (
             <div className="space-y-4">
-              <ReviewRow label={tr('Name', 'Nazwa')} value={name || '—'} />
-              <ReviewRow label={tr('Objective', 'Cel')} value={objective || '—'} />
+              <ReviewRow label={t('audit.name')} value={name || '—'} />
+              <ReviewRow label={t('audit.objective')} value={objective || '—'} />
               <ReviewRow
-                label={tr('Preset', 'Szablon')}
+                label={t('audit.preset')}
                 value={
                   activePreset
                     ? isPolish
                       ? activePreset.label.pl
                       : activePreset.label.en
-                    : tr('Custom', 'Własny')
+                    : t('audit.custom')
                 }
               />
-              <ReviewRow
-                label={tr('Templates', 'Szablony')}
-                value={String(selectedTemplateIds.length)}
-              />
-              <ReviewRow
-                label={tr('Assignees', 'Przypisani')}
-                value={String(selectedAssigneeIds.length)}
-              />
+              <ReviewRow label={t('audit.templates')} value={String(selectedTemplateIds.length)} />
+              <ReviewRow label={t('audit.assignees')} value={String(selectedAssigneeIds.length)} />
 
               <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs text-amber-700 dark:text-amber-300">
-                {tr(
-                  'The program record will be created now. Individual surveys and assignments can be generated from the program page after creation.',
-                  'Rekord programu zostanie utworzony teraz. Ankiety i przypisania można wygenerować ze strony programu po jego utworzeniu.'
-                )}
+                {t('audit.programRecordWillBeCreated')}
               </div>
 
               {error && (
@@ -494,7 +465,7 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
             className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.06]"
           >
             <ArrowLeft className="h-4 w-4" />
-            {stepIndex === 0 ? tr('Cancel', 'Anuluj') : tr('Back', 'Wstecz')}
+            {stepIndex === 0 ? t('audit.cancel') : t('audit.back')}
           </button>
 
           {isLastStep ? (
@@ -509,7 +480,7 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
               ) : (
                 <Check className="h-4 w-4" />
               )}
-              {tr('Create program', 'Utwórz program')}
+              {t('audit.createProgram')}
             </button>
           ) : (
             <button
@@ -518,7 +489,7 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
               disabled={!canProceed()}
               className="inline-flex items-center gap-1.5 rounded-xl bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {tr('Next', 'Dalej')}
+              {t('audit.next')}
               <ArrowRight className="h-4 w-4" />
             </button>
           )}

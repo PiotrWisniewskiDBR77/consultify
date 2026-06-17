@@ -73,9 +73,8 @@ const STATUS_PILL_ALIAS: Record<AuditProgramStatus, string> = {
 };
 
 export const AuditsHub: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const tr = (en: string, pl: string) => (isPolish ? pl : en);
 
   const [programs, setPrograms] = useState<AuditProgram[]>([]);
   const [total, setTotal] = useState(0);
@@ -112,11 +111,7 @@ export const AuditsHub: React.FC = () => {
       setPrograms(res.programs);
       setTotal(res.total);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : tr('Failed to load programs', 'Nie udało się załadować programów')
-      );
+      setError(e instanceof Error ? e.message : t('audit.failedToLoadPrograms'));
     } finally {
       setLoading(false);
     }
@@ -140,11 +135,7 @@ export const AuditsHub: React.FC = () => {
       });
       setTotal(res.total);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : tr('Failed to load programs', 'Nie udało się załadować programów')
-      );
+      setError(e instanceof Error ? e.message : t('audit.failedToLoadPrograms'));
     } finally {
       setLoadingMore(false);
     }
@@ -157,11 +148,11 @@ export const AuditsHub: React.FC = () => {
 
   const statusLabel = (s: AuditProgramStatus | 'all'): string => {
     const map: Record<AuditProgramStatus | 'all', string> = {
-      all: tr('All', 'Wszystkie'),
-      draft: tr('Draft', 'Szkic'),
-      active: tr('Active', 'Aktywny'),
-      completed: tr('Completed', 'Zakończony'),
-      archived: tr('Archived', 'Zarchiwizowany'),
+      all: t('audit.all'),
+      draft: t('audit.draft'),
+      active: t('audit.active'),
+      completed: t('audit.completed'),
+      archived: t('audit.archived'),
     };
     return map[s];
   };
@@ -192,13 +183,13 @@ export const AuditsHub: React.FC = () => {
   );
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(tr('Delete this audit program?', 'Usunąć ten program audytu?'))) return;
+    if (!window.confirm(t('audit.deleteThisAuditProgram'))) return;
     try {
       await deleteProgram(id);
       if (selectedId === id) setSelectedId(null);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : tr('Failed to delete', 'Nie udało się usunąć'));
+      setError(e instanceof Error ? e.message : t('audit.failedToDelete'));
     }
   };
 
@@ -207,20 +198,16 @@ export const AuditsHub: React.FC = () => {
     const assigneeCount = program.config.assigneeIds?.length ?? 0;
     const pairs = templateCount * assigneeCount;
     if (pairs === 0) {
-      setError(
-        tr(
-          'Pick at least one template and one assignee before generating surveys.',
-          'Wybierz co najmniej jeden szablon i jedną osobę przed wygenerowaniem ankiet.'
-        )
-      );
+      setError(t('audit.pickAtLeastOneTemplateAndAssignee'));
       return;
     }
     if (
       !window.confirm(
-        tr(
-          `Generate ${pairs} survey assignment(s) (${templateCount} templates × ${assigneeCount} assignees)?`,
-          `Wygenerować ${pairs} przydziałów ankiet (${templateCount} szablonów × ${assigneeCount} osób)?`
-        )
+        t('audit.generateSurveyAssignmentsConfirm', {
+          pairs,
+          templateCount,
+          assigneeCount,
+        })
       )
     ) {
       return;
@@ -230,22 +217,19 @@ export const AuditsHub: React.FC = () => {
     try {
       const res = await generateSurveys(program.id);
       if (res.alreadyGenerated) {
-        setError(tr('Surveys were already generated.', 'Ankiety zostały już wygenerowane.'));
+        setError(t('audit.surveysWereAlreadyGenerated'));
       } else if (res.failed > 0) {
         setError(
-          tr(
-            `Generated ${res.created} of ${res.requested}; ${res.failed} failed.`,
-            `Wygenerowano ${res.created} z ${res.requested}; ${res.failed} nie powiodło się.`
-          )
+          t('audit.generatedOfRequestedFailed', {
+            created: res.created,
+            requested: res.requested,
+            failed: res.failed,
+          })
         );
       }
       await load();
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : tr('Failed to generate surveys', 'Nie udało się wygenerować ankiet')
-      );
+      setError(e instanceof Error ? e.message : t('audit.failedToGenerateSurveys'));
     } finally {
       setGeneratingId(null);
     }
@@ -262,7 +246,7 @@ export const AuditsHub: React.FC = () => {
     () => [
       {
         id: 'name',
-        label: tr('Program', 'Program'),
+        label: t('audit.program'),
         render: (row: AuditRow) => (
           <div className="flex items-center gap-2">
             <span className="truncate font-medium text-slate-900 dark:text-white">{row.name}</span>
@@ -276,14 +260,14 @@ export const AuditsHub: React.FC = () => {
       },
       {
         id: 'objective',
-        label: tr('Objective', 'Cel'),
+        label: t('audit.objective'),
         render: (row: AuditRow) => (
           <span className="line-clamp-1 text-sm text-slate-500">{row.objective || '—'}</span>
         ),
       },
       {
         id: 'templates',
-        label: tr('Templates', 'Szablony'),
+        label: t('audit.templates'),
         align: 'right',
         render: (row: AuditRow) => (
           <span className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
@@ -294,7 +278,7 @@ export const AuditsHub: React.FC = () => {
       },
       {
         id: 'assignees',
-        label: tr('Assignees', 'Przypisani'),
+        label: t('audit.assignees'),
         align: 'right',
         render: (row: AuditRow) => (
           <span className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
@@ -305,7 +289,7 @@ export const AuditsHub: React.FC = () => {
       },
       {
         id: 'surveys',
-        label: tr('Surveys', 'Ankiety'),
+        label: t('audit.surveys'),
         align: 'right',
         render: (row: AuditRow) =>
           row.surveysGenerated ? (
@@ -330,16 +314,14 @@ export const AuditsHub: React.FC = () => {
       return [
         {
           id: 'generate',
-          label: row.surveysGenerated
-            ? tr('Surveys generated', 'Ankiety wygenerowane')
-            : tr('Generate surveys', 'Generuj ankiety'),
+          label: row.surveysGenerated ? t('audit.surveysGenerated') : t('audit.generateSurveys'),
           icon: Send,
           disabled: row.surveysGenerated || isGenerating,
           onClick: () => void handleGenerate(row),
         },
         {
           id: 'delete',
-          label: tr('Delete', 'Usuń'),
+          label: t('audit.delete'),
           icon: Trash2,
           variant: 'danger',
           onClick: () => void handleDelete(row.id),
@@ -358,7 +340,7 @@ export const AuditsHub: React.FC = () => {
     () => [
       {
         id: 'list' as ModuleTab,
-        label: tr('Audit programs', 'Programy audytu'),
+        label: t('audit.auditPrograms'),
         icon: <ShieldCheck className="h-4 w-4" />,
       },
     ],
@@ -399,7 +381,7 @@ export const AuditsHub: React.FC = () => {
         onRemoveFilter={() => {}}
         onClearFilters={() => {}}
         onNewItem={() => openWizard(null)}
-        newItemLabel={tr('New audit program', 'Nowy program audytu')}
+        newItemLabel={t('audit.newAuditProgram')}
         statusFilters={statusFilters}
         activeStatusFilter={statusFilter === 'all' ? null : statusFilter}
         onStatusFilterChange={(s) => setStatusFilter((s as AuditProgramStatus | null) ?? 'all')}
@@ -411,7 +393,7 @@ export const AuditsHub: React.FC = () => {
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.06]"
           >
             <ShieldCheck className="h-4 w-4" />
-            {tr('ISO 27001', 'ISO 27001')}
+            {t('audit.iso27001')}
           </button>
         }
       >
@@ -425,7 +407,7 @@ export const AuditsHub: React.FC = () => {
           {loading ? (
             <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-12 text-sm text-slate-400 dark:border-white/[0.08] dark:bg-navy-900">
               <Loader2 className="h-4 w-4 animate-spin" />
-              {tr('Loading…', 'Ładowanie…')}
+              {t('audit.loading')}
             </div>
           ) : (
             <>
@@ -439,9 +421,7 @@ export const AuditsHub: React.FC = () => {
                   onSelect={setSelectedId}
                   itemIds={rows.map((r) => r.id)}
                   getItemById={(id) => rows.find((r) => r.id === id) ?? null}
-                  renderPreview={(item) => (
-                    <ProgramDashboard program={item} isPolish={isPolish} tr={tr} />
-                  )}
+                  renderPreview={(item) => <ProgramDashboard program={item} isPolish={isPolish} />}
                 >
                   <FilterableTable
                     columns={columns}
@@ -457,11 +437,8 @@ export const AuditsHub: React.FC = () => {
                     onFilterChange={setTableFilters}
                     emptyMessage={
                       query.trim() || statusFilter !== 'all'
-                        ? tr(
-                            'No programs match your filters.',
-                            'Brak programów pasujących do filtrów.'
-                          )
-                        : tr('No audit programs yet.', 'Brak programów audytu.')
+                        ? t('audit.noProgramsMatchFilters')
+                        : t('audit.noAuditProgramsYet')
                     }
                     canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
                     density="compact"
@@ -480,13 +457,13 @@ export const AuditsHub: React.FC = () => {
                     className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-60 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.06]"
                   >
                     {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {tr('Load more', 'Załaduj więcej')}
+                    {t('audit.loadMore')}
                   </button>
                   <span className="text-[11px] text-slate-400">
-                    {tr(
-                      `Showing ${programs.length} of ${total}`,
-                      `Pokazano ${programs.length} z ${total}`
-                    )}
+                    {t('audit.showingOfTotal', {
+                      shown: programs.length,
+                      total,
+                    })}
                   </span>
                 </div>
               )}
@@ -516,8 +493,8 @@ export const AuditsHub: React.FC = () => {
 const ProgramDashboard: React.FC<{
   program: AuditProgram;
   isPolish: boolean;
-  tr: (en: string, pl: string) => string;
-}> = ({ program, isPolish, tr }) => {
+}> = ({ program, isPolish }) => {
+  const { t } = useTranslation();
   const templateCount = program.config.templateIds?.length ?? 0;
   const assigneeCount = program.config.assigneeIds?.length ?? 0;
   const surveysGenerated = program.config.surveysGenerated === true;
@@ -562,8 +539,8 @@ const ProgramDashboard: React.FC<{
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Stat label={tr('Templates', 'Szablony')} value={templateCount} />
-        <Stat label={tr('Assignees', 'Przypisani')} value={assigneeCount} />
+        <Stat label={t('audit.templates')} value={templateCount} />
+        <Stat label={t('audit.assignees')} value={assigneeCount} />
       </div>
 
       {/* Completion (#19e): real rollup over the program's generated interview
@@ -571,7 +548,7 @@ const ProgramDashboard: React.FC<{
       <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/[0.04]">
         <div className="mb-1 flex items-center justify-between">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            {tr('Completion', 'Postęp')}
+            {t('audit.completion')}
           </span>
           {surveysGenerated && completion && (
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
@@ -580,16 +557,11 @@ const ProgramDashboard: React.FC<{
           )}
         </div>
         {!surveysGenerated ? (
-          <p className="text-xs text-slate-500">
-            {tr(
-              'Not generated. Use "Generate surveys" to fan out templates × assignees into interview assignments.',
-              'Niewygenerowane. Użyj „Generuj ankiety”, aby rozłożyć szablony × osoby na przydziały wywiadów.'
-            )}
-          </p>
+          <p className="text-xs text-slate-500">{t('audit.notGeneratedUseGenerateSurveys')}</p>
         ) : completionLoading ? (
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            {tr('Loading…', 'Ładowanie…')}
+            {t('audit.loading')}
           </div>
         ) : completion ? (
           <div className="space-y-1.5">
@@ -600,23 +572,21 @@ const ProgramDashboard: React.FC<{
               />
             </div>
             <p className="text-xs text-slate-500">
-              {tr(
-                `${completion.done} of ${completion.total} surveys completed`,
-                `${completion.done} z ${completion.total} ankiet ukończonych`
-              )}
+              {t('audit.surveysCompletedOfTotal', {
+                done: completion.done,
+                total: completion.total,
+              })}
             </p>
           </div>
         ) : (
-          <p className="text-xs text-slate-500">
-            {tr('Completion unavailable.', 'Postęp niedostępny.')}
-          </p>
+          <p className="text-xs text-slate-500">{t('audit.completionUnavailable')}</p>
         )}
       </div>
 
       {plan.length > 0 && (
         <div>
           <div className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-300">
-            {tr('Suggested plan', 'Sugerowany plan')}
+            {t('audit.suggestedPlan')}
           </div>
           <ul className="space-y-1">
             {plan.map((row, i) => (
