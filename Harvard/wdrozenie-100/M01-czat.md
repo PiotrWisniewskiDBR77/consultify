@@ -5,7 +5,7 @@
 ## 00 · Nagłówek
 - **Moduł:** M01 Czat (Teresa) · **Pula:** core (kliencki) — najbardziej dojrzały moduł aplikacji
 - **Ocena audytu:** 61/100 · **Status:** FAZA 2 (zależny od kręgosłupa FAZA 0) · **Rozmiar:** M (rdzeń) + **L** (i18n 305 inline)
-- **Żywy bloker:** brak otwartych P0 · **3 uwagi żywe modułowe:** #2 ramka-w-ramce (P3) · #3 show reasoning (P2) · #4 język PL→EN (P1, ZAMKNIĘTA 2026-06-17 — R3 PASS) · **+ kręgosłup #1** (P0-program, SPEC_01)
+- **Żywy bloker:** brak otwartych P0 · **3 uwagi żywe modułowe:** #2 ramka-w-ramce (P3, otwarta) · #3 show reasoning (P2, ZAMKNIĘTA 2026-06-17) · #4 język PL→EN (P1, ZAMKNIĘTA 2026-06-17 — R3 PASS) · **+ kręgosłup #1** (P0-program, P0 ZNEUTRALIZOWANY 2026-06-17 — Tryb B zamknięty, A częściowy)
 - **Właściciel:** Piotr · **Daty:** karta 2026-06-11 (`2d5769ea20`) · teczka 2026-06-13
 - **Karta:** `Harvard/modules/M01-czat/KARTA_AUDYTU.md` · **Evidence:** `…/evidence/f1_code_truth.md`, `f2_tests_report.md`, `f56_kanon_sec.md`
 - **Kod:** `src/components/AIChat/` (UnifiedChatPanel, EnhancedChatInput, MessageRenderer, ChatHistorySidebar, ConversationList, ReasoningTrace) · `server/src/routes/ai.routes.ts` · `server/src/routes/conversations.routes.ts` · `server/src/routes/share.routes.ts` · `server/src/services/ai/AIPipeline.ts` · `server/src/services/ai/persona.ts` · `src/utils/detectMessageLanguage.ts` · `src/store/slices/chatSlice.ts`
@@ -137,9 +137,9 @@ Pełna tabela: karta §1g. **WYJŚCIA →** (7 handoffów intencji, INV_A poz.53
 | L-04 | SQLite-izm `datetime('now')` na PG (cleanup pamięci) | W-01 | cleanup pamięci | P3 | 3 | otwarta |
 | L-05 | martwy `CodeInterpreter`(+`OrganizationMemoryPanel` jeśli ukryć) | W-01 | 0 zewn. referencji | P2 | 3 | otwarta |
 | L-06 | composer ramka-w-ramce | W-02 | `EnhancedChatInput.tsx:1076-1084` + wrapper | P3 | 4 | otwarta (DOM-inspect) |
-| L-07 | „show reasoning" bez parametru modelu | W-03,W-07,W-08 | `AIPipeline.ts:2052-2067` | P2 | 2 | otwarta (DP-12, warstwa AI→staging) |
+| L-07 | „show reasoning" bez parametru modelu | W-03,W-07,W-08 | `AIPipeline.ts:331-416` + `llmService.ts:1008-1042` + `ai.routes.ts:4326-4333` + `useAIStream.ts:832-841` + `ReasoningTrace.tsx` | P2 | 2 | **ZAMKNIĘTA 2026-06-17** (R3 PASS — okablowane E2E 6/6 linków; DP-12 gałąź główna: wymuszony `deepseek-reasoner` gdy toggle ON; commit `5278114d71`; testy `aiPipeline-thinking` 9/9) |
 | L-08 | PL pytanie → EN odpowiedź | W-04,W-07 | `detectMessageLanguage.ts:180-219` + `UnifiedChatPanel.tsx:2007-2008,3114-3122,3615` | P1 | 2 | **ZAMKNIĘTA 2026-06-17** (R3 PASS — łańcuch runtime zweryfikowany E2E; commity `b2457a7c69`+`53e3f86e09`; test `tests/unit/detectMessageLanguage.test.ts` 10/10) |
-| L-09 | chat-as-controller (handoff→panel zerwany) | W-05,W-06,W-08 | `WorkCanvasDocumentPanel.tsx:1035-1070,704-726` | P0-program | 0 | otwarta (SPEC_01, kręgosłup) |
+| L-09 | chat-as-controller (handoff→panel zerwany) | W-05,W-06,W-08 | `WorkCanvasDocumentPanel.tsx:704-747` | P0-program | 0 | **P0 ZNEUTRALIZOWANY 2026-06-17** — Tryb B **ZAMKNIĘTY** (montaż deterministyczny `:722-747`, commity `8a0e64b866`+N-5 `5278114d71`, testy `WorkCanvasDocumentPanel` 33/33); Tryb A **CZĘŚCIOWY** (persona honesty `persona.ts:306/315`+steering `:598-611` live-verified, intent N-4/N-12 `documentIntentDetector.ts`, testy `documentIntentDetector`+`canvasMutationRisk`); **odroczone:** Tryb A function-calling (`tool_generate_deliverable`) = Fala 2 (AI-layer, staging+zgoda); Tryb C konsolidacja silników = Fala 3 BETA |
 | L-10 | i18n inline 305× | W-01 | `src/components/AIChat/` | P1 | 4 | otwarta |
 
 ### 04 · Rejestr decyzji (R5)
@@ -151,7 +151,7 @@ Pełna tabela: karta §1g. **WYJŚCIA →** (7 handoffów intencji, INV_A poz.53
 
 ### 05 · Flagi / rollout / beta — core otwarty (brak beta-gatingu); handoffy/V8/retrieval **strict `=== 'true'`** (OFF w czystym deployu); `chatV9*` FE ON-by-default (kill-switch).
 ### 06 · Ryzyka i założenia — ~~uwaga #4 (L-08) oznaczona NAPRAWIONE bez commita w karcie → R3: do weryfikacji~~ **R3 ROZSTRZYGNIĘTE 2026-06-17:** karta myliła się — fix BYŁ scommitowany (`b2457a7c69` feat + `53e3f86e09` recall). Zweryfikowany cały łańcuch runtime FE→BE→persona: `detectMessageLanguage()` → `effectiveChatLanguage` (`UnifiedChatPanel.tsx:2008`) → persist (`:3114-3122`) → `startStream(…, effectiveChatLanguage)` (`:3615`) → `useAIStream` body.language (`:579`) → `ai.routes.ts` languageInstruction (`:1258`/`:1735`) → `persona.detectLanguage()` (`persona.ts:478-490`). Test 10/10 (`tests/unit/detectMessageLanguage.test.ts`). **L-08 ZAMKNIĘTA.** Reasoning (#3) i język (#4) = warstwa AI → testować na staging, prod za zgodą. Dev `.env` → Railway PROD DB (`finding_assistant_prompt_sot`).
-### 07 · Log wdrożenia + re-ocena — 2026-06-17 (Harvard 1): L-08 (#4 język) ZAMKNIĘTA — R3 PASS, łańcuch runtime zweryfikowany E2E, test 10/10. 2026-06-13: #4 język zaadresowany (status do weryfikacji); teczka pogłębiona do M13-level. Audyt 2026-06-11: 61/100. Re-ocena D/G po Fazie 3/4 + po naprawie kręgosłupa #1.
+### 07 · Log wdrożenia + re-ocena — 2026-06-17 (Harvard 1): **R3 rekonsyliacja AI-layer** — teczka była nieaktualna, wiele luk już naprawione w `5278114d71` (feat M01/M02: reasoning + steering + N-1..N-7). Zweryfikowane w runtime + testy zielone: **L-08** (#4 język) ZAMKNIĘTA — łańcuch E2E, test 10/10. **L-07** (reasoning) ZAMKNIĘTA — 6/6 linków okablowane, `deepseek-reasoner` wymuszany, testy 9/9. **L-09** (kręgosłup) — P0 ZNEUTRALIZOWANY: Tryb B zamknięty (testy 33/33), Tryb A częściowy, Tryb A-full+C odroczone (Fala 2/BETA). 2026-06-13: #4 język zaadresowany (status do weryfikacji); teczka pogłębiona do M13-level. Audyt 2026-06-11: 61/100. Re-ocena D/G po Fazie 3/4 + po naprawie kręgosłupa #1.
 
 ---
 
