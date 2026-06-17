@@ -1211,7 +1211,12 @@ describe('AuthMiddleware', () => {
 
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockDbGet).not.toHaveBeenCalled();
+      // The middleware may issue org-membership fallback queries but must NOT issue
+      // a revocation-specific query (revoked_tokens table) when jti is absent.
+      const revocationCalls = mockDbGet.mock.calls.filter((args) =>
+        String(args[0]).includes('revoked_tokens')
+      );
+      expect(revocationCalls).toHaveLength(0);
       expect(mockReq.user?.id).toBe('user-no-jti');
       expect(mockNext).toHaveBeenCalled();
     });
@@ -1225,7 +1230,12 @@ describe('AuthMiddleware', () => {
 
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockDbGet).not.toHaveBeenCalled();
+      // The middleware may issue org-membership fallback queries but must NOT issue
+      // a revocation-specific query (revoked_tokens table) when jti is blank/whitespace.
+      const revocationCalls = mockDbGet.mock.calls.filter((args) =>
+        String(args[0]).includes('revoked_tokens')
+      );
+      expect(revocationCalls).toHaveLength(0);
       expect(mockReq.user?.id).toBe('user-whitespace-jti');
       expect(mockNext).toHaveBeenCalled();
     });
