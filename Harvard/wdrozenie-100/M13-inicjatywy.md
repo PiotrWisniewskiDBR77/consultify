@@ -102,7 +102,7 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 | L-11a | i18n inline ~1820× | W-01 | `Initiatives/` (`InitiativeDocumentView` 423+`sections/*`) | P1 | 4 | otwarta |
 | L-11b | 18 surowych `<table>` (§27)+RC-4 | W-01 | 13 plików `sections/*`,`Analysis/*` | P2 | 4 | otwarta |
 | L-11c | 13 hex (9=graf) | W-01 | `DependencyGraphCanvas.tsx` i in. | P2 | 4 | otwarta |
-| L-12 | governance router org-spoofable (`/api/initiatives-v4`) | W-01 | `Gateway.ts:906` | P1 | 1 | otwarta (potwierdzić) |
+| L-12 | governance router org-spoofable (`/api/initiatives-v4`) | W-01 | `Gateway.ts:906` | P1 | 1 | **FAŁSZYWY ALARM** — `requireUser()` czyta `req.user?.organizationId` z JWT (verifyToken), nie z req-params; nie można podszyć |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
