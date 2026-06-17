@@ -1690,7 +1690,9 @@ router.post(
       reason = 'Contains exploratory/idea language';
     }
 
-    res.json({ pageId, suggestedType, reason, maturity: page.maturity });
+    // L-06: this is keyword-scoring, NOT an LLM. Declare the method explicitly so
+    // no consumer presents it as "AI" — the suggestion is rule-based, not generated.
+    res.json({ pageId, suggestedType, reason, maturity: page.maturity, method: 'heuristic' });
   })
 );
 
