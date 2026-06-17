@@ -17,7 +17,8 @@ const router = Router();
 const notConfigured = (res: Response) =>
   res.status(503).json({
     statusCode: 503,
-    status: false,
+    success: false,
+    code: 'FEATURE_UNAVAILABLE',
     type: 'not_configured',
     message: 'Service temporarily unavailable due to missing configuration',
   });

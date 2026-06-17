@@ -57,7 +57,8 @@ let adaptiveResponseService: AdaptiveResponseServiceInterface | null = null;
 const notConfigured = (res: Response) =>
   res.status(503).json({
     statusCode: 503,
-    status: false,
+    success: false,
+    code: 'FEATURE_UNAVAILABLE',
     type: 'not_configured',
     message: 'Service temporarily unavailable due to missing configuration',
   });

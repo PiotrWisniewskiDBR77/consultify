@@ -11,6 +11,10 @@ describe('AI feedback adaptive response routes (honest 503 when unavailable)', (
     process.env.MOCK_DB = 'false';
     process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
     vi.resetModules();
+    // Mock the service module so it has no methods → route hits notConfigured()
+    vi.doMock('../../../server/src/services/ai/adaptiveResponseService.js', () => ({
+      default: {},
+    }));
   });
 
   const mount = async () => {
