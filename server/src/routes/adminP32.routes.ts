@@ -1537,7 +1537,7 @@ async function deleteScimGroupMapping(id: string) {
 }
 
 async function readRiskSummary(orgId: string) {
-  const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
+  const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
   const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
   let llmIncidents: any[] = [];
   try {
@@ -1603,7 +1603,7 @@ function matchesAuditFilter(log: any, orgId: string, filters: Record<string, str
 
 async function readAuditStatsForOrg(orgId: string) {
   try {
-    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
+    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
     const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
     return {
       totalLogs: scoped.length,
@@ -2277,7 +2277,7 @@ router.get(
     };
     const limit = Math.min(Number(req.query.limit || 50), 200);
     const offset = Math.max(Number(req.query.offset || 0), 0);
-    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
+    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
     const filtered = logs.filter((log: any) => matchesAuditFilter(log, orgId, filters));
     const paginated = filtered.slice(offset, offset + limit);
 
@@ -2296,7 +2296,7 @@ router.get(
     const actor = await getAdminActor(req, res, ['audit:read']);
     if (!actor) return;
     const { orgId } = actor;
-    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
+    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
     const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
     const unresolved = scoped.filter((log: any) => log.status !== 'resolved').length;
     const highRisk = scoped.filter((log: any) => Number(log.risk_score || 0) >= 60).length;
@@ -2315,7 +2315,7 @@ router.get(
     const actor = await getAdminActor(req, res, ['audit:export', 'audit:read']);
     if (!actor) return;
     const { orgId } = actor;
-    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
+    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
     const scoped = logs.filter((log: any) =>
       matchesAuditFilter(log, orgId, { actionType: '', status: '', riskScoreMin: '', search: '' })
     );

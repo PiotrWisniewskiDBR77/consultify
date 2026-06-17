@@ -65,13 +65,49 @@ class AdminAuditServiceClass {
     return { id, adminId, actionType, riskScore, riskLevel };
   }
 
+  private extractOrgIdFromMetadata(log: any): string {
+    if (!log?.metadata_json) return '';
+    try {
+      const meta =
+        typeof log.metadata_json === 'string'
+          ? JSON.parse(log.metadata_json)
+          : log.metadata_json;
+      return String(
+        meta?.orgId || meta?.organizationId || meta?.details?.orgId || ''
+      ).trim();
+    } catch {
+      return '';
+    }
+  }
+
   async getLogs(filters: any = {}): Promise<any> {
-    const { limit = 10, offset = 0 } = filters;
+    const { limit = 10, offset = 0, organizationId } = filters;
+    // Fetch a wide window so org-scoped callers get enough rows after filtering.
+    // When an orgId is requested we over-fetch then slice; without orgId we
+    // honour limit/offset directly (superadmin / backward-compat path).
+    const fetchLimit = organizationId ? Math.max(limit * 20, 1000) : limit;
+    const fetchOffset = organizationId ? 0 : offset;
+
     const logs = await this.db.all(
       'SELECT * FROM admin_audit_logs ORDER BY created_at DESC LIMIT ? OFFSET ?',
-      [limit, offset]
+      [fetchLimit, fetchOffset]
     );
-    return logs;
+
+    if (!organizationId) {
+      return logs;
+    }
+
+    // Org-scope: filter by orgId embedded in metadata_json, then apply pagination.
+    const orgStr = String(organizationId).trim();
+    if (!orgStr) {
+      // Empty orgId — return nothing rather than leaking all-tenant data.
+      return [];
+    }
+
+    const scoped = (logs || []).filter(
+      (log: any) => this.extractOrgIdFromMetadata(log) === orgStr
+    );
+    return scoped.slice(offset, offset + limit);
   }
 
   async resolveLog(id: string, resolvedBy: string): Promise<boolean> {
@@ -82,9 +118,17 @@ class AdminAuditServiceClass {
     return (result as any).changes > 0;
   }
 
-  async getStats(): Promise<any> {
+  async getStats(organizationId?: string): Promise<any> {
+    if (organizationId) {
+      // No organization_id column — derive stats from org-scoped getLogs.
+      const logs = await this.getLogs({ limit: 2000, offset: 0, organizationId });
+      return {
+        total_logs: logs.length,
+        unresolved_count: logs.filter((l: any) => l.status !== 'resolved').length,
+      };
+    }
     return await this.db.get(`
-            SELECT 
+            SELECT
                 COUNT(*) as total_logs,
                 SUM(CASE WHEN status = 'unresolved' THEN 1 ELSE 0 END) as unresolved_count
             FROM admin_audit_logs
