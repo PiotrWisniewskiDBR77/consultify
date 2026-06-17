@@ -316,6 +316,45 @@ describe('work canvas routes', () => {
     );
   });
 
+  // SEC-M02 (L-08): convert/output endpoints must enforce the canvas.* capability
+  // the panel gates on, server-side — a direct API call cannot bypass the UI gate.
+  it('refuses save-to-workspace without canvas.convert.<target> (L-08)', async () => {
+    hasEffectiveCapabilityMock.mockImplementation(
+      (_a: any, cap: string) => cap !== 'canvas.convert.initiative'
+    );
+    const res = await request(app)
+      .post('/api/work-canvas/drafts/draft-1/save-to-workspace')
+      .send({ target: 'initiative' })
+      .expect(403);
+    expect(res.body.code).toBe('CANVAS_CAPABILITY_REQUIRED');
+    expect(res.body.required).toBe('canvas.convert.initiative');
+    expect(dbRunMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses create-output without canvas.output.<type> (L-08)', async () => {
+    hasEffectiveCapabilityMock.mockImplementation(
+      (_a: any, cap: string) => cap !== 'canvas.output.presentation'
+    );
+    const res = await request(app)
+      .post('/api/work-canvas/drafts/draft-1/create-output')
+      .send({ outputType: 'presentation' })
+      .expect(403);
+    expect(res.body.required).toBe('canvas.output.presentation');
+    expect(dbRunMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses send-to-document-studio without canvas.output.report (L-08)', async () => {
+    hasEffectiveCapabilityMock.mockImplementation(
+      (_a: any, cap: string) => cap !== 'canvas.output.report'
+    );
+    const res = await request(app)
+      .post('/api/work-canvas/drafts/draft-1/send-to-document-studio')
+      .send({})
+      .expect(403);
+    expect(res.body.required).toBe('canvas.output.report');
+    expect(dbRunMock).not.toHaveBeenCalled();
+  });
+
   it('creates a presentation output from a Canvas draft', async () => {
     const response = await request(app)
       .post('/api/work-canvas/drafts/draft-1/create-output')

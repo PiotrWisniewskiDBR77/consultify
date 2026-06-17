@@ -4015,6 +4015,11 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
       .status(400)
       .json({ error: 'target must be idea, note, initiative, decision, or task' });
   }
+  // SEC-M02 (L-08): direct materialization must enforce the SAME
+  // canvas.convert.<target> capability the panel gates on (`canSendToIdea` …)
+  // and that the proposal-approval path enforces — otherwise a direct API call
+  // bypasses the convert gate the UI shows.
+  if (!(await requireCanvasCapability(req, res, `canvas.convert.${target}`))) return;
 
   try {
     const version = await createVersionSnapshot(
@@ -4103,6 +4108,9 @@ router.post('/drafts/:draftId/create-output', async (req: AuthRequest, res) => {
   if (!['presentation', 'table', 'report'].includes(outputType)) {
     return res.status(400).json({ error: 'outputType must be presentation, table, or report' });
   }
+  // SEC-M02 (L-08): enforce canvas.output.<type> server-side (the panel gates
+  // canCreatePresentation/Table/Report on the same capability).
+  if (!(await requireCanvasCapability(req, res, `canvas.output.${outputType}`))) return;
 
   try {
     const version = await createVersionSnapshot(
@@ -4285,6 +4293,8 @@ router.post('/drafts/:draftId/send-to-table-studio', async (req: AuthRequest, re
       code: 'CANVAS_NOT_TABLE_KIND',
     });
   }
+  // SEC-M02 (L-08): Table Studio handoff is a table output → canvas.output.table.
+  if (!(await requireCanvasCapability(req, res, 'canvas.output.table'))) return;
   const { organizationId, userId } = authContext(req);
   const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas table');
 
@@ -4524,6 +4534,8 @@ router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res
 router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  // SEC-M02 (L-08): Document Studio handoff produces a report output → canvas.output.report.
+  if (!(await requireCanvasCapability(req, res, 'canvas.output.report'))) return;
   const { organizationId, userId } = authContext(req);
 
   const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas document');
