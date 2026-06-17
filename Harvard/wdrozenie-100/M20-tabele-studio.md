@@ -133,7 +133,7 @@ Rdzeń (base/table/record/view/field) **szczelny** przez `PermissionsService` (1
 1. **IDOR (L-01) NAPRAWIONY `e9c6cb9c0a`** (msg potwierdza „M20 IDOR — org-scope on record-templates/forms/row-policies/governed-models"): guards `canAccessBase` PRZED mutacją na `:256` (record-templates), `:2824` (form submissions), `:3441/3473/3507` (governed-models publish/sync na `model.base_id`), `:4485-4575` (row-policies). Raw `import` zostaje, ale guard biegnie pierwszy.
 2. **Rozjazd flag (L-06) częściowo ZAMKNIĘTY** — SSOT `FeatureFlags.ts:83-84` komentarz=runtime spójne; stary „disabled" tylko w route-header (P3-doc).
 3. **governed sync (L-05)** wciąż STUB log-only → **DP-6 = preview** (decyzja, nie bug do budowy).
-Otwarte: share_password (L-03), test realnej `tp_records` (L-07). ZAMKNIĘTE w tej sesji: L-01 (IDOR+test), L-02 (webhook AES).
+Otwarte: share_password (L-03 = FALSE POSITIVE, czeka na decyzję Piotra o bcrypt). ZAMKNIĘTE w tej sesji: L-01 (IDOR+test), L-02 (webhook AES), **L-07 (kontrakt round-trip real `tp_records`, 6/6 PASS 2026-06-17)**.
 
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
@@ -144,7 +144,7 @@ Otwarte: share_password (L-03), test realnej `tp_records` (L-07). ZAMKNIĘTE w t
 | L-04 | kręgosłup czat→sheet (generacja z czatu) | W-02 | `SPEC_ZADANIE_01` | P0-program | 0 | zależność (śledzona w SPEC_01) |  |
 | L-05 | governed sync STUB (log-only, 0 czytelników M15/M16) | W-01,W-03,W-04 | `ModuleSyncService.ts:57-110,90` | P1→preview | 3 | otwarta (**D-01 = DP-6 preview**) |  |
 | L-06 | rozjazd 4 flag komentarz↔runtime | W-01 | `FeatureFlags.ts:83-84` (SSOT spójny) + `…ai-editor.routes.ts:36` (stary komentarz) | **P3-doc** (był P2) | 3 | **częściowo ZAMKNIĘTA R3** — uspójnić 1 komentarz route-header | 2026-06-13 |
-| L-07 | fundament Records API w 100% zmockowany (0 dot. real `tp_records`) | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | otwarta |  |
+| L-07 | fundament Records API w 100% zmockowany (0 dot. real `tp_records`) | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | **ZAMKNIĘTA** — kontrakt round-trip uruchamia REALNY `RecordsService` (INSERT/SELECT/UPDATE/DELETE `tp_records`, optimistic-lock, reload-persist) przeciw wiernemu in-memory pool; caboose niedostępny → fallback kontraktowy wg briefu; `tests/integration/table-platform/records-roundtrip.contract.test.ts` (6/6 PASS 2026-06-17) | 2026-06-17 |
 | L-08 | cicha degradacja flag-OFF (`catch→null`, brak 503/404) | W-01 | `TabeleView.tsx:122,171,361` | P2 | 3 | **NAPRAWIONA `a8f0e5dd0f` (2026-06-17)** — TabeleView preview fallback wyróżnia 503/404 zamiast cichego null | 2026-06-17 |
 | L-09 | PublicViewPage EN-only | W-01 | `PublicViewPage` (`'Failed to load shared view'`) | P3 | 4 | otwarta |  |
 | L-10 | 322 hex w data-grid (poza zmierzonym `TabeleView`) | W-01,W-05 | `GridView`/`CellRenderer` | P3 | 4 | otwarta (DP-8: palety legalne; zmierzyć cały footprint) |  |
