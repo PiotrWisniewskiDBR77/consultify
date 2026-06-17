@@ -48,6 +48,7 @@ export interface ColumnDef {
 }
 
 export type FilterOperator =
+  // legacy (FilterPanel) — snake_case
   | 'contains'
   | 'equals'
   | 'not_empty'
@@ -55,7 +56,25 @@ export type FilterOperator =
   | 'gt'
   | 'lt'
   | 'between'
-  | 'in';
+  | 'in'
+  // FilterBuilder (rich) — camelCase. All handled by filterEval.evaluateFilterRule.
+  | 'doesNotContain'
+  | 'startsWith'
+  | 'endsWith'
+  | 'notEquals'
+  | 'isEmpty'
+  | 'isNotEmpty'
+  | 'gte'
+  | 'lte'
+  | 'is'
+  | 'isNot'
+  | 'isAnyOf'
+  | 'isNoneOf'
+  | 'isBefore'
+  | 'isAfter'
+  | 'isOnOrBefore'
+  | 'isOnOrAfter'
+  | 'isWithin';
 
 export interface FilterRule {
   id: string;

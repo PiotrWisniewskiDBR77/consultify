@@ -17,6 +17,7 @@ import type {
 } from '@/types/tablePlatform';
 
 import { EMPTY_SELECTION } from '../ideaSelectionTypes';
+import { evaluateFilterRule } from './filterEval';
 import { columnToField, fieldToColumn, recordToNode } from './tablePlatformMappers';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
 import { DEFAULT_COLUMN_WIDTH } from './tableTypes';
@@ -170,26 +171,8 @@ function applyLocalFilterSortGroup(
 
   if (filters.rules.length > 0) {
     processed = processed.filter((r) => {
-      const results = filters.rules.map((rule) => {
-        const val = String(r?.data?.[rule.column] ?? r?.data?.label ?? '').toLowerCase();
-        const ruleVal = String(rule.value ?? '').toLowerCase();
-        switch (rule.operator) {
-          case 'contains':
-            return val.includes(ruleVal);
-          case 'equals':
-            return val === ruleVal;
-          case 'not_empty':
-            return val.trim().length > 0;
-          case 'is_empty':
-            return val.trim().length === 0;
-          case 'gt':
-            return Number(r?.data?.[rule.column]) > Number(rule.value);
-          case 'lt':
-            return Number(r?.data?.[rule.column]) < Number(rule.value);
-          default:
-            return true;
-        }
-      });
+      // M08 L-02: shared evaluator — full FilterBuilder operator set, not just 6.
+      const results = filters.rules.map((rule) => evaluateFilterRule(rule, r));
       return filters.logic === 'and' ? results.every(Boolean) : results.some(Boolean);
     });
   }

@@ -9,6 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from '../ideaSelectionTypes';
+import { evaluateFilterRule } from './filterEval';
 import { createNodeFromTemplate, type RowTemplate } from './RowTemplatePicker';
 import type { FilterGroup, SortConfig, TableNode } from './tableTypes';
 import type { UseUndoRedoReturn } from './useUndoRedo';
@@ -79,26 +80,9 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
 
     if (filters.rules.length > 0) {
       rows = rows.filter((r) => {
-        const results = filters.rules.map((rule) => {
-          const val = String(r?.data?.[rule.column] || r?.data?.label || '').toLowerCase();
-          const ruleVal = String(rule.value || '').toLowerCase();
-          switch (rule.operator) {
-            case 'contains':
-              return val.includes(ruleVal);
-            case 'equals':
-              return val === ruleVal;
-            case 'not_empty':
-              return val.trim().length > 0;
-            case 'is_empty':
-              return val.trim().length === 0;
-            case 'gt':
-              return Number(r?.data?.[rule.column]) > Number(rule.value);
-            case 'lt':
-              return Number(r?.data?.[rule.column]) < Number(rule.value);
-            default:
-              return true;
-          }
-        });
+        // M08 L-02: shared evaluator handles the full FilterBuilder operator set
+        // (startsWith/notEquals/isEmpty/gte/isAnyOf/between/dates/…), not just 6.
+        const results = filters.rules.map((rule) => evaluateFilterRule(rule, r));
         return filters.logic === 'and' ? results.every(Boolean) : results.some(Boolean);
       });
     }

@@ -788,6 +788,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   const handleTabRenameTable = useCallback(
     (_tableId: string, _newName: string) => {
+      // M08 L-02: optimistic, session-only. Persisting the rename needs a M20
+      // backend endpoint (PATCH /table-platform/tables/:id) that does not exist
+      // yet — owned by Harvard 5 (table-platform.routes.ts). Wire the API call
+      // here once that endpoint lands; until then the new name resets on reload.
       setBaseTables((prev) => prev.map((t) => (t.id === _tableId ? { ...t, name: _newName } : t)));
       toast.success(isPl ? 'Nazwa zmieniona' : 'Renamed');
     },
