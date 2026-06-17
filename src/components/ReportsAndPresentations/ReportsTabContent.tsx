@@ -131,16 +131,16 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: isPolish ? 'Szkic' : 'Draft', color: 'bg-slate-400' },
-          { value: 'ready', label: isPolish ? 'Gotowy' : 'Ready', color: 'bg-emerald-400' },
+          { value: 'draft', label: t('reports.draft'), color: 'bg-slate-400' },
+          { value: 'ready', label: t('reports.ready'), color: 'bg-emerald-400' },
           {
             value: 'exported',
-            label: isPolish ? 'Wyeksportowany' : 'Exported',
+            label: t('reports.exported'),
             color: 'bg-blue-400',
           },
           {
             value: 'archived',
-            label: isPolish ? 'Zarchiwizowany' : 'Archived',
+            label: t('reports.archived'),
             color: 'bg-slate-500',
           },
         ],
@@ -344,10 +344,10 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
 
   if (reports.length === 0 && !searchQuery && activeFilters.length === 0) {
     const canon = [
-      ['R1', isPolish ? 'Weekly Execution' : 'Weekly Execution'],
-      ['R2', isPolish ? 'Steering Committee' : 'Steering Committee'],
-      ['R3', isPolish ? 'Benefits Tracking' : 'Benefits Tracking'],
-      ['R4', isPolish ? 'Portfolio Overview' : 'Portfolio Overview'],
+      ['R1', t('reports.weeklyExecution')],
+      ['R2', t('reports.steeringCommittee')],
+      ['R3', t('reports.benefitsTracking')],
+      ['R4', t('reports.portfolioOverview')],
     ];
 
     return (

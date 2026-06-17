@@ -18,6 +18,8 @@
  * are unit-testable without mounting OutputsAggregateTabContent.
  */
 
+import i18n from '@/i18n';
+
 /** Artifact kinds that can be duplicated into a Work Canvas draft. */
 export type DuplicableArtifactKind = 'document' | 'sheet';
 
@@ -50,9 +52,9 @@ export function mapArtifactKindToDraftKind(kind: DuplicableArtifactKind): Canvas
   return kind === 'sheet' ? 'table' : 'document';
 }
 
-/** "(kopia)" in Polish, "(copy)" otherwise. */
-export function duplicateTitleSuffix(isPolish: boolean): string {
-  return isPolish ? '(kopia)' : '(copy)';
+/** Localized copy-title suffix, e.g. "(kopia)" / "(copy)". */
+export function duplicateTitleSuffix(): string {
+  return i18n.t('reports.copySuffix');
 }
 
 function authToken(): string {
@@ -101,9 +103,9 @@ export function buildDuplicateDraftBody(params: {
   isPolish: boolean;
   sourceTitle?: string;
 }): Record<string, unknown> {
-  const { input, contentMd, isPolish } = params;
+  const { input, contentMd } = params;
   const baseTitle = String(params.sourceTitle || input.title || '').trim() || 'Untitled';
-  const title = `${baseTitle} ${duplicateTitleSuffix(isPolish)}`.trim();
+  const title = `${baseTitle} ${duplicateTitleSuffix()}`.trim();
   return {
     kind: mapArtifactKindToDraftKind(input.kind),
     title,

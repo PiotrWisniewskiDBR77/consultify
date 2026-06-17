@@ -107,10 +107,10 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         width: '130px',
         filterable: true,
         filterOptions: [
-          { value: 'tool', label: isPolish ? 'Narzędzie' : 'Tool', color: 'bg-emerald-400' },
-          { value: 'assessment', label: isPolish ? 'Ocena' : 'Assessment', color: 'bg-blue-400' },
-          { value: 'finance', label: isPolish ? 'Finanse' : 'Finance', color: 'bg-blue-400' },
-          { value: 'upload', label: isPolish ? 'Przesłane' : 'Upload', color: 'bg-amber-400' },
+          { value: 'tool', label: t('reports.tool'), color: 'bg-emerald-400' },
+          { value: 'assessment', label: t('reports.assessment'), color: 'bg-blue-400' },
+          { value: 'finance', label: t('reports.finance'), color: 'bg-blue-400' },
+          { value: 'upload', label: t('reports.upload'), color: 'bg-amber-400' },
         ],
         render: (row: PresentationItem) => {
           const meta = SOURCE_TYPE_META[row.sourceType] || SOURCE_TYPE_META.tool;
@@ -132,18 +132,18 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: isPolish ? 'Szkic' : 'Draft', color: 'bg-slate-400' },
+          { value: 'draft', label: t('reports.draft'), color: 'bg-slate-400' },
           {
             value: 'generated',
-            label: isPolish ? 'Wygenerowana' : 'Generated',
+            label: t('reports.generated'),
             color: 'bg-blue-400',
           },
-          { value: 'editing', label: isPolish ? 'Edycja' : 'Editing', color: 'bg-amber-400' },
-          { value: 'ready', label: isPolish ? 'Gotowa' : 'Ready', color: 'bg-emerald-400' },
-          { value: 'shared', label: isPolish ? 'Udostępniona' : 'Shared', color: 'bg-blue-400' },
+          { value: 'editing', label: t('reports.editing'), color: 'bg-amber-400' },
+          { value: 'ready', label: t('reports.ready2'), color: 'bg-emerald-400' },
+          { value: 'shared', label: t('reports.shared2'), color: 'bg-blue-400' },
           {
             value: 'archived',
-            label: isPolish ? 'Zarchiwizowana' : 'Archived',
+            label: t('reports.archived2'),
             color: 'bg-slate-500',
           },
         ],
@@ -352,7 +352,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       status: item.status.toUpperCase(),
       progress: 0,
       updatedAt: item.updatedAt,
-      description: `${item.slideCount} ${isPolish ? 'slajdów' : 'slides'}`,
+      description: `${item.slideCount} ${t('reports.slides')}`,
       owner: item.owner,
     }));
 

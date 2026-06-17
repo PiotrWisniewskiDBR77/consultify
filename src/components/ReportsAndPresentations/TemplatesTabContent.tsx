@@ -121,11 +121,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         width: '130px',
         filterable: true,
         filterOptions: [
-          { value: 'report', label: isPolish ? 'Raport' : 'Report', color: 'bg-blue-400' },
-          { value: 'sheet', label: isPolish ? 'Tabela' : 'Sheet', color: 'bg-emerald-400' },
+          { value: 'report', label: t('reports.report'), color: 'bg-blue-400' },
+          { value: 'sheet', label: t('reports.sheet'), color: 'bg-emerald-400' },
           {
             value: 'presentation',
-            label: isPolish ? 'Prezentacja' : 'Presentation',
+            label: t('reports.presentation'),
             color: 'bg-blue-400',
           },
         ],
@@ -168,23 +168,17 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         width: '140px',
         filterable: true,
         filterOptions: [
-          { value: 'personal', label: isPolish ? 'Osobisty' : 'Personal' },
-          { value: 'application', label: isPolish ? 'System' : 'Application' },
-          { value: 'organization', label: isPolish ? 'Organizacja' : 'Organization' },
+          { value: 'personal', label: t('reports.personal') },
+          { value: 'application', label: t('reports.application') },
+          { value: 'organization', label: t('reports.organization') },
         ],
         render: (row: TemplateItem) => (
           <span className="text-sm text-slate-600 dark:text-slate-300">
             {row.scope === 'application'
-              ? isPolish
-                ? 'System'
-                : 'Application'
+              ? t('reports.application')
               : row.scope === 'personal'
-                ? isPolish
-                  ? 'Osobisty'
-                  : 'Personal'
-                : isPolish
-                  ? 'Organizacja'
-                  : 'Organization'}
+                ? t('reports.personal')
+                : t('reports.organization')}
           </span>
         ),
       },
@@ -194,16 +188,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'active', label: isPolish ? 'Aktywny' : 'Active', color: 'bg-emerald-400' },
-          { value: 'draft', label: isPolish ? 'Szkic' : 'Draft', color: 'bg-slate-400' },
+          { value: 'active', label: t('reports.active'), color: 'bg-emerald-400' },
+          { value: 'draft', label: t('reports.draft'), color: 'bg-slate-400' },
           {
             value: 'deprecated',
-            label: isPolish ? 'Wycofany' : 'Deprecated',
+            label: t('reports.deprecated'),
             color: 'bg-amber-500',
           },
           {
             value: 'archived',
-            label: isPolish ? 'Zarchiwizowany' : 'Archived',
+            label: t('reports.archived'),
             color: 'bg-slate-500',
           },
         ],
@@ -354,26 +348,20 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     const families = [
       {
         key: 'executive_steering',
-        title: isPolish ? 'Executive Steering' : 'Executive Steering',
-        desc: isPolish
-          ? 'Raporty zarządcze i prezentacje dla komitetu sterującego'
-          : 'Governance reports and steering committee presentations',
+        title: t('reports.executiveSteering'),
+        desc: t('reports.governanceReportsAndSteeringCommitteePre'),
         categories: ['R2', 'executive_update'],
       },
       {
         key: 'transformation_status',
-        title: isPolish ? 'Status Transformacji' : 'Transformation Status',
-        desc: isPolish
-          ? 'Cotygodniowe raporty statusowe i przeglądy postępów'
-          : 'Weekly status reports and progress reviews',
+        title: t('reports.transformationStatus'),
+        desc: t('reports.weeklyStatusReportsAndProgressReviews'),
         categories: ['R1', 'R4'],
       },
       {
         key: 'diagnostic_assessment',
-        title: isPolish ? 'Diagnostyka i Ocena' : 'Diagnostic & Assessment',
-        desc: isPolish
-          ? 'Raporty diagnostyczne, wyniki audytów i oceny dojrzałości'
-          : 'Diagnostic reports, audit findings and maturity assessments',
+        title: t('reports.diagnosticAssessment'),
+        desc: t('reports.diagnosticReportsAuditFindingsAndMaturit'),
         categories: ['R3', 'assessment_results'],
       },
     ];

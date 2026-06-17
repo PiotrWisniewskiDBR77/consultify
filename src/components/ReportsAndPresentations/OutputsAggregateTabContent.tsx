@@ -185,9 +185,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       }
       const ok = await downloadSheetArtifactXlsx(tableId);
       if (ok) {
-        toast.success(isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)');
+        toast.success(t('reports.downloadedSpreadsheetXlsx'));
       } else {
-        toast.error(isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet');
+        toast.error(t('reports.couldNotDownloadSpreadsheet'));
       }
     },
     [isEnabled, isPolish, navigate]
@@ -205,9 +205,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         goal: t('rap.onboarding.body', 'Generate a report or deck with Teresa'),
         // A11/D3: pre-fill the composer with a real opener so the empty-state
         // CTA is not just "open chat" but "open chat ready to generate."
-        teresaPrompt: isPolish
-          ? 'Pomóż mi wygenerować pierwszy raport/prezentację dla tej organizacji. Zaproponuj typ outputu (raport zarządu, decyzyjny, analiza ROI, prezentacja inicjatyw), dobierz format (PDF/PPTX/XLSX) i strukturę sekcji opartą na danych organizacji.'
-          : 'Help me generate the first report/presentation for this organization. Propose the output type (board report, decision memo, ROI analysis, initiatives deck), pick the format (PDF/PPTX/XLSX), and outline sections grounded in the organization context.',
+        teresaPrompt: t('reports.helpMeGenerateTheFirstReport'),
       },
     });
   }, [isPolish, openChatWithContext, t]);
@@ -385,23 +383,23 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: isPolish ? 'Szkic' : 'Draft', color: 'bg-slate-400' },
+          { value: 'draft', label: t('reports.draft'), color: 'bg-slate-400' },
           {
             value: 'generated',
-            label: isPolish ? 'Wygenerowana' : 'Generated',
+            label: t('reports.generated'),
             color: 'bg-blue-400',
           },
-          { value: 'editing', label: isPolish ? 'Edycja' : 'Editing', color: 'bg-amber-400' },
-          { value: 'ready', label: isPolish ? 'Gotowy' : 'Ready', color: 'bg-emerald-400' },
+          { value: 'editing', label: t('reports.editing'), color: 'bg-amber-400' },
+          { value: 'ready', label: t('reports.ready'), color: 'bg-emerald-400' },
           {
             value: 'exported',
-            label: isPolish ? 'Wyeksportowany' : 'Exported',
+            label: t('reports.exported'),
             color: 'bg-blue-400',
           },
-          { value: 'shared', label: isPolish ? 'Udostępniony' : 'Shared', color: 'bg-blue-400' },
+          { value: 'shared', label: t('reports.shared'), color: 'bg-blue-400' },
           {
             value: 'archived',
-            label: isPolish ? 'Zarchiwizowany' : 'Archived',
+            label: t('reports.archived'),
             color: 'bg-slate-500',
           },
         ],
@@ -535,7 +533,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         icon: Copy,
         onClick: async () => {
           const toastId = toast.loading(
-            isPolish ? 'Tworzę kopię…' : 'Creating a copy…'
+            t('reports.creatingACopy')
           );
           try {
             const { chatUrl } = await duplicateArtifactToCanvasDraft(
@@ -548,7 +546,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               { isPolish }
             );
             toast.success(
-              isPolish ? 'Utworzono kopię do edycji' : 'Created an editable copy',
+              t('reports.createdAnEditableCopy'),
               { id: toastId }
             );
             navigate(chatUrl);
@@ -556,9 +554,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             toast.error(
               e?.message
                 ? String(e.message)
-                : isPolish
-                  ? 'Nie udało się utworzyć kopii'
-                  : 'Could not create a copy',
+                : t('reports.couldNotCreateACopy'),
               { id: toastId }
             );
           }
@@ -581,18 +577,16 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
 
           const defaultName = `${row.title} Template`;
           const name = window.prompt(
-            isPolish ? 'Nazwa nowego wzorca:' : 'New template name:',
+            t('reports.newTemplateName'),
             defaultName
           );
           if (!name?.trim()) return;
           const description = window.prompt(
-            isPolish ? 'Opis (opcjonalnie):' : 'Description (optional):',
+            t('reports.descriptionOptional'),
             ''
           );
           const scopeIsOrg = window.confirm(
-            isPolish
-              ? 'Czy to ma być wzorzec organizacji (wymaga review)?'
-              : 'Should this be an organization template (requires review)?'
+            t('reports.shouldThisBeAnOrganizationTemplate')
           );
 
           try {
@@ -614,7 +608,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             };
             const templateArtifactId =
               typeof payload?.data?.artifactId === 'string' ? payload.data.artifactId : null;
-            toast.success(isPolish ? 'Zapisano jako wzorzec' : 'Saved as template');
+            toast.success(t('reports.savedAsTemplate'));
             const params = new URLSearchParams(location.search || '');
             params.set('tab', 'templates');
             if (templateArtifactId) {
@@ -623,7 +617,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             navigate(`/presentations?${params.toString()}`);
           } catch (e: any) {
             toast.error(
-              e?.message ? String(e.message) : isPolish ? 'Błąd zapisu wzorca' : 'Failed'
+              e?.message ? String(e.message) : t('reports.failed')
             );
           }
         },
@@ -653,11 +647,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               const err = await res.json().catch(() => ({}));
               throw new Error(String(err?.error || 'Publish failed'));
             }
-            toast.success(isPolish ? 'Opublikowano' : 'Published');
+            toast.success(t('reports.published'));
             onRefresh();
           } catch (e: any) {
             toast.error(
-              e?.message ? String(e.message) : isPolish ? 'Błąd publikacji' : 'Publish failed'
+              e?.message ? String(e.message) : t('reports.publishFailed')
             );
           }
         },
