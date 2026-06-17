@@ -130,7 +130,7 @@
 | L-01 | V8 mirror ID mismatch (DELETE NOT_FOUND, GET martwy, wiszące krawędzie) | W-01,W-04 | `processFlowService.ts:390`, `IdeaProcessFlowTool.tsx:1008,1060,1383`; jedyny ext-konsument `my-work.routes.ts:36,6031-6089` (`develop` readback) | P0-B | 1 | **NAPRAWIONA — DP-7 CUT:** usunięto `processFlowService.ts`+`processFlowCanon.ts`+`processFlow.routes.ts`+3 testy (−2103 linii); `my-work.routes.ts` import pfService → blob `my_idea_maps.nodes_json`; `v8/index.ts` route wyrejestrowany | 2026-06-17 |
 | L-02 | WS resource-auth gap | W-01 | `ideaCollabWs.gateway.ts:237-242` | P1 | 1 | **NAPRAWIONA + TEST** `tests/integration/gateways/ideaCollabWs.orgscope.test.ts` (6/6 PASS 2026-06-17) |
 | L-03 | AI Proposal STUB; `MessageFlowEdge` martwy; `viewState` hardkod | W-01 | `processFlow.routes.ts:411-437`, `:748`, `:652` | INTEGR/P1/P2 | 3 | NIEAKTUALNA po L-01 CUT (processFlow.routes.ts usunięty; FE AI Proposal = D-02 → DP-5 hidden) |
-| L-04 | Edge UX (orthogonal/waypoints/typy) + swimlane containers | W-01 | edytor diagramów | P2 | 3 | otwarta |
+| L-04 | Edge UX (orthogonal/waypoints/typy) + swimlane containers | W-01 | edytor diagramów | P2 | 3 | **ODROCZONA — P2 ENHANCEMENT (nie bug)** (2026-06-17): Lucidchart-class routing + resize/collapse poole = nowa funkcjonalność, nie correctness-defect. Edytor działa na blob-sync (kanoniczny po DP-7 CUT). Poza zakresem domknięcia do 100% gotowości; osobny epik enhancement po R6. |
 | L-05 | Migracja V8 process_flow nie na staging | W-01,W-04 | `20260603_v8_process_flow.sql` | INTEGR | 1/5 | NIEAKTUALNA — DP-7 CUT; migracja w repozytorium zachowana (może być apply na envach); usunięcie niepotrzebne |
 | L-06 | Brak testu kontraktu ID / call-site + E2E + CI bez `Londyn` | W-01 | `tests/*` (brak) | P0-test | 1+4 | NIEAKTUALNA po L-01 CUT (3 testy process flow usunięte razem z kodem) |
 
@@ -143,7 +143,7 @@
 
 ### 05 · Flagi/rollout — beta Ideas; `ENABLE_V8_GLOBAL` (przy CUT/DP-7 — flaga i cała ścieżka V8 process-flow usunięte).
 ### 06 · Ryzyka — wycięcie V8 mirror upraszcza, ale jeśli inny moduł V8 (M20/M22) konsumuje te endpointy — koordynować. Migracja V8 zbędna przy wycięciu. Dev `.env` → Railway PROD; prod ~2026-05-18 (tabele v8_process_flow_* prawdopodobnie nie istnieją).
-### 07 · Log — 2026-06-13: zweryfikowano L-02 (WS org-scope realny). Audyt 2026-06-12: 55/100 (P0-A/P0-C odrzucone jako fałszywe alarmy). Re-ocena po D-01 + sesji żywej (R6).
+### 07 · Log — 2026-06-13: zweryfikowano L-02 (WS org-scope realny). Audyt 2026-06-12: 55/100 (P0-A/P0-C odrzucone jako fałszywe alarmy). 2026-06-17 (Harvard 2): re-zweryfikowano stan kodu — L-01 V8 mirror CUT potwierdzony (pliki `processFlowService.ts`/`processFlow.routes.ts` nieobecne, 0 ref `pfService`); L-02 test 6/6 PASS; L-03/L-05/L-06 NIEAKTUALNE po CUT; L-04 ODROCZONA (P2 enhancement, nie bug). Moduł = wszystkie luki zamknięte/nieaktualne/odroczone-enhancement. Re-ocena po sesji żywej (R6).
 
 ---
 
