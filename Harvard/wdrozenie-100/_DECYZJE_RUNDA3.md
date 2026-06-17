@@ -82,3 +82,17 @@ Zbiorczy rejestr 8 luk decyzyjnych (D-01/D-02) wymagających rozstrzygnięcia pr
 
 ### 11. M26 L-06 (D-03) — resource shared-catalog → **ROZSTRZYGNIĘTE: zostaw shared + audit** ✅
 - **DECYZJA CTO (techniczna):** `partner_resources` to wspólny toolkit; SELECT bez `partner_org_id` zamierzony, dostęp bramkuje `requirePartnerOrgId`+`min_partner_tier`, pobranie audytowane z `partner_org_id`+`user_id`. Udokumentowane w kodzie. Per-tier ograniczenie katalogu → opcjonalny backlog.
+
+---
+
+## M22 AI OS — decyzja do rozstrzygnięcia (Harvard 3, 2026-06-17)
+
+### 12. M22 L-05 (D-02) — Wave 7 OAuth symulowany → **rekom: B (trwały label „Manual/Simulated")** 🟡 czeka na potwierdzenie
+- Plik: `server/src/routes/wave7-connectors.routes.ts:52-113` (register/patch connector)
+- **Stan obecny:** „połączenie" konektora to ręczny zapis DB — `POST /api/ai-connectors` przyjmuje `status:'connected'`, `externalConnectorId`, `tokenExpiresAt` wprost z body. **Brak realnego flow OAuth** (zero redirect do providera, zero wymiany code→token, zero refresh). Admin DBR77 wpisuje stan połączenia ręcznie. Moduł internal (DBR77-only), nie kliencki.
+- **Opcje:**
+  - **A — realny OAuth provider flow:** redirect do providera (Google/MS/Slack…), callback `code→token`, szyfrowane przechowywanie tokenów + refresh. Duży zakres (per-provider app registration, secret mgmt, token vault, refresh scheduler). Wartość dla modułu internal: niska (zespół DBR77 i tak zarządza ręcznie).
+  - **B (rekom) — trwały label „Manual/Simulated":** zostaw ręczny model jako świadomą, JAWNĄ decyzję; dodaj w panelu Wave 7 widoczny badge/label „Manual connection (no live OAuth)" żeby nie udawać realnego OAuth. Koszt ~0, honest-UX, spójne z DP-11/DP-5 (honest-stub zamiast półbudowy).
+  - **C — usuń sekcję konektorów z v1:** redukuje powierzchnię, ale traci ręczny rejestr konektorów którego zespół używa.
+- **Rekomendacja CTO: B** — moduł jest internal/DBR77-only; realny OAuth (A) to duży nakład bez odbiorcy w v1. Jawny label „Manual/Simulated" usuwa deception (jedyny realny problem L-05) przy zerowym koszcie; realny provider-flow → backlog v1.1 gdy pojawi się klient zewnętrzny. **Warunek domknięcia L-05:** dodać label w `Wave7ConnectorAdminPanel.tsx` (strefa H3) — zrobię po decyzji.
+- **DECYZJA PIOTRA: ☐ A ☐ B ☐ C — [tu wpisz]**
