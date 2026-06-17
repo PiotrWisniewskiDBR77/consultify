@@ -12,6 +12,12 @@
  *            removeSection(reportId, sectionKey) with NO org-ownership check →
  *            org A could delete org B's sections. Now guarded by getReport(id, org).
  *
+ * Wave 6 addition:
+ *   GATE-NOTION — report-builder POST /:id/export/notion published a report to an
+ *            external workspace WITHOUT the export-readiness quality gate that the
+ *            pdf/doc/docx/pptx exports enforce → un-vetted reports could leak
+ *            outside. Now gated by enforceQualityGatesForExport (409 when not ready).
+ *
  * Tests run against mocked DB / auth — no real network or DB.
  */
 
@@ -28,6 +34,9 @@ const mockDbAll = vi.fn();
 const mockGetReport = vi.fn();
 const mockAddCustomSection = vi.fn();
 const mockRemoveSection = vi.fn();
+const mockCreateExportRecord = vi.fn();
+const mockCheckQualityGates = vi.fn();
+const mockExportReportToNotion = vi.fn();
 
 let mockUser: {
   id: string;
@@ -123,9 +132,20 @@ vi.mock('../../services/reportBuilderService.js', () => {
     getReport: (...a: unknown[]) => mockGetReport(...a),
     addCustomSection: (...a: unknown[]) => mockAddCustomSection(...a),
     removeSection: (...a: unknown[]) => mockRemoveSection(...a),
+    createExportRecord: (...a: unknown[]) => mockCreateExportRecord(...a),
   };
   return { __esModule: true, default: svc, ...svc };
 });
+
+// Export-readiness quality gate (shared by all export formats).
+vi.mock('../../services/reportQualityGatesService.js', () => ({
+  checkQualityGates: (...a: unknown[]) => mockCheckQualityGates(...a),
+}));
+
+// External Notion publish target.
+vi.mock('../../services/ai/integrationHubService.js', () => ({
+  exportReportToNotion: (...a: unknown[]) => mockExportReportToNotion(...a),
+}));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HOLE-2 / HOLE-3 — report-builder section mutations reject foreign-org reports
@@ -249,5 +269,84 @@ describe('M17 HOLE-1 — presentations analytics/view deck lookup carries an org
     // intentionally token-scoped and excluded by the `id = ?` anchor.)
     const bareById = src.match(/FROM presentation_decks\s+WHERE id = \?(?!\s*AND organization_id)/g) || [];
     expect(bareById).toEqual([]);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GATE-NOTION — Notion export honours the same export-readiness gate as the
+// file-format exports (pdf/doc/docx/pptx). A report that fails quality gates
+// must NOT be publishable to an external workspace.
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('M17 GATE-NOTION — report-builder Notion export enforces export-readiness gate', () => {
+  // A valid, active Notion integration so getNotionConfigForUser would succeed —
+  // proves the block is the gate, not a missing-config short-circuit.
+  const notionPrefsRow = {
+    preferences_data: JSON.stringify([
+      { provider: 'notion', status: 'active', config: { apiKey: 'secret', parentPageId: 'page-1' } },
+    ]),
+  };
+
+  async function buildReportBuilderApp(): Promise<Express> {
+    const mod = await import('../report-builder.routes.js');
+    const app = express();
+    app.use(express.json());
+    app.use('/api/report-builder', mod.default);
+    return app;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+    mockDbGet.mockResolvedValue(notionPrefsRow);
+    mockDbRun.mockResolvedValue({ changes: 0 });
+    mockDbAll.mockResolvedValue([]);
+    mockGetReport.mockResolvedValue({
+      report: { id: 'report-owned', title: 'R', status: 'DRAFT' },
+      sections: [],
+    });
+    mockCreateExportRecord.mockResolvedValue({ id: 'exp-1' });
+    mockExportReportToNotion.mockResolvedValue({ success: true, url: 'https://notion.so/p' });
+  });
+
+  it('POST /:id/export/notion → 409 when the report fails quality gates (no external publish)', async () => {
+    mockCheckQualityGates.mockResolvedValue({
+      reportId: 'report-owned',
+      canExport: false,
+      canApprove: false,
+      gates: [{ id: 'g1', gateType: 'empty_report', severity: 'error', message: 'x', category: 'structure' }],
+      score: 0,
+      checkedAt: new Date().toISOString(),
+    });
+    const app = await buildReportBuilderApp();
+
+    const res = await request(app).post('/api/report-builder/report-owned/export/notion').send({});
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('REPORT_NOT_READY_FOR_EXPORT');
+    // The gate ran for the caller's own report/org…
+    expect(mockCheckQualityGates).toHaveBeenCalledWith(ORG_A, 'report-owned');
+    // …and the external publish + export record never happened.
+    expect(mockExportReportToNotion).not.toHaveBeenCalled();
+    expect(mockCreateExportRecord).not.toHaveBeenCalled();
+  });
+
+  it('POST /:id/export/notion → 200 + publish when the report passes quality gates', async () => {
+    mockCheckQualityGates.mockResolvedValue({
+      reportId: 'report-owned',
+      canExport: true,
+      canApprove: true,
+      gates: [],
+      score: 100,
+      checkedAt: new Date().toISOString(),
+    });
+    const app = await buildReportBuilderApp();
+
+    const res = await request(app).post('/api/report-builder/report-owned/export/notion').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(mockCheckQualityGates).toHaveBeenCalledWith(ORG_A, 'report-owned');
+    expect(mockExportReportToNotion).toHaveBeenCalledTimes(1);
   });
 });

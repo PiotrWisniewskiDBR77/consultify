@@ -54,6 +54,8 @@ vi.mock('../../services/valuationService.js', () => ({
   listValuations: vi.fn(),
   getValuation: vi.fn(),
   createValuation: vi.fn(),
+  updateAssumptions: vi.fn(),
+  updatePeers: vi.fn(),
   getOrgFinanceSettings: vi.fn(),
   setOrgFinanceSettings: vi.fn(),
 }));
@@ -90,9 +92,15 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 }));
 
 import economicsRoutes from '../economics.routes.js';
+import * as budgetingSvc from '../../services/budgetingService.js';
+import * as finAnalysisSvc from '../../services/financialAnalysisService.js';
+import * as valuationSvc from '../../services/valuationService.js';
 
 const ANALYSIS = 'analysis-1';
 const BUDGET = 'budget-1';
+const VALUATION = 'valuation-1';
+const LINE = 'line-1';
+const SCENARIO = 'scenario-1';
 
 function createApp(): Express {
   const app = express();
@@ -118,6 +126,29 @@ describe('economics routes — input validation', () => {
       cashFlows: [],
     });
     mockApplyScenarioAdjustments.mockReturnValue({ assumptions: [] });
+
+    // Service-delegated mutator defaults (wave 6 boundary-validation suite).
+    vi.mocked(finAnalysisSvc.createAnalysis).mockResolvedValue({ id: 'fa-1' } as any);
+    vi.mocked(finAnalysisSvc.updateAnalysis).mockResolvedValue(undefined as any);
+    vi.mocked(valuationSvc.createValuation).mockResolvedValue({ id: VALUATION } as any);
+    vi.mocked(valuationSvc.getValuation).mockResolvedValue({
+      id: VALUATION,
+      horizon_years: 5,
+      assumptions: '{}',
+      peers: '[]',
+    } as any);
+    vi.mocked(valuationSvc.updateAssumptions).mockResolvedValue(undefined as any);
+    vi.mocked(valuationSvc.updatePeers).mockResolvedValue(undefined as any);
+    vi.mocked(valuationSvc.getOrgFinanceSettings).mockResolvedValue({
+      defaultWacc: 12,
+      defaultCurrency: 'PLN',
+      defaultHorizonYears: 5,
+    } as any);
+    vi.mocked(valuationSvc.setOrgFinanceSettings).mockResolvedValue(undefined as any);
+    vi.mocked(budgetingSvc.createBudget).mockResolvedValue({ id: BUDGET } as any);
+    vi.mocked(budgetingSvc.getBudget).mockResolvedValue({ id: BUDGET } as any);
+    vi.mocked(budgetingSvc.updateBudgetLine).mockResolvedValue(undefined as any);
+    vi.mocked(budgetingSvc.updateScenarioAdjustments).mockResolvedValue(undefined as any);
   });
 
   // ── POST /analyses ──
@@ -234,5 +265,218 @@ describe('economics routes — input validation', () => {
       .post(`/api/economics/budgets/${BUDGET}/initiatives`)
       .send({});
     expect(res.status).toBe(400);
+  });
+
+  // ════════════════════════════════════════════════
+  // Wave 6 — service-delegated mutators (boundary validation).
+  // Valid body reaches the service (200/201); malformed body is rejected
+  // with 400 and the downstream service method is NOT invoked.
+  // ════════════════════════════════════════════════
+
+  // ── POST /financial-analyses → finAnalysisSvc.createAnalysis ──
+  it('POST /financial-analyses — valid body → 201', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/financial-analyses')
+      .send({ title: 'Q4 FA', analysisType: 'comprehensive', currency: 'PLN' });
+    expect(res.status).toBe(201);
+    expect(finAnalysisSvc.createAnalysis).toHaveBeenCalled();
+  });
+
+  it('POST /financial-analyses — missing title → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/financial-analyses')
+      .send({ analysisType: 'comprehensive' });
+    expect(res.status).toBe(400);
+    expect(finAnalysisSvc.createAnalysis).not.toHaveBeenCalled();
+  });
+
+  it('POST /financial-analyses — extra key → 400 (strict), service not reached', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/financial-analyses')
+      .send({ title: 'X', organization_id: 'org-hijack' });
+    expect(res.status).toBe(400);
+    expect(finAnalysisSvc.createAnalysis).not.toHaveBeenCalled();
+  });
+
+  // ── PUT /financial-analyses/:id → finAnalysisSvc.updateAnalysis ──
+  it('PUT /financial-analyses/:id — valid partial body → 200', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/financial-analyses/${ANALYSIS}`)
+      .send({ title: 'Renamed', rebuildFromStatements: true });
+    expect(res.status).toBe(200);
+    expect(finAnalysisSvc.updateAnalysis).toHaveBeenCalled();
+  });
+
+  it('PUT /financial-analyses/:id — periods wrong type → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/financial-analyses/${ANALYSIS}`)
+      .send({ periods: 'not-an-array' });
+    expect(res.status).toBe(400);
+    expect(finAnalysisSvc.updateAnalysis).not.toHaveBeenCalled();
+  });
+
+  // ── POST /valuations → valuationSvc.createValuation ──
+  it('POST /valuations — valid body → 201', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/valuations')
+      .send({ title: 'DCF', sourceType: 'manual', horizonYears: 5 });
+    expect(res.status).toBe(201);
+    expect(valuationSvc.createValuation).toHaveBeenCalled();
+  });
+
+  it('POST /valuations — missing sourceType → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/valuations')
+      .send({ title: 'DCF' });
+    expect(res.status).toBe(400);
+    expect(valuationSvc.createValuation).not.toHaveBeenCalled();
+  });
+
+  it('POST /valuations — invalid sourceType enum → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/valuations')
+      .send({ title: 'DCF', sourceType: 'wat' });
+    expect(res.status).toBe(400);
+    expect(valuationSvc.createValuation).not.toHaveBeenCalled();
+  });
+
+  // ── PUT /valuations/:id/assumptions → valuationSvc.updateAssumptions ──
+  it('PUT /valuations/:id/assumptions — valid partial body → 200', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/valuations/${VALUATION}/assumptions`)
+      .send({ waccPercent: 11, waccBreakdown: { beta: 1.3 } });
+    expect(res.status).toBe(200);
+    expect(valuationSvc.updateAssumptions).toHaveBeenCalled();
+  });
+
+  it('PUT /valuations/:id/assumptions — extra top-level key → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/valuations/${VALUATION}/assumptions`)
+      .send({ injected: true });
+    expect(res.status).toBe(400);
+    expect(valuationSvc.updateAssumptions).not.toHaveBeenCalled();
+  });
+
+  it('PUT /valuations/:id/assumptions — terminalMethod bad enum → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/valuations/${VALUATION}/assumptions`)
+      .send({ terminalMethod: 'magic' });
+    expect(res.status).toBe(400);
+    expect(valuationSvc.updateAssumptions).not.toHaveBeenCalled();
+  });
+
+  // ── PUT /valuations/:id/peers → valuationSvc.updatePeers ──
+  it('PUT /valuations/:id/peers — valid body → 200', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/valuations/${VALUATION}/peers`)
+      .send({
+        metric: 'EV/EBITDA',
+        min: 5,
+        median: 8,
+        max: 12,
+        peerSet: [{ name: 'Peer A' }],
+      });
+    expect(res.status).toBe(200);
+    expect(valuationSvc.updatePeers).toHaveBeenCalled();
+  });
+
+  it('PUT /valuations/:id/peers — missing median → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/valuations/${VALUATION}/peers`)
+      .send({ metric: 'EV/EBITDA', min: 5, max: 12, peerSet: [] });
+    expect(res.status).toBe(400);
+    expect(valuationSvc.updatePeers).not.toHaveBeenCalled();
+  });
+
+  // ── POST /budgets → budgetingSvc.createBudget ──
+  it('POST /budgets — valid body → 201', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/budgets')
+      .send({ title: 'FY26', periodStart: '2026-01', periodEnd: '2026-12' });
+    expect(res.status).toBe(201);
+    expect(budgetingSvc.createBudget).toHaveBeenCalled();
+  });
+
+  it('POST /budgets — missing periodEnd → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/budgets')
+      .send({ title: 'FY26', periodStart: '2026-01' });
+    expect(res.status).toBe(400);
+    expect(budgetingSvc.createBudget).not.toHaveBeenCalled();
+  });
+
+  it('POST /budgets — extra key → 400 (strict), service not reached', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/budgets')
+      .send({ title: 'FY26', periodStart: '2026-01', periodEnd: '2026-12', status: 'APPROVED' });
+    expect(res.status).toBe(400);
+    expect(budgetingSvc.createBudget).not.toHaveBeenCalled();
+  });
+
+  // ── PUT /budgets/:budgetId/lines/:lineId → budgetingSvc.updateBudgetLine ──
+  it('PUT /budgets/:budgetId/lines/:lineId — valid body → 200', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/budgets/${BUDGET}/lines/${LINE}`)
+      .send({ baselineValue: 1000, isLocked: true });
+    expect(res.status).toBe(200);
+    expect(budgetingSvc.updateBudgetLine).toHaveBeenCalled();
+  });
+
+  it('PUT /budgets/:budgetId/lines/:lineId — baselineValue wrong type → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/budgets/${BUDGET}/lines/${LINE}`)
+      .send({ baselineValue: 'lots' });
+    expect(res.status).toBe(400);
+    expect(budgetingSvc.updateBudgetLine).not.toHaveBeenCalled();
+  });
+
+  it('PUT /budgets/:budgetId/lines/:lineId — extra key → 400 (strict), service not reached', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/budgets/${BUDGET}/lines/${LINE}`)
+      .send({ baseline_value: 1000 });
+    expect(res.status).toBe(400);
+    expect(budgetingSvc.updateBudgetLine).not.toHaveBeenCalled();
+  });
+
+  // ── PUT /budgets/:budgetId/scenarios/:scenarioId/adjustments → updateScenarioAdjustments ──
+  it('PUT /budgets/:budgetId/scenarios/:scenarioId/adjustments — valid numeric record → 200', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/budgets/${BUDGET}/scenarios/${SCENARIO}/adjustments`)
+      .send({ revenueGrowth: 0.1, costReduction: 0.05, customDriver: 0.2 });
+    expect(res.status).toBe(200);
+    expect(budgetingSvc.updateScenarioAdjustments).toHaveBeenCalled();
+  });
+
+  it('PUT /budgets/:budgetId/scenarios/:scenarioId/adjustments — non-numeric value → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .put(`/api/economics/budgets/${BUDGET}/scenarios/${SCENARIO}/adjustments`)
+      .send({ revenueGrowth: 'up' });
+    expect(res.status).toBe(400);
+    expect(budgetingSvc.updateScenarioAdjustments).not.toHaveBeenCalled();
+  });
+
+  // ── PUT /finance-settings → valuationSvc.setOrgFinanceSettings ──
+  it('PUT /finance-settings — valid body → 200', async () => {
+    const res = await request(createApp())
+      .put('/api/economics/finance-settings')
+      .send({ defaultWacc: 10, defaultCurrency: 'EUR' });
+    expect(res.status).toBe(200);
+    expect(valuationSvc.setOrgFinanceSettings).toHaveBeenCalled();
+  });
+
+  it('PUT /finance-settings — defaultWacc wrong type → 400, service not reached', async () => {
+    const res = await request(createApp())
+      .put('/api/economics/finance-settings')
+      .send({ defaultWacc: 'high' });
+    expect(res.status).toBe(400);
+    expect(valuationSvc.setOrgFinanceSettings).not.toHaveBeenCalled();
+  });
+
+  it('PUT /finance-settings — unknown key → 400 (strict), service not reached', async () => {
+    const res = await request(createApp())
+      .put('/api/economics/finance-settings')
+      .send({ defaultWacc: 10, evilKey: 'x' });
+    expect(res.status).toBe(400);
+    expect(valuationSvc.setOrgFinanceSettings).not.toHaveBeenCalled();
   });
 });

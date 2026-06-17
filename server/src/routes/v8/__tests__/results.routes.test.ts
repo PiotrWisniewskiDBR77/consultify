@@ -300,7 +300,10 @@ describe('V8 results read-only routes', () => {
         averageResolutionHours: null,
       },
     });
-    mockDbGet.mockResolvedValue({ measurement_frequency: 'MONTHLY' });
+    // Default: parent lookups (KPI / signal ownership prechecks added in the wave-6
+    // follow-up) resolve to an owned row, and the measurement_frequency lookup still
+    // returns MONTHLY. `id` satisfies the COALESCE org-ownership SELECTs.
+    mockDbGet.mockResolvedValue({ id: 'kpi-1', measurement_frequency: 'MONTHLY' });
     mockDbAll.mockResolvedValue([{ name: 'current_value' }]);
     mockDbRun.mockResolvedValue({ changes: 1 });
   });

@@ -67,11 +67,11 @@ const normalizeStatusForDb = (status?: string | null) => {
 // ════════════════════════════════════════════════
 // Zod validation schemas (defense-in-depth — Wave 5 M16 hardening)
 //
-// Scope note: only endpoints whose full body shape is determinable from
-// in-router SQL / economicsFinancials are validated here. Endpoints that
-// forward a raw body to external services (financialAnalysisService,
-// valuationService, budgetingService) are intentionally left unschema'd —
-// their column allowlists live in those services (out of M16 edit scope).
+// Scope note: Wave 5 validated endpoints whose body shape is determinable from
+// in-router SQL / economicsFinancials. Wave 6 EXTENDED validation to the
+// service-delegated mutators (financialAnalysisService, valuationService,
+// budgetingService, finance-settings) by mirroring each service method's
+// destructured allowlist at the route boundary (schemas below the wave-5 set).
 //
 // `.strict()` rejects unexpected top-level keys with 400. Sub-objects that
 // feed `normalizeFinancialData` (which tolerates partials) are kept
@@ -202,6 +202,193 @@ const importBudgetDocumentSchema = z
 const linkBudgetInitiativeSchema = z
   .object({
     initiativeId: idLike,
+  })
+  .strict();
+
+// ════════════════════════════════════════════════
+// Wave 6 — boundary schemas for SERVICE-DELEGATED mutators.
+//
+// These endpoints forward `req.body` to financialAnalysisService /
+// valuationService / budgetingService, whose column allowlists live in the
+// services. Each schema below mirrors the corresponding service method's
+// destructured-field allowlist EXACTLY (derived by reading the service, not
+// invented). `.strict()` rejects unknown top-level keys; sub-objects that the
+// service normalizes from partials (waccBreakdown, manualForecast, statement
+// lines, scenario adjustments) use `.passthrough()`/catchall so no previously
+// service-accepted shape is now rejected.
+//
+// AUTH-ORDERING CAVEAT (preserved from wave 6): validateBody runs after
+// verifyToken but BEFORE the in-handler orgId presence check, so a malformed
+// body from an authenticated-but-org-less token yields 400 (not 401). This is
+// acceptable — both are rejections and no DB write occurs.
+// ════════════════════════════════════════════════
+
+// financialAnalysisService.createAnalysis allowlist (service §343):
+// title, description?, projectId?, analysisType?, periods?, statementData?,
+// currency?, sourceStatementIds?, sourceStatementPackId?
+const statementLineSchema = z
+  .object({
+    code: z.string().max(120).optional(),
+    name: z.string().max(300).optional(),
+    values: z.record(z.string(), z.number()).optional(),
+  })
+  .passthrough();
+
+// StatementData = { pl?: StatementLine[]; bs?: StatementLine[]; cf?: StatementLine[] }
+const statementDataSchema = z
+  .object({
+    pl: z.array(statementLineSchema).optional(),
+    bs: z.array(statementLineSchema).optional(),
+    cf: z.array(statementLineSchema).optional(),
+  })
+  .passthrough();
+
+const createFinancialAnalysisSchema = z
+  .object({
+    title: z.string().trim().min(1).max(300),
+    description: z.string().max(10000).optional(),
+    projectId: idLike.optional(),
+    analysisType: z.string().max(60).optional(),
+    periods: z.array(z.string().max(60)).optional(),
+    statementData: statementDataSchema.optional(),
+    currency: z.string().max(10).optional(),
+    sourceStatementIds: z.array(z.string().max(64)).optional(),
+    sourceStatementPackId: idLike.optional(),
+  })
+  .strict();
+
+// financialAnalysisService.updateAnalysis allowlist (service §442) — all partial:
+// title, description, periods, statementData, currency, sourceStatementIds,
+// sourceStatementPackId, rebuildFromStatements
+const updateFinancialAnalysisSchema = z
+  .object({
+    title: z.string().trim().min(1).max(300).optional(),
+    description: z.string().max(10000).optional(),
+    periods: z.array(z.string().max(60)).optional(),
+    statementData: statementDataSchema.optional(),
+    currency: z.string().max(10).optional(),
+    sourceStatementIds: z.array(z.string().max(64)).optional(),
+    sourceStatementPackId: idLike.optional(),
+    rebuildFromStatements: z.boolean().optional(),
+  })
+  .strict();
+
+// valuationService.createValuation allowlist (service §211):
+// title (req), description?, projectId?, initiativeId?, sourceType (req),
+// sourceId?, horizonYears?, currency?
+const valuationSourceTypeSchema = z.enum([
+  'financial_model',
+  'financial_analysis',
+  'budget',
+  'manual',
+]);
+const createValuationSchema = z
+  .object({
+    title: z.string().trim().min(1).max(300),
+    description: z.string().max(10000).nullish(),
+    projectId: idLike.nullish(),
+    initiativeId: idLike.nullish(),
+    sourceType: valuationSourceTypeSchema,
+    sourceId: idLike.nullish(),
+    horizonYears: z.number().optional(),
+    currency: z.string().max(10).optional(),
+  })
+  .strict();
+
+// valuationService.updateAssumptions — Partial<ValuationAssumptions> (service §31/§308).
+// waccBreakdown + manualForecast are merged from partials → kept permissive.
+const waccBreakdownSchema = z
+  .object({
+    riskFreeRate: z.number().optional(),
+    equityRiskPremium: z.number().optional(),
+    beta: z.number().optional(),
+    costOfDebt: z.number().optional(),
+    taxRate: z.number().optional(),
+    debtWeight: z.number().optional(),
+    equityWeight: z.number().optional(),
+  })
+  .passthrough();
+const manualForecastYearSchema = z
+  .object({
+    year: z.number(),
+    fcff: z.number(),
+    revenue: z.number().optional(),
+    ebitda: z.number().optional(),
+  })
+  .passthrough();
+const updateAssumptionsSchema = z
+  .object({
+    horizonYears: z.number().optional(),
+    waccPercent: z.number().optional(),
+    waccBreakdown: waccBreakdownSchema.optional(),
+    terminalMethod: z.enum(['gordon', 'exit_multiple']).optional(),
+    terminalGrowthPercent: z.number().optional(),
+    exitMultiple: z.number().optional(),
+    exitMultipleMetric: z.enum(['EV/EBITDA', 'EV/Revenue']).optional(),
+    netDebt: z.number().optional(),
+    sharesOutstanding: z.number().optional(),
+    manualForecast: z
+      .object({ years: z.array(manualForecastYearSchema).optional() })
+      .passthrough()
+      .optional(),
+  })
+  .strict();
+
+// valuationService.updatePeers — MultiplesInput (service §46/§358), stored verbatim.
+const updatePeersSchema = z
+  .object({
+    metric: z.enum(['EV/EBITDA', 'EV/Revenue', 'P/E']),
+    min: z.number(),
+    median: z.number(),
+    max: z.number(),
+    peerSet: z.array(
+      z
+        .object({ name: z.string().max(300), notes: z.string().max(2000).optional() })
+        .passthrough()
+    ),
+    confidenceNote: z.string().max(4000).optional(),
+  })
+  .strict();
+
+// budgetingService.createBudget allowlist (service §163):
+// title (req), description?, projectId?, periodStart (req), periodEnd (req),
+// granularity?, currency?
+const createBudgetSchema = z
+  .object({
+    title: z.string().trim().min(1).max(300),
+    description: z.string().max(10000).optional(),
+    projectId: idLike.optional(),
+    periodStart: z.string().trim().min(1).max(40),
+    periodEnd: z.string().trim().min(1).max(40),
+    granularity: z.string().max(40).optional(),
+    currency: z.string().max(10).optional(),
+  })
+  .strict();
+
+// budgetingService.updateBudgetLine allowlist (service §247) — all partial:
+// baselineValue, source, driverKpiId, driverFormula, isLocked
+const updateBudgetLineSchema = z
+  .object({
+    baselineValue: z.number().optional(),
+    source: z.string().max(120).optional(),
+    driverKpiId: idLike.optional(),
+    driverFormula: z.string().max(4000).optional(),
+    isLocked: z.boolean().optional(),
+  })
+  .strict();
+
+// budgetingService.updateScenarioAdjustments — ScenarioAdjustment (service §57):
+// { revenueGrowth?, costReduction?, [key:string]: number|undefined } stored
+// verbatim as JSON → open numeric record (catchall number).
+const updateScenarioAdjustmentsSchema = z.record(z.string(), z.number());
+
+// finance-settings PUT — known finance settings keys merged into a free-form
+// org-settings JSON blob (route handler, valuationService get/set §156-182).
+const financeSettingsSchema = z
+  .object({
+    defaultWacc: z.number().optional(),
+    defaultCurrency: z.string().max(10).optional(),
+    defaultHorizonYears: z.number().optional(),
   })
   .strict();
 
@@ -1651,6 +1838,7 @@ router.get(
 router.post(
   '/financial-analyses',
   verifyToken,
+  validateBody(createFinancialAnalysisSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -1686,6 +1874,7 @@ router.get(
 router.put(
   '/financial-analyses/:id',
   verifyToken,
+  validateBody(updateFinancialAnalysisSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -1993,6 +2182,7 @@ router.get(
 router.post(
   '/valuations',
   verifyToken,
+  validateBody(createValuationSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -2035,6 +2225,7 @@ router.get(
 router.put(
   '/valuations/:id/assumptions',
   verifyToken,
+  validateBody(updateAssumptionsSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2052,6 +2243,7 @@ router.put(
 router.put(
   '/valuations/:id/peers',
   verifyToken,
+  validateBody(updatePeersSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2279,6 +2471,7 @@ router.delete(
 router.post(
   '/budgets',
   verifyToken,
+  validateBody(createBudgetSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -2313,6 +2506,7 @@ router.get(
 router.put(
   '/budgets/:budgetId/lines/:lineId',
   verifyToken,
+  validateBody(updateBudgetLineSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2339,6 +2533,7 @@ router.post(
 router.put(
   '/budgets/:budgetId/scenarios/:scenarioId/adjustments',
   verifyToken,
+  validateBody(updateScenarioAdjustmentsSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2606,6 +2801,7 @@ router.get(
 router.put(
   '/finance-settings',
   verifyToken,
+  validateBody(financeSettingsSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });

@@ -448,11 +448,27 @@ router.post(
         .json({ success: false, error: 'periodStart (or measuredAt) is required' });
     }
 
-    const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
-      `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
-      [kpiId]
-    ).catch(() => null);
-    const periodKey = deriveKpiPeriodKey(periodStart, kpiMeta?.measurement_frequency);
+    // SEC-3 (L-04): the INSERT below attaches a measurement to this kpiId and then runs
+    // deviation logic against it. Org-scoping only the inserted organization_id column is
+    // not enough — a foreign-org kpiId would still get a time-series row (and a deviation
+    // case) recorded under the caller's org against a KPI it cannot see. Verify the parent
+    // KPI belongs to the caller's org first (mirrors the attribution-snapshot route). This
+    // SELECT also supplies measurement_frequency, replacing the prior unscoped lookup.
+    const parentKpi = await dbGet<{ id: string; measurement_frequency?: string | null }>(
+      `SELECT k.id, k.measurement_frequency
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [kpiId, orgId]
+    );
+    if (!parentKpi?.id) {
+      return res.status(404).json({
+        success: false,
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
+    const periodKey = deriveKpiPeriodKey(periodStart, parentKpi.measurement_frequency);
 
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
@@ -1586,6 +1602,24 @@ router.post(
         .status(400)
         .json({ success: false, error: 'periodStart and periodEnd are required' });
     }
+    // SEC-3 (L-04): the INSERT below persists a snapshot row keyed on this kpiId. Without
+    // an ownership precheck a foreign-org kpiId would be stored under the caller's org,
+    // and computeAttribution would emit a row attributed to a KPI the caller cannot see.
+    // Verify the parent KPI belongs to the caller's org first (mirrors kpi-mappings).
+    const parentKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [kpiId, orgId]
+    );
+    if (!parentKpi?.id) {
+      return res.status(404).json({
+        success: false,
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
     const result = await computeAttribution(kpiId, orgId, safePeriodStart, safePeriodEnd);
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
@@ -1667,6 +1701,25 @@ router.post(
       });
     }
     const safeSortOrder = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : 0;
+    // SEC-3 (L-04): parent_line_id references another statement line. Without an
+    // ownership precheck a foreign-org statementLineId could be referenced as the parent
+    // of a new line, leaking a hierarchy edge across orgs. Verify the parent line belongs
+    // to the caller's org (or is a shared system line, organization_id IS NULL) first.
+    const safeParentLineId = typeof parentLineId === 'string' ? parentLineId.trim() : '';
+    if (safeParentLineId) {
+      const parentLine = await dbGet<{ id: string }>(
+        `SELECT id FROM financial_statement_lines
+         WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
+        [safeParentLineId, orgId]
+      );
+      if (!parentLine?.id) {
+        return res.status(404).json({
+          success: false,
+          error: 'Parent statement line not found',
+          code: 'RESULTS_STATEMENT_LINE_NOT_FOUND',
+        });
+      }
+    }
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO financial_statement_lines (id, organization_id, statement_type, line_code, line_name, line_name_pl, parent_line_id, sort_order, is_system)
@@ -1678,7 +1731,7 @@ router.post(
         safeLineCode,
         safeLineName,
         lineNamePl ? String(lineNamePl).trim() : null,
-        parentLineId || null,
+        safeParentLineId || null,
         safeSortOrder,
       ]
     );
@@ -1743,6 +1796,36 @@ router.post(
       multiplier != null && multiplier !== '' && Number.isFinite(Number(multiplier))
         ? Number(multiplier)
         : 1.0;
+    // SEC-3 (L-04): the UPSERT below binds this kpiId + statementLineId into a mapping row
+    // labeled with the caller's org. Without an ownership precheck a foreign-org kpiId or
+    // statementLineId could be referenced, leaking a cross-org financial linkage. Verify
+    // both parents belong to the caller's org (mirrors the initiative kpi-mappings route).
+    const parentKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [safeKpiId, orgId]
+    );
+    if (!parentKpi?.id) {
+      return res.status(404).json({
+        success: false,
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
+    const parentLine = await dbGet<{ id: string }>(
+      `SELECT id FROM financial_statement_lines
+       WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
+      [safeStatementLineId, orgId]
+    );
+    if (!parentLine?.id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Statement line not found',
+        code: 'RESULTS_STATEMENT_LINE_NOT_FOUND',
+      });
+    }
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO kpi_financial_mappings (id, kpi_id, statement_line_id, organization_id, direction, relationship_type, multiplier, formula_params, confidence, assumptions_text, assumptions_owner, created_by)

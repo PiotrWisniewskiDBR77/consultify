@@ -1217,6 +1217,24 @@ router.post(
       });
     }
 
+    // SEC-3 (L-04): p04AssertKpiPermission is a role gate only — it does NOT verify that
+    // this kpiId belongs to the caller's org. Without an ownership precheck a foreign-org
+    // kpiId would have a measurement row inserted under the caller's org. Verify the parent
+    // KPI is owned first (mirrors the org-scoped lookup in PUT/DELETE /kpis/:kpiId).
+    const ownedKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [kpiId, organizationId]
+    );
+    if (!ownedKpi?.id) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
+
     const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
       `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
       [kpiId]
@@ -2237,6 +2255,20 @@ router.post(
       return res.status(400).json({ error: 'kpiId required', code: 'P04_KPI_ID_REQUIRED' });
     if (!(await p04AssertKpiPermission(req, res, 'manage_reconciliation'))) return;
 
+    // SEC-3 (L-04): initiateReconciliation persists a row keyed on this kpiId without
+    // validating ownership service-side. Verify the parent KPI belongs to the caller's org
+    // before the write so a foreign-org kpiId cannot seed a reconciliation under this org.
+    const ownedKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [String(kpiId), organizationId]
+    );
+    if (!ownedKpi?.id) {
+      return res.status(404).json({ error: 'KPI not found', code: 'RESULTS_KPI_NOT_FOUND' });
+    }
+
     const { initiateReconciliation } = await import('../../services/v8/resultsROIService.js');
     const result = await initiateReconciliation({
       organizationId,
@@ -2303,6 +2335,20 @@ router.post(
         .status(400)
         .json({ error: 'kpiId and signalType required', code: 'P04_SIGNAL_PARAMS_REQUIRED' });
     if (!(await p04AssertKpiPermission(req, res, 'create_signal'))) return;
+
+    // SEC-3 (L-04): createKpiSignal inserts kpi_id into v8_kpi_signals without validating
+    // ownership service-side. Verify the parent KPI belongs to the caller's org before the
+    // write so a foreign-org kpiId cannot be attached to a signal under this org.
+    const ownedKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [String(kpiId), organizationId]
+    );
+    if (!ownedKpi?.id) {
+      return res.status(404).json({ error: 'KPI not found', code: 'RESULTS_KPI_NOT_FOUND' });
+    }
 
     const { createKpiSignal } = await import('../../services/v8/resultsROIService.js');
     const signal = await createKpiSignal({
@@ -2372,6 +2418,28 @@ router.post(
         code: 'P04_ACTION_PARAMS_REQUIRED',
       });
     if (!(await p04AssertKpiPermission(req, res, 'create_next_action'))) return;
+
+    // SEC-3 (L-04): createKpiNextAction inserts kpi_id + signal_id into v8_kpi_next_actions
+    // without validating ownership service-side. Verify both parents belong to the caller's
+    // org so a foreign-org kpiId/signalId cannot be referenced by an action under this org.
+    const ownedKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [String(kpiId), organizationId]
+    );
+    if (!ownedKpi?.id) {
+      return res.status(404).json({ error: 'KPI not found', code: 'RESULTS_KPI_NOT_FOUND' });
+    }
+    const ownedSignal = await dbGet<{ id: string }>(
+      `SELECT signal_id AS id FROM v8_kpi_signals WHERE signal_id = ? AND organization_id = ?`,
+      [String(signalId), organizationId],
+      { fallback: true }
+    ).catch(() => null);
+    if (!ownedSignal?.id) {
+      return res.status(404).json({ error: 'Signal not found', code: 'RESULTS_SIGNAL_NOT_FOUND' });
+    }
 
     const { createKpiNextAction } = await import('../../services/v8/resultsROIService.js');
     const action = await createKpiNextAction({

@@ -308,8 +308,12 @@ describe('W1 — POST /benefits/kpis/:kpiId/time-series cannot mutate a foreign 
     mockDbRun.mockResolvedValue({ changes: 0, lastID: 'ts-1' });
   });
 
-  it('current_value UPDATE is scoped with AND organization_id = <caller org>', async () => {
-    // Caller is org A; targets a KPI id that (hypothetically) belongs to org B.
+  // SEC-3 (L-04) wave 6: org-scoping the inserted column was not enough — a foreign-org
+  // kpiId still got a measurement (+ a deviation case) recorded under the caller's org.
+  // The route now verifies parent-KPI ownership and 404s before any write.
+
+  it('→ 404 for a foreign-org KPI (no INSERT, no UPDATE)', async () => {
+    // Parent-KPI ownership SELECT returns null → not owned by the caller's org.
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     const app = await buildBenefitsApp();
 
@@ -317,34 +321,55 @@ describe('W1 — POST /benefits/kpis/:kpiId/time-series cannot mutate a foreign 
       .post('/api/benefits/kpis/kpi-from-org-b/time-series')
       .send({ value: 999, periodStart: '2026-01-15', source: 'manual' });
 
-    // Request itself succeeds (the row simply does not match → changes: 0),
-    // but the contract we guard is that the UPDATE is org-scoped.
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
+
+    // Ownership SELECT ran org-scoped against the caller's org.
+    const ownershipCall = mockDbGet.mock.calls.find(
+      (c) =>
+        /FROM\s+initiative_kpis/i.test(String(c?.[0])) &&
+        /COALESCE\(k\.organization_id,\s*i\.organization_id\)\s*=\s*\?/i.test(String(c?.[0]))
+    );
+    expect(ownershipCall?.[1]).toEqual(['kpi-from-org-b', ORG_A]);
+
+    // Neither the time-series INSERT nor the current_value UPDATE may run.
+    const insertCall = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_time_series/i.test(String(c?.[0]))
+    );
+    expect(insertCall).toBeFalsy();
+    const updateCall = mockDbRun.mock.calls.find((c) =>
+      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    );
+    expect(updateCall).toBeFalsy();
+  });
+
+  it('→ 200 with org-scoped INSERT + UPDATE when the KPI is owned', async () => {
+    // Parent-KPI ownership SELECT resolves → owned by the caller's org.
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+    mockDbGet.mockResolvedValue({ id: 'kpi-owned', measurement_frequency: 'MONTHLY' });
+    const app = await buildBenefitsApp();
+
+    const res = await request(app)
+      .post('/api/benefits/kpis/kpi-owned/time-series')
+      .send({ value: 999, periodStart: '2026-01-15', source: 'manual' });
+
     expect(res.status).toBe(200);
 
+    // INSERT writes the caller's org (3rd positional in the VALUES list).
+    const insertCall = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_time_series/i.test(String(c?.[0]))
+    );
+    expect(insertCall).toBeTruthy();
+    expect(insertCall?.[1]?.[2]).toBe(ORG_A);
+
+    // current_value UPDATE is org-scoped: [value, kpiId, orgId] — never the target's org.
     const updateCall = mockDbRun.mock.calls.find(
       (c) =>
         /UPDATE\s+initiative_kpis/i.test(String(c?.[0])) &&
         /AND\s+organization_id\s*=\s*\?/i.test(String(c?.[0]))
     );
     expect(updateCall).toBeTruthy();
-    // Param order: [value, kpiId, orgId] — the caller's org, never the target's.
-    expect(updateCall?.[1]).toEqual([999, 'kpi-from-org-b', ORG_A]);
-  });
-
-  it('time-series INSERT is org-scoped to the caller (no cross-org write)', async () => {
-    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
-    const app = await buildBenefitsApp();
-
-    await request(app)
-      .post('/api/benefits/kpis/kpi-from-org-b/time-series')
-      .send({ value: 12, periodStart: '2026-02-01', source: 'manual' });
-
-    const insertCall = mockDbRun.mock.calls.find((c) =>
-      /INSERT\s+INTO\s+kpi_time_series/i.test(String(c?.[0]))
-    );
-    expect(insertCall).toBeTruthy();
-    // organization_id param is the caller's org (3rd positional in the VALUES list).
-    expect(insertCall?.[1]?.[2]).toBe(ORG_A);
+    expect(updateCall?.[1]).toEqual([999, 'kpi-owned', ORG_A]);
   });
 });
 
@@ -550,6 +575,8 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
   });
 
   it('POST /benefits/financial/kpi-mappings → 200 + UPSERT with a numeric multiplier fallback', async () => {
+    // Both parent lookups owned: 1st get (KPI ownership) → owned; 2nd (statement line) → owned.
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-x' }).mockResolvedValueOnce({ id: 'line-x' });
     const app = await buildBenefitsApp();
     const res = await request(app)
       .post('/api/benefits/financial/kpi-mappings')
@@ -569,11 +596,81 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
     expect(upsert?.[1]?.[6]).toBe(1.0);
   });
 
+  // ── SEC-3 wave 6: cross-parent ownership 404s on the financial linkage routes ──
+
+  it('POST /benefits/financial/kpi-mappings → 404 when the KPI is foreign-org (no UPSERT)', async () => {
+    // KPI ownership SELECT returns null → not owned.
+    mockDbGet.mockResolvedValue(null);
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/financial/kpi-mappings')
+      .send({ kpiId: 'kpi-from-org-b', statementLineId: 'line-x', direction: 'positive' });
+
+    expect(res.status).toBe(404);
+    const upsert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_financial_mappings/i.test(String(c?.[0]))
+    );
+    expect(upsert).toBeFalsy();
+  });
+
+  it('POST /benefits/financial/kpi-mappings → 404 when KPI owned but statement line is foreign-org (no UPSERT)', async () => {
+    // 1st get (KPI) → owned; 2nd get (statement line) → null (foreign / unknown).
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-owned' }).mockResolvedValueOnce(null);
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/financial/kpi-mappings')
+      .send({ kpiId: 'kpi-owned', statementLineId: 'line-from-org-b', direction: 'positive' });
+
+    expect(res.status).toBe(404);
+    const upsert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_financial_mappings/i.test(String(c?.[0]))
+    );
+    expect(upsert).toBeFalsy();
+  });
+
+  it('POST /benefits/financial/statement-lines → 404 when parentLineId is foreign-org (no INSERT)', async () => {
+    // Parent-line ownership SELECT returns null → neither owned nor a shared system line.
+    mockDbGet.mockResolvedValue(null);
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/financial/statement-lines')
+      .send({
+        statementType: 'PL',
+        lineCode: 'REV',
+        lineName: 'Revenue',
+        parentLineId: 'line-from-org-b',
+      });
+
+    expect(res.status).toBe(404);
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+financial_statement_lines/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('POST /benefits/attribution/:kpiId/snapshot → 404 for a foreign-org KPI (no INSERT)', async () => {
+    // Parent-KPI ownership SELECT returns null → not owned.
+    mockDbGet.mockResolvedValue(null);
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/attribution/kpi-from-org-b/snapshot')
+      .send({ periodStart: '2026-01-01', periodEnd: '2026-03-31' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_attribution_snapshots/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
   // ── HOLE-2: v8 POST /results/kpis/:kpiId/time-series current_value UPDATE org-scope ──
 
   it('v8 POST /results/kpis/:kpiId/time-series current_value UPDATE is org-scoped', async () => {
     // PRAGMA table_info(initiative_kpis) → current_value present → reaches the UPDATE branch.
     mockDbAll.mockResolvedValue([{ name: 'current_value' }]);
+    // KPI ownership precheck → owned (else the route 404s before any write).
+    mockDbGet.mockResolvedValue({ id: 'kpi-from-org-b' });
     const app = await buildV8App();
     const res = await request(app)
       .post('/api/v8/results/kpis/kpi-from-org-b/time-series')
@@ -810,6 +907,94 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
     for (const u of updates) {
       expect(/organization_id\s*=\s*\?/.test(u)).toBe(true);
     }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SEC-3 (wave 6 follow-up) — v8 results writes referencing a parent id now precheck
+// org-ownership (404 before write). p04AssertKpiPermission is a role gate only — these
+// service-backed writes (time-series, signals, next-actions, reconciliations) previously
+// stored a foreign-org kpiId/signalId under the caller's org.
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('SEC-3 wave 6 follow-up — v8 results parent-ownership prechecks', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+    mockDbAll.mockResolvedValue([]);
+    mockDbGet.mockResolvedValue(null);
+    mockDbRun.mockResolvedValue({ changes: 0, lastID: 'x' });
+    mockQueryFirst.mockResolvedValue(null);
+    mockQueryAll.mockResolvedValue([]);
+    mockQueryRun.mockResolvedValue({ rowCount: 0, changes: 0 });
+  });
+
+  it('POST /v8/results/kpis/:kpiId/time-series → 404 for a foreign-org KPI (no INSERT)', async () => {
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/kpis/kpi-from-org-b/time-series')
+      .send({ value: 5, periodStart: '2026-01-15', source: 'manual' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
+    const ownershipCall = mockDbGet.mock.calls.find(
+      (c) =>
+        /FROM\s+initiative_kpis/i.test(String(c?.[0])) &&
+        /COALESCE\(k\.organization_id/i.test(String(c?.[0]))
+    );
+    expect(ownershipCall?.[1]).toEqual(['kpi-from-org-b', ORG_A]);
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_time_series/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('POST /v8/results/signals → 404 for a foreign-org KPI (no signal write)', async () => {
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/signals')
+      .send({ kpiId: 'kpi-from-org-b', signalType: 'deviation', severity: 'high' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
+    const ownershipCall = mockDbGet.mock.calls.find(
+      (c) =>
+        /FROM\s+initiative_kpis/i.test(String(c?.[0])) &&
+        /COALESCE\(k\.organization_id/i.test(String(c?.[0]))
+    );
+    expect(ownershipCall?.[1]).toEqual(['kpi-from-org-b', ORG_A]);
+  });
+
+  it('POST /v8/results/next-actions → 404 for a foreign-org KPI (no action write)', async () => {
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/next-actions')
+      .send({ signalId: 'sig-x', kpiId: 'kpi-from-org-b', actionType: 'investigate' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
+  });
+
+  it('POST /v8/results/next-actions → 404 when KPI owned but signalId is foreign-org', async () => {
+    // 1st get (KPI) → owned; 2nd get (v8_kpi_signals org-scoped) → null.
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-owned' }).mockResolvedValueOnce(null);
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/next-actions')
+      .send({ signalId: 'sig-from-org-b', kpiId: 'kpi-owned', actionType: 'investigate' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_SIGNAL_NOT_FOUND');
+  });
+
+  it('POST /v8/results/reconciliations → 404 for a foreign-org KPI (no reconciliation write)', async () => {
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/reconciliations')
+      .send({ kpiId: 'kpi-from-org-b', financeRef: 'finance:x' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
   });
 });
 
