@@ -2767,7 +2767,7 @@
     "welcomeBack": "Witamy ponownie",
     "signInText": "Zaloguj się, aby kontynuować",
     "signinText": "Zaloguj się, aby kontynuować",
-    "email": "Email",
+    "email": "E-mail",
     "password": "Hasło",
     "forgotPassword": "Zapomniałeś hasła?",
     "register": "Zarejestruj się",
@@ -5268,7 +5268,7 @@
     "hero": {
       "title": "Myśl szerzej.Działaj mądrzej",
       "subtitleLine1": "Twój",
-      "coThinker": "AI Co-Thinker",
+      "coThinker": "Współmyśliciel AI",
       "subtitleLine1End": "dla strategii korporacyjnej.",
       "slogans": {
         "1": "Od diagnozy do dowiezienia — w jednym systemie pracy.",
@@ -5318,6 +5318,12 @@
           "description": "Frameworki oceny DRD, SIRI, ADMA i Lean 4.0.",
           "meta": "DOSKONAŁOŚĆ PRZEMYSŁOWA",
           "cta": "Zobacz audyty"
+        },
+        "tools": {
+          "cta": "Poznaj narzędzia",
+          "meta": "CENTRUM EDUKACYJNE",
+          "title": "Poznaj nasze narzędzia",
+          "description": "Obejrzyj prezentacje i warsztaty poświęcone ponad 40 modelom konsultingowym."
         }
       }
     },
@@ -5351,7 +5357,9 @@
           "label": "Zapytaj o bezpieczeństwo",
           "prompt": "Jak Consultify podchodzi do bezpieczeństwa i rezydencji danych?"
         }
-      }
+      },
+      "noCC": "Nie jest wymagana karta kredytowa",
+      "socialProof": "Cieszy się zaufaniem ponad 200 zespołów konsultingowych na całym świecie"
     },
     "problemPlatform": {
       "badge": "Dlaczego ta kategoria ma znaczenie",
@@ -5472,7 +5480,7 @@
     },
     "profitHero": {
       "h1": {
-        "line1": "Consultify AI.",
+        "line1": "Consultify Sztuczna inteligencja.",
         "line2": "Cała biznesowa wiedza świata.",
         "line3": "Zamieniona w Twoje zyski."
       },
@@ -5718,7 +5726,7 @@
       "fullTitleFallback": "Pełny film"
     },
     "faq": {
-      "badge": "FAQ",
+      "badge": "Najczęściej zadawane pytania",
       "heading": "Pytania? Odpowiedzi.",
       "more": "Masz więcej pytań?",
       "contact": "Skontaktuj się z nami",
@@ -5797,7 +5805,7 @@
       "decisionType": {
         "financial": "Finansowe",
         "strategic": "Strategiczne",
-        "stageGate": "Stage-Gate"
+        "stageGate": "Metoda Stage-Gate"
       },
       "slides": {
         "notifications": {
@@ -5880,7 +5888,7 @@
       "usa": "Stany Zjednoczone"
     },
     "demo": {
-      "word": "Demo",
+      "word": "Wersja demonstracyjna",
       "schedule": "Umów demo",
       "scheduleShort": "Umów",
       "getA": "Umów",
@@ -5908,7 +5916,7 @@
         "euData": "Twój region, Twoje dane",
         "sharedCloud": "Współdzielony cloud",
         "dedicated": "Dedykowane API",
-        "onPrem": "On-premise"
+        "onPrem": "Lokalnie"
       },
       "dataResidency": "Opcje rezydencji danych:",
       "regions": {
@@ -5950,13 +5958,15 @@
       },
       "caseStudies": {
         "title": "Studia przypadków",
-        "businessCases": "Business Cases"
+        "businessCases": "Studia przypadków biznesowych"
       },
       "knowledge": {
         "title": "Wiedza",
         "blog": "Blog",
         "reports": "Reporty",
-        "podcasts": "Podcasty"
+        "podcasts": "Podcasty",
+        "blogConsultify": "Blog Consultify",
+        "blogDbr77": "Blog DBR77"
       },
       "documentation": {
         "title": "Dokumentacja"
@@ -5972,7 +5982,9 @@
         "sla": "SLA",
         "security": "Przegląd bezpieczeństwa",
         "consent": "Zgoda i kontrola"
-      }
+      },
+      "offices": "Biura",
+      "legalOperator": "Operatorem platformy Consultify jest"
     },
     "docs": {
       "badge": "Pomoc i ocena",
@@ -7817,7 +7829,8 @@
       "coreAgreements": "Podstawowe umowy",
       "businessBilling": "Biznes i rozliczenia",
       "securityCompliance": "Bezpieczeństwo i zgodność"
-    }
+    },
+    "centerTitle": "Centrum Prawne"
   },
   "externalAssessment": {
     "mini": {
@@ -11074,7 +11087,82 @@
       "updateFailed": "Nie udało się zaktualizować spotkania",
       "deleteFailed": "Nie udało się usunąć spotkania",
       "statusFailed": "Nie udało się zaktualizować statusu spotkania"
-    }
+    },
+    "noLocation": "Bez lokalizacji",
+    "unassigned": "Nieprzypisane",
+    "openPreview": "Otwórz podgląd",
+    "archive": "Archiwizuj",
+    "comingSoonBackend": "Wkrótce (backend)",
+    "delete2": "Usuń",
+    "aiMeetingNotes": "Notatki AI ze spotkania",
+    "pasteTheMeetingTranscript": "Wklej transkrypcję spotkania",
+    "pasteTheTranscriptTeresaWillExtract": "Wklej tu transkrypcję — Teresa wyciągnie podsumowanie, decyzje i zadania...",
+    "notesGeneratedByKeywordExtractionAi": "Notatki wygenerowane ekstrakcją słów kluczowych (AI niedostępne)",
+    "summary": "Podsumowanie",
+    "keyPoints": "Kluczowe punkty",
+    "decisionsSaved": "Decyzje (zapisane)",
+    "actionItemsSavedAsFollowUps": "Zadania (zapisane jako follow-up)",
+    "generating": "Generuję...",
+    "generateNotes": "Wygeneruj notatki",
+    "meeting": "Spotkanie",
+    "edit": "Edytuj",
+    "markScheduled": "Oznacz jako zaplanowane",
+    "markCompleted": "Oznacz jako zakończone",
+    "addDecision": "Dodaj decyzję",
+    "addFollowUp": "Dodaj follow-up",
+    "generateAiNotesFromTranscriptTeresa": "Wygeneruj notatki AI z transkrypcji (Teresa)",
+    "aiNotes": "Notatki AI",
+    "backToList": "Wróć do listy",
+    "attendees": "Uczestnicy",
+    "noAttendeesYet": "Brak listy uczestników",
+    "preRead": "Pre-read",
+    "noPreReadYet": "Brak materiałów",
+    "agenda": "Agenda",
+    "noAgendaYet": "Brak agendy",
+    "decisions2": "Decyzje",
+    "noDecisionsYet": "Brak decyzji",
+    "followUps": "Follow-upy",
+    "done": "Zrobione",
+    "open": "Otwarte",
+    "noFollowUpsYet": "Brak follow-upów",
+    "completed": "Zamknięte",
+    "scheduled": "Zaplanowane",
+    "followUp2": "Follow-up",
+    "operatorBrief": "Operator brief",
+    "preparingMeetingBrief": "Przygotowuję briefing spotkania...",
+    "noOperatorBriefForThisMeeting": "Brak briefingu operatora dla tego spotkania.",
+    "previousMonth": "Poprzedni miesiąc",
+    "today": "Dziś",
+    "nextMonth": "Następny miesiąc",
+    "more": "więcej",
+    "noLocation2": "Bez lokalizacji",
+    "unassigned2": "Nieprzypisane",
+    "openPreview2": "Otwórz podgląd",
+    "archive2": "Archiwizuj",
+    "comingSoonBackend2": "Wkrótce (backend)",
+    "delete3": "Usuń",
+    "aiMeetingNotes2": "Notatki AI ze spotkania",
+    "pasteTheMeetingTranscript2": "Wklej transkrypcję spotkania",
+    "pasteTheTranscriptTeresaWillExtract2": "Wklej tu transkrypcję — Teresa wyciągnie podsumowanie, decyzje i zadania...",
+    "notesGeneratedByKeywordExtractionAi2": "Notatki wygenerowane ekstrakcją słów kluczowych (AI niedostępne)",
+    "summary2": "Podsumowanie",
+    "keyPoints2": "Kluczowe punkty",
+    "decisionsSaved2": "Decyzje (zapisane)",
+    "actionItemsSavedAsFollowUps2": "Zadania (zapisane jako follow-up)",
+    "generating2": "Generuję...",
+    "generateNotes2": "Wygeneruj notatki",
+    "meetingLabel": "Spotkanie",
+    "edit2": "Edytuj",
+    "delete4": "Usuń",
+    "addDecision2": "Dodaj decyzję",
+    "addFollowUp2": "Dodaj follow-up",
+    "generateAiNotesFromTranscript": "Wygeneruj notatki AI z transkrypcji (Teresa)",
+    "attendees2": "Uczestnicy",
+    "followUps2": "Follow-upy",
+    "open2": "Otwarte",
+    "completed2": "Zamknięte",
+    "scheduled2": "Zaplanowane",
+    "noOperatorBrief": "Brak briefingu operatora dla tego spotkania."
   },
   "manager": {
     "col": {

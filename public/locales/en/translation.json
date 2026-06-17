@@ -59,6 +59,12 @@
           "description": "DRD, SIRI, ADMA & Lean 4.0 assessment frameworks.",
           "meta": "INDUSTRIAL EXCELLENCE",
           "cta": "Explore Audits"
+        },
+        "tools": {
+          "cta": "Explore Tools",
+          "meta": "EDUCATION HUB",
+          "title": "Learn Our Tools",
+          "description": "Watch demos and masterclasses for 40+ consulting frameworks."
         }
       }
     },
@@ -92,7 +98,9 @@
           "label": "Ask about security",
           "prompt": "How does Consultify handle security and data residency?"
         }
-      }
+      },
+      "noCC": "No credit card required",
+      "socialProof": "Trusted by 200+ consulting teams globally"
     },
     "problemPlatform": {
       "badge": "Why this category matters",
@@ -488,7 +496,9 @@
           "q": "What industries do you serve?",
           "a": "We specialize in manufacturing and industrial sectors, including automotive, aerospace, electronics, food & beverage, and heavy industry. Our assessment frameworks are tailored to Industry 4.0 transformation challenges."
         }
-      ]
+      ],
+      "ctaPrimary": "Launch Free Trial",
+      "ctaSecondary": "Browse resources"
     },
     "methodology": {
       "badge": "Our Methodology",
@@ -641,7 +651,11 @@
         "iso27001": "ISO 27001",
         "soc2": "SOC2 Type II",
         "gdpr": "GDPR",
-        "encryption": "AES-256"
+        "encryption": "AES-256",
+        "dedicated": "Dedicated API",
+        "euData": "Your region, your data",
+        "onPrem": "On-premise",
+        "sharedCloud": "Shared cloud"
       },
       "dataResidency": "Data residency",
       "regions": {
@@ -650,7 +664,10 @@
         "gcc": "Middle East",
         "jp": "Japan"
       },
-      "dataNote": "Your data stays in the EU region • No AI training on your data"
+      "dataNote": "Your data stays in the EU region • No AI training on your data",
+      "deployLabel": "Deployment Options",
+      "securityLabel": "Security & Compliance",
+      "euNote": "Your data stays in the region you choose — EU, US, or APAC. You pick, we enforce."
     },
     "trust": {
       "carouselTagline": "AI analyzes. You command.",
@@ -688,7 +705,9 @@
         "title": "Knowledge",
         "blog": "Blog",
         "reports": "Reports",
-        "podcasts": "Podcasts"
+        "podcasts": "Podcasts",
+        "blogConsultify": "Blog Consultify",
+        "blogDbr77": "Blog DBR77"
       },
       "documentation": {
         "title": "Documentation"
@@ -704,7 +723,9 @@
         "sla": "SLA",
         "security": "Security Overview",
         "consent": "Consent & Controls"
-      }
+      },
+      "offices": "Offices",
+      "legalOperator": "Consultify platform operator"
     },
     "docs": {
       "badge": "Help & evaluation",
@@ -725,6 +746,49 @@
       "resources": "Resources",
       "resourcesDesc": "Case studies, whitepapers, webinars, and product update announcements.",
       "explore": "Explore"
+    },
+    "aiOs": {
+      "badge": "AI operating system",
+      "footer": "The point is not more AI surfaces. The point is one coherent, governed AI operating environment across chat, execution, knowledge, and outputs.",
+      "heading": "One AI system for assistants, prompts, agents, knowledge, and artifact-native work.",
+      "sub": "Consultify packages strong AI architecture as a visible operating environment: guided assistants, governed prompts, multi-step agents, policy-aware knowledge, and outputs that continue beyond chat."
+    },
+    "modelDeployment": {
+      "badge": "Custom AI model & deployment",
+      "points": {
+        "control": {
+          "title": "Deployment choice",
+          "body": "Match procurement, integration, and security requirements without forcing a single path."
+        },
+        "model": {
+          "title": "Proprietary AI model",
+          "body": "Built for consulting: decision structures, risk framing, and executive-ready outputs."
+        },
+        "sales": {
+          "title": "Guided evaluation",
+          "body": "Anna walks you through fit, pricing, and deployment before you commit to a trial or enterprise deal."
+        },
+        "security": {
+          "title": "Security by design",
+          "body": "GDPR compliance, AES-256 encryption, and EU data residency available by default."
+        }
+      },
+      "title": "Your governance reality. Your deployment model.",
+      "subtitle": "Consultify runs on a proprietary DBR77 model layer built for consulting logic and executive-grade outputs. Choose how and where it runs."
+    },
+    "narrativeCta": {
+      "askAnna": "Ask Anna first",
+      "badge": "Choose your entry path",
+      "startTrial": "Start trial",
+      "tryDemo": "Try demo",
+      "footer": "One narrative, three safe entry paths: guided orientation, product exploration, or direct trial onboarding.",
+      "heading": "Move from category clarity to your first value moment.",
+      "points": {
+        "0": "Anna explains fit, pricing, and security before you commit to a path.",
+        "1": "The demo shows the Consulting Intelligence Platform on seeded, read-only data.",
+        "2": "The trial starts your own guided consulting workflow, from context to execution."
+      },
+      "sub": "Start with Anna if you want guided orientation, try the demo if you want to explore the platform, or launch a trial when you are ready to apply consulting intelligence to your own organization."
     }
   },
   "partner": {
@@ -1233,7 +1297,8 @@
     "periodEnd": "Period end",
     "noOrganizations": "No organizations found",
     "retry": "Try again",
-    "saved": "Saved"
+    "saved": "Saved",
+    "optional": "optional"
   },
   "superadmin": {
     "confirm": {
@@ -3541,7 +3606,8 @@
     "loading": "Loading...",
     "enterDemo": "Enter Demo Mode",
     "contactSales": "Contact Sales for Full Access",
-    "back": "Back"
+    "back": "Back",
+    "companyName": "Company name"
   },
   "help": {
     "onboarding": {
@@ -7266,7 +7332,8 @@
       "coreAgreements": "Core Agreements",
       "businessBilling": "Business & Billing",
       "securityCompliance": "Security & Compliance"
-    }
+    },
+    "centerTitle": "Legal Center"
   },
   "externalAssessment": {
     "mini": {
@@ -8343,6 +8410,22 @@
         "initiatives": "Deep Dive: Initiatives & Execution",
         "finance": "Deep Dive: Finance & ROI"
       }
+    },
+    "modal": {
+      "askAnna": "Talk to Anna",
+      "atelierLink": "See the Atelier Toys brand this demo is based on",
+      "commercialDescription": "This demo is based on the Atelier Toys story. If you have questions, talk to Anna or contact us directly.",
+      "contactUs": "Contact Us",
+      "demoDescriptionSigned": "Create an account or log in to enter the Atelier Toys demo automatically.",
+      "demoMode": "Demo Environment",
+      "footerNote": "By entering the demo, you agree to our Terms of Service and Privacy Policy.",
+      "loading": "Starting...",
+      "logIn": "Log in",
+      "logInAndDemo": "Log in & Enter Demo",
+      "signUp": "Sign up",
+      "startDemo": "Sign up & Enter Demo",
+      "subtitle": "Explore the Atelier Toys guided workspace",
+      "title": "Experience Consultify Demo"
     }
   },
   "ui": {
@@ -9937,7 +10020,82 @@
       "updateFailed": "Failed to update meeting",
       "deleteFailed": "Failed to delete meeting",
       "statusFailed": "Failed to update meeting status"
-    }
+    },
+    "noLocation": "No location",
+    "unassigned": "Unassigned",
+    "openPreview": "Open preview",
+    "archive": "Archive",
+    "comingSoonBackend": "Coming soon (backend)",
+    "delete2": "Delete",
+    "aiMeetingNotes": "AI Meeting Notes",
+    "pasteTheMeetingTranscript": "Paste the meeting transcript",
+    "pasteTheTranscriptTeresaWillExtract": "Paste the transcript — Teresa will extract a summary, decisions, and action items...",
+    "notesGeneratedByKeywordExtractionAi": "Notes generated by keyword extraction — AI unavailable",
+    "summary": "Summary",
+    "keyPoints": "Key points",
+    "decisionsSaved": "Decisions (saved)",
+    "actionItemsSavedAsFollowUps": "Action items (saved as follow-ups)",
+    "generating": "Generating...",
+    "generateNotes": "Generate notes",
+    "meeting": "Meeting",
+    "edit": "Edit",
+    "markScheduled": "Mark scheduled",
+    "markCompleted": "Mark completed",
+    "addDecision": "Add decision",
+    "addFollowUp": "Add follow-up",
+    "generateAiNotesFromTranscriptTeresa": "Generate AI notes from transcript (Teresa)",
+    "aiNotes": "AI Notes",
+    "backToList": "Back to list",
+    "attendees": "Attendees",
+    "noAttendeesYet": "No attendees yet",
+    "preRead": "Pre-read",
+    "noPreReadYet": "No pre-read yet",
+    "agenda": "Agenda",
+    "noAgendaYet": "No agenda yet",
+    "decisions2": "Decisions",
+    "noDecisionsYet": "No decisions yet",
+    "followUps": "Follow-ups",
+    "done": "Done",
+    "open": "Open",
+    "noFollowUpsYet": "No follow-ups yet",
+    "completed": "Completed",
+    "scheduled": "Scheduled",
+    "followUp2": "Follow-up",
+    "operatorBrief": "Operator brief",
+    "preparingMeetingBrief": "Preparing meeting brief...",
+    "noOperatorBriefForThisMeeting": "No operator brief for this meeting.",
+    "previousMonth": "Previous month",
+    "today": "Today",
+    "nextMonth": "Next month",
+    "more": "more",
+    "noLocation2": "No location",
+    "unassigned2": "Unassigned",
+    "openPreview2": "Open preview",
+    "archive2": "Archive",
+    "comingSoonBackend2": "Coming soon (backend)",
+    "delete3": "Delete",
+    "aiMeetingNotes2": "AI Meeting Notes",
+    "pasteTheMeetingTranscript2": "Paste the meeting transcript",
+    "pasteTheTranscriptTeresaWillExtract2": "Paste the transcript — Teresa will extract a summary, decisions, and action items...",
+    "notesGeneratedByKeywordExtractionAi2": "Notes generated by keyword extraction — AI unavailable",
+    "summary2": "Summary",
+    "keyPoints2": "Key points",
+    "decisionsSaved2": "Decisions (saved)",
+    "actionItemsSavedAsFollowUps2": "Action items (saved as follow-ups)",
+    "generating2": "Generating...",
+    "generateNotes2": "Generate notes",
+    "meetingLabel": "Meeting",
+    "edit2": "Edit",
+    "delete4": "Delete",
+    "addDecision2": "Add decision",
+    "addFollowUp2": "Add follow-up",
+    "generateAiNotesFromTranscript": "Generate AI notes from transcript (Teresa)",
+    "attendees2": "Attendees",
+    "followUps2": "Follow-ups",
+    "open2": "Open",
+    "completed2": "Completed",
+    "scheduled2": "Scheduled",
+    "noOperatorBrief": "No operator brief for this meeting."
   },
   "manager": {
     "col": {
@@ -9957,5 +10115,23 @@
     "dueIn": "in",
     "problems": "problems",
     "noProblems": "No problems detected — on track."
+  },
+  "nav": {
+    "product": "Product",
+    "knowledgeBase": "Knowledge Base",
+    "pricing": "Pricing",
+    "partners": "Partners",
+    "vector": "Vector AI",
+    "security": "Security"
+  },
+  "trial": {
+    "modal": {
+      "logInAndTrial": "Log in & Continue",
+      "ownWorkspace": "Your Own Workspace",
+      "ownWorkspaceDesc": "7 days with your own organization, projects, and data. Full access to all features.",
+      "startTrial": "Sign up & Start Trial",
+      "subtitle": "Your own workspace, 7 days free",
+      "title": "Start Your 7-Day Trial"
+    }
   }
 }

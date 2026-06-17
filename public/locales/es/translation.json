@@ -42,7 +42,11 @@
     "connected": "conectado",
     "comingSoon": "Próximamente",
     "root": "Raíz",
-    "noOrganizations": "No se encontraron organizaciones"
+    "noOrganizations": "No se encontraron organizaciones",
+    "closeMenu": "Cerrar menú",
+    "openMenu": "Abrir menú",
+    "optional": "opcional",
+    "videoUnsupported": "Su navegador no admite la etiqueta «video»."
   },
   "contextBadge": {
     "aiSees": "IA ve",
@@ -1061,7 +1065,10 @@
     "email": "Correo electrónico",
     "password": "Contraseña",
     "forgotPassword": "¿Olvidaste tu contraseña?",
-    "register": "Registrarse"
+    "register": "Registrarse",
+    "companyName": "Nombre de la empresa",
+    "firstName": "Nombre",
+    "lastName": "Apellido"
   },
   "help": {
     "title": "Centro de Ayuda",
@@ -1308,9 +1315,10 @@
   },
   "landing": {
     "hero": {
-      "title": "Think bigger.Do smarter",
-      "subtitleLine1": "Your",
-      "subtitleLine1End": "for Enterprise Strategy.",
+      "title": "Piense a lo grande. Actúe con inteligencia.",
+      "subtitleLine1": "Su",
+      "coThinker": "Colaborador en materia de IA",
+      "subtitleLine1End": "para la estrategia empresarial.",
       "slogans": {
         "1": "Months of consulting. Minutes of AI. Better results.",
         "2": "Transform decisions. Accelerate outcomes.",
@@ -1319,70 +1327,94 @@
         "5": "Consulting reimagined. Results delivered."
       },
       "tagline": {
-        "line1": "AI consulting.",
-        "line2": "No slides.",
-        "line3": "Just decisions."
+        "line1": "Asesoramiento en inteligencia artificial.",
+        "line2": "Sin diapositivas.",
+        "line3": "Decisiones justas."
       },
       "cards": {
         "demo": {
-          "title": "Interactive Demo",
-          "description": "Explore Consultify with AI-guided walkthrough. No signup required.",
-          "meta": "GUIDED EXPERIENCE",
-          "cta": "Start Demo"
+          "title": "Demostración interactiva",
+          "description": "Explore «Consultify» con una guía paso a paso basada en IA. No es necesario registrarse.",
+          "meta": "EXPERIENCIA GUIADA",
+          "cta": "Iniciar demostración"
         },
         "trial": {
-          "title": "Free Trial",
-          "description": "7-day full access to all features. Start your transformation today.",
-          "meta": "7 DAYS FREE",
-          "cta": "Start Free Trial"
+          "title": "Prueba gratuita",
+          "description": "Acceso completo durante 7 días a todas las funciones. Empiece hoy mismo su transformación.",
+          "meta": "7 DÍAS GRATIS",
+          "cta": "Comience su prueba gratuita"
         },
         "video": {
-          "title": "Watch How It Works",
-          "description": "See Consultify in action with real enterprise transformation examples.",
-          "meta": "3 MIN VIDEO",
-          "cta": "Play Video"
+          "title": "Vea cómo funciona",
+          "description": "Vea cómo funciona «Consultify» con ejemplos reales de transformación empresarial.",
+          "meta": "VÍDEO DE 3 MINUTOS",
+          "cta": "Reproducir vídeo"
         },
         "expert": {
-          "title": "Talk to Expert",
-          "description": "Schedule a personalized consultation with our strategy specialists.",
-          "meta": "HUMAN TOUCH",
-          "cta": "Book Consultation"
+          "title": "Hable con un experto",
+          "description": "Concierte una consulta personalizada con nuestros especialistas en estrategia.",
+          "meta": "EL TOQUE HUMANO",
+          "cta": "Reservar una consulta"
         },
         "login": {
-          "title": "Welcome Back",
-          "description": "Continue your transformation journey. Your workspace awaits.",
-          "meta": "EXISTING USER",
-          "cta": "Log In"
+          "title": "Bienvenido de nuevo",
+          "description": "Continúe su proceso de transformación. Su espacio de trabajo le espera.",
+          "meta": "USUARIO REGISTRADO",
+          "cta": "Iniciar sesión"
+        },
+        "audits": {
+          "title": "Auditorías globales",
+          "description": "Los marcos de evaluación DRD, SIRI, ADMA y Lean 4.0.",
+          "meta": "EXCELENCIA INDUSTRIAL",
+          "cta": "Explore las auditorías"
+        },
+        "tools": {
+          "cta": "Explorar herramientas",
+          "meta": "CENTRO DE FORMACIÓN",
+          "title": "Conozca nuestras herramientas",
+          "description": "Vea demostraciones y clases magistrales sobre más de 40 marcos de consultoría."
         }
       }
     },
     "topBar": {
-      "demo": "Demo",
-      "trial": "Trial",
-      "login": "Log in",
-      "signUp": "Sign up"
+      "demo": "Ver demo",
+      "trial": "Iniciar prueba",
+      "login": "Iniciar sesión",
+      "signUp": "Regístrese",
+      "menu": "Menú",
+      "lightMode": "Claro",
+      "darkMode": "Oscuro",
+      "switchLight": "Cambiar al modo claro",
+      "switchDark": "Cambiar al modo oscuro"
     },
-    "methodology": {
-      "badge": "Our Methodology",
-      "heading": "AI-Driven Strategic Transformation"
-    },
-    "steps": {
-      "diagnostic": {
-        "title": "Diagnostic Assessment",
-        "desc": "AI analyzes your organization's digital maturity, identifies gaps, and benchmarks against industry standards."
+    "epicHero": {
+      "eyebrow": "Plataforma de inteligencia para consultoría",
+      "sub": "Para consultores, equipos de transformación y operadores que necesitan diagnóstico, planificación, ejecución y resultados cuantificables en un único flujo de trabajo.",
+      "annaBadge": "Empiece por Anna",
+      "annaSub": "¿No sabe si empezar con una demostración o con una versión de prueba? Anna le puede explicar las características, los precios y la seguridad antes de que decida cuál será su próximo paso.",
+      "annaPrimaryCta": "Pregunte primero a Anna",
+      "annaPrompts": {
+        "fit": {
+          "label": "Pregunte por la talla",
+          "prompt": "¿Es «Consultify» adecuado para mi equipo?"
+        },
+        "pricing": {
+          "label": "Pregunte por los precios",
+          "prompt": "¿Cómo debo elegir entre la versión de demostración, la versión de prueba y los planes de precios?"
+        },
+        "security": {
+          "label": "Pregunte por la seguridad",
+          "prompt": "¿Cómo gestiona «Consultify» la seguridad y la ubicación de los datos?"
+        }
       },
-      "roadmap": {
-        "title": "Strategic Roadmap",
-        "desc": "Generate actionable transformation roadmap with prioritized initiatives, timelines, and resource requirements."
-      },
-      "approval": {
-        "title": "Human Governance",
-        "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
-      }
+      "noCC": "No es necesario disponer de tarjeta de crédito",
+      "socialProof": "Cuenta con la confianza de más de 200 equipos de consultoría en todo el mundo"
     },
     "problemPlatform": {
+      "badge": "¿Por qué es importante esta categoría?",
       "heading": "Lo que Spotify hizo por la música,",
       "headingAccent": "nosotros lo hacemos por la consultoría.",
+      "sub": "La información de consultoría debería ser accesible, y no estar restringida a una élite.",
       "problem": {
         "badge": "El problema del mercado",
         "title": "La inteligencia de negocio sigue siendo inaccesible, genérica e insegura.",
@@ -1406,6 +1438,603 @@
         "summary": "Acceso. Calidad. Confianza. Ese es el cambio."
       }
     },
+    "valueJourney": {
+      "badge": "Cómo genera valor la plataforma",
+      "heading": "Consultify convierte la inteligencia de consultoría en un proceso estructurado que va desde el análisis hasta los resultados.",
+      "sub": "Esta es la arquitectura de valor y la trayectoria operativa que subyace a la categoría: cinco niveles de valor y todo el proceso de consultoría en un único entorno de trabajo.",
+      "layersBadge": "Capas de valor",
+      "layersTitle": "Cinco niveles de valor: Inspiración → Conocimiento → Marcos de referencia → Orientación → Ejecución.",
+      "journeyBadge": "Trayectoria en el ámbito de la consultoría",
+      "journeyTitle": "Una única plataforma para todo el proceso de consultoría: comprensión → diagnóstico → diseño → ejecución → resultados.",
+      "layers": [
+        {
+          "title": "Inspiración",
+          "description": "Muestra a los usuarios nuevas ideas, orientaciones y posibilidades."
+        },
+        {
+          "title": "Conocimiento",
+          "description": "Ofrece acceso a conocimientos de consultoría que, de otro modo, serían difíciles de obtener."
+        },
+        {
+          "title": "Marcos",
+          "description": "Ofrece herramientas estratégicas y analíticas para un pensamiento estructurado."
+        },
+        {
+          "title": "Orientación",
+          "description": "Guía a los usuarios a lo largo del proceso de creación y mejora de una empresa."
+        },
+        {
+          "title": "Ejecución",
+          "description": "Convierte las ideas en acciones, mediciones y resultados."
+        }
+      ],
+      "journey": [
+        {
+          "title": "Comprensión",
+          "description": "Entrevista, análisis del contexto y comprensión de la organización."
+        },
+        {
+          "title": "Diagnóstico",
+          "description": "Marcos de referencia, evaluaciones y análisis basados en datos empíricos."
+        },
+        {
+          "title": "Diseño de iniciativas",
+          "description": "Diseño, prioridades y hoja de ruta del programa de transformación."
+        },
+        {
+          "title": "Ejecución",
+          "description": "Ejecución, gestión y seguimiento operativo."
+        },
+        {
+          "title": "Resultados",
+          "description": "Seguimiento de los indicadores clave de rendimiento (KPI), captura de valor, retorno de la inversión (ROI) y demostración del impacto."
+        }
+      ]
+    },
+    "extendedScope": {
+      "badge": "Más allá de la consultoría clásica",
+      "heading": "Consultify amplía sus servicios de consultoría a los ámbitos de las finanzas, los resultados esperados y la ejecución diaria.",
+      "sub": "La plataforma no se limita a la lógica de asesoramiento. Extiende el trabajo estratégico al ámbito de la inteligencia financiera, a los resultados listos para su presentación a la dirección y al espacio de trabajo operativo, donde los equipos continúan con su labor.",
+      "items": [
+        {
+          "title": "Inteligencia financiera",
+          "description": "Consultify amplía la consultoría clásica con modelos financieros, análisis, valoraciones y previsiones.",
+          "bullets": [
+            "Modelos financieros",
+            "Análisis financiero",
+            "Valoración de la empresa",
+            "Previsión"
+          ]
+        },
+        {
+          "title": "Informes y presentaciones",
+          "description": "Consultify convierte el trabajo sobre el terreno en informes, presentaciones para directivos y resultados de consultoría.",
+          "bullets": [
+            "Informes",
+            "Presentaciones ejecutivas",
+            "Notas"
+          ]
+        },
+        {
+          "title": "Mi trabajo",
+          "description": "Consultify ofrece a los equipos un espacio de trabajo personal y compartido para el seguimiento una vez que se pone en marcha el trabajo estratégico.",
+          "bullets": [
+            "Tareas",
+            "Decisiones",
+            "Ideas",
+            "Iniciativas"
+          ]
+        }
+      ]
+    },
+    "profitHero": {
+      "h1": {
+        "line1": "Consultify IA.",
+        "line2": "Todo el conocimiento empresarial del mundo.",
+        "line3": "Se han convertido en sus beneficios."
+      },
+      "sub": "Para consultores, equipos de transformación y operadores que necesitan diagnóstico, planificación, ejecución y resultados cuantificables en un único flujo de trabajo.",
+      "billboard": "Hemos hecho por el sector de la consultoría lo que Spotify hizo por la música: acceso ilimitado, pero en lugar de listas de reproducción, lo que se obtiene son beneficios.",
+      "billboardShort": "Un proceso único que abarca desde el diagnóstico hasta la ejecución y los resultados cuantificables.",
+      "ctaPrimary": "Iniciar periodo de prueba",
+      "ctaSecondary": "Pruebe la versión de demostración",
+      "ctaNote": "Los avances cortos son públicos. Los vídeos completos se desbloquean tras iniciar sesión.",
+      "panel": {
+        "title": "Del chat → a los resultados → a los beneficios",
+        "subtitle": "Un único espacio de trabajo. Ejecución de principio a fin.",
+        "items": {
+          "tools": "Herramientas y marcos de trabajo",
+          "finance": "Análisis financiero",
+          "reports": "Informes y presentaciones",
+          "governance": "Gobernanza por defecto"
+        },
+        "imageAlt": "Consultify captura de pantalla del producto",
+        "imageHint": "Las capturas de pantalla aparecerán aquí cuando los recursos estén disponibles."
+      }
+    },
+    "howItWorks": {
+      "badge": "Cómo funciona",
+      "heading": "De la idea a los resultados cuantificables",
+      "headingAccent": "en cinco jugadas.",
+      "sub": "No somos una consultora. No se trata de un proyecto de seis meses. Simplemente, la información se convierte en acción.",
+      "steps": {
+        "feedData": {
+          "title": "Introduzca los datos pertinentes",
+          "description": "Suba documentos, conecte sus fuentes de datos o, simplemente, describa su reto. «Consultify» analiza todo su contexto —datos financieros, estructura organizativa, posición en el mercado— en cuestión de segundos."
+        },
+        "aiUnderstands": {
+          "title": "La IA capta al instante el panorama completo",
+          "description": "DBR77 Vector —nuestro modelo propio— analiza su contexto comparándolo con más de 1.000 proyectos de transformación reales para identificar las carencias, los riesgos y las oportunidades mediante un razonamiento estructurado."
+        },
+        "bulletproofPlan": {
+          "title": "Recibirá un plan infalible con cifras claras",
+          "description": "Una hoja de ruta estratégica completa con iniciativas priorizadas, proyecciones de valor actual neto (VAN) y tasa interna de rentabilidad (TIR), plazos y dependencias. Lista para su presentación ante el consejo de administración desde el primer resultado."
+        },
+        "executeWithAI": {
+          "title": "Lleve a cabo la tarea con la IA guiándole en cada paso",
+          "description": "Gestione los flujos de trabajo, asigne tareas y realice un seguimiento de los hitos. La inteligencia artificial detecta los riesgos antes de que se conviertan en problemas y orienta a su equipo hacia la consecución de resultados en cada punto de decisión."
+        },
+        "watchResults": {
+          "title": "Observe cómo aparecen los resultados",
+          "description": "El seguimiento en tiempo real de los KPI vincula cada iniciativa con los resultados empresariales reales. Compruebe el valor actual neto (VAN) obtenido frente al previsto, señale las desviaciones al instante y envíe automáticamente los resultados a las partes interesadas."
+        }
+      },
+      "techBadge": "La tecnología que hay detrás de la magia",
+      "techTitle": "Desarrollado con DBR77 Vector, nuestro modelo de inteligencia artificial propio.",
+      "techDesc": "Desarrollado a partir de más de 1.000 proyectos de transformación reales y implementado mediante vías de implementación seguras. DBR77 Vector es nuestro modelo, no una simple envoltura, con integración de MCP para una automatización de principio a fin.",
+      "techExplore": "Descubra el DBR77 Vector",
+      "tech": {
+        "vector": "Vector DBR77",
+        "vectorDesc": "Modelo de IA propio",
+        "mcp": "Integración de MCP",
+        "mcpDesc": "Automatización completa de principio a fin",
+        "private": "Implementación privada",
+        "privateDesc": "In situ, API privada o acceso aislado",
+        "engagements": "Más de 1.000 interacciones",
+        "engagementsDesc": "Base de conocimientos sobre la transformación real"
+      },
+      "teaser": {
+        "title": "Véalo en directo (20 s)",
+        "subtitle": "Avance público. Versión completa tras iniciar sesión.",
+        "cta": "Véalo en directo",
+        "after": "¿Quiere ver la versión completa? Inicie sesión para desbloquear todos los vídeos.",
+        "afterCta": "Vea la versión completa tras iniciar sesión",
+        "afterCtaAuthed": "Vea la versión completa"
+      }
+    },
+    "forWhom": {
+      "badge": "¿Para quién?",
+      "heading": "Diseñado para los más ambiciosos.",
+      "sub": "Sea quien sea usted, si le importan los resultados, Consultify será su copiloto.",
+      "personas": {
+        "founders": {
+          "tag": "Fundadores y propietarios",
+          "headline": "Actúe con rapidez sin malgastar dinero.",
+          "description": "Ha creado algo sólido. Ahora necesita una estrategia que le permita hacer crecer su negocio, sin necesidad de contratar a un equipo de McKinsey. Consultify es su socio estratégico siempre a su disposición: desde el análisis de mercado hasta la elaboración de modelos financieros y el seguimiento de la ejecución, todo en un mismo lugar.",
+          "points": [
+            "Pruebas de resistencia del modelo de negocio",
+            "Modelos financieros preparados para los inversores",
+            "Una hoja de ruta para el crecimiento en días, no en meses"
+          ]
+        },
+        "executives": {
+          "tag": "Directivos y líderes del cambio",
+          "headline": "Liderar la transformación. Obtener resultados.",
+          "description": "Usted es responsable del cambio. «Consultify» le ofrece un enfoque estructurado y respaldado por datos para la transformación, con una gobernanza humana integrada. Cada decisión es trazable y cada resultado se mide.",
+          "points": [
+            "Diagnóstico organizativo",
+            "Gestión proactiva de la cartera",
+            "Informes listos para presentar al consejo de administración con un solo clic"
+          ]
+        },
+        "consultingFirms": {
+          "tag": "Empresas de consultoría",
+          "headline": "Ofrezca 10 veces más valor en la mitad de tiempo.",
+          "description": "Deje de crear siempre las mismas diapositivas en PowerPoint. Consultify automatiza sus análisis y resultados, para que su equipo se centre en las conclusiones y las relaciones, y no en el formato ni en la recopilación de datos.",
+          "points": [
+            "Espacios de trabajo para clientes de marca blanca",
+            "Análisis automatizados y presentaciones",
+            "Programa de socios con reparto de ingresos"
+          ]
+        },
+        "aiLeaders": {
+          "tag": "Líderes que dan prioridad a la IA",
+          "headline": "Usted piensa en términos de sistemas. Nosotros hablamos su mismo idioma.",
+          "description": "Ya sabe que la IA es la clave. «Consultify» es donde esa apuesta da sus frutos: una plataforma mult LLM totalmente integrada con MCP, complementada con inteligencia de consultoría propia.",
+          "points": [
+            "Acceso completo a la API y al MCP",
+            "Enrutamiento personalizado de LLM",
+            "Cree su propio conjunto de soluciones de consultoría en IA"
+          ]
+        }
+      }
+    },
+    "resources": {
+      "title": "Recursos",
+      "subtitle": "Todos los vídeos cuentan con avances públicos. Inicie sesión para ver las versiones completas.",
+      "watchFull": "Vea la versión completa",
+      "watchFullAfterLogin": "Vea la versión completa tras iniciar sesión",
+      "launchTrial": "Iniciar la prueba gratuita",
+      "ctaAfterTeaserHint": "Vea el avance para desbloquear el botón del vídeo completo."
+    },
+    "howItWorksPage": {
+      "title": "Cómo funciona",
+      "subtitle": "A continuación se muestran los avances públicos. Las versiones completas se desbloquean tras iniciar sesión.",
+      "teaserLabel": "Avance",
+      "afterTeaser": "Vea la versión completa tras iniciar sesión.",
+      "watchFull": "Ver el vídeo completo",
+      "watchFullAfterLogin": "Véalo completo tras iniciar sesión",
+      "ctaAfterTeaserHint": "Vea el avance para desbloquear el botón del vídeo completo.",
+      "heroTeaserLabel": "Avance de «Hero»",
+      "heroTeaserDuration": "los 20",
+      "heroAfterTeaser": "El vídeo completo del héroe se reproduce desde la página de inicio, en el enlace «VER LA DEMO AHORA».",
+      "goHome": "Ir a la página de inicio"
+    },
+    "whereItHappens": {
+      "badge": "En qué consiste «Consultify»",
+      "heading": "Consultify reúne los conocimientos de consultoría, los marcos de trabajo, la ejecución y los resultados en un único entorno de trabajo.",
+      "sub": "Así es como funciona en la práctica la Plataforma de Inteligencia de Consultoría: no se trata solo de respuestas generadas por IA, sino de un flujo de trabajo de consultoría estructurado que abarca desde el diagnóstico hasta los resultados.",
+      "closingNote": "Una promesa por categoría, una interfaz de producto, un camino desde la comprensión hasta los resultados cuantificables.",
+      "imageAlt": "Consultify captura de pantalla del producto",
+      "imageHint": "Las capturas de pantalla aparecerán aquí cuando los recursos estén disponibles.",
+      "features": {
+        "aiCore": {
+          "badge": "Núcleo de IA",
+          "title": "Asesor estratégico en inteligencia artificial",
+          "description": "La IA analiza su organización, identifica las carencias y elabora una hoja de ruta estratégica con prioridades, en cuestión de minutos, no de meses.",
+          "highlights": [
+            "Evaluación diagnóstica",
+            "Análisis de deficiencias",
+            "Comparativa con el sector"
+          ]
+        },
+        "economics": {
+          "badge": "Economía",
+          "title": "Modelización financiera y retorno de la inversión",
+          "description": "Elabore análisis de viabilidad, elabore modelos de escenarios de VAN y TIR, y realice un seguimiento de los rendimientos reales frente a los previstos en cada iniciativa.",
+          "highlights": [
+            "Modelización del VAN y la TIR",
+            "Análisis de sensibilidad",
+            "Seguimiento del ROI en tiempo real"
+          ]
+        },
+        "execution": {
+          "badge": "Ejecución",
+          "title": "Gestión de iniciativas",
+          "description": "Convierta la estrategia en acción. Gestione los flujos de trabajo, los hitos y la gobernanza, con la ayuda de la inteligencia artificial, que le guiará hacia el impacto.",
+          "highlights": [
+            "Hoja de ruta de la iniciativa",
+            "Controles de aprobación por parte de personas",
+            "Detección de riesgos"
+          ]
+        },
+        "deliverables": {
+          "badge": "Resultados esperados",
+          "title": "Generador de informes y presentaciones",
+          "description": "Genere informes listos para presentar en la junta directiva y presentaciones para inversores a partir de sus datos en tiempo real. De un simple clic, pase del análisis a un resultado impecable.",
+          "highlights": [
+            "Barajas generadas automáticamente",
+            "Motor narrativo",
+            "Trazabilidad de la procedencia"
+          ]
+        },
+        "chat": {
+          "badge": "Chat",
+          "title": "Entrevista a un experto en IA",
+          "description": "Pregunte lo que desee sobre el contexto de su empresa. La IA se basa en más de 10 000 marcos de referencia y en sus datos internos para ofrecerle una respuesta precisa.",
+          "highlights": [
+            "Chat sensible al contexto",
+            "Biblioteca de marcos",
+            "Respuestas citadas"
+          ]
+        },
+        "results": {
+          "badge": "Resultados",
+          "title": "Seguimiento del impacto",
+          "description": "Vincule las iniciativas a indicadores clave de rendimiento (KPI) reales. Mida el valor realmente aportado y señale automáticamente las desviaciones antes de que se conviertan en problemas.",
+          "highlights": [
+            "Cuadro de mando de indicadores clave de rendimiento (KPI)",
+            "Alertas de desviación",
+            "Atribución de valor"
+          ]
+        }
+      }
+    },
+    "films": {
+      "film1": {
+        "title": "Hero (demostración completa)",
+        "description": "Guía paso a paso del enfoque «Profit-first»: de la idea al impacto."
+      },
+      "film2": {
+        "title": "Cómo funciona",
+        "description": "Proceso integral: diagnóstico → planificación → ejecución → seguimiento del impacto."
+      },
+      "film3": {
+        "title": "Para empresas de consultoría",
+        "description": "Realice envíos más rápidos. Aumente los márgenes. Mantenga el control."
+      },
+      "film4": {
+        "title": "Resultados",
+        "description": "Qué cambios se producen y cómo se realiza el seguimiento de su impacto."
+      },
+      "film5": {
+        "title": "Recursos (5)",
+        "description": "Avance"
+      },
+      "film6": {
+        "title": "Recursos (6)",
+        "description": "Avance"
+      },
+      "after": {
+        "title": "¿Está listo para el lanzamiento?",
+        "subtitle": "Comience su prueba gratuita y vea todos los vídeos completos.",
+        "cta": "Iniciar la prueba gratuita"
+      }
+    },
+    "videos": {
+      "fullTitleFallback": "Vídeo completo"
+    },
+    "faq": {
+      "badge": "Preguntas frecuentes",
+      "heading": "¿Preguntas? Respuestas.",
+      "more": "¿Tiene más preguntas?",
+      "contact": "Póngase en contacto con nosotros",
+      "items": [
+        {
+          "q": "¿Qué es «Consultify»?",
+          "a": "Consultify es una plataforma de consultoría estratégica basada en inteligencia artificial que ayuda a las organizaciones industriales a afrontar la transformación digital. Combina la inteligencia artificial con la supervisión humana para ofrecer hojas de ruta prácticas, y no solo informes."
+        },
+        {
+          "q": "¿En qué se diferencia esto de la consultoría tradicional?",
+          "a": "La consultoría tradicional ofrece presentaciones en PowerPoint. «Consultify» ofrece un sistema dinámico. Nuestra IA analiza continuamente su contexto, genera iniciativas y supervisa su ejecución. Usted obtiene orientación estratégica en tiempo real, no un informe puntual que acaba en un cajón."
+        },
+        {
+          "q": "¿Están seguros mis datos?",
+          "a": "Por supuesto. Cumplimos con el RGPD y garantizamos la residencia de los datos en la UE. Todos los datos se cifran tanto en reposo (AES-256) como en tránsito (TLS 1.3). Nunca entrenamos modelos de IA con sus datos propios. Los clientes empresariales pueden utilizar sus propias claves de API (BYOK)."
+        },
+        {
+          "q": "¿Es necesario tener conocimientos técnicos para utilizarlo?",
+          "a": "No. «Consultify» está diseñado para directivos, no para especialistas en TI. La interfaz es intuitiva y nuestra IA le guía en cada paso. Además, ofrecemos asistencia para la puesta en marcha y formación para su equipo."
+        },
+        {
+          "q": "¿Puedo probarlo antes de comprarlo?",
+          "a": "¡Sí! Ofrecemos una prueba gratuita de 7 días con acceso completo a todas las funciones. No es necesario facilitar ningún dato de tarjeta de crédito. También puede solicitar una demostración personalizada con nuestro equipo para ver la plataforma en acción aplicada a su caso de uso específico."
+        },
+        {
+          "q": "¿A qué sectores prestan servicio?",
+          "a": "Nos especializamos en los sectores manufacturero e industrial, entre los que se incluyen el automovilístico, el aeroespacial, el electrónico, el de alimentación y bebidas, y la industria pesada. Nuestros marcos de evaluación se adaptan a los retos que plantea la transformación hacia la Industria 4.0."
+        }
+      ],
+      "ctaPrimary": "Iniciar la prueba gratuita",
+      "ctaSecondary": "Explorar recursos"
+    },
+    "methodology": {
+      "badge": "Nuestra metodología",
+      "heading": "Transformación estratégica impulsada por la inteligencia artificial"
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Evaluación diagnóstica",
+        "desc": "La IA analiza la madurez digital de su organización, identifica las deficiencias y compara los resultados con los estándares del sector."
+      },
+      "roadmap": {
+        "title": "Hoja de ruta estratégica",
+        "desc": "Elabore una hoja de ruta de transformación con medidas concretas, que incluya iniciativas priorizadas, plazos y necesidades de recursos."
+      },
+      "approval": {
+        "title": "Gobernanza humana",
+        "desc": "Cada decisión estratégica requiere la aprobación de una persona. La responsabilidad y el control plenos siguen recayendo en su equipo directivo."
+      }
+    },
+    "carousel": {
+      "labels": {
+        "notifications": "Notificaciones",
+        "tasks": "Tareas",
+        "initiatives": "Iniciativas",
+        "decisions": "Decisiones"
+      },
+      "priority": {
+        "high": "Alto",
+        "medium": "Medio"
+      },
+      "status": {
+        "onTrack": "Por buen camino",
+        "atRisk": "En situación de riesgo"
+      },
+      "phase": {
+        "execution": "Ejecución",
+        "planning": "Planificación",
+        "assessment": "Evaluación"
+      },
+      "roi": "ROI",
+      "votes": "votos",
+      "deadline": {
+        "completed": "Finalizado"
+      },
+      "decisionType": {
+        "financial": "Financiero",
+        "strategic": "Estratégico",
+        "stageGate": "Stage-Gate"
+      },
+      "slides": {
+        "notifications": {
+          "badge": "{{count}} Nuevo",
+          "items": {
+            "0": {
+              "title": "Plazo de la iniciativa",
+              "desc": "La hoja de ruta de la Industria 4.0 se publicará dentro de dos días",
+              "time": "Hace 2 horas"
+            },
+            "1": {
+              "title": "Tarea completada",
+              "desc": "El equipo ha finalizado la fase de evaluación",
+              "time": "Hace 4 horas"
+            },
+            "2": {
+              "title": "Nuevo comentario",
+              "desc": "El Dr. Kowalski se pronunció sobre el análisis del retorno de la inversión",
+              "time": "Hace 6 horas"
+            }
+          }
+        },
+        "tasks": {
+          "title": "Mis tareas",
+          "badge": "{{count}} Activo",
+          "items": {
+            "0": {
+              "title": "Evaluación completa del DRD"
+            },
+            "1": {
+              "title": "Revisar las previsiones de retorno de la inversión (ROI)"
+            },
+            "2": {
+              "title": "Elaborar el informe Stage-Gate"
+            }
+          }
+        },
+        "initiatives": {
+          "badge": "{{count}} Activo",
+          "items": {
+            "0": {
+              "name": "Hoja de ruta de la Industria 4.0"
+            },
+            "1": {
+              "name": "Implementación del gemelo digital"
+            },
+            "2": {
+              "name": "Optimización de la cadena de suministro"
+            }
+          }
+        },
+        "decisions": {
+          "badge": "{{count}} Pendiente",
+          "items": {
+            "0": {
+              "title": "Aprobar la asignación presupuestaria del segundo trimestre",
+              "deadline": "2 días"
+            },
+            "1": {
+              "title": "Seleccione un socio tecnológico",
+              "deadline": "5 días"
+            },
+            "2": {
+              "title": "Fase 2: Continuar o no continuar"
+            }
+          }
+        }
+      }
+    },
+    "regional": {
+      "title": "Concierte una cita para",
+      "demo": "Demostración",
+      "titleEnd": "en su región",
+      "subtitle": "Seleccione su zona horaria para disfrutar de la mejor experiencia"
+    },
+    "regions": {
+      "japan": "Japón",
+      "saudi": "Arabia Saudí",
+      "europe": "Europa",
+      "usa": "Estados Unidos"
+    },
+    "demo": {
+      "word": "Demostración",
+      "schedule": "Solicite una demostración",
+      "scheduleShort": "Calendario",
+      "getA": "Consiga un",
+      "bookA": "Reserve una",
+      "subtext": "Llamada gratuita de 30 minutos • Vea «Consultify» en acción"
+    },
+    "knowledge": {
+      "badge": "Base de conocimientos",
+      "title": "Descubra nuestra experiencia",
+      "subtitle": "Metodologías contrastadas y mejores prácticas en las que confían los líderes del sector en toda Europa.",
+      "readMore": "Lea el artículo completo",
+      "exploreAll": "Acceda a la base de conocimientos completa",
+      "ctaSubtext": "Comience una prueba gratuita para acceder a todos los artículos, vídeos y recursos.",
+      "minUnit": "min"
+    },
+    "compliance": {
+      "label": "Seguridad y cumplimiento normativo de nivel empresarial",
+      "badges": {
+        "iso27001": "ISO 27001",
+        "soc2": "SOC2 Tipo II",
+        "gdpr": "RGPD",
+        "encryption": "AES-256",
+        "dedicated": "API específica",
+        "euData": "Su región, sus datos",
+        "onPrem": "En las propias instalaciones",
+        "sharedCloud": "Nube compartida"
+      },
+      "dataResidency": "Residencia de los datos",
+      "regions": {
+        "eu": "Europa",
+        "us": "América del Norte",
+        "gcc": "Oriente Medio",
+        "jp": "Japón"
+      },
+      "dataNote": "Sus datos permanecen en el territorio de la UE • No se realiza ningún entrenamiento de IA con sus datos",
+      "deployLabel": "Opciones de implementación",
+      "securityLabel": "Seguridad y cumplimiento normativo",
+      "euNote": "Sus datos permanecen en la región que elija: la UE, EE. UU. o APAC. Usted elige, nosotros nos encargamos de cumplirlo."
+    },
+    "trust": {
+      "carouselTagline": "La IA analiza. Usted da las órdenes.",
+      "badge": "Integridad empresarial",
+      "heading": "Inteligencia guiada por la aprobación humana.",
+      "description": "La IA es un socio, no una autoridad. Consultify aplica un riguroso sistema de gobernanza en el que cada decisión estratégica requiere la validación de un responsable de alto nivel.",
+      "points": [
+        "Responsabilidad plena sobre cada punto de la hoja de ruta",
+        "Aislamiento de datos multicliente y seguridad de nivel militar",
+        "Lógica de infraestructura conforme a la norma SOC2"
+      ],
+      "cta": "Ver resumen de seguridad"
+    },
+    "footer": {
+      "tagline": "Ayudamos a las organizaciones a afrontar la transformación digital mediante una estrategia basada en la inteligencia artificial y una gobernanza dirigida por personas.",
+      "copyright": "Todos los derechos reservados.",
+      "trust": {
+        "euData": "Datos de la UE"
+      },
+      "products": {
+        "title": "Productos"
+      },
+      "company": {
+        "title": "Empresa",
+        "about": "Acerca de",
+        "news": "Noticias",
+        "events": "Eventos",
+        "contact": "Contacto"
+      },
+      "caseStudies": {
+        "title": "Casos prácticos",
+        "businessCases": "Casos de negocio"
+      },
+      "knowledge": {
+        "title": "Conocimiento",
+        "blog": "Blog",
+        "reports": "Informes",
+        "podcasts": "Podcasts",
+        "blogConsultify": "Blog Consultify",
+        "blogDbr77": "Blog DBR77"
+      },
+      "documentation": {
+        "title": "Documentación"
+      },
+      "legal": {
+        "privacy": "Política de privacidad",
+        "cookies": "Política de cookies",
+        "terms": "Condiciones de uso",
+        "acceptableUse": "Política de uso aceptable",
+        "aiPolicy": "Política sobre la IA",
+        "subscription": "Condiciones de suscripción",
+        "dpa": "DPA",
+        "sla": "SLA",
+        "security": "Resumen sobre seguridad",
+        "consent": "Consentimiento y controles"
+      },
+      "offices": "Oficinas",
+      "legalOperator": "Operador de la plataforma Consultify"
+    },
     "docs": {
       "badge": "Ayuda y evaluacion",
       "title": "Todo lo que necesitas para evaluar Consultify",
@@ -1425,10 +2054,57 @@
       "resources": "Recursos",
       "resourcesDesc": "Casos de estudio, whitepapers, webinars y anuncios de actualizaciones del producto.",
       "explore": "Explorar"
+    },
+    "aiOs": {
+      "badge": "Sistema operativo de inteligencia artificial",
+      "footer": "La cuestión no es disponer de más interfaces de IA. La cuestión es contar con un entorno operativo de IA coherente y regulado que abarque el chat, la ejecución, el conocimiento y los resultados.",
+      "heading": "Un único sistema de IA para asistentes, indicaciones, agentes, conocimientos y trabajo basado en artefactos.",
+      "sub": "Consultify ofrece una arquitectura de IA fuerte en un entorno operativo visible: asistentes guiados, indicaciones reguladas, agentes de varios pasos, conocimientos que tienen en cuenta las políticas y resultados que van más allá del chat."
+    },
+    "modelDeployment": {
+      "badge": "Modelo de IA personalizado y su implementación",
+      "points": {
+        "control": {
+          "title": "Opción de implementación",
+          "body": "Cumpla con los requisitos de adquisición, integración y seguridad sin imponer una única vía."
+        },
+        "model": {
+          "title": "Modelo de IA propio",
+          "body": "Diseñado para la consultoría: estructuras de toma de decisiones, análisis de riesgos y resultados listos para su presentación a la dirección."
+        },
+        "sales": {
+          "title": "Evaluación guiada",
+          "body": "Anna le guía paso a paso por el proceso de evaluación de la idoneidad, la fijación de precios y la implementación antes de que se comprometa con una prueba o un contrato empresarial."
+        },
+        "security": {
+          "title": "Seguridad desde el diseño",
+          "body": "Cumplimiento del RGPD, cifrado AES-256 y residencia de datos en la UE disponibles de forma predeterminada."
+        }
+      },
+      "title": "Su realidad en materia de gobernanza. Su modelo de implementación.",
+      "subtitle": "Consultify Funciona sobre una capa de modelo propia de DBR77, diseñada para la lógica de consultoría y la generación de resultados de alto nivel. Elija cómo y dónde se ejecuta."
+    },
+    "narrativeCta": {
+      "askAnna": "Pregunte primero a Anna",
+      "badge": "Elija su vía de acceso",
+      "startTrial": "Iniciar periodo de prueba",
+      "tryDemo": "Pruebe la versión de demostración",
+      "footer": "Una narrativa, tres vías de acceso seguras: orientación guiada, exploración del producto o incorporación directa mediante prueba.",
+      "heading": "Pase de la claridad en la categoría a su primer momento de valor.",
+      "points": {
+        "0": "Anna le explica los aspectos relacionados con el ajuste, el precio y la seguridad antes de que se comprometa a seguir un camino.",
+        "1": "La demostración muestra la Plataforma de Inteligencia de Consultoría con datos predefinidos y de solo lectura.",
+        "2": "La versión de prueba le permite iniciar su propio proceso de consultoría guiado, desde el contexto hasta la ejecución."
+      },
+      "sub": "Empiece por Anna si desea una orientación guiada; pruebe la demo si quiere explorar la plataforma; o inicie una prueba cuando esté listo para aplicar la inteligencia de consultoría a su propia organización."
     }
   },
   "partner": {
-    "becomePartner": "Become Partner"
+    "becomePartner": "Conviértase en socio",
+    "footerCta": {
+      "sub": "Venda nuestros productos, intégrelos o colabore con nosotros a nivel mundial.",
+      "title": "Conviértase en socio de «Consultify»"
+    }
   },
   "showcase": {
     "common": {
@@ -2093,6 +2769,22 @@
       "used": "usadas",
       "aiUsageTooltip": "Llamadas de IA usadas hoy / límite diario",
       "tokenUsageTooltip": "Tokens usados hoy / límite diario"
+    },
+    "modal": {
+      "askAnna": "Póngase en contacto con Anna",
+      "atelierLink": "Consulte la marca Atelier Toys en la que se basa esta demostración",
+      "commercialDescription": "Esta demostración se basa en la historia de Atelier Toys. Si tiene alguna pregunta, escriba a Anna o póngase en contacto con nosotros directamente.",
+      "contactUs": "Contáctenos",
+      "demoDescriptionSigned": "Cree una cuenta o inicie sesión para acceder automáticamente a la demo de Atelier Toys.",
+      "demoMode": "Entorno de demostración",
+      "footerNote": "Al acceder a la versión de demostración, acepta nuestras Condiciones de servicio y nuestra Política de privacidad.",
+      "loading": "Comenzando...",
+      "logIn": "Iniciar sesión",
+      "logInAndDemo": "Inicie sesión y acceda a la versión de demostración",
+      "signUp": "Regístrese",
+      "startDemo": "Regístrese y acceda a la versión de demostración",
+      "subtitle": "Explore el espacio de trabajo guiado de Atelier Toys",
+      "title": "Pruebe la versión de demostración de «Consultify»"
     }
   },
   "access": {
@@ -2141,6 +2833,87 @@
     },
     "upgrade": {
       "instantUnlock": "Todos los límites se eliminan instantáneamente tras la actualización"
+    }
+  },
+  "nav": {
+    "product": "Producto",
+    "knowledgeBase": "Base de conocimientos",
+    "pricing": "Precios",
+    "partners": "Socios",
+    "vector": "Vector AI",
+    "security": "Seguridad"
+  },
+  "legal": {
+    "centerTitle": "Centro Jurídico"
+  },
+  "pages": {
+    "public": {
+      "cards": {
+        "demo": {
+          "description": "Disfrute de un entorno en tiempo real con datos ficticios pero realistas.",
+          "meta": "Acceso inmediato",
+          "title": "Explorar la demostración"
+        },
+        "partner": {
+          "description": "Únase a nuestro ecosistema.",
+          "meta": "Usuarios habituales",
+          "title": "Conviértase en socio"
+        },
+        "tools": {
+          "description": "Vea demostraciones y clases magistrales.",
+          "meta": "Centro de Educación",
+          "title": "Conozca nuestras herramientas"
+        },
+        "tour": {
+          "description": "Bajo la dirección del Dr. Piotr Wiśniewski",
+          "meta": "Recorrido por el producto",
+          "title": "Cómo funciona"
+        },
+        "trial": {
+          "description": "Utilice «Consultify» con los datos reales de su organización y elabore su hoja de ruta de transformación.",
+          "meta": "Ruta principal",
+          "title": "Comience su prueba gratuita"
+        }
+      },
+      "cta": {
+        "body": "Si considera que su organización necesita una nueva forma de abordar la toma de decisiones, le invitamos a conocer nuestro método.",
+        "button": "Descubra el método «Consultify»",
+        "justSubstance": "Solo el fondo.",
+        "noForms": "Sin formularios • Sin compromisos",
+        "noPressure": "Sin prisas. Sin presiones de venta."
+      },
+      "footer": {
+        "docs": "Documentación",
+        "privacy": "Privacidad",
+        "secured": "Protegido por «DBR77 Governance»",
+        "security": "Seguridad",
+        "terms": "Términos"
+      },
+      "hero": {
+        "title": "Las decisiones estratégicas son demasiado complejas para dejarlas en manos de la intuición y demasiado importantes para dejarlas al azar."
+      },
+      "nav": {
+        "docs": "Documentos",
+        "signIn": "Iniciar sesión"
+      },
+      "tagline": {
+        "line1": "Asesoramiento en inteligencia artificial.",
+        "line2": "Sin diapositivas.",
+        "line3": "Decisiones justas."
+      }
+    }
+  },
+  "pricing": {
+    "badge": "Precios"
+  },
+  "trial": {
+    "modal": {
+      "logInAndTrial": "Inicie sesión y continúe",
+      "ownWorkspace": "Su propio espacio de trabajo",
+      "ownWorkspaceDesc": "7 días con su propia organización, sus proyectos y sus datos. Acceso completo a todas las funciones.",
+      "startTrial": "Regístrese y comience el periodo de prueba",
+      "subtitle": "Su propio espacio de trabajo, 7 días gratis",
+      "title": "Comience su periodo de prueba de 7 días"
     }
   }
 }
