@@ -23,7 +23,7 @@ interface IdeaProposalReviewProps {
 
 function getProposalStatusLabel(proposal: AIProposal, isPl: boolean): string | null {
   if (proposal.generatorStatus === 'cross-tool') {
-    return isPl ? 'cross-tool' : 'cross-tool';
+    return 'cross-tool';
   }
   if (proposal.generatorStatus) {
     return proposal.generatorStatus;
@@ -206,7 +206,7 @@ const ProposalItem: React.FC<{
       parts.push(`${(p.extensions as any).table.rows.length} ${isPl ? 'wierszy' : 'rows'}`);
     }
     if (proposal.targetTool) {
-      parts.push(isPl ? `→ ${proposal.targetTool}` : `→ ${proposal.targetTool}`);
+      parts.push(`→ ${proposal.targetTool}`);
     }
     return parts.join(', ') || (isPl ? 'Zmiana konfiguracji' : 'Config change');
   }, [isPl, proposal.patch, proposal.targetTool]);
@@ -287,7 +287,7 @@ const ProposalItem: React.FC<{
             ) : null}
             {proposal.targetTool ? (
               <div className="text-sky-600 dark:text-sky-400">
-                {isPl ? 'tool switch' : 'tool switch'}: {proposal.targetTool}
+                tool switch: {proposal.targetTool}
               </div>
             ) : null}
           </div>
@@ -306,7 +306,7 @@ const ProposalItem: React.FC<{
                   </span>
                   {proposal.maturity ? (
                     <span className="rounded-full bg-slate-500/10 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:text-slate-300">
-                      {isPl ? 'maturity' : 'maturity'}: {proposal.maturity}
+                      maturity: {proposal.maturity}
                     </span>
                   ) : null}
                 </div>

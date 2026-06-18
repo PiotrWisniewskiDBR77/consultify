@@ -1113,7 +1113,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   ? 'Szukaj w wywiadach, narzędziach, notatkach...'
                   : 'Search interviews, tools, notes...'
               }
-              className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-primary-200/40 dark:border-primary-800/30 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60 outline-none focus:ring-1 focus:ring-primary-400/40"
+              className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-primary-200/40 dark:border-primary-800/30 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60 outline-none focus:ring-1 focus:ring-blue-500/40"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const query = (e.target as HTMLInputElement).value.trim();

@@ -213,6 +213,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
             <button
               type="button"
               onClick={() => setDismissed((prev) => new Set(prev).add(nudge.id))}
+              aria-label={isPl ? 'Odrzuć podpowiedź' : 'Dismiss nudge'}
               className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
             >
               <X size={12} />

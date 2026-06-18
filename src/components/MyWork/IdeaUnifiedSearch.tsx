@@ -193,7 +193,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
                 type="button"
                 onClick={() => navigateToHit(Math.max(activeIndex - 1, 0))}
                 className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
-                aria-label="Previous"
+                aria-label={isPl ? 'Poprzedni' : 'Previous'}
               >
                 <ChevronUp size={14} />
               </button>
@@ -201,7 +201,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
                 type="button"
                 onClick={() => navigateToHit(Math.min(activeIndex + 1, hits.length - 1))}
                 className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
-                aria-label="Next"
+                aria-label={isPl ? 'Następny' : 'Next'}
               >
                 <ChevronDown size={14} />
               </button>
@@ -211,7 +211,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
             type="button"
             onClick={onClose}
             className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
-            aria-label="Close"
+            aria-label={isPl ? 'Zamknij' : 'Close'}
           >
             <X size={14} />
           </button>
