@@ -235,7 +235,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
           <button
             onClick={handleSubmit}
             disabled={!message.trim() || loading}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             {loading ? (
               <>

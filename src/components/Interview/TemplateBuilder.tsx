@@ -2121,7 +2121,7 @@ ${sourceText || '(none)'}`;
                 type="button"
                 onClick={handleGenerateWithAI}
                 disabled={isAiGenerating || isApplicationTemplate}
-                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-primary-500/40 dark:border-primary-500/30 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-primary-500/40 dark:border-primary-500/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isAiGenerating ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -2492,7 +2492,7 @@ ${sourceText || '(none)'}`;
                   <button
                     type="button"
                     onClick={applyAIProposal}
-                    className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
                   >
                     <Sparkles size={14} />
                     {isPolish ? 'Zastosuj sugestie AI' : 'Apply AI suggestions'}

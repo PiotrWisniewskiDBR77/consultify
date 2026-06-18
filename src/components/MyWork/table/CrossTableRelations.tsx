@@ -301,7 +301,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder={isPl ? 'Szukaj…' : 'Search…'}
-                          className="w-full h-7 pl-7 pr-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none"
+                          className="w-full h-7 pl-7 pr-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
                         />
                       </div>
                       {linkSource && (

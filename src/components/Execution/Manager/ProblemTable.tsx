@@ -358,7 +358,7 @@ export function ProblemTable({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('common.search', 'Search...')}
               aria-label={t('common.search', 'Search...')}
-              className="w-40 text-xs bg-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400"
+              className="w-40 text-xs bg-transparent outline-none focus:ring-2 focus:ring-primary-500/30 text-slate-900 dark:text-white placeholder-slate-400"
             />
             <button
               type="button"

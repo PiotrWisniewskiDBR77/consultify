@@ -320,7 +320,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
           </div>
           <button
             onClick={applyDraftMappings}
-            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium hover:bg-navy-800 transition-colors"
+            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm font-medium hover:bg-navy-800 transition-colors"
           >
             <Check className="w-4 h-4" />
             {t('interview.conversational.acceptAnswer')} ({acceptedDraftCount})
@@ -346,7 +346,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
               <button
                 onClick={sendMessage}
                 disabled={!inputValue.trim() || loading}
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Send"
               >
                 {loading ? (

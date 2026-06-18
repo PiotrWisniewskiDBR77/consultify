@@ -407,7 +407,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder={isPl ? 'Szukaj rekordów...' : 'Search records...'}
-                className="flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-zinc-200"
+                className="flex-1 bg-transparent text-sm text-slate-700 outline-none focus:ring-2 focus:ring-primary-500/30 placeholder:text-slate-400 dark:text-zinc-200"
               />
               {loading && <Loader2 className="h-4 w-4 animate-spin text-slate-600" />}
             </div>

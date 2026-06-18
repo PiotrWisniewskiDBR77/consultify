@@ -597,7 +597,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                             onChange={(e) =>
                               void onChangeInitiativeStatus?.(initiative, e.target.value)
                             }
-                            className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none"
+                            className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                           >
                             {statusOptions.map((status) => (
                               <option key={status} value={status}>
