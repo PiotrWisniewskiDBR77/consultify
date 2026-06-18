@@ -1885,7 +1885,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
-        <table className="w-full text-sm table-fixed">
+        <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm table-fixed">
           <colgroup>
             <col style={{ width: '5%' }} />
             <col style={{ width: '22%' }} />

@@ -248,7 +248,7 @@ export const SubscriptionPlansManager: React.FC = () => {
       </div>
 
       <div className="plans-table-container">
-        <table className="plans-table">
+        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="plans-table">
           <thead>
             <tr>
               <th>Plan Name</th>

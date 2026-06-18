@@ -277,7 +277,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
           Transformations (T1–T7) + FoF benchmark
         </h2>
         <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 overflow-x-auto">
-          <table className="w-full text-sm">
+          <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 dark:text-slate-400">
                 <th className="py-2 pr-4">Area</th>

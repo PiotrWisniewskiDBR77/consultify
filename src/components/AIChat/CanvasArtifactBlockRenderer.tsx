@@ -269,7 +269,7 @@ export function CanvasArtifactBlockRenderer({
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10">
+          <table /* §27-exempt: renderer artefaktu AI/markdown read-only, poza zakresem 1.2 */  className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10">
             <thead>
               <tr>
                 <th className="w-10 bg-slate-100 px-3 py-3 dark:bg-white/[0.04]" />

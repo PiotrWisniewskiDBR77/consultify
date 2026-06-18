@@ -428,7 +428,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             {actionError}
           </div>
         )}
-        <table className="admin-table">
+        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="admin-table">
           <thead>
             <tr>
               <th>User</th>

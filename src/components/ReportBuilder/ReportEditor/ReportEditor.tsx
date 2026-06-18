@@ -312,7 +312,7 @@ const SmartContentRenderer: React.FC<{
       if (parsed.type === 'assessment_matrix' && Array.isArray(parsed.axes)) {
         return (
           <div className="not-prose">
-            <table className="w-full text-sm border-collapse">
+            <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b-2 border-slate-200 dark:border-slate-700">
                   <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">

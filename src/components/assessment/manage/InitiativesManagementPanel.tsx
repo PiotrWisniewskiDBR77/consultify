@@ -1250,7 +1250,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               )}
             </div>
           ) : (
-            <table className="w-full" style={{ minWidth: 800 }}>
+            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full" style={{ minWidth: 800 }}>
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50">
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px]">

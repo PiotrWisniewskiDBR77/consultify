@@ -284,7 +284,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
       ) : (
         /* List View */
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden shadow-sm dark:shadow-xl">
-          <table className="w-full text-left border-collapse">
+          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-navy-700">
                 <th className="px-6 py-4">Project</th>

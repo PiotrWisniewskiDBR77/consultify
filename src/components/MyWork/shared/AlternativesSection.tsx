@@ -421,7 +421,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
               ) : (
                 // Comparison View
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-navy-700">
                         <th className="text-left py-3 px-2 text-slate-500 dark:text-slate-400 font-medium">

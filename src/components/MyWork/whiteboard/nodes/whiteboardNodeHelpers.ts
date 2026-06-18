@@ -3,6 +3,8 @@
  */
 import React from 'react';
 
+// rose-exempt: sticky-note brand palette swatch (one of yellow/pink/primary/amber/blue/rose);
+// these are deliberate decorative note colors, not danger semantics — keep raw palette.
 export const STICKY_COLORS = [
   {
     bg: 'bg-yellow-100 dark:bg-yellow-950/60',

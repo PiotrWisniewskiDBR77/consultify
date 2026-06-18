@@ -1669,7 +1669,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 </div>
                 <div className="rounded-xl border border-navy-700/50 overflow-hidden bg-navy-800/20">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
                       <thead className="bg-navy-900/40 text-slate-400">
                         <tr className="text-left text-xs">
                           <th className="px-3 py-2 w-10" />

@@ -472,7 +472,7 @@ const RatioBlocksTable: React.FC<{
             <p className="mt-1 text-xs text-slate-500">{block.subtitle}</p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-sm">
+            <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full min-w-[980px] text-sm">
               <thead>
                 <tr className="border-y border-white/[0.06] text-left text-[11px] uppercase tracking-wide text-slate-500">
                   <th className="px-5 py-3 min-w-[240px]">Wskaźnik</th>

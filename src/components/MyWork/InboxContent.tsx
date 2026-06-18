@@ -3231,7 +3231,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const renderFlatView = () => {
     let globalIndex = 0;
     return (
-      <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
+      <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
         {renderTableHeader()}
         <tbody>
           {displayItems.map((group) => {

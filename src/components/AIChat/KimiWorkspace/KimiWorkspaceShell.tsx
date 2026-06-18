@@ -513,7 +513,7 @@ function ArtifactPreviewPane({
                   {(() => {
                     const sheetData = (preview.perSheetData?.[activeSheet] ?? preview.tableData)!;
                     return (
-                      <table className="w-full text-xs">
+                      <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-xs">
                         <thead>
                           <tr className="bg-slate-50 dark:bg-navy-700/50">
                             {sheetData.columns.map((col) => (

@@ -453,7 +453,7 @@ export const BulkOperationsView: React.FC = () => {
           </p>
 
           <div className="max-h-64 overflow-auto border border-slate-200 dark:border-navy-700 rounded-lg mb-6">
-            <table className="w-full">
+            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
               <thead className="sticky top-0 bg-slate-50 dark:bg-navy-900">
                 <tr>
                   {ALL_FIELDS.map((field) => (

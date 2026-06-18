@@ -1417,7 +1417,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               </div>
             ) : (
               <div className="overflow-auto border border-slate-200 dark:border-navy-700 rounded-xl">
-                <table className="w-full text-sm">
+                <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-sm">
                   <thead className="bg-slate-50 dark:bg-navy-900">
                     <tr>
                       <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">

@@ -372,7 +372,7 @@ const ExtractionStep: React.FC<{
 
       {/* Scores Table */}
       <div className="bg-white dark:bg-navy-950/50 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
+        <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full">
           <thead>
             <tr className="bg-slate-50 dark:bg-navy-800">
               <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">

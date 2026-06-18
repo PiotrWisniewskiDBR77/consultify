@@ -379,7 +379,7 @@ function EditableMarkdownCanvas({
 function TableCanvas({ content }: { content: WorkCanvasTableContent }) {
   return (
     <div className="overflow-auto rounded-2xl border border-slate-200 dark:border-white/10">
-      <table className="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-sm">
+      <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-sm">
         <thead className="bg-slate-50 dark:bg-white/[0.03]">
           <tr>
             {content.columns.map((column) => (

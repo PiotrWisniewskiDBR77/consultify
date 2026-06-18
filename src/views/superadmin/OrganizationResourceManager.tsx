@@ -334,7 +334,7 @@ export const OrganizationResourceManager: React.FC = () => {
 
             <div className="expenses-table">
               <h3>Recent Expenses</h3>
-              <table>
+              <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ >
                 <thead>
                   <tr>
                     <th>Date</th>

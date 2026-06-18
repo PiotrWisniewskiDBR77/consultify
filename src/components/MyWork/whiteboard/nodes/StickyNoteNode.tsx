@@ -31,7 +31,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
   const priority = typeof data?.priority === 'number' ? data.priority : 0;
   const priorityBorder =
     priority >= 80
-      ? 'border-2 border-rose-400/70'
+      ? 'border-2 border-danger-400/70'
       : priority >= 50
         ? 'border-2 border-amber-400/60'
         : '';

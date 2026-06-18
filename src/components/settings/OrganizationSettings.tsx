@@ -416,7 +416,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               No token activity yet.
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-sm">
               <thead className="bg-slate-50 dark:bg-navy-950 sticky top-0">
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">

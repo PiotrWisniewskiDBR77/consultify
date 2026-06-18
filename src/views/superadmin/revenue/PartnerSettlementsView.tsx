@@ -537,7 +537,7 @@ export const PartnerSettlementsView: React.FC = () => {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/10">
                   <th className="text-left px-3 py-2">

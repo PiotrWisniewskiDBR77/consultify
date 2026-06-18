@@ -1200,7 +1200,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table className="w-full text-sm border-collapse">
+                      <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-sm border-collapse">
                         <thead>
                           <tr className="bg-slate-50 dark:bg-navy-800">
                             <th className="text-left px-3 py-2 font-medium text-slate-500 sticky left-0 bg-slate-50 dark:bg-navy-800 z-10 border-r border-slate-200 dark:border-navy-700 min-w-[180px]">

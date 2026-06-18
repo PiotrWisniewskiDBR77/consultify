@@ -487,7 +487,7 @@ const AIQualityDashboardView: React.FC = () => {
 
           {/* Feedback List */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <table className="w-full">
+            <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
               <thead className="bg-slate-50 dark:bg-slate-700/50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">

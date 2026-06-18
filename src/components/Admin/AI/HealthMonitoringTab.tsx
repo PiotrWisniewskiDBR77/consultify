@@ -603,7 +603,7 @@ export const HealthMonitoringTab: React.FC = () => {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-black/20 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
                   <th className="px-4 py-3">Status</th>

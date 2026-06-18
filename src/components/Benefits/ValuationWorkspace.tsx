@@ -1056,7 +1056,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   )}
                                 </h4>
                               </div>
-                              <table className="w-full text-xs">
+                              <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-xs">
                                 <thead>
                                   <tr className="text-slate-500 border-b border-slate-200 dark:border-navy-700">
                                     <th className="px-3 py-1.5 text-left">

@@ -87,7 +87,7 @@ function contentToHtml(content: string): string {
         return `<tr>${cells}</tr>`;
       })
       .join('');
-    return `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ ><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
   });
 
   // Handle bullet lists

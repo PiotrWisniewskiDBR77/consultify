@@ -1608,7 +1608,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               aiProposal.tasks.update.length === 0 &&
               aiProposal.raid.update.length === 0 ? (
                 <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-                  <table className="w-full">
+                  <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full">
                     <thead className="bg-slate-50/80 dark:bg-navy-800/60">
                       <tr>
                         <th className="text-left px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">

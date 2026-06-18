@@ -227,7 +227,7 @@ export const InterviewAssignmentsPanel: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-slate-500 dark:text-slate-400">
                   <th className="py-2 pr-3">{t('admin.interviewAssignmentsPanel.template')}</th>

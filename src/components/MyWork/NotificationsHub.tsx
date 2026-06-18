@@ -980,7 +980,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full">
               <thead className="bg-slate-50 dark:bg-navy-900 sticky top-0 z-10">
                 <tr>
                   <th className="w-6 px-2 py-2"></th>

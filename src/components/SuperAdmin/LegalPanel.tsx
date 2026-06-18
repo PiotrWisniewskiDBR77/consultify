@@ -247,7 +247,7 @@ export const LegalPanel: React.FC = () => {
                   {items.length} version{items.length === 1 ? '' : 's'}
                 </div>
               </div>
-              <table className="w-full text-left text-sm">
+              <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full text-left text-sm">
                 <thead className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
                   <tr>
                     <th className="px-6 py-3 font-medium">Title</th>

@@ -523,7 +523,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+      <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
         <thead className="bg-slate-50 dark:bg-slate-900/60">
           <tr>
             <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

@@ -194,7 +194,7 @@ export const InvoiceTable: React.FC<{
 
   return (
     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-      <table className="w-full text-sm">
+      <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-sm">
         <thead>
           <tr className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
             <th className="px-4 py-3 text-left">Date</th>

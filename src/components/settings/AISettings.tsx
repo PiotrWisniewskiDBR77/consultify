@@ -869,7 +869,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             )}
 
             <div className="border border-white/10 rounded-xl overflow-hidden bg-black/20">
-              <table className="w-full text-left border-collapse">
+              <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
                     <th className="px-6 py-4">Friendly Name</th>

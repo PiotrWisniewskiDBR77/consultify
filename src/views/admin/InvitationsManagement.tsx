@@ -259,7 +259,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
         </div>
       ) : (
         <div className="bg-white dark:bg-navy-900 rounded-lg border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 dark:bg-navy-800">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">

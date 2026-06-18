@@ -683,7 +683,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         renderPreview={renderPreview}
         renderPreviewFooter={renderPreviewFooter}
       >
-        <table
+        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ 
           className="w-full table-fixed bg-slate-50/40 dark:bg-navy-950"
           style={{ minWidth: tableMinWidth }}
         >

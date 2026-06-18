@@ -2760,7 +2760,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     allNodes={effectiveNodes}
                     containerRef={tableContainerRef}
                   />
-                  <table
+                  <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ 
                     className="w-full text-left"
                     style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
                   >

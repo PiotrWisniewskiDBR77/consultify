@@ -700,7 +700,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
 
       {/* Feasibility matrix — sortable, filterable, with explainer */}
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full text-sm">
+        <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full text-sm">
           <thead className="sticky top-0 z-10">
             <tr className="bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
               <th className="w-8 px-4 py-2.5" />

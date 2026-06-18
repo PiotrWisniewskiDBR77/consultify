@@ -292,7 +292,7 @@ export const DocsArticleView: React.FC = () => {
                 },
                 table: ({ children }) => (
                   <div className="overflow-x-auto">
-                    <table className="min-w-full">{children}</table>
+                    <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="min-w-full">{children}</table>
                   </div>
                 ),
               }}

@@ -140,7 +140,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
               {isPl ? 'Brak proponowanych zmian.' : 'No changes proposed.'}
             </div>
           ) : (
-            <table className="w-full text-xs">
+            <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-xs">
               <thead>
                 <tr className="text-left text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200/40 dark:border-navy-700/40">
                   <th className="py-1.5 w-8" />

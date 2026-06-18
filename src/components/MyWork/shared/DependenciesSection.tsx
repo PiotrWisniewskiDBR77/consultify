@@ -574,7 +574,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
             <>
               {/* ── Combined dependencies table ───────────────── */}
               <div className="overflow-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
-                <table className="w-full text-sm">
+                <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
                       <th className="text-left py-2.5 pl-3 pr-2">

@@ -248,7 +248,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
 
   return (
     <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40">
-      <table className="w-full border-collapse text-left text-[11px]">
+      <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full border-collapse text-left text-[11px]">
         <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm">
           <tr>
             <th className="w-10 border-b border-r border-slate-200/80 dark:border-navy-700/80" />

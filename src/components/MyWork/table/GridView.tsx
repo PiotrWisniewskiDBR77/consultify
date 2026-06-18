@@ -476,7 +476,7 @@ const DataGrid: React.FC<DataGridProps> = ({
         className="min-h-[320px] flex-1 overflow-y-auto overflow-x-auto"
         onScroll={onBodyScroll}
       >
-        <table className="w-max min-w-full border-collapse text-left">
+        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-max min-w-full border-collapse text-left">
           <thead className={stickyTop}>
             <tr>
               <th

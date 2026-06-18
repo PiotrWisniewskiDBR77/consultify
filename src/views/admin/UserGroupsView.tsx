@@ -731,7 +731,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                     Permissions
                   </label>
                   <div className="border border-slate-200 dark:border-navy-600 rounded-lg overflow-hidden">
-                    <table className="w-full text-sm">
+                    <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-sm">
                       <thead className="bg-slate-50 dark:bg-navy-900">
                         <tr>
                           <th className="px-4 py-2 text-left text-slate-600 dark:text-slate-400 font-medium">

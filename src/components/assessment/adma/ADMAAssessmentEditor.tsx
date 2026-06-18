@@ -731,7 +731,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
 
               {/* Matrix Table */}
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+                <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full border-collapse">
                   <thead>
                     <tr>
                       <th className="p-3 text-left bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">

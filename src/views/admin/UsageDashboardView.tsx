@@ -621,7 +621,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
                 <thead>
                   <tr className="border-b border-white/[0.05]">
                     <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4">

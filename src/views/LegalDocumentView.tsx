@@ -506,7 +506,7 @@ export const LegalDocumentView: React.FC = () => {
                   // Tables - Beautiful styling
                   table: ({ children }) => (
                     <div className="my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700">
-                      <table className="w-full text-sm">{children}</table>
+                      <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-sm">{children}</table>
                     </div>
                   ),
                   thead: ({ children }) => (

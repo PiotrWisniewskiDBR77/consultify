@@ -795,7 +795,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
 
     return (
       <div className="overflow-auto h-full">
-        <table className="w-full text-left">
+        <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full text-left">
           <thead className="sticky top-0 bg-slate-50 dark:bg-navy-900/80 border-b border-slate-200 dark:border-white/5">
             <tr>
               <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">

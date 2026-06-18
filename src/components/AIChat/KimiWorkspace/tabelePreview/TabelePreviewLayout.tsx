@@ -245,7 +245,7 @@ export function TabelePreviewLayout({
           {tableData.columns.length > 0 ? (
             <div className="overflow-hidden rounded-hig-lg border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-left text-xs">
                   <thead className="bg-slate-100/95 dark:bg-navy-900">
                     <tr>
                       {tableData.columns.map((column) => (

@@ -413,7 +413,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
 
           {activeTab === 'entities' && (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700">
                     <th className="pb-2 pr-4">

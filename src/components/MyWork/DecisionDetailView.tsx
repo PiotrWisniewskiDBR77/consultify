@@ -5366,7 +5366,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 </div>
                               </div>
                               <div className="overflow-auto flex-1">
-                                <table className="w-full text-sm">
+                                <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
                                   <thead>
                                     <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                       <th className="text-left py-2 pr-2">

@@ -232,7 +232,7 @@ export const FullROIView: React.FC = () => {
 
   const renderTable = () => (
     <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-800">
-      <table className="min-w-full text-sm" data-testid="roi-table">
+      <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="min-w-full text-sm" data-testid="roi-table">
         <thead>
           <tr className="border-b border-slate-200 dark:border-navy-700/60 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             <th className="px-4 py-3 font-medium">

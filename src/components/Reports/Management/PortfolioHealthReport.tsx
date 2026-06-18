@@ -117,7 +117,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
           </h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full">
             <thead>
               <tr className="bg-slate-50 dark:bg-navy-800/50 text-xs uppercase text-slate-500 dark:text-slate-400">
                 <th className="px-4 py-3 text-left">Project</th>

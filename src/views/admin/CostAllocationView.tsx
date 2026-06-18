@@ -497,7 +497,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
           Cost Centers
         </h3>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
             <thead>
               <tr className="border-b border-white/[0.05]">
                 <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4">
