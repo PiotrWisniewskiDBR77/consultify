@@ -599,7 +599,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   setIsNewTemplateMetaOpen(false);
                   setIsTemplateBuilderOpen(true);
                 }}
-                className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-medium transition-colors"
+                className="px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-medium transition-colors"
               >
                 Open generator
               </button>

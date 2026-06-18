@@ -26,7 +26,7 @@ interface ReportHeaderProps {
 const reportTypeLabels = {
   TEAM_MEETING: { label: 'Team Meeting Report', icon: '📋', color: 'bg-blue-500' },
   TEAM_WEEKLY: { label: 'Team Weekly Report', icon: '🗓️', color: 'bg-sky-500' },
-  STEERING_COMMITTEE: { label: 'Steering Committee Report', icon: '🏛️', color: 'bg-primary-500' },
+  STEERING_COMMITTEE: { label: 'Steering Committee Report', icon: '🏛️', color: 'bg-navy-900' },
   PORTFOLIO_HEALTH: { label: 'Portfolio Health Report', icon: '📈', color: 'bg-emerald-500' },
   RAID: { label: 'Risk, Assumptions, Issues, Dependencies', icon: '⚠️', color: 'bg-amber-500' },
 };

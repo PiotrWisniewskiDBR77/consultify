@@ -52,13 +52,13 @@ interface DecisionsRequiredSectionProps {
 const getTypeLabel = (type: string): { icon: string; label: string; color: string } => {
   const types: Record<string, { icon: string; label: string; color: string }> = {
     INITIATIVE_APPROVAL: { icon: '🎯', label: 'Initiative Approval', color: 'bg-blue-500' },
-    PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'bg-primary-500' },
+    PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'bg-navy-900' },
     BUDGET: { icon: '💰', label: 'Budget', color: 'bg-amber-500' },
     SCOPE_CHANGE: { icon: '📐', label: 'Scope Change', color: 'bg-blue-500' },
     RISK_ACCEPTANCE: { icon: '⚠️', label: 'Risk', color: 'bg-amber-500' },
     BLOCKER_RESOLUTION: { icon: '🔓', label: 'Unblock', color: 'bg-emerald-500' },
     RESOURCE_ALLOCATION: { icon: '👥', label: 'Resource', color: 'bg-indigo-500' },
-    STRATEGIC: { icon: '🎯', label: 'Strategic', color: 'bg-primary-500' },
+    STRATEGIC: { icon: '🎯', label: 'Strategic', color: 'bg-navy-900' },
     EXECUTION: { icon: '⚡', label: 'Execution', color: 'bg-green-500' },
     GENERAL: { icon: '📋', label: 'General', color: 'bg-slate-500' },
   };

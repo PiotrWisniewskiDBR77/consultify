@@ -1738,7 +1738,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                     onClick={() => onUpdate({ includeVisuals: !block.includeVisuals })}
                     className={`w-full py-1.5 px-3 text-[10px] font-medium rounded flex items-center justify-center gap-1.5 transition-all ${
                       block.includeVisuals
-                        ? 'bg-primary-600 text-white shadow-sm'
+                        ? 'bg-navy-900 text-white shadow-sm'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
@@ -1834,8 +1834,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             }}
                             className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md transition-all border ${
                               isSelected
-                                ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                                : 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800/50 hover:bg-primary-50 dark:hover:bg-primary-900/30'
+                                ? 'bg-navy-900 text-white border-navy-900 shadow-sm'
+                                : 'bg-white dark:bg-slate-800 text-navy-900 dark:text-slate-300 border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800'
                             }`}
                           >
                             {isSelected ? <Check className="w-3 h-3" /> : action.icon}

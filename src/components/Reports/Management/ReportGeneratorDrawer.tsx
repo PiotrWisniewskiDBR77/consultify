@@ -213,7 +213,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                     <div
                       className={`p-2 rounded-lg ${
                         isSelected
-                          ? 'bg-primary-500 text-white'
+                          ? 'bg-navy-900 text-white'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -350,7 +350,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
           <button
             onClick={handleGenerate}
             disabled={generating || (scope === 'PROJECT' && !selectedProjectId)}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-lg transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-lg transition-colors"
           >
             {generating ? (
               <>

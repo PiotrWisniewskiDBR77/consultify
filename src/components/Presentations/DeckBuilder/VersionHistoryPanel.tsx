@@ -126,7 +126,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     <div
                       className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         version.type === 'manual'
-                          ? 'bg-primary-500'
+                          ? 'bg-navy-900'
                           : version.type === 'checkpoint'
                             ? 'bg-blue-500'
                             : 'bg-slate-300'

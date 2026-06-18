@@ -471,7 +471,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     onClick={() => handlePageChange(pageNum)}
                     className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
                       page === pageNum
-                        ? 'bg-primary-500 text-white'
+                        ? 'bg-navy-900 text-white'
                         : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
                     }`}
                   >

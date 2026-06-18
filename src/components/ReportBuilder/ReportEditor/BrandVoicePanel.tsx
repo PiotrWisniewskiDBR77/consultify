@@ -442,7 +442,7 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ label, description, checked, onCh
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-        checked ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+        checked ? 'bg-navy-900' : 'bg-gray-300 dark:bg-gray-600'
       }`}
     >
       <span

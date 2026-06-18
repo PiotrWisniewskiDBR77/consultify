@@ -87,7 +87,7 @@ const VersionItem: React.FC<{
                         w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
                         ${
                           isCurrent
-                            ? 'bg-primary-500 text-white'
+                            ? 'bg-navy-900 text-white'
                             : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'
                         }
                     `}
@@ -100,7 +100,7 @@ const VersionItem: React.FC<{
                 Version {version.versionLabel}
               </span>
               {isCurrent && (
-                <span className="px-2 py-0.5 bg-primary-500 text-white text-xs rounded-full">
+                <span className="px-2 py-0.5 bg-navy-900 text-white text-xs rounded-full">
                   Current
                 </span>
               )}

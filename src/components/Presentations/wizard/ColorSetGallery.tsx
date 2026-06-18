@@ -44,7 +44,7 @@ export const ColorSetGallery: React.FC<ColorSetGalleryProps> = ({
               </p>
             </div>
             {value === 'brand_kit' && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-navy-900 flex items-center justify-center">
                 <Check size={10} className="text-white" />
               </div>
             )}
@@ -73,7 +73,7 @@ export const ColorSetGallery: React.FC<ColorSetGalleryProps> = ({
                 {set.name}
               </p>
               {selected && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-navy-900 flex items-center justify-center">
                   <Check size={10} className="text-white" />
                 </div>
               )}

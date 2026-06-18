@@ -372,7 +372,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
               onClick={() => setViewMode('priority')}
               className={`px-2.5 py-1 ${
                 viewMode === 'priority'
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-navy-900 text-white'
                   : 'bg-transparent text-slate-600 dark:text-slate-300'
               }`}
             >
@@ -384,7 +384,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
               onClick={() => setViewMode('category')}
               className={`px-2.5 py-1 border-l border-slate-200 dark:border-navy-700 ${
                 viewMode === 'category'
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-navy-900 text-white'
                   : 'bg-transparent text-slate-600 dark:text-slate-300'
               }`}
             >

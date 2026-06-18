@@ -222,7 +222,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
               >
                 <div className="flex items-center gap-3 mb-2">
                   <div
-                    className={`p-2 rounded-lg ${isSelected ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'}`}
+                    className={`p-2 rounded-lg ${isSelected ? 'bg-navy-900 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'}`}
                   >
                     <Icon size={20} />
                   </div>
@@ -384,7 +384,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                         className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0
                                                 ${
                                                   isEnabled
-                                                    ? 'bg-primary-500 border-primary-500 text-white'
+                                                    ? 'bg-navy-900 border-navy-900 text-white'
                                                     : 'border-slate-300 dark:border-slate-600'
                                                 }`}
                       >

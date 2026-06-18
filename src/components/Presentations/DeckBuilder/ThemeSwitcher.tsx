@@ -143,7 +143,7 @@ const ThemeCard: React.FC<{
       <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{colorSet.name}</p>
     </div>
     {isSelected && (
-      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center">
+      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-navy-900 flex items-center justify-center">
         <Check size={10} className="text-white" />
       </div>
     )}

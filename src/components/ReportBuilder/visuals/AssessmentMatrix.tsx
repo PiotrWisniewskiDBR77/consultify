@@ -73,7 +73,7 @@ export const AssessmentMatrix: React.FC<{ data: AssessmentMatrixData }> = ({ dat
                             h-6 rounded-md border
                             ${
                               isHit
-                                ? 'bg-primary-500 border-primary-500'
+                                ? 'bg-navy-900 border-navy-900'
                                 : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-slate-700'
                             }
                           `}

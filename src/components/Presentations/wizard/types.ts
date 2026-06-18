@@ -235,11 +235,11 @@ export type CardIntent =
   | 'thank_you';
 
 export const INTENT_COLORS: Record<CardIntent, string> = {
-  cover: 'bg-primary-500',
+  cover: 'bg-navy-900',
   executive_summary: 'bg-blue-500',
   section_intro: 'bg-slate-500',
   key_messages: 'bg-emerald-500',
-  performance_overview: 'bg-primary-500',
+  performance_overview: 'bg-navy-900',
   single_insight: 'bg-amber-500',
   comparison: 'bg-amber-500',
   assessment: 'bg-blue-500',
@@ -253,7 +253,7 @@ export const INTENT_COLORS: Record<CardIntent, string> = {
   // Legacy mappings
   content: 'bg-emerald-500',
   summary: 'bg-blue-500',
-  kpi_dashboard: 'bg-primary-500',
+  kpi_dashboard: 'bg-navy-900',
   data: 'bg-amber-500',
   recommendation: 'bg-green-500',
   section_divider: 'bg-slate-500',

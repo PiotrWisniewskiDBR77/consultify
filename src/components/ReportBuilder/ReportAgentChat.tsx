@@ -262,7 +262,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
               <div
                 className={`px-3 py-2 rounded-xl text-sm ${
                   msg.role === 'user'
-                    ? 'bg-primary-600 text-white rounded-br-sm'
+                    ? 'bg-navy-900 text-white rounded-br-sm'
                     : 'bg-navy-800 text-slate-600 rounded-bl-sm border border-navy-700'
                 }`}
               >

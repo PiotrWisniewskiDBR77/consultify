@@ -23,15 +23,15 @@ export const GeneratingStep: React.FC = () => {
       </p>
       <div className="mt-8 flex items-center gap-3">
         <div
-          className="w-2 h-2 rounded-full bg-primary-500 animate-bounce"
+          className="w-2 h-2 rounded-full bg-navy-900 animate-bounce"
           style={{ animationDelay: '0ms' }}
         />
         <div
-          className="w-2 h-2 rounded-full bg-primary-500 animate-bounce"
+          className="w-2 h-2 rounded-full bg-navy-900 animate-bounce"
           style={{ animationDelay: '150ms' }}
         />
         <div
-          className="w-2 h-2 rounded-full bg-primary-500 animate-bounce"
+          className="w-2 h-2 rounded-full bg-navy-900 animate-bounce"
           style={{ animationDelay: '300ms' }}
         />
       </div>

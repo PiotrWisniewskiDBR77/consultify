@@ -49,7 +49,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({ step, onClose, childre
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
                   step === s.key || (step === 'generating' && s.key === 'result')
-                    ? 'bg-primary-500 text-white'
+                    ? 'bg-navy-900 text-white'
                     : currentIndex > STEP_ORDER.indexOf(s.key)
                       ? 'bg-green-500/20 text-green-600 dark:text-green-400'
                       : 'bg-slate-100 dark:bg-navy-800 text-slate-500'

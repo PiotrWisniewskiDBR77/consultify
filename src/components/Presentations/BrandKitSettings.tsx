@@ -328,7 +328,7 @@ const ToggleField: React.FC<{
   <label className="flex items-center gap-2 cursor-pointer">
     <div
       onClick={() => onChange(!checked)}
-      className={`w-9 h-5 rounded-full transition-colors relative ${checked ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+      className={`w-9 h-5 rounded-full transition-colors relative ${checked ? 'bg-navy-900' : 'bg-slate-300 dark:bg-navy-600'}`}
     >
       <div
         className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : 'translate-x-0.5'}`}

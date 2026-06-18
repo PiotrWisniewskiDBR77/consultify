@@ -625,7 +625,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
                   setShowUtilizeModal(false);
                   setUtilizeNotes('');
                 }}
-                className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg"
+                className="px-4 py-2 text-sm bg-navy-900 text-white rounded-lg hover:bg-navy-800"
               >
                 {t('sponsorReport.confirmUtilize', 'Mark Utilized')}
               </button>

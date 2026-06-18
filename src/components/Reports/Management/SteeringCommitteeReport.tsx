@@ -243,7 +243,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded ${
-                          isOverdue ? 'bg-rose-500 text-white' : 'bg-primary-500 text-white'
+                          isOverdue ? 'bg-rose-500 text-white' : 'bg-navy-900 text-white'
                         }`}
                       >
                         {decision.decisionType}

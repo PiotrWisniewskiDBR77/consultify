@@ -348,7 +348,7 @@ export const ReportGeneratorWizard: React.FC = () => {
               <span
                 className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
                   active
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
                 }`}
               >
@@ -415,7 +415,7 @@ export const ReportGeneratorWizard: React.FC = () => {
               <span
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
                   active
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
                 }`}
               >

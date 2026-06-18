@@ -143,7 +143,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
             onClick={() => setCategory(cat.id)}
             className={`px-2 py-0.5 text-[10px] rounded-full whitespace-nowrap transition-colors ${
               category === cat.id
-                ? 'bg-primary-500 text-white'
+                ? 'bg-navy-900 text-white'
                 : 'bg-slate-100 dark:bg-navy-800 text-slate-500 hover:bg-slate-200'
             }`}
           >

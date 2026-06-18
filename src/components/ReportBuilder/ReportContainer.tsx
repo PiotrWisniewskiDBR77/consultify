@@ -330,7 +330,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
               </p>
               <button
                 onClick={() => handleAddBlock('text')}
-                className="bg-primary-600 text-white px-4 py-2 rounded-lg"
+                className="bg-navy-900 text-white px-4 py-2 rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
               >
                 Add Text Block
               </button>

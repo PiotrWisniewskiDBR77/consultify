@@ -249,7 +249,7 @@ export const ReportTemplatesView: React.FC = () => {
                       <span
                         className={`w-4 h-4 rounded border flex items-center justify-center ${
                           isSelected
-                            ? 'bg-primary-500 border-primary-500 text-white'
+                            ? 'bg-navy-900 border-navy-900 text-white'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}
                       >
