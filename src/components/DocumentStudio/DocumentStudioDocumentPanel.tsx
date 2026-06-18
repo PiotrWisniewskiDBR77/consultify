@@ -174,6 +174,17 @@ function metadataLabel(value: string | string[] | undefined): string {
   return value && value.trim().length > 0 ? value : 'Not set';
 }
 
+/**
+ * Render a comment author identifier in a human-friendly way. Comment threads
+ * only carry the author id; when that id is a raw UUID we shorten it so the UI
+ * never shows a full 36-char identifier.
+ */
+function formatAuthorLabel(authorId: string | undefined | null): string {
+  const id = String(authorId || '').trim();
+  if (!id) return '—';
+  return id.length > 8 ? `${id.slice(0, 8)}…` : id;
+}
+
 function getConnectorState(sourceType: string): {
   label: string;
   tone: 'success' | 'warning' | 'muted';
@@ -581,7 +592,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
               </span>
             </div>
             <div className="mt-1 text-slate-500 dark:text-slate-400">
-              {thread.root.authorId} · {thread.anchor.kind}
+              {formatAuthorLabel(thread.root.authorId)} · {thread.anchor.kind}
             </div>
             {thread.replies.length > 0 ? (
               <div className="mt-2 border-l border-slate-200 pl-2 dark:border-navy-700">

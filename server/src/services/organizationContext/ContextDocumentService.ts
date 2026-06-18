@@ -24,6 +24,7 @@ export interface ContextDocumentRecord {
   id: string;
   organizationId: string;
   ownerId: string;
+  ownerName: string | null;
   projectId: string | null;
   scope: ContextDocumentScope;
   filename: string;
@@ -1335,6 +1336,23 @@ function chunkText(raw: string): ContextTextChunk[] {
   return out;
 }
 
+/**
+ * Resolve a human-readable owner display name from a joined users row.
+ * Prefers "First Last", falls back to email, then a shortened owner UUID,
+ * so the UI never renders a raw 36-char UUID for the document owner.
+ */
+function resolveOwnerDisplayName(row: any): string | null {
+  const first = String(row?.owner_first_name || '').trim();
+  const last = String(row?.owner_last_name || '').trim();
+  const fullName = `${first} ${last}`.trim();
+  if (fullName) return fullName;
+  const email = String(row?.owner_email || '').trim();
+  if (email) return email;
+  const ownerId = String(row?.owner_id || '').trim();
+  if (ownerId) return ownerId.length > 8 ? `${ownerId.slice(0, 8)}…` : ownerId;
+  return null;
+}
+
 function normalizeRecord(row: any): ContextDocumentRecord {
   const fallbackStatus = canonicalizeContextDocumentStatus(row?.status);
   const readBackGeneratedAt = new Date().toISOString();
@@ -1369,6 +1387,7 @@ function normalizeRecord(row: any): ContextDocumentRecord {
     id: String(row?.id || ''),
     organizationId: String(row?.organization_id || ''),
     ownerId: String(row?.owner_id || ''),
+    ownerName: resolveOwnerDisplayName(row),
     projectId: row?.project_id ? String(row.project_id) : null,
     scope: row?.scope === 'project' ? 'project' : 'user',
     filename: String(row?.filename || ''),
@@ -3861,8 +3880,12 @@ export const contextDocumentService = {
     }
 
     const rows = await dbAll(
-      `SELECT d.*
+      `SELECT d.*,
+              u.first_name AS owner_first_name,
+              u.last_name AS owner_last_name,
+              u.email AS owner_email
        FROM knowledge_docs d
+       LEFT JOIN users u ON u.id = d.owner_id
        WHERE ${where.join(' AND ')}
        ORDER BY d.created_at DESC
        LIMIT 500`,
@@ -3882,8 +3905,12 @@ export const contextDocumentService = {
   }): Promise<ContextDocumentRecord | null> {
     await ensureSchema();
     const row = await dbGet(
-      `SELECT d.*
+      `SELECT d.*,
+              u.first_name AS owner_first_name,
+              u.last_name AS owner_last_name,
+              u.email AS owner_email
        FROM knowledge_docs d
+       LEFT JOIN users u ON u.id = d.owner_id
        WHERE d.id = ?
          AND d.organization_id = ?
          AND d.deleted_at IS NULL

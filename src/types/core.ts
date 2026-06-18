@@ -5107,6 +5107,7 @@ export interface Document {
   organizationId: string;
   projectId?: string;
   ownerId: string;
+  ownerName?: string | null;
   scope: DocumentScope;
   filename: string;
   originalName: string;

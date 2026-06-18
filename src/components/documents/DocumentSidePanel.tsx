@@ -183,6 +183,14 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
     return Number((doc as any).fileSize ?? (doc as any).fileSizeBytes ?? 0);
   };
 
+  const getOwnerDisplayName = (doc: Document) => {
+    const name = String(doc.ownerName || '').trim();
+    if (name) return name;
+    const ownerId = String(doc.ownerId || '').trim();
+    if (ownerId) return ownerId.length > 8 ? `${ownerId.slice(0, 8)}…` : ownerId;
+    return '—';
+  };
+
   const getStatusBadge = (status?: string) => {
     const normalized = String(status || '').toLowerCase();
     if (normalized === 'ready' || normalized === 'active') {
@@ -382,6 +390,9 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                         {formatFileSize(getDocumentFileSize(doc))} •{' '}
                         {new Date(doc.createdAt).toLocaleDateString()}
                       </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-500">
+                        {t('documents.owner', 'Owner')}: {getOwnerDisplayName(doc)}
+                      </p>
                       <div className="mt-1 flex items-center gap-1.5">
                         <span
                           className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${getStatusBadge(doc.status).className}`}
@@ -390,7 +401,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                         </span>
                         {doc.chunkCount !== undefined && doc.chunkCount > 0 && (
                           <span className="text-[10px] text-slate-600">
-                            {doc.chunkCount} chunks
+                            {t('documents.chunks', '{{count}} chunks', { count: doc.chunkCount })}
                           </span>
                         )}
                       </div>
@@ -520,7 +531,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                       title={t('documents.download')}
                     >
                       <Download size={12} />
-                      Download
+                      {t('documents.download', 'Download')}
                     </button>
                     {activeTab === 'user' && projectId && (
                       <button
@@ -529,7 +540,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                         title={t('documents.moveToProject')}
                       >
                         <FolderUp size={12} />
-                        Move
+                        {t('documents.moveToProject', 'Move')}
                       </button>
                     )}
                     <button
