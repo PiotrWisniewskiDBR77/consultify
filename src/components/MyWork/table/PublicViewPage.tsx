@@ -101,7 +101,7 @@ export default function PublicViewPage() {
             className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
           {passwordError && (
-            <p className="text-xs text-rose-600 dark:text-rose-400">{passwordError}</p>
+            <p className="text-xs text-danger-600 dark:text-danger-400">{passwordError}</p>
           )}
           <button
             type="submit"
@@ -118,11 +118,11 @@ export default function PublicViewPage() {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="rounded-xl border border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-900/20 p-8 max-w-md text-center">
-          <h2 className="text-lg font-semibold text-rose-800 dark:text-rose-200">
+        <div className="rounded-xl border border-danger-200 bg-danger-50 dark:border-danger-800 dark:bg-danger-900/20 p-8 max-w-md text-center">
+          <h2 className="text-lg font-semibold text-danger-800 dark:text-danger-200">
             View Unavailable
           </h2>
-          <p className="mt-2 text-sm text-rose-600 dark:text-rose-300">{error}</p>
+          <p className="mt-2 text-sm text-danger-600 dark:text-danger-300">{error}</p>
         </div>
       </div>
     );

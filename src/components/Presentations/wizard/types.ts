@@ -247,7 +247,7 @@ export const INTENT_COLORS: Record<CardIntent, string> = {
   initiative_portfolio: 'bg-blue-500',
   prioritization_matrix: 'bg-pink-500',
   roadmap: 'bg-sky-500',
-  risk_management: 'bg-rose-500',
+  risk_management: 'bg-danger-500',
   next_steps: 'bg-indigo-500',
   appendix: 'bg-slate-400',
   // Legacy mappings
@@ -260,7 +260,7 @@ export const INTENT_COLORS: Record<CardIntent, string> = {
   timeline: 'bg-sky-500',
   process: 'bg-sky-500',
   quote: 'bg-emerald-500',
-  risk_overview: 'bg-rose-500',
+  risk_overview: 'bg-danger-500',
   thank_you: 'bg-indigo-500',
 };
 

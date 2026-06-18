@@ -178,7 +178,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
               {/* Delete */}
               <button
                 onClick={() => removeRule(rule.id)}
-                className="p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 hover:text-rose-500 transition-colors"
+                className="p-1 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/10 text-slate-600 hover:text-danger-500 transition-colors"
               >
                 <Trash2 size={12} />
               </button>

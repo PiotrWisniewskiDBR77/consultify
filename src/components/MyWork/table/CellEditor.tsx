@@ -425,7 +425,7 @@ const ValidatedTextEditor: React.FC<
       onKeyDown={handleKeyDown}
       onBlur={handleSave}
       placeholder={placeholder}
-      className={`${baseCls} ${invalid ? 'border-rose-400 dark:border-rose-500 ring-rose-500/30' : ''}`}
+      className={`${baseCls} ${invalid ? 'border-danger-400 dark:border-danger-500 ring-danger-500/30' : ''}`}
     />
   );
 };

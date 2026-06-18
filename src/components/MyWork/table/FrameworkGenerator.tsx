@@ -132,7 +132,7 @@ const FRAMEWORKS: FrameworkDef[] = [
     descEn: 'Identify, assess and mitigate project risks',
     descPl: 'Identyfikacja, ocena i mitygacja ryzyk projektowych',
     icon: Shield,
-    color: 'text-rose-600',
+    color: 'text-danger-600',
     columns: [
       { key: 'label', header: 'Risk', type: 'text', visible: true, width: 220 },
       {

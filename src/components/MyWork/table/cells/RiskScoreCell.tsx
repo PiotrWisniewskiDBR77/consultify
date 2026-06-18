@@ -28,9 +28,9 @@ function severityTone(percent: number): {
 } {
   if (percent >= 0.7) {
     return {
-      bg: 'bg-rose-100 dark:bg-rose-900/30',
-      text: 'text-rose-700 dark:text-rose-300',
-      border: 'border-rose-200 dark:border-rose-800/50',
+      bg: 'bg-danger-100 dark:bg-danger-900/30',
+      text: 'text-danger-700 dark:text-danger-300',
+      border: 'border-danger-200 dark:border-danger-800/50',
       label: 'high',
     };
   }
@@ -69,7 +69,7 @@ export const RiskScoreCell: React.FC<RiskScoreCellProps> = ({ value, fieldOption
   if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1 || num > scale) {
     return (
       <span
-        className="inline-flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 px-1"
+        className="inline-flex items-center gap-1 text-xs text-danger-600 dark:text-danger-400 px-1"
         data-testid="risk-score-invalid"
         title={`risk_score value out of range (expected 1..${scale})`}
       >

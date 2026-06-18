@@ -126,7 +126,7 @@ const GalleryCard = React.memo<{
                 <div key={col.key} className="flex items-center gap-1">
                   <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-400'}`}
+                      className={`h-full rounded-full ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-danger-400'}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>

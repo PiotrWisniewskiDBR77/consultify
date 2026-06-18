@@ -65,7 +65,7 @@ function eventIcon(eventType: string) {
     case 'create':
       return <Plus size={12} className="text-emerald-500" />;
     case 'delete':
-      return <Trash2 size={12} className="text-rose-500" />;
+      return <Trash2 size={12} className="text-danger-500" />;
     default:
       return <Edit3 size={12} className="text-blue-500" />;
   }

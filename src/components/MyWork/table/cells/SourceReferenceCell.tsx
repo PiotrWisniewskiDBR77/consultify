@@ -90,7 +90,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
     if (!allowExternal) {
       return (
         <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-900/20 text-[10px] font-semibold text-rose-700 dark:text-rose-300"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-danger-200 dark:border-danger-800/50 bg-danger-50 dark:bg-danger-900/20 text-[10px] font-semibold text-danger-700 dark:text-danger-300"
           data-testid="source-ref-blocked"
           title="External sources not allowed for this field"
         >
@@ -102,7 +102,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
     if (trimmed.length === 0 || trimmed.length > MAX_EXTERNAL_URL) {
       return (
         <span
-          className="inline-flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 px-1"
+          className="inline-flex items-center gap-1 text-xs text-danger-600 dark:text-danger-400 px-1"
           data-testid="source-ref-invalid"
           title={`source_reference value invalid (length ${trimmed.length})`}
         >
@@ -152,7 +152,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
       if (!allowExternal) {
         return (
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-900/20 text-[10px] font-semibold text-rose-700 dark:text-rose-300"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-danger-200 dark:border-danger-800/50 bg-danger-50 dark:bg-danger-900/20 text-[10px] font-semibold text-danger-700 dark:text-danger-300"
             data-testid="source-ref-blocked"
             title="External sources not allowed for this field"
           >
@@ -181,7 +181,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
 
   return (
     <span
-      className="inline-flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 px-1"
+      className="inline-flex items-center gap-1 text-xs text-danger-600 dark:text-danger-400 px-1"
       data-testid="source-ref-invalid"
       title="source_reference value has unrecognized shape"
     >

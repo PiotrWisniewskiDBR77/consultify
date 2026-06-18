@@ -47,7 +47,7 @@ const GOVERNANCE_DOT_CLASS: Record<string, string> = {
   PASS: 'bg-emerald-500',
   PASS_WITH_P2: 'bg-amber-500',
   BLOCKED_P1: 'bg-orange-500',
-  BLOCKED_P0: 'bg-rose-500',
+  BLOCKED_P0: 'bg-danger-500',
   INCONCLUSIVE: 'bg-slate-400',
 };
 
@@ -56,7 +56,7 @@ type ConfidentialityLevel = 'public' | 'internal' | 'confidential';
 const CONFIDENTIALITY_STYLES: Record<ConfidentialityLevel, { color: string; label: string }> = {
   public: { color: 'text-emerald-500', label: 'Public' },
   internal: { color: 'text-blue-500', label: 'Internal' },
-  confidential: { color: 'text-rose-500', label: 'Confidential' },
+  confidential: { color: 'text-danger-500', label: 'Confidential' },
 };
 
 const ConfidentialityBadge: React.FC<{

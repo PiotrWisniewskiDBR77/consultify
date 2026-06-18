@@ -121,7 +121,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
         )}
         {!loading && error && (
           <p
-            className="text-[12px] text-rose-600 dark:text-rose-300 px-2 py-1"
+            className="text-[12px] text-danger-600 dark:text-danger-300 px-2 py-1"
             role="alert"
             data-testid={`${testId}-error`}
           >
@@ -220,7 +220,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                         onClick={() => {
                           void onArchive(source);
                         }}
-                        className="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-700 dark:text-rose-300"
+                        className="p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-900/30 text-danger-700 dark:text-danger-300"
                         title={isPl ? 'Archiwizuj' : 'Archive'}
                         aria-label={isPl ? 'Archiwizuj' : 'Archive'}
                         data-testid={`${testId}-archive-${source.id}`}

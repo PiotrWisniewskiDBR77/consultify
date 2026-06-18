@@ -417,7 +417,7 @@ export function InterfacesIndex({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleDelete(iface.id)}
-                        className="rounded-lg px-2 py-1 text-xs font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                        className="rounded-lg px-2 py-1 text-xs font-medium text-danger-600 transition-colors hover:bg-danger-50 dark:hover:bg-danger-900/20"
                       >
                         {t('interfacesIndex.confirmDelete', 'Confirm')}
                       </button>
@@ -431,7 +431,7 @@ export function InterfacesIndex({
                   ) : (
                     <button
                       onClick={() => setDeleteConfirm(iface.id)}
-                      className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
+                      className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/20"
                       title={t('interfacesIndex.delete', 'Delete')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

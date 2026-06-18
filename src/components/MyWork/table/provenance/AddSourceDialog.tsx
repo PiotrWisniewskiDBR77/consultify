@@ -213,7 +213,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
           {error && (
             <p
-              className="text-[12px] text-rose-600 dark:text-rose-300"
+              className="text-[12px] text-danger-600 dark:text-danger-300"
               role="alert"
               data-testid={`${testId}-error`}
             >

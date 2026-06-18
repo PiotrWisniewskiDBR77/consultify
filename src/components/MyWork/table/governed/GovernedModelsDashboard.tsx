@@ -99,7 +99,7 @@ const TRUST_CONFIG: Record<
   deprecated: {
     label: 'Deprecated',
     labelPl: 'Wycofany',
-    color: 'text-rose-600 bg-rose-50 dark:bg-rose-500/10',
+    color: 'text-danger-600 bg-danger-50 dark:bg-danger-500/10',
     icon: <XCircle size={12} />,
   },
 };
@@ -435,7 +435,7 @@ function CreateModelWizard({
                       onClick={() =>
                         setWiz((p) => ({ ...p, kpis: p.kpis.filter((_, i) => i !== idx) }))
                       }
-                      className="text-[11px] text-rose-500 hover:underline"
+                      className="text-[11px] text-danger-500 hover:underline"
                     >
                       {isPl ? 'Usuń' : 'Remove'}
                     </button>
@@ -494,7 +494,7 @@ function CreateModelWizard({
                           dimensions: p.dimensions.filter((_, i) => i !== idx),
                         }))
                       }
-                      className="text-[11px] text-rose-500 hover:underline"
+                      className="text-[11px] text-danger-500 hover:underline"
                     >
                       {isPl ? 'Usuń' : 'Remove'}
                     </button>
@@ -689,7 +689,7 @@ function ModelCard({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 hover:text-rose-500"
+            className="p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-500/10 text-slate-600 hover:text-danger-500"
             title={isPl ? 'Usuń' : 'Delete'}
           >
             <Trash2 size={12} />

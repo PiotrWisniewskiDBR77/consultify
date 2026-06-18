@@ -79,7 +79,7 @@ function getStatusIndicator(status: OperationStatus): React.ReactNode {
       );
     case 'failed':
       return (
-        <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center transition-all duration-300 animate-in zoom-in">
+        <div className="w-5 h-5 rounded-full bg-danger-500 flex items-center justify-center transition-all duration-300 animate-in zoom-in">
           <AlertCircle size={12} className="text-white" />
         </div>
       );
@@ -118,7 +118,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
   }, [operations]);
 
   const progressColor = stats.hasErrors
-    ? 'bg-rose-500'
+    ? 'bg-danger-500'
     : stats.allDone
       ? 'bg-emerald-500'
       : 'bg-primary-500';
@@ -144,7 +144,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
             {!stats.allDone && <Loader2 size={14} className="animate-spin text-primary-500" />}
             {stats.allDone && !stats.hasErrors && <Check size={14} className="text-emerald-500" />}
             {stats.allDone && stats.hasErrors && (
-              <AlertCircle size={14} className="text-rose-500" />
+              <AlertCircle size={14} className="text-danger-500" />
             )}
             <span className="text-xs font-semibold text-slate-700 dark:text-zinc-200">
               {statusLabel}
@@ -177,7 +177,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                 isActive
                   ? 'bg-primary-500/5 dark:bg-primary-500/10 border border-primary-500/20'
                   : isFailed
-                    ? 'bg-rose-500/5 dark:bg-rose-500/10 border border-rose-500/20'
+                    ? 'bg-danger-500/5 dark:bg-danger-500/10 border border-danger-500/20'
                     : isDone
                       ? 'bg-emerald-500/5 dark:bg-emerald-500/5 border border-transparent'
                       : 'border border-transparent opacity-60'
@@ -206,7 +206,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                       isDone
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : isFailed
-                          ? 'text-rose-600 dark:text-rose-400'
+                          ? 'text-danger-600 dark:text-danger-400'
                           : isActive
                             ? 'text-primary-600 dark:text-primary-400'
                             : 'text-slate-600 dark:text-zinc-500'
@@ -217,7 +217,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                       isDone
                         ? 'text-emerald-700 dark:text-emerald-300'
                         : isFailed
-                          ? 'text-rose-700 dark:text-rose-300'
+                          ? 'text-danger-700 dark:text-danger-300'
                           : isActive
                             ? 'text-slate-700 dark:text-zinc-200'
                             : 'text-slate-500 dark:text-zinc-400'
@@ -227,7 +227,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                   </span>
                 </div>
                 {isFailed && op.error && (
-                  <p className="mt-1 text-[10px] text-rose-600 dark:text-rose-400 leading-tight">
+                  <p className="mt-1 text-[10px] text-danger-600 dark:text-danger-400 leading-tight">
                     {op.error}
                   </p>
                 )}
@@ -253,8 +253,8 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
 
       {/* Error summary */}
       {stats.allDone && stats.hasErrors && (
-        <div className="px-4 py-3 border-t border-rose-200/60 dark:border-rose-800/40 bg-rose-50/50 dark:bg-rose-950/20">
-          <p className="text-xs text-rose-700 dark:text-rose-300 font-medium">
+        <div className="px-4 py-3 border-t border-danger-200/60 dark:border-danger-800/40 bg-danger-50/50 dark:bg-danger-950/20">
+          <p className="text-xs text-danger-700 dark:text-danger-300 font-medium">
             {isPl
               ? `${stats.failed} z ${stats.total} operacji nie powiodło się`
               : `${stats.failed} of ${stats.total} operations failed`}

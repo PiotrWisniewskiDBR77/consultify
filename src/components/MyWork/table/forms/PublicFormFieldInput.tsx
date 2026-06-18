@@ -29,7 +29,7 @@ interface PublicFormFieldInputProps {
 
 export function PublicFormFieldInput({ field, value, onChange, error }: PublicFormFieldInputProps) {
   const base = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
-    error ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-white'
+    error ? 'border-danger-300 bg-danger-50' : 'border-gray-200 bg-white'
   }`;
 
   switch (field.fieldType) {
@@ -200,7 +200,7 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
     case 'attachment':
       return (
         <div
-          className={`rounded-lg border-2 border-dashed p-4 text-center ${error ? 'border-rose-300' : 'border-gray-200'}`}
+          className={`rounded-lg border-2 border-dashed p-4 text-center ${error ? 'border-danger-300' : 'border-gray-200'}`}
         >
           <input
             type="file"

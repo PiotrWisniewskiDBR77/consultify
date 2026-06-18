@@ -98,7 +98,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
       {
         labelEn: 'Thankless Tasks',
         labelPl: 'Niewdzięczne zadania',
-        color: 'bg-rose-500/10 border-rose-500/20',
+        color: 'bg-danger-500/10 border-danger-500/20',
         xRange: [minX, midX],
         yRange: [midY, maxY],
       },

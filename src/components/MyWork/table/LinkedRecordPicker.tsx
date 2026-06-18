@@ -349,7 +349,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                             e.stopPropagation();
                             handleRemoveLink(link.id);
                           }}
-                          className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/30"
+                          className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-danger-100 hover:text-danger-600 dark:hover:bg-danger-900/30"
                         >
                           <X className="h-3 w-3" />
                         </button>

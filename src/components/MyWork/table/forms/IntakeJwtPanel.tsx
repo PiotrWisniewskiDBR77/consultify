@@ -233,7 +233,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
               Loading intake context…
             </div>
           ) : error ? (
-            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">
+            <div className="rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-danger-700 dark:border-danger-900 dark:bg-danger-950 dark:text-danger-200">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
                 {error}
@@ -415,7 +415,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                   Issue link
                 </button>
                 {!context.isPublished ? (
-                  <p className="mt-1.5 text-[11px] text-rose-500">
+                  <p className="mt-1.5 text-[11px] text-danger-500">
                     Publish the form first; private links won&apos;t verify on a draft form.
                   </p>
                 ) : null}

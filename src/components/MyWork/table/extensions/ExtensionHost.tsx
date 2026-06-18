@@ -202,7 +202,7 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
         <div
           className={`px-3 py-2 text-sm ${
             notification.kind === 'error'
-              ? 'bg-rose-50 text-rose-700'
+              ? 'bg-danger-50 text-danger-700'
               : notification.kind === 'success'
                 ? 'bg-green-50 text-green-700'
                 : 'bg-blue-50 text-blue-700'

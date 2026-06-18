@@ -342,7 +342,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
                   msg.role === 'user'
                     ? 'bg-primary-500/10 text-slate-800 dark:text-slate-200'
                     : msg.role === 'system'
-                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      ? 'bg-danger-500/10 text-danger-600 dark:text-danger-400'
                       : 'bg-slate-100 dark:bg-navy-800/50 text-slate-700 dark:text-slate-300'
                 }`}
               >

@@ -374,7 +374,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
               </button>
               <button
                 onClick={() => removeSlide(index)}
-                className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10"
+                className="p-1.5 rounded-lg text-danger-400 hover:bg-danger-500/10"
               >
                 <Trash2 size={14} />
               </button>

@@ -67,13 +67,13 @@ const categoryLabels: Record<string, string> = {
 };
 
 const severityStyles: Record<string, { bg: string; text: string; icon: typeof XCircle }> = {
-  error: { bg: 'bg-rose-500/10', text: 'text-rose-600', icon: XCircle },
+  error: { bg: 'bg-danger-500/10', text: 'text-danger-600', icon: XCircle },
   warning: { bg: 'bg-amber-500/10', text: 'text-amber-600', icon: AlertTriangle },
   info: { bg: 'bg-blue-500/10', text: 'text-blue-500', icon: Info },
 };
 
 const priorityPillStyles: Record<'P0' | 'P1' | 'P2', string> = {
-  P0: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/30',
+  P0: 'bg-danger-500/15 text-danger-700 dark:text-danger-300 ring-1 ring-danger-500/30',
   P1: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/30',
   P2: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/30',
 };
@@ -90,7 +90,7 @@ const priorityGroupLabel: Record<PriorityKey, string> = {
 };
 
 const priorityGroupHeaderColor: Record<PriorityKey, string> = {
-  P0: 'text-rose-600',
+  P0: 'text-danger-600',
   P1: 'text-amber-600',
   P2: 'text-blue-600',
   Other: 'text-slate-500',
@@ -99,7 +99,7 @@ const priorityGroupHeaderColor: Record<PriorityKey, string> = {
 const resultStyles: Record<string, string> = {
   PASS: 'text-emerald-600',
   PASS_WITH_P2: 'text-amber-600',
-  BLOCKED_P1: 'text-rose-600',
+  BLOCKED_P1: 'text-danger-600',
   INCONCLUSIVE: 'text-slate-500',
 };
 
@@ -237,7 +237,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
       ? 'text-green-500'
       : (report?.score ?? 0) >= 50
         ? 'text-amber-500'
-        : 'text-rose-500';
+        : 'text-danger-500';
 
   const renderGateRow = (gate: DeckQualityGateResult) => {
     const sev = severityStyles[gate.severity] || severityStyles.info;
@@ -298,7 +298,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
             )}
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                report.canExport ? 'bg-green-500/10 text-green-600' : 'bg-rose-500/10 text-rose-600'
+                report.canExport ? 'bg-green-500/10 text-green-600' : 'bg-danger-500/10 text-danger-600'
               }`}
             >
               {report.canExport ? 'Export OK' : 'Export Blocked'}
@@ -319,7 +319,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
       {/* Body */}
       <div ref={bodyRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+          <div className="rounded-lg border border-danger-200 bg-danger-50 p-3 text-xs text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-300">
             {error}
           </div>
         )}
@@ -333,9 +333,9 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
         {!loading && report && report.scorecard && (
           <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3 space-y-2">
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-md bg-rose-500/10 p-2 text-center">
-                <div className="text-lg font-bold text-rose-600">{report.scorecard.p0}</div>
-                <div className="text-[10px] uppercase tracking-wide text-rose-700/80 dark:text-rose-300/80">
+              <div className="rounded-md bg-danger-500/10 p-2 text-center">
+                <div className="text-lg font-bold text-danger-600">{report.scorecard.p0}</div>
+                <div className="text-[10px] uppercase tracking-wide text-danger-700/80 dark:text-danger-300/80">
                   P0 Blockers
                 </div>
               </div>
@@ -435,7 +435,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
                   </span>
                   <div className="ml-auto flex gap-1">
                     {errorCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-600 font-medium">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-danger-500/10 text-danger-600 font-medium">
                         {errorCount}
                       </span>
                     )}

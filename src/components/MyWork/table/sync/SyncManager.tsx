@@ -580,7 +580,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     </button>
                     <button
                       onClick={() => handleDelete(sync.id)}
-                      className="rounded-lg p-1.5 text-rose-500 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/20"
+                      className="rounded-lg p-1.5 text-danger-500 transition-colors hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-900/20"
                       title={isPl ? 'Usuń' : 'Delete'}
                     >
                       <Trash2 size={14} />

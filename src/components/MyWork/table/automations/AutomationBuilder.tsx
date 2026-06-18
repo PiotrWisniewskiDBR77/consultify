@@ -391,7 +391,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     type="button"
                     onClick={() => removeAction(action.id)}
                     disabled={actions.length <= 1}
-                    className="rounded p-1 text-rose-400 hover:text-rose-600 disabled:opacity-30"
+                    className="rounded p-1 text-danger-400 hover:text-danger-600 disabled:opacity-30"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>

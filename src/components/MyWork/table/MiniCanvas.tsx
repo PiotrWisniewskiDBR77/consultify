@@ -390,7 +390,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
           <button
             onClick={handleClear}
             disabled={value.length === 0}
-            className="p-1 rounded text-slate-600 hover:text-rose-500 disabled:opacity-30"
+            className="p-1 rounded text-slate-600 hover:text-danger-500 disabled:opacity-30"
           >
             <Trash2 size={12} />
           </button>

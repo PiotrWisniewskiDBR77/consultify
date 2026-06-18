@@ -311,7 +311,7 @@ const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
     <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
       <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-400'}`}
+          className={`h-full rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-danger-400'}`}
           style={{ width: `${pct}%` }}
         />
       </div>

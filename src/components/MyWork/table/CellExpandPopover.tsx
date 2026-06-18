@@ -216,7 +216,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                       {!locked && (
                         <button
                           onClick={() => handleRemoveOption(opt)}
-                          className="p-0.5 rounded text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-0.5 rounded text-slate-600 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <Trash2 size={10} />
                         </button>
