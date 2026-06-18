@@ -10,7 +10,7 @@
  * `applyingRemoteRef` guards against echoing remote-applied changes back onto the wire.
  */
 import { useCallback, useEffect, useRef } from 'react';
-import type { Edge, Node, NodeChange, EdgeChange } from 'reactflow';
+import type { Edge, EdgeChange, Node, NodeChange } from 'reactflow';
 
 type GraphOp = { op: string; data: any };
 
@@ -40,9 +40,9 @@ export function useWhiteboardCollab({
     }
   }, []);
 
-  // Translate React Flow node changes → graph ops. Only final positions (drag end)
-  // and removals are broadcast — selection/dimension churn and in-flight drags are
-  // skipped to avoid flooding the wire.
+  // Translate React Flow node changes → graph ops. Only final positions (drag end),
+  // final resize dimensions (resize end), and removals are broadcast — selection churn
+  // and in-flight drag/resize frames are skipped to avoid flooding the wire.
   const broadcastNodeChanges = useCallback(
     (changes: NodeChange[], nextNodes: Node[]) => {
       if (applyingRemoteRef.current) return;
@@ -51,6 +51,10 @@ export function useWhiteboardCollab({
         if (change.type === 'position' && change.dragging === false && change.id) {
           const node = nextNodes.find((n) => n.id === change.id);
           if (node) ops.push({ op: 'update_node', data: { id: node.id, position: node.position } });
+        } else if (change.type === 'dimensions' && change.resizing === false && change.id) {
+          // L-05b: propagate the final resized box (NodeResizer writes node.style).
+          const node = nextNodes.find((n) => n.id === change.id);
+          if (node) ops.push({ op: 'update_node', data: { id: node.id, style: node.style } });
         } else if (change.type === 'remove' && change.id) {
           ops.push({ op: 'remove_node', data: { id: change.id } });
         }
@@ -102,7 +106,9 @@ export function useWhiteboardCollab({
         for (const op of detail.operations as GraphOp[]) {
           switch (op.op) {
             case 'add_node':
-              setNodes((prev) => (prev.some((n) => n.id === op.data.id) ? prev : [...prev, op.data]));
+              setNodes((prev) =>
+                prev.some((n) => n.id === op.data.id) ? prev : [...prev, op.data]
+              );
               break;
             case 'remove_node':
               setNodes((prev) => prev.filter((n) => n.id !== op.data.id));
@@ -111,13 +117,17 @@ export function useWhiteboardCollab({
               setNodes((prev) => prev.map((n) => (n.id === op.data.id ? { ...n, ...op.data } : n)));
               break;
             case 'add_edge':
-              setEdges((prev) => (prev.some((ed) => ed.id === op.data.id) ? prev : [...prev, op.data]));
+              setEdges((prev) =>
+                prev.some((ed) => ed.id === op.data.id) ? prev : [...prev, op.data]
+              );
               break;
             case 'remove_edge':
               setEdges((prev) => prev.filter((ed) => ed.id !== op.data.id));
               break;
             case 'update_edge':
-              setEdges((prev) => prev.map((ed) => (ed.id === op.data.id ? { ...ed, ...op.data } : ed)));
+              setEdges((prev) =>
+                prev.map((ed) => (ed.id === op.data.id ? { ...ed, ...op.data } : ed))
+              );
               break;
             default:
               break;
