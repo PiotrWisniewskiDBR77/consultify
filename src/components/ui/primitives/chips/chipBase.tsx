@@ -55,13 +55,20 @@ export const CHIP_ICON_PX: Record<ChipSize, number> = {
 };
 
 /**
- * The neutral shell shared by every chip. Uses ONLY `c.*` tokens, so it
- * adapts to light/dark via the CSS vars with no `dark:` overrides.
+ * Structural shell (geometry only — no color). Color comes from `CHIP_NEUTRAL`,
+ * `accentSoft`, or a caller-supplied `shell` override, so they never collide in
+ * the class string (`cn` here is clsx-style — it does NOT tailwind-merge, so the
+ * color layer must be mutually exclusive, not appended).
  */
-const CHIP_SHELL =
+const CHIP_STRUCTURE =
   'inline-flex items-center whitespace-nowrap rounded-full border font-medium leading-none ' +
-  'border-c-border bg-c-surface-raised text-c-text-secondary ' +
   'transition-colors duration-150 align-middle max-w-full';
+
+/**
+ * The neutral color layer. Uses ONLY `c.*` tokens, so it adapts to light/dark
+ * via the CSS vars with no `dark:` overrides.
+ */
+const CHIP_NEUTRAL = 'border-c-border bg-c-surface-raised text-c-text-secondary';
 
 export interface ChipBaseProps extends React.HTMLAttributes<HTMLSpanElement> {
   size?: ChipSize;
@@ -71,6 +78,12 @@ export interface ChipBaseProps extends React.HTMLAttributes<HTMLSpanElement> {
   trailing?: React.ReactNode;
   /** Apply the soft accent tint shell instead of the neutral shell. */
   accentSoft?: boolean;
+  /**
+   * Replace the neutral color layer (border + bg + text) with a custom one
+   * (e.g. a filled signal tone from StatusChip). Mutually exclusive with the
+   * neutral layer so they don't fight over source order.
+   */
+  shell?: string;
   children?: React.ReactNode;
 }
 
@@ -79,16 +92,17 @@ export interface ChipBaseProps extends React.HTMLAttributes<HTMLSpanElement> {
  * semantic chips (StatusChip, MetaChip, …) instead of this directly.
  */
 export const ChipBase = forwardRef<HTMLSpanElement, ChipBaseProps>(
-  ({ size = 'sm', leading, trailing, accentSoft = false, className, children, ...rest }, ref) => {
+  (
+    { size = 'sm', leading, trailing, accentSoft = false, shell, className, children, ...rest },
+    ref
+  ) => {
+    const colorLayer = accentSoft
+      ? 'border-transparent bg-c-accent-soft text-c-accent'
+      : (shell ?? CHIP_NEUTRAL);
     return (
       <span
         ref={ref}
-        className={cn(
-          CHIP_SHELL,
-          SIZE_CLASS[size],
-          accentSoft && 'border-transparent bg-c-accent-soft text-c-accent',
-          className
-        )}
+        className={cn(CHIP_STRUCTURE, colorLayer, SIZE_CLASS[size], className)}
         {...rest}
       >
         {leading}
