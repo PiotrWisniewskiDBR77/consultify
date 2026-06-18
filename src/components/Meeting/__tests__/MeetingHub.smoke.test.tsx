@@ -84,4 +84,38 @@ describe('MeetingHub (smoke)', () => {
       expect(screen.getByText('Agenda + pre-read + follow-up workspace')).toBeTruthy()
     );
   });
+
+  // M21 — operator brief must degrade honestly: a real fetch failure (non-404)
+  // surfaces a retryable error, NOT the same "no brief" message as a legit empty.
+  it('shows an honest error + retry when the operator brief fetch fails (500)', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    const err: any = new Error('boom');
+    err.status = 500;
+    getBriefMock.mockRejectedValue(err);
+    render(<MeetingHub />);
+
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+
+    expect(await screen.findByText('Could not load the operator brief.')).toBeTruthy();
+    const retry = await screen.findByText('Retry');
+    expect(retry).toBeTruthy();
+
+    // Retry re-issues the request (recovers to a real brief).
+    getBriefMock.mockResolvedValueOnce({ meetingId: 'meeting-1', prepSummary: 'Focus.' });
+    fireEvent.click(retry);
+    await waitFor(() => expect(screen.getByText('Focus.')).toBeTruthy());
+  });
+
+  it('treats a 404 brief as an honest empty (no error banner)', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    const err: any = new Error('Meeting not found');
+    err.status = 404;
+    getBriefMock.mockRejectedValue(err);
+    render(<MeetingHub />);
+
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+
+    await waitFor(() => expect(screen.getByText('meeting.noOperatorBrief')).toBeTruthy());
+    expect(screen.queryByText('Could not load the operator brief.')).toBeNull();
+  });
 });

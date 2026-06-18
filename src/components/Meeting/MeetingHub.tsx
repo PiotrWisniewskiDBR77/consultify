@@ -92,6 +92,10 @@ export const MeetingHub: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [operatorBrief, setOperatorBrief] = useState<any>(null);
   const [operatorBriefLoading, setOperatorBriefLoading] = useState(false);
+  // Honest error vs. empty (CANON §4.1): a failed brief fetch must surface a
+  // retryable error state, NOT silently fall through to "no brief".
+  const [operatorBriefError, setOperatorBriefError] = useState(false);
+  const [operatorBriefReloadKey, setOperatorBriefReloadKey] = useState(0);
   const [draft, setDraft] = useState({
     title: '',
     startAt: '',
@@ -173,16 +177,30 @@ export const MeetingHub: React.FC = () => {
     const targetMeetingId = briefingMeeting?.id;
     if (!targetMeetingId) {
       setOperatorBrief(null);
+      setOperatorBriefError(false);
       return;
     }
     setOperatorBriefLoading(true);
-    void (Api as any)
-      .getAIOperatorMeetingBrief?.(targetMeetingId)
+    setOperatorBriefError(false);
+    const briefApi = (Api as any).getAIOperatorMeetingBrief;
+    if (typeof briefApi !== 'function') {
+      setOperatorBriefLoading(false);
+      return;
+    }
+    void briefApi(targetMeetingId)
       .then((data: any) => {
-        if (!cancelled) setOperatorBrief(data || null);
+        if (!cancelled) {
+          setOperatorBrief(data || null);
+          setOperatorBriefError(false);
+        }
       })
-      .catch(() => {
-        if (!cancelled) setOperatorBrief(null);
+      .catch((err: any) => {
+        if (cancelled) return;
+        setOperatorBrief(null);
+        // 404 = this meeting legitimately has no brief yet (honest empty).
+        // Any other failure (500/network/401) = honest error with retry.
+        const status = Number(err?.status ?? err?.statusCode ?? 0);
+        setOperatorBriefError(status !== 404);
       })
       .finally(() => {
         if (!cancelled) setOperatorBriefLoading(false);
@@ -190,7 +208,7 @@ export const MeetingHub: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [briefingMeeting?.id]);
+  }, [briefingMeeting?.id, operatorBriefReloadKey]);
 
   const openMeetingDocument = (row: MeetingItem) => {
     setSelectedId(row.id);
@@ -641,6 +659,8 @@ export const MeetingHub: React.FC = () => {
               briefMatchesMeeting(operatorBrief, activeMeeting.id) ? operatorBrief : null
             }
             operatorBriefLoading={operatorBriefLoading}
+            operatorBriefError={operatorBriefError && briefingMeeting?.id === activeMeeting.id}
+            onRetryOperatorBrief={() => setOperatorBriefReloadKey((k) => k + 1)}
             onBack={() => setActiveDocumentId(null)}
             onEdit={() => openEditModal(activeMeeting)}
             onDelete={() => setDeleteTarget(activeMeeting)}
@@ -680,6 +700,8 @@ export const MeetingHub: React.FC = () => {
                   isPolish={isPolish}
                   operatorBrief={briefMatchesMeeting(operatorBrief, item.id) ? operatorBrief : null}
                   operatorBriefLoading={operatorBriefLoading && briefingMeeting?.id === item.id}
+                  operatorBriefError={operatorBriefError && briefingMeeting?.id === item.id}
+                  onRetryOperatorBrief={() => setOperatorBriefReloadKey((k) => k + 1)}
                 />
               )}
             >
@@ -1130,6 +1152,8 @@ const MeetingDetailView: React.FC<{
   isPolish: boolean;
   operatorBrief?: any;
   operatorBriefLoading?: boolean;
+  operatorBriefError?: boolean;
+  onRetryOperatorBrief?: () => void;
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -1143,6 +1167,8 @@ const MeetingDetailView: React.FC<{
   isPolish,
   operatorBrief,
   operatorBriefLoading,
+  operatorBriefError,
+  onRetryOperatorBrief,
   onBack,
   onEdit,
   onDelete,
@@ -1229,6 +1255,8 @@ const MeetingDetailView: React.FC<{
           isPolish={isPolish}
           brief={operatorBrief}
           loading={operatorBriefLoading}
+          error={operatorBriefError}
+          onRetry={onRetryOperatorBrief}
           className="lg:col-span-2"
         />
         <PreviewSection
@@ -1305,7 +1333,16 @@ const MeetingPreview: React.FC<{
   isPolish: boolean;
   operatorBrief?: any;
   operatorBriefLoading?: boolean;
-}> = ({ meeting, isPolish, operatorBrief, operatorBriefLoading }) => {
+  operatorBriefError?: boolean;
+  onRetryOperatorBrief?: () => void;
+}> = ({
+  meeting,
+  isPolish,
+  operatorBrief,
+  operatorBriefLoading,
+  operatorBriefError,
+  onRetryOperatorBrief,
+}) => {
   const { t } = useTranslation();
   // canon §4.1 — status uses the c.* chip family (statusChipTone via EntityStatusChip),
   // never a hardcoded status-colored pill. Only the neutral date stays in PreviewMetaCard.
@@ -1334,6 +1371,8 @@ const MeetingPreview: React.FC<{
         isPolish={isPolish}
         brief={operatorBrief}
         loading={operatorBriefLoading}
+        error={operatorBriefError}
+        onRetry={onRetryOperatorBrief}
       />
 
       <PreviewSection
@@ -1374,8 +1413,10 @@ const MeetingOperatorBriefCard: React.FC<{
   isPolish: boolean;
   brief?: any;
   loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
   className?: string;
-}> = ({ isPolish, brief, loading = false, className = '' }) => {
+}> = ({ isPolish, brief, loading = false, error = false, onRetry, className = '' }) => {
   const { t } = useTranslation();
   return (
   <div
@@ -1388,6 +1429,21 @@ const MeetingOperatorBriefCard: React.FC<{
     {loading ? (
       <div className="text-sm text-slate-500 dark:text-slate-400">
         {t('meeting.preparingMeetingBrief')}
+      </div>
+    ) : error ? (
+      <div className="flex flex-col items-start gap-2">
+        <div className="text-sm text-amber-600 dark:text-amber-400">
+          {t('meeting.operatorBriefError', 'Could not load the operator brief.')}
+        </div>
+        {onRetry ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="text-xs font-medium text-slate-600 dark:text-slate-300 underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
+          >
+            {t('common.retry', 'Retry')}
+          </button>
+        ) : null}
       </div>
     ) : brief ? (
       <div className="space-y-2">
