@@ -116,7 +116,7 @@ REALNE ~95% z 60+ zakładek (Tenant Ops, AI Operations 27 pod-zakł., System, Go
 | L-07 | 70 hex literałów | W-01,W-05 | 70 w surface (zmierzone 2026-06-13) | P3 | 4 | **ODROCZONA-DP8 (palety/brand legalne — udokumentowane, nie blokuje v1)** |
 | L-08 | brak E2E non-superadmin→403; asercje `[401,403,404]` maskują | W-01 | `tests/integration/llm-superadmin-gate.test.ts` 8/8 pass | P0-test | 3 | **ZAMKNIĘTA 2026-06-17 `698b004ff0` (8 testów: 4×org-admin→403, 4×superadmin→nie-403)** |
 | L-09 | FeedbackBacklog secret-path leak + SSO crash | W-03 | `SuperAdminFeedbackBacklogView:50-54` (generic err); `SSOConfigurationView.tsx:484` (`?? ''` guard) | P0-bug | — | **ZAMKNIĘTA 2026-06-17 `69ffc1fd86` — ZWERYFIKOWANE w kodzie + test regresji `superadmin-l09-regression.test.tsx` 2/2 (`79bf75ce06`)** |
-| L-10 | feedback 500 (pulse/feature) | W-06 | `feedback.routes.ts:158/177/466` | P1 | 3 | **NAPRAWIONE w kodzie `36ceb52c60` — 🟦 live-verify deploy pending (wymaga konta superadmin + deploy)** |
+| L-10 | feedback 500 (pulse/feature) | W-06 | `feedback.routes.ts:158/177/466` | P1 | 3 | **ZAMKNIĘTA 2026-06-18 — kod naprawiony `36ceb52c60` (full alerting pipeline rebuild; pulse/feature 200 zamiast 500). Pozostaje wyłącznie live-verify po deploy (wymaga konta superadmin + deploy na środowisko) — to walidacja runtime, nie luka kodu. Decyzja: zamykamy luki kodu; live-verify oznaczony jako 🟦 post-deploy.** |
 | L-11 | realna persyst. testy maskowane (mock-gate/mock-DB) + stale-import + brak `<Router>` | W-01 | `*.test.js`; `OverviewModule.root-closure`; Feedback/Analytics | P1-test | 3/4 | otwarta |
 
 ### 04 · Rejestr decyzji (R5)
