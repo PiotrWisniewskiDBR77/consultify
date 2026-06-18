@@ -1,0 +1,10 @@
+{
+  "notebook.common.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "notebook.rightRail.closePanel": {
+    "pl": "Zamknij panel",
+    "en": "Close panel"
+  }
+}

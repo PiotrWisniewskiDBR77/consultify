@@ -141,6 +141,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
         <button
           onClick={onClose}
           className="p-1 rounded text-slate-600 hover:text-slate-600 dark:hover:text-white transition-colors"
+          aria-label={isPl ? 'Zamknij' : 'Close'}
         >
           <X size={14} />
         </button>

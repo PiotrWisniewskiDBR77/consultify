@@ -129,6 +129,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
           <button
             onClick={onClose}
             className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            aria-label={isPl ? 'Zamknij' : 'Close'}
           >
             <X size={16} />
           </button>

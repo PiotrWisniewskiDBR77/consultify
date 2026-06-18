@@ -213,6 +213,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            aria-label={isPl ? 'Zamknij' : 'Close'}
           >
             <X size={14} />
           </button>
@@ -269,7 +270,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
                       value={editingValue}
                       onChange={(e) => setEditingValue(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 text-sm p-2 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/50 resize-none"
+                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 text-sm p-2 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 resize-none"
                       placeholder={isPl ? 'Edytuj temat…' : 'Edit topic…'}
                     />
                     <div className="mt-2 flex items-center gap-2">

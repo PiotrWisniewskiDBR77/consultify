@@ -417,6 +417,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            aria-label={pl ? 'Zamknij' : 'Close'}
           >
             <X size={18} />
           </button>

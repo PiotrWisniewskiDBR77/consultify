@@ -148,6 +148,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
               onDismiss();
             }}
             className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-white/[0.06]"
+            aria-label={pl ? 'Zamknij' : 'Close'}
           >
             <X size={14} />
           </button>
