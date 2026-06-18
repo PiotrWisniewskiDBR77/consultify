@@ -157,7 +157,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
       render: (row: TableRow) => (
         <div className="flex items-center gap-2">
           {row.hasMismatch && (
-            <AlertTriangle size={13} className="shrink-0 text-rose-400" />
+            <AlertTriangle size={13} className="shrink-0 text-danger-400" />
           )}
           <span className="text-slate-200">{row.kpiName}</span>
         </div>
@@ -171,8 +171,8 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
       filterOptions: [
         { value: 'reconciled', label: t('results.reconciliation.status.reconciled', 'Reconciled'), color: 'bg-emerald-500' },
         { value: 'pending', label: t('results.reconciliation.status.pending', 'Pending'), color: 'bg-amber-500' },
-        { value: 'disputed', label: t('results.reconciliation.status.disputed', 'Disputed'), color: 'bg-rose-500' },
-        { value: 'escalated', label: t('results.reconciliation.status.escalated', 'Escalated'), color: 'bg-rose-600' },
+        { value: 'disputed', label: t('results.reconciliation.status.disputed', 'Disputed'), color: 'bg-danger-500' },
+        { value: 'escalated', label: t('results.reconciliation.status.escalated', 'Escalated'), color: 'bg-danger-600' },
       ],
       render: (row: TableRow) => (
         <StatusChip
@@ -211,7 +211,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
             : row.varianceAbsolute > 0
               ? 'text-emerald-400'
               : row.varianceAbsolute < 0
-                ? 'text-rose-400'
+                ? 'text-danger-400'
                 : 'text-slate-400';
         return (
           <span className={`tabular-nums font-medium ${varianceTone}`}>
