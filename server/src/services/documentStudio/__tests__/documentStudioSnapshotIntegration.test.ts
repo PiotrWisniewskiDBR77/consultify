@@ -79,8 +79,8 @@ const ORG = 'org-snap';
 const USER = 'user-snap';
 const ARTIFACT = 'artifact-snap-1';
 
-beforeEach(() => {
-  __resetDocumentLifecycleForTests();
+beforeEach(async () => {
+  await __resetDocumentLifecycleForTests();
   __resetDocumentVersionSnapshotsForTests();
   initializeDocumentLifecycle({
     organizationId: ORG,
@@ -90,8 +90,8 @@ beforeEach(() => {
   liveSchemaState.title = 'Original';
 });
 
-afterEach(() => {
-  __resetDocumentLifecycleForTests();
+afterEach(async () => {
+  await __resetDocumentLifecycleForTests();
   __resetDocumentVersionSnapshotsForTests();
 });
 

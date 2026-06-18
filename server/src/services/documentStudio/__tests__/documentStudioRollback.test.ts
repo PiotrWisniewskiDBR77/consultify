@@ -89,8 +89,8 @@ const ORG_OTHER = 'org-rb-other';
 const USER = 'user-rb';
 const ARTIFACT = 'artifact-rb-1';
 
-beforeEach(() => {
-  __resetDocumentLifecycleForTests();
+beforeEach(async () => {
+  await __resetDocumentLifecycleForTests();
   __resetDocumentVersionSnapshotsForTests();
   __resetSchemaOverlayForTests();
   initializeDocumentLifecycle({
@@ -101,8 +101,8 @@ beforeEach(() => {
   liveSchema.title = 'Live title v3';
 });
 
-afterEach(() => {
-  __resetDocumentLifecycleForTests();
+afterEach(async () => {
+  await __resetDocumentLifecycleForTests();
   __resetDocumentVersionSnapshotsForTests();
   __resetSchemaOverlayForTests();
 });

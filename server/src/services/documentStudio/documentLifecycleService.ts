@@ -23,6 +23,11 @@
  * cross-tenant reads return `null` deny-by-default.
  */
 
+import {
+  __resetLifecycleRegistryDaoForTests,
+  loadLifecycleStatesForOrg as daoLoadLifecycleStatesForOrg,
+  persistLifecycleState as daoPersistLifecycleState,
+} from './documentLifecycleRegistryDao.js';
 import type { DocumentAuditEntry, DocumentStatus } from './documentStudioTypes.js';
 
 // =============================================================================
@@ -120,9 +125,6 @@ export function canTransition(from: DocumentStatus, to: DocumentStatus): boolean
 // =============================================================================
 
 const lifecycleStore = new Map<string, DocumentLifecycleState>();
-// In-memory DAO mirror — the wave5 / Postgres swap will replace these
-// two maps without changing the surface above.
-const persistedLifecycleStore = new Map<string, DocumentLifecycleState>();
 
 function key(organizationId: string, artifactId: string): string {
   return `${organizationId}::${artifactId}`;
@@ -146,19 +148,11 @@ function cloneState(state: DocumentLifecycleState): DocumentLifecycleState {
 
 async function persistLifecycleState(state: DocumentLifecycleState): Promise<{ ok: boolean }> {
   if (!state || !state.artifactId || !state.organizationId) return { ok: false };
-  persistedLifecycleStore.set(key(state.organizationId, state.artifactId), cloneState(state));
-  return { ok: true };
+  return daoPersistLifecycleState(state);
 }
 
 async function loadLifecycleStateForOrg(organizationId: string): Promise<DocumentLifecycleState[]> {
-  if (!organizationId) return [];
-  const prefix = `${organizationId}::`;
-  const out: DocumentLifecycleState[] = [];
-  for (const [k, state] of persistedLifecycleStore.entries()) {
-    if (!k.startsWith(prefix)) continue;
-    out.push(cloneState(state));
-  }
-  return out;
+  return daoLoadLifecycleStatesForOrg(organizationId);
 }
 
 const hydratedOrgs = new Set<string>();
@@ -456,9 +450,9 @@ export function getDocumentStatusOrDefault(
 // =============================================================================
 
 /** @internal */
-export function __resetDocumentLifecycleForTests(): void {
+export async function __resetDocumentLifecycleForTests(): Promise<void> {
   lifecycleStore.clear();
-  persistedLifecycleStore.clear();
   hydratedOrgs.clear();
   hydrationInflight.clear();
+  await __resetLifecycleRegistryDaoForTests();
 }

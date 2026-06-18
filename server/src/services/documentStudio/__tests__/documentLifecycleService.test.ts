@@ -41,16 +41,16 @@ const ARTIFACT = 'artifact-1';
 
 let auditPumpSpy: ReturnType<typeof vi.fn>;
 
-beforeEach(() => {
-  __resetDocumentLifecycleForTests();
+beforeEach(async () => {
+  await __resetDocumentLifecycleForTests();
   auditPumpSpy = vi.fn();
   registerDocumentLifecycleAuditPump((entry: DocumentAuditEntry) => {
     auditPumpSpy(entry);
   });
 });
 
-afterEach(() => {
-  __resetDocumentLifecycleForTests();
+afterEach(async () => {
+  await __resetDocumentLifecycleForTests();
 });
 
 describe('Document Lifecycle — predicates', () => {
