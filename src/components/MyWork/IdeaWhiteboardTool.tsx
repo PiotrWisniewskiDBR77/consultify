@@ -56,6 +56,7 @@ import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
+import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
@@ -222,6 +223,11 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           e.preventDefault();
           const file = item.getAsFile();
           if (!file) return;
+          // L-05/D-02: cap inline base64 images at 10MB (request body limit).
+          if (file.size > MAX_WHITEBOARD_IMAGE_BYTES) {
+            toast.error(t('myWork.whiteboard.errors.imageTooLarge', 'Image too large (max 10MB)'));
+            return;
+          }
 
           const reader = new FileReader();
           reader.onload = (ev) => {
@@ -277,6 +283,11 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           const id = `wb-drop-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
 
           if (file.type.startsWith('image/')) {
+            // L-05/D-02: cap inline base64 images at 10MB (request body limit).
+            if (file.size > MAX_WHITEBOARD_IMAGE_BYTES) {
+              toast.error(t('myWork.whiteboard.errors.imageTooLarge', 'Image too large (max 10MB)'));
+              continue;
+            }
             const reader = new FileReader();
             reader.onload = (ev) => {
               const dataUrl = ev.target?.result as string;
@@ -522,6 +533,9 @@ function normalizeVoteSummary(
   }, {});
 }
 
+// L-05/D-02: inline base64 image cap — matches the 10MB request body limit.
+const MAX_WHITEBOARD_IMAGE_BYTES = 10 * 1024 * 1024;
+
 const DEFAULT_SESSION_STATE: WhiteboardSessionState = {
   active: false,
   role: 'facilitator',
@@ -648,6 +662,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       open,
       locked,
     });
+  // M09 L-02: realtime graph sync (org-scoped WS, mirrors M06 Mind Map).
+  const collab = useWhiteboardCollab({ currentUserId, setNodes, setEdges });
   const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
   const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
   const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
@@ -747,17 +763,20 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         const next = applyNodeChanges(filteredChanges, nds);
         const hasSelectionChange = changes.some((c: NodeChange) => c.type === 'select');
         if (hasSelectionChange) handleSelectionUpdate(next);
+        // L-02: emit final positions / removals to collaborators.
+        collab.broadcastNodeChanges(changes, next);
         return next;
       });
     },
-    [handleSelectionUpdate, pushUndoSnapshot]
+    [collab, handleSelectionUpdate, pushUndoSnapshot]
   );
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       if (changes.some((change) => change.type !== 'select')) pushUndoSnapshot();
+      collab.broadcastEdgeChanges(changes);
       setEdges((eds) => applyEdgeChanges(changes, eds));
     },
-    [pushUndoSnapshot]
+    [collab, pushUndoSnapshot]
   );
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
 
@@ -1398,9 +1417,15 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       const targetNode = nodes.find((node) => node.id === connection.target);
       if (isNodeDataLocked(sourceNode) || isNodeDataLocked(targetNode)) return;
       pushUndoSnapshot();
-      setEdges((eds: Edge[]) => addEdge({ ...connection, type: 'labeled' }, eds));
+      setEdges((eds: Edge[]) => {
+        const next = addEdge({ ...connection, type: 'labeled' }, eds);
+        // L-02: broadcast the newly created edge to collaborators.
+        const added = next.find((e) => !eds.some((prev) => prev.id === e.id));
+        if (added) collab.broadcastEdgeAdd(added);
+        return next;
+      });
     },
-    [locked, nodes, pushUndoSnapshot, setEdges]
+    [collab, locked, nodes, pushUndoSnapshot, setEdges]
   );
 
   // ── Add elements ─────────────────────────────────────────────────────────
@@ -1674,6 +1699,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       pushUndoSnapshot();
       const newNode = createNode(kind, extraData, nodes.length);
       setNodes((prev: Node[]) => [...prev, newNode]);
+      collab.broadcastNodeAdd(newNode); // L-02: realtime add
       const semanticType =
         typeof newNode.data?.semanticType === 'string' ? newNode.data.semanticType : undefined;
       if (
@@ -1696,6 +1722,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     },
     [
       appendActivity,
+      collab,
       createNode,
       createOutcomeRecord,
       currentUserId,
@@ -2864,6 +2891,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             currentUserId={currentUserId}
             currentUserName={currentUserName}
             selectedNodeIds={selectedNodeIds}
+            onRegisterSend={collab.registerCollabSend}
           />
           {/* AI Proposal Review overlay */}
           {proposalBatch && (
