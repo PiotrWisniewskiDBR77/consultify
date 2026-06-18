@@ -495,7 +495,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
               if (e.key === 'Enter') submitUrl();
             }}
             placeholder={t('aiChat.menu.urlPlaceholder', 'https://…')}
-            className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500"
+            className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
           />
           <p className="mt-2 text-[12px] text-slate-500 dark:text-slate-400">
             {t(

@@ -346,7 +346,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                 'chat.feedback.missingInfoPlaceholder',
                 'Opisz czego brakowało w odpowiedzi...'
               )}
-              className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
               rows={2}
             />
           </div>

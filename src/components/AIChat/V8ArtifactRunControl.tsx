@@ -508,7 +508,7 @@ export function V8ArtifactRunControl({
             onChange={(event) =>
               setSelectedOutputType(event.target.value as ArtifactPlanOutputType)
             }
-            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           >
             {OUTPUT_OPTIONS.map((option) => (
               <option key={option.outputType} value={option.outputType}>
@@ -530,7 +530,7 @@ export function V8ArtifactRunControl({
                   'v8.artifactRun.sheetTableIdPlaceholder',
                   'Enter the governed table ID to register/materialize'
                 )}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />
               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                 {t(
@@ -553,7 +553,7 @@ export function V8ArtifactRunControl({
               'v8.artifactRun.goalPlaceholder',
               'Describe what output should be generated from this conversation.'
             )}
-            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           />
 
           <div className="mt-4 flex gap-2">

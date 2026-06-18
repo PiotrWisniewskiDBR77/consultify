@@ -883,7 +883,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           )
                         }
                         rows={3}
-                        className="w-full text-xs bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40"
+                        className="w-full text-xs bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500/40"
                       />
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -1333,7 +1333,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                     rows={3}
-                    className="w-full text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40 text-slate-900 dark:text-slate-100"
+                    className="w-full text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500/40 text-slate-900 dark:text-slate-100"
                   />
                   <div className="flex items-center justify-end gap-2">
                     <button

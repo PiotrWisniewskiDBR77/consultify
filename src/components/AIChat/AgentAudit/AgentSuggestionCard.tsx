@@ -324,7 +324,7 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
                     checked={isSelected}
                     onChange={() => canToggle && onAgentToggle(agent.agentId)}
                     disabled={!canToggle}
-                    className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </label>
 

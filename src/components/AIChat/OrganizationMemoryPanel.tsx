@@ -320,7 +320,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
                   value={searchQuery}
                   onChange={handleSearch}
                   placeholder={t('chat.orgMemory.searchPlaceholder', 'Search decision history…')}
-                  className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-300 dark:focus:ring-primary-700"
+                  className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-600"
                 />
               </div>
             </div>

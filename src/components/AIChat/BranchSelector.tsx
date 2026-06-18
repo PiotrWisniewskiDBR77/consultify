@@ -263,7 +263,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
                       onChange={(e) => setNewBranchName(e.target.value)}
                       placeholder={t('branch.namePlaceholder', 'Branch name...')}
                       autoFocus
-                      className="flex-1 px-2 py-1.5 text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg outline-none focus:border-primary-400"
+                      className="flex-1 px-2 py-1.5 text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg outline-none focus:border-blue-400"
                       onKeyDown={(e) => e.key === 'Enter' && handleCreateBranch()}
                     />
                     <button

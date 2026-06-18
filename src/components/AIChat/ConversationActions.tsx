@@ -126,7 +126,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                         border border-primary-500
                         rounded
                         text-navy-900 dark:text-white
-                        focus:outline-none focus:ring-2 focus:ring-primary-500/50
+                        focus:outline-none focus:ring-2 focus:ring-blue-500/50
                         w-40
                     "
         />

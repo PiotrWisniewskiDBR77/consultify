@@ -184,7 +184,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           onKeyDown={handleRenameKeyDown}
           onBlur={handleFinishRename}
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 min-w-0 px-1.5 py-0.5 text-[13px] rounded bg-white dark:bg-navy-800 border border-primary-400 dark:border-primary-600 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+          className="flex-1 min-w-0 px-1.5 py-0.5 text-[13px] rounded bg-white dark:bg-navy-800 border border-primary-400 dark:border-primary-600 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         />
       ) : (
         <span
