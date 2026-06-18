@@ -1,6 +1,0 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="41.064142">
-<testsuite name="radar-go-gate.spec.ts" timestamp="2026-05-18T08:57:27.636Z" hostname="chromium" tests="1" failures="0" skipped="0" time="8.743" errors="0">
-<testcase name="Radar GO gate (no manual bootstrap) › covers radar shell render and core CTA presence" classname="radar-go-gate.spec.ts" time="8.743">
-</testcase>
-</testsuite>
-</testsuites>

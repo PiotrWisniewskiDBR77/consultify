@@ -199,6 +199,9 @@ coverage/.tmp
 server/exports/
 /exports/
 
+# Local generated reports (one-off runtime/route reports)
+/reports/
+
 # Local backups
 _backup/
 /backups/
