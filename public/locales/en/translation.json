@@ -1578,6 +1578,16 @@
         "loadFailed": "Failed to load templates",
         "confirmDelete": "Are you sure you want to delete this template?"
       }
+    },
+    "aiCoreRuntime": {
+      "refresh": "Refresh",
+      "loading": "Loading…",
+      "none": "none"
+    },
+    "promptOsRuntime": {
+      "refresh": "Refresh",
+      "loading": "Loading…",
+      "none": "none"
     }
   },
   "dynamicTabBar": {

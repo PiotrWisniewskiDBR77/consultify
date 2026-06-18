@@ -303,6 +303,16 @@
         "loadFailed": "Nie udało się załadować szablonów",
         "confirmDelete": "Na pewno chcesz usunąć ten szablon?"
       }
+    },
+    "aiCoreRuntime": {
+      "refresh": "Odśwież",
+      "loading": "Ładowanie…",
+      "none": "brak"
+    },
+    "promptOsRuntime": {
+      "refresh": "Odśwież",
+      "loading": "Ładowanie…",
+      "none": "brak"
     }
   },
   "dynamicTabBar": {
