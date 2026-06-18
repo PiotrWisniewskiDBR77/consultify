@@ -466,6 +466,89 @@ jobs:
           dur=$((end - JOB_START))
           echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
 
+  # ═══════════════════════════════════════════════════════════════
+  # COLOCATED __tests__ (server/src + src)
+  # These never ran in CI: the unit/component/integration jobs pass explicit
+  # paths (tests/unit|tests/components|tests/integration) which override the
+  # vitest `include`, so server/src/**/__tests__ and src/**/__tests__ were
+  # silently skipped (~580 tests). Server colocated tests need Postgres.
+  # ═══════════════════════════════════════════════════════════════
+  colocated-tests:
+    name: 🧬 Colocated __tests__ (server + src)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint-typecheck
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: iris
+          POSTGRES_PASSWORD: iris_test
+          POSTGRES_DB: iris_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "Colocated __tests__ deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
+      - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: npm ci
+
+      - name: Migrate DB (strict)
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: DB_TYPE=postgres DATABASE_URL=postgres://iris:iris_test@localhost:5432/iris_test npm run db:migrate:strict
+
+      # Server colocated tests run under the `node` environment + Postgres.
+      # `vitest run server/src` only matches *.test.* files that are covered by
+      # the config `include` (server/src/**/__tests__/**), so it does NOT
+      # duplicate tests/unit|integration|components.
+      - name: Run server/src colocated __tests__
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: npx vitest run server/src --no-file-parallelism --reporter=junit --outputFile=junit-colocated-server.xml
+        env:
+          DB_TYPE: postgres
+          DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
+
+      # Frontend colocated tests run under jsdom (no DB).
+      - name: Run src colocated __tests__
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: npx vitest run src --reporter=junit --outputFile=junit-colocated-src.xml
+
+      - name: Upload test results
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: colocated-test-results
+          path: |
+            junit-colocated-server.xml
+            junit-colocated-src.xml
+          retention-days: 30
+      - name: Job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          dur=$((end - JOB_START))
+          echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
+
   integration-tests:
     name: 🔗 Integration Tests (Shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
@@ -1125,6 +1208,7 @@ jobs:
         unit-tests,
         component-tests,
         integration-tests,
+        colocated-tests,
         security-integrity,
         e2e-tests,
         readiness-smoke,
@@ -1141,6 +1225,7 @@ jobs:
           UNIT: ${{ needs.unit-tests.result }}
           COMPONENT: ${{ needs.component-tests.result }}
           INTEGRATION: ${{ needs.integration-tests.result }}
+          COLOCATED: ${{ needs.colocated-tests.result }}
           SECURITY_INTEGRITY: ${{ needs.security-integrity.result }}
           E2E_TIER0: ${{ needs.e2e-tests.result }}
           READINESS: ${{ needs.readiness-smoke.result }}
@@ -1154,6 +1239,7 @@ jobs:
           echo "  unit-tests=$UNIT"
           echo "  component-tests=$COMPONENT"
           echo "  integration-tests=$INTEGRATION"
+          echo "  colocated-tests=$COLOCATED"
           echo "  security-integrity=$SECURITY_INTEGRITY"
           echo "  e2e-tests=$E2E_TIER0"
           echo "  readiness-smoke=$READINESS"
@@ -1187,6 +1273,7 @@ jobs:
           req_ok "unit-tests" "$UNIT"
           req_ok "component-tests" "$COMPONENT"
           req_ok "integration-tests" "$INTEGRATION"
+          req_ok "colocated-tests" "$COLOCATED"
           req_ok "security-integrity" "$SECURITY_INTEGRITY"
           req_ok "e2e-tests" "$E2E_TIER0"
           req_ok_or_skipped "readiness-smoke" "$READINESS"
@@ -1208,6 +1295,7 @@ jobs:
         unit-tests,
         component-tests,
         integration-tests,
+        colocated-tests,
         security-integrity,
         security-tests,
         e2e-tests,
@@ -1244,6 +1332,7 @@ jobs:
           echo "| Unit Tests (4 shards) | ${{ needs.unit-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Component Tests | ${{ needs.component-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Colocated __tests__ (server + src) | ${{ needs.colocated-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Tests (Tier-0) | ${{ needs.e2e-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Readiness Smoke (Settings/Admin/SuperAdmin) | ${{ needs.readiness-smoke.result == 'success' && '✅' || (needs.readiness-smoke.result == 'skipped' && '⏭️ scoped out' || '❌') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Patch Coverage (≥80%) | ${{ needs.patch-coverage.result == 'success' && '✅' || (needs.patch-coverage.result == 'skipped' && '⏭️ non-PR' || '❌') }} |" >> $GITHUB_STEP_SUMMARY

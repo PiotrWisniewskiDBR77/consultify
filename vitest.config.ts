@@ -235,6 +235,13 @@ export default defineConfig({
       // Server route tests that are safe to run from the root workspace config
       'server/src/routes/**/__tests__/*.{test,spec}.{js,ts,jsx,tsx}',
       'server/src/routes/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      // Remaining colocated server tests (config/middleware/controllers/database/...).
+      // Without this glob `npx vitest run server/src` matches nothing because an
+      // explicit path positional is intersected with `include`, so these tests
+      // (e.g. OrganizationController.membership, inputSanitization.middleware) never
+      // ran in CI. The `_backup` tree is excluded below.
+      'server/src/**/__tests__/*.{test,spec}.{js,ts,jsx,tsx}',
+      'server/src/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // server/tests excluded - require full DB schema
       // Run separately with specialized setup
       // 'server/tests/**/*.{test,spec}.{js,ts,jsx,tsx}',
@@ -268,6 +275,8 @@ export default defineConfig({
       // 'tests/integration/**', // Re-enabled for fixes
       // 'tests/performance/**', // Now included for Agent 5
       'node_modules/**',
+      // Backup tree (ts/js collision snapshots) — never run as live tests
+      'server/src/_backup/**',
       // Playwright spec files (not Vitest tests)
       'tests/accessibility/*.spec.ts',
       // =====================================
