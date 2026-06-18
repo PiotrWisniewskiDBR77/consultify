@@ -148,7 +148,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
               onClick={() => onChange(n)}
               className={`w-6 h-6 text-[10px] rounded transition-colors ${
                 value === n
-                  ? 'bg-primary-500 text-white'
+                  ? 'bg-navy-900 text-white'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >

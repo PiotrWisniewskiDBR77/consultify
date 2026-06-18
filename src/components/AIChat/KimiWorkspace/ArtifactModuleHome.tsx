@@ -82,7 +82,13 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   const Icon = meta.icon;
 
   const { templates, loading: templatesLoading } = useModuleTemplates(lane);
-  const { artifacts: recentArtifacts, loading: recentLoading } = useModuleRecentArtifacts(lane);
+  const { artifacts: recentArtifacts, loading: recentLoading } = useModuleRecentArtifacts(lane, 10);
+  // "Saved" = finalized artifacts (ready/shared/archived — not drafts).
+  // Recent = all artifacts sorted by time; Saved = subset that are fully complete.
+  const savedArtifacts = useMemo(
+    () => recentArtifacts.filter((a) => a.statusKey !== 'draft'),
+    [recentArtifacts]
+  );
   // Block A / A-S5b — when ON, lane=tabele swaps to the
   // `tp_base_templates` lifecycle endpoint via `<TabeleTemplatesGrid>`
   // and surfaces the lifecycle filter + dot badge + governance drawer.
@@ -200,17 +206,22 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
             lane={lane}
           />
         )}
-        {(activeTab === 'recent' || activeTab === 'saved') && (
+        {activeTab === 'recent' && (
           <ArtifactsList
             artifacts={recentArtifacts}
             loading={recentLoading}
             onArtifactClick={handleArtifactClick}
             isPolish={isPolish}
-            emptyLabel={
-              activeTab === 'recent'
-                ? t('kimi.artifactHome.emptyRecent', 'No recent documents')
-                : t('kimi.artifactHome.emptySaved', 'No saved documents')
-            }
+            emptyLabel={t('kimi.artifactHome.emptyRecent', 'No recent documents')}
+          />
+        )}
+        {activeTab === 'saved' && (
+          <ArtifactsList
+            artifacts={savedArtifacts}
+            loading={recentLoading}
+            onArtifactClick={handleArtifactClick}
+            isPolish={isPolish}
+            emptyLabel={t('kimi.artifactHome.emptySaved', 'No saved documents')}
           />
         )}
       </div>

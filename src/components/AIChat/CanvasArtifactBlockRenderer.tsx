@@ -480,7 +480,7 @@ export function CanvasArtifactBlockRenderer({
                         </div>
                         <div className="h-2 rounded-full bg-slate-200 dark:bg-white/10">
                           <div
-                            className="h-2 rounded-full bg-primary-500"
+                            className="h-2 rounded-full bg-navy-900"
                             style={{ width: `${Math.max(6, (metric.value / max) * 100)}%` }}
                           />
                         </div>
@@ -597,7 +597,7 @@ function ChartBlockView({
               </div>
               <div className="h-3 rounded-full bg-slate-200 dark:bg-white/10">
                 <div
-                  className="h-3 rounded-full bg-primary-500"
+                  className="h-3 rounded-full bg-navy-900"
                   style={{ width: `${Math.max(6, (metric.value / max) * 100)}%` }}
                 />
               </div>

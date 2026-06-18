@@ -223,7 +223,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
               </span>
               <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary-500 rounded-full transition-all duration-500"
+                  className="h-full bg-navy-900 rounded-full transition-all duration-500"
                   style={{ width: `${formatScore(metrics.relevance)}%` }}
                 />
               </div>
@@ -298,7 +298,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
               </span>
               <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary-500 rounded-full transition-all duration-500"
+                  className="h-full bg-navy-900 rounded-full transition-all duration-500"
                   style={{ width: `${formatScore(metrics.coherence)}%` }}
                 />
               </div>

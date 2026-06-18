@@ -470,15 +470,15 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
             <div className="flex items-center gap-2 rounded-full border border-primary-200 dark:border-primary-500/30 bg-white dark:bg-navy-800 px-4 py-2 shadow-lg pointer-events-auto">
               <div className="flex gap-1">
                 <span
-                  className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce"
+                  className="w-1.5 h-1.5 rounded-full bg-navy-900 animate-bounce dark:bg-white"
                   style={{ animationDelay: '0ms' }}
                 />
                 <span
-                  className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce"
+                  className="w-1.5 h-1.5 rounded-full bg-navy-900 animate-bounce dark:bg-white"
                   style={{ animationDelay: '150ms' }}
                 />
                 <span
-                  className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce"
+                  className="w-1.5 h-1.5 rounded-full bg-navy-900 animate-bounce dark:bg-white"
                   style={{ animationDelay: '300ms' }}
                 />
               </div>

@@ -1330,7 +1330,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
                   teresaVoiceStatus === 'live'
                     ? 'bg-danger-600 hover:bg-danger-500 shadow-danger-500/25'
-                    : 'bg-primary-600 hover:bg-primary-500 shadow-primary-500/25'
+                    : 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-primary-500/25'
                 }`}
                 title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
               >
@@ -1349,7 +1349,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 disabled={isDisabled || !teresaVoiceAvailable}
                 className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg group ${
                   teresaVoiceAvailable
-                    ? 'bg-primary-600 hover:bg-primary-500 shadow-primary-500/25'
+                    ? 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-primary-500/25'
                     : 'bg-primary-600/40 cursor-not-allowed shadow-none'
                 }`}
                 title={

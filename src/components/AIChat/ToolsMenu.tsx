@@ -304,7 +304,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       >
         <IconComponent size={20} />
         {activeModeCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold text-white bg-primary-500 rounded-full">
+          <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold text-white bg-navy-900 rounded-full">
             {activeModeCount}
           </span>
         )}

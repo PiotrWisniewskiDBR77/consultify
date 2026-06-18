@@ -278,7 +278,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                 <button
                   onClick={() => void handleInvite()}
                   disabled={busy || !inviteEmail.trim()}
-                  className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white px-3 py-2 text-xs font-semibold"
+                  className="inline-flex items-center gap-1 rounded-xl bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white px-3 py-2 text-xs font-semibold"
                 >
                   <UserPlus size={14} />
                 </button>
@@ -403,7 +403,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                   <button
                     onClick={() => void handleAddSnippet()}
                     disabled={knBusy || !snippet.trim()}
-                    className="rounded-lg bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white p-2"
+                    className="rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white p-2"
                     title={t('common.add', 'Add')}
                   >
                     <Plus size={14} />

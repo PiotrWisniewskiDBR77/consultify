@@ -272,7 +272,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
               <button
                 onClick={handleCreate}
                 disabled={!name.trim()}
-                className="px-2 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
+                className="px-2 py-1.5 text-sm bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
               >
                 {t('common.add', 'Add')}
               </button>

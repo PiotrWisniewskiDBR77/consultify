@@ -128,14 +128,14 @@ export const AIOSHub: React.FC = () => {
               <Link
                 key={module.title}
                 to={module.href}
-                className="group flex min-h-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md dark:border-white/10 dark:bg-navy-900 dark:hover:border-primary-400/40"
+                className="group flex min-h-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-navy-900 dark:hover:border-white/20"
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="rounded-2xl bg-primary-50 p-3 text-primary-700 dark:bg-primary-500/10 dark:text-primary-200">
+                    <div className="rounded-2xl bg-slate-100 p-3 text-slate-700 dark:bg-white/10 dark:text-slate-200">
                       <Icon size={22} />
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-600 group-hover:text-primary-500">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300">
                       Open
                     </span>
                   </div>

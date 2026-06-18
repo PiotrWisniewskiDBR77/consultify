@@ -178,7 +178,7 @@ export const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({ action
       onClick={onAction}
       className="
                 flex items-center gap-2 px-4 py-2
-                bg-primary-600 hover:bg-primary-500
+                bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]
                 text-white text-sm font-medium
                 rounded-lg shadow-md shadow-primary-500/20
                 transition-all duration-200

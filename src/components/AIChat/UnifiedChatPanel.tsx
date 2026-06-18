@@ -5242,7 +5242,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {/* Skip links for keyboard users */}
         <a
           href="#chat-input"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-navy-900 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
         >
           {t('wcag.skipToInput', 'Skip to chat input')}
         </a>
@@ -5296,7 +5296,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               >
                 <Briefcase size={18} strokeWidth={1.75} />
                 {pendingActionsCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-navy-900 text-[10px] font-medium text-white px-1 leading-none">
                     {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
                   </span>
                 )}

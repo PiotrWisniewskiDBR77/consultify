@@ -1486,7 +1486,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             agentAuditState.state !== 'error' && (
               <div className="mt-3 p-2.5 bg-primary-50/50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-800 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+                  <div className="w-2 h-2 rounded-full bg-navy-900 animate-pulse" />
                   <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
                     {agentAuditState.state === 'reviewing'
                       ? t('agentAudit.streaming.reviewing', 'Multi-Agent Review in Progress')

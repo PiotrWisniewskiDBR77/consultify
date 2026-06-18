@@ -180,7 +180,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                     p-2 rounded-xl transition-all duration-200
                     ${
                       isOpen
-                        ? 'bg-primary-600 text-white shadow-lg'
+                        ? 'bg-navy-900 text-white shadow-sm'
                         : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 shadow-md border border-slate-200 dark:border-navy-700'
                     }
                     hover:shadow-lg
