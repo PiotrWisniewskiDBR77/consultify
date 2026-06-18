@@ -140,6 +140,7 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 - Baner MVP (L-03) — R3: zweryfikować runtime, bo re-audit twierdzi poprawiony, a karta wciąż go listuje (`finding_gap_reports_overstate`).
 
 ### 07 · Log wdrożenia + re-ocena
+- **2026-06-17 (Harvard 4 Fala 5): M12 CZYSTA.** Sweep §27+tokens+i18n — brak zmian wymaganych. grep `rose-` Audit/ = 0; hex = 0 realnych (komentarze `#19x` = anchory); §27 = 0 surowych `<table>` w produkcji (1 w pliku testowym, §27-exempt); i18n L-07 = ZABLOKOWANA (locales poza strefą). Teczka zaktualizowana.
 - **2026-06-17 (Harvard 3): reconciliation teczka↔kod.** Stwierdzono że teczka §03 była nieaktualna względem kodu — L-01/L-02/L-05/L-06 były już zaimplementowane w kodzie (kill-switch DP-5, search serwerowy, ModuleHub, FilterableTable §27), tylko teczka tego nie odnotowała. Domknięte realnie: **L-08** (token zamiast `#3b82f6`) + **L-09** (T6 pogodzony z §27 surface — poprzedni test failował 11/30 po refaktorze L-05/L-06; teraz 30/30 PASS) — `bc30513f50`. Pozostaje OTWARTA tylko **L-07** (i18n inline = dług spójności DP-10, NIE błąd). Stray junk `src/utils/auditProgramEditStubFlag 2.ts` (kopia z równoległej sesji git) — do usunięcia poza scope.
 - 2026-06-13: pogłębienie teczki; **R3: `7df4b22d6d` zweryfikowany w git log** (cross-org assignment injection naprawiony, Bramka D tests); enumeracja 7 endpointów + serwisu; DoD przeliczone grepem (**i18n ~96 — korekta zaniżenia karty „19"**; hex 1; table 0). 17 BE testów PASS.
 - Audyt 2026-06-11: 55/100. Re-ocena po Fazie 3/4 + sesji żywej (R6).
