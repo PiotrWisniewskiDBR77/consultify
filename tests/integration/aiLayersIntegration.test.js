@@ -72,7 +72,7 @@ describe('AI Layers Integration', () => {
   describe('AI Drafts (Controlled AI Operations)', () => {
     it('should return 401 without auth for drafts list', async () => {
       const res = await request(app).get('/api/ai-drafts');
-      expect([401, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
 
     it('should get pending AI drafts with auth', async () => {
@@ -82,7 +82,7 @@ describe('AI Layers Integration', () => {
         .get('/api/ai-drafts')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 201, 204, 400, 401, 403, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(Array.isArray(res.body) || res.body.drafts).toBe(true);
       }
@@ -95,14 +95,14 @@ describe('AI Layers Integration', () => {
         .get('/api/ai-drafts/user/stats')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 201, 204, 400, 401, 403, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
   describe('AI Nudges (Proactive Intelligence)', () => {
     it('should return 401 without auth for pending nudges', async () => {
       const res = await request(app).get('/api/ai/nudges/pending');
-      expect([401, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
 
     it('should get pending nudges with auth', async () => {
@@ -112,7 +112,7 @@ describe('AI Layers Integration', () => {
         .get('/api/ai/nudges/pending')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 201, 204, 400, 401, 403, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should track nudge interaction', async () => {
@@ -209,7 +209,7 @@ describe('AI Layers Integration', () => {
         .get('/api/ai-feedback/stats')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 201, 204, 400, 401, 403, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

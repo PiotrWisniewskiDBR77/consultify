@@ -136,8 +136,11 @@ describe('Storage Security & Isolation Integration', () => {
       .get(`/api/projects/${testProjectIdA}/files`)
       .set('Authorization', `Bearer ${testTokenB}`);
 
-    // User B should not have access to User A's project
-    expect([403, 404, 501]).toContain(resB.status);
+    // User B must NOT read User A's project files. Cross-org access = 403 (denied)
+    // or 404 (don't reveal existence). 501 dropped — it masked an unimplemented
+    // isolation guard (the very hole this test must catch).
+    expect([403, 404]).toContain(resB.status);
+    expect(resB.status).not.toBe(200);
   });
 
   it('should block upload if project storage limit is exceeded', async () => {
@@ -149,8 +152,9 @@ describe('Storage Security & Isolation Integration', () => {
       .set('Authorization', `Bearer ${testTokenA}`)
       .attach('file', Buffer.from('test content'), 'test.txt');
 
-    // Accept various status codes as endpoint may not be implemented
-    expect([200, 201, 400, 403, 404, 413, 500, 501]).toContain(res.status);
+    // Own project upload: success (200/201) or quota rejection (413) or validation
+    // (400). 500/501 dropped — they masked server errors / unimplemented limit checks.
+    expect([200, 201, 400, 413]).toContain(res.status);
   });
 
   it('should sanitize filenames preventing directory traversal', async () => {
@@ -161,8 +165,10 @@ describe('Storage Security & Isolation Integration', () => {
       .set('Authorization', `Bearer ${testTokenA}`)
       .attach('file', Buffer.from('test'), '../../../etc/passwd');
 
-    // Should either reject or sanitize the filename
-    expect([200, 201, 400, 403, 404, 500, 501]).toContain(res.status);
+    // Traversal filename must be rejected (400) OR sanitized-and-stored (200/201).
+    // 500/501 dropped (masking). NOTE: a full guarantee also needs a body assertion
+    // that the STORED filename is not the traversal path — tracked for follow-up.
+    expect([200, 201, 400]).toContain(res.status);
   });
 
   it('should soft delete files instead of removing them immediately', async () => {
@@ -173,6 +179,7 @@ describe('Storage Security & Isolation Integration', () => {
       .delete(`/api/projects/${testProjectIdA}/files/test-file-id`)
       .set('Authorization', `Bearer ${testTokenA}`);
 
-    expect([200, 204, 403, 404, 500, 501]).toContain(deleteRes.status);
+    // Soft-delete success (200/204) or file-absent (404). 403/500/501 dropped (masking).
+    expect([200, 204, 404]).toContain(deleteRes.status);
   });
 });
