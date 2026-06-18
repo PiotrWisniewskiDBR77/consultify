@@ -2860,6 +2860,49 @@
       "planned": "planowane",
       "totalDays": "dni łącznie",
       "board": "Zarząd"
+    },
+    "initiativeNotionView": {
+      "other": "Pozostałe",
+      "contents": "Spis treści",
+      "searchSections": "Szukaj sekcji…",
+      "goal": "Cel",
+      "tasks": "Zadania",
+      "team": "Zespół",
+      "resources": "Zasoby",
+      "finance": "Finanse",
+      "sections": "sekcji",
+      "noSectionsToDisplay": "Brak sekcji do wyświetlenia."
+    },
+    "initiativePreview": {
+      "initiative": "Inicjatywa"
+    },
+    "initiativeScrollView": {
+      "contents": "Spis treści",
+      "goal": "Cel",
+      "tasks": "Zadania",
+      "team": "Zespół",
+      "resources": "Zasoby",
+      "financeRisk": "Finanse/Ryzyko",
+      "gateDecisionRequired": "Wymagana decyzja bramkowa"
+    },
+    "initiativeSourceLink": {
+      "ideaWorkspace": "Workspace pomysłu",
+      "assessment": "Ocena",
+      "auditReadout": "Readout audytu",
+      "source": "Źródło"
+    },
+    "financialNarrativeBlocks": {
+      "financialAnalysisSizingRoi": "Analiza finansowa (sizing + ROI)",
+      "financialImpact": "Wpływ finansowy"
+    },
+    "initiativeCharterWizard": {
+      "highImpact": "Duży wpływ",
+      "lowImpact": "Mały wpływ",
+      "bigBet": "Duży zakład",
+      "fillIn": "Uzupełnienie",
+      "reconsider": "Do rozważenia",
+      "lowEffort": "Mały wysiłek",
+      "highEffort": "Duży wysiłek"
     }
   },
   "execution": {

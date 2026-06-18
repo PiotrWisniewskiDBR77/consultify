@@ -3642,6 +3642,49 @@
       "planned": "planned",
       "totalDays": "total days",
       "board": "Board"
+    },
+    "initiativeNotionView": {
+      "other": "Other",
+      "contents": "Contents",
+      "searchSections": "Search sections…",
+      "goal": "Goal",
+      "tasks": "Tasks",
+      "team": "Team",
+      "resources": "Resources",
+      "finance": "Finance",
+      "sections": "sections",
+      "noSectionsToDisplay": "No sections to display."
+    },
+    "initiativePreview": {
+      "initiative": "Initiative"
+    },
+    "initiativeScrollView": {
+      "contents": "Contents",
+      "goal": "Goal",
+      "tasks": "Tasks",
+      "team": "Team",
+      "resources": "Resources",
+      "financeRisk": "Finance/Risk",
+      "gateDecisionRequired": "Gate decision required"
+    },
+    "initiativeSourceLink": {
+      "ideaWorkspace": "Idea Workspace",
+      "assessment": "Assessment",
+      "auditReadout": "Audit readout",
+      "source": "Source"
+    },
+    "financialNarrativeBlocks": {
+      "financialAnalysisSizingRoi": "Financial analysis (sizing + ROI)",
+      "financialImpact": "Financial impact"
+    },
+    "initiativeCharterWizard": {
+      "highImpact": "High impact",
+      "lowImpact": "Low impact",
+      "bigBet": "Big bet",
+      "fillIn": "Fill-in",
+      "reconsider": "Reconsider",
+      "lowEffort": "Low effort",
+      "highEffort": "High effort"
     }
   },
   "execution": {
