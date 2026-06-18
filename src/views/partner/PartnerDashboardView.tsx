@@ -6,6 +6,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   loadPartnerRuntimeSummary,
@@ -22,6 +23,7 @@ import { AppView } from '../../types';
 import { PARTNER_TRUST_PHASES } from './types';
 
 export const PartnerDashboardView: React.FC = () => {
+  const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
   const [runtimeSummary, setRuntimeSummary] = useState<PartnerRuntimeSummary | null>(null);
   const [trustSnapshot, setTrustSnapshot] = useState<PartnerTrustSnapshot>({
@@ -68,13 +70,13 @@ export const PartnerDashboardView: React.FC = () => {
         <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              Trust Progression
+              {t('partner.dashboard.trustProgression', 'Trust Progression')}
             </div>
             <button
               onClick={handleNavigate(AppView.PARTNER_PROVIDER_HOME)}
               className="text-xs font-semibold text-brand hover:underline"
             >
-              View Details →
+              {t('partner.dashboard.viewDetails', 'View Details')} →
             </button>
           </div>
           <TrustProgressionIndicator
@@ -90,18 +92,27 @@ export const PartnerDashboardView: React.FC = () => {
         {/* Quick Navigation */}
         <div className="grid gap-4 md:grid-cols-3">
           <QuickNavCard
-            title="Commission"
-            description="View statements, payments i submit inquiries"
+            title={t('partner.dashboard.nav.commission.title', 'Commission')}
+            description={t(
+              'partner.dashboard.nav.commission.description',
+              'View statements, payments and submit inquiries'
+            )}
             onClick={handleNavigate(AppView.PARTNER_COMMISSION)}
           />
           <QuickNavCard
-            title="Client Access"
-            description="Manage client and employee access"
+            title={t('partner.dashboard.nav.clientAccess.title', 'Client Access')}
+            description={t(
+              'partner.dashboard.nav.clientAccess.description',
+              'Manage client and employee access'
+            )}
             onClick={handleNavigate(AppView.PARTNER_CLIENT_ACCESS)}
           />
           <QuickNavCard
-            title="Directory"
-            description="Update your partner profile"
+            title={t('partner.dashboard.nav.directory.title', 'Directory')}
+            description={t(
+              'partner.dashboard.nav.directory.description',
+              'Update your partner profile'
+            )}
             onClick={handleNavigate(AppView.PARTNER_DIRECTORY)}
           />
         </div>
@@ -109,30 +120,34 @@ export const PartnerDashboardView: React.FC = () => {
         {/* PMO Compliance Note */}
         <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/40 p-4">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            PMO Standards Compliance
+            {t('partner.dashboard.pmo.title', 'PMO Standards Compliance')}
           </h3>
           <p className="mt-2 text-xs text-slate-400">
-            Wszystkie działania partnerskie są mapowane na standardy ISO 21500, PMBOK 7 i PRINCE2.
-            Każdy deal, statement i decyzja otrzymuje automatyczny audit trail z przypisaniem do
-            odpowiedniego PMO domain.
+            {t(
+              'partner.dashboard.pmo.description',
+              'All partner activities are mapped to ISO 21500, PMBOK 7 and PRINCE2 standards. Every deal, statement and decision receives an automatic audit trail assigned to the relevant PMO domain.'
+            )}
           </p>
           <ul className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300">
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-navy-900 dark:bg-white" />
               <span>
-                <strong>GOVERNANCE_DECISION_MAKING</strong> — Deal registration i approval
+                <strong>GOVERNANCE_DECISION_MAKING</strong> —{' '}
+                {t('partner.dashboard.pmo.governance', 'Deal registration and approval')}
               </span>
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
               <span>
-                <strong>BENEFITS_REALIZATION</strong> — Commission tracking i settlements
+                <strong>BENEFITS_REALIZATION</strong> —{' '}
+                {t('partner.dashboard.pmo.benefits', 'Commission tracking and settlements')}
               </span>
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
               <span>
-                <strong>RESOURCE_RESPONSIBILITY</strong> — Client access management
+                <strong>RESOURCE_RESPONSIBILITY</strong> —{' '}
+                {t('partner.dashboard.pmo.resource', 'Client access management')}
               </span>
             </li>
           </ul>

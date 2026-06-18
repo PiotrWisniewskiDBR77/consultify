@@ -7412,6 +7412,14 @@
       "settings-history": {
         "title": "Historia ustawień",
         "subtitle": "Wyświetl i przywróć poprzednie ustawienia"
+      },
+      "ai-chat-history": {
+        "title": "Historia czatu",
+        "subtitle": "Zarządzaj przechowywaniem, eksportem i czyszczeniem historii rozmów"
+      },
+      "billing": {
+        "title": "Subskrypcja i płatności",
+        "subtitle": "Zarządzaj planem, fakturami, zużyciem i warunkami rozliczeń"
       }
     },
     "recovery": {
@@ -8954,7 +8962,30 @@
       "noActivity": "Brak ostatniej aktywności",
       "quickActions": "Szybkie akcje",
       "certificationProgress": "Postęp certyfikacji",
-      "noCertifications": "Brak certyfikacji w toku"
+      "noCertifications": "Brak certyfikacji w toku",
+      "trustProgression": "Postęp zaufania",
+      "viewDetails": "Zobacz szczegóły",
+      "nav": {
+        "commission": {
+          "title": "Prowizje",
+          "description": "Przeglądaj zestawienia, płatności i zgłaszaj zapytania"
+        },
+        "clientAccess": {
+          "title": "Dostęp klientów",
+          "description": "Zarządzaj dostępem klientów i pracowników"
+        },
+        "directory": {
+          "title": "Katalog",
+          "description": "Zaktualizuj swój profil partnera"
+        }
+      },
+      "pmo": {
+        "title": "Zgodność ze standardami PMO",
+        "description": "Wszystkie działania partnerskie są mapowane na standardy ISO 21500, PMBOK 7 i PRINCE2. Każdy deal, zestawienie i decyzja otrzymuje automatyczny ślad audytowy z przypisaniem do odpowiedniej domeny PMO.",
+        "governance": "Rejestracja i akceptacja dealu",
+        "benefits": "Śledzenie prowizji i rozliczenia",
+        "resource": "Zarządzanie dostępem klientów"
+      }
     },
     "metrics": {
       "title": "Metryki",
@@ -11071,14 +11102,18 @@
       "models": "Modele",
       "analysis": "Analiza",
       "prediction": "Predykcja",
-      "valuation": "Wycena przedsiębiorstw"
+      "valuation": "Wycena przedsiębiorstw",
+      "statements": "Sprawozdania",
+      "investment": "Analiza inwestycyjna"
     },
     "cta": {
       "newModel": "+ Nowy model",
       "newAnalysis": "+ Nowa analiza",
       "newScenario": "+ Nowy scenariusz",
       "newValuation": "+ Nowa wycena",
-      "importPdf": "Import PDF"
+      "importPdf": "Import PDF",
+      "newInvestment": "+ Nowa analiza inwestycyjna",
+      "importStatement": "Importuj sprawozdanie"
     },
     "columns": {
       "scenario": "Scenariusz",
@@ -11231,7 +11266,9 @@
     },
     "importWizard": {
       "completed": "Zakończony",
-      "confidence": "pewność"
+      "confidence": "pewność",
+      "rejected": "Import zakończony, ale plik został odrzucony i wymaga ponownego podejścia.",
+      "requiresReview": "Import zakończony. Sprawozdanie trafiło do kolejki odzyskiwania i wymaga domknięcia jakości."
     },
     "lane": {
       "kpi": {
@@ -14385,7 +14422,8 @@
       "notifications": {
         "generated": "Wygenerowana"
       }
-    }
+    },
+    "operatorBriefError": "Nie udało się załadować briefu operatora."
   },
   "manager": {
     "col": {
@@ -14914,7 +14952,9 @@
     "processingAttentionAcknowledged": "Potwierdzone przez Ciebie o {{time}}.",
     "acknowledgeProcessingAttention": "Potwierdź uwagę",
     "openAdminOperations": "Otwórz Operacje administracyjne",
-    "lastStatusRefresh": "Ostatnie odświeżenie statusu: {{time}}"
+    "lastStatusRefresh": "Ostatnie odświeżenie statusu: {{time}}",
+    "owner": "Właściciel",
+    "chunks": "{{count}} fragmentów"
   },
   "consultant": {
     "panel": {

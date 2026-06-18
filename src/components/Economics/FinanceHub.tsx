@@ -2287,15 +2287,15 @@ export const FinanceHub: React.FC = () => {
               handleOpenFull(statementRow);
               toast.success(
                 statementRow.isWorkable
-                  ? t('finance.importWizard.completed', 'Import zakończony')
+                  ? t('finance.importWizard.completed', 'Completed')
                   : statementRow.readinessStatus === 'rejected'
                     ? t(
                         'finance.importWizard.rejected',
-                        'Import zakończony, ale plik został odrzucony i wymaga ponownego podejścia.'
+                        'Import finished, but the file was rejected and requires another attempt.'
                       )
                     : t(
                         'finance.importWizard.requiresReview',
-                        'Import zakończony. Statement trafił do recovery queue i wymaga domknięcia jakości.'
+                        'Import finished. The statement went to the recovery queue and requires quality closure.'
                       )
               );
             }}

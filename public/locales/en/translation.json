@@ -1142,7 +1142,30 @@
       "noActivity": "No recent activity",
       "quickActions": "Quick Actions",
       "certificationProgress": "Certification Progress",
-      "noCertifications": "No certifications in progress"
+      "noCertifications": "No certifications in progress",
+      "trustProgression": "Trust Progression",
+      "viewDetails": "View Details",
+      "nav": {
+        "commission": {
+          "title": "Commission",
+          "description": "View statements, payments and submit inquiries"
+        },
+        "clientAccess": {
+          "title": "Client Access",
+          "description": "Manage client and employee access"
+        },
+        "directory": {
+          "title": "Directory",
+          "description": "Update your partner profile"
+        }
+      },
+      "pmo": {
+        "title": "PMO Standards Compliance",
+        "description": "All partner activities are mapped to ISO 21500, PMBOK 7 and PRINCE2 standards. Every deal, statement and decision receives an automatic audit trail assigned to the relevant PMO domain.",
+        "governance": "Deal registration and approval",
+        "benefits": "Commission tracking and settlements",
+        "resource": "Client access management"
+      }
     },
     "metrics": {
       "title": "Metrics",
@@ -8125,6 +8148,14 @@
       "settings-history": {
         "title": "Settings History",
         "subtitle": "View and restore previous settings"
+      },
+      "ai-chat-history": {
+        "title": "Chat History",
+        "subtitle": "Manage conversation history retention, export, and cleanup"
+      },
+      "billing": {
+        "title": "Subscription & Billing",
+        "subtitle": "Manage your plan, invoices, usage, and billing terms"
       }
     },
     "recovery": {
@@ -10607,7 +10638,8 @@
       "analysis": "Analysis",
       "prediction": "Prediction",
       "valuation": "Enterprise valuation",
-      "investment": "Investment analysis"
+      "investment": "Investment analysis",
+      "statements": "Statements"
     },
     "cta": {
       "newModel": "+ New model",
@@ -10769,7 +10801,9 @@
     },
     "importWizard": {
       "completed": "Completed",
-      "confidence": "confidence"
+      "confidence": "confidence",
+      "rejected": "Import finished, but the file was rejected and requires another attempt.",
+      "requiresReview": "Import finished. The statement went to the recovery queue and requires quality closure."
     },
     "lane": {
       "kpi": {
@@ -13317,7 +13351,8 @@
       "notifications": {
         "generated": "Generated"
       }
-    }
+    },
+    "operatorBriefError": "Could not load the operator brief."
   },
   "manager": {
     "col": {
@@ -13864,7 +13899,9 @@
     "processingAttentionAcknowledged": "Acknowledged by you at {{time}}.",
     "acknowledgeProcessingAttention": "Acknowledge attention",
     "openAdminOperations": "Open Admin Operations",
-    "lastStatusRefresh": "Last status refresh: {{time}}"
+    "lastStatusRefresh": "Last status refresh: {{time}}",
+    "owner": "Owner",
+    "chunks": "{{count}} chunks"
   },
   "consultant": {
     "panel": {
