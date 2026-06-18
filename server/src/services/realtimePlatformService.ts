@@ -308,20 +308,29 @@ class RealtimePlatformService {
     return { id };
   }
 
-  async getVotes(sessionId: string, targetId?: string) {
+  async getVotes(orgId: string, sessionId: string, targetId?: string) {
+    // Defense-in-depth: only return votes for a session owned by this org.
     const sql = targetId
-      ? `SELECT * FROM tool_facilitation_votes WHERE facilitation_session_id=$1 AND vote_target_id=$2 ORDER BY created_at`
-      : `SELECT * FROM tool_facilitation_votes WHERE facilitation_session_id=$1 ORDER BY created_at`;
-    const params = targetId ? [sessionId, targetId] : [sessionId];
+      ? `SELECT * FROM tool_facilitation_votes
+         WHERE facilitation_session_id=$1 AND vote_target_id=$2
+           AND facilitation_session_id IN (SELECT id FROM tool_facilitation_sessions WHERE id=$1 AND organization_id=$3)
+         ORDER BY created_at`
+      : `SELECT * FROM tool_facilitation_votes
+         WHERE facilitation_session_id=$1
+           AND facilitation_session_id IN (SELECT id FROM tool_facilitation_sessions WHERE id=$1 AND organization_id=$2)
+         ORDER BY created_at`;
+    const params = targetId ? [sessionId, targetId, orgId] : [sessionId, orgId];
     return queryHelpers.queryAll(sql, params);
   }
 
-  async getVoteSummary(sessionId: string) {
+  async getVoteSummary(orgId: string, sessionId: string) {
+    // Defense-in-depth: only summarize votes for a session owned by this org.
     return queryHelpers.queryAll(
       `SELECT vote_target_id, vote_type, COUNT(*) as count, SUM(vote_value) as total
        FROM tool_facilitation_votes WHERE facilitation_session_id=$1
+         AND facilitation_session_id IN (SELECT id FROM tool_facilitation_sessions WHERE id=$1 AND organization_id=$2)
        GROUP BY vote_target_id, vote_type ORDER BY total DESC`,
-      [sessionId]
+      [sessionId, orgId]
     );
   }
 
@@ -345,10 +354,13 @@ class RealtimePlatformService {
     return { id };
   }
 
-  async getRoles(sessionId: string) {
+  async getRoles(orgId: string, sessionId: string) {
+    // Defense-in-depth: only return roles for a session owned by this org.
     return queryHelpers.queryAll(
-      `SELECT * FROM tool_facilitation_roles WHERE facilitation_session_id=$1 ORDER BY assigned_at`,
-      [sessionId]
+      `SELECT * FROM tool_facilitation_roles WHERE facilitation_session_id=$1
+         AND facilitation_session_id IN (SELECT id FROM tool_facilitation_sessions WHERE id=$1 AND organization_id=$2)
+       ORDER BY assigned_at`,
+      [sessionId, orgId]
     );
   }
 
@@ -382,10 +394,13 @@ class RealtimePlatformService {
     return { id };
   }
 
-  async getOutcomes(sessionId: string) {
+  async getOutcomes(orgId: string, sessionId: string) {
+    // Defense-in-depth: only return outcomes for a session owned by this org.
     return queryHelpers.queryAll(
-      `SELECT * FROM tool_facilitation_outcomes WHERE facilitation_session_id=$1 ORDER BY created_at`,
-      [sessionId]
+      `SELECT * FROM tool_facilitation_outcomes WHERE facilitation_session_id=$1
+         AND facilitation_session_id IN (SELECT id FROM tool_facilitation_sessions WHERE id=$1 AND organization_id=$2)
+       ORDER BY created_at`,
+      [sessionId, orgId]
     );
   }
 

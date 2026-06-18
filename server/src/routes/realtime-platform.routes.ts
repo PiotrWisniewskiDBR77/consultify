@@ -691,7 +691,7 @@ router.get(
     const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
     if (!session) { res.status(404).json({ error: 'Facilitation session not found' }); return; }
     const targetId = req.query.targetId as string | undefined;
-    res.json({ votes: await realtimePlatformService.getVotes(req.params.sessionId, targetId) });
+    res.json({ votes: await realtimePlatformService.getVotes(id.orgId, req.params.sessionId, targetId) });
   })
 );
 
@@ -702,7 +702,7 @@ router.get(
     if (!id) return;
     const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
     if (!session) { res.status(404).json({ error: 'Facilitation session not found' }); return; }
-    res.json({ summary: await realtimePlatformService.getVoteSummary(req.params.sessionId) });
+    res.json({ summary: await realtimePlatformService.getVoteSummary(id.orgId, req.params.sessionId) });
   })
 );
 
@@ -758,7 +758,7 @@ router.get(
     if (!id) return;
     const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
     if (!session) { res.status(404).json({ error: 'Facilitation session not found' }); return; }
-    res.json({ roles: await realtimePlatformService.getRoles(req.params.sessionId) });
+    res.json({ roles: await realtimePlatformService.getRoles(id.orgId, req.params.sessionId) });
   })
 );
 
@@ -817,7 +817,7 @@ router.get(
     if (!id) return;
     const session = await realtimePlatformService.getFacilitationSession(id.orgId, req.params.sessionId);
     if (!session) { res.status(404).json({ error: 'Facilitation session not found' }); return; }
-    res.json({ outcomes: await realtimePlatformService.getOutcomes(req.params.sessionId) });
+    res.json({ outcomes: await realtimePlatformService.getOutcomes(id.orgId, req.params.sessionId) });
   })
 );
 

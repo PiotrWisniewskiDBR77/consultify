@@ -3556,9 +3556,12 @@ router.get(
     const language = String(req.query.language || 'en').toLowerCase();
     const isPl = language.startsWith('pl');
 
+    // M09 L-01 (DP-3 multiplayer): idea existence is ORG-scoped for READ so a 2nd
+    // org member opening a colleague's board gets 200 (not 404). Ownership (user_id)
+    // still gates WRITE — see PUT handler. Single-player owners are unaffected.
     const idea = await queryHelpers.queryOne<any>(
-      `SELECT id, title FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      `SELECT id, title, user_id as "ownerUserId" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, orgId]
     );
     if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
@@ -3573,15 +3576,21 @@ router.get(
       ? `, schema_version as "schemaVersion"`
       : `, 1 as "schemaVersion"`;
 
-    const row = await queryHelpers.queryOne<any>(
-      `
+    const mapSelectSql = `
       SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}${schemaVersionSelect}
       FROM my_idea_maps
       WHERE idea_id = ? AND user_id = ? AND organization_id = ?
       LIMIT 1
-    `,
-      [ideaId, userId, orgId]
-    );
+    `;
+
+    // Own copy first (owner / single-player unchanged).
+    let row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, userId, orgId]);
+    // M09 L-01: org-read fallback — a non-owner member reads the idea owner's
+    // canonical board so the shared whiteboard loads instead of 404'ing. Realtime
+    // graph_patch (L-02) then keeps both clients in sync. WRITE stays per-user.
+    if (!row && idea.ownerUserId && String(idea.ownerUserId) !== String(userId)) {
+      row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, idea.ownerUserId, orgId]);
+    }
 
     if (!row) {
       const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
