@@ -291,7 +291,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                         )}
                         <button
                           onClick={() => handleDeleteEvidence(item.id)}
-                          className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-500"
+                          className="p-1.5 hover:bg-danger-100 dark:hover:bg-danger-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-danger-500"
                           title="Delete"
                         >
                           <Trash2 size={16} />

@@ -1690,7 +1690,7 @@ export const FinanceHub: React.FC = () => {
             <>
               <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
               <div className={MENU_3_CHIP_INACTIVE}>
-                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-rose-400" />
+                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-danger-400" />
                 <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
                 <span className={MENU_3_BADGE_INACTIVE}>
                   {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}

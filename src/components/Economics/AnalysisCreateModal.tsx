@@ -86,7 +86,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Nazwa analysis <span className="text-rose-500">*</span>
+              Nazwa analysis <span className="text-danger-500">*</span>
             </label>
             <input
               type="text"

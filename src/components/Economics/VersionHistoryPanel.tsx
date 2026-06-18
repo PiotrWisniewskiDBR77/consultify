@@ -363,7 +363,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                       </span>
                     )}
                     {comparisonResult.summary.regressed > 0 && (
-                      <span className="text-rose-500 ml-2">
+                      <span className="text-danger-500 ml-2">
                         -{comparisonResult.summary.regressed} pogorszonych
                       </span>
                     )}
@@ -375,7 +375,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         (comparisonResult.metricsDiff?.overallScore?.change ?? 0) > 0
                           ? 'text-emerald-500'
                           : (comparisonResult.metricsDiff?.overallScore?.change ?? 0) < 0
-                            ? 'text-rose-500'
+                            ? 'text-danger-500'
                             : 'text-slate-500 dark:text-slate-400'
                       }
                     >

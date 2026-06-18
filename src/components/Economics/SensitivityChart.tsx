@@ -144,7 +144,7 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
                   {variables.find((v) => v.name === entry.dataKey)?.namePl || entry.dataKey}:
                 </span>
                 <span
-                  className={`font-medium ${entry.value >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                  className={`font-medium ${entry.value >= 0 ? 'text-emerald-600' : 'text-danger-600'}`}
                 >
                   {new Intl.NumberFormat('pl-PL', {
                     style: 'currency',
@@ -169,7 +169,7 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
           <p className="font-bold text-navy-900 dark:text-white mb-2">{data.variablePl}</p>
           <div className="space-y-1.5 text-sm">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-rose-500">Min NPV:</span>
+              <span className="text-danger-500">Min NPV:</span>
               <span className="font-medium text-navy-900 dark:text-white">
                 {new Intl.NumberFormat('pl-PL', {
                   style: 'currency',

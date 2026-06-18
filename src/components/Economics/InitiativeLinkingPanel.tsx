@@ -164,7 +164,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high':
-        return 'text-rose-500';
+        return 'text-danger-500';
       case 'medium':
         return 'text-yellow-500';
       case 'low':
@@ -194,7 +194,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
               <button
                 onClick={handleUnlink}
                 disabled={isLinking}
-                className="px-3 py-1.5 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
               >
                 Delete Link
               </button>

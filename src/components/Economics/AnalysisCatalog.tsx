@@ -358,9 +358,9 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
 
             <button
               onClick={handleBulkDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-200
-                                dark:border-rose-500/30 rounded-lg text-sm font-medium text-rose-600 dark:text-rose-400
-                                hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-danger-50 dark:bg-danger-500/10 border border-danger-200
+                                dark:border-danger-500/30 rounded-lg text-sm font-medium text-danger-600 dark:text-danger-400
+                                hover:bg-danger-100 dark:hover:bg-danger-500/20 transition-colors"
             >
               <Trash2 size={14} />
               Delete
@@ -585,7 +585,7 @@ const AnalysisCard: React.FC<{
                 onDelete();
                 setShowMenu(false);
               }}
-              className="w-full px-4 py-2.5 text-left text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 flex items-center gap-2"
+              className="w-full px-4 py-2.5 text-left text-sm text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 flex items-center gap-2"
             >
               <Trash2 size={14} /> Delete
             </button>
@@ -834,7 +834,7 @@ const AnalysisTable: React.FC<{
                   </button>
                   <button
                     onClick={() => onDelete(analysis.id)}
-                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-500/10 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

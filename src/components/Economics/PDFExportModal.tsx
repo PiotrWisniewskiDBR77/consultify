@@ -109,8 +109,8 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
-              <FileText className="text-rose-500" size={20} />
+            <div className="w-10 h-10 rounded-xl bg-danger-500/10 flex items-center justify-center">
+              <FileText className="text-danger-500" size={20} />
             </div>
             <div>
               <h2 className="text-lg font-bold text-navy-900 dark:text-white">
@@ -255,7 +255,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
           <button
             onClick={handleExport}
             disabled={isExporting}
-            className="flex items-center gap-2 px-6 py-2 bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white rounded-xl font-medium transition-colors"
+            className="flex items-center gap-2 px-6 py-2 bg-danger-500 hover:bg-danger-600 disabled:bg-danger-300 text-white rounded-xl font-medium transition-colors"
           >
             {isExporting ? (
               <>

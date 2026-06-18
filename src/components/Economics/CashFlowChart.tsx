@@ -114,7 +114,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
                   Netto:
                 </span>
                 <span
-                  className={`font-bold ${data.netCashFlow >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                  className={`font-bold ${data.netCashFlow >= 0 ? 'text-emerald-600' : 'text-danger-600'}`}
                 >
                   {new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(
                     data.netCashFlow
@@ -129,7 +129,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
                   Skumulowane:
                 </span>
                 <span
-                  className={`font-bold ${data.cumulativeCashFlow >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                  className={`font-bold ${data.cumulativeCashFlow >= 0 ? 'text-emerald-600' : 'text-danger-600'}`}
                 >
                   {new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(
                     data.cumulativeCashFlow
@@ -173,7 +173,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
         <div className="flex items-center gap-6">
           <div className="text-right">
             <p className="text-xs text-slate-500 dark:text-slate-400">Total costs</p>
-            <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
+            <p className="text-sm font-bold text-danger-600 dark:text-danger-400">
               {new Intl.NumberFormat('pl-PL', {
                 style: 'currency',
                 currency,

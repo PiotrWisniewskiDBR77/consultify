@@ -263,7 +263,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
                       <td
                         key={`${line.lineCode}-${year}`}
                         className={`px-4 py-3 text-right font-mono ${
-                          value < 0 ? 'text-rose-300' : 'text-slate-100'
+                          value < 0 ? 'text-danger-300' : 'text-slate-100'
                         }`}
                       >
                         {formatValue(value)}

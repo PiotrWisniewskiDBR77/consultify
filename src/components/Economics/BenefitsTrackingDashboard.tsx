@@ -207,7 +207,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
             <div className="flex justify-between gap-4">
               <span className="text-slate-500 dark:text-slate-400">Realizacja:</span>
               <span
-                className={`font-medium ${data.actual >= data.planned ? 'text-emerald-600' : 'text-rose-600'}`}
+                className={`font-medium ${data.actual >= data.planned ? 'text-emerald-600' : 'text-danger-600'}`}
               >
                 {formatCurrency(data.actual)}
               </span>
@@ -215,7 +215,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
             <div className="flex justify-between gap-4 pt-1 border-t border-slate-200 dark:border-navy-700">
               <span className="text-slate-500 dark:text-slate-400">Odchylenie:</span>
               <span
-                className={`font-bold ${data.variance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                className={`font-bold ${data.variance >= 0 ? 'text-emerald-600' : 'text-danger-600'}`}
               >
                 {formatPercent(data.variancePercent)}
               </span>
@@ -409,14 +409,14 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <span
-                          className={`font-medium ${entry.actualBenefits >= entry.plannedBenefits ? 'text-emerald-600' : 'text-rose-600'}`}
+                          className={`font-medium ${entry.actualBenefits >= entry.plannedBenefits ? 'text-emerald-600' : 'text-danger-600'}`}
                         >
                           {formatCurrency(entry.actualBenefits)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <span
-                          className={`font-bold ${entry.variance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                          className={`font-bold ${entry.variance >= 0 ? 'text-emerald-600' : 'text-danger-600'}`}
                         >
                           {formatPercent(variancePercent)}
                         </span>
@@ -428,7 +428,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
                               : isAhead
                                 ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
-                                : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'
+                                : 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-400'
                           }`}
                         >
                           {isOnTrack ? 'On Track' : isAhead ? 'Above' : 'Below'}
@@ -479,7 +479,7 @@ const TotalmaryCard: React.FC<{
     blue: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400',
     green:
       'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
-    red: 'bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20 text-rose-600 dark:text-rose-400',
+    red: 'bg-danger-50 dark:bg-danger-500/10 border-danger-100 dark:border-danger-500/20 text-danger-600 dark:text-danger-400',
     orange:
       'bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400',
   };
@@ -624,13 +624,13 @@ const MeasurementModal: React.FC<{
               className={`p-4 rounded-lg ${
                 actualBenefits >= plannedBenefits
                   ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30'
-                  : 'bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30'
+                  : 'bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">Odchylenie:</span>
                 <span
-                  className={`font-bold ${actualBenefits >= plannedBenefits ? 'text-emerald-600' : 'text-rose-600'}`}
+                  className={`font-bold ${actualBenefits >= plannedBenefits ? 'text-emerald-600' : 'text-danger-600'}`}
                 >
                   {(((actualBenefits - plannedBenefits) / plannedBenefits) * 100).toFixed(1)}%
                 </span>

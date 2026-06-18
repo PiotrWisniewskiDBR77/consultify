@@ -174,7 +174,7 @@ export const AnalysisCompareView: React.FC = () => {
               >
                 <button
                   onClick={() => removeAnalysis(analysis.id)}
-                  className="absolute top-2 right-2 p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                  className="absolute top-2 right-2 p-1 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
                 >
                   <X size={16} />
                 </button>

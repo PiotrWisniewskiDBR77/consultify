@@ -501,11 +501,11 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         {calculatedMetrics && (
           <div className="flex items-center gap-4">
             <div
-              className={`px-4 py-2 rounded-xl ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-rose-100 dark:bg-rose-500/20'}`}
+              className={`px-4 py-2 rounded-xl ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-danger-100 dark:bg-danger-500/20'}`}
             >
               <p className="text-xs text-slate-500 dark:text-slate-400">NPV</p>
               <p
-                className={`font-bold ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
+                className={`font-bold ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-danger-600 dark:text-danger-400'}`}
               >
                 {calculatedMetrics.npv
                   ? new Intl.NumberFormat('pl-PL', {

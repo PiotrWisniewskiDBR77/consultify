@@ -204,7 +204,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                         bg-white dark:bg-navy-800 border rounded-lg text-right
                         ${
                           errors[field]
-                            ? 'border-rose-500 focus:ring-rose-500'
+                            ? 'border-danger-500 focus:ring-danger-500'
                             : 'border-slate-200 dark:border-navy-700 focus:ring-blue-500'
                         }
                         focus:outline-none focus:ring-2 focus:border-transparent
@@ -218,7 +218,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
         )}
       </div>
       {errors[field] && (
-        <p className="text-xs text-rose-500 flex items-center gap-1">
+        <p className="text-xs text-danger-500 flex items-center gap-1">
           <AlertCircle size={12} /> {errors[field]}
         </p>
       )}
@@ -454,7 +454,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                     {!readOnly && (
                       <button
                         onClick={() => removeAssumption(index)}
-                        className="text-rose-500 hover:text-rose-700 text-sm shrink-0"
+                        className="text-danger-500 hover:text-danger-700 text-sm shrink-0"
                       >
                         Delete
                       </button>
