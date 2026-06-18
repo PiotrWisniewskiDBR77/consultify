@@ -1,0 +1,38 @@
+{
+  "table.failedToLoadSharedView": {
+    "pl": "Nie udało się załadować widoku udostępnionego",
+    "en": "Failed to load shared view"
+  },
+  "table.incorrectPassword": {
+    "pl": "Nieprawidłowe hasło",
+    "en": "Incorrect password"
+  },
+  "table.passwordProtected": {
+    "pl": "Chronione hasłem",
+    "en": "Password Protected"
+  },
+  "table.enterPasswordToView": {
+    "pl": "Wpisz hasło, aby wyświetlić tę udostępnioną tabelę.",
+    "en": "Enter the password to view this shared table."
+  },
+  "table.enterPasswordPlaceholder": {
+    "pl": "Wpisz hasło",
+    "en": "Enter password"
+  },
+  "table.verifying": {
+    "pl": "Weryfikacja…",
+    "en": "Verifying…"
+  },
+  "table.viewTable": {
+    "pl": "Wyświetl tabelę",
+    "en": "View Table"
+  },
+  "table.viewUnavailable": {
+    "pl": "Widok niedostępny",
+    "en": "View Unavailable"
+  },
+  "table.sharedViewReadOnly": {
+    "pl": "Widok udostępniony — tylko do odczytu",
+    "en": "Shared view — read only"
+  }
+}

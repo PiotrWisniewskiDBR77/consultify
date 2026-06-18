@@ -1,0 +1,8 @@
+{
+  "_meta": {
+    "module": "M19 Presentations / DeckBuilder",
+    "date": "2026-06-17",
+    "swapped": 0,
+    "note": "No isPolish string-literal ternaries found. DeckBuilder.tsx was already fully converted to t() in a prior session (keys documented in keys_presentations.json). This pass removed the stale `isPolish` variable declaration and its 8 dependency-array references which were never used as ternary guards."
+  }
+}

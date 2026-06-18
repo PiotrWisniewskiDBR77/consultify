@@ -274,7 +274,6 @@ function deckFromUnifiedJson(params: {
 export const DeckBuilder: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { deckId } = useParams<{ deckId: string }>();
-  const isPolish = i18n.language?.startsWith('pl');
   const {
     deck,
     setDeck,
@@ -744,7 +743,7 @@ export const DeckBuilder: React.FC = () => {
         toast.error(message);
       }
     },
-    [deck, isPolish]
+    [deck]
   );
 
   const handleRestoreVersion = useCallback(
@@ -765,7 +764,7 @@ export const DeckBuilder: React.FC = () => {
         );
       }
     },
-    [restoreVersion, setDeck, isPolish]
+    [restoreVersion, setDeck]
   );
 
   const handleAcceptAgentEdit = useCallback(async () => {
@@ -786,7 +785,7 @@ export const DeckBuilder: React.FC = () => {
       toast.success(t('presentations.changesAppliedAndSaved'));
     }
     setPendingAgentEdit(null);
-  }, [pendingAgentEdit, setDeck, isPolish, deck?.deck_id]);
+  }, [pendingAgentEdit, setDeck, deck?.deck_id]);
 
   const handleRejectAgentEdit = useCallback(async () => {
     if (pendingAgentEdit?.operationId && deck?.deck_id) {
@@ -797,7 +796,7 @@ export const DeckBuilder: React.FC = () => {
     }
     toast(t('presentations.changesRejected'));
     setPendingAgentEdit(null);
-  }, [isPolish, pendingAgentEdit?.operationId, deck?.deck_id]);
+  }, [pendingAgentEdit?.operationId, deck?.deck_id]);
 
   const handleAiPrompt = useCallback(
     async (prompt: string) => {
@@ -823,7 +822,7 @@ export const DeckBuilder: React.FC = () => {
       }
       return payload && typeof payload === 'object' ? { ...payload, reply } : { reply };
     },
-    [deck, isPolish]
+    [deck]
   );
 
   const deckWorkspaceContext = useMemo<WorkspaceContext | null>(() => {
@@ -843,7 +842,7 @@ export const DeckBuilder: React.FC = () => {
       },
       timestamp: new Date(),
     };
-  }, [activeCard?.card_id, activeCard?.title, deck, isPolish]);
+  }, [activeCard?.card_id, activeCard?.title, deck]);
 
   const handleTeresaDeckIntent = useCallback(
     async (prompt: string) => {
@@ -857,7 +856,7 @@ export const DeckBuilder: React.FC = () => {
       toast.success(reply || fallbackReply);
       return { handled: true, reply: reply || fallbackReply };
     },
-    [deck, handleAiPrompt, isPolish]
+    [deck, handleAiPrompt]
   );
 
   const handleRegenerateCard = useCallback(
@@ -871,7 +870,7 @@ export const DeckBuilder: React.FC = () => {
         toast.error(t('presentations.failedToRegenerateSlide'));
       }
     },
-    [deckId, isPolish]
+    [deckId]
   );
 
   const handleChangeLayout = useCallback(

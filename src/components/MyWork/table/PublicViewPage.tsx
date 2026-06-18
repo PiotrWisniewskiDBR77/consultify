@@ -1,5 +1,6 @@
 import { Lock } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -8,6 +9,7 @@ import { GridView } from './GridView';
 import type { ColumnDef, TableNode } from './tableTypes';
 
 export default function PublicViewPage() {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   const [data, setData] = useState<{ columns: ColumnDef[]; rows: TableNode[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,9 +35,9 @@ export default function PublicViewPage() {
       .catch((e: any) => {
         if (e?.code === 'VIEW_PASSWORD_REQUIRED') {
           setNeedsPassword(true);
-          if (pw) setPasswordError('Incorrect password');
+          if (pw) setPasswordError(t('table.incorrectPassword'));
         } else {
-          setError(e?.message || 'Failed to load shared view');
+          setError(e?.message || t('table.failedToLoadSharedView'));
         }
       })
       .finally(() => {
@@ -86,10 +88,10 @@ export default function PublicViewPage() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-slate-800 dark:text-white">
-              Password Protected
+              {t('table.passwordProtected')}
             </h2>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Enter the password to view this shared table.
+              {t('table.enterPasswordToView')}
             </p>
           </div>
           <input
@@ -97,7 +99,7 @@ export default function PublicViewPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
+            placeholder={t('table.enterPasswordPlaceholder')}
             className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
           {passwordError && (
@@ -108,7 +110,7 @@ export default function PublicViewPage() {
             disabled={!password.trim() || checking}
             className="w-full rounded-lg bg-slate-800 dark:bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50 transition-colors"
           >
-            {checking ? 'Verifying…' : 'View Table'}
+            {checking ? t('table.verifying') : t('table.viewTable')}
           </button>
         </form>
       </div>
@@ -120,7 +122,7 @@ export default function PublicViewPage() {
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="rounded-xl border border-danger-200 bg-danger-50 dark:border-danger-800 dark:bg-danger-900/20 p-8 max-w-md text-center">
           <h2 className="text-lg font-semibold text-danger-800 dark:text-danger-200">
-            View Unavailable
+            {t('table.viewUnavailable')}
           </h2>
           <p className="mt-2 text-sm text-danger-600 dark:text-danger-300">{error}</p>
         </div>
@@ -137,7 +139,7 @@ export default function PublicViewPage() {
           <GridView rows={data.rows} columns={data.columns} locked={true} />
         </div>
         <p className="mt-4 text-center text-xs text-slate-600 dark:text-slate-500">
-          Shared view — read only
+          {t('table.sharedViewReadOnly')}
         </p>
       </div>
     </div>
