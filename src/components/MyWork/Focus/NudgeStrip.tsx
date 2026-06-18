@@ -78,6 +78,7 @@ export const NudgeStrip: React.FC = () => {
           </div>
           <button
             onClick={() => handleDismiss(nudge.id)}
+            aria-label={i18n.language === 'pl' ? 'Odrzuć' : 'Dismiss'}
             className="p-0.5 rounded hover:bg-black/5 dark:hover:bg-white/5 shrink-0"
           >
             <X size={12} className="text-slate-600" />

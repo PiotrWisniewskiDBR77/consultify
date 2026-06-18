@@ -65,6 +65,7 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
           </div>
           <button
             onClick={onClose}
+            aria-label={isPolish ? 'Zamknij' : 'Close'}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <X size={16} />

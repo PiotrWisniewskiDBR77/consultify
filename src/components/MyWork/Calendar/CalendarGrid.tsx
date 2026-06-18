@@ -83,9 +83,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           allDay: e.allDay ?? false,
           backgroundColor: e.color || SOURCE_COLORS[e.source] || '#64748b',
           borderColor: isConflict
-            ? '#f43f5e'
+            ? 'var(--c-danger)'
             : e.status === 'ai_suggestion'
-              ? '#A51C30'
+              ? 'var(--c-accent)'
               : 'transparent',
           classNames,
           editable: e.editAuthority !== 'none' && e.editAuthority !== undefined,

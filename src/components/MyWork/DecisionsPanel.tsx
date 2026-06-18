@@ -252,6 +252,7 @@ const NewDecisionModal: React.FC<{
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-500"
           >
             <X size={20} />
@@ -462,6 +463,7 @@ const DelegateModal: React.FC<{
           </h3>
           <button
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-500"
           >
             <X size={20} />

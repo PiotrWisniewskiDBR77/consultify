@@ -156,6 +156,7 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
         <button
           type="button"
           onClick={onClose}
+          aria-label={isPl ? 'Zamknij' : 'Close'}
           className="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
           <X size={12} className="text-slate-600" />

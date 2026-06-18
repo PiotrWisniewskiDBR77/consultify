@@ -181,6 +181,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </h3>
           <button
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
           >
             <X size={20} />
@@ -347,6 +348,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       />
                       <button
                         onClick={() => removeChecklistItem(item.id)}
+                        aria-label={t('myWork.tasks.removeSubtask', 'Remove subtask')}
                         className="text-slate-600 dark:text-slate-500 hover:text-danger-500"
                       >
                         <X size={14} />

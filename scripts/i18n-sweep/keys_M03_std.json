@@ -1,0 +1,18 @@
+{
+  "common.close": {
+    "pl": "Zamknij",
+    "en": "Close"
+  },
+  "myWork.focus.removeFromFocus": {
+    "pl": "Usuń z fokusu",
+    "en": "Remove from focus"
+  },
+  "myWork.tasks.removeSubtask": {
+    "pl": "Usuń podzadanie",
+    "en": "Remove subtask"
+  },
+  "myWork.filters.clearSearch": {
+    "pl": "Wyczyść wyszukiwanie",
+    "en": "Clear search"
+  }
+}

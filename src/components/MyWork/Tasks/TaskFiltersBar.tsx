@@ -367,6 +367,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
           {filters.search && (
             <button
               onClick={() => updateFilter('search', '')}
+              aria-label={t('myWork.filters.clearSearch', 'Clear search')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
             >
               <X size={14} />
