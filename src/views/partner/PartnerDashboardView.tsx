@@ -118,7 +118,7 @@ export const PartnerDashboardView: React.FC = () => {
           </p>
           <ul className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300">
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
+              <span className="h-1.5 w-1.5 rounded-full bg-navy-900 dark:bg-white" />
               <span>
                 <strong>GOVERNANCE_DECISION_MAKING</strong> — Deal registration i approval
               </span>

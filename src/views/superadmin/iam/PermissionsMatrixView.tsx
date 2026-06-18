@@ -449,7 +449,7 @@ const PermissionsMatrixView: React.FC = () => {
           <button
             onClick={() => setShowCopyModal(true)}
             disabled={!!loadError}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
           >
             <Copy className="w-4 h-4" />
             Copy Permissions

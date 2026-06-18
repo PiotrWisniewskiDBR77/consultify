@@ -254,7 +254,7 @@ export const AppPricingView: React.FC = () => {
                 onClick={() => setBillingPeriod('annual')}
                 className={`rounded-xl p-4 py-2.5 text-sm font-bold transition-all ${
                   billingPeriod === 'annual'
-                    ? 'bg-primary-600 text-white shadow-md'
+                    ? 'bg-navy-900 text-white shadow-md'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
                 }`}
               >
@@ -267,7 +267,7 @@ export const AppPricingView: React.FC = () => {
                 onClick={() => setBillingPeriod('monthly')}
                 className={`rounded-xl p-4 py-2.5 text-sm font-bold transition-all ${
                   billingPeriod === 'monthly'
-                    ? 'bg-primary-600 text-white shadow-md'
+                    ? 'bg-navy-900 text-white shadow-md'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
                 }`}
               >

@@ -408,7 +408,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                     <button
                       onClick={handleTrainModel}
                       disabled={isTraining}
-                      className="flex items-center gap-2 text-white px-3 py-2 rounded-lg text-sm transition-colors bg-primary-600 hover:bg-primary-700 disabled:bg-gray-600"
+                      className="flex items-center gap-2 text-white px-3 py-2 rounded-lg text-sm transition-colors bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-gray-600"
                     >
                       {isTraining ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

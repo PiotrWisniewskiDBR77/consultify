@@ -22,7 +22,7 @@ export const ResourcesView: React.FC = () => {
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=documentation`)}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 hover:bg-primary-500 px-4 py-2 text-sm font-medium text-white"
+              className="inline-flex items-center gap-2 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 text-sm font-medium text-white"
             >
               Open portal resources
               <ArrowRight className="w-4 h-4" />

@@ -122,7 +122,7 @@ export const PartnerPricingView: React.FC = () => {
             >
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-4 py-2 text-sm font-semibold text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
-                  <span className="h-2 w-2 rounded-full bg-primary-500" />
+                  <span className="h-2 w-2 rounded-full bg-navy-900 dark:bg-white" />
                   Consultify Partner Program
                 </span>
 

@@ -846,7 +846,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                     </p>
                     <button
                       onClick={handleAskAnna}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold shadow-sm hover:bg-navy-800 transition-colors dark:bg-primary-600/20 dark:border dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-600/30"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy-900 text-white hover:bg-navy-800 text-sm font-semibold shadow-sm transition-colors dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
                     >
                       <MessageCircle size={14} />
                       {docsLanguage === 'pl'

@@ -267,7 +267,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
               <h2 className="text-2xl font-light tracking-wide text-navy-900 dark:text-white mb-2">
                 {text.videoTitle}
               </h2>
-              <div className="h-0.5 w-16 bg-primary-600 mx-auto"></div>
+              <div className="h-0.5 w-16 bg-navy-900 mx-auto"></div>
             </div>
 
             {/* Video Player Placeholder */}

@@ -615,7 +615,7 @@ const LearningSystemDashboard: React.FC = () => {
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-navy-700/50'
                 }`}
               >

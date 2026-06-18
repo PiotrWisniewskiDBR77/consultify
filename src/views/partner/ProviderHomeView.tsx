@@ -780,7 +780,7 @@ const CommissionCalculatorSection: React.FC = () => {
                 className={cn(
                   'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
                   clientsPerMonth === num
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : 'bg-white dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-primary-100 dark:hover:bg-primary-900/30'
                 )}
               >
@@ -1105,7 +1105,7 @@ const ContactPartnerManagerSection: React.FC = () => {
           rel="noopener noreferrer"
           className="flex items-center gap-3 p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors group"
         >
-          <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-navy-900 flex items-center justify-center">
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">

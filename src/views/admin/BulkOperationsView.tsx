@@ -434,7 +434,7 @@ export const BulkOperationsView: React.FC = () => {
             <button
               onClick={() => setImportStep('preview')}
               disabled={!columnMapping['email']}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium"
+              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg font-medium"
             >
               Continue to Preview
             </button>
@@ -815,7 +815,7 @@ export const BulkOperationsView: React.FC = () => {
               type="button"
               disabled={sendingEmail}
               onClick={handleSendMassEmail}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
             >
               {sendingEmail ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               {sendingEmail ? 'Sending…' : 'Send Email'}
@@ -864,7 +864,7 @@ export const BulkOperationsView: React.FC = () => {
                   type="button"
                   disabled={sendingEmail}
                   onClick={handleSendMassEmail}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
                 >
                   {sendingEmail ? (
                     <Loader2 size={16} className="animate-spin" />

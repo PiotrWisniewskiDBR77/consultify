@@ -228,7 +228,7 @@ export const DocsArticleView: React.FC = () => {
                 className="block relative aspect-video bg-slate-900 group"
               >
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-full bg-primary-600/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-20 h-20 rounded-full bg-navy-900 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <PlayCircle size={40} className="text-white" />
                   </div>
                 </div>

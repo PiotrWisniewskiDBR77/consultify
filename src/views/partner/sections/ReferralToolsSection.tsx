@@ -867,7 +867,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               <button
                 onClick={handleCreateCampaign}
                 disabled={creating}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
               >
                 {creating && (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

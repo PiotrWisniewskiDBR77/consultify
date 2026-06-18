@@ -78,7 +78,7 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
     },
     violet: {
       text: 'text-primary-600 dark:text-primary-400',
-      accent: 'bg-primary-600',
+      accent: 'bg-navy-900',
       muted: 'bg-primary-50 dark:bg-primary-900/10',
     },
     amber: {
@@ -248,7 +248,7 @@ export const AuditsShowcasePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 relative selection:bg-primary-500 selection:text-white">
+    <div className="min-h-screen bg-white dark:bg-navy-950 relative selection:bg-navy-900 selection:text-white">
       <EntryTopBar
         onTrialClick={() => {
           setDemoModalMode('trial');

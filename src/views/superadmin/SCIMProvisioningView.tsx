@@ -455,7 +455,7 @@ const SCIMProvisioningView: React.FC = () => {
               <button
                 onClick={handleTriggerSync}
                 disabled={syncing}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
                 {syncing ? 'Syncing...' : 'Trigger Full Sync'}
@@ -760,7 +760,7 @@ const SCIMProvisioningView: React.FC = () => {
                   <button
                     onClick={handleGenerateToken}
                     disabled={!newToken.name}
-                    className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                    className="flex-1 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg transition-colors"
                   >
                     Generate
                   </button>
@@ -915,7 +915,7 @@ const SCIMProvisioningView: React.FC = () => {
               <button
                 onClick={handleCreateMapping}
                 disabled={!newMapping.externalGroupId || !newMapping.externalGroupName}
-                className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 Add Mapping
               </button>

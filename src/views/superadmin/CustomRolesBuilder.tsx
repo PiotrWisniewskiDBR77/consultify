@@ -791,7 +791,7 @@ const CustomRolesBuilder: React.FC = () => {
               <button
                 onClick={handleCreateRole}
                 disabled={!newRole.displayName}
-                className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 Create Role
               </button>

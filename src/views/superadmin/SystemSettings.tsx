@@ -227,7 +227,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('GENERAL')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'GENERAL'
-            ? 'bg-primary-600 text-white'
+            ? 'bg-navy-900 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -237,7 +237,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('SECURITY')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'SECURITY'
-            ? 'bg-primary-600 text-white'
+            ? 'bg-navy-900 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -247,7 +247,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('EMAIL')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'EMAIL'
-            ? 'bg-primary-600 text-white'
+            ? 'bg-navy-900 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -257,7 +257,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('LEGAL')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'LEGAL'
-            ? 'bg-primary-600 text-white'
+            ? 'bg-navy-900 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -267,7 +267,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('ADMINS')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'ADMINS'
-            ? 'bg-primary-600 text-white'
+            ? 'bg-navy-900 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -277,7 +277,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('STORAGE')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'STORAGE'
-            ? 'bg-primary-600 text-white'
+            ? 'bg-navy-900 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -287,7 +287,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('AUDIT')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'AUDIT'
-            ? 'bg-primary-600 text-white'
+            ? 'bg-navy-900 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -373,7 +373,7 @@ export const SystemSettings: React.FC = () => {
               onChange={(e) => handleSaveSetting('maintenance_mode', String(e.target.checked))}
               disabled={isSavingSetting('maintenance_mode')}
             />
-            <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-navy-900"></div>
           </label>
         </div>
 
@@ -433,7 +433,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) => handleSaveSetting('enforce_mfa', String(e.target.checked))}
                 disabled={isSavingSetting('enforce_mfa')}
               />
-              <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-navy-900"></div>
             </label>
           </div>
 
@@ -886,7 +886,7 @@ export const SystemSettings: React.FC = () => {
                 onClick={() => setAuditFilter(f)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   auditFilter === f
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                 }`}
               >

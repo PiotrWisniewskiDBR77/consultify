@@ -734,7 +734,7 @@ export const InvoiceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateInvoice}
                 disabled={creatingInvoice}
-                className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
               >
                 {creatingInvoice ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -877,7 +877,7 @@ export const InvoiceCenterView: React.FC = () => {
             <button
               onClick={handleSaveTier}
               disabled={savingTier}
-              className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
             >
               {savingTier ? (
                 <Loader2 size={18} className="animate-spin" />

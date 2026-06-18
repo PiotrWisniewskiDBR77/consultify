@@ -137,7 +137,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
               </button>
               <button
                 onClick={() => handleConfirm(viewedScenario.id)}
-                className="group flex items-center gap-2 px-8 py-3 bg-navy-900 dark:bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl hover:bg-navy-800 dark:hover:bg-navy-800 transition-all font-bold shadow-lg shadow-navy-900/20 dark:shadow-primary-900/40"
+                className="group flex items-center gap-2 px-8 py-3 bg-navy-900 dark:bg-navy-900 text-white rounded-xl hover:bg-navy-800 dark:hover:bg-navy-800 transition-all font-bold shadow-lg shadow-navy-900/20 dark:shadow-primary-900/40"
               >
                 {selectedId === viewedScenario.id ? t.selected : t.select}
                 {selectedId !== viewedScenario.id && (

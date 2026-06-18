@@ -195,7 +195,7 @@ export const AboutView: React.FC = () => {
             </button>
             <button
               onClick={handleTrialClick}
-              className="px-8 py-4 bg-primary-500 text-white font-semibold rounded-xl
+              className="px-8 py-4 bg-navy-900 text-white font-semibold rounded-xl hover:bg-navy-800
                                        hover:bg-primary-400 transition-colors border border-primary-400"
             >
               Start Free Trial

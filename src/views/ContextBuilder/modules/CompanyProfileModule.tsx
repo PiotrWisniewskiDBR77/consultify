@@ -147,7 +147,7 @@ export const CompanyProfileModule: React.FC = () => {
               checked={value === opt}
               onChange={() => onChange(opt)}
             />
-            <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-500 mr-3 peer-checked:border-primary-600 peer-checked:bg-primary-600 relative flex items-center justify-center transition-colors">
+            <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-500 mr-3 peer-checked:border-primary-600 peer-checked:bg-navy-900 relative flex items-center justify-center transition-colors">
               <div className="w-1.5 h-1.5 bg-white dark:bg-navy-900 rounded-full opacity-0 peer-checked:opacity-100" />
             </div>
             <span className="text-sm text-slate-700 dark:text-slate-200 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
@@ -362,7 +362,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.targetMarkets.includes(m)}
                           onChange={() => setCompanyProfile({ targetMarkets: [m] })} // Doing simple radio for now
                         />
-                        <div className="text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 transition shadow-sm hover:shadow">
+                        <div className="text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-navy-900 peer-checked:text-white peer-checked:border-primary-600 transition shadow-sm hover:shadow">
                           {m}
                         </div>
                       </label>
@@ -965,7 +965,7 @@ export const CompanyProfileModule: React.FC = () => {
                           <h4 className="font-bold text-navy-900 dark:text-white leading-tight">
                             {constraint.label}
                           </h4>
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center peer-checked:border-primary-600 peer-checked:bg-primary-600 transition">
+                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center peer-checked:border-primary-600 peer-checked:bg-navy-900 transition">
                             <Check
                               size={12}
                               className="text-white opacity-0 peer-checked:opacity-100"

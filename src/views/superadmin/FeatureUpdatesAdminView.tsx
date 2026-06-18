@@ -668,7 +668,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={saving || selectedIsReadOnly}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <PenSquare size={16} />}
               {selectedUpdate ? 'Save changes' : 'Create draft'}
@@ -773,7 +773,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
                         <button
                           onClick={() => handlePublish(item)}
                           disabled={publishingId === item.id}
-                          className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+                          className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-60 text-white text-sm font-medium transition-colors"
                         >
                           {publishingId === item.id ? (
                             <Loader2 size={14} className="animate-spin" />

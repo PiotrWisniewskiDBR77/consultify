@@ -361,7 +361,7 @@ export const ClientAccessView: React.FC = () => {
             </div>
             <button
               onClick={handleCopyLink}
-              className="p-2 bg-primary-600 hover:bg-primary-500 rounded-lg text-white"
+              className="p-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-white"
             >
               {copiedLink ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
             </button>
@@ -381,7 +381,7 @@ export const ClientAccessView: React.FC = () => {
                 className={cn(
                   'rounded-full px-4 py-1.5 text-xs font-medium transition',
                   selectedRegion === null
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 )}
               >
@@ -394,7 +394,7 @@ export const ClientAccessView: React.FC = () => {
                   className={cn(
                     'flex items-center gap-1 rounded-full px-4 py-1.5 text-xs font-medium transition',
                     selectedRegion === region
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   )}
                 >

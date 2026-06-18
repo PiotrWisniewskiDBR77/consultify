@@ -225,7 +225,7 @@ export const OnboardingWizard = () => {
             <button
               onClick={handleGeneratePlan}
               disabled={loading}
-              className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-primary-500/30 flex items-center gap-2 transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100"
+              className="bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-primary-500/30 flex items-center gap-2 transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100"
             >
               {loading ? (
                 <Loader2 className="animate-spin" />
@@ -369,7 +369,7 @@ export const OnboardingWizard = () => {
                 <button
                   onClick={handleAcceptPlan}
                   disabled={loading || selectedInitiativeIds.length === 0 || isConsultant}
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
+                  className="w-full bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white font-bold py-3 rounded-xl shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
                 >
                   {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
                   {isConsultant ? 'Read-Only Mode' : 'Accept & Start Execution'}

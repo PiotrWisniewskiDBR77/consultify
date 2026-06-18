@@ -289,7 +289,7 @@ export const BecomePartnerView: React.FC = () => {
                 return (
                   <div key={key} className="relative">
                     <div className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl text-center border border-white/5 hover:border-primary-500/20 transition-all duration-300">
-                      <div className="w-12 h-12 rounded-full bg-primary-600 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                      <div className="w-12 h-12 rounded-full bg-navy-900 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                         {index + 1}
                       </div>
                       <h4 className="font-semibold mb-2">{t(`${prefix}.title`)}</h4>

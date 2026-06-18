@@ -189,7 +189,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 label="Invitations Accepted"
                 value={teamMetrics?.invitations?.accepted || 0}
                 percent={teamMetrics?.invitations?.acceptanceRate || 0}
-                color="bg-primary-600"
+                color="bg-navy-900"
               />
               <div className="h-8 flex justify-center py-1">
                 <div className="w-0.5 bg-gradient-to-b from-primary-600 to-green-600 opacity-50" />

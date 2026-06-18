@@ -613,7 +613,7 @@ Help leaders develop change management competencies.`,
                 <button
                   onClick={testOllamaConnection}
                   disabled={testingOllama}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   {testingOllama ? (
                     <RefreshCw size={16} className="animate-spin" />
@@ -990,7 +990,7 @@ Help leaders develop change management competencies.`,
                 <button
                   onClick={saveGlobalSettings}
                   disabled={savingSettings || !globalSettings}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg transition-colors"
                 >
                   {savingSettings ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />

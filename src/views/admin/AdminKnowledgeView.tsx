@@ -932,7 +932,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       </div>
                       <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-primary-500 transition-all duration-500"
+                          className="h-full bg-navy-900 transition-all duration-500"
                           style={{ width: `${s.progress_percentage || 0}%` }}
                         />
                       </div>
@@ -1050,7 +1050,7 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-full transition-all duration-500 ${s.is_active ? 'w-full bg-primary-500' : 'w-0'}`}
+                        className={`h-full transition-all duration-500 ${s.is_active ? "w-full bg-navy-900" : "w-0"}`}
                       />
                     </div>
                     <div className="mt-2 text-xs text-right text-slate-500 dark:text-slate-400">
@@ -1148,7 +1148,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       {/* Content Gaps */}
                       <div className="space-y-4">
                         <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-                          <div className="w-2 h-8 bg-primary-500 rounded-full"></div>
+                          <div className="w-2 h-8 bg-navy-900 rounded-full"></div>
                           Knowledge Gaps
                         </h3>
                         <div className="space-y-3">
@@ -1493,7 +1493,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   type="button"
                   onClick={handleLinkToStrategy}
                   disabled={!linkItemId}
-                  className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
+                  className="flex-1 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
                 >
                   Link
                 </button>

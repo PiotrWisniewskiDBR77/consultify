@@ -580,7 +580,7 @@ const AIBudgetsView: React.FC = () => {
                       ? 'bg-rose-500'
                       : budget.percentUsed >= 80
                         ? 'bg-amber-500'
-                        : 'bg-primary-500'
+                        : 'bg-navy-900'
                   }`}
                   style={{ width: `${Math.min(100, budget.percentUsed)}%` }}
                 />
@@ -784,7 +784,7 @@ const AIBudgetsView: React.FC = () => {
                           ? 'bg-rose-500'
                           : percentUsed >= budget.warningThreshold * 100
                             ? 'bg-amber-500'
-                            : 'bg-primary-500'
+                            : 'bg-navy-900'
                       }`}
                       style={{ width: `${Math.min(100, percentUsed)}%` }}
                     />
@@ -1202,7 +1202,7 @@ const AIBudgetsView: React.FC = () => {
               <button
                 onClick={handleSaveModelPermission}
                 disabled={!newModelPermission.modelId}
-                className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 Save
               </button>

@@ -276,7 +276,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           title={t.helpfulnessRate[lang]}
           value={`${data.feedbackSummary?.overall?.helpfulness_rate || 0}%`}
           icon={<ThumbsUp className="text-white" size={24} />}
-          color="bg-primary-500"
+          color="bg-navy-900"
         />
         <StatCard
           title={t.avgRating[lang]}
@@ -481,7 +481,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               {/* Progress bar */}
               <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary-500 rounded-full"
+                  className="h-full bg-navy-900 rounded-full"
                   style={{ width: `${video.completion_rate}%` }}
                 />
               </div>

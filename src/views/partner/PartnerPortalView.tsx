@@ -423,7 +423,7 @@ const DashboardSection: React.FC = () => {
                   key={index}
                   className="flex items-center gap-3 p-3 rounded-lg bg-slate-100/50 dark:bg-navy-700/30"
                 >
-                  <div className="w-2 h-2 rounded-full bg-primary-500" />
+                  <div className="w-2 h-2 rounded-full bg-navy-900 dark:bg-white" />
                   <div className="flex-1">
                     <p className="text-sm text-slate-900 dark:text-white">{activity.text}</p>
                     <p className="text-xs text-slate-600">{activity.time}</p>
@@ -902,7 +902,7 @@ const MetricsSection: React.FC = () => {
               {
                 label: 'Client Acquisition',
                 score: performanceBreakdown.clientAcquisition || 0,
-                color: 'bg-primary-500',
+                color: 'bg-sky-500',
               },
               {
                 label: 'Project Delivery',
@@ -1310,7 +1310,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                   </div>
                   <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary-600 rounded-full transition-all duration-500"
+                      className="h-full bg-navy-900 rounded-full transition-all duration-500"
                       style={{ width: `${project.progress}%` }}
                     />
                   </div>
@@ -1744,7 +1744,7 @@ const CertificationSection: React.FC<{
                             <div
                               className={cn(
                                 'h-full rounded-full transition-all duration-500',
-                                status === 'completed' ? 'bg-emerald-500' : 'bg-primary-600'
+                                status === 'completed' ? 'bg-emerald-500' : 'bg-navy-900'
                               )}
                               style={{ width: `${course.progress}%` }}
                             />
@@ -2864,7 +2864,7 @@ const ProfileSection: React.FC<{
             aria-label="Toggle public listing"
             className={cn(
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              publicListingEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-navy-600'
+              publicListingEnabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-navy-600'
             )}
           >
             <span

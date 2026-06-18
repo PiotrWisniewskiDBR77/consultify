@@ -1115,7 +1115,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 <button
                   type="submit"
                   disabled={processingId === 'new-access-code'}
-                  className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 rounded text-white text-sm font-medium transition-colors disabled:opacity-60"
+                  className="flex-1 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded text-white text-sm font-medium transition-colors disabled:opacity-60"
                 >
                   {processingId === 'new-access-code' ? 'Generating...' : 'Generate Code'}
                 </button>

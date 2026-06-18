@@ -57,7 +57,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 
   // Type badge config
   const typeBadge = {
-    major: { color: 'bg-primary-500', label: { en: 'Major', pl: 'Główna' } },
+    major: { color: 'bg-sky-500', label: { en: 'Major', pl: 'Główna' } },
     minor: { color: 'bg-blue-500', label: { en: 'Minor', pl: 'Mniejsza' } },
     patch: { color: 'bg-green-500', label: { en: 'Patch', pl: 'Poprawka' } },
   };

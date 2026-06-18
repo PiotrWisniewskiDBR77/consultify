@@ -223,7 +223,7 @@ export const PricingLandingPage: React.FC = () => {
                   <p className="mt-1 text-sm text-slate-500 dark:text-white/45">{pack.subtitle}</p>
                 </div>
                 {(pack as { featured?: boolean }).featured ? (
-                  <span className="rounded-full bg-primary-500 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white">
+                  <span className="rounded-full bg-navy-900 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white">
                     {t('pricing.mostPopular', 'Most popular')}
                   </span>
                 ) : pack.key === 'trial' ? (
@@ -256,7 +256,7 @@ export const PricingLandingPage: React.FC = () => {
                   }
                   className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black transition ${
                     (pack as { featured?: boolean }).featured
-                      ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 dark:bg-white dark:text-primary-700 dark:hover:bg-primary-50'
+                      ? 'bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                       : 'border border-slate-300 dark:border-white/15 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
                 >

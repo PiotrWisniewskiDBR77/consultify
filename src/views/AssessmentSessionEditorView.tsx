@@ -1912,7 +1912,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="h-1.5 w-36 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary-500 transition-all duration-300"
+                      className="h-full bg-navy-900 transition-all duration-300"
                       style={{ width: `${overallProgress}%` }}
                     />
                   </div>

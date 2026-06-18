@@ -262,7 +262,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       {selectedScenario && (
         <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-800 rounded-xl border border-primary-100 dark:border-primary-500/20 p-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 bg-navy-900 rounded-xl flex items-center justify-center shrink-0">
               <GitMerge className="text-white" size={24} />
             </div>
             <div className="flex-1">

@@ -445,7 +445,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'commissions'
-              ? 'bg-primary-600 text-white'
+              ? 'bg-navy-900 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -456,7 +456,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'payouts'
-              ? 'bg-primary-600 text-white'
+              ? 'bg-navy-900 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -467,7 +467,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'attribution'
-              ? 'bg-primary-600 text-white'
+              ? 'bg-navy-900 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -478,7 +478,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'expiring'
-              ? 'bg-primary-600 text-white'
+              ? 'bg-navy-900 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -495,7 +495,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'analytics'
-              ? 'bg-primary-600 text-white'
+              ? 'bg-navy-900 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >

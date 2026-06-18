@@ -673,7 +673,7 @@ export const AdminLLMView: React.FC = () => {
               <button
                 onClick={refreshAllHealth}
                 disabled={refreshingHealth}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <RefreshCw size={16} className={refreshingHealth ? 'animate-spin' : ''} />
                 {refreshingHealth ? 'Refreshing...' : 'Refresh All'}

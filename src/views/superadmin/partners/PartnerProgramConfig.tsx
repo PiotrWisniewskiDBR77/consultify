@@ -118,7 +118,7 @@ const DEFAULT_TIERS: CommissionRate[] = [
   { tier: 'BRONZE', tierName: 'Bronze', rate: 12, minRevenue: 5000, color: 'bg-amber-600' },
   { tier: 'SILVER', tierName: 'Silver', rate: 15, minRevenue: 15000, color: 'bg-slate-400' },
   { tier: 'GOLD', tierName: 'Gold', rate: 18, minRevenue: 50000, color: 'bg-yellow-500' },
-  { tier: 'PLATINUM', tierName: 'Platinum', rate: 20, minRevenue: 100000, color: 'bg-primary-500' },
+  { tier: 'PLATINUM', tierName: 'Platinum', rate: 20, minRevenue: 100000, color: 'bg-navy-900' },
 ];
 
 const PAYMENT_METHODS = [

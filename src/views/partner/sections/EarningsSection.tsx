@@ -194,7 +194,19 @@ const normalizeProgramStatus = (payload: V8PartnerProgramStatus | null | undefin
   payload ?? null;
 
 export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = 'earnings' }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const fmtDate = (iso: string | undefined) => {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleDateString(i18n.language, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return iso;
+    }
+  };
   const [summary, setSummary] = useState<EarningsSummary | null>(null);
   const [v8Summary, setV8Summary] = useState<V8PartnerEarningsSummary | null>(null);
   const [programStatus, setProgramStatus] = useState<V8PartnerProgramStatus | null>(null);
@@ -482,7 +494,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-xl border border-primary-200/70 dark:border-primary-900/30 bg-primary-50/50 dark:bg-primary-950/20 p-4"
+              className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50 dark:bg-navy-900/40 p-4"
             >
               <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {card.label}
@@ -946,7 +958,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                   width: '130px',
                   render: (tx) => (
                     <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {tx.transactionDate}
+                      {fmtDate(tx.transactionDate)}
                     </span>
                   ),
                 },
@@ -1000,8 +1012,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                           {formatCurrency(payout.netAmount, payout.currency)}
                         </p>
                         <p className="text-sm text-slate-600 dark:text-slate-500">
-                          {payout.transactionCount} transactions • {payout.periodStart} to{' '}
-                          {payout.periodEnd}
+                          {payout.transactionCount} transactions • {fmtDate(payout.periodStart)} to{' '}
+                          {fmtDate(payout.periodEnd)}
                         </p>
                       </div>
                     </div>
@@ -1018,7 +1030,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                       </span>
                       {payout.completedAt && (
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Completed {payout.completedAt}
+                          Completed {fmtDate(payout.completedAt)}
                         </p>
                       )}
                     </div>
@@ -1314,7 +1326,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'relative inline-flex h-6 w-11 items-center rounded-full',
                 payoutSettings.autoPayoutEnabled
-                  ? 'bg-primary-600'
+                  ? 'bg-navy-900'
                   : 'bg-slate-300 dark:bg-navy-600'
               )}
             >
