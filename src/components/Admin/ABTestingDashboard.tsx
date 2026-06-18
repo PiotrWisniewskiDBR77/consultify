@@ -807,7 +807,7 @@ export function ABTestingDashboard() {
                       {newExperiment.variants.length > 2 && (
                         <button
                           onClick={() => removeVariant(index)}
-                          className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                          className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                         >
                           <X size={16} />
                         </button>
@@ -818,7 +818,7 @@ export function ABTestingDashboard() {
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   Total traffic: {newExperiment.variants.reduce((sum, v) => sum + v.traffic, 0)}%
                   {newExperiment.variants.reduce((sum, v) => sum + v.traffic, 0) !== 100 && (
-                    <span className="text-rose-500 ml-2">(must be 100%)</span>
+                    <span className="text-danger-500 ml-2">(must be 100%)</span>
                   )}
                 </p>
               </div>

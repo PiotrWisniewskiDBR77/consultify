@@ -220,7 +220,7 @@ export const FeatureFlagsPanel: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleDelete(flag.id)}
-                    className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
+                    className="p-2 rounded-lg bg-danger-500/20 text-danger-400 hover:bg-danger-500/30 transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

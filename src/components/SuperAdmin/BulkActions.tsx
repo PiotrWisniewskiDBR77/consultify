@@ -198,7 +198,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             className={`flex items-center gap-2 px-4 py-2 text-sm ${
               result.success
                 ? 'bg-emerald-500/10 text-emerald-400 border-b border-emerald-500/20'
-                : 'bg-rose-500/10 text-rose-400 border-b border-rose-500/20'
+                : 'bg-danger-500/10 text-danger-400 border-b border-danger-500/20'
             }`}
           >
             {result.success ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
@@ -338,7 +338,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                         setActiveMode('delete');
                         setShowMoreActions(false);
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-400 hover:bg-danger-500/10"
                     >
                       <Trash2 size={14} />
                       Delete
@@ -509,7 +509,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               <button
                 onClick={() => handleAction('removeTags')}
                 disabled={selectedTagIds.length === 0 || isProcessing}
-                className="flex items-center gap-2 px-4 py-2 bg-rose-500 text-white rounded-lg font-medium hover:bg-rose-600 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-danger-500 text-white rounded-lg font-medium hover:bg-danger-600 disabled:opacity-50"
               >
                 {isProcessing ? (
                   <RefreshCw size={14} className="animate-spin" />
@@ -596,7 +596,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   const variantStyles = {
     default: 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-700/50',
     success: 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10',
-    danger: 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10',
+    danger: 'text-danger-400 hover:text-danger-300 hover:bg-danger-500/10',
     warning: 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10',
   };
 
@@ -645,10 +645,10 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
       icon: <CheckCircle2 size={16} className="text-emerald-400" />,
     },
     danger: {
-      bg: 'bg-rose-900/20',
-      border: 'border-rose-500/20',
-      button: 'bg-rose-500 hover:bg-rose-600',
-      icon: <AlertTriangle size={16} className="text-rose-400" />,
+      bg: 'bg-danger-900/20',
+      border: 'border-danger-500/20',
+      button: 'bg-danger-500 hover:bg-danger-600',
+      icon: <AlertTriangle size={16} className="text-danger-400" />,
     },
     warning: {
       bg: 'bg-amber-900/20',

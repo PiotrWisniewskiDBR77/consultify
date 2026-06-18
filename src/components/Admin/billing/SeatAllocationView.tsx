@@ -322,7 +322,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => onRemoveSeat(user.userId)}
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                    className="text-slate-400 dark:text-slate-500 hover:text-danger-500"
                   >
                     <UserX size={14} />
                   </Button>

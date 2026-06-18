@@ -43,7 +43,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
     const configs = {
       up: { icon: TrendingUp, color: 'text-emerald-400', prefix: '+' },
-      down: { icon: TrendingDown, color: 'text-rose-400', prefix: '' },
+      down: { icon: TrendingDown, color: 'text-danger-400', prefix: '' },
       neutral: { icon: Minus, color: 'text-slate-500 dark:text-slate-400', prefix: '' },
     };
 

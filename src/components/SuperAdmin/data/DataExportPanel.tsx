@@ -140,7 +140,7 @@ export const DataExportPanel: React.FC = () => {
         bg: 'bg-emerald-500/20',
         text: 'text-emerald-400',
       },
-      failed: { icon: <XCircle size={14} />, bg: 'bg-rose-500/20', text: 'text-rose-400' },
+      failed: { icon: <XCircle size={14} />, bg: 'bg-danger-500/20', text: 'text-danger-400' },
       expired: { icon: <AlertTriangle size={14} />, bg: 'bg-amber-500/20', text: 'text-amber-400' },
     };
     const config = configs[status] || configs.pending;
@@ -285,7 +285,7 @@ export const DataExportPanel: React.FC = () => {
                   </div>
 
                   {request.error_message && (
-                    <p className="mt-2 text-sm text-rose-400">{request.error_message}</p>
+                    <p className="mt-2 text-sm text-danger-400">{request.error_message}</p>
                   )}
                 </div>
 
@@ -305,7 +305,7 @@ export const DataExportPanel: React.FC = () => {
                     <button
                       onClick={() => handleCancelRequest(request.id)}
                       disabled
-                      className="p-2 text-rose-400 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                      className="p-2 text-danger-400 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                       title={dataExportWorkflowUnavailableReason}
                     >
                       <Trash2 size={16} />

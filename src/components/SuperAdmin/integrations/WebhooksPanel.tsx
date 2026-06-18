@@ -250,7 +250,7 @@ export const WebhooksPanel: React.FC = () => {
 
     if (webhook.last_delivery_status === 'failed') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/20 text-rose-400">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-danger-500/20 text-danger-400">
           <AlertTriangle size={14} />
           Failing
         </span>
@@ -419,7 +419,7 @@ export const WebhooksPanel: React.FC = () => {
                   <button
                     onClick={() => handleDeleteWebhook(webhook.id)}
                     disabled={deletingIds.has(webhook.id)}
-                    className="p-2 hover:bg-rose-500/10 text-rose-400 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 hover:bg-danger-500/10 text-danger-400 rounded-lg transition-colors disabled:opacity-50"
                     title="Delete"
                   >
                     {deletingIds.has(webhook.id) ? (

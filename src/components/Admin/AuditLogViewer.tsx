@@ -206,7 +206,7 @@ export function AuditLogViewer() {
     if (flagged) {
       return (
         <span
-          className={`${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 flex items-center gap-1`}
+          className={`${base} bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400 flex items-center gap-1`}
         >
           <AlertTriangle size={12} />
           FLAGGED
@@ -217,7 +217,7 @@ export function AuditLogViewer() {
       case 'HIGH':
         return (
           <span
-            className={`${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400`}
+            className={`${base} bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400`}
           >
             HIGH
           </span>
@@ -312,12 +312,12 @@ export function AuditLogViewer() {
             </div>
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-rose-500/10 rounded-lg">
-                  <AlertTriangle size={18} className="text-rose-500" />
+                <div className="p-2 bg-danger-500/10 rounded-lg">
+                  <AlertTriangle size={18} className="text-danger-500" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Flagged</p>
-                  <p className="text-xl font-bold text-rose-600 dark:text-rose-400">
+                  <p className="text-xl font-bold text-danger-600 dark:text-danger-400">
                     {stats.flagged_requests || 0}
                   </p>
                 </div>
@@ -325,8 +325,8 @@ export function AuditLogViewer() {
             </div>
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-rose-500/10 rounded-lg">
-                  <AlertCircle size={18} className="text-rose-500" />
+                <div className="p-2 bg-danger-500/10 rounded-lg">
+                  <AlertCircle size={18} className="text-danger-500" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">High Risk</p>
@@ -430,7 +430,7 @@ export function AuditLogViewer() {
               filters.endDate) && (
               <button
                 onClick={() => setFilters(defaultFilters)}
-                className="flex items-center gap-1 px-3 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors text-sm"
+                className="flex items-center gap-1 px-3 py-2 text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors text-sm"
               >
                 <X size={14} />
                 Clear
@@ -498,12 +498,12 @@ export function AuditLogViewer() {
               <Loader2 size={32} className="animate-spin text-primary-500" />
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-20 text-rose-500">
+            <div className="flex flex-col items-center justify-center py-20 text-danger-500">
               <AlertTriangle size={32} className="mb-2" />
               <p>{error}</p>
               <button
                 onClick={fetchLogs}
-                className="mt-4 px-4 py-2 bg-rose-100 dark:bg-rose-900/20 text-rose-600 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/30 transition-colors"
+                className="mt-4 px-4 py-2 bg-danger-100 dark:bg-danger-900/20 text-danger-600 rounded-lg hover:bg-danger-200 dark:hover:bg-danger-900/30 transition-colors"
               >
                 Retry
               </button>
@@ -550,7 +550,7 @@ export function AuditLogViewer() {
                     <tr
                       key={log.id}
                       className={`hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
-                        log.flagged ? 'bg-rose-50/50 dark:bg-rose-900/10' : ''
+                        log.flagged ? 'bg-danger-50/50 dark:bg-danger-900/10' : ''
                       }`}
                     >
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
@@ -687,12 +687,12 @@ export function AuditLogViewer() {
               </div>
 
               {selectedLog.flagged && selectedLog.flag_reason && (
-                <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
-                  <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-medium mb-1">
+                <div className="p-4 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200 dark:border-danger-800">
+                  <div className="flex items-center gap-2 text-danger-700 dark:text-danger-400 font-medium mb-1">
                     <AlertTriangle size={16} />
                     Flag Reason
                   </div>
-                  <p className="text-rose-600 dark:text-rose-300">{selectedLog.flag_reason}</p>
+                  <p className="text-danger-600 dark:text-danger-300">{selectedLog.flag_reason}</p>
                 </div>
               )}
 

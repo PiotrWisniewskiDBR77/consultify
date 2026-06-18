@@ -412,7 +412,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -682,7 +682,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                           handleDelete(flag.id);
                         }}
                         aria-label={`Delete ${flag.name}`}
-                        className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
+                        className="p-2 rounded-lg bg-danger-500/20 text-danger-400 hover:bg-danger-500/30 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -929,7 +929,7 @@ const FeatureFlagModal: React.FC<{
           {saveError && (
             <div
               role="alert"
-              className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-600 dark:text-rose-300"
+              className="rounded-lg border border-danger-500/30 bg-danger-500/5 p-3 text-sm text-danger-600 dark:text-danger-300"
             >
               {saveError}
             </div>

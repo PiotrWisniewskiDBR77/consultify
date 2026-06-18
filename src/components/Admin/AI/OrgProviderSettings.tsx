@@ -173,7 +173,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       case 'degraded':
         return <AlertTriangle size={14} className="text-amber-400" />;
       case 'unhealthy':
-        return <XCircle size={14} className="text-rose-400" />;
+        return <XCircle size={14} className="text-danger-400" />;
       default:
         return <Server size={14} className="text-slate-600 dark:text-slate-500" />;
     }
@@ -246,7 +246,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                 <button
                   onClick={() => toggleProvider(provider.id, true)}
                   disabled={savingProvider === provider.id}
-                  className="flex items-center gap-2 px-3 py-2 bg-emerald-500/20 hover:bg-rose-500/20 text-emerald-400 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-3 py-2 bg-emerald-500/20 hover:bg-danger-500/20 text-emerald-400 hover:text-danger-400 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {savingProvider === provider.id ? (
                     <RefreshCw size={16} className="animate-spin" />

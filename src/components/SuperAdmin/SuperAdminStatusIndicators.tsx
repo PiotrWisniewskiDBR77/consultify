@@ -128,7 +128,7 @@ const IndicatorGroup: React.FC<IndicatorGroupProps> = ({
       case 'warning':
         return 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20';
       case 'critical':
-        return 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20';
+        return 'bg-danger-500/10 border-danger-500/30 text-danger-600 dark:text-danger-400 hover:bg-danger-500/20';
       default:
         return 'bg-slate-500/10 border-slate-500/30 text-slate-500 dark:text-slate-400 animate-pulse';
     }
@@ -141,7 +141,7 @@ const IndicatorGroup: React.FC<IndicatorGroupProps> = ({
       case 'warning':
         return 'bg-amber-500 animate-pulse';
       case 'critical':
-        return 'bg-rose-500 animate-pulse';
+        return 'bg-danger-500 animate-pulse';
       default:
         return 'bg-slate-400';
     }
@@ -158,7 +158,7 @@ const IndicatorGroup: React.FC<IndicatorGroupProps> = ({
         <span className="font-bold tabular-nums">{value}</span>
         <span className="hidden lg:inline text-[10px] opacity-75">{label}</span>
         {badge !== undefined && badge > 0 && (
-          <span className="ml-0.5 px-1.5 py-0.5 text-[9px] font-bold bg-rose-500 text-white rounded-full">
+          <span className="ml-0.5 px-1.5 py-0.5 text-[9px] font-bold bg-danger-500 text-white rounded-full">
             {badge > 99 ? '99+' : badge}
           </span>
         )}
@@ -174,7 +174,7 @@ const IndicatorGroup: React.FC<IndicatorGroupProps> = ({
                 size={16}
                 className={
                   status === 'critical'
-                    ? 'text-rose-500'
+                    ? 'text-danger-500'
                     : status === 'warning'
                       ? 'text-amber-500'
                       : 'text-emerald-500'
@@ -207,7 +207,7 @@ const DetailRow: React.FC<{
     <span
       className={`font-medium ${
         status === 'critical'
-          ? 'text-rose-500'
+          ? 'text-danger-500'
           : status === 'warning'
             ? 'text-amber-500'
             : 'text-navy-900 dark:text-white'
@@ -228,7 +228,7 @@ const ListItem: React.FC<{
   <div
     className={`py-2 px-2 rounded-lg mb-1 ${
       status === 'critical'
-        ? 'bg-rose-50 dark:bg-rose-500/10'
+        ? 'bg-danger-50 dark:bg-danger-500/10'
         : status === 'warning'
           ? 'bg-amber-50 dark:bg-amber-500/10'
           : 'bg-slate-50 dark:bg-white/5'

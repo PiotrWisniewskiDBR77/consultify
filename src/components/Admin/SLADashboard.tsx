@@ -416,7 +416,7 @@ export function SLADashboard() {
             className={`rounded-xl p-6 border ${
               metrics.slaCompliant
                 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-500/30'
-                : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-500/30'
+                : 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-500/30'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -426,8 +426,8 @@ export function SLADashboard() {
                     <CheckCircle size={32} className="text-emerald-400" />
                   </div>
                 ) : (
-                  <div className="p-3 bg-rose-500/20 rounded-full">
-                    <AlertOctagon size={32} className="text-rose-400" />
+                  <div className="p-3 bg-danger-500/20 rounded-full">
+                    <AlertOctagon size={32} className="text-danger-400" />
                   </div>
                 )}
                 <div>
@@ -513,7 +513,7 @@ export function SLADashboard() {
                 <StatRow
                   label="Failed"
                   value={metrics.failedRequests.toLocaleString()}
-                  color="text-rose-400"
+                  color="text-danger-400"
                 />
                 <StatRow
                   label="Avg Latency"
@@ -565,7 +565,7 @@ export function SLADashboard() {
                             style={{ height: `${Math.max(height, 5)}%` }}
                           />
                           {point.incidents > 0 && (
-                            <div className="absolute -top-1 w-2 h-2 bg-rose-500 rounded-full" />
+                            <div className="absolute -top-1 w-2 h-2 bg-danger-500 rounded-full" />
                           )}
                         </div>
                       );
@@ -587,7 +587,7 @@ export function SLADashboard() {
               <Bell size={18} className="text-amber-400" />
               SLA Breach History
               {activeBreaches.length > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-rose-500/20 text-rose-400 text-xs rounded-full">
+                <span className="ml-2 px-2 py-0.5 bg-danger-500/20 text-danger-400 text-xs rounded-full">
                   {activeBreaches.length} Active
                 </span>
               )}
@@ -607,7 +607,7 @@ export function SLADashboard() {
                       breach.resolved
                         ? 'bg-slate-100 dark:bg-navy-950/50'
                         : breach.severity === 'critical'
-                          ? 'bg-rose-900/20 border border-rose-500/30'
+                          ? 'bg-danger-900/20 border border-danger-500/30'
                           : 'bg-amber-900/20 border border-amber-500/30'
                     }`}
                   >
@@ -616,14 +616,14 @@ export function SLADashboard() {
                         breach.resolved
                           ? 'bg-slate-300 dark:bg-slate-700'
                           : breach.severity === 'critical'
-                            ? 'bg-rose-500/20'
+                            ? 'bg-danger-500/20'
                             : 'bg-amber-500/20'
                       }`}
                     >
                       {breach.resolved ? (
                         <CheckCircle size={16} className="text-slate-600 dark:text-slate-500" />
                       ) : breach.severity === 'critical' ? (
-                        <XCircle size={16} className="text-rose-400" />
+                        <XCircle size={16} className="text-danger-400" />
                       ) : (
                         <AlertTriangle size={16} className="text-amber-400" />
                       )}
@@ -636,7 +636,7 @@ export function SLADashboard() {
                         <span
                           className={`text-xs px-2 py-0.5 rounded ${
                             breach.severity === 'critical'
-                              ? 'bg-rose-500/20 text-rose-400'
+                              ? 'bg-danger-500/20 text-danger-400'
                               : 'bg-amber-500/20 text-amber-400'
                           }`}
                         >
@@ -713,7 +713,7 @@ const SLAMetricCard: React.FC<{
 }> = ({ icon: Icon, label, value, target, status, color }) => (
   <div
     className={`bg-white dark:bg-navy-900 border rounded-xl p-4 ${
-      status === 'compliant' ? 'border-slate-200 dark:border-white/10' : 'border-rose-500/30'
+      status === 'compliant' ? 'border-slate-200 dark:border-white/10' : 'border-danger-500/30'
     }`}
   >
     <div className="flex items-center justify-between mb-3">
@@ -723,7 +723,7 @@ const SLAMetricCard: React.FC<{
       {status === 'compliant' ? (
         <CheckCircle size={16} className="text-emerald-400" />
       ) : (
-        <XCircle size={16} className="text-rose-400" />
+        <XCircle size={16} className="text-danger-400" />
       )}
     </div>
     <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{value}</div>
@@ -731,7 +731,7 @@ const SLAMetricCard: React.FC<{
       {label}
     </div>
     <div
-      className={`text-xs mt-2 ${status === 'compliant' ? 'text-emerald-400' : 'text-rose-400'}`}
+      className={`text-xs mt-2 ${status === 'compliant' ? 'text-emerald-400' : 'text-danger-400'}`}
     >
       {target}
     </div>

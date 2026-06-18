@@ -238,7 +238,7 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
                   size="sm"
                   onClick={() => onCancelAll(Array.from(selectedInvitations))}
                   icon={<Trash2 size={14} />}
-                  className="text-rose-600 hover:bg-rose-50"
+                  className="text-danger-600 hover:bg-danger-50"
                 >
                   {t('admin.team.bounced.cancelSelected', 'Cancel')}
                 </Button>
@@ -275,12 +275,12 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
                     className={cn(
                       'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
                       bounceInfo.severity === 'error'
-                        ? 'bg-rose-100 dark:bg-rose-900/30'
+                        ? 'bg-danger-100 dark:bg-danger-900/30'
                         : 'bg-amber-100 dark:bg-amber-900/30'
                     )}
                   >
                     {bounceInfo.severity === 'error' ? (
-                      <AlertCircle size={16} className="text-rose-600 dark:text-rose-400" />
+                      <AlertCircle size={16} className="text-danger-600 dark:text-danger-400" />
                     ) : (
                       <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400" />
                     )}
@@ -390,7 +390,7 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => onCancel(invitation.id)}
-                            className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600"
+                            className="h-8 w-8 p-0 text-danger-500 hover:text-danger-600"
                           >
                             <Trash2 size={14} />
                           </Button>

@@ -528,7 +528,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                 copyFeedback === 'copied'
                   ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-600/60 dark:bg-emerald-900/30 dark:text-emerald-200'
                   : copyFeedback === 'failed'
-                    ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-600/60 dark:bg-rose-900/30 dark:text-rose-200'
+                    ? 'border-danger-300 bg-danger-50 text-danger-700 dark:border-danger-600/60 dark:bg-danger-900/30 dark:text-danger-200'
                     : 'border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800'
               }`}
             >
@@ -571,7 +571,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                 overrideUrlFeedback === 'copied'
                   ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-600/60 dark:bg-emerald-900/30 dark:text-emerald-200'
                   : overrideUrlFeedback === 'failed'
-                    ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-600/60 dark:bg-rose-900/30 dark:text-rose-200'
+                    ? 'border-danger-300 bg-danger-50 text-danger-700 dark:border-danger-600/60 dark:bg-danger-900/30 dark:text-danger-200'
                     : 'border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800'
               }`}
             >

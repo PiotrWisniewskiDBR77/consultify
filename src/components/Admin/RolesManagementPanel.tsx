@@ -236,9 +236,9 @@ const ROLE_COLORS = [
   },
   {
     id: 'rose',
-    bg: 'bg-rose-500',
-    text: 'text-rose-500',
-    light: 'bg-rose-100 dark:bg-rose-900/30',
+    bg: 'bg-danger-500',
+    text: 'text-danger-500',
+    light: 'bg-danger-100 dark:bg-danger-900/30',
   },
   {
     id: 'cyan',
@@ -605,7 +605,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
             {!role.isSystem && (
               <button
                 onClick={() => deleteRole(role)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                 title={t('admin.roles.delete', 'Delete')}
               >
                 <Trash2 size={16} />

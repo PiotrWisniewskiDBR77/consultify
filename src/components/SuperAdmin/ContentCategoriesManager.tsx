@@ -310,7 +310,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                     <div className="border-t border-slate-700 my-1" />
                     <button
                       onClick={() => handleDelete(category.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-400 hover:bg-danger-500/10"
                     >
                       <Trash2 size={14} />
                       Delete

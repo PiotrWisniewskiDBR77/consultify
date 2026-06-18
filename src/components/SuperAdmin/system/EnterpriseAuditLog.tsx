@@ -84,7 +84,7 @@ const RISK_LEVELS = {
   LOW: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Info },
   MEDIUM: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
   HIGH: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertCircle },
-  CRITICAL: { color: 'bg-rose-500', text: 'text-rose-400', icon: Shield },
+  CRITICAL: { color: 'bg-danger-500', text: 'text-danger-400', icon: Shield },
 };
 
 const COMPLIANCE_TAGS = [
@@ -421,7 +421,7 @@ export const EnterpriseAuditLog: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -455,9 +455,9 @@ export const EnterpriseAuditLog: React.FC = () => {
               <div className="text-sm text-slate-600 dark:text-slate-500">High Risk</div>
               <div className="text-2xl font-bold text-amber-400 mt-1">{stats.high_risk || 0}</div>
             </div>
-            <div className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/30">
+            <div className="p-4 bg-danger-500/10 rounded-xl border border-danger-500/30">
               <div className="text-sm text-slate-600 dark:text-slate-500">Critical</div>
-              <div className="text-2xl font-bold text-rose-400 mt-1">
+              <div className="text-2xl font-bold text-danger-400 mt-1">
                 {stats.critical_risk || 0}
               </div>
             </div>

@@ -271,7 +271,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
                   onChange(null);
                   setIsOpen(false);
                 }}
-                className="w-full px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                className="w-full px-3 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
               >
                 {t('admin.team.manager.removeManager', 'Remove manager')}
               </button>

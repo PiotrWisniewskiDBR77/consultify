@@ -135,7 +135,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
   const getTypeColor = (type: 'system' | 'client' | 'feedback') => {
     switch (type) {
       case 'system':
-        return 'text-rose-500';
+        return 'text-danger-500';
       case 'client':
         return 'text-amber-500 dark:text-amber-400';
       case 'feedback':
@@ -154,7 +154,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
         icon={AlertCircle}
         label="System Alerts"
         count={notifications.system.length}
-        colorClass="text-rose-500"
+        colorClass="text-danger-500"
         active={selectedType === 'system'}
         onClick={() => setSelectedType(selectedType === 'system' ? null : 'system')}
       />

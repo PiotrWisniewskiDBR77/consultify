@@ -120,7 +120,7 @@ const STATUS_CONFIG = {
   pending: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Clock },
   in_progress: { color: 'bg-amber-500', text: 'text-amber-400', icon: RefreshCw },
   completed: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
-  failed: { color: 'bg-rose-500', text: 'text-rose-400', icon: XCircle },
+  failed: { color: 'bg-danger-500', text: 'text-danger-400', icon: XCircle },
 };
 
 const fallbackBackupTypeConfig = { color: 'bg-slate-500/20 text-slate-600', label: 'Unknown' };
@@ -300,7 +300,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -454,7 +454,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                             title={destructiveBackupActionReason}
                           >
-                            <Trash2 className="w-4 h-4 text-rose-400" />
+                            <Trash2 className="w-4 h-4 text-danger-400" />
                           </button>
                         </div>
                       </div>

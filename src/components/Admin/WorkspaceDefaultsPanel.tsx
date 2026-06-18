@@ -102,7 +102,7 @@ const DEFAULT_PRIORITIES: TaskPriority[] = [
 // Color options
 const COLOR_OPTIONS = [
   { id: 'slate', bg: 'bg-slate-500', light: 'bg-slate-100' },
-  { id: 'red', bg: 'bg-rose-500', light: 'bg-rose-100' },
+  { id: 'red', bg: 'bg-danger-500', light: 'bg-danger-100' },
   { id: 'orange', bg: 'bg-amber-500', light: 'bg-amber-100' },
   { id: 'amber', bg: 'bg-amber-500', light: 'bg-amber-100' },
   { id: 'green', bg: 'bg-green-500', light: 'bg-green-100' },
@@ -633,7 +633,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
 
                 <button
                   onClick={() => removeWorkflowState(state.id)}
-                  className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-1 text-slate-400 dark:text-slate-500 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X size={14} />
                 </button>

@@ -183,7 +183,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     ? 'text-emerald-400'
                     : data.avgPlaybookSuccessRate >= 40
                       ? 'text-amber-400'
-                      : 'text-rose-400'
+                      : 'text-danger-400'
                 }`}
               >
                 {data.avgPlaybookSuccessRate}%
@@ -196,7 +196,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     ? 'bg-emerald-500'
                     : data.avgPlaybookSuccessRate >= 40
                       ? 'bg-amber-500'
-                      : 'bg-rose-500'
+                      : 'bg-danger-500'
                 }`}
                 style={{ width: `${data.avgPlaybookSuccessRate}%` }}
               />

@@ -144,7 +144,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
         );
       case 'rejected':
         return (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-full">
+          <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 rounded-full">
             <X size={12} />
             {t('admin.compliance.dataRequests.rejected', 'Rejected')}
           </span>
@@ -165,7 +165,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
         return {
           icon: Trash2,
           label: t('admin.compliance.dataRequests.delete', 'Data Deletion'),
-          color: 'text-rose-600 dark:text-rose-400',
+          color: 'text-danger-600 dark:text-danger-400',
         };
       case 'access':
         return {
@@ -270,8 +270,8 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
           className={cn(
             'p-4 rounded-xl border cursor-pointer transition-all',
             filter === 'rejected'
-              ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700'
-              : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-rose-300'
+              ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-300 dark:border-danger-700'
+              : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-danger-300'
           )}
           onClick={() => setFilter(filter === 'rejected' ? 'all' : 'rejected')}
         >
@@ -279,9 +279,9 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.compliance.dataRequests.rejected', 'Rejected')}
             </span>
-            <X size={16} className="text-rose-500" />
+            <X size={16} className="text-danger-500" />
           </div>
-          <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+          <p className="text-2xl font-bold text-danger-600 dark:text-danger-400">
             {statusCounts.rejected || 0}
           </p>
         </div>
@@ -475,7 +475,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                         className={cn(
                           'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
                           request.type === 'export' && 'bg-blue-100 dark:bg-blue-900/30',
-                          request.type === 'delete' && 'bg-rose-100 dark:bg-rose-900/30',
+                          request.type === 'delete' && 'bg-danger-100 dark:bg-danger-900/30',
                           request.type === 'access' && 'bg-primary-100 dark:bg-primary-900/30',
                           request.type === 'rectification' && 'bg-amber-100 dark:bg-amber-900/30'
                         )}
@@ -512,7 +512,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                           className={cn(
                             'text-xs font-medium',
                             daysRemaining <= 3
-                              ? 'text-rose-600'
+                              ? 'text-danger-600'
                               : daysRemaining <= 7
                                 ? 'text-amber-600'
                                 : 'text-slate-500 dark:text-slate-400'

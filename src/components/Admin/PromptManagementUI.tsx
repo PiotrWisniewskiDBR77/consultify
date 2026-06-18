@@ -563,7 +563,7 @@ export function PromptManagementUI() {
           {actionError ? (
             <div
               role="alert"
-              className="mx-6 mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200"
+              className="mx-6 mt-4 rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700 dark:border-danger-900/50 dark:bg-danger-900/20 dark:text-danger-200"
             >
               {actionError}
             </div>
@@ -674,7 +674,7 @@ export function PromptManagementUI() {
                         </button>
                         <button
                           onClick={handleDelete}
-                          className="p-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                          className="p-2 text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 size={18} />

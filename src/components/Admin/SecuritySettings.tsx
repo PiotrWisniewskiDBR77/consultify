@@ -404,7 +404,7 @@ export const SecuritySettings: React.FC = () => {
                         <Check size={14} /> Enabled
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full text-sm">
+                      <span className="flex items-center gap-1 px-3 py-1 bg-danger-500/20 text-danger-400 rounded-full text-sm">
                         <X size={14} /> Not Enabled
                       </span>
                     )}
@@ -612,7 +612,7 @@ export const SecuritySettings: React.FC = () => {
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => handleTerminateSession(session.id)}
-                            className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
+                            className="p-2 hover:bg-danger-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-danger-400"
                             title="Terminate session"
                           >
                             <LogOut size={16} />
@@ -678,7 +678,7 @@ export const SecuritySettings: React.FC = () => {
                             <Check size={14} /> Success
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 text-rose-400 text-xs">
+                          <span className="flex items-center gap-1 text-danger-400 text-xs">
                             <X size={14} /> Failed
                             {item.failureReason && (
                               <span className="text-slate-500 dark:text-slate-400">

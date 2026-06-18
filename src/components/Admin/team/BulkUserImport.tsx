@@ -479,7 +479,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                           key={index}
                           className={cn(
                             'bg-white dark:bg-navy-800',
-                            hasErrors && 'bg-rose-50 dark:bg-rose-900/10'
+                            hasErrors && 'bg-danger-50 dark:bg-danger-900/10'
                           )}
                         >
                           <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
@@ -489,7 +489,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                             className={cn(
                               'px-3 py-2',
                               errors.some((e) => e.field === 'email')
-                                ? 'text-rose-600'
+                                ? 'text-danger-600'
                                 : 'text-navy-900 dark:text-white'
                             )}
                           >
@@ -506,7 +506,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                           </td>
                           <td className="px-3 py-2">
                             {hasErrors ? (
-                              <span className="flex items-center gap-1 text-rose-600">
+                              <span className="flex items-center gap-1 text-danger-600">
                                 <XCircle size={14} />
                                 <span className="text-xs">{errors[0].message}</span>
                               </span>
@@ -582,8 +582,8 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                     <Check size={32} className="text-emerald-600 dark:text-emerald-400" />
                   </div>
                 ) : (
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-900/30 mb-4">
-                    <X size={32} className="text-rose-600 dark:text-rose-400" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-danger-100 dark:bg-danger-900/30 mb-4">
+                    <X size={32} className="text-danger-600 dark:text-danger-400" />
                   </div>
                 )}
                 <h3 className="text-xl font-semibold text-navy-900 dark:text-white">
@@ -603,11 +603,11 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                     {t('admin.team.import.imported', 'Imported')}
                   </p>
                 </div>
-                <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-center">
-                  <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+                <div className="p-4 bg-danger-50 dark:bg-danger-900/20 rounded-lg text-center">
+                  <p className="text-2xl font-bold text-danger-600 dark:text-danger-400">
                     {importResult.failed}
                   </p>
-                  <p className="text-sm text-rose-700 dark:text-rose-300">
+                  <p className="text-sm text-danger-700 dark:text-danger-300">
                     {t('admin.team.import.failed', 'Failed')}
                   </p>
                 </div>
@@ -629,7 +629,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                   </h4>
                   <ul className="space-y-1 text-sm">
                     {importResult.errors.map((error, index) => (
-                      <li key={index} className="text-rose-600 dark:text-rose-400">
+                      <li key={index} className="text-danger-600 dark:text-danger-400">
                         {error.email
                           ? `Row ${error.row} (${error.email}): ${error.error}`
                           : error.error}

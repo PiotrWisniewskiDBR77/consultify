@@ -474,7 +474,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => onDeleteRule(rule.id)}
-                              className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                              className="text-danger-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                               icon={<Trash2 size={14} />}
                             >
                               {t('admin.team.routing.delete', 'Delete')}

@@ -717,7 +717,7 @@ export const EnhancedDataTable = forwardRef<
                                         disabled={isDisabled}
                                         className={cn(
                                           action.danger &&
-                                            'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20'
+                                            'text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20'
                                         )}
                                       >
                                         {Icon && <Icon size={14} />}

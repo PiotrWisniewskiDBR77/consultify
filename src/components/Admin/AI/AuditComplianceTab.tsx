@@ -184,7 +184,7 @@ export const AuditComplianceTab: React.FC = () => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+        return 'bg-danger-500/20 text-danger-400 border-danger-500/30';
       case 'high':
         return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
       case 'medium':
@@ -229,7 +229,7 @@ export const AuditComplianceTab: React.FC = () => {
         );
       case 'non_compliant':
         return (
-          <span className="px-2 py-0.5 rounded-full text-xs bg-rose-500/20 text-rose-400">
+          <span className="px-2 py-0.5 rounded-full text-xs bg-danger-500/20 text-danger-400">
             Non-Compliant
           </span>
         );
@@ -316,7 +316,7 @@ export const AuditComplianceTab: React.FC = () => {
           <Shield size={14} className="inline mr-2" />
           Security Events
           {securityEvents.filter((e) => !e.resolved).length > 0 && (
-            <span className="ml-2 px-1.5 py-0.5 bg-danger-500/20 text-danger-600 dark:text-rose-400 text-xs rounded-full">
+            <span className="ml-2 px-1.5 py-0.5 bg-danger-500/20 text-danger-600 dark:text-danger-400 text-xs rounded-full">
               {securityEvents.filter((e) => !e.resolved).length}
             </span>
           )}
@@ -405,7 +405,7 @@ export const AuditComplianceTab: React.FC = () => {
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
                 Unresolved
               </p>
-              <p className="text-2xl font-bold text-danger-600 dark:text-rose-400">
+              <p className="text-2xl font-bold text-danger-600 dark:text-danger-400">
                 {securityEvents.filter((e) => !e.resolved).length}
               </p>
             </div>
@@ -684,7 +684,7 @@ export const AuditComplianceTab: React.FC = () => {
                           setCustomTemplates((prev) => prev.filter((t) => t.id !== template.id));
                           toast.success('Template deleted');
                         }}
-                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-600 dark:hover:text-rose-400 hover:bg-danger-500/10 rounded transition-colors"
+                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-500/10 rounded transition-colors"
                         title="Delete"
                       >
                         <Trash2 size={16} />

@@ -316,7 +316,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
             />
             <button
               onClick={() => removeRole(index)}
-              className="inline-flex items-center justify-center rounded-lg border border-rose-200 px-3 py-2 text-rose-600 dark:border-rose-500/20 dark:text-rose-300"
+              className="inline-flex items-center justify-center rounded-lg border border-danger-200 px-3 py-2 text-danger-600 dark:border-danger-500/20 dark:text-danger-300"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -383,7 +383,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
               </div>
               <button
                 onClick={() => void deleteAssignment(assignment.id)}
-                className="inline-flex items-center justify-center rounded-lg border border-rose-200 px-3 py-2 text-rose-600 dark:border-rose-500/20 dark:text-rose-300"
+                className="inline-flex items-center justify-center rounded-lg border border-danger-200 px-3 py-2 text-danger-600 dark:border-danger-500/20 dark:text-danger-300"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

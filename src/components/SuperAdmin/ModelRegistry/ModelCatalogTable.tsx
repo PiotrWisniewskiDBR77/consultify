@@ -81,7 +81,7 @@ function ErrorCategoryBadge({
     category === 'billing'
       ? 'bg-amber-500/10 text-amber-400'
       : category === 'auth' || category === 'missing_key'
-        ? 'bg-rose-500/10 text-rose-400'
+        ? 'bg-danger-500/10 text-danger-400'
         : category === 'rate_limit'
           ? 'bg-yellow-500/10 text-yellow-400'
           : 'bg-slate-500/10 text-slate-600';
@@ -222,7 +222,7 @@ function ActionsMenu({
               onDelete(model);
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-400 hover:bg-danger-500/10"
           >
             <Trash2 size={14} /> Delete
           </button>

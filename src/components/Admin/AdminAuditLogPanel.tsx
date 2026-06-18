@@ -183,7 +183,7 @@ export const AdminAuditLogPanel: React.FC = () => {
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             High risk
           </p>
-          <p className="mt-2 text-2xl font-semibold text-rose-600 dark:text-rose-400">
+          <p className="mt-2 text-2xl font-semibold text-danger-600 dark:text-danger-400">
             {stats.highRiskCount}
           </p>
         </div>

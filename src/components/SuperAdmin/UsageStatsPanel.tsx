@@ -89,14 +89,14 @@ export const UsageStatsPanel: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       {loadError && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-rose-700 dark:text-rose-300">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-danger-700 dark:text-danger-300">
           <div className="flex items-center gap-2">
             <AlertTriangle size={18} />
             <span>{loadError}</span>
           </div>
           <button
             onClick={fetchUsageData}
-            className="px-3 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-sm font-medium"
+            className="px-3 py-1.5 rounded-lg bg-danger-100 hover:bg-danger-200 dark:bg-danger-500/20 dark:hover:bg-danger-500/30 text-sm font-medium"
           >
             Retry
           </button>

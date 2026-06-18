@@ -266,7 +266,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                         {field.label}
                       </h4>
                       {field.required && (
-                        <span className="px-1.5 py-0.5 text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded">
+                        <span className="px-1.5 py-0.5 text-xs font-medium bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 rounded">
                           {t('admin.organization.profileFields.required', 'Required')}
                         </span>
                       )}
@@ -301,7 +301,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteField(field.id)}
-                        className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600"
+                        className="h-8 w-8 p-0 text-danger-500 hover:text-danger-600"
                       >
                         <Trash2 size={14} />
                       </Button>

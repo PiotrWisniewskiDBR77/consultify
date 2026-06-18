@@ -287,7 +287,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                     ? 'text-green-600 dark:text-green-400'
                     : summary.languageAccuracy >= 0.8
                       ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-rose-600 dark:text-rose-400'
+                      : 'text-danger-600 dark:text-danger-400'
                 }`}
               >
                 {Math.round(summary.languageAccuracy * 100)}%
@@ -322,7 +322,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                     ) : result.success ? (
                       <AlertTriangle className="w-5 h-5 text-amber-500" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-rose-500" />
+                      <XCircle className="w-5 h-5 text-danger-500" />
                     )}
                     <span className="text-lg">{lang.flag}</span>
                     <span className="font-medium text-slate-900 dark:text-white">{lang.name}</span>
@@ -356,7 +356,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700">
                     {result.error ? (
-                      <div className="mt-3 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm">
+                      <div className="mt-3 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 text-sm">
                         {result.error}
                       </div>
                     ) : result.response ? (

@@ -45,7 +45,7 @@ const SLO_LABEL: Record<DrilldownSloId, string> = {
 const STATUS_TONE: Record<SloStatus, string> = {
   pass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   at_risk: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  breach: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  breach: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   inconclusive: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 
@@ -66,7 +66,7 @@ const STATUS_STROKE: Record<SloStatus, string> = {
 const STATUS_DOT_BG: Record<SloStatus, string> = {
   pass: 'bg-emerald-500',
   at_risk: 'bg-amber-500',
-  breach: 'bg-rose-500',
+  breach: 'bg-danger-500',
   inconclusive: 'bg-slate-400',
 };
 
@@ -314,7 +314,7 @@ const TopDecksList: React.FC<TopDecksListProps> = ({ decks, sloId }) => {
           <span className="text-slate-500 dark:text-slate-400 tabular-nums">
             {formatObserved(sloId, deck.observedNumeric)}
           </span>
-          <span className="text-rose-600 dark:text-rose-300 tabular-nums">
+          <span className="text-danger-600 dark:text-danger-300 tabular-nums">
             {deck.failureCount}/{deck.totalCount}
           </span>
         </li>

@@ -50,10 +50,10 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
         <input
           ref={ref}
           id={inputId}
-          className={`${baseInputClass} ${error ? 'border-rose-500/50' : ''} ${className}`}
+          className={`${baseInputClass} ${error ? 'border-danger-500/50' : ''} ${className}`}
           {...props}
         />
-        {error && <p className="text-xs text-rose-400">{error}</p>}
+        {error && <p className="text-xs text-danger-400">{error}</p>}
         {hint && !error && <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>}
       </div>
     );
@@ -87,10 +87,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           id={inputId}
-          className={`${baseInputClass} min-h-[100px] resize-y ${error ? 'border-rose-500/50' : ''} ${className}`}
+          className={`${baseInputClass} min-h-[100px] resize-y ${error ? 'border-danger-500/50' : ''} ${className}`}
           {...props}
         />
-        {error && <p className="text-xs text-rose-400">{error}</p>}
+        {error && <p className="text-xs text-danger-400">{error}</p>}
         {hint && !error && <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>}
       </div>
     );
@@ -136,7 +136,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     appearance-none cursor-pointer pr-10
                     bg-[url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394A3B8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")]
                     bg-[length:16px] bg-[right_12px_center] bg-no-repeat
-                    ${error ? 'border-rose-500/50' : ''}
+                    ${error ? 'border-danger-500/50' : ''}
                     ${className}
                 `.trim()}
           {...props}
@@ -148,7 +148,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="text-xs text-rose-400">{error}</p>}
+        {error && <p className="text-xs text-danger-400">{error}</p>}
       </div>
     );
   }

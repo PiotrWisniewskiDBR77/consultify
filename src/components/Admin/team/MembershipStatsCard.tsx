@@ -91,7 +91,7 @@ const Sparkline: React.FC<{
     violet: 'stroke-primary-500',
     emerald: 'stroke-emerald-500',
     blue: 'stroke-blue-500',
-    rose: 'stroke-rose-500',
+    rose: 'stroke-danger-500',
   };
 
   return (
@@ -202,7 +202,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                 <TrendingUp size={12} />+{stats.growthRate.toFixed(1)}%
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-xs font-medium text-rose-600">
+              <span className="flex items-center gap-1 text-xs font-medium text-danger-600">
                 <TrendingDown size={12} />
                 {stats.growthRate.toFixed(1)}%
               </span>
@@ -263,16 +263,16 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
 
         {/* Churned Users */}
         <div
-          className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 cursor-pointer hover:border-rose-300 dark:hover:border-rose-700"
+          className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 cursor-pointer hover:border-danger-300 dark:hover:border-danger-700"
           onClick={() => onViewDetails?.('churned')}
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.team.stats.churnedUsers', 'Churned')}
             </span>
-            <UserMinus size={18} className="text-rose-500" />
+            <UserMinus size={18} className="text-danger-500" />
           </div>
-          <p className="text-3xl font-bold text-rose-600 dark:text-rose-400 mb-2">
+          <p className="text-3xl font-bold text-danger-600 dark:text-danger-400 mb-2">
             -{stats.churnedUsersThisPeriod}
           </p>
           <div className="flex items-center gap-2">
@@ -334,7 +334,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                 emerald: 'bg-emerald-500',
                 amber: 'bg-amber-500',
                 slate: 'bg-slate-500',
-                rose: 'bg-rose-500',
+                rose: 'bg-danger-500',
               };
 
               return (
@@ -388,7 +388,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
               'text-lg font-semibold',
               stats.newUsersThisPeriod - stats.churnedUsersThisPeriod >= 0
                 ? 'text-emerald-600'
-                : 'text-rose-600'
+                : 'text-danger-600'
             )}
           >
             {stats.newUsersThisPeriod - stats.churnedUsersThisPeriod >= 0 ? '+' : ''}

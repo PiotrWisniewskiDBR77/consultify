@@ -107,7 +107,7 @@ type ViewId = 'overview' | 'services' | 'metrics' | 'alerts';
 const STATUS_CONFIG = {
   healthy: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
   degraded: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
-  down: { color: 'bg-rose-500', text: 'text-rose-400', icon: XCircle },
+  down: { color: 'bg-danger-500', text: 'text-danger-400', icon: XCircle },
   unknown: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Activity },
 };
 
@@ -522,7 +522,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -814,7 +814,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <div className="flex items-center justify-between mb-2">
                       <Icon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                       {trend === 'up' && <TrendingUp className="w-4 h-4 text-emerald-400" />}
-                      {trend === 'down' && <TrendingDown className="w-4 h-4 text-rose-400" />}
+                      {trend === 'down' && <TrendingDown className="w-4 h-4 text-danger-400" />}
                       {trend === 'stable' && (
                         <Activity className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                       )}
@@ -985,7 +985,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
                       aria-label={`Delete alert ${alert.name}`}
-                      className="p-1 text-slate-600 hover:text-rose-400 transition-colors"
+                      className="p-1 text-slate-600 hover:text-danger-400 transition-colors"
                       title="Delete alert"
                     >
                       <XCircle className="w-4 h-4" />

@@ -281,7 +281,7 @@ export const SessionManagementPanel: React.FC = () => {
                         onClick={() =>
                           handleTerminateAllForUser(userId, firstSession.organization_id)
                         }
-                        className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-sm transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 rounded-lg text-sm transition-colors"
                       >
                         <LogOut size={14} />
                         End All
@@ -339,7 +339,7 @@ export const SessionManagementPanel: React.FC = () => {
                         <button
                           onClick={() => handleTerminateSession(session.id)}
                           disabled={terminatingIds.has(session.id)}
-                          className="p-2 hover:bg-rose-500/10 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-2 hover:bg-danger-500/10 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded-lg transition-colors disabled:opacity-50"
                           title="Terminate Session"
                         >
                           {terminatingIds.has(session.id) ? (

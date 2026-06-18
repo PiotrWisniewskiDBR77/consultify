@@ -267,13 +267,13 @@ export const InterviewAssignmentsPanel: React.FC = () => {
                           <button
                             onClick={() => void handleSendBack(a.id)}
                             disabled={!canSendBack}
-                            className="px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 border border-rose-500/20 hover:bg-rose-600/30 transition-colors text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 rounded-lg bg-danger-600/20 text-danger-300 border border-danger-500/20 hover:bg-danger-600/30 transition-colors text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {t('admin.interviewAssignmentsPanel.sendBack')}
                           </button>
                         </div>
                         {a.sent_back_reason && (
-                          <div className="text-xs text-rose-300 mt-1 truncate">
+                          <div className="text-xs text-danger-300 mt-1 truncate">
                             {a.sent_back_reason}
                           </div>
                         )}

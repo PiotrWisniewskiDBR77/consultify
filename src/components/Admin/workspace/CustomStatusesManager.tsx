@@ -84,7 +84,7 @@ const categoryInfo: Record<
   todo: { icon: CircleDashed, label: 'To Do', color: 'text-slate-500 dark:text-slate-400' },
   in_progress: { icon: CircleDot, label: 'In Progress', color: 'text-blue-500' },
   done: { icon: CircleCheck, label: 'Done', color: 'text-emerald-500' },
-  blocked: { icon: X, label: 'Blocked', color: 'text-rose-500' },
+  blocked: { icon: X, label: 'Blocked', color: 'text-danger-500' },
 };
 
 export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
@@ -322,7 +322,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => deleteStatus(status.id)}
-              className="h-7 w-7 p-0 text-rose-500 hover:text-rose-600"
+              className="h-7 w-7 p-0 text-danger-500 hover:text-danger-600"
             >
               <Trash2 size={14} />
             </Button>

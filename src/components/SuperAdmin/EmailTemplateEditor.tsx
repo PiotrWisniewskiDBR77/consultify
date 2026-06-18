@@ -292,7 +292,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 p-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg font-medium hover:from-pink-600 hover:to-rose-700 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 p-4 py-2 bg-gradient-to-r from-pink-500 to-danger-600 text-white rounded-lg font-medium hover:from-pink-600 hover:to-danger-700 transition-all disabled:opacity-50"
           >
             {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
             {saving ? 'Saving...' : 'Save'}
@@ -302,8 +302,8 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
 
       {/* Alerts */}
       {errors.length > 0 && (
-        <div className="px-6 py-3 bg-rose-500/10 border-b border-rose-500/30">
-          <div className="flex items-center gap-2 text-rose-400">
+        <div className="px-6 py-3 bg-danger-500/10 border-b border-danger-500/30">
+          <div className="flex items-center gap-2 text-danger-400">
             <AlertCircle size={16} />
             <span>{errors.join(', ')}</span>
           </div>
@@ -683,7 +683,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
               <button
                 onClick={handleTestSend}
                 disabled={sendingTest || !testEmails.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg font-medium hover:from-pink-600 hover:to-rose-700 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-danger-600 text-white rounded-lg font-medium hover:from-pink-600 hover:to-danger-700 transition-all disabled:opacity-50"
               >
                 {sendingTest ? (
                   <RefreshCw size={16} className="animate-spin" />

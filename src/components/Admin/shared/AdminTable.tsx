@@ -212,7 +212,7 @@ export const TableAction: React.FC<TableActionProps> = ({
       }}
       className={`p-1.5 rounded-lg transition-colors ${
         variant === 'danger'
-          ? 'text-slate-600 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10'
+          ? 'text-slate-600 dark:text-slate-500 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-500/10'
           : 'text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]'
       }`}
       title={label}

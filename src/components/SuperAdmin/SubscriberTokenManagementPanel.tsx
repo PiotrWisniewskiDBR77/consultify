@@ -53,7 +53,7 @@ const STATUS_PILL: Record<TokenStatus, string> = {
   expired:
     'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-500/20 dark:text-slate-200 dark:border-slate-700',
   revoked:
-    'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-500/20 dark:text-rose-200 dark:border-rose-700',
+    'bg-danger-100 text-danger-800 border-danger-300 dark:bg-danger-500/20 dark:text-danger-200 dark:border-danger-700',
 };
 
 const STATUS_LABEL: Record<TokenStatus, string> = {
@@ -243,7 +243,7 @@ const SubscriberTokenManagementPanel: React.FC<SubscriberTokenManagementPanelPro
               <span className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-2 py-0.5 font-mono text-slate-700 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300">
                 {counts.expired} expired
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 font-mono text-rose-800 dark:border-rose-700 dark:bg-rose-500/10 dark:text-rose-200">
+              <span className="inline-flex items-center gap-1 rounded-full border border-danger-300 bg-danger-50 px-2 py-0.5 font-mono text-danger-800 dark:border-danger-700 dark:bg-danger-500/10 dark:text-danger-200">
                 {counts.revoked} revoked
               </span>
             </div>
@@ -358,7 +358,7 @@ const SubscriberTokenManagementPanel: React.FC<SubscriberTokenManagementPanelPro
                             type="button"
                             onClick={() => handleStartRevoke(token.id)}
                             disabled={revokeOpen}
-                            className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-0.5 font-medium text-rose-700 shadow-sm hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-900/20"
+                            className="inline-flex items-center gap-1 rounded-md border border-danger-200 bg-white px-2 py-0.5 font-medium text-danger-700 shadow-sm hover:bg-danger-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-danger-900 dark:bg-slate-900 dark:text-danger-300 dark:hover:bg-danger-900/20"
                           >
                             <Ban size={10} /> Revoke
                           </button>
@@ -416,9 +416,9 @@ const RevokePanel: React.FC<RevokePanelProps> = ({
   const disabled = state.outcome.kind === 'success';
 
   return (
-    <div className="space-y-2 rounded-md border border-rose-200 bg-white p-2 dark:border-rose-900 dark:bg-slate-900">
+    <div className="space-y-2 rounded-md border border-danger-200 bg-white p-2 dark:border-danger-900 dark:bg-slate-900">
       <div className="flex items-start gap-2">
-        <Ban size={12} className="mt-0.5 text-rose-600 dark:text-rose-400" />
+        <Ban size={12} className="mt-0.5 text-danger-600 dark:text-danger-400" />
         <div className="flex-1">
           <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
             Revoke dashboard token
@@ -473,7 +473,7 @@ const RevokePanel: React.FC<RevokePanelProps> = ({
           checked={state.confirmed}
           onChange={(e) => onChangeConfirm(e.target.checked)}
           disabled={disabled}
-          className="h-3.5 w-3.5 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+          className="h-3.5 w-3.5 rounded border-slate-300 text-danger-600 focus:ring-danger-500"
         />
         Confirm revocation — this token will be permanently invalidated.
       </label>
@@ -486,7 +486,7 @@ const RevokePanel: React.FC<RevokePanelProps> = ({
       )}
 
       {state.outcome.kind === 'error' && (
-        <div className="flex items-start gap-1.5 rounded border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+        <div className="flex items-start gap-1.5 rounded border border-danger-200 bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-300">
           <AlertTriangle size={12} className="mt-0.5 shrink-0" />
           <span>{state.outcome.message}</span>
         </div>
@@ -505,7 +505,7 @@ const RevokePanel: React.FC<RevokePanelProps> = ({
             type="button"
             onClick={onSubmit}
             disabled={!submittable}
-            className="inline-flex items-center gap-1 rounded-md border border-rose-600 bg-rose-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-1 rounded-md border border-danger-600 bg-danger-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-danger-700 focus:outline-none focus:ring-2 focus:ring-danger-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {state.loading ? <Loader2 size={11} className="animate-spin" /> : <Ban size={11} />}
             Revoke token

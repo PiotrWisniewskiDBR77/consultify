@@ -580,11 +580,11 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                     className={`flex items-center gap-1 text-sm ${
                       item.changePercent > 0
                         ? item.metric.includes('Time')
-                          ? 'text-rose-400'
+                          ? 'text-danger-400'
                           : 'text-emerald-400'
                         : item.metric.includes('Time')
                           ? 'text-emerald-400'
-                          : 'text-rose-400'
+                          : 'text-danger-400'
                     }`}
                   >
                     {item.changePercent > 0 ? (

@@ -414,7 +414,7 @@ export const ModelTierAssignments: React.FC = () => {
       case 'degraded':
         return <AlertTriangle size={14} className="text-amber-400" />;
       case 'unhealthy':
-        return <XCircle size={14} className="text-rose-400" />;
+        return <XCircle size={14} className="text-danger-400" />;
       default:
         return <Server size={14} className="text-slate-500 dark:text-slate-400" />;
     }
@@ -468,7 +468,7 @@ export const ModelTierAssignments: React.FC = () => {
       {actionError ? (
         <div
           role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+          className="rounded-xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -575,7 +575,7 @@ export const ModelTierAssignments: React.FC = () => {
                                   e.stopPropagation();
                                   handleRemoveFromTier(assignment.provider_id, tier);
                                 }}
-                                className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.03] rounded-lg transition-colors hover:text-rose-600 dark:hover:text-rose-400"
+                                className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.03] rounded-lg transition-colors hover:text-danger-600 dark:hover:text-danger-400"
                                 title="Remove model from tier"
                               >
                                 <Trash2 size={16} />

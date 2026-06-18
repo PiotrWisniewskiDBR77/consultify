@@ -86,7 +86,7 @@ const PII_SENSITIVITY_OPTIONS = [
     value: 'high',
     label: 'High',
     description: 'Aggressive detection (+ financial, health data)',
-    color: 'text-rose-400',
+    color: 'text-danger-400',
   },
 ];
 
@@ -434,7 +434,7 @@ export const SuperAdminAISettings: React.FC = () => {
       {saveError ? (
         <div
           role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+          className="rounded-xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
         >
           {saveError}
         </div>
@@ -512,7 +512,7 @@ export const SuperAdminAISettings: React.FC = () => {
                       </span>
                       <button
                         onClick={() => removeFromFallbackChain(providerId)}
-                        className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-400 transition-colors"
+                        className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-400 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -640,8 +640,8 @@ export const SuperAdminAISettings: React.FC = () => {
         {/* Security & PII */}
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-rose-500/20">
-              <Shield size={20} className="text-rose-400" />
+            <div className="p-2 rounded-lg bg-danger-500/20">
+              <Shield size={20} className="text-danger-400" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">

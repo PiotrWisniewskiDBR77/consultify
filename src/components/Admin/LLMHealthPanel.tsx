@@ -287,7 +287,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
       case 'degraded':
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       case 'unhealthy':
-        return <XCircle className="w-5 h-5 text-rose-500" />;
+        return <XCircle className="w-5 h-5 text-danger-500" />;
       default:
         return <Info className="w-5 h-5 text-gray-500 dark:text-gray-400" />;
     }
@@ -296,7 +296,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
   const getAlertIcon = (severity: string) => {
     switch (severity) {
       case 'error':
-        return <AlertOctagon className="w-5 h-5 text-rose-500" />;
+        return <AlertOctagon className="w-5 h-5 text-danger-500" />;
       case 'warning':
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       default:
@@ -314,7 +314,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
         <DegradedState title="LLM health unavailable" description={error} />
         <button
           onClick={handleRefresh}
-          className="mt-3 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500"
+          className="mt-3 px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-500"
         >
           Spróbuj ponownie
         </button>
@@ -358,12 +358,12 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
           </div>
         </div>
 
-        <div className="bg-rose-50 dark:bg-rose-900/20 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
+        <div className="bg-danger-50 dark:bg-danger-900/20 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm">
             <XCircle className="w-4 h-4" />
             Niedostępne
           </div>
-          <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
+          <div className="text-2xl font-bold text-danger-600 dark:text-danger-400 mt-1">
             {summary?.unhealthyCount || 0}
           </div>
         </div>
@@ -374,7 +374,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
         <div className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <AlertOctagon className="w-5 h-5 text-rose-500" />
+              <AlertOctagon className="w-5 h-5 text-danger-500" />
               Alerty ({alerts.length})
             </h3>
           </div>
@@ -384,7 +384,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                 key={index}
                 className={`p-4 ${
                   alert.severity === 'error'
-                    ? 'bg-rose-50 dark:bg-rose-900/10'
+                    ? 'bg-danger-50 dark:bg-danger-900/10'
                     : 'bg-yellow-50 dark:bg-yellow-900/10'
                 }`}
               >
@@ -398,7 +398,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                       <span
                         className={`px-2 py-0.5 text-xs rounded-full ${
                           alert.severity === 'error'
-                            ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                            ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300'
                             : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
                         }`}
                       >
@@ -475,7 +475,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                         : provider.status === 'degraded'
                           ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                          : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                          : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300'
                     }`}
                   >
                     {provider.statusLabel.text}
@@ -492,11 +492,11 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
               {expandedProvider === provider.id && (
                 <div className="mt-4 pl-8 space-y-3">
                   {provider.error && (
-                    <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
-                      <p className="font-medium text-rose-700 dark:text-rose-300">
+                    <div className="p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200 dark:border-danger-800">
+                      <p className="font-medium text-danger-700 dark:text-danger-300">
                         {provider.error.title}
                       </p>
-                      <p className="text-sm text-rose-600 dark:text-rose-400 mt-1">
+                      <p className="text-sm text-danger-600 dark:text-danger-400 mt-1">
                         {provider.error.description}
                       </p>
                       <div className="mt-2 p-2 bg-white dark:bg-navy-800 rounded">

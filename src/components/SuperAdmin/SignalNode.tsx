@@ -6,7 +6,7 @@ interface SignalNodeProps {
   icon: LucideIcon;
   label: string;
   count: number;
-  colorClass: string; // e.g., 'bg-rose-500' or 'text-rose-500'
+  colorClass: string; // e.g., 'bg-danger-500' or 'text-danger-500'
   active: boolean;
   onClick: () => void;
 }
@@ -47,7 +47,7 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
     >
       {/* Critical Blinking Ring (Red Light only) */}
       {count > 0 && isCritical && (
-        <div className="absolute inset-0 rounded-xl bg-rose-500/20 animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 rounded-xl bg-danger-500/20 animate-pulse pointer-events-none" />
       )}
 
       {/* Active Status Dot (Top-Right) with Ping */}

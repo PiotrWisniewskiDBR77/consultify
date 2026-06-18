@@ -32,7 +32,7 @@ const authHeaders = () => ({
 const ACTION_ICONS: Record<ModelAuditEntry['action'], React.ReactNode> = {
   created: <Plus size={14} className="text-emerald-400" />,
   updated: <Edit size={14} className="text-blue-400" />,
-  deleted: <Trash2 size={14} className="text-rose-400" />,
+  deleted: <Trash2 size={14} className="text-danger-400" />,
   assignment_changed: <Settings size={14} className="text-amber-400" />,
   fallback_used: <AlertTriangle size={14} className="text-amber-400" />,
 };
@@ -40,7 +40,7 @@ const ACTION_ICONS: Record<ModelAuditEntry['action'], React.ReactNode> = {
 const ACTION_STYLES: Record<ModelAuditEntry['action'], string> = {
   created: 'bg-emerald-500/10 text-emerald-400',
   updated: 'bg-blue-500/10 text-blue-400',
-  deleted: 'bg-rose-500/10 text-rose-400',
+  deleted: 'bg-danger-500/10 text-danger-400',
   assignment_changed: 'bg-amber-500/10 text-amber-400',
   fallback_used: 'bg-amber-500/10 text-amber-400',
 };
@@ -327,7 +327,7 @@ export const ModelAuditLog: React.FC = () => {
                               {key}
                             </span>
                             <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 rounded text-xs font-mono">
+                              <span className="px-2 py-0.5 bg-danger-500/10 text-danger-400 rounded text-xs font-mono">
                                 {change.from === null ? 'null' : JSON.stringify(change.from)}
                               </span>
                               <span className="text-slate-600">→</span>

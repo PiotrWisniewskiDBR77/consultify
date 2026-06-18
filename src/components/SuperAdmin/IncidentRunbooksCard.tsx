@@ -313,7 +313,7 @@ function numericPctToFraction(value: number | null): number | null {
 // ---------------------------------------------------------------------------
 
 const SEVERITY_TONE: Record<IncidentSeverity, string> = {
-  P0: 'bg-rose-600 text-white',
+  P0: 'bg-danger-600 text-white',
   P1: 'bg-amber-500 text-white',
   P2: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
 };

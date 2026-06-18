@@ -245,7 +245,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
               </div>
               <button
                 onClick={() => setShowRemoveConfirm(true)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
+                className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-500 transition-colors"
                 title={t('admin.billing.removePartner', 'Remove partner')}
               >
                 <X className="w-5 h-5" />
@@ -296,14 +296,14 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
 
           {/* Remove Confirmation */}
           {showRemoveConfirm && (
-            <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4">
+            <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-xl p-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-medium text-rose-800 dark:text-rose-300">
+                  <p className="font-medium text-danger-800 dark:text-danger-300">
                     {t('admin.billing.confirmRemove', 'Remove Partner Attribution?')}
                   </p>
-                  <p className="text-sm text-rose-700 dark:text-rose-400 mt-1">
+                  <p className="text-sm text-danger-700 dark:text-danger-400 mt-1">
                     {t(
                       'admin.billing.removeWarning',
                       'This will remove any associated discounts. This action cannot be undone.'
@@ -313,7 +313,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
                     <button
                       onClick={handleRemoveCode}
                       disabled={removing}
-                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+                      className="px-3 py-1.5 bg-danger-600 hover:bg-danger-500 disabled:bg-danger-600/50 text-white rounded-lg text-sm font-medium flex items-center gap-2"
                     >
                       {removing && (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -351,7 +351,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
                     'w-full px-4 py-2.5 rounded-lg border text-navy-900 dark:text-white bg-white dark:bg-navy-900',
                     'focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
                     validationResult?.valid === true && 'border-emerald-500',
-                    validationResult?.valid === false && 'border-rose-500',
+                    validationResult?.valid === false && 'border-danger-500',
                     !validationResult && 'border-slate-200 dark:border-navy-700'
                   )}
                 />
@@ -367,7 +367,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
                 )}
                 {!validating && validationResult?.valid === false && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <X className="w-5 h-5 text-rose-500" />
+                    <X className="w-5 h-5 text-danger-500" />
                   </div>
                 )}
               </div>
@@ -390,7 +390,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
                   'text-sm mt-2',
                   validationResult.valid
                     ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
+                    : 'text-danger-600 dark:text-danger-400'
                 )}
               >
                 {validationResult.valid

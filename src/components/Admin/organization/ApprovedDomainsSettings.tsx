@@ -302,7 +302,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                     )}
                     <button
                       onClick={() => setShowDeleteModal(domain.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                     >
                       <Trash2 size={16} />
                     </button>

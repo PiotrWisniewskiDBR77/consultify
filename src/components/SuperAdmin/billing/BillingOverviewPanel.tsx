@@ -231,7 +231,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 'bg-blue-500',
                 'bg-emerald-500',
                 'bg-amber-500',
-                'bg-rose-500',
+                'bg-danger-500',
               ];
 
               return (
@@ -291,7 +291,7 @@ export const BillingOverviewPanel: React.FC = () => {
                     <ArrowUpRight size={14} />
                     <span className="text-sm">+{day.new_subscriptions}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-rose-400">
+                  <div className="flex items-center gap-1 text-danger-400">
                     <ArrowDownRight size={14} />
                     <span className="text-sm">-{day.churned}</span>
                   </div>

@@ -191,7 +191,7 @@ export const LoginAttemptsPanel: React.FC = () => {
             {stats.loginAttempts.successRate >= 95 ? (
               <TrendingUp size={16} className="text-emerald-400" />
             ) : (
-              <TrendingDown size={16} className="text-rose-400" />
+              <TrendingDown size={16} className="text-danger-400" />
             )}
           </div>
         </div>
@@ -207,7 +207,7 @@ export const LoginAttemptsPanel: React.FC = () => {
 
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <XCircle size={18} className="text-rose-400" />
+            <XCircle size={18} className="text-danger-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Failed</span>
           </div>
           <span className="text-2xl font-bold text-white">{stats.loginAttempts.failed}</span>
@@ -229,11 +229,11 @@ export const LoginAttemptsPanel: React.FC = () => {
     if (lockouts.length === 0) return null;
 
     return (
-      <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 mb-6">
+      <div className="bg-danger-500/10 border border-danger-500/20 rounded-xl p-4 mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle size={20} className="text-rose-400" />
+          <AlertTriangle size={20} className="text-danger-400" />
           <h3 className="font-semibold text-white">Active Account Lockouts</h3>
-          <span className="px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded text-sm">
+          <span className="px-2 py-0.5 bg-danger-500/20 text-danger-400 rounded text-sm">
             {lockouts.length}
           </span>
         </div>
@@ -245,8 +245,8 @@ export const LoginAttemptsPanel: React.FC = () => {
               className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg"
             >
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center">
-                  <User size={18} className="text-rose-400" />
+                <div className="w-10 h-10 rounded-full bg-danger-500/20 flex items-center justify-center">
+                  <User size={18} className="text-danger-400" />
                 </div>
                 <div>
                   <p className="font-medium text-white">
@@ -388,7 +388,7 @@ export const LoginAttemptsPanel: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2 text-rose-400">
+                        <div className="flex items-center gap-2 text-danger-400">
                           <XCircle size={16} />
                           <span className="text-sm">Failed</span>
                         </div>

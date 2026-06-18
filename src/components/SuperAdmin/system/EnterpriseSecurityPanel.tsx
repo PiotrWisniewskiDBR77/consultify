@@ -113,10 +113,10 @@ const SEVERITY_CONFIG = {
     border: 'border-amber-500/30',
   },
   CRITICAL: {
-    color: 'bg-rose-500',
-    text: 'text-rose-700 dark:text-rose-400',
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/30',
+    color: 'bg-danger-500',
+    text: 'text-danger-700 dark:text-danger-400',
+    bg: 'bg-danger-500/10',
+    border: 'border-danger-500/30',
   },
 };
 
@@ -535,10 +535,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
         };
       case 'non_compliant':
         return {
-          bg: 'bg-rose-500/10',
-          border: 'border-rose-500/30',
-          text: 'text-rose-700 dark:text-rose-400',
-          color: 'bg-rose-500',
+          bg: 'bg-danger-500/10',
+          border: 'border-danger-500/30',
+          text: 'text-danger-700 dark:text-danger-400',
+          color: 'bg-danger-500',
         };
       case 'partial':
         return {
@@ -609,7 +609,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -747,7 +747,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                 {event.resolved ? (
                                   <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                 ) : (
-                                  <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                                  <XCircle className="w-4 h-4 text-danger-600 dark:text-danger-400" />
                                 )}
                               </div>
                               <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
@@ -789,7 +789,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <button
                   disabled
                   title="Bulk session termination requires an audited backend workflow"
-                  className="px-4 py-2 bg-rose-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-danger-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Terminate All
                 </button>
@@ -860,7 +860,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             <button
                               onClick={() => handleTerminateSession(session.id)}
                               aria-label={`Terminate session ${session.id}`}
-                              className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-sm rounded-lg transition-colors"
+                              className="px-3 py-1.5 bg-danger-500/20 hover:bg-danger-500/30 text-danger-400 text-sm rounded-lg transition-colors"
                             >
                               Terminate
                             </button>
@@ -927,20 +927,20 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                       className={`p-4 rounded-xl border transition-colors ${
                         rule.rule_type === 'allow'
                           ? 'bg-emerald-500/5 border-emerald-500/20'
-                          : 'bg-rose-500/5 border-rose-500/20'
+                          : 'bg-danger-500/5 border-danger-500/20'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div
                             className={`p-2 rounded-lg ${
-                              rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+                              rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-danger-500/20'
                             }`}
                           >
                             {rule.rule_type === 'allow' ? (
                               <CheckCircle className="w-4 h-4 text-emerald-400" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-rose-400" />
+                              <XCircle className="w-4 h-4 text-danger-400" />
                             )}
                           </div>
                           <div>
@@ -952,7 +952,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                 className={`px-2 py-0.5 text-xs rounded ${
                                   rule.rule_type === 'allow'
                                     ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                                    : 'bg-rose-500/20 text-rose-700 dark:text-rose-400'
+                                    : 'bg-danger-500/20 text-danger-700 dark:text-danger-400'
                                 }`}
                               >
                                 {rule.rule_type.toUpperCase()}
@@ -976,7 +976,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             {rule.enabled ? 'Enabled' : 'Disabled'}
                           </button>
                           <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors">
-                            <Trash2 className="w-4 h-4 text-rose-400" />
+                            <Trash2 className="w-4 h-4 text-danger-400" />
                           </button>
                         </div>
                       </div>

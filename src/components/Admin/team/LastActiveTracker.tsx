@@ -219,7 +219,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
         );
       case 'inactive':
         return (
-          <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
+          <span className="flex items-center gap-1.5 text-danger-600 dark:text-danger-400">
             <WifiOff size={12} />
             {t('admin.team.activity.inactive', 'Inactive')}
           </span>
@@ -300,8 +300,8 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
           className={cn(
             'p-4 rounded-xl border cursor-pointer transition-all',
             statusFilter === 'inactive'
-              ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700'
-              : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-rose-300'
+              ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-300 dark:border-danger-700'
+              : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-danger-300'
           )}
           onClick={() => setStatusFilter(statusFilter === 'inactive' ? 'all' : 'inactive')}
         >
@@ -309,9 +309,9 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.team.activity.inactive', 'Inactive')}
             </span>
-            <WifiOff size={16} className="text-rose-500" />
+            <WifiOff size={16} className="text-danger-500" />
           </div>
-          <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.inactive}</p>
+          <p className="text-2xl font-bold text-danger-600 dark:text-danger-400">{stats.inactive}</p>
         </div>
       </div>
 
@@ -421,7 +421,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onDeactivateUsers(Array.from(selectedUsers))}
-              className="text-rose-600 border-rose-300 hover:bg-rose-50"
+              className="text-danger-600 border-danger-300 hover:bg-danger-50"
               icon={<UserMinus size={14} />}
             >
               {t('admin.team.activity.deactivate', 'Deactivate')}
@@ -529,7 +529,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                 <div className="col-span-3 text-sm text-slate-600 dark:text-slate-400">
                   {formatLastActive(user.lastActiveAt)}
                   {daysSince !== null && daysSince >= settings.warnDays && (
-                    <span className="ml-2 text-xs text-rose-500">({daysSince}d)</span>
+                    <span className="ml-2 text-xs text-danger-500">({daysSince}d)</span>
                   )}
                 </div>
                 <div className="col-span-2 flex justify-end gap-1">

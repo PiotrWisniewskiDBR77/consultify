@@ -258,7 +258,7 @@ export const AIMissionControl: React.FC = () => {
                     className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
                       results[cap.id].status === 'SUCCESS'
                         ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40'
-                        : 'bg-rose-500/20 text-rose-200 border border-rose-500/40'
+                        : 'bg-danger-500/20 text-danger-200 border border-danger-500/40'
                     }`}
                   >
                     {results[cap.id].status} ({results[cap.id].latency}ms)
@@ -299,11 +299,11 @@ export const AIMissionControl: React.FC = () => {
                 <div className="flex gap-2">
                   <span className="text-blue-300">[{new Date().toLocaleTimeString()}]</span>
                   <span className="text-amber-300">{id.toUpperCase()}</span>
-                  <span className={res.status === 'SUCCESS' ? 'text-emerald-200' : 'text-rose-200'}>
+                  <span className={res.status === 'SUCCESS' ? 'text-emerald-200' : 'text-danger-200'}>
                     {res.status} ({res.latency}ms)
                   </span>
                 </div>
-                {res.error && <div className="text-rose-200 ml-4">Error: {res.error}</div>}
+                {res.error && <div className="text-danger-200 ml-4">Error: {res.error}</div>}
                 {res.details !== null && res.details !== undefined && (
                   <pre className="ml-4 mt-1 text-slate-100 whitespace-pre-wrap break-words">
                     {JSON.stringify(res.details, null, 2)}

@@ -145,7 +145,7 @@ export const InvoicesPanel: React.FC = () => {
       },
       open: { icon: <Clock size={14} />, bg: 'bg-blue-500/20', text: 'text-blue-400' },
       paid: { icon: <CheckCircle2 size={14} />, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-      void: { icon: <XCircle size={14} />, bg: 'bg-rose-500/20', text: 'text-rose-400' },
+      void: { icon: <XCircle size={14} />, bg: 'bg-danger-500/20', text: 'text-danger-400' },
       uncollectible: {
         icon: <AlertTriangle size={14} />,
         bg: 'bg-amber-500/20',

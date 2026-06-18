@@ -105,13 +105,13 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
     if (delivery.next_retry_at) {
       return <Clock size={16} className="text-amber-400" />;
     }
-    return <XCircle size={16} className="text-rose-400" />;
+    return <XCircle size={16} className="text-danger-400" />;
   };
 
   const getStatusColor = (status: number) => {
     if (status >= 200 && status < 300) return 'text-emerald-400';
     if (status >= 400 && status < 500) return 'text-amber-400';
-    return 'text-rose-400';
+    return 'text-danger-400';
   };
 
   return (
@@ -222,9 +222,9 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                   {expandedId === delivery.id && (
                     <div className="border-t border-white/[0.06] p-4 space-y-4">
                       {delivery.error_message && (
-                        <div className="flex items-start gap-2 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg">
-                          <AlertTriangle size={16} className="text-rose-400 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-rose-300">{delivery.error_message}</span>
+                        <div className="flex items-start gap-2 p-3 bg-danger-500/10 border border-danger-500/20 rounded-lg">
+                          <AlertTriangle size={16} className="text-danger-400 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-danger-300">{delivery.error_message}</span>
                         </div>
                       )}
 

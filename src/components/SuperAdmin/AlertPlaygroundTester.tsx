@@ -347,7 +347,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
         </div>
 
         {dispatchState.errorMessage && (
-          <div className="mt-2 rounded border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+          <div className="mt-2 rounded border border-danger-200 bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-300">
             {step1FetchReason || dispatchState.errorMessage}
           </div>
         )}
@@ -447,7 +447,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
             </div>
 
             {inboxState.errorMessage && (
-              <div className="mt-2 rounded border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+              <div className="mt-2 rounded border border-danger-200 bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-300">
                 {step2FetchReason || inboxState.errorMessage}
               </div>
             )}
@@ -588,7 +588,7 @@ const InboxResultBanner: React.FC<InboxResultBannerProps> = ({ result }) => {
     ? 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-100'
     : isAmber
       ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-100'
-      : 'border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-700 dark:bg-rose-900/20 dark:text-rose-100';
+      : 'border-danger-300 bg-danger-50 text-danger-900 dark:border-danger-700 dark:bg-danger-900/20 dark:text-danger-100';
   const Icon = isVerified ? CheckCircle2 : isAmber ? AlertTriangle : XCircle;
   const headline = isVerified
     ? 'Signature verified — your verifier code can use the same approach.'

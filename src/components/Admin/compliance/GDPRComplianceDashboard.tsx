@@ -285,7 +285,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                     ? 'text-emerald-600'
                     : compliancePercentage >= 50
                       ? 'text-amber-600'
-                      : 'text-rose-600'
+                      : 'text-danger-600'
                 )}
               >
                 {compliancePercentage}% {t('admin.compliance.gdpr.configured', 'configured')}
@@ -299,7 +299,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                     ? 'bg-emerald-500'
                     : compliancePercentage >= 50
                       ? 'bg-amber-500'
-                      : 'bg-rose-500'
+                      : 'bg-danger-500'
                 )}
                 style={{ width: `${compliancePercentage}%` }}
               />

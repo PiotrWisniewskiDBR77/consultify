@@ -294,8 +294,8 @@ const STATUS_CONFIG: Record<
   },
   error: {
     label: 'Error',
-    color: 'text-rose-400',
-    bg: 'bg-rose-500/10',
+    color: 'text-danger-400',
+    bg: 'bg-danger-500/10',
     icon: <XCircle size={14} />,
   },
   pending: {
@@ -315,7 +315,7 @@ const STATUS_CONFIG: Record<
 const HEALTH_CONFIG: Record<HealthStatus, { label: string; color: string; dot: string }> = {
   healthy: { label: 'Healthy', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   degraded: { label: 'Degraded', color: 'text-amber-400', dot: 'bg-amber-400' },
-  unhealthy: { label: 'Unhealthy', color: 'text-rose-400', dot: 'bg-rose-400' },
+  unhealthy: { label: 'Unhealthy', color: 'text-danger-400', dot: 'bg-danger-400' },
 };
 
 const CONNECTOR_PROVIDER_FAMILY_MAP: Partial<Record<string, V8SyncProviderFamily>> = {
@@ -2167,7 +2167,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   {t('integrations.syncHub.lastResult', 'Last result')}
                 </div>
                 <div
-                  className={`text-xs ${int.lastRun.status === 'completed' ? 'text-emerald-400' : int.lastRun.status === 'failed' ? 'text-rose-400' : 'text-amber-400'}`}
+                  className={`text-xs ${int.lastRun.status === 'completed' ? 'text-emerald-400' : int.lastRun.status === 'failed' ? 'text-danger-400' : 'text-amber-400'}`}
                 >
                   {int.lastRun.status} · {formatDuration(int.lastRun.duration_ms)}
                 </div>
@@ -2219,13 +2219,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               <div className="px-4 pb-4 pt-1 border-t border-navy-700/50 space-y-3">
                 {/* Error banner */}
                 {int.status === 'error' && int.lastError && (
-                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-rose-500/10 text-rose-400 text-xs">
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-danger-500/10 text-danger-400 text-xs">
                     <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                     <div>
                       <div className="font-medium">
                         {t('integrations.syncHub.errorOccurred', 'Error occurred')}
                       </div>
-                      <div className="text-rose-300/70 mt-0.5">{int.lastError}</div>
+                      <div className="text-danger-300/70 mt-0.5">{int.lastError}</div>
                     </div>
                   </div>
                 )}
@@ -2932,7 +2932,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         {t('integrations.syncHub.errorRateLabel', 'Error rate')}:
                       </span>{' '}
                       <span
-                        className={`${int.errorRate > 20 ? 'text-rose-400' : 'text-slate-300'}`}
+                        className={`${int.errorRate > 20 ? 'text-danger-400' : 'text-slate-300'}`}
                       >
                         {int.errorRate}%
                       </span>
@@ -3009,7 +3009,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   )}
                   <button
                     onClick={() => handleDisconnect(int.id)}
-                    className="px-3 py-1.5 text-xs bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors flex items-center gap-1.5 ml-auto"
+                    className="px-3 py-1.5 text-xs bg-danger-500/10 text-danger-400 hover:bg-danger-500/20 rounded-lg transition-colors flex items-center gap-1.5 ml-auto"
                   >
                     <Unplug size={13} />
                     {t('integrations.syncHub.disconnect', 'Disconnect')}
@@ -3171,7 +3171,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {
               label: t('integrations.syncHub.unhealthy', 'Unhealthy'),
               value: healthSummary.unhealthy,
-              color: 'text-rose-400',
+              color: 'text-danger-400',
             },
           ].map((card) => (
             <div
@@ -3211,7 +3211,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               {
                 label: t('integrations.syncHub.v8EscalatedCredentials', 'Escalated'),
                 value: v8AuthHealthSummary.escalated,
-                color: 'text-rose-400',
+                color: 'text-danger-400',
               },
             ].map((card) => (
               <div
@@ -3371,7 +3371,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 : health.healthy
                   ? 'border-emerald-500/20 bg-emerald-500/5'
                   : ['error', 'dead_letter', 'conflict'].includes(health.syncStatus)
-                    ? 'border-rose-500/20 bg-rose-500/5'
+                    ? 'border-danger-500/20 bg-danger-500/5'
                     : 'border-amber-500/20 bg-amber-500/5';
 
               return (
@@ -3516,10 +3516,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       <div>
         <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-          <AlertTriangle size={14} className="text-rose-400" />
+          <AlertTriangle size={14} className="text-danger-400" />
           {t('integrations.syncHub.v8Conflicts', 'V8 Unresolved Sync Conflicts')}
           {v8Conflicts.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-rose-500/10 text-rose-400 rounded">
+            <span className="px-1.5 py-0.5 text-xs bg-danger-500/10 text-danger-400 rounded">
               {v8Conflicts.length}
             </span>
           )}
@@ -3533,15 +3533,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {v8Conflicts.slice(0, 5).map((conflict) => (
               <div
                 key={conflict.conflictId}
-                className="flex items-start gap-3 p-3 rounded-lg bg-rose-500/5 border border-rose-500/20"
+                className="flex items-start gap-3 p-3 rounded-lg bg-danger-500/5 border border-danger-500/20"
               >
-                <AlertTriangle size={14} className="text-rose-400 shrink-0 mt-0.5" />
+                <AlertTriangle size={14} className="text-danger-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-200">
                       {conflict.conflictClass}
                     </span>
-                    <span className="px-1.5 py-0.5 text-[11px] bg-rose-500/10 text-rose-300 rounded uppercase">
+                    <span className="px-1.5 py-0.5 text-[11px] bg-danger-500/10 text-danger-300 rounded uppercase">
                       {conflict.severity}
                     </span>
                   </div>
@@ -3714,7 +3714,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <AlertTriangle size={14} className="text-amber-400" />
           {t('integrations.syncHub.unresolvedErrors', 'Unresolved Errors')}
           {errors.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-rose-500/10 text-rose-400 rounded">
+            <span className="px-1.5 py-0.5 text-xs bg-danger-500/10 text-danger-400 rounded">
               {errors.length}
             </span>
           )}
@@ -3731,7 +3731,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 key={err.id}
                 className="flex items-start gap-3 p-3 rounded-lg bg-navy-900/40 border border-navy-700/50"
               >
-                <XCircle size={14} className="text-rose-400 shrink-0 mt-0.5" />
+                <XCircle size={14} className="text-danger-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-300">{err.errorType}</span>
@@ -3808,7 +3808,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       {ownershipError && (
-        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
+        <div className="p-3 rounded-lg bg-danger-500/10 border border-danger-500/20 text-danger-300 text-sm">
           {ownershipError}
         </div>
       )}
@@ -3931,7 +3931,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       {connectionLogError && (
-        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
+        <div className="p-3 rounded-lg bg-danger-500/10 border border-danger-500/20 text-danger-300 text-sm">
           {connectionLogError}
         </div>
       )}
@@ -4048,7 +4048,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const stateColor = (s: string) => {
       if (s === 'connected' || s === 'recovered') return 'text-green-500';
       if (s === 'degraded' || s === 'requires_action') return 'text-amber-500';
-      if (s === 'blocked') return 'text-rose-500';
+      if (s === 'blocked') return 'text-danger-500';
       return 'text-slate-400';
     };
 
@@ -4218,7 +4218,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const statusColors: Record<string, string> = {
       running: 'text-blue-400 bg-blue-500/10',
       completed: 'text-emerald-400 bg-emerald-500/10',
-      failed: 'text-rose-400 bg-rose-500/10',
+      failed: 'text-danger-400 bg-danger-500/10',
     };
 
     const formatDuration = (ms: number | null) => {
@@ -4316,7 +4316,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   const lifecycleColors: Record<string, string> = {
                     connected: 'text-emerald-400',
                     degraded: 'text-amber-400',
-                    requires_action: 'text-rose-400',
+                    requires_action: 'text-danger-400',
                     draft: 'text-slate-400',
                   };
                   return (
@@ -4377,8 +4377,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         </td>
                       </tr>
                       {run.errorSummary && (
-                        <tr className="bg-rose-500/5">
-                          <td colSpan={9} className="px-4 py-1.5 text-xs text-rose-400/80">
+                        <tr className="bg-danger-500/5">
+                          <td colSpan={9} className="px-4 py-1.5 text-xs text-danger-400/80">
                             <span className="text-slate-500 mr-2">
                               {t('integrations.syncHub.traceId', 'Trace:')} {run.id}
                             </span>
@@ -4433,7 +4433,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         entry.action.includes('connected')
                           ? 'text-emerald-400'
                           : entry.action.includes('disconnected')
-                            ? 'text-rose-400'
+                            ? 'text-danger-400'
                             : entry.action.includes('reauth')
                               ? 'text-amber-400'
                               : entry.action.includes('sync')

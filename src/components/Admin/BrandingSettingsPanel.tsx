@@ -322,7 +322,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
           {value && (
             <button
               onClick={() => updateField(field, '')}
-              className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded"
+              className="p-1 text-slate-400 dark:text-slate-500 hover:text-danger-500 rounded"
             >
               <Trash2 size={14} />
             </button>

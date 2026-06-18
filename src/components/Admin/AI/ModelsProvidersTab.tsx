@@ -318,7 +318,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
       case 'degraded':
         return <AlertTriangle size={14} className="text-amber-400" />;
       case 'unhealthy':
-        return <XCircle size={14} className="text-rose-400" />;
+        return <XCircle size={14} className="text-danger-400" />;
       default:
         return <Server size={14} className="text-slate-600 dark:text-slate-500" />;
     }
@@ -524,7 +524,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         llmStatus.circuitBreakers[p.provider].state === 'CLOSED'
                           ? 'bg-emerald-400'
                           : llmStatus.circuitBreakers[p.provider].state === 'OPEN'
-                            ? 'bg-rose-400'
+                            ? 'bg-danger-400'
                             : 'bg-amber-400'
                       }`}
                     />
@@ -532,7 +532,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                       Circuit: {llmStatus.circuitBreakers[p.provider].state}
                     </span>
                     {llmStatus.circuitBreakers[p.provider].failures > 0 && (
-                      <span className="text-rose-400">
+                      <span className="text-danger-400">
                         ({llmStatus.circuitBreakers[p.provider].failures} failures)
                       </span>
                     )}
@@ -636,7 +636,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                 : statusInfo?.healthStatus === 'degraded'
                                   ? 'text-amber-400'
                                   : statusInfo?.healthStatus === 'unhealthy'
-                                    ? 'text-rose-400'
+                                    ? 'text-danger-400'
                                     : 'text-slate-500 dark:text-slate-400'
                             }`}
                           >

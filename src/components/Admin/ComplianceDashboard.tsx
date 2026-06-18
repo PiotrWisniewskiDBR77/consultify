@@ -325,8 +325,8 @@ export function ComplianceDashboard() {
         icon: <CheckCircle2 size={14} />,
       },
       NON_COMPLIANT: {
-        bg: 'bg-rose-100 dark:bg-rose-900/30',
-        text: 'text-rose-700 dark:text-rose-400',
+        bg: 'bg-danger-100 dark:bg-danger-900/30',
+        text: 'text-danger-700 dark:text-danger-400',
         icon: <XCircle size={14} />,
       },
       PARTIAL: {
@@ -358,7 +358,7 @@ export function ComplianceDashboard() {
       LOW: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
       MEDIUM: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
       HIGH: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-      CRITICAL: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+      CRITICAL: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
     };
 
     return (
@@ -381,7 +381,7 @@ export function ComplianceDashboard() {
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600 dark:text-green-400';
     if (score >= 70) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-rose-600 dark:text-rose-400';
+    return 'text-danger-600 dark:text-danger-400';
   };
 
   const exportComplianceReport = async () => {
@@ -528,8 +528,8 @@ export function ComplianceDashboard() {
             <div className="grid grid-cols-4 gap-4">
               <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-rose-100 dark:bg-rose-900/20 rounded-lg">
-                    <AlertTriangle size={20} className="text-rose-500" />
+                  <div className="p-2 bg-danger-100 dark:bg-danger-900/20 rounded-lg">
+                    <AlertTriangle size={20} className="text-danger-500" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -600,7 +600,7 @@ export function ComplianceDashboard() {
                         {consent.given}
                       </span>
                       <span className="flex items-center gap-1">
-                        <XCircle size={12} className="text-rose-500" />
+                        <XCircle size={12} className="text-danger-500" />
                         {consent.withdrawn}
                       </span>
                       <span className="flex items-center gap-1">

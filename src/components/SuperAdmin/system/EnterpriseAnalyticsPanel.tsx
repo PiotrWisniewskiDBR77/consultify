@@ -389,7 +389,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                           <div className="flex items-center justify-between mb-2">
                             <Icon className={`w-5 h-5 text-${metric.color}-400`} />
                             <div
-                              className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}
+                              className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-danger-400'}`}
                             >
                               {isPositive ? (
                                 <ArrowUpRight className="w-3 h-3" />

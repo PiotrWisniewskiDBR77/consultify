@@ -239,6 +239,6 @@ export const PROVIDER_TYPE_STYLES: Record<ProviderType, { bg: string; text: stri
 export const HEALTH_STYLES: Record<HealthStatus, { bg: string; text: string; dot: string }> = {
   healthy: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
   degraded: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
-  unhealthy: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400' },
+  unhealthy: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-400' },
   unknown: { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };

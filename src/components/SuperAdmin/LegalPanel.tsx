@@ -215,7 +215,7 @@ export const LegalPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+          className="p-4 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400"
         >
           {actionError}
         </div>

@@ -432,7 +432,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               selectedEnvironment === env
                 ? env === 'production'
-                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  ? 'bg-danger-500/20 text-danger-400 border border-danger-500/30'
                   : env === 'staging'
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -482,7 +482,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -654,7 +654,7 @@ const ConfigRow: React.FC<{
               config.type === 'boolean'
                 ? config.value === 'true'
                   ? 'text-emerald-400'
-                  : 'text-rose-400'
+                  : 'text-danger-400'
                 : 'text-slate-700 dark:text-slate-300'
             } font-mono truncate max-w-md`}
           >
@@ -693,11 +693,11 @@ const ConfigRow: React.FC<{
         </button>
         <button
           onClick={onDelete}
-          className="p-2 hover:bg-rose-500/20 rounded-lg transition-colors"
+          className="p-2 hover:bg-danger-500/20 rounded-lg transition-colors"
           title="Delete"
           disabled={config.is_locked}
         >
-          <Trash2 className="w-4 h-4 text-rose-400" />
+          <Trash2 className="w-4 h-4 text-danger-400" />
         </button>
       </div>
     </div>
@@ -744,7 +744,7 @@ const ConfigEditModal: React.FC<{
           {saveError && (
             <div
               role="alert"
-              className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-600 dark:text-rose-300"
+              className="rounded-lg border border-danger-500/30 bg-danger-500/5 p-3 text-sm text-danger-600 dark:text-danger-300"
             >
               {saveError}
             </div>
@@ -882,7 +882,7 @@ const ConfigAddModal: React.FC<{
           {saveError && (
             <div
               role="alert"
-              className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-600 dark:text-rose-300"
+              className="rounded-lg border border-danger-500/30 bg-danger-500/5 p-3 text-sm text-danger-600 dark:text-danger-300"
             >
               {saveError}
             </div>
@@ -1072,7 +1072,7 @@ const ConfigHistoryModal: React.FC<{
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-slate-500 dark:text-slate-400 text-xs">Previous:</span>
-                  <code className="block mt-1 text-rose-400 bg-rose-500/10 px-2 py-1 rounded">
+                  <code className="block mt-1 text-danger-400 bg-danger-500/10 px-2 py-1 rounded">
                     {version.old_value}
                   </code>
                 </div>

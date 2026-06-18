@@ -183,20 +183,20 @@ export const IPAccessRulesPanel: React.FC = () => {
         rule.is_active
           ? rule.rule_type === 'allow'
             ? 'border-emerald-500/20'
-            : 'border-rose-500/20'
+            : 'border-danger-500/20'
           : 'border-white/[0.04] opacity-60'
       }`}
     >
       <div className="flex items-center gap-4">
         <div
           className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-            rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+            rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-danger-500/20'
           }`}
         >
           {rule.rule_type === 'allow' ? (
             <Shield size={18} className="text-emerald-400" />
           ) : (
-            <ShieldOff size={18} className="text-rose-400" />
+            <ShieldOff size={18} className="text-danger-400" />
           )}
         </div>
         <div>
@@ -248,7 +248,7 @@ export const IPAccessRulesPanel: React.FC = () => {
         <button
           onClick={() => handleDeleteRule(rule.id)}
           disabled={deletingIds.has(rule.id)}
-          className="p-2 hover:bg-rose-500/10 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-50"
+          className="p-2 hover:bg-danger-500/10 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded-lg transition-colors disabled:opacity-50"
           title="Delete"
         >
           {deletingIds.has(rule.id) ? (
@@ -363,7 +363,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                     onClick={() => setAddForm((prev) => ({ ...prev, ruleType: 'block' }))}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
                       addForm.ruleType === 'block'
-                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-400'
+                        ? 'bg-danger-500/20 border-danger-500/50 text-danger-400'
                         : 'bg-slate-800 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
                     }`}
                   >
@@ -434,8 +434,8 @@ export const IPAccessRulesPanel: React.FC = () => {
           {/* Blocklist */}
           <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                <ShieldOff size={20} className="text-rose-400" />
+              <div className="w-10 h-10 rounded-lg bg-danger-500/20 flex items-center justify-center">
+                <ShieldOff size={20} className="text-danger-400" />
               </div>
               <div>
                 <h3 className="font-semibold text-white">Blocklist</h3>

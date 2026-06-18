@@ -284,7 +284,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                     {onDeletePreset && !preset.isDefault && (
                       <button
                         onClick={() => onDeletePreset(preset.id)}
-                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-danger-500"
                       >
                         <Trash2 size={12} />
                       </button>

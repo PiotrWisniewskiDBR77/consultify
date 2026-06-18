@@ -253,9 +253,9 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
-          <AlertCircle className="w-5 h-5 text-rose-400" />
-          <span className="text-sm text-rose-300">{error}</span>
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-danger-500/10 border border-danger-500/20">
+          <AlertCircle className="w-5 h-5 text-danger-400" />
+          <span className="text-sm text-danger-300">{error}</span>
         </div>
       )}
 

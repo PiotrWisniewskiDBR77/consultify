@@ -179,8 +179,8 @@ export const SubscriptionsPanel: React.FC = () => {
         bg: 'bg-amber-500/20',
         text: 'text-amber-400',
       },
-      canceled: { icon: <XCircle size={14} />, bg: 'bg-rose-500/20', text: 'text-rose-400' },
-      unpaid: { icon: <AlertTriangle size={14} />, bg: 'bg-rose-500/20', text: 'text-rose-400' },
+      canceled: { icon: <XCircle size={14} />, bg: 'bg-danger-500/20', text: 'text-danger-400' },
+      unpaid: { icon: <AlertTriangle size={14} />, bg: 'bg-danger-500/20', text: 'text-danger-400' },
       paused: {
         icon: <Pause size={14} />,
         bg: 'bg-slate-500/20',
@@ -324,7 +324,7 @@ export const SubscriptionsPanel: React.FC = () => {
                     {sub.status === 'active' && !sub.cancel_at_period_end && (
                       <button
                         onClick={() => handleCancelSubscription(sub.id, false)}
-                        className="p-2 hover:bg-rose-500/10 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors"
+                        className="p-2 hover:bg-danger-500/10 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded-lg transition-colors"
                         title="Cancel"
                       >
                         <XCircle size={16} />
@@ -502,7 +502,7 @@ export const SubscriptionsPanel: React.FC = () => {
                           handleCancelSubscription(selectedSubscription.id, true);
                           setSelectedSubscription(null);
                         }}
-                        className="flex-1 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors"
+                        className="flex-1 px-4 py-2.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 rounded-lg transition-colors"
                       >
                         Cancel Immediately
                       </button>

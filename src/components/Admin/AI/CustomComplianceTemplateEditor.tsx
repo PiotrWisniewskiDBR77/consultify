@@ -802,7 +802,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                       e.stopPropagation();
                       removeSection(section.id);
                     }}
-                    className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-1"
+                    className="text-slate-500 dark:text-slate-400 hover:text-danger-400 p-1"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -894,7 +894,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 
                       <button
                         onClick={() => removeCheckpoint(section.id, checkpoint.id)}
-                        className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-1"
+                        className="text-slate-500 dark:text-slate-400 hover:text-danger-400 p-1"
                       >
                         <Trash2 size={14} />
                       </button>

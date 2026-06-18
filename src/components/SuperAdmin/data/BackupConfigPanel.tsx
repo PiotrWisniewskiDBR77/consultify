@@ -367,7 +367,7 @@ export const BackupConfigPanel: React.FC = () => {
                         className={`inline-flex items-center gap-1 mt-1 text-xs ${
                           config.last_backup_status === 'success'
                             ? 'text-emerald-400'
-                            : 'text-rose-400'
+                            : 'text-danger-400'
                         }`}
                       >
                         {config.last_backup_status === 'success' ? (
@@ -428,7 +428,7 @@ export const BackupConfigPanel: React.FC = () => {
                           {item.status === 'success' ? (
                             <CheckCircle2 size={16} className="text-emerald-400" />
                           ) : (
-                            <XCircle size={16} className="text-rose-400" />
+                            <XCircle size={16} className="text-danger-400" />
                           )}
                           <div>
                             <p className="text-sm text-white">

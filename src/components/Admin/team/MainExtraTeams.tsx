@@ -367,7 +367,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                           {onRemoveExtraTeam && (
                             <button
                               onClick={() => onRemoveExtraTeam(user.userId, team.id)}
-                              className="text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                              className="text-slate-400 dark:text-slate-500 hover:text-danger-500"
                             >
                               <X size={12} />
                             </button>

@@ -1013,7 +1013,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                       e.stopPropagation();
                                       handleDelete(template.id);
                                     }}
-                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
                                     title="Delete"
                                   >
                                     <Trash2 size={15} />
@@ -1155,7 +1155,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                     <div className="space-y-1.5">
                                       {template.suggestedDecisions.map((d: any, i: number) => (
                                         <div key={i} className="flex items-start gap-2">
-                                          <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 flex-shrink-0" />
+                                          <div className="w-1.5 h-1.5 rounded-full bg-danger-400 mt-1.5 flex-shrink-0" />
                                           <span className="text-xs text-slate-400">{d.title}</span>
                                         </div>
                                       ))}

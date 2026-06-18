@@ -479,7 +479,7 @@ export const EnterpriseApiManagement: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -586,17 +586,17 @@ export const EnterpriseApiManagement: React.FC = () => {
                   key={key.id}
                   className={`p-4 rounded-xl border transition-colors ${
                     key.revoked_at
-                      ? 'bg-rose-500/5 border-rose-500/20 opacity-60'
+                      ? 'bg-danger-500/5 border-danger-500/20 opacity-60'
                       : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div
-                        className={`p-2 rounded-lg ${key.revoked_at ? 'bg-rose-500/20' : 'bg-primary-500/20'}`}
+                        className={`p-2 rounded-lg ${key.revoked_at ? 'bg-danger-500/20' : 'bg-primary-500/20'}`}
                       >
                         {key.revoked_at ? (
-                          <Lock className="w-5 h-5 text-rose-400" />
+                          <Lock className="w-5 h-5 text-danger-400" />
                         ) : (
                           <Key className="w-5 h-5 text-primary-400" />
                         )}
@@ -615,7 +615,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                             {KEY_TYPE_CONFIG[key.key_type].label}
                           </span>
                           {key.revoked_at && (
-                            <span className="px-2 py-0.5 text-xs bg-rose-500/20 text-rose-400 rounded">
+                            <span className="px-2 py-0.5 text-xs bg-danger-500/20 text-danger-400 rounded">
                               Revoked
                             </span>
                           )}
@@ -661,10 +661,10 @@ export const EnterpriseApiManagement: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleRevokeKey(key.id)}
-                            className="p-2 hover:bg-rose-500/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-danger-500/20 rounded-lg transition-colors"
                             title="Revoke"
                           >
-                            <Trash2 className="w-4 h-4 text-rose-400" />
+                            <Trash2 className="w-4 h-4 text-danger-400" />
                           </button>
                         </>
                       )}
@@ -760,7 +760,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 </div>
                 <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
                   <div className="text-sm text-slate-600 dark:text-slate-500">Total Errors</div>
-                  <div className="text-2xl font-bold text-rose-400">
+                  <div className="text-2xl font-bold text-danger-400">
                     {selectedKeyUsage.usage.totals?.total_errors || 0}
                   </div>
                 </div>
@@ -811,7 +811,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                                   ? 'bg-emerald-500/20 text-emerald-400'
                                   : endpoint.method === 'PUT'
                                     ? 'bg-amber-500/20 text-amber-400'
-                                    : 'bg-rose-500/20 text-rose-400'
+                                    : 'bg-danger-500/20 text-danger-400'
                             }`}
                           >
                             {endpoint.method}

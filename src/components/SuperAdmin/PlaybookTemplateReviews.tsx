@@ -246,7 +246,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
           text: 'text-emerald-400',
           icon: <CheckCircle2 size={12} />,
         },
-        REJECTED: { bg: 'bg-rose-500/10', text: 'text-rose-400', icon: <XCircle size={12} /> },
+        REJECTED: { bg: 'bg-danger-500/10', text: 'text-danger-400', icon: <XCircle size={12} /> },
         CHANGES_REQUESTED: {
           bg: 'bg-amber-500/10',
           text: 'text-amber-400',
@@ -270,7 +270,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
       LOW: 'bg-slate-500/10 text-slate-600 dark:text-slate-500',
       NORMAL: 'bg-blue-500/10 text-blue-400',
       HIGH: 'bg-amber-500/10 text-amber-400',
-      URGENT: 'bg-rose-500/10 text-rose-400',
+      URGENT: 'bg-danger-500/10 text-danger-400',
     };
 
     return (
@@ -383,7 +383,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                   />
                   <button
                     onClick={() => removeChecklistItem(item.id)}
-                    className="px-2 text-rose-400 hover:text-rose-300"
+                    className="px-2 text-danger-400 hover:text-danger-300"
                   >
                     ×
                   </button>
@@ -574,7 +574,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                             <button
                               onClick={() => handleReject(review.id)}
                               disabled={submitting}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-lg text-sm hover:bg-rose-500/20 disabled:opacity-50"
+                              className="flex items-center gap-2 px-3 py-1.5 bg-danger-500/10 text-danger-400 border border-danger-500/30 rounded-lg text-sm hover:bg-danger-500/20 disabled:opacity-50"
                             >
                               <XCircle size={14} />
                               Reject

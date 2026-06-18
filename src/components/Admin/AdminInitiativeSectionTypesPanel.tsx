@@ -643,7 +643,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       handleDelete(st.id);
                                     }}
                                     disabled={isMutating}
-                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
+                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-danger-600 dark:hover:text-danger-400 transition-colors disabled:opacity-50"
                                     title="Deactivate"
                                   >
                                     <Trash2 size={15} />

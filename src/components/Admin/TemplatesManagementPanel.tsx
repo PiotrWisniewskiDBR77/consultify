@@ -528,7 +528,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             {!template.isDefault && (
               <button
                 onClick={() => deleteTemplate(template)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                 title={t('common.delete', 'Delete')}
               >
                 <Trash2 size={16} />
@@ -630,7 +630,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                   />
                   <button
                     onClick={() => removePhase(phase.id)}
-                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-danger-500"
                   >
                     <X size={16} />
                   </button>

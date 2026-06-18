@@ -297,7 +297,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
               label="Voice Conversations"
               description="Enable voice input and output for AI interactions"
               icon={Mic}
-              iconColor="text-rose-400"
+              iconColor="text-danger-400"
               checked={settings.voiceEnabled}
               onChange={(v) => updateSetting('voiceEnabled', v)}
             />
@@ -548,7 +548,7 @@ Example:
             title="Restricted Topics"
             description="Topics or content types the AI should avoid discussing"
             icon={Lock}
-            iconColor="text-rose-400"
+            iconColor="text-danger-400"
           >
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">

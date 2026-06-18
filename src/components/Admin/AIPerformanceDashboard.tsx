@@ -688,7 +688,7 @@ const MetricCard: React.FC<{
         (trend === 'up' ? (
           <ArrowUpRight size={12} className="text-emerald-400" />
         ) : (
-          <ArrowDownRight size={12} className="text-rose-400" />
+          <ArrowDownRight size={12} className="text-danger-400" />
         ))}
     </div>
     <div className="admin-metric-value">{value}</div>
@@ -738,7 +738,7 @@ const HealthIndicator: React.FC<{ label: string; status: 'healthy' | 'warning' |
             ? 'text-emerald-400'
             : status === 'warning'
               ? 'text-amber-400'
-              : 'text-rose-400'
+              : 'text-danger-400'
         }`}
       >
         {status}

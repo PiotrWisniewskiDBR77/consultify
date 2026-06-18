@@ -1273,7 +1273,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         onClick={() =>
                           setSuggestedTasks(suggestedTasks.filter((_, i) => i !== idx))
                         }
-                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-danger-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1340,7 +1340,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         onClick={() =>
                           setSuggestedMilestones(suggestedMilestones.filter((_, i) => i !== idx))
                         }
-                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-danger-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1418,7 +1418,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         onClick={() =>
                           setSuggestedDecisions(suggestedDecisions.filter((_, i) => i !== idx))
                         }
-                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-danger-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1550,7 +1550,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           );
                           setTeamConfig({ ...teamConfig, requiredRoles: n });
                         }}
-                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                        className="p-1 text-slate-400 hover:text-danger-500 transition-colors"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1607,7 +1607,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           );
                           setTeamConfig({ ...teamConfig, suggestedRaci: n });
                         }}
-                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                        className="p-1 text-slate-400 hover:text-danger-500 transition-colors"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1693,7 +1693,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                       />
                       <button
                         onClick={() => setSuggestedKpis(suggestedKpis.filter((_, i) => i !== idx))}
-                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-danger-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1880,7 +1880,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                     <span className="text-xs text-slate-400">days</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-rose-500 font-medium">Red:</span>
+                    <span className="text-xs text-danger-500 font-medium">Red:</span>
                     <input
                       type="number"
                       value={escalationConfig.redThresholdDays || 7}
@@ -1966,7 +1966,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         size={13}
                         className={
                           raid.type === 'RISK'
-                            ? 'text-rose-500'
+                            ? 'text-danger-500'
                             : raid.type === 'ASSUMPTION'
                               ? 'text-blue-500'
                               : raid.type === 'ISSUE'
@@ -2017,7 +2017,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                       )}
                       <button
                         onClick={() => setRaidTemplates(raidTemplates.filter((_, i) => i !== idx))}
-                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-danger-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>

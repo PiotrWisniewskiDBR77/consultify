@@ -134,7 +134,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
             {stats.successRate && stats.successRate >= 70 ? (
               <TrendingUp size={16} className="text-emerald-400" />
             ) : (
-              <TrendingDown size={16} className="text-rose-400" />
+              <TrendingDown size={16} className="text-danger-400" />
             )}
             <span className="text-sm text-slate-600 dark:text-slate-500">Success Rate</span>
           </div>
@@ -144,7 +144,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                 ? 'text-emerald-400'
                 : stats.successRate && stats.successRate >= 40
                   ? 'text-amber-400'
-                  : 'text-rose-400'
+                  : 'text-danger-400'
             }`}
           >
             {stats.successRate !== null ? `${stats.successRate}%` : 'N/A'}
@@ -207,7 +207,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
               )}
               {failedRuns > 0 && (
                 <div
-                  className="bg-rose-500"
+                  className="bg-danger-500"
                   style={{ width: `${(failedRuns / totalRuns) * 100}%` }}
                   title={`Failed: ${failedRuns}`}
                 />
@@ -232,7 +232,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                 <span className="text-sm text-slate-600">In Progress ({inProgressRuns})</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-rose-500" />
+                <div className="w-3 h-3 rounded-full bg-danger-500" />
                 <span className="text-sm text-slate-600">Failed ({failedRuns})</span>
               </div>
               <div className="flex items-center gap-2">

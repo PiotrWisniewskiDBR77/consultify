@@ -333,7 +333,7 @@ export const AccessLimitsTab: React.FC = () => {
                 checked={settings.freezeOnLimit}
                 onChange={(v) => updateSetting('freezeOnLimit', v)}
                 icon={AlertTriangle}
-                iconColor="text-rose-400"
+                iconColor="text-danger-400"
               />
             </div>
           </SettingsCard>
@@ -343,7 +343,7 @@ export const AccessLimitsTab: React.FC = () => {
             title="Budget Alerts"
             description="Configure automatic alerts when spending reaches certain thresholds"
             icon={AlertTriangle}
-            iconColor="text-rose-400"
+            iconColor="text-danger-400"
           >
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
