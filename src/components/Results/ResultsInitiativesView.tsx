@@ -492,6 +492,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
             </div>
           </div>
 
+          {/* §27-exempt: TableWithPreviewLayout-coupled — checkbox selection drives the right-hand initiative preview pane; custom resizable columns + fixed minWidth layout */}
           <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-x-auto">
             <table className="w-full table-fixed" style={{ minWidth: 1100 }}>
               <colgroup>

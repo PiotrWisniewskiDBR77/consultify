@@ -221,6 +221,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
       </div>
 
       <div className="flex-1 overflow-auto px-6 py-5">
+        {/* §27-exempt: document-layout — financial model document with hierarchical line groups, subtotals, and year-columns; not a flat filterable data set */}
         <div className="overflow-x-auto rounded-2xl bg-white/[0.02]">
           <table className="w-full min-w-[760px] text-sm">
             <thead>

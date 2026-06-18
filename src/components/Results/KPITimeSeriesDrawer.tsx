@@ -1672,6 +1672,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       ))}
                     </div>
                   </div>
+                  {/* §27-exempt: financial-calculation — time-series measurement log with date+value+note columns; tightly coupled to drawer state */}
                   {measurements.length > 0 ? (
                     <div className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden">
                       <table className="w-full text-sm">
