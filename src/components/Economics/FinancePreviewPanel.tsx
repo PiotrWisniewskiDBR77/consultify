@@ -98,7 +98,7 @@ function PackValidationsSection({
             title={validation.message || undefined}
             className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium cursor-default ${
               validation.status === 'fail'
-                ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+                ? 'bg-danger-100 text-danger-700 dark:bg-danger-500/15 dark:text-danger-300'
                 : validation.status === 'warning'
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
                   : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
@@ -313,7 +313,7 @@ export function useFinancePreview({
                         key={`${line.lineCode}-${year}`}
                         className={`px-3 py-2 text-right font-mono ${
                           value < 0
-                            ? 'text-rose-600 dark:text-rose-300'
+                            ? 'text-danger-600 dark:text-danger-300'
                             : 'text-slate-900 dark:text-white'
                         }`}
                       >
@@ -592,7 +592,7 @@ export function useFinancePreview({
                   <span className="text-amber-600 dark:text-amber-400">
                     ⚠ {predictionValidations.warning} {t('finance.prediction.warn', 'warn')}
                   </span>
-                  <span className="text-rose-600 dark:text-rose-400">
+                  <span className="text-danger-600 dark:text-danger-400">
                     ✗ {predictionValidations.fail} {t('finance.prediction.fail', 'fail')}
                   </span>
                 </div>
@@ -813,7 +813,7 @@ export function useFinancePreview({
                                       ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
                                       : norm > 0.33
                                         ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-                                        : 'bg-rose-100 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300';
+                                        : 'bg-danger-100 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300';
                                   return (
                                     <td
                                       key={ci}
@@ -863,7 +863,7 @@ export function useFinancePreview({
                           <span
                             className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${
                               rec.priority === 'high'
-                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                                ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300'
                                 : rec.priority === 'medium'
                                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                                   : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'

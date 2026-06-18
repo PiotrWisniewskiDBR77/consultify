@@ -266,7 +266,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                 className={`text-lg font-bold ${
                   linkedAnalysis.npv && linkedAnalysis.npv > 0
                     ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
+                    : 'text-danger-600 dark:text-danger-400'
                 }`}
               >
                 {formatCurrency(linkedAnalysis.npv)}
@@ -278,7 +278,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                 className={`text-lg font-bold ${
                   linkedAnalysis.roi && linkedAnalysis.roi > 0
                     ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
+                    : 'text-danger-600 dark:text-danger-400'
                 }`}
               >
                 {formatPercent(linkedAnalysis.roi)}

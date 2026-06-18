@@ -54,7 +54,7 @@ const StepIcon: React.FC<{ status: 'done' | 'active' | 'failed' | 'pending'; siz
     case 'active':
       return <Loader2 size={size} className="text-primary-400 animate-spin" />;
     case 'failed':
-      return <XCircle size={size} className="text-rose-400" />;
+      return <XCircle size={size} className="text-danger-400" />;
     case 'pending':
       return <Circle size={size} className="text-slate-500" />;
   }
@@ -63,7 +63,7 @@ const StepIcon: React.FC<{ status: 'done' | 'active' | 'failed' | 'pending'; siz
 const KPI_DOT_COLORS: Record<KpiLinkageStatus, string> = {
   coherent: 'bg-emerald-400',
   stale: 'bg-amber-400',
-  unavailable: 'bg-rose-400',
+  unavailable: 'bg-danger-400',
 };
 
 export const FinanceLaneStrip: React.FC<FinanceLaneStripProps> = ({

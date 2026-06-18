@@ -88,7 +88,7 @@ function StepIcon({ status }: { status: 'done' | 'active' | 'failed' | 'pending'
     case 'active':
       return <Loader2 size={18} className="text-primary-400 animate-spin" />;
     case 'failed':
-      return <XCircle size={18} className="text-rose-400" />;
+      return <XCircle size={18} className="text-danger-400" />;
     case 'pending':
       return <Circle size={18} className="text-slate-500" />;
   }
@@ -188,7 +188,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                             <span
                               className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
                                 status === 'failed'
-                                  ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300'
+                                  ? 'bg-danger-100 text-danger-600 dark:bg-danger-500/20 dark:text-danger-300'
                                   : status === 'done'
                                     ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
                                     : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
@@ -322,7 +322,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                       <span className="text-slate-600 dark:text-slate-300">
                         {a.mutationType} →{' '}
                         <span
-                          className={a.outcome === 'applied' ? 'text-emerald-500' : 'text-rose-500'}
+                          className={a.outcome === 'applied' ? 'text-emerald-500' : 'text-danger-500'}
                         >
                           {a.outcome}
                         </span>{' '}
@@ -350,7 +350,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                         ? 'bg-emerald-400'
                         : kpiCoherence.status === 'stale'
                           ? 'bg-amber-400'
-                          : 'bg-rose-400'
+                          : 'bg-danger-400'
                     }`}
                   />
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">

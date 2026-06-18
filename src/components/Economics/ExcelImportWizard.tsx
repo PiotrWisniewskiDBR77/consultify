@@ -218,9 +218,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {error && (
-            <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4 mb-4 flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
-              <span className="text-rose-700 dark:text-rose-400 text-sm">{error}</span>
+            <div className="bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-xl p-4 mb-4 flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-danger-500 shrink-0" />
+              <span className="text-danger-700 dark:text-danger-400 text-sm">{error}</span>
             </div>
           )}
 
@@ -287,7 +287,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                       e.stopPropagation();
                       setFile(null);
                     }}
-                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                    className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                   >
                     <Trash2 size={18} />
                   </button>
