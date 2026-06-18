@@ -4416,6 +4416,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     </div>
                   </div>
                   <div className="overflow-x-auto">
+                    {/* §27-exempt: pivot/cross-tab matrix — columns are dynamic (one per
+                        session or stakeholder lens) and cells contain composite data
+                        (support badge + evidence count). This is not a standard list
+                        table; FilterableTable does not support pivot layouts. */}
                     <table className="min-w-full text-sm">
                       <thead>
                         <tr className="bg-white/70 dark:bg-navy-900/30">

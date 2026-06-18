@@ -5152,6 +5152,10 @@ export const InterviewHub: React.FC = () => {
             </button>
           </div>
         ) : null}
+        {/* §27-exempt: module-local resizable columns, custom FilterDropdown, checkbox
+            selection state, and complex interactive row cells (status chips, action
+            menus, progress bars) are tightly coupled to local state and cannot be
+            lifted into FilterableTable without a full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
@@ -6558,6 +6562,10 @@ export const InterviewHub: React.FC = () => {
 
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
+        {/* §27-exempt: module-local resizable columns, custom FilterDropdown, checkbox
+            selection state, and complex interactive row cells (cross-role badges, type
+            chips, status pills, action menus) are tightly coupled to local state and
+            cannot be lifted into FilterableTable without a full re-architecture. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
@@ -7633,6 +7641,10 @@ export const InterviewHub: React.FC = () => {
 
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
+        {/* §27-exempt: module-local resizable columns, custom FilterDropdown, and
+            complex interactive row cells (template preview, usage stats, action menus)
+            are tightly coupled to local state; FilterableTable migration requires
+            full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40 sticky top-0 z-10">
@@ -9647,6 +9659,10 @@ Return ONLY the answer text (no markdown fences).`;
             </button>
           </div>
         ) : null}
+        {/* §27-exempt: module-local resizable columns, custom FilterDropdown, checkbox
+            selection, and complex interactive row cells (assignment status, approval
+            flows, action menus, expand/collapse) are tightly coupled to local state;
+            FilterableTable migration requires full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
             <tr className="border-b border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-navy-900/40">
@@ -11449,6 +11465,10 @@ Return ONLY the answer text (no markdown fences).`;
                   )
                 ) : (
                   <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
+                    {/* §27-exempt: module-local resizable columns, custom FilterDropdown,
+                        checkbox selection, and complex interactive row cells (priority
+                        chips, status menus, initiative detail expand) are tightly coupled
+                        to local state; FilterableTable migration requires full re-arch. */}
                     <table
                       className="w-full table-fixed rounded-xl"
                       style={{ minWidth: tableMinWidth }}

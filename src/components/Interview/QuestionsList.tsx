@@ -930,6 +930,11 @@ Rules:
           >
             <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 bg-white/60 dark:bg-navy-900/35 overflow-hidden">
               <div className="overflow-x-auto">
+                {/* §27-exempt: deeply embedded in TableWithPreviewLayout; row selection
+                    drives the preview pane, and cells contain rich interactive elements
+                    (inline status dropdown, star confidence selector, tag menu, AI actions)
+                    that are coupled to local state. Cannot migrate to FilterableTable
+                    without re-architecting the entire QuestionsListpreview flow. */}
                 <table className="w-full min-w-[760px] table-fixed">
                   <thead>
                     <tr className="border-b border-slate-200/60 dark:border-navy-700/50 bg-slate-50/80 dark:bg-navy-950/50">
