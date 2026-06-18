@@ -1,0 +1,17 @@
+ai.applyProposedSchedule	src/components/AiInsightModal.tsx
+ai.observations	src/components/AiInsightModal.tsx
+ai.optimization	src/components/AiInsightModal.tsx
+ai.recommendations	src/components/AiInsightModal.tsx
+aiChat.menu.toast.docDeleted	src/components/AIChat/AddFilesMenu.tsx
+chat.header	src/components/layout/ChatPanel.tsx
+chat.subHeader	src/components/layout/ChatPanel.tsx
+comingSoon	src/components/MyWork/IdeaCanvasToolSelector.tsx
+demo.badge.getFullAccess	src/components/layout/HelpPanel.tsx
+demo.indicator	src/components/layout/HelpPanel.tsx
+execution.rollout.deleteConfirm.body	src/components/Execution/RolloutTab.tsx
+kimi.tabele.preview.emptyRationale	src/components/AIChat/KimiWorkspace/tabelePreview/TabelePreviewLayout.tsx
+kimi.tabele.preview.kpiSection	src/components/AIChat/KimiWorkspace/tabelePreview/TabelePreviewLayout.tsx
+partner.home.contact.role	src/views/partner/ProviderHomeView.tsx
+prezentacje.reopenSummary	src/components/AIChat/KimiWorkspace/PrezentacjeView.tsx
+showcase.common.whatYouGet	src/components/Education/ToolVideoModal.tsx
+step1.months	src/components/layout/HelpPanel.tsx
