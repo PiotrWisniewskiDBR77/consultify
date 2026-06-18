@@ -4,6 +4,7 @@
 
 import { Clock, History } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
@@ -14,12 +15,13 @@ export const HistorySection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
+  const { t } = useTranslation();
   const { history, isPolish } = useInitiativeContext();
 
   return (
     <CollapsibleSection
       id="history"
-      title={isPolish ? 'Historia aktywności' : 'Activity Log'}
+      title={t('initiatives.historySection.activityLog')}
       icon={<History size={18} className="text-slate-500 dark:text-slate-400" />}
       iconBg="bg-gradient-to-br from-slate-500/10 to-gray-500/10 dark:from-slate-500/20 dark:to-gray-500/20"
       expanded={expanded}
@@ -34,12 +36,10 @@ export const HistorySection: React.FC<InitiativeSectionProps> = ({
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
           <History size={32} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Brak historii aktywności' : 'No activity history yet'}
+            {t('initiatives.historySection.noActivityHistory')}
           </p>
           <p className="text-xs text-slate-600 mt-1 max-w-xs mx-auto">
-            {isPolish
-              ? 'Historia zmian pojawi się tutaj po zapisaniu inicjatywy lub wykonaniu akcji (np. zmiana statusu, dodanie zadania)'
-              : 'Activity history will appear here after saving the initiative or performing actions (e.g. status change, adding tasks)'}
+            {t('initiatives.historySection.activityHistoryHint')}
           </p>
         </div>
       ) : (

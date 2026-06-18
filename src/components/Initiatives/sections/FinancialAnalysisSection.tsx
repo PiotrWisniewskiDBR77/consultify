@@ -5,6 +5,7 @@
 import { motion } from 'framer-motion';
 import { BarChart3, DollarSign, Loader2, Sparkles } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
@@ -15,12 +16,13 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { initiative, isPolish, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
+  const { t } = useTranslation();
+  const { initiative, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
 
   return (
     <CollapsibleSection
       id="financialAnalysis"
-      title={isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
+      title={t('initiatives.financialAnalysisSection.financialAnalysis')}
       icon={<BarChart3 size={18} className="text-blue-500 dark:text-blue-400" />}
       iconBg="bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20"
       expanded={expanded}
@@ -60,7 +62,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
                 : '-'}
             </div>
             <p className="text-xs text-slate-600 mt-1">
-              {isPolish ? 'Nakłady inwestycyjne' : 'Capital expenditure'}
+              {t('initiatives.financialAnalysisSection.capitalExpenditure')}
             </p>
           </div>
           <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-700/60">
@@ -74,7 +76,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
                 : '-'}
             </div>
             <p className="text-xs text-slate-600 mt-1">
-              {isPolish ? 'Koszty operacyjne' : 'Operating expenditure'}
+              {t('initiatives.financialAnalysisSection.operatingExpenditure')}
             </p>
           </div>
         </div>
@@ -99,7 +101,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
           </div>
           <div className="p-3 rounded-xl bg-primary-50/50 dark:bg-primary-500/5 border border-primary-200/40 dark:border-primary-500/20 text-center">
             <div className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase mb-1">
-              {isPolish ? 'Zwrot' : 'Payback'}
+              {t('initiatives.financialAnalysisSection.payback')}
             </div>
             <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
               {initiative.paybackMonths ? `${initiative.paybackMonths}m` : '-'}

@@ -5,6 +5,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Plus, Tag, X } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -14,7 +15,8 @@ export const TagsSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { tags, setTags, newTag, setNewTag, isPolish } = useInitiativeContext();
+  const { t } = useTranslation();
+  const { tags, setTags, newTag, setNewTag } = useInitiativeContext();
 
   return (
     <motion.div
@@ -34,7 +36,7 @@ export const TagsSection: React.FC<InitiativeSectionProps> = ({
             <Tag size={18} className="text-pink-500 dark:text-pink-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Tagi' : 'Tags'}
+            {t('initiatives.tagsSection.tags')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -65,7 +67,7 @@ export const TagsSection: React.FC<InitiativeSectionProps> = ({
                   >
                     {tag}
                     <button
-                      onClick={() => setTags(tags.filter((t) => t !== tag))}
+                      onClick={() => setTags(tags.filter((tg) => tg !== tag))}
                       className="hover:text-pink-900 dark:hover:text-pink-100"
                     >
                       <X size={12} />
@@ -84,7 +86,7 @@ export const TagsSection: React.FC<InitiativeSectionProps> = ({
                       setNewTag('');
                     }
                   }}
-                  placeholder={isPolish ? 'Nowy tag...' : 'New tag...'}
+                  placeholder={t('initiatives.tagsSection.newTag')}
                   className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-pink-400"
                 />
                 <button

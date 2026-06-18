@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Loader2, Plus, Sparkles, X } from 'lucide-react';
 import { Sparkle } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
@@ -16,6 +17,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
+  const { t } = useTranslation();
   const { initiative, isPolish, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
 
   const pilotData = initiative?.pilot || {};
@@ -95,7 +97,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
         {/* Status */}
         <div>
           <label className="text-xs text-slate-500 mb-1 block">
-            {isPolish ? 'Status pilotu' : 'Pilot Status'}
+            {t('initiatives.pilotSection.pilotStatus')}
           </label>
           <select
             value={pilotStatus}
@@ -113,7 +115,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
         {/* Hypotheses */}
         <div>
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
-            {isPolish ? 'Hipotezy do zweryfikowania' : 'Hypotheses to Verify'}
+            {t('initiatives.pilotSection.hypothesesToVerify')}
           </label>
           <div className="space-y-2 mb-3">
             {hypotheses.map((h, i) => (
@@ -143,7 +145,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                   setNewHyp('');
                 }
               }}
-              placeholder={isPolish ? 'Dodaj hipotezę...' : 'Add hypothesis...'}
+              placeholder={t('initiatives.pilotSection.addHypothesis')}
               className="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
             />
             <button
@@ -164,7 +166,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
         {/* Success Criteria */}
         <div>
           <label className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mb-2 block">
-            {isPolish ? 'Kryteria sukcesu pilotu' : 'Pilot Success Criteria'}
+            {t('initiatives.pilotSection.pilotSuccessCriteria')}
           </label>
           <div className="space-y-2 mb-3">
             {successCriteria.map((c, i) => (
@@ -193,9 +195,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                   setNewSuccess('');
                 }
               }}
-              placeholder={
-                isPolish ? 'Kiedy pilot jest sukcesem?' : 'When is the pilot successful?'
-              }
+              placeholder={t('initiatives.pilotSection.whenPilotSuccessful')}
               className="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
             />
             <button
@@ -216,7 +216,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
         {/* Failure Criteria */}
         <div>
           <label className="text-sm font-semibold text-rose-600 dark:text-rose-400 mb-2 block">
-            {isPolish ? 'Kryteria porażki' : 'Failure Criteria'}
+            {t('initiatives.pilotSection.failureCriteria')}
           </label>
           <div className="space-y-2 mb-3">
             {failureCriteria.map((c, i) => (
@@ -245,7 +245,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                   setNewFailure('');
                 }
               }}
-              placeholder={isPolish ? 'Kiedy pilot jest porażką?' : 'When is the pilot a failure?'}
+              placeholder={t('initiatives.pilotSection.whenPilotFailure')}
               className="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
             />
             <button
@@ -269,14 +269,14 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
           pilotStatus === 'inconclusive') && (
           <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
-              {isPolish ? 'Wyniki pilotu' : 'Pilot Results'}
+              {t('initiatives.pilotSection.pilotResults')}
             </label>
             <textarea
               value={results}
               onChange={(e) => setResults(e.target.value)}
               rows={3}
               className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-sm resize-none"
-              placeholder={isPolish ? 'Opisz wyniki pilotu...' : 'Describe pilot results...'}
+              placeholder={t('initiatives.pilotSection.describePilotResults')}
             />
           </div>
         )}

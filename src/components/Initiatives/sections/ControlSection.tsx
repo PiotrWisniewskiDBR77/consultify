@@ -7,6 +7,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, ChevronDown, Flag, Layers } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { getStatusActions, getStatusMeta } from '@/services/initiativeLifecycle';
 
@@ -20,6 +21,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
+  const { t } = useTranslation();
   const {
     initiative,
     isPolish,
@@ -43,7 +45,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
   return (
     <CollapsibleSection
       id="control"
-      title={isPolish ? 'Sterowanie' : 'Control'}
+      title={t('initiatives.controlSection.control')}
       icon={<Layers size={18} className="text-primary-500 dark:text-primary-400" />}
       iconBg="bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20"
       expanded={expanded}
@@ -54,13 +56,13 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
         <div className="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-navy-800 dark:to-navy-900/50 border border-slate-200/80 dark:border-navy-700/80">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
-              {isPolish ? 'Aktualny moduł' : 'Current Module'}
+              {t('initiatives.controlSection.currentModule')}
             </span>
             <a
               href={moduleConfig.route}
               className="text-[10px] text-primary-500 hover:text-primary-600 font-medium"
             >
-              {isPolish ? 'Przejdź →' : 'Go to →'}
+              {t('initiatives.controlSection.goTo')}
             </a>
           </div>
           <div
@@ -103,7 +105,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
         {/* Priority */}
         <div className="relative">
           <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-            {isPolish ? 'Priorytet' : 'Priority'}
+            {t('initiatives.controlSection.priority')}
           </label>
           <button
             onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}

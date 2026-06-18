@@ -4,6 +4,7 @@
 
 import React from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import type { Attachment } from '../../MyWork/shared';
 import { AttachmentsSection as SharedAttachmentsSection } from '../../MyWork/shared';
@@ -15,7 +16,8 @@ export const AttachmentsSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { attachments, setAttachments, isPolish } = useInitiativeContext();
+  const { t } = useTranslation();
+  const { attachments, setAttachments } = useInitiativeContext();
 
   return (
     <SharedAttachmentsSection
@@ -30,11 +32,11 @@ export const AttachmentsSection: React.FC<InitiativeSectionProps> = ({
           uploadedAt: new Date().toISOString(),
         }));
         setAttachments((prev) => [...prev, ...newAttachments]);
-        toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');
+        toast.success(t('initiatives.attachmentsSection.attachmentsAdded'));
       }}
       onDelete={async (id) => {
         setAttachments((prev) => prev.filter((a) => a.id !== id));
-        toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment removed');
+        toast.success(t('initiatives.attachmentsSection.attachmentRemoved'));
       }}
       expanded={expanded}
       onToggleExpand={onToggle}

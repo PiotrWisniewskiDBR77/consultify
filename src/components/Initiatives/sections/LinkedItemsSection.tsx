@@ -4,6 +4,7 @@
 
 import React from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -17,7 +18,8 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { linkedItems, setLinkedItems, isPolish } = useInitiativeContext();
+  const { t } = useTranslation();
+  const { linkedItems, setLinkedItems } = useInitiativeContext();
 
   return (
     <SharedLinkedItemsSection
@@ -27,11 +29,11 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
           ...prev,
           { ...item, id: Math.random().toString(36).substr(2, 9) },
         ]);
-        toast.success(isPolish ? 'Element powiązany' : 'Item linked');
+        toast.success(t('initiatives.linkedItemsSection.itemLinked'));
       }}
       onRemove={async (id) => {
         setLinkedItems((prev) => prev.filter((i) => i.id !== id));
-        toast.success(isPolish ? 'Powiązanie usunięte' : 'Link removed');
+        toast.success(t('initiatives.linkedItemsSection.linkRemoved'));
       }}
       searchItems={async (query) => {
         const results: LinkedItem[] = [];

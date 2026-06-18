@@ -102,7 +102,7 @@ function normalizeProposal(raw: any): TeamAiProposal {
 }
 
 export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const { users, initiative, teamAiRequest, clearTeamAiRequest } = useInitiativeContext();
@@ -128,8 +128,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
 
     const initiativeId = initiative?.id;
     const initiativeName = initiative?.name || initiative?.title || 'Untitled Initiative';
-    if (!initiativeId)
-      throw new Error(isPolish ? 'Brak ID inicjatywy' : 'Initiative ID is missing');
+    if (!initiativeId) throw new Error(t('initiatives.initiativeTeamSection.initiativeIdMissing'));
 
     const createRes: any = await Api.post('/projects', {
       name: initiativeName,
@@ -138,8 +137,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
         : `Project auto-created for initiative "${initiativeName}"`,
     });
     const newProjectId = String(createRes?.id || '');
-    if (!newProjectId)
-      throw new Error(isPolish ? 'Nie udało się utworzyć projektu' : 'Failed to create project');
+    if (!newProjectId) throw new Error(t('initiatives.initiativeTeamSection.failedCreateProject'));
 
     await Api.post(`/initiatives/${initiativeId}/move`, {
       targetProjectId: newProjectId,
@@ -281,49 +279,41 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       try {
         await Api.put(`/consultant-project-access/${accessId}`, { projectRole: nextRole });
         await loadPendingConsultants(pid);
-        toast.success(isPolish ? 'Zaktualizowano rolę konsultanta' : 'Consultant role updated');
+        toast.success(t('initiatives.initiativeTeamSection.consultantRoleUpdated'));
       } catch (e: any) {
-        toast.error(
-          e?.message || (isPolish ? 'Nie udało się zaktualizować roli' : 'Update failed')
-        );
+        toast.error(e?.message || t('initiatives.initiativeTeamSection.updateFailed'));
       }
     },
-    [ensureProjectId, isPolish, loadPendingConsultants]
+    [ensureProjectId, t, loadPendingConsultants]
   );
 
   const revokePendingConsultant = useCallback(
     async (accessId: string) => {
-      if (
-        !confirm(
-          isPolish
-            ? 'Cofnąć dostęp konsultanta do projektu?'
-            : 'Revoke consultant access to this project?'
-        )
-      ) {
+      if (!confirm(t('initiatives.initiativeTeamSection.revokeConsultantConfirm'))) {
         return;
       }
       const pid = await ensureProjectId();
       try {
         await Api.delete(`/consultant-project-access/${accessId}`);
         await loadPendingConsultants(pid);
-        toast.success(isPolish ? 'Cofnięto dostęp' : 'Access revoked');
+        toast.success(t('initiatives.initiativeTeamSection.accessRevoked'));
       } catch (e: any) {
-        toast.error(e?.message || (isPolish ? 'Nie udało się cofnąć dostępu' : 'Revoke failed'));
+        toast.error(e?.message || t('initiatives.initiativeTeamSection.revokeFailed'));
       }
     },
-    [ensureProjectId, isPolish, loadPendingConsultants]
+    [ensureProjectId, t, loadPendingConsultants]
   );
 
   const copyToClipboard = useCallback(
     async (text: string) => {
       try {
         await navigator.clipboard.writeText(text);
-        toast.success(isPolish ? 'Skopiowano' : 'Copied');
+        toast.success(t('initiatives.initiativeTeamSection.copied'));
       } catch {
-        toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+        toast.error(t('initiatives.initiativeTeamSection.copyFailed'));
       }
     },
-    [isPolish]
+    [t]
   );
 
   useEffect(() => {
@@ -363,9 +353,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       await Api.post(`/projects/${pid}/members`, { userId, projectRole: role });
       await loadMembers(pid);
       await loadPendingConsultants(pid);
-      toast.success(isPolish ? 'Dodano członka zespołu' : 'Team member added');
+      toast.success(t('initiatives.initiativeTeamSection.teamMemberAdded'));
     },
-    [ensureProjectId, isPolish, loadMembers, loadPendingConsultants]
+    [ensureProjectId, t, loadMembers, loadPendingConsultants]
   );
 
   const onUpdateMember = useCallback(
@@ -374,9 +364,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       await Api.patch(`/projects/${pid}/members/${userId}`, { projectRole: role });
       await loadMembers(pid);
       await loadPendingConsultants(pid);
-      toast.success(isPolish ? 'Zaktualizowano rolę' : 'Role updated');
+      toast.success(t('initiatives.initiativeTeamSection.roleUpdated'));
     },
-    [ensureProjectId, isPolish, loadMembers, loadPendingConsultants]
+    [ensureProjectId, t, loadMembers, loadPendingConsultants]
   );
 
   const onRemoveMember = useCallback(
@@ -385,9 +375,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       await Api.delete(`/projects/${pid}/members/${userId}`);
       await loadMembers(pid);
       await loadPendingConsultants(pid);
-      toast.success(isPolish ? 'Usunięto członka zespołu' : 'Team member removed');
+      toast.success(t('initiatives.initiativeTeamSection.teamMemberRemoved'));
     },
-    [ensureProjectId, isPolish, loadMembers, loadPendingConsultants]
+    [ensureProjectId, t, loadMembers, loadPendingConsultants]
   );
 
   const closeAIModal = useCallback(() => {
@@ -442,11 +432,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       const hasAny =
         proposal.add.length > 0 || proposal.update.length > 0 || proposal.remove.length > 0;
       if (!hasAny) {
-        proposal.note =
-          proposal.note ||
-          (isPolish
-            ? 'AI nie proponuje zmian w zespole na podstawie dostępnego kontekstu.'
-            : 'AI has no team changes to propose based on available context.');
+        proposal.note = proposal.note || t('initiatives.initiativeTeamSection.aiNoTeamChanges');
       }
 
       setAiProposal(proposal);
@@ -459,10 +445,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       setSelectedRemoveIds(Object.fromEntries(proposal.remove.map((r) => [r.userId, false])));
     } catch (e: any) {
       console.error(e);
-      toast.error(
-        e?.message ||
-          (isPolish ? 'AI: nie udało się przygotować propozycji' : 'AI: failed to propose')
-      );
+      toast.error(e?.message || t('initiatives.initiativeTeamSection.aiFailedPropose'));
     } finally {
       setIsAIProposing(false);
     }
@@ -473,6 +456,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
     initiative?.status,
     isAIProposing,
     isPolish,
+    t,
     members,
     orgUsers,
   ]);
@@ -522,14 +506,11 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       }
 
       await loadMembers(pid);
-      toast.success(isPolish ? 'Zastosowano propozycje AI' : 'Applied AI proposals');
+      toast.success(t('initiatives.initiativeTeamSection.appliedAiProposals'));
       closeAIModal();
     } catch (e: any) {
       console.error(e);
-      toast.error(
-        e?.message ||
-          (isPolish ? 'Nie udało się zastosować propozycji AI' : 'Failed to apply AI proposals')
-      );
+      toast.error(e?.message || t('initiatives.initiativeTeamSection.failedApplyAiProposals'));
     } finally {
       setIsApplyingAiProposal(false);
     }
@@ -538,7 +519,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
     closeAIModal,
     ensureProjectId,
     isApplyingAiProposal,
-    isPolish,
+    t,
     loadMembers,
     selectedAddIds,
     selectedRemoveIds,
@@ -552,12 +533,8 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
           <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-navy-800/50 px-2 py-0.5 rounded-full">
             <Loader2 size={12} className="animate-spin" />
             {isAIProposing
-              ? isPolish
-                ? 'AI pracuje...'
-                : 'AI working...'
-              : isPolish
-                ? 'Ładuję...'
-                : 'Loading...'}
+              ? t('initiatives.initiativeTeamSection.aiWorking')
+              : t('initiatives.initiativeTeamSection.loading')}
           </span>
         </div>
       )}
@@ -569,7 +546,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
           className="h-9 px-3 rounded-xl border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors text-sm font-semibold inline-flex items-center gap-2"
         >
           <Users size={16} className="text-slate-500 dark:text-slate-400" />
-          {isPolish ? 'Kompozycja zespołu' : 'Compose team'}
+          {t('initiatives.initiativeTeamSection.composeTeam')}
         </button>
       </div>
 
@@ -625,12 +602,10 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
         <div className="rounded-xl border border-slate-200/80 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200/80 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/20">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              {isPolish ? 'Konsultanci (pending)' : 'Consultants (pending)'}
+              {t('initiatives.initiativeTeamSection.consultantsPending')}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              {isPolish
-                ? 'Zaproszeni, ale jeszcze niezaakceptowani lub bez pełnego konta.'
-                : 'Invited but not accepted yet, or without a full account.'}
+              {t('initiatives.initiativeTeamSection.consultantsPendingHint')}
             </div>
           </div>
           <div className="divide-y divide-slate-200/70 dark:divide-navy-800">
@@ -642,7 +617,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                     {String(c.status || '').toUpperCase()}
-                    {c.accessCode ? ` • ${isPolish ? 'kod' : 'code'}: ${c.accessCode}` : ''}
+                    {c.accessCode
+                      ? ` • ${t('initiatives.initiativeTeamSection.code')}: ${c.accessCode}`
+                      : ''}
                   </div>
                 </div>
 
@@ -651,7 +628,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                     value={String(c.projectRole || 'CONSULTANT')}
                     onChange={(e) => void updatePendingConsultantRole(c.accessId, e.target.value)}
                     className="h-9 px-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    title={isPolish ? 'Rola w projekcie' : 'Project role'}
+                    title={t('initiatives.initiativeTeamSection.projectRole')}
                   >
                     {[
                       'CONSULTANT',
@@ -680,7 +657,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                       type="button"
                       onClick={() => void copyToClipboard(String(c.accessCode))}
                       className="p-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                      title={isPolish ? 'Kopiuj kod' : 'Copy code'}
+                      title={t('initiatives.initiativeTeamSection.copyCode')}
                     >
                       <Copy size={16} />
                     </button>
@@ -690,7 +667,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                     type="button"
                     onClick={() => void revokePendingConsultant(c.accessId)}
                     className="p-2 rounded-xl border border-rose-200/60 dark:border-rose-500/20 bg-rose-50/60 dark:bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-50 transition-colors"
-                    title={isPolish ? 'Cofnij dostęp' : 'Revoke access'}
+                    title={t('initiatives.initiativeTeamSection.revokeAccess')}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -707,7 +684,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div className="min-w-0">
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Proponowane zmiany zespołu (AI)' : 'Proposed team changes (AI)'}
+                  {t('initiatives.initiativeTeamSection.proposedTeamChangesAi')}
                 </h3>
                 {aiProposal.note ? (
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -718,25 +695,25 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
               <button
                 onClick={closeAIModal}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPolish ? 'Zamknij' : 'Close'}
+                title={t('initiatives.initiativeTeamSection.close')}
               >
                 <X size={16} />
               </button>
             </div>
 
             <div className="px-5 py-4 max-h-[70vh] overflow-y-auto space-y-5">
-              <Callout variant="purple" title={isPolish ? 'Plan' : 'Plan'} compact>
+              <Callout variant="purple" title={t('initiatives.initiativeTeamSection.plan')} compact>
                 <div className="space-y-1 text-xs">
                   <div>
-                    {isPolish ? 'Dodajemy:' : 'Add:'}{' '}
+                    {t('initiatives.initiativeTeamSection.addColon')}{' '}
                     <span className="font-semibold">{selectedAddCount}</span>
                   </div>
                   <div>
-                    {isPolish ? 'Zmieniamy role:' : 'Update roles:'}{' '}
+                    {t('initiatives.initiativeTeamSection.updateRolesColon')}{' '}
                     <span className="font-semibold">{selectedUpdateCount}</span>
                   </div>
                   <div>
-                    {isPolish ? 'Usuwamy:' : 'Remove:'}{' '}
+                    {t('initiatives.initiativeTeamSection.removeColon')}{' '}
                     <span className="font-semibold">{selectedRemoveCount}</span>
                   </div>
                 </div>
@@ -744,12 +721,12 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
 
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Do usunięcia' : 'To remove'} ({aiProposal.remove.length})
+                  {t('initiatives.initiativeTeamSection.toRemove')} ({aiProposal.remove.length})
                 </div>
                 {aiProposal.remove.length === 0 ? (
                   <EmptyStateInline
-                    message={isPolish ? 'Brak propozycji usunięć.' : 'No removals suggested.'}
-                    hint={isPolish ? 'To dobry znak.' : 'Good sign.'}
+                    message={t('initiatives.initiativeTeamSection.noRemovalsSuggested')}
+                    hint={t('initiatives.initiativeTeamSection.goodSign')}
                     className="p-4"
                   />
                 ) : (
@@ -775,12 +752,12 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
 
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
+                  {t('initiatives.initiativeTeamSection.toAdd')} ({aiProposal.add.length})
                 </div>
                 {aiProposal.add.length === 0 ? (
                   <EmptyStateInline
-                    message={isPolish ? 'Brak propozycji dodania.' : 'No additions suggested.'}
-                    hint={isPolish ? 'Zespół jest już wystarczający.' : 'Team seems sufficient.'}
+                    message={t('initiatives.initiativeTeamSection.noAdditionsSuggested')}
+                    hint={t('initiatives.initiativeTeamSection.teamSeemsSufficient')}
                     className="p-4"
                   />
                 ) : (
@@ -807,12 +784,12 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
 
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Do zmiany' : 'To change'} ({aiProposal.update.length})
+                  {t('initiatives.initiativeTeamSection.toChange')} ({aiProposal.update.length})
                 </div>
                 {aiProposal.update.length === 0 ? (
                   <EmptyStateInline
-                    message={isPolish ? 'Brak propozycji zmian.' : 'No changes suggested.'}
-                    hint={isPolish ? 'Role wyglądają spójnie.' : 'Roles look consistent.'}
+                    message={t('initiatives.initiativeTeamSection.noChangesSuggested')}
+                    hint={t('initiatives.initiativeTeamSection.rolesLookConsistent')}
                     className="p-4"
                   />
                 ) : (
@@ -844,7 +821,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                 disabled={isApplyingAiProposal}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.initiativeTeamSection.cancel')}
               </button>
               <button
                 onClick={applyAiProposal}
@@ -856,7 +833,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                 ) : (
                   <Sparkles size={13} />
                 )}
-                <span>{isPolish ? 'Zastosuj' : 'Apply'}</span>
+                <span>{t('initiatives.initiativeTeamSection.apply')}</span>
               </button>
             </div>
           </div>

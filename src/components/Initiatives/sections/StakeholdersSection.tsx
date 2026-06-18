@@ -4,6 +4,7 @@
 
 import React from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -21,7 +22,8 @@ export const StakeholdersSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { stakeholders, setStakeholders, users, initiativeId, isPolish } = useInitiativeContext();
+  const { t } = useTranslation();
+  const { stakeholders, setStakeholders, users, initiativeId } = useInitiativeContext();
 
   const toRaciLetter = (role: StakeholderRole): 'A' | 'R' | 'C' | 'I' => {
     if (role === 'accountable') return 'A';
@@ -64,12 +66,9 @@ export const StakeholdersSection: React.FC<InitiativeSectionProps> = ({
             notificationSettings,
           };
           setStakeholders([...stakeholders, newStakeholder]);
-          toast.success(isPolish ? 'Dodano interesariusza' : 'Stakeholder added');
+          toast.success(t('initiatives.stakeholdersSection.stakeholderAdded'));
         } catch (e: any) {
-          toast.error(
-            e?.message ||
-              (isPolish ? 'Nie udało się dodać interesariusza' : 'Failed to add stakeholder')
-          );
+          toast.error(e?.message || t('initiatives.stakeholdersSection.failedAddStakeholder'));
         }
       }}
       onUpdate={(id: string, updates: Partial<Stakeholder>) => {
@@ -82,7 +81,7 @@ export const StakeholdersSection: React.FC<InitiativeSectionProps> = ({
         } catch {
           // best-effort
         }
-        toast.success(isPolish ? 'Usunięto interesariusza' : 'Stakeholder removed');
+        toast.success(t('initiatives.stakeholdersSection.stakeholderRemoved'));
       }}
     />
   );

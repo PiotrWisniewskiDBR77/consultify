@@ -12,6 +12,7 @@
 
 import { AlertTriangle } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type {
   RaidItem,
@@ -30,11 +31,11 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
   onToggle,
   readonly,
 }) => {
+  const { t } = useTranslation();
   const {
     raidItems,
     setRaidItems,
     criticalRaids,
-    isPolish,
     raidAiRequest,
     requestRaidAi,
     initiative,
@@ -131,12 +132,15 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
           const oldTitle = patch.title;
           patch.type = 'issue';
           patch.status = 'OPEN';
-          patch.source = `${isPolish ? 'Konwersja z' : 'Converted from'} ${oldType}: ${oldTitle}`;
+          patch.source = t('initiatives.raidSection.convertedFrom', {
+            type: oldType,
+            title: oldTitle,
+          });
           return patch;
         })
       );
     },
-    [setRaidItems, isPolish]
+    [setRaidItems, t]
   );
 
   const handleAIGenerate = useCallback(() => {
@@ -169,7 +173,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
   return (
     <CollapsibleSection
       id="raid"
-      title={isPolish ? 'Ryzyko i RAID' : 'Risk & RAID'}
+      title={t('initiatives.raidSection.riskAndRaid')}
       icon={<AlertTriangle size={18} className="text-rose-500 dark:text-rose-400" />}
       iconBg="bg-gradient-to-br from-rose-500/10 to-rose-500/10 dark:from-rose-500/20 dark:to-rose-500/20"
       expanded={expanded}
@@ -178,7 +182,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         <div className="flex items-center gap-2">
           {criticalRaids > 0 && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-medium">
-              {criticalRaids} {isPolish ? 'kryt.' : 'crit.'}
+              {criticalRaids} {t('initiatives.raidSection.crit')}
             </span>
           )}
           {raidItems.length > 0 && (

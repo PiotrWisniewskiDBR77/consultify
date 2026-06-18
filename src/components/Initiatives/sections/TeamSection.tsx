@@ -4,6 +4,7 @@
 
 import { Target, User, Users } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
@@ -14,6 +15,7 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
+  const { t } = useTranslation();
   const {
     users,
     ownerId,
@@ -22,14 +24,13 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
     setSponsorId,
     ownerName,
     sponsorName,
-    isPolish,
     canEditOwner,
   } = useInitiativeContext();
 
   return (
     <CollapsibleSection
       id="team"
-      title={isPolish ? 'Zespół' : 'Team'}
+      title={t('initiatives.teamSection.team')}
       icon={<Users size={18} className="text-indigo-500 dark:text-indigo-400" />}
       iconBg="bg-gradient-to-br from-crimson-500/10 to-primary-500/10 dark:from-crimson-500/20 dark:to-primary-500/20"
       expanded={expanded}
@@ -44,30 +45,22 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
                 <User size={14} className="text-blue-500" />
               </div>
               <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
-                {isPolish ? 'Właściciel' : 'Owner'}
+                {t('initiatives.teamSection.owner')}
               </span>
             </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-            {isPolish
-              ? 'Odpowiada za realizację inicjatywy, podejmuje decyzje operacyjne i raportuje postępy.'
-              : 'Responsible for initiative delivery, makes operational decisions and reports progress.'}
+            {t('initiatives.teamSection.ownerDescription')}
           </p>
           <select
             id="initiative-team-owner"
             value={ownerId}
             onChange={(e) => setOwnerId(e.target.value)}
             disabled={!canEditOwner}
-            title={
-              !canEditOwner
-                ? isPolish
-                  ? 'Nie masz uprawnień do edycji właściciela na tym etapie.'
-                  : 'You cannot edit owner at this stage.'
-                : undefined
-            }
+            title={!canEditOwner ? t('initiatives.teamSection.cannotEditOwner') : undefined}
             className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
           >
-            <option value="">{isPolish ? 'Wybierz właściciela...' : 'Select owner...'}</option>
+            <option value="">{t('initiatives.teamSection.selectOwner')}</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.firstName} {user.lastName}
@@ -88,25 +81,17 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
             </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-            {isPolish
-              ? 'Sponsor biznesowy, zapewnia zasoby i wsparcie, usuwa przeszkody organizacyjne.'
-              : 'Business sponsor, provides resources and support, removes organizational obstacles.'}
+            {t('initiatives.teamSection.sponsorDescription')}
           </p>
           <select
             id="initiative-team-sponsor"
             value={sponsorId}
             onChange={(e) => setSponsorId(e.target.value)}
             disabled={!canEditOwner}
-            title={
-              !canEditOwner
-                ? isPolish
-                  ? 'Nie masz uprawnień do edycji sponsora na tym etapie.'
-                  : 'You cannot edit sponsor at this stage.'
-                : undefined
-            }
+            title={!canEditOwner ? t('initiatives.teamSection.cannotEditSponsor') : undefined}
             className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
           >
-            <option value="">{isPolish ? 'Wybierz sponsora...' : 'Select sponsor...'}</option>
+            <option value="">{t('initiatives.teamSection.selectSponsor')}</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.firstName} {user.lastName}
