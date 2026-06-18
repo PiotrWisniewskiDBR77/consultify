@@ -22,6 +22,7 @@ type Wave8Agent = {
 };
 
 export const Wave8AgentCatalogPanel: React.FC = () => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [agents, setAgents] = React.useState<Wave8Agent[]>([]);
@@ -230,12 +231,10 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">
-            {isPolish ? 'Wave 8 — Katalog agentów' : 'Wave 8 Agent Catalog'}
+            {t('aios.wave8AgentCatalogPanel.wave8AgentCatalog')}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            {isPolish
-              ? 'Wyspecjalizowani agenci z promptami ról, zakresami narzędzi, schematami wyjść i audytem zaplanowanych zadań.'
-              : 'Specialized agents with role prompts, tool scopes, output schemas and scheduled work audit.'}
+            {t('aios.wave8AgentCatalogPanel.specializedAgentsWithRolePromptsTool')}
           </p>
         </div>
         <button
@@ -244,7 +243,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
           disabled={loading}
           className="rounded-md border px-3 py-2 text-sm disabled:opacity-50 dark:border-navy-700"
         >
-          {isPolish ? 'Odśwież' : 'Refresh'}
+          {t('aios.wave8AgentCatalogPanel.refresh')}
         </button>
       </div>
 
@@ -257,7 +256,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
         <section className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
           <h2 className="flex items-center gap-2 font-semibold">
-            <TeresaMark size={18} /> {isPolish ? 'Uruchom agenta' : 'Launch Agent'}
+            <TeresaMark size={18} /> {t('aios.wave8AgentCatalogPanel.launchAgent')}
           </h2>
           <div className="mt-4 space-y-3">
             <select
@@ -280,7 +279,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
             <input
               value={requestedTools}
               onChange={(event) => setRequestedTools(event.target.value)}
-              placeholder={isPolish ? 'Żądane narzędzia, oddzielone przecinkami' : 'Requested tools, comma separated'}
+              placeholder={t('aios.wave8AgentCatalogPanel.requestedToolsCommaSeparated')}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <select
@@ -288,14 +287,14 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               onChange={(event) => setCadence(event.target.value as typeof cadence)}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
-              <option value="none">{isPolish ? 'Uruchom teraz' : 'Run now'}</option>
-              <option value="daily">{isPolish ? 'Zaplanuj codziennie' : 'Schedule daily'}</option>
-              <option value="weekly">{isPolish ? 'Zaplanuj co tydzień' : 'Schedule weekly'}</option>
+              <option value="none">{t('aios.wave8AgentCatalogPanel.runNow')}</option>
+              <option value="daily">{t('aios.wave8AgentCatalogPanel.scheduleDaily')}</option>
+              <option value="weekly">{t('aios.wave8AgentCatalogPanel.scheduleWeekly')}</option>
             </select>
             <input
               value={approvalAiRunId}
               onChange={(event) => setApprovalAiRunId(event.target.value)}
-              placeholder={isPolish ? 'Zatwierdzone ID AIRun dla agentów wykonawczych' : 'Approved AIRun id for execution agents'}
+              placeholder={t('aios.wave8AgentCatalogPanel.approvedAirunIdForExecutionAgents')}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <label className="flex items-center gap-2 text-sm">
@@ -304,7 +303,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                 checked={approvalBudget}
                 onChange={(event) => setApprovalBudget(event.target.checked)}
               />
-              {isPolish ? 'Zatwierdzony budżet' : 'Budget gate approved'}
+              {t('aios.wave8AgentCatalogPanel.budgetGateApproved')}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -312,7 +311,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                 checked={evalRunEnabled}
                 onChange={(event) => setEvalRunEnabled(event.target.checked)}
               />
-              {isPolish ? 'Zarejestruj hook ewaluacyjny' : 'Register eval run hook'}
+              {t('aios.wave8AgentCatalogPanel.registerEvalRunHook')}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -320,7 +319,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                 checked={swarmEnabled}
                 onChange={(event) => setSwarmEnabled(event.target.checked)}
               />
-              {isPolish ? 'Tryb roju' : 'Swarm mode'}
+              {t('aios.wave8AgentCatalogPanel.swarmMode')}
             </label>
             {swarmEnabled && (
               <div className="rounded-md border p-3 text-sm dark:border-navy-700">
@@ -330,7 +329,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                     checked={swarmApproved}
                     onChange={(event) => setSwarmApproved(event.target.checked)}
                   />
-                  {isPolish ? 'Zgoda udzielona' : 'Approval granted'}
+                  {t('aios.wave8AgentCatalogPanel.approvalGranted')}
                 </label>
                 <label className="mt-2 flex items-center gap-2">
                   <input
@@ -338,7 +337,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                     checked={budgetApproved}
                     onChange={(event) => setBudgetApproved(event.target.checked)}
                   />
-                  {isPolish ? 'Zatwierdzony budżet' : 'Budget gate approved'}
+                  {t('aios.budgetGateApproved')}
                 </label>
               </div>
             )}
@@ -348,23 +347,21 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               disabled={loading || !selectedAgent}
               className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sky-600"
             >
-              <Play size={16} /> {isPolish ? 'Uruchom kontrolowanego agenta' : 'Launch governed agent'}
+              <Play size={16} /> {t('aios.wave8AgentCatalogPanel.launchGovernedAgent')}
             </button>
           </div>
 
           <h2 className="mt-6 flex items-center gap-2 font-semibold">
-            <ShieldCheck size={18} /> {isPolish ? 'Kontrolowane wykonanie narzędzia' : 'Governed Tool Execution'}
+            <ShieldCheck size={18} /> {t('aios.wave8AgentCatalogPanel.governedToolExecution')}
           </h2>
           <p className="mt-1 text-xs text-slate-500">
-            {isPolish
-              ? 'Używa `/api/ai-agents/tool` do weryfikacji dozwolonych narzędzi, wymagań AIRun i bramek budżetowych przed wykonaniem.'
-              : 'Uses `/api/ai-agents/tool` to verify allowed tools, AIRun requirements and budget gates before execution.'}
+            {t('aios.wave8AgentCatalogPanel.usesApiAiAgentsToolTo')}
           </p>
           <div className="mt-4 space-y-3">
             <input
               value={toolName}
               onChange={(event) => setToolName(event.target.value)}
-              placeholder={isPolish ? 'Nazwa narzędzia' : 'Tool name'}
+              placeholder={t('aios.wave8AgentCatalogPanel.toolName')}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <textarea
@@ -377,7 +374,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
             <input
               value={toolAiRunId}
               onChange={(event) => setToolAiRunId(event.target.value)}
-              placeholder={isPolish ? 'Zatwierdzone ID AIRun, gdy wymagane' : 'Approved AIRun id when required'}
+              placeholder={t('aios.wave8AgentCatalogPanel.approvedAirunIdWhenRequired')}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <label className="flex items-center gap-2 text-sm">
@@ -386,7 +383,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                 checked={toolBudgetApproved}
                 onChange={(event) => setToolBudgetApproved(event.target.checked)}
               />
-              {isPolish ? 'Zatwierdzony budżet dla narzędzi wysokiego kosztu/zarządzania' : 'Budget gate approved for high-cost/governance tools'}
+              {t('aios.wave8AgentCatalogPanel.budgetGateApprovedForHighCost')}
             </label>
             <button
               type="button"
@@ -394,7 +391,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               disabled={loading || !selectedAgent || !toolName.trim()}
               className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              <ShieldCheck size={16} /> {isPolish ? 'Wykonaj narzędzie w zakresie' : 'Execute scoped tool'}
+              <ShieldCheck size={16} /> {t('aios.wave8AgentCatalogPanel.executeScopedTool')}
             </button>
           </div>
 
@@ -403,15 +400,15 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               <div className="font-medium">{selectedAgent.name}</div>
               <p className="mt-1 text-slate-500">{selectedAgent.purpose}</p>
               <div className="mt-2 text-xs text-slate-500">
-                {isPolish ? 'Źródło definicji' : 'Definition source'}: {selectedAgent.source || (isPolish ? 'kod' : 'code')}; {isPolish ? 'edytowalne' : 'editable'}:{' '}
-                {selectedAgent.editable === false ? (isPolish ? 'nie' : 'no') : (isPolish ? 'tak' : 'yes')}
+                {t('aios.wave8AgentCatalogPanel.definitionSource')}: {selectedAgent.source || (t('aios.wave8AgentCatalogPanel.code'))}; {t('aios.wave8AgentCatalogPanel.editable')}:{' '}
+                {selectedAgent.editable === false ? (t('aios.wave8AgentCatalogPanel.no')) : (t('aios.wave8AgentCatalogPanel.yes'))}
               </div>
-              <div className="mt-3 text-xs text-slate-500">{isPolish ? 'Persona' : 'Persona'}: {selectedAgent.persona}</div>
+              <div className="mt-3 text-xs text-slate-500">{t('aios.wave8AgentCatalogPanel.persona')}: {selectedAgent.persona}</div>
               <div className="mt-2 text-xs text-slate-500">
-                {isPolish ? 'Dozwolone narzędzia' : 'Allowed tools'}: {selectedAgent.allowedTools.join(', ')}
+                {t('aios.wave8AgentCatalogPanel.allowedTools')}: {selectedAgent.allowedTools.join(', ')}
               </div>
               <div className="mt-2 text-xs text-slate-500">
-                {isPolish ? 'Schemat wyjścia' : 'Output schema'}: {selectedAgent.outputSchema?.type} /{' '}
+                {t('aios.wave8AgentCatalogPanel.outputSchema')}: {selectedAgent.outputSchema?.type} /{' '}
                 {(selectedAgent.outputSchema?.required || []).join(', ')}
               </div>
             </div>
@@ -420,12 +417,10 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
           {selectedAgent && (
             <div className="mt-4 rounded-lg border p-3 text-sm dark:border-navy-700">
               <div className="font-medium">
-                {isPolish ? 'Edytowalna definicja agenta (admin)' : 'Admin-editable AgentDefinition'}
+                {t('aios.wave8AgentCatalogPanel.adminEditableAgentdefinition')}
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {isPolish
-                  ? 'Zapisuje nadpisanie organizacyjne przez `/api/ai-agents/definitions`.'
-                  : 'Saves an organization override through `/api/ai-agents/definitions`.'}
+                {t('aios.wave8AgentCatalogPanel.savesAnOrganizationOverrideThroughApi')}
               </p>
               <div className="mt-3 space-y-3">
                 <textarea
@@ -437,13 +432,13 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                 <input
                   value={definitionAllowedTools}
                   onChange={(event) => setDefinitionAllowedTools(event.target.value)}
-                  placeholder={isPolish ? 'Dozwolone narzędzia' : 'Allowed tools'}
+                  placeholder={t('aios.allowedTools')}
                   className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
                 />
                 <input
                   value={definitionBlockedTools}
                   onChange={(event) => setDefinitionBlockedTools(event.target.value)}
-                  placeholder={isPolish ? 'Zablokowane narzędzia' : 'Blocked tools'}
+                  placeholder={t('aios.wave8AgentCatalogPanel.blockedTools')}
                   className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
                 />
                 <button
@@ -452,7 +447,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                   disabled={loading}
                   className="w-full rounded-md border px-3 py-2 text-sm font-medium disabled:opacity-50 dark:border-navy-700"
                 >
-                  {isPolish ? 'Zapisz nadpisanie definicji agenta' : 'Save AgentDefinition override'}
+                  {t('aios.wave8AgentCatalogPanel.saveAgentdefinitionOverride')}
                 </button>
               </div>
             </div>
@@ -461,7 +456,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
 
         <section className="space-y-4">
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">{isPolish ? 'Katalog' : 'Catalog'}</h2>
+            <h2 className="font-semibold">{t('aios.wave8AgentCatalogPanel.catalog')}</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {agents.map((agent) => (
                 <div
@@ -478,7 +473,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                   </div>
                   <div className="mt-1 text-xs text-slate-500">{agent.purpose}</div>
                   <div className="mt-2 text-xs text-slate-500">
-                    {isPolish ? 'Polityka' : 'Policy'}: {agent.approvalPolicy}; {isPolish ? 'koszt' : 'cost'}: {agent.costClass}
+                    {t('aios.wave8AgentCatalogPanel.policy')}: {agent.approvalPolicy}; {t('aios.wave8AgentCatalogPanel.cost')}: {agent.costClass}
                   </div>
                 </div>
               ))}
@@ -487,7 +482,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="flex items-center gap-2 font-semibold">
-              <CalendarClock size={18} /> {isPolish ? 'Zaplanowani agenci' : 'Scheduled Agents'}
+              <CalendarClock size={18} /> {t('aios.wave8AgentCatalogPanel.scheduledAgents')}
             </h2>
             <button
               type="button"
@@ -495,7 +490,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               disabled={loading}
               className="mt-3 rounded-md border px-3 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
             >
-              {isPolish ? 'Przetwórz zaległe harmonogramy (ręczne wywołanie)' : 'Process due schedules (manual sweep)'}
+              {t('aios.wave8AgentCatalogPanel.processDueSchedulesManualSweep')}
             </button>
             <div className="mt-3 space-y-2">
               {schedules.map((schedule) => (
@@ -505,21 +500,21 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                 >
                   {schedule.agentId} / {schedule.cadence} / owner {schedule.ownerUserId}
                   <div className="mt-1 text-slate-500">
-                    {isPolish ? 'Harmonogram' : 'Scheduler'}: {schedule.schedulerMode || 'manual_process_due_endpoint'}; {isPolish ? 'następne' : 'next'}:{' '}
-                    {schedule.nextRunAt || (isPolish ? 'na żądanie' : 'on demand')}
+                    {t('aios.wave8AgentCatalogPanel.scheduler')}: {schedule.schedulerMode || 'manual_process_due_endpoint'}; {t('aios.wave8AgentCatalogPanel.next')}:{' '}
+                    {schedule.nextRunAt || (t('aios.wave8AgentCatalogPanel.onDemand'))}
                   </div>
                 </div>
               ))}
               {schedules.length === 0 && (
                 <div className="text-sm text-slate-500">
-                  {isPolish ? 'Brak harmonogramów.' : 'No schedules yet.'}
+                  {t('aios.wave8AgentCatalogPanel.noSchedulesYet')}
                 </div>
               )}
             </div>
           </div>
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">{isPolish ? 'Audyt uruchomień agenta' : 'AgentRun Audit'}</h2>
+            <h2 className="font-semibold">{t('aios.wave8AgentCatalogPanel.agentrunAudit')}</h2>
             <div className="mt-3 space-y-2">
               {runs.map((run) => (
                 <div key={run.runId} className="rounded-lg border p-3 text-xs dark:border-navy-700">
@@ -532,23 +527,23 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                     {run.agentId} / {run.status}
                   </div>
                   <div className="mt-1 text-slate-500">
-                    {isPolish ? 'Narzędzie' : 'Tool'}: {run.audit?.toolDecision?.reason || (isPolish ? 'nieznane' : 'unknown')}; {isPolish ? 'rój' : 'swarm'}:{' '}
-                    {run.audit?.swarmDecision?.reason || (isPolish ? 'nieznany' : 'unknown')}; {isPolish ? 'akceptacja' : 'approval'}:{' '}
-                    {run.audit?.approvalDecision?.reason || (isPolish ? 'nieznana' : 'unknown')}
+                    {t('aios.wave8AgentCatalogPanel.tool')}: {run.audit?.toolDecision?.reason || (t('aios.wave8AgentCatalogPanel.unknown'))}; {t('aios.wave8AgentCatalogPanel.swarm')}:{' '}
+                    {run.audit?.swarmDecision?.reason || (t('aios.wave8AgentCatalogPanel.unknown2'))}; {t('aios.wave8AgentCatalogPanel.approval')}:{' '}
+                    {run.audit?.approvalDecision?.reason || (t('aios.wave8AgentCatalogPanel.unknown3'))}
                   </div>
                   <div className="mt-1 text-slate-500">
-                    {isPolish ? 'Harmonogram' : 'Scheduler'}: {run.audit?.scheduler?.status || (isPolish ? 'nieznany' : 'unknown')} /{' '}
-                    {run.audit?.scheduler?.trigger || (isPolish ? 'nieznany' : 'unknown')}; {isPolish ? 'hook eval' : 'eval hook'}:{' '}
-                    {run.audit?.evalRunHook?.status || (isPolish ? 'nie_żądany' : 'not_requested')}
+                    {t('aios.scheduler')}: {run.audit?.scheduler?.status || (t('aios.unknown2'))} /{' '}
+                    {run.audit?.scheduler?.trigger || (t('aios.unknown2'))}; {t('aios.wave8AgentCatalogPanel.evalHook')}:{' '}
+                    {run.audit?.evalRunHook?.status || (t('aios.wave8AgentCatalogPanel.notRequested'))}
                   </div>
                 </div>
               ))}
-              {runs.length === 0 && <div className="text-sm text-slate-500">{isPolish ? 'Brak uruchomień.' : 'No runs yet.'}</div>}
+              {runs.length === 0 && <div className="text-sm text-slate-500">{t('aios.wave8AgentCatalogPanel.noRunsYet')}</div>}
             </div>
           </div>
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">{isPolish ? 'Powiadomienia' : 'Notifications'}</h2>
+            <h2 className="font-semibold">{t('aios.wave8AgentCatalogPanel.notifications')}</h2>
             <div className="mt-3 space-y-2">
               {notifications.map((notification) => (
                 <div
@@ -558,13 +553,13 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                   {notification.notificationType} / run {notification.runId} / owner{' '}
                   {notification.ownerUserId}
                   <div className="mt-1 text-slate-500">
-                    {isPolish ? 'Dostarczenie' : 'Delivery'}: {notification.payload?.delivery?.dispatchMode || 'audit_log_only'}
+                    {t('aios.wave8AgentCatalogPanel.delivery')}: {notification.payload?.delivery?.dispatchMode || 'audit_log_only'}
                   </div>
                 </div>
               ))}
               {notifications.length === 0 && (
                 <div className="text-sm text-slate-500">
-                  {isPolish ? 'Brak powiadomień.' : 'No notifications yet.'}
+                  {t('aios.wave8AgentCatalogPanel.noNotificationsYet')}
                 </div>
               )}
             </div>

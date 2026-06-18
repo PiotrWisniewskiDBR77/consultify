@@ -28,6 +28,7 @@ interface AssignmentRow {
 }
 
 export const InterviewAssignmentsPanel: React.FC = () => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -105,8 +106,8 @@ export const InterviewAssignmentsPanel: React.FC = () => {
 
   const handleSendBack = async (assignmentId: string) => {
     const reason =
-      window.prompt(isPolish ? 'Powód odesłania (Send Back):' : 'Send back reason:') ||
-      (isPolish ? 'Proszę uzupełnij wywiad' : 'Please complete the interview');
+      window.prompt(t('admin.interviewAssignmentsPanel.sendBackReason')) ||
+      (t('admin.interviewAssignmentsPanel.pleaseCompleteTheInterview'));
     try {
       await Api.post(`/interview/assignments/${assignmentId}/send-back`, { reason });
       await refresh();
@@ -120,24 +121,24 @@ export const InterviewAssignmentsPanel: React.FC = () => {
       <div className="p-5 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {isPolish ? 'Przypisania wywiadów' : 'Interview assignments'}
+            {t('admin.interviewAssignmentsPanel.interviewAssignments')}
           </h3>
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Admin przypisuje, user zatwierdza' : 'Admin assigns, user submits'}
+            {t('admin.interviewAssignmentsPanel.adminAssignsUserSubmits')}
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
             <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
-              {isPolish ? 'Użytkownik' : 'User'}
+              {t('admin.interviewAssignmentsPanel.user')}
             </label>
             <select
               value={assigneeUserId}
               onChange={(e) => setAssigneeUserId(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm"
             >
-              <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
+              <option value="">{t('admin.interviewAssignmentsPanel.select')}</option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.firstName} {u.lastName} {u.email ? `(${u.email})` : ''}
@@ -148,14 +149,14 @@ export const InterviewAssignmentsPanel: React.FC = () => {
 
           <div>
             <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
-              {isPolish ? 'Template (approved)' : 'Template (approved)'}
+              {t('admin.interviewAssignmentsPanel.templateApproved')}
             </label>
             <select
               value={templateId}
               onChange={(e) => setTemplateId(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm"
             >
-              <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
+              <option value="">{t('admin.select')}</option>
               {approvedTemplates.map((t: any) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -166,7 +167,7 @@ export const InterviewAssignmentsPanel: React.FC = () => {
 
           <div>
             <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
-              {isPolish ? 'Termin (opcjonalnie)' : 'Due date (optional)'}
+              {t('admin.interviewAssignmentsPanel.dueDateOptional')}
             </label>
             <input
               type="date"
@@ -178,12 +179,12 @@ export const InterviewAssignmentsPanel: React.FC = () => {
 
           <div>
             <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
-              {isPolish ? 'Proces (opcjonalnie)' : 'Process (optional)'}
+              {t('admin.interviewAssignmentsPanel.processOptional')}
             </label>
             <input
               value={processRef}
               onChange={(e) => setProcessRef(e.target.value)}
-              placeholder={isPolish ? 'np. Order-to-Cash' : 'e.g. Order-to-Cash'}
+              placeholder={t('admin.interviewAssignmentsPanel.eGOrderToCash')}
               className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm"
             />
           </div>
@@ -194,7 +195,7 @@ export const InterviewAssignmentsPanel: React.FC = () => {
             onClick={() => void refresh()}
             className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors text-sm"
           >
-            {isPolish ? 'Odśwież' : 'Refresh'}
+            {t('admin.interviewAssignmentsPanel.refresh')}
           </button>
           <button
             onClick={() => void handleCreate()}
@@ -202,12 +203,8 @@ export const InterviewAssignmentsPanel: React.FC = () => {
             className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving
-              ? isPolish
-                ? 'Zapisywanie...'
-                : 'Saving...'
-              : isPolish
-                ? 'Przypisz'
-                : 'Assign'}
+              ? t('admin.interviewAssignmentsPanel.saving')
+              : t('admin.interviewAssignmentsPanel.assign')}
           </button>
         </div>
       </div>
@@ -215,29 +212,29 @@ export const InterviewAssignmentsPanel: React.FC = () => {
       <div className="p-5 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-            {isPolish ? 'Lista przypisań' : 'Assignments list'}
+            {t('admin.interviewAssignmentsPanel.assignmentsList')}
           </h4>
           <span className="text-xs text-slate-500 dark:text-slate-400">{assignments.length}</span>
         </div>
 
         {loading ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Ładowanie...' : 'Loading...'}
+            {t('admin.interviewAssignmentsPanel.loading')}
           </div>
         ) : assignments.length === 0 ? (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak danych' : 'No data'}
+            {t('admin.interviewAssignmentsPanel.noData')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-slate-500 dark:text-slate-400">
-                  <th className="py-2 pr-3">{isPolish ? 'Template' : 'Template'}</th>
-                  <th className="py-2 pr-3">{isPolish ? 'Status' : 'Status'}</th>
-                  <th className="py-2 pr-3">{isPolish ? 'Postęp' : 'Progress'}</th>
-                  <th className="py-2 pr-3">{isPolish ? 'Termin' : 'Due'}</th>
-                  <th className="py-2 pr-3">{isPolish ? 'Akcje' : 'Actions'}</th>
+                  <th className="py-2 pr-3">{t('admin.interviewAssignmentsPanel.template')}</th>
+                  <th className="py-2 pr-3">{t('admin.interviewAssignmentsPanel.status')}</th>
+                  <th className="py-2 pr-3">{t('admin.interviewAssignmentsPanel.progress')}</th>
+                  <th className="py-2 pr-3">{t('admin.interviewAssignmentsPanel.due')}</th>
+                  <th className="py-2 pr-3">{t('admin.interviewAssignmentsPanel.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
@@ -265,14 +262,14 @@ export const InterviewAssignmentsPanel: React.FC = () => {
                             onClick={() => void refresh()}
                             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors text-xs"
                           >
-                            {isPolish ? 'Odśwież' : 'Refresh'}
+                            {t('admin.refresh')}
                           </button>
                           <button
                             onClick={() => void handleSendBack(a.id)}
                             disabled={!canSendBack}
                             className="px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 border border-rose-500/20 hover:bg-rose-600/30 transition-colors text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                           >
-                            {isPolish ? 'Send Back' : 'Send Back'}
+                            {t('admin.interviewAssignmentsPanel.sendBack')}
                           </button>
                         </div>
                         {a.sent_back_reason && (

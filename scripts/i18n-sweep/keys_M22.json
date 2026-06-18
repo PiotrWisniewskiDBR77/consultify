@@ -1,0 +1,850 @@
+{
+  "wave5ArtifactRuntimePanel.titleAndContentAreRequired": {
+    "pl": "Tytuł i treść są wymagane.",
+    "en": "Title and content are required."
+  },
+  "wave5ArtifactRuntimePanel.generationPromptIsRequired": {
+    "pl": "Polecenie generowania jest wymagane.",
+    "en": "Generation prompt is required."
+  },
+  "wave5ArtifactRuntimePanel.artifactsUnavailable": {
+    "pl": "Artefakty niedostępne",
+    "en": "Artifacts unavailable"
+  },
+  "wave5ArtifactRuntimePanel.retry": {
+    "pl": "Spróbuj ponownie",
+    "en": "Retry"
+  },
+  "wave5ArtifactRuntimePanel.wave5ArtifactRuntime": {
+    "pl": "Środowisko artefaktów — Wave 5",
+    "en": "Wave 5 Artifact Runtime"
+  },
+  "wave5ArtifactRuntimePanel.firstClassArtifactsWithMutationProposals": {
+    "pl": "Artefakty pierwszej klasy z propozycjami mutacji, podglądem różnic, zatwierdzaniem, historią wersji, wypełnianiem dokumentów i manifestami proweniencji.",
+    "en": "First-class artifacts with mutation proposals, diff preview, approval, version lineage, document filling and provenance manifests."
+  },
+  "wave5ArtifactRuntimePanel.generateOutput": {
+    "pl": "Generuj dokument wyjściowy",
+    "en": "Generate Output"
+  },
+  "wave5ArtifactRuntimePanel.createReportDeckOrTableAs": {
+    "pl": "Utwórz raport, prezentację lub tabelę jako artefakt pierwszej klasy.",
+    "en": "Create report, deck or table as a first-class artifact."
+  },
+  "wave5ArtifactRuntimePanel.executiveReport": {
+    "pl": "Raport zarządczy",
+    "en": "Executive report"
+  },
+  "wave5ArtifactRuntimePanel.boardDeck": {
+    "pl": "Prezentacja dla zarządu",
+    "en": "Board deck"
+  },
+  "wave5ArtifactRuntimePanel.kpiTable": {
+    "pl": "Tabela KPI",
+    "en": "KPI table"
+  },
+  "wave5ArtifactRuntimePanel.describeTheArtifactToGenerate": {
+    "pl": "Opisz artefakt do wygenerowania",
+    "en": "Describe the artifact to generate"
+  },
+  "wave5ArtifactRuntimePanel.generateArtifact": {
+    "pl": "Generuj artefakt",
+    "en": "Generate artifact"
+  },
+  "wave5ArtifactRuntimePanel.createArtifact": {
+    "pl": "Utwórz artefakt",
+    "en": "Create Artifact"
+  },
+  "wave5ArtifactRuntimePanel.artifactTitle": {
+    "pl": "Tytuł artefaktu",
+    "en": "Artifact title"
+  },
+  "wave5ArtifactRuntimePanel.artifactContent": {
+    "pl": "Treść artefaktu",
+    "en": "Artifact content"
+  },
+  "wave5ArtifactRuntimePanel.createDraftArtifact": {
+    "pl": "Utwórz szkic artefaktu",
+    "en": "Create draft artifact"
+  },
+  "wave5ArtifactRuntimePanel.documentFilling": {
+    "pl": "Wypełnianie dokumentu",
+    "en": "Document Filling"
+  },
+  "wave5ArtifactRuntimePanel.missingFieldsReturnQuestionsNotGuesses": {
+    "pl": "Brakujące pola zwracają pytania, nie domysły.",
+    "en": "Missing fields return questions, not guesses."
+  },
+  "wave5ArtifactRuntimePanel.fillTemplate": {
+    "pl": "Wypełnij szablon",
+    "en": "Fill template"
+  },
+  "wave5ArtifactRuntimePanel.artifacts": {
+    "pl": "Artefakty",
+    "en": "Artifacts"
+  },
+  "wave5ArtifactRuntimePanel.refresh": {
+    "pl": "Odśwież",
+    "en": "Refresh"
+  },
+  "wave5ArtifactRuntimePanel.noWave5ArtifactsYet": {
+    "pl": "Brak artefaktów Wave 5.",
+    "en": "No Wave 5 artifacts yet."
+  },
+  "wave5ArtifactRuntimePanel.selectOrCreateAnArtifact": {
+    "pl": "Wybierz lub utwórz artefakt.",
+    "en": "Select or create an artifact."
+  },
+  "wave5ArtifactRuntimePanel.version": {
+    "pl": "wersja",
+    "en": "version"
+  },
+  "wave5ArtifactRuntimePanel.exportManifest": {
+    "pl": "Eksportuj manifest",
+    "en": "Export manifest"
+  },
+  "wave5ArtifactRuntimePanel.proposeMutation": {
+    "pl": "Zaproponuj mutację",
+    "en": "Propose Mutation"
+  },
+  "wave5ArtifactRuntimePanel.newArtifactContentThisCreatesA": {
+    "pl": "Nowa treść artefaktu. Tworzy porównanie zmian i oczekuje na zatwierdzenie.",
+    "en": "New artifact content. This creates a diff and waits for approval."
+  },
+  "wave5ArtifactRuntimePanel.createMutationProposal": {
+    "pl": "Utwórz propozycję mutacji",
+    "en": "Create mutation proposal"
+  },
+  "wave5ArtifactRuntimePanel.mutationProposals": {
+    "pl": "Propozycje mutacji",
+    "en": "Mutation Proposals"
+  },
+  "wave5ArtifactRuntimePanel.noMutationsYet": {
+    "pl": "Brak propozycji mutacji.",
+    "en": "No mutations yet."
+  },
+  "wave5ArtifactRuntimePanel.commit": {
+    "pl": "Zatwierdź",
+    "en": "Commit"
+  },
+  "wave5ArtifactRuntimePanel.versionLineage": {
+    "pl": "Historia wersji",
+    "en": "Version Lineage"
+  },
+  "wave5ArtifactRuntimePanel.provenanceFooter": {
+    "pl": "Stopka proweniencji",
+    "en": "Provenance Footer"
+  },
+  "wave6ContextLearningPanel.wave6ContextAndLearning": {
+    "pl": "Wave 6 — Kontekst i uczenie",
+    "en": "Wave 6 Context and Learning"
+  },
+  "wave6ContextLearningPanel.showsWhatAiKnowsWhereIt": {
+    "pl": "Pokazuje co AI wie, skąd pochodzi ta wiedza i które wspomnienia wymagają jawnej akceptacji.",
+    "en": "Shows what AI knows, where it came from, and which memories need explicit approval."
+  },
+  "wave6ContextLearningPanel.refresh": {
+    "pl": "Odśwież",
+    "en": "Refresh"
+  },
+  "wave6ContextLearningPanel.contextControls": {
+    "pl": "Ustawienia kontekstu",
+    "en": "Context Controls"
+  },
+  "wave6ContextLearningPanel.projectScope": {
+    "pl": "Zakres projektu",
+    "en": "Project scope"
+  },
+  "wave6ContextLearningPanel.optionalProjectId": {
+    "pl": "Opcjonalne ID projektu",
+    "en": "Optional project id"
+  },
+  "wave6ContextLearningPanel.snapshotScope": {
+    "pl": "Zakres migawki",
+    "en": "Snapshot scope"
+  },
+  "wave6ContextLearningPanel.userWorkProfileSnapshot": {
+    "pl": "Migawka profilu użytkownika",
+    "en": "User work profile snapshot"
+  },
+  "wave6ContextLearningPanel.organizationSnapshot": {
+    "pl": "Migawka organizacji",
+    "en": "Organization snapshot"
+  },
+  "wave6ContextLearningPanel.projectSnapshot": {
+    "pl": "Migawka projektu",
+    "en": "Project snapshot"
+  },
+  "wave6ContextLearningPanel.privateModeBlocksLearningWrites": {
+    "pl": "Tryb prywatny blokuje zapis wiedzy",
+    "en": "Private mode blocks learning writes"
+  },
+  "wave6ContextLearningPanel.captureContextSnapshot": {
+    "pl": "Zrób migawkę kontekstu",
+    "en": "Capture context snapshot"
+  },
+  "wave6ContextLearningPanel.memoryCandidate": {
+    "pl": "Kandydat do pamięci",
+    "en": "Memory Candidate"
+  },
+  "wave6ContextLearningPanel.assistantScope": {
+    "pl": "Zakres asystenta",
+    "en": "Assistant scope"
+  },
+  "wave6ContextLearningPanel.teresaTenantMemory": {
+    "pl": "Pamięć Teresy (tenant)",
+    "en": "Teresa tenant memory"
+  },
+  "wave6ContextLearningPanel.annaPublicProductMemory": {
+    "pl": "Publiczna pamięć produktu Anny",
+    "en": "Anna public product memory"
+  },
+  "wave6ContextLearningPanel.memoryScope": {
+    "pl": "Zakres pamięci",
+    "en": "Memory scope"
+  },
+  "wave6ContextLearningPanel.user": {
+    "pl": "Użytkownik",
+    "en": "User"
+  },
+  "wave6ContextLearningPanel.project": {
+    "pl": "Projekt",
+    "en": "Project"
+  },
+  "wave6ContextLearningPanel.organization": {
+    "pl": "Organizacja",
+    "en": "Organization"
+  },
+  "wave6ContextLearningPanel.tenant": {
+    "pl": "Tenant",
+    "en": "Tenant"
+  },
+  "wave6ContextLearningPanel.publicProduct": {
+    "pl": "Produkt publiczny",
+    "en": "Public product"
+  },
+  "wave6ContextLearningPanel.memoryKey": {
+    "pl": "Klucz pamięci",
+    "en": "Memory key"
+  },
+  "wave6ContextLearningPanel.memoryValue": {
+    "pl": "Wartość pamięci",
+    "en": "Memory value"
+  },
+  "wave6ContextLearningPanel.whatShouldAiRememberExampleI": {
+    "pl": "Co AI powinno zapamiętać? Przykład: Wolę zwięzłe notatki implementacyjne z krokami weryfikacji.",
+    "en": "What should AI remember? Example: I prefer concise implementation notes with verification steps."
+  },
+  "wave6ContextLearningPanel.createMemoryCandidate": {
+    "pl": "Utwórz kandydata do pamięci",
+    "en": "Create memory candidate"
+  },
+  "wave6ContextLearningPanel.whatAiKnows": {
+    "pl": "Co wie AI",
+    "en": "What AI Knows"
+  },
+  "wave6ContextLearningPanel.snapshot": {
+    "pl": "migawka",
+    "en": "snapshot"
+  },
+  "wave6ContextLearningPanel.fresh": {
+    "pl": "Aktualność",
+    "en": "Fresh"
+  },
+  "wave6ContextLearningPanel.unknown": {
+    "pl": "nieznana",
+    "en": "unknown"
+  },
+  "wave6ContextLearningPanel.noDisplayableFactsForThisSnapshot": {
+    "pl": "Brak danych do wyświetlenia dla tej migawki.",
+    "en": "No displayable facts for this snapshot."
+  },
+  "wave6ContextLearningPanel.noContextSnapshotsYet": {
+    "pl": "Brak migawek kontekstu.",
+    "en": "No context snapshots yet."
+  },
+  "wave6ContextLearningPanel.memoryStewardshipQueue": {
+    "pl": "Kolejka zarządzania pamięcią",
+    "en": "Memory Stewardship Queue"
+  },
+  "wave6ContextLearningPanel.source": {
+    "pl": "źródło",
+    "en": "source"
+  },
+  "wave6ContextLearningPanel.unknown2": {
+    "pl": "nieznane",
+    "en": "unknown"
+  },
+  "wave6ContextLearningPanel.approveAndRetain": {
+    "pl": "Zatwierdź i zachowaj",
+    "en": "Approve and retain"
+  },
+  "wave6ContextLearningPanel.reject": {
+    "pl": "Odrzuć",
+    "en": "Reject"
+  },
+  "wave6ContextLearningPanel.markApplied": {
+    "pl": "Oznacz jako zastosowane",
+    "en": "Mark applied"
+  },
+  "wave6ContextLearningPanel.expire": {
+    "pl": "Wygaś",
+    "en": "Expire"
+  },
+  "wave6ContextLearningPanel.noMemoryCandidatesYet": {
+    "pl": "Brak kandydatów do pamięci.",
+    "en": "No memory candidates yet."
+  },
+  "wave7ConnectorAdminPanel.wave7ConnectorAdmin": {
+    "pl": "Wave 7 — Panel administracyjny konektorów",
+    "en": "Wave 7 Connector Admin"
+  },
+  "wave7ConnectorAdminPanel.permissionAwareConnectorRegistryOauthSes": {
+    "pl": "Rejestr konektorów z kontrolą uprawnień, cykl życia OAuth/sesji, ślad źródłowy i bezpieczne wykonywanie narzędzi.",
+    "en": "Permission-aware connector registry, OAuth/session lifecycle, source trace and safe tool execution."
+  },
+  "wave7ConnectorAdminPanel.refresh": {
+    "pl": "Odśwież",
+    "en": "Refresh"
+  },
+  "wave7ConnectorAdminPanel.registerConnector": {
+    "pl": "Rejestruj konektor",
+    "en": "Register Connector"
+  },
+  "wave7ConnectorAdminPanel.connected": {
+    "pl": "Połączony",
+    "en": "Connected"
+  },
+  "wave7ConnectorAdminPanel.stale": {
+    "pl": "Przestarzały",
+    "en": "Stale"
+  },
+  "wave7ConnectorAdminPanel.disconnected": {
+    "pl": "Odłączony",
+    "en": "Disconnected"
+  },
+  "wave7ConnectorAdminPanel.failed": {
+    "pl": "Błąd",
+    "en": "Failed"
+  },
+  "wave7ConnectorAdminPanel.optionalProjectAclIdsCommaSeparated": {
+    "pl": "Opcjonalne ID projektów ACL, oddzielone przecinkami",
+    "en": "Optional project ACL ids, comma separated"
+  },
+  "wave7ConnectorAdminPanel.registerConnector2": {
+    "pl": "Zarejestruj konektor",
+    "en": "Register connector"
+  },
+  "wave7ConnectorAdminPanel.toolExecutionTest": {
+    "pl": "Test wykonania narzędzia",
+    "en": "Tool Execution Test"
+  },
+  "wave7ConnectorAdminPanel.selectConnector": {
+    "pl": "Wybierz konektor",
+    "en": "Select connector"
+  },
+  "wave7ConnectorAdminPanel.read": {
+    "pl": "Odczyt",
+    "en": "Read"
+  },
+  "wave7ConnectorAdminPanel.search": {
+    "pl": "Wyszukiwanie",
+    "en": "Search"
+  },
+  "wave7ConnectorAdminPanel.writeRequiresAirun": {
+    "pl": "Zapis (wymaga AIRun)",
+    "en": "Write (requires AIRun)"
+  },
+  "wave7ConnectorAdminPanel.destructiveRequiresAirun": {
+    "pl": "Destrukcyjne (wymaga AIRun)",
+    "en": "Destructive (requires AIRun)"
+  },
+  "wave7ConnectorAdminPanel.connectorQuery": {
+    "pl": "Zapytanie konektora",
+    "en": "Connector query"
+  },
+  "wave7ConnectorAdminPanel.airunIdForWriteDestructiveTools": {
+    "pl": "ID AIRun dla narzędzi zapisu/destrukcyjnych",
+    "en": "AIRun id for write/destructive tools"
+  },
+  "wave7ConnectorAdminPanel.executeGovernedTool": {
+    "pl": "Wykonaj kontrolowane narzędzie",
+    "en": "Execute governed tool"
+  },
+  "wave7ConnectorAdminPanel.realSourceBinding": {
+    "pl": "Powiązanie z realnym źródłem",
+    "en": "Real Source Binding"
+  },
+  "wave7ConnectorAdminPanel.existingTpConnectorsId": {
+    "pl": "Istniejące ID tp_connectors",
+    "en": "Existing tp_connectors id"
+  },
+  "wave7ConnectorAdminPanel.link": {
+    "pl": "Powiąż",
+    "en": "Link"
+  },
+  "wave7ConnectorAdminPanel.reindex": {
+    "pl": "Reindeksuj",
+    "en": "Reindex"
+  },
+  "wave7ConnectorAdminPanel.disconnect": {
+    "pl": "Odłącz",
+    "en": "Disconnect"
+  },
+  "wave7ConnectorAdminPanel.oauthSessionLifecycle": {
+    "pl": "Cykl życia sesji OAuth",
+    "en": "OAuth Session Lifecycle"
+  },
+  "wave7ConnectorAdminPanel.markReconnected": {
+    "pl": "Oznacz jako ponownie połączony",
+    "en": "Mark reconnected"
+  },
+  "wave7ConnectorAdminPanel.markAccessRevoked": {
+    "pl": "Oznacz dostęp jako cofnięty",
+    "en": "Mark access revoked"
+  },
+  "wave7ConnectorAdminPanel.connectorHealth": {
+    "pl": "Stan konektorów",
+    "en": "Connector Health"
+  },
+  "wave7ConnectorAdminPanel.total": {
+    "pl": "Łącznie",
+    "en": "Total"
+  },
+  "wave7ConnectorAdminPanel.connected2": {
+    "pl": "Połączone",
+    "en": "Connected"
+  },
+  "wave7ConnectorAdminPanel.stale2": {
+    "pl": "Przestarzałe",
+    "en": "Stale"
+  },
+  "wave7ConnectorAdminPanel.failed2": {
+    "pl": "Błędy",
+    "en": "Failed"
+  },
+  "wave7ConnectorAdminPanel.status": {
+    "pl": "Status",
+    "en": "Status"
+  },
+  "wave7ConnectorAdminPanel.freshnessAge": {
+    "pl": "wiek aktualności",
+    "en": "freshness age"
+  },
+  "wave7ConnectorAdminPanel.unknown": {
+    "pl": "nieznany",
+    "en": "unknown"
+  },
+  "wave7ConnectorAdminPanel.oauthAccess": {
+    "pl": "Dostęp OAuth",
+    "en": "OAuth access"
+  },
+  "wave7ConnectorAdminPanel.tokenExpiry": {
+    "pl": "wygaśnięcie tokenu",
+    "en": "token expiry"
+  },
+  "wave7ConnectorAdminPanel.notRecorded": {
+    "pl": "nie zarejestrowano",
+    "en": "not recorded"
+  },
+  "wave7ConnectorAdminPanel.reconnectRequired": {
+    "pl": "Wymagane ponowne połączenie",
+    "en": "Reconnect required"
+  },
+  "wave7ConnectorAdminPanel.tokenExpired": {
+    "pl": "; token wygasł",
+    "en": "; token expired"
+  },
+  "wave7ConnectorAdminPanel.sourceBinding": {
+    "pl": "Powiązanie źródła",
+    "en": "Source binding"
+  },
+  "wave7ConnectorAdminPanel.registryOnly": {
+    "pl": "tylko rejestr",
+    "en": "registry only"
+  },
+  "wave7ConnectorAdminPanel.failure": {
+    "pl": "Błąd",
+    "en": "Failure"
+  },
+  "wave7ConnectorAdminPanel.noWave7ConnectorsYet": {
+    "pl": "Brak konektorów Wave 7.",
+    "en": "No Wave 7 connectors yet."
+  },
+  "wave7ConnectorAdminPanel.connectorrunAudit": {
+    "pl": "Audyt uruchomień konektora",
+    "en": "ConnectorRun Audit"
+  },
+  "wave7ConnectorAdminPanel.freshness": {
+    "pl": "aktualność",
+    "en": "freshness"
+  },
+  "wave7ConnectorAdminPanel.fresh": {
+    "pl": "aktualne",
+    "en": "fresh"
+  },
+  "wave7ConnectorAdminPanel.notTracked": {
+    "pl": "nie śledzono",
+    "en": "not tracked"
+  },
+  "wave7ConnectorAdminPanel.error": {
+    "pl": "Błąd",
+    "en": "Error"
+  },
+  "wave7ConnectorAdminPanel.noRunsYet": {
+    "pl": "Brak uruchomień.",
+    "en": "No runs yet."
+  },
+  "wave8AgentCatalogPanel.wave8AgentCatalog": {
+    "pl": "Wave 8 — Katalog agentów",
+    "en": "Wave 8 Agent Catalog"
+  },
+  "wave8AgentCatalogPanel.specializedAgentsWithRolePromptsTool": {
+    "pl": "Wyspecjalizowani agenci z promptami ról, zakresami narzędzi, schematami wyjść i audytem zaplanowanych zadań.",
+    "en": "Specialized agents with role prompts, tool scopes, output schemas and scheduled work audit."
+  },
+  "wave8AgentCatalogPanel.refresh": {
+    "pl": "Odśwież",
+    "en": "Refresh"
+  },
+  "wave8AgentCatalogPanel.launchAgent": {
+    "pl": "Uruchom agenta",
+    "en": "Launch Agent"
+  },
+  "wave8AgentCatalogPanel.requestedToolsCommaSeparated": {
+    "pl": "Żądane narzędzia, oddzielone przecinkami",
+    "en": "Requested tools, comma separated"
+  },
+  "wave8AgentCatalogPanel.runNow": {
+    "pl": "Uruchom teraz",
+    "en": "Run now"
+  },
+  "wave8AgentCatalogPanel.scheduleDaily": {
+    "pl": "Zaplanuj codziennie",
+    "en": "Schedule daily"
+  },
+  "wave8AgentCatalogPanel.scheduleWeekly": {
+    "pl": "Zaplanuj co tydzień",
+    "en": "Schedule weekly"
+  },
+  "wave8AgentCatalogPanel.approvedAirunIdForExecutionAgents": {
+    "pl": "Zatwierdzone ID AIRun dla agentów wykonawczych",
+    "en": "Approved AIRun id for execution agents"
+  },
+  "wave8AgentCatalogPanel.budgetGateApproved": {
+    "pl": "Zatwierdzony budżet",
+    "en": "Budget gate approved"
+  },
+  "wave8AgentCatalogPanel.registerEvalRunHook": {
+    "pl": "Zarejestruj hook ewaluacyjny",
+    "en": "Register eval run hook"
+  },
+  "wave8AgentCatalogPanel.swarmMode": {
+    "pl": "Tryb roju",
+    "en": "Swarm mode"
+  },
+  "wave8AgentCatalogPanel.approvalGranted": {
+    "pl": "Zgoda udzielona",
+    "en": "Approval granted"
+  },
+  "wave8AgentCatalogPanel.launchGovernedAgent": {
+    "pl": "Uruchom kontrolowanego agenta",
+    "en": "Launch governed agent"
+  },
+  "wave8AgentCatalogPanel.governedToolExecution": {
+    "pl": "Kontrolowane wykonanie narzędzia",
+    "en": "Governed Tool Execution"
+  },
+  "wave8AgentCatalogPanel.usesApiAiAgentsToolTo": {
+    "pl": "Używa `/api/ai-agents/tool` do weryfikacji dozwolonych narzędzi, wymagań AIRun i bramek budżetowych przed wykonaniem.",
+    "en": "Uses `/api/ai-agents/tool` to verify allowed tools, AIRun requirements and budget gates before execution."
+  },
+  "wave8AgentCatalogPanel.toolName": {
+    "pl": "Nazwa narzędzia",
+    "en": "Tool name"
+  },
+  "wave8AgentCatalogPanel.approvedAirunIdWhenRequired": {
+    "pl": "Zatwierdzone ID AIRun, gdy wymagane",
+    "en": "Approved AIRun id when required"
+  },
+  "wave8AgentCatalogPanel.budgetGateApprovedForHighCost": {
+    "pl": "Zatwierdzony budżet dla narzędzi wysokiego kosztu/zarządzania",
+    "en": "Budget gate approved for high-cost/governance tools"
+  },
+  "wave8AgentCatalogPanel.executeScopedTool": {
+    "pl": "Wykonaj narzędzie w zakresie",
+    "en": "Execute scoped tool"
+  },
+  "wave8AgentCatalogPanel.definitionSource": {
+    "pl": "Źródło definicji",
+    "en": "Definition source"
+  },
+  "wave8AgentCatalogPanel.code": {
+    "pl": "kod",
+    "en": "code"
+  },
+  "wave8AgentCatalogPanel.editable": {
+    "pl": "edytowalne",
+    "en": "editable"
+  },
+  "wave8AgentCatalogPanel.no": {
+    "pl": "nie",
+    "en": "no"
+  },
+  "wave8AgentCatalogPanel.yes": {
+    "pl": "tak",
+    "en": "yes"
+  },
+  "wave8AgentCatalogPanel.persona": {
+    "pl": "Persona",
+    "en": "Persona"
+  },
+  "wave8AgentCatalogPanel.allowedTools": {
+    "pl": "Dozwolone narzędzia",
+    "en": "Allowed tools"
+  },
+  "wave8AgentCatalogPanel.outputSchema": {
+    "pl": "Schemat wyjścia",
+    "en": "Output schema"
+  },
+  "wave8AgentCatalogPanel.adminEditableAgentdefinition": {
+    "pl": "Edytowalna definicja agenta (admin)",
+    "en": "Admin-editable AgentDefinition"
+  },
+  "wave8AgentCatalogPanel.savesAnOrganizationOverrideThroughApi": {
+    "pl": "Zapisuje nadpisanie organizacyjne przez `/api/ai-agents/definitions`.",
+    "en": "Saves an organization override through `/api/ai-agents/definitions`."
+  },
+  "wave8AgentCatalogPanel.blockedTools": {
+    "pl": "Zablokowane narzędzia",
+    "en": "Blocked tools"
+  },
+  "wave8AgentCatalogPanel.saveAgentdefinitionOverride": {
+    "pl": "Zapisz nadpisanie definicji agenta",
+    "en": "Save AgentDefinition override"
+  },
+  "wave8AgentCatalogPanel.catalog": {
+    "pl": "Katalog",
+    "en": "Catalog"
+  },
+  "wave8AgentCatalogPanel.policy": {
+    "pl": "Polityka",
+    "en": "Policy"
+  },
+  "wave8AgentCatalogPanel.cost": {
+    "pl": "koszt",
+    "en": "cost"
+  },
+  "wave8AgentCatalogPanel.scheduledAgents": {
+    "pl": "Zaplanowani agenci",
+    "en": "Scheduled Agents"
+  },
+  "wave8AgentCatalogPanel.processDueSchedulesManualSweep": {
+    "pl": "Przetwórz zaległe harmonogramy (ręczne wywołanie)",
+    "en": "Process due schedules (manual sweep)"
+  },
+  "wave8AgentCatalogPanel.scheduler": {
+    "pl": "Harmonogram",
+    "en": "Scheduler"
+  },
+  "wave8AgentCatalogPanel.next": {
+    "pl": "następne",
+    "en": "next"
+  },
+  "wave8AgentCatalogPanel.onDemand": {
+    "pl": "na żądanie",
+    "en": "on demand"
+  },
+  "wave8AgentCatalogPanel.noSchedulesYet": {
+    "pl": "Brak harmonogramów.",
+    "en": "No schedules yet."
+  },
+  "wave8AgentCatalogPanel.agentrunAudit": {
+    "pl": "Audyt uruchomień agenta",
+    "en": "AgentRun Audit"
+  },
+  "wave8AgentCatalogPanel.tool": {
+    "pl": "Narzędzie",
+    "en": "Tool"
+  },
+  "wave8AgentCatalogPanel.unknown": {
+    "pl": "nieznane",
+    "en": "unknown"
+  },
+  "wave8AgentCatalogPanel.swarm": {
+    "pl": "rój",
+    "en": "swarm"
+  },
+  "wave8AgentCatalogPanel.unknown2": {
+    "pl": "nieznany",
+    "en": "unknown"
+  },
+  "wave8AgentCatalogPanel.approval": {
+    "pl": "akceptacja",
+    "en": "approval"
+  },
+  "wave8AgentCatalogPanel.unknown3": {
+    "pl": "nieznana",
+    "en": "unknown"
+  },
+  "wave8AgentCatalogPanel.evalHook": {
+    "pl": "hook eval",
+    "en": "eval hook"
+  },
+  "wave8AgentCatalogPanel.notRequested": {
+    "pl": "nie_żądany",
+    "en": "not_requested"
+  },
+  "wave8AgentCatalogPanel.noRunsYet": {
+    "pl": "Brak uruchomień.",
+    "en": "No runs yet."
+  },
+  "wave8AgentCatalogPanel.notifications": {
+    "pl": "Powiadomienia",
+    "en": "Notifications"
+  },
+  "wave8AgentCatalogPanel.delivery": {
+    "pl": "Dostarczenie",
+    "en": "Delivery"
+  },
+  "wave8AgentCatalogPanel.noNotificationsYet": {
+    "pl": "Brak powiadomień.",
+    "en": "No notifications yet."
+  },
+  "wave9OutcomeAIOpsPanel.outcomeKpiRoiContractCreatedWith": {
+    "pl": "Kontrakt KPI/ROI wyniku utworzony ze zweryfikowanymi dowodami i odwołaniami do źródeł.",
+    "en": "Outcome KPI/ROI contract created with verified evidence and source refs."
+  },
+  "wave9OutcomeAIOpsPanel.providerFailureAndRollbackIncidentRecord": {
+    "pl": "Awaria dostawcy i incydent wycofania zostały zarejestrowane.",
+    "en": "Provider failure and rollback incident recorded."
+  },
+  "wave9OutcomeAIOpsPanel.goldenPromptEvalRecordedAsPass": {
+    "pl": "Ewaluacja wzorcowego promptu zarejestrowana jako ZALICZONA.",
+    "en": "Golden prompt eval recorded as PASS."
+  },
+  "wave9OutcomeAIOpsPanel.wave9OutcomeAiOps": {
+    "pl": "Wave 9 — Wyniki i AI Ops",
+    "en": "Wave 9 Outcome & AI Ops"
+  },
+  "wave9OutcomeAIOpsPanel.kpiRoiContractsCfoScenariosExecutive": {
+    "pl": "Kontrakty KPI/ROI, scenariusze CFO, raporty zarządcze, stan dostawców AI, incydenty i akceptacja końcowa.",
+    "en": "KPI/ROI contracts, CFO scenarios, executive reports, provider health, incidents and final acceptance."
+  },
+  "wave9OutcomeAIOpsPanel.refresh": {
+    "pl": "Odśwież",
+    "en": "Refresh"
+  },
+  "wave9OutcomeAIOpsPanel.kpiRoiContract": {
+    "pl": "Kontrakt KPI / ROI",
+    "en": "KPI / ROI Contract"
+  },
+  "wave9OutcomeAIOpsPanel.createAnOutcomeOnlyWhenThe": {
+    "pl": "Twórz wynik tylko wtedy, gdy KPI jest zakorzeniony w zweryfikowanych odwołaniach do źródeł i przypisanych identyfikatorach zadań.",
+    "en": "Create an outcome only when the KPI is grounded in verified source refs and mapped task IDs."
+  },
+  "wave9OutcomeAIOpsPanel.initiativeIdForTheVerifiedOutcome": {
+    "pl": "Identyfikator inicjatywy dla zweryfikowanego wyniku",
+    "en": "Initiative ID for the verified outcome"
+  },
+  "wave9OutcomeAIOpsPanel.taskIdsLinkedToThisKpi": {
+    "pl": "Identyfikatory zadań powiązanych z tym KPI, oddzielone przecinkami",
+    "en": "Task IDs linked to this KPI, comma separated"
+  },
+  "wave9OutcomeAIOpsPanel.kpiNameShownInReports": {
+    "pl": "Nazwa KPI widoczna w raportach",
+    "en": "KPI name shown in reports"
+  },
+  "wave9OutcomeAIOpsPanel.verifiedSourceRefsOnePerLine": {
+    "pl": "Zweryfikowane odwołania do źródeł, jedno w wierszu jako typ:id:tytuł",
+    "en": "Verified source refs, one per line as type:id:title"
+  },
+  "wave9OutcomeAIOpsPanel.createKpiRoiOutcome": {
+    "pl": "Utwórz wynik KPI/ROI",
+    "en": "Create KPI/ROI outcome"
+  },
+  "wave9OutcomeAIOpsPanel.outcomes": {
+    "pl": "Wyniki",
+    "en": "Outcomes"
+  },
+  "wave9OutcomeAIOpsPanel.baseline": {
+    "pl": "bazowy",
+    "en": "baseline"
+  },
+  "wave9OutcomeAIOpsPanel.target": {
+    "pl": "cel",
+    "en": "target"
+  },
+  "wave9OutcomeAIOpsPanel.confidence": {
+    "pl": "pewność",
+    "en": "confidence"
+  },
+  "wave9OutcomeAIOpsPanel.riskAdjusted": {
+    "pl": "skorygowany o ryzyko",
+    "en": "risk-adjusted"
+  },
+  "wave9OutcomeAIOpsPanel.missing": {
+    "pl": "brak danych",
+    "en": "missing"
+  },
+  "wave9OutcomeAIOpsPanel.noOutcomesYet": {
+    "pl": "Brak wyników.",
+    "en": "No outcomes yet."
+  },
+  "wave9OutcomeAIOpsPanel.reports": {
+    "pl": "Raporty",
+    "en": "Reports"
+  },
+  "wave9OutcomeAIOpsPanel.assumptions": {
+    "pl": "założenia",
+    "en": "assumptions"
+  },
+  "wave9OutcomeAIOpsPanel.aiOpsDashboard": {
+    "pl": "Panel AI Ops",
+    "en": "AI Ops Dashboard"
+  },
+  "wave9OutcomeAIOpsPanel.providers": {
+    "pl": "Dostawcy",
+    "en": "Providers"
+  },
+  "wave9OutcomeAIOpsPanel.cost": {
+    "pl": "Koszt",
+    "en": "Cost"
+  },
+  "wave9OutcomeAIOpsPanel.evalGate": {
+    "pl": "Bramka ewaluacji",
+    "en": "Eval gate"
+  },
+  "wave9OutcomeAIOpsPanel.acceptanceRunsRegistered": {
+    "pl": "Zarejestrowane przebiegi akceptacyjne",
+    "en": "Acceptance runs registered"
+  },
+  "wave9OutcomeAIOpsPanel.recordGoldenEvalPass": {
+    "pl": "Zapisz wynik ewaluacji: ZALICZONA",
+    "en": "Record golden eval PASS"
+  },
+  "wave9OutcomeAIOpsPanel.simulateProviderUnavailable": {
+    "pl": "Symuluj niedostępność dostawcy",
+    "en": "Simulate provider unavailable"
+  },
+  "wave9OutcomeAIOpsPanel.finalAcceptance": {
+    "pl": "Akceptacja końcowa",
+    "en": "Final Acceptance"
+  },
+  "wave9OutcomeAIOpsPanel.runFinalAcceptance": {
+    "pl": "Uruchom akceptację końcową",
+    "en": "Run final acceptance"
+  },
+  "wave9OutcomeAIOpsPanel.decision": {
+    "pl": "Decyzja",
+    "en": "Decision"
+  },
+  "wave9OutcomeAIOpsPanel.linkedRuns": {
+    "pl": "Powiązane przebiegi",
+    "en": "Linked runs"
+  },
+  "wave9OutcomeAIOpsPanel.none": {
+    "pl": "brak",
+    "en": "none"
+  }
+}

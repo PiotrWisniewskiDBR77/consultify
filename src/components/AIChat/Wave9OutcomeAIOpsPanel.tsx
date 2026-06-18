@@ -51,6 +51,7 @@ const parseSourceRefs = (raw: string): SourceRef[] =>
     .filter((source) => source.sourceId.length > 0);
 
 export const Wave9OutcomeAIOpsPanel: React.FC = () => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
 
@@ -157,9 +158,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
         sourceRefs: parsedSourceRefs,
       });
       if (res?.outcome?.outcomeId) setSelectedOutcomeId(res.outcome.outcomeId);
-      setMessage(isPolish
-        ? 'Kontrakt KPI/ROI wyniku utworzony ze zweryfikowanymi dowodami i odwołaniami do źródeł.'
-        : 'Outcome KPI/ROI contract created with verified evidence and source refs.');
+      setMessage(t('aios.wave9OutcomeAIOpsPanel.outcomeKpiRoiContractCreatedWith'));
       await load();
     } catch (err: any) {
       setMessage(err?.message || 'Outcome creation failed');
@@ -202,9 +201,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
         title: 'Primary provider unavailable',
         rollbackFlag: 'ai.provider.primary.disabled',
       });
-      setMessage(isPolish
-        ? 'Awaria dostawcy i incydent wycofania zostały zarejestrowane.'
-        : 'Provider failure and rollback incident recorded.');
+      setMessage(t('aios.wave9OutcomeAIOpsPanel.providerFailureAndRollbackIncidentRecord'));
       await load();
     } catch (err: any) {
       setMessage(err?.message || 'Provider failure simulation failed');
@@ -236,9 +233,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
         verificationMethod: 'golden_prompt_eval',
         payload: { promptKey: 'wave9-golden-business-outcome', score: 0.92 },
       });
-      setMessage(isPolish
-        ? 'Ewaluacja wzorcowego promptu zarejestrowana jako ZALICZONA.'
-        : 'Golden prompt eval recorded as PASS.');
+      setMessage(t('aios.wave9OutcomeAIOpsPanel.goldenPromptEvalRecordedAsPass'));
       await load();
     } catch (err: any) {
       setMessage(err?.message || 'Eval recording failed');
@@ -313,12 +308,10 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">
-            {isPolish ? 'Wave 9 — Wyniki i AI Ops' : 'Wave 9 Outcome & AI Ops'}
+            {t('aios.wave9OutcomeAIOpsPanel.wave9OutcomeAiOps')}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            {isPolish
-              ? 'Kontrakty KPI/ROI, scenariusze CFO, raporty zarządcze, stan dostawców AI, incydenty i akceptacja końcowa.'
-              : 'KPI/ROI contracts, CFO scenarios, executive reports, provider health, incidents and final acceptance.'}
+            {t('aios.wave9OutcomeAIOpsPanel.kpiRoiContractsCfoScenariosExecutive')}
           </p>
         </div>
         <button
@@ -327,7 +320,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
           disabled={loading}
           className="rounded-md border px-3 py-2 text-sm disabled:opacity-50 dark:border-navy-700"
         >
-          {isPolish ? 'Odśwież' : 'Refresh'}
+          {t('aios.wave9OutcomeAIOpsPanel.refresh')}
         </button>
       </div>
 
@@ -340,16 +333,14 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[390px_minmax(0,1fr)]">
         <section className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
           <h2 className="flex items-center gap-2 font-semibold">
-            <BarChart3 size={18} /> {isPolish ? 'Kontrakt KPI / ROI' : 'KPI / ROI Contract'}
+            <BarChart3 size={18} /> {t('aios.wave9OutcomeAIOpsPanel.kpiRoiContract')}
           </h2>
           <p className="mt-1 text-xs text-slate-500">
-            {isPolish
-              ? 'Twórz wynik tylko wtedy, gdy KPI jest zakorzeniony w zweryfikowanych odwołaniach do źródeł i przypisanych identyfikatorach zadań.'
-              : 'Create an outcome only when the KPI is grounded in verified source refs and mapped task IDs.'}
+            {t('aios.wave9OutcomeAIOpsPanel.createAnOutcomeOnlyWhenThe')}
           </p>
           <div className="mt-4 space-y-3">
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-              {isPolish ? 'Identyfikator inicjatywy dla zweryfikowanego wyniku' : 'Initiative ID for the verified outcome'}
+              {t('aios.wave9OutcomeAIOpsPanel.initiativeIdForTheVerifiedOutcome')}
               <input
                 value={initiativeId}
                 onChange={(e) => setInitiativeId(e.target.value)}
@@ -357,7 +348,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               />
             </label>
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-              {isPolish ? 'Identyfikatory zadań powiązanych z tym KPI, oddzielone przecinkami' : 'Task IDs linked to this KPI, comma separated'}
+              {t('aios.wave9OutcomeAIOpsPanel.taskIdsLinkedToThisKpi')}
               <input
                 value={taskIds}
                 onChange={(e) => setTaskIds(e.target.value)}
@@ -365,7 +356,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               />
             </label>
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-              {isPolish ? 'Nazwa KPI widoczna w raportach' : 'KPI name shown in reports'}
+              {t('aios.wave9OutcomeAIOpsPanel.kpiNameShownInReports')}
               <input
                 value={kpiName}
                 onChange={(e) => setKpiName(e.target.value)}
@@ -414,7 +405,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-              {isPolish ? 'Zweryfikowane odwołania do źródeł, jedno w wierszu jako typ:id:tytuł' : 'Verified source refs, one per line as type:id:title'}
+              {t('aios.wave9OutcomeAIOpsPanel.verifiedSourceRefsOnePerLine')}
               <textarea
                 value={sourceRefs}
                 onChange={(e) => setSourceRefs(e.target.value)}
@@ -428,14 +419,14 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               disabled={loading}
               className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sky-600"
             >
-              {isPolish ? 'Utwórz wynik KPI/ROI' : 'Create KPI/ROI outcome'}
+              {t('aios.wave9OutcomeAIOpsPanel.createKpiRoiOutcome')}
             </button>
           </div>
         </section>
 
         <section className="space-y-4">
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">{isPolish ? 'Wyniki' : 'Outcomes'}</h2>
+            <h2 className="font-semibold">{t('aios.wave9OutcomeAIOpsPanel.outcomes')}</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {outcomes.map((outcome) => (
                 <button
@@ -446,20 +437,20 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                 >
                   <div className="font-medium">{outcome.kpiName}</div>
                   <div className="mt-1 text-xs text-slate-500">
-                    {isPolish ? 'bazowy' : 'baseline'} {outcome.baseline} → {isPolish ? 'cel' : 'target'} {outcome.target}; {isPolish ? 'pewność' : 'confidence'}{' '}
+                    {t('aios.wave9OutcomeAIOpsPanel.baseline')} {outcome.baseline} → {t('aios.wave9OutcomeAIOpsPanel.target')} {outcome.target}; {t('aios.wave9OutcomeAIOpsPanel.confidence')}{' '}
                     {outcome.confidence}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
                     ROI:{' '}
                     {outcome.roi?.available
-                      ? `${outcome.roi.riskAdjustedRoiPercent}% ${isPolish ? 'skorygowany o ryzyko' : 'risk-adjusted'}`
-                      : (isPolish ? 'brak danych' : 'missing')}
+                      ? `${outcome.roi.riskAdjustedRoiPercent}% ${t('aios.wave9OutcomeAIOpsPanel.riskAdjusted')}`
+                      : (t('aios.wave9OutcomeAIOpsPanel.missing'))}
                   </div>
                 </button>
               ))}
               {outcomes.length === 0 && (
                 <div className="text-sm text-slate-500">
-                  {isPolish ? 'Brak wyników.' : 'No outcomes yet.'}
+                  {t('aios.wave9OutcomeAIOpsPanel.noOutcomesYet')}
                 </div>
               )}
             </div>
@@ -467,7 +458,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="flex items-center gap-2 font-semibold">
-              <FileText size={18} /> {isPolish ? 'Raporty' : 'Reports'}
+              <FileText size={18} /> {t('aios.wave9OutcomeAIOpsPanel.reports')}
             </h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {(
@@ -490,7 +481,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               <div className="mt-3 rounded-lg border p-3 text-xs dark:border-navy-700">
                 <div className="font-medium">{report.title}</div>
                 <div className="mt-1 text-slate-500">
-                  {isPolish ? 'założenia' : 'assumptions'}: {report.businessEffectSummary?.assumptions?.length || 0}; {isPolish ? 'pewność' : 'confidence'}:{' '}
+                  {t('aios.wave9OutcomeAIOpsPanel.assumptions')}: {report.businessEffectSummary?.assumptions?.length || 0}; {t('aios.confidence')}:{' '}
                   {report.businessEffectSummary?.confidence}
                 </div>
               </div>
@@ -499,23 +490,23 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="flex items-center gap-2 font-semibold">
-              <Activity size={18} /> {isPolish ? 'Panel AI Ops' : 'AI Ops Dashboard'}
+              <Activity size={18} /> {t('aios.wave9OutcomeAIOpsPanel.aiOpsDashboard')}
             </h2>
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
                 <Database size={14} className="mb-1" />
-                {isPolish ? 'Dostawcy' : 'Providers'}: {dashboard?.providerHealth?.length || 0}
+                {t('aios.wave9OutcomeAIOpsPanel.providers')}: {dashboard?.providerHealth?.length || 0}
               </div>
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
-                {isPolish ? 'Koszt' : 'Cost'}: ${dashboard?.costDashboard?.totalCostUsd || 0}
+                {t('aios.wave9OutcomeAIOpsPanel.cost')}: ${dashboard?.costDashboard?.totalCostUsd || 0}
               </div>
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
                 <ListChecks size={14} className="mb-1" />
-                {isPolish ? 'Bramka ewaluacji' : 'Eval gate'}: {dashboard?.evalDashboard?.latestGate || 'BLOCKED'}
+                {t('aios.wave9OutcomeAIOpsPanel.evalGate')}: {dashboard?.evalDashboard?.latestGate || 'BLOCKED'}
               </div>
             </div>
             <div className="mt-3 rounded-lg border p-3 text-xs text-slate-600 dark:border-navy-700 dark:text-slate-300">
-              {isPolish ? 'Zarejestrowane przebiegi akceptacyjne' : 'Acceptance runs registered'}: {acceptanceRuns.length}
+              {t('aios.wave9OutcomeAIOpsPanel.acceptanceRunsRegistered')}: {acceptanceRuns.length}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -524,22 +515,22 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                 disabled={loading}
                 className="inline-flex items-center gap-2 rounded-md border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-700 disabled:opacity-50 dark:border-emerald-900 dark:text-emerald-200"
               >
-                <CheckCircle2 size={14} /> {isPolish ? 'Zapisz wynik ewaluacji: ZALICZONA' : 'Record golden eval PASS'}
+                <CheckCircle2 size={14} /> {t('aios.wave9OutcomeAIOpsPanel.recordGoldenEvalPass')}
               </button>
               <button
                 type="button"
                 onClick={simulateProviderFailure}
                 disabled={loading}
-                className="inline-flex items-center gap-2 rounded-md border border-rose-200 px-3 py-2 text-xs font-medium text-rose-700 disabled:opacity-50 dark:border-rose-900 dark:text-rose-200"
+                className="inline-flex items-center gap-2 rounded-md border border-danger-200 px-3 py-2 text-xs font-medium text-danger-700 disabled:opacity-50 dark:border-danger-900 dark:text-danger-200"
               >
-                <AlertTriangle size={14} /> {isPolish ? 'Symuluj niedostępność dostawcy' : 'Simulate provider unavailable'}
+                <AlertTriangle size={14} /> {t('aios.wave9OutcomeAIOpsPanel.simulateProviderUnavailable')}
               </button>
             </div>
           </div>
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="flex items-center gap-2 font-semibold">
-              <Flag size={18} /> {isPolish ? 'Akceptacja końcowa' : 'Final Acceptance'}
+              <Flag size={18} /> {t('aios.wave9OutcomeAIOpsPanel.finalAcceptance')}
             </h2>
             <button
               type="button"
@@ -547,7 +538,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               disabled={loading}
               className="mt-3 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              {isPolish ? 'Uruchom akceptację końcową' : 'Run final acceptance'}
+              {t('aios.wave9OutcomeAIOpsPanel.runFinalAcceptance')}
             </button>
             {acceptance && (
               <div className="mt-3 rounded-lg border p-3 text-sm dark:border-navy-700">
@@ -557,7 +548,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                   ) : (
                     <AlertTriangle size={16} className="text-amber-500" />
                   )}
-                  {isPolish ? 'Decyzja' : 'Decision'}: {acceptance.decision}
+                  {t('aios.wave9OutcomeAIOpsPanel.decision')}: {acceptance.decision}
                 </div>
                 {acceptance.report?.blockers?.length > 0 && (
                   <div className="mt-2 text-xs text-amber-700 dark:text-amber-200">
@@ -568,11 +559,11 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                 )}
                 {acceptance.report?.acceptanceRunEvidence && (
                   <div className="mt-2 text-xs text-slate-500">
-                    {isPolish ? 'Powiązane przebiegi' : 'Linked runs'}:{' '}
+                    {t('aios.wave9OutcomeAIOpsPanel.linkedRuns')}:{' '}
                     {Object.values(acceptance.report.acceptanceRunEvidence)
                       .filter(Boolean)
                       .map((run: any) => `${run.runType}:${run.runRef || run.runId}`)
-                      .join(', ') || (isPolish ? 'brak' : 'none')}
+                      .join(', ') || (t('aios.wave9OutcomeAIOpsPanel.none'))}
                   </div>
                 )}
               </div>

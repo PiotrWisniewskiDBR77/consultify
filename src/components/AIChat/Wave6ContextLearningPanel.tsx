@@ -73,6 +73,7 @@ function getDisplayFacts(facts: unknown): Array<{ label: string; value: string }
 }
 
 export const Wave6ContextLearningPanel: React.FC = () => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [panel, setPanel] = React.useState<any>(null);
@@ -225,12 +226,10 @@ export const Wave6ContextLearningPanel: React.FC = () => {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">
-            {isPolish ? 'Wave 6 — Kontekst i uczenie' : 'Wave 6 Context and Learning'}
+            {t('aios.wave6ContextLearningPanel.wave6ContextAndLearning')}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            {isPolish
-              ? 'Pokazuje co AI wie, skąd pochodzi ta wiedza i które wspomnienia wymagają jawnej akceptacji.'
-              : 'Shows what AI knows, where it came from, and which memories need explicit approval.'}
+            {t('aios.wave6ContextLearningPanel.showsWhatAiKnowsWhereIt')}
           </p>
         </div>
         <button
@@ -239,7 +238,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50 dark:border-navy-700"
         >
-          <RefreshCw size={16} /> {isPolish ? 'Odśwież' : 'Refresh'}
+          <RefreshCw size={16} /> {t('aios.wave6ContextLearningPanel.refresh')}
         </button>
       </div>
 
@@ -252,20 +251,20 @@ export const Wave6ContextLearningPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
         <section className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
           <h2 className="flex items-center gap-2 font-semibold">
-            <Shield size={18} /> {isPolish ? 'Ustawienia kontekstu' : 'Context Controls'}
+            <Shield size={18} /> {t('aios.wave6ContextLearningPanel.contextControls')}
           </h2>
           <div className="mt-4 space-y-3">
             <label className="block text-xs font-medium text-slate-500">
-              {isPolish ? 'Zakres projektu' : 'Project scope'}
+              {t('aios.wave6ContextLearningPanel.projectScope')}
             </label>
             <input
               value={projectId}
               onChange={(event) => setProjectId(event.target.value)}
-              placeholder={isPolish ? 'Opcjonalne ID projektu' : 'Optional project id'}
+              placeholder={t('aios.wave6ContextLearningPanel.optionalProjectId')}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <label className="block text-xs font-medium text-slate-500">
-              {isPolish ? 'Zakres migawki' : 'Snapshot scope'}
+              {t('aios.wave6ContextLearningPanel.snapshotScope')}
             </label>
             <select
               value={snapshotScope}
@@ -273,13 +272,13 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
               <option value="user">
-                {isPolish ? 'Migawka profilu użytkownika' : 'User work profile snapshot'}
+                {t('aios.wave6ContextLearningPanel.userWorkProfileSnapshot')}
               </option>
               <option value="org">
-                {isPolish ? 'Migawka organizacji' : 'Organization snapshot'}
+                {t('aios.wave6ContextLearningPanel.organizationSnapshot')}
               </option>
               <option value="project" disabled={!projectId.trim()}>
-                {isPolish ? 'Migawka projektu' : 'Project snapshot'}
+                {t('aios.wave6ContextLearningPanel.projectSnapshot')}
               </option>
             </select>
             <label className="flex items-center gap-2 rounded-md border p-3 text-sm dark:border-navy-700">
@@ -288,7 +287,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                 checked={privateMode}
                 onChange={(event) => setPrivateMode(event.target.checked)}
               />
-              <Lock size={15} /> {isPolish ? 'Tryb prywatny blokuje zapis wiedzy' : 'Private mode blocks learning writes'}
+              <Lock size={15} /> {t('aios.wave6ContextLearningPanel.privateModeBlocksLearningWrites')}
             </label>
             <button
               type="button"
@@ -296,16 +295,16 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               disabled={loading}
               className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sky-600"
             >
-              {isPolish ? 'Zrób migawkę kontekstu' : 'Capture context snapshot'}
+              {t('aios.wave6ContextLearningPanel.captureContextSnapshot')}
             </button>
           </div>
 
           <h2 className="mt-6 flex items-center gap-2 font-semibold">
-            <Brain size={18} /> {isPolish ? 'Kandydat do pamięci' : 'Memory Candidate'}
+            <Brain size={18} /> {t('aios.wave6ContextLearningPanel.memoryCandidate')}
           </h2>
           <div className="mt-4 space-y-3">
             <label className="block text-xs font-medium text-slate-500">
-              {isPolish ? 'Zakres asystenta' : 'Assistant scope'}
+              {t('aios.wave6ContextLearningPanel.assistantScope')}
             </label>
             <select
               value={assistantScope}
@@ -321,28 +320,28 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
               <option value="teresa_tenant">
-                {isPolish ? 'Pamięć Teresy (tenant)' : 'Teresa tenant memory'}
+                {t('aios.wave6ContextLearningPanel.teresaTenantMemory')}
               </option>
               <option value="anna_public">
-                {isPolish ? 'Publiczna pamięć produktu Anny' : 'Anna public product memory'}
+                {t('aios.wave6ContextLearningPanel.annaPublicProductMemory')}
               </option>
             </select>
             <label className="block text-xs font-medium text-slate-500">
-              {isPolish ? 'Zakres pamięci' : 'Memory scope'}
+              {t('aios.wave6ContextLearningPanel.memoryScope')}
             </label>
             <select
               value={memoryScope}
               onChange={(event) => setMemoryScope(event.target.value as Wave6MemoryScope)}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
-              <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
-              <option value="project">{isPolish ? 'Projekt' : 'Project'}</option>
-              <option value="org">{isPolish ? 'Organizacja' : 'Organization'}</option>
-              <option value="tenant">{isPolish ? 'Tenant' : 'Tenant'}</option>
-              <option value="public_product">{isPolish ? 'Produkt publiczny' : 'Public product'}</option>
+              <option value="user">{t('aios.wave6ContextLearningPanel.user')}</option>
+              <option value="project">{t('aios.wave6ContextLearningPanel.project')}</option>
+              <option value="org">{t('aios.wave6ContextLearningPanel.organization')}</option>
+              <option value="tenant">{t('aios.wave6ContextLearningPanel.tenant')}</option>
+              <option value="public_product">{t('aios.wave6ContextLearningPanel.publicProduct')}</option>
             </select>
             <label className="block text-xs font-medium text-slate-500">
-              {isPolish ? 'Klucz pamięci' : 'Memory key'}
+              {t('aios.wave6ContextLearningPanel.memoryKey')}
             </label>
             <select
               value={memoryKey}
@@ -356,15 +355,13 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               ))}
             </select>
             <label className="block text-xs font-medium text-slate-500">
-              {isPolish ? 'Wartość pamięci' : 'Memory value'}
+              {t('aios.wave6ContextLearningPanel.memoryValue')}
             </label>
             <textarea
               value={memoryValue}
               onChange={(event) => setMemoryValue(event.target.value)}
               placeholder={
-                isPolish
-                  ? 'Co AI powinno zapamiętać? Przykład: Wolę zwięzłe notatki implementacyjne z krokami weryfikacji.'
-                  : 'What should AI remember? Example: I prefer concise implementation notes with verification steps.'
+                t('aios.wave6ContextLearningPanel.whatShouldAiRememberExampleI')
               }
               rows={4}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
@@ -375,14 +372,14 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               disabled={loading || !memoryValue.trim()}
               className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              {isPolish ? 'Utwórz kandydata do pamięci' : 'Create memory candidate'}
+              {t('aios.wave6ContextLearningPanel.createMemoryCandidate')}
             </button>
           </div>
         </section>
 
         <section className="space-y-4">
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">{isPolish ? 'Co wie AI' : 'What AI Knows'}</h2>
+            <h2 className="font-semibold">{t('aios.wave6ContextLearningPanel.whatAiKnows')}</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {(panel?.snapshots || []).map((snapshot: any) => (
                 <div
@@ -390,10 +387,10 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                   className="rounded-lg border p-3 text-sm dark:border-navy-700"
                 >
                   <div className="font-medium">
-                    {snapshot.snapshotType} {isPolish ? 'migawka' : 'snapshot'}
+                    {snapshot.snapshotType} {t('aios.wave6ContextLearningPanel.snapshot')}
                   </div>
                   <div className="text-xs text-slate-500">
-                    {isPolish ? 'Aktualność' : 'Fresh'}: {snapshot.freshnessAt || (isPolish ? 'nieznana' : 'unknown')}
+                    {t('aios.wave6ContextLearningPanel.fresh')}: {snapshot.freshnessAt || (t('aios.wave6ContextLearningPanel.unknown'))}
                   </div>
                   <div className="mt-2 rounded bg-slate-50 p-2 text-xs dark:bg-navy-950">
                     {getDisplayFacts(snapshot.facts).length > 0 ? (
@@ -412,7 +409,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                       </dl>
                     ) : (
                       <div className="text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Brak danych do wyświetlenia dla tej migawki.' : 'No displayable facts for this snapshot.'}
+                        {t('aios.wave6ContextLearningPanel.noDisplayableFactsForThisSnapshot')}
                       </div>
                     )}
                   </div>
@@ -420,7 +417,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               ))}
               {(panel?.snapshots || []).length === 0 && (
                 <div className="text-sm text-slate-500">
-                  {isPolish ? 'Brak migawek kontekstu.' : 'No context snapshots yet.'}
+                  {t('aios.wave6ContextLearningPanel.noContextSnapshotsYet')}
                 </div>
               )}
             </div>
@@ -428,7 +425,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="font-semibold">
-              {isPolish ? 'Kolejka zarządzania pamięcią' : 'Memory Stewardship Queue'}
+              {t('aios.wave6ContextLearningPanel.memoryStewardshipQueue')}
             </h2>
             <div className="mt-3 space-y-3">
               {memories.map((memory) => (
@@ -444,8 +441,8 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                       </div>
                       <div className="mt-1 text-slate-600 dark:text-slate-300">{memory.value}</div>
                       <div className="mt-2 text-xs text-slate-500">
-                        {memory.assistantScope} / {memory.memoryScope} / {isPolish ? 'źródło' : 'source'}:{' '}
-                        {memory.sourceLabel || (isPolish ? 'nieznane' : 'unknown')}
+                        {memory.assistantScope} / {memory.memoryScope} / {t('aios.wave6ContextLearningPanel.source')}:{' '}
+                        {memory.sourceLabel || (t('aios.wave6ContextLearningPanel.unknown2'))}
                       </div>
                     </div>
                     <div className="flex shrink-0 gap-2">
@@ -455,15 +452,15 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                             type="button"
                             onClick={() => decideMemory(memory, 'approve')}
                             className="rounded bg-emerald-600 p-2 text-white"
-                            title={isPolish ? 'Zatwierdź i zachowaj' : 'Approve and retain'}
+                            title={t('aios.wave6ContextLearningPanel.approveAndRetain')}
                           >
                             <Check size={14} />
                           </button>
                           <button
                             type="button"
                             onClick={() => decideMemory(memory, 'reject')}
-                            className="rounded bg-rose-600 p-2 text-white"
-                            title={isPolish ? 'Odrzuć' : 'Reject'}
+                            className="rounded bg-danger-600 p-2 text-white"
+                            title={t('aios.wave6ContextLearningPanel.reject')}
                           >
                             <X size={14} />
                           </button>
@@ -474,7 +471,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                           type="button"
                           onClick={() => decideMemory(memory, 'apply')}
                           className="rounded bg-sky-600 p-2 text-white"
-                          title={isPolish ? 'Oznacz jako zastosowane' : 'Mark applied'}
+                          title={t('aios.wave6ContextLearningPanel.markApplied')}
                         >
                           <Check size={14} />
                         </button>
@@ -483,7 +480,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                         type="button"
                         onClick={() => decideMemory(memory, 'expire')}
                         className="rounded border p-2 dark:border-navy-700"
-                        title={isPolish ? 'Wygaś' : 'Expire'}
+                        title={t('aios.wave6ContextLearningPanel.expire')}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -493,7 +490,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               ))}
               {memories.length === 0 && (
                 <div className="text-sm text-slate-500">
-                  {isPolish ? 'Brak kandydatów do pamięci.' : 'No memory candidates yet.'}
+                  {t('aios.wave6ContextLearningPanel.noMemoryCandidatesYet')}
                 </div>
               )}
             </div>

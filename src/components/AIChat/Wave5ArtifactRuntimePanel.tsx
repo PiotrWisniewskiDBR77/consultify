@@ -39,6 +39,7 @@ const DEFAULT_TYPES = [
 ];
 
 export const Wave5ArtifactRuntimePanel: React.FC = () => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
 
@@ -112,7 +113,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
   const createArtifact = async () => {
     if (!title.trim() || !content.trim()) {
-      setMessage(isPolish ? 'Tytuł i treść są wymagane.' : 'Title and content are required.');
+      setMessage(t('aios.wave5ArtifactRuntimePanel.titleAndContentAreRequired'));
       return;
     }
     setLoading(true);
@@ -219,7 +220,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
   const generateStructuredArtifact = async () => {
     if (!generationPrompt.trim()) {
-      setMessage(isPolish ? 'Polecenie generowania jest wymagane.' : 'Generation prompt is required.');
+      setMessage(t('aios.wave5ArtifactRuntimePanel.generationPromptIsRequired'));
       return;
     }
     setLoading(true);
@@ -254,7 +255,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
       <div className="p-6 flex flex-col items-center justify-center min-h-[320px] text-center space-y-3">
         <FileText size={32} className="text-slate-400 dark:text-slate-600" />
         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          {isPolish ? 'Artefakty niedostępne' : 'Artifacts unavailable'}
+          {t('aios.wave5ArtifactRuntimePanel.artifactsUnavailable')}
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
           {isPolish
@@ -269,7 +270,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
           onClick={() => { setLoadError(null); load(); }}
           className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline"
         >
-          {isPolish ? 'Spróbuj ponownie' : 'Retry'}
+          {t('aios.wave5ArtifactRuntimePanel.retry')}
         </button>
       </div>
     );
@@ -282,12 +283,10 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
           Consultify AI OS
         </p>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Środowisko artefaktów — Wave 5' : 'Wave 5 Artifact Runtime'}
+          {t('aios.wave5ArtifactRuntimePanel.wave5ArtifactRuntime')}
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          {isPolish
-            ? 'Artefakty pierwszej klasy z propozycjami mutacji, podglądem różnic, zatwierdzaniem, historią wersji, wypełnianiem dokumentów i manifestami proweniencji.'
-            : 'First-class artifacts with mutation proposals, diff preview, approval, version lineage, document filling and provenance manifests.'}
+          {t('aios.wave5ArtifactRuntimePanel.firstClassArtifactsWithMutationProposals')}
         </p>
       </div>
 
@@ -301,12 +300,10 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
         <section className="rounded-xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
           <div className="border-b border-slate-200 p-4 dark:border-navy-700">
             <h2 className="font-semibold text-slate-900 dark:text-white">
-              {isPolish ? 'Generuj dokument wyjściowy' : 'Generate Output'}
+              {t('aios.wave5ArtifactRuntimePanel.generateOutput')}
             </h2>
             <p className="text-xs text-slate-500">
-              {isPolish
-                ? 'Utwórz raport, prezentację lub tabelę jako artefakt pierwszej klasy.'
-                : 'Create report, deck or table as a first-class artifact.'}
+              {t('aios.wave5ArtifactRuntimePanel.createReportDeckOrTableAs')}
             </p>
             <div className="mt-3 space-y-2">
               <select
@@ -314,14 +311,14 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 onChange={(event) => setGenerationKind(event.target.value as typeof generationKind)}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               >
-                <option value="executive_report">{isPolish ? 'Raport zarządczy' : 'Executive report'}</option>
-                <option value="board_deck">{isPolish ? 'Prezentacja dla zarządu' : 'Board deck'}</option>
-                <option value="kpi_table">{isPolish ? 'Tabela KPI' : 'KPI table'}</option>
+                <option value="executive_report">{t('aios.wave5ArtifactRuntimePanel.executiveReport')}</option>
+                <option value="board_deck">{t('aios.wave5ArtifactRuntimePanel.boardDeck')}</option>
+                <option value="kpi_table">{t('aios.wave5ArtifactRuntimePanel.kpiTable')}</option>
               </select>
               <textarea
                 value={generationPrompt}
                 onChange={(event) => setGenerationPrompt(event.target.value)}
-                placeholder={isPolish ? 'Opisz artefakt do wygenerowania' : 'Describe the artifact to generate'}
+                placeholder={t('aios.wave5ArtifactRuntimePanel.describeTheArtifactToGenerate')}
                 rows={4}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               />
@@ -331,14 +328,14 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 disabled={loading || !generationPrompt.trim()}
                 className="rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
               >
-                {isPolish ? 'Generuj artefakt' : 'Generate artifact'}
+                {t('aios.wave5ArtifactRuntimePanel.generateArtifact')}
               </button>
             </div>
           </div>
 
           <div className="border-b border-slate-200 p-4 dark:border-navy-700">
             <h2 className="font-semibold text-slate-900 dark:text-white">
-              {isPolish ? 'Utwórz artefakt' : 'Create Artifact'}
+              {t('aios.wave5ArtifactRuntimePanel.createArtifact')}
             </h2>
             <div className="mt-3 space-y-2">
               <select
@@ -355,13 +352,13 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder={isPolish ? 'Tytuł artefaktu' : 'Artifact title'}
+                placeholder={t('aios.wave5ArtifactRuntimePanel.artifactTitle')}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               />
               <textarea
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                placeholder={isPolish ? 'Treść artefaktu' : 'Artifact content'}
+                placeholder={t('aios.wave5ArtifactRuntimePanel.artifactContent')}
                 rows={5}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               />
@@ -371,19 +368,17 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 disabled={loading}
                 className="rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-navy-950"
               >
-                {isPolish ? 'Utwórz szkic artefaktu' : 'Create draft artifact'}
+                {t('aios.wave5ArtifactRuntimePanel.createDraftArtifact')}
               </button>
             </div>
           </div>
 
           <div className="border-b border-slate-200 p-4 dark:border-navy-700">
             <h2 className="font-semibold text-slate-900 dark:text-white">
-              {isPolish ? 'Wypełnianie dokumentu' : 'Document Filling'}
+              {t('aios.wave5ArtifactRuntimePanel.documentFilling')}
             </h2>
             <p className="text-xs text-slate-500">
-              {isPolish
-                ? 'Brakujące pola zwracają pytania, nie domysły.'
-                : 'Missing fields return questions, not guesses.'}
+              {t('aios.wave5ArtifactRuntimePanel.missingFieldsReturnQuestionsNotGuesses')}
             </p>
             <div className="mt-3 space-y-2">
               <textarea
@@ -403,7 +398,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 onClick={runTemplateFill}
                 className="rounded-md border px-3 py-2 text-xs"
               >
-                {isPolish ? 'Wypełnij szablon' : 'Fill template'}
+                {t('aios.wave5ArtifactRuntimePanel.fillTemplate')}
               </button>
             </div>
           </div>
@@ -411,17 +406,17 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
           <div className="p-4">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Artefakty' : 'Artifacts'}
+                {t('aios.wave5ArtifactRuntimePanel.artifacts')}
               </h2>
               <button type="button" onClick={load} className="rounded-md border px-2 py-1 text-xs">
                 <RefreshCw size={12} className="inline mr-1" />
-                {isPolish ? 'Odśwież' : 'Refresh'}
+                {t('aios.wave5ArtifactRuntimePanel.refresh')}
               </button>
             </div>
             <div className="mt-3 divide-y divide-slate-200 dark:divide-navy-800">
               {artifacts.length === 0 ? (
                 <p className="py-3 text-sm text-slate-500">
-                  {isPolish ? 'Brak artefaktów Wave 5.' : 'No Wave 5 artifacts yet.'}
+                  {t('aios.wave5ArtifactRuntimePanel.noWave5ArtifactsYet')}
                 </p>
               ) : (
                 artifacts.map((artifact) => (
@@ -448,7 +443,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
         <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           {!selected ? (
             <p className="text-sm text-slate-500">
-              {isPolish ? 'Wybierz lub utwórz artefakt.' : 'Select or create an artifact.'}
+              {t('aios.wave5ArtifactRuntimePanel.selectOrCreateAnArtifact')}
             </p>
           ) : (
             <div className="space-y-4">
@@ -458,7 +453,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                     {selected.title}
                   </h2>
                   <p className="text-xs text-slate-500">
-                    {selected.artifactType} · {selected.status} · {isPolish ? 'wersja' : 'version'} {selected.version}
+                    {selected.artifactType} · {selected.status} · {t('aios.wave5ArtifactRuntimePanel.version')} {selected.version}
                   </p>
                 </div>
                 <button
@@ -466,7 +461,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                   onClick={exportManifest}
                   className="rounded-md border px-3 py-1.5 text-xs"
                 >
-                  {isPolish ? 'Eksportuj manifest' : 'Export manifest'}
+                  {t('aios.wave5ArtifactRuntimePanel.exportManifest')}
                 </button>
               </div>
 
@@ -476,12 +471,12 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {isPolish ? 'Zaproponuj mutację' : 'Propose Mutation'}
+                  {t('aios.wave5ArtifactRuntimePanel.proposeMutation')}
                 </h3>
                 <textarea
                   value={proposedContent}
                   onChange={(event) => setProposedContent(event.target.value)}
-                  placeholder={isPolish ? 'Nowa treść artefaktu. Tworzy porównanie zmian i oczekuje na zatwierdzenie.' : 'New artifact content. This creates a diff and waits for approval.'}
+                  placeholder={t('aios.wave5ArtifactRuntimePanel.newArtifactContentThisCreatesA')}
                   rows={5}
                   className="mt-2 w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
                 />
@@ -491,19 +486,19 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                   disabled={loading || !proposedContent.trim()}
                   className="mt-2 rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
                 >
-                  {isPolish ? 'Utwórz propozycję mutacji' : 'Create mutation proposal'}
+                  {t('aios.wave5ArtifactRuntimePanel.createMutationProposal')}
                 </button>
               </div>
 
               <div>
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                   <GitBranch size={14} />
-                  {isPolish ? 'Propozycje mutacji' : 'Mutation Proposals'}
+                  {t('aios.wave5ArtifactRuntimePanel.mutationProposals')}
                 </h3>
                 <div className="mt-2 space-y-3">
                   {(selected.mutations || []).length === 0 ? (
                     <p className="text-sm text-slate-500">
-                      {isPolish ? 'Brak propozycji mutacji.' : 'No mutations yet.'}
+                      {t('aios.wave5ArtifactRuntimePanel.noMutationsYet')}
                     </p>
                   ) : (
                     (selected.mutations || []).map((mutation) => (
@@ -542,7 +537,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                               onClick={() => commitMutation(mutation.mutationId)}
                               className="rounded-md bg-sky-600 px-2 py-1 text-white"
                             >
-                              {isPolish ? 'Zatwierdź' : 'Commit'}
+                              {t('aios.wave5ArtifactRuntimePanel.commit')}
                             </button>
                           )}
                         </div>
@@ -555,7 +550,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                                 <span className="mr-2 text-slate-600">{line.line}</span>
                                 <span>{line.type}</span>
                                 {line.before && (
-                                  <div className="text-rose-600">- {line.before}</div>
+                                  <div className="text-danger-600">- {line.before}</div>
                                 )}
                                 {line.after && (
                                   <div className="text-emerald-600">+ {line.after}</div>
@@ -571,7 +566,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {isPolish ? 'Historia wersji' : 'Version Lineage'}
+                  {t('aios.wave5ArtifactRuntimePanel.versionLineage')}
                 </h3>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {(selected.versions || []).map((version) => (
@@ -584,7 +579,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {isPolish ? 'Stopka proweniencji' : 'Provenance Footer'}
+                  {t('aios.wave5ArtifactRuntimePanel.provenanceFooter')}
                 </h3>
                 <pre className="mt-2 max-h-44 overflow-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-700 whitespace-pre-wrap dark:bg-navy-950 dark:text-slate-200">
                   {JSON.stringify(selected.provenance || {}, null, 2)}
