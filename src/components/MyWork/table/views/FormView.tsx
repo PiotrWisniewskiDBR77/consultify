@@ -30,7 +30,7 @@ const FieldRenderer: React.FC<{
   isPl: boolean;
 }> = ({ col, value, onChange, isPl }) => {
   const baseInput =
-    'w-full h-9 px-3 rounded-xl text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30 transition-all';
+    'w-full h-9 px-3 rounded-xl text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all';
 
   switch (col.type) {
     case 'text':

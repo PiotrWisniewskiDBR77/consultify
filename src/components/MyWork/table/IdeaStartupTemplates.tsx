@@ -220,7 +220,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   : 'E.g. I want to structure transformation initiatives and find the best rollout order...'
               }
               autoFocus
-              className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none transition-shadow duration-200"
+              className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-shadow duration-200"
             />
           </div>
 

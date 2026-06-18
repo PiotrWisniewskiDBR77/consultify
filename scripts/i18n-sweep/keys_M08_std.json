@@ -1,0 +1,146 @@
+{
+  "table.stage": {
+    "pl": "Etap",
+    "en": "Stage"
+  },
+  "table.tool": {
+    "pl": "Narzedzie",
+    "en": "Tool"
+  },
+  "table.tags": {
+    "pl": "Tagi",
+    "en": "Tags"
+  },
+  "table.source": {
+    "pl": "Źródło",
+    "en": "Source"
+  },
+  "table.items": {
+    "pl": "Elementy",
+    "en": "Items"
+  },
+  "table.edges": {
+    "pl": "Połączenia",
+    "en": "Edges"
+  },
+  "table.details": {
+    "pl": "Szczegóły",
+    "en": "Details"
+  },
+  "table.context": {
+    "pl": "Kontekst",
+    "en": "Context"
+  },
+  "table.convert": {
+    "pl": "Konwertuj",
+    "en": "Convert"
+  },
+  "table.openFlow": {
+    "pl": "Otwórz Flow",
+    "en": "Open Flow"
+  },
+  "table.delete": {
+    "pl": "Usuń",
+    "en": "Delete"
+  },
+  "table.noLinkedDocuments": {
+    "pl": "Brak powiązań",
+    "en": "No linked documents"
+  },
+  "table.selectVisible": {
+    "pl": "Zaznacz widoczne",
+    "en": "Select visible"
+  },
+  "table.title": {
+    "pl": "Tytul",
+    "en": "Title"
+  },
+  "table.updated": {
+    "pl": "Data",
+    "en": "Updated"
+  },
+  "table.actions": {
+    "pl": "Akcje",
+    "en": "Actions"
+  },
+  "table.viewSettings": {
+    "pl": "Ustawienia widoku",
+    "en": "View settings"
+  },
+  "table.visibleColumns": {
+    "pl": "Widoczne kolumny",
+    "en": "Visible columns"
+  },
+  "table.showRowDescription": {
+    "pl": "Pokaż opis w wierszu",
+    "en": "Show row description"
+  },
+  "table.open": {
+    "pl": "Otwórz",
+    "en": "Open"
+  },
+  "table.convertTo": {
+    "pl": "Konwertuj do",
+    "en": "Convert to"
+  },
+  "table.initiative": {
+    "pl": "Inicjatywa",
+    "en": "Initiative"
+  },
+  "table.tasks": {
+    "pl": "Zadania",
+    "en": "Tasks"
+  },
+  "table.decision": {
+    "pl": "Decyzja",
+    "en": "Decision"
+  },
+  "table.folder": {
+    "pl": "Folder",
+    "en": "Folder"
+  },
+  "table.noFolder": {
+    "pl": "Bez folderu",
+    "en": "No folder"
+  },
+  "table.openPreview": {
+    "pl": "Otwórz podgląd",
+    "en": "Open preview"
+  },
+  "table.edit": {
+    "pl": "Edytuj",
+    "en": "Edit"
+  },
+  "table.archive": {
+    "pl": "Archiwizuj",
+    "en": "Archive"
+  },
+  "table.comingSoonBackend": {
+    "pl": "Wkrótce (backend)",
+    "en": "Coming soon (backend)"
+  },
+  "table.presentation": {
+    "pl": "Prezentacja",
+    "en": "Presentation"
+  },
+  "table.soon": {
+    "pl": "wkrótce",
+    "en": "soon"
+  },
+  "table.report": {
+    "pl": "Raport",
+    "en": "Report"
+  },
+  "table.table": {
+    "pl": "Tabela",
+    "en": "Table"
+  },
+  "table.selectIdea": {
+    "pl": "Zaznacz pomysł",
+    "en": "Select idea"
+  },
+  "table.untitled": {
+    "pl": "Bez tytulu",
+    "en": "Untitled"
+  }
+}

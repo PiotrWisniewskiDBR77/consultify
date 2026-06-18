@@ -163,7 +163,7 @@ export interface FilterBuilderProps {
 // ── Value Input Components ───────────────────────────────────────────────────
 
 const inputCls =
-  'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30';
+  'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30';
 
 interface ValueInputProps {
   field: TablePlatformField;
@@ -506,7 +506,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={rule.fieldId}
                   onChange={(e) => handleFieldChange(idx, e.target.value)}
-                  className="flex-1 min-w-[100px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+                  className="flex-1 min-w-[100px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   {filterableFields.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -519,7 +519,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={rule.operator}
                   onChange={(e) => handleOperatorChange(idx, e.target.value, fieldType)}
-                  className="w-32 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+                  className="w-32 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   {operators.map((op) => (
                     <option key={op.value} value={op.value}>

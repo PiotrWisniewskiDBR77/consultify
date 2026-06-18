@@ -207,7 +207,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={handleCreateKeyDown}
                   placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
-                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
                 <div className="flex items-center gap-1">
                   {CREATE_VIEW_TYPES.map((vt) => {

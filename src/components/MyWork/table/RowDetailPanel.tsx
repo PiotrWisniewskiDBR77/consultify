@@ -1149,7 +1149,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                           ? 'Dodaj komentarz... (@ aby wspomnieć)'
                           : 'Add a comment... (@ to mention)'
                       }
-                      className="flex-1 min-h-[40px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary-500/30 resize-y"
+                      className="flex-1 min-h-[40px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
                     />
                     <button
                       type="button"

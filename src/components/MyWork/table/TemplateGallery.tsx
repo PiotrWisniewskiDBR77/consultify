@@ -138,7 +138,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isPl ? 'Szukaj szablonów…' : 'Search templates…'}
-              className="w-full h-9 pl-9 pr-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="w-full h-9 pl-9 pr-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
           <div className="flex items-center gap-1 overflow-x-auto">

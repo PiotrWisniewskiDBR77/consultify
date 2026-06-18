@@ -1506,7 +1506,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       value={saveViewName}
                       onChange={(e) => setSaveViewName(e.target.value)}
                       placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
-                      className="w-full h-8 px-3 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-primary-500/30 mb-3"
+                      className="w-full h-8 px-3 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-blue-500/30 mb-3"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && saveViewName.trim()) {
                           saveCurrentView(saveViewName.trim(), columns);
@@ -1603,7 +1603,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   value={filterInput}
                   onChange={(e) => setFilterInput(e.target.value)}
                   placeholder={isPl ? 'Filtruj…' : 'Filter…'}
-                  className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-white dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+                  className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-white dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
                 {filterInput && (
                   <button

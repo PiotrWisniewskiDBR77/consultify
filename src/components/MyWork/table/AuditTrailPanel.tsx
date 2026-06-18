@@ -251,7 +251,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
             value={filterUser}
             onChange={(e) => setFilterUser(e.target.value)}
             placeholder={isPl ? 'Filtruj po użytkowniku…' : 'Filter by user…'}
-            className="w-full h-7 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-primary-500/30 text-slate-700 dark:text-slate-200"
+            className="w-full h-7 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-700 dark:text-slate-200"
           />
           <div className="flex gap-1">
             {['created', 'updated', 'deleted'].map((a) => (

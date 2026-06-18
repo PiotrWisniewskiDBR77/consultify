@@ -696,7 +696,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
               }
               disabled={loading}
               rows={1}
-              className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 outline-none text-sm text-slate-800 dark:text-zinc-200 placeholder-slate-400 resize-none leading-relaxed focus:border-primary-400 dark:focus:border-primary-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 outline-none text-sm text-slate-800 dark:text-zinc-200 placeholder-slate-400 resize-none leading-relaxed focus:border-primary-400 dark:focus:border-blue-500 transition-colors"
             />
           </div>
           <button

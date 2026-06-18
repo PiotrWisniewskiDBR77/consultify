@@ -139,7 +139,7 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
       <div
         ref={editorRef}
         contentEditable
-        className="min-h-[80px] p-2 border rounded bg-white dark:bg-navy-950 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 text-slate-800 dark:text-slate-200"
+        className="min-h-[80px] p-2 border rounded bg-white dark:bg-navy-950 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
         onInput={() => {
           /* value tracked via ref */
         }}

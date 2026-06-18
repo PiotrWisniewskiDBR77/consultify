@@ -155,7 +155,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 onChange={(e) => onChange(e.target.value)}
                 disabled={locked}
                 rows={6}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-3 text-xs text-slate-700 dark:text-slate-300 outline-none resize-none focus:ring-2 focus:ring-primary-500/30 leading-relaxed"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-3 text-xs text-slate-700 dark:text-slate-300 outline-none resize-none focus:ring-2 focus:ring-blue-500/30 leading-relaxed"
                 placeholder={isPl ? 'Markdown obsługiwany...' : 'Markdown supported...'}
               />
               <p className="text-[9px] text-slate-600 mt-1.5">
@@ -232,7 +232,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                     onChange={(e) => setNewOption(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddOption()}
                     placeholder={isPl ? 'Nowa opcja...' : 'New option...'}
-                    className="flex-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-primary-500/30"
+                    className="flex-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                   <button
                     onClick={handleAddOption}
@@ -306,7 +306,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 value={value ?? ''}
                 onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
                 disabled={locked}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-sm font-mono text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-sm font-mono text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30"
               />
               {column.type === 'currency' && (
                 <p className="text-[9px] text-slate-600 mt-1.5">{isPl ? 'Waluta' : 'Currency'}</p>
@@ -367,7 +367,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
               value={String(value || '')}
               onChange={(e) => onChange(e.target.value)}
               disabled={locked}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           )}
 
@@ -380,7 +380,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 onChange={(e) => onChange(e.target.value)}
                 disabled={locked}
                 placeholder="https://..."
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-blue-600 dark:text-blue-400 outline-none focus:ring-2 focus:ring-primary-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-blue-600 dark:text-blue-400 outline-none focus:ring-2 focus:ring-blue-500/30"
               />
               {value && (
                 <a
@@ -412,7 +412,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
               value={String(value || '')}
               onChange={(e) => onChange(e.target.value)}
               disabled={locked}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           )}
         </div>

@@ -591,7 +591,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         chartAggregation: e.target.value as 'count' | 'sum' | 'avg' | 'min' | 'max',
                       })
                     }
-                    className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+                    className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
                   >
                     <option value="count">Count</option>
                     <option value="sum">Sum</option>
@@ -733,7 +733,7 @@ const FieldSelect: React.FC<{
     <select
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+      className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
     >
       {allowEmpty && <option value="">{isPl ? '— Brak —' : '— None —'}</option>}
       {options.map((col) => (

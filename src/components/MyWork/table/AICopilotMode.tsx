@@ -422,7 +422,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               }}
               placeholder={isPl ? 'Zapytaj AI o pomysły…' : 'Ask AI about ideas…'}
               disabled={loading}
-              className="flex-1 h-9 px-3 rounded-xl text-[11px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
+              className="flex-1 h-9 px-3 rounded-xl text-[11px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
             />
             <button
               onClick={() => handleSend()}

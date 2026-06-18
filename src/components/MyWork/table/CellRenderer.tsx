@@ -45,7 +45,7 @@ const TextCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
     value={String(value ?? '')}
     onChange={(e) => onChange(e.target.value)}
     disabled={locked}
-    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-primary-500/30 rounded"
+    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-blue-500/30 rounded"
     onClick={(e) => e.stopPropagation()}
   />
 );
@@ -58,7 +58,7 @@ const NumberCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
     value={value ?? ''}
     onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
     disabled={locked}
-    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-primary-500/30 rounded text-right tabular-nums"
+    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-blue-500/30 rounded text-right tabular-nums"
     onClick={(e) => e.stopPropagation()}
   />
 );
@@ -212,7 +212,7 @@ const DateCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       value={value ? String(value).slice(0, 10) : ''}
       onChange={(e) => onChange(e.target.value || null)}
       disabled={locked}
-      className="bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/30 rounded"
+      className="bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/30 rounded"
     />
   </div>
 );
@@ -274,7 +274,7 @@ const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       onChange={(e) => onChange(e.target.value)}
       disabled={locked}
       placeholder="—"
-      className="flex-1 bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/30 rounded"
+      className="flex-1 bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/30 rounded"
     />
   </div>
 );
@@ -288,7 +288,7 @@ const UrlCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       onChange={(e) => onChange(e.target.value)}
       disabled={locked}
       placeholder="https://..."
-      className="flex-1 bg-transparent border-0 outline-none text-xs text-blue-600 dark:text-blue-400 underline focus:ring-2 focus:ring-primary-500/30 rounded"
+      className="flex-1 bg-transparent border-0 outline-none text-xs text-blue-600 dark:text-blue-400 underline focus:ring-2 focus:ring-blue-500/30 rounded"
     />
     {value && (
       <a
