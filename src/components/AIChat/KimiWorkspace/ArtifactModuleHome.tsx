@@ -33,6 +33,23 @@ import { useModuleTemplates } from './useModuleTemplates';
 
 type HomeTab = 'templates' | 'recent' | 'saved';
 
+// Terminal/finalized statuses that qualify an artifact as "Saved".
+// Anything else (draft, generated, generating, editing, error…) is treated as
+// work-in-progress and only shows under "Recent". Covers document
+// (ready/exported/archived), presentation (ready/shared/archived) and sheet
+// (final/published/archived) vocabularies.
+const SAVED_STATUS_KEYS = new Set<string>([
+  'ready',
+  'shared',
+  'exported',
+  'published',
+  'final',
+  'finalized',
+  'archived',
+  'complete',
+  'completed',
+]);
+
 const LANE_META: Record<
   KimiLane,
   {
@@ -83,10 +100,14 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
   const { templates, loading: templatesLoading } = useModuleTemplates(lane);
   const { artifacts: recentArtifacts, loading: recentLoading } = useModuleRecentArtifacts(lane, 10);
-  // "Saved" = finalized artifacts (ready/shared/archived — not drafts).
-  // Recent = all artifacts sorted by time; Saved = subset that are fully complete.
+  // Scope split (M19/M20 scope-bug fix):
+  //   Recent = every artifact in this lane, newest-touched first (incl. drafts/WIP).
+  //   Saved  = ONLY artifacts the user has finalized/persisted — an explicit
+  //            allowlist of terminal states. Using a plain `!== 'draft'` made
+  //            Saved leak WIP states (generated/editing/generating) so it
+  //            mirrored Recent whenever no row happened to be a draft.
   const savedArtifacts = useMemo(
-    () => recentArtifacts.filter((a) => a.statusKey !== 'draft'),
+    () => recentArtifacts.filter((a) => SAVED_STATUS_KEYS.has(String(a.statusKey || '').toLowerCase())),
     [recentArtifacts]
   );
   // Block A / A-S5b — when ON, lane=tabele swaps to the
