@@ -17,43 +17,37 @@ const TOOLS: Array<{
   icon: React.ElementType;
   labelKey: string;
   fallback: string;
-  fallbackPl: string;
 }> = [
   {
     id: 'auto',
     icon: Sparkles,
     labelKey: 'chatOutputTool.auto',
     fallback: 'Auto',
-    fallbackPl: 'Auto',
   },
   {
     id: 'wordy',
     icon: FileText,
     labelKey: 'chatOutputTool.documents',
     fallback: 'Documents',
-    fallbackPl: 'Dokumenty',
   },
   {
     id: 'excele',
     icon: FileSpreadsheet,
     labelKey: 'chatOutputTool.tables',
     fallback: 'Tables',
-    fallbackPl: 'Tabele',
   },
   {
     id: 'prezentacje',
     icon: Presentation,
     labelKey: 'chatOutputTool.presentations',
     fallback: 'Presentations',
-    fallbackPl: 'Prezentacje',
   },
 ];
 
 export const OutputToolSelector: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const chatOutputTool = useAppStore((s) => s.chatOutputTool);
   const setChatOutputTool = useAppStore((s) => s.setChatOutputTool);
-  const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
 
   return (
     <div className="flex items-center gap-1 mb-2">
@@ -61,19 +55,17 @@ export const OutputToolSelector: React.FC = () => {
           selection — the bare "Auto" pill was being misread as "AI picks the
           best model" (composer audit D1). */}
       <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 select-none">
-        {t('chatOutputTool.groupLabel', isPolish ? 'Wynik' : 'Output')}
+        {t('chatOutputTool.groupLabel', 'Output')}
       </span>
       {TOOLS.map((tool) => {
         const Icon = tool.icon;
         const isActive = chatOutputTool === tool.id;
-        const label = t(tool.labelKey, isPolish ? tool.fallbackPl : tool.fallback);
+        const label = t(tool.labelKey, tool.fallback);
         const title =
           tool.id === 'auto'
             ? t(
                 'chatOutputTool.autoTooltip',
-                isPolish
-                  ? 'Auto: Teresa sama wybiera format wyniku (Dokument/Tabela/Prezentacja), gdy pasuje. To NIE jest wybór modelu.'
-                  : 'Auto: Teresa routes the output to a Document/Table/Presentation when relevant. This is NOT model selection.'
+                'Auto: Teresa routes the output to a Document/Table/Presentation when relevant. This is NOT model selection.'
               )
             : label;
         return (

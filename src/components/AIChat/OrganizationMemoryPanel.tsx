@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import { OrgPattern, PastDecision } from '../../hooks/useOrgMemory';
 
@@ -46,16 +47,16 @@ function outcomeColor(status: PastDecision['outcomeStatus']): string {
   }
 }
 
-function outcomeLabel(status: PastDecision['outcomeStatus'], isPl: boolean): string {
-  const labels: Record<string, { en: string; pl: string }> = {
-    positive: { en: 'Positive', pl: 'Pozytywny' },
-    negative: { en: 'Negative', pl: 'Negatywny' },
-    mixed: { en: 'Mixed', pl: 'Mieszany' },
-    neutral: { en: 'Neutral', pl: 'Neutralny' },
-    pending: { en: 'Pending', pl: 'Oczekuje' },
+function outcomeLabel(status: PastDecision['outcomeStatus'], t: TFunction): string {
+  const labels: Record<string, { key: string; en: string }> = {
+    positive: { key: 'chat.orgMemory.outcome.positive', en: 'Positive' },
+    negative: { key: 'chat.orgMemory.outcome.negative', en: 'Negative' },
+    mixed: { key: 'chat.orgMemory.outcome.mixed', en: 'Mixed' },
+    neutral: { key: 'chat.orgMemory.outcome.neutral', en: 'Neutral' },
+    pending: { key: 'chat.orgMemory.outcome.pending', en: 'Pending' },
   };
   const entry = labels[status] || labels.pending;
-  return isPl ? entry.pl : entry.en;
+  return t(entry.key, entry.en);
 }
 
 function patternIcon(type: string) {
@@ -86,10 +87,10 @@ function formatDate(dateStr: string): string {
 
 const DecisionCard: React.FC<{
   decision: PastDecision;
-  isPl: boolean;
   onUseInConversation?: (summary: string) => void;
   onOpenConversation?: (conversationId: string) => void;
-}> = ({ decision, isPl, onUseInConversation, onOpenConversation }) => {
+}> = ({ decision, onUseInConversation, onOpenConversation }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -99,12 +100,12 @@ const DecisionCard: React.FC<{
           onClick={() => setExpanded(!expanded)}
           className="flex-1 text-left text-xs font-medium text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
-          {decision.decisionSummary || (isPl ? 'Analiza bez tytułu' : 'Untitled analysis')}
+          {decision.decisionSummary || t('chat.orgMemory.untitledAnalysis', 'Untitled analysis')}
         </button>
         <span
           className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${outcomeColor(decision.outcomeStatus)}`}
         >
-          {outcomeLabel(decision.outcomeStatus, isPl)}
+          {outcomeLabel(decision.outcomeStatus, t)}
         </span>
       </div>
 
@@ -131,14 +132,16 @@ const DecisionCard: React.FC<{
         <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700 space-y-1.5 animate-in fade-in duration-200">
           {decision.problemFraming && (
             <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              <span className="font-semibold">{isPl ? 'Problem:' : 'Problem:'}</span>{' '}
+              <span className="font-semibold">{t('chat.orgMemory.problemLabel', 'Problem:')}</span>{' '}
               {decision.problemFraming.slice(0, 200)}
               {decision.problemFraming.length > 200 ? '…' : ''}
             </p>
           )}
           {decision.recommendationText && (
             <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              <span className="font-semibold">{isPl ? 'Rekomendacja:' : 'Recommendation:'}</span>{' '}
+              <span className="font-semibold">
+                {t('chat.orgMemory.recommendationLabel', 'Recommendation:')}
+              </span>{' '}
               {decision.recommendationText.slice(0, 200)}
               {decision.recommendationText.length > 200 ? '…' : ''}
             </p>
@@ -148,12 +151,12 @@ const DecisionCard: React.FC<{
               <button
                 onClick={() =>
                   onUseInConversation(
-                    `[${isPl ? 'Kontekst z historii decyzji' : 'Context from decision history'}] ${decision.decisionSummary}`
+                    `[${t('chat.orgMemory.contextFromHistory', 'Context from decision history')}] ${decision.decisionSummary}`
                   )
                 }
                 className="px-2 py-1 text-[10px] font-medium rounded bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
               >
-                {isPl ? 'Użyj w rozmowie' : 'Use in conversation'}
+                {t('chat.orgMemory.useInConversation', 'Use in conversation')}
               </button>
             )}
             {decision.conversationId && onOpenConversation && (
@@ -162,7 +165,7 @@ const DecisionCard: React.FC<{
                 className="px-2 py-1 text-[10px] font-medium rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors flex items-center gap-0.5"
               >
                 <ExternalLink size={8} />
-                {isPl ? 'Otwórz rozmowę' : 'View conversation'}
+                {t('chat.orgMemory.viewConversation', 'View conversation')}
               </button>
             )}
           </div>
@@ -174,7 +177,7 @@ const DecisionCard: React.FC<{
           onClick={() => setExpanded(true)}
           className="mt-1 text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
         >
-          {isPl ? 'Pokaż szczegóły ▾' : 'Show details ▾'}
+          {t('chat.orgMemory.showDetails', 'Show details ▾')}
         </button>
       )}
     </div>
@@ -183,26 +186,28 @@ const DecisionCard: React.FC<{
 
 const PatternCard: React.FC<{
   pattern: OrgPattern;
-  isPl: boolean;
-}> = ({ pattern, isPl }) => (
-  <div className="flex items-start gap-2 p-2 rounded-lg bg-slate-50 dark:bg-navy-800/50 border border-slate-100 dark:border-navy-700">
-    <div className="mt-0.5">{patternIcon(pattern.type)}</div>
-    <div className="flex-1 min-w-0">
-      <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-tight truncate">
-        {pattern.title}
-      </p>
-      <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
-        {pattern.content}
-      </p>
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-[9px] text-slate-400">
-          {isPl ? `Użyto ${pattern.usageCount}×` : `Used ${pattern.usageCount}×`}
-        </span>
-        <span className="text-[9px] text-slate-400">{formatDate(pattern.createdAt)}</span>
+}> = ({ pattern }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-start gap-2 p-2 rounded-lg bg-slate-50 dark:bg-navy-800/50 border border-slate-100 dark:border-navy-700">
+      <div className="mt-0.5">{patternIcon(pattern.type)}</div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-tight truncate">
+          {pattern.title}
+        </p>
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+          {pattern.content}
+        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[9px] text-slate-400">
+            {t('chat.orgMemory.usedCount', 'Used {{count}}×', { count: pattern.usageCount })}
+          </span>
+          <span className="text-[9px] text-slate-400">{formatDate(pattern.createdAt)}</span>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Main Component
@@ -227,8 +232,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
   onOpenConversation,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'decisions' | 'patterns'>('decisions');
@@ -260,7 +264,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
         <div className="flex items-center gap-2">
           <BookOpen size={14} className="text-primary-500" />
           <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-            {isPl ? 'Pamięć organizacji' : 'Organization Memory'}
+            {t('chat.orgMemory.title', 'Organization Memory')}
           </span>
           {totalCount > 0 && (
             <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
@@ -287,7 +291,8 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              {isPl ? 'Decyzje' : 'Decisions'} {decisions.length > 0 && `(${decisions.length})`}
+              {t('chat.orgMemory.tabDecisions', 'Decisions')}{' '}
+              {decisions.length > 0 && `(${decisions.length})`}
             </button>
             <button
               onClick={() => setActiveTab('patterns')}
@@ -297,7 +302,8 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              {isPl ? 'Wzorce' : 'Patterns'} {patterns.length > 0 && `(${patterns.length})`}
+              {t('chat.orgMemory.tabPatterns', 'Patterns')}{' '}
+              {patterns.length > 0 && `(${patterns.length})`}
             </button>
           </div>
 
@@ -313,7 +319,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
                   type="text"
                   value={searchQuery}
                   onChange={handleSearch}
-                  placeholder={isPl ? 'Szukaj w historii decyzji…' : 'Search decision history…'}
+                  placeholder={t('chat.orgMemory.searchPlaceholder', 'Search decision history…')}
                   className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-300 dark:focus:ring-primary-700"
                 />
               </div>
@@ -334,7 +340,6 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
                 <DecisionCard
                   key={d.id}
                   decision={d}
-                  isPl={isPl}
                   onUseInConversation={onUseInConversation}
                   onOpenConversation={onOpenConversation}
                 />
@@ -343,24 +348,24 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
             {activeTab === 'decisions' && !loading && decisions.length === 0 && (
               <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-3">
                 {searchQuery
-                  ? isPl
-                    ? 'Brak wyników dla tego zapytania'
-                    : 'No results for this query'
-                  : isPl
-                    ? 'Jeszcze nie zapisano żadnych decyzji. Użyj „Zapisz jako decyzję" po analizie Deep Thinking.'
-                    : 'No decisions saved yet. Use "Save as Decision" after a Deep Thinking analysis.'}
+                  ? t('chat.orgMemory.noResults', 'No results for this query')
+                  : t(
+                      'chat.orgMemory.noDecisions',
+                      'No decisions saved yet. Use "Save as Decision" after a Deep Thinking analysis.'
+                    )}
               </p>
             )}
 
             {activeTab === 'patterns' &&
               !loading &&
-              patterns.map((p) => <PatternCard key={p.id} pattern={p} isPl={isPl} />)}
+              patterns.map((p) => <PatternCard key={p.id} pattern={p} />)}
 
             {activeTab === 'patterns' && !loading && patterns.length === 0 && (
               <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-3">
-                {isPl
-                  ? 'System uczy się wzorców z Twoich projektów. Pojawią się tutaj automatycznie.'
-                  : 'System learns patterns from your projects. They will appear here automatically.'}
+                {t(
+                  'chat.orgMemory.noPatterns',
+                  'System learns patterns from your projects. They will appear here automatically.'
+                )}
               </p>
             )}
           </div>

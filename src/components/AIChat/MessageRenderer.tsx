@@ -1681,18 +1681,17 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         const content = String(msg.content || '');
         const decision = shouldOfferDocumentEmission(content);
         if (!decision.offer) return null;
-        const pl = (i18n.language || 'en').split('-')[0] === 'pl';
         return (
           <div className="mt-1.5">
             <button
               type="button"
               onClick={() => onEmitArtifactFromMessage(content, decision.title)}
               className="group inline-flex max-w-full items-center gap-2 rounded-xl border border-navy-200 dark:border-navy-700/40 bg-navy-50/60 dark:bg-navy-800/30 px-3 py-1.5 text-left transition-colors hover:border-primary-200 hover:bg-primary-50/70 dark:hover:border-primary-700/50 dark:hover:bg-primary-900/20"
-              title={pl ? 'Utwórz dokument z tej odpowiedzi' : 'Create a document from this answer'}
+              title={t('chat.message.emitDocumentTooltip', 'Create a document from this answer')}
             >
               <FilePlus2 size={14} className="shrink-0 text-navy-500 group-hover:text-primary-500" />
               <span className="truncate text-xs font-medium text-navy-600 dark:text-navy-300 group-hover:text-primary-600">
-                {pl ? 'Otwórz jako dokument' : 'Open as document'}
+                {t('chat.message.openAsDocument', 'Open as document')}
               </span>
             </button>
           </div>

@@ -1,0 +1,59 @@
+{
+  "chat.signals.savedToIdeas": { "pl": "Zapisano do My Ideas", "en": "Saved to My Ideas" },
+  "chat.signals.saveFailed": { "pl": "Nie udało się zapisać", "en": "Save failed" },
+  "chat.signals.savedToNotebook": { "pl": "Zapisano do Notebook", "en": "Saved to Notebook" },
+  "chat.signals.snoozed": { "pl": "Wyciszono sygnał", "en": "Signal snoozed" },
+  "chat.signals.snoozeFailed": { "pl": "Nie udało się wyciszyć", "en": "Snooze failed" },
+  "chat.signals.typeMuted": { "pl": "Wyciszono typ sygnału", "en": "Muted signal type" },
+  "chat.signals.muteFailed": { "pl": "Nie udało się wyciszyć", "en": "Mute failed" },
+  "chat.signals.dismissFailed": { "pl": "Nie udało się ukryć", "en": "Dismiss failed" },
+
+  "chatOutputTool.groupLabel": { "pl": "Wynik", "en": "Output" },
+  "chatOutputTool.auto": { "pl": "Auto", "en": "Auto" },
+  "chatOutputTool.documents": { "pl": "Dokumenty", "en": "Documents" },
+  "chatOutputTool.tables": { "pl": "Tabele", "en": "Tables" },
+  "chatOutputTool.presentations": { "pl": "Prezentacje", "en": "Presentations" },
+  "chatOutputTool.autoTooltip": {
+    "pl": "Auto: Teresa sama wybiera format wyniku (Dokument/Tabela/Prezentacja), gdy pasuje. To NIE jest wybór modelu.",
+    "en": "Auto: Teresa routes the output to a Document/Table/Presentation when relevant. This is NOT model selection."
+  },
+
+  "chat.message.emitDocumentTooltip": {
+    "pl": "Utwórz dokument z tej odpowiedzi",
+    "en": "Create a document from this answer"
+  },
+  "chat.message.openAsDocument": { "pl": "Otwórz jako dokument", "en": "Open as document" },
+
+  "chat.orgMemory.title": { "pl": "Pamięć organizacji", "en": "Organization Memory" },
+  "chat.orgMemory.tabDecisions": { "pl": "Decyzje", "en": "Decisions" },
+  "chat.orgMemory.tabPatterns": { "pl": "Wzorce", "en": "Patterns" },
+  "chat.orgMemory.searchPlaceholder": {
+    "pl": "Szukaj w historii decyzji…",
+    "en": "Search decision history…"
+  },
+  "chat.orgMemory.untitledAnalysis": { "pl": "Analiza bez tytułu", "en": "Untitled analysis" },
+  "chat.orgMemory.problemLabel": { "pl": "Problem:", "en": "Problem:" },
+  "chat.orgMemory.recommendationLabel": { "pl": "Rekomendacja:", "en": "Recommendation:" },
+  "chat.orgMemory.contextFromHistory": {
+    "pl": "Kontekst z historii decyzji",
+    "en": "Context from decision history"
+  },
+  "chat.orgMemory.useInConversation": { "pl": "Użyj w rozmowie", "en": "Use in conversation" },
+  "chat.orgMemory.viewConversation": { "pl": "Otwórz rozmowę", "en": "View conversation" },
+  "chat.orgMemory.showDetails": { "pl": "Pokaż szczegóły ▾", "en": "Show details ▾" },
+  "chat.orgMemory.usedCount": { "pl": "Użyto {{count}}×", "en": "Used {{count}}×" },
+  "chat.orgMemory.noResults": { "pl": "Brak wyników dla tego zapytania", "en": "No results for this query" },
+  "chat.orgMemory.noDecisions": {
+    "pl": "Jeszcze nie zapisano żadnych decyzji. Użyj „Zapisz jako decyzję\" po analizie Deep Thinking.",
+    "en": "No decisions saved yet. Use \"Save as Decision\" after a Deep Thinking analysis."
+  },
+  "chat.orgMemory.noPatterns": {
+    "pl": "System uczy się wzorców z Twoich projektów. Pojawią się tutaj automatycznie.",
+    "en": "System learns patterns from your projects. They will appear here automatically."
+  },
+  "chat.orgMemory.outcome.positive": { "pl": "Pozytywny", "en": "Positive" },
+  "chat.orgMemory.outcome.negative": { "pl": "Negatywny", "en": "Negative" },
+  "chat.orgMemory.outcome.mixed": { "pl": "Mieszany", "en": "Mixed" },
+  "chat.orgMemory.outcome.neutral": { "pl": "Neutralny", "en": "Neutral" },
+  "chat.orgMemory.outcome.pending": { "pl": "Oczekuje", "en": "Pending" }
+}

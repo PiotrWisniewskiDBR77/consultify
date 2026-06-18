@@ -32,8 +32,7 @@ const clampText = (s: string, max = 220) => {
 };
 
 export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClose, projectId }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [signals, setSignals] = useState<Signal[]>([]);
@@ -82,14 +81,14 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
           sourceMessageId: null,
         });
         trackFunnelEvent('signal_saved_to_ideas', { surface: 'chat-signals', signalKey: n.key });
-        toast.success(isPolish ? 'Zapisano do My Ideas' : 'Saved to My Ideas');
+        toast.success(t('chat.signals.savedToIdeas', 'Saved to My Ideas'));
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('Failed to save to My Ideas:', e);
-        toast.error(isPolish ? 'Nie udało się zapisać' : 'Save failed');
+        toast.error(t('chat.signals.saveFailed', 'Save failed'));
       }
     },
-    [isPolish, t]
+    [t]
   );
 
   const handleSaveToNotebook = useCallback(
@@ -109,9 +108,9 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
         },
       });
       trackFunnelEvent('signal_saved_to_notebook', { surface: 'chat-signals', signalKey: n.key });
-      toast.success(isPolish ? 'Zapisano do Notebook' : 'Saved to Notebook');
+      toast.success(t('chat.signals.savedToNotebook', 'Saved to Notebook'));
     },
-    [isPolish, projectId, t]
+    [projectId, t]
   );
 
   const handleSnooze = useCallback(
@@ -120,14 +119,14 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
         await Api.post(`/my-work/signals/${encodeURIComponent(n.key)}/snooze`, { preset });
         setSignals((prev) => prev.filter((x) => x.key !== n.key));
         trackFunnelEvent('signal_snoozed', { surface: 'chat-signals', signalKey: n.key, preset });
-        toast.success(isPolish ? 'Wyciszono sygnał' : 'Signal snoozed');
+        toast.success(t('chat.signals.snoozed', 'Signal snoozed'));
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('Failed to snooze signal:', e);
-        toast.error(isPolish ? 'Nie udało się wyciszyć' : 'Snooze failed');
+        toast.error(t('chat.signals.snoozeFailed', 'Snooze failed'));
       }
     },
-    [isPolish]
+    [t]
   );
 
   const handleMuteType = useCallback(
@@ -139,14 +138,14 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
         setMutedTypes(Array.isArray(res?.mutedTypes) ? res.mutedTypes : []);
         setSignals((prev) => prev.filter((x) => String(x.type || '').toUpperCase() !== type));
         trackFunnelEvent('signal_type_muted', { surface: 'chat-signals', type });
-        toast.success(isPolish ? 'Wyciszono typ sygnału' : 'Muted signal type');
+        toast.success(t('chat.signals.typeMuted', 'Muted signal type'));
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('Failed to mute type:', e);
-        toast.error(isPolish ? 'Nie udało się wyciszyć' : 'Mute failed');
+        toast.error(t('chat.signals.muteFailed', 'Mute failed'));
       }
     },
-    [isPolish]
+    [t]
   );
 
   const handleDismiss = useCallback(
@@ -158,10 +157,10 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('Failed to dismiss signal:', e);
-        toast.error(isPolish ? 'Nie udało się ukryć' : 'Dismiss failed');
+        toast.error(t('chat.signals.dismissFailed', 'Dismiss failed'));
       }
     },
-    [isPolish]
+    [t]
   );
 
   if (!open) return null;
