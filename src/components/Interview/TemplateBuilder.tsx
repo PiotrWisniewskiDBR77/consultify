@@ -329,7 +329,7 @@ const RespondentQuestionPreview: React.FC<{
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-sm font-medium text-slate-900 dark:text-white">
             {question.questionText || (isPolish ? '(Pytanie bez treści)' : '(Untitled question)')}
-            {question.isRequired ? <span className="ml-1 text-rose-500">*</span> : null}
+            {question.isRequired ? <span className="ml-1 text-danger-500">*</span> : null}
           </p>
           {question.description ? (
             <p className="text-xs text-slate-500 dark:text-slate-400">{question.description}</p>
@@ -1868,11 +1868,11 @@ ${sourceText || '(none)'}`;
                   }
                   className={`w-full h-9 px-3 rounded-md bg-white dark:bg-navy-950 border text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 transition-all ${
                     errors.name
-                      ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/50'
+                      ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
                       : 'border-slate-300 dark:border-navy-700 focus:border-primary-500 focus:ring-primary-500/50'
                   }`}
                 />
-                {errors.name && <p className="text-xs text-rose-400 mt-1">{errors.name}</p>}
+                {errors.name && <p className="text-xs text-danger-400 mt-1">{errors.name}</p>}
               </div>
 
               {/* Description */}
@@ -2132,8 +2132,8 @@ ${sourceText || '(none)'}`;
               </button>
 
               {errors.questions && (
-                <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg">
-                  <p className="text-xs text-rose-400 flex items-center gap-2">
+                <div className="mt-4 p-3 bg-danger-500/10 border border-danger-500/30 rounded-lg">
+                  <p className="text-xs text-danger-400 flex items-center gap-2">
                     <AlertCircle size={14} />
                     {errors.questions}
                   </p>
@@ -2822,7 +2822,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   return (
     <div
       className={`rounded-lg overflow-hidden transition-all ${
-        error ? 'ring-1 ring-rose-500/40' : ''
+        error ? 'ring-1 ring-danger-500/40' : ''
       } ${isDragging ? 'shadow-lg' : ''}`}
     >
       {/* Header */}
@@ -2847,7 +2847,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
         <div className="flex items-center gap-1.5 shrink-0">
           {question.isRequired && (
-            <span className="px-1.5 py-0.5 bg-rose-500/15 text-rose-500 dark:text-rose-300 text-[10px] rounded border border-rose-500/20 leading-none">
+            <span className="px-1.5 py-0.5 bg-danger-500/15 text-danger-500 dark:text-danger-300 text-[10px] rounded border border-danger-500/20 leading-none">
               {isPolish ? 'Wymagane' : 'Required'}
             </span>
           )}
@@ -2937,7 +2937,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               rows={2}
               className={`w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
                 error
-                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/50'
+                  ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
                   : 'border-slate-300 dark:border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
               }`}
             />
@@ -3003,7 +3003,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 disabled={readOnly}
                 className={`w-full h-10 px-3 rounded-lg border text-sm font-medium transition-all ${
                   question.isRequired
-                    ? 'bg-rose-500/20 border-rose-500 text-rose-500 dark:text-rose-400'
+                    ? 'bg-danger-500/20 border-danger-500 text-danger-500 dark:text-danger-400'
                     : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500'
                 } disabled:opacity-50 disabled:pointer-events-none`}
               >
@@ -3042,7 +3042,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     <button
                       onClick={() => handleRemoveOption(idx)}
                       disabled={readOnly}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-rose-500/20 text-slate-600 hover:text-rose-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-danger-500/20 text-slate-600 hover:text-danger-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     >
                       <X size={14} />
                     </button>
@@ -3069,7 +3069,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 </div>
               </div>
               {error && error.includes('opcje') && (
-                <p className="text-xs text-rose-400 mt-1">{error}</p>
+                <p className="text-xs text-danger-400 mt-1">{error}</p>
               )}
             </div>
           )}
@@ -3273,7 +3273,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         setShowSectionInput(false);
                       }}
                       disabled={readOnly}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-rose-500/20 text-slate-600 hover:text-rose-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-danger-500/20 text-slate-600 hover:text-danger-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                       title={isPolish ? 'Usuń nagłówek sekcji' : 'Remove section header'}
                     >
                       <X size={14} />

@@ -297,14 +297,14 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                 className={`flex items-start gap-3 p-2 rounded-lg border ${
                   mapping.accepted
                     ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20'
-                    : 'border-rose-200 bg-rose-50/30 dark:border-rose-800 dark:bg-rose-950/20 opacity-60'
+                    : 'border-danger-200 bg-danger-50/30 dark:border-danger-800 dark:bg-danger-950/20 opacity-60'
                 }`}
               >
                 <button onClick={() => toggleMapping(idx)} className="mt-0.5 flex-shrink-0">
                   {mapping.accepted ? (
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   ) : (
-                    <X className="w-4 h-4 text-rose-400" />
+                    <X className="w-4 h-4 text-danger-400" />
                   )}
                 </button>
                 <div className="flex-1 min-w-0">

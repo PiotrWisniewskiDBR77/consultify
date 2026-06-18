@@ -138,7 +138,7 @@ const TAG_OPTIONS = [
     value: 'risk',
     labelEn: 'Risk',
     labelPl: 'Ryzyko',
-    color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
   },
   {
     value: 'opportunity',
@@ -789,7 +789,7 @@ Rules:
                         </div>
 
                         {saveError && (
-                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 text-danger-600 dark:text-danger-400 text-xs">
                             <AlertTriangle size={14} />
                             {saveError}
                           </div>

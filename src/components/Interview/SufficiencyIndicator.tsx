@@ -52,9 +52,9 @@ function getScoreVariant(score: number): 'red' | 'amber' | 'green' {
 
 const VARIANT_STYLES = {
   red: {
-    bar: 'bg-rose-500',
-    text: 'text-rose-400',
-    bg: 'bg-rose-500/10',
+    bar: 'bg-danger-500',
+    text: 'text-danger-400',
+    bg: 'bg-danger-500/10',
     label: 'interview.sufficiency.status.red',
   },
   amber: {

@@ -1293,8 +1293,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           </div>
 
           {requiredMissing.length > 0 && (
-            <div className="mb-4 rounded-xl border border-rose-200/70 dark:border-rose-500/20 bg-rose-50/70 dark:bg-rose-500/10 px-4 py-3">
-              <p className="text-sm font-medium text-rose-600 dark:text-rose-400">
+            <div className="mb-4 rounded-xl border border-danger-200/70 dark:border-danger-500/20 bg-danger-50/70 dark:bg-danger-500/10 px-4 py-3">
+              <p className="text-sm font-medium text-danger-600 dark:text-danger-400">
                 <CircleAlert size={14} className="inline mr-1.5 -mt-0.5" />
                 {isPolish
                   ? `${requiredMissing.length} wymaganych pytań bez odpowiedzi`
@@ -1329,7 +1329,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           answered
                             ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                             : q.isRequired
-                              ? 'bg-rose-500/10 text-rose-500'
+                              ? 'bg-danger-500/10 text-danger-500'
                               : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
                         }`}
                       >
@@ -1398,7 +1398,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               {answered ? (
                                 <Check size={14} className="text-emerald-500" />
                               ) : q.isRequired ? (
-                                <CircleAlert size={14} className="text-rose-400" />
+                                <CircleAlert size={14} className="text-danger-400" />
                               ) : (
                                 <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-navy-600" />
                               )}
@@ -1786,8 +1786,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
                             immersive
-                              ? 'bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/15'
-                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                              ? 'bg-danger-500/10 text-danger-400 ring-1 ring-danger-500/15'
+                              : 'bg-danger-500/10 text-danger-600 dark:text-danger-400'
                           }`}
                         >
                           <CircleAlert size={10} />
@@ -2069,8 +2069,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
                     {/* Inline recording indicator (no separate window) */}
                     {isRecording && (
-                      <div className="pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 border border-rose-500/40 px-2 py-0.5 text-[11px] font-medium text-rose-500 tabular-nums">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      <div className="pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1.5 rounded-full bg-danger-500/15 border border-danger-500/40 px-2 py-0.5 text-[11px] font-medium text-danger-500 tabular-nums">
+                        <span className="w-1.5 h-1.5 rounded-full bg-danger-500 animate-pulse" />
                         {Math.floor(recordingSeconds / 60)}:
                         {String(recordingSeconds % 60).padStart(2, '0')}
                       </div>
@@ -2156,7 +2156,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         disabled={isTranscribing}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
                           isRecording
-                            ? 'border-rose-500/40 bg-rose-500/15 text-rose-500 animate-pulse'
+                            ? 'border-danger-500/40 bg-danger-500/15 text-danger-500 animate-pulse'
                             : immersive
                               ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
