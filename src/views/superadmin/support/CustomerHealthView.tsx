@@ -142,7 +142,7 @@ export const CustomerHealthView: React.FC = () => {
       case 'fair':
         return 'text-yellow-800 dark:text-yellow-400';
       case 'poor':
-        return 'text-rose-700 dark:text-rose-400';
+        return 'text-danger-700 dark:text-danger-400';
       default:
         return 'text-slate-700 dark:text-slate-400';
     }

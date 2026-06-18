@@ -276,8 +276,8 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
       case 'bug':
         return {
           icon: <Bug size={16} />,
-          color: 'text-rose-500 dark:text-rose-400',
-          bgColor: 'bg-rose-100 dark:bg-rose-900/30',
+          color: 'text-danger-500 dark:text-danger-400',
+          bgColor: 'bg-danger-100 dark:bg-danger-900/30',
           label: t('admin.feedback.types.bug', 'Błąd'),
         };
       case 'feature':
@@ -361,7 +361,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
   const getPriorityConfig = (priority?: string) => {
     switch (priority) {
       case 'critical':
-        return { color: 'text-rose-600 dark:text-rose-400', label: 'Krytyczny' };
+        return { color: 'text-danger-600 dark:text-danger-400', label: 'Krytyczny' };
       case 'high':
         return { color: 'text-amber-600 dark:text-amber-400', label: 'Wysoki' };
       case 'medium':
@@ -452,11 +452,11 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
         </div>
         <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
-              <Bug size={18} className="text-rose-600 dark:text-rose-400" />
+            <div className="p-2 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
+              <Bug size={18} className="text-danger-600 dark:text-danger-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-rose-600">{stats.bugs}</p>
+              <p className="text-2xl font-bold text-danger-600">{stats.bugs}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {t('admin.feedback.stats.openBugs', 'Otwarte błędy')}
               </p>

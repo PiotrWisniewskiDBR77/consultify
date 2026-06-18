@@ -166,10 +166,10 @@ const AIObservabilityDashboard: React.FC = () => {
       </div>
 
       {alerts.length > 0 && (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
+        <div className="rounded-xl border border-danger-500/30 bg-danger-500/10 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="w-5 h-5 text-rose-400" />
-            <span className="text-rose-300 font-semibold">
+            <AlertTriangle className="w-5 h-5 text-danger-400" />
+            <span className="text-danger-300 font-semibold">
               {alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}
             </span>
           </div>
@@ -179,7 +179,7 @@ const AIObservabilityDashboard: React.FC = () => {
                 <span
                   className={`px-2 py-0.5 rounded text-xs font-medium ${
                     alert.severity === 'critical'
-                      ? 'bg-rose-500/20 text-rose-300'
+                      ? 'bg-danger-500/20 text-danger-300'
                       : 'bg-yellow-500/20 text-yellow-300'
                   }`}
                 >
@@ -299,7 +299,7 @@ const AIObservabilityDashboard: React.FC = () => {
             {metrics.evalRegression.passesGate ? (
               <CheckCircle className="w-4 h-4 text-green-400" />
             ) : (
-              <XCircle className="w-4 h-4 text-rose-400" />
+              <XCircle className="w-4 h-4 text-danger-400" />
             )}{' '}
             Eval Regression Gate
           </h3>
@@ -307,7 +307,7 @@ const AIObservabilityDashboard: React.FC = () => {
             <div className="flex justify-between">
               <span className="text-white/50 text-sm">Status</span>
               <span
-                className={`font-medium ${metrics.evalRegression.passesGate ? 'text-green-400' : 'text-rose-400'}`}
+                className={`font-medium ${metrics.evalRegression.passesGate ? 'text-green-400' : 'text-danger-400'}`}
               >
                 {metrics.evalRegression.passesGate == null
                   ? 'No runs'

@@ -142,7 +142,7 @@ function formatTimeAgo(dateStr?: string): string {
 
 function severityDot(severity?: string | null): string {
   const s = String(severity || '').toUpperCase();
-  if (s === 'CRITICAL') return 'bg-rose-500';
+  if (s === 'CRITICAL') return 'bg-danger-500';
   if (s === 'HIGH') return 'bg-amber-500';
   if (s === 'WARNING') return 'bg-yellow-500';
   return 'bg-slate-400 dark:bg-slate-500';
@@ -151,7 +151,7 @@ function severityDot(severity?: string | null): string {
 const ActivityRow: React.FC<{ activity: ActivityItem }> = ({ activity }) => {
   const actionColors: Record<string, string> = {
     created: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
-    deleted: 'text-rose-600 dark:text-rose-400 bg-rose-500/10',
+    deleted: 'text-danger-600 dark:text-danger-400 bg-danger-500/10',
     updated: 'text-blue-600 dark:text-blue-400 bg-blue-500/10',
     login: 'text-slate-600 dark:text-slate-400 bg-slate-500/10',
   };
@@ -290,7 +290,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             <div className="flex items-center gap-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
               {signalCounts.system.length > 0 && (
                 <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-danger-400" />
                   {signalCounts.system.length} alerts
                 </span>
               )}

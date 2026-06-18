@@ -351,7 +351,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       case 'UPDATE':
         return <Edit size={14} className="text-blue-500" />;
       case 'DELETE':
-        return <Trash2 size={14} className="text-rose-500" />;
+        return <Trash2 size={14} className="text-danger-500" />;
       case 'VIEW':
         return <Eye size={14} className="text-slate-500 dark:text-slate-400" />;
       case 'LOGIN':
@@ -374,7 +374,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       case 'UPDATE':
         return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
       case 'DELETE':
-        return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400';
+        return 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400';
       case 'LOGIN':
       case 'LOGOUT':
         return 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400';

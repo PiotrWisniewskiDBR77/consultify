@@ -246,7 +246,7 @@ const BusinessMetricsView: React.FC = () => {
     if (!trend || trend === 0)
       return <Minus className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />;
     if (trend > 0) return <TrendingUp className="w-4 h-4 text-green-400" />;
-    return <TrendingDown className="w-4 h-4 text-rose-400" />;
+    return <TrendingDown className="w-4 h-4 text-danger-400" />;
   };
 
   const getHealthStatus = (metric: BusinessMetric) => {
@@ -305,10 +305,10 @@ const BusinessMetricsView: React.FC = () => {
 
       {/* Error Banner */}
       {error && (
-        <div className="flex items-center justify-between p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-danger-500/10 border border-danger-500/30 rounded-xl">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-rose-400" />
-            <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
+            <AlertTriangle className="w-5 h-5 text-danger-400" />
+            <span className="text-sm text-danger-700 dark:text-danger-300">{error}</span>
           </div>
           <button
             onClick={async () => {
@@ -316,7 +316,7 @@ const BusinessMetricsView: React.FC = () => {
               const m = await fetchMetrics();
               await fetchStats(m);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-sm rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-danger-600 hover:bg-danger-700 text-white text-sm rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Retry
@@ -371,8 +371,8 @@ const BusinessMetricsView: React.FC = () => {
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-rose-500/20 rounded-lg">
-                  <XCircle className="w-5 h-5 text-rose-400" />
+                <div className="p-2 bg-danger-500/20 rounded-lg">
+                  <XCircle className="w-5 h-5 text-danger-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -448,7 +448,7 @@ const BusinessMetricsView: React.FC = () => {
                         : health === 'warning'
                           ? 'bg-yellow-500/20 text-yellow-400'
                           : health === 'bad'
-                            ? 'bg-rose-500/20 text-rose-400'
+                            ? 'bg-danger-500/20 text-danger-400'
                             : 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300'
                     }`}
                   >
@@ -484,7 +484,7 @@ const BusinessMetricsView: React.FC = () => {
                           metric.trend > 0
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : metric.trend < 0
-                              ? 'text-rose-600 dark:text-rose-400'
+                              ? 'text-danger-600 dark:text-danger-400'
                               : 'text-slate-600 dark:text-slate-400'
                         }`}
                       >
@@ -505,7 +505,7 @@ const BusinessMetricsView: React.FC = () => {
                             ? 'bg-green-500'
                             : health === 'warning'
                               ? 'bg-yellow-500'
-                              : 'bg-rose-500'
+                              : 'bg-danger-500'
                         }`}
                         style={{
                           width: `${Math.min(100, (metric.current_value / metric.target_value) * 100)}%`,
@@ -549,7 +549,7 @@ const BusinessMetricsView: React.FC = () => {
               </button>
               <button
                 onClick={() => handleDeleteMetric(selectedMetric.id)}
-                className="p-2 text-rose-400 hover:bg-rose-600/20 rounded-lg transition-colors"
+                className="p-2 text-danger-400 hover:bg-danger-600/20 rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

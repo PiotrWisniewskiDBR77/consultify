@@ -88,7 +88,7 @@ export const PlaybookRunsView: React.FC = () => {
       case 'COMPLETED':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'FAILED':
-        return <XCircle className="w-4 h-4 text-rose-500" />;
+        return <XCircle className="w-4 h-4 text-danger-500" />;
       case 'CANCELLED':
         return <Pause className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
       default:

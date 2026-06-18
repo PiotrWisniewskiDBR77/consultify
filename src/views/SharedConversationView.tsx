@@ -98,7 +98,7 @@ export const SharedConversationView: React.FC = () => {
         )}
 
         {status === 'error' && (
-          <div className="py-20 text-center text-sm text-rose-600">
+          <div className="py-20 text-center text-sm text-danger-600">
             Something went wrong loading this conversation.
           </div>
         )}

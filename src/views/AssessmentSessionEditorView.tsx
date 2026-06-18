@@ -1552,7 +1552,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="max-w-md text-center">
-          <div className="text-rose-500 font-medium mb-2">{error}</div>
+          <div className="text-danger-500 font-medium mb-2">{error}</div>
           <button
             onClick={() => navigate('/assessment/overview')}
             className="px-4 py-2 rounded-lg bg-navy-900 text-white hover:bg-navy-800 transition-colors"
@@ -2096,7 +2096,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                               : String(status).toUpperCase() === 'AWAITING_APPROVAL'
                                 ? 'bg-amber-500/20 text-amber-300'
                                 : String(status).toUpperCase() === 'REJECTED'
-                                  ? 'bg-rose-500/20 text-rose-300'
+                                  ? 'bg-danger-500/20 text-danger-300'
                                   : 'bg-slate-500/20 text-slate-600'
                         }`}
                       >
@@ -2109,7 +2109,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                                 : String(status).toUpperCase() === 'AWAITING_APPROVAL'
                                   ? 'bg-amber-400'
                                   : String(status).toUpperCase() === 'REJECTED'
-                                    ? 'bg-rose-400'
+                                    ? 'bg-danger-400'
                                     : 'bg-slate-400'
                           }`}
                         />

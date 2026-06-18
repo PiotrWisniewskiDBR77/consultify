@@ -46,11 +46,11 @@ type AccentTheme = { gradient: string; border: string; glow: string; text: strin
 
 const ACCENT_THEMES: AccentTheme[] = [
   {
-    gradient: 'from-rose-400 to-rose-500',
-    border: 'border-rose-500/20 hover:border-rose-500/40',
+    gradient: 'from-danger-400 to-danger-500',
+    border: 'border-danger-500/20 hover:border-danger-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(244,63,94,0.35)]',
-    text: 'text-rose-400',
-    bg: 'bg-rose-500/10',
+    text: 'text-danger-400',
+    bg: 'bg-danger-500/10',
   },
   {
     gradient: 'from-emerald-400 to-blue-500',

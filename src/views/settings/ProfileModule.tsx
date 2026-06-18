@@ -114,7 +114,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
     if (/[0-9]/.test(password)) strength += 15;
     if (/[^A-Za-z0-9]/.test(password)) strength += 15;
 
-    if (strength < 40) return { strength, label: 'Weak', color: 'bg-rose-500' };
+    if (strength < 40) return { strength, label: 'Weak', color: 'bg-danger-500' };
     if (strength < 70) return { strength, label: 'Medium', color: 'bg-yellow-500' };
     return { strength, label: 'Strong', color: 'bg-green-500' };
   };
@@ -191,7 +191,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                 <span
                   className={`text-xs font-medium ${
                     passwordStrength.label === 'Weak'
-                      ? 'text-rose-500'
+                      ? 'text-danger-500'
                       : passwordStrength.label === 'Medium'
                         ? 'text-yellow-500'
                         : 'text-green-500'
@@ -216,7 +216,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
           />
           {confirmPassword && newPassword !== confirmPassword && (
-            <p className="text-xs text-rose-500 mt-1">Passwords do not match</p>
+            <p className="text-xs text-danger-500 mt-1">Passwords do not match</p>
           )}
         </div>
 
@@ -374,13 +374,13 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
         </div>
 
         {/* Delete Account */}
-        <div className="p-4 bg-rose-50 dark:bg-rose-500/10 rounded-lg border border-rose-200 dark:border-rose-500/20">
+        <div className="p-4 bg-danger-50 dark:bg-danger-500/10 rounded-lg border border-danger-200 dark:border-danger-500/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-rose-700 dark:text-rose-400">
+              <p className="font-medium text-danger-700 dark:text-danger-400">
                 {t('settings.account.deleteAccount', 'Delete Account')}
               </p>
-              <p className="text-sm text-rose-600 dark:text-rose-300">
+              <p className="text-sm text-danger-600 dark:text-danger-300">
                 {t(
                   'settings.account.deleteDesc',
                   'Permanently delete your account and all associated data'
@@ -389,7 +389,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             </div>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg transition-colors"
             >
               {t('settings.account.delete', 'Delete')}
             </button>
@@ -397,8 +397,8 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
-            <div className="mt-4 p-4 bg-white dark:bg-navy-900 rounded-lg border border-rose-300 dark:border-rose-500/30">
-              <p className="text-sm text-rose-700 dark:text-rose-300 mb-3">
+            <div className="mt-4 p-4 bg-white dark:bg-navy-900 rounded-lg border border-danger-300 dark:border-danger-500/30">
+              <p className="text-sm text-danger-700 dark:text-danger-300 mb-3">
                 This action cannot be undone. Type <strong>DELETE</strong> to confirm:
               </p>
               <input
@@ -406,7 +406,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                 placeholder="Type DELETE"
-                className="w-full px-3 py-2 border border-rose-300 dark:border-rose-500/30 rounded-lg mb-3"
+                className="w-full px-3 py-2 border border-danger-300 dark:border-danger-500/30 rounded-lg mb-3"
               />
               <div className="flex gap-2">
                 <button
@@ -421,7 +421,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleteConfirmText !== 'DELETE'}
-                  className="px-4 py-2 bg-rose-600 text-white rounded-lg disabled:opacity-50"
+                  className="px-4 py-2 bg-danger-600 text-white rounded-lg disabled:opacity-50"
                 >
                   Delete Forever
                 </button>

@@ -68,7 +68,7 @@ const AI_CAPABILITIES = [
     icon: Sparkles,
     description: 'Głęboka analiza z chain-of-thought',
     promptKey: 'system_max_reasoner',
-    color: 'from-rose-500 to-rose-600',
+    color: 'from-danger-500 to-danger-600',
   },
   {
     id: 'coach',

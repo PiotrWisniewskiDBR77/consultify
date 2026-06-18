@@ -68,7 +68,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Acceptable Use Policy',
     description: 'Rules and guidelines for appropriate use of the platform.',
     icon: <FileText className="w-5 h-5" />,
-    iconBg: 'from-rose-500 to-pink-600',
+    iconBg: 'from-danger-500 to-pink-600',
     required: false,
     category: 'core',
   },
@@ -392,7 +392,7 @@ export const LegalIndexView: React.FC = () => {
             <ContactCard
               label="Security Issues"
               email="security@dbr77.com"
-              gradient="from-rose-500 to-pink-600"
+              gradient="from-danger-500 to-pink-600"
             />
             <ContactCard
               label="Billing Questions"

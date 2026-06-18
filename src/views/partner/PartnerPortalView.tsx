@@ -265,11 +265,11 @@ const DashboardSection: React.FC = () => {
   // Error state
   if (error) {
     return (
-      <div className="bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-6 text-center">
-        <p className="text-rose-400 mb-4">{error}</p>
+      <div className="bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl p-6 text-center">
+        <p className="text-danger-400 mb-4">{error}</p>
         <button
           onClick={fetchDashboard}
-          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium"
+          className="px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg text-sm font-medium"
         >
           {t('common.retry', 'Retry')}
         </button>
@@ -364,7 +364,7 @@ const DashboardSection: React.FC = () => {
               className={cn(
                 'text-sm mt-1',
                 stat.changeType === 'positive' && 'text-emerald-600 dark:text-emerald-400',
-                stat.changeType === 'negative' && 'text-rose-400',
+                stat.changeType === 'negative' && 'text-danger-400',
                 stat.changeType === 'neutral' && 'text-slate-600'
               )}
             >
@@ -737,11 +737,11 @@ const MetricsSection: React.FC = () => {
   // Error state
   if (error) {
     return (
-      <div className="bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-6 text-center">
-        <p className="text-rose-400 mb-4">{error}</p>
+      <div className="bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl p-6 text-center">
+        <p className="text-danger-400 mb-4">{error}</p>
         <button
           onClick={fetchMetrics}
-          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium"
+          className="px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg text-sm font-medium"
         >
           {t('common.retry', 'Retry')}
         </button>
@@ -1121,11 +1121,11 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
 
   // Error component
   const ErrorDisplay = () => (
-    <div className="bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-6 text-center">
-      <p className="text-rose-400 mb-4">{error}</p>
+    <div className="bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl p-6 text-center">
+      <p className="text-danger-400 mb-4">{error}</p>
       <button
         onClick={fetchData}
-        className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium"
+        className="px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg text-sm font-medium"
       >
         {t('common.retry', 'Retry')}
       </button>
@@ -1584,11 +1584,11 @@ const CertificationSection: React.FC<{
 
   // Error component
   const ErrorDisplay = () => (
-    <div className="bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-6 text-center">
-      <p className="text-rose-400 mb-4">{error}</p>
+    <div className="bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl p-6 text-center">
+      <p className="text-danger-400 mb-4">{error}</p>
       <button
         onClick={fetchCertifications}
-        className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium"
+        className="px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg text-sm font-medium"
       >
         {t('common.retry', 'Retry')}
       </button>
@@ -1727,7 +1727,7 @@ const CertificationSection: React.FC<{
                           </span>
                         )}
                         {course.blockedReason && (
-                          <span className="px-2 py-1 rounded-full bg-rose-100 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300">
+                          <span className="px-2 py-1 rounded-full bg-danger-100 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300">
                             {course.blockedReason}
                           </span>
                         )}
@@ -1981,7 +1981,7 @@ const CertificationSection: React.FC<{
                     'mt-4 rounded-lg p-3 text-sm',
                     examResult.passed
                       ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                      : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                      : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300'
                   )}
                 >
                   {examResult.passed ? 'Passed' : 'Failed'} • Score: {examResult.scorePercent}%
@@ -2210,11 +2210,11 @@ const ResourcesSection: React.FC<{
   // Error state
   if (error) {
     return (
-      <div className="bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-6 text-center">
-        <p className="text-rose-400 mb-4">{error}</p>
+      <div className="bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl p-6 text-center">
+        <p className="text-danger-400 mb-4">{error}</p>
         <button
           onClick={fetchResources}
-          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium"
+          className="px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg text-sm font-medium"
         >
           {t('common.retry', 'Retry')}
         </button>
@@ -2623,11 +2623,11 @@ const ProfileSection: React.FC<{
 
   // Error component
   const ErrorDisplay = () => (
-    <div className="bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-6 text-center">
-      <p className="text-rose-400 mb-4">{error}</p>
+    <div className="bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl p-6 text-center">
+      <p className="text-danger-400 mb-4">{error}</p>
       <button
         onClick={fetchOrganization}
-        className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium"
+        className="px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg text-sm font-medium"
       >
         {t('common.retry', 'Retry')}
       </button>
@@ -3287,7 +3287,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
             )}
 
             {connectError && (
-              <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/10 dark:text-rose-300">
+              <div className="mt-4 rounded-lg border border-danger-200 bg-danger-50 p-3 text-sm text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/10 dark:text-danger-300">
                 {connectError}
               </div>
             )}

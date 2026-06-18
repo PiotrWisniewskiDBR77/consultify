@@ -358,8 +358,8 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           {/* Login Protection */}
           <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
             <div className="flex gap-4">
-              <div className="p-3 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
-                <Shield className="text-rose-600 dark:text-rose-400" size={24} />
+              <div className="p-3 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
+                <Shield className="text-danger-600 dark:text-danger-400" size={24} />
               </div>
               <div className="flex-1">
                 <h3 className="font-medium text-slate-900 dark:text-white">
@@ -501,7 +501,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           {saveError && (
             <div
               role="alert"
-              className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+              className="p-4 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400"
             >
               <p>{saveError}</p>
               {saveErrorCode ? (

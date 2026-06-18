@@ -159,7 +159,7 @@ const VERDICT_TONE: Record<WatchlistVerdict, string> = {
   PASS: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   PASS_WITH_P2: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
   BLOCKED_P1: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
-  BLOCKED_P0: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  BLOCKED_P0: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   INCONCLUSIVE: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 
@@ -1276,7 +1276,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                       {saveError && (
                         <div
                           role="alert"
-                          className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] text-rose-700 dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-300"
+                          className="mt-2 rounded-md border border-danger-200 bg-danger-50 px-2 py-1 text-[11px] text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
                         >
                           {saveError}
                         </div>
@@ -1361,7 +1361,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                                   <button
                                     type="button"
                                     onClick={() => void handleConfirmDelete(preset.id)}
-                                    className="rounded-md border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-300"
+                                    className="rounded-md border border-danger-300 bg-danger-50 px-2 py-0.5 text-[10px] font-medium text-danger-700 hover:bg-danger-100 focus:outline-none focus:ring-2 focus:ring-danger-500 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
                                   >
                                     Confirm
                                   </button>
@@ -1378,7 +1378,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                                   type="button"
                                   onClick={() => handleRequestDelete(preset.id)}
                                   aria-label={`Delete preset ${preset.name}`}
-                                  className="rounded p-1 text-slate-500 hover:bg-rose-100 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
+                                  className="rounded p-1 text-slate-500 hover:bg-danger-100 hover:text-danger-600 focus:outline-none focus:ring-2 focus:ring-danger-500 dark:text-slate-400 dark:hover:bg-danger-900/30 dark:hover:text-danger-300"
                                 >
                                   <Trash2 size={12} />
                                 </button>
@@ -1440,7 +1440,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                   {importErrors.length > 0 && !importBundle && (
                     <div
                       role="alert"
-                      className="mx-3 mb-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700 dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-300"
+                      className="mx-3 mb-2 rounded-md border border-danger-200 bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
                     >
                       <div className="font-semibold">Could not import bundle</div>
                       <ul className="mt-1 list-disc space-y-0.5 pl-4 opacity-90">
@@ -1502,7 +1502,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                       )}
                       {importPlan.invalid.length > 0 && (
                         <div className="mt-1.5">
-                          <div className="text-[10px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+                          <div className="text-[10px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
                             Reject (invalid)
                           </div>
                           <ul className="ml-3 list-disc text-[11px] text-slate-700 dark:text-slate-300">
@@ -1675,7 +1675,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                       {savedSearchSaveError && (
                         <div
                           role="alert"
-                          className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] text-rose-700 dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-300"
+                          className="mt-2 rounded-md border border-danger-200 bg-danger-50 px-2 py-1 text-[11px] text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
                         >
                           {savedSearchSaveError}
                         </div>
@@ -1767,7 +1767,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                                   <button
                                     type="button"
                                     onClick={() => void handleConfirmDeleteSavedSearch(record.id)}
-                                    className="rounded-md border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-300"
+                                    className="rounded-md border border-danger-300 bg-danger-50 px-2 py-0.5 text-[10px] font-medium text-danger-700 hover:bg-danger-100 focus:outline-none focus:ring-2 focus:ring-danger-500 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
                                   >
                                     Confirm
                                   </button>
@@ -1784,7 +1784,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                                   type="button"
                                   onClick={() => handleRequestDeleteSavedSearch(record.id)}
                                   aria-label={`Delete saved search ${record.name}`}
-                                  className="rounded p-1 text-slate-500 hover:bg-rose-100 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
+                                  className="rounded p-1 text-slate-500 hover:bg-danger-100 hover:text-danger-600 focus:outline-none focus:ring-2 focus:ring-danger-500 dark:text-slate-400 dark:hover:bg-danger-900/30 dark:hover:text-danger-300"
                                 >
                                   <Trash2 size={12} />
                                 </button>
@@ -1899,7 +1899,7 @@ const TransitionAlertsRegion: React.FC<TransitionAlertsRegionProps> = ({
       {alerts.map((alert) => {
         const tone =
           alert.toVerdict === 'BLOCKED_P0'
-            ? 'border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-200'
+            ? 'border-danger-300 bg-danger-50 text-danger-800 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-200'
             : 'border-orange-300 bg-orange-50 text-orange-800 dark:border-orange-900/60 dark:bg-orange-900/30 dark:text-orange-200';
         const fromLabel = alert.fromVerdict ?? 'new';
         return (
@@ -2025,7 +2025,7 @@ function renderBody(props: BodyProps): React.ReactElement {
           <span>·</span>
           <span>
             BLOCKED_P0:{' '}
-            <strong className="text-rose-700 dark:text-rose-300">
+            <strong className="text-danger-700 dark:text-danger-300">
               {formatNumber(totals.blockedP0)}
             </strong>
           </span>

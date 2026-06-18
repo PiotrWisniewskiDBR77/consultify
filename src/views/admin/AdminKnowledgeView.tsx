@@ -491,7 +491,7 @@ export const AdminKnowledgeView: React.FC = () => {
             {actionError ? (
               <div
                 role="alert"
-                className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+                className="rounded-xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
               >
                 {actionError}
               </div>
@@ -573,7 +573,7 @@ export const AdminKnowledgeView: React.FC = () => {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleAction(c.id, 'rejected')}
-                                className="p-2 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition-colors"
+                                className="p-2 bg-danger-100 text-danger-700 rounded-lg hover:bg-danger-200 transition-colors"
                                 title="Reject"
                               >
                                 <X size={16} />
@@ -829,7 +829,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                 <Edit2 size={16} />
                               </button>
                               <button
-                                className="text-slate-600 hover:text-rose-600 transition-colors"
+                                className="text-slate-600 hover:text-danger-600 transition-colors"
                                 title="Delete (Pending Implementation)"
                               >
                                 <Trash2 size={16} />
@@ -885,7 +885,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           onClick={() => handleToggleStrategy(s.id, !!s.is_active)}
                           className={`p-2 rounded-lg transition-colors ${
                             s.is_active
-                              ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-700'
+                              ? 'bg-emerald-100 text-emerald-700 hover:bg-danger-100 hover:text-danger-700'
                               : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'
                           }`}
                           title={s.is_active ? 'Click to Deactivate' : 'Click to Activate'}
@@ -904,7 +904,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
                               s.priority === 'high'
-                                ? 'bg-rose-100 text-rose-700'
+                                ? 'bg-danger-100 text-danger-700'
                                 : s.priority === 'medium'
                                   ? 'bg-amber-100 text-amber-700'
                                   : 'bg-blue-100 text-blue-700'
@@ -1008,7 +1008,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                       onClick={() =>
                                         handleUnlinkFromStrategy(s.id, 'document', doc.id)
                                       }
-                                      className="hover:text-rose-400"
+                                      className="hover:text-danger-400"
                                     >
                                       <X size={10} />
                                     </button>
@@ -1037,7 +1037,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                       onClick={() =>
                                         handleUnlinkFromStrategy(s.id, 'idea', idea.id)
                                       }
-                                      className="hover:text-rose-600"
+                                      className="hover:text-danger-600"
                                     >
                                       <X size={10} />
                                     </button>
@@ -1116,7 +1116,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                 <span
                                   className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
                                     item.severity === 'high'
-                                      ? 'bg-rose-100 text-rose-700'
+                                      ? 'bg-danger-100 text-danger-700'
                                       : item.severity === 'medium'
                                         ? 'bg-amber-100 text-amber-700'
                                         : 'bg-blue-100 text-blue-700'
@@ -1161,7 +1161,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                 <span
                                   className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
                                     item.severity === 'high'
-                                      ? 'bg-rose-100 text-rose-700'
+                                      ? 'bg-danger-100 text-danger-700'
                                       : item.severity === 'medium'
                                         ? 'bg-amber-100 text-amber-700'
                                         : 'bg-primary-100 text-primary-700'

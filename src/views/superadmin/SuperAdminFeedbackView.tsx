@@ -203,7 +203,7 @@ const STATUS_CONFIG: Record<FeedbackStatus, { color: string; bg: string; border:
 };
 
 const SEVERITY_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
-  CRITICAL: { color: 'text-rose-700 dark:text-rose-400', icon: <AlertTriangle size={12} /> },
+  CRITICAL: { color: 'text-danger-700 dark:text-danger-400', icon: <AlertTriangle size={12} /> },
   HIGH: { color: 'text-amber-700 dark:text-amber-400', icon: <AlertTriangle size={12} /> },
   MEDIUM: { color: 'text-amber-700 dark:text-amber-400', icon: <AlertTriangle size={12} /> },
   LOW: { color: 'text-slate-600 dark:text-slate-500', icon: null },
@@ -221,8 +221,8 @@ const ALERT_STATUS_CONFIG: Record<
   },
   failed: {
     badge:
-      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800',
-    text: 'text-rose-700 dark:text-rose-300',
+      'bg-danger-50 text-danger-700 border-danger-200 dark:bg-danger-900/20 dark:text-danger-300 dark:border-danger-800',
+    text: 'text-danger-700 dark:text-danger-300',
   },
   skipped: {
     badge:
@@ -685,7 +685,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
               <span
                 className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
                   item.type === 'BUG'
-                    ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:border-rose-900'
+                    ? 'bg-danger-50 text-danger-700 border-danger-200 dark:bg-danger-900/40 dark:text-danger-400 dark:border-danger-900'
                     : item.type === 'FEATURE'
                       ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/40 dark:text-primary-400 dark:border-primary-900'
                       : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
@@ -918,7 +918,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <span
                   className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
                     selectedItem.type === 'BUG'
-                      ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:border-rose-900'
+                      ? 'bg-danger-50 text-danger-700 border-danger-200 dark:bg-danger-900/40 dark:text-danger-400 dark:border-danger-900'
                       : selectedItem.type === 'FEATURE'
                         ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/40 dark:text-primary-400 dark:border-primary-900'
                         : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
@@ -1450,7 +1450,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                     />
                   </a>
                 ) : screenshotError ? (
-                  <div className="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-900/10 p-3 text-xs text-rose-700 dark:text-rose-300">
+                  <div className="rounded-lg border border-danger-200 dark:border-danger-900/40 bg-danger-50 dark:bg-danger-900/10 p-3 text-xs text-danger-700 dark:text-danger-300">
                     {screenshotError}
                   </div>
                 ) : (
@@ -1462,15 +1462,15 @@ export const SuperAdminFeedbackView: React.FC = () => {
             )}
 
             {lastUncaught?.message && (
-              <div className="rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/40 p-3 text-xs">
-                <div className="font-semibold text-rose-700 dark:text-rose-300">
+              <div className="rounded-lg bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-900/40 p-3 text-xs">
+                <div className="font-semibold text-danger-700 dark:text-danger-300">
                   {t('feedback.lastError', 'Last uncaught error')}
                 </div>
-                <div className="text-rose-800 dark:text-rose-200 mt-1 font-mono break-all">
+                <div className="text-danger-800 dark:text-danger-200 mt-1 font-mono break-all">
                   {lastUncaught.message}
                 </div>
                 {lastUncaught.stack && (
-                  <pre className="mt-2 max-h-40 overflow-auto text-[10px] text-rose-700/80 dark:text-rose-300/80 whitespace-pre-wrap">
+                  <pre className="mt-2 max-h-40 overflow-auto text-[10px] text-danger-700/80 dark:text-danger-300/80 whitespace-pre-wrap">
                     {lastUncaught.stack}
                   </pre>
                 )}
@@ -1509,7 +1509,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                       <span className="text-slate-600">
                         {n.at ? format(new Date(n.at), 'HH:mm:ss') : ''}
                       </span>{' '}
-                      <span className="text-rose-600 dark:text-rose-400">{n.status ?? 'ERR'}</span>{' '}
+                      <span className="text-danger-600 dark:text-danger-400">{n.status ?? 'ERR'}</span>{' '}
                       {n.method} {n.url} ({n.durationMs ?? '?'}ms)
                       {n.error ? ` — ${n.error}` : ''}
                     </li>
@@ -1728,7 +1728,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
       </div>
 
       {loadError && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+        <div className="rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300">
           {loadError}
         </div>
       )}
@@ -1738,7 +1738,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
           {
             label: 'Critical prod',
             value: pipelineStats.criticalProd,
-            tone: 'text-rose-600 dark:text-rose-400',
+            tone: 'text-danger-600 dark:text-danger-400',
           },
           {
             label: 'Unassigned',

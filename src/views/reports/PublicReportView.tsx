@@ -90,8 +90,8 @@ export const PublicReportView: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Clock className="w-8 h-8 text-rose-500" />
+          <div className="w-16 h-16 bg-danger-100 dark:bg-danger-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Clock className="w-8 h-8 text-danger-500" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t('reports.linkExpired')}
@@ -112,7 +112,7 @@ export const PublicReportView: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center max-w-md mx-auto p-8">
-          <AlertTriangle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
+          <AlertTriangle className="w-16 h-16 text-danger-500 mx-auto mb-4" />
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {t('reports.error')}
           </h1>

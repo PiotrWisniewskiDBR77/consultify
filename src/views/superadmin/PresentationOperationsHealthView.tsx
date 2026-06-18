@@ -60,7 +60,7 @@ const AUTO_REFRESH_INTERVAL_MS = 60_000;
 const SLO_TONE: Record<SloStatus, string> = {
   pass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   at_risk: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  breach: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  breach: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   inconclusive: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 
@@ -73,7 +73,7 @@ const SLO_LABEL: Record<SloStatus, string> = {
 
 const JOB_STATUS_TONE: Record<JobRunSnapshot['lastRunStatus'], string> = {
   pass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  fail: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  fail: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   unknown: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 
@@ -582,7 +582,7 @@ const JobsStrip: React.FC<JobsStripProps> = ({ jobs }) => {
                 </span>
                 {job.isStale && (
                   <span
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300"
                     title={
                       job.staleDays !== null
                         ? `Stale by ${job.staleDays.toFixed(2)} day(s)`
@@ -626,7 +626,7 @@ const AlertsPanel: React.FC<AlertsPanelProps> = ({ activity }) => {
           <span>·</span>
           <span>
             Failed:{' '}
-            <strong className="text-rose-700 dark:text-rose-300 tabular-nums">
+            <strong className="text-danger-700 dark:text-danger-300 tabular-nums">
               {formatNumber(activity.failed)}
             </strong>
           </span>

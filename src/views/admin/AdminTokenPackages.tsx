@@ -292,7 +292,7 @@ export const AdminTokenPackages = () => {
               </div>
 
               <div
-                className={`text-xs text-center py-1 rounded ${pkg.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}
+                className={`text-xs text-center py-1 rounded ${pkg.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-danger-500/10 text-danger-400'}`}
               >
                 {pkg.is_active ? 'Active' : 'Inactive'}
               </div>

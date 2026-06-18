@@ -132,7 +132,7 @@ const OAuthCallback: React.FC = () => {
         )}
         {status === 'error' && (
           <div>
-            <h2 className="mt-6 text-3xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
+            <h2 className="mt-6 text-3xl font-bold tracking-tight text-danger-600 dark:text-danger-400">
               Authentication Failed
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{message}</p>

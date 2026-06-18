@@ -308,9 +308,9 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
 
         {/* Error State */}
         {error && (
-          <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 mb-6 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-rose-400" />
-            <span className="text-rose-400">{error}</span>
+          <div className="bg-danger-500/10 border border-danger-500/30 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-danger-400" />
+            <span className="text-danger-400">{error}</span>
           </div>
         )}
 
@@ -509,7 +509,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                               <button
                                 onClick={() => handleDelete(template.id)}
                                 disabled={actionLoading === template.id}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-700 dark:text-rose-400 hover:bg-rose-500/10 disabled:opacity-50"
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-700 dark:text-danger-400 hover:bg-danger-500/10 disabled:opacity-50"
                               >
                                 <Trash2 size={14} />
                                 {t('superadmin.emailTemplates.actions.delete')}

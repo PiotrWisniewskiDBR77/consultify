@@ -69,7 +69,7 @@ export const VerifyEmail = () => {
         )}
         {status === 'error' && (
           <div>
-            <h2 className="mt-6 text-3xl font-bold tracking-tight text-rose-600">
+            <h2 className="mt-6 text-3xl font-bold tracking-tight text-danger-600">
               {t('auth.verifyEmail.errorTitle')}
             </h2>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{message}</p>

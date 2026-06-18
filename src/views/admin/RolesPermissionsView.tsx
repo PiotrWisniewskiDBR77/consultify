@@ -593,7 +593,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   handleDeleteRole(role.id);
                                 }}
                                 disabled
-                                className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded text-slate-400 dark:text-slate-500 hover:text-rose-600"
+                                className="p-1.5 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded text-slate-400 dark:text-slate-500 hover:text-danger-600"
                               >
                                 <Trash2 size={14} />
                               </button>

@@ -593,11 +593,11 @@ const SCIMProvisioningView: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      token.isActive ? 'bg-green-500/20' : 'bg-rose-500/20'
+                      token.isActive ? 'bg-green-500/20' : 'bg-danger-500/20'
                     }`}
                   >
                     <Key
-                      className={token.isActive ? 'text-green-400' : 'text-rose-400'}
+                      className={token.isActive ? 'text-green-400' : 'text-danger-400'}
                       size={20}
                     />
                   </div>
@@ -617,7 +617,7 @@ const SCIMProvisioningView: React.FC = () => {
                   <button
                     onClick={() => handleRevokeToken(token.id)}
                     title={`Revoke token ${token.name}`}
-                    className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -841,7 +841,7 @@ const SCIMProvisioningView: React.FC = () => {
                     <button
                       onClick={() => handleDeleteMapping(mapping.id)}
                       title={`Delete mapping ${mapping.externalGroupName}`}
-                      className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                      className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -966,7 +966,7 @@ const SCIMProvisioningView: React.FC = () => {
                       log.status === 'success'
                         ? 'bg-green-400'
                         : log.status === 'error'
-                          ? 'bg-rose-400'
+                          ? 'bg-danger-400'
                           : 'bg-yellow-400'
                     }`}
                   />
@@ -985,7 +985,7 @@ const SCIMProvisioningView: React.FC = () => {
                 </span>
               </div>
               {log.errorMessage && (
-                <div className="mt-2 text-sm text-rose-700 dark:text-rose-300 bg-rose-500/10 rounded px-3 py-1">
+                <div className="mt-2 text-sm text-danger-700 dark:text-danger-300 bg-danger-500/10 rounded px-3 py-1">
                   {log.errorMessage}
                 </div>
               )}
@@ -1192,7 +1192,7 @@ const SCIMProvisioningView: React.FC = () => {
       {loading ? (
         <LoadingState variant="spinner" className="py-12" />
       ) : loadError ? (
-        <div className="rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-6 text-rose-700 dark:text-rose-300">
+        <div className="rounded-xl border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-6 text-danger-700 dark:text-danger-300">
           <div className="flex items-center gap-2 font-medium">
             <AlertTriangle size={18} />
             Failed to load SCIM data
@@ -1200,7 +1200,7 @@ const SCIMProvisioningView: React.FC = () => {
           <p className="mt-2 text-sm">{loadError}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-sm font-medium"
+            className="mt-4 px-4 py-2 rounded-lg bg-danger-100 hover:bg-danger-200 dark:bg-danger-500/20 dark:hover:bg-danger-500/30 text-sm font-medium"
           >
             Retry
           </button>

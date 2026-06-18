@@ -67,7 +67,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   administration: <Settings size={24} className="text-gray-500" />,
   'api-reference': <Code size={24} className="text-primary-500" />,
   integrations: <Link2 size={24} className="text-blue-400" />,
-  troubleshooting: <LifeBuoy size={24} className="text-rose-500" />,
+  troubleshooting: <LifeBuoy size={24} className="text-danger-500" />,
   default: <Book size={24} className="text-primary-500" />,
 };
 

@@ -305,7 +305,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
       {error && (
         <div
           role="alert"
-          className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 flex items-center gap-2"
+          className="p-4 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 flex items-center gap-2"
         >
           <AlertCircle size={18} />
           {error}
@@ -497,10 +497,10 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
                         {isDocumentActive(doc) && (
                           <button
                             onClick={() => toggleActive(doc.id, false)}
-                            className="p-1.5 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30"
+                            className="p-1.5 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30"
                             title="Deactivate"
                           >
-                            <X size={16} className="text-rose-600" />
+                            <X size={16} className="text-danger-600" />
                           </button>
                         )}
                       </div>

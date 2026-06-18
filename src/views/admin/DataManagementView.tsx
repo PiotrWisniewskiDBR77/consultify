@@ -445,13 +445,13 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
       </div>
 
       {/* Danger Zone */}
-      <div className="p-6 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-800">
-        <h3 className="font-medium text-rose-800 dark:text-rose-200 mb-4 flex items-center gap-2">
+      <div className="p-6 bg-danger-50 dark:bg-danger-900/20 rounded-xl border border-danger-200 dark:border-danger-800">
+        <h3 className="font-medium text-danger-800 dark:text-danger-200 mb-4 flex items-center gap-2">
           <AlertTriangle size={18} />
           Danger Zone
         </h3>
         <div className="space-y-4">
-          <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-rose-200 dark:border-rose-800">
+          <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-danger-200 dark:border-danger-800">
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-medium text-slate-900 dark:text-white">Delete Organization</p>
@@ -462,7 +462,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
               </div>
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-medium"
+                className="px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg font-medium"
               >
                 Delete
               </button>
@@ -487,17 +487,17 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
               className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden"
             >
               <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-                <h3 className="text-lg font-semibold text-rose-600 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-danger-600 flex items-center gap-2">
                   <AlertTriangle size={20} />
                   Delete Organization
                 </h3>
               </div>
               <div className="p-6 space-y-4">
-                <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
-                  <p className="text-sm text-rose-800 dark:text-rose-200 font-medium">
+                <div className="p-4 bg-danger-50 dark:bg-danger-900/20 rounded-lg">
+                  <p className="text-sm text-danger-800 dark:text-danger-200 font-medium">
                     This action is irreversible!
                   </p>
-                  <ul className="mt-2 text-xs text-rose-700 dark:text-rose-300 space-y-1">
+                  <ul className="mt-2 text-xs text-danger-700 dark:text-danger-300 space-y-1">
                     <li>• All users will lose access</li>
                     <li>• All projects and data will be deleted</li>
                     <li>• Active subscriptions will be cancelled</li>
@@ -532,7 +532,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                 <button
                   onClick={handleDeleteOrganization}
                   disabled={deleting || deleteConfirmation !== currentOrganization?.name}
-                  className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {deleting && <RefreshCw className="w-4 h-4 animate-spin" />}
                   Delete Organization

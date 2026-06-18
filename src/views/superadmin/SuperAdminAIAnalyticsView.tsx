@@ -138,7 +138,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
               ? 'bg-green-500/10 border border-green-500/20'
               : diagnostics.status === 'NEEDS_CONFIG'
                 ? 'bg-yellow-500/10 border border-yellow-500/20'
-                : 'bg-rose-500/10 border border-rose-500/20'
+                : 'bg-danger-500/10 border border-danger-500/20'
           }`}
         >
           {diagnostics.status === 'OK' ? (
@@ -297,7 +297,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        provider.is_active ? 'bg-green-500' : 'bg-rose-500'
+                        provider.is_active ? 'bg-green-500' : 'bg-danger-500'
                       }`}
                     />
                     <div>
@@ -337,7 +337,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
               {check.status === 'OK' ? (
                 <CheckCircle className="text-green-500 shrink-0" size={18} />
               ) : check.status === 'FAILED' ? (
-                <XCircle className="text-rose-500 shrink-0" size={18} />
+                <XCircle className="text-danger-500 shrink-0" size={18} />
               ) : check.status === 'NEEDS_CONFIGURATION' ? (
                 <AlertCircle className="text-yellow-500 shrink-0" size={18} />
               ) : (

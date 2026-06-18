@@ -517,7 +517,7 @@ export const SecurityPoliciesView: React.FC = () => {
                     addToList('ipBlocklist', newBlocklistIP);
                     setNewBlocklistIP('');
                   }}
-                  className="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"
+                  className="px-3 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg"
                 >
                   <Plus size={16} />
                 </button>
@@ -526,12 +526,12 @@ export const SecurityPoliciesView: React.FC = () => {
                 {editedPolicy.ipBlocklist.map((ip, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between px-3 py-1.5 bg-rose-50 dark:bg-rose-500/10 rounded text-sm"
+                    className="flex items-center justify-between px-3 py-1.5 bg-danger-50 dark:bg-danger-500/10 rounded text-sm"
                   >
-                    <span className="text-rose-700 dark:text-rose-400 font-mono">{ip}</span>
+                    <span className="text-danger-700 dark:text-danger-400 font-mono">{ip}</span>
                     <button
                       onClick={() => removeFromList('ipBlocklist', idx)}
-                      className="text-rose-600 hover:text-rose-800"
+                      className="text-danger-600 hover:text-danger-800"
                     >
                       <Trash2 size={14} />
                     </button>

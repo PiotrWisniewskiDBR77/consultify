@@ -181,7 +181,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
                 Context Quality
               </div>
               <div
-                className={`text-xl font-bold ${sufficiency.score >= 80 ? 'text-green-500' : sufficiency.score >= 50 ? 'text-yellow-500' : 'text-rose-500'}`}
+                className={`text-xl font-bold ${sufficiency.score >= 80 ? 'text-green-500' : sufficiency.score >= 50 ? 'text-yellow-500' : 'text-danger-500'}`}
               >
                 {sufficiency.score}%
               </div>
@@ -189,7 +189,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
             {/* Visual Progress Bar */}
             <div className="w-24 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all duration-500 ${sufficiency.score >= 80 ? 'bg-green-500' : sufficiency.score >= 50 ? 'bg-yellow-500' : 'bg-rose-500'}`}
+                className={`h-full transition-all duration-500 ${sufficiency.score >= 80 ? 'bg-green-500' : sufficiency.score >= 50 ? 'bg-yellow-500' : 'bg-danger-500'}`}
                 style={{ width: `${sufficiency.score}%` }}
               ></div>
             </div>
@@ -229,7 +229,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
                 {sufficiency.gaps.map((gap) => (
                   <li
                     key={gap}
-                    className="flex items-center gap-2 text-xs text-rose-500 font-medium"
+                    className="flex items-center gap-2 text-xs text-danger-500 font-medium"
                   >
                     <AlertTriangle size={12} />
                     {gap}

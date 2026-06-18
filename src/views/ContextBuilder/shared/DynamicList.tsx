@@ -203,7 +203,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                 </button>
                 <button
                   onClick={(e) => handleDelete(item.id, e)}
-                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded"
+                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 rounded"
                 >
                   <Trash2 size={16} />
                 </button>

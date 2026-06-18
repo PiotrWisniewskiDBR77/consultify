@@ -319,7 +319,7 @@ export const DocsArticleView: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleFeedback('down')}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-300 dark:hover:border-rose-700 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-danger-50 dark:hover:bg-danger-900/20 hover:border-danger-300 dark:hover:border-danger-700 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
                 >
                   <ThumbsDown size={16} />
                   No

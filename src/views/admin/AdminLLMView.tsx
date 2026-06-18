@@ -259,7 +259,7 @@ export const AdminLLMView: React.FC = () => {
       case 'degraded':
         return <AlertTriangle size={16} className="text-yellow-400" />;
       case 'unhealthy':
-        return <XCircle size={16} className="text-rose-400" />;
+        return <XCircle size={16} className="text-danger-400" />;
       default:
         return <Activity size={16} className="text-slate-600 dark:text-slate-500" />;
     }
@@ -273,7 +273,7 @@ export const AdminLLMView: React.FC = () => {
       case 'degraded':
         return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
       case 'unhealthy':
-        return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+        return 'text-danger-400 bg-danger-500/10 border-danger-500/20';
       default:
         return 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
     }
@@ -380,7 +380,7 @@ export const AdminLLMView: React.FC = () => {
               className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
                 llmStatus.summary.healthy > 0
                   ? 'bg-green-500/20 text-green-400'
-                  : 'bg-rose-500/20 text-rose-400'
+                  : 'bg-danger-500/20 text-danger-400'
               }`}
             >
               {llmStatus.summary.healthy}/{llmStatus.summary.configured}
@@ -495,12 +495,12 @@ export const AdminLLMView: React.FC = () => {
                 <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
                   <div className="flex justify-between items-start mb-2">
                     <div
-                      className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-rose-500/20' : 'bg-primary-500/20'}`}
+                      className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-danger-500/20' : 'bg-primary-500/20'}`}
                     >
                       <AlertTriangle
                         size={20}
                         className={
-                          analytics?.error_rate > 0.05 ? 'text-rose-400' : 'text-primary-400'
+                          analytics?.error_rate > 0.05 ? 'text-danger-400' : 'text-primary-400'
                         }
                       />
                     </div>
@@ -548,7 +548,7 @@ export const AdminLLMView: React.FC = () => {
                               className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
                                 log.status === 'success'
                                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                  : 'bg-danger-500/10 text-danger-400 border-danger-500/20'
                               }`}
                             >
                               {log.status}
@@ -574,7 +574,7 @@ export const AdminLLMView: React.FC = () => {
                           <td className="px-4 py-3">
                             {log.error_message ? (
                               <span
-                                className="text-rose-400 text-xs truncate max-w-[200px] block"
+                                className="text-danger-400 text-xs truncate max-w-[200px] block"
                                 title={log.error_message}
                               >
                                 {log.error_message}
@@ -626,10 +626,10 @@ export const AdminLLMView: React.FC = () => {
                 </div>
                 <p className="text-3xl font-bold text-white">{llmStatus?.summary.degraded || 0}</p>
               </div>
-              <div className="bg-gradient-to-br from-rose-900/30 to-navy-900 border border-rose-500/20 rounded-xl p-4">
+              <div className="bg-gradient-to-br from-danger-900/30 to-navy-900 border border-danger-500/20 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <XCircle size={18} className="text-rose-400" />
-                  <span className="text-xs uppercase tracking-wider text-rose-400">Unhealthy</span>
+                  <XCircle size={18} className="text-danger-400" />
+                  <span className="text-xs uppercase tracking-wider text-danger-400">Unhealthy</span>
                 </div>
                 <p className="text-3xl font-bold text-white">{llmStatus?.summary.unhealthy || 0}</p>
               </div>
@@ -683,14 +683,14 @@ export const AdminLLMView: React.FC = () => {
             {/* Critical Errors */}
             {llmStatus?.startupValidation?.criticalErrors &&
               llmStatus.startupValidation.criticalErrors.length > 0 && (
-                <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-4">
-                  <h3 className="text-rose-400 font-semibold flex items-center gap-2 mb-2">
+                <div className="bg-danger-500/10 border border-danger-500/30 rounded-xl p-4">
+                  <h3 className="text-danger-400 font-semibold flex items-center gap-2 mb-2">
                     <AlertTriangle size={16} />
                     Critical Errors
                   </h3>
                   <ul className="space-y-1">
                     {llmStatus.startupValidation.criticalErrors.map((err, i) => (
-                      <li key={i} className="text-rose-300 text-sm">
+                      <li key={i} className="text-danger-300 text-sm">
                         • {err}
                       </li>
                     ))}
@@ -769,7 +769,7 @@ export const AdminLLMView: React.FC = () => {
                             llmStatus.circuitBreakers[p.provider].state === 'CLOSED'
                               ? 'text-green-400'
                               : llmStatus.circuitBreakers[p.provider].state === 'OPEN'
-                                ? 'text-rose-400'
+                                ? 'text-danger-400'
                                 : 'text-yellow-400'
                           }
                         />
@@ -777,7 +777,7 @@ export const AdminLLMView: React.FC = () => {
                           Circuit: {llmStatus.circuitBreakers[p.provider].state}
                         </span>
                         {llmStatus.circuitBreakers[p.provider].failures > 0 && (
-                          <span className="text-rose-400">
+                          <span className="text-danger-400">
                             ({llmStatus.circuitBreakers[p.provider].failures} failures)
                           </span>
                         )}

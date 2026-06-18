@@ -55,7 +55,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
           uploadStatus === 'success'
             ? 'bg-green-100 border-green-200 text-green-600'
             : uploadStatus === 'error'
-              ? 'bg-rose-100 border-rose-200 text-rose-600'
+              ? 'bg-danger-100 border-danger-200 text-danger-600'
               : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-primary-600'
         }`}
       >
@@ -83,7 +83,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
               Successfully processed: {statusMessage}
             </span>
           ) : uploadStatus === 'error' ? (
-            <span className="text-rose-600 font-medium">Error: {statusMessage}</span>
+            <span className="text-danger-600 font-medium">Error: {statusMessage}</span>
           ) : (
             <>
               Upload relevant files to help AI understand your context better.

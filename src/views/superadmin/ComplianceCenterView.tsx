@@ -101,7 +101,7 @@ const STATUS_COLORS = {
   compliant: 'bg-emerald-500',
   in_progress: 'bg-blue-500',
   pending: 'bg-slate-400',
-  non_compliant: 'bg-rose-500',
+  non_compliant: 'bg-danger-500',
   not_applicable: 'bg-slate-300',
 };
 
@@ -630,7 +630,7 @@ export const ComplianceCenterView: React.FC = () => {
                   ? 'bg-emerald-500/10'
                   : overallScore >= 50
                     ? 'bg-amber-500/10'
-                    : 'bg-rose-500/10'
+                    : 'bg-danger-500/10'
               }`}
             >
               <Target
@@ -639,7 +639,7 @@ export const ComplianceCenterView: React.FC = () => {
                     ? 'text-emerald-500'
                     : overallScore >= 50
                       ? 'text-amber-500'
-                      : 'text-rose-500'
+                      : 'text-danger-500'
                 }
                 size={20}
               />
@@ -658,7 +658,7 @@ export const ComplianceCenterView: React.FC = () => {
                     ? 'bg-emerald-500'
                     : overallScore >= 50
                       ? 'bg-amber-500'
-                      : 'bg-rose-500'
+                      : 'bg-danger-500'
                 }`}
                 style={{ width: `${overallScore}%` }}
               />
@@ -679,7 +679,7 @@ export const ComplianceCenterView: React.FC = () => {
           {dsarLoadError ? (
             <div className="mt-1 text-sm text-amber-600">DSAR source unavailable</div>
           ) : overdueDoars > 0 ? (
-            <div className="mt-1 text-sm text-rose-500 flex items-center gap-1">
+            <div className="mt-1 text-sm text-danger-500 flex items-center gap-1">
               <AlertCircle size={14} />
               {overdueDoars} overdue
             </div>
@@ -755,7 +755,7 @@ export const ComplianceCenterView: React.FC = () => {
                           ? 'text-emerald-600'
                           : status.score >= 50
                             ? 'text-amber-600'
-                            : 'text-rose-600'
+                            : 'text-danger-600'
                       }`}
                     >
                       {Number(status.score) || 0}%
@@ -785,7 +785,7 @@ export const ComplianceCenterView: React.FC = () => {
                     style={{ width: `${pct(status.pending, status.total)}%` }}
                   />
                   <div
-                    className="bg-rose-500 rounded-r"
+                    className="bg-danger-500 rounded-r"
                     style={{ width: `${pct(status.nonCompliant, status.total)}%` }}
                   />
                 </div>
@@ -803,7 +803,7 @@ export const ComplianceCenterView: React.FC = () => {
                     {Number(status.pending) || 0} Pending
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-rose-500" />{' '}
+                    <span className="w-2 h-2 rounded-full bg-danger-500" />{' '}
                     {Number(status.nonCompliant) || 0} Non-Compliant
                   </span>
                 </div>
@@ -858,7 +858,7 @@ export const ComplianceCenterView: React.FC = () => {
                           ? 'bg-blue-500/10 text-blue-600'
                           : dsar.status === 'pending'
                             ? 'bg-amber-500/10 text-amber-600'
-                            : 'bg-rose-500/10 text-rose-600'
+                            : 'bg-danger-500/10 text-danger-600'
                     }`}
                   >
                     {dsar.status.replace('_', ' ')}
@@ -1054,7 +1054,7 @@ export const ComplianceCenterView: React.FC = () => {
                         ? 'text-emerald-600'
                         : status.score >= 50
                           ? 'text-amber-600'
-                          : 'text-rose-600'
+                          : 'text-danger-600'
                     }`}
                   >
                     {status.score}%
@@ -1145,7 +1145,7 @@ export const ComplianceCenterView: React.FC = () => {
                             ? 'bg-blue-500/10 text-blue-600'
                             : dsar.status === 'pending'
                               ? 'bg-amber-500/10 text-amber-600'
-                              : 'bg-rose-500/10 text-rose-600'
+                              : 'bg-danger-500/10 text-danger-600'
                       }`}
                     >
                       {dsar.status.replace('_', ' ')}
@@ -1158,7 +1158,7 @@ export const ComplianceCenterView: React.FC = () => {
                     <span
                       className={`text-sm ${
                         isOverdue(dsar.dueDate, dsar.status)
-                          ? 'text-rose-600 font-medium'
+                          ? 'text-danger-600 font-medium'
                           : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -1242,9 +1242,9 @@ export const ComplianceCenterView: React.FC = () => {
                 </span>
               </div>
               {audit.findingsCount > 0 && (
-                <div className="p-3 bg-rose-50 dark:bg-rose-500/10 rounded-lg flex items-center gap-2">
-                  <AlertTriangle size={16} className="text-rose-500" />
-                  <span className="text-sm text-rose-700 dark:text-rose-400">
+                <div className="p-3 bg-danger-50 dark:bg-danger-500/10 rounded-lg flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-danger-500" />
+                  <span className="text-sm text-danger-700 dark:text-danger-400">
                     {audit.findingsCount} findings
                   </span>
                 </div>
@@ -1711,7 +1711,7 @@ export const ComplianceCenterView: React.FC = () => {
                               ? 'bg-blue-500/10 text-blue-600'
                               : dsarViewModal.dsar.status === 'pending'
                                 ? 'bg-amber-500/10 text-amber-600'
-                                : 'bg-rose-500/10 text-rose-600'
+                                : 'bg-danger-500/10 text-danger-600'
                         }`}
                       >
                         {(dsarViewModal.dsar.status || 'pending').replace('_', ' ')}
@@ -1776,10 +1776,10 @@ export const ComplianceCenterView: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-2 h-2 rounded-full ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'bg-rose-500' : 'bg-amber-500'}`}
+                        className={`w-2 h-2 rounded-full ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'bg-danger-500' : 'bg-amber-500'}`}
                       />
                       <span
-                        className={`text-sm ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'text-rose-600 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
+                        className={`text-sm ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'text-danger-600 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
                       >
                         Due: {formatDateTime(dsarViewModal.dsar.dueDate, '—')}
                       </span>

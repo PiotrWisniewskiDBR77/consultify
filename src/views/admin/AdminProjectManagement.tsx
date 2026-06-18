@@ -221,7 +221,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   {canDelete && (
                     <button
                       onClick={() => handleDeleteProject(p.id)}
-                      className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 shadow-sm"
+                      className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-danger-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 shadow-sm"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -381,7 +381,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                       {canDelete && (
                         <button
                           onClick={() => handleDeleteProject(p.id)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
                         >
                           <Trash2 size={18} />
                         </button>

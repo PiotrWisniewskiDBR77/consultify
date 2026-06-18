@@ -159,11 +159,11 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
         <div className="bg-white dark:bg-navy-800 rounded-xl shadow-md border border-slate-200 dark:border-navy-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <AlertTriangle className="text-rose-500" size={18} />
+              <AlertTriangle className="text-danger-500" size={18} />
               Risk Profile
             </h4>
             <span
-              className={`px-2 py-1 rounded text-xs font-bold ${criticalRisks.length > 2 ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}
+              className={`px-2 py-1 rounded text-xs font-bold ${criticalRisks.length > 2 ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}
             >
               {criticalRisks.length > 2 ? 'High Risk' : 'Manageable'}
             </span>

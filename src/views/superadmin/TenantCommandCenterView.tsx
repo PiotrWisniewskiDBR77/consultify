@@ -95,7 +95,7 @@ const hasListShape = (value: unknown, keys: string[]) => {
 };
 
 const metricTone = (value: number, warningThreshold: number, criticalThreshold: number) => {
-  if (value >= criticalThreshold) return 'text-rose-600 dark:text-rose-400';
+  if (value >= criticalThreshold) return 'text-danger-600 dark:text-danger-400';
   if (value >= warningThreshold) return 'text-amber-600 dark:text-amber-400';
   return 'text-emerald-600 dark:text-emerald-400';
 };

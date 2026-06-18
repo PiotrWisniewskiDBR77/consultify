@@ -389,11 +389,11 @@ const accentMap: Record<
     buttonRegistered: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
   },
   rose: {
-    badge: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    icon: 'text-rose-400',
-    highlight: 'from-rose-500/10 to-rose-600/5 border-rose-500/10',
-    button: 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20',
-    buttonRegistered: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
+    badge: 'bg-danger-500/10 text-danger-400 border-danger-500/20',
+    icon: 'text-danger-400',
+    highlight: 'from-danger-500/10 to-danger-600/5 border-danger-500/10',
+    button: 'bg-danger-600 hover:bg-danger-500 text-white shadow-lg shadow-danger-600/20',
+    buttonRegistered: 'bg-danger-500/10 text-danger-400 border border-danger-500/20',
   },
 };
 

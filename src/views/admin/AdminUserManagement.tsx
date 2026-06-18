@@ -423,7 +423,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
         {actionError && (
           <div
             role="alert"
-            className="m-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
+            className="m-4 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 text-sm"
           >
             {actionError}
           </div>
@@ -568,7 +568,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                           className={`p-2 rounded-lg ${
                             user.isOwner || user.role === 'OWNER'
                               ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
-                              : 'hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400'
+                              : 'hover:bg-danger-500/20 text-slate-400 dark:text-slate-500 hover:text-danger-400'
                           }`}
                           title={
                             user.isOwner || user.role === 'OWNER'
@@ -625,7 +625,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               {formError && (
                 <div
                   role="alert"
-                  className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
+                  className="p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 text-sm"
                 >
                   {formError}
                 </div>

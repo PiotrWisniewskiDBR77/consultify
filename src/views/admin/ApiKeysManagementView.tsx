@@ -319,7 +319,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
               key={key.id}
               className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
                 isKeyExpired(key)
-                  ? 'border-rose-200 dark:border-rose-800'
+                  ? 'border-danger-200 dark:border-danger-800'
                   : isKeyExpiringSoon(key)
                     ? 'border-amber-200 dark:border-amber-800'
                     : 'border-slate-200 dark:border-navy-700'
@@ -330,14 +330,14 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                   <div
                     className={`p-3 rounded-lg ${
                       isKeyExpired(key) || key.revokedAt
-                        ? 'bg-rose-100 dark:bg-rose-900/30'
+                        ? 'bg-danger-100 dark:bg-danger-900/30'
                         : 'bg-primary-100 dark:bg-primary-900/30'
                     }`}
                   >
                     <Key
                       className={`w-5 h-5 ${
                         isKeyExpired(key) || key.revokedAt
-                          ? 'text-rose-600 dark:text-rose-400'
+                          ? 'text-danger-600 dark:text-danger-400'
                           : 'text-primary-600 dark:text-primary-400'
                       }`}
                     />
@@ -346,12 +346,12 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-slate-900 dark:text-white">{key.name}</h3>
                       {isKeyExpired(key) && (
-                        <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400 text-xs rounded-full">
                           Expired
                         </span>
                       )}
                       {key.revokedAt && (
-                        <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400 text-xs rounded-full">
                           Revoked
                         </span>
                       )}
@@ -402,7 +402,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     <button
                       onClick={() => handleRevokeKey(key.id)}
                       disabled={!!loadError}
-                      className="p-2 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600"
+                      className="p-2 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600"
                       title="Revoke key"
                     >
                       <Trash2 size={16} />
@@ -556,14 +556,14 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                 </h3>
               </div>
               <div className="p-6 space-y-4">
-                <div className="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg">
+                <div className="p-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400 mt-0.5" />
+                    <AlertTriangle className="w-5 h-5 text-danger-600 dark:text-danger-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-rose-800 dark:text-rose-200">
+                      <p className="text-sm font-medium text-danger-800 dark:text-danger-200">
                         This key will only be shown once!
                       </p>
-                      <p className="text-xs text-rose-600 dark:text-rose-300 mt-1">
+                      <p className="text-xs text-danger-600 dark:text-danger-300 mt-1">
                         Make sure to copy it now. You won't be able to see it again.
                       </p>
                     </div>

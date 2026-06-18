@@ -278,8 +278,8 @@ export const ClientAccessView: React.FC = () => {
   if (error && clients.length === 0 && employees.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="p-4 rounded-full bg-rose-500/10 mb-4">
-          <Users className="w-8 h-8 text-rose-400" />
+        <div className="p-4 rounded-full bg-danger-500/10 mb-4">
+          <Users className="w-8 h-8 text-danger-400" />
         </div>
         <p className="text-slate-500 mb-4">{error}</p>
         <button
@@ -572,7 +572,7 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
     ACTIVE: 'bg-emerald-500/20 text-emerald-400',
     PENDING: 'bg-amber-500/20 text-amber-400',
     TRIAL: 'bg-blue-500/20 text-blue-400',
-    REVOKED: 'bg-rose-500/20 text-rose-400',
+    REVOKED: 'bg-danger-500/20 text-danger-400',
   };
 
   return (

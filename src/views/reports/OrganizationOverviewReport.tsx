@@ -66,12 +66,12 @@ const statusColors: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
   in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   completed: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  blocked: 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300',
+  blocked: 'bg-danger-100 text-danger-700 dark:bg-danger-900 dark:text-danger-300',
   on_hold: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
 };
 
 const priorityColors: Record<string, string> = {
-  critical: 'text-rose-600 dark:text-rose-400',
+  critical: 'text-danger-600 dark:text-danger-400',
   high: 'text-amber-600 dark:text-amber-400',
   medium: 'text-yellow-600 dark:text-yellow-400',
   low: 'text-gray-500 dark:text-gray-400',
@@ -120,7 +120,7 @@ export const OrganizationOverviewReport: React.FC<OrganizationOverviewReportProp
 
   if (error || !report) {
     return (
-      <div className="p-6 text-center text-rose-500">
+      <div className="p-6 text-center text-danger-500">
         <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
         <p>{error || 'Failed to load report'}</p>
       </div>
@@ -268,13 +268,13 @@ export const OrganizationOverviewReport: React.FC<OrganizationOverviewReportProp
       {report.activeBlockers.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-rose-500" />
+            <AlertTriangle className="w-5 h-5 text-danger-500" />
             {t('reports.activeBlockers')}
           </h2>
-          <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-4 space-y-3">
+          <div className="bg-danger-50 dark:bg-danger-900/20 rounded-xl p-4 space-y-3">
             {report.activeBlockers.map((blocker, idx) => (
               <div key={idx} className="flex items-start gap-3">
-                <AlertTriangle className="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-danger-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white">{blocker.task}</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">

@@ -245,28 +245,28 @@ const CustomerComplianceView: React.FC = () => {
                         {item.gdpr_compliant ? (
                           <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
                         ) : (
-                          <XCircle className="w-5 h-5 text-rose-400 mx-auto" />
+                          <XCircle className="w-5 h-5 text-danger-400 mx-auto" />
                         )}
                       </td>
                       <td className="py-3 text-center">
                         {item.dpa_signed ? (
                           <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
                         ) : (
-                          <XCircle className="w-5 h-5 text-rose-400 mx-auto" />
+                          <XCircle className="w-5 h-5 text-danger-400 mx-auto" />
                         )}
                       </td>
                       <td className="py-3 text-center">
                         {item.data_retention_policy ? (
                           <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
                         ) : (
-                          <XCircle className="w-5 h-5 text-rose-400 mx-auto" />
+                          <XCircle className="w-5 h-5 text-danger-400 mx-auto" />
                         )}
                       </td>
                       <td className="py-3 text-center">
                         {item.security_audit_passed ? (
                           <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
                         ) : (
-                          <XCircle className="w-5 h-5 text-rose-400 mx-auto" />
+                          <XCircle className="w-5 h-5 text-danger-400 mx-auto" />
                         )}
                       </td>
                       <td className="py-3 text-slate-600 dark:text-slate-400 text-sm">

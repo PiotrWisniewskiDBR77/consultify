@@ -241,11 +241,11 @@ export const RevenueRecognitionView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-rose-500/20 border border-rose-500 text-rose-300 px-4 py-3 rounded-lg">
+        <div className="bg-danger-500/20 border border-danger-500 text-danger-300 px-4 py-3 rounded-lg">
           {error}
           <button
             onClick={() => setError(null)}
-            className="float-right text-rose-300 hover:text-rose-100"
+            className="float-right text-danger-300 hover:text-danger-100"
           >
             ×
           </button>

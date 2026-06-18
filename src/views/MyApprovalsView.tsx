@@ -107,7 +107,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
   const getStatusBadge = (status: string, isOverdue: boolean) => {
     if (isOverdue && (status === 'PENDING' || status === 'ACKED')) {
       return (
-        <span className="px-2 py-1 text-xs font-medium rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400">
+        <span className="px-2 py-1 text-xs font-medium rounded-full bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400">
           <AlertTriangle className="w-3 h-3 inline mr-1" />
           Overdue
         </span>
@@ -198,7 +198,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
 
       {/* Error State */}
       {error && (
-        <div className="p-4 mb-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-700 dark:text-rose-400">
+        <div className="p-4 mb-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400">
           {error}
         </div>
       )}
@@ -229,7 +229,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
               key={approval.id}
               className={`p-4 bg-white dark:bg-gray-800 rounded-xl border ${
                 approval.isOverdue
-                  ? 'border-rose-300 dark:border-rose-700'
+                  ? 'border-danger-300 dark:border-danger-700'
                   : 'border-gray-200 dark:border-gray-700'
               } hover:shadow-md transition-shadow`}
             >

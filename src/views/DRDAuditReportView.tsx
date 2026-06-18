@@ -531,8 +531,8 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
   if (error) {
     return (
       <div className="flex items-center justify-center h-full bg-slate-50 dark:bg-navy-950">
-        <div className="text-center max-w-md p-8 bg-white dark:bg-navy-900 rounded-xl border border-rose-200 dark:border-rose-500/20">
-          <p className="text-rose-500 mb-4">{error}</p>
+        <div className="text-center max-w-md p-8 bg-white dark:bg-navy-900 rounded-xl border border-danger-200 dark:border-danger-500/20">
+          <p className="text-danger-500 mb-4">{error}</p>
           <button
             onClick={fetchReport}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

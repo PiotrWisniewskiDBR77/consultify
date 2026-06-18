@@ -227,7 +227,7 @@ export const VectorPage: React.FC = () => {
             {[
               {
                 icon: Factory,
-                accent: 'from-rose-500 to-amber-500',
+                accent: 'from-danger-500 to-amber-500',
                 title: t('vector.beyond.problem.title', 'The Problem'),
                 body: t(
                   'vector.beyond.problem.body',

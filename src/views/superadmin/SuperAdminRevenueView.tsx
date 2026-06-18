@@ -414,7 +414,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                       <td className="py-3 text-right">
                         {formatNumber(item.totalTokens || item.requests)}
                       </td>
-                      <td className="py-3 text-right font-semibold text-rose-500">
+                      <td className="py-3 text-right font-semibold text-danger-500">
                         {safeMoney(item.cost, 'USD')}
                       </td>
                     </tr>
@@ -442,7 +442,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                         <td colSpan={3} className="py-3 font-bold text-gray-900 dark:text-white">
                           Total Operational Cost
                         </td>
-                        <td className="py-3 text-right font-bold text-xl text-rose-500">
+                        <td className="py-3 text-right font-bold text-xl text-danger-500">
                           {safeMoney(operationalCosts.totalCost, 'USD')}
                         </td>
                       </tr>

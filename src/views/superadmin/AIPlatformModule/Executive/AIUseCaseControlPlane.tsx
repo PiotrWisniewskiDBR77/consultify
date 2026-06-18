@@ -109,8 +109,8 @@ type OperatorOps = {
 const STATUS_STYLES: Record<string, string> = {
   healthy: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
   degraded: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  critical: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
-  missing: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  critical: 'bg-danger-500/10 text-danger-700 dark:text-danger-300',
+  missing: 'bg-danger-500/10 text-danger-700 dark:text-danger-300',
   unknown: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
 };
 
@@ -492,7 +492,7 @@ export const AIUseCaseControlPlane: React.FC = () => {
                     ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                     : item.status === 'partial'
                       ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
-                      : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                      : 'bg-danger-500/10 text-danger-700 dark:text-danger-300'
                 }`}
               >
                 <span>{item.label}</span>
@@ -726,7 +726,7 @@ export const AIUseCaseControlPlane: React.FC = () => {
                     <span
                       className={`rounded-full px-2 py-1 text-[10px] font-medium ${
                         purpose.policyAllowed === false
-                          ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300'
+                          ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/20 dark:text-danger-300'
                           : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
                       }`}
                     >

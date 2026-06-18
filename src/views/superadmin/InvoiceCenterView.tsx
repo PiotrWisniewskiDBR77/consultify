@@ -372,7 +372,7 @@ export const InvoiceCenterView: React.FC = () => {
       draft: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
       pending: 'bg-amber-500/10 text-amber-600',
       paid: 'bg-emerald-500/10 text-emerald-600',
-      overdue: 'bg-rose-500/10 text-rose-600',
+      overdue: 'bg-danger-500/10 text-danger-600',
       cancelled: 'bg-slate-500/10 text-slate-500 dark:text-slate-400',
       refunded: 'bg-blue-500/10 text-blue-600',
     };
@@ -412,7 +412,7 @@ export const InvoiceCenterView: React.FC = () => {
               {formatCurrency(stats.totalRevenue)}
             </div>
             <div
-              className={`mt-1 text-sm flex items-center gap-1 ${stats.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+              className={`mt-1 text-sm flex items-center gap-1 ${stats.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-danger-600'}`}
             >
               {stats.monthlyGrowth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
               {Math.abs(stats.monthlyGrowth)}% vs last month
@@ -448,12 +448,12 @@ export const InvoiceCenterView: React.FC = () => {
           <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-slate-500 dark:text-slate-400">Overdue</span>
-              <div className="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center">
-                <AlertTriangle className="text-rose-500" size={20} />
+              <div className="w-10 h-10 rounded-lg bg-danger-500/10 flex items-center justify-center">
+                <AlertTriangle className="text-danger-500" size={20} />
               </div>
             </div>
-            <div className="text-2xl font-bold text-rose-600">{stats.overdueInvoices}</div>
-            <div className="mt-1 text-sm text-rose-500">
+            <div className="text-2xl font-bold text-danger-600">{stats.overdueInvoices}</div>
+            <div className="mt-1 text-sm text-danger-500">
               {formatCurrency(stats.overdueAmount)} outstanding
             </div>
           </div>
@@ -582,7 +582,7 @@ export const InvoiceCenterView: React.FC = () => {
                     <span
                       className={`text-sm ${
                         invoice.status === 'overdue'
-                          ? 'text-rose-600 font-medium'
+                          ? 'text-danger-600 font-medium'
                           : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -1008,10 +1008,10 @@ export const InvoiceCenterView: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteTier(tier.id)}
-                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                        className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
                         title="Delete"
                       >
-                        <Trash2 size={16} className="text-rose-400" />
+                        <Trash2 size={16} className="text-danger-400" />
                       </button>
                     </div>
                   </td>

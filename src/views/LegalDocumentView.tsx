@@ -90,7 +90,7 @@ const DOCUMENT_INFO: Record<
     title: 'Acceptable Use Policy',
     description: 'Rules and guidelines for using the platform',
     icon: AlertTriangle,
-    color: 'from-rose-500 to-pink-600',
+    color: 'from-danger-500 to-pink-600',
   },
   AI_POLICY: {
     title: 'AI Usage Policy',

@@ -233,7 +233,7 @@ export const SuperAdminPlansView: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleDelete(plan.id)}
-                    className="px-3 py-2 text-sm text-rose-600 dark:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                    className="px-3 py-2 text-sm text-danger-600 dark:text-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

@@ -498,7 +498,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleRemoveConsultant(consultant.consultant_id)}
-                          className="text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-colors p-2 hover:bg-rose-500/10 rounded-lg"
+                          className="text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors p-2 hover:bg-danger-500/10 rounded-lg"
                           title="Remove consultant"
                         >
                           <Trash2 size={16} />
@@ -558,7 +558,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                 </button>
                                 <button
                                   onClick={() => handleRevokeAccess(project.access_id)}
-                                  className="text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-colors p-1.5 hover:bg-rose-500/10 rounded"
+                                  className="text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors p-1.5 hover:bg-danger-500/10 rounded"
                                   title="Revoke access"
                                 >
                                   <X size={14} />
@@ -931,7 +931,7 @@ const PermissionsModal: React.FC<{
             </button>
             <button
               onClick={disableAll}
-              className="px-3 py-1 text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors"
+              className="px-3 py-1 text-xs bg-danger-500/10 text-danger-400 border border-danger-500/20 rounded hover:bg-danger-500/20 transition-colors"
             >
               <EyeOff className="inline w-3 h-3 mr-1" />
               Disable All

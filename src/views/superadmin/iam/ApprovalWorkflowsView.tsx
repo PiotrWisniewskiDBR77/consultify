@@ -261,7 +261,7 @@ const ApprovalWorkflowsView: React.FC = () => {
         );
       case 'rejected':
         return (
-          <span className="px-2 py-1 bg-rose-500/10 text-rose-400 rounded text-xs">Rejected</span>
+          <span className="px-2 py-1 bg-danger-500/10 text-danger-400 rounded text-xs">Rejected</span>
         );
       default:
         return (
@@ -320,8 +320,8 @@ const ApprovalWorkflowsView: React.FC = () => {
 
           <Card variant="bordered" className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-rose-500/10 rounded-lg">
-                <X className="w-5 h-5 text-rose-500" />
+              <div className="p-2 bg-danger-500/10 rounded-lg">
+                <X className="w-5 h-5 text-danger-500" />
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-500">Rejected</p>
@@ -336,11 +336,11 @@ const ApprovalWorkflowsView: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <Card variant="bordered" className="p-4 border-rose-500/30 bg-rose-500/5">
-          <div role="alert" className="flex items-center gap-2 text-rose-400">
+        <Card variant="bordered" className="p-4 border-danger-500/30 bg-danger-500/5">
+          <div role="alert" className="flex items-center gap-2 text-danger-400">
             <AlertTriangle className="w-5 h-5" />
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-rose-300">
+            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-danger-300">
               Dismiss
             </button>
           </div>
@@ -485,7 +485,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setWorkflowPendingDelete(workflow)}
-                              className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                              className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors"
                               aria-label={`Delete approval workflow ${workflow.name}`}
                               title="Delete"
                             >
@@ -588,7 +588,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                               <button
                                 onClick={() => handleReject(request.id)}
                                 disabled={actionLoading === request.id}
-                                className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
                                 aria-label={`Reject request ${request.id}`}
                                 title="Reject"
                               >
@@ -712,7 +712,7 @@ const ApprovalWorkflowsView: React.FC = () => {
               </button>
               <button
                 onClick={() => handleDeleteWorkflow(workflowPendingDelete.id)}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-rose-600 hover:bg-rose-700 rounded-lg"
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-danger-600 hover:bg-danger-700 rounded-lg"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete Workflow

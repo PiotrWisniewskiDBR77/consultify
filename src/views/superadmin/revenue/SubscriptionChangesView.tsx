@@ -97,7 +97,7 @@ export const SubscriptionChangesView: React.FC = () => {
     const badges: Record<string, { bg: string; text: string }> = {
       upgrade: { bg: 'bg-green-500/20', text: 'text-green-400' },
       downgrade: { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
-      cancel: { bg: 'bg-rose-500/20', text: 'text-rose-400' },
+      cancel: { bg: 'bg-danger-500/20', text: 'text-danger-400' },
       reactivate: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
     };
     const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-600' };
@@ -112,7 +112,7 @@ export const SubscriptionChangesView: React.FC = () => {
     const badges: Record<string, { bg: string; text: string }> = {
       pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
       approved: { bg: 'bg-green-500/20', text: 'text-green-400' },
-      rejected: { bg: 'bg-rose-500/20', text: 'text-rose-400' },
+      rejected: { bg: 'bg-danger-500/20', text: 'text-danger-400' },
       completed: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
     };
     const badge = badges[status] || {
@@ -152,11 +152,11 @@ export const SubscriptionChangesView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-rose-500/20 border border-rose-500 text-rose-300 px-4 py-3 rounded-lg">
+        <div className="bg-danger-500/20 border border-danger-500 text-danger-300 px-4 py-3 rounded-lg">
           {error}
           <button
             onClick={() => setError(null)}
-            className="float-right text-rose-300 hover:text-rose-100"
+            className="float-right text-danger-300 hover:text-danger-100"
           >
             ×
           </button>
@@ -192,7 +192,7 @@ export const SubscriptionChangesView: React.FC = () => {
           </Card>
           <Card>
             <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-rose-400">{stats.cancellations}</div>
+              <div className="text-2xl font-bold text-danger-400">{stats.cancellations}</div>
               <div className="text-sm text-slate-600 dark:text-slate-400">Cancellations</div>
             </CardContent>
           </Card>
@@ -288,7 +288,7 @@ export const SubscriptionChangesView: React.FC = () => {
                       {change.proration_amount !== 0 && (
                         <span
                           className={
-                            change.proration_amount > 0 ? 'text-green-400' : 'text-rose-400'
+                            change.proration_amount > 0 ? 'text-green-400' : 'text-danger-400'
                           }
                         >
                           Proration: {formatCurrency(change.proration_amount)}
@@ -307,7 +307,7 @@ export const SubscriptionChangesView: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleReject(change.id)}
-                        className="px-3 py-1.5 text-sm bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors"
+                        className="px-3 py-1.5 text-sm bg-danger-600 text-white rounded hover:bg-danger-700 transition-colors"
                       >
                         Reject
                       </button>

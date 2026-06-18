@@ -57,7 +57,7 @@ const OUTCOME_COLORS: Record<string, string> = {
   trial_started: 'bg-blue-500',
   question_answered: 'bg-slate-400',
   escalated: 'bg-amber-500',
-  abandoned: 'bg-rose-400',
+  abandoned: 'bg-danger-400',
   unknown: 'bg-slate-300',
 };
 

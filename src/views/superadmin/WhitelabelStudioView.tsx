@@ -334,7 +334,7 @@ export const WhitelabelStudioView: React.FC = () => {
                         : 'faviconUrl';
                 updateField(urlField, undefined);
               }}
-              className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center"
+              className="absolute -top-2 -right-2 w-5 h-5 bg-danger-500 text-white rounded-full flex items-center justify-center"
             >
               <Trash2 size={10} />
             </button>
@@ -813,7 +813,7 @@ export const WhitelabelStudioView: React.FC = () => {
                 branding.customDomainSslStatus === 'active'
                   ? 'bg-emerald-500/10 text-emerald-600'
                   : branding.customDomainSslStatus === 'failed'
-                    ? 'bg-rose-500/10 text-rose-600'
+                    ? 'bg-danger-500/10 text-danger-600'
                     : 'bg-amber-500/10 text-amber-600'
               }`}
             >
@@ -873,7 +873,7 @@ export const WhitelabelStudioView: React.FC = () => {
                           e.stopPropagation();
                           handleDelete(org.id);
                         }}
-                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-colors"
+                        className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-danger-500 transition-colors"
                         title="Reset to defaults"
                       >
                         <Trash2 size={16} />
@@ -961,7 +961,7 @@ export const WhitelabelStudioView: React.FC = () => {
           className={`p-4 rounded-lg border ${
             message.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-              : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400'
+              : 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/20 text-danger-700 dark:text-danger-400'
           }`}
         >
           <div className="flex items-center gap-2">

@@ -280,7 +280,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
 
       <div className="pt-4 border-t border-white/10 flex justify-end">
         {actionError && (
-          <div role="alert" className="mr-auto text-sm text-rose-400">
+          <div role="alert" className="mr-auto text-sm text-danger-400">
             {actionError}
           </div>
         )}
@@ -432,7 +432,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                       <td className="p-3 text-white font-medium">{formatMoney(inv.amount_due)}</td>
                       <td className="p-3">
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${inv.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-rose-500/20 text-rose-400'}`}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${inv.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-danger-500/20 text-danger-400'}`}
                         >
                           {inv.status}
                         </span>

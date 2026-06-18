@@ -14,7 +14,7 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
 const postureTone = (value: number, warningThreshold: number, criticalThreshold: number) => {
-  if (value >= criticalThreshold) return 'text-rose-600 dark:text-rose-400';
+  if (value >= criticalThreshold) return 'text-danger-600 dark:text-danger-400';
   if (value >= warningThreshold) return 'text-amber-600 dark:text-amber-400';
   return 'text-emerald-600 dark:text-emerald-400';
 };
@@ -116,7 +116,7 @@ export const GlobalSecurityPostureView: React.FC = () => {
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-                <ShieldAlert className="h-4 w-4 text-rose-500" />
+                <ShieldAlert className="h-4 w-4 text-danger-500" />
                 Audit debt
               </div>
               <div

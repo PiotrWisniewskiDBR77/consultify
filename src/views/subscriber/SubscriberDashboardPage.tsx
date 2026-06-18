@@ -409,7 +409,7 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
             aria-describedby="subscriber-token-help"
           />
           {showInvalidHint && (
-            <p role="status" className="text-xs text-rose-600 dark:text-rose-300">
+            <p role="status" className="text-xs text-danger-600 dark:text-danger-300">
               {COPY.invalidTokenInline}
             </p>
           )}
@@ -539,7 +539,7 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
           role="status"
           className={`mt-3 flex items-start gap-2 rounded-md border p-3 text-xs ${
             overdue
-              ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-200'
+              ? 'border-danger-200 bg-danger-50 text-danger-800 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-200'
               : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
           }`}
         >
@@ -622,7 +622,7 @@ interface DeliveryStatProps {
 
 const STAT_TONE: Record<DeliveryStatProps['tone'], string> = {
   emerald: 'text-emerald-700 dark:text-emerald-300',
-  rose: 'text-rose-700 dark:text-rose-300',
+  rose: 'text-danger-700 dark:text-danger-300',
   slate: 'text-slate-700 dark:text-slate-200',
   sky: 'text-sky-700 dark:text-sky-300',
 };
@@ -676,9 +676,9 @@ interface ErrorViewProps {
 const ERROR_TONE: Record<SubscriberFetchStatus, string> = {
   ok: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200',
   unauthorized:
-    'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-200',
+    'border-danger-200 bg-danger-50 text-danger-800 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-200',
   forbidden:
-    'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-200',
+    'border-danger-200 bg-danger-50 text-danger-800 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-200',
   rate_limited:
     'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
   storage_unavailable:

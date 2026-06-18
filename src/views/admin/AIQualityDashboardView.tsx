@@ -239,7 +239,7 @@ const AIQualityDashboardView: React.FC = () => {
               trend === 'up'
                 ? 'text-green-500'
                 : trend === 'down'
-                  ? 'text-rose-500'
+                  ? 'text-danger-500'
                   : 'text-slate-400'
             }`}
           >
@@ -442,7 +442,7 @@ const AIQualityDashboardView: React.FC = () => {
                   <span className="font-medium">{metrics?.positiveFeedback ?? 0}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-rose-500 flex items-center gap-1">
+                  <span className="text-danger-500 flex items-center gap-1">
                     <ThumbsDown size={14} /> Negatywne
                   </span>
                   <span className="font-medium">{metrics?.negativeFeedback ?? 0}</span>
@@ -524,7 +524,7 @@ const AIQualityDashboardView: React.FC = () => {
                         className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                           item.rating > 0 || item.feedback_type === 'HELPFUL'
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                            : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                            : 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
                         }`}
                       >
                         {item.rating > 0 || item.feedback_type === 'HELPFUL' ? (
@@ -646,7 +646,7 @@ const AIQualityDashboardView: React.FC = () => {
                                 ? 'bg-green-500'
                                 : pattern.confidence_score >= 0.5
                                   ? 'bg-yellow-500'
-                                  : 'bg-rose-500'
+                                  : 'bg-danger-500'
                             }`}
                             style={{ width: `${pattern.confidence_score * 100}%` }}
                           />
@@ -681,7 +681,7 @@ const AIQualityDashboardView: React.FC = () => {
                             </button>
                             <button
                               onClick={() => updatePatternStatus(pattern.id, 'rejected')}
-                              className="text-xs text-rose-600 hover:text-rose-500"
+                              className="text-xs text-danger-600 hover:text-danger-500"
                             >
                               Odrzuć
                             </button>
@@ -753,7 +753,7 @@ const AIQualityDashboardView: React.FC = () => {
                             ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
                             : parseFloat(ctx.satisfactionRate || '0') >= 50
                               ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                              : 'bg-danger-100 text-danger-600 dark:bg-danger-900/30 dark:text-danger-400'
                         }`}
                       >
                         {ctx.satisfactionRate ? `${ctx.satisfactionRate}%` : '-'}

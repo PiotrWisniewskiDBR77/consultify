@@ -142,7 +142,7 @@ function statusBannerForFetch(status: TemplateGovernanceFetchStatus): {
     };
   }
   return {
-    tone: 'bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:border-rose-700',
+    tone: 'bg-danger-50 text-danger-900 border-danger-200 dark:bg-danger-500/10 dark:text-danger-200 dark:border-danger-700',
     icon: <AlertTriangle size={16} />,
     title: 'Could not load template governance data',
     body: 'A transient error occurred. Refresh to retry.',
@@ -760,7 +760,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
           {ACTION_HINT[modal.action]}
         </p>
         <label className="mt-3 block text-xs font-medium text-slate-700 dark:text-slate-200">
-          Reason {reasonRequired ? <span className="text-rose-600">*</span> : null}
+          Reason {reasonRequired ? <span className="text-danger-600">*</span> : null}
         </label>
         <textarea
           className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
@@ -771,14 +771,14 @@ const ActionModal: React.FC<ActionModalProps> = ({
           placeholder={reasonRequired ? 'Required — explain replacement / risk' : 'Optional'}
         />
         <div className="mt-1 flex items-center justify-between text-[11px]">
-          <span className={`${overLimit ? 'text-rose-600' : 'text-slate-500 dark:text-slate-400'}`}>
+          <span className={`${overLimit ? 'text-danger-600' : 'text-slate-500 dark:text-slate-400'}`}>
             {reason.length}/{REASON_MAX}
           </span>
         </div>
         {error ? (
           <div
             role="alert"
-            className="mt-3 flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
+            className="mt-3 flex items-start gap-2 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-xs text-danger-900 dark:border-danger-700 dark:bg-danger-500/10 dark:text-danger-200"
           >
             <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
             <span>{error}</span>

@@ -345,7 +345,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     <div
                       className={`h-2 rounded-full ${
                         usagePercent > 80
-                          ? 'bg-rose-500'
+                          ? 'bg-danger-500'
                           : usagePercent > 60
                             ? 'bg-amber-500'
                             : 'bg-green-500'
@@ -455,7 +455,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     </button>
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
-                      className="p-2 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600"
+                      className="p-2 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -574,7 +574,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                         <button
                           type="button"
                           onClick={() => removeEmailField(idx)}
-                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
+                          className="p-2 text-danger-500 hover:bg-danger-50 rounded-lg"
                         >
                           <Trash2 size={16} />
                         </button>

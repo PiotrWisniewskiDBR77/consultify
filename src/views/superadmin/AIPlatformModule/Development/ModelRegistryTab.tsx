@@ -413,7 +413,7 @@ export const ModelRegistryTab: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`text-sm ${model.successRate >= 99 ? 'text-emerald-500' : model.successRate >= 95 ? 'text-amber-500' : 'text-rose-500'}`}
+                        className={`text-sm ${model.successRate >= 99 ? 'text-emerald-500' : model.successRate >= 95 ? 'text-amber-500' : 'text-danger-500'}`}
                       >
                         {model.successRate.toFixed(1)}%
                       </span>

@@ -807,7 +807,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       {error && (
         <div
-          className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20"
+          className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm justify-center bg-danger-50 dark:bg-danger-500/10 p-3 rounded border border-danger-200 dark:border-danger-500/20"
           role="alert"
           aria-live="assertive"
         >
@@ -973,7 +973,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         {error && (
           <div
-            className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20 mt-4"
+            className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm justify-center bg-danger-50 dark:bg-danger-500/10 p-3 rounded border border-danger-200 dark:border-danger-500/20 mt-4"
             role="alert"
             aria-live="assertive"
           >
@@ -1156,7 +1156,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         {error && (
           <div
-            className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-500/10 p-3 rounded border border-rose-200 dark:border-rose-500/20"
+            className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm justify-center bg-danger-50 dark:bg-danger-500/10 p-3 rounded border border-danger-200 dark:border-danger-500/20"
             role="alert"
             aria-live="assertive"
           >

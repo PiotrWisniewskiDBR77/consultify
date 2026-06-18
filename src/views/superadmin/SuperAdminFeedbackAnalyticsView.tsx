@@ -173,7 +173,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
     return (
       <div
         role="alert"
-        className="p-4 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded"
+        className="p-4 text-sm text-danger-700 bg-danger-50 border border-danger-200 rounded"
       >
         {error}
       </div>
@@ -226,7 +226,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
       'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800',
     amber:
       'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
-    rose: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800',
+    rose: 'bg-danger-50 text-danger-700 border-danger-200 dark:bg-danger-900/30 dark:text-danger-300 dark:border-danger-800',
   };
 
   return (
@@ -272,7 +272,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
               { label: '< 24h', value: data.aging.under24h, color: 'bg-emerald-500' },
               { label: '24–48h', value: data.aging.h24_48, color: 'bg-amber-500' },
               { label: '2–7d', value: data.aging.d2_7, color: 'bg-amber-500' },
-              { label: '> 7d', value: data.aging.over7d, color: 'bg-rose-500' },
+              { label: '> 7d', value: data.aging.over7d, color: 'bg-danger-500' },
             ].map((bucket) => {
               const total =
                 data.aging.under24h + data.aging.h24_48 + data.aging.d2_7 + data.aging.over7d || 1;

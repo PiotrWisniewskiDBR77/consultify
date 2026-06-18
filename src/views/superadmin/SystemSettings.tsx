@@ -297,7 +297,7 @@ export const SystemSettings: React.FC = () => {
         onClick={() => setActiveTab('ADVANCED')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           activeTab === 'ADVANCED'
-            ? 'bg-rose-600/80 text-white'
+            ? 'bg-danger-600/80 text-white'
             : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
         }`}
       >
@@ -619,7 +619,7 @@ export const SystemSettings: React.FC = () => {
       </div>
 
       {adminsLoadError && (
-        <div className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">
+        <div className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300">
           {adminsLoadError}
         </div>
       )}
@@ -663,7 +663,7 @@ export const SystemSettings: React.FC = () => {
                       className={`flex items-center gap-1.5 ${
                         admin.status === 'active'
                           ? 'text-emerald-700 dark:text-emerald-400'
-                          : 'text-rose-700 dark:text-rose-400'
+                          : 'text-danger-700 dark:text-danger-400'
                       }`}
                     >
                       {admin.status === 'active' ? <Check size={14} /> : <AlertCircle size={14} />}
@@ -677,7 +677,7 @@ export const SystemSettings: React.FC = () => {
                     <button
                       onClick={() => handleDeleteAdmin(admin.id)}
                       disabled={savingAdmin}
-                      className="p-1.5 hover:bg-rose-500/20 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors disabled:opacity-60"
+                      className="p-1.5 hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors disabled:opacity-60"
                       title="Remove Admin"
                     >
                       <Trash2 size={16} />
@@ -939,7 +939,7 @@ export const SystemSettings: React.FC = () => {
                           log.action === 'created'
                             ? 'bg-emerald-500/20 text-emerald-400'
                             : log.action === 'deleted'
-                              ? 'bg-rose-500/20 text-rose-400'
+                              ? 'bg-danger-500/20 text-danger-400'
                               : log.action === 'updated'
                                 ? 'bg-blue-500/20 text-blue-400'
                                 : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
@@ -995,11 +995,11 @@ export const SystemSettings: React.FC = () => {
           title="Database viewer is read-only"
           description="This surface can inspect selected tables only. Inline edits and destructive actions are intentionally unavailable here."
         />
-        <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="text-rose-400 shrink-0 mt-0.5" size={20} />
+        <div className="bg-danger-500/10 border border-danger-500/30 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="text-danger-400 shrink-0 mt-0.5" size={20} />
           <div>
-            <h3 className="font-semibold text-rose-400">Advanced Database Access</h3>
-            <p className="text-sm text-rose-300/80 mt-1">
+            <h3 className="font-semibold text-danger-400">Advanced Database Access</h3>
+            <p className="text-sm text-danger-300/80 mt-1">
               Direct database access is for debugging only. Changes here bypass all validation. Use
               with extreme caution.
             </p>
@@ -1121,7 +1121,7 @@ export const SystemSettings: React.FC = () => {
       {renderTabs()}
 
       {loadError && (
-        <div className="mb-6 rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">
+        <div className="mb-6 rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300">
           {loadError}
         </div>
       )}

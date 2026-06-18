@@ -312,13 +312,13 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
   };
 
   const getBudgetStatusColor = (percentage: number) => {
-    if (percentage >= 90) return 'text-rose-400';
+    if (percentage >= 90) return 'text-danger-400';
     if (percentage >= 75) return 'text-amber-400';
     return 'text-emerald-400';
   };
 
   const getProgressBarColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-rose-500';
+    if (percentage >= 90) return 'bg-danger-500';
     if (percentage >= 75) return 'bg-amber-500';
     return 'bg-emerald-500';
   };
@@ -576,7 +576,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                       </button>
                       <button
                         onClick={() => handleDelete(center.id)}
-                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-colors"
+                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>

@@ -700,7 +700,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                         <button
                           onClick={() => handleRemoveContact(contact.id)}
                           disabled
-                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-colors"
+                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>

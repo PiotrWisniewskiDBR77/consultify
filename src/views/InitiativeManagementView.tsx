@@ -76,7 +76,7 @@ const PRIORITY_CONFIG = {
   LOW: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
   MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   HIGH: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  CRITICAL: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  CRITICAL: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
 };
 
 export const InitiativeManagementView: React.FC = () => {
@@ -532,8 +532,8 @@ export const InitiativeManagementView: React.FC = () => {
                   <MessageSquare className="text-amber-600 dark:text-amber-400" size={24} />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-                  <AlertTriangle className="text-rose-600 dark:text-rose-400" size={24} />
+                <div className="w-12 h-12 rounded-full bg-danger-100 dark:bg-danger-900/30 flex items-center justify-center">
+                  <AlertTriangle className="text-danger-600 dark:text-danger-400" size={24} />
                 </div>
               )}
               <div>
@@ -588,7 +588,7 @@ export const InitiativeManagementView: React.FC = () => {
                     ? 'bg-green-600 hover:bg-green-500'
                     : reviewAction === 'changes'
                       ? 'bg-amber-600 hover:bg-amber-500'
-                      : 'bg-rose-600 hover:bg-rose-500'
+                      : 'bg-danger-600 hover:bg-danger-500'
                 }`}
               >
                 {reviewAction === 'approve'

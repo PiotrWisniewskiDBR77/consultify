@@ -185,7 +185,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         </div>
         {change !== undefined && (
           <div
-            className={`flex items-center gap-1 text-sm ${change >= 0 ? 'text-green-500' : 'text-rose-500'}`}
+            className={`flex items-center gap-1 text-sm ${change >= 0 ? 'text-green-500' : 'text-danger-500'}`}
           >
             {change >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
             {Math.abs(change)}%
@@ -205,7 +205,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-danger-500 mx-auto mb-4" />
           <p className="text-slate-600 dark:text-slate-400">{error}</p>
           <button
             onClick={fetchData}
@@ -412,7 +412,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         {/* Needs Improvement */}
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <ThumbsDown size={20} className="text-rose-500" />
+            <ThumbsDown size={20} className="text-danger-500" />
             {t.needsImprovement[lang]}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -424,7 +424,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             {data.feedbackSummary?.needsImprovement?.map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 px-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg"
+                className="flex items-center justify-between py-2 px-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg"
               >
                 <div>
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -433,7 +433,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                   <p className="text-xs text-slate-500 dark:text-slate-400">{item.content_type}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-rose-600">{item.helpfulness_rate}%</p>
+                  <p className="text-sm font-medium text-danger-600">{item.helpfulness_rate}%</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {item.feedback_count} feedback
                   </p>
@@ -510,7 +510,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  comment.is_helpful ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'
+                  comment.is_helpful ? 'bg-green-100 text-green-600' : 'bg-danger-100 text-danger-600'
                 }`}
               >
                 {comment.is_helpful ? <ThumbsUp size={16} /> : <ThumbsDown size={16} />}

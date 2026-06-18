@@ -477,7 +477,7 @@ export const AdminAnalyticsView: React.FC = () => {
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         idea.priority === 'high'
-                          ? 'bg-rose-500/20 text-rose-400'
+                          ? 'bg-danger-500/20 text-danger-400'
                           : idea.priority === 'medium'
                             ? 'bg-amber-500/20 text-amber-400'
                             : 'bg-emerald-500/20 text-emerald-400'
@@ -505,7 +505,7 @@ export const AdminAnalyticsView: React.FC = () => {
                         <ThumbsUp className="w-4 h-4" />
                       </button>
                       <button
-                        className="p-2 hover:bg-rose-500/20 rounded-lg text-rose-400 transition-colors"
+                        className="p-2 hover:bg-danger-500/20 rounded-lg text-danger-400 transition-colors"
                         title="Reject"
                       >
                         <ThumbsDown className="w-4 h-4" />
@@ -571,7 +571,7 @@ export const AdminAnalyticsView: React.FC = () => {
                     <div
                       className={`mt-1 p-2 rounded-lg mr-4 ${
                         obs.category === 'anomaly'
-                          ? 'bg-rose-500/20 text-rose-400'
+                          ? 'bg-danger-500/20 text-danger-400'
                           : obs.category === 'insight'
                             ? 'bg-primary-500/20 text-primary-400'
                             : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'

@@ -135,7 +135,7 @@ export const PaymentMethodsView: React.FC = () => {
       pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
       retrying: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
       resolved: { bg: 'bg-green-500/20', text: 'text-green-400' },
-      failed: { bg: 'bg-rose-500/20', text: 'text-rose-400' },
+      failed: { bg: 'bg-danger-500/20', text: 'text-danger-400' },
       recovered: { bg: 'bg-green-500/20', text: 'text-green-400' },
     };
     const badge = badges[safe] || {
@@ -181,11 +181,11 @@ export const PaymentMethodsView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-rose-500/20 border border-rose-500 text-rose-300 px-4 py-3 rounded-lg">
+        <div className="bg-danger-500/20 border border-danger-500 text-danger-300 px-4 py-3 rounded-lg">
           {error}
           <button
             onClick={() => setError(null)}
-            className="float-right text-rose-300 hover:text-rose-100"
+            className="float-right text-danger-300 hover:text-danger-100"
           >
             ×
           </button>
@@ -217,7 +217,7 @@ export const PaymentMethodsView: React.FC = () => {
           </Card>
           <Card>
             <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-rose-400">{stats.totalFailures}</div>
+              <div className="text-2xl font-bold text-danger-400">{stats.totalFailures}</div>
               <div className="text-sm text-slate-600 dark:text-slate-400">Total Failures</div>
             </CardContent>
           </Card>
@@ -314,7 +314,7 @@ export const PaymentMethodsView: React.FC = () => {
                       </div>
                       <button
                         onClick={() => handleDeleteMethod(method.id)}
-                        className="px-3 py-1.5 text-sm bg-rose-600/20 text-rose-400 rounded hover:bg-rose-600/30 transition-colors"
+                        className="px-3 py-1.5 text-sm bg-danger-600/20 text-danger-400 rounded hover:bg-danger-600/30 transition-colors"
                       >
                         Remove
                       </button>
@@ -346,7 +346,7 @@ export const PaymentMethodsView: React.FC = () => {
                   key={failure.id}
                   className={`p-4 rounded-lg border ${
                     failure.status === 'pending' || failure.status === 'retrying'
-                      ? 'bg-rose-900/20 border-rose-800'
+                      ? 'bg-danger-900/20 border-danger-800'
                       : 'bg-slate-50 dark:bg-navy-950/20 border-slate-200 dark:border-navy-700'
                   }`}
                 >
@@ -363,7 +363,7 @@ export const PaymentMethodsView: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <div className="mt-2 text-sm text-rose-400">
+                      <div className="mt-2 text-sm text-danger-400">
                         <strong>Reason:</strong> {failure.failure_reason}
                       </div>
                       {failure.failure_code && (

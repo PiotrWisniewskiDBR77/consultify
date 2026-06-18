@@ -410,7 +410,7 @@ export const ProcessAutomationView: React.FC = () => {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => removeStep(step.id)}
-                        className="p-1 text-slate-600 hover:text-rose-500 transition-colors"
+                        className="p-1 text-slate-600 hover:text-danger-500 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

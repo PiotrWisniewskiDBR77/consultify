@@ -343,7 +343,7 @@ const CustomerAutomationView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+          className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -501,7 +501,7 @@ const CustomerAutomationView: React.FC = () => {
                 </p>
 
                 {createError && (
-                  <div className="mb-4 text-sm bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-300 rounded-lg px-3 py-2">
+                  <div className="mb-4 text-sm bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-900/30 text-danger-700 dark:text-danger-300 rounded-lg px-3 py-2">
                     {createError}
                   </div>
                 )}
@@ -629,7 +629,7 @@ const CustomerAutomationView: React.FC = () => {
                     <button
                       onClick={() => handleDeleteRule(selectedRule.id)}
                       disabled={deleteSubmitting}
-                      className="px-3 py-2 text-sm rounded-lg border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 disabled:opacity-50"
+                      className="px-3 py-2 text-sm rounded-lg border border-danger-200 dark:border-danger-900/30 text-danger-700 dark:text-danger-300 hover:bg-danger-50 dark:hover:bg-danger-900/20 disabled:opacity-50"
                     >
                       {deleteSubmitting ? 'Deleting…' : 'Delete'}
                     </button>
@@ -647,7 +647,7 @@ const CustomerAutomationView: React.FC = () => {
                 </div>
 
                 {ruleError && (
-                  <div className="mt-4 text-sm bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-300 rounded-lg px-3 py-2">
+                  <div className="mt-4 text-sm bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-900/30 text-danger-700 dark:text-danger-300 rounded-lg px-3 py-2">
                     {ruleError}
                   </div>
                 )}

@@ -158,7 +158,7 @@ export const RevenueForecastView: React.FC = () => {
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return 'text-green-400';
     if (confidence >= 0.6) return 'text-yellow-400';
-    return 'text-rose-400';
+    return 'text-danger-400';
   };
 
   if (loading) {
@@ -184,11 +184,11 @@ export const RevenueForecastView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-rose-500/20 border border-rose-500 text-rose-300 px-4 py-3 rounded-lg">
+        <div className="bg-danger-500/20 border border-danger-500 text-danger-300 px-4 py-3 rounded-lg">
           {error}
           <button
             onClick={() => setError(null)}
-            className="float-right text-rose-300 hover:text-rose-100"
+            className="float-right text-danger-300 hover:text-danger-100"
           >
             ×
           </button>
@@ -327,7 +327,7 @@ export const RevenueForecastView: React.FC = () => {
                                 ? 'bg-green-500'
                                 : forecast.confidence_level >= 0.6
                                   ? 'bg-yellow-500'
-                                  : 'bg-rose-500'
+                                  : 'bg-danger-500'
                             }`}
                             style={{ width: `${forecast.confidence_level * 100}%` }}
                           />
@@ -345,7 +345,7 @@ export const RevenueForecastView: React.FC = () => {
                     <td className="py-3 px-4 text-center">
                       <button
                         onClick={() => handleDeleteForecast(forecast.id)}
-                        className="px-2 py-1 text-xs bg-rose-600/20 text-rose-400 rounded hover:bg-rose-600/30 transition-colors"
+                        className="px-2 py-1 text-xs bg-danger-600/20 text-danger-400 rounded hover:bg-danger-600/30 transition-colors"
                       >
                         Delete
                       </button>

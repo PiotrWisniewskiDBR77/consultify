@@ -482,7 +482,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       case 'active':
         return 'text-emerald-700 dark:text-emerald-400';
       case 'blocked':
-        return 'text-rose-700 dark:text-rose-400';
+        return 'text-danger-700 dark:text-danger-400';
       case 'pending':
         return 'text-amber-700 dark:text-yellow-400';
       default:
@@ -533,7 +533,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       {actionError && (
         <div
           role="alert"
-          className="mb-6 rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+          className="mb-6 rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -750,7 +750,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                               <button
                                 onClick={cancelInlineEdit}
                                 disabled={processingId === org.id}
-                                className="p-1.5 bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 rounded transition-colors disabled:opacity-60"
+                                className="p-1.5 bg-danger-500/20 text-danger-400 hover:bg-danger-500/30 rounded transition-colors disabled:opacity-60"
                                 title="Cancel"
                               >
                                 <X size={16} />
@@ -784,7 +784,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                               <button
                                 onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
                                 disabled={processingId === org.id}
-                                className="p-1.5 hover:bg-rose-500/20 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors disabled:opacity-60"
+                                className="p-1.5 hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors disabled:opacity-60"
                                 title="Delete"
                               >
                                 <Trash2 size={16} />
@@ -866,7 +866,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                           req.status === 'approved'
                             ? 'bg-emerald-500/20 text-emerald-400'
                             : req.status === 'rejected'
-                              ? 'bg-rose-500/20 text-rose-400'
+                              ? 'bg-danger-500/20 text-danger-400'
                               : 'bg-yellow-500/20 text-yellow-400'
                         }`}
                       >
@@ -887,7 +887,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                           <button
                             onClick={() => handleReject(req.id)}
                             disabled={processingId === req.id}
-                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded transition-colors disabled:opacity-50"
+                            className="p-1.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 rounded transition-colors disabled:opacity-50"
                             title="Reject"
                           >
                             <XCircle size={18} />
@@ -895,7 +895,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                         </div>
                       )}
                       {req.status === 'rejected' && req.rejection_reason && (
-                        <span className="text-xs text-rose-400 italic">
+                        <span className="text-xs text-danger-400 italic">
                           Reason: {req.rejection_reason}
                         </span>
                       )}
@@ -1002,7 +1002,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                         <button
                           onClick={() => handleDeactivateCode(code.id)}
                           disabled={processingId === code.id}
-                          className="text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-50"
+                          className="text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-colors disabled:opacity-50"
                           title="Deactivate code"
                         >
                           <XCircle size={16} />

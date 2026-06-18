@@ -244,7 +244,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
       case 'basic':
         return 'text-yellow-600';
       default:
-        return 'text-rose-600';
+        return 'text-danger-600';
     }
   };
 
@@ -552,7 +552,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
       </header>
       <div className="max-w-3xl mx-auto py-6">
         {error && (
-          <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 rounded-lg text-sm">
             {error}
           </div>
         )}

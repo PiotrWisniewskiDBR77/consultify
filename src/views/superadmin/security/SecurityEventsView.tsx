@@ -124,7 +124,7 @@ export const SecurityEventsView: React.FC = () => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'bg-rose-500/10 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border-rose-500/30';
+        return 'bg-danger-500/10 text-danger-700 dark:bg-danger-500/20 dark:text-danger-400 border-danger-500/30';
       case 'high':
         return 'bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border-amber-500/30';
       case 'medium':
@@ -186,7 +186,7 @@ export const SecurityEventsView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+          className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
         </div>

@@ -370,7 +370,7 @@ const ThreatIntelligenceView: React.FC = () => {
     switch (level) {
       case 'CRITICAL':
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-rose-600/20 text-rose-400 rounded text-xs font-medium">
+          <span className="flex items-center gap-1 px-2 py-1 bg-danger-600/20 text-danger-400 rounded text-xs font-medium">
             <AlertCircle className="w-3 h-3" />
             CRITICAL
           </span>
@@ -411,7 +411,7 @@ const ThreatIntelligenceView: React.FC = () => {
     if (safeScore >= 80) return 'text-emerald-400';
     if (safeScore >= 50) return 'text-amber-400';
     if (safeScore >= 20) return 'text-amber-400';
-    return 'text-rose-400';
+    return 'text-danger-400';
   };
 
   const getThreatTypeLabel = (type: string) => {
@@ -445,8 +445,8 @@ const ThreatIntelligenceView: React.FC = () => {
 
           <Card variant="bordered" className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-rose-500/10 rounded-lg">
-                <Lock className="w-5 h-5 text-rose-500" />
+              <div className="p-2 bg-danger-500/10 rounded-lg">
+                <Lock className="w-5 h-5 text-danger-500" />
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">Blocked</p>
@@ -457,8 +457,8 @@ const ThreatIntelligenceView: React.FC = () => {
 
           <Card variant="bordered" className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-rose-600/10 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-rose-600" />
+              <div className="p-2 bg-danger-600/10 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-danger-600" />
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
@@ -507,11 +507,11 @@ const ThreatIntelligenceView: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <Card variant="bordered" className="p-4 border-rose-500/30 bg-rose-500/5">
-          <div role="alert" className="flex items-center gap-2 text-rose-400">
+        <Card variant="bordered" className="p-4 border-danger-500/30 bg-danger-500/5">
+          <div role="alert" className="flex items-center gap-2 text-danger-400">
             <AlertTriangle className="w-5 h-5" />
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-rose-300">
+            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-danger-300">
               Dismiss
             </button>
           </div>
@@ -552,7 +552,7 @@ const ThreatIntelligenceView: React.FC = () => {
           <button
             onClick={() => setShowCreateModal(true)}
             disabled={!!loadError}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-rose-500 hover:bg-rose-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-danger-500 hover:bg-danger-600 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add Threat
@@ -723,7 +723,7 @@ const ThreatIntelligenceView: React.FC = () => {
                       </td>
                       <td className="py-3 px-4">
                         {threat.isBlocked ? (
-                          <span className="px-2 py-1 bg-rose-500/10 text-rose-400 rounded text-xs">
+                          <span className="px-2 py-1 bg-danger-500/10 text-danger-400 rounded text-xs">
                             Blocked
                           </span>
                         ) : (
@@ -750,7 +750,7 @@ const ThreatIntelligenceView: React.FC = () => {
                             <button
                               onClick={() => handleBlock(threat.id)}
                               aria-label={`Block threat ${threat.id}`}
-                              className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                              className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors"
                               title="Block"
                             >
                               <Lock className="w-4 h-4" />
@@ -890,7 +890,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <button
                 onClick={handleCreate}
                 disabled={saving || (!formData.ipAddress && !formData.domain)}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-rose-500 hover:bg-rose-600 rounded-lg disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-danger-500 hover:bg-danger-600 rounded-lg disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

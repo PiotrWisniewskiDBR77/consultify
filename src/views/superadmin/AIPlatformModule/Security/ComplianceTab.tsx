@@ -203,7 +203,7 @@ export const ComplianceTab: React.FC = () => {
       case 'warning':
         return <AlertTriangle size={18} className="text-amber-500" />;
       case 'non_compliant':
-        return <XCircle size={18} className="text-rose-500" />;
+        return <XCircle size={18} className="text-danger-500" />;
       case 'not_applicable':
         return <Info size={18} className="text-slate-600" />;
     }
@@ -213,7 +213,7 @@ export const ComplianceTab: React.FC = () => {
     const styles = {
       compliant: 'bg-emerald-500/10 text-emerald-500',
       warning: 'bg-amber-500/10 text-amber-500',
-      non_compliant: 'bg-rose-500/10 text-rose-500',
+      non_compliant: 'bg-danger-500/10 text-danger-500',
       not_applicable: 'bg-slate-500/10 text-slate-600',
     };
     const labels = {
@@ -316,9 +316,9 @@ export const ComplianceTab: React.FC = () => {
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Non-Compliant</span>
-                <XCircle size={20} className="text-rose-500" />
+                <XCircle size={20} className="text-danger-500" />
               </div>
-              <div className="text-3xl font-bold text-rose-500">
+              <div className="text-3xl font-bold text-danger-500">
                 {checks.filter((c) => c.status === 'non_compliant').length}
               </div>
               <div className="text-xs text-slate-600 mt-1">Critical issues</div>

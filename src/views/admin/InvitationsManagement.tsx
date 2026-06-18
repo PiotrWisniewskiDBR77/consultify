@@ -144,7 +144,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
       case 'expired':
         return <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
       case 'revoked':
-        return <XCircle className="w-4 h-4 text-rose-500" />;
+        return <XCircle className="w-4 h-4 text-danger-500" />;
       default:
         return <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
     }
@@ -155,7 +155,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
       pending: 'bg-yellow-100 text-yellow-800',
       accepted: 'bg-green-100 text-green-800',
       expired: 'bg-gray-100 dark:bg-navy-800 text-gray-800',
-      revoked: 'bg-rose-100 text-rose-800',
+      revoked: 'bg-danger-100 text-danger-800',
     };
 
     return (
@@ -210,12 +210,12 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-2">
+        <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-lg flex items-center gap-2">
           <AlertCircle className="w-5 h-5" />
           {error}
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-rose-700 hover:text-rose-900"
+            className="ml-auto text-danger-700 hover:text-danger-900"
           >
             <XCircle className="w-4 h-4" />
           </button>
@@ -340,7 +340,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
                         </button>
                         <button
                           onClick={() => handleRevoke(invitation.id)}
-                          className="text-rose-600 hover:text-rose-900"
+                          className="text-danger-600 hover:text-danger-900"
                           title="Revoke invitation"
                         >
                           <Trash2 className="w-4 h-4 inline" />

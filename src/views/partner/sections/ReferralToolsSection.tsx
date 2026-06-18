@@ -495,8 +495,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   if (error && !tools) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="p-4 rounded-full bg-rose-500/10 mb-4">
-          <Link2 className="w-8 h-8 text-rose-400" />
+        <div className="p-4 rounded-full bg-danger-500/10 mb-4">
+          <Link2 className="w-8 h-8 text-danger-400" />
         </div>
         <p className="text-slate-600 dark:text-slate-500 mb-4">{error}</p>
         <button

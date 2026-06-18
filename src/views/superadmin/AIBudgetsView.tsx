@@ -577,7 +577,7 @@ const AIBudgetsView: React.FC = () => {
                 <div
                   className={`h-full rounded-full transition-all ${
                     budget.percentUsed >= 100
-                      ? 'bg-rose-500'
+                      ? 'bg-danger-500'
                       : budget.percentUsed >= 80
                         ? 'bg-amber-500'
                         : 'bg-navy-900'
@@ -606,7 +606,7 @@ const AIBudgetsView: React.FC = () => {
                 key={alert.id}
                 className={`flex items-center justify-between p-3 rounded-lg ${
                   alert.alertType === 'exceeded'
-                    ? 'bg-rose-500/10 border border-rose-500/30'
+                    ? 'bg-danger-500/10 border border-danger-500/30'
                     : alert.alertType === 'warning'
                       ? 'bg-amber-500/10 border border-amber-500/30'
                       : 'bg-blue-500/10 border border-blue-500/30'
@@ -616,7 +616,7 @@ const AIBudgetsView: React.FC = () => {
                   <AlertTriangle
                     className={
                       alert.alertType === 'exceeded'
-                        ? 'text-rose-400'
+                        ? 'text-danger-400'
                         : alert.alertType === 'warning'
                           ? 'text-amber-400'
                           : 'text-blue-400'
@@ -685,7 +685,7 @@ const AIBudgetsView: React.FC = () => {
       </div>
 
       {loadError && (
-        <div className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">
+        <div className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300">
           {loadError}
         </div>
       )}
@@ -742,7 +742,7 @@ const AIBudgetsView: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {budget.hardLimit && (
-                      <span className="text-xs text-rose-400 bg-rose-500/10 px-2 py-1 rounded">
+                      <span className="text-xs text-danger-400 bg-danger-500/10 px-2 py-1 rounded">
                         Hard Limit
                       </span>
                     )}
@@ -756,7 +756,7 @@ const AIBudgetsView: React.FC = () => {
                     <button
                       onClick={() => handleDeleteBudget(budget.id)}
                       aria-label={`Delete budget ${budget.id}`}
-                      className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                      className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -781,7 +781,7 @@ const AIBudgetsView: React.FC = () => {
                     <div
                       className={`h-full rounded-full transition-all ${
                         percentUsed >= 100
-                          ? 'bg-rose-500'
+                          ? 'bg-danger-500'
                           : percentUsed >= budget.warningThreshold * 100
                             ? 'bg-amber-500'
                             : 'bg-navy-900'
@@ -948,7 +948,7 @@ const AIBudgetsView: React.FC = () => {
               key={alert.id}
               className={`bg-white dark:bg-gray-800/50 border rounded-xl p-4 ${
                 alert.alertType === 'exceeded'
-                  ? 'border-rose-500/50'
+                  ? 'border-danger-500/50'
                   : alert.alertType === 'warning'
                     ? 'border-amber-500/50'
                     : 'border-slate-200 dark:border-gray-700'
@@ -959,7 +959,7 @@ const AIBudgetsView: React.FC = () => {
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                       alert.alertType === 'exceeded'
-                        ? 'bg-rose-500/20'
+                        ? 'bg-danger-500/20'
                         : alert.alertType === 'warning'
                           ? 'bg-amber-500/20'
                           : 'bg-blue-500/20'
@@ -968,7 +968,7 @@ const AIBudgetsView: React.FC = () => {
                     <AlertTriangle
                       className={
                         alert.alertType === 'exceeded'
-                          ? 'text-rose-400'
+                          ? 'text-danger-400'
                           : alert.alertType === 'warning'
                             ? 'text-amber-400'
                             : 'text-blue-400'
@@ -1083,7 +1083,7 @@ const AIBudgetsView: React.FC = () => {
                       className={`px-2 py-1 rounded text-xs ${
                         perm.isAllowed
                           ? 'bg-green-500/20 text-green-300'
-                          : 'bg-rose-500/20 text-rose-300'
+                          : 'bg-danger-500/20 text-danger-300'
                       }`}
                     >
                       {perm.isAllowed ? 'Allowed' : 'Blocked'}
@@ -1099,7 +1099,7 @@ const AIBudgetsView: React.FC = () => {
                     <button
                       onClick={() => handleDeleteModelPermission(perm.id)}
                       aria-label={`Delete model permission ${perm.id}`}
-                      className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                      className="p-2 text-danger-400 hover:text-danger-300 hover:bg-danger-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -1243,7 +1243,7 @@ const AIBudgetsView: React.FC = () => {
                 <Icon size={18} />
                 {tab.label}
                 {tab.id === 'alerts' && alerts.length > 0 && (
-                  <span className="px-1.5 py-0.5 bg-rose-500 text-white text-xs rounded-full">
+                  <span className="px-1.5 py-0.5 bg-danger-500 text-white text-xs rounded-full">
                     {alerts.length}
                   </span>
                 )}
@@ -1256,7 +1256,7 @@ const AIBudgetsView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>

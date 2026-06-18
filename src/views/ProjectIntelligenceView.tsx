@@ -817,7 +817,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
             title="Delete insight"
           >
             <Trash2 size={18} />

@@ -132,7 +132,7 @@ export const WorkerPreviewPanel: React.FC<WorkerPreviewPanelProps> = ({
       </section>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300">
+        <div className="rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300">
           {error}
         </div>
       )}

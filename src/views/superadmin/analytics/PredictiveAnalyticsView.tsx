@@ -79,7 +79,7 @@ const ACCURACY_TEXT_CLASS: Record<string, string> = {
   gray: 'text-slate-600 dark:text-slate-400',
   green: 'text-emerald-600 dark:text-emerald-400',
   yellow: 'text-yellow-600 dark:text-yellow-400',
-  red: 'text-rose-600 dark:text-rose-400',
+  red: 'text-danger-600 dark:text-danger-400',
 };
 
 const PredictiveAnalyticsView: React.FC = () => {
@@ -287,17 +287,17 @@ const PredictiveAnalyticsView: React.FC = () => {
 
       {/* Error Banner */}
       {error && (
-        <div className="flex items-center justify-between p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-danger-500/10 border border-danger-500/30 rounded-xl">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-rose-400" />
-            <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
+            <AlertTriangle className="w-5 h-5 text-danger-400" />
+            <span className="text-sm text-danger-700 dark:text-danger-300">{error}</span>
           </div>
           <button
             onClick={() => {
               setError(null);
               fetchModels();
             }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-sm rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-danger-600 hover:bg-danger-700 text-white text-sm rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Retry
@@ -428,7 +428,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDeleteModel(selectedModel.id)}
-                      className="p-2 text-rose-400 hover:bg-rose-600/20 rounded-lg transition-colors"
+                      className="p-2 text-danger-400 hover:bg-danger-600/20 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

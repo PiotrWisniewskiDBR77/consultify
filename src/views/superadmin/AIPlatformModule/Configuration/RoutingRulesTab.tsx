@@ -572,7 +572,7 @@ export const RoutingRulesTab: React.FC = () => {
           {actionError ? (
             <div
               role="alert"
-              className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+              className="rounded-xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
             >
               {actionError}
             </div>
@@ -717,7 +717,7 @@ export const RoutingRulesTab: React.FC = () => {
                       </button>
                       <button
                         onClick={() => deleteRuleQuick(rule)}
-                        className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-rose-500/20 hover:text-rose-500 transition-colors"
+                        className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-danger-500/20 hover:text-danger-500 transition-colors"
                         title="Delete"
                       >
                         <Trash2 size={16} />

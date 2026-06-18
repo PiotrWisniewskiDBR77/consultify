@@ -366,10 +366,10 @@ export const PartnerProgramConfig: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-4">
+        <div className="bg-danger-500/10 border border-danger-500/30 rounded-xl p-4">
           <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-rose-400" />
-            <span className="text-rose-300">{error}</span>
+            <AlertCircle className="w-5 h-5 text-danger-400" />
+            <span className="text-danger-300">{error}</span>
           </div>
         </div>
       )}

@@ -651,7 +651,7 @@ export const APIManagementView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
+          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -818,7 +818,7 @@ export const APIManagementView: React.FC = () => {
                           Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-600">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-danger-500/10 text-danger-600">
                           <XCircle size={12} />
                           Revoked
                         </span>
@@ -847,10 +847,10 @@ export const APIManagementView: React.FC = () => {
                           <button
                             onClick={() => setKeyPendingRevoke(key)}
                             aria-label={`Revoke API key ${key.id}`}
-                            className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                            className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
                             title="Revoke Key"
                           >
-                            <Trash2 size={16} className="text-rose-400" />
+                            <Trash2 size={16} className="text-danger-400" />
                           </button>
                         )}
                       </div>
@@ -908,7 +908,7 @@ export const APIManagementView: React.FC = () => {
                 <div className="text-sm text-slate-500 dark:text-slate-400">Avg Response Time</div>
               </div>
               <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-lg">
-                <div className="text-2xl font-bold text-rose-600">
+                <div className="text-2xl font-bold text-danger-600">
                   {formatInteger(usageData.totals?.total_errors)}
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">Errors</div>
@@ -933,7 +933,7 @@ export const APIManagementView: React.FC = () => {
                               ? 'bg-emerald-500/10 text-emerald-600'
                               : ep.method === 'PUT'
                                 ? 'bg-amber-500/10 text-amber-600'
-                                : 'bg-rose-500/10 text-rose-600'
+                                : 'bg-danger-500/10 text-danger-600'
                         }`}
                       >
                         {ep.method}
@@ -1083,7 +1083,7 @@ export const APIManagementView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleRevokeKey(keyPendingRevoke.id)}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
+                className="rounded-lg bg-danger-600 px-4 py-2 text-sm font-medium text-white hover:bg-danger-700"
               >
                 Revoke Key
               </button>

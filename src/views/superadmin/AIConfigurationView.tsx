@@ -87,7 +87,7 @@ const AI_CAPABILITIES = [
     icon: Sparkles,
     description: 'Deep analysis with chain-of-thought',
     promptKey: 'system_max_reasoner',
-    color: 'from-rose-500 to-rose-600',
+    color: 'from-danger-500 to-danger-600',
   },
   {
     id: 'coach',
@@ -657,7 +657,7 @@ Help leaders develop change management competencies.`,
               )}
 
               {ollamaConnected === false && (
-                <p className="text-rose-400 text-sm">
+                <p className="text-danger-400 text-sm">
                   Unable to connect. Make sure Ollama is running.
                 </p>
               )}
@@ -770,7 +770,7 @@ Help leaders develop change management competencies.`,
                               </button>
                               <button
                                 onClick={() => handleDeleteProvider(p.id)}
-                                className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
+                                className="p-2 hover:bg-danger-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-danger-400"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -1161,7 +1161,7 @@ Help leaders develop change management competencies.`,
                     title="Security & Privacy"
                     description="PII detection, encryption, and data residency"
                     icon={Lock}
-                    iconColor="text-rose-400"
+                    iconColor="text-danger-400"
                   >
                     <div className="space-y-4">
                       <div>

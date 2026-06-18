@@ -625,7 +625,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-rose-400 transition-colors">
+                      <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-danger-400 transition-colors">
                         <Trash2 size={16} />
                       </button>
                     </div>

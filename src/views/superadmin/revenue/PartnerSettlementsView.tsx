@@ -705,7 +705,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </button>
                     )}
                     <button
-                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
+                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors"
                       title="Reject"
                     >
                       <XCircle className="w-5 h-5" />
@@ -859,7 +859,7 @@ export const PartnerSettlementsView: React.FC = () => {
                             <button
                               onClick={() => handleRemoveAttribution(attribution.id)}
                               disabled={processing}
-                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
+                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors"
                               title="Remove attribution"
                             >
                               <Unlink className="w-4 h-4" />
@@ -974,7 +974,7 @@ export const PartnerSettlementsView: React.FC = () => {
                           className={cn(
                             'px-2 py-1 text-xs rounded-full',
                             attr.daysRemaining <= 7
-                              ? 'bg-rose-500/20 text-rose-400'
+                              ? 'bg-danger-500/20 text-danger-400'
                               : attr.daysRemaining <= 14
                                 ? 'bg-amber-500/20 text-amber-400'
                                 : 'bg-slate-500/20 text-slate-600 dark:text-slate-500'

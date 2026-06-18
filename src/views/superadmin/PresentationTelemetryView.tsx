@@ -59,7 +59,7 @@ const TONE_MAP: Record<KpiTone, string> = {
     'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800',
   emerald:
     'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
-  rose: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800',
+  rose: 'bg-danger-50 text-danger-700 border-danger-200 dark:bg-danger-900/30 dark:text-danger-300 dark:border-danger-800',
   amber:
     'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
   slate:
@@ -355,7 +355,7 @@ const VERDICT_TONE: Record<GovernanceVerdict, string> = {
   PASS: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   PASS_WITH_P2: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
   BLOCKED_P1: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
-  BLOCKED_P0: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  BLOCKED_P0: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   INCONCLUSIVE: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 

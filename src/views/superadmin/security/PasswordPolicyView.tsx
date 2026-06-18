@@ -268,7 +268,7 @@ export const PasswordPolicyView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+          className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
         </div>

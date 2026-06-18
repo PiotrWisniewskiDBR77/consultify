@@ -256,7 +256,7 @@ const CHANGE_TYPE_CONFIG: Record<
   breaking: {
     icon: AlertTriangle,
     label: 'Breaking',
-    color: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+    color: 'bg-danger-500/20 text-danger-400 border-danger-500/30',
   },
   security: {
     icon: CheckCircle2,
@@ -350,7 +350,7 @@ function ReleaseCard({ release }: { release: Release }) {
               <span className="text-blue-400">{improvementCount} improvements</span>
             )}
             {fixCount > 0 && <span className="text-amber-400">{fixCount} fixes</span>}
-            {breakingCount > 0 && <span className="text-rose-400">{breakingCount} breaking</span>}
+            {breakingCount > 0 && <span className="text-danger-400">{breakingCount} breaking</span>}
           </div>
         </div>
 

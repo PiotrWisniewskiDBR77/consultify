@@ -335,7 +335,7 @@ const CustomRolesBuilder: React.FC = () => {
                       e.stopPropagation();
                       handleDeleteRole(role.id);
                     }}
-                    className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -455,7 +455,7 @@ const CustomRolesBuilder: React.FC = () => {
                                     </span>
                                     {perm.riskLevel === 'critical' && (
                                       <AlertTriangle
-                                        className="text-rose-400 flex-shrink-0"
+                                        className="text-danger-400 flex-shrink-0"
                                         size={14}
                                       />
                                     )}
@@ -488,7 +488,7 @@ const CustomRolesBuilder: React.FC = () => {
                   </span>
                   <div className="flex items-center gap-2">
                     {rolePermissions.some((p) => p.riskLevel === 'critical') && (
-                      <span className="flex items-center gap-1 text-xs text-rose-400">
+                      <span className="flex items-center gap-1 text-xs text-danger-400">
                         <AlertTriangle size={12} />
                         Critical permissions enabled
                       </span>
@@ -530,7 +530,7 @@ const CustomRolesBuilder: React.FC = () => {
               key={level}
               className={`px-2 py-1 text-xs rounded ${
                 level === 'critical'
-                  ? 'bg-rose-500/20 text-rose-300'
+                  ? 'bg-danger-500/20 text-danger-300'
                   : level === 'high'
                     ? 'bg-amber-500/20 text-amber-300'
                     : level === 'medium'
@@ -560,7 +560,7 @@ const CustomRolesBuilder: React.FC = () => {
                   <span
                     className={`w-2 h-2 rounded-full ${
                       perm.riskLevel === 'critical'
-                        ? 'bg-rose-400'
+                        ? 'bg-danger-400'
                         : perm.riskLevel === 'high'
                           ? 'bg-amber-400'
                           : perm.riskLevel === 'medium'
@@ -676,15 +676,15 @@ const CustomRolesBuilder: React.FC = () => {
       {loading ? (
         <LoadingState variant="spinner" className="py-12" />
       ) : loadError ? (
-        <Card className="p-6 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10">
-          <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300 font-medium">
+        <Card className="p-6 border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10">
+          <div className="flex items-center gap-2 text-danger-700 dark:text-danger-300 font-medium">
             <AlertTriangle size={18} />
             Failed to load custom roles
           </div>
-          <p className="mt-2 text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
+          <p className="mt-2 text-sm text-danger-700 dark:text-danger-300">{loadError}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-rose-800 dark:text-rose-200 rounded-lg text-sm font-medium"
+            className="mt-4 px-4 py-2 bg-danger-100 hover:bg-danger-200 dark:bg-danger-500/20 dark:hover:bg-danger-500/30 text-danger-800 dark:text-danger-200 rounded-lg text-sm font-medium"
           >
             Retry
           </button>

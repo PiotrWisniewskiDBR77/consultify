@@ -240,7 +240,7 @@ export const IPWhitelistView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+          className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -305,7 +305,7 @@ export const IPWhitelistView: React.FC = () => {
                       <button
                         onClick={() => handleRemoveIP(ip.id)}
                         aria-label={`Remove IP ${ip.ip_address}`}
-                        className="text-rose-700 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300"
+                        className="text-danger-700 hover:text-danger-800 dark:text-danger-400 dark:hover:text-danger-300"
                       >
                         <Trash2 size={18} />
                       </button>

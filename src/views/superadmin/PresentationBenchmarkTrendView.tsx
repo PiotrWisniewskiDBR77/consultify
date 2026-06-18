@@ -66,7 +66,7 @@ const STATUS_LABEL: Record<ClientDimensionTrendStatus, string> = {
 const STATUS_TONE: Record<ClientDimensionTrendStatus, string> = {
   improving: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   stable: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  regressing: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  regressing: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   inconclusive: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 

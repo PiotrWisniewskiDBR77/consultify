@@ -110,7 +110,7 @@ export const AdminMarginConfig = () => {
       </div>
 
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-lg mb-4 flex items-start gap-3 text-sm">
+        <div className="bg-danger-500/10 border border-danger-500/20 text-danger-400 p-4 rounded-lg mb-4 flex items-start gap-3 text-sm">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-bold">Error Loading Data</p>

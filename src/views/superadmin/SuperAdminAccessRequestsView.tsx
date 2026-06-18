@@ -179,7 +179,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
       case 'approved':
         return <CheckCircle className="text-green-600 dark:text-green-400" size={20} />;
       case 'rejected':
-        return <XCircle className="text-rose-600 dark:text-rose-400" size={20} />;
+        return <XCircle className="text-danger-600 dark:text-danger-400" size={20} />;
       default:
         return <Clock className="text-slate-400" size={20} />;
     }
@@ -232,7 +232,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+          className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -297,8 +297,8 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                     </div>
 
                     {request.rejection_reason && (
-                      <div className="mt-3 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/30 rounded-lg">
-                        <p className="text-sm text-rose-700 dark:text-rose-400">
+                      <div className="mt-3 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-900/30 rounded-lg">
+                        <p className="text-sm text-danger-700 dark:text-danger-400">
                           <strong>Rejection Reason:</strong> {asText(request.rejection_reason)}
                         </p>
                       </div>
@@ -325,7 +325,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                           setShowRejectDialog(true);
                         }}
                         aria-label={`Reject access request ${request.id}`}
-                        className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors flex items-center gap-2"
+                        className="px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors flex items-center gap-2"
                       >
                         <XCircle size={18} />
                         Reject
@@ -438,7 +438,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
               <button
                 onClick={handleReject}
                 disabled={processing}
-                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors font-medium disabled:opacity-60"
+                className="flex-1 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors font-medium disabled:opacity-60"
               >
                 {processing ? 'Rejecting...' : 'Reject'}
               </button>

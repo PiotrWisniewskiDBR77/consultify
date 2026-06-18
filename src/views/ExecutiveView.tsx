@@ -285,7 +285,7 @@ export const ExecutiveView: React.FC = () => {
         {/* Blockers (Top 5) */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle size={18} className="text-rose-500" />
+            <AlertTriangle size={18} className="text-danger-500" />
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">
               Top Blockers ({snapshot?.blockers.length || 0})
             </h2>
@@ -352,7 +352,7 @@ export const ExecutiveView: React.FC = () => {
         {/* Overdue Tasks (Top 5) */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Clock size={18} className="text-rose-500" />
+            <Clock size={18} className="text-danger-500" />
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">
               Overdue Tasks ({snapshot?.tasks.overdueCount || 0})
             </h2>
@@ -366,11 +366,11 @@ export const ExecutiveView: React.FC = () => {
                   key={task.id}
                   className="flex items-center gap-3 py-2 border-b border-slate-200 dark:border-navy-700 last:border-0"
                 >
-                  <AlertTriangle size={14} className="text-rose-500 flex-shrink-0" />
+                  <AlertTriangle size={14} className="text-danger-500 flex-shrink-0" />
                   <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                     {task.title}
                   </span>
-                  <span className="text-xs text-rose-400">
+                  <span className="text-xs text-danger-400">
                     Due: {new Date(task.due_date).toLocaleDateString()}
                   </span>
                 </div>
@@ -403,7 +403,7 @@ export const ExecutiveView: React.FC = () => {
                   <span
                     className={`px-2 py-0.5 rounded text-xs ${
                       initiative.status === 'BLOCKED'
-                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                        ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300'
                         : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                     }`}
                   >

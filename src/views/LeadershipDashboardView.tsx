@@ -69,7 +69,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
           {subValue && <span className="text-slate-500 dark:text-slate-400">{subValue}</span>}
           {trend && (
             <span
-              className={`flex items-center gap-0.5 ${trendUp ? 'text-green-400' : 'text-rose-400'}`}
+              className={`flex items-center gap-0.5 ${trendUp ? 'text-green-400' : 'text-danger-400'}`}
             >
               {trendUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
               {trend}
@@ -196,7 +196,7 @@ export const LeadershipDashboardView: React.FC = () => {
                 )}
                 <div className="w-px h-16 bg-white/10"></div>
                 <div className="flex flex-col gap-2">
-                  <div className="text-3xl font-bold text-rose-400">
+                  <div className="text-3xl font-bold text-danger-400">
                     {healthData?.overdueTasks || 0}
                   </div>
                   <div className="text-xs uppercase text-slate-500 dark:text-slate-400 font-bold tracking-wider">
@@ -239,7 +239,7 @@ export const LeadershipDashboardView: React.FC = () => {
                     </div>
                   </div>
                   {user.overdue_tasks > 0 && (
-                    <div className="text-rose-400 text-xs font-bold bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">
+                    <div className="text-danger-400 text-xs font-bold bg-danger-500/10 px-2 py-1 rounded border border-danger-500/20">
                       {user.overdue_tasks} Overdue
                     </div>
                   )}

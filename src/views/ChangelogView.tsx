@@ -293,8 +293,8 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 
                         {/* Breaking Changes */}
                         {release.breaking && release.breaking.length > 0 && (
-                          <div className="bg-rose-50 dark:bg-rose-900/20 rounded-lg p-4">
-                            <h4 className="text-sm font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <div className="bg-danger-50 dark:bg-danger-900/20 rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-danger-700 dark:text-danger-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                               <AlertTriangle size={16} />
                               {t.breaking[lang]}
                             </h4>
@@ -302,7 +302,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                               {release.breaking.map((item: any, i: number) => (
                                 <li
                                   key={i}
-                                  className="flex items-start gap-2 text-rose-700 dark:text-rose-300"
+                                  className="flex items-start gap-2 text-danger-700 dark:text-danger-300"
                                 >
                                   <span>•</span>
                                   {item[lang]}

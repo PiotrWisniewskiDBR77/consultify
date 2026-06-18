@@ -132,7 +132,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
     const styles = {
       paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
       pending: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-      overdue: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
+      overdue: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400',
       void: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400',
     };
 

@@ -515,7 +515,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+          className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
         </div>
@@ -714,7 +714,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                         <button
                           onClick={() => handleDeletePlaybook(selectedPlaybook.id)}
                           aria-label="Delete success playbook"
-                          className="p-2 text-rose-400 hover:bg-rose-600/20 rounded-lg transition-colors"
+                          className="p-2 text-danger-400 hover:bg-danger-600/20 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -810,7 +810,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                     action.status === 'completed'
                                       ? 'bg-green-500/20 text-green-400'
                                       : action.status === 'failed'
-                                        ? 'bg-rose-500/20 text-rose-400'
+                                        ? 'bg-danger-500/20 text-danger-400'
                                         : 'bg-yellow-500/20 text-yellow-400'
                                   }`}
                                 >
@@ -919,7 +919,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                       </div>
                       <button
                         onClick={() => removeActionFromPlaybook(idx)}
-                        className="text-rose-400 hover:text-rose-300"
+                        className="text-danger-400 hover:text-danger-300"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

@@ -390,7 +390,7 @@ export const OrgAISettingsView: React.FC = () => {
       {saveError && (
         <div
           role="alert"
-          className="mx-8 mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200"
+          className="mx-8 mt-4 rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-sm text-danger-200"
         >
           {saveError}
         </div>
@@ -620,7 +620,7 @@ export const OrgAISettingsView: React.FC = () => {
                     checked={settings.freezeOnLimit}
                     onChange={(v) => updateSetting('freezeOnLimit', v)}
                     icon={AlertTriangle}
-                    iconColor="text-rose-400"
+                    iconColor="text-danger-400"
                   />
                 </div>
               </SettingsCard>
@@ -676,7 +676,7 @@ export const OrgAISettingsView: React.FC = () => {
                   label="Voice Conversations"
                   description="Enable voice input and output for AI interactions"
                   icon={Mic}
-                  iconColor="text-rose-400"
+                  iconColor="text-danger-400"
                   checked={settings.voiceEnabled}
                   onChange={(v) => updateSetting('voiceEnabled', v)}
                 />

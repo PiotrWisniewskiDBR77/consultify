@@ -382,13 +382,13 @@ export const PerformanceMetricsTab: React.FC = () => {
 
   const getChangeIcon = (changeType: PerformanceMetric['changeType']) => {
     if (changeType === 'positive') return <TrendingUp size={14} className="text-emerald-500" />;
-    if (changeType === 'negative') return <TrendingDown size={14} className="text-rose-500" />;
+    if (changeType === 'negative') return <TrendingDown size={14} className="text-danger-500" />;
     return null;
   };
 
   const getChangeColor = (changeType: PerformanceMetric['changeType']) => {
     if (changeType === 'positive') return 'text-emerald-500';
-    if (changeType === 'negative') return 'text-rose-500';
+    if (changeType === 'negative') return 'text-danger-500';
     return 'text-slate-600';
   };
 
@@ -578,7 +578,7 @@ export const PerformanceMetricsTab: React.FC = () => {
                                 ? 'text-emerald-500'
                                 : pm.successRate >= 99
                                   ? 'text-amber-500'
-                                  : 'text-rose-500'
+                                  : 'text-danger-500'
                           }
                         >
                           {pm.successRate === null ? 'n/a' : `${pm.successRate.toFixed(2)}%`}
@@ -593,7 +593,7 @@ export const PerformanceMetricsTab: React.FC = () => {
                                 ? 'text-emerald-500'
                                 : pm.errorRate <= 0.5
                                   ? 'text-amber-500'
-                                  : 'text-rose-500'
+                                  : 'text-danger-500'
                           }
                         >
                           {pm.errorRate === null ? 'n/a' : `${pm.errorRate.toFixed(2)}%`}
@@ -629,12 +629,12 @@ export const PerformanceMetricsTab: React.FC = () => {
                         key={`${a?.provider || 'alert'}-${idx}`}
                         className={`flex items-center gap-3 p-3 rounded-lg border ${
                           isErr
-                            ? 'bg-rose-500/10 border-rose-500/20'
+                            ? 'bg-danger-500/10 border-danger-500/20'
                             : 'bg-amber-500/10 border-amber-500/20'
                         }`}
                       >
                         {isErr ? (
-                          <AlertTriangle size={16} className="text-rose-500" />
+                          <AlertTriangle size={16} className="text-danger-500" />
                         ) : (
                           <AlertTriangle size={16} className="text-amber-500" />
                         )}
@@ -650,7 +650,7 @@ export const PerformanceMetricsTab: React.FC = () => {
                         <span
                           className={`px-2 py-1 text-xs rounded ${
                             isErr
-                              ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400'
+                              ? 'bg-danger-500/20 text-danger-600 dark:text-danger-400'
                               : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
                           }`}
                         >

@@ -266,7 +266,7 @@ export const SupportTicketsView: React.FC = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-rose-500/20 text-rose-400';
+        return 'bg-danger-500/20 text-danger-400';
       case 'medium':
         return 'bg-yellow-500/20 text-yellow-400';
       case 'low':
@@ -315,7 +315,7 @@ export const SupportTicketsView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+          className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
         </div>

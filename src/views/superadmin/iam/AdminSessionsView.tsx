@@ -292,8 +292,8 @@ const AdminSessionsView: React.FC = () => {
 
           <Card variant="bordered" className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-rose-500/10 rounded-lg">
-                <ShieldX className="w-5 h-5 text-rose-500" />
+              <div className="p-2 bg-danger-500/10 rounded-lg">
+                <ShieldX className="w-5 h-5 text-danger-500" />
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">Break-glass</p>
@@ -306,11 +306,11 @@ const AdminSessionsView: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <Card variant="bordered" className="p-4 border-rose-500/30 bg-rose-500/5">
-          <div role="alert" className="flex items-center gap-2 text-rose-400">
+        <Card variant="bordered" className="p-4 border-danger-500/30 bg-danger-500/5">
+          <div role="alert" className="flex items-center gap-2 text-danger-400">
             <AlertTriangle className="w-5 h-5" />
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-rose-300">
+            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-danger-300">
               Dismiss
             </button>
           </div>
@@ -331,7 +331,7 @@ const AdminSessionsView: React.FC = () => {
           <button
             onClick={handleRevokeAll}
             disabled={!!loadError || actionLoading === 'all' || sessions.length === 0}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 rounded-lg transition-colors disabled:opacity-50"
           >
             {actionLoading === 'all' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -435,7 +435,7 @@ const AdminSessionsView: React.FC = () => {
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`text-sm ${isExpired(session.expiresAt) ? 'text-rose-400' : 'text-slate-600'}`}
+                          className={`text-sm ${isExpired(session.expiresAt) ? 'text-danger-400' : 'text-slate-600'}`}
                         >
                           {formatDate(session.expiresAt)}
                         </span>
@@ -445,7 +445,7 @@ const AdminSessionsView: React.FC = () => {
                           onClick={() => handleRevokeSession(session.id)}
                           disabled={actionLoading === session.id}
                           aria-label={`Revoke admin session ${session.id}`}
-                          className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-2 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
                           title="Revoke Session"
                         >
                           {actionLoading === session.id ? (

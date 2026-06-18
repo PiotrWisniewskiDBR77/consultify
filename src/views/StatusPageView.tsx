@@ -90,8 +90,8 @@ const STATUS_CONFIG = {
   },
   major_outage: {
     icon: XCircle,
-    color: 'text-rose-500',
-    bg: 'bg-rose-100 dark:bg-rose-900/30',
+    color: 'text-danger-500',
+    bg: 'bg-danger-100 dark:bg-danger-900/30',
     label: { en: 'Major Outage', pl: 'Poważna awaria' },
   },
   maintenance: {

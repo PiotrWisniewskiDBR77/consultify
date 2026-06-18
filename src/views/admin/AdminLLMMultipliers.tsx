@@ -227,7 +227,7 @@ export const AdminLLMMultipliers = () => {
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="p-1.5 bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 rounded border border-rose-500/20 transition-all"
+                          className="p-1.5 bg-danger-500/20 text-danger-400 hover:bg-danger-500/30 rounded border border-danger-500/20 transition-all"
                         >
                           <X size={16} />
                         </button>

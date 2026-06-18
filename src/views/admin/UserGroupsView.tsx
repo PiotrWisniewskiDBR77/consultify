@@ -67,9 +67,9 @@ const GROUP_COLORS = [
   },
   {
     id: 'rose',
-    bg: 'bg-rose-500',
-    text: 'text-rose-500',
-    light: 'bg-rose-100 dark:bg-rose-900/30',
+    bg: 'bg-danger-500',
+    text: 'text-danger-500',
+    light: 'bg-danger-100 dark:bg-danger-900/30',
   },
   {
     id: 'cyan',
@@ -525,7 +525,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                       </button>
                       <button
                         onClick={() => handleDeleteGroup(group.id)}
-                        className="p-2 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600"
+                        className="p-2 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600"
                         title="Delete group"
                       >
                         <Trash2 size={18} />

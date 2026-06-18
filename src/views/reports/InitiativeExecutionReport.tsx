@@ -75,7 +75,7 @@ const statusColors: Record<string, string> = {
   todo: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
   in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   done: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  blocked: 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300',
+  blocked: 'bg-danger-100 text-danger-700 dark:bg-danger-900 dark:text-danger-300',
 };
 
 export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps> = ({
@@ -123,7 +123,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
 
   if (error || !report) {
     return (
-      <div className="p-6 text-center text-rose-500">
+      <div className="p-6 text-center text-danger-500">
         <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
         <p>{error || 'Failed to load report'}</p>
       </div>
@@ -243,13 +243,13 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
       {report.blockers.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-rose-500" />
+            <AlertTriangle className="w-5 h-5 text-danger-500" />
             {t('reports.blockers')} ({report.blockers.length})
           </h2>
-          <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-4 space-y-3">
+          <div className="bg-danger-50 dark:bg-danger-900/20 rounded-xl p-4 space-y-3">
             {report.blockers.map((blocker, idx) => (
               <div key={idx} className="flex items-start gap-3">
-                <AlertTriangle className="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-danger-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white">{blocker.task}</div>
                   {blocker.reason && (
@@ -311,7 +311,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
                       : task.status === 'in_progress'
                         ? 'bg-blue-500'
                         : task.status === 'blocked'
-                          ? 'bg-rose-500'
+                          ? 'bg-danger-500'
                           : 'bg-gray-400'
                   }`}
                 />

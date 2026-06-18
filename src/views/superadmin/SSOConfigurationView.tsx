@@ -508,7 +508,7 @@ export const SSOConfigurationView: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
                       {config.enforceSso && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                        <span className="text-xs px-2 py-0.5 rounded bg-danger-500/10 text-danger-600 dark:text-danger-400">
                           SSO Only
                         </span>
                       )}
@@ -541,7 +541,7 @@ export const SSOConfigurationView: React.FC = () => {
                       </button>
                       <button
                         onClick={() => deleteSSOConfig(config.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 transition-colors"
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-danger-500/10 text-danger-600 hover:bg-danger-500/20 transition-colors"
                       >
                         Delete
                       </button>
@@ -579,7 +579,7 @@ export const SSOConfigurationView: React.FC = () => {
     <div className="space-y-6">
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-rose-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-danger-500 flex items-center justify-center">
             <Globe size={24} className="text-white" />
           </div>
           <div className="flex-1">
@@ -614,7 +614,7 @@ export const SSOConfigurationView: React.FC = () => {
               className={`p-4 rounded-lg border ${
                 message.type === 'success'
                   ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400'
+                  : 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/20 text-danger-700 dark:text-danger-400'
               }`}
             >
               {message.text}

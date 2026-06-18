@@ -250,7 +250,7 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-rose-500 text-sm font-medium bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border border-rose-100 dark:border-rose-500/20">
+              <div className="flex items-center gap-2 text-danger-500 text-sm font-medium bg-danger-50 dark:bg-danger-500/10 p-3 rounded-lg border border-danger-100 dark:border-danger-500/20">
                 <Info size={16} />
                 {error}
               </div>

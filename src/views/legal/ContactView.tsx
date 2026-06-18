@@ -416,7 +416,7 @@ export const ContactView: React.FC = () => {
                   </div>
 
                   {error && (
-                    <div className="mb-6 p-4 rounded-xl border border-rose-500/20 bg-rose-500/[0.08] text-rose-400 text-sm">
+                    <div className="mb-6 p-4 rounded-xl border border-danger-500/20 bg-danger-500/[0.08] text-danger-400 text-sm">
                       {error}
                     </div>
                   )}

@@ -190,10 +190,10 @@ export const BusinessCasesPage: React.FC = () => {
       <section className="bg-slate-50 px-6 py-16 dark:bg-slate-900/50">
         <motion.div {...fade} className="mx-auto max-w-7xl">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-danger-100 text-danger-600 dark:bg-danger-500/10 dark:text-danger-400">
               <Clock size={20} />
             </div>
-            <p className="text-xs font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400">
+            <p className="text-xs font-bold uppercase tracking-widest text-danger-600 dark:text-danger-400">
               The problem
             </p>
           </div>
@@ -239,7 +239,7 @@ export const BusinessCasesPage: React.FC = () => {
                   key={item.text}
                   className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-800/50"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-danger-100 text-danger-600 dark:bg-danger-500/10 dark:text-danger-400">
                     <Icon size={18} />
                   </div>
                   <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">

@@ -236,7 +236,7 @@ export function OrganizationContextWorkerOperationsPanel({
             <p
               className={
                 Number(summary.deadLetterCount || 0) > 0
-                  ? 'text-lg font-semibold text-rose-700'
+                  ? 'text-lg font-semibold text-danger-700'
                   : 'text-lg font-semibold text-slate-900 dark:text-white'
               }
             >
@@ -348,7 +348,7 @@ export function OrganizationContextWorkerOperationsPanel({
                 summary.externalWorkerHealthProbe?.status === 'healthy'
                   ? 'font-semibold text-green-700'
                   : summary.externalWorkerHealthProbe?.status === 'unhealthy'
-                    ? 'font-semibold text-rose-700'
+                    ? 'font-semibold text-danger-700'
                     : 'font-semibold text-amber-700'
               }
             >
@@ -458,7 +458,7 @@ export function OrganizationContextWorkerOperationsPanel({
             <p
               className={
                 summary.externalWorkerHealthProbe.status === 'unhealthy'
-                  ? 'col-span-2 rounded bg-rose-50 p-2 text-rose-800 dark:bg-rose-900/20 dark:text-rose-200'
+                  ? 'col-span-2 rounded bg-danger-50 p-2 text-danger-800 dark:bg-danger-900/20 dark:text-danger-200'
                   : 'col-span-2 rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300'
               }
             >

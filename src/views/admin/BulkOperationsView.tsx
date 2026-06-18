@@ -403,7 +403,7 @@ export const BulkOperationsView: React.FC = () => {
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     {field}
                     {REQUIRED_FIELDS.includes(field) && (
-                      <span className="text-rose-500 ml-1">*</span>
+                      <span className="text-danger-500 ml-1">*</span>
                     )}
                   </span>
                 </div>
@@ -555,11 +555,11 @@ export const BulkOperationsView: React.FC = () => {
           </div>
 
           {importResult.errors.length > 0 && (
-            <div className="bg-rose-50 dark:bg-rose-500/10 rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-rose-900 dark:text-rose-300 mb-2">
+            <div className="bg-danger-50 dark:bg-danger-500/10 rounded-lg p-4 mb-6">
+              <h4 className="font-medium text-danger-900 dark:text-danger-300 mb-2">
                 {importResult.failed} Failed Imports:
               </h4>
-              <ul className="text-sm text-rose-800 dark:text-rose-400 space-y-1">
+              <ul className="text-sm text-danger-800 dark:text-danger-400 space-y-1">
                 {importResult.errors.slice(0, 5).map((err, idx) => (
                   <li key={idx}>
                     Row {err.row}: {err.email || 'Unknown'} - {err.error}

@@ -406,7 +406,7 @@ const OverviewTab: React.FC = () => {
                       Number.isFinite(grossProfit)
                         ? grossProfit >= 0
                           ? 'text-emerald-400'
-                          : 'text-rose-400'
+                          : 'text-danger-400'
                         : 'text-slate-600'
                     }`}
                   >
@@ -501,7 +501,7 @@ const OverviewTab: React.FC = () => {
                       <td className="py-3 text-right text-slate-600 dark:text-slate-500">
                         {formatNumber(item.totalTokens)}
                       </td>
-                      <td className="py-3 text-right font-semibold text-rose-400">
+                      <td className="py-3 text-right font-semibold text-danger-400">
                         {safeMoney(item.cost, 'USD')}
                       </td>
                     </tr>
@@ -535,7 +535,7 @@ const OverviewTab: React.FC = () => {
                         <td colSpan={3} className="py-3 font-bold text-slate-900 dark:text-white">
                           Total Operational Cost
                         </td>
-                        <td className="py-3 text-right font-bold text-lg text-rose-400">
+                        <td className="py-3 text-right font-bold text-lg text-danger-400">
                           {safeMoney(operationalCosts.totalCost, 'USD')}
                         </td>
                       </tr>
@@ -1074,7 +1074,7 @@ const PlanCard: React.FC<{
       </button>
       <button
         onClick={onDelete}
-        className="px-3 py-2 text-sm text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors"
+        className="px-3 py-2 text-sm text-danger-400 rounded-lg hover:bg-danger-500/10 transition-colors"
       >
         <Trash2 className="w-4 h-4" />
       </button>
@@ -1268,7 +1268,7 @@ const TransactionsTab: React.FC = () => {
       case 'usage':
         return 'bg-blue-500/20 text-blue-400';
       case 'refund':
-        return 'bg-rose-500/20 text-rose-400';
+        return 'bg-danger-500/20 text-danger-400';
       case 'bonus':
         return 'bg-yellow-500/20 text-yellow-400';
       default:
@@ -1371,7 +1371,7 @@ const TransactionsTab: React.FC = () => {
                     {Number.isFinite(safeNumber(tx.amount_usd, Number.NaN)) ? (
                       <span
                         className={
-                          safeNumber(tx.amount_usd) > 0 ? 'text-emerald-400' : 'text-rose-400'
+                          safeNumber(tx.amount_usd) > 0 ? 'text-emerald-400' : 'text-danger-400'
                         }
                       >
                         {safeNumber(tx.amount_usd) > 0 ? '+' : ''}
@@ -1383,7 +1383,7 @@ const TransactionsTab: React.FC = () => {
                   </td>
                   <td className="py-4 px-6 text-right font-mono text-sm">
                     <span
-                      className={safeNumber(tx.tokens) > 0 ? 'text-emerald-400' : 'text-rose-400'}
+                      className={safeNumber(tx.tokens) > 0 ? 'text-emerald-400' : 'text-danger-400'}
                     >
                       {safeNumber(tx.tokens) > 0 ? '+' : ''}
                       {formatNumber(tx.tokens)}

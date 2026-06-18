@@ -367,7 +367,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300">
+        <div className="rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300">
           {error}
         </div>
       )}
@@ -586,7 +586,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                 </div>
                 <button
                   onClick={() => handleRemove(assignment.id)}
-                  className="p-1.5 text-slate-600 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                  className="p-1.5 text-slate-600 hover:text-danger-500 transition-colors rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20"
                 >
                   <Trash2 size={14} />
                 </button>
