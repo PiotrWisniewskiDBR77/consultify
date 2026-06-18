@@ -240,7 +240,7 @@ function mapArtifactReport(raw: any): ReportItem {
     title: resolveArtifactTitle(raw, 'Document'),
     reportType: raw.reportType || 'custom',
     status: reportStatus,
-    owner: raw.ownerUserId || raw.createdBy || '—',
+    owner: raw.ownerName || raw.created_by_name || raw.createdByName || '—',
     goal: raw.goal || undefined,
     communicationRegister: raw.communicationRegister || undefined,
     confidentiality: raw.confidentiality || undefined,
@@ -409,7 +409,7 @@ function mapArtifactPresentation(raw: any): PresentationItem {
     artifactId: raw.artifactId || raw.artifact_id,
     title: resolveArtifactTitle(raw, 'Presentation'),
     sourceType: resolvePresentationSourceType(raw),
-    owner: raw.ownerUserId || raw.createdBy || '—',
+    owner: raw.ownerName || raw.created_by_name || raw.createdByName || '—',
     status: (
       raw.originStatus ||
       raw.deliveryState ||
@@ -477,7 +477,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       artifactId: raw.artifactId || raw.artifact_id,
       title: resolveArtifactTitle(raw, 'Document template'),
       statusKey: delivery,
-      owner: raw.ownerUserId || raw.createdBy || '—',
+      owner: raw.ownerName || raw.created_by_name || raw.createdByName || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
       reportType:
         String((raw?.originSummary as any)?.template?.reportType || raw.reportType || 'custom') ||
@@ -501,7 +501,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       artifactId: raw.artifactId || raw.artifact_id,
       title: resolveArtifactTitle(raw, 'Presentation template'),
       statusKey: delivery,
-      owner: raw.ownerUserId || raw.createdBy || '—',
+      owner: raw.ownerName || raw.created_by_name || raw.createdByName || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
       sourceType: String(
         (raw?.originSummary as any)?.template?.deckType || raw.sourceType || 'tool'
@@ -521,7 +521,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       artifactId: raw.artifactId || raw.artifact_id,
       title: resolveArtifactTitle(raw, 'Sheet'),
       statusKey: delivery,
-      owner: raw.ownerUserId || raw.createdBy || '—',
+      owner: raw.ownerName || raw.created_by_name || raw.createdByName || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: raw.exportFormat ? [raw.exportFormat] : [],

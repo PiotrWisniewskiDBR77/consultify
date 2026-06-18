@@ -222,6 +222,7 @@ interface ArtifactListRow extends ArtifactRow {
   publish_state: string | null;
   publish_reviewers: string | null;
   review_gate_count: number | null;
+  owner_name: string | null;
 }
 
 interface OriginLinkRow {
@@ -1770,6 +1771,7 @@ function rowToListItem(row: ArtifactListRow): ArtifactListItem {
     publishState: row.publish_state,
     publishReviewers: safeJsonParse(row.publish_reviewers, [] as string[]),
     reviewGateCount: Number(row.review_gate_count || 0),
+    ownerName: row.owner_name || null,
   };
 }
 
@@ -1924,7 +1926,8 @@ export async function listArtifactsForUser(params: {
             (
               SELECT COUNT(*) FROM v8_review_gates g
               WHERE g.artifact_id = a.artifact_id AND g.organization_id = a.organization_id
-            ) AS review_gate_count
+            ) AS review_gate_count,
+            NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), '') AS owner_name
      FROM v8_output_artifacts a
      LEFT JOIN v8_artifact_origin_links l
        ON l.artifact_id = a.artifact_id
@@ -1941,6 +1944,7 @@ export async function listArtifactsForUser(params: {
      LEFT JOIN v8_publish_records p
        ON p.artifact_id = a.artifact_id
       AND p.organization_id = a.organization_id
+     LEFT JOIN users u ON u.id = a.owner_user_id
      WHERE a.organization_id = ?
      ORDER BY COALESCE(a.last_transition_at, a.created_at) DESC`,
     [organizationId],

@@ -146,6 +146,7 @@ export interface ArtifactListItem extends ArtifactRecord {
   publishState: string | null;
   publishReviewers: string[];
   reviewGateCount: number;
+  ownerName: string | null;
 }
 
 export interface ArtifactListFilters {
