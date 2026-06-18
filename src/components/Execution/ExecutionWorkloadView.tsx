@@ -164,7 +164,7 @@ const getHeatmapColor = (percentage: number): string => {
   if (percentage <= 85) return 'bg-yellow-500/35';
   if (percentage <= 100) return 'bg-amber-500/45';
   if (percentage <= 120) return 'bg-amber-500/50';
-  return 'bg-rose-500/50';
+  return 'bg-danger-500/50';
 };
 
 const getHeatmapTextColor = (percentage: number): string => {
@@ -173,14 +173,14 @@ const getHeatmapTextColor = (percentage: number): string => {
   if (percentage <= 70) return 'text-emerald-300';
   if (percentage <= 85) return 'text-yellow-400';
   if (percentage <= 100) return 'text-amber-400';
-  return 'text-rose-400';
+  return 'text-danger-400';
 };
 
 const getHeatmapBorder = (percentage: number): string => {
   if (percentage === 0) return 'border-transparent';
   if (percentage <= 70) return 'border-emerald-500/20';
   if (percentage <= 100) return 'border-amber-500/30';
-  return 'border-rose-500/40';
+  return 'border-danger-500/40';
 };
 
 // ============================================
@@ -719,7 +719,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
               <span className="text-slate-500 dark:text-slate-400">Medium</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-3 rounded-sm bg-rose-500/50" />
+              <div className="w-4 h-3 rounded-sm bg-danger-500/50" />
               <span className="text-slate-500 dark:text-slate-400">Overallocated</span>
             </div>
           </div>
