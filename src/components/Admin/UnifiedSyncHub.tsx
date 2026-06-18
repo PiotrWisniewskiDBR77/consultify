@@ -1746,8 +1746,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               </td>
                               <td className="px-3 py-2.5">
                                 {status === 'connected' ? (
-                                  <span className="inline-flex items-center gap-1 text-xs text-emerald-400">
-                                    <CheckCircle2 size={12} />{' '}
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                                    <CheckCircle2 size={10} />{' '}
                                     {t('integrations.syncHub.alreadyConnected', 'Connected')}
                                   </span>
                                 ) : status === 'coming_soon' ? (

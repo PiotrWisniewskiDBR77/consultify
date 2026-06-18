@@ -137,7 +137,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
     <button
       onClick={onToggle}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+        enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
       }`}
     >
       <span

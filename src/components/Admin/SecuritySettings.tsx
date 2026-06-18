@@ -373,7 +373,7 @@ export const SecuritySettings: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, require2fa: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-primary-600 transition-colors"></div>
+                <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-navy-900 transition-colors"></div>
                 <div className="absolute left-1 top-1 w-4 h-4 bg-white dark:bg-navy-900 rounded-full peer-checked:translate-x-5 transition-transform"></div>
               </label>
             </div>
@@ -544,7 +544,7 @@ export const SecuritySettings: React.FC = () => {
             <button
               onClick={handleSaveSettings}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-600/50 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-primary-600/50 text-white rounded-lg font-medium transition-colors"
             >
               {saving ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
               Save Settings

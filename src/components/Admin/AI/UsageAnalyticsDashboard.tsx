@@ -431,7 +431,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
   const formatCurrency = (num: number) => `$${num.toFixed(2)}`;
 
   const getIntensityColor = (intensity: number) => {
-    if (intensity >= 80) return 'bg-primary-500';
+    if (intensity >= 80) return 'bg-navy-900';
     if (intensity >= 60) return 'bg-primary-400';
     if (intensity >= 40) return 'bg-primary-300/70';
     if (intensity >= 20) return 'bg-primary-200/50';
@@ -469,7 +469,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 title={loadError || undefined}
                 className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -778,7 +778,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 <div className="w-4 h-3 bg-primary-200/50 rounded-sm" />
                 <div className="w-4 h-3 bg-primary-300/70 rounded-sm" />
                 <div className="w-4 h-3 bg-primary-400 rounded-sm" />
-                <div className="w-4 h-3 bg-primary-500 rounded-sm" />
+                <div className="w-4 h-3 bg-navy-900 rounded-sm" />
               </div>
               <span>High</span>
             </div>

@@ -433,7 +433,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
           <button
             onClick={refreshAllHealth}
             disabled={refreshingHealth}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <RefreshCw size={16} className={refreshingHealth ? 'animate-spin' : ''} />
             {refreshingHealth ? 'Refreshing...' : 'Refresh All'}
@@ -649,7 +649,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                           onClick={() => toggleOrgAccess(p.id, p.is_enabled_for_org !== false)}
                           disabled={savingProvider === p.id}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            p.is_enabled_for_org !== false ? 'bg-primary-600' : 'bg-slate-700'
+                            p.is_enabled_for_org !== false ? 'bg-navy-900' : 'bg-slate-700'
                           } ${savingProvider === p.id ? 'opacity-50' : ''}`}
                         >
                           {savingProvider === p.id ? (
@@ -668,11 +668,11 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                       </td>
                       <td className="px-6 py-4">
                         {p.is_active ? (
-                          <span className="text-emerald-400 flex items-center gap-1 text-xs">
-                            <Check size={12} /> Active
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                            <Check size={10} /> Active
                           </span>
                         ) : (
-                          <span className="text-slate-500 dark:text-slate-400 text-xs">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400">
                             Inactive
                           </span>
                         )}

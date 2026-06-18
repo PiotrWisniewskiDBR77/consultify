@@ -266,7 +266,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
                 step === s
-                  ? 'bg-primary-500 text-white'
+                  ? 'bg-navy-900 text-white'
                   : ['select', 'configure', 'running', 'done'].indexOf(step) > i
                     ? 'bg-primary-500/20 text-primary-400'
                     : 'bg-white/5 text-slate-500'
@@ -506,7 +506,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 </p>
                 <div className="w-64 mx-auto h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-primary-500 transition-all"
+                    className="h-full bg-navy-900 transition-all"
                     style={{
                       width: `${(progress.generatedCount / progress.requestedCount) * 100}%`,
                     }}

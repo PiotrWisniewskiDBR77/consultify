@@ -364,7 +364,7 @@ export const AccessLimitsTab: React.FC = () => {
                       </span>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" defaultChecked className="sr-only peer" />
-                        <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-navy-900"></div>
                       </label>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400">{alert.label}</p>
@@ -696,7 +696,7 @@ export const AccessLimitsTab: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-primary-500 rounded-full"
+                              className="h-full bg-navy-900 rounded-full"
                               style={{ width: `${item.percentage}%` }}
                             />
                           </div>
