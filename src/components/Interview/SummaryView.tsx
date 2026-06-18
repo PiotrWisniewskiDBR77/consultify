@@ -128,7 +128,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     ? 'bg-emerald-500'
                     : progress >= 50
                       ? 'bg-amber-500'
-                      : 'bg-primary-500'
+                      : 'bg-navy-900'
                 }`}
                 style={{ width: `${progress}%` }}
               />

@@ -69,7 +69,7 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
         aria-valuenow={activeIndex + 1}
       >
         <div
-          className="h-full rounded-full bg-primary-500 transition-[width] duration-300 ease-out"
+          className="h-full rounded-full bg-navy-900 transition-[width] duration-300 ease-out"
           style={{ width: `${Math.round(progress * 100)}%` }}
         />
       </div>
@@ -102,7 +102,7 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
                   <span
                     className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold transition-colors ${
                       isActive
-                        ? 'bg-primary-500 text-white shadow-sm'
+                        ? 'bg-navy-900 text-white shadow-sm'
                         : isComplete
                           ? 'bg-emerald-500 text-white'
                           : 'bg-slate-200/80 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
@@ -121,7 +121,7 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
                         <span
                           className={`inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
                             isActive
-                              ? 'bg-primary-500 text-white'
+                              ? 'bg-navy-900 text-white'
                               : 'bg-slate-200 text-slate-600 dark:bg-navy-800 dark:text-slate-300'
                           }`}
                         >

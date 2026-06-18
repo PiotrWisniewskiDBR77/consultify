@@ -247,7 +247,7 @@ const AnswerTypePreview: React.FC<{
             className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400"
           >
             <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-slate-400 dark:border-slate-500">
-              {i === 0 ? <span className="h-1.5 w-1.5 rounded-full bg-primary-500" /> : null}
+              {i === 0 ? <span className="h-1.5 w-1.5 rounded-full bg-navy-900 dark:bg-white" /> : null}
             </span>
             <span className="truncate">{opt}</span>
           </div>
@@ -271,7 +271,7 @@ const AnswerTypePreview: React.FC<{
             key={n}
             className={`flex h-5 w-5 items-center justify-center rounded text-[10px] font-medium ${
               n === 3
-                ? 'bg-primary-500 text-white'
+                ? 'bg-navy-900 text-white'
                 : 'border border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -284,7 +284,7 @@ const AnswerTypePreview: React.FC<{
   if (answerType === 'boolean') {
     return (
       <div className="flex items-center gap-2">
-        <span className="rounded-full bg-primary-500 px-2.5 py-0.5 text-[11px] font-medium text-white">
+        <span className="rounded-full bg-navy-900 px-2.5 py-0.5 text-[11px] font-medium text-white">
           {isPolish ? 'Tak' : 'Yes'}
         </span>
         <span className="rounded-full border border-slate-300 dark:border-navy-600 px-2.5 py-0.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -1907,7 +1907,7 @@ ${sourceText || '(none)'}`;
                     type="button"
                     onClick={handleCloneTemplate}
                     disabled={isCloning}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-navy-900 text-white hover:bg-primary-600 transition-colors disabled:opacity-50"
                   >
                     {isCloning ? (
                       <Loader2 size={13} className="animate-spin" />

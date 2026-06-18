@@ -224,7 +224,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
           <div className="mt-3 flex items-center gap-2">
             <div className="flex-1 h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary-500 rounded-full"
+                className="h-full bg-navy-900 rounded-full"
                 style={{ width: `${context.completenessPercent}%` }}
               />
             </div>

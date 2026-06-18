@@ -409,7 +409,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                             w-5 h-5 rounded border flex items-center justify-center transition-colors
                             ${
                               selectedAssignees.includes(member.id)
-                                ? 'bg-primary-500 border-primary-500'
+                                ? 'bg-navy-900 border-navy-900'
                                 : 'border-slate-500'
                             }
                           `}

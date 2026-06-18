@@ -1254,7 +1254,7 @@ Rules:
                 >
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                      m.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-primary-500'
+                      m.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-navy-900'
                     }`}
                   >
                     {m.role === 'user' ? (
@@ -1277,7 +1277,7 @@ Rules:
 
               {chatLoading && (
                 <div className="flex gap-2">
-                  <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-navy-900 flex items-center justify-center shrink-0">
                     <TeresaMark size={12} className="text-white" />
                   </div>
                   <div className="px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-sm text-slate-600">

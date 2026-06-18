@@ -183,7 +183,7 @@ const Disclosure: React.FC<{
       <Icon size={16} className="shrink-0 text-slate-500 dark:text-slate-400" />
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</span>
       {typeof count === 'number' && count > 0 && (
-        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[11px] font-semibold text-white">
+        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-navy-900 px-1.5 text-[11px] font-semibold text-white">
           {count}
         </span>
       )}

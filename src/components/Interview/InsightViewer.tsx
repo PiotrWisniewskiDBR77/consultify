@@ -512,7 +512,7 @@ const STATUS_CONFIG: Record<
   },
   published: {
     label: { en: 'Published', pl: 'Opublikowane' },
-    color: 'bg-primary-500',
+    color: 'bg-sky-500',
     textColor: 'text-primary-500',
   },
   failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-danger-500', textColor: 'text-danger-500' },
@@ -2989,7 +2989,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           return {
             icon: <MessageSquare size={12} />,
             label: isPolish ? 'Komentarz' : 'Comment',
-            style: 'bg-primary-500 text-white',
+            style: 'bg-navy-900 text-white',
           };
         case 'edit':
           return {
@@ -6734,7 +6734,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
                         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-navy-700/60">
                           <div
-                            className="h-full rounded-full bg-primary-500"
+                            className="h-full rounded-full bg-navy-900"
                             style={{ width: `${share}%` }}
                           />
                         </div>

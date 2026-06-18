@@ -127,7 +127,7 @@ export const SufficiencyIndicator: React.FC<SufficiencyIndicatorProps> = ({
             {canProceed && onProceed && (
               <button
                 onClick={onProceed}
-                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-navy-900 text-white hover:bg-primary-600 transition-colors"
               >
                 {t('interview.sufficiency.proceed')}
               </button>

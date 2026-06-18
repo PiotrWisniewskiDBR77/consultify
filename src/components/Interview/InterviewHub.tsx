@@ -6090,7 +6090,7 @@ export const InterviewHub: React.FC = () => {
                 <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition ${
-                      progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'
+                      progress === 100 ? 'bg-emerald-500' : 'bg-navy-900'
                     }`}
                     style={{ width: `${progress}%` }}
                   />
@@ -10381,7 +10381,7 @@ Return ONLY the answer text (no markdown fences).`;
                 <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition ${
-                      progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'
+                      progress === 100 ? 'bg-emerald-500' : 'bg-navy-900'
                     }`}
                     style={{ width: `${progress}%` }}
                   />
