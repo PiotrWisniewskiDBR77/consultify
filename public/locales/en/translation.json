@@ -3022,7 +3022,11 @@
         "workload": "Workload",
         "reassign": "Reassign",
         "allApplied": "All {{count}} reassignments applied",
-        "partialApplied": "{{success}} applied, {{failed}} failed"
+        "partialApplied": "{{success}} applied, {{failed}} failed",
+        "aiNoCapacity": "No available team member — consider hiring or postponing",
+        "noActionable": "No actionable proposals — select a person for each row first",
+        "aiBalanced": "Workload is balanced — no changes needed",
+        "selectOwner": "Select new owner..."
       },
       "feasibility": {
         "title": "Feasibility",
@@ -3040,7 +3044,9 @@
         "total": "Initiatives",
         "highRisk": "High risk (<50%)",
         "criticalDims": "With critical dimension",
-        "filterBy": "Filtered by:"
+        "filterBy": "Filtered by:",
+        "allGood": "All initiatives have healthy feasibility",
+        "priorityRanking": "AI Priority Ranking — recommended execution order"
       },
       "logic": {
         "title": "Logic",
@@ -3074,7 +3080,10 @@
           "hint": "Drag from predecessor to successor",
           "timingConflict": "Timing conflict",
           "removeEdge": "Remove edge"
-        }
+        },
+        "discoveredDeps": "AI discovered potential dependencies",
+        "noCriticalPath": "No dependency chain found — add dependencies first",
+        "emptyHint": "Click \"AI Discover Dependencies\" to let AI analyze your initiatives and suggest connections."
       },
       "timeline": {
         "title": "Timeline",
@@ -4611,7 +4620,11 @@
       "aiGenerationError": "Generowanie AI nie powiodło się",
       "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
       "archiveError": "Nie udało się zarchiwizować",
-      "deleteError": "Nie udało się usunąć"
+      "deleteError": "Nie udało się usunąć",
+      "statusNotAllowed": "Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.",
+      "gateBlockedHub": "Nie można przejść dalej — brakuje elementów blokujących:\\n• {{items}}",
+      "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
+      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}"
     },
     "decisions": {
       "decision": "Decision",
@@ -4628,12 +4641,15 @@
       "assign": "Assign",
       "changeDueDate": "Change due date",
       "exported": "Exported {{count}}",
-      "selected": "{{count}} selected"
+      "selected": "{{count}} selected",
+      "archiveIneligible": "Tylko zakończone/anulowane można archiwizować"
     },
     "scope": {
       "label": "Scope",
       "active": "Active",
-      "all": "All"
+      "all": "All",
+      "activeHint": "Review → Promoted → Planning → Approved → Scheduled",
+      "allHint": "Full lifecycle including Draft, Executing, Blocked, Done, Archived..."
     },
     "charter": {
       "short": "Charter"
@@ -4693,7 +4709,29 @@
       "status": "Status",
       "initiative": "Initiative",
       "missing": "missing",
-      "updated": "Updated"
+      "updated": "Updated",
+      "priority": "Priority",
+      "owner": "Owner",
+      "targetDate": "Target date",
+      "health": "Health",
+      "nextStep": "Next step"
+    },
+    "errors": {
+      "loadFailed": "Failed to load initiatives from the active data source."
+    },
+    "v8Degraded": {
+      "title": "Planning runtime is in degraded mode",
+      "message": "The governed V8 Planning service is unavailable, so initiatives are shown from the legacy data source. Some governed features (gates, decision chains, portfolio rollups) may be limited until it is restored."
+    },
+    "kanban": {
+      "noOwner": "Unassigned",
+      "nextGate": "Next gate"
+    },
+    "archive": {
+      "hint": "Zakończ lub anuluj najpierw"
+    },
+    "card": {
+      "nextStep": "Next step"
     }
   },
   "execution": {
@@ -5616,19 +5654,188 @@
       "status": "Status",
       "version": "version",
       "generated": "Generated",
-      "name": "Name"
+      "name": "Name",
+      "type": "Type",
+      "title": "Title",
+      "scope": "Scope",
+      "sections": "Sections",
+      "created": "Created",
+      "frequency": "Frequency",
+      "schedule": "Schedule",
+      "nextRun": "Next Run"
     },
     "schedule": {
-      "active": "Active"
+      "active": "Active",
+      "paused": "Paused"
     },
     "preview": {
       "project": "Project",
-      "version": "version"
+      "version": "version",
+      "author": "Author",
+      "period": "Period",
+      "immutable": "Immutable version"
     },
     "toast": {
       "chatOpened": "Chat opened",
-      "chatOpenError": "Failed to open chat"
-    }
+      "chatOpenError": "Failed to open chat",
+      "selectProjectFirst": "Najpierw wybierz projekt",
+      "reportGenerated": "Raport wygenerowany pomyślnie",
+      "generateError": "Nie udało się wygenerować raportu",
+      "loadSchedulesError": "Nie udało się załadować harmonogramów",
+      "selectProjectForSchedule": "Wybierz projekt dla harmonogramu",
+      "scheduleCreated": "Harmonogram utworzony",
+      "scheduleCreateError": "Nie udało się utworzyć harmonogramu",
+      "scheduleRemoved": "Harmonogram usunięty",
+      "scheduleRemoveError": "Nie udało się usunąć harmonogramu",
+      "loadTemplatesError": "Nie udało się załadować szablonów",
+      "templateNameRequired": "Nazwa szablonu jest wymagana",
+      "templateCreated": "Szablon utworzony",
+      "templateCreateError": "Nie udało się utworzyć szablonu",
+      "loadError": "Nie udało się załadować danych",
+      "loadReportError": "Nie udało się załadować raportu",
+      "pdfStarted": "Pobieranie PDF rozpoczęte",
+      "pdfError": "Nie udało się pobrać PDF",
+      "shareLinkCopied": "Link do udostępniania skopiowany",
+      "shareLinkError": "Nie udało się utworzyć linku",
+      "selectProject": "Wybierz projekt",
+      "generateFailed": "Nie udało się wygenerować raportu",
+      "loadHistoryError": "Nie udało się załadować historii",
+      "scheduleError": "Raport wygenerowany, ale harmonogram nie został utworzony"
+    },
+    "agent": {
+      "changesApplied": "Changes applied",
+      "title": "Report Agent",
+      "subtitle": "Edit structure via chat",
+      "welcome": "I'm your report assistant",
+      "welcomeDesc": "Ask me to modify your report structure, add sections, or check quality.",
+      "proposedChanges": "Proposed changes:",
+      "applying": "Applying…",
+      "applyChanges": "Apply Changes",
+      "applied": "Applied",
+      "placeholder": "Ask me to modify the report…"
+    },
+    "qualityGates": {
+      "title": "Quality Check",
+      "readinessScore": "Readiness Score",
+      "exportReady": "Export ready",
+      "notExportReady": "Not export ready",
+      "allPassed": "All quality checks passed!",
+      "errors": "errors",
+      "warnings": "warnings",
+      "exportBlocked": "Export blocked",
+      "fixWithAI": "Fix with AI"
+    },
+    "escalation": {
+      "criticalTitle": "Critical: Steering Committee escalation recommended",
+      "warningTitle": "Attention: Consider escalating to Steering Committee",
+      "blocked": "blocked",
+      "overdueDecisions": "overdue decisions",
+      "budgetDeviations": "budget deviations",
+      "createR2": "Create R2 Report",
+      "dismiss": "Dismiss"
+    },
+    "narrative": {
+      "facts": "facts",
+      "observations": "observations",
+      "checksPass": "Checks passed",
+      "checksWarn": "Checks flagged"
+    },
+    "openSourceValuation": "Open Valuation",
+    "openSourceAnalysis": "Open Analysis",
+    "openSourceAssessment": "Open Assessment",
+    "openSourceInitiative": "Open Initiative",
+    "openSourceSession": "Open Idea Workspace",
+    "untitledReport": "Untitled Report",
+    "exportPdf": "Export as PDF",
+    "exportExcel": "Export as Excel",
+    "finalize": "Submit",
+    "regenerate": "Regenerate Report",
+    "regenerateHint": "AI will recreate all sections",
+    "created": "Created",
+    "lastUpdated": "Updated",
+    "highPriority": "High",
+    "mediumPriority": "Medium",
+    "lowPriority": "Low",
+    "achieved": "Achieved",
+    "maturityMatrix": "Maturity Matrix - 7 Axes",
+    "axis": "Axis",
+    "current": "Current",
+    "gap": "Gap",
+    "priority": "Priority",
+    "average": "Average",
+    "currentLevel": "Current Level",
+    "targetLevel": "Target Level",
+    "levels": "levels",
+    "progressToTarget": "Progress to Target",
+    "areaBreakdown": "Area Breakdown",
+    "area": "Area",
+    "gapAnalysis": "Gap Analysis Summary",
+    "criticalGaps": "Critical Gaps",
+    "highGaps": "High Priority",
+    "totalLevels": "Total Levels to Gain",
+    "currentVsTarget": "Current → Target",
+    "estTime": "Est. Time",
+    "complexity": "Complexity",
+    "aiActions": "AI Actions",
+    "aiGenerated": "AI Generated",
+    "manuallyEdited": "Manually edited",
+    "sectionTitle": "Section title",
+    "enterContent": "Enter section content...",
+    "quickAI": "Quick AI:",
+    "confirmDelete": "Are you sure you want to delete this section?",
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All",
+    "sections": "sections",
+    "readOnlyMode": "Read-only mode",
+    "manual": "Manual",
+    "aiImprove": "AI Improve",
+    "addSection": "Add Section",
+    "dropHere": "Drop section here",
+    "addSectionEnd": "Add Section",
+    "tableOfContents": "Table of Contents",
+    "edited": "edited",
+    "clickToNavigate": "Click to navigate",
+    "export": {
+      "pdfSuccess": "PDF wygenerowany pomyślnie",
+      "pdfError": "Nie udało się wygenerować PDF",
+      "pptxSuccess": "PowerPoint wygenerowany pomyślnie",
+      "pptxError": "Nie udało się wygenerować PowerPoint",
+      "shareLinkCreated": "Link do udostępniania utworzony",
+      "shareLinkError": "Nie udało się utworzyć linku",
+      "linkCopied": "Link skopiowany do schowka",
+      "copyError": "Nie udało się skopiować linku"
+    },
+    "actions": {
+      "downloadPdf": "Download PDF",
+      "share": "Share link",
+      "chat": "Chat about this report"
+    },
+    "empty": {
+      "noResults": "No reports found."
+    },
+    "aiThinking": "Processing your request...",
+    "aiError": "Sorry, I could not process your request.",
+    "aiAssistant": "AI Report Assistant",
+    "focusedOn": "Focused on",
+    "chatWelcome": "Hi! I can help you edit and improve your report.",
+    "chatExamples": "Try: \"Expand the executive summary\" or \"Make it more formal\"",
+    "chatPlaceholder": "Ask me to edit or improve any section...",
+    "errorLoading": "Failed to load report",
+    "generateError": "Failed to generate report",
+    "finalizeConfirm": "Are you sure you want to finalize this report? This action cannot be undone.",
+    "emptyReport": "Report is empty",
+    "generatePrompt": "Generate a complete DRD audit report based on the assessment data. The report will include all 7 axes, gap analysis, and recommendations.",
+    "generateReport": "Generate Full Report",
+    "finalized": "Finalized",
+    "unsaved": "Unsaved",
+    "toggleChat": "Toggle AI Chat",
+    "linkRevoked": "Link Revoked",
+    "linkRevokedDescription": "This share link has been revoked by the organization.",
+    "contactOrg": "Contact the organization for access",
+    "sharedSnapshot": "Shared Snapshot",
+    "sharedSnapshotFooter": "This is a read-only shared snapshot",
+    "snapshotGeneratedAt": "Generated",
+    "aiActionComplete": "AI action complete"
   },
   "auth": {
     "logIn": "Log in",
@@ -10179,17 +10386,67 @@
       "slides": "slides",
       "dataRefresh": {
         "stale": "Stale"
-      }
+      },
+      "noContent": "Deck has no content yet. Generate slides first.",
+      "loadFailed": "Failed to load presentation deck",
+      "moduleLabel": "Prezentacje",
+      "teresa": {
+        "title": "Teresa"
+      },
+      "usedIn": "Used in (backlinks)",
+      "topBar": {
+        "qualityGates": "Quality Gates",
+        "governance": "Governance",
+        "analytics": "Share Analytics",
+        "auditLog": "Audit log",
+        "teresa": "Teresa"
+      },
+      "share": {
+        "enablePublicFirst": "Enable public link sharing first to get an embed code.",
+        "generateLink": "Generate share link"
+      },
+      "alternativeLayout": "Alternative layout",
+      "regenerateSlide": "Regenerate slide",
+      "regenerating": "Regenerating…",
+      "notesPlaceholder": "Speaker notes for this slide..."
     },
     "governance": {
       "loading": "Loading…",
-      "retry": "Retry"
+      "retry": "Retry",
+      "title": "Governance Card",
+      "exportJson": "Export JSON",
+      "unavailable": "Governance card unavailable",
+      "forbidden": "You don't have permission to view this deck's governance card.",
+      "notFound": "No governance data found for this deck yet.",
+      "overall": "Overall verdict",
+      "quality": "Quality",
+      "gateCount": "Total gates: {{n}}",
+      "confidentiality": "Confidentiality",
+      "sharingAllowedForRole": "Sharing for role: {{value}}",
+      "telemetry": "Telemetry (last {{n}}d)",
+      "proposals": "Proposals",
+      "applied": "Applied",
+      "rejected": "Rejected",
+      "exportsBlocked": "Exports blocked",
+      "lastActivity": "Last activity:"
     },
     "qualityGates": {
-      "failed": "Failed"
+      "failed": "Failed",
+      "title": "Quality Gates",
+      "score": "Deck Score",
+      "allPassed": "All quality gates passed!",
+      "readyToExport": "Your deck is ready to export and share.",
+      "checking": "Checking...",
+      "recheck": "Re-check Quality Gates"
     },
     "analytics": {
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "title": "Share Analytics",
+      "totalViews": "Total Views",
+      "uniqueViewers": "Unique Viewers",
+      "perCard": "Per-Card Engagement",
+      "dailyViews": "Daily Viewers (last 30d)",
+      "noViews": "No views yet. Share your deck to start tracking engagement."
     },
     "status": {
       "draft": "Draft",
@@ -10198,10 +10455,32 @@
       "archived": "Archived"
     },
     "shared": {
-      "loading": "Loading…"
+      "loading": "Loading…",
+      "unavailableTitle": "Presentation unavailable",
+      "unavailableBody": "The shared link is invalid or expired.",
+      "badge": "Shared presentation"
     },
     "sources": {
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "artifactLoadFailed": "Could not load registered artifacts.",
+      "artifactsTitle": "Concrete source artifacts",
+      "artifactsSubtitle": "Select the exact project evidence that should ground the generated deck.",
+      "searchArtifacts": "Search project, study, report, initiative...",
+      "loadingArtifacts": "Loading artifacts...",
+      "noArtifacts": "No registered artifacts found yet. You can still choose a source type below for a draft deck.",
+      "selectedEvidence": "Selected evidence"
+    },
+    "exportBlocked": "Export blocked by quality gates. Open the deck to review blockers.",
+    "openInBuilder": "Open this deck in the full editor to view and edit slides.",
+    "setup": {
+      "smartDefaults": "Suggested based on your organization's preferences",
+      "loadingDefaults": "Loading smart defaults..."
+    },
+    "wizard": {
+      "contentDepth": "Content Depth"
+    },
+    "outline": {
+      "keyMessagePlaceholder": "Key message for this slide..."
     }
   },
   "finance": {
@@ -11876,7 +12155,10 @@
       "reports": "Reports",
       "presentations": "Presentations",
       "all": "All",
-      "documents": "Documents"
+      "documents": "Documents",
+      "mine": "Mine",
+      "needsReview": "Needs review",
+      "sheets": "Sheets"
     },
     "columns": {
       "name": "Name",
@@ -11892,14 +12174,25 @@
       "exports": "Exports",
       "source": "Source",
       "slides": "Slides",
-      "reportType": "Type"
+      "reportType": "Type",
+      "mode": "Tryb"
     },
     "filters": {
       "type": "Type",
       "category": "Category",
       "scope": "Scope",
-      "status": "Status",
-      "source": "Source"
+      "source": "Source",
+      "hint": "Pick statuses and (optionally) sources.",
+      "status": {
+        "active": "Active",
+        "draft": "Draft",
+        "archived": "Archived",
+        "generated": "Generated",
+        "editing": "Editing",
+        "exported": "Exported",
+        "shared": "Shared",
+        "deprecated": "Deprecated"
+      }
     },
     "actions": {
       "newTemplate": "New template",
@@ -11914,20 +12207,47 @@
       "exportPdf": "Export PDF",
       "exportPptx": "Export PPTX",
       "share": "Share",
-      "rename": "Rename"
+      "rename": "Rename",
+      "openPreview": "Otwórz podgląd",
+      "discuss": "Discuss",
+      "askAI": "Zapytaj AI",
+      "submitTemplateReview": "Submit for review",
+      "newDocumentStudio": "New AI document (Document Studio)",
+      "duplicateAsTemplate": "Duplikuj / Użyj jako szablonu",
+      "saveAsTemplate": "Save as template",
+      "approveTemplate": "Approve & publish",
+      "newFromTemplate": "Nowy z szablonu",
+      "openInWorkspace": "Open in workspace",
+      "exportXlsx": "Download XLSX",
+      "startReview": "Start review"
     },
     "empty": {
       "templates": "No templates found",
       "reports": "No reports found",
       "presentations": "No presentations found",
       "noOutputs": "No outputs yet",
-      "newWithTeresa": "New with Teresa"
+      "newWithTeresa": "New with Teresa",
+      "reportsTitle": "Canonical management reports",
+      "reportsBody": "This library is organized around the V3 report canon. Start from one of the four sponsor-ready report types below.",
+      "reportsHint": "Use the topbar quick chips or create a new report to enter R1, R2, R3, or R4 flow.",
+      "templatesOnboarding": "Biblioteka wzorców",
+      "templatesOnboardingDesc": "Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.",
+      "outputs": "Brak outputów"
     },
     "preview": {
       "useTemplate": "Use this template",
       "openFull": "Open full",
       "slides": "slides",
-      "deprecated": "Deprecated"
+      "deprecated": "Deprecated",
+      "scope": "Zakres",
+      "category": "Kategoria",
+      "sections": "Sekcje",
+      "publishState": "Publish",
+      "validationState": "Walidacja",
+      "reviewGates": "Review gates",
+      "migrationHint": "Zamiennik",
+      "replacedBy": "Nowy wzorzec",
+      "updatedAt": "Ostatnia zmiana"
     },
     "toast": {
       "exported": "Exported successfully",
@@ -11935,10 +12255,16 @@
       "archived": "Archived",
       "archiveFailed": "Failed to archive",
       "exportBlocked": "Approve the artifact before exporting",
-      "deleteFailed": "Failed to delete deck"
+      "deleteFailed": "Failed to delete deck",
+      "deleted": "Deleted",
+      "reviewStarted": "Review started",
+      "reviewFailed": "Failed to start review"
     },
     "sheets": {
-      "error": "Could not load sheets"
+      "error": "Could not load sheets",
+      "emptyTitle": "Sheets in Outputs Library",
+      "emptyBody": "Governed workbooks and exports will appear here through the same canonical artifact registry as documents and presentations. This tab now reflects live sheet artifacts as soon as the registry receives them.",
+      "emptyHint": "Create or export a governed sheet and it will appear here automatically."
     },
     "onboarding": {
       "title": "Your outputs land here",
@@ -11951,27 +12277,115 @@
     "outputs": {
       "kind": {
         "presentation": "Presentation",
-        "sheet": "Sheet"
+        "sheet": "Sheet",
+        "document": "Document"
       },
       "columns": {
-        "source": "source"
+        "source": "source",
+        "visibility": "Visibility",
+        "review": "Review",
+        "kind": "Typ",
+        "exports": "Exports"
       },
       "preview": {
         "status": "Status",
-        "source": "source"
+        "source": "source",
+        "lineageLoadFailed": "Could not load full lineage for this run",
+        "lineageTitle": "Run lineage",
+        "lineageRunId": "Execution run",
+        "lineageLoading": "Loading lineage…",
+        "lineageRun": "Run",
+        "lineageCreatedAt": "Created",
+        "lineageToolCalls": "Tool calls",
+        "lineageTraces": "Traces",
+        "lineageOutputs": "Outputs",
+        "lineageVisibility": "Visibility enforced",
+        "lineageToolCallsList": "Tool calls",
+        "lineageOutputsList": "Output pointers",
+        "download": "Download",
+        "open": "Open",
+        "sheetHint": "Governed sheet artifacts use the same registry; authoring and export paths are rolling out in Wave 2.",
+        "originsShort": "origins",
+        "sourcesShort": "sources",
+        "validationChecksAllGood": "all passed",
+        "trustState": "Trust state",
+        "visibility": "Visibility",
+        "validation": "Validation",
+        "execution": "Execution",
+        "review": "Review",
+        "reviewersShort": "gates",
+        "lineage": "Lineage",
+        "artifactId": "Artifact ID",
+        "executionRunId": "Execution run",
+        "trace": "Trace",
+        "exports": "Exports",
+        "exportTrace": "Export trace",
+        "accessControl": "Access control",
+        "canManageAccess": "Can manage",
+        "readOnly": "Read only",
+        "trustBoundary": "Trust boundary",
+        "executionAuthority": "Execution",
+        "reviewAuthority": "Review",
+        "validationChecks": "Validation checks"
       },
       "tabs": {
         "all": "All",
-        "documents": "Documents"
+        "documents": "Documents",
+        "mine": "Mine",
+        "review": "Needs review",
+        "sheets": "Sheets"
       },
       "visibility": {
         "project": "Project",
-        "organization": "Organization"
+        "organization": "Organization",
+        "private": "Private",
+        "reviewShared": "Review shared",
+        "demo": "Demo"
       },
       "review": {
         "published": "Published",
-        "archived": "Archived"
+        "archived": "Archived",
+        "privateDraft": "Private draft",
+        "reviewableShare": "Reviewable share",
+        "inReview": "In review",
+        "approved": "Approved"
+      },
+      "cta": {
+        "new": "New output"
+      },
+      "filters": {
+        "kind": "Output type"
+      },
+      "source": {
+        "initiativeLinked": "Initiative linked"
+      },
+      "breadcrumb": {
+        "library": "Library"
       }
+    },
+    "errors": {
+      "realReportsTitle": "Real reports source needs attention",
+      "realSourceHint": "No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.",
+      "realPresentationsTitle": "Real presentations source needs attention",
+      "realTemplatesTitle": "Real templates source needs attention",
+      "outputsRegistryTitle": "Outputs library source needs attention"
+    },
+    "reportCanon": {
+      "r1": "Weekly Execution",
+      "r2": "Steering Committee",
+      "r3": "Benefits Tracking",
+      "r4": "Portfolio Overview"
+    },
+    "hub": {
+      "entityName": "Reports & Presentations"
+    },
+    "moduleDisabled": {
+      "title": "Outputs library is turned off",
+      "body": "This workspace does not have the outputs library enabled. Contact your administrator to turn it on."
+    },
+    "breadcrumb": {
+      "presentationWizard": "Presentation Wizard",
+      "deckBuilder": "Deck Builder"
     }
   },
   "rbHub": {
@@ -13395,7 +13809,31 @@
     "projectHint": "Documents shared within this project.",
     "uploading": "Uploading…",
     "userHint": "Your private documents, visible only to you.",
-    "ready": "Ready"
+    "ready": "Ready",
+    "confirmDelete": "Are you sure you want to delete this document?",
+    "unknownSize": "Unknown size",
+    "processing": "Processing",
+    "ocrRequired": "OCR required",
+    "unreadable": "Unreadable",
+    "processingQueued": "Queued for organization context processing.",
+    "processingActive": "Worker is processing this document.",
+    "processingRetry": "Processing will retry automatically.",
+    "processingStale": "Processing is taking longer than expected. An admin may need to check the worker.",
+    "processingAttention": "Processing status needs attention because no active job was found.",
+    "unknownDate": "Unknown date",
+    "refreshStatus": "Refresh document status",
+    "processingRefreshLoop": "Processing documents refresh every 15 seconds while this panel is open.",
+    "uploadHint": "Upload your first document to get started",
+    "processingRecoveryTitle": "Processing needs admin review",
+    "processingAdminRecoveryHint": "Open Admin Operations to review worker jobs, stale locks, and safe recovery actions.",
+    "processingUserRecoveryHint": "Ask an organization admin to review worker jobs in Admin Operations.",
+    "processingAttentionReadBack": "Attention visible since {{time}}.",
+    "processingRecoveryAuditFound": "Recovery audit found: {{action}} at {{time}}.",
+    "processingRecoveryAuditMissing": "No audited recovery action found yet.",
+    "processingAttentionAcknowledged": "Acknowledged by you at {{time}}.",
+    "acknowledgeProcessingAttention": "Acknowledge attention",
+    "openAdminOperations": "Open Admin Operations",
+    "lastStatusRefresh": "Last status refresh: {{time}}"
   },
   "consultant": {
     "panel": {
@@ -13530,11 +13968,22 @@
     "reopenSummary": "Presentation \"{{title}}\" — {{count}} slides.",
     "kpi": {
       "slides": "slides",
-      "status": "Status"
+      "status": "Status",
+      "format": "Format"
     },
     "intentRouted": {
-      "failed": "Failed"
-    }
+      "failed": "Failed",
+      "exportPdf": "PDF export started",
+      "exportPptx": "PPTX download started",
+      "agentEdit": "Agent edit applied",
+      "openBuilder": "Opening Deck Builder for theme changes"
+    },
+    "defaultTitle": "Presentation",
+    "loadPreviewFailed": "Could not load deck preview.",
+    "builderUnreachable": "Deck identifier is missing — cannot open Deck Builder yet.",
+    "openingBuilder": "Opening Deck Builder...",
+    "qualityGateBlocked": "Export blocked by Quality Gate",
+    "qualityGateBlockedDetailed": "Quality gate blocked — review required before export"
   },
   "aiActions": {
     "report": "Report",
@@ -13681,7 +14130,134 @@
       "proposalExecuted": "proposal_executed"
     },
     "home": {
-      "search": "Search"
+      "search": "Search",
+      "title": "Consultify Documentation",
+      "subtitle": "Comprehensive guides, tutorials, and best practices for the Consultify Transformation AI Platform. Learn how to accelerate your digital transformation journey.",
+      "searchPlaceholder": "Search documentation...",
+      "gettingStarted": "Getting Started",
+      "apiReference": "API Reference",
+      "security": "Security",
+      "helpRuntime": {
+        "badge": "Help runtime",
+        "title": "Get help your way",
+        "subtitle": "Use one support system across documentation, guided Teresa help, in-product contextual support, and product updates.",
+        "cards": {
+          "docs": {
+            "title": "Browse the knowledge base",
+            "description": "Use long-form articles, category pages, and featured guidance when you need structured answers."
+          },
+          "teresa": {
+            "title": "Ask Teresa for guided help",
+            "description": "Teresa can explain a workflow, recommend the next step, and help you continue the work from guidance into action."
+          },
+          "contextual": {
+            "title": "Use contextual in-app support",
+            "description": "Inside the product you get screen-specific help, quick guides, FAQs, and handoff into AI with the right context."
+          },
+          "updates": {
+            "title": "Track updates and releases",
+            "description": "Stay aligned with product changes, new capabilities, and guided follow-up paths after each release."
+          },
+          "cta": "Open"
+        }
+      },
+      "journey": {
+        "title": "Consulting journey"
+      },
+      "support": {
+        "title": "Support surfaces",
+        "subtitle": "The help system connects the core transformation journey with the work surfaces where teams actually execute."
+      },
+      "guidedJourneys": {
+        "title": "Guided journeys",
+        "subtitle": "Start with a guide when you need a recommended path instead of searching the whole library."
+      },
+      "educationScope": {
+        "badge": "Education scope",
+        "title": "Where Help ends and Education begins",
+        "subtitle": "Help and Knowledge Base stay focused on just-in-time guidance, reference articles, and contextual support. Education is the separate enablement layer for structured learning paths, role-based progress, and certification-style readiness.",
+        "helpTitle": "Inside Help / Knowledge Base",
+        "helpPoint1": "Contextual help, FAQs, quick guides, product walkthroughs, and long-form reference articles.",
+        "helpPoint2": "Teresa-led discovery when the user needs help to continue real work in the current module.",
+        "helpPoint3": "Updates, release notes, and knowledge surfacing that reduce friction in day-to-day product usage.",
+        "educationTitle": "Inside standalone Education / Academy",
+        "educationPoint1": "Structured learning paths with foundations, role tracks, and deeper methodology enablement.",
+        "educationPoint2": "Progress visibility, completion semantics, and certification or readiness checkpoints.",
+        "educationPoint3": "Role-aware enablement tied to onboarding, partner growth, and skill development over time.",
+        "pathTitle": "Canonical learning-path model",
+        "path1": {
+          "title": "1. Foundations",
+          "description": "Learn the platform, core consulting journey, and essential operating concepts."
+        },
+        "path2": {
+          "title": "2. Role path",
+          "description": "Go deeper by role or motion: operator, consultant, partner, or specialized methodology track."
+        },
+        "path3": {
+          "title": "3. Proof of readiness",
+          "description": "Close the path with progress evidence, completion state, and certification-style trust signals where needed."
+        }
+      },
+      "browseByCategory": "Browse by Category",
+      "categoryFallback": "Explore articles in this category",
+      "browseArticles": "Browse articles",
+      "featuredArticles": "Featured Articles",
+      "viewAll": "View all",
+      "apiCardDescription": "Check the current API documentation status and request access to integration guidance until the live reference is published.",
+      "apiCardCta": "View API status"
+    },
+    "layout": {
+      "brand": "Consultify Docs",
+      "searchPlaceholder": "Search documentation...",
+      "home": "Home",
+      "signIn": "Sign In",
+      "pressEnterPrefix": "Press",
+      "pressEnterSuffix": "to search",
+      "overview": "Overview"
+    },
+    "common": {
+      "docs": "Docs",
+      "readTime": "{{count}} min read",
+      "views": "{{count}} views",
+      "featured": "Featured"
+    },
+    "search": {
+      "title": "Search",
+      "placeholder": "Search documentation...",
+      "resultsFor": "Search results for \"{{query}}\"",
+      "searching": "Searching...",
+      "resultsCount": "{{count}} results found",
+      "emptyPromptTitle": "Enter a search query",
+      "emptyPromptBody": "Type in the search box above to find articles",
+      "noResultsTitle": "No results found",
+      "noResultsBody": "Try adjusting your search query or browse categories",
+      "backToDocs": "Back to Documentation"
+    },
+    "api": {
+      "title": "API Reference",
+      "subtitle": "This surface is not yet a live OpenAPI explorer. We only expose an honest placeholder until the real reference is published.",
+      "placeholder": {
+        "message": "Interactive API reference is not published yet.",
+        "hint": "Do not treat this page as an authoritative endpoint catalog. Use product docs and shipped integrations until the real API reference is available."
+      },
+      "backToDocs": "Back to Documentation",
+      "contactSupport": "Contact support"
+    },
+    "category": {
+      "fallbackTitle": "Category",
+      "searchPlaceholder": "Search in this category...",
+      "emptyTitle": "No articles found",
+      "emptySearch": "Try adjusting your search query",
+      "emptyCategory": "This category is empty",
+      "backToCategories": "Back to all categories"
+    },
+    "article": {
+      "notFoundTitle": "Article Not Found",
+      "notFoundBody": "The article you're looking for doesn't exist or has been moved.",
+      "backToDocs": "Back to Documentation",
+      "copied": "Copied!",
+      "share": "Share",
+      "watchVideo": "Watch video tutorial"
     }
   },
   "documentStudio": {

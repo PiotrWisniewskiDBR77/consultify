@@ -479,16 +479,7 @@
       "downloadFailed": "Pobieranie nie powiodło się",
       "presentationMode": "Tryb prezentacji",
       "communicationRegister": "Rejestr komunikacji",
-      "contentDepth": {
-        "minimal": "Minimalna",
-        "minimalDesc": "Tylko nagłówki i kluczowe liczby",
-        "concise": "Zwięzła",
-        "conciseDesc": "Krótkie akapity z kluczowymi punktami",
-        "detailed": "Szczegółowa",
-        "detailedDesc": "Pełna analiza z danymi wspierającymi",
-        "extensive": "Rozbudowana",
-        "extensiveDesc": "Kompleksowe głębokie zagłębienie"
-      },
+      "contentDepth": "Głębia treści",
       "imageStylePreset": "Styl obrazów",
       "imageSource": "Źródło obrazów",
       "cardSize": "Rozmiar karty",
@@ -566,7 +557,14 @@
       "raid": "Ryzyka i problemy",
       "assessment": "Wyniki oceny",
       "valuation": "Wycena przedsiębiorstwa",
-      "loadMore": "Załaduj więcej"
+      "loadMore": "Załaduj więcej",
+      "artifactLoadFailed": "Nie udało się załadować zarejestrowanych artefaktów.",
+      "artifactsTitle": "Konkretne artefakty źródłowe",
+      "artifactsSubtitle": "Wybierz dokładne dowody projektowe, na których ma się opierać wygenerowana prezentacja.",
+      "searchArtifacts": "Szukaj projektu, badania, raportu, inicjatywy...",
+      "loadingArtifacts": "Ładowanie artefaktów...",
+      "noArtifacts": "Nie znaleziono jeszcze żadnych zarejestrowanych artefaktów. Możesz nadal wybrać typ źródła poniżej, aby utworzyć roboczą prezentację.",
+      "selectedEvidence": "Wybrane dowody"
     },
     "setup": {
       "title": "Skonfiguruj swój deck",
@@ -595,7 +593,9 @@
         "densityLow": "Niska",
         "densityMedium": "Średnia",
         "densityHigh": "Wysoka"
-      }
+      },
+      "smartDefaults": "Sugerowane na podstawie preferencji Twojej organizacji",
+      "loadingDefaults": "Ładowanie inteligentnych ustawień domyślnych..."
     },
     "audiences": {
       "sponsor": "Sponsor",
@@ -644,7 +644,8 @@
         "addKpi": "Dashboard KPI",
         "addNextSteps": "Następne kroki",
         "addThankYou": "Dziękuję"
-      }
+      },
+      "keyMessagePlaceholder": "Kluczowy przekaz tego slajdu..."
     },
     "generating": {
       "title": "Generowanie decka",
@@ -704,7 +705,12 @@
         "agent": "Agent",
         "present": "Prezentuj",
         "undo": "Cofnij",
-        "redo": "Ponów"
+        "redo": "Ponów",
+        "qualityGates": "Bramki jakości",
+        "governance": "Nadzór",
+        "analytics": "Analityka udostępniania",
+        "auditLog": "Dziennik audytu",
+        "teresa": "Teresa"
       },
       "bottomBar": {
         "card": "Karta",
@@ -776,7 +782,9 @@
         "publicLink": "Link publiczny",
         "copyLink": "Kopiuj link",
         "anyoneCanView": "Każdy z linkiem może oglądać",
-        "anyoneCanComment": "Każdy z linkiem może komentować"
+        "anyoneCanComment": "Każdy z linkiem może komentować",
+        "enablePublicFirst": "Najpierw włącz udostępnianie linku publicznego, aby uzyskać kod osadzania.",
+        "generateLink": "Wygeneruj link do udostępniania"
       },
       "export": {
         "pdf": "PDF",
@@ -850,7 +858,18 @@
       },
       "loading": "Ładowanie…",
       "back": "Wstecz",
-      "slides": "slajdów"
+      "slides": "slajdów",
+      "noContent": "Prezentacja nie ma jeszcze treści. Najpierw wygeneruj slajdy.",
+      "loadFailed": "Nie udało się załadować prezentacji",
+      "moduleLabel": "Prezentacje",
+      "teresa": {
+        "title": "Teresa"
+      },
+      "usedIn": "Wykorzystano w (odnośniki zwrotne)",
+      "alternativeLayout": "Alternatywny układ",
+      "regenerateSlide": "Wygeneruj slajd ponownie",
+      "regenerating": "Generowanie ponowne…",
+      "notesPlaceholder": "Notatki prelegenta do tego slajdu..."
     },
     "agent": {
       "title": "Agent AI",
@@ -898,21 +917,54 @@
     "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.",
     "governance": {
       "loading": "Ładowanie…",
-      "retry": "Spróbuj ponownie"
+      "retry": "Spróbuj ponownie",
+      "title": "Karta nadzoru",
+      "exportJson": "Eksportuj JSON",
+      "unavailable": "Karta nadzoru niedostępna",
+      "forbidden": "Nie masz uprawnień do wyświetlenia karty nadzoru tej prezentacji.",
+      "notFound": "Nie znaleziono jeszcze danych nadzoru dla tej prezentacji.",
+      "overall": "Ogólny werdykt",
+      "quality": "Jakość",
+      "gateCount": "Łącznie bramek: {{n}}",
+      "confidentiality": "Poufność",
+      "sharingAllowedForRole": "Udostępnianie dla roli: {{value}}",
+      "telemetry": "Telemetria (ostatnie {{n}} dni)",
+      "proposals": "Propozycje",
+      "applied": "Zastosowano",
+      "rejected": "Odrzucono",
+      "exportsBlocked": "Eksporty zablokowane",
+      "lastActivity": "Ostatnia aktywność:"
     },
     "qualityGates": {
-      "failed": "Błąd"
+      "failed": "Błąd",
+      "title": "Bramki jakości",
+      "score": "Ocena prezentacji",
+      "allPassed": "Wszystkie bramki jakości zaliczone!",
+      "readyToExport": "Twoja prezentacja jest gotowa do eksportu i udostępnienia.",
+      "checking": "Sprawdzanie...",
+      "recheck": "Sprawdź ponownie bramki jakości"
     },
     "analytics": {
-      "refresh": "Odśwież"
+      "refresh": "Odśwież",
+      "title": "Analityka udostępniania",
+      "totalViews": "Łączna liczba wyświetleń",
+      "uniqueViewers": "Unikalni widzowie",
+      "perCard": "Zaangażowanie wg kart",
+      "dailyViews": "Dzienni widzowie (ostatnie 30 dni)",
+      "noViews": "Brak wyświetleń. Udostępnij prezentację, aby rozpocząć śledzenie zaangażowania."
     },
     "tabs": {
       "templates": "Wzorce",
-      "recent": "Ostatnie"
+      "recent": "Ostatnie",
+      "allDecks": "Wszystkie prezentacje"
     },
     "columns": {
       "status": "Status",
-      "slides": "slajdów"
+      "slides": "slajdów",
+      "title": "Tytuł",
+      "sourceType": "Źródło",
+      "owner": "Właściciel",
+      "date": "Data"
     },
     "status": {
       "draft": "Szkic",
@@ -921,14 +973,24 @@
       "archived": "Zarchiwizowany"
     },
     "shared": {
-      "loading": "Ładowanie…"
+      "loading": "Ładowanie…",
+      "unavailableTitle": "Prezentacja niedostępna",
+      "unavailableBody": "Udostępniony link jest nieprawidłowy lub wygasł.",
+      "badge": "Udostępniona prezentacja"
     },
     "sourceType": {
       "tool": "Narzędzie",
       "assessment": "Ocena",
       "finance": "Finanse",
       "upload": "Przesłane"
-    }
+    },
+    "actions": {
+      "export": "Eksportuj",
+      "openSource": "Otwórz źródło",
+      "rename": "Zmień nazwę"
+    },
+    "exportBlocked": "Eksport zablokowany przez bramki jakości. Otwórz prezentację, aby przejrzeć blokady.",
+    "openInBuilder": "Otwórz tę prezentację w pełnym edytorze, aby wyświetlić i edytować slajdy."
   },
   "sidebar": {
     "module3_1": "Inicjatywy",
@@ -2190,7 +2252,11 @@
         "workload": "Obciążenie",
         "reassign": "Przepisz",
         "allApplied": "Zastosowano wszystkie przepisania ({{count}})",
-        "partialApplied": "Zastosowano {{success}}, nie powiodło się {{failed}}"
+        "partialApplied": "Zastosowano {{success}}, nie powiodło się {{failed}}",
+        "aiNoCapacity": "Brak dostępnego członka zespołu — rozważ rekrutację lub przesunięcie w czasie",
+        "noActionable": "Brak propozycji do realizacji — najpierw wybierz osobę dla każdego wiersza",
+        "aiBalanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne",
+        "selectOwner": "Wybierz nowego właściciela..."
       },
       "feasibility": {
         "title": "Wykonalność",
@@ -2208,7 +2274,9 @@
         "total": "Inicjatywy",
         "highRisk": "Wysokie ryzyko (<50%)",
         "criticalDims": "Z wymiarem krytycznym",
-        "filterBy": "Filtrowane wg:"
+        "filterBy": "Filtrowane wg:",
+        "allGood": "Wszystkie inicjatywy mają zdrową wykonalność",
+        "priorityRanking": "Ranking priorytetów AI — zalecana kolejność realizacji"
       },
       "logic": {
         "title": "Logika",
@@ -2242,7 +2310,10 @@
           "hint": "Przeciągnij od poprzednika do następnika",
           "timingConflict": "Konflikt terminów",
           "removeEdge": "Usuń połączenie"
-        }
+        },
+        "discoveredDeps": "AI wykryła potencjalne zależności",
+        "noCriticalPath": "Nie znaleziono łańcucha zależności — najpierw dodaj zależności",
+        "emptyHint": "Kliknij „Wykryj zależności z AI”, aby AI przeanalizowała Twoje inicjatywy i zasugerowała powiązania."
       },
       "timeline": {
         "title": "Harmonogram",
@@ -3779,7 +3850,11 @@
       "aiGenerationError": "Generowanie AI nie powiodło się",
       "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
       "archiveError": "Nie udało się zarchiwizować",
-      "deleteError": "Nie udało się usunąć"
+      "deleteError": "Nie udało się usunąć",
+      "statusNotAllowed": "Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.",
+      "gateBlockedHub": "Nie można przejść dalej — brakuje elementów blokujących:\\n• {{items}}",
+      "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
+      "cannotApprove": "Nie można zatwierdzić — brakuje wymaganych pól:\\n• {{errors}}"
     },
     "decisions": {
       "decision": "Decyzja",
@@ -3796,12 +3871,15 @@
       "assign": "Przypisz",
       "changeDueDate": "Zmień termin",
       "exported": "Wyeksportowano {{count}}",
-      "selected": "Wybrano: {{count}}"
+      "selected": "Wybrano: {{count}}",
+      "archiveIneligible": "Tylko zakończone/anulowane można archiwizować"
     },
     "scope": {
       "label": "Zakres",
       "active": "Aktywne",
-      "all": "Wszystkie"
+      "all": "Wszystkie",
+      "activeHint": "Przegląd → Promowana → Planowanie → Zatwierdzona → Zaplanowana",
+      "allHint": "Pełny cykl życia z uwzględnieniem statusów: Szkic, W realizacji, Zablokowana, Zakończona, Zarchiwizowana..."
     },
     "charter": {
       "short": "Karta"
@@ -3861,7 +3939,29 @@
       "status": "Status",
       "initiative": "Inicjatywa",
       "missing": "brak danych",
-      "updated": "Data"
+      "updated": "Data",
+      "priority": "Priorytet",
+      "owner": "Właściciel",
+      "targetDate": "Data docelowa",
+      "health": "Kondycja",
+      "nextStep": "Następny krok"
+    },
+    "errors": {
+      "loadFailed": "Nie udało się załadować inicjatyw z aktywnego źródła danych."
+    },
+    "v8Degraded": {
+      "title": "Środowisko planowania działa w trybie ograniczonym",
+      "message": "Nadzorowana usługa Planowania V8 jest niedostępna, dlatego inicjatywy są wyświetlane ze starszego źródła danych. Niektóre nadzorowane funkcje (bramki, łańcuchy decyzji, zestawienia portfela) mogą być ograniczone do czasu jej przywrócenia."
+    },
+    "kanban": {
+      "noOwner": "Nieprzypisana",
+      "nextGate": "Następna bramka"
+    },
+    "archive": {
+      "hint": "Zakończ lub anuluj najpierw"
+    },
+    "card": {
+      "nextStep": "Następny krok"
     }
   },
   "execution": {
@@ -4784,19 +4884,188 @@
       "status": "Status",
       "version": "wersja",
       "generated": "Wygenerowana",
-      "name": "Nazwa"
+      "name": "Nazwa",
+      "type": "Typ",
+      "title": "Tytuł",
+      "scope": "Zakres",
+      "sections": "Sekcje",
+      "created": "Utworzono",
+      "frequency": "Częstotliwość",
+      "schedule": "Harmonogram",
+      "nextRun": "Następne uruchomienie"
     },
     "schedule": {
-      "active": "Aktywny"
+      "active": "Aktywny",
+      "paused": "Wstrzymany"
     },
     "preview": {
       "project": "Projekt",
-      "version": "wersja"
+      "version": "wersja",
+      "author": "Autor",
+      "period": "Okres",
+      "immutable": "Wersja niezmienna"
     },
     "toast": {
       "chatOpened": "Czat otwarty",
-      "chatOpenError": "Nie udało się otworzyć czatu"
-    }
+      "chatOpenError": "Nie udało się otworzyć czatu",
+      "selectProjectFirst": "Najpierw wybierz projekt",
+      "reportGenerated": "Raport wygenerowany pomyślnie",
+      "generateError": "Nie udało się wygenerować raportu",
+      "loadSchedulesError": "Nie udało się załadować harmonogramów",
+      "selectProjectForSchedule": "Wybierz projekt dla harmonogramu",
+      "scheduleCreated": "Harmonogram utworzony",
+      "scheduleCreateError": "Nie udało się utworzyć harmonogramu",
+      "scheduleRemoved": "Harmonogram usunięty",
+      "scheduleRemoveError": "Nie udało się usunąć harmonogramu",
+      "loadTemplatesError": "Nie udało się załadować szablonów",
+      "templateNameRequired": "Nazwa szablonu jest wymagana",
+      "templateCreated": "Szablon utworzony",
+      "templateCreateError": "Nie udało się utworzyć szablonu",
+      "loadError": "Nie udało się załadować danych",
+      "loadReportError": "Nie udało się załadować raportu",
+      "pdfStarted": "Pobieranie PDF rozpoczęte",
+      "pdfError": "Nie udało się pobrać PDF",
+      "shareLinkCopied": "Link do udostępniania skopiowany",
+      "shareLinkError": "Nie udało się utworzyć linku",
+      "selectProject": "Wybierz projekt",
+      "generateFailed": "Nie udało się wygenerować raportu",
+      "loadHistoryError": "Nie udało się załadować historii",
+      "scheduleError": "Raport wygenerowany, ale harmonogram nie został utworzony"
+    },
+    "agent": {
+      "changesApplied": "Zmiany zastosowane",
+      "title": "Asystent raportów",
+      "subtitle": "Edytuj strukturę przez czat",
+      "welcome": "Jestem Twoim asystentem raportów",
+      "welcomeDesc": "Poproś mnie o modyfikację struktury raportu, dodanie sekcji lub sprawdzenie jakości.",
+      "proposedChanges": "Proponowane zmiany:",
+      "applying": "Stosowanie…",
+      "applyChanges": "Zastosuj zmiany",
+      "applied": "Zastosowano",
+      "placeholder": "Poproś mnie o modyfikację raportu…"
+    },
+    "qualityGates": {
+      "title": "Kontrola jakości",
+      "readinessScore": "Wskaźnik gotowości",
+      "exportReady": "Gotowy do eksportu",
+      "notExportReady": "Niegotowy do eksportu",
+      "allPassed": "Wszystkie kontrole jakości zaliczone!",
+      "errors": "błędy",
+      "warnings": "ostrzeżenia",
+      "exportBlocked": "Eksport zablokowany",
+      "fixWithAI": "Napraw z AI"
+    },
+    "escalation": {
+      "criticalTitle": "Krytyczne: zalecana eskalacja do Komitetu Sterującego",
+      "warningTitle": "Uwaga: rozważ eskalację do Komitetu Sterującego",
+      "blocked": "zablokowane",
+      "overdueDecisions": "zaległe decyzje",
+      "budgetDeviations": "odchylenia budżetowe",
+      "createR2": "Utwórz raport R2",
+      "dismiss": "Odrzuć"
+    },
+    "narrative": {
+      "facts": "fakty",
+      "observations": "obserwacje",
+      "checksPass": "Kontrole zaliczone",
+      "checksWarn": "Kontrole oznaczone"
+    },
+    "openSourceValuation": "Otwórz wycenę",
+    "openSourceAnalysis": "Otwórz analizę",
+    "openSourceAssessment": "Otwórz ocenę",
+    "openSourceInitiative": "Otwórz inicjatywę",
+    "openSourceSession": "Otwórz przestrzeń pomysłów",
+    "untitledReport": "Raport bez tytułu",
+    "exportPdf": "Eksportuj jako PDF",
+    "exportExcel": "Eksportuj jako Excel",
+    "finalize": "Prześlij",
+    "regenerate": "Wygeneruj raport ponownie",
+    "regenerateHint": "AI odtworzy wszystkie sekcje",
+    "created": "Utworzono",
+    "lastUpdated": "Zaktualizowano",
+    "highPriority": "Wysoki",
+    "mediumPriority": "Średni",
+    "lowPriority": "Niski",
+    "achieved": "Osiągnięto",
+    "maturityMatrix": "Macierz dojrzałości — 7 osi",
+    "axis": "Oś",
+    "current": "Obecny",
+    "gap": "Luka",
+    "priority": "Priorytet",
+    "average": "Średnia",
+    "currentLevel": "Obecny poziom",
+    "targetLevel": "Poziom docelowy",
+    "levels": "poziomy",
+    "progressToTarget": "Postęp do celu",
+    "areaBreakdown": "Podział na obszary",
+    "area": "Obszar",
+    "gapAnalysis": "Podsumowanie analizy luk",
+    "criticalGaps": "Luki krytyczne",
+    "highGaps": "Wysoki priorytet",
+    "totalLevels": "Łącznie poziomów do zdobycia",
+    "currentVsTarget": "Obecny → Docelowy",
+    "estTime": "Szac. czas",
+    "complexity": "Złożoność",
+    "aiActions": "Działania AI",
+    "aiGenerated": "Wygenerowane przez AI",
+    "manuallyEdited": "Edytowane ręcznie",
+    "sectionTitle": "Tytuł sekcji",
+    "enterContent": "Wprowadź treść sekcji...",
+    "quickAI": "Szybkie AI:",
+    "confirmDelete": "Czy na pewno chcesz usunąć tę sekcję?",
+    "expandAll": "Rozwiń wszystko",
+    "collapseAll": "Zwiń wszystko",
+    "sections": "sekcje",
+    "readOnlyMode": "Tryb tylko do odczytu",
+    "manual": "Ręcznie",
+    "aiImprove": "Popraw z AI",
+    "addSection": "Dodaj sekcję",
+    "dropHere": "Upuść sekcję tutaj",
+    "addSectionEnd": "Dodaj sekcję",
+    "tableOfContents": "Spis treści",
+    "edited": "edytowano",
+    "clickToNavigate": "Kliknij, aby przejść",
+    "export": {
+      "pdfSuccess": "PDF wygenerowany pomyślnie",
+      "pdfError": "Nie udało się wygenerować PDF",
+      "pptxSuccess": "PowerPoint wygenerowany pomyślnie",
+      "pptxError": "Nie udało się wygenerować PowerPoint",
+      "shareLinkCreated": "Link do udostępniania utworzony",
+      "shareLinkError": "Nie udało się utworzyć linku",
+      "linkCopied": "Link skopiowany do schowka",
+      "copyError": "Nie udało się skopiować linku"
+    },
+    "actions": {
+      "downloadPdf": "Pobierz PDF",
+      "share": "Udostępnij link",
+      "chat": "Porozmawiaj o tym raporcie"
+    },
+    "empty": {
+      "noResults": "Nie znaleziono raportów."
+    },
+    "aiThinking": "Przetwarzanie Twojego żądania...",
+    "aiError": "Przepraszam, nie udało mi się przetworzyć Twojego żądania.",
+    "aiAssistant": "Asystent raportów AI",
+    "focusedOn": "Skupiono na",
+    "chatWelcome": "Cześć! Mogę pomóc Ci edytować i ulepszyć Twój raport.",
+    "chatExamples": "Spróbuj: „Rozwiń streszczenie wykonawcze” lub „Nadaj bardziej formalny ton”",
+    "chatPlaceholder": "Poproś mnie o edycję lub ulepszenie dowolnej sekcji...",
+    "errorLoading": "Nie udało się załadować raportu",
+    "generateError": "Nie udało się wygenerować raportu",
+    "finalizeConfirm": "Czy na pewno chcesz sfinalizować ten raport? Tej operacji nie można cofnąć.",
+    "emptyReport": "Raport jest pusty",
+    "generatePrompt": "Wygeneruj pełny raport audytu DRD na podstawie danych z oceny. Raport obejmie wszystkie 7 osi, analizę luk oraz rekomendacje.",
+    "generateReport": "Wygeneruj pełny raport",
+    "finalized": "Sfinalizowany",
+    "unsaved": "Niezapisany",
+    "toggleChat": "Przełącz czat AI",
+    "linkRevoked": "Link unieważniony",
+    "linkRevokedDescription": "Ten link do udostępniania został unieważniony przez organizację.",
+    "contactOrg": "Skontaktuj się z organizacją w sprawie dostępu",
+    "sharedSnapshot": "Udostępniona migawka",
+    "sharedSnapshotFooter": "To jest udostępniona migawka tylko do odczytu",
+    "snapshotGeneratedAt": "Wygenerowano",
+    "aiActionComplete": "Akcja AI zakończona"
   },
   "auth": {
     "logIn": "Zaloguj się",
@@ -12475,7 +12744,10 @@
       "reports": "Raporty",
       "presentations": "Prezentacje",
       "all": "Wszystkie",
-      "documents": "Dokumenty"
+      "documents": "Dokumenty",
+      "mine": "Moje",
+      "needsReview": "Wymaga przeglądu",
+      "sheets": "Arkusze"
     },
     "columns": {
       "name": "Nazwa",
@@ -12491,14 +12763,25 @@
       "exports": "Eksporty",
       "source": "Źródło",
       "slides": "Slajdy",
-      "reportType": "Typ"
+      "reportType": "Typ",
+      "mode": "Tryb"
     },
     "filters": {
       "type": "Typ",
       "category": "Kategoria",
       "scope": "Zakres",
-      "status": "Status",
-      "source": "Źródło"
+      "source": "Źródło",
+      "hint": "Wybierz statusy oraz (opcjonalnie) źródła.",
+      "status": {
+        "active": "Aktywny",
+        "draft": "Szkic",
+        "archived": "Zarchiwizowany",
+        "generated": "Wygenerowany",
+        "editing": "W edycji",
+        "exported": "Wyeksportowany",
+        "shared": "Udostępniony",
+        "deprecated": "Wycofany"
+      }
     },
     "actions": {
       "newTemplate": "Nowy wzorzec",
@@ -12513,20 +12796,47 @@
       "exportPdf": "Eksportuj PDF",
       "exportPptx": "Eksportuj PPTX",
       "share": "Udostępnij",
-      "rename": "Zmień nazwę"
+      "rename": "Zmień nazwę",
+      "openPreview": "Otwórz podgląd",
+      "discuss": "Omów",
+      "askAI": "Zapytaj AI",
+      "submitTemplateReview": "Prześlij do przeglądu",
+      "newDocumentStudio": "Nowy dokument AI (Document Studio)",
+      "duplicateAsTemplate": "Duplikuj / Użyj jako szablonu",
+      "saveAsTemplate": "Zapisz jako szablon",
+      "approveTemplate": "Zatwierdź i opublikuj",
+      "newFromTemplate": "Nowy z szablonu",
+      "openInWorkspace": "Otwórz w przestrzeni roboczej",
+      "exportXlsx": "Pobierz XLSX",
+      "startReview": "Rozpocznij przegląd"
     },
     "empty": {
       "templates": "Brak wzorców",
       "reports": "Brak raportów",
       "presentations": "Brak prezentacji",
       "noOutputs": "Brak wyników",
-      "newWithTeresa": "Nowe z Teresą"
+      "newWithTeresa": "Nowe z Teresą",
+      "reportsTitle": "Kanoniczne raporty zarządcze",
+      "reportsBody": "Ta biblioteka jest zorganizowana wokół kanonu raportów V3. Zacznij od jednego z czterech gotowych dla sponsora typów raportów poniżej.",
+      "reportsHint": "Użyj szybkich przycisków na pasku górnym lub utwórz nowy raport, aby wejść w przepływ R1, R2, R3 lub R4.",
+      "templatesOnboarding": "Biblioteka wzorców",
+      "templatesOnboardingDesc": "Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.",
+      "outputs": "Brak outputów"
     },
     "preview": {
       "useTemplate": "Użyj tego wzorca",
       "openFull": "Otwórz pełny",
       "slides": "slajdów",
-      "deprecated": "Wycofany"
+      "deprecated": "Wycofany",
+      "scope": "Zakres",
+      "category": "Kategoria",
+      "sections": "Sekcje",
+      "publishState": "Publikacja",
+      "validationState": "Walidacja",
+      "reviewGates": "Bramki przeglądu",
+      "migrationHint": "Zamiennik",
+      "replacedBy": "Nowy wzorzec",
+      "updatedAt": "Ostatnia zmiana"
     },
     "toast": {
       "exported": "Wyeksportowano",
@@ -12534,10 +12844,16 @@
       "archived": "Zarchiwizowano",
       "archiveFailed": "Archiwizacja nie powiodła się",
       "exportBlocked": "Zatwierdź artefakt przed eksportem",
-      "deleteFailed": "Nie udało się usunąć prezentacji"
+      "deleteFailed": "Nie udało się usunąć prezentacji",
+      "deleted": "Usunięto",
+      "reviewStarted": "Przegląd rozpoczęty",
+      "reviewFailed": "Nie udało się rozpocząć przeglądu"
     },
     "sheets": {
-      "error": "Nie można załadować arkuszy"
+      "error": "Nie można załadować arkuszy",
+      "emptyTitle": "Arkusze w bibliotece outputów",
+      "emptyBody": "Nadzorowane skoroszyty i eksporty pojawią się tutaj poprzez ten sam kanoniczny rejestr artefaktów co dokumenty i prezentacje. Ta zakładka odzwierciedla teraz aktywne artefakty arkuszy, gdy tylko rejestr je otrzyma.",
+      "emptyHint": "Utwórz lub wyeksportuj nadzorowany arkusz, a pojawi się tutaj automatycznie."
     },
     "onboarding": {
       "title": "Tutaj lądują Twoje wyniki",
@@ -12550,27 +12866,115 @@
     "outputs": {
       "kind": {
         "presentation": "Prezentacja",
-        "sheet": "Tabela"
+        "sheet": "Tabela",
+        "document": "Dokument"
       },
       "columns": {
-        "source": "źródło"
+        "source": "źródło",
+        "visibility": "Widoczność",
+        "review": "Przegląd",
+        "kind": "Typ",
+        "exports": "Eksporty"
       },
       "preview": {
         "status": "Status",
-        "source": "źródło"
+        "source": "źródło",
+        "lineageLoadFailed": "Nie udało się załadować pełnej genezy tego uruchomienia",
+        "lineageTitle": "Geneza uruchomienia",
+        "lineageRunId": "Uruchomienie",
+        "lineageLoading": "Ładowanie genezy…",
+        "lineageRun": "Uruchomienie",
+        "lineageCreatedAt": "Utworzono",
+        "lineageToolCalls": "Wywołania narzędzi",
+        "lineageTraces": "Ślady",
+        "lineageOutputs": "Outputy",
+        "lineageVisibility": "Widoczność wymuszona",
+        "lineageToolCallsList": "Wywołania narzędzi",
+        "lineageOutputsList": "Wskaźniki outputów",
+        "download": "Pobierz",
+        "open": "Otwórz",
+        "sheetHint": "Nadzorowane artefakty arkuszy korzystają z tego samego rejestru; ścieżki tworzenia i eksportu są wdrażane w fali 2.",
+        "originsShort": "źródła pochodzenia",
+        "sourcesShort": "źródła",
+        "validationChecksAllGood": "wszystkie zaliczone",
+        "trustState": "Stan zaufania",
+        "visibility": "Widoczność",
+        "validation": "Walidacja",
+        "execution": "Wykonanie",
+        "review": "Przegląd",
+        "reviewersShort": "bramki",
+        "lineage": "Geneza",
+        "artifactId": "ID artefaktu",
+        "executionRunId": "Uruchomienie",
+        "trace": "Ślad",
+        "exports": "Eksporty",
+        "exportTrace": "Ślad eksportu",
+        "accessControl": "Kontrola dostępu",
+        "canManageAccess": "Może zarządzać",
+        "readOnly": "Tylko do odczytu",
+        "trustBoundary": "Granica zaufania",
+        "executionAuthority": "Wykonanie",
+        "reviewAuthority": "Przegląd",
+        "validationChecks": "Kontrole walidacji"
       },
       "tabs": {
         "all": "Wszystkie",
-        "documents": "Dokumenty"
+        "documents": "Dokumenty",
+        "mine": "Moje",
+        "review": "Wymaga przeglądu",
+        "sheets": "Arkusze"
       },
       "visibility": {
         "project": "Projekt",
-        "organization": "Organizacja"
+        "organization": "Organizacja",
+        "private": "Prywatny",
+        "reviewShared": "Udostępniony do przeglądu",
+        "demo": "Demo"
       },
       "review": {
         "published": "Opublikowano",
-        "archived": "Zarchiwizowany"
+        "archived": "Zarchiwizowany",
+        "privateDraft": "Szkic prywatny",
+        "reviewableShare": "Udostępnienie do przeglądu",
+        "inReview": "W przeglądzie",
+        "approved": "Zatwierdzony"
+      },
+      "cta": {
+        "new": "Nowy output"
+      },
+      "filters": {
+        "kind": "Typ outputu"
+      },
+      "source": {
+        "initiativeLinked": "Powiązany z inicjatywą"
+      },
+      "breadcrumb": {
+        "library": "Biblioteka"
       }
+    },
+    "errors": {
+      "realReportsTitle": "Źródło rzeczywistych raportów wymaga uwagi",
+      "realSourceHint": "Nie wstrzyknięto syntetycznych danych demonstracyjnych. Sprawdź aktywną bazę danych, zakres organizacji i kontekst danych przed ponowną próbą.",
+      "realPresentationsTitle": "Źródło rzeczywistych prezentacji wymaga uwagi",
+      "realTemplatesTitle": "Źródło rzeczywistych szablonów wymaga uwagi",
+      "outputsRegistryTitle": "Źródło biblioteki outputów wymaga uwagi"
+    },
+    "reportCanon": {
+      "r1": "Realizacja tygodniowa",
+      "r2": "Komitet Sterujący",
+      "r3": "Śledzenie korzyści",
+      "r4": "Przegląd portfela"
+    },
+    "hub": {
+      "entityName": "Raporty i prezentacje"
+    },
+    "moduleDisabled": {
+      "title": "Biblioteka outputów jest wyłączona",
+      "body": "Ta przestrzeń robocza nie ma włączonej biblioteki outputów. Skontaktuj się z administratorem, aby ją włączyć."
+    },
+    "breadcrumb": {
+      "presentationWizard": "Kreator prezentacji",
+      "deckBuilder": "Kreator prezentacji"
     }
   },
   "rbHub": {
@@ -14455,7 +14859,31 @@
     "projectHint": "Dokumenty współdzielone w ramach tego projektu.",
     "uploading": "Przesyłanie…",
     "userHint": "Twoje prywatne dokumenty, widoczne tylko dla Ciebie.",
-    "ready": "Gotowy"
+    "ready": "Gotowy",
+    "confirmDelete": "Czy na pewno chcesz usunąć ten dokument?",
+    "unknownSize": "Nieznany rozmiar",
+    "processing": "Przetwarzanie",
+    "ocrRequired": "Wymagany OCR",
+    "unreadable": "Nieczytelny",
+    "processingQueued": "W kolejce do przetwarzania w kontekście organizacji.",
+    "processingActive": "Worker przetwarza ten dokument.",
+    "processingRetry": "Przetwarzanie zostanie automatycznie ponowione.",
+    "processingStale": "Przetwarzanie trwa dłużej niż oczekiwano. Administrator może potrzebować sprawdzić workera.",
+    "processingAttention": "Status przetwarzania wymaga uwagi, ponieważ nie znaleziono aktywnego zadania.",
+    "unknownDate": "Nieznana data",
+    "refreshStatus": "Odśwież status dokumentu",
+    "processingRefreshLoop": "Przetwarzane dokumenty są odświeżane co 15 sekund, gdy ten panel jest otwarty.",
+    "uploadHint": "Prześlij swój pierwszy dokument, aby rozpocząć",
+    "processingRecoveryTitle": "Przetwarzanie wymaga przeglądu przez administratora",
+    "processingAdminRecoveryHint": "Otwórz Operacje administracyjne, aby przejrzeć zadania workera, nieaktualne blokady i bezpieczne działania naprawcze.",
+    "processingUserRecoveryHint": "Poproś administratora organizacji o przejrzenie zadań workera w Operacjach administracyjnych.",
+    "processingAttentionReadBack": "Wymaga uwagi od {{time}}.",
+    "processingRecoveryAuditFound": "Znaleziono audyt naprawy: {{action}} o {{time}}.",
+    "processingRecoveryAuditMissing": "Nie znaleziono jeszcze audytowanego działania naprawczego.",
+    "processingAttentionAcknowledged": "Potwierdzone przez Ciebie o {{time}}.",
+    "acknowledgeProcessingAttention": "Potwierdź uwagę",
+    "openAdminOperations": "Otwórz Operacje administracyjne",
+    "lastStatusRefresh": "Ostatnie odświeżenie statusu: {{time}}"
   },
   "consultant": {
     "panel": {
@@ -14590,11 +15018,22 @@
     "reopenSummary": "Prezentacja „{{title}}” — {{count}} slajdów.",
     "kpi": {
       "slides": "slajdów",
-      "status": "Status"
+      "status": "Status",
+      "format": "Format"
     },
     "intentRouted": {
-      "failed": "Błąd"
-    }
+      "failed": "Błąd",
+      "exportPdf": "Rozpoczęto eksport do PDF",
+      "exportPptx": "Rozpoczęto pobieranie PPTX",
+      "agentEdit": "Zastosowano edycję asystenta",
+      "openBuilder": "Otwieranie Kreatora prezentacji w celu zmiany motywu"
+    },
+    "defaultTitle": "Prezentacja",
+    "loadPreviewFailed": "Nie udało się załadować podglądu prezentacji.",
+    "builderUnreachable": "Brak identyfikatora prezentacji — nie można jeszcze otworzyć Kreatora prezentacji.",
+    "openingBuilder": "Otwieranie Kreatora prezentacji...",
+    "qualityGateBlocked": "Eksport zablokowany przez bramkę jakości",
+    "qualityGateBlockedDetailed": "Bramka jakości zablokowana — wymagany przegląd przed eksportem"
   },
   "aiActions": {
     "report": "Raport",
@@ -14741,7 +15180,134 @@
       "proposalExecuted": "wykonano_propozycje"
     },
     "home": {
-      "search": "Wyszukiwanie"
+      "search": "Wyszukiwanie",
+      "title": "Dokumentacja Consultify",
+      "subtitle": "Kompleksowe przewodniki, samouczki i najlepsze praktyki dla platformy Consultify Transformation AI. Dowiedz się, jak przyspieszyć swoją drogę cyfrowej transformacji.",
+      "searchPlaceholder": "Przeszukaj dokumentację...",
+      "gettingStarted": "Pierwsze kroki",
+      "apiReference": "Dokumentacja API",
+      "security": "Bezpieczeństwo",
+      "helpRuntime": {
+        "badge": "Środowisko pomocy",
+        "title": "Uzyskaj pomoc na swój sposób",
+        "subtitle": "Korzystaj z jednego systemu wsparcia obejmującego dokumentację, asystowaną pomoc Teresy, kontekstowe wsparcie w produkcie oraz aktualizacje produktu.",
+        "cards": {
+          "docs": {
+            "title": "Przeglądaj bazę wiedzy",
+            "description": "Korzystaj z obszernych artykułów, stron kategorii i wyróżnionych wskazówek, gdy potrzebujesz uporządkowanych odpowiedzi."
+          },
+          "teresa": {
+            "title": "Poproś Teresę o asystowaną pomoc",
+            "description": "Teresa może objaśnić przepływ pracy, zarekomendować następny krok i pomóc Ci przejść od wskazówek do działania."
+          },
+          "contextual": {
+            "title": "Korzystaj z kontekstowego wsparcia w aplikacji",
+            "description": "Wewnątrz produktu otrzymujesz pomoc dopasowaną do ekranu, szybkie przewodniki, FAQ oraz przekazanie do AI z właściwym kontekstem."
+          },
+          "updates": {
+            "title": "Śledź aktualizacje i wydania",
+            "description": "Bądź na bieżąco ze zmianami produktu, nowymi funkcjami i asystowanymi ścieżkami dalszych działań po każdym wydaniu."
+          },
+          "cta": "Otwórz"
+        }
+      },
+      "journey": {
+        "title": "Ścieżka konsultingowa"
+      },
+      "support": {
+        "title": "Powierzchnie wsparcia",
+        "subtitle": "System pomocy łączy podstawową ścieżkę transformacji z powierzchniami pracy, na których zespoły faktycznie realizują zadania."
+      },
+      "guidedJourneys": {
+        "title": "Asystowane ścieżki",
+        "subtitle": "Zacznij od przewodnika, gdy potrzebujesz zalecanej ścieżki zamiast przeszukiwania całej biblioteki."
+      },
+      "educationScope": {
+        "badge": "Zakres edukacji",
+        "title": "Gdzie kończy się Pomoc, a zaczyna Edukacja",
+        "subtitle": "Pomoc i Baza wiedzy koncentrują się na wskazówkach na żądanie, artykułach referencyjnych i wsparciu kontekstowym. Edukacja to odrębna warstwa rozwoju kompetencji obejmująca uporządkowane ścieżki nauki, postęp oparty na rolach i gotowość w stylu certyfikacji.",
+        "helpTitle": "Wewnątrz Pomocy / Bazy wiedzy",
+        "helpPoint1": "Pomoc kontekstowa, FAQ, szybkie przewodniki, przewodniki po produkcie i obszerne artykuły referencyjne.",
+        "helpPoint2": "Odkrywanie prowadzone przez Teresę, gdy użytkownik potrzebuje pomocy, aby kontynuować rzeczywistą pracę w bieżącym module.",
+        "helpPoint3": "Aktualizacje, informacje o wydaniach i udostępnianie wiedzy, które zmniejszają tarcia w codziennym korzystaniu z produktu.",
+        "educationTitle": "Wewnątrz samodzielnej Edukacji / Akademii",
+        "educationPoint1": "Uporządkowane ścieżki nauki z podstawami, ścieżkami ról i pogłębionym rozwojem metodyki.",
+        "educationPoint2": "Widoczność postępów, semantyka ukończenia oraz punkty kontrolne certyfikacji lub gotowości.",
+        "educationPoint3": "Rozwój kompetencji świadomy ról, powiązany z wdrożeniem, rozwojem partnerów i kształtowaniem umiejętności w czasie.",
+        "pathTitle": "Kanoniczny model ścieżki nauki",
+        "path1": {
+          "title": "1. Podstawy",
+          "description": "Poznaj platformę, podstawową ścieżkę konsultingową i kluczowe koncepcje operacyjne."
+        },
+        "path2": {
+          "title": "2. Ścieżka roli",
+          "description": "Pogłęb wiedzę według roli lub kierunku: operator, konsultant, partner lub specjalistyczna ścieżka metodyki."
+        },
+        "path3": {
+          "title": "3. Dowód gotowości",
+          "description": "Zamknij ścieżkę dowodami postępu, stanem ukończenia i sygnałami zaufania w stylu certyfikacji tam, gdzie to potrzebne."
+        }
+      },
+      "browseByCategory": "Przeglądaj według kategorii",
+      "categoryFallback": "Przeglądaj artykuły w tej kategorii",
+      "browseArticles": "Przeglądaj artykuły",
+      "featuredArticles": "Wyróżnione artykuły",
+      "viewAll": "Zobacz wszystkie",
+      "apiCardDescription": "Sprawdź aktualny status dokumentacji API i poproś o dostęp do wskazówek integracyjnych, dopóki nie zostanie opublikowana aktywna dokumentacja.",
+      "apiCardCta": "Zobacz status API"
+    },
+    "layout": {
+      "brand": "Consultify Docs",
+      "searchPlaceholder": "Przeszukaj dokumentację...",
+      "home": "Strona główna",
+      "signIn": "Zaloguj się",
+      "pressEnterPrefix": "Naciśnij",
+      "pressEnterSuffix": "aby wyszukać",
+      "overview": "Przegląd"
+    },
+    "common": {
+      "docs": "Dokumentacja",
+      "readTime": "{{count}} min czytania",
+      "views": "{{count}} wyświetleń",
+      "featured": "Wyróżnione"
+    },
+    "search": {
+      "title": "Szukaj",
+      "placeholder": "Przeszukaj dokumentację...",
+      "resultsFor": "Wyniki wyszukiwania dla „{{query}}”",
+      "searching": "Wyszukiwanie...",
+      "resultsCount": "Znaleziono wyników: {{count}}",
+      "emptyPromptTitle": "Wprowadź zapytanie",
+      "emptyPromptBody": "Wpisz w polu wyszukiwania powyżej, aby znaleźć artykuły",
+      "noResultsTitle": "Nie znaleziono wyników",
+      "noResultsBody": "Spróbuj zmodyfikować zapytanie lub przejrzeć kategorie",
+      "backToDocs": "Powrót do dokumentacji"
+    },
+    "api": {
+      "title": "Dokumentacja API",
+      "subtitle": "Ta powierzchnia nie jest jeszcze aktywną przeglądarką OpenAPI. Udostępniamy jedynie uczciwy placeholder, dopóki nie zostanie opublikowana właściwa dokumentacja.",
+      "placeholder": {
+        "message": "Interaktywna dokumentacja API nie została jeszcze opublikowana.",
+        "hint": "Nie traktuj tej strony jako miarodajnego katalogu punktów końcowych. Do czasu udostępnienia właściwej dokumentacji API korzystaj z dokumentacji produktu i wdrożonych integracji."
+      },
+      "backToDocs": "Powrót do dokumentacji",
+      "contactSupport": "Skontaktuj się ze wsparciem"
+    },
+    "category": {
+      "fallbackTitle": "Kategoria",
+      "searchPlaceholder": "Szukaj w tej kategorii...",
+      "emptyTitle": "Nie znaleziono artykułów",
+      "emptySearch": "Spróbuj zmodyfikować zapytanie",
+      "emptyCategory": "Ta kategoria jest pusta",
+      "backToCategories": "Powrót do wszystkich kategorii"
+    },
+    "article": {
+      "notFoundTitle": "Nie znaleziono artykułu",
+      "notFoundBody": "Artykuł, którego szukasz, nie istnieje lub został przeniesiony.",
+      "backToDocs": "Powrót do dokumentacji",
+      "copied": "Skopiowano!",
+      "share": "Udostępnij",
+      "watchVideo": "Obejrzyj samouczek wideo"
     }
   },
   "documentStudio": {
