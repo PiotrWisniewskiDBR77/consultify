@@ -183,7 +183,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
 
   const variantStyles: Record<string, string> = {
     default: 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700',
-    danger: 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20',
+    danger: 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20',
     primary:
       'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20',
   };

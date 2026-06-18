@@ -63,8 +63,8 @@ const VARIANT_STYLES: Record<CalloutVariant, { bg: string; text: string; icon: L
     icon: AlertTriangle,
   },
   critical: {
-    bg: 'bg-rose-500/[0.06] dark:bg-rose-500/10',
-    text: 'text-rose-600 dark:text-rose-400',
+    bg: 'bg-danger-500/[0.06] dark:bg-danger-500/10',
+    text: 'text-danger-600 dark:text-danger-400',
     icon: AlertCircle,
   },
   success: {

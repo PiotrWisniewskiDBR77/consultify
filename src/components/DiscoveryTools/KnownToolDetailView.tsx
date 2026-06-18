@@ -305,8 +305,8 @@ export function KnownToolDetailView(props: {
                   ]
             )}
           </div>
-          <div className="rounded-2xl border border-rose-200/70 bg-rose-500/5 p-4 dark:border-rose-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+          <div className="rounded-2xl border border-danger-200/70 bg-danger-500/5 p-4 dark:border-danger-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
               {isPolish ? 'Czym to narzędzie nie jest' : 'What this tool is not'}
             </div>
             {bullets(
@@ -348,8 +348,8 @@ export function KnownToolDetailView(props: {
                   ]
             )}
           </div>
-          <div className="rounded-2xl border border-rose-200/70 bg-rose-500/5 p-4 dark:border-rose-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+          <div className="rounded-2xl border border-danger-200/70 bg-danger-500/5 p-4 dark:border-danger-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
               {isPolish ? 'Kiedy nie zaczynać od SWOT' : 'When not to start with SWOT'}
             </div>
             {bullets(
@@ -741,10 +741,10 @@ export function KnownToolDetailView(props: {
                   dot: 'bg-amber-500',
                 },
                 rose: {
-                  border: 'border-rose-200/70',
-                  bg: 'bg-rose-500/5',
-                  title: 'text-rose-700 dark:text-rose-300',
-                  dot: 'bg-rose-500',
+                  border: 'border-danger-200/70',
+                  bg: 'bg-danger-500/5',
+                  title: 'text-danger-700 dark:text-danger-300',
+                  dot: 'bg-danger-500',
                 },
               };
               const a = accentMap[item.accent] || accentMap.emerald;
@@ -924,11 +924,11 @@ export function KnownToolDetailView(props: {
         dot: 'bg-emerald-500',
       },
       rose: {
-        card: 'border-rose-200/70 bg-rose-500/5 dark:border-rose-900/40',
+        card: 'border-danger-200/70 bg-danger-500/5 dark:border-danger-900/40',
         badge:
-          'border-rose-300/50 bg-white/70 text-rose-800 dark:border-rose-800/50 dark:bg-white/[0.05] dark:text-rose-200',
-        title: 'text-rose-700 dark:text-rose-300',
-        dot: 'bg-rose-500',
+          'border-danger-300/50 bg-white/70 text-danger-800 dark:border-danger-800/50 dark:bg-white/[0.05] dark:text-danger-200',
+        title: 'text-danger-700 dark:text-danger-300',
+        dot: 'bg-danger-500',
       },
     };
 
@@ -1309,8 +1309,8 @@ export function KnownToolDetailView(props: {
                   ]
             )}
           </div>
-          <div className="rounded-2xl border border-rose-200/70 bg-rose-500/5 p-4 dark:border-rose-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+          <div className="rounded-2xl border border-danger-200/70 bg-danger-500/5 p-4 dark:border-danger-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
               {isPolish ? 'Czym to narzędzie nie jest' : 'What this tool is not'}
             </div>
             {bullets(

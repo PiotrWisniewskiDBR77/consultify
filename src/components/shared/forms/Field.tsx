@@ -42,7 +42,7 @@ export const FieldLabel: React.FC<FieldLabelProps> = ({
     className={cn('block text-sm font-medium text-slate-700 dark:text-slate-300', className)}
   >
     {children}
-    {required ? <span className="ml-0.5 text-rose-500">*</span> : null}
+    {required ? <span className="ml-0.5 text-danger-500">*</span> : null}
   </label>
 );
 
@@ -53,7 +53,7 @@ export interface FieldErrorProps {
 
 export const FieldError: React.FC<FieldErrorProps> = ({ children, className }) => {
   if (!children) return null;
-  return <p className={cn('text-xs text-rose-500 dark:text-rose-400', className)}>{children}</p>;
+  return <p className={cn('text-xs text-danger-500 dark:text-danger-400', className)}>{children}</p>;
 };
 
 export default Field;

@@ -339,7 +339,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                       <td className="px-2 py-1.5">
                         <button
                           onClick={() => handleRemoveStep(step.id)}
-                          className="p-1.5 rounded text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                          className="p-1.5 rounded text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 transition-colors"
                           title={lang === 'pl' ? 'Usuń' : 'Remove'}
                         >
                           <Trash2 size={14} />

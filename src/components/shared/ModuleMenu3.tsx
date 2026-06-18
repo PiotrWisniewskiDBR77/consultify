@@ -69,8 +69,8 @@ export const MENU_3_ACTION_NEUTRAL = cn(
 
 export const MENU_3_ACTION_DANGER = cn(
   MENU_3_ACTION_BASE,
-  'border-rose-300/40 bg-rose-50/70 text-rose-700 hover:bg-rose-100/80',
-  'dark:border-rose-500/20 dark:bg-rose-500/[0.08] dark:text-rose-300 dark:hover:bg-rose-500/[0.14]'
+  'border-danger-300/40 bg-danger-50/70 text-danger-700 hover:bg-danger-100/80',
+  'dark:border-danger-500/20 dark:bg-danger-500/[0.08] dark:text-danger-300 dark:hover:bg-danger-500/[0.14]'
 );
 
 export const MENU_3_ALL_DOT_CLASS = 'h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500';

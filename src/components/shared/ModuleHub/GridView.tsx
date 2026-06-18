@@ -84,7 +84,7 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
     dot: 'bg-blue-400',
     label: 'Executing',
   },
-  BLOCKED: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400', label: 'Blocked' },
+  BLOCKED: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-400', label: 'Blocked' },
   DONE: { bg: 'bg-green-500/10', text: 'text-green-400', dot: 'bg-green-400', label: 'Done' },
   TRACKING: {
     bg: 'bg-blue-500/10',
@@ -118,9 +118,9 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
     label: 'Awaiting Approval',
   },
   REJECTED: {
-    bg: 'bg-rose-500/10',
-    text: 'text-rose-400',
-    dot: 'bg-rose-400',
+    bg: 'bg-danger-500/10',
+    text: 'text-danger-400',
+    dot: 'bg-danger-400',
     label: 'Rejected',
   },
   // Report-specific statuses
@@ -362,7 +362,7 @@ export const GridView: React.FC<GridViewProps> = ({
                           onItemAction?.('delete', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                       >
                         <Trash2 size={14} />
                         {labels.delete}

@@ -49,7 +49,7 @@ const PRIORITIES: PriorityMeta[] = [
     labelEn: 'Urgent',
     labelPl: 'Pilny',
     icon: <AlertTriangle size={14} />,
-    active: 'border-rose-400 bg-rose-500/15 text-rose-600 dark:text-rose-300',
+    active: 'border-danger-400 bg-danger-500/15 text-danger-600 dark:text-danger-300',
   },
 ];
 

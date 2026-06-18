@@ -81,7 +81,7 @@ export const UserTableRow: React.FC<{
   mode,
 }) => {
   const getRoleBadgeColor = (role?: string) => {
-    if (isSuperAdminRole(role)) return 'bg-rose-500/20 text-rose-400';
+    if (isSuperAdminRole(role)) return 'bg-danger-500/20 text-danger-400';
     if (role === UserRole.ADMIN) return 'bg-primary-500/20 text-primary-400 border-primary-500/50';
     return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
   };
@@ -139,7 +139,7 @@ export const UserTableRow: React.FC<{
       </td>
       <td className="px-6 py-4">
         <span
-          className={`flex items-center gap-1.5 ${user.status === 'active' ? 'text-green-400' : 'text-rose-400'}`}
+          className={`flex items-center gap-1.5 ${user.status === 'active' ? 'text-green-400' : 'text-danger-400'}`}
         >
           {user.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
           {user.status || 'active'}
@@ -197,8 +197,8 @@ export const UserTableRow: React.FC<{
               onClick={() => onBlock(user.id, user.status || 'active')}
               className={`p-2 rounded-lg text-xs font-medium ${
                 user.status === 'active'
-                  ? 'hover:bg-rose-500/20 text-slate-600 dark:text-slate-500 hover:text-rose-400'
-                  : 'hover:bg-green-500/20 text-rose-400 hover:text-green-400'
+                  ? 'hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400'
+                  : 'hover:bg-green-500/20 text-danger-400 hover:text-green-400'
               }`}
               title={user.status === 'active' ? 'Block' : 'Unblock'}
             >
@@ -208,7 +208,7 @@ export const UserTableRow: React.FC<{
           {onDelete && (
             <button
               onClick={() => onDelete(user.id)}
-              className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-400"
+              className="p-2 hover:bg-danger-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-danger-400"
               title="Delete"
             >
               <Trash2 size={16} />
@@ -948,7 +948,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       )}
 
       {loadError && (
-        <div className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">
+        <div className="rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300">
           {loadError}
         </div>
       )}

@@ -59,7 +59,7 @@ const TONE_VALUE_CLASS: Record<SummaryCardMetricTone, string> = {
   default: 'text-slate-800 dark:text-slate-200',
   positive: 'text-emerald-600 dark:text-emerald-400',
   warning: 'text-amber-600 dark:text-amber-400',
-  danger: 'text-rose-600 dark:text-rose-400',
+  danger: 'text-danger-600 dark:text-danger-400',
 };
 
 export const SummaryCard: React.FC<SummaryCardProps> = ({

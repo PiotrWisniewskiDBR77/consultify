@@ -43,7 +43,7 @@ const COLOR_MAP: Record<PillColorScheme, string> = {
     'border-amber-400/60 dark:border-amber-500/30 bg-amber-100 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-200/70 dark:hover:bg-amber-500/15',
   neutral:
     'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]',
-  red: 'border-rose-300/40 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-100/70 dark:hover:bg-rose-500/15',
+  red: 'border-danger-300/40 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200 hover:bg-danger-100/70 dark:hover:bg-danger-500/15',
   green:
     'border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15',
   /* VISUAL_STANDARD.md §5.1 — primary action = neutral high-contrast

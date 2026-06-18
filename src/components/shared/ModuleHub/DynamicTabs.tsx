@@ -45,7 +45,7 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   APPROVED: 'bg-emerald-400',
   SCHEDULED: 'bg-primary-400',
   EXECUTING: 'bg-blue-400',
-  BLOCKED: 'bg-rose-400',
+  BLOCKED: 'bg-danger-400',
   DONE: 'bg-green-400',
   TRACKING: 'bg-blue-400',
   CANCELLED: 'bg-gray-400',

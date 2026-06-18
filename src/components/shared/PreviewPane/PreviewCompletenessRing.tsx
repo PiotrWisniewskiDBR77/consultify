@@ -15,7 +15,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 function ringColor(pct: number): string {
   if (pct >= 80) return 'stroke-emerald-500';
   if (pct >= 50) return 'stroke-amber-500';
-  return 'stroke-rose-500';
+  return 'stroke-danger-500';
 }
 
 export const PreviewCompletenessRing: React.FC<PreviewCompletenessRingProps> = ({
@@ -74,7 +74,7 @@ export const PreviewCompletenessRing: React.FC<PreviewCompletenessRingProps> = (
                 key={field}
                 className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1"
               >
-                <span className="w-1 h-1 rounded-full bg-rose-400 shrink-0" />
+                <span className="w-1 h-1 rounded-full bg-danger-400 shrink-0" />
                 {field}
               </li>
             ))}

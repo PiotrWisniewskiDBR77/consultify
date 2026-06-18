@@ -138,7 +138,7 @@ const FileIcon: React.FC<{ name: string; className?: string }> = ({ name, classN
     return <FileImage size={15} className={`text-blue-400 ${className}`} />;
   if (['xlsx', 'xls', 'csv', 'numbers'].includes(ext))
     return <FileSpreadsheet size={15} className={`text-emerald-400 ${className}`} />;
-  if (['pdf'].includes(ext)) return <FileText size={15} className={`text-rose-400 ${className}`} />;
+  if (['pdf'].includes(ext)) return <FileText size={15} className={`text-danger-400 ${className}`} />;
   if (['doc', 'docx', 'odt', 'rtf', 'txt', 'md'].includes(ext))
     return <FileText size={15} className={`text-blue-500 ${className}`} />;
   return <File size={15} className={`text-slate-600 ${className}`} />;
@@ -235,7 +235,7 @@ const getStatusBadge = (status?: string) => {
   if (['pending', 'review', 'deferred', 'draft'].includes(s))
     return 'border-amber-400/40 text-amber-400 bg-amber-500/10';
   if (['blocked', 'rejected', 'critical', 'overdue'].includes(s))
-    return 'border-rose-400/40 text-rose-400 bg-rose-500/10';
+    return 'border-danger-400/40 text-danger-400 bg-danger-500/10';
   return 'border-slate-300/50 text-slate-600 bg-slate-100/60 dark:bg-slate-500/10';
 };
 
@@ -404,7 +404,7 @@ const ContextMenu: React.FC<{
               onClick={item.onClick}
               className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
                 item.danger
-                  ? 'text-rose-500 hover:bg-rose-500/10'
+                  ? 'text-danger-500 hover:bg-danger-500/10'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/50'
               }`}
             >
@@ -1274,7 +1274,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       )
                     )
                   }
-                  className="text-slate-600 hover:text-rose-400 transition-colors flex-shrink-0"
+                  className="text-slate-600 hover:text-danger-400 transition-colors flex-shrink-0"
                 >
                   <X size={13} />
                 </button>
@@ -1540,7 +1540,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       </div>
                       <button
                         onClick={() => setStagedInternalItem(null)}
-                        className="p-1.5 rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
                         title={isPolish ? 'Usuń wybór' : 'Remove selection'}
                       >
                         <X size={14} />

@@ -28,13 +28,13 @@ interface CompletenessPillProps {
 function getScoreColor(score: number): string {
   if (score >= 100) return 'text-emerald-500 dark:text-emerald-400';
   if (score >= 50) return 'text-amber-500 dark:text-amber-400';
-  return 'text-rose-500 dark:text-rose-400';
+  return 'text-danger-500 dark:text-danger-400';
 }
 
 function getScoreBgColor(score: number): string {
   if (score >= 100) return 'bg-emerald-500/10 dark:bg-emerald-500/10';
   if (score >= 50) return 'bg-amber-500/10 dark:bg-amber-500/10';
-  return 'bg-rose-500/10 dark:bg-rose-500/10';
+  return 'bg-danger-500/10 dark:bg-danger-500/10';
 }
 
 export const CompletenessPill: React.FC<CompletenessPillProps> = ({

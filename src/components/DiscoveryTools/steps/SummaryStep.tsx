@@ -342,14 +342,14 @@ function DynamicSwotOutputs({
                   {isPolish ? 'Gotowość analizy' : 'Analysis readiness'}
                 </span>
                 <span
-                  className={`text-sm font-bold ${readinessScore >= 4 ? 'text-emerald-600 dark:text-emerald-400' : readinessScore >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`}
+                  className={`text-sm font-bold ${readinessScore >= 4 ? 'text-emerald-600 dark:text-emerald-400' : readinessScore >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-danger-600 dark:text-danger-400'}`}
                 >
                   {readinessScore}/{readinessTotal}
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-navy-800">
                 <div
-                  className={`h-full rounded-full transition-all ${readinessScore >= 4 ? 'bg-emerald-500' : readinessScore >= 2 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                  className={`h-full rounded-full transition-all ${readinessScore >= 4 ? 'bg-emerald-500' : readinessScore >= 2 ? 'bg-amber-500' : 'bg-danger-500'}`}
                   style={{ width: `${(readinessScore / readinessTotal) * 100}%` }}
                 />
               </div>
@@ -393,7 +393,7 @@ function DynamicSwotOutputs({
               {
                 label: isPolish ? 'Napięcia' : 'Tensions',
                 value: tensions.length,
-                color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+                color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
               },
               {
                 label: isPolish ? 'Ruchy' : 'Moves',
@@ -516,7 +516,7 @@ function DynamicSwotOutputs({
                                     ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
                                     : initiative.estimatedEffort === 'medium'
                                       ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                                      : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300'
+                                      : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                                 }`}
                               >
                                 {isPolish ? 'Wysiłek' : 'Effort'}: {initiative.estimatedEffort}

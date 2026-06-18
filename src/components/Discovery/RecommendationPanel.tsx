@@ -188,11 +188,11 @@ export const RecommendationPanel: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
-            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+          <div className="p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-danger-600 dark:text-danger-400">
               {painPointsCount}
             </div>
-            <div className="text-xs text-rose-500 dark:text-rose-400">
+            <div className="text-xs text-danger-500 dark:text-danger-400">
               {t('discovery.conversion.painPointsCount', { count: painPointsCount })}
             </div>
           </div>

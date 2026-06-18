@@ -47,7 +47,7 @@ const CategoryHeader: React.FC<{ category: (typeof CANVAS_CATEGORIES)[0]; nodeCo
   const isPolish = i18n.language === 'pl';
 
   const colorClasses: Record<string, string> = {
-    red: 'border-rose-300 bg-rose-50/80 text-rose-700 dark:border-rose-700 dark:bg-rose-900/20 dark:text-rose-300',
+    red: 'border-danger-300 bg-danger-50/80 text-danger-700 dark:border-danger-700 dark:bg-danger-900/20 dark:text-danger-300',
     amber:
       'border-amber-300 bg-amber-50/80 text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
     green:

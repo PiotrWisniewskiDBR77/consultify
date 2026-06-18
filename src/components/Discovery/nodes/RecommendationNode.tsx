@@ -18,7 +18,7 @@ const ConfidenceMeter: React.FC<{ score: number }> = ({ score }) => {
     if (score >= 80) return 'bg-green-500';
     if (score >= 60) return 'bg-blue-500';
     if (score >= 40) return 'bg-amber-500';
-    return 'bg-rose-500';
+    return 'bg-danger-500';
   };
 
   return (

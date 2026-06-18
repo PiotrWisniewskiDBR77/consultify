@@ -207,7 +207,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                   <button
                     onClick={() => onDeleteComment(c.id)}
                     disabled={locked}
-                    className="p-0.5 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    className="p-0.5 text-slate-600 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                   >
                     <X size={12} />
                   </button>

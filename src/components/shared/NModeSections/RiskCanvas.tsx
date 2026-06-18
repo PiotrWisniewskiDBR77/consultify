@@ -81,7 +81,7 @@ export const getRiskScore = (risk: RiskItem): number =>
   riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
 
 const getRiskScoreClass = (score: number): string => {
-  if (score >= 12) return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30';
+  if (score >= 12) return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
   if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
   if (score >= 4)
     return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -90,7 +90,7 @@ const getRiskScoreClass = (score: number): string => {
 
 const getRiskLevelClass = (level?: string): string => {
   const n = String(level || '').toLowerCase();
-  if (n === 'critical') return 'border-rose-500/60 bg-rose-500/10 text-rose-700 dark:text-rose-300';
+  if (n === 'critical') return 'border-danger-500/60 bg-danger-500/10 text-danger-700 dark:text-danger-300';
   if (n === 'high') return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   if (n === 'medium')
     return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
@@ -280,7 +280,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       <button
                         onClick={() => onRemoveRisk(risk.id)}
                         disabled={locked}
-                        className="p-1 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                        className="p-1 text-slate-600 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                       >
                         <X size={12} />
                       </button>
@@ -390,7 +390,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                             })
                           }
                           disabled={locked}
-                          className="px-1.5 py-0.5 rounded border border-rose-400/30 text-rose-500 dark:text-rose-400 text-[10px] hover:bg-rose-500/10 transition-colors disabled:opacity-40"
+                          className="px-1.5 py-0.5 rounded border border-danger-400/30 text-danger-500 dark:text-danger-400 text-[10px] hover:bg-danger-500/10 transition-colors disabled:opacity-40"
                         >
                           +{arg}
                         </button>

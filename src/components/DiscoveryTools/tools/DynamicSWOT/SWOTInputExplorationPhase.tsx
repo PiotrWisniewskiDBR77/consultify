@@ -57,9 +57,9 @@ const STREAM_META: Record<
     title: { en: 'Threats', pl: 'Zagrożenia' },
     subtitle: { en: 'External risk', pl: 'Ryzyko zewnętrzne' },
     badge: '4/4',
-    headerTone: 'text-rose-700 dark:text-rose-300',
-    surface: 'border-rose-200/70 bg-rose-500/5 dark:border-rose-900/40',
-    proposalTone: 'border-rose-200/70 bg-white/85 dark:border-rose-900/30 dark:bg-navy-950/40',
+    headerTone: 'text-danger-700 dark:text-danger-300',
+    surface: 'border-danger-200/70 bg-danger-500/5 dark:border-danger-900/40',
+    proposalTone: 'border-danger-200/70 bg-white/85 dark:border-danger-900/30 dark:bg-navy-950/40',
   },
 };
 

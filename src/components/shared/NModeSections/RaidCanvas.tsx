@@ -166,9 +166,9 @@ const RAID_TYPE_META: Record<
 > = {
   risk: {
     icon: AlertTriangle,
-    color: 'text-rose-500',
-    bgLight: 'bg-rose-500/10',
-    borderActive: 'border-rose-400/60 ring-rose-400/30',
+    color: 'text-danger-500',
+    bgLight: 'bg-danger-500/10',
+    borderActive: 'border-danger-400/60 ring-danger-400/30',
   },
   assumption: {
     icon: HelpCircle,
@@ -178,9 +178,9 @@ const RAID_TYPE_META: Record<
   },
   issue: {
     icon: XCircle,
-    color: 'text-rose-500',
-    bgLight: 'bg-rose-500/10',
-    borderActive: 'border-rose-400/60 ring-rose-400/30',
+    color: 'text-danger-500',
+    bgLight: 'bg-danger-500/10',
+    borderActive: 'border-danger-400/60 ring-danger-400/30',
   },
   dependency: {
     icon: GitBranch,
@@ -207,7 +207,7 @@ export const getRaidScore = (item: RaidItem): number =>
 
 const getScoreClass = (score: number, isRisk: boolean): string => {
   if (isRisk) {
-    if (score >= 12) return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30';
+    if (score >= 12) return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
     if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
     if (score >= 4)
       return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -220,7 +220,7 @@ const getScoreClass = (score: number, isRisk: boolean): string => {
 
 const getLevelClass = (level?: string): string => {
   const n = String(level || '').toLowerCase();
-  if (n === 'critical') return 'border-rose-500/60 bg-rose-500/10 text-rose-700 dark:text-rose-300';
+  if (n === 'critical') return 'border-danger-500/60 bg-danger-500/10 text-danger-700 dark:text-danger-300';
   if (n === 'high') return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   if (n === 'medium')
     return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
@@ -236,7 +236,7 @@ const getStatusClass = (status: string): string => {
   if (s === 'accepted') return 'bg-amber-500/15 text-amber-500 border-amber-400/30';
   if (s === 'transferred') return 'bg-primary-500/15 text-primary-500 border-primary-400/30';
   if (s === 'materialized' || s === 'invalidated' || s === 'not_met')
-    return 'bg-rose-500/20 text-rose-500 border-rose-400/40';
+    return 'bg-danger-500/20 text-danger-500 border-danger-400/40';
   if (s === 'escalated' || s === 'at_risk')
     return 'bg-amber-500/15 text-amber-500 border-amber-400/30';
   if (s === 'in_progress') return 'bg-blue-500/15 text-blue-500 border-blue-400/30';
@@ -492,13 +492,13 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
   }, [items, criticalItems, overdueItems, unownedItems]);
 
   const healthColor =
-    healthScore >= 70 ? 'text-emerald-500' : healthScore >= 40 ? 'text-amber-500' : 'text-rose-500';
+    healthScore >= 70 ? 'text-emerald-500' : healthScore >= 40 ? 'text-amber-500' : 'text-danger-500';
   const healthBg =
     healthScore >= 70
       ? 'bg-emerald-500/10 border-emerald-500/30'
       : healthScore >= 40
         ? 'bg-amber-500/10 border-amber-500/30'
-        : 'bg-rose-500/10 border-rose-500/30';
+        : 'bg-danger-500/10 border-danger-500/30';
 
   const filteredItems = useMemo(() => {
     const filtered = typeFilter === 'all' ? items : items.filter((i) => i.type === typeFilter);
@@ -610,10 +610,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         </div>
         {/* Critical/High */}
         <div
-          className={`p-2.5 rounded-xl text-center border ${criticalItems.length > 0 ? 'border-rose-400/40 bg-rose-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+          className={`p-2.5 rounded-xl text-center border ${criticalItems.length > 0 ? 'border-danger-400/40 bg-danger-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
         >
           <div
-            className={`text-xl font-bold ${criticalItems.length > 0 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`text-xl font-bold ${criticalItems.length > 0 ? 'text-danger-500' : 'text-slate-700 dark:text-slate-200'}`}
           >
             {criticalItems.length}
           </div>
@@ -726,7 +726,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       const score = raidLevelToScore(p) * raidLevelToScore(i);
                       const bgClass =
                         score >= 12
-                          ? 'bg-rose-500/25'
+                          ? 'bg-danger-500/25'
                           : score >= 8
                             ? 'bg-amber-500/20'
                             : score >= 4
@@ -849,7 +849,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                     itemOverdue
                       ? 'bg-amber-500/5 dark:bg-amber-500/5 ring-1 ring-amber-400/30'
                       : showConvert
-                        ? 'bg-rose-500/5 dark:bg-rose-500/5 ring-1 ring-rose-400/20'
+                        ? 'bg-danger-500/5 dark:bg-danger-500/5 ring-1 ring-danger-400/20'
                         : 'bg-slate-50/20 dark:bg-navy-900/25'
                   }`}
                 >
@@ -858,7 +858,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                     <div
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium ${
                         showConvert
-                          ? 'bg-rose-500/15 text-rose-500 dark:text-rose-400'
+                          ? 'bg-danger-500/15 text-danger-500 dark:text-danger-400'
                           : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                       }`}
                     >
@@ -875,7 +875,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           <button
                             onClick={() => handleConvertToIssue(item)}
                             disabled={locked}
-                            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 dark:text-rose-400 text-[10px] font-semibold transition-colors disabled:opacity-40"
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-danger-500/20 hover:bg-danger-500/30 text-danger-600 dark:text-danger-400 text-[10px] font-semibold transition-colors disabled:opacity-40"
                           >
                             <ArrowRight size={10} />
                             {isPolish ? 'Konwertuj na Issue' : 'Convert to Issue'}
@@ -934,7 +934,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         <button
                           onClick={() => onRemoveItem(item.id)}
                           disabled={locked}
-                          className="p-1 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                          className="p-1 text-slate-600 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                         >
                           <X size={12} />
                         </button>
@@ -1208,7 +1208,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                                 })
                               }
                               disabled={locked}
-                              className="px-1.5 py-0.5 rounded border border-rose-400/30 text-rose-500 dark:text-rose-400 text-[10px] hover:bg-rose-500/10 transition-colors disabled:opacity-40"
+                              className="px-1.5 py-0.5 rounded border border-danger-400/30 text-danger-500 dark:text-danger-400 text-[10px] hover:bg-danger-500/10 transition-colors disabled:opacity-40"
                             >
                               +{arg}
                             </button>
@@ -1306,7 +1306,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                               : item.type === 'assumption'
                                 ? 'border-blue-400/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10'
                                 : item.type === 'issue'
-                                  ? 'border-rose-400/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10'
+                                  ? 'border-danger-400/30 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10'
                                   : 'border-primary-400/30 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10'
                           }`}
                         >

@@ -138,7 +138,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
               {hoveredId === item.id && !locked && (
                 <button
                   onClick={() => onRemove(item.id)}
-                  className="p-0.5 text-slate-600 hover:text-rose-500 transition-colors flex-shrink-0"
+                  className="p-0.5 text-slate-600 hover:text-danger-500 transition-colors flex-shrink-0"
                 >
                   <Trash2 size={11} />
                 </button>

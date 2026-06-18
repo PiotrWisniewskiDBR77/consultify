@@ -73,13 +73,13 @@ export const SourceMetadataBlock: React.FC<SourceMetadataBlockProps> = ({
   if (!source) {
     return (
       <div
-        className={`rounded-lg border border-rose-500/30 bg-rose-500/10 ${
+        className={`rounded-lg border border-danger-500/30 bg-danger-500/10 ${
           compact ? 'px-2 py-1' : 'px-3 py-2'
         }`}
       >
         <div className="flex items-center gap-2">
-          <AlertTriangle size={compact ? 12 : 14} className="text-rose-400 shrink-0" />
-          <span className="text-xs font-medium text-rose-400">
+          <AlertTriangle size={compact ? 12 : 14} className="text-danger-400 shrink-0" />
+          <span className="text-xs font-medium text-danger-400">
             {t('traceability.noSource', 'No source')}
           </span>
         </div>

@@ -60,7 +60,7 @@ const NotionItemCard: React.FC<{
         {item.dueDate && (
           <span
             className={`text-[11px] font-medium ${
-              item.isOverdue ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'
+              item.isOverdue ? 'text-danger-500' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             {item.dueDate}

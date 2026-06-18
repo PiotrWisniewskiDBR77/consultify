@@ -31,9 +31,9 @@ const QUADRANT_CONFIG = {
   weaknesses: {
     label: { en: 'Weaknesses', pl: 'Słabe strony' },
     color: 'red',
-    bgClass: 'bg-rose-50 dark:bg-rose-900/20',
-    borderClass: 'border-rose-200 dark:border-rose-800',
-    textClass: 'text-rose-700 dark:text-rose-300',
+    bgClass: 'bg-danger-50 dark:bg-danger-900/20',
+    borderClass: 'border-danger-200 dark:border-danger-800',
+    textClass: 'text-danger-700 dark:text-danger-300',
     icon: 'W',
   },
   opportunities: {
@@ -100,7 +100,7 @@ export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({ data, isPolish, onItemCl
                     px-1.5 py-0.5 text-xs rounded
                     ${
                       item.impact === 'high'
-                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                        ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300'
                         : item.impact === 'medium'
                           ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                           : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'

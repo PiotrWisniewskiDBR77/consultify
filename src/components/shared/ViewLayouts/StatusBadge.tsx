@@ -19,9 +19,9 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
     dot: 'bg-amber-500',
   },
   danger: {
-    bg: 'bg-rose-100 dark:bg-rose-500/20',
-    text: 'text-rose-700 dark:text-rose-400',
-    dot: 'bg-rose-500',
+    bg: 'bg-danger-100 dark:bg-danger-500/20',
+    text: 'text-danger-700 dark:text-danger-400',
+    dot: 'bg-danger-500',
   },
   info: {
     bg: 'bg-blue-50/70 dark:bg-blue-500/10',
@@ -68,7 +68,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 /* ─────────────── Priority Dot ─────────────── */
 
 const PRIORITY_COLORS: Record<string, string> = {
-  critical: 'text-rose-500',
+  critical: 'text-danger-500',
   high: 'text-amber-500',
   medium: 'text-blue-500',
   low: 'text-slate-600',

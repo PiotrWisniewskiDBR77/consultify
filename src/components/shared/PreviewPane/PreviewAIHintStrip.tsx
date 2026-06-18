@@ -187,7 +187,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
       </div>
 
       {error ? (
-        <div className="mt-2 text-xs text-rose-600 dark:text-rose-400">{error}</div>
+        <div className="mt-2 text-xs text-danger-600 dark:text-danger-400">{error}</div>
       ) : result ? (
         <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
           {result}

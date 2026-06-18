@@ -193,12 +193,12 @@ const statusLabel = (
 type ToolSaveState = 'saved' | 'saving' | 'dirty' | 'error';
 
 const getPriorityDotClass = (priority: CommentPriority) =>
-  priority === 'high' ? 'bg-rose-500' : priority === 'low' ? 'bg-emerald-500' : 'bg-blue-500';
+  priority === 'high' ? 'bg-danger-500' : priority === 'low' ? 'bg-emerald-500' : 'bg-blue-500';
 
 const getPriorityButtonClass = (priority: CommentPriority, isActive: boolean) =>
   isActive
     ? priority === 'high'
-      ? 'border-rose-400/80 text-rose-300 bg-rose-500/20'
+      ? 'border-danger-400/80 text-danger-300 bg-danger-500/20'
       : priority === 'low'
         ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20'
         : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15'
@@ -933,7 +933,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                       ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
                       : dynamicSwotReadiness.readiness === 'needs-work'
                         ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                        : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300'
+                        : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                   }`}
                 >
                   {dynamicSwotReadiness.label}

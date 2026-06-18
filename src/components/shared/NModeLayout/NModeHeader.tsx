@@ -110,7 +110,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
         ? 'Zapis nie powiódł się. Kliknij, aby spróbować ponownie.'
         : 'Save failed. Click to retry.',
       className:
-        'bg-rose-500/10 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/15 dark:hover:bg-rose-500/15 border-rose-500/30',
+        'bg-danger-500/10 dark:bg-danger-500/10 text-danger-700 dark:text-danger-300 hover:bg-danger-500/15 dark:hover:bg-danger-500/15 border-danger-500/30',
       icon: AlertTriangle,
       disabled: false,
     },

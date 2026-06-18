@@ -66,7 +66,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
       return item.dueDate ? (
         <span
           className={`text-xs font-medium ${
-            item.isOverdue ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'
+            item.isOverdue ? 'text-danger-500' : 'text-slate-500 dark:text-slate-400'
           }`}
         >
           {item.dueDate}

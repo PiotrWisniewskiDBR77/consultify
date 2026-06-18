@@ -111,10 +111,10 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; border: string;
     ring: 'ring-sky-400/30',
   },
   red: {
-    bg: 'bg-rose-500/10',
-    text: 'text-rose-500',
-    border: 'border-rose-500/20',
-    ring: 'ring-rose-400/30',
+    bg: 'bg-danger-500/10',
+    text: 'text-danger-500',
+    border: 'border-danger-500/20',
+    ring: 'ring-danger-400/30',
   },
   lime: {
     bg: 'bg-lime-500/10',
@@ -281,7 +281,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
             <button
               type="button"
               onClick={onRemove}
-              className="p-1 rounded hover:bg-rose-500/10 text-slate-600 hover:text-rose-500"
+              className="p-1 rounded hover:bg-danger-500/10 text-slate-600 hover:text-danger-500"
               title={isPl ? 'Usuń link' : 'Remove link'}
             >
               <X size={10} />

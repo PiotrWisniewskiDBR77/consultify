@@ -104,8 +104,8 @@ const INSIGHT_TYPE_CONFIG: Record<
   risk: {
     label: 'Risk',
     icon: <AlertTriangle size={16} />,
-    color: 'text-rose-400',
-    bgColor: 'bg-rose-500/20',
+    color: 'text-danger-400',
+    bgColor: 'bg-danger-500/20',
   },
   problem: {
     label: 'Problem',
@@ -134,8 +134,8 @@ const INSIGHT_TYPE_CONFIG: Record<
   problems: {
     label: 'Problems',
     icon: <AlertTriangle size={16} />,
-    color: 'text-rose-400',
-    bgColor: 'bg-rose-500/20',
+    color: 'text-danger-400',
+    bgColor: 'bg-danger-500/20',
   },
   recommendations: {
     label: 'Recommendations',
@@ -164,8 +164,8 @@ const INSIGHT_TYPE_CONFIG: Record<
   risk_assessment: {
     label: 'Risk Assessment',
     icon: <AlertTriangle size={16} />,
-    color: 'text-rose-400',
-    bgColor: 'bg-rose-500/20',
+    color: 'text-danger-400',
+    bgColor: 'bg-danger-500/20',
   },
   opportunity_scan: {
     label: 'Opportunity Scan',
@@ -196,7 +196,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 const IMPACT_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
-  critical: { label: 'Critical', color: 'text-rose-400', bgColor: 'bg-rose-500/20' },
+  critical: { label: 'Critical', color: 'text-danger-400', bgColor: 'bg-danger-500/20' },
   high: { label: 'High', color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   medium: { label: 'Medium', color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
   low: { label: 'Low', color: 'text-slate-600', bgColor: 'bg-slate-500/20' },
@@ -213,7 +213,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
   approved: { label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   generating: { label: 'Generating...', color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   completed: { label: 'Ready', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
-  failed: { label: 'Failed', color: 'text-rose-400', bgColor: 'bg-rose-500/20' },
+  failed: { label: 'Failed', color: 'text-danger-400', bgColor: 'bg-danger-500/20' },
   exported: { label: 'Exported', color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
 };
 

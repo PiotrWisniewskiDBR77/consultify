@@ -194,7 +194,7 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemove(item.id)}
-                    className="p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-600 hover:text-rose-500"
+                    className="p-1 rounded-lg hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500"
                     aria-label={isPolish ? 'Usuń' : 'Remove'}
                   >
                     <Trash2 className="w-4 h-4" />

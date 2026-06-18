@@ -22,7 +22,7 @@ export function ProposalStatusBadge({
     status === 'ai-proposed'
       ? 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/40 dark:bg-primary-950/30 dark:text-primary-300'
       : status === 'rejected'
-        ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300'
+        ? 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/30 dark:text-danger-300'
         : status === 'rethinking'
           ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300'
           : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300';
@@ -83,7 +83,7 @@ export function ProposalCardActions({
         <button
           type="button"
           onClick={() => onRejectCard?.(cardType, cardId)}
-          className="rounded-lg bg-rose-50 p-1.5 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-300"
+          className="rounded-lg bg-danger-50 p-1.5 text-danger-700 hover:bg-danger-100 dark:bg-danger-900/30 dark:text-danger-300"
           aria-label={isPolish ? 'Odrzuć' : 'Reject'}
           title={isPolish ? 'Odrzuć kartę AI' : 'Reject AI card'}
         >

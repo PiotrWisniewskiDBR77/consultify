@@ -389,7 +389,7 @@ export const KnownToolPreviewV3Body: React.FC<{
           : 'Inactive',
       className: tool.isActive
         ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
-        : 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300',
+        : 'bg-danger-50 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
     },
     ...(tool.isComingSoon
       ? [

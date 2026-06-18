@@ -182,7 +182,7 @@ const INITIATIVES_STATUSES: StatusFilterOption[] = [
   { id: 'planned', label: 'Planned', color: 'text-blue-400', bgColor: 'bg-blue-500' },
   { id: 'in_progress', label: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
-  { id: 'cancelled', label: 'Cancelled', color: 'text-rose-400', bgColor: 'bg-rose-500' },
+  { id: 'cancelled', label: 'Cancelled', color: 'text-danger-400', bgColor: 'bg-danger-500' },
 ];
 
 // Tool type codes
@@ -265,8 +265,8 @@ const CATEGORY_META: Record<
   licensed: {
     name: 'Assessments',
     icon: <Shield size={16} />,
-    textClass: 'text-rose-400',
-    dotClass: 'bg-rose-400',
+    textClass: 'text-danger-400',
+    dotClass: 'bg-danger-400',
     count: 5,
   },
 };
@@ -285,31 +285,31 @@ const ASSESSMENT_FRAMEWORK_META: Record<
   DRD: {
     name: 'Digital Readiness Diagnosis',
     shortName: 'DRD',
-    icon: <Activity size={16} className="text-rose-400" />,
+    icon: <Activity size={16} className="text-danger-400" />,
     tags: ['assessment', 'digital', 'readiness'],
   },
   SIRI: {
     name: 'Smart Industry Readiness Index',
     shortName: 'SIRI',
-    icon: <Cpu size={16} className="text-rose-400" />,
+    icon: <Cpu size={16} className="text-danger-400" />,
     tags: ['assessment', 'industry-4.0', 'readiness'],
   },
   ADMA: {
     name: 'Advanced Digital Maturity Assessment',
     shortName: 'ADMA',
-    icon: <Database size={16} className="text-rose-400" />,
+    icon: <Database size={16} className="text-danger-400" />,
     tags: ['assessment', 'maturity', 'digital'],
   },
   CMMI: {
     name: 'Capability Maturity Model Integration',
     shortName: 'CMMI',
-    icon: <Layers size={16} className="text-rose-400" />,
+    icon: <Layers size={16} className="text-danger-400" />,
     tags: ['assessment', 'process', 'maturity'],
   },
   LEAN: {
     name: 'Lean 4.0',
     shortName: 'LEAN',
-    icon: <Workflow size={16} className="text-rose-400" />,
+    icon: <Workflow size={16} className="text-danger-400" />,
     tags: ['assessment', 'lean', 'operations'],
   },
 };
@@ -1597,7 +1597,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             const meta = (ASSESSMENT_FRAMEWORK_META as any)?.[fw];
             return (
               <div className="flex items-center gap-2">
-                <span className="text-rose-400">{meta?.icon || <Shield size={16} />}</span>
+                <span className="text-danger-400">{meta?.icon || <Shield size={16} />}</span>
                 <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                   {fw || 'ASSESS'}
                 </span>
@@ -1851,7 +1851,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const priority = row._fullData?.priority || 'MEDIUM';
           const priorityDots: Record<string, string> = {
-            CRITICAL: 'bg-rose-500',
+            CRITICAL: 'bg-danger-500',
             HIGH: 'bg-amber-500',
             MEDIUM: 'bg-blue-500',
             LOW: 'bg-slate-400',
@@ -2762,7 +2762,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       case 'IN_PROGRESS':
         return 'bg-blue-500/20 text-blue-400';
       case 'BLOCKED':
-        return 'bg-rose-500/20 text-rose-400';
+        return 'bg-danger-500/20 text-danger-400';
       default:
         return 'bg-slate-500/20 text-slate-600';
     }
@@ -2771,7 +2771,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return 'text-rose-400';
+        return 'text-danger-400';
       case 'HIGH':
         return 'text-amber-400';
       case 'MEDIUM':
@@ -2922,7 +2922,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     <span className="text-green-400">{taskStats.done} Done</span>
                     <span className="text-blue-400">{taskStats.inProgress} In Progress</span>
                     {taskStats.blocked > 0 && (
-                      <span className="text-rose-400">{taskStats.blocked} Blocked</span>
+                      <span className="text-danger-400">{taskStats.blocked} Blocked</span>
                     )}
                   </div>
                 </div>
@@ -2966,7 +2966,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                               : task.status === 'IN_PROGRESS'
                                 ? 'bg-blue-400'
                                 : task.status === 'BLOCKED'
-                                  ? 'bg-rose-400'
+                                  ? 'bg-danger-400'
                                   : 'bg-slate-400'
                           }`}
                         />
@@ -3158,7 +3158,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (loadError) {
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
-          <AlertTriangle className="w-12 h-12 text-rose-500 mb-4" />
+          <AlertTriangle className="w-12 h-12 text-danger-500 mb-4" />
           <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
             {loadError.isTransportBlock
               ? isPolish
@@ -4532,7 +4532,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   id: 'licensed' as const,
                   label: isPolish ? 'Assessments' : 'Assessments',
                   count: libraryCategoryCounts.licensed,
-                  dot: 'bg-rose-500',
+                  dot: 'bg-danger-500',
                 },
                 {
                   id: 'other' as const,

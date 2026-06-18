@@ -16,7 +16,7 @@ export function SwotMatrixVisual({ data, isPolish }: { data: SWOTData; isPolish:
     ['strengths', isPolish ? 'Mocne strony' : 'Strengths', 'bg-emerald-50 text-emerald-700'],
     ['weaknesses', isPolish ? 'Słabe strony' : 'Weaknesses', 'bg-amber-50 text-amber-700'],
     ['opportunities', isPolish ? 'Szanse' : 'Opportunities', 'bg-sky-50 text-sky-700'],
-    ['threats', isPolish ? 'Zagrożenia' : 'Threats', 'bg-rose-50 text-rose-700'],
+    ['threats', isPolish ? 'Zagrożenia' : 'Threats', 'bg-danger-50 text-danger-700'],
   ] as const;
   return (
     <div className={cardClass}>
@@ -184,7 +184,7 @@ export function RiskMatrixVisual({
       <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
         {isPolish ? 'Macierz prawdopodobieństwo x wpływ' : 'Probability x impact matrix'}
       </div>
-      <div className="relative h-56 rounded-2xl bg-gradient-to-tr from-emerald-50 via-amber-50 to-rose-50 dark:from-emerald-950/20 dark:via-amber-950/20 dark:to-rose-950/20">
+      <div className="relative h-56 rounded-2xl bg-gradient-to-tr from-emerald-50 via-amber-50 to-danger-50 dark:from-emerald-950/20 dark:via-amber-950/20 dark:to-danger-900/20">
         <div className="absolute inset-x-1/2 top-0 h-full w-px bg-white/70" />
         <div className="absolute inset-y-1/2 left-0 h-px w-full bg-white/70" />
         {(data.risks || []).map((risk) => (

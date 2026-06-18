@@ -270,8 +270,8 @@ export function DynamicSwotLibraryGraphic({
       hint: labels.threatsHint,
       items: labels.threatItems,
       className:
-        'border-rose-200/70 bg-rose-50/80 text-rose-950 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-100',
-      titleClassName: 'text-rose-800 dark:text-rose-300',
+        'border-danger-200/70 bg-danger-50/80 text-danger-900 dark:border-danger-900/40 dark:bg-danger-900/30 dark:text-danger-100',
+      titleClassName: 'text-danger-800 dark:text-danger-300',
     },
   ];
 

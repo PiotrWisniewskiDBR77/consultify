@@ -132,7 +132,7 @@ export const AISystemHealthCard: React.FC<{
       bg: 'bg-yellow-500/10',
       icon: <AlertTriangle size={16} />,
     },
-    error: { color: 'text-rose-500', bg: 'bg-rose-500/10', icon: <AlertTriangle size={16} /> },
+    error: { color: 'text-danger-500', bg: 'bg-danger-500/10', icon: <AlertTriangle size={16} /> },
     unknown: {
       color: 'text-slate-500 dark:text-slate-400',
       bg: 'bg-slate-500/10',

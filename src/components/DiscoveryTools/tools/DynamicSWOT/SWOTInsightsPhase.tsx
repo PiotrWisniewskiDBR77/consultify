@@ -79,7 +79,7 @@ const TENSION_BUCKETS = [
     label: 'PROTECT',
     title: { en: 'Weakness + Threat', pl: 'Słabość + Zagrożenie' },
     icon: AlertTriangle,
-    accent: 'text-rose-700 dark:text-rose-300',
+    accent: 'text-danger-700 dark:text-danger-300',
   },
 ] as const;
 
@@ -110,10 +110,10 @@ const QUADRANT_META: Record<
   },
   threats: {
     title: { en: 'Threats', pl: 'Zagrożenia' },
-    border: 'border-rose-200/70 dark:border-rose-900/40',
-    bg: 'bg-rose-50/60 dark:bg-rose-950/20',
-    text: 'text-rose-800 dark:text-rose-300',
-    label: 'text-rose-600 dark:text-rose-400',
+    border: 'border-danger-200/70 dark:border-danger-900/40',
+    bg: 'bg-danger-50/60 dark:bg-danger-900/20',
+    text: 'text-danger-800 dark:text-danger-300',
+    label: 'text-danger-600 dark:text-danger-400',
   },
 };
 
@@ -152,7 +152,7 @@ interface Observation {
 const PRIORITY_META: Record<ObsPriority, { label: { en: string; pl: string }; cls: string }> = {
   critical: {
     label: { en: 'Critical', pl: 'Krytyczne' },
-    cls: 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300',
+    cls: 'border-danger-300 bg-danger-50 text-danger-700 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-300',
   },
   important: {
     label: { en: 'Important', pl: 'Ważne' },
@@ -815,7 +815,7 @@ const INSIGHT_TYPE_META: Record<
 > = {
   tension: {
     label: { en: 'Strategic tension', pl: 'Napięcie strategiczne' },
-    accent: 'text-rose-600 dark:text-rose-400',
+    accent: 'text-danger-600 dark:text-danger-400',
     icon: Swords,
   },
   leverage: {
@@ -1179,7 +1179,7 @@ function RecommendationCard({
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
                     : rec.estimatedEffort === 'medium'
                       ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                      : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300'
+                      : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                 }`}
               >
                 {isPolish ? 'Wysiłek' : 'Effort'}: {rec.estimatedEffort}
@@ -1685,7 +1685,7 @@ export function SWOTInsightsPhase({
                               ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
                               : move.estimatedEffort === 'medium'
                                 ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                                : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300'
+                                : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                           }`}
                         >
                           {isPolish ? 'Wysiłek' : 'Effort'}: {move.estimatedEffort}
@@ -1766,8 +1766,8 @@ export function SWOTInsightsPhase({
           {deferredMoves.length > 0 && (
             <div className="mt-2">
               <div className="mb-3 flex items-center gap-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-rose-600 dark:text-rose-400">
+                <AlertTriangle className="h-3.5 w-3.5 text-danger-500" />
+                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-danger-600 dark:text-danger-400">
                   {isPolish ? 'Nie teraz / odłóż' : 'Not now / defer'}
                 </span>
               </div>
@@ -1775,7 +1775,7 @@ export function SWOTInsightsPhase({
                 {deferredMoves.map((move) => (
                   <div
                     key={move.id}
-                    className="rounded-xl border border-rose-200/40 bg-rose-50/30 p-3 dark:border-rose-900/25 dark:bg-rose-950/10"
+                    className="rounded-xl border border-danger-200/40 bg-danger-50/30 p-3 dark:border-danger-900/25 dark:bg-danger-900/10"
                   >
                     <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                       {move.title}
@@ -1783,7 +1783,7 @@ export function SWOTInsightsPhase({
                     <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                       {move.rationale}
                     </div>
-                    <div className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+                    <div className="mt-1 text-xs text-danger-600 dark:text-danger-400">
                       {isPolish
                         ? 'Wysoki wysiłek, nieproporcjonalny do oczekiwanego wpływu.'
                         : 'High effort, disproportionate to expected impact.'}
@@ -1859,7 +1859,7 @@ export function SWOTInsightsPhase({
                               ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
                               : initiative.estimatedEffort === 'medium'
                                 ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                                : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300'
+                                : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
                           }`}
                         >
                           {isPolish ? 'Wysiłek' : 'Effort'}: {initiative.estimatedEffort}

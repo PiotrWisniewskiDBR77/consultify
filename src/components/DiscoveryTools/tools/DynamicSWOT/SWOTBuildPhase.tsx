@@ -55,8 +55,8 @@ const QUADRANT_META: Record<
   threats: {
     title: { en: 'Threats', pl: 'Zagrożenia' },
     subtitle: { en: 'External risk', pl: 'Zewnętrzne ryzyko' },
-    accent: 'text-rose-700 dark:text-rose-300',
-    surface: 'border-rose-200 bg-rose-50/80 dark:border-rose-900/40 dark:bg-rose-950/20',
+    accent: 'text-danger-700 dark:text-danger-300',
+    surface: 'border-danger-200 bg-danger-50/80 dark:border-danger-900/40 dark:bg-danger-900/20',
   },
 };
 
@@ -165,7 +165,7 @@ function QuadrantCard({
                 <button
                   type="button"
                   onClick={() => removeSWOTItem(item.id)}
-                  className="rounded-lg p-1.5 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                  className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

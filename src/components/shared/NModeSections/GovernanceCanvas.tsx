@@ -515,7 +515,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                             onClick={() =>
                               setStakeholders((prev) => prev.filter((item) => item.id !== s.id))
                             }
-                            className="p-1 text-slate-600 hover:text-rose-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />
@@ -624,7 +624,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                             onClick={() =>
                               setReminders((prev) => prev.filter((item) => item.id !== r.id))
                             }
-                            className="p-1 text-slate-600 hover:text-rose-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />
@@ -746,7 +746,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                                 prev.filter((item) => item.id !== rule.id)
                               )
                             }
-                            className="p-1 text-slate-600 hover:text-rose-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-danger-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />

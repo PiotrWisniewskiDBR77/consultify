@@ -110,7 +110,7 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
                         : pill.tone === 'warning'
                           ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
                           : pill.tone === 'danger'
-                            ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
+                            ? 'bg-danger-500/10 text-danger-600 dark:text-danger-300'
                             : pill.tone === 'info'
                               ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300'
                               : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'),

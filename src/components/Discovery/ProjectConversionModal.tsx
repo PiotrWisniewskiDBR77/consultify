@@ -114,9 +114,9 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
               {t('discovery.conversion.whatWillBeTransferred', 'What will be transferred')}
             </h3>
             <div className="space-y-2">
-              <div className="flex items-center gap-3 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
-                <AlertCircle size={18} className="text-rose-500" />
-                <span className="text-sm text-rose-700 dark:text-rose-300">
+              <div className="flex items-center gap-3 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg">
+                <AlertCircle size={18} className="text-danger-500" />
+                <span className="text-sm text-danger-700 dark:text-danger-300">
                   {t('discovery.conversion.painPointsCount', '{{count}} pain points', {
                     count: painPointsCount,
                   })}
@@ -190,7 +190,7 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
 
           {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-600 dark:text-rose-400 text-sm">
+            <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-600 dark:text-danger-400 text-sm">
               <AlertCircle size={16} />
               {error}
             </div>
