@@ -2821,7 +2821,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return (
       <>
         {qualityGateModal}
-        <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-[#0a0f1e] dark:to-navy-950">
+        <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
           {/* Minimal top bar */}
           <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl">
             <button
