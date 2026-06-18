@@ -160,8 +160,8 @@ const RiskLevelBadge: React.FC<{ level: string }> = ({ level }) => {
       label: t('executive.kpi.riskHigh', 'High'),
     },
     critical: {
-      bg: 'bg-rose-100 dark:bg-rose-900/30',
-      text: 'text-rose-700 dark:text-rose-300',
+      bg: 'bg-danger-100 dark:bg-danger-900/30',
+      text: 'text-danger-700 dark:text-danger-300',
       label: t('executive.kpi.riskCritical', 'Critical'),
     },
   };
@@ -175,7 +175,7 @@ const RiskLevelBadge: React.FC<{ level: string }> = ({ level }) => {
       <span
         className={`w-1.5 h-1.5 rounded-full ${
           level === 'critical'
-            ? 'bg-rose-500 animate-pulse'
+            ? 'bg-danger-500 animate-pulse'
             : level === 'high'
               ? 'bg-amber-500'
               : level === 'medium'
@@ -374,7 +374,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
               !hasRiskData
                 ? 'text-slate-600'
                 : kpiData.risk.level === 'critical'
-                  ? 'text-rose-500'
+                  ? 'text-danger-500'
                   : kpiData.risk.level === 'high'
                     ? 'text-amber-500'
                     : kpiData.risk.level === 'medium'
@@ -387,7 +387,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
           !hasRiskData
             ? 'bg-slate-500/10'
             : kpiData.risk.level === 'critical'
-              ? 'bg-rose-500/10'
+              ? 'bg-danger-500/10'
               : kpiData.risk.level === 'high'
                 ? 'bg-amber-500/10'
                 : kpiData.risk.level === 'medium'

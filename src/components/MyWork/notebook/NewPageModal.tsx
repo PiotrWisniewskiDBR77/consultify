@@ -99,7 +99,7 @@ const STATIC_TEMPLATES: PageTemplate[] = [
     labelPl: 'Analiza ryzyka',
     description: 'Document and assess risks with mitigation plans',
     descriptionPl: 'Dokumentuj i oceniaj ryzyka z planami mitygacji',
-    gradient: 'from-rose-500 to-amber-600',
+    gradient: 'from-danger-500 to-amber-600',
     defaultTitle: 'Risk Analysis',
     defaultTitlePl: 'Analiza ryzyka',
     defaultIcon: '⚠️',

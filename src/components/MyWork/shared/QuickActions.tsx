@@ -46,8 +46,8 @@ const PRIORITIES = [
   {
     value: 'critical',
     label: { en: 'Critical', pl: 'Krytyczny' },
-    color: 'bg-rose-500',
-    textColor: 'text-rose-500',
+    color: 'bg-danger-500',
+    textColor: 'text-danger-500',
   },
 ];
 
@@ -57,7 +57,7 @@ const STATUSES = [
   { value: 'in_progress', label: { en: 'In Progress', pl: 'W trakcie' }, color: 'bg-blue-500' },
   { value: 'review', label: { en: 'Review', pl: 'Przegląd' }, color: 'bg-primary-500' },
   { value: 'done', label: { en: 'Done', pl: 'Ukończone' }, color: 'bg-emerald-500' },
-  { value: 'blocked', label: { en: 'Blocked', pl: 'Zablokowane' }, color: 'bg-rose-500' },
+  { value: 'blocked', label: { en: 'Blocked', pl: 'Zablokowane' }, color: 'bg-danger-500' },
 ];
 
 interface QuickActionsProps {
@@ -421,7 +421,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
                       onDelete();
                       setShowMoreMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10"
                   >
                     <Trash2 size={14} />
                     <span>{isPolish ? 'Usuń' : 'Delete'}</span>

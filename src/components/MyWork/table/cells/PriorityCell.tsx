@@ -30,9 +30,9 @@ function toneForIndex(index: number): { bg: string; text: string; border: string
   switch (index) {
     case 0:
       return {
-        bg: 'bg-rose-100 dark:bg-rose-900/30',
-        text: 'text-rose-700 dark:text-rose-300',
-        border: 'border-rose-200 dark:border-rose-800/50',
+        bg: 'bg-danger-100 dark:bg-danger-900/30',
+        text: 'text-danger-700 dark:text-danger-300',
+        border: 'border-danger-200 dark:border-danger-800/50',
       };
     case 1:
       return {
@@ -76,7 +76,7 @@ export const PriorityCell: React.FC<PriorityCellProps> = ({ value, fieldOptions 
   if (index < 0) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-800/50 text-[10px] font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-900/20"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-danger-200 dark:border-danger-800/50 text-[10px] font-semibold text-danger-700 dark:text-danger-300 bg-danger-50 dark:bg-danger-900/20"
         data-testid="priority-invalid"
         title={`priority value '${str}' is not in preset '${String(levelsKey)}'`}
       >

@@ -88,19 +88,19 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
     }
   > = {
     overdue: {
-      bgColor: 'bg-rose-50 dark:bg-rose-500/10',
-      borderColor: 'border-rose-200 dark:border-rose-500/30',
-      textColor: 'text-rose-700 dark:text-rose-400',
+      bgColor: 'bg-danger-50 dark:bg-danger-500/10',
+      borderColor: 'border-danger-200 dark:border-danger-500/30',
+      textColor: 'text-danger-700 dark:text-danger-400',
       icon: XCircle,
-      iconColor: 'text-rose-500',
+      iconColor: 'text-danger-500',
       pulse: true,
     },
     critical: {
-      bgColor: 'bg-rose-50 dark:bg-rose-500/10',
-      borderColor: 'border-rose-200 dark:border-rose-500/30',
-      textColor: 'text-rose-700 dark:text-rose-400',
+      bgColor: 'bg-danger-50 dark:bg-danger-500/10',
+      borderColor: 'border-danger-200 dark:border-danger-500/30',
+      textColor: 'text-danger-700 dark:text-danger-400',
       icon: AlertTriangle,
-      iconColor: 'text-rose-500',
+      iconColor: 'text-danger-500',
       pulse: true,
     },
     warning: {
@@ -153,7 +153,7 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
           <div>
             <p className={`text-sm font-semibold ${currentConfig.textColor}`}>{message}</p>
             {urgency === 'overdue' && (
-              <p className="text-xs text-rose-600/70 dark:text-rose-400/70 mt-0.5">
+              <p className="text-xs text-danger-600/70 dark:text-danger-400/70 mt-0.5">
                 {isPolish
                   ? 'Ta decyzja wymaga natychmiastowej uwagi'
                   : 'This decision requires immediate attention'}
@@ -166,9 +166,9 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
         <div
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
             urgency === 'overdue'
-              ? 'bg-rose-100 dark:bg-rose-500/20'
+              ? 'bg-danger-100 dark:bg-danger-500/20'
               : urgency === 'critical'
-                ? 'bg-rose-100 dark:bg-rose-500/20'
+                ? 'bg-danger-100 dark:bg-danger-500/20'
                 : urgency === 'warning'
                   ? 'bg-amber-100 dark:bg-amber-500/20'
                   : 'bg-blue-100 dark:bg-blue-500/20'
@@ -198,7 +198,7 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
             transition={{ duration: 0.5 }}
             className={`h-full ${
               urgency === 'critical'
-                ? 'bg-rose-500'
+                ? 'bg-danger-500'
                 : urgency === 'warning'
                   ? 'bg-amber-500'
                   : 'bg-blue-500'

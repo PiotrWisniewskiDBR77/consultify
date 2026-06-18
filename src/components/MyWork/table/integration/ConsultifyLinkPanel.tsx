@@ -212,7 +212,7 @@ function ModuleLinkSection({
             {status.recordCount} {isPl ? 'rek.' : 'rec.'}
           </span>
           {status.errors.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-rose-500">
+            <span className="inline-flex items-center gap-1 text-[10px] text-danger-500">
               <XCircle size={10} /> {status.errors.length} {isPl ? 'błędów' : 'errors'}
             </span>
           )}

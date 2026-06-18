@@ -226,7 +226,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
       ? 'text-emerald-500'
       : overallScore >= 40
         ? 'text-amber-500'
-        : 'text-rose-500';
+        : 'text-danger-500';
   const ringColor = overallScore >= 70 ? '#34d399' : overallScore >= 40 ? '#fbbf24' : '#f43f5e';
 
   return (
@@ -277,7 +277,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
           <div className="px-3 pb-3 space-y-2">
             {metrics.map((m) => {
               const color =
-                m.score >= 70 ? 'bg-emerald-500' : m.score >= 40 ? 'bg-amber-500' : 'bg-rose-500';
+                m.score >= 70 ? 'bg-emerald-500' : m.score >= 40 ? 'bg-amber-500' : 'bg-danger-500';
               return (
                 <div key={m.key}>
                   <div className="flex items-center justify-between mb-0.5">

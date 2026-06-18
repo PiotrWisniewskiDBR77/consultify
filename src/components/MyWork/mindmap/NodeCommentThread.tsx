@@ -217,7 +217,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                     {c.author === currentUser && (
                       <button
                         onClick={() => handleDelete(c.id)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-600 hover:text-rose-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-600 hover:text-danger-500 transition-all"
                       >
                         <Trash2 size={10} />
                       </button>

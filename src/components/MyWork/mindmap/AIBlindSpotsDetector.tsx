@@ -145,7 +145,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
   if (visibleSpots.length === 0 && !loading) return null;
 
   const severityColor = {
-    high: 'text-rose-500',
+    high: 'text-danger-500',
     medium: 'text-amber-500',
     low: 'text-blue-500',
   };

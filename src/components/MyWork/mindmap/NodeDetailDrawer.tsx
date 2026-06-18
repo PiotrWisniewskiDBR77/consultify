@@ -569,7 +569,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     type="button"
                     disabled={locked || isProtected}
                     onClick={() => handleRemoveTag(tag)}
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/20 dark:hover:text-danger-400 transition-colors disabled:opacity-50"
                   >
                     <Hash size={9} className="shrink-0" />
                     <span>{tag}</span>
@@ -794,7 +794,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     <div className="flex items-start gap-2">
                       <div className="mt-0.5 shrink-0">
                         {item.type === 'assessment' && (
-                          <Target size={11} className="text-rose-500" />
+                          <Target size={11} className="text-danger-500" />
                         )}
                         {item.type === 'interview' && (
                           <MessageSquare size={11} className="text-blue-500" />
@@ -820,7 +820,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                           <div className="flex items-center gap-1 mt-1">
                             <div className="w-8 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                               <div
-                                className={`h-full rounded-full ${item.confidence >= 0.7 ? 'bg-emerald-500' : item.confidence >= 0.4 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                className={`h-full rounded-full ${item.confidence >= 0.7 ? 'bg-emerald-500' : item.confidence >= 0.4 ? 'bg-amber-500' : 'bg-danger-500'}`}
                                 style={{ width: `${Math.round(item.confidence * 100)}%` }}
                               />
                             </div>

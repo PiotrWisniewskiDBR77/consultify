@@ -55,9 +55,9 @@ const STATUS_CONFIG = {
   },
   rejected: {
     label: { en: 'Rejected', pl: 'Odrzucony' },
-    color: 'bg-rose-500',
-    textColor: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
+    color: 'bg-danger-500',
+    textColor: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-100 dark:bg-danger-500/20',
   },
 };
 
@@ -290,7 +290,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                                   e.stopPropagation();
                                   onRemove(idea.id);
                                 }}
-                                className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                                className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                               >
                                 <Trash2 size={14} />
                               </button>

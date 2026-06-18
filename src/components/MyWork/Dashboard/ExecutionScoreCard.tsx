@@ -52,7 +52,7 @@ export const ExecutionScoreCard: React.FC<
     if (value >= 80) return 'text-green-500';
     if (value >= 60) return 'text-blue-500';
     if (value >= 40) return 'text-amber-500';
-    return 'text-rose-500';
+    return 'text-danger-500';
   };
 
   // Trend icon
@@ -61,7 +61,7 @@ export const ExecutionScoreCard: React.FC<
     trend === 'up'
       ? 'text-green-500'
       : trend === 'down'
-        ? 'text-rose-500'
+        ? 'text-danger-500'
         : 'text-slate-400 dark:text-slate-500';
 
   if (compact) {
@@ -142,7 +142,7 @@ export const ExecutionScoreCard: React.FC<
                 trend === 'up'
                   ? 'bg-green-100 dark:bg-green-900/30'
                   : trend === 'down'
-                    ? 'bg-rose-100 dark:bg-rose-900/30'
+                    ? 'bg-danger-100 dark:bg-danger-900/30'
                     : 'bg-slate-100 dark:bg-white/5'
               }`}
             >

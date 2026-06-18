@@ -69,7 +69,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
 
   const getFileIcon = (type: string, size: number = 24) => {
     if (type.startsWith('image/')) return <FileImage size={size} className="text-blue-400" />;
-    if (type === 'application/pdf') return <FileText size={size} className="text-rose-400" />;
+    if (type === 'application/pdf') return <FileText size={size} className="text-danger-400" />;
     if (type.includes('spreadsheet') || type.includes('excel') || type === 'text/csv')
       return <FileSpreadsheet size={size} className="text-emerald-400" />;
     if (type.includes('document') || type.includes('word'))
@@ -320,10 +320,10 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                                 e.stopPropagation();
                                 handleDeleteClick(attachment);
                               }}
-                              className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-rose-50 dark:hover:bg-rose-500/20"
+                              className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-danger-50 dark:hover:bg-danger-500/20"
                               title={isPolish ? 'Usuń' : 'Delete'}
                             >
-                              <Trash2 size={12} className="text-rose-500" />
+                              <Trash2 size={12} className="text-danger-500" />
                             </button>
                           )}
                         </div>
@@ -395,10 +395,10 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         handleDeleteClick(previewAttachment);
                         setPreviewAttachment(null);
                       }}
-                      className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors"
+                      className="p-2 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/20 transition-colors"
                       title={isPolish ? 'Usuń' : 'Delete'}
                     >
-                      <Trash2 size={18} className="text-rose-500" />
+                      <Trash2 size={18} className="text-danger-500" />
                     </button>
                   )}
                   <button

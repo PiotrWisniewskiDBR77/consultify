@@ -199,7 +199,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                       )}
                       {comp.weaknesses.length > 0 && (
                         <div className="flex-1">
-                          <div className="text-[8px] font-bold text-rose-600 uppercase tracking-wider mb-1">
+                          <div className="text-[8px] font-bold text-danger-600 uppercase tracking-wider mb-1">
                             {isPl ? 'Slabe' : 'Weaknesses'}
                           </div>
                           {comp.weaknesses.map((w, i) => (

@@ -33,9 +33,9 @@ interface PresentationModeProps {
 
 const BRANCH_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
   problem: {
-    bg: 'from-rose-500/20 to-rose-600/10',
-    text: 'text-rose-700 dark:text-rose-300',
-    accent: 'bg-rose-500',
+    bg: 'from-danger-500/20 to-danger-600/10',
+    text: 'text-danger-700 dark:text-danger-300',
+    accent: 'bg-danger-500',
   },
   goal: {
     bg: 'from-emerald-500/20 to-emerald-600/10',

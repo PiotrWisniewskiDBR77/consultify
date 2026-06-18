@@ -39,7 +39,7 @@ export const PersonalExecutionBar: React.FC<Props> = ({ stats }) => {
             <span className="text-slate-600 dark:text-slate-500">Done</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-rose-500">{overdue}</span>
+            <span className="text-danger-500">{overdue}</span>
             <span className="text-slate-600 dark:text-slate-500">Overdue</span>
           </div>
         </div>
@@ -52,7 +52,7 @@ export const PersonalExecutionBar: React.FC<Props> = ({ stats }) => {
           style={{ width: `${Math.min(100, (completed / Math.max(1, total)) * 100)}%` }}
         />
         <div
-          className="h-full bg-rose-500 transition-all duration-500"
+          className="h-full bg-danger-500 transition-all duration-500"
           style={{ width: `${Math.min(100, (overdue / Math.max(1, total)) * 100)}%` }}
         />
       </div>

@@ -54,10 +54,10 @@ const typeConfig = {
 // Severity styling
 const severityConfig = {
   critical: {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    border: 'border-rose-200 dark:border-rose-500/30',
-    badge: 'bg-rose-500 text-white',
-    text: 'text-rose-700 dark:text-rose-300',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    border: 'border-danger-200 dark:border-danger-500/30',
+    badge: 'bg-danger-500 text-white',
+    text: 'text-danger-700 dark:text-danger-300',
   },
   high: {
     bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -107,8 +107,8 @@ const BottleneckCard: React.FC<{
       {item.severity === 'critical' && (
         <div className="absolute top-3 right-3">
           <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-danger-500" />
           </span>
         </div>
       )}
@@ -138,7 +138,7 @@ const BottleneckCard: React.FC<{
       {/* Blocking Info */}
       {item.blockedByTitle && (
         <div className="flex items-center gap-2 mb-3 p-2 bg-slate-50 dark:bg-white/50 dark:bg-white/5 rounded-lg">
-          <XCircle size={12} className="text-rose-500 shrink-0" />
+          <XCircle size={12} className="text-danger-500 shrink-0" />
           <span className="text-xs text-slate-600 dark:text-slate-400">
             {t('team.bottleneck.blockedBy', 'Blocked by')}:
           </span>
@@ -155,7 +155,7 @@ const BottleneckCard: React.FC<{
           <span
             className={
               item.daysBlocked > 3
-                ? 'text-rose-600 dark:text-rose-400 font-bold'
+                ? 'text-danger-600 dark:text-danger-400 font-bold'
                 : 'text-slate-600 dark:text-slate-400'
             }
           >
@@ -198,7 +198,7 @@ const BottleneckCard: React.FC<{
               e.stopPropagation();
               onEscalate?.();
             }}
-            className="px-3 py-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 rounded-lg bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 text-xs font-semibold hover:bg-danger-200 dark:hover:bg-danger-900/50 transition-colors flex items-center gap-1"
           >
             <Zap size={12} />
             {t('team.bottleneck.escalate', 'Escalate')}
@@ -251,7 +251,7 @@ export const BottleneckMap: React.FC<BottleneckMapProps> = ({
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
                 criticalCount > 0
-                  ? 'bg-gradient-to-br from-rose-500 to-rose-600 shadow-rose-500/30'
+                  ? 'bg-gradient-to-br from-danger-500 to-danger-600 shadow-danger-500/30'
                   : 'bg-gradient-to-br from-amber-500 to-amber-600 shadow-amber-500/30'
               }`}
             >
@@ -263,7 +263,7 @@ export const BottleneckMap: React.FC<BottleneckMapProps> = ({
                 <span
                   className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                     criticalCount > 0
-                      ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                      ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                   }`}
                 >
@@ -279,8 +279,8 @@ export const BottleneckMap: React.FC<BottleneckMapProps> = ({
           {/* Summary */}
           <div className="flex items-center gap-3">
             {criticalCount > 0 && (
-              <div className="px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-900/30">
-                <span className="text-xs font-bold text-rose-700 dark:text-rose-300">
+              <div className="px-2.5 py-1 rounded-lg bg-danger-100 dark:bg-danger-900/30">
+                <span className="text-xs font-bold text-danger-700 dark:text-danger-300">
                   {criticalCount} {t('team.bottleneck.critical', 'critical')}
                 </span>
               </div>

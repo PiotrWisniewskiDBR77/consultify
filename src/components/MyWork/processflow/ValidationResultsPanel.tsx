@@ -46,7 +46,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
         {isPl ? 'Poprawny' : 'Valid'}
       </span>
     ) : result && !result.valid ? (
-      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">
+      <span className="rounded-full bg-danger-100 px-2 py-0.5 text-xs font-semibold text-danger-800 dark:bg-danger-900/40 dark:text-danger-200">
         {isPl ? 'Błędy' : 'Invalid'}
       </span>
     ) : (
@@ -116,7 +116,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                       const Icon = issue.severity === 'error' ? AlertCircle : AlertTriangle;
                       const iconClass =
                         issue.severity === 'error'
-                          ? 'text-rose-500 dark:text-rose-400'
+                          ? 'text-danger-500 dark:text-danger-400'
                           : 'text-amber-500 dark:text-amber-400';
                       const rowClass = `flex w-full items-start gap-2 rounded-lg border border-transparent px-2 py-2 text-left text-xs ${
                         clickable

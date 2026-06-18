@@ -71,10 +71,10 @@ const AlertSection: React.FC<{
       icon: 'text-amber-500',
     },
     red: {
-      bg: 'bg-rose-50 dark:bg-rose-900/20',
-      border: 'border-rose-200 dark:border-rose-800/50',
-      badge: 'bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300',
-      icon: 'text-rose-500',
+      bg: 'bg-danger-50 dark:bg-danger-900/20',
+      border: 'border-danger-200 dark:border-danger-800/50',
+      badge: 'bg-danger-100 dark:bg-danger-800/50 text-danger-700 dark:text-danger-300',
+      icon: 'text-danger-500',
     },
     purple: {
       bg: 'bg-primary-50 dark:bg-primary-900/20',
@@ -238,13 +238,13 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
           <button
             key={d.id}
             onClick={() => onDecisionClick?.(d.id)}
-            className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-rose-100 dark:border-rose-800/30 hover:border-rose-300 transition-colors"
+            className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-danger-100 dark:border-danger-800/30 hover:border-danger-300 transition-colors"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
                 {d.title}
               </span>
-              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 font-medium">
+              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-danger-100 dark:bg-danger-800/50 text-danger-700 dark:text-danger-300 font-medium">
                 {d.blockedCount} blocked
               </span>
             </div>

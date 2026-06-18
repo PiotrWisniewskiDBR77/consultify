@@ -103,7 +103,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
             ? 'text-emerald-500'
             : completeness >= 50
               ? 'text-amber-500'
-              : 'text-rose-500',
+              : 'text-danger-500',
       },
     ];
 
@@ -129,7 +129,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
               ? 'bg-emerald-500'
               : metrics.completeness >= 50
                 ? 'bg-amber-500'
-                : 'bg-rose-400'
+                : 'bg-danger-400'
           }`}
           style={{ width: `${metrics.completeness}%` }}
         />

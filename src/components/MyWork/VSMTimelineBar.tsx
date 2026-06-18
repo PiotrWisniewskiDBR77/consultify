@@ -106,7 +106,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
               ? 'text-emerald-700 dark:text-emerald-300'
               : metrics.pce >= 10
                 ? 'text-amber-700 dark:text-amber-300'
-                : 'text-rose-700 dark:text-rose-300'
+                : 'text-danger-700 dark:text-danger-300'
           }`}
         >
           {metrics.pce.toFixed(1)}%
@@ -129,7 +129,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
           )}
           {nvaPercent > 0 && (
             <div
-              className="h-full bg-rose-400 dark:bg-rose-500 transition-all duration-300"
+              className="h-full bg-danger-400 dark:bg-danger-500 transition-all duration-300"
               style={{ width: `${nvaPercent}%` }}
               title={
                 isPl
@@ -147,7 +147,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
             <span className="text-[8px] text-slate-500 dark:text-slate-400">VA</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-rose-400 dark:bg-rose-500" />
+            <div className="w-2 h-2 rounded-full bg-danger-400 dark:bg-danger-500" />
             <span className="text-[8px] text-slate-500 dark:text-slate-400">NVA</span>
           </div>
         </div>

@@ -1326,7 +1326,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     {!locked && (
                       <button
                         onClick={() => handleRemoveAttachment(att.id)}
-                        className="p-1 rounded text-slate-600 hover:text-rose-500 transition-colors"
+                        className="p-1 rounded text-slate-600 hover:text-danger-500 transition-colors"
                       >
                         <Trash2 size={12} />
                       </button>

@@ -284,7 +284,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                 onClick={isRecording ? stopRecording : startRecording}
                 className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center transition-all ${
                   isRecording
-                    ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-500/30'
+                    ? 'bg-danger-500 text-white animate-pulse shadow-lg shadow-danger-500/30'
                     : 'bg-primary-500/10 text-primary-600 hover:bg-primary-500/20'
                 }`}
               >

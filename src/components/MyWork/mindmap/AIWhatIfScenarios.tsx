@@ -102,8 +102,8 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
     },
     risk: {
       icon: AlertTriangle,
-      color: 'text-rose-500',
-      bg: 'bg-rose-500/10',
+      color: 'text-danger-500',
+      bg: 'bg-danger-500/10',
       label: isPl ? 'Ryzyko' : 'Risk',
     },
     alternative: {
@@ -115,7 +115,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
   };
 
   const impactBadge = {
-    high: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    high: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
     medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     low: 'bg-slate-100 text-slate-600 dark:bg-slate-800/30 dark:text-slate-400',
   };

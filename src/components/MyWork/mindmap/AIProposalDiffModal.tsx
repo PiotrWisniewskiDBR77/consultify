@@ -107,7 +107,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
             </span>
           )}
           {removeCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-danger-700 dark:text-danger-400 bg-danger-100 dark:bg-danger-900/30 px-2 py-0.5 rounded-full">
               <Trash2 size={10} /> {removeCount} {isPl ? 'usunięto' : 'removed'}
             </span>
           )}
@@ -182,7 +182,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                           className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                             isAdd
                               ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                              : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
+                              : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400'
                           }`}
                         >
                           {isAdd ? <Plus size={9} /> : <Trash2 size={9} />}

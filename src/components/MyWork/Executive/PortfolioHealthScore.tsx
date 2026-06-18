@@ -151,7 +151,7 @@ const BreakdownBar: React.FC<{
                   ? 'bg-blue-500'
                   : value >= 40
                     ? 'bg-amber-500'
-                    : 'bg-rose-500'
+                    : 'bg-danger-500'
             }`}
           />
         </div>
@@ -186,7 +186,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
     trend === 'up'
       ? 'text-emerald-500'
       : trend === 'down'
-        ? 'text-rose-500'
+        ? 'text-danger-500'
         : 'text-slate-500 dark:text-slate-400 dark:text-slate-500';
 
   const getScoreLabel = (value: number) => {
@@ -195,7 +195,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
     if (value >= 60) return { label: t('executive.health.good', 'Good'), color: 'text-blue-500' };
     if (value >= 40)
       return { label: t('executive.health.attention', 'Needs Attention'), color: 'text-amber-500' };
-    return { label: t('executive.health.critical', 'Critical'), color: 'text-rose-500' };
+    return { label: t('executive.health.critical', 'Critical'), color: 'text-danger-500' };
   };
 
   const scoreInfo = hasData

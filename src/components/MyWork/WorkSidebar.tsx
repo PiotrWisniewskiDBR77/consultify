@@ -81,7 +81,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
       label: t('myWork.timeGroup.overdue', 'Overdue'),
       count: taskCounts.overdue,
       icon: AlertCircle,
-      color: 'text-rose-500',
+      color: 'text-danger-500',
     },
     {
       key: 'today' as TaskTimeGroup,
@@ -202,7 +202,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         item.key === 'overdue' && item.count > 0
-                          ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                          ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
                           : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                       }`}
                     >

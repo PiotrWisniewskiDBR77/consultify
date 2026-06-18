@@ -389,7 +389,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
       icon: ListChecks,
       labelPl: 'Assessment',
       labelEn: 'Assessment',
-      iconColor: 'text-rose-500 dark:text-rose-400',
+      iconColor: 'text-danger-500 dark:text-danger-400',
     },
     {
       id: 'report',
@@ -439,7 +439,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
         <button
           onClick={deleteContainingBlock}
           disabled={!editor}
-          className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-rose-500/[0.06] text-rose-500/70 hover:bg-rose-500/[0.12] hover:text-rose-600 dark:hover:text-rose-400 text-[10px] font-medium disabled:opacity-40 transition-all"
+          className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-danger-500/[0.06] text-danger-500/70 hover:bg-danger-500/[0.12] hover:text-danger-600 dark:hover:text-danger-400 text-[10px] font-medium disabled:opacity-40 transition-all"
         >
           <Trash2 size={11} />
           {isPl ? 'Usuń blok' : 'Delete block'}
@@ -562,7 +562,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                 {onDeletePage && (
                   <button
                     onClick={onDeletePage}
-                    className="inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[10px] font-medium bg-rose-500/[0.06] text-rose-400/70 hover:bg-rose-500/[0.12] hover:text-rose-500 border border-rose-500/[0.06] hover:border-rose-500/10 transition-all"
+                    className="inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[10px] font-medium bg-danger-500/[0.06] text-danger-400/70 hover:bg-danger-500/[0.12] hover:text-danger-500 border border-danger-500/[0.06] hover:border-danger-500/10 transition-all"
                     title={isPl ? 'Usuń stronę' : 'Delete page'}
                   >
                     <Trash2 size={11} />
@@ -611,11 +611,11 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                   <button
                     onClick={toggleMic}
-                    className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-rose-500/15 text-rose-500 shadow-sm shadow-rose-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08]'}`}
+                    className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-danger-500/15 text-danger-500 shadow-sm shadow-danger-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08]'}`}
                     title={isPl ? 'Mikrofon' : 'Microphone'}
                   >
                     {isRecording && (
-                      <span className="absolute inset-0 rounded-xl animate-ping bg-rose-500/10" />
+                      <span className="absolute inset-0 rounded-xl animate-ping bg-danger-500/10" />
                     )}
                     <span className="relative">
                       {isRecording ? <MicOff size={16} /> : <Mic size={16} />}

@@ -296,10 +296,10 @@ const BRANCH_COLORS: Record<
   { bg: string; border: string; text: string; ring: string; edge: string }
 > = {
   problem: {
-    bg: 'bg-rose-100 dark:bg-rose-900/25',
-    border: 'border-rose-400/70',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/25',
+    border: 'border-danger-400/70',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-danger-400',
     edge: '#fb7185',
   },
   goal: {
@@ -353,10 +353,10 @@ const BRANCH_COLORS: Record<
     edge: '#34d399',
   },
   weaknesses: {
-    bg: 'bg-rose-100 dark:bg-rose-900/25',
-    border: 'border-rose-400/70',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/25',
+    border: 'border-danger-400/70',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-danger-400',
     edge: '#fb7185',
   },
   opportunities: {
@@ -403,10 +403,10 @@ const BRANCH_COLORS: Record<
     edge: '#a3e635',
   },
   root_cause: {
-    bg: 'bg-rose-100 dark:bg-rose-900/25',
-    border: 'border-rose-400/70',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/25',
+    border: 'border-danger-400/70',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-danger-400',
     edge: '#f87171',
   },
   // Ishikawa (6M)
@@ -454,10 +454,10 @@ const BRANCH_COLORS: Record<
   },
   // Stakeholder map
   high_influence: {
-    bg: 'bg-rose-100 dark:bg-rose-900/25',
-    border: 'border-rose-400/70',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/25',
+    border: 'border-danger-400/70',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-danger-400',
     edge: '#f87171',
   },
   medium_influence: {
@@ -476,10 +476,10 @@ const BRANCH_COLORS: Record<
   },
   // Porter's 5 Forces
   rivalry: {
-    bg: 'bg-rose-100 dark:bg-rose-900/25',
-    border: 'border-rose-400/70',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/25',
+    border: 'border-danger-400/70',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-danger-400',
     edge: '#fb7185',
   },
   new_entrants: {
@@ -576,10 +576,10 @@ const BRANCH_COLORS: Record<
     edge: '#6366f1',
   },
   shared_values: {
-    bg: 'bg-rose-100 dark:bg-rose-900/25',
-    border: 'border-rose-400/70',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/25',
+    border: 'border-danger-400/70',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-danger-400',
     edge: '#fb7185',
   },
   skills: {
@@ -620,10 +620,10 @@ const BRANCH_COLORS: Record<
   },
   // Kotter's 8 Steps
   urgency: {
-    bg: 'bg-rose-100 dark:bg-rose-900/25',
-    border: 'border-rose-400/70',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/25',
+    border: 'border-danger-400/70',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-danger-400',
     edge: '#f87171',
   },
   coalition: {
@@ -648,10 +648,10 @@ const BRANCH_COLORS: Record<
     edge: '#38bdf8',
   },
   obstacles: {
-    bg: 'bg-rose-100 dark:bg-rose-900/25',
-    border: 'border-rose-400/70',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/25',
+    border: 'border-danger-400/70',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-danger-400',
     edge: '#fb7185',
   },
   wins: {
@@ -747,7 +747,7 @@ function inferNodeAccentColor(data: Record<string, any> | undefined): string | u
 // ─────── Node Types ───────
 
 const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => (
-  <div className="relative flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-rose-500 shadow-2xl shadow-amber-500/30 border-4 border-white dark:border-navy-800 center-node-glow center-node-animated-border transition-transform duration-200 hover:scale-105">
+  <div className="relative flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-danger-500 shadow-2xl shadow-amber-500/30 border-4 border-white dark:border-navy-800 center-node-glow center-node-animated-border transition-transform duration-200 hover:scale-105">
     <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
@@ -1494,7 +1494,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" />
                 )}
                 {data.riskNote && (
-                  <AlertTriangle size={9} className="text-rose-400 dark:text-rose-500 shrink-0" />
+                  <AlertTriangle size={9} className="text-danger-400 dark:text-danger-500 shrink-0" />
                 )}
                 {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
                   <span
@@ -2957,7 +2957,7 @@ function MindMapInner({
     return () => window.removeEventListener('idea-mindmap-export-pdf', handler);
   }, [exportAsPdf, ideaTitle]);
 
-  // Quick action listener is wirose below (after all state declarations).
+  // Quick action listener is wired below (after all state declarations).
 
   // ── Insert from AI Suggestions panel ─────────────────────────────────────
   useEffect(() => {
@@ -4765,7 +4765,7 @@ function MindMapInner({
 
   const savedLabel = useMemo(() => {
     if (persistence === 'no_route')
-      return isPolish ? 'Backend wymaga restartu' : 'Backend restart requirose';
+      return isPolish ? 'Backend wymaga restartu' : 'Backend restart required';
     if (persistence === 'missing_table')
       return isPolish ? 'Brakuje tabeli mapy' : 'Map table missing';
     if (persistence === 'offline')
@@ -6178,7 +6178,7 @@ function MindMapInner({
                   <span className="rounded bg-white/5 px-1.5 py-0.5 text-amber-300">
                     silent {debugStats.silent}
                   </span>
-                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-rose-300">
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-danger-300">
                     errors {debugStats.errors}
                   </span>
                 </div>
@@ -6234,7 +6234,7 @@ function MindMapInner({
                     lastHandlerSummaryRef.current = 'none';
                     setDebugTick((t) => t + 1);
                   }}
-                  className="text-rose-300 hover:text-rose-200"
+                  className="text-danger-300 hover:text-danger-200"
                 >
                   clear
                 </button>
@@ -6257,7 +6257,7 @@ function MindMapInner({
                 debugEntries.map((entry) => {
                   const lineClass =
                     entry.severity === 'error'
-                      ? 'text-rose-300'
+                      ? 'text-danger-300'
                       : entry.reaction === 'silent'
                         ? 'text-amber-300'
                         : entry.reaction === 'blocked'

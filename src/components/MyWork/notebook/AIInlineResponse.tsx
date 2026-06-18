@@ -155,7 +155,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
 
         <div className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed min-h-[48px] max-h-[300px] overflow-y-auto">
           {error ? (
-            <span className="text-rose-600 dark:text-rose-400">{error}</span>
+            <span className="text-danger-600 dark:text-danger-400">{error}</span>
           ) : response ? (
             response
           ) : (

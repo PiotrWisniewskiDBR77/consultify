@@ -85,7 +85,7 @@ export const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-300',
   in_progress: 'bg-blue-500',
   done: 'bg-green-500',
-  blocked: 'bg-rose-500',
+  blocked: 'bg-danger-500',
 };
 
 export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
@@ -116,7 +116,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
   const shapeStyles: Record<FlowShape, string> = {
     start:
       'rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-900/30 dark:border-green-400',
-    end: 'rounded-full border-2 border-rose-500 bg-rose-50 dark:bg-rose-900/30 dark:border-rose-400',
+    end: 'rounded-full border-2 border-danger-500 bg-danger-50 dark:bg-danger-900/30 dark:border-danger-400',
     action: 'rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800',
     decision:
       'rotate-45 border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
@@ -153,7 +153,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
     vsm_customer:
       'rounded-xl border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400',
     vsm_kaizen:
-      'rounded-full border-2 border-rose-500 bg-rose-50 dark:bg-rose-900/30 dark:border-rose-400',
+      'rounded-full border-2 border-danger-500 bg-danger-50 dark:bg-danger-900/30 dark:border-danger-400',
     vsm_push_arrow:
       'rounded-lg border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
     vsm_pull_arrow:

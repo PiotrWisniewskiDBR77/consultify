@@ -137,7 +137,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
       </div>
 
       {error ? (
-        <p className="text-xs font-medium text-rose-600 dark:text-rose-400">{error}</p>
+        <p className="text-xs font-medium text-danger-600 dark:text-danger-400">{error}</p>
       ) : null}
 
       {isGenerating ? (
@@ -196,7 +196,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
                 </span>
               ))}
               {destructiveCount(proposal.operations) > 0 ? (
-                <span className="inline-flex items-center rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-300">
+                <span className="inline-flex items-center rounded-full bg-danger-500/15 px-2 py-0.5 text-[10px] font-bold text-danger-700 dark:text-danger-300">
                   {t.destructive}: {destructiveCount(proposal.operations)}
                 </span>
               ) : null}
@@ -259,7 +259,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
               type="button"
               disabled={!pending}
               onClick={onReject}
-              className="inline-flex flex-1 min-w-[100px] items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-rose-500/40 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50"
+              className="inline-flex flex-1 min-w-[100px] items-center justify-center gap-1.5 rounded-xl border border-danger-300 bg-danger-50 px-3 py-2 text-xs font-semibold text-danger-700 hover:bg-danger-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-danger-500/40 dark:bg-danger-900/30 dark:text-danger-300 dark:hover:bg-danger-900/50"
             >
               <X size={14} />
               {t.reject}

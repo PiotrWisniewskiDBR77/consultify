@@ -494,7 +494,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               {isPl ? 'Aktualizuj' : 'Update'}
             </button>
             <button
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-danger-50 dark:hover:bg-danger-900/20 text-danger-600"
               onClick={() => {
                 deleteSavedView(viewContextMenu.viewId);
                 toast.success(isPl ? 'Widok usunięty' : 'View deleted');
@@ -1047,7 +1047,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
             )}
             {props.connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
-              <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-danger-500" />
             )}
           </button>
         )}

@@ -94,7 +94,7 @@ const DiffBadge: React.FC<{ diff: SnapshotDiff; pl: boolean }> = ({ diff, pl }) 
   ];
   const colors = [
     'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
-    'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300',
+    'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300',
     'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
     'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
   ];
@@ -512,7 +512,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                           </button>
                           <button
                             onClick={() => del(snap.id)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 transition-colors"
                           >
                             <Trash2 size={10} />
                             {t('Usuń', 'Delete')}

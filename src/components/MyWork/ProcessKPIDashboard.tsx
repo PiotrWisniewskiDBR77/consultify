@@ -206,10 +206,10 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
 
         {kpis.bottleneckLabel && (
           <KPICard
-            icon={<Target size={14} className="text-rose-600 dark:text-rose-400" />}
+            icon={<Target size={14} className="text-danger-600 dark:text-danger-400" />}
             label={isPl ? 'Wąskie gardło' : 'Bottleneck'}
             value={kpis.bottleneckLabel}
-            color="bg-rose-100 dark:bg-rose-900/40"
+            color="bg-danger-100 dark:bg-danger-900/40"
             subtitle={`${kpis.bottleneckScore} ${isPl ? 'wejść' : 'incoming'}`}
           />
         )}

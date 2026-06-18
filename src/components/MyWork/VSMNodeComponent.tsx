@@ -471,19 +471,19 @@ export const VSMKaizenNode: React.FC<NodeProps> = ({ data, selected }) => {
       <svg viewBox="0 0 80 80" className="w-16 h-16 absolute inset-0 m-auto" aria-hidden>
         <polygon
           points="40,2 48,26 74,26 54,42 62,68 40,52 18,68 26,42 6,26 32,26"
-          className={`fill-rose-100 dark:fill-rose-900/40 stroke-rose-500 dark:stroke-rose-400 ${
+          className={`fill-danger-100 dark:fill-danger-900/40 stroke-danger-500 dark:stroke-danger-400 ${
             selected ? 'stroke-[3]' : 'stroke-[2]'
           }`}
         />
       </svg>
 
       <div className="relative z-10 flex flex-col items-center">
-        <Zap size={14} className="text-rose-500 dark:text-rose-400 mb-0.5" />
+        <Zap size={14} className="text-danger-500 dark:text-danger-400 mb-0.5" />
         <LabelEditor
           label={label}
           locked={locked}
           onLabelChange={data?.onLabelChange}
-          className="text-[8px] font-bold text-rose-700 dark:text-rose-300 max-w-[56px]"
+          className="text-[8px] font-bold text-danger-700 dark:text-danger-300 max-w-[56px]"
         />
       </div>
 

@@ -538,7 +538,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       icon: AlertTriangle,
       labelPl: 'Luki (Assessment)',
       labelEn: 'Gaps (Assessment)',
-      color: 'text-rose-600 dark:text-rose-400',
+      color: 'text-danger-600 dark:text-danger-400',
       items: grouped.gaps,
     },
     {
@@ -1174,14 +1174,14 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         </div>
 
         {loading ? null : error ? (
-          <div className="rounded-xl border border-rose-200/60 dark:border-rose-800/40 bg-rose-50/60 dark:bg-rose-900/10 p-3">
+          <div className="rounded-xl border border-danger-200/60 dark:border-danger-800/40 bg-danger-50/60 dark:bg-danger-900/10 p-3">
             <div className="flex items-start gap-2">
-              <AlertTriangle size={14} className="text-rose-500 mt-0.5 flex-shrink-0" />
-              <div className="text-[11px] text-rose-700 dark:text-rose-300">{error}</div>
+              <AlertTriangle size={14} className="text-danger-500 mt-0.5 flex-shrink-0" />
+              <div className="text-[11px] text-danger-700 dark:text-danger-300">{error}</div>
             </div>
             <button
               onClick={() => fetchData()}
-              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-900/20 hover:bg-rose-200/60 transition-colors"
+              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-danger-700 dark:text-danger-300 bg-danger-100/60 dark:bg-danger-900/20 hover:bg-danger-200/60 transition-colors"
             >
               <RefreshCw size={10} />
               {isPl ? 'Spróbuj ponownie' : 'Retry'}

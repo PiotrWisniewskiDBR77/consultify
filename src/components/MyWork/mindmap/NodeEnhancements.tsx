@@ -18,7 +18,7 @@ interface EvidenceBadgeProps {
 }
 
 const EVIDENCE_CONFIG: Record<EvidenceType, { color: string; letter: string }> = {
-  assessment: { color: 'bg-rose-500', letter: 'A' },
+  assessment: { color: 'bg-danger-500', letter: 'A' },
   interview: { color: 'bg-blue-500', letter: 'I' },
   kpi: { color: 'bg-emerald-500', letter: 'K' },
 };

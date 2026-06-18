@@ -358,7 +358,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                     {!readOnly && (
                                       <button
                                         onClick={() => onRemove(stakeholder.id)}
-                                        className="p-1.5 rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors opacity-0 group-hover:opacity-100"
+                                        className="p-1.5 rounded-lg text-slate-600 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/20 transition-colors opacity-0 group-hover:opacity-100"
                                         title={isPolish ? 'Usuń' : 'Remove'}
                                       >
                                         <Trash2 size={14} />

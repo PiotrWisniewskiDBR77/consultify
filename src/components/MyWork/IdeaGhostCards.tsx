@@ -37,7 +37,7 @@ export interface IdeaGhostCardsProps {
 }
 
 const GHOST_COLORS: Record<string, string> = {
-  problem: 'border-rose-300/50 bg-rose-50/30 dark:bg-rose-900/10',
+  problem: 'border-danger-300/50 bg-danger-50/30 dark:bg-danger-900/10',
   goal: 'border-emerald-300/50 bg-emerald-50/30 dark:bg-emerald-900/10',
   options: 'border-amber-300/50 bg-amber-50/30 dark:bg-amber-900/10',
   evidence: 'border-sky-300/50 bg-sky-50/30 dark:bg-sky-900/10',

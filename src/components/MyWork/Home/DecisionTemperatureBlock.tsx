@@ -32,7 +32,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-lg border border-rose-400/15 bg-rose-500/[0.08] p-3">
+            <div className="rounded-lg border border-danger-400/15 bg-danger-500/[0.08] p-3">
               <div className="font-mono text-[9px] uppercase tracking-wider text-white/50">
                 {t('myWork.radar.pending')}
               </div>
@@ -95,7 +95,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
               }
               className="flex w-full items-start gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-left transition hover:bg-white/[0.08]"
             >
-              <div className="rounded-xl bg-rose-500/15 p-2 text-rose-200">
+              <div className="rounded-xl bg-danger-500/15 p-2 text-danger-200">
                 <AlertTriangle size={15} />
               </div>
               <div className="min-w-0 flex-1">

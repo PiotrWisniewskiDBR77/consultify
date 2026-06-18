@@ -262,7 +262,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   </button>
                   <button
                     onClick={() => handleRevokeShare(view.id)}
-                    className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                    className="p-1.5 rounded-lg text-danger-500 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                     title={isPl ? 'Cofnij udostępnianie' : 'Revoke'}
                   >
                     <X size={14} />
@@ -431,7 +431,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     {!isOwner && (
                       <button
                         onClick={() => handleRemoveCollaborator(collab.userId)}
-                        className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-danger-500 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                         title={isPl ? 'Usuń dostęp' : 'Remove access'}
                       >
                         <Trash2 size={14} />

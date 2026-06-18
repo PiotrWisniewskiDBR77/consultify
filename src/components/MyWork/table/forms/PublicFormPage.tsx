@@ -159,8 +159,8 @@ export function PublicFormPage() {
   if (error && !form) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="max-w-md rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
-          <AlertCircle className="mx-auto mb-3 h-10 w-10 text-rose-400" />
+        <div className="max-w-md rounded-2xl border border-danger-200 bg-white p-8 text-center shadow-sm">
+          <AlertCircle className="mx-auto mb-3 h-10 w-10 text-danger-400" />
           <h2 className="mb-2 text-lg font-semibold text-gray-900">Form not found</h2>
           <p className="text-sm text-gray-500">{error}</p>
         </div>
@@ -205,7 +205,7 @@ export function PublicFormPage() {
         {form.description && <p className="mb-6 text-sm text-gray-500">{form.description}</p>}
 
         {error && (
-          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="mb-4 rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700">
             {error}
           </div>
         )}
@@ -220,7 +220,7 @@ export function PublicFormPage() {
               <div key={fc.fieldId}>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
                   {fc.label || field.name}
-                  {fc.required && <span className="ml-1 text-rose-500">*</span>}
+                  {fc.required && <span className="ml-1 text-danger-500">*</span>}
                 </label>
                 {fc.helpText && <p className="mb-1 text-xs text-gray-600">{fc.helpText}</p>}
                 <PublicFormFieldInput
@@ -229,7 +229,7 @@ export function PublicFormPage() {
                   onChange={(val) => setValue(fc.fieldId, val)}
                   error={!!fieldError}
                 />
-                {fieldError && <p className="mt-1 text-xs text-rose-500">{fieldError}</p>}
+                {fieldError && <p className="mt-1 text-xs text-danger-500">{fieldError}</p>}
               </div>
             );
           })}

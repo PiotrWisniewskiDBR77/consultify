@@ -13,7 +13,7 @@ interface AIPulseCoreProps {
 }
 
 const PRIORITY_RING: Record<AIPulseCorePayload['focusItems'][number]['priority'], string> = {
-  high: 'from-rose-400 to-amber-400',
+  high: 'from-danger-400 to-amber-400',
   medium: 'from-blue-400 to-primary-400',
   low: 'from-emerald-400 to-blue-400',
 };

@@ -109,7 +109,7 @@ const PRIORITY_OPTIONS = [
   { value: 'low', label: { en: 'Low', pl: 'Niski' }, color: 'text-slate-500' },
   { value: 'medium', label: { en: 'Medium', pl: 'Średni' }, color: 'text-blue-500' },
   { value: 'high', label: { en: 'High', pl: 'Wysoki' }, color: 'text-amber-500' },
-  { value: 'critical', label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-rose-500' },
+  { value: 'critical', label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-danger-500' },
 ];
 
 export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
@@ -482,7 +482,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                           </button>
                           <button
                             onClick={() => handleDelete(template.id)}
-                            className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 hover:text-rose-500 transition-colors"
+                            className="p-2 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/10 text-slate-600 hover:text-danger-500 transition-colors"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={16} />

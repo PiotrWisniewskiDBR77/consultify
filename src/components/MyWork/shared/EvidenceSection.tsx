@@ -289,7 +289,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                             {!readOnly && (
                               <button
                                 onClick={() => onRemoveEvidence(item.id)}
-                                className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                                className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                               >
                                 <Trash2 size={14} />
                               </button>

@@ -53,7 +53,7 @@ interface NotificationCenterProps {
 const getNotificationIcon = (type: string, severity: string) => {
   const iconClass =
     severity === 'CRITICAL'
-      ? 'text-rose-500'
+      ? 'text-danger-500'
       : severity === 'WARNING'
         ? 'text-amber-500'
         : 'text-blue-500';
@@ -108,7 +108,7 @@ const formatRelativeTime = (dateString: string | null | undefined): string => {
 const getSeverityBadgeClass = (severity: string): string => {
   switch (severity) {
     case 'CRITICAL':
-      return 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300';
+      return 'bg-danger-100 text-danger-700 dark:bg-danger-900/50 dark:text-danger-300';
     case 'WARNING':
       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300';
     default:
@@ -172,7 +172,7 @@ const NotificationItem: React.FC<{
                         shrink-0 w-8 h-8 rounded-full flex items-center justify-center
                         ${
                           notification.severity === 'CRITICAL'
-                            ? 'bg-rose-100 dark:bg-rose-900/30'
+                            ? 'bg-danger-100 dark:bg-danger-900/30'
                             : notification.severity === 'WARNING'
                               ? 'bg-amber-100 dark:bg-amber-900/30'
                               : 'bg-blue-100 dark:bg-blue-900/30'
@@ -252,7 +252,7 @@ const NotificationItem: React.FC<{
                     e.stopPropagation();
                     onDelete(notification.id);
                   }}
-                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-rose-500"
+                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-danger-500"
                   title="Delete"
                 >
                   <Trash2 size={14} />
@@ -464,7 +464,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             {t('myWork.notifications.title', 'Notifications')}
           </h3>
           {unreadCount > 0 && (
-            <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">
+            <span className="px-2 py-0.5 bg-danger-500 text-white text-[10px] font-bold rounded-full">
               {unreadCount}
             </span>
           )}

@@ -558,18 +558,18 @@ const TYPE_COLORS = {
   task: 'border-l-emerald-500',
   idea: 'border-l-blue-500',
   decision: 'border-l-amber-500',
-  notification: 'border-l-rose-500',
+  notification: 'border-l-danger-500',
 };
 
 const STATUS_COLORS: Record<ItemStatus, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-blue-400',
   completed: 'bg-emerald-400',
-  blocked: 'bg-rose-400',
+  blocked: 'bg-danger-400',
   idea: 'bg-amber-400',
   pending: 'bg-amber-400',
   approved: 'bg-emerald-400',
-  rejected: 'bg-rose-400',
+  rejected: 'bg-danger-400',
   read: 'bg-slate-500',
   unread: 'bg-amber-400',
 };
@@ -1485,7 +1485,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         id: 'overdue' as TaskFilter,
         label: isPolish ? 'Zaległe' : 'Overdue',
         icon: <AlertCircle size={14} />,
-        color: 'bg-rose-500',
+        color: 'bg-danger-500',
         count: taskFilterCounts.overdue,
       },
       {

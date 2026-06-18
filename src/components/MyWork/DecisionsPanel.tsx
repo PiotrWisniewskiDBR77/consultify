@@ -165,7 +165,7 @@ const OverdueBadge: React.FC<{ days: number }> = ({ days }) => {
 
   const getBadgeStyle = () => {
     if (days > 7) {
-      return 'bg-rose-500 text-white animate-pulse';
+      return 'bg-danger-500 text-white animate-pulse';
     } else if (days > 3) {
       return 'bg-amber-500 text-white';
     } else {
@@ -368,8 +368,8 @@ const NewDecisionModal: React.FC<{
 
         {/* Priority indicator */}
         {priority === 'CRITICAL' && (
-          <div className="mt-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/20">
-            <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300 text-sm">
+          <div className="mt-4 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/20">
+            <div className="flex items-center gap-2 text-danger-700 dark:text-danger-300 text-sm">
               <Zap size={16} className="animate-pulse" />
               <span className="font-medium">
                 {t(
@@ -529,7 +529,7 @@ const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
 
   const config = {
     CRITICAL: {
-      bg: 'bg-rose-500',
+      bg: 'bg-danger-500',
       text: 'text-white',
       icon: Zap,
       label: t('priority.critical', 'Critical'),
@@ -593,7 +593,7 @@ const StatusTimeline: React.FC<{
       <div
         className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
           daysOverdue > 7
-            ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 animate-pulse'
+            ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 animate-pulse'
             : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
         }`}
       >
@@ -670,11 +670,11 @@ const DecisionCard: React.FC<{
 
   const getCardStyle = () => {
     if (isOverdue && daysOverdue > 7) {
-      return 'border-l-rose-500 bg-gradient-to-r from-rose-50 to-white dark:from-rose-900/20 dark:to-navy-900 ring-1 ring-rose-200 dark:ring-rose-500/20';
+      return 'border-l-danger-500 bg-gradient-to-r from-danger-50 to-white dark:from-danger-900/20 dark:to-navy-900 ring-1 ring-danger-200 dark:ring-danger-500/20';
     } else if (isOverdue) {
       return 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-white dark:from-amber-900/20 dark:to-navy-900';
     } else if (decision.priority === 'CRITICAL') {
-      return 'border-l-rose-500 bg-white dark:bg-navy-900';
+      return 'border-l-danger-500 bg-white dark:bg-navy-900';
     } else if (decision.priority === 'HIGH') {
       return 'border-l-amber-500 bg-white dark:bg-navy-900';
     }
@@ -686,7 +686,7 @@ const DecisionCard: React.FC<{
       INITIATIVE_APPROVAL: { icon: '🎯', label: 'Initiative', color: 'text-blue-600' },
       PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'text-primary-600' },
       UNBLOCK: { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
-      CANCEL: { icon: '❌', label: 'Cancel', color: 'text-rose-600' },
+      CANCEL: { icon: '❌', label: 'Cancel', color: 'text-danger-600' },
       BUDGET: { icon: '💰', label: 'Budget', color: 'text-amber-600' },
       SCOPE_CHANGE: { icon: '📐', label: 'Scope', color: 'text-blue-600' },
       GENERAL: { icon: '📋', label: 'General', color: 'text-slate-600 dark:text-slate-400' },
@@ -790,10 +790,10 @@ const DecisionCard: React.FC<{
           {/* Blocked Items */}
           {(decision.blockedItemsCount || 0) > 0 && (
             <div className="flex items-center gap-2 text-xs">
-              <div className="w-6 h-6 rounded-md bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
-                <AlertTriangle size={12} className="text-rose-600 dark:text-rose-400" />
+              <div className="w-6 h-6 rounded-md bg-danger-100 dark:bg-danger-900/30 flex items-center justify-center shrink-0">
+                <AlertTriangle size={12} className="text-danger-600 dark:text-danger-400" />
               </div>
-              <span className="text-rose-600 dark:text-rose-400 font-medium">
+              <span className="text-danger-600 dark:text-danger-400 font-medium">
                 {decision.blockedItemsCount} {t('decisions.blocked', 'blocked')}
               </span>
             </div>
@@ -814,7 +814,7 @@ const DecisionCard: React.FC<{
               animate={{ width: `${Math.min(100, ((decision.daysWaiting || 0) / 14) * 100)}%` }}
               className={`h-full rounded-full ${
                 (decision.daysWaiting || 0) > 10
-                  ? 'bg-rose-500'
+                  ? 'bg-danger-500'
                   : (decision.daysWaiting || 0) > 5
                     ? 'bg-amber-500'
                     : 'bg-green-500'
@@ -828,7 +828,7 @@ const DecisionCard: React.FC<{
       <div
         className={`px-4 py-3 border-t flex items-center gap-2 ${
           isOverdue
-            ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-500/10'
+            ? 'bg-danger-50/50 dark:bg-danger-900/10 border-danger-100 dark:border-danger-500/10'
             : 'bg-slate-50/50 dark:bg-white/5 border-slate-200 dark:border-navy-700'
         }`}
       >
@@ -851,7 +851,7 @@ const DecisionCard: React.FC<{
                 e.stopPropagation();
                 onReject(decision.id);
               }}
-              className="flex-1 px-3 py-2 rounded-lg bg-rose-500 text-white hover:bg-rose-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
+              className="flex-1 px-3 py-2 rounded-lg bg-danger-500 text-white hover:bg-danger-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
             >
               <XCircle size={14} />
               {t('decisions.reject', 'Reject')}
@@ -886,7 +886,7 @@ const DecisionCard: React.FC<{
                   e.stopPropagation();
                   onEscalate(decision.id);
                 }}
-                className="px-4 py-2 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                className="px-4 py-2 rounded-lg bg-danger-600 text-white text-xs font-semibold hover:bg-danger-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <TrendingUp size={14} />
                 {t('decisions.escalate', 'Escalate')}
@@ -1182,7 +1182,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               id: 'overdue',
               label: t('decisions.overdue', 'Overdue'),
               items: overdue,
-              accentColor: 'text-rose-500',
+              accentColor: 'text-danger-500',
             },
           ]
         : []),
@@ -1253,7 +1253,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {myDecisionsCount + awaitingCount} {t('decisions.pending', 'pending')}
                 {urgentCount > 0 && (
-                  <span className="text-rose-500 ml-1">• {urgentCount} urgent</span>
+                  <span className="text-danger-500 ml-1">• {urgentCount} urgent</span>
                 )}
               </p>
             </div>
@@ -1373,7 +1373,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                     }`}
                   >
                     {filter === 'all' && <Tag size={14} />}
-                    {filter === 'overdue' && <AlertTriangle size={14} className="text-rose-500" />}
+                    {filter === 'overdue' && <AlertTriangle size={14} className="text-danger-500" />}
                     {filter === 'thisWeek' && <Calendar size={14} className="text-blue-500" />}
                     {filter === 'blocking' && <Bell size={14} className="text-amber-500" />}
                     {filter === 'all'
@@ -1402,7 +1402,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                         : 'text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    {filter === 'critical' && <Zap size={14} className="text-rose-500" />}
+                    {filter === 'critical' && <Zap size={14} className="text-danger-500" />}
                     {filter === 'high' && <Flag size={14} className="text-amber-500" />}
                     {filter === 'critical'
                       ? t('decisions.filterCritical', 'Critical Only')

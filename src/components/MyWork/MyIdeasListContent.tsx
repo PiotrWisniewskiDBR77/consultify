@@ -151,11 +151,11 @@ const STAGE_CONFIG: Record<
   },
   promoted: {
     icon: Rocket,
-    color: 'text-rose-500',
-    bgColor: 'bg-rose-500/10 dark:bg-rose-500/15',
-    borderColor: 'border-rose-400/30 dark:border-rose-500/20',
-    badgeBg: 'border border-rose-200/70 bg-rose-50 dark:border-rose-300/15 dark:bg-rose-300/10',
-    badgeText: 'text-rose-800 dark:text-rose-200',
+    color: 'text-danger-500',
+    bgColor: 'bg-danger-500/10 dark:bg-danger-500/15',
+    borderColor: 'border-danger-400/30 dark:border-danger-500/20',
+    badgeBg: 'border border-danger-200/70 bg-danger-50 dark:border-danger-300/15 dark:bg-danger-300/10',
+    badgeText: 'text-danger-800 dark:text-danger-200',
   },
 };
 
@@ -547,7 +547,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   onClick={() => handleDeleteFolder(f.id)}
                   title={isPolish ? 'Usuń folder' : 'Delete folder'}
                   aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
-                  className="ml-0.5 rounded-full p-0.5 text-slate-600 hover:text-rose-500"
+                  className="ml-0.5 rounded-full p-0.5 text-slate-600 hover:text-danger-500"
                 >
                   <X size={12} />
                 </button>

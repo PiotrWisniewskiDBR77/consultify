@@ -292,7 +292,7 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
             )}
             <button
               onClick={onUninstall}
-              className="px-3 py-1.5 text-xs font-medium text-rose-600 bg-rose-50 rounded hover:bg-rose-100 transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-danger-600 bg-danger-50 rounded hover:bg-danger-100 transition-colors"
             >
               Uninstall
             </button>

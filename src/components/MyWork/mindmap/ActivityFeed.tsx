@@ -111,7 +111,7 @@ const TYPE_ICONS: Record<string, React.ComponentType<any>> = {
 
 const TYPE_COLORS: Record<string, string> = {
   node_added: 'text-emerald-500',
-  node_deleted: 'text-rose-500',
+  node_deleted: 'text-danger-500',
   node_edited: 'text-blue-500',
   node_status: 'text-amber-500',
   ai_expand: 'text-primary-500',

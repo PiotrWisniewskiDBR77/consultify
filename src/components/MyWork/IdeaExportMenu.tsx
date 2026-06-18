@@ -671,7 +671,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
               </div>
             )}
             {importPreview && !importPreview.ok && (
-              <div className="rounded-lg bg-rose-50 px-3 py-2 text-[10px] text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+              <div className="rounded-lg bg-danger-50 px-3 py-2 text-[10px] text-danger-700 dark:bg-danger-900/30 dark:text-danger-300">
                 {importPreview.error}
               </div>
             )}

@@ -75,7 +75,7 @@ const OP_META: Record<string, { en: string; pl: string; icon: LucideIcon; color:
     en: 'Delete field',
     pl: 'Usuń pole',
     icon: Trash2,
-    color: 'text-rose-600 dark:text-rose-400',
+    color: 'text-danger-600 dark:text-danger-400',
   },
   create_view: {
     en: 'Create view',
@@ -335,7 +335,7 @@ function renderPayloadDetails(payload: Record<string, unknown>, isPl: boolean): 
             <span className="text-slate-600">—</span>
             <span>{String(f.type ?? f.fieldType ?? 'text')}</span>
             {Boolean(f.required) && (
-              <span className="text-rose-500 text-[9px]">{isPl ? 'wymagane' : 'required'}</span>
+              <span className="text-danger-500 text-[9px]">{isPl ? 'wymagane' : 'required'}</span>
             )}
           </div>
         ))}
@@ -424,10 +424,10 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
       ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
       : confidence >= 0.6
         ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
-        : 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30';
+        : 'bg-danger-500/20 text-danger-700 dark:text-danger-300 border-danger-500/30';
 
   const confidenceDot =
-    confidence >= 0.8 ? 'bg-emerald-500' : confidence >= 0.6 ? 'bg-amber-500' : 'bg-rose-500';
+    confidence >= 0.8 ? 'bg-emerald-500' : confidence >= 0.6 ? 'bg-amber-500' : 'bg-danger-500';
 
   const confidencePercent = Math.round(confidence * 100);
 
@@ -584,7 +584,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
             <button
               onClick={handleReject}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-danger-600 text-white hover:bg-danger-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               <X size={14} />
               {isPl ? 'Odrzuć' : 'Reject'}

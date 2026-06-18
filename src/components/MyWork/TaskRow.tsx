@@ -22,7 +22,7 @@ interface TaskRowProps {
 const getPriorityColor = (priority?: string): string => {
   switch (priority?.toLowerCase()) {
     case 'urgent':
-      return 'bg-rose-500';
+      return 'bg-danger-500';
     case 'high':
       return 'bg-amber-500';
     case 'medium':
@@ -153,7 +153,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
           className={`flex items-center gap-1 text-xs ${
             dueDateFormatted
               ? overdue
-                ? 'text-rose-500 font-medium'
+                ? 'text-danger-500 font-medium'
                 : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
               : 'text-slate-700 dark:text-slate-300 dark:text-slate-400'
           }`}

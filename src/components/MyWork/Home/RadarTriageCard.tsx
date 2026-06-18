@@ -18,13 +18,13 @@ import type { HomeScreenAction, TriageSignal, TriageState } from './homeV2Types'
 const TK = 'myWork.radar.triage';
 
 const PRIORITY_BADGE: Record<TriageSignal['priorityLevel'], string> = {
-  P0: 'border-rose-400/45 bg-rose-500/15 text-rose-200',
+  P0: 'border-danger-400/45 bg-danger-500/15 text-danger-200',
   P1: 'border-amber-400/40 bg-amber-500/12 text-amber-100',
   P2: 'border-slate-500/40 bg-slate-500/12 text-slate-200',
 };
 
 const PRIORITY_BORDER: Record<TriageSignal['priorityLevel'], string> = {
-  P0: 'border-l-rose-400',
+  P0: 'border-l-danger-400',
   P1: 'border-l-amber-400',
   P2: 'border-l-slate-400',
 };
@@ -38,8 +38,8 @@ const DEGRADED_META: Record<
     bannerClass: 'border-amber-400/25 bg-amber-500/10 text-amber-100',
   },
   degraded_conflict: {
-    icon: <FileWarning className="size-3.5 shrink-0 text-rose-300" aria-hidden />,
-    bannerClass: 'border-rose-400/25 bg-rose-500/10 text-rose-100',
+    icon: <FileWarning className="size-3.5 shrink-0 text-danger-300" aria-hidden />,
+    bannerClass: 'border-danger-400/25 bg-danger-500/10 text-danger-100',
   },
   degraded_stale: {
     icon: <Clock className="size-3.5 shrink-0 text-slate-300" aria-hidden />,
@@ -117,7 +117,7 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
             {t(`${TK}.category.${signal.category}`)}
           </span>
           {hasHardGate && (
-            <span className="rounded-md border border-rose-400/35 bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-200">
+            <span className="rounded-md border border-danger-400/35 bg-danger-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-danger-200">
               {t(`${TK}.hardGate`)}
             </span>
           )}

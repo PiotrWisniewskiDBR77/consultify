@@ -66,9 +66,9 @@ const RISK_LEVELS = {
   },
   critical: {
     label: { en: 'Critical', pl: 'Krytyczne' },
-    color: 'bg-rose-500',
-    textColor: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-500/10 dark:bg-rose-500/20',
+    color: 'bg-danger-500',
+    textColor: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-500/10 dark:bg-danger-500/20',
     score: 4,
   },
 };
@@ -126,7 +126,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
       case 'high':
         return <ShieldAlert size={16} className="text-amber-500" />;
       case 'critical':
-        return <AlertTriangle size={16} className="text-rose-500" />;
+        return <AlertTriangle size={16} className="text-danger-500" />;
       default:
         return <Shield size={16} className="text-slate-500 dark:text-slate-400" />;
     }
@@ -272,7 +272,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                   e.stopPropagation();
                                   onRemove(risk.id);
                                 }}
-                                className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                                className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                               >
                                 <Trash2 size={14} />
                               </button>

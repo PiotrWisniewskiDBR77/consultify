@@ -90,7 +90,7 @@ const InitiativeCard: React.FC<{
     IN_PROGRESS: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
     PLANNING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
     AT_RISK: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-    BLOCKED: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    BLOCKED: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
     DRAFT: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-400',
     COMPLETED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   };
@@ -156,7 +156,7 @@ const InitiativeCard: React.FC<{
 // --- AI Signal Card ---
 const SignalCard: React.FC<{ signal: AISignal; onClick?: () => void }> = ({ signal, onClick }) => {
   const severityConfig: Record<string, { border: string; icon: string }> = {
-    CRITICAL: { border: 'border-l-rose-500', icon: 'text-rose-500' },
+    CRITICAL: { border: 'border-l-danger-500', icon: 'text-danger-500' },
     WARNING: { border: 'border-l-amber-500', icon: 'text-amber-500' },
     INFO: { border: 'border-l-blue-500', icon: 'text-blue-500' },
   };
@@ -173,7 +173,7 @@ const SignalCard: React.FC<{ signal: AISignal; onClick?: () => void }> = ({ sign
         <span
           className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
             signal.severity?.toUpperCase() === 'CRITICAL'
-              ? 'bg-rose-500'
+              ? 'bg-danger-500'
               : signal.severity?.toUpperCase() === 'WARNING'
                 ? 'bg-amber-500'
                 : 'bg-slate-400 dark:bg-slate-500'
@@ -701,7 +701,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   return (
     <div className="space-y-6">
       {loadError && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-500/30 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
+        <div className="rounded-xl border border-danger-200 bg-danger-50 dark:bg-danger-900/20 dark:border-danger-500/30 px-4 py-3 text-sm text-danger-700 dark:text-danger-300">
           {loadError}
         </div>
       )}
@@ -817,7 +817,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             )}
             {patterns.overdueRate != null && (
               <div className="text-center">
-                <div className="text-lg font-bold text-rose-600">{patterns.overdueRate}%</div>
+                <div className="text-lg font-bold text-danger-600">{patterns.overdueRate}%</div>
                 <div className="text-[10px] text-slate-500">
                   {t('executive.patterns.overdueRate', 'overdue rate')}
                 </div>

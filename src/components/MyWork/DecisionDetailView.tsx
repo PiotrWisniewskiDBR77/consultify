@@ -226,8 +226,8 @@ const STATUS_CONFIG = {
   },
   rejected: {
     label: { en: 'Rejected', pl: 'Odrzucona' },
-    color: 'bg-rose-500',
-    textColor: 'text-rose-500',
+    color: 'bg-danger-500',
+    textColor: 'text-danger-500',
   },
   deferred: {
     label: { en: 'Deferred', pl: 'Odroczona' },
@@ -259,8 +259,8 @@ const PRIORITY_CONFIG = {
   },
   critical: {
     label: { en: 'Critical', pl: 'Krytyczny' },
-    color: 'bg-rose-500',
-    textColor: 'text-rose-500',
+    color: 'bg-danger-500',
+    textColor: 'text-danger-500',
   },
 };
 
@@ -315,7 +315,7 @@ const CATEGORY_CONFIG = {
 const IMPACT_LEVELS = {
   low: { label: { en: 'Low', pl: 'Niski' }, color: 'bg-emerald-500', emoji: '🟢' },
   medium: { label: { en: 'Medium', pl: 'Średni' }, color: 'bg-amber-500', emoji: '🟡' },
-  high: { label: { en: 'High', pl: 'Wysoki' }, color: 'bg-rose-500', emoji: '🔴' },
+  high: { label: { en: 'High', pl: 'Wysoki' }, color: 'bg-danger-500', emoji: '🔴' },
 };
 
 // ── DEMO DATA (populate N/C views for testing) ────────────────────────────────
@@ -1341,7 +1341,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return {
         icon: <X size={12} />,
         label: isPolish ? 'Odrzucenie' : 'Rejection',
-        style: 'text-rose-500 bg-rose-500/10 border-rose-400/30',
+        style: 'text-danger-500 bg-danger-500/10 border-danger-400/30',
       };
     if (type === 'escalated')
       return {
@@ -1371,7 +1371,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return {
         icon: <Calendar size={12} />,
         label: isPolish ? 'Termin' : 'Deadline',
-        style: 'text-rose-500 bg-rose-500/10 border-rose-400/30',
+        style: 'text-danger-500 bg-danger-500/10 border-danger-400/30',
       };
     if (type === 'priority' || type === 'status_change')
       return {
@@ -3321,7 +3321,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   const getRiskScore = (risk: RiskItem) =>
     riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
   const getRiskScoreClass = (score: number) => {
-    if (score >= 12) return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30';
+    if (score >= 12) return 'text-danger-600 dark:text-danger-400 bg-danger-500/10 border-danger-500/30';
     if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
     if (score >= 4)
       return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -3330,7 +3330,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   const getRiskLevelClass = (level?: string) => {
     const normalized = String(level || '').toLowerCase();
     if (normalized === 'critical')
-      return 'border-rose-500/60 bg-rose-500/10 text-rose-700 dark:text-rose-300';
+      return 'border-danger-500/60 bg-danger-500/10 text-danger-700 dark:text-danger-300';
     if (normalized === 'high')
       return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
     if (normalized === 'medium')
@@ -3828,7 +3828,7 @@ Context: ${JSON.stringify(projectContext)}`;
   }, [createdAt, isPolish]);
   const statusAlertBorderClass =
     status === 'escalated' || status === 'rejected'
-      ? 'border-rose-400/70 dark:border-rose-500/50'
+      ? 'border-danger-400/70 dark:border-danger-500/50'
       : status === 'pending' || status === 'deferred'
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : status === 'approved'
@@ -3836,7 +3836,7 @@ Context: ${JSON.stringify(projectContext)}`;
           : 'border-slate-200 dark:border-navy-600/60';
   const priorityAlertBorderClass =
     priority === 'critical'
-      ? 'border-rose-400/70 dark:border-rose-500/50'
+      ? 'border-danger-400/70 dark:border-danger-500/50'
       : priority === 'high'
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : priority === 'medium'
@@ -3850,7 +3850,7 @@ Context: ${JSON.stringify(projectContext)}`;
     if (Number.isNaN(due.getTime())) return 'border-slate-200 dark:border-navy-600/60';
     const now = new Date();
     const daysDiff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysDiff < 0) return 'border-rose-400/70 dark:border-rose-500/50';
+    if (daysDiff < 0) return 'border-danger-400/70 dark:border-danger-500/50';
     if (daysDiff <= 3) return 'border-amber-400/70 dark:border-amber-500/50';
     return 'border-emerald-400/60 dark:border-emerald-500/40';
   }, [dueDate, status]);
@@ -3987,7 +3987,7 @@ Context: ${JSON.stringify(projectContext)}`;
 
   const getPriorityButtonClass = (priority: CommentPriorityLevel, isActive: boolean) => {
     if (isActive && priority === 'high') {
-      return 'border-rose-400/80 text-rose-300 bg-rose-500/20 shadow-[0_0_0_1px_rgba(244,63,94,0.3)]';
+      return 'border-danger-400/80 text-danger-300 bg-danger-500/20 shadow-[0_0_0_1px_rgba(244,63,94,0.3)]';
     }
     if (isActive && priority === 'normal') {
       return 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]';
@@ -4627,7 +4627,7 @@ Context: ${JSON.stringify(projectContext)}`;
                     </button>
                     <button
                       onClick={handleReject}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-400/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
                     >
                       <X size={13} /> {isPolish ? 'Odrzuć' : 'Reject'}
                     </button>
@@ -4991,7 +4991,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       )}
                                       <button
                                         onClick={() => removeAlternative(alt.id)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -5046,7 +5046,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           />
                                           <button
                                             onClick={() => removeAlternativePro(alt.id, idx)}
-                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                                           >
                                             <X size={11} />
                                           </button>
@@ -5087,7 +5087,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
 
                                     <div className="space-y-1.5">
-                                      <span className="text-rose-500 dark:text-rose-400 font-medium">
+                                      <span className="text-danger-500 dark:text-danger-400 font-medium">
                                         − {alt.cons?.length || 0} {isPolish ? 'przeciw' : 'cons'}
                                       </span>
                                       {(alt.cons || []).map((con, idx) => (
@@ -5100,14 +5100,14 @@ Context: ${JSON.stringify(projectContext)}`;
                                             onChange={(e) =>
                                               updateAlternativeCon(alt.id, idx, e.target.value)
                                             }
-                                            className="flex-1 text-[11px] bg-transparent border-b border-rose-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-rose-400"
+                                            className="flex-1 text-[11px] bg-transparent border-b border-danger-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-danger-400"
                                             placeholder={
                                               isPolish ? 'Argument przeciw...' : 'Con argument...'
                                             }
                                           />
                                           <button
                                             onClick={() => removeAlternativeCon(alt.id, idx)}
-                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                                           >
                                             <X size={11} />
                                           </button>
@@ -5139,7 +5139,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           <button
                                             key={`${alt.id}-quick-con-${arg}`}
                                             onClick={() => addAlternativeCon(alt.id, arg)}
-                                            className="px-1.5 py-0.5 rounded border border-rose-400/30 text-rose-500 dark:text-rose-400 text-[10px] hover:bg-rose-500/10 transition-colors"
+                                            className="px-1.5 py-0.5 rounded border border-danger-400/30 text-danger-500 dark:text-danger-400 text-[10px] hover:bg-danger-500/10 transition-colors"
                                           >
                                             +{arg}
                                           </button>
@@ -5148,7 +5148,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
                                     {alt.riskLevel && (
                                       <span
-                                        className={`font-medium ${alt.riskLevel === 'high' ? 'text-rose-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
+                                        className={`font-medium ${alt.riskLevel === 'high' ? 'text-danger-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
                                       >
                                         {isPolish ? 'ryzyko' : 'risk'}: {alt.riskLevel}
                                       </span>
@@ -5239,7 +5239,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   ? 'border-emerald-400/35 bg-emerald-500/5'
                                   : scenarioKey === 'neutral'
                                     ? 'border-amber-400/35 bg-amber-500/5'
-                                    : 'border-rose-400/35 bg-rose-500/5';
+                                    : 'border-danger-400/35 bg-danger-500/5';
                               return (
                                 <div
                                   key={scenarioKey}
@@ -5444,7 +5444,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     stakeholders.filter((item) => item.id !== s.id)
                                                   )
                                                 }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -5576,7 +5576,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     reminders.filter((item) => item.id !== r.id)
                                                   )
                                                 }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -5740,7 +5740,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     )
                                                   )
                                                 }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -7005,7 +7005,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             stakeholders.filter((item) => item.id !== s.id)
                                           )
                                         }
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7241,7 +7241,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                         onClick={() =>
                                           setReminders(reminders.filter((item) => item.id !== r.id))
                                         }
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7480,7 +7480,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <button
                                         disabled={isDecisionStageLocked}
                                         onClick={() => handleDeleteAttachment(a.id)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7562,7 +7562,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <button
                                         disabled={isDecisionStageLocked}
                                         onClick={() => handleRemoveLinkedItem(item)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7598,7 +7598,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       </button>
                       <button
                         onClick={handleReject}
-                        className="px-3 py-2 rounded-xl border border-rose-400/50 text-rose-500 hover:bg-rose-500/10 text-sm font-medium"
+                        className="px-3 py-2 rounded-xl border border-danger-400/50 text-danger-500 hover:bg-danger-500/10 text-sm font-medium"
                       >
                         {isPolish ? 'Odrzuć' : 'Reject'}
                       </button>

@@ -128,7 +128,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
                 batch: true,
               });
             }}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-danger-600 dark:text-danger-400 bg-danger-500/10 hover:bg-danger-500/20 transition-colors"
           >
             <X size={10} />
             {isPl ? 'Odrzuć' : 'Reject all'}
@@ -184,7 +184,7 @@ const ProposalItem: React.FC<{
       ? 'bg-emerald-500'
       : proposal.confidence >= 0.4
         ? 'bg-amber-500'
-        : 'bg-rose-500';
+        : 'bg-danger-500';
 
   const patchSummary = useMemo(() => {
     const p = proposal.patch;
@@ -257,7 +257,7 @@ const ProposalItem: React.FC<{
               </div>
             ))}
             {proposal.patch.removeNodeIds?.map((id) => (
-              <div key={id} className="text-rose-600 dark:text-rose-400">
+              <div key={id} className="text-danger-600 dark:text-danger-400">
                 - {id}
               </div>
             ))}
@@ -342,7 +342,7 @@ const ProposalItem: React.FC<{
             </button>
             <button
               onClick={onReject}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/10 transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-danger-600 dark:text-danger-400 bg-danger-500/10 hover:bg-danger-500/20 border border-danger-500/10 transition-colors"
             >
               <X size={10} />
               {isPl ? 'Odrzuć' : 'Reject'}

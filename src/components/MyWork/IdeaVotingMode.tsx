@@ -194,9 +194,9 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             </div>
             {timerSeconds != null && timerSeconds > 0 && (
               <div className="flex items-center gap-1">
-                <Clock size={10} className={timeLeft > 10 ? 'text-slate-600' : 'text-rose-500'} />
+                <Clock size={10} className={timeLeft > 10 ? 'text-slate-600' : 'text-danger-500'} />
                 <span
-                  className={`text-[10px] font-semibold ${timeLeft > 10 ? 'text-slate-600 dark:text-slate-400' : 'text-rose-500'}`}
+                  className={`text-[10px] font-semibold ${timeLeft > 10 ? 'text-slate-600 dark:text-slate-400' : 'text-danger-500'}`}
                 >
                   {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
                 </span>
@@ -239,7 +239,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
                     {!persistent && myVotes > 0 && (
                       <button
                         onClick={() => handleUnvote(node.id)}
-                        className="p-1 rounded text-primary-500 hover:text-rose-500"
+                        className="p-1 rounded text-primary-500 hover:text-danger-500"
                       >
                         <ThumbsUp size={10} className="fill-current" />
                       </button>

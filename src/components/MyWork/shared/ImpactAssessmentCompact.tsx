@@ -137,7 +137,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
       case 'medium':
         return 'bg-amber-500 text-amber-500 border-amber-500';
       case 'high':
-        return 'bg-rose-500 text-rose-500 border-rose-500';
+        return 'bg-danger-500 text-danger-500 border-danger-500';
       default:
         return 'bg-slate-500 text-slate-500 border-slate-500';
     }
@@ -147,7 +147,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
   const getScoreColor = (score: number) => {
     if (score <= 3.3) return 'text-emerald-500';
     if (score <= 6.6) return 'text-amber-500';
-    return 'text-rose-500';
+    return 'text-danger-500';
   };
 
   // Get overall label

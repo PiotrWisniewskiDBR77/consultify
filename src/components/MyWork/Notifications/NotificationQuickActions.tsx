@@ -196,7 +196,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                 e.stopPropagation();
                 onReject();
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-medium rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-danger-500 hover:bg-danger-600 text-white text-xs font-medium rounded-lg transition-colors"
             >
               <ThumbsDown size={12} />
               {t('notifications.actions.reject', 'Reject')}
@@ -368,7 +368,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-colors"
+          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded transition-colors"
           title={t('notifications.actions.delete', 'Delete')}
         >
           <Trash2 size={14} />

@@ -238,7 +238,7 @@ const FocusTaskCard: React.FC<{
                 e.stopPropagation();
                 onRemove(task.taskId);
               }}
-              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-all"
+              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-900/20 text-slate-600 dark:text-slate-500 hover:text-danger-500 transition-all"
             >
               <X size={14} />
             </button>

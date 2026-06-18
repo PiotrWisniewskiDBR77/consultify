@@ -113,7 +113,7 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
   const isUp = diff > 0;
   return (
     <span
-      className={`inline-flex items-center gap-0.5 text-[8px] font-bold ${isUp ? 'text-emerald-500' : 'text-rose-500'}`}
+      className={`inline-flex items-center gap-0.5 text-[8px] font-bold ${isUp ? 'text-emerald-500' : 'text-danger-500'}`}
     >
       {isUp ? <TrendingUp size={8} /> : <TrendingDown size={8} />}
       {showLabel && `${isUp ? '+' : ''}${pctChange}%`}

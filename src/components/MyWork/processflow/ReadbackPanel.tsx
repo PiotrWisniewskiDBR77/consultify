@@ -40,7 +40,7 @@ function stepIcon(type: ReadbackStep['type']) {
     case 'start':
       return { Icon: Play, className: 'text-emerald-600 dark:text-emerald-400' };
     case 'end':
-      return { Icon: Square, className: 'text-rose-600 dark:text-rose-400' };
+      return { Icon: Square, className: 'text-danger-600 dark:text-danger-400' };
     case 'decision':
       return { Icon: GitBranch, className: 'text-amber-600 dark:text-amber-400' };
     case 'parallel_split':

@@ -126,7 +126,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
       <div className="w-full max-w-md rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center gap-2">
-            <Mic size={16} className="text-rose-500" />
+            <Mic size={16} className="text-danger-500" />
             <h3 className="text-sm font-bold text-slate-800 dark:text-white">
               {isPl ? 'Mów pomysły' : 'Voice to Node'}
             </h3>
@@ -144,7 +144,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
             {listening ? (
               <button
                 onClick={stopListening}
-                className="w-16 h-16 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-500/30 transition-all animate-pulse"
+                className="w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-lg shadow-danger-500/30 transition-all animate-pulse"
               >
                 <Square size={24} />
               </button>
@@ -152,7 +152,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
               <button
                 onClick={startListening}
                 disabled={locked}
-                className="w-16 h-16 rounded-full bg-gradient-to-br from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white flex items-center justify-center shadow-lg shadow-rose-500/20 transition-all disabled:opacity-40"
+                className="w-16 h-16 rounded-full bg-gradient-to-br from-danger-500 to-danger-600 hover:from-danger-600 hover:to-danger-700 text-white flex items-center justify-center shadow-lg shadow-danger-500/20 transition-all disabled:opacity-40"
               >
                 <Mic size={24} />
               </button>

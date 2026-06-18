@@ -512,12 +512,12 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           <>
             {showDeleteConfirm ? (
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-rose-500 font-medium">
+                <span className="text-[10px] text-danger-500 font-medium">
                   {isPl ? 'Na pewno?' : 'Are you sure?'}
                 </span>
                 <button
                   onClick={onDelete}
-                  className="px-2 py-0.5 rounded text-[10px] font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors"
+                  className="px-2 py-0.5 rounded text-[10px] font-semibold text-white bg-danger-500 hover:bg-danger-600 transition-colors"
                 >
                   {isPl ? 'Tak' : 'Yes'}
                 </button>
@@ -531,7 +531,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
             ) : (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="inline-flex items-center gap-1 text-[10px] font-medium text-rose-500 hover:text-rose-600 transition-colors"
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-danger-500 hover:text-danger-600 transition-colors"
               >
                 <Trash2 size={10} />
                 {isPl ? 'Usuń' : 'Delete'}

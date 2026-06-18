@@ -155,7 +155,7 @@ const PRIORITY_COLORS: Record<number, string> = {
   25: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
   50: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
   75: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
-  100: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
+  100: 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-300',
 };
 
 export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
@@ -343,8 +343,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       labelEn: 'RAID Log',
       descPl: 'Risks, Actions, Issues, Dependencies',
       descEn: 'Risks, Actions, Issues, Dependencies',
-      gradient: 'from-rose-500/15 to-amber-500/10',
-      textColor: 'text-rose-600 dark:text-rose-400',
+      gradient: 'from-danger-500/15 to-amber-500/10',
+      textColor: 'text-danger-600 dark:text-danger-400',
     },
   ];
 

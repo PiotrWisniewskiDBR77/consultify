@@ -56,20 +56,20 @@ export const NudgeStrip: React.FC = () => {
           key={nudge.id}
           className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-xs ${
             nudge.priority === 'high'
-              ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200/50 dark:border-rose-800/30'
+              ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200/50 dark:border-danger-800/30'
               : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-800/30'
           }`}
         >
           <div className="flex items-center gap-2 min-w-0">
             {nudge.priority === 'high' ? (
-              <AlertTriangle size={14} className="text-rose-500 shrink-0" />
+              <AlertTriangle size={14} className="text-danger-500 shrink-0" />
             ) : (
               <Clock size={14} className="text-amber-500 shrink-0" />
             )}
             <span
               className={`font-medium truncate ${
                 nudge.priority === 'high'
-                  ? 'text-rose-700 dark:text-rose-300'
+                  ? 'text-danger-700 dark:text-danger-300'
                   : 'text-amber-700 dark:text-amber-300'
               }`}
             >

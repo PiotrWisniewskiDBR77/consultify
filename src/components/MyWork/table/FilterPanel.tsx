@@ -95,7 +95,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           {filters.rules.length > 0 && (
             <button
               onClick={clearAll}
-              className="text-[10px] text-slate-600 hover:text-rose-500 transition-colors px-1"
+              className="text-[10px] text-slate-600 hover:text-danger-500 transition-colors px-1"
             >
               {isPl ? 'Wyczyść' : 'Clear'}
             </button>
@@ -155,7 +155,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             )}
             <button
               onClick={() => removeRule(rule.id)}
-              className="p-1 rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+              className="p-1 rounded-lg text-slate-600 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
             >
               <Trash2 size={12} />
             </button>

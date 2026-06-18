@@ -147,7 +147,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       return 'bg-blue-500/20 text-blue-400';
     }
     if (['blocked', 'rejected', 'critical'].includes(statusLower)) {
-      return 'bg-rose-500/20 text-rose-400';
+      return 'bg-danger-500/20 text-danger-400';
     }
     if (['pending', 'review', 'deferred'].includes(statusLower)) {
       return 'bg-amber-500/20 text-amber-400';
@@ -526,12 +526,12 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                               {!readOnly && (
                                 <button
                                   onClick={() => handleRemoveItem(item.id)}
-                                  className="p-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors"
+                                  className="p-1.5 rounded hover:bg-danger-50 dark:hover:bg-danger-500/20 transition-colors"
                                   title={isPolish ? 'Usuń powiązanie' : 'Remove link'}
                                 >
                                   <Trash2
                                     size={14}
-                                    className="text-slate-500 dark:text-slate-400 hover:text-rose-500"
+                                    className="text-slate-500 dark:text-slate-400 hover:text-danger-500"
                                   />
                                 </button>
                               )}

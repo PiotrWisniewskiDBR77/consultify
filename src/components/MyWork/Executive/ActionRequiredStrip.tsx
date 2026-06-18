@@ -53,13 +53,13 @@ const typeIcons = {
 };
 
 const urgencyDot: Record<string, string> = {
-  critical: 'bg-rose-500',
+  critical: 'bg-danger-500',
   high: 'bg-amber-500',
   medium: 'bg-slate-400 dark:bg-slate-500',
 };
 
 const urgencyLabel: Record<string, string> = {
-  critical: 'text-rose-500 dark:text-rose-400',
+  critical: 'text-danger-500 dark:text-danger-400',
   high: 'text-amber-600 dark:text-amber-400',
   medium: 'text-slate-500 dark:text-slate-400',
 };
@@ -256,7 +256,7 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
               {criticalCount > 0 && (
-                <span className="text-rose-500 dark:text-rose-400 font-medium">
+                <span className="text-danger-500 dark:text-danger-400 font-medium">
                   {criticalCount} {t('executive.actions.critical', 'critical')}
                 </span>
               )}

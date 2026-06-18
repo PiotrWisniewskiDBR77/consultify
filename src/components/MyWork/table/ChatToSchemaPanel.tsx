@@ -279,7 +279,7 @@ const ProposalHistoryList: React.FC<{
                   entry.status === 'executed'
                     ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                     : entry.status === 'rejected'
-                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                      ? 'bg-danger-500/15 text-danger-600 dark:text-danger-400'
                       : entry.status === 'refined'
                         ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400'
                         : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
@@ -655,12 +655,12 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="px-4 py-2 bg-rose-500/10 border-t border-rose-500/20 flex-shrink-0">
+        <div className="px-4 py-2 bg-danger-500/10 border-t border-danger-500/20 flex-shrink-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-xs text-rose-700 dark:text-rose-300">{error}</p>
+            <p className="text-xs text-danger-700 dark:text-danger-300">{error}</p>
             <button
               onClick={clearError}
-              className="p-0.5 text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 transition-colors flex-shrink-0"
+              className="p-0.5 text-danger-400 hover:text-danger-600 dark:hover:text-danger-300 transition-colors flex-shrink-0"
             >
               <X size={12} />
             </button>

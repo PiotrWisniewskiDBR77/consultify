@@ -156,7 +156,7 @@ const formatRelativeTime = (dateString: string): string => {
 const getNotificationIcon = (type: string, severity: string) => {
   const iconClass =
     severity === 'CRITICAL'
-      ? 'text-rose-500'
+      ? 'text-danger-500'
       : severity === 'WARNING'
         ? 'text-amber-500'
         : 'text-blue-500';
@@ -317,7 +317,7 @@ const NotificationItem: React.FC<{
                 e.stopPropagation();
                 onDelete(notification.id);
               }}
-              className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
+              className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -397,7 +397,7 @@ const NotificationItem: React.FC<{
                   <div
                     className={`px-2 py-1 rounded text-[11px] font-medium ${
                       notification.severity === 'CRITICAL'
-                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                        ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                         : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
                     }`}
                   >
@@ -690,7 +690,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
 
     return [
       ...(critical.length > 0
-        ? [{ id: 'critical', label: 'Critical', items: critical, accentColor: 'text-rose-500' }]
+        ? [{ id: 'critical', label: 'Critical', items: critical, accentColor: 'text-danger-500' }]
         : []),
       ...(warning.length > 0
         ? [{ id: 'warning', label: 'Warning', items: warning, accentColor: 'text-amber-500' }]
@@ -1099,7 +1099,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                             e.stopPropagation();
                             handleDelete(notification.id);
                           }}
-                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
+                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
                           title={t('notifications.delete', 'Delete')}
                         >
                           <Trash2 size={13} />
@@ -1158,7 +1158,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                         newNotifSeverity === sev
                           ? sev === 'CRITICAL'
-                            ? 'bg-rose-100 border-rose-300 text-rose-700 dark:bg-rose-900/30 dark:border-rose-700 dark:text-rose-300'
+                            ? 'bg-danger-100 border-danger-300 text-danger-700 dark:bg-danger-900/30 dark:border-danger-700 dark:text-danger-300'
                             : sev === 'WARNING'
                               ? 'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300'
                               : 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'

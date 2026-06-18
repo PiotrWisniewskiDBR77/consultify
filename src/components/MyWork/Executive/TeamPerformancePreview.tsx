@@ -39,14 +39,14 @@ interface TeamPerformancePreviewProps {
 // Capacity indicator with color
 const CapacityIndicator: React.FC<{ capacity: number }> = ({ capacity }) => {
   const getColor = () => {
-    if (capacity > 100) return 'bg-rose-500';
+    if (capacity > 100) return 'bg-danger-500';
     if (capacity > 85) return 'bg-amber-500';
     if (capacity > 60) return 'bg-emerald-500';
     return 'bg-blue-500';
   };
 
   const getTextColor = () => {
-    if (capacity > 100) return 'text-rose-600 dark:text-rose-400';
+    if (capacity > 100) return 'text-danger-600 dark:text-danger-400';
     if (capacity > 85) return 'text-amber-600 dark:text-amber-400';
     return 'text-navy-900 dark:text-white';
   };
@@ -96,7 +96,7 @@ const TeamMemberRow: React.FC<{
           <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
             {member.name}
           </span>
-          {isOverloaded && <AlertTriangle size={12} className="text-rose-500 shrink-0" />}
+          {isOverloaded && <AlertTriangle size={12} className="text-danger-500 shrink-0" />}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span>
@@ -105,7 +105,7 @@ const TeamMemberRow: React.FC<{
           {TrendIcon && (
             <TrendIcon
               size={10}
-              className={member.trend === 'up' ? 'text-emerald-500' : 'text-rose-500'}
+              className={member.trend === 'up' ? 'text-emerald-500' : 'text-danger-500'}
             />
           )}
         </div>

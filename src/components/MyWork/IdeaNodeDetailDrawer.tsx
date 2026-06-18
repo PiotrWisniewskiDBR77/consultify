@@ -186,8 +186,8 @@ const STATUS_CONFIG: Record<
   rejected: {
     labelPl: 'Odrzucone',
     labelEn: 'Rejected',
-    color: 'text-rose-600',
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
+    color: 'text-danger-600',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
   },
 };
 
@@ -196,7 +196,7 @@ const TAG_COLORS = [
   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
-  'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+  'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
 ];
 
@@ -910,7 +910,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       <div key={i} className="flex items-start gap-1.5 py-1">
                         <AlertTriangle
                           size={10}
-                          className={`mt-0.5 shrink-0 ${risk.severity === 'high' ? 'text-rose-500' : 'text-amber-500'}`}
+                          className={`mt-0.5 shrink-0 ${risk.severity === 'high' ? 'text-danger-500' : 'text-amber-500'}`}
                         />
                         <div className="text-[10px] text-slate-700 dark:text-slate-300">
                           {risk.text}
@@ -988,7 +988,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   {!locked && (
                     <button
                       onClick={() => handleRemoveAttachment(att.id)}
-                      className="text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 shrink-0"
+                      className="text-slate-600 hover:text-danger-500 opacity-0 group-hover:opacity-100 shrink-0"
                     >
                       <X size={12} />
                     </button>
@@ -1089,7 +1089,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                           e.stopPropagation();
                           handleDetachArtifact(artifactType, artifactId);
                         }}
-                        className="text-slate-600 hover:text-rose-500 shrink-0"
+                        className="text-slate-600 hover:text-danger-500 shrink-0"
                       >
                         <X size={12} />
                       </button>

@@ -128,12 +128,12 @@ const SEVERITY_CONFIG = {
   },
   CRITICAL: {
     label: { en: 'Critical', pl: 'Krytyczne' },
-    color: 'bg-rose-500',
-    textColor: 'text-rose-500',
-    bgColor: 'bg-rose-500/10',
-    borderColor: 'border-rose-500/30',
+    color: 'bg-danger-500',
+    textColor: 'text-danger-500',
+    bgColor: 'bg-danger-500/10',
+    borderColor: 'border-danger-500/30',
     icon: AlertCircle,
-    dotColor: 'bg-rose-500',
+    dotColor: 'bg-danger-500',
   },
 };
 
@@ -141,24 +141,24 @@ const SEVERITY_CONFIG = {
 
 const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   TASK_ASSIGNED: { icon: CheckSquare, color: 'text-blue-400' },
-  TASK_OVERDUE: { icon: Clock, color: 'text-rose-400' },
-  TASK_BLOCKED: { icon: AlertCircle, color: 'text-rose-400' },
+  TASK_OVERDUE: { icon: Clock, color: 'text-danger-400' },
+  TASK_BLOCKED: { icon: AlertCircle, color: 'text-danger-400' },
   DECISION_REQUIRED: { icon: Scale, color: 'text-primary-400' },
-  DECISION_OVERDUE: { icon: Scale, color: 'text-rose-400' },
+  DECISION_OVERDUE: { icon: Scale, color: 'text-danger-400' },
   INITIATIVE_STARTED: { icon: Target, color: 'text-emerald-400' },
   INITIATIVE_STALLED: { icon: Target, color: 'text-amber-400' },
   INITIATIVE_COMPLETED: { icon: Target, color: 'text-emerald-400' },
   AI_RISK_DETECTED: { icon: AlertTriangle, color: 'text-amber-400' },
   AI_RECOMMENDATION: { icon: Info, color: 'text-primary-400' },
-  AI_OVERLOAD_DETECTED: { icon: AlertTriangle, color: 'text-rose-400' },
+  AI_OVERLOAD_DETECTED: { icon: AlertTriangle, color: 'text-danger-400' },
   AI_DEPENDENCY_CONFLICT: { icon: AlertCircle, color: 'text-amber-400' },
   SYSTEM_ALERT: { icon: Bell, color: 'text-slate-600' },
   // App / billing comms
-  PAYMENT_FAILED: { icon: CreditCard, color: 'text-rose-400' },
+  PAYMENT_FAILED: { icon: CreditCard, color: 'text-danger-400' },
   USAGE_ALERT: { icon: AlertTriangle, color: 'text-amber-400' },
   SUBSCRIPTION_CHANGE: { icon: CreditCard, color: 'text-indigo-400' },
   BILLING_LIMIT_WARNING: { icon: AlertTriangle, color: 'text-amber-400' },
-  BILLING_LIMIT_REACHED: { icon: AlertCircle, color: 'text-rose-400' },
+  BILLING_LIMIT_REACHED: { icon: AlertCircle, color: 'text-danger-400' },
   INVOICE_READY: { icon: CreditCard, color: 'text-emerald-400' },
   // DBR77 comms
   DBR77_UPDATE: { icon: Megaphone, color: 'text-primary-400' },
@@ -1392,7 +1392,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           // Severity border color for left accent
           const severityBorderAccent =
             notification.severity === 'CRITICAL'
-              ? 'border-l-rose-500'
+              ? 'border-l-danger-500'
               : notification.severity === 'WARNING'
                 ? 'border-l-amber-500'
                 : 'border-l-blue-400';
@@ -1617,7 +1617,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                         aiAnalysis.riskLevel === 'critical'
-                          ? 'bg-rose-500/10 text-rose-500'
+                          ? 'bg-danger-500/10 text-danger-500'
                           : aiAnalysis.riskLevel === 'high'
                             ? 'bg-amber-500/10 text-amber-500'
                             : aiAnalysis.riskLevel === 'medium'
@@ -1793,13 +1793,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       // Urgency-based left accent
                       const urgencyBorder =
                         urgency === 'critical'
-                          ? 'border-l-2 border-l-rose-400/70'
+                          ? 'border-l-2 border-l-danger-400/70'
                           : urgency === 'optional'
                             ? 'border-l-2 border-l-slate-200/50 dark:border-l-navy-700/50'
                             : '';
                       const urgencyText =
                         urgency === 'critical' && !done
-                          ? 'text-rose-600 dark:text-rose-400 font-medium'
+                          ? 'text-danger-600 dark:text-danger-400 font-medium'
                           : urgency === 'optional' && !done
                             ? 'text-slate-500 dark:text-slate-400'
                             : done
@@ -1821,7 +1821,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               done
                                 ? 'bg-emerald-500 border-emerald-500 text-white'
                                 : urgency === 'critical'
-                                  ? 'border-rose-300 dark:border-rose-500/50 hover:border-rose-400'
+                                  ? 'border-danger-300 dark:border-danger-500/50 hover:border-danger-400'
                                   : 'border-slate-300 dark:border-navy-600 hover:border-emerald-400 dark:hover:border-emerald-500'
                             }`}
                           >
@@ -1961,10 +1961,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             </div>
                             <button
                               onClick={() => handleDeleteComment(comment.id)}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-all"
                               title={isPolish ? 'Usuń' : 'Delete'}
                             >
-                              <Trash2 size={12} className="text-rose-400" />
+                              <Trash2 size={12} className="text-danger-400" />
                             </button>
                           </div>
                           {/* Body */}
@@ -1999,8 +1999,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               bg: 'bg-blue-100 dark:bg-blue-500/20',
             },
             comment_deleted: {
-              icon: <Trash2 size={14} className="text-rose-400" />,
-              bg: 'bg-rose-100 dark:bg-rose-500/20',
+              icon: <Trash2 size={14} className="text-danger-400" />,
+              bg: 'bg-danger-100 dark:bg-danger-500/20',
             },
           };
           const defaultIcon = {
@@ -2506,7 +2506,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   {/* Delete */}
                   <button
                     onClick={handleDelete}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-400/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
                   >
                     <Trash2 size={13} />
                     {isPolish ? 'Usuń' : 'Delete'}
@@ -2665,7 +2665,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <div className="p-5 space-y-4">
                             <div className="flex items-center gap-3">
                               <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-rose-500/10 text-rose-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-500/10 text-slate-500'}`}
+                                className={`px-2.5 py-1 rounded-full text-xs font-bold ${aiAnalysis.riskLevel === 'critical' ? 'bg-danger-500/10 text-danger-500' : aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' : aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-500/10 text-slate-500'}`}
                               >
                                 {isPolish ? 'Priorytet' : 'Priority'}: {aiAnalysis.priority}
                               </span>
@@ -3068,7 +3068,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 </button>
                                 <button
                                   onClick={handleDelete}
-                                  className="flex-1 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
+                                  className="flex-1 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 hover:bg-danger-100 dark:hover:bg-danger-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
                                 >
                                   <Trash2 size={14} />
                                   <span>{isPolish ? 'Usuń' : 'Delete'}</span>

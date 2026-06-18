@@ -139,7 +139,7 @@ const STATUS_CONFIG: Record<
   changes_requested: {
     labelPl: 'Zmiany wymagane',
     labelEn: 'Changes Requested',
-    color: 'text-rose-600 bg-rose-100 dark:bg-rose-900/30',
+    color: 'text-danger-600 bg-danger-100 dark:bg-danger-900/30',
     icon: AlertCircle,
   },
 };

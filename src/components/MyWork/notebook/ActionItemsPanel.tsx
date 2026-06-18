@@ -123,7 +123,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
   if (!open) return null;
 
   const priorityColors: Record<string, string> = {
-    high: 'text-rose-500 bg-rose-500/10',
+    high: 'text-danger-500 bg-danger-500/10',
     medium: 'text-amber-500 bg-amber-500/10',
     low: 'text-slate-500 bg-slate-500/10',
   };

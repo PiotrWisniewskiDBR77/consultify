@@ -50,7 +50,7 @@ const QuickStat: React.FC<{
   const statusColors = {
     success: 'text-emerald-500',
     warning: 'text-amber-500',
-    danger: 'text-rose-500',
+    danger: 'text-danger-500',
     neutral: 'text-navy-900 dark:text-white',
   };
 
@@ -74,7 +74,7 @@ const QuickStat: React.FC<{
                   trend === 'up'
                     ? 'text-emerald-500'
                     : trend === 'down'
-                      ? 'text-rose-500'
+                      ? 'text-danger-500'
                       : 'text-slate-600 dark:text-slate-500'
                 }`}
               >

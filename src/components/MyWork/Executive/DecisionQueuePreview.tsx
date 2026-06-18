@@ -40,14 +40,14 @@ interface DecisionQueuePreviewProps {
 }
 
 const priorityDot: Record<string, string> = {
-  critical: 'bg-rose-500',
+  critical: 'bg-danger-500',
   high: 'bg-amber-500',
   medium: 'bg-slate-400 dark:bg-slate-500',
   low: 'bg-slate-300 dark:bg-slate-600',
 };
 
 const priorityText: Record<string, string> = {
-  critical: 'text-rose-500 dark:text-rose-400',
+  critical: 'text-danger-500 dark:text-danger-400',
   high: 'text-amber-600 dark:text-amber-400',
   medium: 'text-slate-500 dark:text-slate-400',
   low: 'text-slate-600 dark:text-slate-500',
@@ -228,7 +228,7 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
               </span>
             </h3>
             {criticalCount > 0 && (
-              <p className="text-[11px] text-rose-500 dark:text-rose-400 font-medium">
+              <p className="text-[11px] text-danger-500 dark:text-danger-400 font-medium">
                 {criticalCount} {t('executive.actions.critical', 'critical')}
               </p>
             )}

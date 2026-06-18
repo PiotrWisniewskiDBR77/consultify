@@ -33,7 +33,7 @@ const ForecastDay: React.FC<{
   const { t } = useTranslation();
 
   const getCapacityColor = (capacity: number) => {
-    if (capacity > 100) return 'bg-rose-500';
+    if (capacity > 100) return 'bg-danger-500';
     if (capacity > 85) return 'bg-amber-500';
     if (capacity > 60) return 'bg-blue-500';
     return 'bg-emerald-500';
@@ -41,7 +41,7 @@ const ForecastDay: React.FC<{
 
   const getCapacityBgColor = (capacity: number) => {
     if (capacity > 100)
-      return 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-500/30';
+      return 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-500/30';
     if (capacity > 85)
       return 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-500/30';
     return 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700';
@@ -79,7 +79,7 @@ const ForecastDay: React.FC<{
           <AlertTriangle
             size={14}
             className={
-              forecast.riskLevel === 'high' ? 'text-rose-500 animate-pulse' : 'text-amber-500'
+              forecast.riskLevel === 'high' ? 'text-danger-500 animate-pulse' : 'text-amber-500'
             }
           />
         )}
@@ -94,7 +94,7 @@ const ForecastDay: React.FC<{
           <span
             className={`font-bold ${
               forecast.capacity > 100
-                ? 'text-rose-600 dark:text-rose-400'
+                ? 'text-danger-600 dark:text-danger-400'
                 : forecast.capacity > 85
                   ? 'text-amber-600 dark:text-amber-400'
                   : 'text-navy-900 dark:text-white'
@@ -130,7 +130,7 @@ const ForecastDay: React.FC<{
       {/* Bottleneck indicator */}
       {forecast.bottlenecks.length > 0 && (
         <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
-          <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium truncate">
+          <p className="text-[10px] text-danger-600 dark:text-danger-400 font-medium truncate">
             {forecast.bottlenecks[0]}
           </p>
         </div>
@@ -222,8 +222,8 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
               </p>
             </div>
             {riskDays > 0 && (
-              <div className="px-3 py-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/30">
-                <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-300">
+              <div className="px-3 py-1.5 rounded-lg bg-danger-100 dark:bg-danger-900/30">
+                <div className="flex items-center gap-1.5 text-danger-700 dark:text-danger-300">
                   <AlertTriangle size={14} />
                   <span className="text-sm font-bold">{riskDays}</span>
                   <span className="text-xs">{t('team.forecast.riskDays', 'risk days')}</span>

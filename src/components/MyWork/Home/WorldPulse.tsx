@@ -26,14 +26,14 @@ const CATEGORY_BADGE_STYLES: Record<string, string> = {
   ai_tech: 'bg-gradient-to-br from-indigo-500/20 to-blue-500/20',
   industry: 'bg-gradient-to-br from-emerald-500/20 to-amber-500/20',
   consulting: 'bg-gradient-to-br from-primary-500/20 to-crimson-700/20',
-  clients: 'bg-gradient-to-br from-rose-500/20 to-amber-500/20',
+  clients: 'bg-gradient-to-br from-danger-500/20 to-amber-500/20',
 };
 
 const CATEGORY_TEXT_STYLES: Record<string, string> = {
   ai_tech: 'text-indigo-500',
   industry: 'text-emerald-500',
   consulting: 'text-primary-400',
-  clients: 'text-rose-400',
+  clients: 'text-danger-400',
 };
 
 const CATEGORY_EMOJIS: Record<string, string> = {

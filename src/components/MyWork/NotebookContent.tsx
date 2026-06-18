@@ -2409,7 +2409,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               {tag}
                               <button
                                 onClick={() => handleRemoveTag(tag)}
-                                className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-rose-500"
+                                className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-danger-500"
                                 aria-label={`Remove tag ${tag}`}
                               >
                                 <X size={9} />

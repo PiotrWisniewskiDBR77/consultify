@@ -9,9 +9,9 @@ export interface TagColorRule {
 const TAG_COLOR_MAP: Record<string, { color: string; bg: string; text: string; border: string }> = {
   risk: {
     color: '#f43f5e',
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    text: 'text-rose-700 dark:text-rose-300',
-    border: 'border-rose-300 dark:border-rose-700',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    text: 'text-danger-700 dark:text-danger-300',
+    border: 'border-danger-300 dark:border-danger-700',
   },
   opportunity: {
     color: '#22c55e',
@@ -45,9 +45,9 @@ const TAG_COLOR_MAP: Record<string, { color: string; bg: string; text: string; b
   },
   blocker: {
     color: '#dc2626',
-    bg: 'bg-rose-100 dark:bg-rose-900/30',
-    text: 'text-rose-800 dark:text-rose-200',
-    border: 'border-rose-400 dark:border-rose-600',
+    bg: 'bg-danger-100 dark:bg-danger-900/30',
+    text: 'text-danger-800 dark:text-danger-200',
+    border: 'border-danger-400 dark:border-danger-600',
   },
   insight: {
     color: '#a855f7',

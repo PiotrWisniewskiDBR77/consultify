@@ -159,9 +159,9 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     statuses: ['rejected'],
     apiStatus: 'REJECTED',
     icon: <X size={14} />,
-    headerColor: 'text-rose-400',
-    dotColor: 'bg-rose-500',
-    dropHighlight: 'ring-rose-500/40 bg-rose-500/5',
+    headerColor: 'text-danger-400',
+    dotColor: 'bg-danger-500',
+    dropHighlight: 'ring-danger-500/40 bg-danger-500/5',
   },
   {
     id: 'deferred',
@@ -192,11 +192,11 @@ const getPriorityCardStyle = (priority?: string) => {
   switch (priority?.toUpperCase()) {
     case 'CRITICAL':
       return {
-        border: 'border-l-4 border-l-rose-500',
-        bg: 'bg-rose-500/5 dark:bg-rose-500/10',
-        badge: 'bg-rose-500/15 text-rose-400 border border-rose-500/20',
+        border: 'border-l-4 border-l-danger-500',
+        bg: 'bg-danger-500/5 dark:bg-danger-500/10',
+        badge: 'bg-danger-500/15 text-danger-400 border border-danger-500/20',
         label: 'Critical',
-        dot: 'bg-rose-500',
+        dot: 'bg-danger-500',
         icon: Zap,
       };
     case 'HIGH':
@@ -351,7 +351,7 @@ const KanbanCardContent: React.FC<{
         {dueLabel ? (
           <span
             className={`flex items-center gap-1 text-[11px] font-medium ${
-              overdue ? 'text-rose-400' : 'text-slate-500 dark:text-slate-400'
+              overdue ? 'text-danger-400' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             <Calendar size={11} />

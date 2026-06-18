@@ -56,9 +56,9 @@ const CHIP_COLORS = [
     hover: 'hover:bg-amber-100 dark:hover:bg-amber-900/40',
   },
   {
-    bg: 'bg-rose-50 dark:bg-rose-900/25',
-    text: 'text-rose-700 dark:text-rose-300',
-    hover: 'hover:bg-rose-100 dark:hover:bg-rose-900/40',
+    bg: 'bg-danger-50 dark:bg-danger-900/25',
+    text: 'text-danger-700 dark:text-danger-300',
+    hover: 'hover:bg-danger-100 dark:hover:bg-danger-900/40',
   },
 ];
 

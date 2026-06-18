@@ -1578,7 +1578,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       {isPl ? 'Aktualizuj' : 'Update'}
                     </button>
                     <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600"
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-danger-50 dark:hover:bg-danger-900/20 text-danger-600"
                       onClick={() => {
                         deleteSavedView(viewContextMenu.viewId);
                         toast.success(isPl ? 'Widok usunięty' : 'View deleted');
@@ -2228,7 +2228,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                     )}
                     {connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
-                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-rose-500" />
+                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-danger-500" />
                     )}
                   </button>
                 )}
@@ -2387,7 +2387,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       </div>
                       <button
                         onClick={_bulkDel}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-rose-600 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-danger-600 bg-danger-500/10 hover:bg-danger-500/20 transition-colors"
                       >
                         <Trash2 size={11} />
                         {isPl ? 'Usuń' : 'Delete'}
@@ -3080,7 +3080,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 </button>
                 <div className="h-px bg-slate-200 dark:bg-navy-700 my-1" />
                 <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600"
+                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-danger-50 dark:hover:bg-danger-900/20 text-danger-600"
                   onClick={() => {
                     deleteColumn(colContextMenu.colKey);
                     toast.success(isPl ? 'Kolumna usunięta' : 'Column deleted');

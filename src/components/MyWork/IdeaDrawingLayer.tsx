@@ -353,7 +353,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
           <button
             onClick={handleClear}
             disabled={paths.length === 0}
-            className="p-1.5 text-slate-600 hover:text-rose-500 disabled:opacity-30"
+            className="p-1.5 text-slate-600 hover:text-danger-500 disabled:opacity-30"
           >
             <Trash2 size={14} />
           </button>

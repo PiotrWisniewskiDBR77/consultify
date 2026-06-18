@@ -18,7 +18,7 @@ interface AdvisorResult {
 
 const URGENCY_COLORS = {
   critical:
-    'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+    'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 border-danger-200 dark:border-danger-800',
   high: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
   medium:
     'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
@@ -94,7 +94,7 @@ export const AICoachPanel: React.FC = () => {
                 {result.summary}
               </p>
               {result.overcommitWarning && (
-                <div className="px-2.5 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-800/30 text-xs text-rose-700 dark:text-rose-300">
+                <div className="px-2.5 py-1.5 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200/50 dark:border-danger-800/30 text-xs text-danger-700 dark:text-danger-300">
                   {result.overcommitWarning}
                 </div>
               )}

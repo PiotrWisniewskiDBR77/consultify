@@ -718,7 +718,7 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
     fireEvent.change(input, { target: { value: 'not-a-valid-url' } });
     fireEvent.blur(input);
     expect(onSave).not.toHaveBeenCalled();
-    expect(input.className).toMatch(/border-rose-400/);
+    expect(input.className).toMatch(/border-danger-400/);
   });
 
   it('6. network timeout on save — load-retry affordance via EmptyStateInline + Retry', async () => {

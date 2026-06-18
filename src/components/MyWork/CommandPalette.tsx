@@ -307,7 +307,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         id: 'action-filter-overdue',
         title: t('command.action.filterOverdue', 'Show Overdue'),
         subtitle: t('command.action.filterOverdueDesc', 'Filter overdue tasks'),
-        icon: <Clock size={18} className="text-rose-500" />,
+        icon: <Clock size={18} className="text-danger-500" />,
         category: 'action',
         keywords: ['overdue', 'late', 'urgent'],
         action: () => {

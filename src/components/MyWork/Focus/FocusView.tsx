@@ -504,7 +504,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                   e.stopPropagation();
                   onRemove(item);
                 }}
-                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors"
+                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 rounded-md hover:bg-danger-100 dark:hover:bg-danger-900/30 transition-colors"
               >
                 <ThumbsDown size={10} />
                 {t('myWork.focus.card.reject', 'Reject')}
@@ -1755,7 +1755,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-lg font-semibold text-rose-600 dark:text-rose-400">
+              <div className="text-lg font-semibold text-danger-600 dark:text-danger-400">
                 {workloadSummary?.overdue ?? 0}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -1930,7 +1930,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                     </button>
                     <button
                       onClick={() => handleRemoveFromFocus(selectedItem)}
-                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-rose-300/40 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-100/70 dark:hover:bg-rose-500/15 transition-colors text-xs font-medium"
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-danger-300/40 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200 hover:bg-danger-100/70 dark:hover:bg-danger-500/15 transition-colors text-xs font-medium"
                       title={t('myWork.focus.actions.remove', 'Remove from focus')}
                     >
                       <X size={14} />

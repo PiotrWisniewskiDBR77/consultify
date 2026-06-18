@@ -23,10 +23,10 @@ type Props = {
 const statusTone: Record<string, string> = {
   strong: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   watch: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  stale: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  stale: 'bg-danger-500/10 text-danger-700 dark:text-danger-300',
   ready: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   partial: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  blocked: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  blocked: 'bg-danger-500/10 text-danger-700 dark:text-danger-300',
 };
 
 const readinessTone = (score: number) =>
@@ -34,7 +34,7 @@ const readinessTone = (score: number) =>
     ? 'text-emerald-600 dark:text-emerald-300'
     : score >= 45
       ? 'text-amber-600 dark:text-amber-300'
-      : 'text-rose-600 dark:text-rose-300';
+      : 'text-danger-600 dark:text-danger-300';
 
 export const AIOperatorOverviewCard: React.FC<Props> = ({
   overview,

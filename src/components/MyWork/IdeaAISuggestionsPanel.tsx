@@ -180,7 +180,7 @@ const CATEGORY_CONFIG: Record<
     icon: AlertTriangle,
     labelPl: 'Flagi ryzyka',
     labelEn: 'Risk flags',
-    color: 'text-rose-600 dark:text-rose-400',
+    color: 'text-danger-600 dark:text-danger-400',
   },
   framework_recommendations: {
     icon: Wrench,
@@ -506,7 +506,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                               <div className="flex items-center gap-1">
                                 <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                                   <div
-                                    className={`h-full rounded-full ${sug.confidence >= 0.7 ? 'bg-emerald-500' : sug.confidence >= 0.4 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                    className={`h-full rounded-full ${sug.confidence >= 0.7 ? 'bg-emerald-500' : sug.confidence >= 0.4 ? 'bg-amber-500' : 'bg-danger-500'}`}
                                     style={{ width: `${Math.round(sug.confidence * 100)}%` }}
                                   />
                                 </div>
@@ -541,7 +541,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                             )}
                             <button
                               onClick={() => dismissSuggestion(sug.id)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-colors ml-auto"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 transition-colors ml-auto"
                               title={isPl ? 'Odrzuć' : 'Dismiss'}
                             >
                               <XCircle size={9} />

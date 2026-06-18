@@ -147,7 +147,7 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
     trend === 'up'
       ? 'text-emerald-500'
       : trend === 'down'
-        ? 'text-rose-500'
+        ? 'text-danger-500'
         : 'text-slate-600 dark:text-slate-500';
 
   // Calculate achievement vs target
@@ -191,7 +191,7 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
             trend === 'up'
               ? 'bg-emerald-100 dark:bg-emerald-900/30'
               : trend === 'down'
-                ? 'bg-rose-100 dark:bg-rose-900/30'
+                ? 'bg-danger-100 dark:bg-danger-900/30'
                 : 'bg-slate-100 dark:bg-white/10'
           }`}
         >
@@ -245,7 +245,7 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
                 ? 'text-emerald-500'
                 : achievementRate >= 80
                   ? 'text-amber-500'
-                  : 'text-rose-500'
+                  : 'text-danger-500'
             }`}
           >
             {achievementRate}%

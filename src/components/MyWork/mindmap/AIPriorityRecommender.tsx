@@ -37,7 +37,7 @@ const IMPACT_COLORS = {
   low: 'text-slate-500 bg-slate-500/10',
 };
 const EFFORT_COLORS = {
-  high: 'text-rose-600 bg-rose-500/10',
+  high: 'text-danger-600 bg-danger-500/10',
   medium: 'text-amber-600 bg-amber-500/10',
   low: 'text-emerald-600 bg-emerald-500/10',
 };

@@ -224,7 +224,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   >
                     <Trash2
                       size={14}
-                      className="text-slate-500 dark:text-slate-400 hover:text-rose-500"
+                      className="text-slate-500 dark:text-slate-400 hover:text-danger-500"
                     />
                   </button>
                 )}

@@ -293,11 +293,11 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
       </div>
 
       {overdue.length > 0 && activeFilter !== 'overdue' && (
-        <div className="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50/70 dark:bg-rose-500/10 p-3">
-          <div className="flex items-center gap-2 text-xs font-medium text-rose-700 dark:text-rose-300">
+        <div className="rounded-lg border border-danger-200 dark:border-danger-900/40 bg-danger-50/70 dark:bg-danger-500/10 p-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-danger-700 dark:text-danger-300">
             <Clock size={14} />
             <span>{t('myWork.calendar.overdue', 'Overdue')}</span>
-            <span className="ml-1 rounded-full bg-rose-100 dark:bg-rose-500/20 px-2 py-0.5 text-[10px]">
+            <span className="ml-1 rounded-full bg-danger-100 dark:bg-danger-500/20 px-2 py-0.5 text-[10px]">
               {overdue.length}
             </span>
           </div>
@@ -305,7 +305,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
             {overdue.slice(0, 6).map((task) => (
               <button
                 key={task.id}
-                className="text-left rounded-md px-2 py-1 text-xs text-rose-800 dark:text-rose-200 hover:bg-rose-100/70 dark:hover:bg-rose-500/10"
+                className="text-left rounded-md px-2 py-1 text-xs text-danger-800 dark:text-danger-200 hover:bg-danger-100/70 dark:hover:bg-danger-500/10"
                 onClick={() => onTaskClick(task.id, task)}
               >
                 {task.title || t('myWork.tasks.untitled', 'Untitled task')}

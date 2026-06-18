@@ -98,7 +98,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: 'bg-blue-500',
   review: 'bg-primary-500',
   done: 'bg-emerald-500',
-  blocked: 'bg-rose-500',
+  blocked: 'bg-danger-500',
   cancelled: 'bg-slate-300',
 };
 
@@ -112,7 +112,7 @@ const STATUS_LABELS: Record<string, { en: string; pl: string }> = {
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  critical: 'text-rose-500',
+  critical: 'text-danger-500',
   high: 'text-amber-500',
   medium: 'text-amber-500',
   low: 'text-slate-500 dark:text-slate-400',
@@ -755,7 +755,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                         setOpenMenuId(null);
                                         handleRemove(dep);
                                       }}
-                                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
+                                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
                                     >
                                       <Trash2 size={13} />
                                       {isPolish ? 'Kasuj' : 'Delete'}

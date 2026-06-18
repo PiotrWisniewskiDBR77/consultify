@@ -443,7 +443,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
                 'button',
                 {
                   className:
-                    'ml-2 px-2 py-0.5 rounded bg-rose-600 text-white text-xs font-medium hover:bg-rose-700',
+                    'ml-2 px-2 py-0.5 rounded bg-danger-600 text-white text-xs font-medium hover:bg-danger-700',
                   onClick: () => {
                     toast.dismiss(t.id);
                     deleteSelected({ confirmed: true });

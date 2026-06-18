@@ -71,7 +71,7 @@ function getInitials(name?: string): string {
 const ACTION_STYLES: Record<string, string> = {
   created: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   updated: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  deleted: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+  deleted: 'bg-danger-500/10 text-danger-600 dark:text-danger-400',
 };
 
 // ── Sub-components ───────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ const FieldDiff = React.memo(function FieldDiff({ change }: { change: FieldChang
         {change.fieldName || change.fieldId}
       </span>
       <div className="flex items-start gap-1.5 mt-0.5">
-        <span className="inline-block px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 line-through max-w-[45%] truncate">
+        <span className="inline-block px-1.5 py-0.5 rounded bg-danger-500/10 text-danger-600 dark:text-danger-400 line-through max-w-[45%] truncate">
           {formatValue(change.oldValue)}
         </span>
         <span className="text-slate-600 dark:text-slate-500 mt-0.5">→</span>

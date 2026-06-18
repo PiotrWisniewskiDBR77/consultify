@@ -187,7 +187,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                           </button>
                           <button
                             onClick={() => handleDelete(tpl.id)}
-                            className="p-1.5 rounded-lg text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-600 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                             title={isPl ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={12} />

@@ -657,7 +657,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-danger-600 dark:text-danger-400">
                 <X className="h-3.5 w-3.5" />
                 {validation.error ?? (isPl ? 'Niepoprawna formuła' : 'Invalid formula')}
               </div>

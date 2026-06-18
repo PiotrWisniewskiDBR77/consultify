@@ -72,7 +72,7 @@ interface DecisionDetailModalProps {
 const getPriorityStyle = (priority?: string) => {
   switch (priority?.toUpperCase()) {
     case 'CRITICAL':
-      return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
+      return 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300';
     case 'HIGH':
       return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
     case 'MEDIUM':
@@ -282,7 +282,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                           className={`text-xs px-2 py-0.5 rounded font-medium ${
                             decision.status === 'APPROVED'
                               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                              : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                              : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300'
                           }`}
                         >
                           {decision.status}
@@ -381,13 +381,13 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                           key={impact.id || idx}
                           className={`p-2 rounded-lg text-sm ${
                             impact.isBlocker
-                              ? 'bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30'
+                              ? 'bg-danger-50 dark:bg-danger-900/20 border border-danger-100 dark:border-danger-800/30'
                               : 'bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700'
                           }`}
                         >
                           <div className="flex items-center gap-2">
                             {impact.isBlocker && (
-                              <span className="text-xs px-1.5 py-0.5 bg-rose-100 dark:bg-rose-800/50 text-rose-600 dark:text-rose-300 rounded font-medium">
+                              <span className="text-xs px-1.5 py-0.5 bg-danger-100 dark:bg-danger-800/50 text-danger-600 dark:text-danger-300 rounded font-medium">
                                 Blocking
                               </span>
                             )}
@@ -505,7 +505,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                     <button
                       onClick={() => handleDecision('REJECTED')}
                       disabled={submitting || !outcome.trim()}
-                      className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:border-rose-300 dark:hover:border-rose-500/50 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:border-danger-300 dark:hover:border-danger-500/50 hover:text-danger-600 dark:hover:text-danger-400 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <span className="flex items-center gap-1.5">
                         <XCircle size={14} />

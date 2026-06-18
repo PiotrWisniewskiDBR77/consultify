@@ -285,14 +285,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
                 {status === 'blocked' && (
                   <div className="animate-in fade-in slide-in-from-top-2">
-                    <label className="block text-sm font-bold text-rose-600 dark:text-rose-400 mb-1">
+                    <label className="block text-sm font-bold text-danger-600 dark:text-danger-400 mb-1">
                       Reason for blocking
                     </label>
                     <input
                       type="text"
                       value={blockedReason}
                       onChange={(e) => setBlockedReason(e.target.value)}
-                      className="w-full px-3 py-2 border border-rose-300 dark:border-rose-500/30 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-900 dark:text-white placeholder:text-rose-400 focus:ring-2 focus:ring-rose-500 outline-none"
+                      className="w-full px-3 py-2 border border-danger-300 dark:border-danger-500/30 rounded-lg bg-danger-50 dark:bg-danger-500/10 text-danger-900 dark:text-white placeholder:text-danger-400 focus:ring-2 focus:ring-danger-500 outline-none"
                       placeholder="What is blocking this task?"
                     />
                   </div>
@@ -347,7 +347,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       />
                       <button
                         onClick={() => removeChecklistItem(item.id)}
-                        className="text-slate-600 dark:text-slate-500 hover:text-rose-500"
+                        className="text-slate-600 dark:text-slate-500 hover:text-danger-500"
                       >
                         <X size={14} />
                       </button>

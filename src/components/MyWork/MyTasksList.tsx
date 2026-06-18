@@ -57,9 +57,9 @@ const getTimeGroupConfigs = (t: (key: string, fallback: string) => string): Time
     key: 'overdue',
     label: t('myWork.timeGroup.overdue', 'Overdue'),
     icon: AlertCircle,
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-900/20',
-    borderColor: 'border-rose-200 dark:border-rose-800/30',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-900/20',
+    borderColor: 'border-danger-200 dark:border-danger-800/30',
   },
   {
     key: 'today',
@@ -388,7 +388,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         config.key === 'overdue'
-                          ? 'bg-rose-100 dark:bg-rose-800/50 text-rose-600 dark:text-rose-300'
+                          ? 'bg-danger-100 dark:bg-danger-800/50 text-danger-600 dark:text-danger-300'
                           : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                       }`}
                     >

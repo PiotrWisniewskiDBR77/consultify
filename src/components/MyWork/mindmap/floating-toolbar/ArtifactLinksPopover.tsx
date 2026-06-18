@@ -70,7 +70,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
                     type="button"
                     disabled={disabled}
                     onClick={() => onRemoveArtifact(link)}
-                    className="text-slate-600 hover:text-rose-500 transition-colors disabled:opacity-40"
+                    className="text-slate-600 hover:text-danger-500 transition-colors disabled:opacity-40"
                     title={isPl ? 'Usuń powiązanie' : 'Remove link'}
                   >
                     <Trash2 size={12} />

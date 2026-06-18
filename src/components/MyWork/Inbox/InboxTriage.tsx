@@ -58,7 +58,7 @@ const urgencyConfig = {
     label: 'Krytyczne',
     className: 'inbox-critical',
     icon: <AlertTriangle size={14} />,
-    color: 'text-rose-500',
+    color: 'text-danger-500',
   },
   high: {
     label: 'Wysokie',
@@ -485,7 +485,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {totalItems} {t('myWork.inbox.items', 'items')}
               {criticalCount > 0 && (
-                <span className="text-rose-500 ml-1">
+                <span className="text-danger-500 ml-1">
                   ({criticalCount} {t('myWork.inbox.critical', 'critical')})
                 </span>
               )}

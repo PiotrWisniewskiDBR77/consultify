@@ -75,9 +75,9 @@ const getSeverityColors = (severity: string) => {
   switch (severity) {
     case 'CRITICAL':
       return {
-        bg: 'bg-rose-50 dark:bg-rose-900/20',
-        border: 'border-rose-200 dark:border-rose-800/50',
-        badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
+        bg: 'bg-danger-50 dark:bg-danger-900/20',
+        border: 'border-danger-200 dark:border-danger-800/50',
+        badge: 'bg-danger-100 text-danger-700 dark:bg-danger-900/50 dark:text-danger-300',
       };
     case 'WARNING':
       return {

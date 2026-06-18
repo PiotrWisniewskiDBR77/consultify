@@ -188,7 +188,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
           placeholder="*/15 * * * *"
           className={`w-full rounded-lg border px-3 py-2 font-mono text-sm ${
             customInput && !validation.valid
-              ? 'border-rose-300 bg-rose-50 dark:border-rose-600 dark:bg-rose-900/20'
+              ? 'border-danger-300 bg-danger-50 dark:border-danger-600 dark:bg-danger-900/20'
               : 'border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800'
           }`}
         />
@@ -199,7 +199,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
           </p>
         )}
         {customInput && !validation.valid && validation.error && (
-          <p className="flex items-center gap-1 text-xs text-rose-500">
+          <p className="flex items-center gap-1 text-xs text-danger-500">
             <AlertCircle className="h-3 w-3" />
             {validation.error}
           </p>

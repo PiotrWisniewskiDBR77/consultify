@@ -59,7 +59,7 @@ const getStatusStyle = (status: string) => {
     return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
   }
   if (['blocked', 'rejected', 'cancelled'].includes(s)) {
-    return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
+    return 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300';
   }
   if (['in_progress', 'executing', 'review'].includes(s)) {
     return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';

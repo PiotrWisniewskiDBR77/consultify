@@ -29,8 +29,8 @@ const bottleneckConfig: Record<
   },
   overdue_cluster: {
     icon: <Calendar size={16} />,
-    color: 'text-rose-500',
-    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
+    color: 'text-danger-500',
+    bgColor: 'bg-danger-100 dark:bg-danger-900/30',
   },
   blocked_chain: {
     icon: <Link2 size={16} />,
@@ -69,7 +69,7 @@ const BottleneckItem: React.FC<{
                 hover:shadow-md
                 ${
                   bottleneck.impact === 'high'
-                    ? 'border-rose-200 dark:border-rose-800/30 bg-rose-50/50 dark:bg-rose-900/10'
+                    ? 'border-danger-200 dark:border-danger-800/30 bg-danger-50/50 dark:bg-danger-900/10'
                     : bottleneck.impact === 'medium'
                       ? 'border-amber-200 dark:border-amber-800/30 bg-amber-50/50 dark:bg-amber-900/10'
                       : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
@@ -89,7 +89,7 @@ const BottleneckItem: React.FC<{
                         text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded
                         ${
                           bottleneck.impact === 'high'
-                            ? 'bg-rose-500 text-white'
+                            ? 'bg-danger-500 text-white'
                             : bottleneck.impact === 'medium'
                               ? 'bg-amber-500 text-white'
                               : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'

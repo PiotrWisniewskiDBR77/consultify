@@ -65,7 +65,7 @@ export interface DecisionsTimelineContainerProps {
 /* ─── Priority bar styles (muted, DBR77) ─── */
 
 const PRIORITY_STYLES: Record<string, { bg: string; border: string; dot: string }> = {
-  CRITICAL: { bg: 'bg-rose-500/20', border: 'border-rose-500/40', dot: 'bg-rose-500' },
+  CRITICAL: { bg: 'bg-danger-500/20', border: 'border-danger-500/40', dot: 'bg-danger-500' },
   HIGH: { bg: 'bg-amber-500/20', border: 'border-amber-500/40', dot: 'bg-amber-500' },
   MEDIUM: { bg: 'bg-amber-500/20', border: 'border-amber-500/40', dot: 'bg-amber-500' },
   LOW: { bg: 'bg-slate-500/20', border: 'border-slate-500/40', dot: 'bg-slate-400' },
@@ -82,7 +82,7 @@ const getStatusBadge = (status?: string) => {
     case 'APPROVED':
       return { label: 'Approved', cls: 'bg-emerald-500/20 text-emerald-400' };
     case 'REJECTED':
-      return { label: 'Rejected', cls: 'bg-rose-500/20 text-rose-400' };
+      return { label: 'Rejected', cls: 'bg-danger-500/20 text-danger-400' };
     case 'DEFERRED':
       return { label: 'Deferred', cls: 'bg-amber-500/20 text-amber-400' };
     case 'ESCALATED':

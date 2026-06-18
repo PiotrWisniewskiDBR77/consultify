@@ -25,7 +25,7 @@ export const SEMANTIC_TYPE_OPTIONS = [
     labelEn: 'Hypothesis',
     color: 'text-amber-500',
   },
-  { id: 'risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk', color: 'text-rose-500' },
+  { id: 'risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk', color: 'text-danger-500' },
   {
     id: 'action',
     iconEl: CheckSquare,

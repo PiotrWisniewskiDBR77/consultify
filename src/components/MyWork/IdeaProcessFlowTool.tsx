@@ -2002,7 +2002,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             {coachInsights.map((insight: any, idx: number) => (
               <li key={idx} className="flex items-start gap-2 text-[11px]">
                 <span
-                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-rose-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}
+                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-danger-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}
                 >
                   {insight.type === 'bottleneck' ? (
                     <AlertTriangle size={12} />
@@ -2167,14 +2167,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           )}
           {summaryData.risks?.length > 0 && (
             <div className="mt-1.5">
-              <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 mb-0.5">
+              <div className="text-[9px] font-bold text-danger-600 dark:text-danger-400 mb-0.5">
                 {isPl ? 'Ryzyka:' : 'Risks:'}
               </div>
               <ul className="space-y-0.5">
                 {summaryData.risks.map((r: string, i: number) => (
                   <li
                     key={i}
-                    className="text-[9px] text-rose-600/80 dark:text-rose-400/80 flex items-start gap-1"
+                    className="text-[9px] text-danger-600/80 dark:text-danger-400/80 flex items-start gap-1"
                   >
                     <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" /> {r}
                   </li>

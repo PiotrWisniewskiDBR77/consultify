@@ -186,7 +186,7 @@ const MultiSelectDropdown: React.FC<{
               <div className="border-t border-slate-200 dark:border-navy-700 p-2">
                 <button
                   onClick={() => onChange([])}
-                  className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-rose-500 py-1"
+                  className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-danger-500 py-1"
                 >
                   Clear selection
                 </button>
@@ -420,7 +420,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-danger-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
           >
             <X size={14} />
             {t('myWork.filters.clearAll', 'Clear')}
@@ -483,7 +483,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
               {onDeletePreset && (
                 <button
                   onClick={() => onDeletePreset(preset.id)}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 transition-all"
                 >
                   <X size={10} />
                 </button>

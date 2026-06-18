@@ -6,7 +6,7 @@ const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-300',
   in_progress: 'bg-blue-500',
   done: 'bg-green-500',
-  blocked: 'bg-rose-500',
+  blocked: 'bg-danger-500',
 };
 
 export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {

@@ -16,6 +16,6 @@ export const MENU_CONTAINER_CLASS =
 
 export const menuItemClass = (item: Pick<MenuItemBase, 'disabled' | 'danger'>) => {
   if (item.disabled) return 'text-slate-600 dark:text-slate-400 cursor-not-allowed';
-  if (item.danger) return 'text-rose-600 dark:text-rose-400 hover:bg-rose-500/10';
+  if (item.danger) return 'text-danger-600 dark:text-danger-400 hover:bg-danger-500/10';
   return 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]';
 };

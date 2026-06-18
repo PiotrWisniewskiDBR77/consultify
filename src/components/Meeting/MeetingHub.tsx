@@ -609,7 +609,7 @@ export const MeetingHub: React.FC = () => {
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 transition-colors"
           >
             <span>{t('meeting.actions.new', 'New meeting')}</span>
           </button>
@@ -835,7 +835,7 @@ export const MeetingHub: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSaveMeeting}
-                  className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
+                  className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
                 >
                   {editingId
                     ? t('meeting.actions.save', 'Save changes')
@@ -886,7 +886,7 @@ export const MeetingHub: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddDecision}
-                className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
+                className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
               >
                 {t('meeting.decisions.actions.add', 'Add decision')}
               </button>
@@ -941,7 +941,7 @@ export const MeetingHub: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddFollowUp}
-                className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
+                className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
               >
                 {t('meeting.followUp.actions.add', 'Add follow-up')}
               </button>
@@ -1063,7 +1063,7 @@ export const MeetingHub: React.FC = () => {
                   type="button"
                   onClick={handleGenerateNotes}
                   disabled={generatingNotes || !notesTranscript.trim()}
-                  className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:bg-primary-700"
+                  className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
                 >
                   <Sparkles className="w-4 h-4" />
                   {generatingNotes
@@ -1202,14 +1202,14 @@ const MeetingDetailView: React.FC<{
           <button
             type="button"
             onClick={onAddFollowUp}
-            className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
+            className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
           >
             {t('meeting.addFollowUp2')}
           </button>
           <button
             type="button"
             onClick={onGenerateNotes}
-            className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium inline-flex items-center gap-1.5 hover:bg-primary-700"
+            className="h-9 px-4 rounded-full bg-navy-900 text-white text-sm font-medium inline-flex items-center gap-1.5 hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200"
             title={t('meeting.generateAiNotesFromTranscript')}
           >
             <Sparkles className="w-4 h-4" />

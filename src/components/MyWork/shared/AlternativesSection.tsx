@@ -99,7 +99,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
   const getScoreColor = (score: number) => {
     if (score >= 7) return 'text-emerald-500';
     if (score >= 4) return 'text-amber-500';
-    return 'text-rose-500';
+    return 'text-danger-500';
   };
 
   return (
@@ -281,7 +281,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             </button>
                             <button
                               onClick={() => onRemove(alt.id)}
-                              className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-danger-100 dark:hover:bg-danger-500/20 text-slate-600 hover:text-danger-500 transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -329,7 +329,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                         pros: alt.pros.filter((_, idx) => idx !== i),
                                       });
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-500 transition-opacity"
+                                    className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-danger-500 transition-opacity"
                                   >
                                     <X size={10} />
                                   </button>
@@ -347,7 +347,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
 
                           {/* Cons */}
                           <div>
-                            <div className="flex items-center gap-1 mb-2 text-xs font-medium text-rose-600 dark:text-rose-400">
+                            <div className="flex items-center gap-1 mb-2 text-xs font-medium text-danger-600 dark:text-danger-400">
                               <ThumbsDown size={12} />
                               <span>{isPolish ? 'Wady' : 'Cons'}</span>
                               <span className="text-slate-500 dark:text-slate-400">
@@ -357,7 +357,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             <div className="space-y-1">
                               {alt.cons.map((con, i) => (
                                 <div key={i} className="flex items-center gap-1 group">
-                                  <span className="text-rose-500 text-xs">-</span>
+                                  <span className="text-danger-500 text-xs">-</span>
                                   <input
                                     type="text"
                                     value={con}
@@ -375,7 +375,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                         cons: alt.cons.filter((_, idx) => idx !== i),
                                       });
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-500 transition-opacity"
+                                    className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-danger-500 transition-opacity"
                                   >
                                     <X size={10} />
                                   </button>
@@ -383,7 +383,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                               ))}
                               <button
                                 onClick={() => onUpdate(alt.id, { cons: [...alt.cons, ''] })}
-                                className="text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1"
+                                className="text-xs text-danger-500 hover:text-danger-600 flex items-center gap-1"
                               >
                                 <Plus size={10} />
                                 {isPolish ? 'Dodaj' : 'Add'}
@@ -496,12 +496,12 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                       {/* Cons count row */}
                       <tr>
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                          <ThumbsDown size={14} className="text-rose-500" />
+                          <ThumbsDown size={14} className="text-danger-500" />
                           {isPolish ? 'Wady' : 'Cons'}
                         </td>
                         {sortedAlternatives.map((alt) => (
                           <td key={alt.id} className="text-center py-3 px-4">
-                            <span className="text-rose-600 dark:text-rose-400 font-medium">
+                            <span className="text-danger-600 dark:text-danger-400 font-medium">
                               {alt.cons.filter((c) => c.trim()).length}
                             </span>
                           </td>
