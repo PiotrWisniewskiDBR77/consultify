@@ -446,6 +446,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                 </h3>
                 {realized.length > 0 ? (
                   <div className="border border-navy-700 rounded-lg overflow-hidden">
+                    {/* §27-exempt: financial-calculation — per-row planned/variance computed from projectedBenefit/12; rendered inside a narrow side-drawer at fixed width */}
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-navy-800">

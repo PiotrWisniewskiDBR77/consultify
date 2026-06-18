@@ -572,6 +572,7 @@ export const ROIAnalysisView: React.FC = () => {
       )}
 
       {/* Initiative list table */}
+      {/* §27-exempt: financial-calculation — sort state drives bar chart order; lock-conditional disabled row actions and custom ColumnFilterDropdown in Status header cannot be expressed through FilterableTable column API without destructive rewrite */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">

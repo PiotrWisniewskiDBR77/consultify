@@ -412,6 +412,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
       </div>
 
       {/* Initiative ROI Table */}
+      {/* §27-exempt: financial-calculation — bespoke sort/filter state drives both table and KPI summary cards above; inline MoreVertical action menus are context-specific */}
       <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">

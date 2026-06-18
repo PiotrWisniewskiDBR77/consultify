@@ -82,6 +82,7 @@ export const ROIAssumptionEditor: React.FC<ROIAssumptionEditorProps> = ({
       </h4>
 
       <div className="border border-navy-700 rounded-lg overflow-hidden">
+        {/* §27-exempt: financial-calculation — editable form table with per-row number inputs, confidence selects, and a computed tfoot total row */}
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-navy-800/50">

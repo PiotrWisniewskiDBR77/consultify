@@ -21,6 +21,9 @@ import {
   type V8ResultsReconciliationOverview,
 } from '@/services/api/v8/results';
 
+import { FilterableTable, type TableColumn, type TableRow } from '../shared/ModuleHub';
+import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+
 interface ReconciliationPanelProps {
   /** Optional narrowing: only show reconciliations for this initiative. */
   initiativeId?: string;
@@ -141,8 +144,99 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     [t]
   );
 
+  const [reconciliationFilters, setReconciliationFilters] = useState<FilterChip[]>([]);
+
   const items: V8ResultsReconciliationItem[] = overview?.items ?? [];
   const summary = overview?.summary;
+
+  const reconciliationColumns: TableColumn[] = [
+    {
+      id: 'kpiName',
+      label: t('results.reconciliation.col.kpi', 'KPI'),
+      width: '35%',
+      render: (row: TableRow) => (
+        <div className="flex items-center gap-2">
+          {row.hasMismatch && (
+            <AlertTriangle size={13} className="shrink-0 text-rose-400" />
+          )}
+          <span className="text-slate-200">{row.kpiName}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'reconciliationStatus',
+      label: t('results.reconciliation.col.status', 'Status'),
+      width: '18%',
+      filterable: true,
+      filterOptions: [
+        { value: 'reconciled', label: t('results.reconciliation.status.reconciled', 'Reconciled'), color: 'bg-emerald-500' },
+        { value: 'pending', label: t('results.reconciliation.status.pending', 'Pending'), color: 'bg-amber-500' },
+        { value: 'disputed', label: t('results.reconciliation.status.disputed', 'Disputed'), color: 'bg-rose-500' },
+        { value: 'escalated', label: t('results.reconciliation.status.escalated', 'Escalated'), color: 'bg-rose-600' },
+      ],
+      render: (row: TableRow) => (
+        <StatusChip
+          status={row.reconciliationStatus as V8ReconciliationStatus}
+          label={statusLabel(row.reconciliationStatus as V8ReconciliationStatus)}
+        />
+      ),
+    },
+    {
+      id: 'projectedValue',
+      label: t('results.reconciliation.col.projected', 'Projected'),
+      width: '15%',
+      align: 'right',
+      render: (row: TableRow) => (
+        <span className="tabular-nums text-slate-300">{formatCurrency(row.projectedValue)}</span>
+      ),
+    },
+    {
+      id: 'realizedValue',
+      label: t('results.reconciliation.col.realized', 'Realized'),
+      width: '15%',
+      align: 'right',
+      render: (row: TableRow) => (
+        <span className="tabular-nums text-slate-300">{formatCurrency(row.realizedValue)}</span>
+      ),
+    },
+    {
+      id: 'varianceAbsolute',
+      label: t('results.reconciliation.col.variance', 'Variance'),
+      width: '17%',
+      align: 'right',
+      render: (row: TableRow) => {
+        const varianceTone =
+          row.varianceAbsolute == null
+            ? 'text-slate-500'
+            : row.varianceAbsolute > 0
+              ? 'text-emerald-400'
+              : row.varianceAbsolute < 0
+                ? 'text-rose-400'
+                : 'text-slate-400';
+        return (
+          <span className={`tabular-nums font-medium ${varianceTone}`}>
+            {formatCurrency(row.varianceAbsolute)}
+            {row.variancePercent != null && (
+              <span className="ml-1 text-xs text-slate-500">
+                ({formatPercent(row.variancePercent)})
+              </span>
+            )}
+          </span>
+        );
+      },
+    },
+  ];
+
+  const reconciliationRows: TableRow[] = items.map((item) => ({
+    id: item.reconciliationId,
+    kpiName: item.kpiName || t('results.reconciliation.unnamedKpi', 'KPI {{id}}', { id: item.kpiId.slice(0, 8) }),
+    hasMismatch: item.hasMismatch,
+    reconciliationStatus: item.reconciliationStatus,
+    projectedValue: item.projectedValue,
+    realizedValue: item.realizedValue,
+    varianceAbsolute: item.varianceAbsolute,
+    variancePercent: item.variancePercent,
+  }));
 
   return (
     <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
@@ -200,85 +294,17 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-navy-700 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">
-                  {t('results.reconciliation.col.kpi', 'KPI')}
-                </th>
-                <th className="px-4 py-2 font-medium">
-                  {t('results.reconciliation.col.status', 'Status')}
-                </th>
-                <th className="px-4 py-2 text-right font-medium">
-                  {t('results.reconciliation.col.projected', 'Projected')}
-                </th>
-                <th className="px-4 py-2 text-right font-medium">
-                  {t('results.reconciliation.col.realized', 'Realized')}
-                </th>
-                <th className="px-4 py-2 text-right font-medium">
-                  {t('results.reconciliation.col.variance', 'Variance')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => {
-                const varianceTone =
-                  item.varianceAbsolute == null
-                    ? 'text-slate-500'
-                    : item.varianceAbsolute > 0
-                      ? 'text-emerald-400'
-                      : item.varianceAbsolute < 0
-                        ? 'text-rose-400'
-                        : 'text-slate-400';
-                return (
-                  <tr
-                    key={item.reconciliationId}
-                    className={`border-b border-navy-800 last:border-0 ${
-                      item.hasMismatch ? 'bg-rose-500/[0.04]' : ''
-                    }`}
-                  >
-                    <td className="px-4 py-2.5">
-                      <div className="flex items-center gap-2">
-                        {item.hasMismatch && (
-                          <AlertTriangle size={13} className="shrink-0 text-rose-400" />
-                        )}
-                        <span className="text-slate-200">
-                          {item.kpiName ||
-                            t('results.reconciliation.unnamedKpi', 'KPI {{id}}', {
-                              id: item.kpiId.slice(0, 8),
-                            })}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <StatusChip
-                        status={item.reconciliationStatus}
-                        label={statusLabel(item.reconciliationStatus)}
-                      />
-                    </td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">
-                      {formatCurrency(item.projectedValue)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">
-                      {formatCurrency(item.realizedValue)}
-                    </td>
-                    <td
-                      className={`px-4 py-2.5 text-right tabular-nums font-medium ${varianceTone}`}
-                    >
-                      {formatCurrency(item.varianceAbsolute)}
-                      {item.variancePercent != null && (
-                        <span className="ml-1 text-xs text-slate-500">
-                          ({formatPercent(item.variancePercent)})
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <FilterableTable
+          columns={reconciliationColumns}
+          data={reconciliationRows}
+          activeFilters={reconciliationFilters}
+          onFilterChange={setReconciliationFilters}
+          hideRowActions
+          canvasClassName=""
+          density="compact"
+          enableColumnSettings={false}
+          emptyMessage={t('results.reconciliation.empty', 'No KPI–Finance reconciliations yet.')}
+        />
       )}
     </div>
   );
