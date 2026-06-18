@@ -25,13 +25,13 @@ import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
-  below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
+  below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };
 
 const TREND_ICON: Record<KPITrend, { Icon: typeof ArrowUp; color: string }> = {
   up: { Icon: ArrowUp, color: 'text-emerald-400' },
-  down: { Icon: ArrowDown, color: 'text-rose-400' },
+  down: { Icon: ArrowDown, color: 'text-danger-400' },
   stable: { Icon: ArrowRight, color: 'text-slate-600' },
 };
 
@@ -207,12 +207,12 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
         </div>
         <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <ArrowDown size={16} className="text-rose-400" />
+            <ArrowDown size={16} className="text-danger-400" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.operational.belowTarget', 'Below Target')}
             </span>
           </div>
-          <p className="text-lg font-semibold text-rose-400">{summary.belowCount}</p>
+          <p className="text-lg font-semibold text-danger-400">{summary.belowCount}</p>
         </div>
         <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">

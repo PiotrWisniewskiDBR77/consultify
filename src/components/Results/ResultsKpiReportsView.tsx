@@ -810,7 +810,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                 {t('results.kpi.queue.requiresReview', 'Requires review')}:{' '}
                 {reviewContext.requiresReview}
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-rose-500/10 px-3 py-1 text-rose-500">
+              <span className="inline-flex items-center gap-2 rounded-full bg-danger-500/10 px-3 py-1 text-danger-500">
                 {t('results.kpi.queue.discrepancy', 'Discrepancy')}: {reviewContext.discrepancy}
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-amber-600 dark:text-amber-300">

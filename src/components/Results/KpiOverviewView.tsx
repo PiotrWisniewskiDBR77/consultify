@@ -265,7 +265,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                         </span>
                       ) : null}
                       {kpi.openDeviationCase ? (
-                        <span className="inline-flex rounded-full bg-rose-500/10 px-2 py-0.5 text-[11px] font-medium text-rose-500">
+                        <span className="inline-flex rounded-full bg-danger-500/10 px-2 py-0.5 text-[11px] font-medium text-danger-500">
                           {kpi.openDeviationCase.severity}
                         </span>
                       ) : null}
@@ -294,7 +294,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                 className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
               >
                 <span>{t('results.kpi.overview.healthBelow', 'Below target')}</span>
-                <span className="font-semibold text-rose-500">{metrics.below}</span>
+                <span className="font-semibold text-danger-500">{metrics.below}</span>
               </button>
               <button
                 type="button"

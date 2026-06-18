@@ -24,7 +24,7 @@ import type { KPIStatus, KPITrend, ResultsKPI } from './kpiDomain';
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
-  below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
+  below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };
 
@@ -58,7 +58,7 @@ const NeedsEntryBadge: React.FC = () => {
 
 const TREND_ICON: Record<KPITrend, { Icon: typeof ArrowUp; color: string }> = {
   up: { Icon: ArrowUp, color: 'text-emerald-400' },
-  down: { Icon: ArrowDown, color: 'text-rose-400' },
+  down: { Icon: ArrowDown, color: 'text-danger-400' },
   stable: { Icon: ArrowRight, color: 'text-slate-600' },
 };
 
@@ -95,7 +95,7 @@ const ValueCell: React.FC<{
     ? status === 'on-target'
       ? 'text-emerald-400'
       : status === 'below'
-        ? 'text-rose-400'
+        ? 'text-danger-400'
         : 'text-slate-600'
     : 'text-slate-600';
   return (
@@ -327,7 +327,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'on-target', label: 'On Target', color: 'bg-emerald-500' },
-          { value: 'below', label: 'Below Target', color: 'bg-rose-500' },
+          { value: 'below', label: 'Below Target', color: 'bg-danger-500' },
           { value: 'no-data', label: 'No Data', color: 'bg-slate-400' },
         ],
         render: (row: any) => (
@@ -611,7 +611,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
           kpi.status === 'on-target'
             ? 'border-l-emerald-500 dark:border-l-emerald-400'
             : kpi.status === 'below'
-              ? 'border-l-rose-500 dark:border-l-rose-400'
+              ? 'border-l-danger-500 dark:border-l-danger-400'
               : 'border-l-slate-400 dark:border-l-slate-500';
 
         return (
@@ -709,7 +709,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('delete', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-600 dark:text-rose-300 hover:bg-rose-500/10"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-danger-600 dark:text-danger-300 hover:bg-danger-500/10"
                           >
                             <Trash2 size={14} />
                             {t('common.delete', 'Delete')}
@@ -752,7 +752,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                       kpi.status === 'on-target'
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : kpi.status === 'below'
-                          ? 'text-rose-600 dark:text-rose-400'
+                          ? 'text-danger-600 dark:text-danger-400'
                           : 'text-slate-700 dark:text-slate-200'
                     }`}
                   >

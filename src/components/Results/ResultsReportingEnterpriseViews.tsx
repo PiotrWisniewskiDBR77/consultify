@@ -80,8 +80,8 @@ const ScheduleApprovalChip: React.FC<{ approval: string }> = ({ approval }) => {
   }
   if (normalized === 'rejected') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+      <span className="inline-flex items-center gap-1 rounded-full bg-danger-500/10 px-2 py-0.5 text-xs font-medium text-danger-600 dark:text-danger-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-danger-500" />
         {t('results.reportingSchedules.approvalRejected', 'Rejected')}
       </span>
     );

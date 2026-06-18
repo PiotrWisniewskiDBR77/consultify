@@ -42,7 +42,7 @@ import type { KpiDrawerSection, KPIStatus, KPITrend, ResultsKPI } from './kpiDom
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
-  below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
+  below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };
 
@@ -92,11 +92,11 @@ const DeviationPill: React.FC<{ severity: 'AMBER' | 'RED'; label: string }> = ({
       className={[
         'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full',
         isRed
-          ? 'bg-rose-500/10 text-rose-400'
+          ? 'bg-danger-500/10 text-danger-400'
           : 'bg-amber-500/10 text-amber-400 dark:text-amber-300',
       ].join(' ')}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${isRed ? 'bg-rose-500' : 'bg-amber-500'}`} />
+      <span className={`w-1.5 h-1.5 rounded-full ${isRed ? 'bg-danger-500' : 'bg-amber-500'}`} />
       <span className="text-xs font-medium">{label}</span>
     </span>
   );
@@ -112,7 +112,7 @@ const ValueCell: React.FC<{ value?: number | null; unit?: string; status?: KPISt
     status === 'on-target'
       ? 'text-emerald-400'
       : status === 'below'
-        ? 'text-rose-400'
+        ? 'text-danger-400'
         : 'text-slate-500 dark:text-slate-300';
   return (
     <span className={`text-sm font-medium ${color}`}>
@@ -198,7 +198,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         label: t('results.status.onTarget', 'On target'),
         color: 'bg-emerald-500',
       },
-      { value: 'below', label: t('results.status.below', 'Below target'), color: 'bg-rose-500' },
+      { value: 'below', label: t('results.status.below', 'Below target'), color: 'bg-danger-500' },
       { value: 'no-data', label: t('results.status.noData', 'No data'), color: 'bg-slate-400' },
     ],
     [t]
@@ -417,10 +417,10 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                     kpi.openDeviationCase.severity === 'RED'
                       ? t('results.deviation.red', 'Deviation (Red)')
                       : t('results.deviation.amber', 'Deviation (Amber)'),
-                  dot: kpi.openDeviationCase.severity === 'RED' ? 'bg-rose-500' : 'bg-amber-500',
+                  dot: kpi.openDeviationCase.severity === 'RED' ? 'bg-danger-500' : 'bg-amber-500',
                   className:
                     kpi.openDeviationCase.severity === 'RED'
-                      ? 'bg-rose-500/10 text-rose-400'
+                      ? 'bg-danger-500/10 text-danger-400'
                       : 'bg-amber-500/10 text-amber-400 dark:text-amber-300',
                 } as MetaPill,
               ]

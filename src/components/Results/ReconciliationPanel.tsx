@@ -45,15 +45,15 @@ const STATUS_META: Record<
   },
   pending: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-500', icon: Clock },
   disputed: {
-    bg: 'bg-rose-500/10',
-    text: 'text-rose-400',
-    dot: 'bg-rose-500',
+    bg: 'bg-danger-500/10',
+    text: 'text-danger-400',
+    dot: 'bg-danger-500',
     icon: AlertTriangle,
   },
   escalated: {
-    bg: 'bg-rose-500/15',
-    text: 'text-rose-300',
-    dot: 'bg-rose-600',
+    bg: 'bg-danger-500/15',
+    text: 'text-danger-300',
+    dot: 'bg-danger-600',
     icon: AlertTriangle,
   },
 };
@@ -161,7 +161,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
         </div>
         <div className="flex items-center gap-3">
           {summary && summary.mismatchCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-400">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-danger-500/10 px-2.5 py-0.5 text-xs font-medium text-danger-400">
               <AlertTriangle size={12} />
               {t('results.reconciliation.mismatches', '{{count}} mismatch', {
                 count: summary.mismatchCount,
@@ -229,19 +229,19 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
                     : item.varianceAbsolute > 0
                       ? 'text-emerald-400'
                       : item.varianceAbsolute < 0
-                        ? 'text-rose-400'
+                        ? 'text-danger-400'
                         : 'text-slate-400';
                 return (
                   <tr
                     key={item.reconciliationId}
                     className={`border-b border-navy-800 last:border-0 ${
-                      item.hasMismatch ? 'bg-rose-500/[0.04]' : ''
+                      item.hasMismatch ? 'bg-danger-500/[0.04]' : ''
                     }`}
                   >
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         {item.hasMismatch && (
-                          <AlertTriangle size={13} className="shrink-0 text-rose-400" />
+                          <AlertTriangle size={13} className="shrink-0 text-danger-400" />
                         )}
                         <span className="text-slate-200">
                           {item.kpiName ||
