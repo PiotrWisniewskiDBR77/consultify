@@ -60,8 +60,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
   onStopStream,
   provenanceScope,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
   const extensions = useMemo(() => getCanvasEditorExtensions(placeholder), [placeholder]);
 
   const onContentChangeRef = useRef(onContentChange);
@@ -462,7 +461,6 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
           <AIAcceptRejectBar
             onAccept={handleAcceptDiff}
             onReject={handleRejectDiff}
-            isPolish={isPolish}
           />
         )}
 
@@ -485,7 +483,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
                 />
               </div>
               <span className="text-sm text-slate-600 dark:text-slate-300">
-                {isPolish ? 'Teresa pisze...' : 'Teresa is writing...'}
+                {t('canvas.editor.teresaWriting', 'Teresa is writing...')}
               </span>
               {onStopStream && (
                 <button

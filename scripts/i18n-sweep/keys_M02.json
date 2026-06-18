@@ -1,0 +1,150 @@
+{
+  "canvas.aiMenu.promptPlaceholder": {
+    "pl": "Co Teresa ma zrobić z tym tekstem?",
+    "en": "What should Teresa do with this text?"
+  },
+  "canvas.aiMenu.quickAction.expand": { "pl": "Rozwiń", "en": "Expand" },
+  "canvas.aiMenu.quickAction.shorten": { "pl": "Skróć", "en": "Shorten" },
+  "canvas.aiMenu.quickAction.rewrite": { "pl": "Przepisz", "en": "Rewrite" },
+  "canvas.aiMenu.quickAction.final_polish": { "pl": "Doszlifuj", "en": "Final polish" },
+  "canvas.aiMenu.quickAction.length_concise": { "pl": "Długość: zwięzła", "en": "Length: concise" },
+  "canvas.aiMenu.quickAction.length_detailed": { "pl": "Długość: rozbudowana", "en": "Length: detailed" },
+  "canvas.aiMenu.quickAction.level_exec": { "pl": "Dla: zarządu", "en": "For: executive" },
+  "canvas.aiMenu.quickAction.level_expert": { "pl": "Dla: eksperta", "en": "For: expert" },
+  "canvas.aiMenu.quickAction.level_beginner": { "pl": "Dla: laika", "en": "For: beginner" },
+  "canvas.aiMenu.quickAction.translate_en": { "pl": "Tłumacz → EN", "en": "Translate → EN" },
+  "canvas.aiMenu.quickAction.translate_pl": { "pl": "Tłumacz → PL", "en": "Translate → PL" },
+  "canvas.aiMenu.tone.tone_formal": { "pl": "Formalny", "en": "Formal" },
+  "canvas.aiMenu.tone.tone_simple": { "pl": "Prostszy", "en": "Simpler" },
+  "canvas.aiMenu.tone.label": { "pl": "Ton", "en": "Tone" },
+  "canvas.aiMenu.explanation": { "pl": "Wyjaśnienie", "en": "Explanation" },
+  "canvas.aiMenu.close": { "pl": "Zamknij", "en": "Close" },
+  "canvas.aiMenu.explaining": { "pl": "Teresa wyjaśnia...", "en": "Teresa is explaining..." },
+  "canvas.aiMenu.explainError": {
+    "pl": "Nie udało się pobrać wyjaśnienia. Spróbuj ponownie.",
+    "en": "Could not get an explanation. Please try again."
+  },
+  "canvas.aiMenu.askTeresaTitle": { "pl": "Zapytaj Teresę", "en": "Ask Teresa" },
+  "canvas.aiMenu.askTeresa": { "pl": "Teresa", "en": "Ask AI" },
+  "canvas.aiMenu.condenseTitle": { "pl": "Skróć zaznaczenie ~40%", "en": "Condense selection ~40%" },
+  "canvas.aiMenu.condense": { "pl": "Skróć", "en": "Condense" },
+  "canvas.aiMenu.expandTitle": { "pl": "Rozwiń zaznaczenie (maks. 2x)", "en": "Expand selection (max 2x)" },
+  "canvas.aiMenu.expand": { "pl": "Rozwiń", "en": "Expand" },
+  "canvas.aiMenu.changeToneTitle": { "pl": "Zmień ton tekstu", "en": "Change tone" },
+  "canvas.aiMenu.explainTitle": {
+    "pl": "Wyjaśnij zaznaczenie (nie zmienia dokumentu)",
+    "en": "Explain selection (does not modify the document)"
+  },
+  "canvas.aiMenu.explain": { "pl": "Wyjaśnij", "en": "Explain" },
+  "canvas.aiMenu.quickActionsTitle": { "pl": "Szybkie akcje", "en": "Quick actions" },
+  "canvas.aiMenu.actions": { "pl": "Akcje", "en": "Actions" },
+  "canvas.aiMenu.teresaSuggestion": { "pl": "Propozycja Teresy", "en": "Teresa suggestion" },
+  "canvas.aiMenu.accept": { "pl": "Akceptuj", "en": "Accept" },
+  "canvas.aiMenu.reject": { "pl": "Odrzuć", "en": "Reject" },
+
+  "canvas.editor.teresaWriting": { "pl": "Teresa pisze...", "en": "Teresa is writing..." },
+
+  "kimi.artifactHome.hero.wordy": {
+    "pl": "Raporty, briefy, analizy, artykuły i dokumenty biznesowe",
+    "en": "Reports, briefs, analyses, articles and business documents"
+  },
+  "kimi.artifactHome.hero.excele": {
+    "pl": "Budżety, modele finansowe, harmonogramy, matryce ryzyk",
+    "en": "Budgets, financial models, timelines, risk matrices"
+  },
+  "kimi.artifactHome.hero.tabele": {
+    "pl": "Tabele operacyjne, master data, rejestry, logi, OKR-y, decyzje",
+    "en": "Operational tables, master data, registers, logs, OKRs, decisions"
+  },
+  "kimi.artifactHome.hero.deck": {
+    "pl": "Decki zarządcze, pitch, status update, prezentacje warsztatowe",
+    "en": "Executive decks, pitch, status updates, workshop presentations"
+  },
+  "kimi.artifactHome.laneLabel.wordy": { "pl": "Dokumenty", "en": "Documents" },
+  "kimi.artifactHome.laneLabel.excele": { "pl": "Tabele", "en": "Tables" },
+  "kimi.artifactHome.laneLabel.tabele": { "pl": "Tabele Studio", "en": "Table Studio" },
+  "kimi.artifactHome.laneLabel.deck": { "pl": "Prezentacje", "en": "Presentations" },
+  "kimi.artifactHome.tab.templates": { "pl": "Wzorce", "en": "Templates" },
+  "kimi.artifactHome.tab.recent": { "pl": "Ostatnie", "en": "Recent" },
+  "kimi.artifactHome.tab.saved": { "pl": "Zapisane", "en": "Saved" },
+  "kimi.artifactHome.startNew": { "pl": "Zacznij nowy", "en": "Start new" },
+  "kimi.artifactHome.emptyRecent": { "pl": "Brak ostatnich dokumentów", "en": "No recent documents" },
+  "kimi.artifactHome.emptySaved": { "pl": "Brak zapisanych dokumentów", "en": "No saved documents" },
+
+  "kimi.shell.inputPlaceholder.wordy": {
+    "pl": "Opisz dokument, który chcesz stworzyć...",
+    "en": "Describe the document you want to create..."
+  },
+  "kimi.shell.inputPlaceholder.excele": {
+    "pl": "Prześlij arkusz lub stwórz od zera",
+    "en": "Upload a spreadsheet to work with or create from scratch"
+  },
+  "kimi.shell.inputPlaceholder.prezentacje": {
+    "pl": "Opisz prezentację, którą chcesz stworzyć...",
+    "en": "Describe the presentation you want to create..."
+  },
+  "kimi.shell.inputPlaceholder.tabele": {
+    "pl": "Opisz tabelę operacyjną, którą chcesz zbudować...",
+    "en": "Describe the operational table you want to build..."
+  },
+  "kimi.shell.lane.wordy": { "pl": "Dokumenty", "en": "Wordy" },
+  "kimi.shell.lane.excele": { "pl": "Tabele", "en": "Excele" },
+  "kimi.shell.lane.prezentacje": { "pl": "Prezentacje", "en": "Prezentacje" },
+  "kimi.shell.lane.tabele": { "pl": "Tabele Studio", "en": "Table Studio" },
+
+  "kimi.preview.provenance.header": { "pl": "Pochodzenie", "en": "Provenance" },
+  "kimi.preview.provenance.none": { "pl": "Brak pochodzenia", "en": "No provenance" },
+
+  "kimi.template.filter.ariaLabel": { "pl": "Filtr statusu szablonów", "en": "Template status filter" },
+  "kimi.template.status.approved": { "pl": "Zatwierdzone", "en": "Approved" },
+  "kimi.template.status.draft": { "pl": "Szkice", "en": "Draft" },
+  "kimi.template.status.deprecated": { "pl": "Wycofane", "en": "Deprecated" },
+
+  "kimi.template.badge.draft": { "pl": "Szkic", "en": "Draft" },
+  "kimi.template.badge.approved": { "pl": "Zatwierdzony", "en": "Approved" },
+  "kimi.template.badge.deprecated": { "pl": "Wycofany", "en": "Deprecated" },
+  "kimi.template.badge.statusPrefix": { "pl": "Status szablonu", "en": "Template status" },
+
+  "kimi.template.actions.operationFailed": { "pl": "Operacja nieudana.", "en": "Operation failed." },
+  "kimi.template.actions.approve": { "pl": "Zatwierdź", "en": "Approve" },
+  "kimi.template.actions.deprecate": { "pl": "Wycofaj", "en": "Deprecate" },
+  "kimi.template.actions.approveTitle": { "pl": "Zatwierdź szablon", "en": "Approve template" },
+  "kimi.template.actions.deprecateTitle": { "pl": "Wycofaj szablon", "en": "Deprecate template" },
+  "kimi.template.actions.close": { "pl": "Zamknij", "en": "Close" },
+  "kimi.template.actions.approveBody": {
+    "pl": "Zatwierdzenie sprawia, że szablon staje się widoczny dla wszystkich użytkowników. Operacja zapisuje wpis w historii zatwierdzeń.",
+    "en": "Approving makes this template visible to all tenants. The action is logged in approval_history."
+  },
+  "kimi.template.actions.deprecateBody": {
+    "pl": "Wycofanie ukrywa szablon przed nowymi użytkownikami. Istniejące bazy korzystające z szablonu pozostają nienaruszone. Operacja jest zapisywana w historii zatwierdzeń.",
+    "en": "Deprecating hides the template from new users. Existing bases that already used it remain untouched. The action is logged in approval_history."
+  },
+  "kimi.template.actions.noteLabel": { "pl": "Notatka (opcjonalnie)", "en": "Note (optional)" },
+  "kimi.template.actions.cancel": { "pl": "Anuluj", "en": "Cancel" },
+
+  "kimi.template.governance.title": { "pl": "Governance szablonu", "en": "Template governance" },
+  "kimi.template.governance.close": { "pl": "Zamknij", "en": "Close" },
+  "kimi.template.governance.loading": { "pl": "Wczytywanie…", "en": "Loading…" },
+  "kimi.template.governance.approvalHistory": { "pl": "Historia zatwierdzeń", "en": "Approval history" },
+  "kimi.template.governance.noEntries": { "pl": "Brak wpisów.", "en": "No entries yet." },
+  "kimi.template.governance.actor": { "pl": "Aktor", "en": "Actor" },
+  "kimi.template.governance.previousStatus": { "pl": "Poprzedni status", "en": "Previous status" },
+  "kimi.template.governance.rules": { "pl": "Reguły governance", "en": "Governance rules" },
+  "kimi.template.event.approved": { "pl": "Zatwierdzono", "en": "Approved" },
+  "kimi.template.event.deprecated": { "pl": "Wycofano", "en": "Deprecated" },
+  "kimi.template.event.reverted_to_draft": { "pl": "Cofnięto do szkicu", "en": "Reverted to draft" },
+  "kimi.template.event.auto_promoted_from_legacy_featured": {
+    "pl": "Auto-promocja (legacy featured)",
+    "en": "Auto-promoted (legacy featured)"
+  },
+
+  "kimi.template.grid.loading": { "pl": "Wczytywanie…", "en": "Loading…" },
+  "kimi.template.grid.empty": {
+    "pl": "Brak szablonów w statusie \"{{status}}\".",
+    "en": "No templates in status \"{{status}}\"."
+  },
+  "kimi.template.grid.featured": { "pl": "⭐ Wyróżniony · ", "en": "⭐ Featured · " },
+  "kimi.template.grid.used": { "pl": "Użyć", "en": "Used" },
+  "kimi.template.grid.governanceTitle": { "pl": "Governance", "en": "Governance" },
+  "kimi.template.grid.governanceShort": { "pl": "Govern.", "en": "Govern." }
+}

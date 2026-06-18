@@ -6,7 +6,6 @@ import { isRecordProvenanceEnabled } from '@/utils/recordProvenanceFlag';
 
 import type { ArtifactPreview } from '../KimiWorkspaceShell';
 import {
-  getTabeleProvenanceHeaderLabel,
   readRowProvenance,
   rowsHaveProvenance,
   TabeleProvenanceColumn,
@@ -19,7 +18,6 @@ interface TabelePreviewLayoutProps {
   preview: ArtifactPreview & { type: 'tabele' };
   onOpenBuilder?: () => void;
   onOpenProposalQueue?: () => void;
-  isPolish: boolean;
 }
 
 type PreviewTableData = NonNullable<ArtifactPreview['tableData']>;
@@ -91,7 +89,6 @@ export function TabelePreviewLayout({
   preview,
   onOpenBuilder,
   onOpenProposalQueue,
-  isPolish,
 }: TabelePreviewLayoutProps) {
   const { t } = useTranslation();
   const tableData = useMemo(() => getPreviewTableData(preview), [preview]);
@@ -107,7 +104,7 @@ export function TabelePreviewLayout({
     () => isRecordProvenanceEnabled() && rowsHaveProvenance(visibleRows),
     [visibleRows]
   );
-  const provenanceHeaderLabel = useMemo(() => getTabeleProvenanceHeaderLabel(isPolish), [isPolish]);
+  const provenanceHeaderLabel = t('kimi.preview.provenance.header', 'Provenance');
   const formatLabel =
     preview.tableId || preview.tabeleRelations || preview.tabeleSchemaFields
       ? t('kimi.tabele.preview.formatOperational', { defaultValue: 'Operational' })
@@ -212,11 +209,7 @@ export function TabelePreviewLayout({
             <div id="tabele-preview-schema-heading-content" className="space-y-3">
               {schemaFields.length > 0 ? (
                 schemaFields.map((field) => (
-                  <TabeleSchemaBlock
-                    key={field.fieldId || field.name}
-                    field={field}
-                    isPolish={isPolish}
-                  />
+                  <TabeleSchemaBlock key={field.fieldId || field.name} field={field} />
                 ))
               ) : (
                 <p className="rounded-hig-md border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-navy-700 dark:text-slate-400">
@@ -402,7 +395,6 @@ export function TabelePreviewLayout({
           {preview.tabeleRationale ? (
             <TabeleRationaleSection
               rationale={preview.tabeleRationale}
-              isPolish={isPolish}
               onOpenProposalQueue={onOpenProposalQueue}
             />
           ) : (

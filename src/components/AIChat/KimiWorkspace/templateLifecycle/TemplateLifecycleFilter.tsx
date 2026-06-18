@@ -58,22 +58,21 @@ export const TemplateLifecycleFilter: React.FC<TemplateLifecycleFilterProps> = (
   visibleStatuses,
   testId = 'template-lifecycle-filter',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const visible = visibleStatuses ?? ORDER;
   const ordered = ORDER.filter((s) => visible.includes(s));
 
   return (
     <div
       role="radiogroup"
-      aria-label={isPl ? 'Filtr statusu szablonów' : 'Template status filter'}
+      aria-label={t('kimi.template.filter.ariaLabel', 'Template status filter')}
       data-testid={testId}
       className="inline-flex items-center gap-1.5"
     >
       {ordered.map((status) => {
         const meta = META[status];
         const active = status === value;
-        const label = isPl ? meta.pl : meta.en;
+        const label = t(`kimi.template.status.${status}`, meta.en);
         return (
           <button
             key={status}

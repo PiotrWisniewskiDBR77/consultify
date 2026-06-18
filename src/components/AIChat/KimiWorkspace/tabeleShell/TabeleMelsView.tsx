@@ -203,13 +203,10 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
     [qaFindingsCount, sourcePackCount, preview, t]
   );
 
-  const isPolish = (t('common.lang.code', 'en') as string) === 'pl';
-
   const canvas = preview ? (
     <div className="px-6 py-4 max-w-[1024px] mx-auto" data-testid="tabele-mels-canvas">
       <TabelePreviewLayout
         preview={preview}
-        isPolish={isPolish}
         {...(onRunPrimary ? { onOpenBuilder: onRunPrimary } : {})}
       />
     </div>

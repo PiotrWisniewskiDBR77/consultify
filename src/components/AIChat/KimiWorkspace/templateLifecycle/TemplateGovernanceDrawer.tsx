@@ -64,8 +64,7 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
   onClose,
   testId = 'template-governance-drawer',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
 
   if (!open) return null;
 
@@ -93,14 +92,14 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
               id={`${testId}-title`}
               className="text-sm font-semibold text-slate-800 dark:text-slate-100"
             >
-              {isPl ? 'Governance szablonu' : 'Template governance'}
+              {t('kimi.template.governance.title', 'Template governance')}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="text-slate-600 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-1"
-            aria-label={isPl ? 'Zamknij' : 'Close'}
+            aria-label={t('kimi.template.governance.close', 'Close')}
             data-testid={`${testId}-close`}
           >
             <X size={16} />
@@ -109,7 +108,7 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
 
         {loading && (
           <p className="px-4 py-6 text-[12px] text-slate-500" data-testid={`${testId}-loading`}>
-            {isPl ? 'Wczytywanie…' : 'Loading…'}
+            {t('kimi.template.governance.loading', 'Loading…')}
           </p>
         )}
 
@@ -157,14 +156,14 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
             {/* Approval history */}
             <section>
               <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {isPl ? 'Historia zatwierdzeń' : 'Approval history'}
+                {t('kimi.template.governance.approvalHistory', 'Approval history')}
               </h4>
               {sortedHistory.length === 0 ? (
                 <p
                   className="mt-2 text-[12px] text-slate-500 dark:text-slate-400"
                   data-testid={`${testId}-history-empty`}
                 >
-                  {isPl ? 'Brak wpisów.' : 'No entries yet.'}
+                  {t('kimi.template.governance.noEntries', 'No entries yet.')}
                 </p>
               ) : (
                 <ol className="mt-2 space-y-2" data-testid={`${testId}-history`}>
@@ -177,17 +176,18 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
                         data-testid={`${testId}-history-item`}
                       >
                         <div className="flex items-center justify-between text-[12px] font-semibold text-slate-700 dark:text-slate-100">
-                          <span>{isPl ? label.pl : label.en}</span>
+                          <span>{t(`kimi.template.event.${entry.event}`, label.en)}</span>
                           <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">
                             {fmtDate(entry.at)}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                          {isPl ? 'Aktor' : 'Actor'}: {entry.actor}
+                          {t('kimi.template.governance.actor', 'Actor')}: {entry.actor}
                         </p>
                         {entry.previous_status && (
                           <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {isPl ? 'Poprzedni status' : 'Previous status'}: {entry.previous_status}
+                            {t('kimi.template.governance.previousStatus', 'Previous status')}:{' '}
+                            {entry.previous_status}
                           </p>
                         )}
                         {entry.note && (
@@ -205,7 +205,7 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
             {/* Governance rules */}
             <section>
               <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {isPl ? 'Reguły governance' : 'Governance rules'}
+                {t('kimi.template.governance.rules', 'Governance rules')}
               </h4>
               <pre
                 className="mt-2 max-h-[320px] overflow-auto rounded-md border border-slate-200 dark:border-navy-700 bg-slate-950/95 text-slate-100 p-3 text-[11px] leading-relaxed"

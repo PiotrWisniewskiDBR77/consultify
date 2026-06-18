@@ -37,8 +37,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
   onDeprecate,
   testId = 'template-lifecycle-actions',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [pending, setPending] = useState<Action | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [note, setNote] = useState('');
@@ -72,7 +71,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
     } catch (err) {
       const message =
         (err as { message?: string })?.message ??
-        (isPl ? 'Operacja nieudana.' : 'Operation failed.');
+        t('kimi.template.actions.operationFailed', 'Operation failed.');
       setError(message);
     } finally {
       setSubmitting(false);
@@ -89,7 +88,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
           data-testid={`${testId}-approve`}
         >
           <CheckCircle2 size={11} aria-hidden />
-          <span>{isPl ? 'Zatwierdź' : 'Approve'}</span>
+          <span>{t('kimi.template.actions.approve', 'Approve')}</span>
         </button>
       )}
       {showDeprecate && (
@@ -100,7 +99,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
           data-testid={`${testId}-deprecate`}
         >
           <MinusCircle size={11} aria-hidden />
-          <span>{isPl ? 'Wycofaj' : 'Deprecate'}</span>
+          <span>{t('kimi.template.actions.deprecate', 'Deprecate')}</span>
         </button>
       )}
       {pending && (
@@ -121,18 +120,14 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
                 className="text-sm font-semibold text-slate-800 dark:text-slate-100"
               >
                 {pending === 'approve'
-                  ? isPl
-                    ? 'Zatwierdź szablon'
-                    : 'Approve template'
-                  : isPl
-                    ? 'Wycofaj szablon'
-                    : 'Deprecate template'}
+                  ? t('kimi.template.actions.approveTitle', 'Approve template')
+                  : t('kimi.template.actions.deprecateTitle', 'Deprecate template')}
               </h2>
               <button
                 type="button"
                 onClick={close}
                 className="text-slate-600 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-1"
-                aria-label={isPl ? 'Zamknij' : 'Close'}
+                aria-label={t('kimi.template.actions.close', 'Close')}
                 data-testid={`${testId}-dialog-close`}
               >
                 <X size={16} />
@@ -141,16 +136,18 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
             <div className="px-4 py-3 space-y-3">
               <p className="text-[12px] text-slate-600 dark:text-slate-300">
                 {pending === 'approve'
-                  ? isPl
-                    ? 'Zatwierdzenie sprawia, że szablon staje się widoczny dla wszystkich użytkowników. Operacja zapisuje wpis w historii zatwierdzeń.'
-                    : 'Approving makes this template visible to all tenants. The action is logged in approval_history.'
-                  : isPl
-                    ? 'Wycofanie ukrywa szablon przed nowymi użytkownikami. Istniejące bazy korzystające z szablonu pozostają nienaruszone. Operacja jest zapisywana w historii zatwierdzeń.'
-                    : 'Deprecating hides the template from new users. Existing bases that already used it remain untouched. The action is logged in approval_history.'}
+                  ? t(
+                      'kimi.template.actions.approveBody',
+                      'Approving makes this template visible to all tenants. The action is logged in approval_history.'
+                    )
+                  : t(
+                      'kimi.template.actions.deprecateBody',
+                      'Deprecating hides the template from new users. Existing bases that already used it remain untouched. The action is logged in approval_history.'
+                    )}
               </p>
               <label className="block">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Notatka (opcjonalnie)' : 'Note (optional)'}
+                  {t('kimi.template.actions.noteLabel', 'Note (optional)')}
                 </span>
                 <textarea
                   value={note}
@@ -176,7 +173,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
                 onClick={close}
                 className="px-3 py-1.5 rounded-md text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
               >
-                {isPl ? 'Anuluj' : 'Cancel'}
+                {t('kimi.template.actions.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -193,12 +190,8 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
               >
                 {submitting && <Loader2 size={14} className="animate-spin" aria-hidden />}
                 {pending === 'approve'
-                  ? isPl
-                    ? 'Zatwierdź'
-                    : 'Approve'
-                  : isPl
-                    ? 'Wycofaj'
-                    : 'Deprecate'}
+                  ? t('kimi.template.actions.approve', 'Approve')
+                  : t('kimi.template.actions.deprecate', 'Deprecate')}
               </button>
             </div>
           </div>

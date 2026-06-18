@@ -159,8 +159,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
   onExplainRequest,
   isProcessing,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [position, setPosition] = useState<MenuPosition | null>(null);
   const [showPromptInput, setShowPromptInput] = useState(false);
   const [customPrompt, setCustomPrompt] = useState('');
@@ -288,11 +287,10 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
                 setCustomPrompt('');
               }
             }}
-            placeholder={
-              isPolish
-                ? 'Co Teresa ma zrobić z tym tekstem?'
-                : 'What should Teresa do with this text?'
-            }
+            placeholder={t(
+              'canvas.aiMenu.promptPlaceholder',
+              'What should Teresa do with this text?'
+            )}
             className="w-64 bg-transparent text-sm outline-none text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
           />
           <button
@@ -315,7 +313,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
               disabled={isProcessing}
               className="w-full px-3 py-1.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] disabled:opacity-40"
             >
-              {isPolish ? action.labelPl : action.labelEn}
+              {t(`canvas.aiMenu.quickAction.${action.id}`, action.labelEn)}
             </button>
           ))}
         </div>
@@ -331,7 +329,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
               disabled={isProcessing}
               className="w-full px-3 py-1.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] disabled:opacity-40"
             >
-              {isPolish ? option.labelPl : option.labelEn}
+              {t(`canvas.aiMenu.tone.${option.id}`, option.labelEn)}
             </button>
           ))}
         </div>
@@ -344,12 +342,12 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
           <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
             <HelpCircle size={13} className="text-primary-500 shrink-0" />
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex-1">
-              {isPolish ? 'Wyjaśnienie' : 'Explanation'}
+              {t('canvas.aiMenu.explanation', 'Explanation')}
             </span>
             <button
               onClick={() => setExplainState(null)}
               className="p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
-              title={isPolish ? 'Zamknij' : 'Close'}
+              title={t('canvas.aiMenu.close', 'Close')}
             >
               <X size={12} />
             </button>
@@ -358,14 +356,15 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
             {explainState.status === 'loading' && (
               <div className="flex items-center gap-2 py-1 text-sm text-slate-500 dark:text-slate-400">
                 <Loader2 size={14} className="animate-spin text-primary-500" />
-                <span>{isPolish ? 'Teresa wyjaśnia...' : 'Teresa is explaining...'}</span>
+                <span>{t('canvas.aiMenu.explaining', 'Teresa is explaining...')}</span>
               </div>
             )}
             {explainState.status === 'error' && (
               <p className="py-1 text-sm text-red-600 dark:text-red-400">
-                {isPolish
-                  ? 'Nie udało się pobrać wyjaśnienia. Spróbuj ponownie.'
-                  : 'Could not get an explanation. Please try again.'}
+                {t(
+                  'canvas.aiMenu.explainError',
+                  'Could not get an explanation. Please try again.'
+                )}
               </p>
             )}
             {explainState.status === 'done' && (
@@ -387,10 +386,10 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
             setExplainState(null);
           }}
           className="flex items-center gap-1 px-2 py-1 rounded text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
-          title={isPolish ? 'Zapytaj Teresę' : 'Ask Teresa'}
+          title={t('canvas.aiMenu.askTeresaTitle', 'Ask Teresa')}
         >
           <Sparkles size={14} />
-          <span>{isPolish ? 'Teresa' : 'Ask AI'}</span>
+          <span>{t('canvas.aiMenu.askTeresa', 'Ask AI')}</span>
         </button>
         <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
         {/* E1 — shortcut actions (ChatGPT-Canvas pattern). Rewrites go through
@@ -399,19 +398,19 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
           onClick={() => handleQuickAction(SHORTCUT_CONDENSE_PROMPT)}
           disabled={isProcessing}
           className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40"
-          title={isPolish ? 'Skróć zaznaczenie ~40%' : 'Condense selection ~40%'}
+          title={t('canvas.aiMenu.condenseTitle', 'Condense selection ~40%')}
         >
           <Minimize2 size={13} />
-          <span>{isPolish ? 'Skróć' : 'Condense'}</span>
+          <span>{t('canvas.aiMenu.condense', 'Condense')}</span>
         </button>
         <button
           onClick={() => handleQuickAction(SHORTCUT_EXPAND_PROMPT)}
           disabled={isProcessing}
           className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40"
-          title={isPolish ? 'Rozwiń zaznaczenie (maks. 2x)' : 'Expand selection (max 2x)'}
+          title={t('canvas.aiMenu.expandTitle', 'Expand selection (max 2x)')}
         >
           <Maximize2 size={13} />
-          <span>{isPolish ? 'Rozwiń' : 'Expand'}</span>
+          <span>{t('canvas.aiMenu.expand', 'Expand')}</span>
         </button>
         <button
           onClick={() => {
@@ -422,10 +421,10 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
           }}
           disabled={isProcessing}
           className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40"
-          title={isPolish ? 'Zmień ton tekstu' : 'Change tone'}
+          title={t('canvas.aiMenu.changeToneTitle', 'Change tone')}
         >
           <SlidersHorizontal size={13} />
-          <span>{isPolish ? 'Ton' : 'Tone'}</span>
+          <span>{t('canvas.aiMenu.tone.label', 'Tone')}</span>
           <ChevronDown size={12} />
         </button>
         {onExplainRequest && (
@@ -433,18 +432,17 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
             onClick={handleExplain}
             disabled={isProcessing}
             className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40"
-            title={
-              isPolish
-                ? 'Wyjaśnij zaznaczenie (nie zmienia dokumentu)'
-                : 'Explain selection (does not modify the document)'
-            }
+            title={t(
+              'canvas.aiMenu.explainTitle',
+              'Explain selection (does not modify the document)'
+            )}
           >
             {explainState?.status === 'loading' ? (
               <Loader2 size={13} className="animate-spin" />
             ) : (
               <HelpCircle size={13} />
             )}
-            <span>{isPolish ? 'Wyjaśnij' : 'Explain'}</span>
+            <span>{t('canvas.aiMenu.explain', 'Explain')}</span>
           </button>
         )}
         <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
@@ -456,9 +454,9 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
             setExplainState(null);
           }}
           className="flex items-center gap-0.5 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-          title={isPolish ? 'Szybkie akcje' : 'Quick actions'}
+          title={t('canvas.aiMenu.quickActionsTitle', 'Quick actions')}
         >
-          <span>{isPolish ? 'Akcje' : 'Actions'}</span>
+          <span>{t('canvas.aiMenu.actions', 'Actions')}</span>
           <ChevronDown size={12} />
         </button>
       </div>
@@ -472,33 +470,36 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
 interface AIAcceptRejectBarProps {
   onAccept: () => void;
   onReject: () => void;
+  /** @deprecated language is now resolved via i18n; prop kept for call-site compat */
   isPolish?: boolean;
 }
 
 export const AIAcceptRejectBar: React.FC<AIAcceptRejectBarProps> = ({
   onAccept,
   onReject,
-  isPolish,
-}) => (
-  <div className="sticky bottom-4 flex justify-center z-50 pointer-events-none">
-    <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 px-3 py-1.5 shadow-lg pointer-events-auto">
-      <span className="text-xs text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Propozycja Teresy' : 'Teresa suggestion'}
-      </span>
-      <button
-        onClick={onAccept}
-        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
-      >
-        <Check size={12} />
-        {isPolish ? 'Akceptuj' : 'Accept'}
-      </button>
-      <button
-        onClick={onReject}
-        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
-      >
-        <X size={12} />
-        {isPolish ? 'Odrzuć' : 'Reject'}
-      </button>
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div className="sticky bottom-4 flex justify-center z-50 pointer-events-none">
+      <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 px-3 py-1.5 shadow-lg pointer-events-auto">
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          {t('canvas.aiMenu.teresaSuggestion', 'Teresa suggestion')}
+        </span>
+        <button
+          onClick={onAccept}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
+        >
+          <Check size={12} />
+          {t('canvas.aiMenu.accept', 'Accept')}
+        </button>
+        <button
+          onClick={onReject}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+        >
+          <X size={12} />
+          {t('canvas.aiMenu.reject', 'Reject')}
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};

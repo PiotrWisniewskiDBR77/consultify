@@ -48,8 +48,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
   enableGovernanceDrawer = true,
   testId = 'tabele-templates-grid',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const { templates, status, setStatus, loading, error } = useTpBaseTemplates({ category });
   const [governanceTarget, setGovernanceTarget] = useState<LifecycleTemplate | null>(null);
 
@@ -63,7 +62,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
             data-testid={`${testId}-loading`}
           >
             <Loader2 size={12} className="animate-spin" aria-hidden />
-            {isPl ? 'Wczytywanie…' : 'Loading…'}
+            {t('kimi.template.grid.loading', 'Loading…')}
           </span>
         )}
       </div>
@@ -83,7 +82,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
           className="text-sm text-slate-500 dark:text-slate-400 text-center py-12"
           data-testid={`${testId}-empty`}
         >
-          {isPl ? `Brak szablonów w statusie "${status}".` : `No templates in status "${status}".`}
+          {t('kimi.template.grid.empty', 'No templates in status "{{status}}".', { status })}
         </p>
       )}
 
@@ -117,8 +116,8 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
               )}
               {(tpl.usage_count > 0 || tpl.is_featured) && (
                 <p className="mt-2 text-[10px] text-slate-600 dark:text-slate-500 tabular-nums">
-                  {tpl.is_featured && (isPl ? '⭐ Wyróżniony · ' : '⭐ Featured · ')}
-                  {isPl ? 'Użyć' : 'Used'}: {tpl.usage_count}
+                  {tpl.is_featured && t('kimi.template.grid.featured', '⭐ Featured · ')}
+                  {t('kimi.template.grid.used', 'Used')}: {tpl.usage_count}
                 </p>
               )}
             </button>
@@ -130,11 +129,11 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
                   setGovernanceTarget(tpl);
                 }}
                 className="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                title={isPl ? 'Governance' : 'Governance'}
+                title={t('kimi.template.grid.governanceTitle', 'Governance')}
                 data-testid={`${testId}-card-${tpl.id}-governance`}
               >
                 <ShieldCheck size={11} aria-hidden />
-                {isPl ? 'Govern.' : 'Govern.'}
+                {t('kimi.template.grid.governanceShort', 'Govern.')}
               </button>
             )}
           </div>

@@ -55,10 +55,10 @@ export const TemplateLifecycleBadge: React.FC<TemplateLifecycleBadgeProps> = ({
   variant = 'chip',
   testId = 'template-lifecycle-badge',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const style = STYLES[status];
-  const label = isPl ? style.pl : style.en;
+  const label = t(`kimi.template.badge.${status}`, style.en);
+  const statusPrefix = t('kimi.template.badge.statusPrefix', 'Template status');
 
   if (variant === 'dot') {
     return (
@@ -67,7 +67,7 @@ export const TemplateLifecycleBadge: React.FC<TemplateLifecycleBadgeProps> = ({
         className="inline-block w-2 h-2 rounded-full"
         style={{ backgroundColor: style.fg }}
         title={label}
-        aria-label={`${isPl ? 'Status szablonu' : 'Template status'}: ${label}`}
+        aria-label={`${statusPrefix}: ${label}`}
       />
     );
   }
@@ -77,7 +77,7 @@ export const TemplateLifecycleBadge: React.FC<TemplateLifecycleBadgeProps> = ({
       data-testid={testId}
       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border"
       style={{ backgroundColor: style.bg, color: style.fg, borderColor: style.border }}
-      aria-label={`${isPl ? 'Status szablonu' : 'Template status'}: ${label}`}
+      aria-label={`${statusPrefix}: ${label}`}
     >
       <span aria-hidden style={{ color: style.fg }}>
         {style.icon}

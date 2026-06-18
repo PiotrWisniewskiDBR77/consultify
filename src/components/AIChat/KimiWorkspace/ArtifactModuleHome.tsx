@@ -73,7 +73,7 @@ interface ArtifactModuleHomeProps {
 }
 
 export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const [activeTab, setActiveTab] = useState<HomeTab>('templates');
@@ -91,28 +91,32 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
   const heroText = useMemo(() => {
     if (lane === 'wordy')
-      return isPolish
-        ? 'Raporty, briefy, analizy, artykuły i dokumenty biznesowe'
-        : 'Reports, briefs, analyses, articles and business documents';
+      return t(
+        'kimi.artifactHome.hero.wordy',
+        'Reports, briefs, analyses, articles and business documents'
+      );
     if (lane === 'excele')
-      return isPolish
-        ? 'Budżety, modele finansowe, harmonogramy, matryce ryzyk'
-        : 'Budgets, financial models, timelines, risk matrices';
+      return t(
+        'kimi.artifactHome.hero.excele',
+        'Budgets, financial models, timelines, risk matrices'
+      );
     if (lane === 'tabele')
-      return isPolish
-        ? 'Tabele operacyjne, master data, rejestry, logi, OKR-y, decyzje'
-        : 'Operational tables, master data, registers, logs, OKRs, decisions';
-    return isPolish
-      ? 'Decki zarządcze, pitch, status update, prezentacje warsztatowe'
-      : 'Executive decks, pitch, status updates, workshop presentations';
-  }, [lane, isPolish]);
+      return t(
+        'kimi.artifactHome.hero.tabele',
+        'Operational tables, master data, registers, logs, OKRs, decisions'
+      );
+    return t(
+      'kimi.artifactHome.hero.deck',
+      'Executive decks, pitch, status updates, workshop presentations'
+    );
+  }, [lane, t]);
 
   const laneLabel = useMemo(() => {
-    if (lane === 'wordy') return isPolish ? 'Dokumenty' : 'Documents';
-    if (lane === 'excele') return isPolish ? 'Tabele' : 'Tables';
-    if (lane === 'tabele') return isPolish ? 'Tabele Studio' : 'Table Studio';
-    return isPolish ? 'Prezentacje' : 'Presentations';
-  }, [lane, isPolish]);
+    if (lane === 'wordy') return t('kimi.artifactHome.laneLabel.wordy', 'Documents');
+    if (lane === 'excele') return t('kimi.artifactHome.laneLabel.excele', 'Tables');
+    if (lane === 'tabele') return t('kimi.artifactHome.laneLabel.tabele', 'Table Studio');
+    return t('kimi.artifactHome.laneLabel.deck', 'Presentations');
+  }, [lane, t]);
 
   const handleNewClick = () => {
     navigate(`${meta.route}?view=new`);
@@ -131,9 +135,9 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   };
 
   const tabs: Array<{ id: HomeTab; label: string; icon: React.ElementType }> = [
-    { id: 'templates', label: isPolish ? 'Wzorce' : 'Templates', icon: Sparkles },
-    { id: 'recent', label: isPolish ? 'Ostatnie' : 'Recent', icon: Clock },
-    { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', icon: Save },
+    { id: 'templates', label: t('kimi.artifactHome.tab.templates', 'Templates'), icon: Sparkles },
+    { id: 'recent', label: t('kimi.artifactHome.tab.recent', 'Recent'), icon: Clock },
+    { id: 'saved', label: t('kimi.artifactHome.tab.saved', 'Saved'), icon: Save },
   ];
 
   return (
@@ -156,7 +160,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors mt-2"
         >
           <Plus size={16} />
-          {isPolish ? 'Zacznij nowy' : 'Start new'}
+          {t('kimi.artifactHome.startNew', 'Start new')}
         </button>
       </div>
 
@@ -204,12 +208,8 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
             isPolish={isPolish}
             emptyLabel={
               activeTab === 'recent'
-                ? isPolish
-                  ? 'Brak ostatnich dokumentów'
-                  : 'No recent documents'
-                : isPolish
-                  ? 'Brak zapisanych dokumentów'
-                  : 'No saved documents'
+                ? t('kimi.artifactHome.emptyRecent', 'No recent documents')
+                : t('kimi.artifactHome.emptySaved', 'No saved documents')
             }
           />
         )}

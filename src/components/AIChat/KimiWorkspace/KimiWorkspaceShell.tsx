@@ -284,9 +284,8 @@ function ArtifactPreviewPane({
   onStartGeneration?: (goal: string) => Promise<void>;
   onRetry?: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const config = LANE_CONFIG[lane];
-  const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const Icon = config.icon;
   const usesChatOnlyStart = lane === 'tabele';
   const [activeSheet, setActiveSheet] = useState(0);
@@ -393,7 +392,10 @@ function ArtifactPreviewPane({
               <textarea
                 value={goalInput}
                 onChange={(e) => setGoalInput(e.target.value)}
-                placeholder={isPolish ? config.inputPlaceholderPl : config.inputPlaceholder}
+                placeholder={t(
+                  `kimi.shell.inputPlaceholder.${lane}`,
+                  config.inputPlaceholder
+                )}
                 rows={3}
                 className="w-full rounded-hig-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 resize-none"
               />
@@ -571,10 +573,7 @@ function ArtifactPreviewPane({
           </div>
         )}
         {preview.type === 'tabele' && (
-          <TabelePreviewLayout
-            preview={preview as ArtifactPreview & { type: 'tabele' }}
-            isPolish={isPolish}
-          />
+          <TabelePreviewLayout preview={preview as ArtifactPreview & { type: 'tabele' }} />
         )}
         {preview.type === 'deck' && (
           <div className="space-y-4">
@@ -779,10 +778,9 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
   onStartGeneration,
   chatSystemPrompt,
 }) => {
-  const { t: tShell, i18n } = useTranslation();
+  const { t: tShell } = useTranslation();
   const setDisplayMode = useConversationStore((s) => s.setDisplayMode);
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
-  const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
 
   const workspaceContext = useMemo(() => {
     const laneViewMap: Record<KimiLane, AppView> = {
@@ -841,9 +839,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
             className: 'text-slate-500 dark:text-slate-400',
           })}
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {isPolish
-              ? LANE_CONFIG[lane].labelPl
-              : tShell(`kimi.lane${LANE_CONFIG[lane].label}`, LANE_CONFIG[lane].label)}
+            {tShell(`kimi.shell.lane.${lane}`, LANE_CONFIG[lane].label)}
           </span>
           <span className="text-xs text-slate-600 dark:text-slate-500">
             / {tShell('kimi.workspace', 'Workspace')}

@@ -6,7 +6,6 @@ import type { TabelePreviewSchemaField } from '@/types/tabeleArtifact';
 
 interface TabeleSchemaBlockProps {
   field: TabelePreviewSchemaField;
-  isPolish: boolean;
   onClickProposal?: (proposalId: string) => void;
 }
 

@@ -26,15 +26,6 @@ export interface TabeleProvenanceColumnProps {
   testId?: string;
 }
 
-const HEADER_LABELS = {
-  en: 'Provenance',
-  pl: 'Pochodzenie',
-};
-
-export function getTabeleProvenanceHeaderLabel(isPolish: boolean): string {
-  return isPolish ? HEADER_LABELS.pl : HEADER_LABELS.en;
-}
-
 /**
  * Returns the candidate provenance values from a Word-canvas preview row.
  * Reads the `__confidence_score` / `__validation_status` keys mirrored by
@@ -81,8 +72,7 @@ export const TabeleProvenanceColumn: React.FC<TabeleProvenanceColumnProps> = ({
   validationStatus,
   testId = 'tabele-provenance-column',
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const hasSignal =
     confidenceScore !== null && confidenceScore !== undefined && Number.isFinite(confidenceScore);
   const status: ValidationStatus = validationStatus ?? 'unverified';
@@ -92,7 +82,7 @@ export const TabeleProvenanceColumn: React.FC<TabeleProvenanceColumnProps> = ({
       <span
         data-testid={`${testId}-empty`}
         className="text-[11px] text-slate-600 dark:text-slate-500"
-        aria-label={isPl ? 'Brak pochodzenia' : 'No provenance'}
+        aria-label={t('kimi.preview.provenance.none', 'No provenance')}
       >
         —
       </span>

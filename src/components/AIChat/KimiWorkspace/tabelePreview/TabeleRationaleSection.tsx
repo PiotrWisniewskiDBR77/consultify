@@ -6,7 +6,6 @@ import type { TabelePreviewRationale } from '@/types/tabeleArtifact';
 
 interface TabeleRationaleSectionProps {
   rationale: TabelePreviewRationale;
-  isPolish: boolean;
   onOpenProposalQueue?: () => void;
 }
 
