@@ -145,4 +145,73 @@ describe('RealtimePlatformService', () => {
       ],
     );
   });
+
+  // ── M09 L-04: shared facilitation session (governance backend) ──
+
+  it('createFacilitationSession is idempotent per (org, toolSessionId) — reuses the existing shared session', async () => {
+    // A session already exists for this org + tool session → a 2nd participant must
+    // resolve to the SAME session (shared timer/phase/voting/roles), not a private one.
+    mockQueryFirst.mockResolvedValue({ id: 'shared-session-1' });
+
+    const { realtimePlatformService } = await import(
+      '../../../../server/src/services/realtimePlatformService.js'
+    );
+    const result = await realtimePlatformService.createFacilitationSession('org-1', {
+      toolSessionId: 'tool-session-9',
+      facilitatorId: 'user-B',
+    });
+
+    expect(result).toEqual({ id: 'shared-session-1' });
+    // Looked up by org + tool_session_id, status not ended.
+    expect(mockQueryFirst).toHaveBeenCalledWith(
+      expect.stringContaining('tool_facilitation_sessions'),
+      ['org-1', 'tool-session-9'],
+    );
+    // No INSERT happened — the existing row was reused.
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('createFacilitationSession inserts a new session when none exists (first participant = facilitator)', async () => {
+    mockQueryFirst.mockResolvedValue(null);
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const { realtimePlatformService } = await import(
+      '../../../../server/src/services/realtimePlatformService.js'
+    );
+    const result = await realtimePlatformService.createFacilitationSession('org-1', {
+      toolSessionId: 'tool-session-fresh',
+      facilitatorId: 'user-A',
+    });
+
+    expect(result).toEqual({ id: 'realtime-uuid' });
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO tool_facilitation_sessions'),
+      ['realtime-uuid', 'org-1', 'tool-session-fresh', 'user-A', '{}'],
+    );
+  });
+
+  it('two participants cast votes into the SAME shared session (consistent aggregation target)', async () => {
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const { realtimePlatformService } = await import(
+      '../../../../server/src/services/realtimePlatformService.js'
+    );
+    await realtimePlatformService.castVote('shared-session-1', {
+      voterId: 'user-A',
+      voteTargetId: 'node-9',
+      voteValue: 1,
+    });
+    await realtimePlatformService.castVote('shared-session-1', {
+      voterId: 'user-B',
+      voteTargetId: 'node-9',
+      voteValue: 1,
+    });
+
+    // Both votes target the same facilitation_session_id (arg index 1) and the same
+    // node, from two distinct voters — so getVoteSummary aggregates them together.
+    const sessionIds = mockQueryRun.mock.calls.map((c) => (c[1] as unknown[])[1]);
+    const voterIds = mockQueryRun.mock.calls.map((c) => (c[1] as unknown[])[2]);
+    expect(sessionIds).toEqual(['shared-session-1', 'shared-session-1']);
+    expect(voterIds).toEqual(['user-A', 'user-B']);
+  });
 });

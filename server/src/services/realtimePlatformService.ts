@@ -236,6 +236,19 @@ class RealtimePlatformService {
       settings?: object;
     }
   ) {
+    // M09 L-04: facilitation sessions are SHARED per (org, tool_session_id) so a 2nd
+    // participant joining the same board resolves to the SAME session (shared timer,
+    // phase, voting, roles) instead of spawning a private one. The first creator stays
+    // the facilitator (facilitator_id); later joiners reuse the row and become
+    // participants. Idempotent: return the existing active session if present.
+    const existing = await queryHelpers.queryFirst<{ id: string }>(
+      `SELECT id FROM tool_facilitation_sessions
+        WHERE organization_id=$1 AND tool_session_id=$2 AND status <> 'ended'
+        ORDER BY created_at ASC LIMIT 1`,
+      [orgId, data.toolSessionId]
+    );
+    if (existing?.id) return { id: existing.id };
+
     const id = uuidv4();
     const settingsJson = data.settings ? JSON.stringify(data.settings) : '{}';
     await queryHelpers.queryRun(
