@@ -33,17 +33,19 @@ interface EditableTarget {
   label: string;
 }
 
-function formatAuditAction(action: DocumentAuditEntry['action'], isPolish: boolean): string {
-  if (!isPolish) return action;
+function formatAuditAction(
+  action: DocumentAuditEntry['action'],
+  t: (key: string, fallback: string) => string
+): string {
   switch (action) {
     case 'proposal_created':
-      return 'utworzono_propozycje';
+      return t('docs.auditAction.proposalCreated', 'proposal_created');
     case 'proposal_approved':
-      return 'zatwierdzono_propozycje';
+      return t('docs.auditAction.proposalApproved', 'proposal_approved');
     case 'proposal_rejected':
-      return 'odrzucono_propozycje';
+      return t('docs.auditAction.proposalRejected', 'proposal_rejected');
     case 'proposal_executed':
-      return 'wykonano_propozycje';
+      return t('docs.auditAction.proposalExecuted', 'proposal_executed');
     default:
       return action;
   }
@@ -54,8 +56,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
   schema,
   onSchemaUpdated,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const { t } = useTranslation();
   const [instruction, setInstruction] = useState('');
   const [targetKey, setTargetKey] = useState('');
   const [scope, setScope] = useState<DocumentEditorScope>('local');
@@ -504,7 +505,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
               .map((entry) => (
                 <li key={entry.auditId}>
                   {new Date(entry.occurredAt).toLocaleString()} ·{' '}
-                  {formatAuditAction(entry.action, Boolean(isPolish))}
+                  {formatAuditAction(entry.action, t)}
                 </li>
               ))}
           </ul>

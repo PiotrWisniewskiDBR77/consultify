@@ -1,0 +1,18 @@
+{
+  "docs.auditAction.proposalCreated": {
+    "pl": "utworzono_propozycje",
+    "en": "proposal_created"
+  },
+  "docs.auditAction.proposalApproved": {
+    "pl": "zatwierdzono_propozycje",
+    "en": "proposal_approved"
+  },
+  "docs.auditAction.proposalRejected": {
+    "pl": "odrzucono_propozycje",
+    "en": "proposal_rejected"
+  },
+  "docs.auditAction.proposalExecuted": {
+    "pl": "wykonano_propozycje",
+    "en": "proposal_executed"
+  }
+}
