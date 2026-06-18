@@ -108,12 +108,7 @@ const ValueCell: React.FC<{ value?: number | null; unit?: string; status?: KPISt
   status,
 }) => {
   if (value == null) return <span className="text-sm text-slate-500">—</span>;
-  const color =
-    status === 'on-target'
-      ? 'text-emerald-400'
-      : status === 'below'
-        ? 'text-danger-400'
-        : 'text-slate-500 dark:text-slate-300';
+  const color = 'text-slate-700 dark:text-slate-300';
   return (
     <span className={`text-sm font-medium ${color}`}>
       {value.toLocaleString()}
@@ -249,7 +244,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
           ),
         ].map((n) => ({ value: n, label: n })),
         render: (row: TableRow) => (
-          <span className="text-sm text-primary-400 truncate block max-w-[260px]">
+          <span className="text-sm text-slate-500 dark:text-slate-400 truncate block max-w-[260px]">
             {row.initiativeName || '—'}
           </span>
         ),
@@ -335,7 +330,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
           const k = row._raw as ResultsKPI;
           const v = Boolean(k.needsEntry);
           return v ? (
-            <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-amber-500/10 text-amber-300">
+            <span className="inline-flex items-center whitespace-nowrap h-6 px-2 text-[11px] font-medium rounded-full bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-300">
               {t('results.needsEntry.badge', 'Needs entry')}
             </span>
           ) : (

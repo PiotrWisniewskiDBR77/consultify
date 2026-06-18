@@ -415,7 +415,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             <div className="w-4 h-4 rounded-full bg-blue-500 border border-white dark:border-navy-900 flex items-center justify-center text-[6px] text-white">
               B
             </div>
-            <div className="w-4 h-4 rounded-full bg-primary-500 border border-white dark:border-navy-900 flex items-center justify-center text-[6px] text-white">
+            <div className="w-4 h-4 rounded-full bg-navy-700 border border-white dark:border-navy-900 flex items-center justify-center text-[6px] text-white">
               E
             </div>
           </div>

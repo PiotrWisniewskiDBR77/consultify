@@ -197,7 +197,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                       key={i}
                       className="flex items-center gap-3 text-slate-700 dark:text-slate-300"
                     >
-                      <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-navy-900 rounded-full dark:bg-slate-300"></div>
                       {item}
                     </li>
                   ))}

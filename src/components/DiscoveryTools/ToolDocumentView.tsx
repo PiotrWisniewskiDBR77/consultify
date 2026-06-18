@@ -1100,7 +1100,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             type="button"
             onClick={() => nextStep()}
             disabled={currentStep >= stepDefs.length || !canAdvanceStep()}
-            className="rounded-lg bg-primary-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+            className="rounded-lg bg-navy-900 px-3 py-2 text-sm text-white hover:bg-navy-800 disabled:opacity-50"
           >
             {isPolish ? 'Next' : 'Next'}
           </button>
@@ -1615,7 +1615,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 disabled={
                   phaseIndex >= stepDefs.length || (phaseIndex === currentStep && !canAdvanceStep())
                 }
-                className="rounded-lg bg-primary-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+                className="rounded-lg bg-navy-900 px-3 py-2 text-sm text-white hover:bg-navy-800 disabled:opacity-50"
               >
                 {phaseIndex >= stepDefs.length
                   ? isPolish
@@ -2129,7 +2129,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               <button
                 type="button"
                 onClick={() => void handleConfirmRequestReview()}
-                className="rounded-lg bg-primary-500 px-4 py-2 text-sm text-white"
+                className="rounded-lg bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-800"
               >
                 {isPolish ? 'Send review' : 'Send review'}
               </button>

@@ -143,7 +143,7 @@ export const STATUS_COLORS = {
     textDark: 'dark:text-primary-300',
     border: 'border-primary-300',
     borderDark: 'dark:border-primary-700',
-    indicator: 'bg-primary-500',
+    indicator: 'bg-navy-900',
   },
   EXECUTING: {
     bg: 'bg-blue-100 dark:bg-blue-900/30',
@@ -229,7 +229,7 @@ export const KANBAN_COLUMN_COLORS = {
 // Timeline colors
 export const TIMELINE_COLORS = {
   past: 'bg-slate-200 dark:bg-slate-700',
-  current: 'bg-primary-500 dark:bg-primary-600',
+  current: 'bg-navy-900 dark:bg-slate-300',
   future: 'bg-slate-300 dark:bg-slate-600',
   milestone: 'bg-amber-500 dark:bg-amber-600',
 } as const;

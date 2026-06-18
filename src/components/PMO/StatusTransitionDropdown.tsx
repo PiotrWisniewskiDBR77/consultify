@@ -388,7 +388,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                 className={`px-4 py-2 text-white text-sm font-medium rounded-lg disabled:opacity-50 ${
                   pendingStatus === InitiativeStatus.DONE
                     ? 'bg-green-600 hover:bg-green-500'
-                    : 'bg-primary-600 hover:bg-primary-500'
+                    : 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                 }`}
               >
                 {isLoading ? 'Updating...' : 'Confirm'}

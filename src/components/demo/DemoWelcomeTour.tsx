@@ -297,7 +297,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                   <button
                     onClick={handleStartTour}
                     disabled={!canStartTour}
-                    className="px-6 py-3 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-150 flex items-center gap-2"
+                    className="px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl transition-all duration-150 flex items-center gap-2"
                   >
                     {t('tour.startScenario', 'Start walkthrough')}
                     <ArrowRight size={18} />

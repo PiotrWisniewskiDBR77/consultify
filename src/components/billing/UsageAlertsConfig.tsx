@@ -139,7 +139,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
           <button
             onClick={() => toggleSetting('email_notifications')}
             className={`w-12 h-6 rounded-full transition-colors ${
-              settings.email_notifications ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.email_notifications ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -184,7 +184,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                 <button
                   onClick={() => toggleSetting(key)}
                   className={`w-10 h-5 rounded-full transition-colors ${
-                    settings[key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+                    settings[key] ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
                   }`}
                 >
                   <div
@@ -235,7 +235,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                 <button
                   onClick={() => toggleSetting(key)}
                   className={`w-10 h-5 rounded-full transition-colors ${
-                    settings[key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+                    settings[key] ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
                   }`}
                 >
                   <div
@@ -302,7 +302,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
           <button
             onClick={() => toggleSetting('auto_upgrade_enabled')}
             className={`w-12 h-6 rounded-full transition-colors ${
-              settings.auto_upgrade_enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.auto_upgrade_enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div

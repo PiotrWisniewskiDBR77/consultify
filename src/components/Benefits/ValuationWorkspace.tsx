@@ -626,7 +626,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                     <div className="relative mb-3">
                       <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 bg-slate-200 dark:bg-navy-700 rounded-full" />
                       <div
-                        className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-primary-600 rounded-full transition-all duration-300"
+                        className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-navy-900 rounded-full transition-all duration-300"
                         style={{ width: `${progressPercent}%` }}
                       />
                       <div className="relative flex justify-between">

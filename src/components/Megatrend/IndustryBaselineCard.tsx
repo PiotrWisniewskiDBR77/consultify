@@ -92,7 +92,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
                   trend.type === 'Technology'
                     ? 'bg-blue-500'
                     : trend.type === 'Business'
-                      ? 'bg-primary-500'
+                      ? 'bg-navy-900'
                       : 'bg-amber-500'
                 }`}
               ></div>

@@ -266,7 +266,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                         flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all
                         ${
                           selectedGoalId
-                            ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-900/20'
+                            ? 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white shadow-lg shadow-primary-900/20'
                             : 'bg-slate-100 dark:bg-navy-900 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                         }
                     `}

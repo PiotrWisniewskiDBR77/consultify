@@ -67,7 +67,7 @@ const PhaseNode: React.FC<PhaseNodeProps> = ({ phase, isCurrent, isLast }) => {
         {isCurrent && phase.progress > 0 && phase.progress < 100 && (
           <div className="absolute -bottom-3 w-12 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary-500 rounded-full transition-all duration-500"
+              className="h-full bg-navy-900 rounded-full transition-all duration-500"
               style={{ width: `${phase.progress}%` }}
             />
           </div>
@@ -111,7 +111,7 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
     return (
       <div className={`flex items-center gap-3 ${className}`}>
         <div className="flex items-center gap-1.5">
-          <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full bg-navy-900 flex items-center justify-center">
             <span className="text-xs font-bold text-white">{progress.currentPhase}</span>
           </div>
           <span className="text-xs font-medium text-navy-900 dark:text-white">
@@ -120,7 +120,7 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
         </div>
         <div className="w-20 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary-500 rounded-full transition-all duration-500"
+            className="h-full bg-navy-900 rounded-full transition-all duration-500"
             style={{ width: `${progress.overallProgress}%` }}
           />
         </div>

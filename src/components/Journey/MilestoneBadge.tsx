@@ -31,7 +31,7 @@ const MILESTONE_COLORS: Record<string, { bg: string; icon: string; glow: string 
   cta_clicked: { bg: 'bg-amber-500', icon: 'text-white', glow: 'shadow-amber-500/30' },
   demo_started: { bg: 'bg-blue-500', icon: 'text-white', glow: 'shadow-blue-500/30' },
   demo_completed: { bg: 'bg-green-500', icon: 'text-white', glow: 'shadow-green-500/30' },
-  trial_started: { bg: 'bg-primary-500', icon: 'text-white', glow: 'shadow-primary-500/30' },
+  trial_started: { bg: 'bg-navy-900', icon: 'text-white', glow: 'shadow-primary-500/30' },
   memory_activated: { bg: 'bg-indigo-500', icon: 'text-white', glow: 'shadow-indigo-500/30' },
   first_axis_created: { bg: 'bg-emerald-500', icon: 'text-white', glow: 'shadow-emerald-500/30' },
   snapshot_created: { bg: 'bg-blue-500', icon: 'text-white', glow: 'shadow-blue-500/30' },

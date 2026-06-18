@@ -432,7 +432,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
           <button
             onClick={() => setIsMobileChatOpen(true)}
             className={`
-                            lg:hidden fixed z-40 rounded-full bg-primary-600 text-white shadow-lg shadow-primary-600/30
+                            lg:hidden fixed z-40 rounded-full bg-navy-900 text-white shadow-lg shadow-navy-900/30
                             flex items-center justify-center transition-all touch-ripple touch-target
                             ${
                               isMobile

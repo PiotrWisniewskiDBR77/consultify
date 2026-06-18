@@ -113,7 +113,7 @@ const InviteRouteWrapper = () => {
           <button
             type="button"
             onClick={() => navigate('/login', { replace: true })}
-            className="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 rounded-md bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
           >
             Go to login
           </button>

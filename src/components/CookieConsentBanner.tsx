@@ -155,9 +155,7 @@ export const CookieConsentBanner: React.FC = () => {
                     </button>
                     <button
                       onClick={acceptAll}
-                      className="px-6 py-2.5 text-sm font-semibold text-white
-                                                       bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors
-                                                       shadow-lg shadow-primary-500/25"
+                      className="px-6 py-2.5 text-sm font-semibold bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors shadow-lg"
                     >
                       Accept All
                     </button>
@@ -215,9 +213,7 @@ export const CookieConsentBanner: React.FC = () => {
                       <div className="mt-6 flex justify-end">
                         <button
                           onClick={saveCustomPreferences}
-                          className="px-6 py-2.5 text-sm font-semibold text-white
-                                                               bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors
-                                                               flex items-center gap-2"
+                          className="px-6 py-2.5 text-sm font-semibold bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors flex items-center gap-2"
                         >
                           <Check size={16} />
                           Save Preferences
@@ -279,7 +275,7 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
         disabled={locked || disabled}
         className={`relative w-12 h-7 rounded-full transition-colors ${
           locked || disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-        } ${enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+        } ${enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-700'}`}
       >
         <motion.div
           animate={{ x: enabled ? 22 : 2 }}

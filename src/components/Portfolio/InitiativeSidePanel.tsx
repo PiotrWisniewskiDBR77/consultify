@@ -303,7 +303,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div className="flex items-center gap-2">
               <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary-500 rounded-full"
+                  className="h-full bg-navy-900 rounded-full"
                   style={{ width: `${initiative.progress}%` }}
                 />
               </div>
@@ -1056,7 +1056,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                 <button
                   onClick={handleRequestGate}
                   disabled={submittingGate || !gateType || !gateOwnerId || !gateDueDate}
-                  className="px-4 py-2 text-sm text-white bg-primary-600 hover:bg-primary-500 rounded-lg disabled:opacity-50"
+                  className="px-4 py-2 text-sm text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-50"
                 >
                   {submittingGate ? 'Requesting...' : 'Request'}
                 </button>

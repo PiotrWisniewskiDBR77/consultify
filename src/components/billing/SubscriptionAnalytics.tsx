@@ -358,7 +358,7 @@ export const SubscriptionAnalytics: React.FC = () => {
               const totalMRR = mrr?.totalMRR || 1;
               const percentage = (plan.plan_mrr / totalMRR) * 100;
               const colors = [
-                'bg-primary-500',
+                'bg-navy-900',
                 'bg-blue-500',
                 'bg-green-500',
                 'bg-amber-500',

@@ -327,7 +327,7 @@ export function DraftReviewPanel({
               <FileText className="w-5 h-5 text-primary-600" />
               <span className="font-medium">Sugestie AI</span>
               {pendingCount > 0 && (
-                <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full">
+                <span className="bg-navy-900 text-white text-xs px-2 py-0.5 rounded-full">
                   {pendingCount} do przeglądu
                 </span>
               )}

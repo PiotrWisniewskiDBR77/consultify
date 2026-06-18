@@ -61,7 +61,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
         >
           {/* Selection Count */}
           <div className="flex items-center gap-2 pr-3 border-r border-slate-200 dark:border-navy-600">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-500 text-white text-xs font-medium">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-navy-900 text-white text-xs font-medium dark:bg-white dark:text-navy-950">
               {selectedCount}
             </span>
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">selected</span>

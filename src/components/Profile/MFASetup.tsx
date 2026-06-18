@@ -1055,7 +1055,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ number, label, active, co
         completed
           ? 'bg-emerald-500 text-white'
           : active
-            ? 'bg-primary-600 text-white'
+            ? 'bg-navy-900 text-white'
             : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
       }`}
     >

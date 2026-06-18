@@ -1551,7 +1551,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                     <div
                       className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                         message.role === 'user'
-                          ? 'bg-primary-600 text-white'
+                          ? 'bg-navy-900 text-white'
                           : 'bg-white/[0.06] text-white/85'
                       }`}
                     >

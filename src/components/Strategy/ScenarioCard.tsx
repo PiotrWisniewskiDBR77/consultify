@@ -103,7 +103,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
           </span>
           <VisualScale
             value={parseInt(scenario.tempo || '3', 10)}
-            colorClass={isSelected ? 'bg-primary-500' : 'bg-slate-400'}
+            colorClass={isSelected ? 'bg-navy-900' : 'bg-slate-400'}
           />
         </div>
         <div className="flex justify-between items-center text-xs">
@@ -112,7 +112,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
           </span>
           <VisualScale
             value={parseInt(scenario.ambition || '3', 10)}
-            colorClass={isSelected ? 'bg-primary-500' : 'bg-slate-400'}
+            colorClass={isSelected ? 'bg-navy-900' : 'bg-slate-400'}
           />
         </div>
         <div className="flex justify-between items-center text-xs">
@@ -121,7 +121,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
           </span>
           <VisualScale
             value={parseInt(scenario.risk || '3', 10)}
-            colorClass={isSelected ? 'bg-primary-500' : 'bg-slate-400'}
+            colorClass={isSelected ? 'bg-navy-900' : 'bg-slate-400'}
           />
         </div>
       </div>

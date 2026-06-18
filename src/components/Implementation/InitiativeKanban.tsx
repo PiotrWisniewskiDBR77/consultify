@@ -167,7 +167,7 @@ const SortableInitiativeCard: React.FC<{
         </div>
         <div className="h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary-500 rounded-full transition-all"
+            className="h-full bg-navy-900 rounded-full transition-all"
             style={{ width: `${initiative.progress || 0}%` }}
           />
         </div>

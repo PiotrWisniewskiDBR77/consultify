@@ -99,7 +99,7 @@ export const UsageMeter: React.FC<{
                 ? 'bg-rose-500'
                 : percentage >= 80
                   ? 'bg-amber-500'
-                  : 'bg-primary-600'
+                  : 'bg-navy-900'
             }`}
             style={{ width: `${Math.min(100, percentage)}%` }}
           />

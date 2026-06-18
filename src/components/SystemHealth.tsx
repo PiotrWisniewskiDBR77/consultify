@@ -116,9 +116,9 @@ export const SystemHealth = () => {
           type="button"
           disabled
           title={t('system.demoDataTitle', 'Demo data session')}
-          className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-primary-400/30 bg-primary-500/10 text-primary-700 dark:text-primary-200 cursor-default"
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-slate-200 bg-slate-50 text-slate-700 dark:border-navy-600 dark:bg-navy-800/50 dark:text-slate-300 cursor-default"
         >
-          <div className="w-2 h-2 rounded-full bg-primary-500" />
+          <div className="w-2 h-2 rounded-full bg-navy-900 dark:bg-slate-300" />
           <span className="text-xs font-medium">{t('system.demoData', 'Demo Data')}</span>
           <ChevronDown size={14} className="text-primary-300/80" />
         </button>
@@ -271,7 +271,7 @@ export const SystemHealth = () => {
                 </div>
                 <div className="h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${apiPercent > 80 ? 'bg-amber-500' : 'bg-primary-500'}`}
+                    className={`h-full rounded-full transition-all ${apiPercent > 80 ? 'bg-amber-500' : 'bg-navy-900 dark:bg-slate-300'}`}
                     style={{ width: `${Math.min(apiPercent, 100)}%` }}
                   />
                 </div>

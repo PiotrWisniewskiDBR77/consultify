@@ -104,7 +104,7 @@ export const PartnerRuntimeSummaryStrip: React.FC<{ summary: PartnerRuntimeSumma
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-xl border border-primary-200 bg-white p-6 dark:border-primary-900/40 dark:bg-navy-800">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-800">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
@@ -150,7 +150,7 @@ export const PartnerRuntimeSummaryStrip: React.FC<{ summary: PartnerRuntimeSumma
         ].map((card) => (
           <div
             key={card.label}
-            className="rounded-xl border border-primary-200/70 bg-primary-50/50 p-4 dark:border-primary-900/30 dark:bg-primary-950/20"
+            className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-navy-700/60 dark:bg-navy-900/40"
           >
             <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {card.label}

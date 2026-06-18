@@ -48,8 +48,8 @@ const TIERS: Tier[] = [
     nameKey: 'llm.premiumTier',
     descKey: 'llm.premiumTierDesc',
     icon: <Crown size={16} />,
-    color: 'bg-primary-500',
-    darkColor: 'bg-primary-400',
+    color: 'bg-sky-500',
+    darkColor: 'bg-sky-400',
   },
   {
     id: 'REASONING',
@@ -230,9 +230,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
           type="button"
           disabled
           title={t('llm.demoTitle', 'Demo AI workspace')}
-          className="inline-flex items-center gap-2 h-9 px-2 rounded-full border border-primary-400/30 bg-primary-500/10 text-xs font-medium text-primary-700 dark:text-primary-200 cursor-default"
+          className="inline-flex items-center gap-2 h-9 px-2 rounded-full border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 dark:border-navy-600 dark:bg-navy-800/50 dark:text-slate-300 cursor-default"
         >
-          <div className="w-2 h-2 rounded-full bg-primary-500" />
+          <div className="w-2 h-2 rounded-full bg-navy-900 dark:bg-slate-300" />
           <span className={compact ? 'max-w-[72px] truncate' : ''}>
             {t('llm.demoLabel', 'Demo AI')}
           </span>

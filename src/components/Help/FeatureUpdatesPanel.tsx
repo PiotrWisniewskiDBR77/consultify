@@ -342,7 +342,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     {!u.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-navy-900 flex-shrink-0" />
                     )}
                     <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
                       {u.title}
@@ -487,7 +487,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
                   <button
                     onClick={publishNow}
                     disabled={publishing}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-xs font-semibold transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-60 text-white text-xs font-semibold transition-colors"
                   >
                     {publishing ? (
                       <Loader2 size={14} className="animate-spin" />

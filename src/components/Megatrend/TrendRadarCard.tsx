@@ -36,7 +36,7 @@ const ringOrder: Record<RadarMegatrend['ring'], number> = {
 // Colours and emojis per type
 const typeColors: Record<RadarMegatrend['type'], { bg: string; border: string; emoji: string }> = {
   Technology: { bg: 'bg-blue-500', border: 'border-blue-700', emoji: '🔵' },
-  Business: { bg: 'bg-primary-500', border: 'border-primary-700', emoji: '🟣' },
+  Business: { bg: 'bg-navy-900', border: 'border-primary-700', emoji: '🟣' },
   Societal: { bg: 'bg-amber-500', border: 'border-amber-700', emoji: '🟠' },
 };
 

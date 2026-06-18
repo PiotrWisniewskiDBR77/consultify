@@ -4907,7 +4907,7 @@ Please return:
               setIsLoading(true);
               queueExecutionTruthRefresh();
             }}
-            className="inline-flex items-center gap-2 rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600"
+            className="inline-flex items-center gap-2 rounded-md bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
             <RefreshCw className="h-4 w-4" />
             {t('common.retry', 'Retry')}

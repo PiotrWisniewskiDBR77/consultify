@@ -28,7 +28,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
           </span>
         </div>
         <div className="w-full h-1 bg-slate-50 dark:bg-navy-800 rounded-full overflow-hidden">
-          <div className="h-full bg-primary-500 w-full shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+          <div className="h-full bg-navy-900 w-full "></div>
         </div>
       </div>
 

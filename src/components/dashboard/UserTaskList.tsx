@@ -81,7 +81,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ onNavigate }) => {
           <button
             type="button"
             onClick={() => setShowModal(true)}
-            className="px-3 py-1.5 text-xs rounded-md bg-primary-600 text-white"
+            className="px-3 py-1.5 text-xs rounded-md bg-navy-900 text-white hover:bg-navy-800"
           >
             Add Task
           </button>

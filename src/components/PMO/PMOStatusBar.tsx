@@ -72,7 +72,7 @@ export const PMOStatusBar: React.FC = () => {
       case 'Assessment':
         return 'bg-indigo-500';
       case 'Initiatives':
-        return 'bg-primary-500';
+        return 'bg-navy-900';
       case 'Roadmap':
         return 'bg-pink-500';
       case 'Execution':

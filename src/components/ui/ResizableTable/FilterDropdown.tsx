@@ -89,7 +89,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
       >
         <Filter size={12} />
         {activeCount > 0 && (
-          <span className="text-[10px] font-medium bg-primary-500 text-white px-1 rounded">
+          <span className="text-[10px] font-medium bg-navy-900 text-white px-1 rounded dark:bg-white dark:text-navy-950">
             {activeCount}
           </span>
         )}
@@ -143,7 +143,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                           w-4 h-4 rounded border flex items-center justify-center
                           ${
                             isSelected
-                              ? 'bg-primary-500 border-primary-500'
+                              ? 'bg-navy-900 border-navy-900 dark:bg-white dark:border-white'
                               : 'border-slate-300 dark:border-navy-500'
                           }
                         `}
@@ -205,7 +205,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
               </button>
               <button
                 onClick={handleApply}
-                className="px-3 py-1 text-xs font-medium bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors"
+                className="px-3 py-1 text-xs font-medium bg-navy-900 text-white rounded hover:bg-navy-800 transition-colors dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
               >
                 Apply
               </button>

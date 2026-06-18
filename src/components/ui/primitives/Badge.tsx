@@ -76,7 +76,7 @@ const variantStyles: Record<BadgeVariant, string> = {
 };
 
 const dotColors: Record<BadgeVariant, string> = {
-  primary: 'bg-primary-500',
+  primary: 'bg-navy-900',
   secondary: 'bg-secondary-500',
   success: 'bg-success-500',
   danger: 'bg-danger-500',

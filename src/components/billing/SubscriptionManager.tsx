@@ -282,7 +282,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                 {/* Current Badge */}
                 {isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-full">
+                    <span className="flex items-center gap-1 px-3 py-1 bg-navy-900 text-white text-xs font-bold rounded-full">
                       <Check className="w-3 h-3" />
                       {t('billing.subscription.current', 'Current')}
                     </span>

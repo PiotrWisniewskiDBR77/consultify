@@ -165,7 +165,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       },
       {
         id: 'presentations' as ModuleTab,
-        label: t('rap.tabs.presentations', 'Prezentacje'),
+        label: t('rap.tabs.presentations', 'Presentations'),
         icon: <Presentation size={16} />,
       },
       {
@@ -175,7 +175,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       },
       {
         id: 'templates' as ModuleTab,
-        label: t('rap.tabs.templates', 'Biblioteka wzorców'),
+        label: t('rap.tabs.templates', 'Template Library'),
         icon: <BookTemplate size={16} />,
       },
     ],
@@ -187,10 +187,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       outputs_all: t('rap.outputs.cta.new', 'New output'),
       outputs_mine: t('rap.outputs.cta.new', 'New output'),
       outputs_review: t('rap.outputs.cta.new', 'New output'),
-      outputs_documents: t('rap.actions.newReport', 'Nowy raport'),
-      presentations: t('rap.actions.newPresentation', 'Nowa prezentacja'),
+      outputs_documents: t('rap.actions.newReport', 'New report'),
+      presentations: t('rap.actions.newPresentation', 'New presentation'),
       outputs_sheets: '',
-      templates: t('rap.actions.newTemplate', 'Nowy wzorzec'),
+      templates: t('rap.actions.newTemplate', 'New template'),
     }),
     [t]
   );

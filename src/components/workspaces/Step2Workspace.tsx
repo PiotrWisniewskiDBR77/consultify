@@ -25,7 +25,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
           <span className="text-xs text-slate-500 dark:text-slate-400">Quick Assessment</span>
         </div>
         <div className="w-full h-1 bg-slate-50 dark:bg-navy-800 rounded-full overflow-hidden">
-          <div className="h-full bg-primary-500 w-2/3 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+          <div className="h-full bg-navy-900 w-2/3 "></div>
         </div>
       </div>
 
@@ -38,7 +38,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
           </div>
 
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-            <span className="w-1 h-6 bg-primary-500 rounded-full"></span>
+            <span className="w-1 h-6 bg-navy-900 rounded-full"></span>
             Strategic Goals
           </h3>
 

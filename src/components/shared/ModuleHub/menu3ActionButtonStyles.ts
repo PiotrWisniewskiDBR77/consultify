@@ -7,6 +7,6 @@ export const MENU3_AI_BUTTON_BASE_CLASS =
 export const getMenu3AiButtonClass = (active = false) =>
   `${MENU3_AI_BUTTON_BASE_CLASS} ${
     active
-      ? 'bg-primary-500/15 text-primary-800 dark:bg-primary-500/10 dark:text-primary-200 border-primary-500/60 dark:border-primary-500/40 shadow-[inset_0_0_0_1px_rgba(168,85,247,0.18)] dark:shadow-[inset_0_0_0_1px_rgba(168,85,247,0.10)]'
+      ? 'bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:text-sky-300 border-sky-300 dark:border-sky-500/30'
       : 'menu3-ai-opportunity bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-navy-700/60 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-navy-900/50'
   }`;

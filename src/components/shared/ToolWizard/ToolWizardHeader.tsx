@@ -84,7 +84,7 @@ export const ToolWizardHeader: React.FC<ToolWizardHeaderProps> = ({
           </span>
           <div className="w-20 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary-500 rounded-full transition-all duration-300"
+              className="h-full bg-navy-900 rounded-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>

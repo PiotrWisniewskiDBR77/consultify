@@ -450,7 +450,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             />
             {/* Progress */}
             <div
-              className="absolute inset-y-0 left-0 bg-primary-500 rounded-full"
+              className="absolute inset-y-0 left-0 bg-navy-900 rounded-full"
               style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
             />
             {/* Chapter Markers */}

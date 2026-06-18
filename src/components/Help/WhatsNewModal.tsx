@@ -95,7 +95,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
 
   // Type badge color
   const typeBadgeColor = {
-    major: 'bg-primary-500',
+    major: 'bg-navy-900',
     minor: 'bg-blue-500',
     patch: 'bg-green-500',
   };
@@ -252,7 +252,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                           onClick={() => setCurrentFeatureIndex(i)}
                           className={`w-2 h-2 rounded-full transition-colors ${
                             i === currentFeatureIndex
-                              ? 'bg-primary-500'
+                              ? 'bg-navy-900'
                               : 'bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
                           }`}
                         />

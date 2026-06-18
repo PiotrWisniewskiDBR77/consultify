@@ -24,7 +24,7 @@
  * Bilingual (pl/en).
  */
 
-import { ClipboardList, Loader2, Send, ShieldCheck, Trash2, Users } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Send, ShieldCheck, Trash2, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -111,7 +111,12 @@ export const AuditsHub: React.FC = () => {
       setPrograms(res.programs);
       setTotal(res.total);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('audit.failedToLoadPrograms'));
+      const msg = e instanceof Error ? e.message : '';
+      setError(
+        msg.toLowerCase().includes('transport safeguard') || msg.toLowerCase().includes('circuit')
+          ? t('audit.temporarilyUnavailable', 'Service temporarily unavailable. Please try again in a moment.')
+          : msg || t('audit.failedToLoadPrograms')
+      );
     } finally {
       setLoading(false);
     }
@@ -135,7 +140,12 @@ export const AuditsHub: React.FC = () => {
       });
       setTotal(res.total);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('audit.failedToLoadPrograms'));
+      const msg = e instanceof Error ? e.message : '';
+      setError(
+        msg.toLowerCase().includes('transport safeguard') || msg.toLowerCase().includes('circuit')
+          ? t('audit.temporarilyUnavailable', 'Service temporarily unavailable. Please try again in a moment.')
+          : msg || t('audit.failedToLoadPrograms')
+      );
     } finally {
       setLoadingMore(false);
     }
@@ -399,8 +409,18 @@ export const AuditsHub: React.FC = () => {
       >
         <div className="mx-auto max-w-6xl px-6 py-6">
           {error && (
-            <div className="mb-4 rounded-xl border border-red-400/30 bg-red-400/5 p-3 text-sm text-red-600 dark:text-red-300">
-              {error}
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 p-4 dark:border-danger-500/20 dark:bg-danger-500/10">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger-600 dark:text-danger-400" />
+              <div className="flex-1">
+                <p className="text-sm text-danger-800 dark:text-danger-300">{error}</p>
+              </div>
+              <button
+                onClick={load}
+                className="flex items-center gap-1.5 rounded-lg border border-danger-200 bg-white px-3 py-1.5 text-xs font-medium text-danger-700 transition-colors hover:bg-danger-50 dark:border-danger-500/30 dark:bg-transparent dark:text-danger-300 dark:hover:bg-danger-500/10"
+              >
+                <RefreshCw className="h-3 w-3" />
+                {t('common.retry', 'Retry')}
+              </button>
             </div>
           )}
 

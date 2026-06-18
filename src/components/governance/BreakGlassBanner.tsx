@@ -28,7 +28,7 @@ const scopeColors: Record<string, string> = {
   policy_engine_disabled: 'bg-amber-500',
   approval_bypass: 'bg-rose-500',
   rate_limit_bypass: 'bg-yellow-500',
-  audit_bypass: 'bg-primary-500',
+  audit_bypass: 'bg-sky-500',
   emergency_access: 'bg-rose-600',
 };
 

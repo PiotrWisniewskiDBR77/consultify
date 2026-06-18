@@ -822,7 +822,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
               type="button"
               onClick={() => void executeOverride()}
               disabled={overrideFlow.pending === 'executing'}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-primary-500 dark:hover:bg-primary-400"
+              className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
               data-testid={`${testId}-overrides-execute`}
             >
               <PendingButtonContent

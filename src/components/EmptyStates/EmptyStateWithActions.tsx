@@ -107,7 +107,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
       {/* Templates */}
       {templates.length > 0 && (
         <div className="w-full max-w-lg">
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3">
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-500 tracking-wider mb-3">
             Lub wybierz szablon
           </p>
           <div className="grid grid-cols-1 gap-2">

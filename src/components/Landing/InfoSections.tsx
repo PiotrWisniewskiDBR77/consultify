@@ -422,7 +422,7 @@ const FeatureCarousel: React.FC = () => {
               onClick={() => setCurrentSlide(idx)}
               className={`transition-all duration-300 ${
                 idx === currentSlide
-                  ? 'w-8 h-2 bg-primary-500 rounded-full'
+                  ? 'w-8 h-2 bg-navy-900 rounded-full dark:bg-white'
                   : 'w-2 h-2 bg-white/20 rounded-full hover:bg-white/40'
               }`}
             />

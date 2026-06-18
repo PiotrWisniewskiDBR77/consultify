@@ -98,12 +98,12 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-navy-900 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-navy-700 flex flex-col max-h-[80vh]">
         {/* Header */}
-        <div className="p-4 bg-indigo-600 flex justify-between items-center text-white">
+        <div className="p-4 bg-navy-900 flex justify-between items-center text-white">
           <div className="flex items-center gap-2">
             <TeresaMark size={20} />
             <h3 className="font-bold">AI Auditor: {axisLabel}</h3>
           </div>
-          <button onClick={onClose} className="hover:bg-indigo-500 p-1 rounded transition">
+          <button onClick={onClose} className="hover:bg-navy-800 p-1 rounded transition">
             <X size={20} />
           </button>
         </div>
@@ -113,12 +113,12 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
           {messages.map((m, idx) => (
             <div key={idx} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.role === 'user' ? 'bg-slate-300 text-slate-600 dark:text-slate-400' : 'bg-indigo-600 text-white'}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.role === 'user' ? 'bg-slate-300 text-slate-600 dark:text-slate-400' : 'bg-navy-900 text-white'}`}
               >
                 {m.role === 'user' ? <User size={14} /> : <TeresaMark size={14} />}
               </div>
               <div
-                className={`p-3 rounded-xl max-w-[80%] text-sm ${m.role === 'user' ? 'bg-white border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200 rounded-tr-none' : 'bg-indigo-600 text-white rounded-tl-none'}`}
+                className={`p-3 rounded-xl max-w-[80%] text-sm ${m.role === 'user' ? 'bg-white border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200 rounded-tr-none' : 'bg-navy-900 text-white rounded-tl-none'}`}
               >
                 {m.text}
               </div>
@@ -126,7 +126,7 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
           ))}
           {isLoading && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full bg-navy-900 flex items-center justify-center shrink-0">
                 <TeresaMark size={14} className="text-white" />
               </div>
               <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl rounded-tl-none">
@@ -170,7 +170,7 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-300 text-white p-3 rounded-xl transition-colors"
+                className="bg-navy-900 hover:bg-navy-800 disabled:bg-slate-300 text-white p-3 rounded-xl transition-colors"
               >
                 <Send size={20} />
               </button>

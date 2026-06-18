@@ -112,7 +112,7 @@ const STATUS_COLORS: Record<
     bg: 'bg-primary-500/20',
     border: 'border-primary-500/50',
     text: 'text-primary-400',
-    progress: 'bg-primary-500',
+    progress: 'bg-navy-900',
   },
   [InitiativeStatus.EXECUTING]: {
     bg: 'bg-blue-500/20',

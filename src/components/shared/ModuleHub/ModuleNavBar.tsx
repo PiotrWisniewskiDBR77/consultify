@@ -148,7 +148,7 @@ const BUTTON_INACTIVE = `
 
 const BUTTON_ACTIVE = `
   ${BUTTON_BASE}
-  bg-primary-500/10 text-slate-900 dark:text-slate-100
+  bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-slate-100
 `;
 
 export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
@@ -442,7 +442,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                       transition-colors duration-150
                       ${
                         isActive
-                          ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                          ? 'bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-slate-100'
                           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
                       }
                     `}

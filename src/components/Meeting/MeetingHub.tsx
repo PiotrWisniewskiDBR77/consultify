@@ -1379,9 +1379,9 @@ const MeetingOperatorBriefCard: React.FC<{
   const { t } = useTranslation();
   return (
   <div
-    className={`rounded-xl border border-primary-200/70 dark:border-primary-500/20 bg-primary-50/60 dark:bg-primary-500/5 p-3 ${className}`.trim()}
+    className={`rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-navy-900/40 p-3 ${className}`.trim()}
   >
-    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
+    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
       <Sparkles size={14} />
       <span>{'Operator brief'}</span>
     </div>
@@ -1562,7 +1562,7 @@ const MeetingCalendarView: React.FC<{
                 <span
                   className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] ${
                     isToday
-                      ? 'bg-primary-600 font-semibold text-white'
+                      ? 'bg-navy-900 font-semibold text-white dark:bg-slate-100 dark:text-navy-950'
                       : inMonth
                         ? 'text-slate-600 dark:text-slate-300'
                         : 'text-slate-600 dark:text-slate-400'
@@ -1581,7 +1581,7 @@ const MeetingCalendarView: React.FC<{
                     className={`block w-full truncate rounded-md px-1.5 py-0.5 text-left text-[11px] font-medium transition-colors ${
                       meeting.status === 'completed'
                         ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300'
-                        : 'bg-primary-500/10 text-primary-700 hover:bg-primary-500/20 dark:text-primary-300'
+                        : 'bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 dark:text-sky-300'
                     }`}
                   >
                     {new Date(meeting.startAt).toLocaleTimeString(locale, {

@@ -3149,9 +3149,11 @@ export const Api = {
   },
 
   getMeetings: async (projectId?: string): Promise<any> => {
-    const url = new URL(`${API_URL}/meeting`);
-    if (projectId) url.searchParams.set('projectId', projectId);
-    const res = await fetch(url.toString(), { headers: getHeaders() });
+    const qs = new URLSearchParams();
+    if (projectId) qs.set('projectId', projectId);
+    const qstring = qs.toString();
+    const endpoint = `${API_URL}/meeting${qstring ? `?${qstring}` : ''}`;
+    const res = await fetch(endpoint, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch meetings');
   },
 

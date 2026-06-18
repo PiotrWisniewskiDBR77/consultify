@@ -44,7 +44,7 @@ export const ACTUAL_COLORS = {
  */
 export const TARGET_COLORS = {
   // Primary background and border
-  bg: 'bg-primary-600',
+  bg: 'bg-navy-900',
   bgLight: 'bg-primary-100',
   bgLightDark: 'dark:bg-primary-600/40',
   border: 'border-primary-500',
@@ -69,10 +69,10 @@ export const TARGET_COLORS = {
   // Shadow and glow effects
   shadow: 'shadow-lg shadow-primary-900/40',
   glow: 'shadow-lg shadow-primary-900/30',
-  glowRing: 'shadow-[0_0_15px_rgba(168,85,247,0.5)]',
+  glowRing: 'shadow-[0_0_15px_rgba(30,58,95,0.4)]',
 
   // Small elements (dots, indicators)
-  dot: 'bg-primary-600',
+  dot: 'bg-navy-900',
   ring: 'border-primary-400 border-dashed',
 } as const;
 

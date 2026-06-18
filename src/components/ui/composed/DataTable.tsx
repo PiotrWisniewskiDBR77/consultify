@@ -285,7 +285,7 @@ export const DataTable = forwardRef<HTMLDivElement, DataTableProps<Record<string
                         w-8 h-8 text-sm rounded-lg transition-colors
                         ${
                           currentPage === pageNum
-                            ? 'bg-primary-500 text-white'
+                            ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
                         }
                       `}

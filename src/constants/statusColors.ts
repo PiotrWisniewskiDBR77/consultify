@@ -226,6 +226,6 @@ export const PILL_INACTIVE =
 // ─────────────────────────────────────────────
 
 /** Standard progress bar fill — always primary, green when 100% */
-export const PROGRESS_BAR_FILL = 'bg-primary-500';
+export const PROGRESS_BAR_FILL = 'bg-navy-900';
 export const PROGRESS_BAR_COMPLETE = 'bg-emerald-500';
 export const PROGRESS_BAR_TRACK = 'bg-slate-200 dark:bg-navy-700';

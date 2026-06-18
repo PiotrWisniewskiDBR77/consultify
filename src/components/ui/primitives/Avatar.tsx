@@ -64,7 +64,7 @@ const getInitials = (name: string): string => {
 // Generate consistent color from name
 const getColorFromName = (name: string): string => {
   const colors = [
-    'bg-primary-500',
+    'bg-sky-500',
     'bg-secondary-500',
     'bg-success-500',
     'bg-amber-500',

@@ -292,7 +292,7 @@ export const NotificationDropdown = () => {
       type.includes('LIMIT')
     )
       return 'bg-amber-500';
-    if (type.startsWith('DBR77_')) return 'bg-primary-500';
+    if (type.startsWith('DBR77_')) return 'bg-navy-900';
     return 'bg-blue-500';
   };
 

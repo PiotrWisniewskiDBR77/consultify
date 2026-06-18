@@ -473,8 +473,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                           onClick={() => setTask({ ...task, weight: w })}
                           className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
                             (task.weight || 1) === w
-                              ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
-                              : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-primary-500/30'
+                              ? 'bg-navy-900 text-white shadow-sm dark:bg-white dark:text-navy-950'
+                              : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                           }`}
                         >
                           {w}x

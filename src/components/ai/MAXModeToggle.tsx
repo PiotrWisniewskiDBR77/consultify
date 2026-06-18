@@ -83,7 +83,7 @@ export function MAXModeToggle({
               MAX Mode
             </span>
             {enabled && (
-              <span className="flex items-center gap-1 text-xs bg-primary-600 text-white px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs bg-navy-900 text-white px-2 py-0.5 rounded-full">
                 <Sparkles className="w-3 h-3" />
                 Aktywny
               </span>

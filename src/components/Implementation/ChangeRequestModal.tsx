@@ -330,7 +330,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
               <div
                 key={s}
                 className={`flex-1 h-2 rounded-full transition-colors ${
-                  s <= step ? 'bg-primary-500' : 'bg-slate-200 dark:bg-navy-800'
+                  s <= step ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-800'
                 }`}
               />
             ))}
@@ -365,7 +365,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
             disabled={
               !formData.title || (step === 2 && (!formData.description || !formData.justification))
             }
-            className="px-6 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+            className="px-6 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
           >
             {step === 3 ? 'Submit Request' : 'Next'}
           </button>

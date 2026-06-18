@@ -1188,7 +1188,7 @@ export const FeedbackSidePanel: React.FC = () => {
               onClick={() => setFeatureImpact(value as 'low' | 'medium' | 'high')}
               className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                 featureImpact === value
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-navy-900 text-white'
                   : 'bg-slate-100 dark:bg-navy-900 text-slate-600 dark:text-slate-400'
               }`}
             >

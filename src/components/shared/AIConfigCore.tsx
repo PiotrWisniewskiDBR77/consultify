@@ -68,7 +68,7 @@ export const ProviderTabs: React.FC<{
           onClick={() => onProviderChange(provider)}
           className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
             activeProvider === provider
-              ? 'bg-primary-600 text-white shadow-lg'
+              ? 'bg-navy-900 text-white shadow-sm'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
           }`}
         >

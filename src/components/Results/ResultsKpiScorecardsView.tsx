@@ -664,7 +664,7 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
               type="button"
               disabled={creating}
               onClick={() => void handleCreate()}
-              className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              className="rounded-xl bg-navy-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 hover:bg-navy-800"
             >
               {creating ? t('common.loading', 'Loading...') : t('common.create', 'Create')}
             </button>

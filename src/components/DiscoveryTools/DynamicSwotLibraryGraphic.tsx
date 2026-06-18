@@ -203,7 +203,7 @@ export function DynamicSwotLibraryGraphic({
       title: labels.stage1,
       value: labels.stage1Value,
       tone: 'from-primary-500/18 to-crimson-700/8',
-      accent: 'bg-primary-500',
+      accent: 'bg-navy-900',
       badge: null,
     },
     {
@@ -235,7 +235,7 @@ export function DynamicSwotLibraryGraphic({
       title: labels.stage5,
       value: labels.stage5Value,
       tone: 'from-primary-500/22 to-crimson-500/10',
-      accent: 'bg-primary-600',
+      accent: 'bg-navy-900',
       badge: labels.stage5Badge,
     },
   ];
@@ -482,7 +482,7 @@ export function DynamicSwotLibraryGraphic({
           <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
             {labels.moveItems.map((item) => (
               <li key={item} className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500" />
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-navy-900 dark:bg-white" />
                 <span>{item}</span>
               </li>
             ))}

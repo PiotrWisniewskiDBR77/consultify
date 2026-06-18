@@ -351,7 +351,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
           </div>
           <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-indigo-500 rounded-full"
+              className="h-full bg-navy-900 rounded-full"
               style={{ width: `${data.playbooks.completion_rate}%` }}
             ></div>
           </div>

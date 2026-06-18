@@ -207,7 +207,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               <span className="text-slate-500 dark:text-slate-400">Partner agreement</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-              <div className="h-full bg-primary-600 w-1/4 transition-all duration-300" />
+              <div className="h-full bg-navy-900 w-1/4 transition-all duration-300" />
             </div>
           </div>
 
@@ -262,7 +262,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <button
             onClick={handleAcceptTerms}
             disabled={!termsAccepted || !privacyAccepted || loading}
-            className="w-full mt-8 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+            className="w-full mt-8 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -374,7 +374,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               <span className="text-slate-500 dark:text-slate-400">Partner track</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-              <div className="h-full bg-primary-600 w-2/4 transition-all duration-300" />
+              <div className="h-full bg-navy-900 w-2/4 transition-all duration-300" />
             </div>
           </div>
 
@@ -390,7 +390,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                 } ${tier.popular ? 'ring-2 ring-primary-500 ring-offset-4' : ''}`}
               >
                 {tier.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-navy-900 text-white px-4 py-1 rounded-full text-sm font-semibold">
                     Most Popular
                   </div>
                 )}
@@ -415,7 +415,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                 </ul>
 
                 {selectedTier === tier.id && (
-                  <div className="absolute top-4 right-4 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                  <div className="absolute top-4 right-4 w-8 h-8 bg-navy-900 rounded-full flex items-center justify-center">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                 )}
@@ -427,7 +427,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <button
               onClick={handleSelectTier}
               disabled={!selectedTier || loading}
-              className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+              className="w-full bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -474,7 +474,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               <span className="text-slate-500 dark:text-slate-400">Payout readiness</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-              <div className="h-full bg-primary-600 w-3/4 transition-all duration-300" />
+              <div className="h-full bg-navy-900 w-3/4 transition-all duration-300" />
             </div>
           </div>
 
@@ -512,7 +512,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <button
               onClick={handleSetupPayment}
               disabled={loading}
-              className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
+              className="flex-1 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -547,7 +547,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
         </p>
         <button
           onClick={() => navigate('/app')}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-xl transition-all inline-flex items-center gap-2"
+          className="bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white font-semibold px-8 py-4 rounded-xl transition-all inline-flex items-center gap-2"
         >
           Go to workspace
           <ArrowRight className="w-5 h-5" />

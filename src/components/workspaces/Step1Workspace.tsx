@@ -31,7 +31,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
           <span className="text-xs text-slate-500 dark:text-slate-400">{t.subtitle}</span>
         </div>
         <div className="w-full h-1 bg-slate-50 dark:bg-navy-800 rounded-full overflow-hidden">
-          <div className="h-full bg-primary-500 w-1/3 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+          <div className="h-full bg-navy-900 w-1/3 "></div>
         </div>
       </div>
 
@@ -40,7 +40,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         {/* Card 1: Basic Info */}
         <div className="bg-gradient-to-br from-slate-50 dark:from-navy-950/80 to-white dark:to-navy-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative group hover:border-primary-500/30 transition-colors backdrop-blur-sm shadow-xl">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-            <span className="w-1 h-6 bg-primary-500 rounded-full"></span>
+            <span className="w-1 h-6 bg-navy-900 rounded-full"></span>
             {t.profile}
           </h3>
           <div className="grid grid-cols-2 gap-6">

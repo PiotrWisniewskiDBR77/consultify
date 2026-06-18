@@ -53,7 +53,7 @@ const PMO_DOMAIN_INFO: Record<
   GOVERNANCE_DECISION_MAKING: {
     label: 'Governance',
     icon: <Shield size={14} />,
-    color: 'bg-primary-500',
+    color: 'bg-sky-500',
   },
   SCOPE_CHANGE_CONTROL: {
     label: 'Scope Control',

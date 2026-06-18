@@ -435,7 +435,7 @@ export function KnownToolDetailView(props: {
         note: isPolish
           ? 'Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem.'
           : 'The quality of the full session depends on the opening question. If the brief is vague, the matrix becomes only well-organized chaos.',
-        accent: 'bg-primary-500',
+        accent: 'bg-navy-900',
         tone: 'from-primary-500/12 to-crimson-700/5',
       },
       {
@@ -527,7 +527,7 @@ export function KnownToolDetailView(props: {
         note: isPolish
           ? 'Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania.'
           : 'Dynamic SWOT is only strong when it ends in a decision, a move, or a credible bridge to action.',
-        accent: 'bg-primary-600',
+        accent: 'bg-navy-900',
         tone: 'from-primary-500/15 to-crimson-500/5',
       },
     ];
@@ -900,7 +900,7 @@ export function KnownToolDetailView(props: {
         badge:
           'border-primary-300/50 bg-white/70 text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200',
         title: 'text-primary-700 dark:text-primary-300',
-        dot: 'bg-primary-500',
+        dot: 'bg-navy-900',
       },
       sky: {
         card: 'border-sky-200/70 bg-sky-500/5 dark:border-sky-900/40',
@@ -1651,7 +1651,7 @@ export function KnownToolDetailView(props: {
               className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-[11px] font-bold text-white">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy-900 text-[11px] font-bold text-white">
                   {index + 1}
                 </div>
                 <div>

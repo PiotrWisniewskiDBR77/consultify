@@ -43,7 +43,7 @@ interface UsageData {
 
 const USAGE_TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
   chat: { icon: <MessageSquare className="w-4 h-4" />, color: 'bg-blue-500', label: 'AI Chat' },
-  analysis: { icon: <Brain className="w-4 h-4" />, color: 'bg-primary-500', label: 'Analysis' },
+  analysis: { icon: <Brain className="w-4 h-4" />, color: 'bg-sky-500', label: 'Analysis' },
   generation: {
     icon: <FileText className="w-4 h-4" />,
     color: 'bg-emerald-500',

@@ -102,7 +102,7 @@ const generateMonths = (startYear: number, numMonths: number) => {
 // Axis colors
 const AXIS_COLORS: Record<string, string> = {
   processes: 'bg-blue-500',
-  digitalProducts: 'bg-primary-500',
+  digitalProducts: 'bg-sky-500',
   dataManagement: 'bg-blue-500',
   culture: 'bg-amber-500',
   aiMaturity: 'bg-emerald-500',
@@ -638,7 +638,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               onClick={() => setZoomLevel('month')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                 zoomLevel === 'month'
-                  ? 'bg-primary-600 text-white shadow-sm'
+                  ? 'bg-navy-900 text-white shadow-sm dark:bg-white dark:text-navy-950'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
@@ -648,7 +648,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               onClick={() => setZoomLevel('quarter')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                 zoomLevel === 'quarter'
-                  ? 'bg-primary-600 text-white shadow-sm'
+                  ? 'bg-navy-900 text-white shadow-sm dark:bg-white dark:text-navy-950'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
@@ -906,7 +906,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                           }}
                           className={`p-1 rounded transition-colors shrink-0 ${
                             isLinking
-                              ? 'bg-primary-600 text-white'
+                              ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
                               : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
                           }`}
                           title="Create dependency"

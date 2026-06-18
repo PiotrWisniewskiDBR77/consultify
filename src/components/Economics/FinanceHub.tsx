@@ -760,31 +760,31 @@ export const FinanceHub: React.FC = () => {
       },
       {
         id: 'models' as ModuleTab,
-        label: t('finance.tabs.models', 'Modele'),
+        label: t('finance.tabs.models', 'Models'),
         icon: <Calculator size={16} />,
         count: models.length,
       },
       {
         id: 'analysis' as ModuleTab,
-        label: t('finance.tabs.analysis', 'Analiza'),
+        label: t('finance.tabs.analysis', 'Analysis'),
         icon: <BarChart3 size={16} />,
         count: analyses.length,
       },
       {
         id: 'prediction' as ModuleTab,
-        label: t('finance.tabs.prediction', 'Predykcja'),
+        label: t('finance.tabs.prediction', 'Prediction'),
         icon: <TrendingUp size={16} />,
         count: models.length + budgets.length,
       },
       {
         id: 'valuation' as ModuleTab,
-        label: t('finance.tabs.valuation', 'Wycena przedsiębiorstw'),
+        label: t('finance.tabs.valuation', 'Enterprise valuation'),
         icon: <Target size={16} />,
         count: valuations.length,
       },
       {
         id: 'investment' as ModuleTab,
-        label: t('finance.tabs.investment', 'Analiza inwestycyjna'),
+        label: t('finance.tabs.investment', 'Investment analysis'),
         icon: <Target size={16} />,
         count: analyses.filter((row: any) =>
           isInvestmentAnalysisType(row.analysisType || row.analysis_type)
@@ -1034,7 +1034,7 @@ export const FinanceHub: React.FC = () => {
               <MetaChip
                 label={
                   isBudget
-                    ? t('finance.prediction.budget', 'Budżet')
+                    ? t('finance.prediction.budget', 'Budget')
                     : t('finance.prediction.model', 'Model')
                 }
               />
@@ -1156,12 +1156,12 @@ export const FinanceHub: React.FC = () => {
   // ---- Primary CTA ----
   const primaryCta = useMemo(() => {
     const labels: Record<FinanceKind | 'investment', string> = {
-      statements: t('finance.cta.importStatement', 'Importuj statement'),
-      models: t('finance.cta.newModel', 'Nowy model'),
-      analysis: t('finance.cta.newAnalysis', 'Nowa analiza'),
-      prediction: t('finance.cta.newScenario', 'Nowy scenariusz'),
-      valuation: t('finance.cta.newValuation', 'Nowa wycena'),
-      investment: t('finance.cta.newInvestment', 'Nowy case inwestycyjny'),
+      statements: t('finance.cta.importStatement', 'Import statement'),
+      models: t('finance.cta.newModel', '+ New model'),
+      analysis: t('finance.cta.newAnalysis', '+ New analysis'),
+      prediction: t('finance.cta.newScenario', '+ New scenario'),
+      valuation: t('finance.cta.newValuation', '+ New valuation'),
+      investment: t('finance.cta.newInvestment', '+ New investment case'),
     };
     const currentKind = (activeTab === 'investment' ? 'investment' : activeTab) as
       | FinanceKind

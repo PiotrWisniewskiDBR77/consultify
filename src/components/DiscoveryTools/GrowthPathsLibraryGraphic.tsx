@@ -83,7 +83,7 @@ export function GrowthPathsLibraryGraphic({
                   key={stage}
                   className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60"
                 >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-600 text-xs font-bold text-white">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-navy-900 text-xs font-bold text-white">
                     {index + 1}
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">

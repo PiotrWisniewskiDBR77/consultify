@@ -55,7 +55,7 @@ const CERTIFICATION_INFO: Record<string, { label: string; description: string; c
   CONSULTIFY_CERTIFIED: {
     label: 'Consultify Certified Partner',
     description: 'Completed all required methodology modules',
-    color: 'from-primary-500 to-indigo-600',
+    color: 'from-navy-900 to-blue-700',
   },
   CO_SELL_EXPERT: {
     label: 'Co-Sell Expert',
@@ -175,7 +175,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
           </div>
           <div className="h-3 overflow-hidden rounded-full bg-white/80 dark:bg-navy-900/60">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-navy-900 to-blue-600 transition-all duration-500"
               style={{ width: `${stats.progressPercent}%` }}
             />
           </div>

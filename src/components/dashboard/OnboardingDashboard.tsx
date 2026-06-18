@@ -89,7 +89,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                       status === 'completed'
                         ? 'bg-green-500 text-white'
                         : isCurrent
-                          ? 'bg-primary-600 text-white'
+                          ? 'bg-navy-900 text-white'
                           : 'bg-slate-200 text-slate-600 dark:bg-slate-800'
                     }`}
                   >

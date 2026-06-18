@@ -519,7 +519,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 onClick={() => setViewMode('weekly')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'weekly'
-                    ? 'bg-primary-600 text-white shadow-sm'
+                    ? 'bg-navy-900 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-200'
                 }`}
               >
@@ -530,7 +530,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 onClick={() => setViewMode('monthly')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'monthly'
-                    ? 'bg-primary-600 text-white shadow-sm'
+                    ? 'bg-navy-900 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-200'
                 }`}
               >

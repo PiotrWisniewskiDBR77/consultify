@@ -475,7 +475,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                 <div className="relative group">
                   <button
                     disabled
-                    className="px-6 py-2 rounded-lg bg-primary-600 text-white opacity-50 cursor-not-allowed"
+                    className="px-6 py-2 rounded-lg bg-navy-900 text-white opacity-50 cursor-not-allowed"
                   >
                     Verify
                   </button>

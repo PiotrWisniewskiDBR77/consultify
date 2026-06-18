@@ -107,7 +107,7 @@ export function MarketForcesLibraryGraphic({
       };
 
   const stages = [
-    [labels.stage1, labels.stage1Value, 'bg-primary-500'],
+    [labels.stage1, labels.stage1Value, 'bg-sky-500'],
     [labels.stage2, labels.stage2Value, 'bg-sky-500'],
     [labels.stage3, labels.stage3Value, 'bg-blue-500'],
     [labels.stage4, labels.stage4Value, 'bg-amber-500'],

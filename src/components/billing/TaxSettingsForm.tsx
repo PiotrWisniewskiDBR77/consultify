@@ -216,7 +216,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
           <button
             onClick={() => handleChange('tax_exempt', settings.tax_exempt === 1 ? 0 : 1)}
             className={`w-10 h-5 rounded-full transition-colors ${
-              settings.tax_exempt ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.tax_exempt ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div

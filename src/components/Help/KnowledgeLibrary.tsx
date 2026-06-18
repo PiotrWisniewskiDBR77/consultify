@@ -147,7 +147,7 @@ const CategoryChip: React.FC<CategoryChipProps> = ({ category, isActive, onClick
       transition-all whitespace-nowrap
       ${
         isActive
-          ? 'bg-primary-600 text-white shadow-md'
+          ? 'bg-navy-900 text-white shadow-md'
           : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-100 dark:hover:bg-primary-900/30'
       }
     `}
@@ -406,7 +406,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
                   key={f.id}
                   onClick={() => handleCollectionClick(f.slug)}
                   className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all
-                    ${activeCollection === f.slug ? 'bg-primary-600 text-white' : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
+                    ${activeCollection === f.slug ? 'bg-navy-900 text-white' : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
                   `}
                 >
                   <FolderOpen size={10} />
@@ -457,7 +457,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
               transition-all whitespace-nowrap
               ${
                 !activeCategory
-                  ? 'bg-primary-600 text-white shadow-md'
+                  ? 'bg-navy-900 text-white shadow-md'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-100'
               }
             `}

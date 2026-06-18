@@ -422,7 +422,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 <div
                   className={`relative max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-primary-600 text-white rounded-tr-sm'
+                      ? 'bg-navy-900 text-white rounded-tr-sm'
                       : 'bg-slate-50 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 rounded-tl-sm'
                   }`}
                 >
@@ -489,15 +489,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   {msg.isStreaming && (
                     <span className="inline-flex items-center gap-1 ml-2">
                       <span
-                        className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                        className="w-1.5 h-1.5 bg-navy-900 rounded-full animate-bounce dark:bg-white"
                         style={{ animationDelay: '0ms' }}
                       />
                       <span
-                        className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                        className="w-1.5 h-1.5 bg-navy-900 rounded-full animate-bounce dark:bg-white"
                         style={{ animationDelay: '150ms' }}
                       />
                       <span
-                        className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                        className="w-1.5 h-1.5 bg-navy-900 rounded-full animate-bounce dark:bg-white"
                         style={{ animationDelay: '300ms' }}
                       />
                     </span>

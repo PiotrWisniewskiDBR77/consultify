@@ -144,13 +144,13 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
           <div className="bg-navy-950 p-1 rounded-lg border border-white/10 flex gap-1">
             <button
               onClick={() => setInputMode('range')}
-              className={`px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors ${inputMode === 'range' ? 'bg-primary-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors ${inputMode === 'range' ? 'bg-navy-900 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               <Sliders size={14} /> Estimate Ranges
             </button>
             <button
               onClick={() => setInputMode('precise')}
-              className={`px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors ${inputMode === 'precise' ? 'bg-primary-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors ${inputMode === 'precise' ? 'bg-navy-900 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               <Hash size={14} /> Precise Numbers
             </button>

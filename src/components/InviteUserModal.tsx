@@ -318,7 +318,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                   onClick={() => setIsProjectInvite(false)}
                   className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
                     !isProjectInvite
-                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      ? 'bg-navy-900 text-white border-navy-900'
                       : 'bg-white text-gray-700 dark:text-gray-300 border-gray-300 hover:bg-gray-50 dark:bg-navy-800'
                   }`}
                 >
@@ -329,7 +329,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                   onClick={() => setIsProjectInvite(true)}
                   className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
                     isProjectInvite
-                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      ? 'bg-navy-900 text-white border-navy-900'
                       : 'bg-white text-gray-700 dark:text-gray-300 border-gray-300 hover:bg-gray-50 dark:bg-navy-800'
                   }`}
                 >
@@ -454,7 +454,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
             <button
               type="submit"
               disabled={loading || !email || (seatsAreFull ? !autoAddSeat : false)}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2 bg-navy-900 text-white rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 addingSeat ? (

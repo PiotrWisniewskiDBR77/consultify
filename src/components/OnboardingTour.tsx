@@ -149,7 +149,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                   key={idx}
                   className={`h-1.5 rounded-full transition-all ${
                     idx === currentStep
-                      ? 'w-6 bg-primary-500'
+                      ? 'w-6 bg-navy-900 dark:bg-white'
                       : 'w-1.5 bg-slate-300 dark:bg-slate-600'
                   }`}
                 />
@@ -158,7 +158,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
             <button
               onClick={handleNext}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
             >
               {currentStep === steps.length - 1 ? 'Finish' : 'Next'}
               <ChevronRight size={16} />

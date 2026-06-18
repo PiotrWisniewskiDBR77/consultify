@@ -196,7 +196,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
               onClick={() => setActiveSection(section.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
                 activeSection === section.id
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-navy-900 text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
               }`}
             >

@@ -51,7 +51,7 @@ const circularSizeStyles: Record<ProgressSize, { size: number; stroke: number }>
 
 const colorStyles: Record<ProgressColor, { bar: string; track: string }> = {
   primary: {
-    bar: 'bg-primary-500',
+    bar: 'bg-navy-900',
     track: 'bg-slate-200 dark:bg-navy-800',
   },
   success: {
@@ -214,9 +214,9 @@ export const ProgressSteps: React.FC<ProgressStepsProps> = ({
                   transition-colors duration-200
                   ${
                     isCompleted
-                      ? 'bg-primary-500 text-white'
+                      ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
                       : isCurrent
-                        ? 'bg-primary-500 text-white ring-4 ring-primary-100 dark:ring-primary-900/30'
+                        ? 'bg-navy-900 text-white ring-4 ring-slate-200 dark:ring-navy-700 dark:bg-white dark:text-navy-950'
                         : 'bg-slate-200 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                   }
                 `}
@@ -243,7 +243,7 @@ export const ProgressSteps: React.FC<ProgressStepsProps> = ({
                 <div
                   className={`
                     h-full rounded-full transition-colors duration-200
-                    ${stepNumber < current ? 'bg-primary-500' : 'bg-slate-200 dark:bg-navy-800'}
+                    ${stepNumber < current ? 'bg-navy-900 dark:bg-slate-300' : 'bg-slate-200 dark:bg-navy-800'}
                   `}
                 />
               </div>

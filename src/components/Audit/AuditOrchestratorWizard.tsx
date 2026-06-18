@@ -473,7 +473,7 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
               type="button"
               onClick={handleCreate}
               disabled={submitting || !name.trim()}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -487,7 +487,7 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
               type="button"
               onClick={() => setStepIndex((i) => i + 1)}
               disabled={!canProceed()}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {t('audit.next')}
               <ArrowRight className="h-4 w-4" />

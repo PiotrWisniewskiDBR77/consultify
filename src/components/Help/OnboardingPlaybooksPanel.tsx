@@ -217,7 +217,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
               </div>
               <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mt-1">
                 <div
-                  className="h-full bg-primary-500 rounded-full transition-all"
+                  className="h-full bg-navy-900 rounded-full transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -260,7 +260,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
             {currentStep.actionType === 'CTA' && (
               <button
                 onClick={() => handleStepAction(currentStep)}
-                className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
+                className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white text-sm font-semibold transition-colors"
               >
                 {t(getStepCtaLabelKey(currentStep), 'Try it now')}
                 <ArrowRight size={16} />

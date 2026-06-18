@@ -51,10 +51,10 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 w-5 h-5 rounded border flex items-center justify-center transition-colors
                 ${
                   allSelected
-                    ? 'bg-primary-500 border-primary-500 text-white'
+                    ? 'bg-navy-900 border-navy-900 text-white dark:bg-white dark:border-white dark:text-navy-950'
                     : someSelected
-                      ? 'bg-primary-500/50 border-primary-500 text-white'
-                      : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                      ? 'bg-navy-900/50 border-navy-900/60 text-white dark:bg-white/50 dark:border-white/60'
+                      : 'border-slate-300 dark:border-navy-500 hover:border-slate-400 text-transparent hover:text-slate-400'
                 }
               `}
             >

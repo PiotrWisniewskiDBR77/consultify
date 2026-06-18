@@ -323,7 +323,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                   aria-checked={useTemplate}
                   onClick={() => setUseTemplate(!useTemplate)}
                   className={`relative w-10 h-6 rounded-full transition-colors ${
-                    useTemplate ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'
+                    useTemplate ? 'bg-navy-900' : 'bg-slate-300 dark:bg-navy-600'
                   }`}
                 >
                   <span

@@ -83,19 +83,19 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
             </h3>
             <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white" />
                 {t('billing.benefit1', 'AI-powered project analysis and insights')}
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white" />
                 {t('billing.benefit2', 'Smart recommendations and suggestions')}
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white" />
                 {t('billing.benefit3', 'Automated reports and documentation')}
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white" />
                 {t('billing.benefit4', 'Risk detection and early warnings')}
               </li>
             </ul>

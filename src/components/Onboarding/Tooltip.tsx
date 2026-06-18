@@ -234,7 +234,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
             {onNext && (
               <button
                 onClick={onNext}
-                className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
               >
                 {step && step.current === step.total ? 'Zakończ' : 'Dalej'}
                 {step && step.current !== step.total && <ChevronRight size={14} />}

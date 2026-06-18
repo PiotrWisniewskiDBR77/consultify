@@ -198,8 +198,8 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-3 p-3 bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20 rounded-lg">
-                            <h4 className="text-primary-700 dark:text-primary-300 font-semibold mb-2 flex items-center gap-1.5 text-xs">
+                          <div className="mt-3 p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-600/50 rounded-lg">
+                            <h4 className="text-slate-700 dark:text-slate-300 font-semibold mb-2 flex items-center gap-1.5 text-xs">
                               <TeresaMark size={14} /> Digital Pathfinder AI
                             </h4>
 
@@ -213,7 +213,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                   value={aiInput}
                                   onChange={(e) => setAiInput(e.target.value)}
                                   placeholder="e.g. We currently use Excel for everything, but we are looking at..."
-                                  className="w-full text-xs bg-white dark:bg-navy-950 border border-primary-200 dark:border-primary-500/30 rounded-lg p-2 text-navy-900 dark:text-slate-200 focus:outline-none focus:border-primary-500 h-20 mb-2 placeholder:text-slate-400"
+                                  className="w-full text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-600 rounded-lg p-2 text-navy-900 dark:text-slate-200 focus:outline-none focus:border-navy-400 h-20 mb-2 placeholder:text-slate-400"
                                 />
                                 <button
                                   onClick={handleAiDiagnose}
@@ -231,7 +231,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                             ) : (
                               <div className="animate-pulse-once">
                                 <div className="flex items-start gap-3 mb-3">
-                                  <div className="bg-primary-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                                  <div className="bg-navy-900 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 dark:bg-white dark:text-navy-950">
                                     {aiResult.level}
                                   </div>
                                   <div>

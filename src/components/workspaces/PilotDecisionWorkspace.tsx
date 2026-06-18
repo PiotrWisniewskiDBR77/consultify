@@ -142,7 +142,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
               <Button
                 onClick={handleConfirmPilot}
                 disabled={!selectedPilotId}
-                className="bg-primary-600 hover:bg-primary-500"
+                className="bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
               >
                 Confirm Pilot & Proceed <ArrowRight size={16} className="ml-2" />
               </Button>

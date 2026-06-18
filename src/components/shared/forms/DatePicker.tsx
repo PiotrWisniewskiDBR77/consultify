@@ -250,7 +250,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                       className={cn(
                         'flex h-8 w-8 items-center justify-center rounded-lg text-sm transition-colors',
                         isSel
-                          ? 'bg-primary-500 font-semibold text-white'
+                          ? 'bg-navy-900 font-semibold text-white dark:bg-white dark:text-navy-950'
                           : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]',
                         !isSel && isToday && 'ring-1 ring-inset ring-primary-400',
                         off &&

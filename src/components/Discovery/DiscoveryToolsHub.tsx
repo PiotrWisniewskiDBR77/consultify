@@ -115,6 +115,7 @@ import {
 } from '../shared/ModuleMenu3';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { ChipBase } from '../ui/primitives/chips/chipBase';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -229,6 +230,7 @@ const CATEGORY_META: Record<
     name: string;
     icon: React.ReactNode;
     textClass: string;
+    dotClass: string;
     count: number;
   }
 > = {
@@ -236,30 +238,35 @@ const CATEGORY_META: Record<
     name: 'Strategy',
     icon: <Target size={16} />,
     textClass: 'text-emerald-400',
+    dotClass: 'bg-emerald-400',
     count: 10,
   },
   operational: {
     name: 'Operations',
     icon: <Settings size={16} />,
     textClass: 'text-blue-400',
+    dotClass: 'bg-blue-400',
     count: 10,
   },
   digital: {
     name: 'Digital',
     icon: <Cpu size={16} />,
     textClass: 'text-blue-400',
+    dotClass: 'bg-blue-400',
     count: 10,
   },
   automation: {
     name: 'Process Auto',
     icon: <Zap size={16} />,
     textClass: 'text-amber-400',
+    dotClass: 'bg-amber-400',
     count: 1,
   },
   licensed: {
     name: 'Assessments',
     icon: <Shield size={16} />,
     textClass: 'text-rose-400',
+    dotClass: 'bg-rose-400',
     count: 5,
   },
 };
@@ -1513,7 +1520,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => (
           <div className="min-w-0">
             <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
-              {row.name}
+              {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')}
             </span>
           </div>
         ),
@@ -1530,9 +1537,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
+            <ChipBase leading={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-slate-400'}`} />}>
               {meta?.name || row.category}
-            </span>
+            </ChipBase>
           );
         },
       },
@@ -1616,7 +1623,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => (
           <div className="min-w-0">
             <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
-              {row.name}
+              {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')}
             </span>
           </div>
         ),
@@ -1633,9 +1640,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
+            <ChipBase leading={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta?.dotClass || 'bg-slate-400'}`} />}>
               {meta?.name || row.category}
-            </span>
+            </ChipBase>
           );
         },
       },
@@ -1690,9 +1697,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     ? 'text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-500'
                 }`}
-                title={row.name}
+                title={String(row.name || '').replace(/&amp;/g, '&')}
               >
-                {row.name}
+                {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')}
               </div>
               {row.isComingSoon ? (
                 <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] text-slate-500 dark:text-slate-400">
@@ -2190,7 +2197,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       if (!toolType) return;
       try {
         const sessionName =
-          String(params.name || '').trim() || `${toolType} — ${isPolish ? 'Sesja' : 'Session'}`;
+          String(params.name || '').trim() || t('tools.hub.defaultSessionName', 'Session');
         const created = await Api.createToolSession({
           toolType,
           name: sessionName,
@@ -2308,7 +2315,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         }
         void createAndOpenToolSession({
           toolType,
-          name: `${row?.name || toolType} — ${isPolish ? 'Sesja' : 'Session'}`,
+          name: row?.name || toolType,
           source: 'library',
         });
       } else if (action === 'library_chat') {
@@ -2877,7 +2884,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </button>
               <button
                 onClick={handleSubmitForReview}
-                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors flex items-center gap-2"
               >
                 <ArrowRight size={16} />
                 Submit for Review
@@ -4359,7 +4366,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           }
                           void createAndOpenToolSession({
                             toolType: item.toolType,
-                            name: `${item.name} — ${isPolish ? 'Sesja' : 'Session'}`,
+                            name: item.name,
                             source: 'add_menu',
                           });
                         }

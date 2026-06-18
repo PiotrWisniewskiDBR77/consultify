@@ -123,7 +123,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
               </Link>
               <Link
                 to="/login"
-                className="px-4 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
+                className="px-4 py-1.5 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white text-sm font-medium transition-colors"
               >
                 {t('docs.layout.signIn', 'Sign In')}
               </Link>

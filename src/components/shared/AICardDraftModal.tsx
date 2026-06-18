@@ -176,7 +176,7 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
               <button
                 onClick={handleGenerate}
                 disabled={loading || brief.trim().length < 10}
-                className="w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-40 text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -256,7 +256,7 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
             </button>
             <button
               onClick={handleApply}
-              className="px-5 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
+              className="px-5 py-2 rounded-xl bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-40 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
             >
               <Check size={16} />
               <span>{t('aiAuthoring.applySelected', 'Apply Selected')}</span>

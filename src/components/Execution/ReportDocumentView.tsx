@@ -189,7 +189,7 @@ const Section: React.FC<{
   accent?: 'violet' | 'cyan' | 'amber' | 'rose' | 'emerald';
 }> = ({ title, subtitle, children, accent = 'violet' }) => {
   const accentBar: Record<string, string> = {
-    violet: 'bg-primary-500',
+    violet: 'bg-sky-500',
     cyan: 'bg-blue-500',
     amber: 'bg-amber-500',
     rose: 'bg-danger-500',

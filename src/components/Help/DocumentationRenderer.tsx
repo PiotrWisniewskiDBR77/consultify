@@ -200,7 +200,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                   {module.workflowSteps.map((step: any, i: number) => (
                     <div key={i} className="relative flex items-start gap-4 pl-10">
                       {/* Step number */}
-                      <div className="absolute left-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold">
+                      <div className="absolute left-0 w-8 h-8 rounded-full bg-navy-900 text-white flex items-center justify-center text-sm font-bold">
                         {i + 1}
                       </div>
                       <div>
