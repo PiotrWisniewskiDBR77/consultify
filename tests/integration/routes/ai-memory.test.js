@@ -12,7 +12,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('AI Memory API', () => {
   let app;
@@ -26,14 +25,14 @@ describe('AI Memory API', () => {
   describe('GET /api/ai/memory', () => {
     it('should get memory or handle appropriately', async () => {
       const response = await request(app).get('/api/ai/memory');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 
   describe('POST /api/ai/memory', () => {
     it('should store memory or handle appropriately', async () => {
       const response = await request(app).post('/api/ai/memory').send({ content: 'Test memory' });
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 });

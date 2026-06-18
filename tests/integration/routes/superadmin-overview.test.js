@@ -17,7 +17,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-overview-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('SuperAdmin Overview API - Production Ready', () => {
   let app;
@@ -38,7 +37,7 @@ describe('SuperAdmin Overview API - Production Ready', () => {
     it('returns dashboard stats structure', async () => {
       if (!app) return;
       const response = await request(app).get('/api/superadmin/dashboard');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
 
       if (response.status === 200) {
         expect(response.body).toHaveProperty('counts');
@@ -62,7 +61,7 @@ describe('SuperAdmin Overview API - Production Ready', () => {
     it('returns comprehensive platform statistics', async () => {
       if (!app) return;
       const response = await request(app).get('/api/superadmin/platform-stats');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
 
       if (response.status === 200) {
         expect(response.body).toHaveProperty('infrastructure');
@@ -88,7 +87,7 @@ describe('SuperAdmin Overview API - Production Ready', () => {
     it('returns signals array', async () => {
       if (!app) return;
       const response = await request(app).get('/api/superadmin/signals');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
 
       if (response.status === 200) {
         expect(Array.isArray(response.body)).toBe(true);
@@ -111,7 +110,7 @@ describe('SuperAdmin Overview API - Production Ready', () => {
     it('returns funnel metrics', async () => {
       if (!app) return;
       const response = await request(app).get('/api/metrics/funnels?days=30');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
 
       if (response.status === 200) {
         expect(response.body).toHaveProperty('funnels');
@@ -137,7 +136,7 @@ describe('SuperAdmin Overview API - Production Ready', () => {
     it('returns attribution channels', async () => {
       if (!app) return;
       const response = await request(app).get('/api/metrics/attribution?days=30');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
 
       if (response.status === 200) {
         expect(response.body).toHaveProperty('channels');
@@ -163,7 +162,7 @@ describe('SuperAdmin Overview API - Production Ready', () => {
     it('returns warnings array', async () => {
       if (!app) return;
       const response = await request(app).get('/api/metrics/warnings');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
 
       if (response.status === 200) {
         expect(response.body).toHaveProperty('warnings');
@@ -187,7 +186,7 @@ describe('SuperAdmin Overview API - Production Ready', () => {
     it('returns partner leaderboard', async () => {
       if (!app) return;
       const response = await request(app).get('/api/metrics/partners?days=90');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
 
       if (response.status === 200) {
         expect(response.body).toHaveProperty('leaderboard');
@@ -200,7 +199,7 @@ describe('SuperAdmin Overview API - Production Ready', () => {
     it('returns help effectiveness metrics', async () => {
       if (!app) return;
       const response = await request(app).get('/api/metrics/help?days=30');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
 
       if (response.status === 200) {
         expect(response.body).toHaveProperty('byPlaybook');

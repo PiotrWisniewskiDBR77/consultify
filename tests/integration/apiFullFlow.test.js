@@ -77,7 +77,7 @@ describe('API Full Flow Integration', () => {
       });
 
       // Accept 200/201 for success, 400/409 for validation errors, 404/500/501 for missing endpoints
-      expect([200, 201, 400, 404, 409, 500, 501]).toContain(registerRes.status);
+      expect(registerRes.status).toBe(200);
 
       if (registerRes.status === 200 || registerRes.status === 201) {
         testUserId = registerRes.body.user?.id;
@@ -89,7 +89,7 @@ describe('API Full Flow Integration', () => {
         password: testPassword,
       });
 
-      expect([200, 401, 403, 404]).toContain(loginRes.status);
+      expect(loginRes.status).toBe(401);
 
       if (loginRes.status === 200) {
         expect(loginRes.body.token).toBeDefined();
@@ -141,7 +141,7 @@ describe('API Full Flow Integration', () => {
           status: 'active',
         });
 
-      expect([200, 201, 403, 500]).toContain(createRes.status);
+      expect(createRes.status).toBe(200);
 
       if (createRes.status === 200 || createRes.status === 201) {
         testProjectId = createRes.body.project?.id || createRes.body.id;
@@ -160,7 +160,7 @@ describe('API Full Flow Integration', () => {
         .set('Authorization', `Bearer ${testToken}`);
 
       // Accept various status codes as endpoints may vary
-      expect([200, 404, 500, 501]).toContain(overviewRes.status);
+      expect(overviewRes.status).toBe(200);
 
       if (overviewRes.status === 200) {
         expect(overviewRes.body).toBeDefined();
@@ -178,7 +178,7 @@ describe('API Full Flow Integration', () => {
         .set('Authorization', `Bearer ${testToken}`);
 
       // Accept various status codes
-      expect([200, 404, 500, 501]).toContain(reportsRes.status);
+      expect(reportsRes.status).toBe(200);
 
       if (reportsRes.status === 200) {
         expect(Array.isArray(reportsRes.body) || reportsRes.body.reports).toBeTruthy();

@@ -276,7 +276,7 @@ describe('Health routes integration (L3)', () => {
   it('GET /database returns payload with pool and metrics after pool init', async () => {
     await initializeConnectionPool();
     const res = await dispatch({ method: 'GET', url: '/api/health/database' });
-    expect([200, 503]).toContain(res.status);
+    expect(res.status).toBe(200);
     expect(res.body).toEqual(
       expect.objectContaining({
         status: expect.any(String),
@@ -289,7 +289,7 @@ describe('Health routes integration (L3)', () => {
   it('GET /database formats uptime and response time strings', async () => {
     await initializeConnectionPool();
     const res = await dispatch({ method: 'GET', url: '/api/health/database' });
-    expect([200, 503]).toContain(res.status);
+    expect(res.status).toBe(200);
     expect(res.body.metrics.uptime).toMatch(/%$/);
     expect(res.body.metrics.averageResponseTime).toMatch(/ms$/);
   });
@@ -297,7 +297,7 @@ describe('Health routes integration (L3)', () => {
   it('GET /database includes timestamp', async () => {
     await initializeConnectionPool();
     const res = await dispatch({ method: 'GET', url: '/api/health/database' });
-    expect([200, 503]).toContain(res.status);
+    expect(res.status).toBe(200);
     expect(typeof res.body.timestamp).toBe('string');
   });
 

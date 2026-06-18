@@ -68,7 +68,7 @@ describe('Integration Test: Management Reports Routes', () => {
         .get('/api/management-reports/types')
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect([200, 404, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200 && Array.isArray(res.body)) {
         expect(res.body.length).toBeGreaterThanOrEqual(0);
       }
@@ -81,7 +81,7 @@ describe('Integration Test: Management Reports Routes', () => {
         .get('/api/management-reports/history')
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect([200, 404, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(Array.isArray(res.body) || res.body.reports !== undefined).toBe(true);
       }
@@ -98,7 +98,7 @@ describe('Integration Test: Management Reports Routes', () => {
           period: 'monthly',
         });
 
-      expect([200, 201, 400, 404, 500, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 

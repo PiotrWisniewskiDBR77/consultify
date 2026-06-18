@@ -83,7 +83,7 @@ describe('AI Routes Integration Tests', () => {
         .set('Authorization', `Bearer ${testToken}`);
 
       // Accept various valid status codes
-      expect([200, 404, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200 && res.body) {
         expect(res.body.platform || res.body.context).toBeDefined();
       }
@@ -102,7 +102,7 @@ describe('AI Routes Integration Tests', () => {
         .get(`/api/ai/context/${testProjectId}`)
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect([200, 404, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should handle non-existent project', async () => {
@@ -110,7 +110,7 @@ describe('AI Routes Integration Tests', () => {
         .get('/api/ai/context/non-existent-project-id')
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect([200, 400, 404]).toContain(res.status);
+      expect(res.status).toBe(404);
     });
   });
 
@@ -125,7 +125,7 @@ describe('AI Routes Integration Tests', () => {
         });
 
       // Accept various status codes
-      expect([200, 400, 404, 500, 501, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -135,7 +135,7 @@ describe('AI Routes Integration Tests', () => {
         .get('/api/ai/policy')
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect([200, 404, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -145,7 +145,7 @@ describe('AI Routes Integration Tests', () => {
         .get(`/api/ai/memory/project/${testProjectId}`)
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect([200, 404, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -156,7 +156,7 @@ describe('AI Routes Integration Tests', () => {
         .set('Authorization', `Bearer ${testToken}`);
 
       // Should return error status, not crash
-      expect([200, 400, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(400);
     });
 
     it('should reject requests without token', async () => {

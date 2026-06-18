@@ -105,7 +105,7 @@ describe('SuperAdmin IAM API', () => {
       const res = await request(app)
         .get('/api/superadmin/admin/sessions')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should get session stats for superadmin', async () => {
@@ -113,7 +113,7 @@ describe('SuperAdmin IAM API', () => {
       const res = await request(app)
         .get('/api/superadmin/admin/sessions/stats')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -130,8 +130,7 @@ describe('SuperAdmin IAM API', () => {
         .set('Authorization', `Bearer ${superadminToken}`);
 
       // The hardened endpoint MUST NOT 5xx for valid superadmin requests.
-      expect([200, 404]).toContain(res.status);
-      if (res.status !== 200) return;
+      expect(res.status).toBe(200);
 
       expect(res.body).toBeTypeOf('object');
       expect(Array.isArray(res.body.logs)).toBe(true);
@@ -152,11 +151,10 @@ describe('SuperAdmin IAM API', () => {
         .get('/api/superadmin/admin/audit-logs?limit=NaN&offset=-50&status=pwned')
         .set('Authorization', `Bearer ${superadminToken}`);
 
-      expect([200, 404]).toContain(res.status);
-      if (res.status === 200) {
-        expect(res.body.pagination.limit).toBeGreaterThanOrEqual(1);
-        expect(res.body.pagination.offset).toBeGreaterThanOrEqual(0);
-      }
+      // Contract: invalid pagination is clamped and returns 200 (never 5xx).
+      expect(res.status).toBe(200);
+      expect(res.body.pagination.limit).toBeGreaterThanOrEqual(1);
+      expect(res.body.pagination.offset).toBeGreaterThanOrEqual(0);
     });
 
     it('should expose stats with safe numeric defaults', async () => {
@@ -164,7 +162,7 @@ describe('SuperAdmin IAM API', () => {
       const res = await request(app)
         .get('/api/superadmin/admin/audit-logs/stats')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(res.body).toMatchObject({
           total_logs: expect.any(Number),
@@ -189,7 +187,7 @@ describe('SuperAdmin IAM API', () => {
       const res = await request(app)
         .get('/api/superadmin/admin/permissions')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

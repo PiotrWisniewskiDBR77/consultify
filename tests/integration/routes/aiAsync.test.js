@@ -11,7 +11,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('AI Async API', () => {
   let app;
@@ -25,7 +24,7 @@ describe('AI Async API', () => {
   describe('POST /api/ai/async', () => {
     it('should handle async request or respond appropriately', async () => {
       const response = await request(app).post('/api/ai/async');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 });

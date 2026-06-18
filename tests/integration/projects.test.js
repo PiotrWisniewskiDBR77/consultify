@@ -94,7 +94,7 @@ describe('Projects Integration', () => {
         status: 'active',
       });
 
-    expect([200, 201, 403, 500]).toContain(res.status);
+    expect([200, 201]).toContain(res.status);
 
     if (res.status === 200 || res.status === 201) {
       createdProjectId = res.body.project?.id || res.body.id;
@@ -107,7 +107,7 @@ describe('Projects Integration', () => {
 
     const res = await request(app).get('/api/projects').set('Authorization', `Bearer ${testToken}`);
 
-    expect([200, 403, 500]).toContain(res.status);
+    expect(res.status).toBe(200);
 
     if (res.status === 200) {
       expect(Array.isArray(res.body) || res.body.projects).toBeTruthy();
@@ -125,7 +125,7 @@ describe('Projects Integration', () => {
         description: 'Updated by integration test',
       });
 
-    expect([200, 403, 404, 500]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 
   it('should delete project', async () => {
@@ -135,7 +135,7 @@ describe('Projects Integration', () => {
       .delete(`/api/projects/${createdProjectId}`)
       .set('Authorization', `Bearer ${testToken}`);
 
-    expect([200, 204, 403, 404, 500]).toContain(res.status);
+    expect([200, 204]).toContain(res.status);
 
     if (res.status === 200 || res.status === 204) {
       createdProjectId = null; // Mark as deleted

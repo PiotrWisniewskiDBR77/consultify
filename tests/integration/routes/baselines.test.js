@@ -71,8 +71,8 @@ describe('Integration Test: Baselines Routes', () => {
           rationale: 'Initial Baseline',
         });
 
-      // Expect 201 Created or 500/403 (if permissions issue despite ADMIN logic)
-      expect([201, 200, 403, 500]).toContain(res.status);
+      // Capture is a create: success is 200 or 201 (5xx/403 masking removed).
+      expect([200, 201]).toContain(res.status);
     });
   });
 
@@ -85,7 +85,7 @@ describe('Integration Test: Baselines Routes', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       // 404 is acceptable here as we haven't successfully created one guaranteed
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -97,7 +97,7 @@ describe('Integration Test: Baselines Routes', () => {
         .get(`/api/baselines/${testRoadmapId}/variance`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

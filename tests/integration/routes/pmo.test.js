@@ -72,7 +72,7 @@ describe('Integration Test: PMO Health Routes', () => {
         .get(`/api/pmo/health/${testProjectId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

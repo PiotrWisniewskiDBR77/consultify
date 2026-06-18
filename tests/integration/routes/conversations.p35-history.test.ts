@@ -35,7 +35,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
   describe('Conversation Lifecycle CRUD', () => {
     it('GET /api/conversations returns 200 with conversations array or 401 without auth', async () => {
       const res = await request(app).get('/api/conversations');
-      expect([200, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('conversations');
         expect(Array.isArray(res.body.conversations)).toBe(true);
@@ -48,7 +48,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app)
         .post('/api/conversations')
         .send({ title: 'P35 Test Conversation' });
-      expect([201, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 201) {
         expect(res.body).toHaveProperty('id');
         expect(typeof res.body.id).toBe('string');
@@ -59,14 +59,14 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app)
         .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
         .send({ title: 'Renamed', starred: true });
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
 
     it('DELETE /api/conversations/:id returns soft-delete response or 401/404', async () => {
       const res = await request(app).delete(
         '/api/conversations/00000000-0000-0000-0000-000000000001'
       );
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body.success).toBe(true);
         // Should be soft-delete (not purge) by default
@@ -81,7 +81,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app).delete(
         '/api/conversations/00000000-0000-0000-0000-000000000001?force=true'
       );
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200 && res.body.purged) {
         expect(res.body.messagesRemoved).toBeDefined();
         expect(typeof res.body.messagesRemoved).toBe('number');
@@ -94,12 +94,12 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
   describe('Server-Side Search (P34-governed)', () => {
     it('GET /api/conversations/search without q returns empty', async () => {
       const res = await request(app).get('/api/conversations/search');
-      expect([200, 400, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
 
     it('GET /api/conversations/search?q=ab (2 chars) returns results or auth error', async () => {
       const res = await request(app).get('/api/conversations/search?q=ab');
-      expect([200, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('conversations');
         expect(res.body).toHaveProperty('nextCursor');
@@ -111,7 +111,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
 
     it('search supports cursor pagination (nextCursor + hasMore)', async () => {
       const res = await request(app).get('/api/conversations/search?q=test&limit=2');
-      expect([200, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(typeof res.body.hasMore).toBe('boolean');
         if (res.body.hasMore) {
@@ -125,7 +125,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app).get(
         '/api/conversations/search?q=test&pinned=true&archived=false'
       );
-      expect([200, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -136,7 +136,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app).get(
         '/api/conversations?cursor=2026-01-01T00:00:00Z|fake-id&limit=5'
       );
-      expect([200, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('conversations');
         expect(res.body).toHaveProperty('nextCursor');
@@ -166,12 +166,12 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const archiveRes = await request(app)
         .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
         .send({ archived: true });
-      expect([200, 401, 404]).toContain(archiveRes.status);
+      expect(archiveRes.status).toBe(401);
 
       const unarchiveRes = await request(app)
         .patch('/api/conversations/00000000-0000-0000-0000-000000000001')
         .send({ archived: false });
-      expect([200, 401, 404]).toContain(unarchiveRes.status);
+      expect(unarchiveRes.status).toBe(401);
     });
   });
 
@@ -189,7 +189,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app)
         .post('/api/conversations/bulk')
         .send({ ids: ['00000000-0000-0000-0000-000000000001'], action: 'archive' });
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -213,7 +213,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
   describe('Chat Projects / Folders', () => {
     it('GET /api/chat-projects returns folders or requires auth', async () => {
       const res = await request(app).get('/api/chat-projects');
-      expect([200, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('projects');
       }
@@ -239,7 +239,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
           mime: 'application/pdf',
           sizeBytes: 1024,
         });
-      expect([201, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 201) {
         expect(res.body).toHaveProperty('id');
         expect(res.body.kind).toBe('file');
@@ -250,7 +250,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
     it('GET /:id/messages/:messageId/attachments lists attachments or degrades gracefully', async () => {
       const res = await request(app)
         .get('/api/conversations/00000000-0000-0000-0000-000000000001/messages/msg-1/attachments');
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('attachments');
         expect(Array.isArray(res.body.attachments)).toBe(true);
@@ -264,7 +264,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
     it('GET /:id/sessions lists sessions or degrades gracefully', async () => {
       const res = await request(app)
         .get('/api/conversations/00000000-0000-0000-0000-000000000001/sessions');
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('sessions');
       }
@@ -274,7 +274,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app)
         .post('/api/conversations/00000000-0000-0000-0000-000000000001/sessions')
         .send({ modelId: 'gpt-4', locale: 'en' });
-      expect([201, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 201) {
         expect(res.body).toHaveProperty('id');
         expect(res.body.model_id).toBe('gpt-4');
@@ -304,7 +304,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app).get(
         '/api/conversations/00000000-0000-0000-0000-000000000001/export'
       );
-      expect([200, 400, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('conversation');
         expect(res.body).toHaveProperty('messages');
@@ -316,14 +316,14 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app).get(
         '/api/conversations/00000000-0000-0000-0000-000000000001/export?format=markdown'
       );
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
 
     it('GET /:id/export supports date range narrowing', async () => {
       const res = await request(app).get(
         '/api/conversations/00000000-0000-0000-0000-000000000001/export?from=2026-01-01&to=2026-12-31'
       );
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -332,7 +332,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
   describe('Partial Retrieval — Scope Blocked (§2.3.5 E7)', () => {
     it('search returns scopeBlocked count', async () => {
       const res = await request(app).get('/api/conversations/search?q=test');
-      expect([200, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('scopeBlocked');
         expect(typeof res.body.scopeBlocked).toBe('number');
@@ -357,7 +357,7 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
         .post('/api/conversations/00000000-0000-0000-0000-000000000001/summarize')
         .send({ keepRecent: 10 });
       // Should not get "no such table: messages" error
-      expect([200, 401, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 500) {
         expect(res.body.error).not.toContain('no such table: messages');
       }

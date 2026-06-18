@@ -194,8 +194,8 @@ describe('Organization Profile API (P30-B)', () => {
     const res = await fetch(`${API_URL}/organization-profiles/${TEST_ORG_ID}/audit`, {
       headers: headers(),
     });
-    // Either 200 (admin) or 403 (non-admin) — both are valid
-    expect([200, 401, 403]).toContain(res.status);
+    // Either 200 (admin) or 403 (non-admin) — both are valid for an authed caller.
+    expect([200, 403]).toContain(res.status);
   });
 });
 

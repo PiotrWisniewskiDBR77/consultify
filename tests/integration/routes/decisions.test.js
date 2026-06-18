@@ -139,9 +139,8 @@ describe('Decisions Routes', () => {
 
       const response = await request(testApp).get('/api/decisions');
 
-      // Controller maps rows, so if it fails it might return 500 or empty depending on error handling
-      // Since we use asyncHandler, it should return 500
-      expect([200, 500]).toContain(response.status);
+      // rawDb.all is mocked to error; asyncHandler surfaces it as a 500.
+      expect(response.status).toBe(500);
     });
   });
 

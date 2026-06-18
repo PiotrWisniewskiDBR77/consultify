@@ -11,7 +11,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('My Work API', () => {
   let app;
@@ -25,7 +24,7 @@ describe('My Work API', () => {
   describe('GET /api/my-work', () => {
     it('should get work items or handle appropriately', async () => {
       const response = await request(app).get('/api/my-work');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 });

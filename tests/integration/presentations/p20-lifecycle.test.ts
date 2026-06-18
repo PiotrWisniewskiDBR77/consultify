@@ -97,14 +97,14 @@ describe('P20 Deck Lifecycle — E2E (SKIPPED: requires caboose §06)', () => {
     const res = await fetch(`${API_URL}/presentations/decks/${deckId}/export/pdf`, {
       headers: AUTH_HEADER,
     });
-    expect([200, 404]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 
   it.skip('P20-A.9: export PPTX download available [caboose]', async () => {
     const res = await fetch(`${API_URL}/presentations/decks/${deckId}/download`, {
       headers: AUTH_HEADER,
     });
-    expect([200, 404]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 
   it.skip('P20 §2.6: version history is retrievable [caboose]', async () => {

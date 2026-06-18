@@ -11,7 +11,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('Assessment Reports Routes', () => {
   let app;
@@ -24,7 +23,7 @@ describe('Assessment Reports Routes', () => {
 
   it('GET /api/assessment-reports returns valid response', async () => {
     const response = await request(app).get('/api/assessment-reports');
-    expect(VALID_STATUSES).toContain(response.status);
+    expect(response.status).toBe(401);
     if (response.status === 200 && response.body.reports) {
       expect(Array.isArray(response.body.reports)).toBe(true);
     }
@@ -32,11 +31,11 @@ describe('Assessment Reports Routes', () => {
 
   it('GET /api/assessment-reports/templates returns valid response', async () => {
     const response = await request(app).get('/api/assessment-reports/templates');
-    expect(VALID_STATUSES).toContain(response.status);
+    expect(response.status).toBe(401);
   });
 
   it('POST /api/assessment-reports requires assessmentId', async () => {
     const response = await request(app).post('/api/assessment-reports').send({});
-    expect(VALID_STATUSES).toContain(response.status);
+    expect(response.status).toBe(401);
   });
 });

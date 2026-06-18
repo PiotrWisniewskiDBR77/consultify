@@ -70,7 +70,7 @@ describe('AI Explain API', () => {
       const res = await request(app)
         .get('/api/ai/explain')
         .set('Authorization', `Bearer ${authToken}`);
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

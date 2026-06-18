@@ -12,7 +12,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('AI Prompts API', () => {
   let app;
@@ -26,14 +25,14 @@ describe('AI Prompts API', () => {
   describe('GET /api/ai/prompts', () => {
     it('should list prompts or handle appropriately', async () => {
       const response = await request(app).get('/api/ai/prompts');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 
   describe('POST /api/ai/prompts', () => {
     it('should create prompt or handle appropriately', async () => {
       const response = await request(app).post('/api/ai/prompts').send({ content: 'Test prompt' });
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 });

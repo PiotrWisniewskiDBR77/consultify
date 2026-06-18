@@ -71,7 +71,7 @@ describe('Integration Test: Stage Gate Routes', () => {
         .get(`/api/stage-gates/${testProjectId}/evaluate/Context_To_Roadmap`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -97,7 +97,7 @@ describe('Integration Test: Stage Gate Routes', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       // Some CI/local DB snapshots do not have stage_gates migrated; do not fail the whole suite on that infra gap.
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(Array.isArray(res.body)).toBe(true);
       }

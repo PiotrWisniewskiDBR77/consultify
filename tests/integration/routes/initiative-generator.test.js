@@ -11,7 +11,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('Initiative Generator API', () => {
   let app;
@@ -27,7 +26,7 @@ describe('Initiative Generator API', () => {
       const response = await request(app)
         .post('/api/initiatives/generate')
         .send({ type: 'quick_wins' });
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 });

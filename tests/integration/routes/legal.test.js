@@ -60,8 +60,9 @@ describe('Integration Test: Legal Routes', () => {
   describe('GET /api/legal/document/TOS', () => {
     it('should get public TOS document', async () => {
       const res = await request(app).get('/api/legal/document/TOS');
-      // 200 or 404 (if not seeded) is valid for integration checks
-      expect([200, 404, 500, 503]).toContain(res.status);
+      // Public endpoint: 200 when the TOS doc is seeded, 404 when it is not.
+      // (5xx removed — a server error here is a real failure, not an accepted state.)
+      expect([200, 404]).toContain(res.status);
     });
   });
 
@@ -73,7 +74,7 @@ describe('Integration Test: Legal Routes', () => {
         .get('/api/legal/active')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -85,7 +86,7 @@ describe('Integration Test: Legal Routes', () => {
         .get('/api/legal/pending')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -101,7 +102,7 @@ describe('Integration Test: Legal Routes', () => {
           scope: 'USER',
         });
 
-      expect([200, 400, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

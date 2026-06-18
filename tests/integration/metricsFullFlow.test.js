@@ -83,7 +83,7 @@ describe('Metrics & Analytics Full Flow Integration', () => {
         .get('/api/analytics/health')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 400]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(res.body).toBeDefined();
       }
@@ -103,7 +103,7 @@ describe('Metrics & Analytics Full Flow Integration', () => {
         .get('/api/analytics/performance')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 400]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(Array.isArray(res.body) || typeof res.body === 'object').toBe(true);
       }
@@ -123,7 +123,7 @@ describe('Metrics & Analytics Full Flow Integration', () => {
         .get('/api/analytics/economics')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 400]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(res.body).toBeDefined();
       }
@@ -163,7 +163,7 @@ describe('Metrics & Analytics Full Flow Integration', () => {
         .get('/api/analytics/health')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 400]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should calculate economic totals including test data', async () => {
@@ -173,7 +173,7 @@ describe('Metrics & Analytics Full Flow Integration', () => {
         .get('/api/analytics/economics')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 400]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200 && res.body.total_capex) {
         expect(res.body.total_capex).toBeGreaterThanOrEqual(50000);
       }

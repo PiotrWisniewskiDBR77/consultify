@@ -72,7 +72,7 @@ describe('Integration Test: PMO Analysis Routes', () => {
         .get(`/api/pmo-analysis/${testProjectId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -84,7 +84,7 @@ describe('Integration Test: PMO Analysis Routes', () => {
         .get(`/api/pmo-analysis/${testProjectId}/progress`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -96,7 +96,7 @@ describe('Integration Test: PMO Analysis Routes', () => {
         .get(`/api/pmo-analysis/${testProjectId}/dependencies`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

@@ -75,7 +75,7 @@ describe('Integration Test: Scenarios Routes', () => {
           proposedChanges: [{ type: 'DELAY', taskId: 'task-1', days: 5 }],
         });
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -87,7 +87,7 @@ describe('Integration Test: Scenarios Routes', () => {
         .get(`/api/scenarios/${testProjectId}/critical-path`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -99,7 +99,7 @@ describe('Integration Test: Scenarios Routes', () => {
         .get(`/api/scenarios/${testProjectId}/schedule-risks`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

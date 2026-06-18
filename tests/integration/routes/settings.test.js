@@ -76,7 +76,7 @@ describe('Integration Test: Settings Routes', () => {
     it('should require authentication', async () => {
       const res = await request(app).get('/api/settings');
 
-      expect([200, 401, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -95,7 +95,7 @@ describe('Integration Test: Settings Routes', () => {
           value: 'dark',
         });
 
-      expect([200, 400]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

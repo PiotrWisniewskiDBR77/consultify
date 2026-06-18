@@ -72,7 +72,7 @@ describe('Integration Test: PMO Domains Routes', () => {
         .get('/api/pmo-domains')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
       // If 200, verify structure
       if (res.status === 200) {
         expect(res.body.success).toBe(true);
@@ -89,7 +89,7 @@ describe('Integration Test: PMO Domains Routes', () => {
         .get('/api/pmo-domains/standards-mapping')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -101,7 +101,7 @@ describe('Integration Test: PMO Domains Routes', () => {
         .get(`/api/pmo-domains/projects/${testProjectId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

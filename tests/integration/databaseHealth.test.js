@@ -25,6 +25,8 @@ describe('Database Health Integration', () => {
     it('should return database health status', async () => {
       const res = await request(app).get('/api/health/database');
 
+      // /health/database returns 503 when the DB is degraded — both are part of
+      // the documented health contract (body.status enum is asserted below).
       expect([200, 503]).toContain(res.status);
       expect(res.body.status).toBeDefined();
       expect(['healthy', 'degraded', 'unavailable', 'error']).toContain(res.body.status);
@@ -45,7 +47,8 @@ describe('Database Health Integration', () => {
     it('should return connection pool status', async () => {
       const res = await request(app).get('/api/health/connections');
 
-      expect([200, 500, 503]).toContain(res.status);
+      // 503 is a valid degraded-pool health response.
+      expect([200, 503]).toContain(res.status);
       expect(res.body.status).toBeDefined();
     });
 
@@ -64,7 +67,7 @@ describe('Database Health Integration', () => {
     it('should return basic health check', async () => {
       const res = await request(app).get('/api/health');
 
-      expect([200, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -72,6 +75,7 @@ describe('Database Health Integration', () => {
     it('should return readiness status', async () => {
       const res = await request(app).get('/api/health/ready');
 
+      // Readiness flips to 503 when dependencies (DB) are not ready.
       expect([200, 503]).toContain(res.status);
     });
   });
@@ -80,7 +84,7 @@ describe('Database Health Integration', () => {
     it('should return liveness status', async () => {
       const res = await request(app).get('/api/health/live');
 
-      expect([200, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

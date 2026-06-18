@@ -74,7 +74,7 @@ describe('Integration Test: Teams Routes', () => {
     it('should require authentication', async () => {
       const res = await request(app).get('/api/teams');
 
-      expect([200, 401, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -94,7 +94,7 @@ describe('Integration Test: Teams Routes', () => {
         });
 
       // Accept 200, 201 for success, or 400, 500 for validation/server errors in test env
-      expect([200, 201, 400, 500]).toContain(res.status);
+      expect([200, 201]).toContain(res.status);
     });
   });
 });

@@ -15,7 +15,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-assessment-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 503];
 
 describe('Assessment Routes (L3)', () => {
   let app: any;
@@ -28,7 +27,7 @@ describe('Assessment Routes (L3)', () => {
 
   it('GET /api/assessment-reports returns valid response', async () => {
     const res = await request(app).get('/api/assessment-reports');
-    expect(VALID_STATUSES).toContain(res.status);
+    expect(res.status).toBe(401);
     if (res.status === 200 && res.body?.reports) {
       expect(Array.isArray(res.body.reports)).toBe(true);
     }
@@ -36,7 +35,7 @@ describe('Assessment Routes (L3)', () => {
 
   it('GET /api/assessment-reports/templates returns valid response', async () => {
     const res = await request(app).get('/api/assessment-reports/templates');
-    expect(VALID_STATUSES).toContain(res.status);
+    expect(res.status).toBe(401);
   });
 
   it('POST /api/assessment-reports with invalid body returns 400 or 401', async () => {
@@ -44,16 +43,16 @@ describe('Assessment Routes (L3)', () => {
       .post('/api/assessment-reports')
       .set('Content-Type', 'application/json')
       .send({});
-    expect(VALID_STATUSES).toContain(res.status);
+    expect(res.status).toBe(401);
   });
 
   it('GET /api/assessments/my-assessments returns 401 without token (unauthorized)', async () => {
     const res = await request(app).get('/api/assessments/my-assessments');
-    expect(VALID_STATUSES).toContain(res.status);
+    expect(res.status).toBe(401);
   });
 
   it('GET /api/assessment/frameworks/list returns valid response or 401', async () => {
     const res = await request(app).get('/api/assessment/frameworks/list');
-    expect(VALID_STATUSES).toContain(res.status);
+    expect(res.status).toBe(401);
   });
 });

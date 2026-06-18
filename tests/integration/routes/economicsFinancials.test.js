@@ -11,7 +11,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('Economics Financials API', () => {
   let app;
@@ -25,7 +24,7 @@ describe('Economics Financials API', () => {
   describe('GET /api/economics/financials', () => {
     it('should get financials or handle appropriately', async () => {
       const response = await request(app).get('/api/economics/financials');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 });

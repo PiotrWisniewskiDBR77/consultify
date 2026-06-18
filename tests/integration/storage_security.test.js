@@ -154,7 +154,7 @@ describe('Storage Security & Isolation Integration', () => {
 
     // Own project upload: success (200/201) or quota rejection (413) or validation
     // (400). 500/501 dropped — they masked server errors / unimplemented limit checks.
-    expect([200, 201, 400, 413]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 
   it('should sanitize filenames preventing directory traversal', async () => {
@@ -168,7 +168,7 @@ describe('Storage Security & Isolation Integration', () => {
     // Traversal filename must be rejected (400) OR sanitized-and-stored (200/201).
     // 500/501 dropped (masking). NOTE: a full guarantee also needs a body assertion
     // that the STORED filename is not the traversal path — tracked for follow-up.
-    expect([200, 201, 400]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 
   it('should soft delete files instead of removing them immediately', async () => {
@@ -180,6 +180,6 @@ describe('Storage Security & Isolation Integration', () => {
       .set('Authorization', `Bearer ${testTokenA}`);
 
     // Soft-delete success (200/204) or file-absent (404). 403/500/501 dropped (masking).
-    expect([200, 204, 404]).toContain(deleteRes.status);
+    expect([200, 204]).toContain(deleteRes.status);
   });
 });

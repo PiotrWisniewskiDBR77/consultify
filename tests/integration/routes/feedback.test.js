@@ -74,7 +74,7 @@ describe('Integration Test: Feedback Routes', () => {
           severity: 'MEDIUM',
         });
 
-      expect([200, 201, 500]).toContain(res.status); // 500 if DB not ready
+      expect(res.status).toBe(200);
     });
 
     it('should allow anonymous feedback submissions', async () => {
@@ -83,7 +83,7 @@ describe('Integration Test: Feedback Routes', () => {
         message: 'Test',
       });
 
-      expect([200, 400, 500]).toContain(res.status); // 500 if DB not ready
+      expect(res.status).toBe(200);
     });
   });
 

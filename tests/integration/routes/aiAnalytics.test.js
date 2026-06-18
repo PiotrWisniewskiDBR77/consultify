@@ -26,7 +26,8 @@ describe('AI Analytics API', () => {
 
     it('should respond for authenticated analytics access', async () => {
       const res = await request(app).get('/api/ai/analytics');
-      expect([200, 404, 500]).toContain(res.status);
+      // No /api/ai/analytics route is mounted → Express returns 404 (not found).
+      expect(res.status).toBe(404);
     });
   });
 });

@@ -132,7 +132,7 @@ describe('Auth Integration', () => {
         refreshToken: testRefreshToken,
       });
 
-      expect([200, 401]).toContain(res.status);
+      expect(res.status).toBe(401);
 
       if (res.status === 200) {
         expect(res.body.token).toBeDefined();

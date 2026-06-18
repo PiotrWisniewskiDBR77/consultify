@@ -15,7 +15,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-interview-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500];
 
 describe('Interview Routes (L3)', () => {
   let app: any;
@@ -46,12 +45,12 @@ describe('Interview Routes (L3)', () => {
       .post('/api/interview/sessions')
       .set('Content-Type', 'application/json')
       .send({ title: '' });
-    expect(VALID_STATUSES).toContain(res.status);
+    expect(res.status).toBe(401);
   });
 
   it('GET /api/interview/sessions/:id with invalid UUID returns 401 or 400', async () => {
     const res = await request(app).get('/api/interview/sessions/not-a-uuid');
-    expect(VALID_STATUSES).toContain(res.status);
+    expect(res.status).toBe(401);
   });
 
   it('GET /api/interview/context returns 401 without token', async () => {

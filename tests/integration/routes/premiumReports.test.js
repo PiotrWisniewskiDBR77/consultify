@@ -68,7 +68,7 @@ describe('Integration Test: Premium Reports Routes', () => {
         .send({});
 
       // Endpoints often return 500 when PDF gen fails or ID not found if not excessively guarded
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(404);
     });
   });
 });

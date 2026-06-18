@@ -34,7 +34,7 @@ describe('Integration Test: LLM Routes', () => {
     it('should return public providers', async () => {
       const res = await request(app).get('/api/llm/providers/public');
 
-      expect([200, 404]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(Array.isArray(res.body) || Array.isArray(res.body.providers)).toBe(true);
       }
@@ -51,8 +51,8 @@ describe('Integration Test: LLM Routes', () => {
           model_id: 'gpt-3.5-turbo',
         });
 
-      // Should return result (success or error)
-      expect([200, 400, 403]).toContain(res.status);
+      // POST /api/llm/test is guarded by verifySuperAdmin; no auth header → 401.
+      expect(res.status).toBe(401);
       expect(res.body).toBeDefined();
     });
 
@@ -64,7 +64,8 @@ describe('Integration Test: LLM Routes', () => {
           api_key: 'test-key',
         });
 
-      expect([400, 403, 500]).toContain(res.status);
+      // verifySuperAdmin runs before body validation; no auth header → 401.
+      expect(res.status).toBe(401);
     });
   });
 
@@ -76,8 +77,8 @@ describe('Integration Test: LLM Routes', () => {
           endpoint: 'http://localhost:11434',
         });
 
-      // May fail if Ollama not running, but should handle gracefully
-      expect([200, 400, 403, 500]).toContain(res.status);
+      // POST /api/llm/test-ollama is guarded by verifySuperAdmin; no auth header → 401.
+      expect(res.status).toBe(401);
     });
   });
 
@@ -88,7 +89,7 @@ describe('Integration Test: LLM Routes', () => {
         .query({ endpoint: 'http://localhost:11434' });
 
       // May fail if Ollama not running
-      expect([200, 400, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

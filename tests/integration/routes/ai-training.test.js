@@ -12,7 +12,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('AI Training API', () => {
   let app;
@@ -26,14 +25,14 @@ describe('AI Training API', () => {
   describe('GET /api/ai/training', () => {
     it('should get training data or handle appropriately', async () => {
       const response = await request(app).get('/api/ai/training');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 
   describe('POST /api/ai/training', () => {
     it('should start training or handle appropriately', async () => {
       const response = await request(app).post('/api/ai/training').send({ type: 'fine-tune' });
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 });

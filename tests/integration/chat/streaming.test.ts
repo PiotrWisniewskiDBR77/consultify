@@ -75,7 +75,7 @@ describe('Chat Streaming Integration', () => {
         });
 
       // Can return streaming response or error if AI not configured
-      expect([200, 400, 404, 500, 501, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should set correct content type for streaming', async () => {
@@ -86,7 +86,7 @@ describe('Chat Streaming Integration', () => {
         .send({ message: 'Test' });
 
       // Either returns SSE or error
-      expect([200, 400, 404, 500, 501, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200 && res.headers['content-type']) {
         expect(res.headers['content-type']).toMatch(/text\/event-stream|application\/json/);
       }
@@ -103,7 +103,7 @@ describe('Chat Streaming Integration', () => {
           stream: false,
         });
 
-      expect([200, 400, 404, 500, 501, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 

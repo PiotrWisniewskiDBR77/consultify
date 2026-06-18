@@ -11,7 +11,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('Integration Test: Documents Routes', () => {
   let app;
@@ -25,19 +24,19 @@ describe('Integration Test: Documents Routes', () => {
   describe('GET /api/documents', () => {
     it('should return list of documents', async () => {
       const response = await request(app).get('/api/documents');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
 
     it('should require authentication', async () => {
       const response = await request(app).get('/api/documents');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 
   describe('POST /api/documents/upload', () => {
     it('should require file upload', async () => {
       const response = await request(app).post('/api/documents/upload');
-      expect(VALID_STATUSES).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 });

@@ -105,7 +105,7 @@ describe('SuperAdmin Support API', () => {
       const res = await request(app)
         .get('/api/superadmin/access-requests')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -115,7 +115,7 @@ describe('SuperAdmin Support API', () => {
       const res = await request(app)
         .get('/api/superadmin/activities')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should get activity stats for superadmin', async () => {
@@ -123,7 +123,7 @@ describe('SuperAdmin Support API', () => {
       const res = await request(app)
         .get('/api/superadmin/activities/stats')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

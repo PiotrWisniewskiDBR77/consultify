@@ -68,7 +68,7 @@ describe('Integration Test: Reports Routes', () => {
       // 200 if successful, 500 if dependent services (like DB complexity queries) fail but are handled.
       // Since we mocked basic DB, it should ideally be 200, but 500 is also acceptable if logic is complex.
       // However, verify status is valid HTTP.
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(res.body).toBeDefined();
       }
@@ -83,7 +83,7 @@ describe('Integration Test: Reports Routes', () => {
         .get('/api/reports/org-overview')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(res.body).toBeDefined();
       }

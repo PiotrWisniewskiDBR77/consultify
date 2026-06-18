@@ -82,7 +82,7 @@ describe('Integration Test: Roadmap Routes', () => {
         .get(`/api/roadmap/${testProjectId}/waves`)
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect([200, 404, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(Array.isArray(res.body) || res.body.waves !== undefined).toBe(true);
       }
@@ -100,7 +100,7 @@ describe('Integration Test: Roadmap Routes', () => {
           endDate: '2024-03-31',
         });
 
-      expect([200, 201, 400, 404, 500, 501]).toContain(res.status);
+      expect([200, 201]).toContain(res.status);
     });
   });
 
@@ -110,7 +110,7 @@ describe('Integration Test: Roadmap Routes', () => {
         .get(`/api/roadmap/${testProjectId}/summary`)
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect([200, 404, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -124,7 +124,7 @@ describe('Integration Test: Roadmap Routes', () => {
           description: 'Initial baseline',
         });
 
-      expect([200, 201, 400, 404, 500, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -133,13 +133,13 @@ describe('Integration Test: Roadmap Routes', () => {
       const res = await request(app).get(`/api/roadmap/${testProjectId}/waves`);
 
       // Some routes may be public, some require auth
-      expect([200, 401, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
 
     it('should require authentication or return data for summary', async () => {
       const res = await request(app).get(`/api/roadmap/${testProjectId}/summary`);
 
-      expect([200, 401, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 });

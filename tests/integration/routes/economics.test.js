@@ -71,7 +71,7 @@ describe('Integration Test: Economics Routes', () => {
         .get('/api/economics/analyses')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -83,7 +83,7 @@ describe('Integration Test: Economics Routes', () => {
         .get('/api/economics/stats')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -101,7 +101,7 @@ describe('Integration Test: Economics Routes', () => {
           tags: ['test'],
         });
 
-      expect([201, 200, 500]).toContain(res.status);
+      expect([200, 201]).toContain(res.status);
     });
   });
 });

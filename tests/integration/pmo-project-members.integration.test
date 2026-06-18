@@ -48,7 +48,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Project Members API', () => {
         testMemberId = response.body.id;
       } else {
         // Member might already exist
-        expect([201, 400]).toContain(response.status);
+        expect(response.status).toBe(201);
       }
     });
 
@@ -156,7 +156,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Project Members API', () => {
       if (response.status === 200) {
         expect(response.body.projectRole).toBe('INITIATIVE_OWNER');
       } else {
-        expect([200, 403, 404]).toContain(response.status);
+        expect(response.status).toBe(200);
       }
     });
 
@@ -198,7 +198,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Project Members API', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       // Should succeed or fail due to permissions
-      expect([200, 400, 403]).toContain(response.status);
+      expect(response.status).toBe(200);
       
       if (response.status === 200) {
         expect(response.body.success).toBe(true);
@@ -245,7 +245,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Workstreams API', () => {
         expect(response.body.status).toBe('ACTIVE');
         testWorkstreamId = response.body.id;
       } else {
-        expect([201, 403]).toContain(response.status);
+        expect(response.status).toBe(201);
       }
     });
 
@@ -333,7 +333,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Workstreams API', () => {
         .delete(`/api/workstreams/${testWorkstreamId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 403, 404]).toContain(response.status);
+      expect(response.status).toBe(200);
     });
   });
 });
@@ -363,7 +363,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Task Assignment API', () => {
         expect(response.body.slaDueAt).toBeDefined();
         expect(response.body.escalationLevel).toBe(0);
       } else {
-        expect([200, 400, 404]).toContain(response.status);
+        expect(response.status).toBe(200);
       }
     });
 
@@ -397,7 +397,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Task Assignment API', () => {
         expect(response.body.escalation.toLevel).toBeGreaterThan(0);
         expect(response.body.escalation.reason).toBe('Task is blocked');
       } else {
-        expect([200, 400]).toContain(response.status);
+        expect(response.status).toBe(200);
       }
     });
   });
@@ -443,7 +443,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Task Assignment API', () => {
         expect(response.body.assigneeId).toBeNull();
         expect(response.body.slaDueAt).toBeNull();
       } else {
-        expect([200, 400]).toContain(response.status);
+        expect(response.status).toBe(200);
       }
     });
   });

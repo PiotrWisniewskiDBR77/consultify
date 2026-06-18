@@ -94,7 +94,7 @@ describe('Organization Management Workflow', () => {
         status: 'active',
       });
 
-    expect([200, 201, 403, 404, 500, 501]).toContain(res.status);
+    expect([200, 201]).toContain(res.status);
 
     if (res.status === 200 || res.status === 201) {
       createdOrgId = res.body.organization?.id || res.body.id;
@@ -114,7 +114,7 @@ describe('Organization Management Workflow', () => {
         settings: { theme: 'dark' },
       });
 
-    expect([200, 403, 404, 500]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 
   it('should manage organization members', async () => {
@@ -124,7 +124,7 @@ describe('Organization Management Workflow', () => {
       .get('/api/admin/team')
       .set('Authorization', `Bearer ${testToken}`);
 
-    expect([200, 403, 404, 500, 501]).toContain(res.status);
+    expect(res.status).toBe(200);
 
     if (res.status === 200) {
       expect(Array.isArray(res.body) || res.body.members || res.body.users).toBeTruthy();
@@ -138,7 +138,7 @@ describe('Organization Management Workflow', () => {
       .delete(`/api/superadmin/organizations/${createdOrgId}`)
       .set('Authorization', `Bearer ${testToken}`);
 
-    expect([200, 204, 403, 404, 500]).toContain(res.status);
+    expect(res.status).toBe(200);
 
     if (res.status === 200 || res.status === 204) {
       createdOrgId = null;

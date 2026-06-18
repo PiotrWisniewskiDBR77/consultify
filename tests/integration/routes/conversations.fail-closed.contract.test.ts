@@ -78,7 +78,7 @@ describe('conversations fail-closed contract', () => {
       .post('/api/conversations/11111111-1111-4111-8111-111111111111/title/generate')
       .set('X-Correlation-ID', 'pack10s3-conversations-title-fail-1');
 
-    expect([200, 500]).toContain(res.status);
+    expect(res.status).toBe(200);
     if (res.status === 500) {
       expect(res.body.status).toBe('error');
       expect(res.body.error.code).toBe('CONVERSATIONS_TITLE_GENERATION_FAILED');

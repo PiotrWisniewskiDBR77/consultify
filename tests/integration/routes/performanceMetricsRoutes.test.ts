@@ -54,6 +54,7 @@ describe('Performance metrics routes', () => {
 
   it('GET /api/performance-metrics/health returns 200/503 with ok boolean', async () => {
     const res = await request(mount()).get(`${basePath}/health`);
+    // Health endpoint: 200 when healthy, 503 when degraded (ok boolean asserted below).
     expect([200, 503]).toContain(res.status);
     expect(res.body).toEqual(
       expect.objectContaining({

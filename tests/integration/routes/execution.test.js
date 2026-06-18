@@ -72,7 +72,7 @@ describe('Integration Test: Execution Routes', () => {
         .get(`/api/execution/${testProjectId}/summary`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -84,7 +84,7 @@ describe('Integration Test: Execution Routes', () => {
         .get(`/api/execution/${testProjectId}/blockers`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -99,7 +99,7 @@ describe('Integration Test: Execution Routes', () => {
           targetPhase: 'phase2',
         });
 
-      expect([200, 500, 501]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

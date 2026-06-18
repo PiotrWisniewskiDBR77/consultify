@@ -70,7 +70,7 @@ describe('AI Playbooks API', () => {
       const res = await request(app)
         .get('/api/ai/playbooks')
         .set('Authorization', `Bearer ${authToken}`);
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

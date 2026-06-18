@@ -103,7 +103,7 @@ describe('Initiatives Integration', () => {
       .get(`/api/projects/${testProjectId}/initiatives`)
       .set('Authorization', `Bearer ${testToken}`);
 
-    expect([200, 403, 404, 500, 501]).toContain(res.status);
+    expect(res.status).toBe(200);
 
     if (res.status === 200) {
       expect(Array.isArray(res.body) || res.body.initiatives).toBeTruthy();
@@ -123,7 +123,7 @@ describe('Initiatives Integration', () => {
         status: 'proposed',
       });
 
-    expect([200, 201, 403, 404, 500, 501]).toContain(res.status);
+    expect([200, 201]).toContain(res.status);
 
     if (res.status === 200 || res.status === 201) {
       createdInitiativeId = res.body.initiative?.id || res.body.id;
@@ -141,7 +141,7 @@ describe('Initiatives Integration', () => {
         status: 'in_progress',
       });
 
-    expect([200, 403, 404, 500, 501]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 
   it('should delete initiative', async () => {
@@ -151,7 +151,7 @@ describe('Initiatives Integration', () => {
       .delete(`/api/initiatives/${createdInitiativeId}`)
       .set('Authorization', `Bearer ${testToken}`);
 
-    expect([200, 204, 403, 404, 500]).toContain(res.status);
+    expect([200, 204]).toContain(res.status);
 
     if (res.status === 200 || res.status === 204) {
       createdInitiativeId = null;
@@ -169,6 +169,6 @@ describe('Initiatives Integration', () => {
         criteria: 'impact',
       });
 
-    expect([200, 403, 404, 500, 501]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 });

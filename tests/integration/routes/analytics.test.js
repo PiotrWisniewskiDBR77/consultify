@@ -77,7 +77,7 @@ describe('Integration Test: Analytics Routes', () => {
     it('should require authentication', async () => {
       const res = await request(app).get('/api/analytics/health');
 
-      expect([200, 401, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 

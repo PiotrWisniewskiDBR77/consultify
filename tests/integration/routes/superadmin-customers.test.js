@@ -114,7 +114,7 @@ describe('SuperAdmin Customers API', () => {
       const res = await request(app)
         .get('/api/superadmin/customers')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(
           Array.isArray(res.body) || res.body.customers || res.body.organizations
@@ -134,7 +134,7 @@ describe('SuperAdmin Customers API', () => {
       const res = await request(app)
         .get('/api/superadmin/organizations')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -149,7 +149,7 @@ describe('SuperAdmin Customers API', () => {
       const res = await request(app)
         .get('/api/superadmin/system-health')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

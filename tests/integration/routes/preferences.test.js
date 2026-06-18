@@ -65,7 +65,7 @@ describe('Integration Test: Preferences Routes', () => {
         .get('/api/preferences')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 404, 500]).toContain(res.status); // 404 acceptable if empty
+      expect(res.status).toBe(200);
     });
   });
 
@@ -96,7 +96,7 @@ describe('Integration Test: Preferences Routes', () => {
         });
 
       // Accept 200 for success, 400/403/404 for validation/auth, 500 for server errors
-      expect([200, 400, 403, 404, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -111,7 +111,7 @@ describe('Integration Test: Preferences Routes', () => {
           density: 'compact',
         });
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

@@ -72,7 +72,7 @@ describe('Integration Test: Users Routes', () => {
         console.log('[DEBUG] 500 Error Body:', JSON.stringify(res.body, null, 2));
       }
 
-      expect([200, 403, 404]).toContain(res.status); // May require admin
+      expect(res.status).toBe(200);
     });
 
     it('should require authentication', async () => {
@@ -112,7 +112,7 @@ describe('Integration Test: Users Routes', () => {
         .get(`/api/users/${testUserId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -131,7 +131,7 @@ describe('Integration Test: Users Routes', () => {
         });
 
       // Accept 200 for success, 400 for validation, 403 for permission denied
-      expect([200, 400, 403]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

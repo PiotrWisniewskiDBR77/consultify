@@ -11,7 +11,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-customers-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501, 503];
 
 describe('SuperAdmin Customers Module API', () => {
   let app;
@@ -31,7 +30,7 @@ describe('SuperAdmin Customers Module API', () => {
   it('GET /api/superadmin/usage/by-organization returns usage data', async () => {
     if (!app) return;
     const response = await request(app).get('/api/superadmin/usage/by-organization');
-    expect(VALID_STATUSES).toContain(response.status);
+    expect(response.status).toBe(401);
     if (response.status === 200) {
       expect(Array.isArray(response.body)).toBe(true);
     }
@@ -40,7 +39,7 @@ describe('SuperAdmin Customers Module API', () => {
   it('GET /api/superadmin/compliance/summary returns compliance summary', async () => {
     if (!app) return;
     const response = await request(app).get('/api/superadmin/compliance/summary');
-    expect(VALID_STATUSES).toContain(response.status);
+    expect(response.status).toBe(401);
     if (response.status === 200) {
       expect(response.body).toHaveProperty('items');
       expect(Array.isArray(response.body.items)).toBe(true);
@@ -50,7 +49,7 @@ describe('SuperAdmin Customers Module API', () => {
   it('GET /api/superadmin/security/events returns events list', async () => {
     if (!app) return;
     const response = await request(app).get('/api/superadmin/security/events');
-    expect(VALID_STATUSES).toContain(response.status);
+    expect(response.status).toBe(401);
     if (response.status === 200) {
       const events = response.body.events || [];
       expect(Array.isArray(events)).toBe(true);

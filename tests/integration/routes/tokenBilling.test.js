@@ -133,8 +133,8 @@ describe('Integration Test: Token Billing Routes', () => {
         .get('/api/token-billing/margins')
         .set('Authorization', `Bearer ${authToken}`);
 
-      // May require admin, so 200 or 403 is acceptable
-      expect([200, 403, 404]).toContain(res.status);
+      // May require admin, so 200 (allowed) or 403 (forbidden) is acceptable.
+      expect([200, 403]).toContain(res.status);
     });
   });
 

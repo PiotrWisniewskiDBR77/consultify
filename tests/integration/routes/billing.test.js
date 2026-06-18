@@ -105,7 +105,7 @@ describe('Billing API Integration', () => {
         .set('X-Organization-Id', 'test-org');
 
       // May return 200 with array, 404 if not found, or 500 for server errors
-      expect([200, 404, 500]).toContain(response.status);
+      expect(response.status).toBe(200);
       if (response.status === 200) {
         // Response could be an array directly or an object with payment methods
         expect(Array.isArray(response.body) || typeof response.body === 'object').toBe(true);

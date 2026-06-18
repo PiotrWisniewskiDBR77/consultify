@@ -873,16 +873,16 @@ describe('Billing routes integration (L3) - full', () => {
     );
 
     const churn = await dispatch(app, { method: 'GET', url: '/api/billing/analytics/churn', user: superAdminUser });
-    expect([200, 503]).toContain(churn.status);
+    expect(churn.status).toBe(200);
 
     const ltv = await dispatch(app, { method: 'GET', url: '/api/billing/analytics/ltv', user: superAdminUser });
-    expect([200, 503]).toContain(ltv.status);
+    expect(ltv.status).toBe(200);
 
     const cohorts = await dispatch(app, { method: 'GET', url: '/api/billing/analytics/cohorts', user: superAdminUser });
-    expect([200, 503]).toContain(cohorts.status);
+    expect(cohorts.status).toBe(200);
 
     const expansion = await dispatch(app, { method: 'GET', url: '/api/billing/analytics/expansion', user: superAdminUser });
-    expect([200, 503]).toContain(expansion.status);
+    expect(expansion.status).toBe(200);
   });
 
   it('covers admin mocks + placeholder admin endpoints', async () => {
@@ -1010,14 +1010,14 @@ describe('Billing routes integration (L3) - full', () => {
 	    expect(Number(updatedInvoice?.subtotal || 0)).toBeGreaterThan(0);
 
 	    const sendInvoice = await dispatch(app, { method: 'POST', url: `/api/billing/invoices/${uuid(31)}/send`, user: superAdminUser });
-	    expect([200, 500]).toContain(sendInvoice.status);
+	    expect(sendInvoice.status).toBe(200);
 	  });
 
 	  it('covers subscription self-serve + admin subscription CRUD', async () => {
 	    const app = await makeApp();
 
 	    const current = await dispatch(app, { method: 'GET', url: '/api/billing/current', user: ownerUser });
-	    expect([200, 404]).toContain(current.status);
+	    expect(current.status).toBe(200);
 
 	    await dbRun(
 	      `INSERT INTO organization_billing (id, organization_id, subscription_plan_id, status)
@@ -1037,7 +1037,7 @@ describe('Billing routes integration (L3) - full', () => {
 	    expect(plans.body).toEqual(expect.objectContaining({ plans: expect.any(Array) }));
 
 	    const getSub = await dispatch(app, { method: 'GET', url: '/api/billing/subscription', user: ownerUser });
-	    expect([200, 404]).toContain(getSub.status);
+	    expect(getSub.status).toBe(200);
 	    expect(getSub.body).toHaveProperty('data');
 
 	    await dbRun(
@@ -1062,16 +1062,16 @@ describe('Billing routes integration (L3) - full', () => {
 	    );
 
     const getUsage = await dispatch(app, { method: 'GET', url: '/api/billing/usage', user: ownerUser });
-    expect([200, 503]).toContain(getUsage.status);
+    expect(getUsage.status).toBe(200);
 
     const subscribe = await dispatch(app, { method: 'POST', url: '/api/billing/subscribe', user: ownerUser, body: { planId: uuid(1) } });
-    expect([200, 400, 500, 503]).toContain(subscribe.status);
+    expect(subscribe.status).toBe(200);
 
     const change = await dispatch(app, { method: 'POST', url: '/api/billing/change-plan', user: ownerUser, body: { newPlanId: uuid(2) } });
-    expect([200, 400, 500, 503]).toContain(change.status);
+    expect(change.status).toBe(200);
 
     const cancel = await dispatch(app, { method: 'POST', url: '/api/billing/cancel', user: ownerUser, body: { immediately: false } });
-    expect([200, 400, 500, 503]).toContain(cancel.status);
+    expect(cancel.status).toBe(200);
 
     const list = await dispatch(app, { method: 'GET', url: '/api/billing/subscriptions', user: superAdminUser, query: { page: '1', pageSize: '20' } });
     expect(list.status).toBe(200);
@@ -1134,7 +1134,7 @@ describe('Billing routes integration (L3) - full', () => {
     expect(createdPlanId).toBeTruthy();
 
     const updateNoop = await dispatch(app, { method: 'PUT', url: `/api/billing/admin/plans/${createdPlanId}`, user: superAdminUser, body: {} });
-    expect([200, 400]).toContain(updateNoop.status);
+    expect(updateNoop.status).toBe(400);
 
     const update = await dispatch(app, {
       method: 'PUT',
@@ -1195,7 +1195,7 @@ describe('Billing routes integration (L3) - full', () => {
     const app = await makeApp();
 
     const list = await dispatch(app, { method: 'GET', url: '/api/billing/credit-notes', user: ownerUser });
-    expect([200, 403]).toContain(list.status);
+    expect(list.status).toBe(200);
 
     const create = await dispatch(app, {
       method: 'POST',
@@ -1203,13 +1203,13 @@ describe('Billing routes integration (L3) - full', () => {
       user: superAdminUser,
       body: { organizationId: uuid(101), amount: 10, reason: 'Test', invoiceId: uuid(31) },
     });
-    expect([200, 400, 500, 503]).toContain(create.status);
+    expect(create.status).toBe(200);
 
     const adminList = await dispatch(app, { method: 'GET', url: '/api/billing/admin/credit-notes', user: superAdminUser });
-    expect([200, 503]).toContain(adminList.status);
+    expect(adminList.status).toBe(200);
 
 	    const adminStats = await dispatch(app, { method: 'GET', url: '/api/billing/admin/credit-notes/stats', user: superAdminUser });
-	    expect([200, 503]).toContain(adminStats.status);
+	    expect(adminStats.status).toBe(200);
 
 	    const applyMissingInvoice = await dispatch(app, {
 	      method: 'POST',
@@ -1217,7 +1217,7 @@ describe('Billing routes integration (L3) - full', () => {
 	      user: superAdminUser,
 	      body: { invoiceId: uuid(999), amount: 5 },
 	    });
-	    expect([404, 500, 503]).toContain(applyMissingInvoice.status);
+	    expect(applyMissingInvoice.status).toBe(404);
 
 	    const apply = await dispatch(app, {
 	      method: 'POST',
@@ -1270,7 +1270,7 @@ describe('Billing routes integration (L3) - full', () => {
 	    const app = await makeApp();
 
 	    const list = await dispatch(app, { method: 'GET', url: '/api/billing/payment-methods', user: ownerUser });
-	    expect([200, 500, 503]).toContain(list.status);
+	    expect(list.status).toBe(200);
 
 	    const prevStripe = {
 	      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
@@ -1290,19 +1290,19 @@ describe('Billing routes integration (L3) - full', () => {
 	    process.env.STRIPE_KEY = prevStripe.STRIPE_KEY;
 
 	    const setupIntent = await dispatch(app, { method: 'POST', url: '/api/billing/setup-intent', user: ownerUser });
-	    expect([200, 500, 503]).toContain(setupIntent.status);
+	    expect(setupIntent.status).toBe(200);
 
 	    const create = await dispatch(app, { method: 'POST', url: '/api/billing/payment-methods', user: ownerUser, body: { paymentMethodId: 'pm_2' } });
-	    expect([200, 201, 400, 500, 503]).toContain(create.status);
+	    expect(create.status).toBe(201);
 
     const makeDefaultPut = await dispatch(app, { method: 'PUT', url: `/api/billing/payment-methods/${uuid(61)}/default`, user: ownerUser });
-    expect([200, 404, 500, 503]).toContain(makeDefaultPut.status);
+    expect(makeDefaultPut.status).toBe(200);
 
     const makeDefaultPost = await dispatch(app, { method: 'POST', url: `/api/billing/payment-methods/${uuid(61)}/default`, user: ownerUser });
-    expect([200, 404, 500, 503]).toContain(makeDefaultPost.status);
+    expect(makeDefaultPost.status).toBe(200);
 
     const del = await dispatch(app, { method: 'DELETE', url: `/api/billing/payment-methods/${uuid(61)}`, user: ownerUser });
-    expect([204, 400, 404, 500, 503]).toContain(del.status);
+    expect(del.status).toBe(400);
   });
 
 	  it('covers usage endpoints (record + list + summary)', async () => {
@@ -1317,14 +1317,14 @@ describe('Billing routes integration (L3) - full', () => {
 	    expect(list.body).toEqual(expect.objectContaining({ usage: expect.any(Array), structuredUsage: expect.any(Object) }));
 
 	    const summary = await dispatch(app, { method: 'GET', url: '/api/billing/usage-summary', user: superAdminUser, query: { organizationId: uuid(101) } });
-	    expect([200, 500, 503]).toContain(summary.status);
+	    expect(summary.status).toBe(200);
 	  });
 
 	  it('covers spending alerts CRUD + toggles', async () => {
 	    const app = await makeApp();
 
     const list = await dispatch(app, { method: 'GET', url: '/api/billing/spending-alerts', user: ownerUser });
-    expect([200, 500, 503]).toContain(list.status);
+    expect(list.status).toBe(200);
 
     const create = await dispatch(app, {
       method: 'POST',
@@ -1339,7 +1339,7 @@ describe('Billing routes integration (L3) - full', () => {
         isActive: true,
       },
     });
-    expect([200, 400, 500, 503]).toContain(create.status);
+    expect(create.status).toBe(200);
 
     const update = await dispatch(app, {
       method: 'PUT',
@@ -1347,7 +1347,7 @@ describe('Billing routes integration (L3) - full', () => {
       user: ownerUser,
       body: { threshold: 95 },
     });
-    expect([200, 400, 404, 500, 503]).toContain(update.status);
+    expect(update.status).toBe(200);
 
 	    const toggle = await dispatch(app, {
 	      method: 'POST',
@@ -1355,17 +1355,17 @@ describe('Billing routes integration (L3) - full', () => {
 	      user: ownerUser,
 	      body: { enabled: false },
 	    });
-	    expect([200, 400, 404, 500, 503]).toContain(toggle.status);
+	    expect(toggle.status).toBe(200);
 
 	    const del = await dispatch(app, { method: 'DELETE', url: `/api/billing/spending-alerts/${uuid(51)}`, user: ownerUser });
-	    expect([200, 404, 500, 503]).toContain(del.status);
+	    expect(del.status).toBe(200);
 	  });
 
 	  it('covers tax settings + tax rates + VAT validation', async () => {
 	    const app = await makeApp();
 
 	    const getTax = await dispatch(app, { method: 'GET', url: '/api/billing/tax-settings', user: ownerUser });
-	    expect([200, 404, 500, 503]).toContain(getTax.status);
+	    expect(getTax.status).toBe(200);
 
 	    await dbRun(`DELETE FROM billing_tax_settings WHERE organization_id = ?`, [uuid(101)]);
 	    const getTaxMissing = await dispatch(app, { method: 'GET', url: '/api/billing/tax-settings', user: ownerUser });
@@ -1389,32 +1389,32 @@ describe('Billing routes integration (L3) - full', () => {
         poNumber: 'PO-1',
       },
     });
-    expect([200, 500, 503]).toContain(putTax.status);
+    expect(putTax.status).toBe(200);
 
     const listRates = await dispatch(app, { method: 'GET', url: '/api/billing/tax/rates', user: ownerUser, query: { country: 'US' } });
-    expect([200, 500, 503]).toContain(listRates.status);
+    expect(listRates.status).toBe(200);
 
     const listLegacyRates = await dispatch(app, { method: 'GET', url: '/api/billing/tax-rates', user: ownerUser, query: { country: 'US' } });
-    expect([200, 500, 503]).toContain(listLegacyRates.status);
+    expect(listLegacyRates.status).toBe(200);
 
     const createRate = await dispatch(app, { method: 'POST', url: '/api/billing/tax-rates', user: superAdminUser, body: { displayName: 'EU VAT', jurisdiction: 'EU', percentage: 20, taxType: 'vat', country: 'DE', region: 'BE', isActive: true } });
-    expect([200, 400, 500, 503]).toContain(createRate.status);
+    expect(createRate.status).toBe(200);
 
     const adminCreateRate = await dispatch(app, { method: 'POST', url: '/api/billing/admin/tax/rates', user: superAdminUser, body: { displayName: 'Admin VAT', jurisdiction: 'EU', percentage: 21, taxType: 'vat', country: 'DE', region: 'BW' } });
-    expect([200, 400, 500, 503]).toContain(adminCreateRate.status);
+    expect(adminCreateRate.status).toBe(200);
     const adminRateId = adminCreateRate.body?.id as string | undefined;
     if (adminRateId) {
       const adminUpdate = await dispatch(app, { method: 'PUT', url: `/api/billing/admin/tax/rates/${adminRateId}`, user: superAdminUser, body: { isActive: false } });
-      expect([200, 500, 503]).toContain(adminUpdate.status);
+      expect(adminUpdate.status).toBe(200);
       const adminDelete = await dispatch(app, { method: 'DELETE', url: `/api/billing/admin/tax/rates/${adminRateId}`, user: superAdminUser });
-      expect([200, 404, 500, 503]).toContain(adminDelete.status);
+      expect(adminDelete.status).toBe(200);
     }
 
     const validateVat = await dispatch(app, { method: 'POST', url: '/api/billing/tax/validate-vat', user: ownerUser, body: { vatNumber: 'EU123', countryCode: 'DE' } });
-    expect([200, 400, 500, 503]).toContain(validateVat.status);
+    expect(validateVat.status).toBe(200);
 
     const calc = await dispatch(app, { method: 'POST', url: '/api/billing/tax/calculate', user: ownerUser, body: { amount: 100, currency: 'USD', country: 'US', taxIdNumber: '' } });
-    expect([200, 400, 500, 503]).toContain(calc.status);
+    expect(calc.status).toBe(200);
   });
 
   it(
@@ -1423,33 +1423,33 @@ describe('Billing routes integration (L3) - full', () => {
     const app = await makeApp();
 
     const list = await dispatch(app, { method: 'GET', url: '/api/billing/templates', user: ownerUser });
-    expect([200, 500]).toContain(list.status);
+    expect(list.status).toBe(200);
 
     const listLegacy = await dispatch(app, { method: 'GET', url: '/api/billing/invoice-templates', user: ownerUser });
-    expect([200, 500]).toContain(listLegacy.status);
+    expect(listLegacy.status).toBe(200);
 
     const previewMissing = await dispatch(app, { method: 'GET', url: `/api/billing/templates/${uuid(9999)}/preview`, user: ownerUser });
-    expect([404, 500]).toContain(previewMissing.status);
+    expect(previewMissing.status).toBe(404);
 
     const preview = await dispatch(app, { method: 'GET', url: `/api/billing/templates/${uuid(1011)}/preview`, user: ownerUser });
-    expect([200, 500]).toContain(preview.status);
+    expect(preview.status).toBe(200);
 
     const create = await dispatch(app, { method: 'POST', url: '/api/billing/templates', user: ownerUser, body: { name: 'T1', templateType: 'standard', layoutType: 'classic' } });
-    expect([200, 500]).toContain(create.status);
+    expect(create.status).toBe(200);
     const createdId = create.body?.id as string | undefined;
 
     const createLegacy = await dispatch(app, { method: 'POST', url: '/api/billing/invoice-templates', user: ownerUser, body: { name: 'Legacy', templateType: 'standard', layoutType: 'classic' } });
-    expect([200, 500]).toContain(createLegacy.status);
+    expect(createLegacy.status).toBe(200);
 
     if (createdId) {
       const update = await dispatch(app, { method: 'PUT', url: `/api/billing/templates/${createdId}`, user: ownerUser, body: { name: 'Updated', isDefault: true } });
-      expect([200, 500]).toContain(update.status);
+      expect(update.status).toBe(200);
 
       const clone = await dispatch(app, { method: 'POST', url: `/api/billing/templates/${createdId}/clone`, user: ownerUser, body: { name: 'Clone' } });
-      expect([200, 500]).toContain(clone.status);
+      expect(clone.status).toBe(200);
 
       const del = await dispatch(app, { method: 'DELETE', url: `/api/billing/templates/${createdId}`, user: ownerUser });
-      expect([200, 403, 404, 500]).toContain(del.status);
+      expect(del.status).toBe(200);
     }
     },
     120_000
@@ -1459,40 +1459,40 @@ describe('Billing routes integration (L3) - full', () => {
 	    const app = await makeApp();
 
     const listForecasts = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecasts', user: superAdminUser });
-    expect([200, 500, 503]).toContain(listForecasts.status);
+    expect(listForecasts.status).toBe(200);
 
     const statsForecasts = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecasts/stats', user: superAdminUser });
-    expect([200, 500, 503]).toContain(statsForecasts.status);
+    expect(statsForecasts.status).toBe(200);
 
     const generateForecasts = await dispatch(app, { method: 'POST', url: '/api/billing/revenue-forecasts/generate', user: superAdminUser, body: { periodDays: 30 } });
-    expect([200, 400, 500, 503]).toContain(generateForecasts.status);
+    expect(generateForecasts.status).toBe(200);
 
     const deleteForecastMissing = await dispatch(app, { method: 'DELETE', url: `/api/billing/revenue-forecasts/${uuid(999)}`, user: superAdminUser });
-    expect([200, 404, 500, 503]).toContain(deleteForecastMissing.status);
+    expect(deleteForecastMissing.status).toBe(404);
 
     const listRecog = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-recognitions', user: superAdminUser });
-    expect([200, 500, 503]).toContain(listRecog.status);
+    expect(listRecog.status).toBe(200);
 
     const statsRecog = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-recognitions/stats', user: superAdminUser });
-    expect([200, 500, 503]).toContain(statsRecog.status);
+    expect(statsRecog.status).toBe(200);
 
     const schedule = await dispatch(app, { method: 'GET', url: `/api/billing/revenue-recognitions/${uuid(121)}/schedule`, user: superAdminUser });
-    expect([200, 404, 500, 503]).toContain(schedule.status);
+    expect(schedule.status).toBe(200);
 
     const recognize = await dispatch(app, { method: 'POST', url: `/api/billing/revenue-recognitions/${uuid(121)}/recognize`, user: superAdminUser, body: { amount: 5 } });
-    expect([200, 400, 404, 500, 503]).toContain(recognize.status);
+    expect(recognize.status).toBe(200);
 
     const legacyList = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-recognition', user: superAdminUser });
-    expect([200, 500, 503]).toContain(legacyList.status);
+    expect(legacyList.status).toBe(200);
 
     const legacyStats = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-recognition/stats', user: superAdminUser });
-    expect([200, 500, 503]).toContain(legacyStats.status);
+    expect(legacyStats.status).toBe(200);
 
 	    const legacyForecastList = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecast', user: superAdminUser });
-	    expect([200, 500, 503]).toContain(legacyForecastList.status);
+	    expect(legacyForecastList.status).toBe(200);
 
 	    const legacyForecastStats = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecast/stats', user: superAdminUser });
-	    expect([200, 500, 503]).toContain(legacyForecastStats.status);
+	    expect(legacyForecastStats.status).toBe(200);
 
 	    const legacyForecastGenerate = await dispatch(app, {
 	      method: 'POST',
@@ -1500,13 +1500,13 @@ describe('Billing routes integration (L3) - full', () => {
 	      user: superAdminUser,
 	      body: { scenario: 'baseline', months: 2, assumptions: { growthRate: 0.1, churnRate: 0.01 } },
 	    });
-	    expect([200, 400, 500, 503]).toContain(legacyForecastGenerate.status);
+	    expect(legacyForecastGenerate.status).toBe(200);
 
 	    if (legacyForecastGenerate.status === 200) {
 	      const id = legacyForecastGenerate.body?.id as string;
 	      expect(id).toBeTruthy();
 	      const del = await dispatch(app, { method: 'DELETE', url: `/api/billing/revenue-forecast/${id}`, user: superAdminUser });
-	      expect([200, 404, 500, 503]).toContain(del.status);
+	      expect(del.status).toBe(200);
 	    }
 
 	    const legacyCreateRec = await dispatch(app, {
@@ -1515,20 +1515,20 @@ describe('Billing routes integration (L3) - full', () => {
 	      user: superAdminUser,
 	      body: { organization_id: uuid(101), invoice_id: uuid(31), amount: 10, recognition_date: new Date().toISOString(), description: 'Test' },
 	    });
-	    expect([200, 500, 503]).toContain(legacyCreateRec.status);
+	    expect(legacyCreateRec.status).toBe(200);
 
 	    const legacyRecognize = await dispatch(app, { method: 'POST', url: `/api/billing/revenue-recognition/${uuid(121)}/recognize`, user: superAdminUser });
-	    expect([200, 404, 500, 503]).toContain(legacyRecognize.status);
+	    expect(legacyRecognize.status).toBe(200);
 	  });
 
 	  it('covers billing alerts + addons endpoints', async () => {
 	    const app = await makeApp();
 
 	    const addons = await dispatch(app, { method: 'GET', url: '/api/billing/addons', user: ownerUser });
-	    expect([200, 500, 503]).toContain(addons.status);
+	    expect(addons.status).toBe(200);
 
 	    const getAlerts = await dispatch(app, { method: 'GET', url: '/api/billing/alerts', user: ownerUser });
-	    expect([200, 500, 503]).toContain(getAlerts.status);
+	    expect(getAlerts.status).toBe(200);
 	    if (getAlerts.status === 200) {
 	      expect(getAlerts.body).toEqual(expect.objectContaining({ alerts: expect.any(Array) }));
 	    }
@@ -1539,7 +1539,7 @@ describe('Billing routes integration (L3) - full', () => {
 	      user: ownerUser,
 	      body: { alerts: [{ type: 'tokens' }, { type: 'spend', threshold: 90 }] },
 	    });
-	    expect([200, 500, 503]).toContain(putAlerts.status);
+	    expect(putAlerts.status).toBe(200);
 	  });
 
   it('covers webhook events endpoints + retry/pending/failed admin endpoints', async () => {
@@ -1552,32 +1552,32 @@ describe('Billing routes integration (L3) - full', () => {
     expect(listDenied.status).toBe(403);
 
     const list = await dispatch(app, { method: 'GET', url: '/api/billing/webhook-events', user: ownerUser, query: { limit: '10' } });
-    expect([200, 500]).toContain(list.status);
+    expect(list.status).toBe(200);
 
     const stats = await dispatch(app, { method: 'GET', url: '/api/billing/webhook-events/stats', user: ownerUser, query: { period: '30 days' } });
-    expect([200, 500]).toContain(stats.status);
+    expect(stats.status).toBe(200);
 
     const getBadId = await dispatch(app, { method: 'GET', url: '/api/billing/webhook-events/not-a-uuid', user: ownerUser });
     expect(getBadId.status).toBe(400);
 
     const getOk = await dispatch(app, { method: 'GET', url: `/api/billing/webhook-events/${uuid(141)}`, user: ownerUser });
-    expect([200, 400, 403, 404, 500]).toContain(getOk.status);
+    expect(getOk.status).toBe(200);
 
     const retry = await dispatch(app, { method: 'POST', url: `/api/billing/admin/webhook-events/${uuid(141)}/retry`, user: superAdminUser });
-    expect([200, 404, 500, 503]).toContain(retry.status);
+    expect(retry.status).toBe(200);
 
     const failed = await dispatch(app, { method: 'GET', url: '/api/billing/admin/webhook-events/failed', user: superAdminUser, query: { limit: '10' } });
-    expect([200, 500, 503]).toContain(failed.status);
+    expect(failed.status).toBe(200);
 
     const pending = await dispatch(app, { method: 'GET', url: '/api/billing/admin/webhook-events/pending', user: superAdminUser, query: { limit: '10' } });
-    expect([200, 500, 503]).toContain(pending.status);
+    expect(pending.status).toBe(200);
   });
 
 	  it('covers subscription changes endpoints (approve/reject + stats)', async () => {
 	    const app = await makeApp();
 
 	    const list = await dispatch(app, { method: 'GET', url: '/api/billing/subscription-changes', user: superAdminUser });
-	    expect([200, 500, 503]).toContain(list.status);
+	    expect(list.status).toBe(200);
 
 	    const stats = await dispatch(app, { method: 'GET', url: '/api/billing/subscription-changes/stats', user: superAdminUser });
 	    expect(stats.status).toBe(200);
@@ -1589,10 +1589,10 @@ describe('Billing routes integration (L3) - full', () => {
 	    );
 
 	    const approve = await dispatch(app, { method: 'POST', url: `/api/billing/subscription-changes/${uuid(131)}/approve`, user: superAdminUser });
-	    expect([200, 404, 500, 503]).toContain(approve.status);
+	    expect(approve.status).toBe(200);
 
 	    const reject = await dispatch(app, { method: 'POST', url: `/api/billing/subscription-changes/${uuid(131)}/reject`, user: superAdminUser, body: { reason: 'no' } });
-	    expect([200, 404, 500, 503]).toContain(reject.status);
+	    expect(reject.status).toBe(200);
 	  });
 
   it('covers grace-period + reactivate endpoints', async () => {
@@ -1644,10 +1644,10 @@ describe('Billing routes integration (L3) - full', () => {
     );
 
     const get = await dispatch(app, { method: 'GET', url: '/api/billing/usage-billing', user: ownerUser });
-    expect([200, 500, 503]).toContain(get.status);
+    expect(get.status).toBe(200);
 
     const put = await dispatch(app, { method: 'PUT', url: '/api/billing/usage-billing', user: superAdminUser, body: { tokenOverageRate: 0.01, storageOverageRate: 0.2 } });
-    expect([200, 403, 500]).toContain(put.status);
+    expect(put.status).toBe(200);
   });
 
   it('sanity: key billing tables contain expected seeded rows', async () => {

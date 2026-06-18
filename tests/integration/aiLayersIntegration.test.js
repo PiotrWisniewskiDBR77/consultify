@@ -126,7 +126,7 @@ describe('AI Layers Integration', () => {
           action: 'viewed',
         });
 
-      expect([200, 201, 400, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should dismiss nudge', async () => {
@@ -140,7 +140,7 @@ describe('AI Layers Integration', () => {
           reason: 'not_relevant',
         });
 
-      expect([200, 204, 400, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -152,7 +152,7 @@ describe('AI Layers Integration', () => {
         .get('/api/ai-settings/proactivity')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 403, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should get available proactivity modes', async () => {
@@ -162,7 +162,7 @@ describe('AI Layers Integration', () => {
         .get('/api/ai-settings/proactivity/modes')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 403, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should get effective AI settings', async () => {
@@ -172,7 +172,7 @@ describe('AI Layers Integration', () => {
         .get('/api/ai-settings/effective')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 403, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should get available AI models', async () => {
@@ -182,7 +182,7 @@ describe('AI Layers Integration', () => {
         .get('/api/ai-settings/available-models')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 403, 404, 500, 503]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -199,7 +199,7 @@ describe('AI Layers Integration', () => {
           comment: 'Good response',
         });
 
-      expect([200, 201, 400, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
 
     it('should get feedback stats', async () => {

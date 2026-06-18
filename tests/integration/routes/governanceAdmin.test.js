@@ -66,7 +66,7 @@ describe('Integration Test: Governance Admin Routes', () => {
         .get('/api/governance/audit')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -78,7 +78,7 @@ describe('Integration Test: Governance Admin Routes', () => {
         .get('/api/governance/permissions')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -90,7 +90,7 @@ describe('Integration Test: Governance Admin Routes', () => {
         .get('/api/governance/break-glass/active')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

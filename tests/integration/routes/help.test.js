@@ -65,7 +65,7 @@ describe('Integration Test: Help Routes', () => {
         .get('/api/help/playbooks')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
       if (res.status === 200) {
         expect(res.body).toHaveProperty('playbooks');
         expect(res.body).toHaveProperty('recommendedKey');
@@ -86,7 +86,7 @@ describe('Integration Test: Help Routes', () => {
           context: { route: '/dashboard' },
         });
 
-      expect([201, 200, 400, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });
