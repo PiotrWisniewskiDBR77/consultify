@@ -19,6 +19,7 @@ export const TableBlock: React.FC<Props> = ({ block, theme }) => {
       className="overflow-x-auto rounded-lg border"
       style={{ borderColor: theme.colors.primary + '20' }}
     >
+      {/* §27-exempt: slide-content-renderer — renders presentation block data (headers/rows) as a visual table inside a deck slide; not a data listing */}
       <table className="w-full text-sm">
         <thead>
           <tr style={{ backgroundColor: theme.colors.primary + '10' }}>
