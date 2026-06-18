@@ -14,6 +14,7 @@ import { type FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
 import {
   FilterableTable,
   type TableColumn,
+  type TableRow,
 } from '@/components/shared/ModuleHub/FilterableTable';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
 import { LoadingState } from '@/components/ui/primitives';
@@ -253,7 +254,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
   );
 
   const getRowActions = useCallback(
-    (row: Requirement): RowAction[] =>
+    (row: TableRow): RowAction[] =>
       isReadOnly
         ? []
         : [

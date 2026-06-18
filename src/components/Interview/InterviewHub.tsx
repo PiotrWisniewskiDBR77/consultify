@@ -2802,7 +2802,7 @@ export const InterviewHub: React.FC = () => {
   // numbered pipeline stages appear (Sessions is a side view, excluded); labels
   // are stripped of the numeral prefix the tab bar adds (the pill shows it).
   const pipelineSteps = useMemo<InterviewPipelineStep[]>(() => {
-    return INTERVIEW_PIPELINE_STAGE_ORDER.map((id) => {
+    return INTERVIEW_PIPELINE_STAGE_ORDER.map((id): InterviewPipelineStep | null => {
       const tab = tabs.find((t) => t.id === id);
       if (!tab) return null;
       return {

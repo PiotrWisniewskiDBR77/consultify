@@ -438,8 +438,6 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
   initialTab,
   currentUser,
   onUpdateUser,
-  theme,
-  toggleTheme,
 }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(initialTab || 'personal');
@@ -555,12 +553,7 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
               onNavigate={setActiveTab}
               showDetails={true}
             />
-            <ProfileSettings
-              currentUser={currentUser}
-              onUpdateUser={onUpdateUser}
-              theme={theme}
-              toggleTheme={toggleTheme}
-            />
+            <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
           </div>
         );
       case 'status':
@@ -685,12 +678,7 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
         );
       default:
         return (
-          <ProfileSettings
-            currentUser={currentUser}
-            onUpdateUser={onUpdateUser}
-            theme={theme}
-            toggleTheme={toggleTheme}
-          />
+          <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
         );
     }
   };

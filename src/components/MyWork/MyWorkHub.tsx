@@ -555,6 +555,7 @@ const TAB_ACTIVE = MENU_3_CHIP_ACTIVE;
 // Type colors for dynamic tabs
 const TYPE_COLORS = {
   // v3 identity map (docs/ui-standards/00-foundation/artifact-identity-map.md)
+  initiative: 'border-l-blue-500',
   task: 'border-l-emerald-500',
   idea: 'border-l-blue-500',
   decision: 'border-l-amber-500',
