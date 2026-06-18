@@ -1771,7 +1771,8 @@
       "results": "Zobacz wyniki"
     },
     "preview": {
-      "financialAnalysis": "Analiza finansowa"
+      "financialAnalysis": "Analiza finansowa",
+      "resultsAndReports": "Rezultaty i raporty KPI"
     },
     "compact": {
       "summary": "Podsumowanie",
@@ -1823,7 +1824,8 @@
       "failedToLoad": "Nie udało się załadować karty inicjatywy.",
       "notFound": "Nie znaleziono inicjatywy",
       "retry": "Spróbuj ponownie",
-      "goBack": "Wróć"
+      "goBack": "Wróć",
+      "untitled": "Inicjatywa bez tytułu"
     },
     "empty": {
       "title": "Brak inicjatyw",
@@ -1908,7 +1910,25 @@
         "overallocated": "Przeciążony",
         "underutilized": "Niewykorzystany",
         "overallocatedCount": "{{count}} przeciążonych zasobów",
-        "noData": "Brak danych alokacji zasobów."
+        "noData": "Brak danych alokacji zasobów.",
+        "ownerReassigned": "Właściciel przepisany",
+        "reassignFailed": "Nie udało się przepisać właściciela",
+        "proposalApplied": "Przepisanie zastosowane",
+        "aiProposals": "Propozycje rebalansowania AI",
+        "applyAll": "Zastosuj wszystkie",
+        "selectPerson": "— Wybierz osobę —",
+        "accept": "Akceptuj",
+        "teamMembers": "Członkowie zespołu",
+        "totalInitiatives": "Inicjatywy",
+        "overloaded": "Przeciążeni",
+        "available": "Dostępni",
+        "teamWorkload": "Obciążenie zespołu",
+        "person": "Osoba",
+        "allRoles": "Wszystkie role",
+        "workload": "Obciążenie",
+        "reassign": "Przepisz",
+        "allApplied": "Zastosowano wszystkie przepisania ({{count}})",
+        "partialApplied": "Zastosowano {{success}}, nie powiodło się {{failed}}"
       },
       "feasibility": {
         "title": "Wykonalność",
@@ -1919,13 +1939,48 @@
         "risk": "Ryzyko",
         "score": "Wynik",
         "highRiskCount": "{{count}} inicjatyw wysokiego ryzyka",
-        "noData": "Brak danych wykonalności."
+        "noData": "Brak danych wykonalności.",
+        "updated": "Inicjatywa zaktualizowana",
+        "updateFailed": "Nie udało się zaktualizować",
+        "aiProposals": "Propozycje optymalizacji AI",
+        "total": "Inicjatywy",
+        "highRisk": "Wysokie ryzyko (<50%)",
+        "criticalDims": "Z wymiarem krytycznym",
+        "filterBy": "Filtrowane wg:"
       },
       "logic": {
         "title": "Logika",
         "dependencies": "Zależności",
         "criticalDependencyIssues": "{{count}} krytycznych problemów zależności",
-        "noData": "Brak danych zależności."
+        "noData": "Brak danych zależności.",
+        "needMore": "Wymagane są co najmniej 2 inicjatywy",
+        "depAccepted": "Zależność zapisana: {{from}} → {{to}}",
+        "depAcceptFailed": "Nie udało się zapisać zależności",
+        "noCycles": "Nie wykryto cykli",
+        "noNewDeps": "Nie odkryto dodatkowych zależności",
+        "cyclesFound": "Wykryto {{count}} cykl(i)",
+        "criticalPathTitle": "Ścieżka krytyczna",
+        "blockersTitle": "Blokady",
+        "blockerBadge": "{{count}} zależnych",
+        "sequencerTitle": "Rekomendowana przez AI sekwencja realizacji",
+        "noInitiatives": "Brak inicjatyw do uszeregowania",
+        "totalDeps": "Wszystkie zależności",
+        "timingConflicts": "Konflikty terminów",
+        "blockers": "Blokady",
+        "criticalPathLen": "Długość ścieżki krytycznej",
+        "from": "Poprzednik",
+        "to": "Następnik",
+        "type": "Typ",
+        "status": "Status",
+        "aiDiscover": "Wykryj zależności przez AI",
+        "graph": {
+          "noOwner": "Brak właściciela",
+          "criticalPath": "Ścieżka krytyczna",
+          "title": "Graf zależności",
+          "hint": "Przeciągnij od poprzednika do następnika",
+          "timingConflict": "Konflikt terminów",
+          "removeEdge": "Usuń połączenie"
+        }
       },
       "timeline": {
         "title": "Harmonogram",
@@ -1935,7 +1990,10 @@
         "delayed": "Opóźniona",
         "atRisk": "Zagrożona",
         "noDates": "Brak dat",
-        "noData": "Brak danych harmonogramu."
+        "noData": "Brak danych harmonogramu.",
+        "invalidDates": "Początek musi być przed końcem",
+        "datesUpdated": "Daty zaktualizowane",
+        "updateFailed": "Niepowodzenie"
       },
       "completeness": {
         "title": "Kompletność",
@@ -1950,7 +2008,10 @@
         "noData": "Brak danych kompletności."
       },
       "issues": "Problemy",
-      "openInitiative": "Otwórz inicjatywę"
+      "openInitiative": "Otwórz inicjatywę",
+      "fixApplied": "Sugestia AI zastosowana",
+      "fixFailed": "Nie udało się zastosować poprawki",
+      "previewInitiative": "Podgląd"
     },
     "templates": {
       "quick_win": {
@@ -2081,7 +2142,6 @@
     "stakeholder": "Interesariusz",
     "gateReview": "Przegląd bramki",
     "deadline": "Termin",
-    "priority": "Priorytet",
     "escalation": "Eskalacja",
     "descriptionContext": "Opis i kontekst",
     "whatProblemDoesThisInitiativeSolve": "Jaki problem rozwiązuje ta inicjatywa",
@@ -3429,6 +3489,106 @@
       "canExecuteTransitionTitle": "Czy Twoja rola może wykonać przejście (z gate-readiness-check)",
       "yourRoleCanAdvance": "Twoja rola może przejść dalej",
       "viewOnlyForYourRole": "Tylko podgląd dla Twojej roli"
+    },
+    "toast": {
+      "scheduleUpdated": "Harmonogram zaktualizowany",
+      "scheduleUpdateError": "Nie udało się zaktualizować harmonogramu",
+      "gateActionSuccess": "Akcja \"{{gate}}\" wykonana pomyślnie",
+      "gateActionError": "Nie udało się wykonać {{gate}}",
+      "notFound": "Nie znaleziono inicjatywy",
+      "openFailed": "Nie udało się otworzyć inicjatywy",
+      "statusUpdated": "Status zaktualizowany",
+      "statusUpdateFailed": "Nie udało się zaktualizować statusu",
+      "updateFailed": "Nie udało się zaktualizować",
+      "archived": "Inicjatywa zarchiwizowana",
+      "archiveFailed": "Nie udało się zarchiwizować inicjatywy",
+      "chatOpened": "Czat otwarty",
+      "chatOpenError": "Nie udało się otworzyć czatu",
+      "statusChanged": "Status zmieniony na {{status}}",
+      "statusChangeError": "Nie udało się zmienić statusu",
+      "statusChangeFailed": "Zmiana statusu nie powiodła się",
+      "statusChangedLabel": "Status zmieniony na {{label}}",
+      "statusUpdateError": "Nie udało się zaktualizować statusu",
+      "watchError": "Nie udało się zmienić obserwowania",
+      "saveError": "Nie udało się zapisać",
+      "createTaskError": "Nie udało się utworzyć zadania",
+      "createDecisionError": "Nie udało się utworzyć decyzji",
+      "createRaidError": "Nie udało się dodać elementu RAID",
+      "aiGenerationError": "Generowanie AI nie powiodło się",
+      "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
+      "archiveError": "Nie udało się zarchiwizować",
+      "deleteError": "Nie udało się usunąć"
+    },
+    "decisions": {
+      "decision": "Decyzja",
+      "openFailed": "Nie udało się otworzyć decyzji"
+    },
+    "tasks": {
+      "task": "Zadanie",
+      "openFailed": "Nie udało się otworzyć zadania"
+    },
+    "bulk": {
+      "exportFailed": "Eksport nie powiódł się",
+      "exportCsv": "Eksportuj CSV",
+      "tag": "Otaguj",
+      "assign": "Przypisz",
+      "changeDueDate": "Zmień termin",
+      "exported": "Wyeksportowano {{count}}",
+      "selected": "Wybrano: {{count}}"
+    },
+    "scope": {
+      "label": "Zakres",
+      "active": "Aktywne",
+      "all": "Wszystkie"
+    },
+    "charter": {
+      "short": "Karta"
+    },
+    "pilot": {
+      "createLocked": "Dostępne w kolejnej fazie projektu"
+    },
+    "bulkEdit": {
+      "title": "Edycja zbiorcza",
+      "updatesFailed": "Nie udało się zaktualizować {{count}} inicjatyw",
+      "bulkUpdateApplied": "Zmiany zbiorcze zastosowane",
+      "selectedCount": "Wybrano {{count}} inicjatyw",
+      "status": "Status",
+      "noChange": "Bez zmian",
+      "priority": "Priorytet",
+      "businessOwner": "Właściciel biznesowy",
+      "executionOwner": "Właściciel wykonawczy",
+      "applyChanges": "Zastosuj zmiany"
+    },
+    "drawer": {
+      "showLess": "Pokaż mniej",
+      "showMore": "Pokaż więcej ({{count}})",
+      "quickReview": "Szybki przegląd",
+      "gateReadiness": "Gotowość bramek",
+      "viewDecisions": "Zobacz decyzje",
+      "notRequested": "Nie zażądano",
+      "summary": "Podsumowanie",
+      "noSummary": "Brak podsumowania",
+      "progress": "Postęp",
+      "roi": "ROI",
+      "budget": "Budżet",
+      "priority": "Priorytet",
+      "timeline": "Harmonogram",
+      "start": "Początek",
+      "end": "Koniec",
+      "nextMilestone": "Następny kamień milowy",
+      "topRisks": "Najważniejsze ryzyka",
+      "noRaidItems": "Brak elementów RAID",
+      "manageTeam": "Zarządzaj zespołem",
+      "gateDecisions": "Decyzje bramkowe",
+      "requestDecision": "Poproś o decyzję",
+      "noDecisions": "Brak decyzji",
+      "initiative": "Inicjatywa"
+    },
+    "priority": {
+      "critical": "Krytyczny",
+      "high": "Wysoki",
+      "medium": "Średni",
+      "low": "Niski"
     }
   },
   "execution": {

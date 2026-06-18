@@ -2553,7 +2553,8 @@
       "results": "View Results"
     },
     "preview": {
-      "financialAnalysis": "Financial Analysis"
+      "financialAnalysis": "Financial Analysis",
+      "resultsAndReports": "Results & KPI reports"
     },
     "compact": {
       "summary": "Summary",
@@ -2605,7 +2606,8 @@
       "failedToLoad": "Failed to load initiative card.",
       "notFound": "Initiative not found",
       "retry": "Retry",
-      "goBack": "Go back"
+      "goBack": "Go back",
+      "untitled": "Untitled initiative"
     },
     "empty": {
       "title": "No initiatives yet",
@@ -2690,7 +2692,25 @@
         "overallocated": "Overallocated",
         "underutilized": "Underutilized",
         "overallocatedCount": "{{count}} overallocated resource(s)",
-        "noData": "No resource allocation data available."
+        "noData": "No resource allocation data available.",
+        "ownerReassigned": "Owner reassigned",
+        "reassignFailed": "Failed to reassign owner",
+        "proposalApplied": "Reassignment applied",
+        "aiProposals": "AI rebalancing proposals",
+        "applyAll": "Apply all",
+        "selectPerson": "— Select person —",
+        "accept": "Accept",
+        "teamMembers": "Team members",
+        "totalInitiatives": "Initiatives",
+        "overloaded": "Overloaded",
+        "available": "Available",
+        "teamWorkload": "Team workload",
+        "person": "Person",
+        "allRoles": "All roles",
+        "workload": "Workload",
+        "reassign": "Reassign",
+        "allApplied": "All {{count}} reassignments applied",
+        "partialApplied": "{{success}} applied, {{failed}} failed"
       },
       "feasibility": {
         "title": "Feasibility",
@@ -2701,13 +2721,48 @@
         "risk": "Risk",
         "score": "Score",
         "highRiskCount": "{{count}} high-risk initiative(s)",
-        "noData": "No feasibility data available."
+        "noData": "No feasibility data available.",
+        "updated": "Initiative updated",
+        "updateFailed": "Failed to update",
+        "aiProposals": "AI optimization proposals",
+        "total": "Initiatives",
+        "highRisk": "High risk (<50%)",
+        "criticalDims": "With critical dimension",
+        "filterBy": "Filtered by:"
       },
       "logic": {
         "title": "Logic",
         "dependencies": "Dependencies",
         "criticalDependencyIssues": "{{count}} critical dependency issue(s)",
-        "noData": "No dependency data available."
+        "noData": "No dependency data available.",
+        "needMore": "Need at least 2 initiatives",
+        "depAccepted": "Dependency saved: {{from}} → {{to}}",
+        "depAcceptFailed": "Failed to save dependency",
+        "noCycles": "No cycles detected",
+        "noNewDeps": "No additional dependencies discovered",
+        "cyclesFound": "{{count}} cycle(s) detected",
+        "criticalPathTitle": "Critical Path",
+        "blockersTitle": "Blockers",
+        "blockerBadge": "{{count}} dependent(s)",
+        "sequencerTitle": "AI Recommended Execution Sequence",
+        "noInitiatives": "No initiatives to sequence",
+        "totalDeps": "Total dependencies",
+        "timingConflicts": "Timing conflicts",
+        "blockers": "Blockers",
+        "criticalPathLen": "Critical path length",
+        "from": "Predecessor",
+        "to": "Successor",
+        "type": "Type",
+        "status": "Status",
+        "aiDiscover": "AI Discover Dependencies",
+        "graph": {
+          "noOwner": "No owner",
+          "criticalPath": "Critical path",
+          "title": "Dependency Graph",
+          "hint": "Drag from predecessor to successor",
+          "timingConflict": "Timing conflict",
+          "removeEdge": "Remove edge"
+        }
       },
       "timeline": {
         "title": "Timeline",
@@ -2717,7 +2772,10 @@
         "delayed": "Delayed",
         "atRisk": "At risk",
         "noDates": "No dates",
-        "noData": "No timeline data available."
+        "noData": "No timeline data available.",
+        "invalidDates": "Start must be before end",
+        "datesUpdated": "Dates updated",
+        "updateFailed": "Failed"
       },
       "completeness": {
         "title": "Completeness",
@@ -2732,7 +2790,10 @@
         "noData": "No completeness data available."
       },
       "issues": "Issues",
-      "openInitiative": "Open initiative"
+      "openInitiative": "Open initiative",
+      "fixApplied": "AI suggestion applied",
+      "fixFailed": "Failed to apply fix",
+      "previewInitiative": "Preview"
     },
     "templates": {
       "quick_win": {
@@ -2863,7 +2924,6 @@
     "stakeholder": "Stakeholder",
     "gateReview": "Gate review",
     "deadline": "Deadline",
-    "priority": "Priority",
     "escalation": "Escalation",
     "descriptionContext": "Description & Context",
     "whatProblemDoesThisInitiativeSolve": "What problem does this initiative solve",
@@ -4211,6 +4271,106 @@
       "canExecuteTransitionTitle": "Whether your role can execute the transition (from gate-readiness-check)",
       "yourRoleCanAdvance": "Your role can advance",
       "viewOnlyForYourRole": "View-only for your role"
+    },
+    "toast": {
+      "scheduleUpdated": "Harmonogram zaktualizowany",
+      "scheduleUpdateError": "Nie udało się zaktualizować harmonogramu",
+      "gateActionSuccess": "Akcja \"{{gate}}\" wykonana pomyślnie",
+      "gateActionError": "Nie udało się wykonać {{gate}}",
+      "notFound": "Nie znaleziono inicjatywy",
+      "openFailed": "Nie udało się otworzyć inicjatywy",
+      "statusUpdated": "Status zaktualizowany",
+      "statusUpdateFailed": "Nie udało się zaktualizować statusu",
+      "updateFailed": "Nie udało się zaktualizować",
+      "archived": "Initiative archived",
+      "archiveFailed": "Could not archive initiative",
+      "chatOpened": "Chat opened",
+      "chatOpenError": "Failed to open chat",
+      "statusChanged": "Status zmieniony na {{status}}",
+      "statusChangeError": "Nie udało się zmienić statusu",
+      "statusChangeFailed": "Zmiana statusu nie powiodła się",
+      "statusChangedLabel": "Status zmieniony na {{label}}",
+      "statusUpdateError": "Nie udało się zaktualizować statusu",
+      "watchError": "Nie udało się zmienić obserwowania",
+      "saveError": "Nie udało się zapisać",
+      "createTaskError": "Nie udało się utworzyć zadania",
+      "createDecisionError": "Nie udało się utworzyć decyzji",
+      "createRaidError": "Nie udało się dodać elementu RAID",
+      "aiGenerationError": "Generowanie AI nie powiodło się",
+      "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
+      "archiveError": "Nie udało się zarchiwizować",
+      "deleteError": "Nie udało się usunąć"
+    },
+    "decisions": {
+      "decision": "Decision",
+      "openFailed": "Failed to open decision"
+    },
+    "tasks": {
+      "task": "Task",
+      "openFailed": "Failed to open task"
+    },
+    "bulk": {
+      "exportFailed": "Export failed",
+      "exportCsv": "Export CSV",
+      "tag": "Tag",
+      "assign": "Assign",
+      "changeDueDate": "Change due date",
+      "exported": "Exported {{count}}",
+      "selected": "{{count}} selected"
+    },
+    "scope": {
+      "label": "Scope",
+      "active": "Active",
+      "all": "All"
+    },
+    "charter": {
+      "short": "Charter"
+    },
+    "pilot": {
+      "createLocked": "Available in the next project phase"
+    },
+    "bulkEdit": {
+      "title": "Bulk edit",
+      "updatesFailed": "Failed to update {{count}} initiatives",
+      "bulkUpdateApplied": "Bulk changes applied",
+      "selectedCount": "{{count}} initiatives selected",
+      "status": "Status",
+      "noChange": "No change",
+      "priority": "Priority",
+      "businessOwner": "Business owner",
+      "executionOwner": "Execution owner",
+      "applyChanges": "Apply changes"
+    },
+    "drawer": {
+      "showLess": "Show less",
+      "showMore": "Show more ({{count}})",
+      "quickReview": "Quick review",
+      "gateReadiness": "Gate readiness",
+      "viewDecisions": "View decisions",
+      "notRequested": "Not requested",
+      "summary": "Summary",
+      "noSummary": "No summary",
+      "progress": "Progress",
+      "roi": "ROI",
+      "budget": "Budget",
+      "priority": "Priority",
+      "timeline": "Timeline",
+      "start": "Start",
+      "end": "End",
+      "nextMilestone": "Next milestone",
+      "topRisks": "Top risks",
+      "noRaidItems": "No RAID items",
+      "manageTeam": "Manage team",
+      "gateDecisions": "Gate decisions",
+      "requestDecision": "Request decision",
+      "noDecisions": "No decisions",
+      "initiative": "Initiative"
+    },
+    "priority": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
     }
   },
   "execution": {
