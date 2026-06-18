@@ -25,7 +25,7 @@ describe('LLM Health Integration', () => {
     it('should return LLM health status', async () => {
       const res = await request(app).get('/api/llm/health');
 
-      expect([200, 401, 403, 503]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200) {
         expect(res.body).toBeDefined();
       }
@@ -36,7 +36,7 @@ describe('LLM Health Integration', () => {
     it('should return health status alias', async () => {
       const res = await request(app).get('/api/llm/health/status');
 
-      expect([200, 401, 403, 503]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -44,7 +44,7 @@ describe('LLM Health Integration', () => {
     it('should return health summary', async () => {
       const res = await request(app).get('/api/llm/health/summary');
 
-      expect([200, 401, 403, 503]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -52,7 +52,7 @@ describe('LLM Health Integration', () => {
     it('should return detailed health info', async () => {
       const res = await request(app).get('/api/llm/health/detailed');
 
-      expect([200, 401, 403, 503]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -60,7 +60,7 @@ describe('LLM Health Integration', () => {
     it('should return health errors list', async () => {
       const res = await request(app).get('/api/llm/health/errors');
 
-      expect([200, 401, 403, 503]).toContain(res.status);
+      expect(res.status).toBe(401);
       if (res.status === 200 && Array.isArray(res.body)) {
         // Each error should have basic structure
         res.body.forEach((error) => {
@@ -76,7 +76,7 @@ describe('LLM Health Integration', () => {
     it('should return list of LLM providers', async () => {
       const res = await request(app).get('/api/llm/providers');
 
-      expect([200, 401, 403, 500]).toContain(res.status);
+      expect(res.status).toBe(401);
     });
   });
 
@@ -84,7 +84,8 @@ describe('LLM Health Integration', () => {
     it('should return public provider list without auth', async () => {
       const res = await request(app).get('/api/llm/providers/public');
 
-      expect([200, 404, 500]).toContain(res.status);
+      expect(res.status).not.toBe(401);
+      expect(res.status).not.toBe(403);
     });
   });
 });
