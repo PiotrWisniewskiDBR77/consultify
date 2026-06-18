@@ -208,7 +208,7 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
       <div className="mx-4 flex h-[560px] max-h-[calc(100vh-2rem)] w-[920px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-navy-900">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-5 py-3.5 dark:border-white/[0.08]">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-            <span aria-hidden className="inline-block h-5 w-1.5 rounded-full bg-primary-600" />
+            <span aria-hidden className="inline-block h-5 w-1.5 rounded-full bg-navy-900" />
             {tr('Zaproponuj inicjatywę', 'Propose initiative')}
           </h2>
           <div className="flex items-center gap-3">
@@ -220,7 +220,7 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
                   onClick={() => setBoardTab(tabKey)}
                   className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                     boardTab === tabKey
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
                   }`}
                 >

@@ -929,7 +929,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                               : isCurrent
                                 ? hasBlocking
                                   ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 ring-1 ring-rose-500/30'
-                                  : 'bg-primary-500 text-white'
+                                  : 'bg-navy-900 text-white'
                                 : 'bg-slate-200/80 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                           }
                         `}
@@ -961,7 +961,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                               {stage.label}
                             </span>
                             {isCurrent && (
-                              <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-primary-500 text-white uppercase tracking-wider">
+                              <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-navy-900 text-white uppercase tracking-wider">
                                 {t('initiatives.initiativeGatesWorkflowTable.now')}
                               </span>
                             )}

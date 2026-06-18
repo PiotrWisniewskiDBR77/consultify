@@ -208,7 +208,7 @@ export const InitiativeStatusPipeline: React.FC = () => {
                   {meta.label}
                 </span>
                 {isCurrent && (
-                  <span className="mt-0.5 px-1 py-0.5 text-[8px] font-bold rounded bg-primary-500 text-white uppercase tracking-wider">
+                  <span className="mt-0.5 px-1 py-0.5 text-[8px] font-bold rounded bg-navy-900 text-white uppercase tracking-wider">
                     {t('initiatives.initiativeStatusPipeline.now')}
                   </span>
                 )}

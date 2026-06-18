@@ -187,7 +187,7 @@ const formatDate = (d?: string) => {
 const ProgressBar: React.FC<{ value: number; max: number; color?: string }> = ({
   value,
   max,
-  color = 'bg-primary-500',
+  color = 'bg-navy-900',
 }) => {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (

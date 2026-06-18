@@ -425,7 +425,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'schedule',
           label: 'Schedule',
           gate: 'SCHEDULE',
-          color: 'bg-primary-600 hover:bg-primary-500',
+          color: 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
           icon: <Calendar size={16} />,
         });
         break;

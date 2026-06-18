@@ -452,7 +452,7 @@ export function InitiativeTeamComposerModal(props: {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-primary-500 text-white">
+                <div className="p-2 rounded-xl bg-navy-900 text-white">
                   <Users size={16} />
                 </div>
                 <div>

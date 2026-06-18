@@ -452,7 +452,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary-500 rounded-full"
+                  className="h-full bg-navy-900 rounded-full"
                   style={{ width: `${initiative.progress || 0}%` }}
                 />
               </div>

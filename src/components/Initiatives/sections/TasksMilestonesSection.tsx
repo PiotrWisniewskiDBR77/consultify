@@ -82,8 +82,8 @@ const TASK_STATUS_CONFIG: Record<
   },
   review: {
     label: { en: 'Review', pl: 'Przegląd' },
-    color: 'bg-primary-500',
-    dotColor: 'bg-primary-500',
+    color: 'bg-sky-500',
+    dotColor: 'bg-navy-900',
     bgColor: 'bg-primary-100 dark:bg-primary-500/20',
     textColor: 'text-primary-600 dark:text-primary-400',
   },

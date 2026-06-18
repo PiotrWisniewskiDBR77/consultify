@@ -6980,7 +6980,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         </p>
                         <div className="h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-primary-500"
+                            className="h-full rounded-full bg-navy-900"
                             style={{ width: `${val as number}%` }}
                           />
                         </div>
@@ -7710,7 +7710,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         onClick={() => setCreateKpiMode('manual')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           createKpiMode === 'manual'
-                            ? 'bg-primary-500 text-white'
+                            ? 'bg-navy-900 text-white'
                             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                         }`}
                       >
@@ -7720,7 +7720,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         onClick={() => setCreateKpiMode('linked')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           createKpiMode === 'linked'
-                            ? 'bg-primary-500 text-white'
+                            ? 'bg-navy-900 text-white'
                             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                         }`}
                       >

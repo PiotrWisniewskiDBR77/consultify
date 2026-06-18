@@ -637,9 +637,9 @@ export const MODULE_CONFIG = {
   INITIATIVES: {
     label: 'Initiatives',
     labelPl: 'Inicjatywy',
-    color: 'bg-primary-500',
-    textColor: 'text-primary-600 dark:text-primary-400',
-    bgLight: 'bg-primary-500/10',
+    color: 'bg-navy-900',
+    textColor: 'text-navy-900 dark:text-slate-300',
+    bgLight: 'bg-navy-900/10',
     icon: 'Lightbulb',
     route: '/initiatives',
     description: 'Planning & approval phase',

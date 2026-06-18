@@ -187,7 +187,7 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
 const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-blue-500',
-  review: 'bg-primary-500',
+  review: 'bg-sky-500',
   blocked: 'bg-rose-500',
   done: 'bg-emerald-500',
 };
@@ -3851,7 +3851,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   const shapeColor: Record<TimelineRowType, string> = {
     start: 'bg-emerald-500',
     finish: 'bg-rose-500',
-    milestone: 'bg-primary-500',
+    milestone: 'bg-navy-900',
     decision: 'bg-amber-500',
     info_event: 'bg-blue-500',
     notification: 'bg-indigo-500',

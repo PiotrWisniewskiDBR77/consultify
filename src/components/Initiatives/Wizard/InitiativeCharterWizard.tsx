@@ -114,7 +114,7 @@ const Disclosure: React.FC<{
     >
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</span>
       {typeof count === 'number' && count > 0 && (
-        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[11px] font-semibold text-white">
+        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-navy-900 px-1.5 text-[11px] font-semibold text-white">
           {count}
         </span>
       )}
@@ -527,7 +527,7 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           <span className="text-slate-500 dark:text-slate-400">
             {tr('Sugestia:', 'Suggestion:')}
           </span>
-          <span className="rounded-md bg-primary-600 px-2 py-0.5 text-xs font-semibold text-white">
+          <span className="rounded-md bg-navy-900 px-2 py-0.5 text-xs font-semibold text-white">
             {isPolish ? quadrant.pl : quadrant.en}
           </span>
           <span className="text-slate-400">·</span>
