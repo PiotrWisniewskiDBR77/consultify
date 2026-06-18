@@ -9,6 +9,7 @@
 import { Loader2, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
@@ -36,6 +37,7 @@ type AIDependencyProposal = {
 };
 
 export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly }) => {
+  const { t } = useTranslation();
   const {
     initiativeId,
     dependencies,
@@ -286,9 +288,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
 
       const fallbackNote =
         proposal.add.length === 0 && proposal.remove.length === 0
-          ? isPolish
-            ? 'AI nie znalazło sugestii zmian — zależności wyglądają OK.'
-            : 'AI found no change suggestions — dependencies look good.'
+          ? t('initiatives.dependenciesSection.noChangeSuggestions')
           : '';
 
       setAiProposal({
@@ -306,9 +306,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
         >
       );
     } catch (e: any) {
-      toast.error(
-        e?.message || (isPolish ? 'Nie udało się przeanalizować zależności' : 'AI analysis failed')
-      );
+      toast.error(e?.message || t('initiatives.dependenciesSection.aiAnalysisFailed'));
     } finally {
       setIsAIProposing(false);
     }
@@ -320,6 +318,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
     initiativeTasks,
     isPolish,
     parseAIJson,
+    t,
     taskTitleById,
   ]);
 
@@ -351,15 +350,13 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
     const toRemove = aiProposal.remove.filter((r) => !!selectedRemoveIds[r.dependencyId]);
 
     if (toAdd.length === 0 && toRemove.length === 0) {
-      toast(isPolish ? 'Brak wybranych zmian' : 'No selected changes');
+      toast(t('initiatives.dependenciesSection.noSelectedChanges'));
       return;
     }
 
     if (toRemove.length > 0) {
       const ok = window.confirm(
-        isPolish
-          ? `Usunąć ${toRemove.length} zależnoś(ć)? To działanie jest nieodwracalne.`
-          : `Delete ${toRemove.length} dependency link(s)? This action cannot be undone.`
+        t('initiatives.dependenciesSection.deleteDependenciesConfirm', { count: toRemove.length })
       );
       if (!ok) return;
     }
@@ -387,13 +384,16 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
 
       await refresh();
       toast.success(
-        isPolish
-          ? `Zastosowano propozycje AI (${toAdd.length} dodano${toRemove.length ? `, ${toRemove.length} usunięto` : ''})`
-          : `Applied AI proposals (${toAdd.length} added${toRemove.length ? `, ${toRemove.length} removed` : ''})`
+        t('initiatives.dependenciesSection.appliedAiProposals', {
+          added: toAdd.length,
+          removed: toRemove.length
+            ? t('initiatives.dependenciesSection.removedSuffix', { count: toRemove.length })
+            : '',
+        })
       );
       closeAIModal();
     } catch {
-      toast.error(isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals');
+      toast.error(t('initiatives.dependenciesSection.failedToApplyProposals'));
     } finally {
       setIsApplying(false);
     }
@@ -406,6 +406,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
     refresh,
     selectedAddIdx,
     selectedRemoveIds,
+    t,
   ]);
 
   return (
@@ -416,14 +417,10 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div className="min-w-0">
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isPolish
-                    ? 'Propozycje zmian w zależnościach (AI)'
-                    : 'Proposed dependency changes (AI)'}
+                  {t('initiatives.dependenciesSection.proposedDependencyChanges')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish
-                    ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
-                    : 'Select items to add/remove, then click “Apply”.'}
+                  {t('initiatives.dependenciesSection.selectItemsThenApply')}
                 </p>
                 {aiProposal.note ? (
                   <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50/60 dark:bg-navy-950/20 border border-slate-200/60 dark:border-navy-700/60 rounded-lg px-3 py-2">
@@ -434,7 +431,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
               <button
                 onClick={closeAIModal}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPolish ? 'Zamknij' : 'Close'}
+                title={t('initiatives.dependenciesSection.close')}
               >
                 <X size={16} />
               </button>
@@ -445,7 +442,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do usunięcia' : 'To remove'} ({aiProposal.remove.length})
+                    {t('initiatives.dependenciesSection.toRemove')} ({aiProposal.remove.length})
                   </span>
                   {aiProposal.remove.length > 0 && (
                     <button
@@ -458,7 +455,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.dependenciesSection.selectAll')}
                     </button>
                   )}
                 </div>
@@ -468,11 +465,19 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200/60 dark:border-navy-700/60">
                         <th className="w-10 py-2.5 pl-3 pr-2"></th>
-                        <th className="text-left py-2.5 pr-2">{isPolish ? 'Z' : 'From'}</th>
-                        <th className="text-left py-2.5 pr-2">{isPolish ? 'Do' : 'To'}</th>
-                        <th className="text-left py-2.5 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-                        <th className="text-left py-2.5 pr-2">{isPolish ? 'Lag' : 'Lag'}</th>
-                        <th className="text-left py-2.5 pr-3">{isPolish ? 'Powód' : 'Reason'}</th>
+                        <th className="text-left py-2.5 pr-2">
+                          {t('initiatives.dependenciesSection.from')}
+                        </th>
+                        <th className="text-left py-2.5 pr-2">
+                          {t('initiatives.dependenciesSection.to')}
+                        </th>
+                        <th className="text-left py-2.5 pr-2">
+                          {t('initiatives.dependenciesSection.type')}
+                        </th>
+                        <th className="text-left py-2.5 pr-2">Lag</th>
+                        <th className="text-left py-2.5 pr-3">
+                          {t('initiatives.dependenciesSection.reason')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -482,7 +487,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                             colSpan={6}
                             className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                           >
-                            {isPolish ? 'Brak propozycji usunięć.' : 'No removal suggestions.'}
+                            {t('initiatives.dependenciesSection.noRemovalSuggestions')}
                           </td>
                         </tr>
                       ) : (
@@ -540,7 +545,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
+                    {t('initiatives.dependenciesSection.toAdd')} ({aiProposal.add.length})
                   </span>
                   {aiProposal.add.length > 0 && (
                     <button
@@ -554,7 +559,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.dependenciesSection.selectAll')}
                     </button>
                   )}
                 </div>
@@ -564,12 +569,18 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200/60 dark:border-navy-700/60">
                         <th className="w-10 py-2.5 pl-3 pr-2"></th>
-                        <th className="text-left py-2.5 pr-2">{isPolish ? 'Z' : 'From'}</th>
-                        <th className="text-left py-2.5 pr-2">{isPolish ? 'Do' : 'To'}</th>
-                        <th className="text-left py-2.5 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-                        <th className="text-left py-2.5 pr-2">{isPolish ? 'Lag' : 'Lag'}</th>
+                        <th className="text-left py-2.5 pr-2">
+                          {t('initiatives.dependenciesSection.from')}
+                        </th>
+                        <th className="text-left py-2.5 pr-2">
+                          {t('initiatives.dependenciesSection.to')}
+                        </th>
+                        <th className="text-left py-2.5 pr-2">
+                          {t('initiatives.dependenciesSection.type')}
+                        </th>
+                        <th className="text-left py-2.5 pr-2">Lag</th>
                         <th className="text-left py-2.5 pr-3">
-                          {isPolish ? 'Notatki / Uzasadnienie' : 'Notes / Rationale'}
+                          {t('initiatives.dependenciesSection.notesRationale')}
                         </th>
                       </tr>
                     </thead>
@@ -580,7 +591,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                             colSpan={6}
                             className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                           >
-                            {isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                            {t('initiatives.dependenciesSection.noAdditionsProposed')}
                           </td>
                         </tr>
                       ) : (
@@ -649,11 +660,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                   ) : (
                     <Sparkles size={14} className="text-primary-500" />
                   )}
-                  <span>
-                    {isPolish
-                      ? 'Po akceptacji dodamy/usuniemy wybrane zależności przez API (bez wymyślania nowych zadań).'
-                      : 'On apply we will add/remove the selected dependency links via API (no new tasks invented).'}
-                  </span>
+                  <span>{t('initiatives.dependenciesSection.applyApiNote')}</span>
                 </div>
               </div>
             </div>
@@ -664,7 +671,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                 disabled={isApplying}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.dependenciesSection.cancel')}
               </button>
               <button
                 onClick={() => void applyAIProposal()}
@@ -672,7 +679,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {isApplying ? <Loader2 size={13} className="animate-spin" /> : null}
-                <span>{isPolish ? 'Zastosuj' : 'Apply'}</span>
+                <span>{t('initiatives.dependenciesSection.apply')}</span>
               </button>
             </div>
           </div>

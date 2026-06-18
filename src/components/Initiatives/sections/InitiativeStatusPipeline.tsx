@@ -25,6 +25,7 @@
 
 import { AlertTriangle, Check, CircleDot, Flag, Lock } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { getLifecycleOrder, getStatusMeta } from '@/services/initiativeLifecycle';
 import { InitiativeStatus } from '@/types';
@@ -49,6 +50,7 @@ const HAPPY_PATH: InitiativeStatus[] = [
 type ReadinessVerdict = 'ready' | 'warning' | 'blocking' | 'unknown';
 
 export const InitiativeStatusPipeline: React.FC = () => {
+  const { t } = useTranslation();
   const { status: statusRaw, isPolish, gateReadiness } = useInitiativeContext();
 
   const status = (statusRaw || 'DRAFT') as InitiativeStatus;
@@ -101,13 +103,13 @@ export const InitiativeStatusPipeline: React.FC = () => {
   const offPathLabel = (() => {
     switch (status) {
       case InitiativeStatus.PENDING_REVIEW:
-        return isPolish ? 'Oczekuje na przegląd' : 'Pending review';
+        return t('initiatives.initiativeStatusPipeline.pendingReview');
       case InitiativeStatus.BLOCKED:
-        return isPolish ? 'Zablokowana' : 'Blocked';
+        return t('initiatives.initiativeStatusPipeline.blocked');
       case InitiativeStatus.CANCELLED:
-        return isPolish ? 'Anulowana' : 'Cancelled';
+        return t('initiatives.initiativeStatusPipeline.cancelled');
       case InitiativeStatus.ARCHIVED:
-        return isPolish ? 'Zarchiwizowana' : 'Archived';
+        return t('initiatives.initiativeStatusPipeline.archived');
       default:
         return null;
     }
@@ -118,25 +120,25 @@ export const InitiativeStatusPipeline: React.FC = () => {
       case 'ready':
         return {
           icon: Check,
-          text: isPolish ? 'Gotowa' : 'Ready',
+          text: t('initiatives.initiativeStatusPipeline.ready'),
           cls: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
         };
       case 'warning':
         return {
           icon: AlertTriangle,
-          text: isPolish ? 'Ostrzeżenia' : 'Warnings',
+          text: t('initiatives.initiativeStatusPipeline.warnings'),
           cls: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
         };
       case 'blocking':
         return {
           icon: Lock,
-          text: isPolish ? 'Braki blokujące' : 'Blocking gaps',
+          text: t('initiatives.initiativeStatusPipeline.blockingGaps'),
           cls: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
         };
       default:
         return {
           icon: CircleDot,
-          text: isPolish ? 'Brak danych' : 'No data',
+          text: t('initiatives.initiativeStatusPipeline.noData'),
           cls: 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20',
         };
     }
@@ -148,21 +150,17 @@ export const InitiativeStatusPipeline: React.FC = () => {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Cykl życia (status)' : 'Lifecycle (status)'}
+            {t('initiatives.initiativeStatusPipeline.lifecycleStatus')}
           </span>
           <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider bg-slate-200/70 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
-            {isPolish ? 'podgląd' : 'preview'}
+            {t('initiatives.initiativeStatusPipeline.preview')}
           </span>
         </div>
         {/* Next-gate readiness chip (backend-sourced) */}
         {nextGateConfig && (
           <div
             className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-semibold ${readinessChip.cls}`}
-            title={
-              isPolish
-                ? 'Gotowość następnej bramki — wg systemu (gate-readiness-check)'
-                : 'Next-gate readiness — from system (gate-readiness-check)'
-            }
+            title={t('initiatives.initiativeStatusPipeline.nextGateReadinessTitle')}
           >
             <readinessChip.icon size={12} />
             <span>{readinessChip.text}</span>
@@ -211,7 +209,7 @@ export const InitiativeStatusPipeline: React.FC = () => {
                 </span>
                 {isCurrent && (
                   <span className="mt-0.5 px-1 py-0.5 text-[8px] font-bold rounded bg-primary-500 text-white uppercase tracking-wider">
-                    {isPolish ? 'teraz' : 'now'}
+                    {t('initiatives.initiativeStatusPipeline.now')}
                   </span>
                 )}
               </div>
@@ -234,9 +232,7 @@ export const InitiativeStatusPipeline: React.FC = () => {
         <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-400">
           <AlertTriangle size={13} className="shrink-0" />
           <span>
-            {isPolish
-              ? `Status poza ścieżką główną: ${offPathLabel}. Powyższa oś pokazuje docelowy przebieg.`
-              : `Status is off the happy path: ${offPathLabel}. The track above shows the target flow.`}
+            {t('initiatives.initiativeStatusPipeline.offHappyPath', { label: offPathLabel })}
           </span>
         </div>
       )}
@@ -246,11 +242,11 @@ export const InitiativeStatusPipeline: React.FC = () => {
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 rounded-xl bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/60">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
             <Flag size={12} className="text-primary-500" />
-            {isPolish ? 'Następna bramka' : 'Next gate'}:{' '}
+            {t('initiatives.initiativeStatusPipeline.nextGate')}:{' '}
             {isPolish ? nextGateConfig.namePl : nextGateConfig.name}
           </span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Decydent' : 'Approver'}:{' '}
+            {t('initiatives.initiativeStatusPipeline.approver')}:{' '}
             {getRoleLabel(nextGateConfig.requiredRole, isPolish)}
           </span>
           <span
@@ -259,19 +255,11 @@ export const InitiativeStatusPipeline: React.FC = () => {
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : 'text-slate-500 dark:text-slate-400'
             }`}
-            title={
-              isPolish
-                ? 'Czy Twoja rola może wykonać przejście (z gate-readiness-check)'
-                : 'Whether your role can execute the transition (from gate-readiness-check)'
-            }
+            title={t('initiatives.initiativeStatusPipeline.canExecuteTransitionTitle')}
           >
             {userCanAdvance
-              ? isPolish
-                ? 'Twoja rola może przejść dalej'
-                : 'Your role can advance'
-              : isPolish
-                ? 'Tylko podgląd dla Twojej roli'
-                : 'View-only for your role'}
+              ? t('initiatives.initiativeStatusPipeline.yourRoleCanAdvance')
+              : t('initiatives.initiativeStatusPipeline.viewOnlyForYourRole')}
           </span>
         </div>
       )}

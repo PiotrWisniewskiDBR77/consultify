@@ -9,6 +9,7 @@
 import { motion } from 'framer-motion';
 import { AlertTriangle, Loader2, Plus, Scale, Sparkles, Trash2, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 
@@ -47,7 +48,8 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { initiative, isPolish, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
+  const { t } = useTranslation();
+  const { initiative, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
   const artifactContext = {
     type: 'initiative',
     title: initiative?.name || '',
@@ -131,7 +133,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
   return (
     <CollapsibleSection
       id="scope"
-      title={isPolish ? 'Zakres i kryteria rezygnacji' : 'Scope & Kill Criteria'}
+      title={t('initiatives.scopeSection.scopeAndKillCriteria')}
       icon={<Scale size={18} className="text-primary-500 dark:text-primary-400" />}
       iconBg="bg-gradient-to-br from-primary-500/10 to-primary-500/10 dark:from-primary-500/20 dark:to-primary-500/20"
       expanded={expanded}
@@ -180,12 +182,10 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 <span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" />
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                    {isPolish ? 'W zakresie' : 'In Scope'}
+                    {t('initiatives.scopeSection.inScope')}
                   </label>
                   <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                    {isPolish
-                      ? 'Elementy, procesy i obszary objęte inicjatywą'
-                      : 'Elements, processes and areas included in this initiative'}
+                    {t('initiatives.scopeSection.inScopeDescription')}
                   </p>
                 </div>
               </div>
@@ -194,7 +194,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               >
                 <Plus size={14} />
-                {isPolish ? 'Dodaj' : 'Add item'}
+                {t('initiatives.scopeSection.addItem')}
               </button>
             </div>
             <div className="min-h-[40px]">
@@ -205,13 +205,13 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                   updateInScope,
                   removeInScope,
                   'emerald',
-                  isPolish ? 'Element zakresu...' : 'Scope item...',
-                  isPolish ? 'W zakresie — element listy' : 'In Scope — list item'
+                  t('initiatives.scopeSection.scopeItemPlaceholder'),
+                  t('initiatives.scopeSection.inScopeListItem')
                 )
               )}
               {inScope.length === 0 && (
                 <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
-                  {isPolish ? 'Brak elementów' : 'No items yet'}
+                  {t('initiatives.scopeSection.noItemsYet')}
                 </p>
               )}
             </div>
@@ -227,12 +227,10 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 <span className="w-3 h-3 rounded-full bg-rose-400 shrink-0" />
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                    {isPolish ? 'Poza zakresem' : 'Out of Scope'}
+                    {t('initiatives.scopeSection.outOfScope')}
                   </label>
                   <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                    {isPolish
-                      ? 'Wykluczenia i ograniczenia poza zakresem'
-                      : 'Exclusions and boundaries not covered'}
+                    {t('initiatives.scopeSection.outOfScopeDescription')}
                   </p>
                 </div>
               </div>
@@ -241,7 +239,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
               >
                 <Plus size={14} />
-                {isPolish ? 'Dodaj' : 'Add item'}
+                {t('initiatives.scopeSection.addItem')}
               </button>
             </div>
             <div className="min-h-[40px]">
@@ -252,13 +250,13 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                   updateOutScope,
                   removeOutScope,
                   'red',
-                  isPolish ? 'Wykluczenie...' : 'Exclusion...',
-                  isPolish ? 'Poza zakresem — element listy' : 'Out of Scope — list item'
+                  t('initiatives.scopeSection.exclusionPlaceholder'),
+                  t('initiatives.scopeSection.outOfScopeListItem')
                 )
               )}
               {outScope.length === 0 && (
                 <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
-                  {isPolish ? 'Brak elementów' : 'No items yet'}
+                  {t('initiatives.scopeSection.noItemsYet')}
                 </p>
               )}
             </div>
@@ -275,12 +273,10 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
               <span className="w-3 h-3 rounded-full bg-rose-500 shrink-0" />
               <div>
                 <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                  {isPolish ? 'Kryteria rezygnacji (Kill Criteria)' : 'Kill Criteria'}
+                  {t('initiatives.scopeSection.killCriteriaLabel')}
                 </label>
                 <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
-                  {isPolish
-                    ? 'Warunki, których spełnienie oznacza natychmiastowe zatrzymanie inicjatywy'
-                    : 'Conditions that trigger immediate initiative termination'}
+                  {t('initiatives.scopeSection.killCriteriaDescription')}
                 </p>
               </div>
             </div>
@@ -289,7 +285,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
               className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             >
               <Plus size={14} />
-              {isPolish ? 'Dodaj' : 'Add item'}
+              {t('initiatives.scopeSection.addItem')}
             </button>
           </div>
           <div className="min-h-[40px]">
@@ -300,15 +296,13 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                   type="text"
                   value={item}
                   onChange={(e) => updateKill(i, e.target.value)}
-                  placeholder={isPolish ? 'Kryterium rezygnacji...' : 'Kill criteria...'}
+                  placeholder={t('initiatives.scopeSection.killCriteriaPlaceholder')}
                   autoFocus={!item}
                   className="flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-700 dark:text-slate-300"
                 />
                 <AIFieldEnhancer
                   fieldKey={`scope.killCriteria.${i}`}
-                  sectionLabel={
-                    isPolish ? 'Kryteria rezygnacji — element listy' : 'Kill Criteria — list item'
-                  }
+                  sectionLabel={t('initiatives.scopeSection.killCriteriaListItem')}
                   currentValue={item}
                   onApply={(v) => updateKill(i, v)}
                   artifactContext={artifactContext}
@@ -325,7 +319,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
             ))}
             {killCriteria.length === 0 && (
               <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
-                {isPolish ? 'Brak kryteriów' : 'No criteria yet'}
+                {t('initiatives.scopeSection.noCriteriaYet')}
               </p>
             )}
           </div>

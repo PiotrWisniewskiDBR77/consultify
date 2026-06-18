@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
@@ -282,6 +283,7 @@ const getUserDisplayName = (user: {
 // ── Component ───────────────────────────────────────────────────────────────
 
 export const InitiativeGatesWorkflowTable: FC = () => {
+  const { t } = useTranslation();
   const {
     initiative,
     initiativeId,
@@ -379,7 +381,9 @@ export const InitiativeGatesWorkflowTable: FC = () => {
         case 'scope':
           return !!description;
         case 'all_tasks_done': {
-          const all = (tasks || []).every((t) => String(t.status || '').toUpperCase() === 'DONE');
+          const all = (tasks || []).every(
+            (task) => String(task.status || '').toUpperCase() === 'DONE'
+          );
           return (tasks || []).length > 0 ? all : false;
         }
         default:
@@ -672,7 +676,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
     const fallbackAssigneeId = gateApprovers[0]?.userId || ownerId || sponsorId;
     const deciderId = draftAssigneeId || fallbackAssigneeId;
     if (!deciderId) {
-      toast.error(isPolish ? 'Przypisz najpierw osobę decyzyjną' : 'Assign a gate approver first');
+      toast.error(t('initiatives.initiativeGatesWorkflowTable.assignApproverFirst'));
       return;
     }
 
@@ -683,7 +687,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
       pass: checkRequirement(r.key),
     }));
     if (reqs.some((r) => r.severity === 'blocking' && !r.pass)) {
-      toast.error(isPolish ? 'Brakuje wymagań blokujących' : 'Blocking requirements missing');
+      toast.error(t('initiatives.initiativeGatesWorkflowTable.blockingRequirementsMissing'));
       return;
     }
 
@@ -706,10 +710,10 @@ export const InitiativeGatesWorkflowTable: FC = () => {
         decisionOwnerId: deciderId,
         dueDate,
       });
-      toast.success(isPolish ? `Wysłano: ${gateLabel}` : `Requested: ${gateLabel}`);
+      toast.success(t('initiatives.initiativeGatesWorkflowTable.requested', { label: gateLabel }));
       await fetchAll();
     } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+      toast.error(e?.message || t('initiatives.initiativeGatesWorkflowTable.failed'));
     } finally {
       setRequestBusyGate(null);
     }
@@ -731,10 +735,10 @@ export const InitiativeGatesWorkflowTable: FC = () => {
       ];
 
       await Api.put(`/initiatives/${initiativeId}/gate-roles`, { roles: merged });
-      toast.success(isPolish ? 'Role bramkowe zapisane' : 'Gate roles saved');
+      toast.success(t('initiatives.initiativeGatesWorkflowTable.gateRolesSaved'));
       await fetchAll();
     } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Błąd zapisu ról' : 'Failed to save roles'));
+      toast.error(e?.message || t('initiatives.initiativeGatesWorkflowTable.failedToSaveRoles'));
     } finally {
       setSavingRoles(false);
     }
@@ -754,16 +758,16 @@ export const InitiativeGatesWorkflowTable: FC = () => {
               #
             </th>
             <th className="w-[20%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Etap' : 'Stage'}
+              {t('initiatives.initiativeGatesWorkflowTable.stage')}
             </th>
             <th className="w-[18%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Bramka' : 'Gate Decision'}
+              {t('initiatives.initiativeGatesWorkflowTable.gateDecision')}
             </th>
             <th className="w-[18%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Decydent' : 'Approver'}
+              {t('initiatives.initiativeGatesWorkflowTable.approver')}
             </th>
             <th className="w-[12%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Gotowość' : 'Readiness'}
+              {t('initiatives.initiativeGatesWorkflowTable.readiness')}
             </th>
             <th className="w-[12%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Status
@@ -837,7 +841,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
               const rowActions: RowAction[] = [
                 {
                   id: `edit-${stage.id}`,
-                  label: isPolish ? 'Edytuj' : 'Edit',
+                  label: t('initiatives.initiativeGatesWorkflowTable.edit'),
                   icon: Edit3,
                   onClick: () => {
                     setEditingStageId((prev) => (prev === stage.id ? null : stage.id));
@@ -873,7 +877,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                 },
                 {
                   id: `delete-${stage.id}`,
-                  label: isPolish ? 'Usuń decyzję' : 'Delete decision',
+                  label: t('initiatives.initiativeGatesWorkflowTable.deleteDecision'),
                   icon: Trash2,
                   variant: 'danger',
                   divider: true,
@@ -881,15 +885,17 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                   onClick: async () => {
                     if (!gateKey || !decision?.id) return;
                     const ok = window.confirm(
-                      isPolish ? 'Usunąć powiązaną decyzję?' : 'Delete linked decision?'
+                      t('initiatives.initiativeGatesWorkflowTable.deleteLinkedDecision')
                     );
                     if (!ok) return;
                     try {
                       await Api.delete(`/decisions/${decision.id}`);
-                      toast.success(isPolish ? 'Usunięto' : 'Deleted');
+                      toast.success(t('initiatives.initiativeGatesWorkflowTable.deleted'));
                       await fetchAll();
                     } catch (e: any) {
-                      toast.error(e?.message || (isPolish ? 'Błąd' : 'Error'));
+                      toast.error(
+                        e?.message || t('initiatives.initiativeGatesWorkflowTable.error')
+                      );
                     }
                   },
                 },
@@ -956,7 +962,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             </span>
                             {isCurrent && (
                               <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-primary-500 text-white uppercase tracking-wider">
-                                {isPolish ? 'teraz' : 'now'}
+                                {t('initiatives.initiativeGatesWorkflowTable.now')}
                               </span>
                             )}
                           </div>
@@ -1018,7 +1024,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                               }}
                               className="flex-shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400 hover:underline"
                             >
-                              {isPolish ? 'Otwórz' : 'Open'}
+                              {t('initiatives.initiativeGatesWorkflowTable.open')}
                             </button>
                           )}
                         </div>
@@ -1056,7 +1062,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           {isCurrent && (
                             <span
                               className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"
-                              title={isPolish ? 'Nie przypisano' : 'Not assigned'}
+                              title={t('initiatives.initiativeGatesWorkflowTable.notAssigned')}
                             />
                           )}
                         </div>
@@ -1075,7 +1081,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                               requirements.filter((r) => r.severity === 'blocking' && !r.pass)
                                 .length
                             }{' '}
-                            {isPolish ? 'blok' : 'block'}
+                            {t('initiatives.initiativeGatesWorkflowTable.block')}
                           </span>
                         ) : hasWarnings ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
@@ -1083,7 +1089,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             {
                               requirements.filter((r) => r.severity === 'warning' && !r.pass).length
                             }{' '}
-                            {isPolish ? 'uwag' : 'warn'}
+                            {t('initiatives.initiativeGatesWorkflowTable.warn')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
@@ -1198,7 +1204,10 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                       ) : (
                                         <>
                                           <UserPlus size={11} />
-                                          {roleName}: {isPolish ? 'nie przypisano' : 'not assigned'}
+                                          {roleName}:{' '}
+                                          {t(
+                                            'initiatives.initiativeGatesWorkflowTable.notAssignedLower'
+                                          )}
                                         </>
                                       )}
                                     </div>
@@ -1235,7 +1244,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                 }}
                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/15 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors font-medium"
                               >
-                                {isPolish ? 'Otwórz decyzję' : 'Open decision'} →
+                                {t('initiatives.initiativeGatesWorkflowTable.openDecision')} →
                               </button>
                             )}
                           </div>
@@ -1293,7 +1302,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                       </div>
                       <div>
                         <h2 className="text-base font-bold text-slate-800 dark:text-white">
-                          {isPolish ? 'Edycja bramki' : 'Edit Gate'}
+                          {t('initiatives.initiativeGatesWorkflowTable.editGate')}
                         </h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                           {editStage.label} —{' '}
@@ -1317,7 +1326,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         <div className="flex items-center gap-2">
                           <UserPlus size={14} className="text-primary-500" />
                           <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                            {isPolish ? 'Role bramkowe' : 'Gate Roles'}
+                            {t('initiatives.initiativeGatesWorkflowTable.gateRoles')}
                           </label>
                         </div>
                         <div className="space-y-2">
@@ -1347,7 +1356,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                   className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
                                 >
                                   <option value="">
-                                    {isPolish ? '— nie przypisano —' : '— not assigned —'}
+                                    {t('initiatives.initiativeGatesWorkflowTable.notAssignedDash')}
                                   </option>
                                   {users.map((u) => {
                                     const full = `${u.firstName || ''} ${u.lastName || ''}`.trim();
@@ -1368,7 +1377,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     {/* Due date */}
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        {isPolish ? 'Termin decyzji' : 'Decision deadline'}
+                        {t('initiatives.initiativeGatesWorkflowTable.decisionDeadline')}
                       </label>
                       <input
                         type="date"
@@ -1383,7 +1392,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     {/* Note */}
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        {isPolish ? 'Notatka' : 'Note'}
+                        {t('initiatives.initiativeGatesWorkflowTable.note')}
                       </label>
                       <textarea
                         value={noteDraft[editGateKey] || ''}
@@ -1391,7 +1400,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           setNoteDraft((prev) => ({ ...prev, [editGateKey]: e.target.value }))
                         }
                         rows={3}
-                        placeholder={isPolish ? 'Dodaj kontekst do bramki…' : 'Add gate context…'}
+                        placeholder={t('initiatives.initiativeGatesWorkflowTable.addGateContext')}
                         className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all resize-none"
                       />
                     </div>
@@ -1400,7 +1409,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     {editStage.requirements.length > 0 && (
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                          {isPolish ? 'Wymagania' : 'Requirements'}
+                          {t('initiatives.initiativeGatesWorkflowTable.requirements')}
                         </label>
                         <div className="flex flex-wrap gap-1.5">
                           {editStage.requirements.map((req) => {
@@ -1438,7 +1447,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                       onClick={() => setEditingStageId(null)}
                       className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
+                      {t('initiatives.initiativeGatesWorkflowTable.cancel')}
                     </button>
                     <div className="flex items-center gap-2">
                       {editDecision?.id && (
@@ -1449,7 +1458,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           }}
                           className="px-4 py-2 rounded-xl text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
                         >
-                          {isPolish ? 'Otwórz decyzję' : 'Open decision'}
+                          {t('initiatives.initiativeGatesWorkflowTable.openDecision')}
                         </button>
                       )}
                       <button
@@ -1478,14 +1487,16 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                   String(noteDraft[editGateKey] || '').trim() || undefined,
                                 title: `${editGateKey} — ${initiative?.name || initiativeId}`,
                               });
-                              toast.success(isPolish ? 'Zapisano' : 'Saved');
+                              toast.success(t('initiatives.initiativeGatesWorkflowTable.saved'));
                             } catch (e: any) {
-                              toast.error(e?.message || (isPolish ? 'Błąd' : 'Error'));
+                              toast.error(
+                                e?.message || t('initiatives.initiativeGatesWorkflowTable.error')
+                              );
                             } finally {
                               setSavingEdit(false);
                             }
                           } else if (newRoleAssignments.length === 0) {
-                            toast.success(isPolish ? 'Zapisano draft' : 'Draft saved');
+                            toast.success(t('initiatives.initiativeGatesWorkflowTable.draftSaved'));
                           }
 
                           setEditingStageId(null);
@@ -1496,10 +1507,8 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                       >
                         {savingEdit || savingRoles ? (
                           <Loader2 size={14} className="animate-spin" />
-                        ) : isPolish ? (
-                          'Zapisz'
                         ) : (
-                          'Save'
+                          t('initiatives.initiativeGatesWorkflowTable.save')
                         )}
                       </button>
                     </div>

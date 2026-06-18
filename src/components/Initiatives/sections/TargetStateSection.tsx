@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
@@ -244,6 +245,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
   onToggle,
   readonly = false,
 }) => {
+  const { t } = useTranslation();
   const {
     initiative,
     isPolish,
@@ -510,14 +512,11 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
 
       if (!hasAnySuggestions) {
         setAiNoSuggestionsMessage(
-          proposal.note ||
-            (isPolish
-              ? 'AI nie znalazło sensownych zmian do zaproponowania dla tego modułu.'
-              : 'AI did not find meaningful changes to propose for this module.')
+          proposal.note || t('initiatives.targetStateSection.aiNoMeaningfulChanges')
         );
       }
     } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Analiza AI nie powiodła się' : 'AI analysis failed'));
+      toast.error(e?.message || t('initiatives.targetStateSection.aiAnalysisFailed'));
     } finally {
       setIsAIProposing(false);
       clearTargetStateAiRequest?.();
@@ -530,6 +529,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
     parseAIJson,
     readonly,
     successCriteriaItems,
+    t,
     targetDescriptionDraft,
   ]);
 
@@ -632,7 +632,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
   return (
     <CollapsibleSection
       id="targetState"
-      title={isPolish ? 'Kryteria sukcesu' : 'Success Criteria'}
+      title={t('initiatives.targetStateSection.successCriteria')}
       icon={<Target size={18} className="text-emerald-500 dark:text-emerald-400" />}
       iconBg="bg-gradient-to-br from-emerald-500/10 to-green-500/10 dark:from-emerald-500/20 dark:to-green-500/20"
       expanded={expanded}
@@ -645,7 +645,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
     >
       <div className="grid grid-cols-1 gap-3">
         {aiNoSuggestionsMessage && !showAIModal && (
-          <Callout variant="purple" compact title={isPolish ? 'AI' : 'AI'}>
+          <Callout variant="purple" compact title="AI">
             {aiNoSuggestionsMessage}
           </Callout>
         )}
@@ -657,21 +657,17 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                    {isPolish
-                      ? 'Propozycje zmian w kryteriach sukcesu (AI)'
-                      : 'Proposed Success Criteria changes (AI)'}
+                    {t('initiatives.targetStateSection.proposedSuccessCriteriaChanges')}
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    {isPolish
-                      ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
-                      : 'Select items to add/remove, then click “Apply”.'}
+                    {t('initiatives.targetStateSection.selectItemsThenApply')}
                   </p>
                 </div>
                 <button
                   onClick={closeAIModal}
                   disabled={isAIProposing}
                   className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
-                  title={isPolish ? 'Zamknij' : 'Close'}
+                  title={t('initiatives.targetStateSection.close')}
                 >
                   <X size={16} />
                 </button>
@@ -679,7 +675,11 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
 
               <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
                 {aiProposal.note || aiNoSuggestionsMessage ? (
-                  <Callout variant="purple" compact title={isPolish ? 'Notatka' : 'Note'}>
+                  <Callout
+                    variant="purple"
+                    compact
+                    title={t('initiatives.targetStateSection.note')}
+                  >
                     {aiProposal.note || aiNoSuggestionsMessage}
                   </Callout>
                 ) : null}
@@ -688,7 +688,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Kryteria sukcesu' : 'Success Criteria'}
+                      {t('initiatives.targetStateSection.successCriteria')}
                     </h4>
                   </div>
 
@@ -696,7 +696,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {isPolish ? 'Do wywalenia' : 'To remove'} (
+                        {t('initiatives.targetStateSection.toRemove')} (
                         {aiProposal.successCriteria?.remove?.length || 0})
                       </span>
                       {(aiProposal.successCriteria?.remove?.length || 0) > 0 && (
@@ -710,7 +710,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                           }
                           className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                         >
-                          {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                          {t('initiatives.targetStateSection.selectAll')}
                         </button>
                       )}
                     </div>
@@ -719,11 +719,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                         icon={Trash2}
                         dashed={false}
                         className="p-5"
-                        message={
-                          isPolish
-                            ? 'AI nie zasugerowało usunięć.'
-                            : 'No removal suggestions from AI.'
-                        }
+                        message={t('initiatives.targetStateSection.noRemovalSuggestions')}
                       />
                     ) : (
                       <div className="space-y-1.5">
@@ -766,7 +762,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {isPolish ? 'Do dodania' : 'To add'} (
+                        {t('initiatives.targetStateSection.toAdd')} (
                         {aiProposal.successCriteria?.add?.length || 0})
                       </span>
                       {(aiProposal.successCriteria?.add?.length || 0) > 0 && (
@@ -780,7 +776,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                           }
                           className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                         >
-                          {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                          {t('initiatives.targetStateSection.selectAll')}
                         </button>
                       )}
                     </div>
@@ -789,9 +785,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                         icon={Plus}
                         dashed={false}
                         className="p-5"
-                        message={
-                          isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'
-                        }
+                        message={t('initiatives.targetStateSection.noAdditionsProposed')}
                       />
                     ) : (
                       <div className="space-y-1.5">
@@ -831,7 +825,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (
+                        {t('initiatives.targetStateSection.suggestedOrder')} (
                         {aiProposal.successCriteria?.reorder?.order?.length || 0})
                       </span>
                       <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
@@ -841,7 +835,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                           onChange={(e) => setApplySuggestedOrderSC(e.target.checked)}
                           disabled={!aiProposal.successCriteria?.reorder?.order?.length}
                         />
-                        {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
+                        {t('initiatives.targetStateSection.applyOrder')}
                       </label>
                     </div>
                     {!aiProposal.successCriteria?.reorder?.order?.length ? (
@@ -849,7 +843,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                         icon={Sparkles}
                         dashed={false}
                         className="p-5"
-                        message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
+                        message={t('initiatives.targetStateSection.noOrderingSuggestion')}
                       />
                     ) : (
                       <>
@@ -879,7 +873,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Produkty' : 'Deliverables'}
+                      {t('initiatives.targetStateSection.deliverables')}
                     </h4>
                   </div>
 
@@ -887,7 +881,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {isPolish ? 'Do wywalenia' : 'To remove'} (
+                        {t('initiatives.targetStateSection.toRemove')} (
                         {aiProposal.deliverables?.remove?.length || 0})
                       </span>
                       {(aiProposal.deliverables?.remove?.length || 0) > 0 && (
@@ -901,7 +895,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                           }
                           className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                         >
-                          {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                          {t('initiatives.targetStateSection.selectAll')}
                         </button>
                       )}
                     </div>
@@ -910,11 +904,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                         icon={Trash2}
                         dashed={false}
                         className="p-5"
-                        message={
-                          isPolish
-                            ? 'AI nie zasugerowało usunięć.'
-                            : 'No removal suggestions from AI.'
-                        }
+                        message={t('initiatives.targetStateSection.noRemovalSuggestions')}
                       />
                     ) : (
                       <div className="space-y-1.5">
@@ -957,7 +947,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {isPolish ? 'Do dodania' : 'To add'} (
+                        {t('initiatives.targetStateSection.toAdd')} (
                         {aiProposal.deliverables?.add?.length || 0})
                       </span>
                       {(aiProposal.deliverables?.add?.length || 0) > 0 && (
@@ -971,7 +961,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                           }
                           className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                         >
-                          {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                          {t('initiatives.targetStateSection.selectAll')}
                         </button>
                       )}
                     </div>
@@ -980,9 +970,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                         icon={Plus}
                         dashed={false}
                         className="p-5"
-                        message={
-                          isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'
-                        }
+                        message={t('initiatives.targetStateSection.noAdditionsProposed')}
                       />
                     ) : (
                       <div className="space-y-1.5">
@@ -1022,7 +1010,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (
+                        {t('initiatives.targetStateSection.suggestedOrder')} (
                         {aiProposal.deliverables?.reorder?.order?.length || 0})
                       </span>
                       <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
@@ -1032,7 +1020,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                           onChange={(e) => setApplySuggestedOrderDL(e.target.checked)}
                           disabled={!aiProposal.deliverables?.reorder?.order?.length}
                         />
-                        {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
+                        {t('initiatives.targetStateSection.applyOrder')}
                       </label>
                     </div>
                     {!aiProposal.deliverables?.reorder?.order?.length ? (
@@ -1040,7 +1028,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                         icon={Sparkles}
                         dashed={false}
                         className="p-5"
-                        message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
+                        message={t('initiatives.targetStateSection.noOrderingSuggestion')}
                       />
                     ) : (
                       <>
@@ -1069,46 +1057,30 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                 {/* Plan */}
                 <Callout
                   variant="purple"
-                  title={isPolish ? 'Plan' : 'Plan'}
+                  title={t('initiatives.targetStateSection.plan')}
                   compact
                   className="rounded-xl"
                 >
                   <ul className="list-disc pl-4 space-y-1">
                     <li>
-                      {isPolish
-                        ? `Usuń zaznaczone kryteria: ${
-                            Object.values(selectedRemoveIdsSC).filter(Boolean).length
-                          }.`
-                        : `Remove selected success criteria: ${
-                            Object.values(selectedRemoveIdsSC).filter(Boolean).length
-                          }.`}
+                      {t('initiatives.targetStateSection.removeSelectedSuccessCriteria', {
+                        count: Object.values(selectedRemoveIdsSC).filter(Boolean).length,
+                      })}
                     </li>
                     <li>
-                      {isPolish
-                        ? `Dodaj zaznaczone kryteria: ${
-                            Object.values(selectedAddIdxSC).filter(Boolean).length
-                          }.`
-                        : `Add selected success criteria: ${
-                            Object.values(selectedAddIdxSC).filter(Boolean).length
-                          }.`}
+                      {t('initiatives.targetStateSection.addSelectedSuccessCriteria', {
+                        count: Object.values(selectedAddIdxSC).filter(Boolean).length,
+                      })}
                     </li>
                     <li>
-                      {isPolish
-                        ? `Usuń zaznaczone produkty: ${
-                            Object.values(selectedRemoveIdsDL).filter(Boolean).length
-                          }.`
-                        : `Remove selected deliverables: ${
-                            Object.values(selectedRemoveIdsDL).filter(Boolean).length
-                          }.`}
+                      {t('initiatives.targetStateSection.removeSelectedDeliverables', {
+                        count: Object.values(selectedRemoveIdsDL).filter(Boolean).length,
+                      })}
                     </li>
                     <li>
-                      {isPolish
-                        ? `Dodaj zaznaczone produkty: ${
-                            Object.values(selectedAddIdxDL).filter(Boolean).length
-                          }.`
-                        : `Add selected deliverables: ${
-                            Object.values(selectedAddIdxDL).filter(Boolean).length
-                          }.`}
+                      {t('initiatives.targetStateSection.addSelectedDeliverables', {
+                        count: Object.values(selectedAddIdxDL).filter(Boolean).length,
+                      })}
                     </li>
                   </ul>
                 </Callout>
@@ -1120,7 +1092,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   disabled={isAIProposing}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('initiatives.targetStateSection.cancel')}
                 </button>
                 <button
                   onClick={() => void applyAIProposal()}
@@ -1128,7 +1100,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                 >
                   {isAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
-                  {isPolish ? 'Zastosuj' : 'Apply'}
+                  {t('initiatives.targetStateSection.apply')}
                 </button>
               </div>
             </div>
@@ -1137,16 +1109,12 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
 
         {/* ── 1. Target State ────────────────────────────────────────── */}
         <ResizablePanel
-          title={isPolish ? 'Stan docelowy' : 'Target State'}
-          description={
-            isPolish
-              ? 'Opisz pożądany stan końcowy po wdrożeniu inicjatywy'
-              : 'Describe the desired end state after initiative completion'
-          }
+          title={t('initiatives.targetStateSection.targetState')}
+          description={t('initiatives.targetStateSection.targetStateDescription')}
           aiControl={
             <AIFieldEnhancer
               fieldKey="targetState.description"
-              sectionLabel={isPolish ? 'Stan docelowy — opis' : 'Target State — description'}
+              sectionLabel={t('initiatives.targetStateSection.targetStateDescriptionLabel')}
               currentValue={targetDescriptionDraft}
               onApply={setTargetDescriptionDraft}
               artifactContext={artifactContext}
@@ -1154,7 +1122,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               disabled={readonly}
             />
           }
-          addLabel={isPolish ? 'Edytuj' : 'Edit'}
+          addLabel={t('initiatives.targetStateSection.edit')}
           onAdd={() => setShowTargetInput(true)}
           hasContent={!!targetDescriptionDraft}
         >
@@ -1169,9 +1137,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               onChange={(e) => setTargetDescriptionDraft(e.target.value)}
               rows={3}
               className="w-full px-2.5 py-2 rounded-lg bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/80 dark:border-navy-700/50 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/20 resize-none transition-all"
-              placeholder={
-                isPolish ? 'Opisz pożądany stan końcowy...' : 'Describe the desired end state...'
-              }
+              placeholder={t('initiatives.targetStateSection.describeEndStatePlaceholder')}
               onBlur={() => {
                 if (!targetDescriptionDraft) setShowTargetInput(false);
               }}
@@ -1179,25 +1145,19 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
             />
           ) : (
             <p className="text-xs text-slate-600 dark:text-slate-500 italic">
-              {isPolish
-                ? 'Brak opisu. Kliknij „Edytuj" lub „AI" aby dodać.'
-                : 'No description. Click "Edit" or "AI" to add.'}
+              {t('initiatives.targetStateSection.noDescriptionHint')}
             </p>
           )}
         </ResizablePanel>
 
         {/* ── 2. Success Criteria ────────────────────────────────────── */}
         <ResizablePanel
-          title={isPolish ? 'Kryteria sukcesu' : 'Success Criteria'}
-          description={
-            isPolish
-              ? 'Mierzalne warunki uznania inicjatywy za zakończoną sukcesem'
-              : 'Measurable conditions for considering the initiative successful'
-          }
+          title={t('initiatives.targetStateSection.successCriteria')}
+          description={t('initiatives.targetStateSection.successCriteriaDescription')}
           aiControl={
             <AIFieldEnhancer
               fieldKey="targetState.successCriteria"
-              sectionLabel={isPolish ? 'Kryteria sukcesu — lista' : 'Success Criteria — list'}
+              sectionLabel={t('initiatives.targetStateSection.successCriteriaListLabel')}
               currentValue={successCriteria.join('\n')}
               onApply={(v) => {
                 const items = String(v || '')
@@ -1217,7 +1177,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               disabled={readonly}
             />
           }
-          addLabel={isPolish ? 'Dodaj' : 'Add item'}
+          addLabel={t('initiatives.targetStateSection.addItem')}
           onAdd={() => {
             // Focus the inline input by scrolling to it
             const input = document.getElementById('add-criteria-input');
@@ -1255,23 +1215,19 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   setNewCriteria('');
                 }
               }}
-              placeholder={isPolish ? 'Dodaj kryterium sukcesu...' : 'Add success criteria...'}
+              placeholder={t('initiatives.targetStateSection.addSuccessCriteriaPlaceholder')}
             />
           </div>
         </ResizablePanel>
 
         {/* ── 3. Deliverables ────────────────────────────────────────── */}
         <ResizablePanel
-          title={isPolish ? 'Produkty' : 'Deliverables'}
-          description={
-            isPolish
-              ? 'Konkretne produkty i rezultaty do dostarczenia'
-              : 'Specific outputs and results to be delivered'
-          }
+          title={t('initiatives.targetStateSection.deliverables')}
+          description={t('initiatives.targetStateSection.deliverablesDescription')}
           aiControl={
             <AIFieldEnhancer
               fieldKey="targetState.deliverables"
-              sectionLabel={isPolish ? 'Produkty — lista' : 'Deliverables — list'}
+              sectionLabel={t('initiatives.targetStateSection.deliverablesListLabel')}
               currentValue={deliverables.join('\n')}
               onApply={(v) => {
                 const items = String(v || '')
@@ -1291,7 +1247,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               disabled={readonly}
             />
           }
-          addLabel={isPolish ? 'Dodaj' : 'Add item'}
+          addLabel={t('initiatives.targetStateSection.addItem')}
           onAdd={() => {
             const input = document.getElementById('add-deliverable-input');
             if (input) input.focus();
@@ -1328,7 +1284,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   setNewDeliverable('');
                 }
               }}
-              placeholder={isPolish ? 'Dodaj produkt...' : 'Add deliverable...'}
+              placeholder={t('initiatives.targetStateSection.addDeliverablePlaceholder')}
             />
           </div>
         </ResizablePanel>
