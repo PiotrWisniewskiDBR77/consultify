@@ -617,10 +617,15 @@ router.get(
       const orgIdStr = Array.isArray(orgId) ? orgId[0] : (orgId as string);
       const { limit = 100, offset = 0 } = req.query;
       const userRole = req.user?.role;
-      const userOrgId = req.user?.organizationId || req.user?.organizationId;
+      const userOrgId = req.user?.organizationId;
 
-      // Check access
-      if (userRole !== 'administrator' && userOrgId !== orgIdStr) {
+      // Access requires superadmin, OR membership in THIS org AND owner/admin role.
+      // (Matches the canonical gate at :218-221/:258-259 — an admin from a different
+      // org must NOT read another org's audit log.)
+      const isSuperAdmin = userRole === 'super_admin';
+      const isOrgAdmin =
+        userOrgId === orgIdStr && (userRole === 'owner' || userRole === 'administrator');
+      if (!isSuperAdmin && !isOrgAdmin) {
         return res.status(403).json({ error: 'Access denied' });
       }
 

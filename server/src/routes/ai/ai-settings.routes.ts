@@ -603,8 +603,13 @@ router.get(
       const userRole = req.user?.role;
       const userOrgId = req.user?.organizationId || req.user?.organization_id;
 
-      // Check access
-      if (userRole !== 'superadmin' && userRole !== 'SUPERADMIN' && userOrgId !== orgId) {
+      // Access: superadmin, OR admin of THIS org. Same-org non-admins and
+      // cross-org admins are both denied (matches canonical gate at :689-692).
+      const isAuthorized =
+        userRole === 'superadmin' ||
+        userRole === 'SUPERADMIN' ||
+        (userOrgId === orgId && (userRole === 'admin' || userRole === 'ADMIN'));
+      if (!isAuthorized) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
