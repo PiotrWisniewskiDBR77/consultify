@@ -417,7 +417,7 @@ export const LegalPanel: React.FC = () => {
               <button
                 onClick={handlePublish}
                 disabled={publishing || !newDoc.title.trim()}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2"
               >
                 {publishing && <Loader2 className="w-4 h-4 animate-spin" />}
                 Publish

@@ -257,7 +257,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
             >
               <Filter size={16} />
               {hasActiveFilters && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-primary-500 rounded-full" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-navy-900 rounded-full dark:bg-white" />
               )}
             </button>
           )}

@@ -160,7 +160,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                   <div
                     className={`absolute left-2.5 w-3 h-3 rounded-full border-2 ${
                       isCurrent
-                        ? 'bg-primary-500 border-primary-400'
+                        ? 'bg-navy-900 border-navy-800'
                         : 'bg-slate-800 border-slate-600'
                     }`}
                   />

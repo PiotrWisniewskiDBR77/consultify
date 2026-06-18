@@ -1170,7 +1170,7 @@ const ApiKeyModal: React.FC<{
                         onClick={() => toggleScope(scope.id)}
                         className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                           formData.scopes.includes(scope.id)
-                            ? 'bg-primary-600 text-white'
+                            ? 'bg-navy-900 text-white'
                             : 'bg-slate-700 text-slate-600 hover:bg-slate-600'
                         }`}
                       >

@@ -884,7 +884,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <button
                   disabled
                   title="IP rule creation requires an audited backend workflow"
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white text-sm rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Add Rule
@@ -1056,7 +1056,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <button
                   disabled
                   title="Compliance assessment execution requires an audited backend workflow"
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white text-sm rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Run Assessment

@@ -107,7 +107,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   period === p
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : 'text-slate-600 dark:text-slate-500 hover:text-white'
                 }`}
               >
@@ -227,7 +227,7 @@ export const BillingOverviewPanel: React.FC = () => {
               );
               const percentage = total > 0 ? (plan.subscriber_count / total) * 100 : 0;
               const colors = [
-                'bg-primary-500',
+                'bg-navy-900',
                 'bg-blue-500',
                 'bg-emerald-500',
                 'bg-amber-500',

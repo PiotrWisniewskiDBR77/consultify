@@ -468,7 +468,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
               disabled={!!loadError}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedCategory === cat.id
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-navy-900 text-white'
                   : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20'
               }`}
             >

@@ -216,7 +216,7 @@ export const DataExportPanel: React.FC = () => {
           <button
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 rounded-lg text-white font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-white font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={18} />
             Request Export
@@ -397,7 +397,7 @@ export const DataExportPanel: React.FC = () => {
               <button
                 onClick={handleCreateExport}
                 disabled={creating || formData.includeData.length === 0}
-                className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
               >
                 {creating ? (
                   <Loader2 size={18} className="animate-spin" />

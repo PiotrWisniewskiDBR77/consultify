@@ -499,7 +499,7 @@ export const EnterpriseAuditLog: React.FC = () => {
             disabled={!!loadError}
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
               showFilters
-                ? 'bg-primary-600 border-primary-500 text-white'
+                ? 'bg-navy-900 border-navy-900 text-white'
                 : 'bg-white/5 border-white/10 text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800/40'
             }`}
           >

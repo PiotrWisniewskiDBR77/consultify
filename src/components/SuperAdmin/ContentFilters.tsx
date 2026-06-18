@@ -155,7 +155,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
         <Filter size={16} />
         Filters
         {activeFiltersCount > 0 && (
-          <span className="px-1.5 py-0.5 bg-primary-500 text-white text-xs rounded-full">
+          <span className="px-1.5 py-0.5 bg-navy-900 text-white text-xs rounded-full dark:bg-white dark:text-navy-950">
             {activeFiltersCount}
           </span>
         )}
@@ -218,7 +218,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                   }
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filters.contentType === type
-                      ? 'bg-primary-500 text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'bg-slate-900 text-slate-400 dark:text-slate-500 hover:bg-slate-700 hover:text-white'
                   }`}
                 >
