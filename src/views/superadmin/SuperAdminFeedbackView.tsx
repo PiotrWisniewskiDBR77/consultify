@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock,
   Copy,
+  Download,
   ExternalLink,
   Globe,
   Image as ImageIcon,
@@ -25,6 +26,7 @@ import {
   Terminal,
   User,
 } from 'lucide-react';
+import JSZip from 'jszip';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -246,6 +248,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<FeedbackItem | null>(null);
   const [screenshotObjectUrl, setScreenshotObjectUrl] = useState<string | null>(null);
   const [screenshotError, setScreenshotError] = useState<string | null>(null);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const [responseText, setResponseText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [deepLinkStatus, setDeepLinkStatus] = useState<string | null>(null);
@@ -595,6 +598,166 @@ export const SuperAdminFeedbackView: React.FC = () => {
       addSuffix: true,
       locale: i18n.language === 'pl' ? pl : enUS,
     });
+  const buildAndDownloadZip = useCallback(async (item: FeedbackItem) => {
+    setIsDownloadingZip(true);
+    try {
+      const meta = (() => {
+        try { return item.metadata ? JSON.parse(item.metadata) : {}; } catch { return {}; }
+      })() as Record<string, unknown>;
+      const dossier = (meta.dossier && typeof meta.dossier === 'object' ? meta.dossier : {}) as Record<string, unknown>;
+      const appCtx = (dossier.appContext && typeof dossier.appContext === 'object' ? dossier.appContext : {}) as Record<string, unknown>;
+      const consoleLogs = Array.isArray(dossier.consoleLogs) ? dossier.consoleLogs as Array<{at?:string;level?:string;message?:string}> : [];
+      const networkErrors = Array.isArray(dossier.networkErrors) ? dossier.networkErrors as Array<{at?:string;method?:string;url?:string;status?:number|null;durationMs?:number|null;error?:string}> : [];
+      const networkEntries = Array.isArray(dossier.networkEntries) ? dossier.networkEntries as Array<{at?:string;method?:string;url?:string;status?:number|null;durationMs?:number|null;ok?:boolean}> : [];
+      const breadcrumbs = Array.isArray(dossier.breadcrumbs) ? dossier.breadcrumbs as Array<{at?:string;kind?:string;label?:string;target?:string}> : [];
+      const lastUncaught = dossier.lastUncaughtError as {message?:string;stack?:string;at?:string;source?:string}|undefined;
+      const signatureHash = typeof meta.signatureHash === 'string' ? meta.signatureHash : null;
+
+      const lines: string[] = [];
+      lines.push(`# Bug Report — ${item.title || item.message.slice(0, 80)}`);
+      lines.push('');
+      lines.push(`**ID:** \`${item.id}\``);
+      lines.push(`**Typ:** ${item.type}`);
+      lines.push(`**Status:** ${item.status}`);
+      lines.push(`**Severity:** ${item.severity || '—'}`);
+      lines.push(`**Priority:** ${item.priority || '—'}`);
+      lines.push(`**Zgłoszone przez:** ${item.user_email}${item.user_name ? ` (${item.user_name})` : ''}`);
+      lines.push(`**Data:** ${item.created_at}`);
+      lines.push(`**Route:** ${item.route_path || appCtx.route ? JSON.stringify(appCtx.route) : '—'}`);
+      if (signatureHash) lines.push(`**Signature hash:** \`${signatureHash}\``);
+      lines.push('');
+      lines.push('## Opis');
+      lines.push('');
+      lines.push(item.message || '—');
+      lines.push('');
+
+      if (item.admin_response) {
+        lines.push('## Odpowiedź admina');
+        lines.push('');
+        lines.push(item.admin_response);
+        lines.push('');
+      }
+
+      lines.push('## Środowisko (AppContext)');
+      lines.push('');
+      lines.push('```json');
+      lines.push(JSON.stringify(appCtx, null, 2));
+      lines.push('```');
+      lines.push('');
+
+      if (lastUncaught?.message) {
+        lines.push('## Ostatni niezłapany błąd JS');
+        lines.push('');
+        lines.push(`**Czas:** ${lastUncaught.at || '—'}`);
+        lines.push(`**Źródło:** ${lastUncaught.source || '—'}`);
+        lines.push(`**Message:** ${lastUncaught.message}`);
+        if (lastUncaught.stack) {
+          lines.push('');
+          lines.push('```');
+          lines.push(lastUncaught.stack);
+          lines.push('```');
+        }
+        lines.push('');
+      }
+
+      if (networkErrors.length > 0) {
+        lines.push(`## Błędy sieciowe (${networkErrors.length})`);
+        lines.push('');
+        lines.push('| Czas | Metoda | URL | Status | Czas (ms) | Błąd |');
+        lines.push('|------|--------|-----|--------|-----------|------|');
+        for (const n of networkErrors) {
+          lines.push(`| ${n.at || ''} | ${n.method || ''} | ${n.url || ''} | ${n.status ?? 'ERR'} | ${n.durationMs ?? '?'} | ${n.error || ''} |`);
+        }
+        lines.push('');
+      }
+
+      if (networkEntries.length > 0) {
+        lines.push(`## Wszystkie requesty sieciowe (${networkEntries.length})`);
+        lines.push('');
+        lines.push('| Czas | Metoda | URL | Status | Czas (ms) | OK |');
+        lines.push('|------|--------|-----|--------|-----------|-----|');
+        for (const n of networkEntries) {
+          lines.push(`| ${n.at || ''} | ${n.method || ''} | ${n.url || ''} | ${n.status ?? '?'} | ${n.durationMs ?? '?'} | ${n.ok ? '✓' : '✗'} |`);
+        }
+        lines.push('');
+      }
+
+      if (breadcrumbs.length > 0) {
+        lines.push(`## Breadcrumbs — akcje użytkownika (${breadcrumbs.length})`);
+        lines.push('');
+        for (const b of breadcrumbs) {
+          lines.push(`- \`${b.at || ''}\` **${b.kind || ''}** ${b.label || ''}${b.target ? ` ← \`${b.target}\`` : ''}`);
+        }
+        lines.push('');
+      }
+
+      if (consoleLogs.length > 0) {
+        lines.push(`## Logi konsoli (${consoleLogs.length})`);
+        lines.push('');
+        lines.push('```');
+        for (const c of consoleLogs) {
+          lines.push(`[${c.level || 'log'}] ${c.at || ''} ${c.message || ''}`);
+        }
+        lines.push('```');
+        lines.push('');
+      }
+
+      const workflow = (meta.workflow && typeof meta.workflow === 'object' ? meta.workflow : {}) as Record<string, unknown>;
+      if (Object.keys(workflow).length > 0) {
+        lines.push('## Workflow');
+        lines.push('');
+        lines.push('```json');
+        lines.push(JSON.stringify(workflow, null, 2));
+        lines.push('```');
+        lines.push('');
+      }
+
+      if (item.statusHistory && item.statusHistory.length > 0) {
+        lines.push('## Historia statusów');
+        lines.push('');
+        for (const s of item.statusHistory) {
+          lines.push(`- \`${s.created_at}\` **${s.from_status || '—'} → ${s.to_status}**${s.changed_by ? ` by ${s.changed_by}` : ''}${s.note ? ` (${s.note})` : ''}`);
+        }
+        lines.push('');
+      }
+
+      const zip = new JSZip();
+      const slug = item.id.slice(0, 8);
+      const mdFilename = `feedback-${slug}.md`;
+      zip.file(mdFilename, lines.join('\n'));
+
+      const artifacts = Array.isArray(meta.artifacts) ? meta.artifacts as any[] : [];
+      const hasScreenshotArtifact =
+        artifacts.some((a: any) => a && a.kind === 'screenshot') ||
+        (typeof dossier.screenshot === 'object' && dossier.screenshot !== null);
+
+      if (hasScreenshotArtifact) {
+        try {
+          const blob = await Api.getFeedbackScreenshotBlob(item.id);
+          const ext = blob.type.includes('png') ? 'png' : 'jpg';
+          zip.file(`screenshot.${ext}`, blob);
+        } catch {
+          // screenshot niedostępny — kontynuuj bez niego
+        }
+      }
+
+      zip.file('dossier.json', JSON.stringify({ meta, item: { id: item.id, type: item.type, status: item.status, created_at: item.created_at, user_email: item.user_email } }, null, 2));
+
+      const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `feedback-${slug}.zip`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch (err) {
+      toast.error('Nie udało się wygenerować ZIP');
+      console.error('[FeedbackZip]', err);
+    } finally {
+      setIsDownloadingZip(false);
+    }
+  }, []);
+
   const parseMetadata = (meta?: string): Record<string, unknown> => {
     if (!meta) return {};
     try {
@@ -908,7 +1071,18 @@ export const SuperAdminFeedbackView: React.FC = () => {
           >
             <ArrowLeft size={16} /> {t('feedback.backToList', 'Back to list')}
           </button>
-          <InfoButton cardId="superadmin-feedback" position="header-inline" size="md" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => buildAndDownloadZip(selectedItem)}
+              disabled={isDownloadingZip}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-navy-700 dark:hover:bg-navy-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors disabled:opacity-50"
+              title="Pobierz raport błędu jako ZIP (Markdown + screenshot + dossier JSON)"
+            >
+              <Download size={13} />
+              {isDownloadingZip ? 'Generowanie…' : 'Pobierz ZIP'}
+            </button>
+            <InfoButton cardId="superadmin-feedback" position="header-inline" size="md" />
+          </div>
         </div>
 
         <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 space-y-4">
