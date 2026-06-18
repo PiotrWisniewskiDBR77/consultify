@@ -11,7 +11,7 @@ interface AgentActivityPanelProps {
 const STATUS_DOT_CLASS: Record<string, string> = {
   proposal: 'bg-amber-500',
   applied: 'bg-emerald-500',
-  rejected: 'bg-rose-500',
+  rejected: 'bg-danger-500',
 };
 
 function statusDotClass(status: string | null): string {

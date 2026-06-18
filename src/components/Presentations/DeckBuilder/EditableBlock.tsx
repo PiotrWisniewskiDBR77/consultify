@@ -132,7 +132,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1 text-rose-400 hover:text-rose-600"
+            className="p-1 text-danger-400 hover:text-danger-600"
             title="Delete"
           >
             <Trash2 size={12} />

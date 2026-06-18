@@ -32,8 +32,8 @@ const VERDICT_STYLE: Record<GovernanceVerdict, { bg: string; text: string; label
     label: 'BLOCKED P1',
   },
   BLOCKED_P0: {
-    bg: 'bg-rose-100 dark:bg-rose-500/20',
-    text: 'text-rose-700 dark:text-rose-300',
+    bg: 'bg-danger-100 dark:bg-danger-500/20',
+    text: 'text-danger-700 dark:text-danger-300',
     label: 'BLOCKED P0',
   },
   INCONCLUSIVE: {
@@ -49,7 +49,7 @@ const CONFIDENTIALITY_STYLE: Record<string, { bg: string; text: string }> = {
     text: 'text-emerald-700 dark:text-emerald-300',
   },
   internal: { bg: 'bg-blue-100 dark:bg-blue-500/20', text: 'text-blue-700 dark:text-blue-300' },
-  confidential: { bg: 'bg-rose-100 dark:bg-rose-500/20', text: 'text-rose-700 dark:text-rose-300' },
+  confidential: { bg: 'bg-danger-100 dark:bg-danger-500/20', text: 'text-danger-700 dark:text-danger-300' },
 };
 
 function formatTimestamp(value: string | null | undefined): string {
@@ -80,7 +80,7 @@ const StatTile: React.FC<{
   tone?: 'rose' | 'amber' | 'slate' | 'emerald' | 'blue';
 }> = ({ label, value, tone = 'slate' }) => {
   const toneClass: Record<string, string> = {
-    rose: 'text-rose-600 dark:text-rose-300',
+    rose: 'text-danger-600 dark:text-danger-300',
     amber: 'text-amber-600 dark:text-amber-300',
     slate: 'text-slate-700 dark:text-slate-200',
     emerald: 'text-emerald-600 dark:text-emerald-300',

@@ -190,7 +190,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                       onDelete(index);
                       setContextMenuIndex(null);
                     }}
-                    className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500"
+                    className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 text-danger-500"
                   >
                     <Trash2 size={12} /> Delete
                   </button>

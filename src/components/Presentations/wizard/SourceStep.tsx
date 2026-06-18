@@ -31,7 +31,7 @@ const SOURCE_TYPES = [
   { type: 'initiative_portfolio', icon: 'Target', color: 'text-blue-500' },
   { type: 'kpi_roi', icon: 'TrendingUp', color: 'text-amber-500' },
   { type: 'assessment', icon: 'FileText', color: 'text-primary-500' },
-  { type: 'raid', icon: 'Shield', color: 'text-rose-500' },
+  { type: 'raid', icon: 'Shield', color: 'text-danger-500' },
   { type: 'execution_status', icon: 'ClipboardList', color: 'text-emerald-500' },
   { type: 'tool_session', icon: 'Zap', color: 'text-blue-500' },
 ];

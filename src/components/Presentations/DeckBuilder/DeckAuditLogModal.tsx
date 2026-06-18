@@ -51,9 +51,9 @@ const ACTION_CHIP: Record<string, { bg: string; text: string; ring: string }> = 
     ring: 'ring-1 ring-slate-500/30',
   },
   delete: {
-    bg: 'bg-rose-500/15',
-    text: 'text-rose-700 dark:text-rose-300',
-    ring: 'ring-1 ring-rose-500/30',
+    bg: 'bg-danger-500/15',
+    text: 'text-danger-700 dark:text-danger-300',
+    ring: 'ring-1 ring-danger-500/30',
   },
   share: {
     bg: 'bg-violet-500/15',
@@ -968,7 +968,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                             placeholder="e.g. AI activity, last 7 days"
                           />
                           {saveDraftError ? (
-                            <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+                            <p className="mt-1 text-[11px] text-danger-600 dark:text-danger-400">
                               {saveDraftError}
                             </p>
                           ) : null}
@@ -1028,7 +1028,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                                     type="button"
                                     onClick={() => handleDeleteView(view.id)}
                                     aria-label={`Delete saved view ${view.name}`}
-                                    className="rounded-md p-1 text-rose-500 hover:bg-rose-500/10"
+                                    className="rounded-md p-1 text-danger-500 hover:bg-danger-500/10"
                                   >
                                     <Trash2 size={11} />
                                   </button>
@@ -1075,7 +1075,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                           role={importStatus.kind === 'error' ? 'alert' : undefined}
                           className={
                             importStatus.kind === 'error'
-                              ? 'mt-2 rounded-md border border-rose-200 dark:border-rose-700/60 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 text-[11px] text-rose-700 dark:text-rose-300'
+                              ? 'mt-2 rounded-md border border-danger-200 dark:border-danger-700/60 bg-danger-50 dark:bg-danger-900/20 px-2 py-1 text-[11px] text-danger-700 dark:text-danger-300'
                               : 'mt-2 rounded-md border border-emerald-200 dark:border-emerald-700/60 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 text-[11px] text-emerald-700 dark:text-emerald-300'
                           }
                         >

@@ -162,7 +162,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     onClick={() => handleRestore(version.id)}
                     className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-xs ${
                       restoreConfirm === version.id
-                        ? 'bg-rose-500 text-white opacity-100'
+                        ? 'bg-danger-500 text-white opacity-100'
                         : 'text-slate-600 hover:text-primary-500 hover:bg-primary-50'
                     }`}
                     title={restoreConfirm === version.id ? 'Click again to confirm' : 'Restore'}

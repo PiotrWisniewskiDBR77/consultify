@@ -253,7 +253,9 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
 
       {/* Error summary */}
       {stats.allDone && stats.hasErrors && (
+
         <div className="px-4 py-3 border-t border-danger-200/60 dark:border-danger-800/40 bg-danger-50/50 dark:bg-danger-900/20">
+        <div className="px-4 py-3 border-t border-danger-200/60 dark:border-danger-800/40 bg-danger-50/50 dark:bg-danger-950/20">
           <p className="text-xs text-danger-700 dark:text-danger-300 font-medium">
             {isPl
               ? `${stats.failed} z ${stats.total} operacji nie powiodło się`

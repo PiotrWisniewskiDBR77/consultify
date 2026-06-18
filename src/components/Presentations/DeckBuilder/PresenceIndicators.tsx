@@ -43,7 +43,7 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
             : connectionStatus === 'connecting'
               ? 'bg-amber-50 text-amber-600'
               : connectionStatus === 'error'
-                ? 'bg-rose-50 text-rose-600'
+                ? 'bg-danger-50 text-danger-600'
                 : 'bg-slate-100 text-slate-400'
         }`}
       >
