@@ -131,8 +131,8 @@ function KpiProgressBar({
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full transition-all bg-indigo-500"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all"
+          style={{ backgroundColor: 'var(--c-info)', width: `${pct}%` }}
         />
       </div>
       <span className="text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">
