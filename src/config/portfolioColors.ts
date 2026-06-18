@@ -27,14 +27,14 @@ export const AXIS_COLORS = {
     border: 'border-amber-200 dark:border-amber-800',
   },
   culture: {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    text: 'text-rose-700 dark:text-rose-300',
-    border: 'border-rose-200 dark:border-rose-800',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    text: 'text-danger-700 dark:text-danger-300',
+    border: 'border-danger-200 dark:border-danger-800',
   },
   cybersecurity: {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    text: 'text-rose-700 dark:text-rose-300',
-    border: 'border-rose-200 dark:border-rose-800',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    text: 'text-danger-700 dark:text-danger-300',
+    border: 'border-danger-200 dark:border-danger-800',
   },
   ai: {
     bg: 'bg-primary-50 dark:bg-primary-900/20',
@@ -51,9 +51,9 @@ export function getAxisColor(axis: string) {
 // Priority colors
 export const PRIORITY_COLORS = {
   CRITICAL: {
-    bg: 'bg-rose-100 dark:bg-rose-900/30',
-    text: 'text-rose-700 dark:text-rose-300',
-    dot: 'bg-rose-500',
+    bg: 'bg-danger-100 dark:bg-danger-900/30',
+    text: 'text-danger-700 dark:text-danger-300',
+    dot: 'bg-danger-500',
   },
   HIGH: {
     bg: 'bg-amber-100 dark:bg-amber-900/30',
@@ -155,13 +155,13 @@ export const STATUS_COLORS = {
     indicator: 'bg-blue-500',
   },
   BLOCKED: {
-    bg: 'bg-rose-100 dark:bg-rose-900/30',
-    bgDark: 'dark:bg-rose-900/30',
-    text: 'text-rose-700 dark:text-rose-300',
-    textDark: 'dark:text-rose-300',
-    border: 'border-rose-300',
-    borderDark: 'dark:border-rose-700',
-    indicator: 'bg-rose-500',
+    bg: 'bg-danger-100 dark:bg-danger-900/30',
+    bgDark: 'dark:bg-danger-900/30',
+    text: 'text-danger-700 dark:text-danger-300',
+    textDark: 'dark:text-danger-300',
+    border: 'border-danger-300',
+    borderDark: 'dark:border-danger-700',
+    indicator: 'bg-danger-500',
   },
   DONE: {
     bg: 'bg-green-100 dark:bg-green-900/30',
@@ -219,7 +219,7 @@ export const KANBAN_COLUMN_COLORS = {
   APPROVED: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800',
   SCHEDULED: 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800',
   EXECUTING: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
-  BLOCKED: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800',
+  BLOCKED: 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-800',
   DONE: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
   TRACKING: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
   CANCELLED: 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800',

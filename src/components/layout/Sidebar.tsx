@@ -863,7 +863,7 @@ export const Sidebar: React.FC = () => {
             <button
               onClick={() => logout()}
               className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium btn-base transition-all duration-200
-                text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400
+                text-slate-500 dark:text-slate-400 hover:bg-danger-50 dark:hover:bg-danger-500/10 hover:text-danger-600 dark:hover:text-danger-400
                 ${!showFull ? 'justify-center px-0' : 'px-3'} `}
               title={t('sidebar.logOut')}
             >

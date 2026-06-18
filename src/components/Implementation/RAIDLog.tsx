@@ -76,8 +76,8 @@ const RAID_TYPES: Record<
   ISSUE: {
     label: 'Issue',
     icon: AlertCircle,
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-100 dark:bg-danger-900/30',
   },
   DEPENDENCY: {
     label: 'Dependency',
@@ -205,7 +205,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
   };
 
   const getRiskScoreColor = (score: number): string => {
-    if (score >= 9) return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400';
+    if (score >= 9) return 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400';
     if (score >= 6) return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
     if (score >= 3)
       return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400';
@@ -243,7 +243,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                     : item.status === 'MITIGATED'
                       ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                       : item.status === 'REALIZED'
-                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
+                        ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400'
                         : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                 }`}
               >
@@ -319,7 +319,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                 {item.type === 'RISK' && (
                   <button
                     onClick={() => handleStatusChange(item, 'REALIZED')}
-                    className="p-1.5 text-rose-400 hover:bg-rose-900/20 rounded"
+                    className="p-1.5 text-danger-400 hover:bg-danger-900/20 rounded"
                     title="Mark Realized"
                   >
                     <XCircle size={16} />
@@ -333,7 +333,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                   handleDeleteItem(item.id);
                 }
               }}
-              className="p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-900/20 rounded"
+              className="p-1.5 text-slate-500 hover:text-danger-500 hover:bg-danger-900/20 rounded"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -370,7 +370,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full ${
                         tab === 'ISSUE' && count > 0
-                          ? 'bg-rose-900/30 text-rose-400'
+                          ? 'bg-danger-900/30 text-danger-400'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >

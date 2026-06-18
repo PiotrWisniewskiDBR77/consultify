@@ -165,14 +165,14 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
         <div
           className={`rounded-lg p-2 text-center ${
             snapshot.tasks.overdueCount > 0
-              ? 'bg-rose-50 dark:bg-rose-900/20'
+              ? 'bg-danger-50 dark:bg-danger-900/20'
               : 'bg-slate-50 dark:bg-navy-900'
           }`}
         >
           <div
             className={`text-lg font-bold ${
               snapshot.tasks.overdueCount > 0
-                ? 'text-rose-600 dark:text-rose-400'
+                ? 'text-danger-600 dark:text-danger-400'
                 : 'text-slate-900 dark:text-white'
             }`}
           >

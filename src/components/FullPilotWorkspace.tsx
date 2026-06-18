@@ -76,7 +76,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
 
         {/* Scope OUT */}
         <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-white/5">
-          <h3 className="flex items-center gap-2 text-lg font-bold text-rose-500 mb-4">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-danger-500 mb-4">
             <AlertTriangle size={20} /> Scope OUT (Won't Do)
           </h3>
           {isEditing ? (
@@ -244,12 +244,12 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
                 Pilot successful. Proceed to scale.
               </p>
             </div>
-            <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20 p-8 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-105 transition-transform">
-              <div className="w-16 h-16 bg-rose-100 dark:bg-rose-500/20 rounded-full flex items-center justify-center mb-4 text-rose-600 dark:text-rose-400">
+            <div className="bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-500/20 p-8 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-105 transition-transform">
+              <div className="w-16 h-16 bg-danger-100 dark:bg-danger-500/20 rounded-full flex items-center justify-center mb-4 text-danger-600 dark:text-danger-400">
                 <X size={32} />
               </div>
-              <h3 className="text-2xl font-bold text-rose-700 dark:text-rose-400">NO-GO: Pivot</h3>
-              <p className="text-rose-600/70 dark:text-rose-400/70 mt-2">
+              <h3 className="text-2xl font-bold text-danger-700 dark:text-danger-400">NO-GO: Pivot</h3>
+              <p className="text-danger-600/70 dark:text-danger-400/70 mt-2">
                 Pilot failed. Re-evaluate strategy.
               </p>
             </div>

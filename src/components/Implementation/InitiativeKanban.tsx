@@ -193,7 +193,7 @@ const SortableInitiativeCard: React.FC<{
       <div
         className={`flex items-center gap-2 p-2 rounded-lg text-xs ${
           slaStatus === 'overdue'
-            ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+            ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
             : slaStatus === 'warning'
               ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
               : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
@@ -233,7 +233,7 @@ const SortableInitiativeCard: React.FC<{
           <span
             className={`text-xs font-medium px-2 py-0.5 rounded ${
               initiative.priority === 'Critical'
-                ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
                 : initiative.priority === 'High'
                   ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'

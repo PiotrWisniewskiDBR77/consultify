@@ -76,7 +76,7 @@ function hasHighPriorityFlags(audit: PresentationStudioOutlineLayoutAudit): bool
 
 function flagToneClass(flag: PresentationStudioLayoutAuditFlag): string {
   if (HIGH_PRIORITY_FLAGS.has(flag)) {
-    return 'border-rose-300 bg-rose-100 text-rose-900 dark:border-rose-900/60 dark:bg-rose-900/40 dark:text-rose-100';
+    return 'border-danger-300 bg-danger-100 text-danger-900 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-100';
   }
   return 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-900/60 dark:bg-amber-900/40 dark:text-amber-100';
 }
@@ -170,7 +170,7 @@ export function PresentationStudioLayoutAuditBanner({
     <div
       className={
         highPriority
-          ? 'flex flex-col gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200'
+          ? 'flex flex-col gap-2 rounded-xl border border-danger-300 bg-danger-50 px-4 py-3 text-sm text-danger-900 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-200'
           : 'flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200'
       }
       role="status"
@@ -187,7 +187,7 @@ export function PresentationStudioLayoutAuditBanner({
             </span>
             {highPriority ? (
               <span
-                className="inline-flex items-center rounded-full border border-rose-300 bg-rose-100 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-rose-900 dark:border-rose-900/60 dark:bg-rose-900/40 dark:text-rose-100"
+                className="inline-flex items-center rounded-full border border-danger-300 bg-danger-100 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-danger-900 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-100"
                 data-testid={`${dataTestId}-priority-badge`}
               >
                 High priority
@@ -203,7 +203,7 @@ export function PresentationStudioLayoutAuditBanner({
           type="button"
           className={
             highPriority
-              ? 'ml-auto inline-flex items-center gap-1 rounded-lg border border-rose-300 bg-white/60 px-2 py-1 text-xs font-medium text-rose-900 hover:bg-white dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-100 dark:hover:bg-rose-900/40'
+              ? 'ml-auto inline-flex items-center gap-1 rounded-lg border border-danger-300 bg-white/60 px-2 py-1 text-xs font-medium text-danger-900 hover:bg-white dark:border-danger-900/60 dark:bg-danger-900/20 dark:text-danger-100 dark:hover:bg-danger-900/40'
               : 'ml-auto inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-white/60 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-white dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-100 dark:hover:bg-amber-900/40'
           }
           onClick={() => setExpanded((prev) => !prev)}

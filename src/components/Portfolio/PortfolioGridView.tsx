@@ -79,7 +79,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
           {initiative.priority}
         </span>
         {initiative.isCriticalPath && (
-          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400">
             Critical Path
           </span>
         )}

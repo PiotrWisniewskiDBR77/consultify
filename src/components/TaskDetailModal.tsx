@@ -113,7 +113,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
       switch (val) {
         case 'critical':
-          return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
+          return 'text-danger-500 bg-danger-500/10 border-danger-500/20';
         case 'high':
           return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
         case 'medium':
@@ -490,14 +490,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     />
                   </div>
 
-                  <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/10">
-                    <h3 className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-2 flex items-center gap-2">
+                  <div className="p-4 rounded-lg bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-500/10">
+                    <h3 className="text-xs font-bold text-danger-600 dark:text-danger-400 mb-2 flex items-center gap-2">
                       <AlertTriangle size={14} /> Blocking Issues / Risks
                     </h3>
                     <textarea
                       value={task.blockingIssues || ''}
                       onChange={(e) => setTask({ ...task, blockingIssues: e.target.value })}
-                      className="w-full h-20 bg-transparent border-none text-sm text-navy-900 dark:text-slate-300 placeholder:text-rose-400/50 dark:placeholder:text-rose-500/30 outline-none resize-none"
+                      className="w-full h-20 bg-transparent border-none text-sm text-navy-900 dark:text-slate-300 placeholder:text-danger-400/50 dark:placeholder:text-danger-500/30 outline-none resize-none"
                       placeholder="Describe any critical blockers..."
                     />
                   </div>
@@ -631,7 +631,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                         }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                           task.signedOff
-                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 hover:text-rose-600'
+                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-danger-100 dark:hover:bg-danger-500/20 hover:text-danger-600'
                             : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-500/30'
                         }`}
                       >

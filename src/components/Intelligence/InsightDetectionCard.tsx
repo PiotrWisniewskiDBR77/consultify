@@ -100,7 +100,7 @@ export function InsightDetectionCard({
 
         <button
           onClick={() => onDismiss(insight.id)}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+          className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
         >
           <X size={14} />
           Dismiss

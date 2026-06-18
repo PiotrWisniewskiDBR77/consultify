@@ -111,7 +111,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
   const getLevelColor = (lvl: string) => {
     switch (lvl) {
       case 'superadmin':
-        return 'text-rose-400 bg-rose-500/10';
+        return 'text-danger-400 bg-danger-500/10';
       case 'admin':
         return 'text-amber-400 bg-amber-500/10';
       case 'user':
@@ -250,7 +250,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
       {/* Error State */}
       {error && (
-        <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm">
+        <div className="p-4 rounded-lg bg-danger-500/10 border border-danger-500/30 text-danger-300 text-sm">
           {error}
         </div>
       )}

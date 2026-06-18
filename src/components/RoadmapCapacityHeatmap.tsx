@@ -97,7 +97,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
     if (percent <= 75) return 'bg-green-400 dark:bg-green-700';
     if (percent <= 100) return 'bg-amber-400 dark:bg-amber-600';
     if (percent <= 125) return 'bg-amber-500 dark:bg-amber-600';
-    return 'bg-rose-500 dark:bg-rose-600';
+    return 'bg-danger-500 dark:bg-danger-600';
   };
 
   // Calculate summary stats
@@ -143,7 +143,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
           </h3>
           <div className="flex items-center gap-4 text-xs">
             {stats.overloadedMonths > 0 && (
-              <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-1 text-danger-600 dark:text-danger-400">
                 <AlertTriangle size={14} />
                 {stats.overloadedMonths} months overloaded
               </div>
@@ -167,7 +167,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
           <p
             className={`text-lg font-bold ${
               stats.avgUtilization > 100
-                ? 'text-rose-600 dark:text-rose-400'
+                ? 'text-danger-600 dark:text-danger-400'
                 : 'text-green-600 dark:text-green-400'
             }`}
           >
@@ -185,7 +185,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
           <p
             className={`text-lg font-bold ${
               stats.overloadedMonths > 0
-                ? 'text-rose-600 dark:text-rose-400'
+                ? 'text-danger-600 dark:text-danger-400'
                 : 'text-green-600 dark:text-green-400'
             }`}
           >
@@ -236,7 +236,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                       <p>
                         {d.totalEffort}h / {d.capacity}h
                       </p>
-                      <p className={d.isOverloaded ? 'text-rose-400' : 'text-green-400'}>
+                      <p className={d.isOverloaded ? 'text-danger-400' : 'text-green-400'}>
                         {d.utilizationPercent}% utilized
                       </p>
                     </div>
@@ -269,7 +269,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
             <span>76-100%</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-rose-500 dark:bg-rose-600" />
+            <div className="w-4 h-4 rounded bg-danger-500 dark:bg-danger-600" />
             <span>&gt;100%</span>
           </div>
         </div>

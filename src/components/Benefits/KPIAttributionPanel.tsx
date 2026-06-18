@@ -415,7 +415,7 @@ const ConfBadge: React.FC<{ level: string }> = ({ level }) => {
   const cls: Record<string, string> = {
     high: 'bg-green-500/20 text-green-600 dark:text-green-400',
     medium: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
-    low: 'bg-rose-500/20 text-rose-600 dark:text-rose-400',
+    low: 'bg-danger-500/20 text-danger-600 dark:text-danger-400',
   };
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls[level] || cls.low}`}>

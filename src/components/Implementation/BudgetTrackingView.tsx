@@ -231,7 +231,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
       case 'CRITICAL':
         return 'text-amber-600 dark:text-amber-400';
       case 'OVERRUN':
-        return 'text-rose-600 dark:text-rose-400';
+        return 'text-danger-600 dark:text-danger-400';
       default:
         return 'text-slate-600 dark:text-slate-400';
     }
@@ -246,7 +246,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
       case 'CRITICAL':
         return 'bg-amber-100 dark:bg-amber-900/30';
       case 'OVERRUN':
-        return 'bg-rose-100 dark:bg-rose-900/30';
+        return 'bg-danger-100 dark:bg-danger-900/30';
       default:
         return 'bg-slate-100 dark:bg-slate-800';
     }
@@ -447,16 +447,16 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
               Remaining
             </span>
             <div
-              className={`p-2 rounded-lg ${totals.remaining > 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-rose-100 dark:bg-rose-900/30'}`}
+              className={`p-2 rounded-lg ${totals.remaining > 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-danger-100 dark:bg-danger-900/30'}`}
             >
               <DollarSign
                 size={16}
-                className={totals.remaining > 0 ? 'text-green-600' : 'text-rose-600'}
+                className={totals.remaining > 0 ? 'text-green-600' : 'text-danger-600'}
               />
             </div>
           </div>
           <p
-            className={`text-2xl font-bold ${totals.remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-rose-600 dark:text-rose-400'}`}
+            className={`text-2xl font-bold ${totals.remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-danger-600 dark:text-danger-400'}`}
           >
             {formatCurrency(totals.remaining, budget.currency)}
           </p>
@@ -473,7 +473,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
             </span>
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               {burnRate?.trend === 'INCREASING' ? (
-                <TrendingUp size={16} className="text-rose-500" />
+                <TrendingUp size={16} className="text-danger-500" />
               ) : burnRate?.trend === 'DECREASING' ? (
                 <TrendingDown size={16} className="text-green-500" />
               ) : (
@@ -504,7 +504,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
           <div
             className={`h-full rounded-full transition-all ${
               totals.status === 'OVERRUN'
-                ? 'bg-rose-500'
+                ? 'bg-danger-500'
                 : totals.status === 'CRITICAL'
                   ? 'bg-amber-500'
                   : totals.status === 'WARNING'
@@ -522,7 +522,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
               80% Warning
             </span>
             <span className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-rose-500 rounded-full" />
+              <div className="w-2 h-2 bg-danger-500 rounded-full" />
               100% Budget
             </span>
           </span>
@@ -535,19 +535,19 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
         <div
           className={`rounded-xl p-4 border ${
             forecast.isProjectedOverrun
-              ? 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-500/20'
+              ? 'bg-danger-50 dark:bg-danger-900/10 border-danger-200 dark:border-danger-500/20'
               : 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-500/20'
           }`}
         >
           <div className="flex items-start gap-3">
             {forecast.isProjectedOverrun ? (
-              <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
+              <AlertTriangle size={20} className="text-danger-500 shrink-0 mt-0.5" />
             ) : (
               <CheckCircle2 size={20} className="text-green-500 shrink-0 mt-0.5" />
             )}
             <div className="flex-1">
               <h4
-                className={`font-medium ${forecast.isProjectedOverrun ? 'text-rose-700 dark:text-rose-300' : 'text-green-700 dark:text-green-300'}`}
+                className={`font-medium ${forecast.isProjectedOverrun ? 'text-danger-700 dark:text-danger-300' : 'text-green-700 dark:text-green-300'}`}
               >
                 Forecast at Completion
               </h4>
@@ -567,7 +567,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 <div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Variance</p>
                   <p
-                    className={`font-bold ${forecast.varianceAtCompletion > 0 ? 'text-rose-600' : 'text-green-600'}`}
+                    className={`font-bold ${forecast.varianceAtCompletion > 0 ? 'text-danger-600' : 'text-green-600'}`}
                   >
                     {forecast.varianceAtCompletion > 0 ? '+' : ''}
                     {formatCurrency(forecast.varianceAtCompletion)}
@@ -576,7 +576,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 <div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">CPI</p>
                   <p
-                    className={`font-bold ${forecast.costPerformanceIndex >= 1 ? 'text-green-600' : 'text-rose-600'}`}
+                    className={`font-bold ${forecast.costPerformanceIndex >= 1 ? 'text-green-600' : 'text-danger-600'}`}
                   >
                     {forecast.costPerformanceIndex.toFixed(2)}
                   </p>
@@ -623,7 +623,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                   </div>
                   <div className="text-right">
                     <p
-                      className={`font-bold text-sm ${tx.type === 'EXPENSE' ? 'text-rose-600' : 'text-green-600'}`}
+                      className={`font-bold text-sm ${tx.type === 'EXPENSE' ? 'text-danger-600' : 'text-green-600'}`}
                     >
                       {tx.type === 'EXPENSE' ? '-' : '+'}
                       {formatCurrency(tx.amount)}

@@ -20,7 +20,7 @@ const VALUE_MOMENT_CONFIG: Record<
   initiative_created: { icon: Rocket, colorClass: 'from-primary-500 to-crimson-500' },
   tool_session_completed: { icon: Lightbulb, colorClass: 'from-amber-500 to-amber-500' },
   execution_signal_viewed: { icon: Zap, colorClass: 'from-blue-500 to-blue-500' },
-  deck_exported: { icon: BarChart3, colorClass: 'from-rose-500 to-pink-500' },
+  deck_exported: { icon: BarChart3, colorClass: 'from-danger-500 to-pink-500' },
 };
 
 interface DemoConversionCTAProps {

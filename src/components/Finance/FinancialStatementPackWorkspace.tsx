@@ -253,13 +253,13 @@ function ReadinessRing({ score, size = 32 }: { score: number; size?: number }) {
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct / 100) * circumference;
   const color =
-    pct >= 80 ? 'stroke-emerald-500' : pct >= 50 ? 'stroke-amber-500' : 'stroke-rose-500';
+    pct >= 80 ? 'stroke-emerald-500' : pct >= 50 ? 'stroke-amber-500' : 'stroke-danger-500';
   const textColor =
     pct >= 80
       ? 'text-emerald-600 dark:text-emerald-400'
       : pct >= 50
         ? 'text-amber-600 dark:text-amber-400'
-        : 'text-rose-600 dark:text-rose-400';
+        : 'text-danger-600 dark:text-danger-400';
 
   return (
     <div
@@ -530,10 +530,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 p-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-500/10">
-          <AlertTriangle size={20} className="text-rose-500" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-danger-50 dark:bg-danger-500/10">
+          <AlertTriangle size={20} className="text-danger-500" />
         </div>
-        <div className="text-sm text-rose-600 dark:text-rose-300">{error}</div>
+        <div className="text-sm text-danger-600 dark:text-danger-300">{error}</div>
         <button
           type="button"
           onClick={() => void loadPack()}
@@ -691,7 +691,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               className="inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]"
             >
               {failCount > 0 && (
-                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-100 px-1 text-[9px] font-bold text-rose-600 dark:bg-rose-500/15 dark:text-rose-400">
+                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-danger-100 px-1 text-[9px] font-bold text-danger-600 dark:bg-danger-500/15 dark:text-danger-400">
                   {failCount}
                 </span>
               )}

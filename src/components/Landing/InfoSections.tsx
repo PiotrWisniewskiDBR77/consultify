@@ -46,7 +46,7 @@ const AppFeatureSlide: React.FC<{
               {t('landing.carousel.labels.notifications', 'Notifications')}
             </span>
           </div>
-          <span className="px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full text-xs font-bold">
+          <span className="px-3 py-1 bg-danger-500/20 text-danger-400 rounded-full text-xs font-bold">
             {t('landing.carousel.slides.notifications.badge', {
               count: 3,
               defaultValue: '{{count}} New',
@@ -176,7 +176,7 @@ const AppFeatureSlide: React.FC<{
                   <span className="text-white font-semibold text-sm">{task.title}</span>
                 </div>
                 <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'high' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}`}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'high' ? 'bg-danger-500/20 text-danger-400' : 'bg-amber-500/20 text-amber-400'}`}
                 >
                   {task.priorityLabel}
                 </span>

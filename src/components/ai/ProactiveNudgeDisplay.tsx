@@ -84,10 +84,10 @@ const nudgeStyles = {
   },
   WARNING: {
     icon: AlertCircle,
-    bgColor: 'bg-rose-50 dark:bg-rose-900/20',
-    borderColor: 'border-rose-200 dark:border-rose-800',
-    iconColor: 'text-rose-500',
-    titleColor: 'text-rose-900 dark:text-rose-100',
+    bgColor: 'bg-danger-50 dark:bg-danger-900/20',
+    borderColor: 'border-danger-200 dark:border-danger-800',
+    iconColor: 'text-danger-500',
+    titleColor: 'text-danger-900 dark:text-danger-100',
   },
 };
 
@@ -301,7 +301,7 @@ export function ProactiveNudgeDisplay({
                         </button>
                         <button
                           onClick={() => handleFeedback(nudge.id, 'negative')}
-                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                           title="Not helpful"
                         >
                           <ThumbsDown size={14} />

@@ -331,7 +331,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div
               className={`text-lg font-semibold ${
                 (initiative.riskScore || 0) > 70
-                  ? 'text-rose-600 dark:text-rose-400'
+                  ? 'text-danger-600 dark:text-danger-400'
                   : (initiative.riskScore || 0) > 40
                     ? 'text-amber-600 dark:text-amber-400'
                     : 'text-green-600 dark:text-green-400'
@@ -466,7 +466,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div
               className={`h-full rounded-full ${
                 (initiative.progress || 0) > 90
-                  ? 'bg-rose-500'
+                  ? 'bg-danger-500'
                   : (initiative.progress || 0) > 70
                     ? 'bg-amber-500'
                     : 'bg-green-500'
@@ -566,7 +566,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <span
               className={`text-lg font-bold ${
                 (initiative?.riskScore || 0) > 70
-                  ? 'text-rose-600 dark:text-rose-400'
+                  ? 'text-danger-600 dark:text-danger-400'
                   : (initiative?.riskScore || 0) > 40
                     ? 'text-amber-600 dark:text-amber-400'
                     : 'text-green-600 dark:text-green-400'
@@ -579,7 +579,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div
               className={`h-full rounded-full ${
                 (initiative?.riskScore || 0) > 70
-                  ? 'bg-rose-500'
+                  ? 'bg-danger-500'
                   : (initiative?.riskScore || 0) > 40
                     ? 'bg-amber-500'
                     : 'bg-green-500'
@@ -595,8 +595,8 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             {
               label: 'Risks',
               count: initiative?.riskScore && initiative.riskScore > 50 ? 'High' : 'Low',
-              color: 'text-rose-500',
-              bg: 'bg-rose-50 dark:bg-rose-900/20',
+              color: 'text-danger-500',
+              bg: 'bg-danger-50 dark:bg-danger-900/20',
             },
             {
               label: 'Assumptions',
@@ -642,7 +642,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       case 'in-progress':
         return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
       case 'blocked':
-        return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
+        return 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300';
       default:
         return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
     }
@@ -652,7 +652,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
     switch (priority?.toLowerCase()) {
       case 'urgent':
       case 'critical':
-        return 'text-rose-600 dark:text-rose-400';
+        return 'text-danger-600 dark:text-danger-400';
       case 'high':
         return 'text-amber-600 dark:text-amber-400';
       case 'medium':
@@ -806,7 +806,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       case 'APPROVED':
         return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
       case 'REJECTED':
-        return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
+        return 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300';
       case 'DEFERRED':
         return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
       default:
@@ -817,7 +817,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
   const getDecisionPriorityColor = (priority?: string) => {
     switch (priority?.toUpperCase()) {
       case 'CRITICAL':
-        return 'border-l-rose-500';
+        return 'border-l-danger-500';
       case 'HIGH':
         return 'border-l-amber-500';
       case 'MEDIUM':
@@ -926,7 +926,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     key={decision.id}
                     onClick={() => setSelectedDecisionId(decision.id)}
                     className={`p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border-l-4 border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 cursor-pointer transition-all group ${getDecisionPriorityColor(decision.priority)} ${
-                      isOverdue ? 'ring-1 ring-rose-400/50' : ''
+                      isOverdue ? 'ring-1 ring-danger-400/50' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -941,7 +941,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                             </span>
                           )}
                           {isOverdue && (
-                            <span className="text-[10px] font-medium text-rose-500 uppercase">
+                            <span className="text-[10px] font-medium text-danger-500 uppercase">
                               Overdue
                             </span>
                           )}

@@ -47,7 +47,7 @@ export const PlaybookNode: React.FC<PlaybookNodeProps> = ({
       case NodeType.START:
         return `${base} ${selected} bg-green-100 border-green-400 text-green-800`;
       case NodeType.END:
-        return `${base} ${selected} bg-rose-100 border-rose-400 text-rose-800`;
+        return `${base} ${selected} bg-danger-100 border-danger-400 text-danger-800`;
       case NodeType.BRANCH:
         return `${base} ${selected} bg-yellow-100 border-yellow-400 text-yellow-800`;
       case NodeType.CHECK:

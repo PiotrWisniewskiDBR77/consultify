@@ -245,27 +245,27 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
         </div>
 
         {/* Priority Alerts */}
-        <div className="bg-rose-50 dark:bg-rose-900/10 rounded-2xl p-6 border border-rose-100 dark:border-rose-500/20 shadow-sm">
-          <h3 className="text-rose-600 dark:text-rose-400 font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+        <div className="bg-danger-50 dark:bg-danger-900/10 rounded-2xl p-6 border border-danger-100 dark:border-danger-500/20 shadow-sm">
+          <h3 className="text-danger-600 dark:text-danger-400 font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
             <AlertOctagon size={16} />
             Priority Alerts
           </h3>
           <ul className="space-y-2">
             {!session.step2Completed && (
-              <li className="text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+              <li className="text-sm text-danger-800 dark:text-danger-200 flex items-start gap-2">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-danger-500 shrink-0"></span>
                 Assessment incomplete: Missing key data points.
               </li>
             )}
             {initiativeStats.delayed > 0 && (
-              <li className="text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+              <li className="text-sm text-danger-800 dark:text-danger-200 flex items-start gap-2">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-danger-500 shrink-0"></span>
                 {initiativeStats.delayed} initiatives are currently delayed.
               </li>
             )}
             {initiativeStats.total === 0 && (
-              <li className="text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+              <li className="text-sm text-danger-800 dark:text-danger-200 flex items-start gap-2">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-danger-500 shrink-0"></span>
                 No initiatives defined yet — create a roadmap to begin.
               </li>
             )}
@@ -338,7 +338,7 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-rose-500"></span> Delayed
+                  <span className="w-2 h-2 rounded-full bg-danger-500"></span> Delayed
                 </span>
                 <span className="font-mono font-bold">{initiativeStats.delayed}</span>
               </div>
@@ -356,7 +356,7 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
                     <div className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
                       {kpi.value}
                       {kpi.trend === 'good' && <TrendingUp size={14} className="text-green-500" />}
-                      {kpi.trend === 'bad' && <TrendingDown size={14} className="text-rose-500" />}
+                      {kpi.trend === 'bad' && <TrendingDown size={14} className="text-danger-500" />}
                     </div>
                     <div className="text-[10px] text-slate-600">Baseline: {kpi.baseline}</div>
                   </div>
@@ -417,10 +417,10 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
 
                 {/* Predictive Risk */}
                 {aiInsights.risk ? (
-                  <div className="bg-rose-500/20 backdrop-blur-md rounded-xl p-5 border border-rose-500/20 flex items-start gap-4">
-                    <AlertTriangle size={24} className="text-rose-300 shrink-0" />
+                  <div className="bg-danger-500/20 backdrop-blur-md rounded-xl p-5 border border-danger-500/20 flex items-start gap-4">
+                    <AlertTriangle size={24} className="text-danger-300 shrink-0" />
                     <div>
-                      <h4 className="text-sm font-semibold text-rose-200 uppercase tracking-wider mb-1">
+                      <h4 className="text-sm font-semibold text-danger-200 uppercase tracking-wider mb-1">
                         Early Predictive Risk
                       </h4>
                       <p className="text-sm text-white/90">{aiInsights.risk}</p>

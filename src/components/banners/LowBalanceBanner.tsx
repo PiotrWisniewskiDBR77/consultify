@@ -34,10 +34,10 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
   };
 
   const bannerColor = isZeroBalance
-    ? 'from-rose-500 to-amber-500 border-rose-400/50'
+    ? 'from-danger-500 to-amber-500 border-danger-400/50'
     : 'from-amber-500 to-amber-500 border-amber-400/50';
 
-  const iconBg = isZeroBalance ? 'bg-rose-600/20' : 'bg-amber-600/20';
+  const iconBg = isZeroBalance ? 'bg-danger-600/20' : 'bg-amber-600/20';
 
   return (
     <>
@@ -47,7 +47,7 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center`}>
               {isZeroBalance ? (
-                <AlertTriangle className="w-5 h-5 text-rose-500" />
+                <AlertTriangle className="w-5 h-5 text-danger-500" />
               ) : (
                 <Coins className="w-5 h-5 text-amber-500" />
               )}

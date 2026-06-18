@@ -65,7 +65,7 @@ const getAvatarColor = (userId: string): string => {
     'bg-pink-500',
     'bg-indigo-500',
     'bg-blue-500',
-    'bg-rose-500',
+    'bg-danger-500',
   ];
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {

@@ -86,10 +86,10 @@ const MetricCard: React.FC<{
 }> = ({ title, value, subtitle, icon, trend, color, onClick }) => {
   const colorStyles = {
     red: {
-      bg: 'bg-rose-50 dark:bg-rose-900/20',
-      border: 'border-rose-200 dark:border-rose-800/50',
-      icon: 'text-rose-500',
-      value: 'text-rose-700 dark:text-rose-300',
+      bg: 'bg-danger-50 dark:bg-danger-900/20',
+      border: 'border-danger-200 dark:border-danger-800/50',
+      icon: 'text-danger-500',
+      value: 'text-danger-700 dark:text-danger-300',
     },
     amber: {
       bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -134,7 +134,7 @@ const MetricCard: React.FC<{
         {trend && (
           <span
             className={`text-xs flex items-center gap-0.5 ${
-              trend.direction === 'up' ? 'text-rose-500' : 'text-green-500'
+              trend.direction === 'up' ? 'text-danger-500' : 'text-green-500'
             }`}
           >
             {trend.direction === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -170,10 +170,10 @@ const AlertSection: React.FC<{
       icon: 'text-amber-500',
     },
     red: {
-      bg: 'bg-rose-50 dark:bg-rose-900/20',
-      border: 'border-rose-200 dark:border-rose-800/50',
-      badge: 'bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300',
-      icon: 'text-rose-500',
+      bg: 'bg-danger-50 dark:bg-danger-900/20',
+      border: 'border-danger-200 dark:border-danger-800/50',
+      badge: 'bg-danger-100 dark:bg-danger-800/50 text-danger-700 dark:text-danger-300',
+      icon: 'text-danger-500',
     },
     purple: {
       bg: 'bg-primary-50 dark:bg-primary-900/20',
@@ -351,7 +351,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
       <div className="shrink-0 p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-rose-500 to-amber-600 text-white rounded-lg shadow-sm">
+            <div className="p-2 bg-gradient-to-br from-danger-500 to-amber-600 text-white rounded-lg shadow-sm">
               <AlertTriangle size={20} />
             </div>
             <div>
@@ -436,7 +436,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
         {criticalDecisions.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              <Flame size={14} className="text-rose-500" />
+              <Flame size={14} className="text-danger-500" />
               {t('decisions.criticalDecisions', 'Critical Decisions')}
             </h3>
             <div className="space-y-2">
@@ -502,13 +502,13 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                 <button
                   key={d.id}
                   onClick={() => onDecisionClick?.(d.id)}
-                  className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-rose-100 dark:border-rose-800/30 hover:border-rose-300 transition-colors"
+                  className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-danger-100 dark:border-danger-800/30 hover:border-danger-300 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
                       {d.title}
                     </span>
-                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 font-medium">
+                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-danger-100 dark:bg-danger-800/50 text-danger-700 dark:text-danger-300 font-medium">
                       {d.blockedCount} blocked
                     </span>
                   </div>

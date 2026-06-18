@@ -35,7 +35,7 @@ export const AiInsightModal: React.FC<AiInsightModalProps> = ({
                 type === 'validation' && data?.status === 'OK'
                   ? 'bg-green-100 text-green-600'
                   : type === 'validation' && data?.status !== 'OK'
-                    ? 'bg-rose-100 text-rose-600'
+                    ? 'bg-danger-100 text-danger-600'
                     : 'bg-blue-100 text-blue-600'
               }`}
             >
@@ -52,7 +52,7 @@ export const AiInsightModal: React.FC<AiInsightModalProps> = ({
               {type === 'validation' && (
                 <p
                   className={`text-xs font-bold uppercase ${
-                    data?.status === 'OK' ? 'text-green-600' : 'text-rose-500'
+                    data?.status === 'OK' ? 'text-green-600' : 'text-danger-500'
                   }`}
                 >
                   {t('common.statusLabel')} {data?.status}
@@ -86,16 +86,16 @@ export const AiInsightModal: React.FC<AiInsightModalProps> = ({
           {/* Observations / Risks */}
           {(data?.observations?.length > 0 || data?.keyRisks?.length > 0) && (
             <div>
-              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 text-rose-500 flex items-center gap-2">
+              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 text-danger-500 flex items-center gap-2">
                 <AlertTriangle size={14} /> {t('ai.observations')}
               </h4>
               <div className="space-y-2">
                 {(data.observations || data.keyRisks).map((item: string, idx: number) => (
                   <div
                     key={idx}
-                    className="flex gap-3 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-500/10 hover:border-rose-500/30 transition-colors"
+                    className="flex gap-3 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/10 border border-danger-100 dark:border-danger-500/10 hover:border-danger-500/30 transition-colors"
                   >
-                    <span className="text-rose-500">•</span>
+                    <span className="text-danger-500">•</span>
                     <span className="text-sm text-navy-900 dark:text-slate-200">{item}</span>
                   </div>
                 ))}

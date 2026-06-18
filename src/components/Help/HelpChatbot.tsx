@@ -448,7 +448,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                           </button>
                           <button
                             onClick={() => handleFeedback(message.id, false)}
-                            className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-colors"
+                            className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-500 transition-colors"
                           >
                             <ThumbsDown size={14} />
                           </button>
@@ -457,7 +457,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                     {message.feedback && (
                       <div
                         className={`text-xs mt-1 ${
-                          message.feedback === 'helpful' ? 'text-green-500' : 'text-rose-500'
+                          message.feedback === 'helpful' ? 'text-green-500' : 'text-danger-500'
                         }`}
                       >
                         {message.feedback === 'helpful'

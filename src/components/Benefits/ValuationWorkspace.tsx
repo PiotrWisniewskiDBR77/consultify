@@ -57,7 +57,7 @@ function sensitivityHeatmapColor(value: number, min: number, max: number): strin
   if (ratio >= 0.4)
     return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
   if (ratio >= 0.2) return 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300';
-  return 'bg-rose-100 dark:bg-rose-900/20 text-rose-800 dark:text-rose-300';
+  return 'bg-danger-100 dark:bg-danger-900/20 text-danger-800 dark:text-danger-300';
 }
 
 function safeNumber(v: unknown, fb: number): number {
@@ -683,7 +683,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               {activeStep === 'assumptions' && (
                 <div className="space-y-4">
                   {validationError && (
-                    <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl p-3 text-sm">
+                    <div className="bg-danger-500/10 border border-danger-500/30 text-danger-400 rounded-xl p-3 text-sm">
                       {validationError}
                     </div>
                   )}
@@ -1120,7 +1120,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
                                 medium:
                                   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-                                high: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+                                high: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
                               };
                               const impactKey = String(r.impactTier || '').toLowerCase();
                               const effortKey = String(r.effort || '').toLowerCase();
@@ -1392,7 +1392,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 </table>
                                 <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-600">
                                   <span>{t('valuation.sensitivity.legend', 'Legend')}:</span>
-                                  <span className="inline-block w-3 h-3 rounded bg-rose-100 dark:bg-rose-900/20" />
+                                  <span className="inline-block w-3 h-3 rounded bg-danger-100 dark:bg-danger-900/20" />
                                   <span>{t('valuation.sensitivity.lower', 'Lower')}</span>
                                   <span className="inline-block w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/20" />
                                   <span>{t('valuation.sensitivity.mid', 'Mid')}</span>

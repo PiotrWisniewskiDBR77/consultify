@@ -536,7 +536,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <span
                       className={`uppercase font-bold ${
                         initiative.status === 'BLOCKED'
-                          ? 'text-rose-400'
+                          ? 'text-danger-400'
                           : initiative.status === 'DONE'
                             ? 'text-green-400'
                             : initiative.status === 'EXECUTING'
@@ -1014,7 +1014,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               {t('initiative.charterReadiness')}
                             </h4>
                             <div
-                              className={`text-lg font-bold ${readiness >= 80 ? 'text-green-500' : readiness >= 50 ? 'text-amber-500' : 'text-rose-500'}`}
+                              className={`text-lg font-bold ${readiness >= 80 ? 'text-green-500' : readiness >= 50 ? 'text-amber-500' : 'text-danger-500'}`}
                             >
                               {readiness}%
                             </div>
@@ -1133,7 +1133,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                     targetState: newState,
                                   });
                                 }}
-                                className="opacity-0 group-hover:opacity-100 text-slate-600 dark:text-slate-400 hover:text-rose-500"
+                                className="opacity-0 group-hover:opacity-100 text-slate-600 dark:text-slate-400 hover:text-danger-500"
                               >
                                 <X size={12} />
                               </button>
@@ -1195,7 +1195,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               list.splice(idx, 1);
                               setInitiative({ ...initiative, attachments: list });
                             }}
-                            className="text-slate-600 dark:text-slate-400 hover:text-rose-500"
+                            className="text-slate-600 dark:text-slate-400 hover:text-danger-500"
                           >
                             <X size={12} />
                           </button>
@@ -1365,7 +1365,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           {
                             label: t('initiative.changeMgmt'),
                             key: 'change',
-                            color: 'bg-rose-500',
+                            color: 'bg-danger-500',
                           },
                         ].map((metric) => (
                           <div key={metric.key} className="flex items-center gap-3">
@@ -1398,7 +1398,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 }}
                               />
                               <span
-                                className={`text-xs font-bold w-4 text-center ${initiative.effortProfile?.[metric.key as keyof typeof initiative.effortProfile] === 5 ? 'text-rose-500 dark:text-rose-400' : 'text-slate-600 dark:text-slate-300'}`}
+                                className={`text-xs font-bold w-4 text-center ${initiative.effortProfile?.[metric.key as keyof typeof initiative.effortProfile] === 5 ? 'text-danger-500 dark:text-danger-400' : 'text-slate-600 dark:text-slate-300'}`}
                               >
                                 {initiative.effortProfile?.[
                                   metric.key as keyof typeof initiative.effortProfile
@@ -1494,7 +1494,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               structuredSuccessCriteria: list,
                             });
                           }}
-                          className="text-slate-500 dark:text-slate-400 hover:text-rose-500"
+                          className="text-slate-500 dark:text-slate-400 hover:text-danger-500"
                         >
                           <X size={16} />
                         </button>
@@ -1644,7 +1644,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       />
                       <button
                         onClick={() => removeArrayItem('deliverables', idx)}
-                        className="text-slate-500 dark:text-slate-400 hover:text-rose-500"
+                        className="text-slate-500 dark:text-slate-400 hover:text-danger-500"
                       >
                         <X size={16} />
                       </button>
@@ -1693,7 +1693,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           </button>
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase mb-2 flex justify-between">
+                          <h4 className="text-xs font-bold text-danger-600 dark:text-danger-400 uppercase mb-2 flex justify-between">
                             {t('initiative.outOfScope')}{' '}
                             <button onClick={() => handleGenerateList('scopeOut')}>
                               <Sparkles size={10} />
@@ -1713,7 +1713,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           ))}
                           <button
                             onClick={() => addArrayItem('scopeOut')}
-                            className="text-xs text-rose-400"
+                            className="text-xs text-danger-400"
                           >
                             + {t('common.add')}
                           </button>
@@ -1765,8 +1765,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   </h3>
 
                   <InputGroup label={t('initiative.killCriteriaMandatory')}>
-                    <div className="bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2 text-rose-600 dark:text-rose-400 text-xs font-bold uppercase">
+                    <div className="bg-danger-50 dark:bg-danger-500/5 border border-danger-200 dark:border-danger-500/20 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2 text-danger-600 dark:text-danger-400 text-xs font-bold uppercase">
                         <AlertTriangle size={12} />
                         <span>{t('initiative.stopConditions')}</span>
                       </div>
@@ -1869,7 +1869,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 list.splice(idx, 1);
                                 setInitiative({ ...initiative, milestones: list });
                               }}
-                              className="text-slate-500 dark:text-slate-400 hover:text-rose-500"
+                              className="text-slate-500 dark:text-slate-400 hover:text-danger-500"
                             >
                               <X size={14} />
                             </button>
@@ -1901,7 +1901,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 <select
                                   className={`text-xs border rounded px-2 py-0.5 outline-none ${
                                     m.decision === 'stop'
-                                      ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                                      ? 'bg-danger-500/20 text-danger-400 border-danger-500/30'
                                       : m.decision === 'adjust'
                                         ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                                         : 'bg-green-500/20 text-green-400 border-green-500/30'
@@ -1991,7 +1991,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             newRisks.splice(idx, 1);
                             setInitiative({ ...initiative, keyRisks: newRisks });
                           }}
-                          className="text-xs text-rose-500 mt-2"
+                          className="text-xs text-danger-500 mt-2"
                         >
                           {t('common.remove')}
                         </button>
@@ -2319,7 +2319,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         <div
                           className={`w-3 h-3 rounded-full ${
                             initiative.status === 'BLOCKED'
-                              ? 'bg-rose-500'
+                              ? 'bg-danger-500'
                               : initiative.status === 'DONE'
                                 ? 'bg-green-500'
                                 : initiative.status === 'EXECUTING'
@@ -2332,7 +2332,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         </span>
                       </div>
                       {initiative.status === 'BLOCKED' && (
-                        <p className="text-xs text-rose-400 mt-2">
+                        <p className="text-xs text-danger-400 mt-2">
                           {t('common.reason')}:{' '}
                           {(initiative as any).blockedReason || t('common.notSpecified')}
                         </p>
@@ -2579,7 +2579,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               );
                               setInitiative({ ...initiative, teamMembers: updated });
                             }}
-                            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-colors"
+                            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded transition-colors"
                           >
                             <X size={14} />
                           </button>
@@ -2680,7 +2680,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 relatedInitiatives: updated,
                               });
                             }}
-                            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded"
+                            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 rounded"
                           >
                             <X size={14} />
                           </button>
@@ -2787,7 +2787,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               );
                               setInitiative({ ...initiative, comments: updated });
                             }}
-                            className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500"
+                            className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-500"
                           >
                             <X size={14} />
                           </button>

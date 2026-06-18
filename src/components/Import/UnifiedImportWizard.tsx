@@ -355,7 +355,7 @@ const UploadStep: React.FC<{
               e.stopPropagation();
               onFileRemove();
             }}
-            className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+            className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
           >
             <Trash2 size={18} />
           </button>
@@ -598,7 +598,7 @@ const ReviewStep: React.FC<{
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                             : score.confidence >= 50
                               ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                              : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
+                              : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400'
                         }`}
                       >
                         {score.confidence >= 80 ? (
@@ -819,7 +819,7 @@ const ConfirmStep: React.FC<{
             {isPolish ? 'Kompletność:' : 'Completeness:'}
           </span>
           <span
-            className={`font-bold ${completeness >= 80 ? 'text-green-600 dark:text-green-400' : completeness >= 50 ? 'text-yellow-600 dark:text-yellow-400' : 'text-rose-600 dark:text-rose-400'}`}
+            className={`font-bold ${completeness >= 80 ? 'text-green-600 dark:text-green-400' : completeness >= 50 ? 'text-yellow-600 dark:text-yellow-400' : 'text-danger-600 dark:text-danger-400'}`}
           >
             {completeness}%
           </span>
@@ -1190,9 +1190,9 @@ export const UnifiedImportWizard: React.FC<UnifiedImportWizardProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {state.error && (
-            <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-3 mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
-              <span className="text-rose-700 dark:text-rose-400 text-sm">{state.error}</span>
+            <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg p-3 mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-danger-500 shrink-0" />
+              <span className="text-danger-700 dark:text-danger-400 text-sm">{state.error}</span>
             </div>
           )}
 

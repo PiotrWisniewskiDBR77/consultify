@@ -119,7 +119,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
                   />
                   <button
                     onClick={() => removeListItem('businessGoals', i)}
-                    className="text-rose-500 hover:text-rose-400"
+                    className="text-danger-500 hover:text-danger-400"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -155,7 +155,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
                     />
                     <button
                       onClick={() => removeListItem('inScope', i)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-rose-400"
+                      className="text-slate-400 dark:text-slate-500 hover:text-danger-400"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -171,7 +171,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-rose-500 mb-2 flex items-center gap-2">
+              <label className="block text-sm font-bold text-danger-500 mb-2 flex items-center gap-2">
                 <Trash2 size={16} /> Out of Scope
               </label>
               <div className="space-y-2">
@@ -185,7 +185,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
                     />
                     <button
                       onClick={() => removeListItem('outScope', i)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-rose-400"
+                      className="text-slate-400 dark:text-slate-500 hover:text-danger-400"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -193,7 +193,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
                 ))}
                 <button
                   onClick={() => addListItem('outScope')}
-                  className="text-rose-500 text-xs font-bold flex items-center gap-1"
+                  className="text-danger-500 text-xs font-bold flex items-center gap-1"
                 >
                   + Add Excl.
                 </button>

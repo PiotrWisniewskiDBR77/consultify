@@ -72,7 +72,7 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+              <div className="w-2 h-2 rounded-full bg-danger-500"></div>
               <span className="text-slate-500 dark:text-slate-400">Change: {dataPoint.change}</span>
             </div>
             <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700 font-semibold">
@@ -80,7 +80,7 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
               <span
                 className={
                   dataPoint.status === 'Overload'
-                    ? 'text-rose-500'
+                    ? 'text-danger-500'
                     : dataPoint.status === 'High'
                       ? 'text-amber-500'
                       : 'text-green-500'
@@ -110,7 +110,7 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
             <div className="w-2 h-2 rounded-full bg-emerald-500"></div>Operational
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-rose-500"></div>Change
+            <div className="w-2 h-2 rounded-full bg-danger-500"></div>Change
           </div>
         </div>
       </div>

@@ -107,7 +107,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     trend === 'up'
       ? 'text-green-500'
       : trend === 'down'
-        ? 'text-rose-500'
+        ? 'text-danger-500'
         : 'text-slate-500 dark:text-slate-400';
 
   return (

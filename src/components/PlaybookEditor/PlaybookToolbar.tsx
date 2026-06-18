@@ -75,7 +75,7 @@ export const PlaybookToolbar: React.FC<PlaybookToolbarProps> = ({
         {hasSelectedNode && (
           <button
             onClick={onDeleteSelected}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-danger-200 text-danger-600 hover:bg-danger-50 transition"
             title="Delete selected node"
           >
             <Trash2 size={14} />

@@ -32,7 +32,7 @@ export const ActionDecisionDialog: React.FC<ActionDecisionDialogProps> = ({
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div
-                className={`p-2 rounded-lg ${type === 'APPROVE' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-rose-500/20 text-rose-500'}`}
+                className={`p-2 rounded-lg ${type === 'APPROVE' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-danger-500/20 text-danger-500'}`}
               >
                 {type === 'APPROVE' ? <ShieldCheck size={20} /> : <AlertCircle size={20} />}
               </div>
@@ -86,7 +86,7 @@ export const ActionDecisionDialog: React.FC<ActionDecisionDialogProps> = ({
               className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm text-white transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
                 type === 'APPROVE'
                   ? 'bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/20'
-                  : 'bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-500/20'
+                  : 'bg-danger-600 hover:bg-danger-500 shadow-lg shadow-danger-500/20'
               }`}
             >
               {type === 'APPROVE' ? 'Confirm & Execute' : 'Confirm Rejection'}

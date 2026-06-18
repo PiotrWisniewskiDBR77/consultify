@@ -153,7 +153,7 @@ export const ROITrackingPanel: React.FC = () => {
     summary.totalVariance > 0
       ? 'text-green-500'
       : summary.totalVariance < 0
-        ? 'text-rose-500'
+        ? 'text-danger-500'
         : 'text-slate-600';
 
   return (
@@ -201,13 +201,13 @@ export const ROITrackingPanel: React.FC = () => {
       {/* Variance Signal */}
       {summary.totalRealized !== 0 && (
         <div
-          className={`rounded-xl p-4 border ${summary.totalVariance >= 0 ? 'bg-green-500/5 border-green-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}
+          className={`rounded-xl p-4 border ${summary.totalVariance >= 0 ? 'bg-green-500/5 border-green-500/20' : 'bg-danger-500/5 border-danger-500/20'}`}
         >
           <div className="flex items-center gap-3">
             {summary.totalVariance >= 0 ? (
               <ArrowUp className="w-5 h-5 text-green-500" />
             ) : (
-              <ArrowDown className="w-5 h-5 text-rose-500" />
+              <ArrowDown className="w-5 h-5 text-danger-500" />
             )}
             <div>
               <p className={`font-semibold ${varianceColor}`}>
@@ -283,7 +283,7 @@ export const ROITrackingPanel: React.FC = () => {
                   </td>
                   <td className="px-4 py-3 text-right">
                     {item.hasRealized ? (
-                      <span className={item.variance >= 0 ? 'text-green-500' : 'text-rose-500'}>
+                      <span className={item.variance >= 0 ? 'text-green-500' : 'text-danger-500'}>
                         {item.variance >= 0 ? '+' : ''}
                         {fmtCurrency(item.variance)}
                       </span>
@@ -333,7 +333,7 @@ const ConfidenceBadge: React.FC<{ level: string }> = ({ level }) => {
   const colors: Record<string, string> = {
     high: 'bg-green-500/20 text-green-500',
     medium: 'bg-yellow-500/20 text-yellow-500',
-    low: 'bg-rose-500/20 text-rose-500',
+    low: 'bg-danger-500/20 text-danger-500',
   };
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors[level] || colors.low}`}>

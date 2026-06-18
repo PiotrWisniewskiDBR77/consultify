@@ -183,7 +183,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
             </div>
             <div
               className={`flex items-center gap-1 text-xs font-medium ${
-                usageData.trend === 'up' ? 'text-rose-500' : 'text-emerald-500'
+                usageData.trend === 'up' ? 'text-danger-500' : 'text-emerald-500'
               }`}
             >
               {usageData.trend === 'up' ? (
@@ -262,7 +262,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
           <div
             className={`h-full rounded-full transition-all duration-500 ${
               usagePercentage >= 90
-                ? 'bg-rose-500'
+                ? 'bg-danger-500'
                 : usagePercentage >= 75
                   ? 'bg-amber-500'
                   : 'bg-gradient-to-r from-primary-500 to-crimson-500'

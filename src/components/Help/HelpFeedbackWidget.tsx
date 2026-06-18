@@ -142,7 +142,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
         <button
           onClick={() => handleClick(false)}
           disabled={isSubmitting}
-          className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
+          className="p-1.5 rounded-lg hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-500 dark:text-slate-400 hover:text-danger-600 dark:hover:text-danger-400 transition-colors disabled:opacity-50"
           title={tTrans.no}
         >
           <ThumbsDown size={16} />
@@ -196,7 +196,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
               rows={3}
             />
 
-            {error && <p className="text-sm text-rose-500">{error}</p>}
+            {error && <p className="text-sm text-danger-500">{error}</p>}
 
             <div className="flex justify-end gap-2">
               <button
@@ -241,14 +241,14 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
               <button
                 onClick={() => handleClick(false)}
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 text-slate-700 dark:text-slate-300 hover:text-danger-600 dark:hover:text-danger-400 transition-all disabled:opacity-50"
               >
                 <ThumbsDown size={18} />
                 <span>{tTrans.no}</span>
               </button>
             </div>
 
-            {error && <p className="text-center text-sm text-rose-500">{error}</p>}
+            {error && <p className="text-center text-sm text-danger-500">{error}</p>}
           </motion.div>
         )}
       </AnimatePresence>

@@ -235,7 +235,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
       <div className="flex-1 overflow-y-auto">
         {/* P26-B: Deprecation banner */}
         {redirectInfo?.deprecationReason && (
-          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200 flex items-start gap-2">
+          <div className="mb-4 rounded-xl border border-danger-200 bg-danger-50 px-3 py-2 text-xs text-danger-900 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200 flex items-start gap-2">
             <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">
@@ -248,14 +248,14 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
                     onBack();
                     setTimeout(() => onArticleClick?.(redirectInfo.redirectSlug!), 100);
                   }}
-                  className="mt-1 text-rose-700 dark:text-rose-300 underline hover:no-underline"
+                  className="mt-1 text-danger-700 dark:text-danger-300 underline hover:no-underline"
                 >
                   {t('help.knowledge.viewReplacement', 'View replacement article')} →
                 </button>
               ) : (
                 <button
                   onClick={() => onBack()}
-                  className="mt-1 text-rose-700 dark:text-rose-300 underline hover:no-underline"
+                  className="mt-1 text-danger-700 dark:text-danger-300 underline hover:no-underline"
                 >
                   {t('help.knowledge.browseCollections', 'Browse collections')} →
                 </button>

@@ -112,7 +112,7 @@ export const PMOStatusBar: React.FC = () => {
       case 'INITIATIVE':
         return <AlertTriangle size={14} className="text-amber-400" />;
       default:
-        return <XCircle size={14} className="text-rose-400" />;
+        return <XCircle size={14} className="text-danger-400" />;
     }
   };
 
@@ -172,12 +172,12 @@ export const PMOStatusBar: React.FC = () => {
               {criticalMessages.map((msg, idx) => (
                 <div
                   key={`crit-${idx}`}
-                  className="flex items-start gap-2 p-2 bg-rose-500/10 rounded border border-rose-500/20"
+                  className="flex items-start gap-2 p-2 bg-danger-500/10 rounded border border-danger-500/20"
                 >
-                  <XCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+                  <XCircle size={16} className="text-danger-400 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-xs font-bold text-rose-400">{msg.code}</span>
-                    <p className="text-xs text-rose-300">{msg.message}</p>
+                    <span className="text-xs font-bold text-danger-400">{msg.code}</span>
+                    <p className="text-xs text-danger-300">{msg.message}</p>
                   </div>
                 </div>
               ))}
@@ -219,7 +219,7 @@ export const PMOStatusBar: React.FC = () => {
                           {issue.type}
                         </span>
                         {issue.label && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 text-rose-400 rounded">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-danger-500/20 text-danger-400 rounded">
                             {issue.label}
                           </span>
                         )}

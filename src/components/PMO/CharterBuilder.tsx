@@ -302,7 +302,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                   {!readOnly && (
                     <button
                       onClick={() => removeArrayItem('deliverables', index)}
-                      className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                      className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                     >
                       <Minus size={14} />
                     </button>
@@ -352,7 +352,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                   {!readOnly && (
                     <button
                       onClick={() => removeArrayItem('successCriteria', index)}
-                      className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                      className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                     >
                       <Minus size={14} />
                     </button>
@@ -406,7 +406,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                     {!readOnly && (
                       <button
                         onClick={() => removeArrayItem('scopeIn', index)}
-                        className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                        className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                       >
                         <Minus size={14} />
                       </button>
@@ -420,7 +420,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="font-medium text-rose-700 dark:text-rose-400">Out of Scope</h3>
+                  <h3 className="font-medium text-danger-700 dark:text-danger-400">Out of Scope</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     What is explicitly excluded?
                   </p>
@@ -428,7 +428,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 {!readOnly && (
                   <button
                     onClick={() => addToArray('scopeOut')}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                   >
                     <Plus size={14} />
                     Add
@@ -438,18 +438,18 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
               <div className="space-y-2">
                 {(formData.scopeOut || []).map((item, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <X size={16} className="text-rose-500 shrink-0" />
+                    <X size={16} className="text-danger-500 shrink-0" />
                     <input
                       type="text"
                       value={item}
                       onChange={(e) => updateArrayItem('scopeOut', index, e.target.value)}
                       disabled={readOnly}
-                      className="flex-1 px-3 py-2 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/20 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
+                      className="flex-1 px-3 py-2 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/20 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
                     />
                     {!readOnly && (
                       <button
                         onClick={() => removeArrayItem('scopeOut', index)}
-                        className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                        className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                       >
                         <Minus size={14} />
                       </button>
@@ -494,7 +494,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                   {!readOnly && (
                     <button
                       onClick={() => removeArrayItem('keyRisks', index)}
-                      className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                      className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                     >
                       <Minus size={14} />
                     </button>

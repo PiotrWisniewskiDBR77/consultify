@@ -447,7 +447,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {/* Notification dot if there are unread messages */}
             {activeChatMessages.length > 0 &&
               activeChatMessages[activeChatMessages.length - 1]?.role === 'ai' && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 rounded-full flex items-center justify-center">
                   <span className="w-2 h-2 bg-slate-900 dark:bg-navy-900 rounded-full animate-ping" />
                 </span>
               )}

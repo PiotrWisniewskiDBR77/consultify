@@ -74,7 +74,7 @@ const getTypeInfo = (type: string): { icon: string; label: string; color: string
     PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'text-primary-600' },
     TASK_UNBLOCK: { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
     UNBLOCK: { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
-    CANCEL: { icon: '❌', label: 'Cancel', color: 'text-rose-600' },
+    CANCEL: { icon: '❌', label: 'Cancel', color: 'text-danger-600' },
     BUDGET: { icon: '💰', label: 'Budget', color: 'text-amber-600' },
     SCOPE_CHANGE: { icon: '📐', label: 'Scope', color: 'text-blue-600' },
     RISK_ACCEPTANCE: { icon: '⚠️', label: 'Risk', color: 'text-amber-600' },
@@ -90,7 +90,7 @@ const getTypeInfo = (type: string): { icon: string; label: string; color: string
 const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
   const config = {
     CRITICAL: {
-      bg: 'bg-rose-500',
+      bg: 'bg-danger-500',
       text: 'text-slate-900 dark:text-white',
       icon: Zap,
       label: 'Critical',
@@ -145,7 +145,7 @@ const EscalationBadge: React.FC<{ level?: string; daysOverdue?: number }> = ({
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
         isRed
-          ? 'bg-rose-500 text-white animate-pulse'
+          ? 'bg-danger-500 text-white animate-pulse'
           : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
       }`}
     >
@@ -176,7 +176,7 @@ const StatusTimeline: React.FC<{
       <div
         className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
           daysOverdue > 7
-            ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 animate-pulse'
+            ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 animate-pulse'
             : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
         }`}
       >
@@ -255,11 +255,11 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
 
   const getCardStyle = () => {
     if (decision.escalationLevelName === 'red' || (isOverdue && daysOverdue > 7)) {
-      return 'border-l-rose-500 bg-gradient-to-r from-rose-50 to-white dark:from-rose-900/20 dark:to-navy-900 ring-1 ring-rose-200 dark:ring-rose-500/20';
+      return 'border-l-danger-500 bg-gradient-to-r from-danger-50 to-white dark:from-danger-900/20 dark:to-navy-900 ring-1 ring-danger-200 dark:ring-danger-500/20';
     } else if (decision.escalationLevelName === 'amber' || isOverdue) {
       return 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-white dark:from-amber-900/20 dark:to-navy-900';
     } else if (decision.priority === 'CRITICAL') {
-      return 'border-l-rose-500 bg-white dark:bg-navy-900';
+      return 'border-l-danger-500 bg-white dark:bg-navy-900';
     } else if (decision.priority === 'HIGH') {
       return 'border-l-amber-500 bg-white dark:bg-navy-900';
     }
@@ -433,10 +433,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
 
           {(decision.blockedItemsCount || 0) > 0 && (
             <div className="flex items-center gap-2 text-xs">
-              <div className="w-6 h-6 rounded-md bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
-                <AlertTriangle size={12} className="text-rose-600 dark:text-rose-400" />
+              <div className="w-6 h-6 rounded-md bg-danger-100 dark:bg-danger-900/30 flex items-center justify-center shrink-0">
+                <AlertTriangle size={12} className="text-danger-600 dark:text-danger-400" />
               </div>
-              <span className="text-rose-600 dark:text-rose-400 font-medium">
+              <span className="text-danger-600 dark:text-danger-400 font-medium">
                 {decision.blockedItemsCount} {t('decisions.blocked', 'blocked')}
               </span>
             </div>
@@ -458,7 +458,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                 animate={{ width: `${Math.min(100, (decision.daysWaiting / 14) * 100)}%` }}
                 className={`h-full rounded-full ${
                   decision.daysWaiting > 10
-                    ? 'bg-rose-500'
+                    ? 'bg-danger-500'
                     : decision.daysWaiting > 5
                       ? 'bg-amber-500'
                       : 'bg-green-500'
@@ -474,7 +474,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
         <div
           className={`px-4 py-3 border-t flex items-center gap-2 ${
             isOverdue
-              ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-500/10'
+              ? 'bg-danger-50/50 dark:bg-danger-900/10 border-danger-100 dark:border-danger-500/10'
               : 'bg-slate-50/50 dark:bg-white/5 border-slate-200 dark:border-navy-700'
           }`}
         >
@@ -503,7 +503,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                   }
                   onReject?.(decision.id);
                 }}
-                className="flex-1 px-3 py-2 rounded-lg bg-rose-500 text-white hover:bg-rose-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
+                className="flex-1 px-3 py-2 rounded-lg bg-danger-500 text-white hover:bg-danger-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <XCircle size={14} />
                 {t('decisions.reject', 'Reject')}
@@ -541,7 +541,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                     e.stopPropagation();
                     onEscalate(decision.id);
                   }}
-                  className="px-4 py-2 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-lg bg-danger-600 text-white text-xs font-semibold hover:bg-danger-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   <TrendingUp size={14} />
                   {t('decisions.escalate', 'Escalate')}

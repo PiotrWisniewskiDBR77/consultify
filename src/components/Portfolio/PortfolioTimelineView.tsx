@@ -135,7 +135,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({ initiative, startCol, endCol,
 
         {/* Priority indicator */}
         {initiative.priority === 'CRITICAL' && (
-          <AlertTriangle size={14} className="shrink-0 text-rose-500" />
+          <AlertTriangle size={14} className="shrink-0 text-danger-500" />
         )}
       </div>
 
@@ -322,10 +322,10 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
             {/* Today marker */}
             {todayPosition !== null && (
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-20"
+                className="absolute top-0 bottom-0 w-0.5 bg-danger-500 z-20"
                 style={{ left: `${todayPosition}%` }}
               >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-rose-500 text-white text-[10px] font-medium rounded">
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-danger-500 text-white text-[10px] font-medium rounded">
                   Today
                 </div>
               </div>
@@ -387,11 +387,11 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
       {/* Legend */}
       <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-xs text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-rose-500" />
+          <div className="w-3 h-3 rounded-full bg-danger-500" />
           <span>Today</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <AlertTriangle size={12} className="text-rose-500" />
+          <AlertTriangle size={12} className="text-danger-500" />
           <span>Critical Path</span>
         </div>
         <div className="flex items-center gap-1.5">

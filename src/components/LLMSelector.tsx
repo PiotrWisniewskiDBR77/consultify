@@ -250,7 +250,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
         title={buttonTitle}
         className={`inline-flex h-9 items-center gap-2 rounded-full border ${compact ? 'px-2' : 'px-3'} transition-colors duration-150 ${
           isUnavailable
-            ? 'bg-rose-50/70 dark:bg-rose-500/10 border-rose-400/50 dark:border-rose-500/40 hover:bg-rose-100/70 dark:hover:bg-rose-500/15'
+            ? 'bg-danger-50/70 dark:bg-danger-500/10 border-danger-400/50 dark:border-danger-500/40 hover:bg-danger-100/70 dark:hover:bg-danger-500/15'
             : isDegraded
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
               : isOpen
@@ -261,7 +261,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
         {/* Status Dot / Icon */}
         <div
           className={`w-2 h-2 rounded-full animate-pulse ${
-            isUnavailable ? 'bg-rose-500' : isDegraded ? 'bg-amber-500' : activeTier.color
+            isUnavailable ? 'bg-danger-500' : isDegraded ? 'bg-amber-500' : activeTier.color
           }`}
         />
 
@@ -285,7 +285,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
               <div
                 className={`mb-2 flex items-center gap-1.5 text-[10px] ${
                   isUnavailable
-                    ? 'text-rose-600 dark:text-rose-400'
+                    ? 'text-danger-600 dark:text-danger-400'
                     : 'text-amber-700 dark:text-amber-400'
                 }`}
               >

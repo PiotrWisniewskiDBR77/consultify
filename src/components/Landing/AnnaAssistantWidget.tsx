@@ -1570,7 +1570,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                 )}
 
                 {error && (
-                  <div className="rounded-2xl border border-rose-400/15 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                  <div className="rounded-2xl border border-danger-400/15 bg-danger-500/10 px-4 py-3 text-sm text-danger-200">
                     {error}
                   </div>
                 )}
@@ -1688,7 +1688,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                   disabled={isLoading || actionMode === 'connecting'}
                   className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white transition-all disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 ${
                     actionMode === 'stop'
-                      ? 'bg-rose-500 shadow-[0_0_28px_rgba(244,63,94,0.45)] hover:bg-rose-400'
+                      ? 'bg-danger-500 shadow-[0_0_28px_rgba(244,63,94,0.45)] hover:bg-danger-400'
                       : actionMode === 'mic'
                         ? 'bg-blue-500 shadow-[0_0_28px_rgba(6,182,212,0.45)] hover:bg-blue-400'
                         : 'bg-primary-600 hover:bg-primary-500'

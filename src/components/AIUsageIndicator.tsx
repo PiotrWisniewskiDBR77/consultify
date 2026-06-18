@@ -62,7 +62,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
   };
 
   const getProgressColor = (percentage: number): string => {
-    if (percentage >= 90) return 'bg-rose-500';
+    if (percentage >= 90) return 'bg-danger-500';
     if (percentage >= 70) return 'bg-yellow-500';
     return 'bg-green-500';
   };

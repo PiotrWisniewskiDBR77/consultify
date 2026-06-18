@@ -102,7 +102,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     green: 'bg-green-500/20 text-green-400',
     purple: 'bg-primary-500/20 text-primary-400',
     amber: 'bg-amber-500/20 text-amber-400',
-    red: 'bg-rose-500/20 text-rose-400',
+    red: 'bg-danger-500/20 text-danger-400',
   };
 
   return (
@@ -115,7 +115,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
               trend === 'up'
                 ? 'text-green-400'
                 : trend === 'down'
-                  ? 'text-rose-400'
+                  ? 'text-danger-400'
                   : 'text-slate-600'
             }`}
           >
@@ -166,7 +166,7 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
                 {metric.initiativeName}
               </span>
               <span
-                className={`text-sm font-bold ${isPositive ? 'text-green-400' : 'text-rose-400'}`}
+                className={`text-sm font-bold ${isPositive ? 'text-green-400' : 'text-danger-400'}`}
               >
                 {isPositive ? '+' : ''}
                 {metric.roi.toFixed(0)}%
@@ -175,7 +175,7 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
             <div className="h-6 bg-navy-700 rounded-lg overflow-hidden relative">
               <div
                 className={`h-full rounded-lg transition-all ${
-                  isPositive ? 'bg-green-500/50' : 'bg-rose-500/50'
+                  isPositive ? 'bg-green-500/50' : 'bg-danger-500/50'
                 } group-hover:opacity-80`}
                 style={{ width: `${barWidth}%` }}
               />
@@ -185,7 +185,7 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
                     metric.status === InitiativeStatus.DONE
                       ? 'text-green-400'
                       : metric.status === InitiativeStatus.BLOCKED
-                        ? 'text-rose-400'
+                        ? 'text-danger-400'
                         : 'text-slate-600'
                   }`}
                 >
@@ -277,7 +277,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
                       metric.status === InitiativeStatus.DONE
                         ? 'bg-green-400'
                         : metric.status === InitiativeStatus.BLOCKED
-                          ? 'bg-rose-400'
+                          ? 'bg-danger-400'
                           : 'bg-slate-400'
                     }`}
                   />
@@ -298,7 +298,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
               <td className="py-3">
                 <div
                   className={`flex items-center gap-1 text-sm font-medium ${
-                    metric.variance >= 0 ? 'text-green-400' : 'text-rose-400'
+                    metric.variance >= 0 ? 'text-green-400' : 'text-danger-400'
                   }`}
                 >
                   {metric.variance >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -309,7 +309,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
               <td className="py-3">
                 <span
                   className={`text-sm font-bold ${
-                    metric.roi >= 0 ? 'text-green-400' : 'text-rose-400'
+                    metric.roi >= 0 ? 'text-green-400' : 'text-danger-400'
                   }`}
                 >
                   {metric.roi >= 0 ? '+' : ''}
@@ -480,10 +480,10 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
             </div>
             <div className="bg-navy-800 rounded-xl p-4 border border-navy-700">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-3 h-3 rounded-full bg-rose-500" />
+                <div className="w-3 h-3 rounded-full bg-danger-500" />
                 <span className="text-sm text-slate-600">Below Target</span>
               </div>
-              <span className="text-3xl font-bold text-rose-400">
+              <span className="text-3xl font-bold text-danger-400">
                 {summary.initiativesBelowTarget}
               </span>
             </div>

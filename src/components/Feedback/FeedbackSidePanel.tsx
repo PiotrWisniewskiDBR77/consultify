@@ -740,7 +740,7 @@ export const FeedbackSidePanel: React.FC = () => {
           onClick={() => setReportType('BUG')}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
             reportType === 'BUG'
-              ? 'bg-white dark:bg-navy-800 text-rose-600 shadow-sm'
+              ? 'bg-white dark:bg-navy-800 text-danger-600 shadow-sm'
               : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
           }`}
         >
@@ -787,7 +787,7 @@ export const FeedbackSidePanel: React.FC = () => {
               {
                 value: 'CRITICAL',
                 label: t('feedback.severity.critical', 'Krytyczny'),
-                color: 'text-rose-500 bg-rose-50 dark:bg-rose-900/20',
+                color: 'text-danger-500 bg-danger-50 dark:bg-danger-900/20',
               },
             ].map(({ value, label, color }) => (
               <button
@@ -976,7 +976,7 @@ export const FeedbackSidePanel: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setUploadedScreenshot(null)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-slate-500 hover:text-danger-600 dark:text-slate-400 dark:hover:text-danger-400 transition-colors"
                 title={t('feedback.attach.remove', 'Usuń załączony screenshot')}
               >
                 <X size={12} />
@@ -1041,7 +1041,7 @@ export const FeedbackSidePanel: React.FC = () => {
         disabled={isSubmitting || !message.trim()}
         className={`w-full py-2.5 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm ${
           severity === 'CRITICAL' && reportType === 'BUG'
-            ? 'bg-rose-600 hover:bg-rose-700 text-white'
+            ? 'bg-danger-600 hover:bg-danger-700 text-white'
             : 'bg-amber-500 hover:bg-amber-600 text-white'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
@@ -1244,7 +1244,7 @@ export const FeedbackSidePanel: React.FC = () => {
         {
           rating: 1,
           icon: Frown,
-          color: 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20',
+          color: 'text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20',
         },
         {
           rating: 2,
@@ -1352,7 +1352,7 @@ export const FeedbackSidePanel: React.FC = () => {
             {!showSuccess && renderQuickPulseHeader()}
             <button
               onClick={closeSidePanel}
-              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-danger-500 dark:text-slate-400 dark:hover:text-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
             >
               <X size={18} />
             </button>
@@ -1371,7 +1371,7 @@ export const FeedbackSidePanel: React.FC = () => {
               {submitErrorMessage ? (
                 <div
                   role="alert"
-                  className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+                  className="mb-3 rounded-xl border border-danger-200 bg-danger-50 px-3 py-2 text-xs text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
                 >
                   {submitErrorMessage}
                 </div>

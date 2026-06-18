@@ -69,7 +69,7 @@ const LIMIT_CONFIG: Record<
     title: 'upgrade.tokenLimit.title',
     description: 'upgrade.tokenLimit.description',
     upgradeFeature: 'More tokens',
-    color: 'from-rose-500 to-rose-500',
+    color: 'from-danger-500 to-danger-500',
   },
   general: {
     icon: <TrendingUp className="w-5 h-5" />,

@@ -62,8 +62,8 @@ const CATEGORY_CONFIG: Record<
   },
   constraint: {
     icon: Lock,
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-100 dark:bg-danger-900/30',
     label: 'Constraint',
   },
   decision: {

@@ -41,7 +41,7 @@ const getAuthToken = (): string | null => {
 
 function importanceBadge(importance: string) {
   if (importance === 'high')
-    return 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20';
+    return 'bg-danger-500/10 text-danger-700 dark:text-danger-300 border-danger-500/20';
   if (importance === 'low')
     return 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300 border-slate-200 dark:border-navy-700';
   return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20';

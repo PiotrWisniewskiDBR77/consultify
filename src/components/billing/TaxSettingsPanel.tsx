@@ -251,12 +251,12 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
 
       {/* Error Display */}
       {error && (
-        <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-rose-500" />
-          <p className="text-rose-700 dark:text-rose-400">{error}</p>
+        <div className="p-4 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-danger-500" />
+          <p className="text-danger-700 dark:text-danger-400">{error}</p>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-rose-500 hover:text-rose-700"
+            className="ml-auto text-danger-500 hover:text-danger-700"
           >
             <XCircle className="w-4 h-4" />
           </button>
@@ -407,7 +407,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                             </button>
                             <button
                               onClick={() => handleDeleteRate(rate.id)}
-                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                              className="p-1.5 rounded-lg text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -493,18 +493,18 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
               className={`p-4 rounded-lg ${
                 validation.is_valid
                   ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                  : 'bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800'
+                  : 'bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800'
               }`}
             >
               <div className="flex items-start gap-3">
                 {validation.is_valid ? (
                   <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-rose-500 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-danger-500 mt-0.5" />
                 )}
                 <div>
                   <p
-                    className={`font-medium ${validation.is_valid ? 'text-green-700 dark:text-green-400' : 'text-rose-700 dark:text-rose-400'}`}
+                    className={`font-medium ${validation.is_valid ? 'text-green-700 dark:text-green-400' : 'text-danger-700 dark:text-danger-400'}`}
                   >
                     {validation.is_valid ? 'Valid VAT Number' : 'Invalid VAT Number'}
                   </p>
@@ -519,7 +519,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                     </p>
                   )}
                   {validation.error && (
-                    <p className="text-sm text-rose-600 dark:text-rose-400 mt-1">
+                    <p className="text-sm text-danger-600 dark:text-danger-400 mt-1">
                       {validation.error}
                     </p>
                   )}

@@ -154,7 +154,7 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
                 />
                 <button
                   onClick={() => handleUpdateWorkstreams(workstreams.filter((x) => x.id !== ws.id))}
-                  className="text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                  className="text-slate-400 dark:text-slate-500 hover:text-danger-500"
                 >
                   <Trash2 size={16} />
                 </button>

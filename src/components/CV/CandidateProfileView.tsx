@@ -274,7 +274,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
   const confidenceColor = (c: number) => {
     if (c >= 0.7) return 'text-green-600';
     if (c >= 0.5) return 'text-yellow-600';
-    return 'text-rose-600';
+    return 'text-danger-600';
   };
 
   const statusBadge = (status: string) => {
@@ -285,7 +285,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
       mapping: 'bg-yellow-100 text-yellow-700',
       mapped: 'bg-green-100 text-green-700',
       ready: 'bg-green-100 text-green-800',
-      error: 'bg-rose-100 text-rose-600',
+      error: 'bg-danger-100 text-danger-600',
     };
     return colors[status] || 'bg-gray-100 text-gray-600';
   };
@@ -493,7 +493,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                             {!locked && (
                               <button
                                 onClick={() => handleDeleteDocument(doc.id)}
-                                className="p-1 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                                className="p-1 text-danger-400 hover:text-danger-600 hover:bg-danger-50 rounded"
                                 title={t('cv.deleteCV', 'Delete (right to be forgotten)')}
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -587,7 +587,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                               </button>
                               <button
                                 onClick={() => handleRejectSignal(sig.id)}
-                                className="flex items-center gap-1 px-2 py-1 text-xs bg-rose-50 text-rose-700 rounded hover:bg-rose-100"
+                                className="flex items-center gap-1 px-2 py-1 text-xs bg-danger-50 text-danger-700 rounded hover:bg-danger-100"
                               >
                                 <X className="w-3 h-3" /> {t('cv.reject', 'Reject')}
                               </button>
@@ -652,7 +652,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                             </span>
                           </div>
                           <span
-                            className={`text-lg font-bold ${m.matchScore >= 70 ? 'text-green-600' : m.matchScore >= 40 ? 'text-yellow-600' : 'text-rose-600'}`}
+                            className={`text-lg font-bold ${m.matchScore >= 70 ? 'text-green-600' : m.matchScore >= 40 ? 'text-yellow-600' : 'text-danger-600'}`}
                           >
                             {m.matchScore}%
                           </span>
@@ -663,7 +663,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                             {Object.entries(m.explanation).map(([cap, detail]: [string, any]) => (
                               <div key={cap} className="flex items-center justify-between text-xs">
                                 <span className="text-gray-600 dark:text-gray-400">{cap}</span>
-                                <span className={detail.meets ? 'text-green-600' : 'text-rose-500'}>
+                                <span className={detail.meets ? 'text-green-600' : 'text-danger-500'}>
                                   {detail.actual}/{detail.required} {detail.meets ? '✓' : '✗'}
                                 </span>
                               </div>

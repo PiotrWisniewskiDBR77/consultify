@@ -26,10 +26,10 @@ const scopeLabels: Record<string, string> = {
 
 const scopeColors: Record<string, string> = {
   policy_engine_disabled: 'bg-amber-500',
-  approval_bypass: 'bg-rose-500',
+  approval_bypass: 'bg-danger-500',
   rate_limit_bypass: 'bg-yellow-500',
   audit_bypass: 'bg-sky-500',
-  emergency_access: 'bg-rose-600',
+  emergency_access: 'bg-danger-600',
 };
 
 export const BreakGlassBanner: React.FC<BreakGlassBannerProps> = ({
@@ -61,7 +61,7 @@ export const BreakGlassBanner: React.FC<BreakGlassBannerProps> = ({
       {sessions.map((session) => (
         <div
           key={session.id}
-          className={`${scopeColors[session.scope] || 'bg-rose-500'} text-white px-4 py-2`}
+          className={`${scopeColors[session.scope] || 'bg-danger-500'} text-white px-4 py-2`}
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">

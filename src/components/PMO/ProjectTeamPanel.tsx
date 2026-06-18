@@ -265,7 +265,7 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="px-6 py-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
+        <div className="px-6 py-3 bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300 text-sm flex items-center gap-2">
           <AlertTriangle className="w-4 h-4" />
           {error}
         </div>
@@ -504,7 +504,7 @@ const MemberRow: React.FC<MemberRowProps> = ({
         {canManage && (
           <button
             onClick={onRemove}
-            className="p-1.5 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500"
+            className="p-1.5 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-danger-500"
           >
             <X className="w-4 h-4" />
           </button>
@@ -663,7 +663,7 @@ const SteeringBoardPanel: React.FC<{ projectId: string; canManage: boolean }> = 
                   {canManage && (
                     <button
                       onClick={() => removeMember(m.userId)}
-                      className="p-1.5 text-slate-600 hover:text-rose-500"
+                      className="p-1.5 text-slate-600 hover:text-danger-500"
                       title={t('common.remove', 'Remove')}
                     >
                       <X className="w-4 h-4" />
@@ -890,7 +890,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
           </div>
 
           {error && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 text-sm rounded-lg">
+            <div className="p-3 bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300 text-sm rounded-lg">
               {error}
             </div>
           )}

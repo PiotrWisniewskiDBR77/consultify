@@ -106,7 +106,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
             </div>
             <button
               onClick={() => onDelete(trend.id)}
-              className="text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500 transition p-1"
+              className="text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-danger-500 transition p-1"
             >
               <Trash2 size={16} />
             </button>

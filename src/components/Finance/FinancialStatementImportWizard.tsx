@@ -511,12 +511,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         ? 'text-emerald-600 bg-emerald-50'
         : pct >= 40
           ? 'text-amber-600 bg-amber-50'
-          : 'text-rose-600 bg-rose-50';
+          : 'text-danger-600 bg-danger-50';
     return <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${color}`}>{pct}%</span>;
   };
 
   const validationIcon = (type: string) => {
-    if (type === 'error') return <XCircle size={14} className="text-rose-500" />;
+    if (type === 'error') return <XCircle size={14} className="text-danger-500" />;
     if (type === 'warning') return <AlertTriangle size={14} className="text-amber-500" />;
     return <CheckCircle2 size={14} className="text-emerald-500" />;
   };
@@ -621,9 +621,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       </div>
 
       {error && (
-        <div className="mb-6 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl flex items-start gap-2">
-          <AlertTriangle size={16} className="text-rose-500 mt-0.5 shrink-0" />
-          <span className="text-sm text-rose-700 dark:text-rose-400">{error}</span>
+        <div className="mb-6 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl flex items-start gap-2">
+          <AlertTriangle size={16} className="text-danger-500 mt-0.5 shrink-0" />
+          <span className="text-sm text-danger-700 dark:text-danger-400">{error}</span>
         </div>
       )}
 
@@ -682,13 +682,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                   file.name.endsWith('.pdf')
-                    ? 'bg-rose-50 dark:bg-rose-500/10'
+                    ? 'bg-danger-50 dark:bg-danger-500/10'
                     : 'bg-emerald-50 dark:bg-emerald-500/10'
                 }`}
               >
                 <FileText
                   size={18}
-                  className={file.name.endsWith('.pdf') ? 'text-rose-500' : 'text-emerald-500'}
+                  className={file.name.endsWith('.pdf') ? 'text-danger-500' : 'text-emerald-500'}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -1101,7 +1101,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 ? 'border-emerald-200 dark:border-emerald-800'
                 : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
                   ? 'border-amber-200 dark:border-amber-800'
-                  : 'border-rose-200 dark:border-rose-800'
+                  : 'border-danger-200 dark:border-danger-800'
             }`}
           >
             {/* Gauge bar at top */}
@@ -1111,7 +1111,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                   ? 'bg-emerald-500'
                   : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
                     ? 'bg-amber-500'
-                    : 'bg-rose-500'
+                    : 'bg-danger-500'
               }`}
             />
 
@@ -1121,7 +1121,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                   ? 'bg-emerald-50/80 dark:bg-emerald-900/10'
                   : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
                     ? 'bg-amber-50/80 dark:bg-amber-900/10'
-                    : 'bg-rose-50/80 dark:bg-rose-900/10'
+                    : 'bg-danger-50/80 dark:bg-danger-900/10'
               }`}
             >
               <div className="flex items-start gap-4 mb-4">
@@ -1132,7 +1132,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                       : readiness?.readinessStatus === 'recoverable' ||
                           validation.status === 'warnings'
                         ? 'bg-amber-100 dark:bg-amber-500/15'
-                        : 'bg-rose-100 dark:bg-rose-500/15'
+                        : 'bg-danger-100 dark:bg-danger-500/15'
                   }`}
                 >
                   {isReadyForConfirm ? (
@@ -1141,7 +1141,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                     validation.status === 'warnings' ? (
                     <AlertTriangle size={24} className="text-amber-500" />
                   ) : (
-                    <XCircle size={24} className="text-rose-500" />
+                    <XCircle size={24} className="text-danger-500" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">

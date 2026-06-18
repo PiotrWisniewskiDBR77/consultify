@@ -388,7 +388,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                       className={`text-sm font-bold ${
                         formData.targetValue > formData.baselineValue
                           ? 'text-green-400'
-                          : 'text-rose-400'
+                          : 'text-danger-400'
                       }`}
                     >
                       {formData.targetValue > formData.baselineValue ? '+' : ''}

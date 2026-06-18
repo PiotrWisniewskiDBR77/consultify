@@ -151,7 +151,7 @@ export const SystemHealth = () => {
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex h-9 items-center gap-2 rounded-full border px-3 text-xs font-medium transition-colors duration-150 ${
           status === 'offline'
-            ? 'bg-rose-50/70 dark:bg-rose-500/10 border-rose-400/50 dark:border-rose-500/40 hover:bg-rose-100/70 dark:hover:bg-rose-500/15'
+            ? 'bg-danger-50/70 dark:bg-danger-500/10 border-danger-400/50 dark:border-danger-500/40 hover:bg-danger-100/70 dark:hover:bg-danger-500/15'
             : status === 'degraded'
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
               : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
@@ -163,7 +163,7 @@ export const SystemHealth = () => {
               ? 'bg-green-500'
               : status === 'degraded'
                 ? 'bg-amber-500'
-                : 'bg-rose-500'
+                : 'bg-danger-500'
           }`}
         />
         <span>{t('system.data', 'Data')}</span>
@@ -184,7 +184,7 @@ export const SystemHealth = () => {
                     ? 'bg-green-500 animate-pulse'
                     : status === 'degraded'
                       ? 'bg-amber-500 animate-pulse'
-                      : 'bg-rose-500'
+                      : 'bg-danger-500'
                 }`}
               />
               <span className="text-sm font-semibold text-navy-900 dark:text-white">
@@ -207,7 +207,7 @@ export const SystemHealth = () => {
                   {t('system.status', 'Status')}
                 </span>
                 <span
-                  className={metrics.dbStatus === 'online' ? 'text-green-500' : 'text-rose-500'}
+                  className={metrics.dbStatus === 'online' ? 'text-green-500' : 'text-danger-500'}
                 >
                   {metrics.dbStatus === 'online'
                     ? t('system.connected', 'Connected')

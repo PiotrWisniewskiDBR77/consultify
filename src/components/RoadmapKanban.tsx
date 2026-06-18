@@ -64,7 +64,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
       onClick={onClick}
       className={`bg-navy-800 p-3 rounded-lg mb-2 border hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer group relative ${
         initiative.priority === 'High'
-          ? 'border-rose-500/20'
+          ? 'border-danger-500/20'
           : initiative.priority === 'Medium'
             ? 'border-yellow-500/20'
             : 'border-green-500/20'
@@ -99,7 +99,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
             <span
               className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
                 initiative.priority === 'High'
-                  ? 'text-rose-400 bg-rose-500/10'
+                  ? 'text-danger-400 bg-danger-500/10'
                   : initiative.priority === 'Medium'
                     ? 'text-yellow-400 bg-yellow-500/10'
                     : 'text-green-400 bg-green-500/10'
@@ -124,7 +124,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
 
             {/* High Change Indicator */}
             {isHighChange && (
-              <span className="text-rose-500" title="High Change Effort">
+              <span className="text-danger-500" title="High Change Effort">
                 <svg
                   width="10"
                   height="10"
@@ -163,7 +163,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
                   style={{ height: `${(initiative.effortProfile.operational / 5) * 100}%` }}
                 ></div>
                 <div
-                  className="bg-rose-500 w-1/3 rounded-sm"
+                  className="bg-danger-500 w-1/3 rounded-sm"
                   style={{ height: `${(initiative.effortProfile.change / 5) * 100}%` }}
                 ></div>
               </div>

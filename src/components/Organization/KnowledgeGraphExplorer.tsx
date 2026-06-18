@@ -325,7 +325,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 text-xs">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 text-xs">
           <AlertTriangle size={14} />
           {error}
         </div>

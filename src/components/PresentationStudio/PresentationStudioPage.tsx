@@ -209,7 +209,7 @@ function StatusBadge({ tone, label, icon }: StatusBadgeProps): React.ReactElemen
     blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
     amber: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
     emerald: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-    rose: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+    rose: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300',
   };
   return (
     <span
@@ -623,7 +623,7 @@ export const PresentationStudioPage: React.FC = () => {
 
         {showFormErrors && !formIsValid ? (
           <div
-            className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300"
             role="alert"
             data-testid="presentation-studio-form-error"
           >
@@ -640,7 +640,7 @@ export const PresentationStudioPage: React.FC = () => {
 
         {state.error ? (
           <div
-            className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300"
             role="alert"
             data-testid="presentation-studio-error"
           >
@@ -668,7 +668,7 @@ export const PresentationStudioPage: React.FC = () => {
 
         {approval.ticketRejectionReason ? (
           <div
-            className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300"
             role="alert"
             data-testid="presentation-studio-ticket-error"
           >
@@ -911,7 +911,7 @@ export const PresentationStudioPage: React.FC = () => {
               </p>
               {state.generate.wouldGenerate.blockingReasons.length > 0 ? (
                 <ul
-                  className="list-disc space-y-0.5 pl-5 text-rose-700 dark:text-rose-300"
+                  className="list-disc space-y-0.5 pl-5 text-danger-700 dark:text-danger-300"
                   data-testid="generate-blocking-reasons"
                 >
                   {state.generate.wouldGenerate.blockingReasons.map((reason, idx) => (

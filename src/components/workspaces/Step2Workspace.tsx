@@ -54,7 +54,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
                       className={`text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider
                          ${
                            goal.priority === 'High'
-                             ? 'bg-rose-500/20 text-rose-300'
+                             ? 'bg-danger-500/20 text-danger-300'
                              : goal.priority === 'Medium'
                                ? 'bg-yellow-500/20 text-yellow-300'
                                : 'bg-blue-500/20 text-blue-300'

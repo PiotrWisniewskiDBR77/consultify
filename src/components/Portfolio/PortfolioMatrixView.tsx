@@ -338,7 +338,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
           <span>Initiative (size = budget)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-rose-500" />
+          <div className="w-3 h-3 rounded-full bg-danger-500" />
           <span>Critical</span>
         </div>
         <div className="flex items-center gap-1.5">

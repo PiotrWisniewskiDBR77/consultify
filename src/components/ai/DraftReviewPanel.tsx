@@ -46,7 +46,7 @@ const DRAFT_TYPE_LABELS: Record<string, string> = {
 const CONFIDENCE_LEVELS = {
   HIGH: { min: 0.8, color: 'text-green-600', bg: 'bg-green-100' },
   MEDIUM: { min: 0.6, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-  LOW: { min: 0, color: 'text-rose-600', bg: 'bg-rose-100' },
+  LOW: { min: 0, color: 'text-danger-600', bg: 'bg-danger-100' },
 };
 
 function getConfidenceLevel(score: number) {
@@ -225,8 +225,8 @@ export function DraftReviewPanel({
         {/* Original vs Suggested (if has diff) */}
         {isExpanded && draft.original_content && draft.diff_data?.hasChanges && (
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
-              <p className="text-xs font-medium text-rose-700 mb-1">Oryginał:</p>
+            <div className="p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg">
+              <p className="text-xs font-medium text-danger-700 mb-1">Oryginał:</p>
               <div className="text-sm">{renderContent(draft.original_content)}</div>
             </div>
             <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -271,7 +271,7 @@ export function DraftReviewPanel({
               <>
                 <button
                   onClick={() => handleReject(draft)}
-                  className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"
+                  className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg"
                   disabled={isProcessing}
                   title="Odrzuć"
                 >
@@ -307,7 +307,7 @@ export function DraftReviewPanel({
 
   if (error) {
     return (
-      <div className="p-4 bg-rose-50 text-rose-700 rounded-lg flex items-center gap-2">
+      <div className="p-4 bg-danger-50 text-danger-700 rounded-lg flex items-center gap-2">
         <AlertTriangle className="w-5 h-5" />
         <span>{error}</span>
         <button onClick={fetchDrafts} className="ml-auto text-sm underline">
@@ -340,7 +340,7 @@ export function DraftReviewPanel({
               <p className="text-gray-500 dark:text-gray-400 text-xs">Zaakceptowane</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-rose-600">{stats.rejected || 0}</p>
+              <p className="text-lg font-semibold text-danger-600">{stats.rejected || 0}</p>
               <p className="text-gray-500 dark:text-gray-400 text-xs">Odrzucone</p>
             </div>
             {stats.acceptanceRate !== null && (

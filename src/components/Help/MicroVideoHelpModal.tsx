@@ -85,7 +85,7 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
             </div>
             <button
               onClick={handleClose}
-              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-danger-500 dark:hover:text-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
             >
               <X size={16} />
             </button>

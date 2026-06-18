@@ -566,7 +566,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
 
   const validationStatusIcon = (status: string) => {
     if (status === 'pass') return <CheckCircle2 size={14} className="text-emerald-500" />;
-    if (status === 'fail') return <XCircle size={14} className="text-rose-500" />;
+    if (status === 'fail') return <XCircle size={14} className="text-danger-500" />;
     return <AlertTriangle size={14} className="text-amber-500" />;
   };
 
@@ -792,9 +792,9 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
             )}
 
             {error && (
-              <div className="mx-6 mt-3 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl flex items-start gap-2">
-                <AlertTriangle size={14} className="text-rose-500 mt-0.5 shrink-0" />
-                <span className="text-sm text-rose-700 dark:text-rose-400">{error}</span>
+              <div className="mx-6 mt-3 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl flex items-start gap-2">
+                <AlertTriangle size={14} className="text-danger-500 mt-0.5 shrink-0" />
+                <span className="text-sm text-danger-700 dark:text-danger-400">{error}</span>
               </div>
             )}
 
@@ -820,7 +820,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                 >
                   {tab.icon} {tab.label}
                   {tab.key === 'validation' && validationSummary.fail > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-rose-100 text-rose-700 text-[10px] rounded-full">
+                    <span className="ml-1 px-1.5 py-0.5 bg-danger-100 text-danger-700 text-[10px] rounded-full">
                       {validationSummary.fail}
                     </span>
                   )}
@@ -984,9 +984,9 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                           <button
                             onClick={() => handleDeleteEvent(ev.id)}
                             aria-label={t('finance.model.deleteEvent', 'Delete event') as string}
-                            className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                            className="p-1.5 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                           >
-                            <Trash2 size={14} className="text-rose-400" />
+                            <Trash2 size={14} className="text-danger-400" />
                           </button>
                         </div>
                       );
@@ -1261,7 +1261,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                                     return (
                                       <td
                                         key={period}
-                                        className={`px-3 py-2 text-right font-mono whitespace-nowrap ${val < 0 ? 'text-rose-600' : 'text-slate-900 dark:text-white'}`}
+                                        className={`px-3 py-2 text-right font-mono whitespace-nowrap ${val < 0 ? 'text-danger-600' : 'text-slate-900 dark:text-white'}`}
                                       >
                                         {formatAmount(val)}
                                       </td>
@@ -1304,14 +1304,14 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     <SummaryCard
                       label={t('finance.model.failed', 'Failed')}
                       value={String(validationSummary.fail)}
-                      icon={<XCircle size={18} className="text-rose-500" />}
-                      accentClass="border-l-rose-500"
+                      icon={<XCircle size={18} className="text-danger-500" />}
+                      accentClass="border-l-danger-500"
                       ratio={
                         validationSummary.total > 0
                           ? validationSummary.fail / validationSummary.total
                           : 0
                       }
-                      ratioColor="bg-rose-500"
+                      ratioColor="bg-danger-500"
                     />
                     <SummaryCard
                       label={t('finance.model.warnings', 'Warnings')}
@@ -1331,7 +1331,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   <div
                     className={`p-4 rounded-xl border ${
                       validationSummary.fail > 0
-                        ? 'bg-rose-50 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800'
+                        ? 'bg-danger-50 border-danger-200 dark:bg-danger-900/20 dark:border-danger-800'
                         : validationSummary.warning > 0
                           ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
                           : validationSummary.total > 0
@@ -1341,7 +1341,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   >
                     <div className="flex items-center gap-2">
                       {validationSummary.fail > 0 ? (
-                        <XCircle size={20} className="text-rose-500" />
+                        <XCircle size={20} className="text-danger-500" />
                       ) : validationSummary.warning > 0 ? (
                         <AlertTriangle size={20} className="text-amber-500" />
                       ) : validationSummary.total > 0 ? (
@@ -1390,7 +1390,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             <tr
                               key={i}
                               className={
-                                v.status === 'fail' ? 'bg-rose-50/30 dark:bg-rose-900/10' : ''
+                                v.status === 'fail' ? 'bg-danger-50/30 dark:bg-danger-900/10' : ''
                               }
                             >
                               <td className="px-4 py-2 text-slate-700 dark:text-slate-300 font-medium">

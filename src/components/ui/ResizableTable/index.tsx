@@ -208,7 +208,7 @@ export const STANDARD_COLUMNS = {
 
 // Priority filter options
 export const PRIORITY_FILTER_OPTIONS = [
-  { value: 'critical', label: 'Critical', color: 'text-rose-500' },
+  { value: 'critical', label: 'Critical', color: 'text-danger-500' },
   { value: 'high', label: 'High', color: 'text-amber-500' },
   { value: 'medium', label: 'Medium', color: 'text-amber-500' },
   { value: 'low', label: 'Low', color: 'text-blue-500' },

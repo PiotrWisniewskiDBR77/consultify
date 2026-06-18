@@ -238,10 +238,10 @@ export const NotificationDropdown = () => {
   const getIcon = (type: string) => {
     const t = (type || '').toUpperCase();
     if (t === 'TASK_ASSIGNED') return <CheckSquare size={16} className="text-blue-400" />;
-    if (t === 'TASK_OVERDUE') return <Clock size={16} className="text-rose-400" />;
-    if (t === 'TASK_BLOCKED') return <AlertCircle size={16} className="text-rose-400" />;
+    if (t === 'TASK_OVERDUE') return <Clock size={16} className="text-danger-400" />;
+    if (t === 'TASK_BLOCKED') return <AlertCircle size={16} className="text-danger-400" />;
     if (t === 'DECISION_REQUIRED') return <Scale size={16} className="text-primary-400" />;
-    if (t === 'DECISION_OVERDUE') return <Scale size={16} className="text-rose-400" />;
+    if (t === 'DECISION_OVERDUE') return <Scale size={16} className="text-danger-400" />;
     if (t === 'GATE_PENDING_APPROVAL') return <Flag size={16} className="text-amber-400" />;
     if (t.includes('INITIATIVE_STARTED') || t.includes('INITIATIVE_COMPLETED'))
       return <Target size={16} className="text-emerald-400" />;
@@ -251,8 +251,8 @@ export const NotificationDropdown = () => {
     if (t === 'AI_RECOMMENDATION' || t === 'AI_DEPENDENCY_CONFLICT')
       return <TeresaMark size={16} className="text-primary-400" />;
     if (t.includes('AI')) return <Sparkles size={16} className="text-indigo-500" />;
-    if (t === 'SYSTEM_ALERT') return <AlertCircle size={16} className="text-rose-500" />;
-    if (t === 'PAYMENT_FAILED') return <CreditCard size={16} className="text-rose-500" />;
+    if (t === 'SYSTEM_ALERT') return <AlertCircle size={16} className="text-danger-500" />;
+    if (t === 'PAYMENT_FAILED') return <CreditCard size={16} className="text-danger-500" />;
     if (t === 'USAGE_ALERT' || t.includes('LIMIT'))
       return <AlertTriangle size={16} className="text-amber-400" />;
     if (t === 'SUBSCRIPTION_CHANGE') return <CreditCard size={16} className="text-indigo-400" />;
@@ -280,7 +280,7 @@ export const NotificationDropdown = () => {
       type === 'SYSTEM_ALERT' ||
       type === 'PAYMENT_FAILED'
     )
-      return 'bg-rose-500';
+      return 'bg-danger-500';
     if (
       severity === 'WARNING' ||
       type.includes('OVERDUE') ||
@@ -300,7 +300,7 @@ export const NotificationDropdown = () => {
   const getPriorityBadgeStyle = (priority: string): string => {
     switch (priority) {
       case 'CRITICAL':
-        return 'bg-rose-500/10 text-rose-500 border-rose-500/30';
+        return 'bg-danger-500/10 text-danger-500 border-danger-500/30';
       case 'HIGH':
         return 'bg-amber-500/10 text-amber-500 border-amber-500/30';
       case 'MEDIUM':
@@ -333,7 +333,7 @@ export const NotificationDropdown = () => {
       >
         <Inbox size={20} />
         {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm">
+          <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-danger-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -557,7 +557,7 @@ export const NotificationDropdown = () => {
                             )}
                             <button
                               onClick={(e) => handleDelete(notification.id, e)}
-                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-md transition-colors"
+                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/20 rounded-md transition-colors"
                               title={isPolish ? 'Usuń' : 'Delete'}
                             >
                               <Trash2 size={14} />
@@ -608,7 +608,7 @@ export const NotificationDropdown = () => {
                 {notifications.length > 1 && (
                   <button
                     onClick={handleDeleteAll}
-                    className="text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 font-medium transition-colors px-2 py-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                    className="text-xs text-danger-600 hover:text-danger-700 dark:text-danger-400 dark:hover:text-danger-300 font-medium transition-colors px-2 py-1 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/10"
                     title={isPolish ? 'Usuń wszystkie' : 'Delete all notifications'}
                   >
                     {isPolish ? 'Usuń wszystkie' : 'Clear all'}

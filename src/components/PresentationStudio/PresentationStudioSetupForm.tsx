@@ -138,11 +138,11 @@ const FIELD_BASE =
 const FIELD_LABEL =
   'mb-1 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400';
 
-const FIELD_ERROR = 'mt-1 text-xs font-medium text-rose-600 dark:text-rose-400';
+const FIELD_ERROR = 'mt-1 text-xs font-medium text-danger-600 dark:text-danger-400';
 
 const FIELD_HELP = 'mt-1 text-xs text-slate-500 dark:text-slate-400';
 
-const FIELD_BORDER_ERROR = 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/20';
+const FIELD_BORDER_ERROR = 'border-danger-400 focus:border-danger-500 focus:ring-danger-500/20';
 
 export const PresentationStudioSetupForm: React.FC<PresentationStudioSetupFormProps> = ({
   value,
@@ -182,7 +182,7 @@ export const PresentationStudioSetupForm: React.FC<PresentationStudioSetupFormPr
         <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Deck setup</h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           Fields drive the source pack, narrative plan, template architect, and generate previews.
-          Required fields are marked with <span className="text-rose-500">*</span>; no silent
+          Required fields are marked with <span className="text-danger-500">*</span>; no silent
           defaults.
         </p>
       </header>
@@ -190,7 +190,7 @@ export const PresentationStudioSetupForm: React.FC<PresentationStudioSetupFormPr
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="psstudio-title" className={FIELD_LABEL}>
-            Title <span className="text-rose-500">*</span>
+            Title <span className="text-danger-500">*</span>
           </label>
           <input
             id="psstudio-title"
@@ -220,7 +220,7 @@ export const PresentationStudioSetupForm: React.FC<PresentationStudioSetupFormPr
 
         <div>
           <label htmlFor="psstudio-deck-type" className={FIELD_LABEL}>
-            Deck type <span className="text-rose-500">*</span>
+            Deck type <span className="text-danger-500">*</span>
           </label>
           <select
             id="psstudio-deck-type"

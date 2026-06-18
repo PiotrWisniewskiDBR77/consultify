@@ -239,7 +239,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400">
+        <div className="p-4 bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400">
           {error}
         </div>
       )}
@@ -320,7 +320,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
                             className={`p-2 rounded-lg transition-colors ${
                               status === 'granted'
                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 hover:bg-green-200'
-                                : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 hover:bg-rose-200'
+                                : 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 hover:bg-danger-200'
                             }`}
                             title={status === 'granted' ? 'Click to revoke' : 'Click to grant'}
                           >
@@ -350,8 +350,8 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
             <span>Granted</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-rose-100 dark:bg-rose-900/30 rounded flex items-center justify-center">
-              <X className="w-3 h-3 text-rose-600" />
+            <div className="w-4 h-4 bg-danger-100 dark:bg-danger-900/30 rounded flex items-center justify-center">
+              <X className="w-3 h-3 text-danger-600" />
             </div>
             <span>Revoked</span>
           </div>

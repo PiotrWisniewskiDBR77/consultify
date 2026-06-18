@@ -699,7 +699,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 </span>
                                 {!isBase && revenueDelta !== 0 && (
                                   <span
-                                    className={`ml-2 text-xs font-medium ${revenueDelta > 0 ? 'text-emerald-500' : 'text-rose-500'}`}
+                                    className={`ml-2 text-xs font-medium ${revenueDelta > 0 ? 'text-emerald-500' : 'text-danger-500'}`}
                                   >
                                     {revenueDelta > 0 ? '+' : ''}
                                     {fmtNumber.format(revenueDelta)}
@@ -717,7 +717,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 </span>
                                 {!isBase && netIncomeDelta !== 0 && (
                                   <span
-                                    className={`ml-2 text-xs font-medium ${netIncomeDelta > 0 ? 'text-emerald-500' : 'text-rose-500'}`}
+                                    className={`ml-2 text-xs font-medium ${netIncomeDelta > 0 ? 'text-emerald-500' : 'text-danger-500'}`}
                                   >
                                     {netIncomeDelta > 0 ? '+' : ''}
                                     {fmtNumber.format(netIncomeDelta)}
@@ -778,7 +778,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                       {fmtNumber.format(val)}
                                       {!isBase && delta !== 0 && (
                                         <span
-                                          className={`ml-1.5 text-xs ${delta > 0 ? 'text-emerald-500' : 'text-rose-500'}`}
+                                          className={`ml-1.5 text-xs ${delta > 0 ? 'text-emerald-500' : 'text-danger-500'}`}
                                         >
                                           ({delta > 0 ? '+' : ''}
                                           {fmtNumber.format(delta)})
@@ -912,7 +912,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                               <td className="px-4 py-2">
                                 <button
                                   onClick={() => handleUnlinkInitiative(ini.id)}
-                                  className="text-rose-400 hover:text-rose-600"
+                                  className="text-danger-400 hover:text-danger-600"
                                   title={t('finance.budget.unlinkInitiative', 'Unlink') as string}
                                 >
                                   <X size={14} />

@@ -51,7 +51,7 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
             {title}
           </div>
           {unreadCount && unreadCount > 0 ? (
-            <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold leading-none bg-rose-500 text-white shrink-0">
+            <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold leading-none bg-danger-500 text-white shrink-0">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           ) : null}

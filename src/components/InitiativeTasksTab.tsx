@@ -86,7 +86,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       case 'in_progress':
         return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
       case 'blocked':
-        return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+        return 'text-danger-400 bg-danger-500/10 border-danger-500/20';
       default:
         return 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
     }
@@ -354,7 +354,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
                     </span>
                   )}
                   <span
-                    className={`uppercase ${task.priority === 'urgent' ? 'text-rose-500 dark:text-rose-400' : task.priority === 'high' ? 'text-amber-500 dark:text-amber-400' : 'text-slate-500'}`}
+                    className={`uppercase ${task.priority === 'urgent' ? 'text-danger-500 dark:text-danger-400' : task.priority === 'high' ? 'text-amber-500 dark:text-amber-400' : 'text-slate-500'}`}
                   >
                     {task.priority}
                   </span>

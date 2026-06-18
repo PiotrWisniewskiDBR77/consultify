@@ -29,7 +29,7 @@ const StatusDot: React.FC<{ isConnected: boolean; isLoading?: boolean }> = ({
   }
   return (
     <div
-      className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-rose-500'}`}
+      className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-danger-500'}`}
       title={isConnected ? 'Model LLM połączony' : 'Model LLM niedostępny'}
     />
   );

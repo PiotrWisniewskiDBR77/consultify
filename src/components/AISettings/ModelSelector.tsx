@@ -107,7 +107,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       case 'ollama':
         return 'from-primary-500 to-primary-500';
       case 'deepseek':
-        return 'from-rose-500 to-pink-500';
+        return 'from-danger-500 to-pink-500';
       default:
         return 'from-slate-500 to-slate-600';
     }
@@ -129,7 +129,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         );
       case 'unhealthy':
         return (
-          <span className="flex items-center gap-1 text-rose-400">
+          <span className="flex items-center gap-1 text-danger-400">
             <WifiOff className="w-3 h-3" /> Offline
           </span>
         );

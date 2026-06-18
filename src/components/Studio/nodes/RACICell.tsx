@@ -20,7 +20,7 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({ data, selecte
 
   const valueColors = {
     R: 'bg-blue-500/30 text-blue-400 border-blue-500/50',
-    A: 'bg-rose-500/30 text-rose-400 border-rose-500/50',
+    A: 'bg-danger-500/30 text-danger-400 border-danger-500/50',
     C: 'bg-amber-500/30 text-amber-400 border-amber-500/50',
     I: 'bg-green-500/30 text-green-400 border-green-500/50',
     '': 'bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-600/50',

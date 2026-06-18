@@ -354,7 +354,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                 <div
                   className={`p-1.5 rounded ${
                     option.format === 'pdf'
-                      ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600'
+                      ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600'
                       : option.format === 'pptx'
                         ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600'
                         : 'bg-green-100 dark:bg-green-900/30 text-green-600'

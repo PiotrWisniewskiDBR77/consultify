@@ -195,14 +195,14 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
   const statusIcon = (status: string) => {
     if (status === 'ok') return <CheckCircle2 size={14} className="text-emerald-500" />;
     if (status === 'warn') return <AlertTriangle size={14} className="text-amber-500" />;
-    if (status === 'critical') return <XCircle size={14} className="text-rose-500" />;
+    if (status === 'critical') return <XCircle size={14} className="text-danger-500" />;
     return <Minus size={14} className="text-slate-600" />;
   };
 
   const statusBg = (status: string) => {
     if (status === 'ok') return 'bg-emerald-50 dark:bg-emerald-900/20';
     if (status === 'warn') return 'bg-amber-50 dark:bg-amber-900/20';
-    if (status === 'critical') return 'bg-rose-50 dark:bg-rose-900/20';
+    if (status === 'critical') return 'bg-danger-50 dark:bg-danger-900/20';
     return 'bg-slate-50 dark:bg-navy-800';
   };
 

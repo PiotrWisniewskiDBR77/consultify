@@ -144,7 +144,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
               <div className="text-navy-900 dark:text-white font-medium text-xs md:text-sm">
                 {getAxisLabel(lowest.id)}
               </div>
-              <div className="text-rose-500 dark:text-rose-400 text-xs font-bold">
+              <div className="text-danger-500 dark:text-danger-400 text-xs font-bold">
                 {lowest.score.toFixed(1)}/7
               </div>
             </div>
@@ -213,7 +213,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
           <div className="flex gap-1 h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-navy-900 relative z-10">
             <div className="bg-green-500" style={{ width: `${(done / total) * 100}%` }}></div>
             <div className="bg-blue-500" style={{ width: `${(inProg / total) * 100}%` }}></div>
-            <div className="bg-rose-500" style={{ width: `${(blocked / total) * 100}%` }}></div>
+            <div className="bg-danger-500" style={{ width: `${(blocked / total) * 100}%` }}></div>
           </div>
           <div className="flex justify-between mt-2 text-[10px] text-slate-500 dark:text-slate-400 relative z-10">
             <span className="flex items-center gap-1">
@@ -223,7 +223,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
               <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>In Prog
             </span>
             <span className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>Blocked
+              <div className="w-1.5 h-1.5 rounded-full bg-danger-500"></div>Blocked
             </span>
           </div>
         </div>

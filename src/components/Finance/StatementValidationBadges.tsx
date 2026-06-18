@@ -13,9 +13,9 @@ const STATUS_CONFIG: Record<
   { bg: string; text: string; icon: React.ReactNode }
 > = {
   fail: {
-    bg: 'bg-rose-50 border-rose-200/60 dark:bg-rose-500/10 dark:border-rose-500/20',
-    text: 'text-rose-700 dark:text-rose-300',
-    icon: <XCircle size={11} className="text-rose-500 flex-shrink-0" />,
+    bg: 'bg-danger-50 border-danger-200/60 dark:bg-danger-500/10 dark:border-danger-500/20',
+    text: 'text-danger-700 dark:text-danger-300',
+    icon: <XCircle size={11} className="text-danger-500 flex-shrink-0" />,
   },
   warning: {
     bg: 'bg-amber-50 border-amber-200/60 dark:bg-amber-500/10 dark:border-amber-500/20',

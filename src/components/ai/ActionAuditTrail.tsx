@@ -41,7 +41,7 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({
       case 'APPROVED':
         return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
       case 'REJECTED':
-        return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
+        return 'text-danger-500 bg-danger-500/10 border-danger-500/20';
       case 'MODIFIED':
         return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
       default:

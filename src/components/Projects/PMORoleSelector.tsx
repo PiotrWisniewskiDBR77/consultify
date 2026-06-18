@@ -144,7 +144,7 @@ export const PMORoleSelector: React.FC<PMORoleSelectorProps> = ({
             {LEVEL_ICONS[selectedRole.level]}
             <span>{isPl ? selectedRole.namePl : selectedRole.name}</span>
             {selectedRole.isRequired && (
-              <span className="text-xs bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded">
+              <span className="text-xs bg-danger-100 dark:bg-danger-900 text-danger-600 dark:text-danger-400 px-1.5 py-0.5 rounded">
                 {t('admin.pmoRoles.required', 'Required')}
               </span>
             )}
@@ -200,7 +200,7 @@ export const PMORoleSelector: React.FC<PMORoleSelectorProps> = ({
                             {isPl ? role.namePl : role.name}
                           </span>
                           {role.isRequired && (
-                            <span className="text-xs bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded">
+                            <span className="text-xs bg-danger-100 dark:bg-danger-900 text-danger-600 dark:text-danger-400 px-1.5 py-0.5 rounded">
                               *
                             </span>
                           )}

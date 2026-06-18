@@ -35,13 +35,13 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
       {/* Content Scrollable */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-navy-700">
         {/* Card 1: Challenges Map */}
-        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative group border-l-4 border-l-rose-500/50">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative group border-l-4 border-l-danger-500/50">
           <div className="absolute top-0 right-0 p-6 opacity-5">
-            <AlertTriangle size={64} className="text-rose-500" />
+            <AlertTriangle size={64} className="text-danger-500" />
           </div>
 
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-            <span className="w-1 h-6 bg-rose-500 rounded-full"></span>
+            <span className="w-1 h-6 bg-danger-500 rounded-full"></span>
             Challenges Map
           </h3>
 
@@ -57,7 +57,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
                       {challenge.area}
                     </span>
                     <div className="flex gap-2">
-                      <span className="text-[10px] px-2 py-0.5 bg-rose-500/10 text-rose-300 rounded border border-rose-500/20">
+                      <span className="text-[10px] px-2 py-0.5 bg-danger-500/10 text-danger-300 rounded border border-danger-500/20">
                         Sev: {challenge.severity}
                       </span>
                       <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-300 rounded border border-amber-500/20">
@@ -100,7 +100,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
                   >
                     <span className="text-slate-700 dark:text-slate-300">{c.type}</span>
                     <span
-                      className={`text-xs px-1.5 py-0.5 rounded ${c.impactLevel === 'High' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-200' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
+                      className={`text-xs px-1.5 py-0.5 rounded ${c.impactLevel === 'High' ? 'bg-danger-100 dark:bg-danger-900/40 text-danger-600 dark:text-danger-200' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                     >
                       {c.impactLevel}
                     </span>

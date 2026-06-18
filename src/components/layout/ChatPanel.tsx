@@ -58,7 +58,7 @@ const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
       case 'approved':
         return <Check size={14} className="text-blue-500" />;
       case 'rejected':
-        return <XCircle size={14} className="text-rose-500" />;
+        return <XCircle size={14} className="text-danger-500" />;
       case 'pending':
       default:
         return <Clock size={14} className="text-amber-500 animate-pulse" />;
@@ -72,7 +72,7 @@ const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
       case 'approved':
         return 'border-blue-500/30 bg-blue-500/10';
       case 'rejected':
-        return 'border-rose-500/30 bg-rose-500/10';
+        return 'border-danger-500/30 bg-danger-500/10';
       case 'pending':
       default:
         return 'border-amber-500/30 bg-amber-500/10';
@@ -544,7 +544,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                           </button>
                           <button
                             onClick={() => handleMessageFeedback(msg.id, 'negative')}
-                            className="p-1.5 rounded-md text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                            className="p-1.5 rounded-md text-slate-500 hover:text-danger-600 dark:text-slate-400 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                             title={t('chat.actions.notHelpful', 'Not helpful')}
                           >
                             <ThumbsDown size={14} />
@@ -567,7 +567,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       {msg.role === 'user' && (
                         <button
                           onClick={() => handleDeleteMessage(msg.id)}
-                          className="p-1.5 rounded-md text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                          className="p-1.5 rounded-md text-slate-500 hover:text-danger-600 dark:text-slate-400 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                           title={t('chat.actions.delete', 'Delete')}
                         >
                           <Trash2 size={14} />
@@ -580,7 +580,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                           onClick={() =>
                             voiceState.isSpeaking ? stopSpeaking() : speak(msg.content)
                           }
-                          className={`p-1.5 rounded-md ${voiceState.isSpeaking ? 'text-rose-500 hover:text-rose-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                          className={`p-1.5 rounded-md ${voiceState.isSpeaking ? 'text-danger-500 hover:text-danger-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                           title={
                             voiceState.isSpeaking
                               ? t('chat.actions.stop', 'Stop')
@@ -640,7 +640,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
                       msg.feedback.rating === 'positive'
                         ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                        : 'bg-danger-100 text-danger-600 dark:bg-danger-900/30 dark:text-danger-400'
                     }`}
                   >
                     {msg.feedback.rating === 'positive' ? (
@@ -682,7 +682,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       onClick={() => (voiceState.isSpeaking ? stopSpeaking() : speak(msg.content))}
                       className={`p-1.5 rounded-md transition-all ${
                         voiceState.isSpeaking
-                          ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                          ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
                           : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                       }`}
                       title={voiceState.isSpeaking ? 'Zatrzymaj' : 'Przeczytaj'}
@@ -777,13 +777,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     ? 'Listening...'
                     : 'Type your answer...'
               }
-              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-rose-400 ring-1 ring-rose-400 animate-pulse' : ''}`}
+              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-danger-400 ring-1 ring-danger-400 animate-pulse' : ''}`}
             />
             {isRecording && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <span className="flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-danger-500"></span>
                 </span>
               </div>
             )}
@@ -796,7 +796,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             disabled={aiFreezeStatus.isFrozen || !speechSupported}
             className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
               isRecording
-                ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-500/30'
+                ? 'bg-danger-500 text-white hover:bg-danger-600 shadow-md shadow-danger-500/30'
                 : speechSupported
                   ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-200'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 cursor-not-allowed'

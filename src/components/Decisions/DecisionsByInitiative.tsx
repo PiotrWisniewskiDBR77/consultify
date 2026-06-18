@@ -105,7 +105,7 @@ const GroupHeader: React.FC<{
         hover:border-primary-300 dark:hover:border-primary-500/50
         transition-all duration-150
         ${group.counts.overdue > 0 ? 'border-l-4 border-l-amber-500' : ''}
-        ${group.counts.critical > 0 ? 'border-l-4 border-l-rose-500' : ''}
+        ${group.counts.critical > 0 ? 'border-l-4 border-l-danger-500' : ''}
       `}
     >
       <div className="flex items-center gap-3">
@@ -144,7 +144,7 @@ const GroupHeader: React.FC<{
           </span>
         )}
         {group.counts.critical > 0 && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 font-medium">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 font-medium">
             {group.counts.critical} critical
           </span>
         )}

@@ -28,7 +28,7 @@ interface RACIMatrixProps {
 
 const RACI_LABELS: Record<RACIType, { label: string; fullLabel: string; color: string }> = {
   R: { label: 'R', fullLabel: 'Responsible', color: 'bg-blue-500 text-white' },
-  A: { label: 'A', fullLabel: 'Accountable', color: 'bg-rose-500 text-white' },
+  A: { label: 'A', fullLabel: 'Accountable', color: 'bg-danger-500 text-white' },
   C: { label: 'C', fullLabel: 'Consulted', color: 'bg-yellow-500 text-white' },
   I: { label: 'I', fullLabel: 'Informed', color: 'bg-green-500 text-white' },
 };
@@ -93,7 +93,7 @@ export const RACIMatrix: React.FC<RACIMatrixProps> = ({ projectId }) => {
   if (error) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+        <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400">
           <AlertCircle className="w-5 h-5" />
           {error}
         </div>

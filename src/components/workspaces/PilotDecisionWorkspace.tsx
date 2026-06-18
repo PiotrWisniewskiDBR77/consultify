@@ -127,7 +127,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                   <tr>
                     <td className="p-4 font-medium text-navy-900 dark:text-white">Risk Exposure</td>
                     <td className="p-4 text-green-600">Contained / Low</td>
-                    <td className="p-4 text-rose-500">High Systemic Risk</td>
+                    <td className="p-4 text-danger-500">High Systemic Risk</td>
                   </tr>
                   <tr>
                     <td className="p-4 font-medium text-navy-900 dark:text-white">Resource Load</td>

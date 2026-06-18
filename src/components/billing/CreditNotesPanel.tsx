@@ -108,8 +108,8 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; icon: React.Reac
     icon: <CheckCircle className="w-3 h-3" />,
   },
   voided: {
-    bg: 'bg-rose-100 dark:bg-rose-900/30',
-    text: 'text-rose-600 dark:text-rose-400',
+    bg: 'bg-danger-100 dark:bg-danger-900/30',
+    text: 'text-danger-600 dark:text-danger-400',
     icon: <XCircle className="w-3 h-3" />,
   },
   refunded: {
@@ -339,9 +339,9 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-rose-500" />
-          <p className="text-rose-700 dark:text-rose-400">{error}</p>
+        <div className="p-4 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-danger-500" />
+          <p className="text-danger-700 dark:text-danger-400">{error}</p>
         </div>
       )}
 
@@ -473,7 +473,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
                         note.amount_applied === 0 && (
                           <button
                             onClick={() => handleVoid(note.id)}
-                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                            className="p-1.5 rounded-lg text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                             title="Void"
                           >
                             <XCircle className="w-4 h-4" />
@@ -706,7 +706,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
         </h3>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 text-sm">
             {error}
           </div>
         )}
@@ -817,7 +817,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
                     <button
                       type="button"
                       onClick={() => removeItem(index)}
-                      className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+                      className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
                     >
                       <XCircle className="w-4 h-4" />
                     </button>

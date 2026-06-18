@@ -29,14 +29,14 @@ const formatNumber = (num: number): string => {
 };
 
 const getStatusColor = (percentage: number): string => {
-  if (percentage >= 95) return 'bg-rose-500';
+  if (percentage >= 95) return 'bg-danger-500';
   if (percentage >= 80) return 'bg-amber-500';
   if (percentage >= 60) return 'bg-yellow-500';
   return 'bg-emerald-500';
 };
 
 const getTextColor = (percentage: number): string => {
-  if (percentage >= 95) return 'text-rose-500';
+  if (percentage >= 95) return 'text-danger-500';
   if (percentage >= 80) return 'text-amber-500';
   return 'text-gray-600 dark:text-gray-400';
 };

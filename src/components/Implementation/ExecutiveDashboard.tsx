@@ -275,7 +275,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       case 'CRITICAL':
         return 'text-amber-600 dark:text-amber-400';
       case 'OVERRUN':
-        return 'text-rose-600 dark:text-rose-400';
+        return 'text-danger-600 dark:text-danger-400';
       default:
         return 'text-slate-600 dark:text-slate-400';
     }
@@ -290,7 +290,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       case 'CRITICAL':
         return 'bg-amber-100 dark:bg-amber-900/30';
       case 'OVERRUN':
-        return 'bg-rose-100 dark:bg-rose-900/30';
+        return 'bg-danger-100 dark:bg-danger-900/30';
       default:
         return 'bg-slate-100 dark:bg-slate-800';
     }
@@ -316,8 +316,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const getAlertColors = (alert: Alert) => {
     if (alert.severity === 'critical') {
       return {
-        bg: 'bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50',
-        icon: 'text-rose-600 dark:text-rose-400',
+        bg: 'bg-danger-100 dark:bg-danger-900/30 hover:bg-danger-200 dark:hover:bg-danger-900/50',
+        icon: 'text-danger-600 dark:text-danger-400',
       };
     }
     return {
@@ -417,7 +417,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               <p
                 className={`text-3xl font-bold mt-1 ${
                   metrics.blocked > 0
-                    ? 'text-rose-600 dark:text-rose-400'
+                    ? 'text-danger-600 dark:text-danger-400'
                     : 'text-navy-900 dark:text-white'
                 }`}
               >
@@ -427,19 +427,19 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <div
               className={`p-3 rounded-xl ${
                 metrics.blocked > 0
-                  ? 'bg-rose-100 dark:bg-rose-900/30 animate-pulse'
+                  ? 'bg-danger-100 dark:bg-danger-900/30 animate-pulse'
                   : 'bg-slate-100 dark:bg-slate-800'
               }`}
             >
               <Pause
                 className={`w-6 h-6 ${
-                  metrics.blocked > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600'
+                  metrics.blocked > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-slate-600'
                 }`}
               />
             </div>
           </div>
           {metrics.blocked > 0 && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-3">
+            <p className="text-xs text-danger-600 dark:text-danger-400 mt-3">
               Requires immediate attention
             </p>
           )}
@@ -594,7 +594,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               <p
                 className={`text-3xl font-bold mt-1 ${
                   metrics.overdueTasks > 0
-                    ? 'text-rose-600 dark:text-rose-400'
+                    ? 'text-danger-600 dark:text-danger-400'
                     : 'text-navy-900 dark:text-white'
                 }`}
               >
@@ -604,27 +604,27 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <div
               className={`p-3 rounded-xl ${
                 metrics.overdueTasks > 0
-                  ? 'bg-rose-100 dark:bg-rose-900/30'
+                  ? 'bg-danger-100 dark:bg-danger-900/30'
                   : 'bg-slate-100 dark:bg-slate-800'
               }`}
             >
               <Clock
                 className={`w-6 h-6 ${
-                  metrics.overdueTasks > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600'
+                  metrics.overdueTasks > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-slate-600'
                 }`}
               />
             </div>
           </div>
           {metrics.overdueTasks > 0 && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 mt-3">Past due date</p>
+            <p className="text-xs text-danger-600 dark:text-danger-400 mt-3">Past due date</p>
           )}
         </div>
       </div>
 
       {/* Alerts Section */}
       {alerts.length > 0 && (
-        <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-4 border border-rose-200 dark:border-rose-500/20">
-          <h3 className="font-semibold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-3">
+        <div className="bg-danger-50 dark:bg-danger-900/20 rounded-xl p-4 border border-danger-200 dark:border-danger-500/20">
+          <h3 className="font-semibold text-danger-700 dark:text-danger-400 flex items-center gap-2 mb-3">
             <AlertCircle size={18} />
             Alerts ({alerts.length})
           </h3>
@@ -652,7 +652,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             })}
           </div>
           {alerts.length > 5 && (
-            <button className="mt-3 text-sm text-rose-600 dark:text-rose-400 hover:underline">
+            <button className="mt-3 text-sm text-danger-600 dark:text-danger-400 hover:underline">
               View all {alerts.length} alerts
             </button>
           )}
@@ -713,8 +713,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
         {/* Blocked */}
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="px-4 py-3 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-200 dark:border-rose-500/20">
-            <h3 className="font-semibold text-rose-700 dark:text-rose-400 flex items-center gap-2">
+          <div className="px-4 py-3 bg-danger-50 dark:bg-danger-900/20 border-b border-danger-200 dark:border-danger-500/20">
+            <h3 className="font-semibold text-danger-700 dark:text-danger-400 flex items-center gap-2">
               <Pause size={18} />
               Blocked ({blockedInitiatives.length})
             </h3>
@@ -730,15 +730,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 <div
                   key={init.id}
                   onClick={() => onInitiativeClick?.(init)}
-                  className="p-3 hover:bg-rose-50 dark:hover:bg-rose-900/20 cursor-pointer"
+                  className="p-3 hover:bg-danger-50 dark:hover:bg-danger-900/20 cursor-pointer"
                 >
                   <div className="flex items-start gap-2">
-                    <AlertTriangle size={14} className="text-rose-500 mt-0.5 shrink-0" />
+                    <AlertTriangle size={14} className="text-danger-500 mt-0.5 shrink-0" />
                     <div>
                       <p className="font-medium text-navy-900 dark:text-white text-sm">
                         {init.name}
                       </p>
-                      <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+                      <p className="text-xs text-danger-600 dark:text-danger-400 mt-1">
                         {init.blockedReason || 'Reason not specified'}
                       </p>
                     </div>

@@ -344,7 +344,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
         </div>
         <div className="mt-3 h-2 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${usagePercent > 95 ? 'bg-rose-500' : usagePercent > 80 ? 'bg-amber-500' : 'bg-slate-400'}`}
+            className={`h-full rounded-full transition-all ${usagePercent > 95 ? 'bg-danger-500' : usagePercent > 80 ? 'bg-amber-500' : 'bg-slate-400'}`}
             style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
         </div>
@@ -487,7 +487,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 </div>
                 <div className="h-1.5 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${isCrit ? 'bg-rose-500' : isWarn ? 'bg-amber-500' : 'bg-slate-400'}`}
+                    className={`h-full rounded-full ${isCrit ? 'bg-danger-500' : isWarn ? 'bg-amber-500' : 'bg-slate-400'}`}
                     style={{ width: `${Math.min(pct, 100)}%` }}
                   />
                 </div>
@@ -685,7 +685,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
       {domainActionError && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+          className="rounded-xl border border-danger-200 bg-danger-50 p-3 text-sm text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200"
         >
           {domainActionError}
         </div>
@@ -792,7 +792,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   }}
                   disabled={!d.id}
                   title={!d.id ? 'Cannot remove a domain without a server id' : undefined}
-                  className="text-slate-600 hover:text-rose-500"
+                  className="text-slate-600 hover:text-danger-500"
                 >
                   <Trash2 size={12} />
                 </button>

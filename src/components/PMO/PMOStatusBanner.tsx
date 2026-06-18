@@ -51,7 +51,7 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <AlertCircle size={14} className="text-rose-500" />;
+        return <AlertCircle size={14} className="text-danger-500" />;
       case 'warning':
         return <AlertTriangle size={14} className="text-amber-500" />;
       default:
@@ -62,7 +62,7 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
   const getSeverityClass = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/30 text-rose-700 dark:text-rose-300';
+        return 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-800/30 text-danger-700 dark:text-danger-300';
       case 'warning':
         return 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-300';
       default:
@@ -80,7 +80,7 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
           {t('pmo.phase', 'Phase')} {phaseNumber}/{totalPhases}: {currentPhase}
         </div>
         {hasBlockers && showBlockingCount && (
-          <div className="flex items-center gap-1 px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-md text-xs font-medium">
+          <div className="flex items-center gap-1 px-2 py-1 bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 rounded-md text-xs font-medium">
             <AlertCircle size={12} />
             {blockingIssues.length}
           </div>
@@ -140,7 +140,7 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
 
           {/* Blocking Issues Count */}
           {hasBlockers && showBlockingCount && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-md text-xs font-medium cursor-pointer hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors">
+            <div className="flex items-center gap-1 px-2 py-1 bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 rounded-md text-xs font-medium cursor-pointer hover:bg-danger-200 dark:hover:bg-danger-900/50 transition-colors">
               <AlertCircle size={12} />
               {blockingIssues.length} {t('pmo.blocking', 'blocking')}
             </div>
@@ -217,7 +217,7 @@ export const PMOBlockingBadge: React.FC<{ onClick?: () => void }> = ({ onClick }
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded text-xs font-medium hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors"
+      className="flex items-center gap-1 px-2 py-0.5 bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 rounded text-xs font-medium hover:bg-danger-200 dark:hover:bg-danger-900/50 transition-colors"
     >
       <AlertCircle size={10} />
       {blockingIssues.length} blocking

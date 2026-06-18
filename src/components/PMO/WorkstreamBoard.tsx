@@ -182,7 +182,7 @@ export const WorkstreamBoard: React.FC<WorkstreamBoardProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 rounded-lg text-sm">
+        <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300 rounded-lg text-sm">
           <AlertTriangle className="w-4 h-4" />
           {error}
         </div>
@@ -322,7 +322,7 @@ const WorkstreamCard: React.FC<WorkstreamCardProps> = ({
                       setShowMenu(false);
                       onDelete();
                     }}
-                    className="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                    className="w-full text-left px-3 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete
@@ -606,7 +606,7 @@ const WorkstreamModal: React.FC<WorkstreamModalProps> = ({
           </div>
 
           {error && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 text-sm rounded-lg">
+            <div className="p-3 bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300 text-sm rounded-lg">
               {error}
             </div>
           )}

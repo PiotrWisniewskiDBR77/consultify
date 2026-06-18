@@ -295,7 +295,7 @@ export const FinancialMappingPanel: React.FC = () => {
                                 </span>
                                 <ArrowRight size={12} className="text-slate-600" />
                                 <span
-                                  className={`text-xs font-medium ${m.direction === 'positive' ? 'text-green-500' : m.direction === 'negative' ? 'text-rose-500' : 'text-slate-600'}`}
+                                  className={`text-xs font-medium ${m.direction === 'positive' ? 'text-green-500' : m.direction === 'negative' ? 'text-danger-500' : 'text-slate-600'}`}
                                 >
                                   {m.direction === 'positive'
                                     ? '↑ improves'
@@ -316,7 +316,7 @@ export const FinancialMappingPanel: React.FC = () => {
                                 </button>
                                 <button
                                   onClick={() => handleDelete(m.id)}
-                                  className="text-rose-400 hover:text-rose-300"
+                                  className="text-danger-400 hover:text-danger-300"
                                   title="Remove"
                                 >
                                   <Trash2 size={14} />
@@ -361,7 +361,7 @@ export const FinancialMappingPanel: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-600">Δ KPI: {imp.kpiDelta.toFixed(2)}</span>
                   <span
-                    className={`font-medium ${imp.estimatedImpact >= 0 ? 'text-green-600' : 'text-rose-600'}`}
+                    className={`font-medium ${imp.estimatedImpact >= 0 ? 'text-green-600' : 'text-danger-600'}`}
                   >
                     {imp.estimatedImpact >= 0 ? '+' : ''}
                     {imp.estimatedImpact.toFixed(2)}
@@ -556,7 +556,7 @@ const ConfBadgeSmall: React.FC<{ level: string }> = ({ level }) => {
   const cls: Record<string, string> = {
     high: 'bg-green-500/20 text-green-600 dark:text-green-400',
     medium: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
-    low: 'bg-rose-500/20 text-rose-600 dark:text-rose-400',
+    low: 'bg-danger-500/20 text-danger-600 dark:text-danger-400',
   };
   return (
     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${cls[level] || cls.low}`}>

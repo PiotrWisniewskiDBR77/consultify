@@ -257,7 +257,7 @@ function ErrorList({
 }): React.ReactElement {
   return (
     <ul
-      className="list-disc space-y-0.5 pl-5 text-rose-700 dark:text-rose-300"
+      className="list-disc space-y-0.5 pl-5 text-danger-700 dark:text-danger-300"
       data-testid={testId}
     >
       {errors.map((e, i) => (
@@ -573,11 +573,11 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
   if (bootstrap.status === 'error' || !bootstrap.data) {
     return (
       <section
-        className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-4 dark:border-rose-900/60 dark:bg-rose-950/40"
+        className="rounded-xl border border-danger-200 bg-danger-50 px-5 py-4 dark:border-danger-900/60 dark:bg-danger-900/40"
         data-testid={`${testId}-error`}
         role="alert"
       >
-        <div className="flex items-start gap-3 text-sm text-rose-700 dark:text-rose-300">
+        <div className="flex items-start gap-3 text-sm text-danger-700 dark:text-danger-300">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <div className="min-w-0 flex-1">
             <div className="font-medium">Failed to load layout-capacity admin surface</div>
@@ -585,7 +585,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
             <button
               type="button"
               onClick={() => void loadBootstrap()}
-              className="mt-2 inline-flex items-center gap-2 rounded-full border border-rose-300 bg-white px-3 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:bg-rose-900/40 dark:text-rose-200 dark:hover:bg-rose-900/60"
+              className="mt-2 inline-flex items-center gap-2 rounded-full border border-danger-300 bg-white px-3 py-1 text-xs font-medium text-danger-700 hover:bg-danger-50 dark:border-danger-700 dark:bg-danger-900/40 dark:text-danger-200 dark:hover:bg-danger-900/60"
               data-testid={`${testId}-retry`}
             >
               <RefreshCw className="h-3 w-3" aria-hidden="true" />
@@ -632,7 +632,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
               data.loadWarning.reason === 'corrupt' ||
               data.loadWarning.reason === 'rejected_by_validator' ||
               data.loadWarning.reason === 'signature_mismatch'
-                ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300'
+                ? 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300'
                 : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200'
             }`}
             role="alert"
@@ -781,7 +781,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
 
         {overrideFlow.proposeError ? (
           <div
-            className="mt-3 flex items-start gap-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="mt-3 flex items-start gap-3 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300"
             role="alert"
             data-testid={`${testId}-overrides-propose-error`}
           >
@@ -792,7 +792,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
 
         {overrideFlow.proposeErrors ? (
           <div
-            className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="mt-3 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300"
             role="alert"
             data-testid={`${testId}-overrides-validation-errors`}
           >
@@ -837,7 +837,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
 
         {overrideFlow.executeError ? (
           <div
-            className="mt-3 flex items-start gap-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="mt-3 flex items-start gap-3 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300"
             role="alert"
             data-testid={`${testId}-overrides-execute-error`}
           >
@@ -890,7 +890,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
 
         {resetFlow.proposeError ? (
           <div
-            className="mt-3 flex items-start gap-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="mt-3 flex items-start gap-3 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300"
             role="alert"
             data-testid={`${testId}-reset-propose-error`}
           >
@@ -945,7 +945,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
                 type="button"
                 onClick={() => void executeReset()}
                 disabled={resetFlow.pending === 'executing'}
-                className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-rose-500 dark:hover:bg-rose-400"
+                className="inline-flex items-center gap-2 rounded-full bg-danger-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-danger-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-danger-500 dark:hover:bg-danger-400"
                 data-testid={`${testId}-reset-execute`}
               >
                 <PendingButtonContent
@@ -961,7 +961,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
 
         {resetFlow.executeError ? (
           <div
-            className="mt-3 flex items-start gap-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="mt-3 flex items-start gap-3 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/40 dark:text-danger-300"
             role="alert"
             data-testid={`${testId}-reset-execute-error`}
           >

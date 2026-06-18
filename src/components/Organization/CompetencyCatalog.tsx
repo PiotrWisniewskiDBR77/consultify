@@ -300,7 +300,7 @@ export const CompetencyCatalog: React.FC = () => {
                       e.stopPropagation();
                       handleDeleteCategory(cat.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 ml-1 text-slate-600 hover:text-rose-500"
+                    className="opacity-0 group-hover:opacity-100 ml-1 text-slate-600 hover:text-danger-500"
                   >
                     <X size={12} />
                   </button>

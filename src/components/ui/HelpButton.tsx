@@ -65,7 +65,7 @@ const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
 
         {/* Badge */}
         {availableCount > 0 && !loading && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-white bg-rose-500 rounded-full border-2 border-white dark:border-slate-900">
+          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-white bg-danger-500 rounded-full border-2 border-white dark:border-slate-900">
             {availableCount > 9 ? '9+' : availableCount}
           </span>
         )}

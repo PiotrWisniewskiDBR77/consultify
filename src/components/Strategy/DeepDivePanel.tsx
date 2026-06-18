@@ -103,14 +103,14 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
                 ))}
               </ul>
             </div>
-            <div className="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-xl border border-rose-100 dark:border-rose-900/20">
-              <div className="text-xs font-bold text-rose-700 dark:text-rose-400 mb-2 uppercase">
+            <div className="bg-danger-50 dark:bg-danger-900/10 p-4 rounded-xl border border-danger-100 dark:border-danger-900/20">
+              <div className="text-xs font-bold text-danger-700 dark:text-danger-400 mb-2 uppercase">
                 {t.deepDive.sacrifices}
               </div>
               <ul className="space-y-2">
                 {getSacrifices().map((sac, i) => (
                   <li key={i} className="flex gap-2 text-xs text-navy-900 dark:text-white">
-                    <span className="text-rose-500 font-bold">-</span>
+                    <span className="text-danger-500 font-bold">-</span>
                     {sac}
                   </li>
                 ))}

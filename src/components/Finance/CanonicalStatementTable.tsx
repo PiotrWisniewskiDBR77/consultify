@@ -221,7 +221,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                           row.delta.direction === 'up'
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : row.delta.direction === 'down'
-                              ? 'text-rose-600 dark:text-rose-400'
+                              ? 'text-danger-600 dark:text-danger-400'
                               : 'text-slate-600 dark:text-slate-500'
                         }`}
                       >

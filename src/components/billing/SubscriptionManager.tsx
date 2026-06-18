@@ -452,7 +452,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                 </div>
                 {discount && (
                   <p
-                    className={`text-sm mt-1 ${discount.valid ? 'text-green-600' : 'text-rose-500'}`}
+                    className={`text-sm mt-1 ${discount.valid ? 'text-green-600' : 'text-danger-500'}`}
                   >
                     {discount.valid
                       ? `${discount.discount?.type === 'percent' ? `${discount.discount.value}% off` : `$${discount.discount?.value} off`}`

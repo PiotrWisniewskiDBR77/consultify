@@ -183,7 +183,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
         <div className="p-6">
           {/* Error Display */}
           {error && (
-            <div className="mb-4 p-3 bg-rose-100 dark:bg-rose-900/30 border border-rose-300 dark:border-rose-700 rounded-lg flex items-center gap-2 text-rose-700 dark:text-rose-300">
+            <div className="mb-4 p-3 bg-danger-100 dark:bg-danger-900/30 border border-danger-300 dark:border-danger-700 rounded-lg flex items-center gap-2 text-danger-700 dark:text-danger-300">
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>

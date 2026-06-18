@@ -226,7 +226,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
 
   const getUtilizationColor = (allocated: number, capacity: number) => {
     const rate = (allocated / capacity) * 100;
-    if (rate > 100) return 'text-rose-500';
+    if (rate > 100) return 'text-danger-500';
     if (rate >= 80) return 'text-amber-500';
     if (rate >= 50) return 'text-green-500';
     return 'text-blue-500';
@@ -234,7 +234,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
 
   const getProgressColor = (allocated: number, capacity: number) => {
     const rate = (allocated / capacity) * 100;
-    if (rate > 100) return 'bg-rose-500';
+    if (rate > 100) return 'bg-danger-500';
     if (rate >= 80) return 'bg-amber-500';
     if (rate >= 50) return 'bg-green-500';
     return 'bg-blue-500';
@@ -297,7 +297,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
           <div
             className={`text-2xl font-bold ${
               utilizationRate > 100
-                ? 'text-rose-600'
+                ? 'text-danger-600'
                 : utilizationRate >= 80
                   ? 'text-amber-600'
                   : 'text-green-600'
@@ -310,7 +310,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Overallocated</div>
           <div
-            className={`text-2xl font-bold ${overallocatedCount > 0 ? 'text-rose-600' : 'text-green-600'}`}
+            className={`text-2xl font-bold ${overallocatedCount > 0 ? 'text-danger-600' : 'text-green-600'}`}
           >
             {overallocatedCount}
           </div>
@@ -320,14 +320,14 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
 
       {/* Overallocation Warning */}
       {overallocatedCount > 0 && (
-        <div className="flex items-start gap-3 p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20 rounded-xl">
-          <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-500/20 rounded-xl">
+          <AlertTriangle size={20} className="text-danger-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
+            <p className="text-sm font-medium text-danger-700 dark:text-danger-300">
               {overallocatedCount} team member{overallocatedCount > 1 ? 's are' : ' is'}{' '}
               overallocated
             </p>
-            <p className="text-xs text-rose-600/70 dark:text-rose-400/70 mt-1">
+            <p className="text-xs text-danger-600/70 dark:text-danger-400/70 mt-1">
               Review task assignments or consider adding resources to maintain delivery quality
             </p>
           </div>
@@ -381,7 +381,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
             >
               <div
                 className={`p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors ${
-                  isOverallocated ? 'border-l-4 border-l-rose-500' : ''
+                  isOverallocated ? 'border-l-4 border-l-danger-500' : ''
                 }`}
                 onClick={() => setExpandedMember(isExpanded ? null : member.id)}
               >
@@ -397,7 +397,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
                     <div>
                       <div className="font-medium text-navy-900 dark:text-white">{member.name}</div>
                       {isOverallocated && (
-                        <span className="text-xs text-rose-500 font-medium">Overallocated</span>
+                        <span className="text-xs text-danger-500 font-medium">Overallocated</span>
                       )}
                     </div>
                   </div>
@@ -480,7 +480,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
                               Week of {new Date(week.weekStart).toLocaleDateString('pl-PL')}
                             </span>
                             <span
-                              className={`font-medium ${week.isOverloaded ? 'text-rose-600' : 'text-primary-600'}`}
+                              className={`font-medium ${week.isOverloaded ? 'text-danger-600' : 'text-primary-600'}`}
                             >
                               {week.allocatedHours}h ({week.utilizationPercent}%)
                             </span>
@@ -534,7 +534,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
             </div>
           </div>
           <div className="text-center p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-            <div className="text-3xl font-bold text-rose-600 dark:text-rose-400">
+            <div className="text-3xl font-bold text-danger-600 dark:text-danger-400">
               {members.filter((m) => m.allocated > m.capacity).length}
             </div>
             <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">

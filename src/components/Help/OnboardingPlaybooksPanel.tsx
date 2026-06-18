@@ -347,7 +347,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
             title={t('help.onboarding.dismiss', 'Dismiss')}
             aria-label={t('help.onboarding.dismiss', 'Dismiss')}
           >
-            <XCircle size={16} className="text-slate-600 hover:text-rose-500" />
+            <XCircle size={16} className="text-slate-600 hover:text-danger-500" />
           </button>
         )}
       </div>

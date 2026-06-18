@@ -122,21 +122,21 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
           </div>
 
           {/* Priority Alerts */}
-          <div className="bg-rose-50 dark:bg-rose-900/10 rounded-xl p-6 border border-rose-100 dark:border-rose-500/20">
-            <h3 className="text-rose-600 dark:text-rose-400 font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+          <div className="bg-danger-50 dark:bg-danger-900/10 rounded-xl p-6 border border-danger-100 dark:border-danger-500/20">
+            <h3 className="text-danger-600 dark:text-danger-400 font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
               <AlertTriangle size={16} />
               Priority Alerts
             </h3>
             <ul className="space-y-2">
               {initiativeStats.delayed > 0 && (
-                <li className="text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                <li className="text-sm text-danger-800 dark:text-danger-200 flex items-start gap-2">
+                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-danger-500 shrink-0"></span>
                   {initiativeStats.delayed} initiatives are currently delayed.
                 </li>
               )}
               {!safeSession.step2Completed && (
-                <li className="text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                <li className="text-sm text-danger-800 dark:text-danger-200 flex items-start gap-2">
+                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-danger-500 shrink-0"></span>
                   Assessment incomplete: Missing key data points.
                 </li>
               )}
@@ -164,8 +164,8 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
             </div>
             <div className="text-xs text-slate-500 mt-1">Completed</div>
           </div>
-          <div className="bg-rose-50 dark:bg-rose-900/20 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-rose-600 dark:text-rose-400">
+          <div className="bg-danger-50 dark:bg-danger-900/20 rounded-lg p-4 text-center">
+            <div className="text-3xl font-bold text-danger-600 dark:text-danger-400">
               {initiativeStats.delayed}
             </div>
             <div className="text-xs text-slate-500 mt-1">Delayed</div>
@@ -217,7 +217,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                           initiative.status === InitiativeStatus.PLANNING
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                             : initiative.status === InitiativeStatus.BLOCKED
-                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                              ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                               : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                         }`}
                       >

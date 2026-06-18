@@ -49,14 +49,14 @@ const DOMAIN_COLORS: Record<string, string> = {
   SCOPE_CHANGE_CONTROL: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   SCHEDULE_MILESTONES: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
   RESOURCE_RESPONSIBILITY: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  RISK_ISSUE_MANAGEMENT: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+  RISK_ISSUE_MANAGEMENT: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
   PERFORMANCE_REPORTING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
 };
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
   created: <CheckCircle size={14} className="text-green-500" />,
   updated: <Clock size={14} className="text-blue-500" />,
-  deleted: <AlertCircle size={14} className="text-rose-500" />,
+  deleted: <AlertCircle size={14} className="text-danger-500" />,
   approved: <Shield size={14} className="text-primary-500" />,
   rejected: <AlertCircle size={14} className="text-amber-500" />,
 };

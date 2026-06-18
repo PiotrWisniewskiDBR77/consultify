@@ -18,7 +18,7 @@ const getStatusColor = (status: string) => {
     case 'review':
       return 'border-blue-500 text-blue-500';
     case 'blocked':
-      return 'border-rose-500 text-rose-500';
+      return 'border-danger-500 text-danger-500';
     case 'done':
       return 'border-green-500 text-green-500';
     case 'cancelled':
@@ -57,7 +57,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           <span
             className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${
               task.priority === 'urgent'
-                ? 'border-rose-500 text-rose-500 bg-rose-500/10'
+                ? 'border-danger-500 text-danger-500 bg-danger-500/10'
                 : task.priority === 'high'
                   ? 'border-amber-500 text-amber-500 bg-amber-500/10'
                   : task.priority === 'medium'
@@ -68,7 +68,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
             {task.priority || 'Normal'}
           </span>
         </div>
-        {task.priority === 'urgent' && <AlertCircle size={14} className="text-rose-500" />}
+        {task.priority === 'urgent' && <AlertCircle size={14} className="text-danger-500" />}
       </div>
 
       <h4 className="text-navy-900 dark:text-white text-sm font-medium mb-1 line-clamp-2">
@@ -104,7 +104,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
         {task.dueDate && (
           <div
-            className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== 'done' ? 'text-rose-500 dark:text-rose-400' : ''}`}
+            className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== 'done' ? 'text-danger-500 dark:text-danger-400' : ''}`}
           >
             <Calendar size={12} />
             <span>
@@ -121,7 +121,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         <div className="mt-3 flex items-center gap-2">
           <div className="flex-1 h-1 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
             <div
-              className={`h-full ${task.status === 'blocked' ? 'bg-rose-500' : 'bg-blue-500'}`}
+              className={`h-full ${task.status === 'blocked' ? 'bg-danger-500' : 'bg-blue-500'}`}
               style={{ width: `${task.progress || (completedChecks / (totalChecks || 1)) * 100}%` }}
             ></div>
           </div>

@@ -62,7 +62,7 @@ const CATEGORY_CONFIG: Record<
   BUDGET: { label: 'Budget Change', icon: DollarSign, color: 'text-green-500' },
   QUALITY: { label: 'Quality Change', icon: CheckCircle2, color: 'text-primary-500' },
   RESOURCE: { label: 'Resource Change', icon: Users, color: 'text-blue-500' },
-  RISK: { label: 'Risk Response', icon: AlertTriangle, color: 'text-rose-500' },
+  RISK: { label: 'Risk Response', icon: AlertTriangle, color: 'text-danger-500' },
 };
 
 export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({

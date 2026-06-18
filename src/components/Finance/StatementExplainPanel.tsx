@@ -89,13 +89,13 @@ function ConfidenceBar({ value }: { value: number }) {
       ? 'bg-emerald-500 dark:bg-emerald-400'
       : pct >= 50
         ? 'bg-amber-500 dark:bg-amber-400'
-        : 'bg-rose-500 dark:bg-rose-400';
+        : 'bg-danger-500 dark:bg-danger-400';
   const textColor =
     pct >= 80
       ? 'text-emerald-600 dark:text-emerald-300'
       : pct >= 50
         ? 'text-amber-600 dark:text-amber-300'
-        : 'text-rose-600 dark:text-rose-300';
+        : 'text-danger-600 dark:text-danger-300';
 
   return (
     <div className="flex items-center gap-2">
@@ -303,7 +303,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                     delta > 0
                       ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
                       : delta < 0
-                        ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400'
+                        ? 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-400'
                         : 'bg-slate-50 text-slate-500 dark:bg-white/[0.04] dark:text-slate-400'
                   }`}
                 >

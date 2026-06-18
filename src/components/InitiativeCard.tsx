@@ -66,7 +66,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case InitiativeStatus.EXECUTING:
         return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
       case InitiativeStatus.BLOCKED:
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+        return 'bg-danger-500/10 text-danger-400 border-danger-500/20';
       case InitiativeStatus.DONE:
         return 'bg-green-500/10 text-green-400 border-green-500/20';
       case InitiativeStatus.CANCELLED:
@@ -99,7 +99,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case 'Grow':
         return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
       case 'Fix':
-        return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
+        return 'bg-danger-500/10 text-danger-500 border-danger-500/20';
       case 'Stabilize':
         return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'De-risk':
@@ -151,7 +151,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
     if (typeof confidence === 'number') {
       if (confidence >= 70) return { color: 'bg-green-500', label: 'High Confidence' };
       if (confidence >= 40) return { color: 'bg-yellow-500', label: 'Review Needed' };
-      if (confidence > 0) return { color: 'bg-rose-500', label: 'Not Decision Ready' };
+      if (confidence > 0) return { color: 'bg-danger-500', label: 'Not Decision Ready' };
       return { color: 'bg-slate-300', label: 'Not Analyzed' };
     }
     // Handle string confidence
@@ -161,7 +161,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case 'Medium':
         return { color: 'bg-yellow-500', label: 'Review Needed' };
       case 'Low':
-        return { color: 'bg-rose-500', label: 'Not Decision Ready' };
+        return { color: 'bg-danger-500', label: 'Not Decision Ready' };
       default:
         return { color: 'bg-slate-300', label: 'Not Analyzed' };
     }
@@ -181,7 +181,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
         {isHighChange && (
           <div
-            className="flex items-center gap-1 bg-rose-50 dark:bg-rose-900/20 text-rose-500 px-1.5 py-0.5 rounded border border-rose-100 dark:border-rose-900/30"
+            className="flex items-center gap-1 bg-danger-50 dark:bg-danger-900/20 text-danger-500 px-1.5 py-0.5 rounded border border-danger-100 dark:border-danger-900/30"
             title="High Change Effort"
           >
             <RefreshCw size={10} className="animate-spin-slow" />
@@ -194,7 +194,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             {(typeof initiative.aiConfidence === 'number'
               ? initiative.aiConfidence < 40
               : initiative.aiConfidence === 'Low') && (
-              <span className="text-[9px] font-bold text-rose-500 uppercase tracking-wider border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/20 px-1.5 py-0.5 rounded">
+              <span className="text-[9px] font-bold text-danger-500 uppercase tracking-wider border border-danger-200 dark:border-danger-900/30 bg-danger-50 dark:bg-danger-900/20 px-1.5 py-0.5 rounded">
                 Not Ready
               </span>
             )}
@@ -320,7 +320,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
                   </div>
                   <div className="h-1 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-rose-500"
+                      className="h-full bg-danger-500"
                       style={{ width: `${(initiative.effortProfile.change / 5) * 100}%` }}
                     ></div>
                   </div>
@@ -344,9 +344,9 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
 
           {initiative.problemStatement && (
             <div className="flex gap-2">
-              <div className="min-w-[4px] w-1 bg-rose-400/50 rounded-full h-auto"></div>
+              <div className="min-w-[4px] w-1 bg-danger-400/50 rounded-full h-auto"></div>
               <div>
-                <span className="text-[10px] font-bold text-rose-400 uppercase">Problem</span>
+                <span className="text-[10px] font-bold text-danger-400 uppercase">Problem</span>
                 <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
                   {initiative.problemStatement}
                 </p>

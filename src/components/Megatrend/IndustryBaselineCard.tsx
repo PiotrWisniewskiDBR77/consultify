@@ -112,7 +112,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
                 <span
                   className={`text-[10px] font-bold px-2 py-1 rounded ${
                     trend.impactScore >= 6
-                      ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300'
+                      ? 'bg-danger-100 text-danger-600 dark:bg-danger-900/30 dark:text-danger-300'
                       : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                   }`}
                 >

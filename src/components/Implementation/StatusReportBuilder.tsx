@@ -98,7 +98,7 @@ interface StatusReportBuilderProps {
 const STATUS_CONFIG: Record<ReportStatus, { color: string; bgColor: string; label: string }> = {
   GREEN: { color: 'text-green-600', bgColor: 'bg-green-500', label: 'On Track' },
   AMBER: { color: 'text-amber-600', bgColor: 'bg-amber-500', label: 'At Risk' },
-  RED: { color: 'text-rose-600', bgColor: 'bg-rose-500', label: 'Off Track' },
+  RED: { color: 'text-danger-600', bgColor: 'bg-danger-500', label: 'Off Track' },
 };
 
 export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
@@ -321,7 +321,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
       case 'QUALITY':
         return <CheckCircle2 size={16} className="text-primary-500" />;
       case 'RISKS':
-        return <AlertTriangle size={16} className="text-rose-500" />;
+        return <AlertTriangle size={16} className="text-danger-500" />;
       case 'RESOURCES':
         return <Clock size={16} className="text-blue-500" />;
       default:
@@ -512,7 +512,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             ? 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-500/20'
             : overallStatus === 'AMBER'
               ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20'
-              : 'bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20'
+              : 'bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-500/20'
         }`}
       >
         <div className="flex items-center justify-between">
@@ -663,8 +663,8 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
 
       {/* Escalations */}
       {currentReport.escalations && currentReport.escalations.length > 0 && (
-        <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4">
-          <h4 className="font-bold text-rose-700 dark:text-rose-300 mb-3 flex items-center gap-2">
+        <div className="bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-500/20 rounded-xl p-4">
+          <h4 className="font-bold text-danger-700 dark:text-danger-300 mb-3 flex items-center gap-2">
             <AlertTriangle size={18} />
             Escalations Requiring Decision
           </h4>
@@ -672,7 +672,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             {currentReport.escalations.map((item, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2 text-sm text-rose-600 dark:text-rose-400"
+                className="flex items-start gap-2 text-sm text-danger-600 dark:text-danger-400"
               >
                 <ChevronRight size={14} className="mt-1 shrink-0" />
                 {typeof item === 'string' ? item : item.message}

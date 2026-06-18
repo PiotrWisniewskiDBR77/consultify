@@ -75,9 +75,9 @@ const STATUS_CONFIG: Partial<
     label: 'Executing',
   },
   [InitiativeStatus.BLOCKED]: {
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-100',
-    darkBgColor: 'dark:bg-rose-900/30',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-100',
+    darkBgColor: 'dark:bg-danger-900/30',
     icon: <Pause size={14} />,
     label: 'Blocked',
   },

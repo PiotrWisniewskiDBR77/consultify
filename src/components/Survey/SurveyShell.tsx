@@ -214,7 +214,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
       <div key={question.id} className="mb-6 last:mb-0">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           {qText}
-          {question.required && <span className="text-rose-500 ml-1">*</span>}
+          {question.required && <span className="text-danger-500 ml-1">*</span>}
         </label>
 
         {question.type === 'single_choice' && question.options && (

@@ -68,7 +68,7 @@ const PMO_DOMAIN_INFO: Record<
   RISK_ISSUE_MANAGEMENT: {
     label: 'Risk Mgmt',
     icon: <Shield size={14} />,
-    color: 'bg-rose-500',
+    color: 'bg-danger-500',
   },
   RESOURCE_RESPONSIBILITY: {
     label: 'Resources',
@@ -256,7 +256,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
                   ? 'bg-emerald-500'
                   : metrics.ecosystemHealthScore >= 60
                     ? 'bg-amber-500'
-                    : 'bg-rose-500'
+                    : 'bg-danger-500'
               }`}
               style={{ width: `${metrics.ecosystemHealthScore}%` }}
             />
@@ -332,7 +332,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
       </div>
       {trend && (
         <div
-          className={`flex items-center gap-1 text-xs font-semibold ${trendUp ? 'text-emerald-500' : 'text-rose-500'}`}
+          className={`flex items-center gap-1 text-xs font-semibold ${trendUp ? 'text-emerald-500' : 'text-danger-500'}`}
         >
           <TrendingUp size={12} className={trendUp ? '' : 'rotate-180'} />
           {trend}
@@ -355,7 +355,7 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({ label, status, value 
   const statusColors = {
     healthy: 'bg-emerald-500',
     warning: 'bg-amber-500',
-    critical: 'bg-rose-500',
+    critical: 'bg-danger-500',
   };
 
   return (

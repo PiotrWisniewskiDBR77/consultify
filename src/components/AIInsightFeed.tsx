@@ -47,7 +47,7 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
   const getIcon = (type: string) => {
     switch (type) {
       case 'risk':
-        return <AlertTriangle className="text-rose-500" size={18} />;
+        return <AlertTriangle className="text-danger-500" size={18} />;
       case 'opportunity':
         return <TrendingUp className="text-green-500" size={18} />;
       case 'anomaly':
@@ -60,7 +60,7 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
   const getBg = (type: string) => {
     switch (type) {
       case 'risk':
-        return 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30';
+        return 'bg-danger-50 dark:bg-danger-900/10 border-danger-100 dark:border-danger-900/30';
       case 'opportunity':
         return 'bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30';
       default:

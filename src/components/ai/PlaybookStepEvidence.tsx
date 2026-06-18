@@ -119,7 +119,7 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 py-3 text-sm text-rose-500">
+      <div className="flex items-center gap-2 py-3 text-sm text-danger-500">
         <AlertCircle className="w-4 h-4" />
         {error}
       </div>

@@ -31,13 +31,13 @@ interface Props {
 
 function ConfidenceDot({ confidence }: { confidence: number }) {
   const pct = Math.round(confidence * 100);
-  const color = pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-500';
+  const color = pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-danger-500';
   const bgColor =
     pct >= 70
       ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
       : pct >= 40
         ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
-        : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300';
+        : 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-300';
 
   return (
     <span

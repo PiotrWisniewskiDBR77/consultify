@@ -283,7 +283,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
                     </button>
                     <button
                       onClick={() => handleDelete(selectedTemplate.id)}
-                      className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                      className="p-1.5 rounded-lg text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -528,7 +528,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
       )}
 
       {error && (
-        <div className="fixed bottom-4 right-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-2 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 right-4 bg-danger-50 border border-danger-200 text-danger-700 px-4 py-2 rounded-lg shadow-lg">
           {error}
           <button onClick={() => setError(null)} className="ml-2 font-bold">
             ×

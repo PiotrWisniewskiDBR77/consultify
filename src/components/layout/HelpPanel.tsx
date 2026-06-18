@@ -346,7 +346,7 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onClick, onDismis
           className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:bg-navy-800 dark:hover:bg-gray-700 rounded transition-all"
           title={t('help.panel.dismiss')}
         >
-          <XCircle className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500" />
+          <XCircle className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-danger-500" />
         </button>
       )}
     </div>

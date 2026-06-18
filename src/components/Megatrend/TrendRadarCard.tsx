@@ -137,7 +137,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
           <span>Loading radar data…</span>
         </div>
       )}
-      {error && <p className="text-rose-600 dark:text-rose-400">Error: {error}</p>}
+      {error && <p className="text-danger-600 dark:text-danger-400">Error: {error}</p>}
 
       <div className="relative mx-auto" style={{ width: size, height: size }}>
         {/* Base radar grid – dummy max values just to draw the web */}

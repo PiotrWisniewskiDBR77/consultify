@@ -31,7 +31,7 @@ export const TrialBanner: React.FC = () => {
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Trial Plan</span>
           <span
             className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-              lowDays ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
+              lowDays ? 'bg-danger-100 text-danger-700' : 'bg-blue-100 text-blue-700'
             }`}
           >
             {daysRemaining} Days Left

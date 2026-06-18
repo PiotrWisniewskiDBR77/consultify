@@ -545,7 +545,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
             <button
               onClick={handleLogout}
-              className="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 flex items-center gap-2 rounded-lg transition-colors"
+              className="w-full text-left px-3 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 flex items-center gap-2 rounded-lg transition-colors"
             >
               <LogOut size={16} />
               {t('sidebar.logOut', 'Log Out')}

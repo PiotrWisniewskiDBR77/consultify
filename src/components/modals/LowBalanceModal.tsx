@@ -29,7 +29,7 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* Header */}
         <div
-          className={`p-6 ${isZeroBalance ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-amber-500 to-amber-500'}`}
+          className={`p-6 ${isZeroBalance ? 'bg-gradient-to-r from-danger-500 to-amber-500' : 'bg-gradient-to-r from-amber-500 to-amber-500'}`}
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">

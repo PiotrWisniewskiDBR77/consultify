@@ -180,10 +180,10 @@ export const AIAnalyticsDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-rose-700">
+      <div className="bg-danger-50 border border-danger-200 rounded-lg p-4 text-danger-700">
         <AlertTriangle className="w-5 h-5 inline mr-2" />
         {error}
-        <button onClick={loadData} className="ml-4 text-rose-600 underline">
+        <button onClick={loadData} className="ml-4 text-danger-600 underline">
           Retry
         </button>
       </div>
@@ -361,14 +361,14 @@ export const AIAnalyticsDashboard: React.FC = () => {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Dead-Letter Rate
             </span>
-            <AlertTriangle className="w-5 h-5 text-rose-500" />
+            <AlertTriangle className="w-5 h-5 text-danger-500" />
           </div>
           <div className="text-3xl font-bold text-gray-900 dark:text-white">
             {data.deadLetter.dead_letter_rate}%
           </div>
           <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-rose-500 rounded-full"
+              className="h-full bg-danger-500 rounded-full"
               style={{ width: `${Math.min(data.deadLetter.dead_letter_rate, 100)}%` }}
             ></div>
           </div>
@@ -451,7 +451,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center">
-              <XCircle className="w-4 h-4 text-rose-500 mr-1" />
+              <XCircle className="w-4 h-4 text-danger-500 mr-1" />
               <span className="text-gray-600 dark:text-gray-400">
                 {data.actions.failed_count} failed
               </span>
@@ -494,10 +494,10 @@ export const AIAnalyticsDashboard: React.FC = () => {
                       {pb.name}
                     </td>
                     <td className="py-3 px-4 text-sm text-right text-green-600">{pb.completed}</td>
-                    <td className="py-3 px-4 text-sm text-right text-rose-600">{pb.failed}</td>
+                    <td className="py-3 px-4 text-sm text-right text-danger-600">{pb.failed}</td>
                     <td className="py-3 px-4 text-sm text-right">
                       <span
-                        className={`px-2 py-1 rounded ${pb.rate >= 80 ? 'bg-green-100 text-green-700' : pb.rate >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-rose-100 text-rose-700'}`}
+                        className={`px-2 py-1 rounded ${pb.rate >= 80 ? 'bg-green-100 text-green-700' : pb.rate >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-danger-100 text-danger-700'}`}
                       >
                         {pb.rate}%
                       </span>
@@ -530,7 +530,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
               <div className="text-sm text-gray-500 dark:text-gray-400">Min (mins)</div>
             </div>
             <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="text-3xl font-bold text-rose-600">
+              <div className="text-3xl font-bold text-danger-600">
                 {data.timeToResolution.max_resolution_mins?.toFixed(1) || '-'}
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400">Max (mins)</div>

@@ -169,7 +169,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
                       threshold === 100
-                        ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400'
+                        ? 'bg-danger-100 dark:bg-danger-500/20 text-danger-600 dark:text-danger-400'
                         : threshold === 90
                           ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
                           : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
@@ -217,7 +217,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
                       threshold === 100
-                        ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400'
+                        ? 'bg-danger-100 dark:bg-danger-500/20 text-danger-600 dark:text-danger-400'
                         : threshold === 90
                           ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
                           : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'

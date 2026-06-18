@@ -106,7 +106,7 @@ export const TaskDropdown = () => {
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
       case 'high':
-        return 'text-rose-500 bg-rose-50 dark:bg-rose-500/10';
+        return 'text-danger-500 bg-danger-50 dark:bg-danger-500/10';
       case 'medium':
         return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
       case 'low':
@@ -147,7 +147,7 @@ export const TaskDropdown = () => {
         {stats.today > 0 && (
           <span
             className={`absolute top-0.5 right-0.5 min-w-[16px] h-4 text-slate-900 dark:text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm
-                        ${stats.overdue > 0 ? 'bg-rose-500' : 'bg-blue-500'}`}
+                        ${stats.overdue > 0 ? 'bg-danger-500' : 'bg-blue-500'}`}
           >
             {stats.today > 99 ? '99+' : stats.today}
           </span>
@@ -183,7 +183,7 @@ export const TaskDropdown = () => {
                 {t('taskDropdown.overdue', 'Overdue')}
               </div>
               <div
-                className={`text-sm font-bold ${stats.overdue > 0 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}`}
+                className={`text-sm font-bold ${stats.overdue > 0 ? 'text-danger-500' : 'text-slate-700 dark:text-slate-300'}`}
               >
                 {stats.overdue}
               </div>
@@ -241,7 +241,7 @@ export const TaskDropdown = () => {
                                 task.status === TaskStatus.IN_PROGRESS
                                   ? 'border-blue-500 text-blue-500 bg-blue-500'
                                   : task.status === TaskStatus.BLOCKED
-                                    ? 'border-rose-500 text-rose-500 bg-rose-500'
+                                    ? 'border-danger-500 text-danger-500 bg-danger-500'
                                     : 'border-slate-500 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800/300'
                               }`}
                             >
@@ -265,7 +265,7 @@ export const TaskDropdown = () => {
                           <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {task.dueDate && (
                               <div
-                                className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== TaskStatus.DONE ? 'text-rose-500 font-medium' : ''}`}
+                                className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== TaskStatus.DONE ? 'text-danger-500 font-medium' : ''}`}
                               >
                                 <Calendar size={12} />
                                 {formatDueDate(task.dueDate)}

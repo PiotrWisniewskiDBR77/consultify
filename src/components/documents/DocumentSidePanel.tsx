@@ -160,7 +160,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
       return <FileImage size={16} className="text-pink-500" />;
     if (['xls', 'xlsx', 'csv'].includes(type))
       return <FileSpreadsheet size={16} className="text-green-500" />;
-    if (['pdf'].includes(type)) return <FileText size={16} className="text-rose-500" />;
+    if (['pdf'].includes(type)) return <FileText size={16} className="text-danger-500" />;
     return <File size={16} className="text-slate-600 dark:text-slate-500" />;
   };
 
@@ -206,7 +206,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
     if (normalized === 'unreadable' || normalized === 'failed') {
       return {
         label: t('documents.unreadable', 'Unreadable'),
-        className: 'bg-rose-500/10 text-rose-500',
+        className: 'bg-danger-500/10 text-danger-500',
       };
     }
     return { label: normalized || 'unknown', className: 'bg-slate-500/10 text-slate-500' };
@@ -281,7 +281,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
           </h2>
           <button
             onClick={closeSidePanel}
-            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-danger-500 dark:text-slate-400 dark:hover:text-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
           >
             <X size={18} />
           </button>
@@ -395,13 +395,13 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                         )}
                       </div>
                       {doc.processingError && (
-                        <p className="mt-1 text-[10px] text-rose-500">{doc.processingError}</p>
+                        <p className="mt-1 text-[10px] text-danger-500">{doc.processingError}</p>
                       )}
                       {getProcessingHint(doc) && (
                         <p
                           className={`mt-1 text-[10px] ${
                             doc.processingState?.attentionRequired
-                              ? 'text-rose-500'
+                              ? 'text-danger-500'
                               : 'text-amber-600 dark:text-amber-400'
                           }`}
                         >
@@ -409,7 +409,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                         </p>
                       )}
                       {doc.processingState?.attentionRequired && (
-                        <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50/80 p-2 text-[10px] text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/20 dark:text-rose-300">
+                        <div className="mt-2 rounded-lg border border-danger-200 bg-danger-50/80 p-2 text-[10px] text-danger-700 dark:border-danger-500/30 dark:bg-danger-900/20 dark:text-danger-300">
                           <div className="flex items-start gap-1.5">
                             <ShieldAlert size={12} className="mt-0.5 shrink-0" />
                             <div className="space-y-1">
@@ -432,7 +432,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                               </p>
                               {doc.processingState?.attentionReadBack?.status ===
                                 'visible_to_user' && (
-                                <p className="text-rose-600/80 dark:text-rose-200/80">
+                                <p className="text-danger-600/80 dark:text-danger-200/80">
                                   {t(
                                     'documents.processingAttentionReadBack',
                                     'Attention visible since {{time}}.',
@@ -460,7 +460,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                                   )}
                                 </p>
                               ) : (
-                                <p className="text-rose-600/80 dark:text-rose-200/80">
+                                <p className="text-danger-600/80 dark:text-danger-200/80">
                                   {t(
                                     'documents.processingRecoveryAuditMissing',
                                     'No audited recovery action found yet.'
@@ -484,7 +484,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                                   type="button"
                                   onClick={() => void handleAcknowledgeProcessingAttention(doc.id)}
                                   disabled={acknowledgingDocId === doc.id}
-                                  className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-1 font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50"
+                                  className="inline-flex items-center gap-1 rounded-md border border-danger-200 bg-white px-2 py-1 font-semibold text-danger-700 hover:bg-danger-50 disabled:opacity-60 dark:border-danger-500/30 dark:bg-danger-900/30 dark:text-danger-200 dark:hover:bg-danger-900/50"
                                 >
                                   {acknowledgingDocId === doc.id && (
                                     <Loader2 size={10} className="animate-spin" />
@@ -499,7 +499,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                                 <button
                                   type="button"
                                   onClick={handleOpenAdminOperations}
-                                  className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-1 font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50"
+                                  className="inline-flex items-center gap-1 rounded-md border border-danger-200 bg-white px-2 py-1 font-semibold text-danger-700 hover:bg-danger-50 dark:border-danger-500/30 dark:bg-danger-900/30 dark:text-danger-200 dark:hover:bg-danger-900/50"
                                 >
                                   {t('documents.openAdminOperations', 'Open Admin Operations')}
                                   <ArrowRight size={10} />
@@ -534,7 +534,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                     )}
                     <button
                       onClick={() => handleDelete(doc.id)}
-                      className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                       title={t('documents.delete')}
                     >
                       <Trash2 size={12} />

@@ -82,7 +82,7 @@ const TensionBadge: React.FC<{ level: 'none' | 'low' | 'medium' | 'high' }> = ({
     none: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
     low: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    high: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    high: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
   };
 
   const labels = {
@@ -195,14 +195,14 @@ const AxisView: React.FC<{
             <>
               {/* Tension Summary for high tension */}
               {tension === 'high' && (
-                <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg">
+                <div className="mb-4 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg">
                   <div className="flex items-start gap-2">
-                    <Scale size={16} className="text-rose-600 dark:text-rose-400 mt-0.5" />
+                    <Scale size={16} className="text-danger-600 dark:text-danger-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
+                      <p className="text-sm font-medium text-danger-700 dark:text-danger-300">
                         Wykryto znaczące różnice w perspektywach
                       </p>
-                      <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+                      <p className="text-xs text-danger-600 dark:text-danger-400 mt-1">
                         To może wskazywać na ważny obszar do dyskusji zespołowej.
                       </p>
                     </div>

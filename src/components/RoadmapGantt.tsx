@@ -107,17 +107,17 @@ const AXIS_COLORS: Record<string, string> = {
   culture: 'bg-amber-500',
   aiMaturity: 'bg-emerald-500',
   businessModels: 'bg-indigo-500',
-  cybersecurity: 'bg-rose-500',
+  cybersecurity: 'bg-danger-500',
 };
 
 // Status colors
 const STATUS_COLORS: Record<string, string> = {
   approved: 'border-l-4 border-l-green-500',
   active: 'border-l-4 border-l-primary-500',
-  on_hold: 'border-l-4 border-l-rose-500 animate-pulse',
+  on_hold: 'border-l-4 border-l-danger-500 animate-pulse',
   APPROVED: 'border-l-4 border-l-green-500',
   EXECUTING: 'border-l-4 border-l-primary-500',
-  BLOCKED: 'border-l-4 border-l-rose-500 animate-pulse',
+  BLOCKED: 'border-l-4 border-l-danger-500 animate-pulse',
 };
 
 // ============================================
@@ -686,7 +686,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               onClick={() => setShowCriticalPath((v) => !v)}
               className={`p-1.5 rounded-lg transition-colors ${
                 showCriticalPath
-                  ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                  ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
                   : 'text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
               }`}
               title={showCriticalPath ? 'Hide critical path' : 'Show critical path'}
@@ -864,7 +864,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                   key={init.id}
                   className={`flex border-b border-slate-200 dark:border-navy-700 group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
                     isLinking ? 'bg-primary-50 dark:bg-primary-900/10' : ''
-                  } ${isCritical ? 'bg-rose-50/50 dark:bg-rose-900/5' : ''}`}
+                  } ${isCritical ? 'bg-danger-50/50 dark:bg-danger-900/5' : ''}`}
                 >
                   {/* Info Column */}
                   <div
@@ -880,7 +880,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             size={12}
                             className={
                               warnings.some((w) => w.severity === 'error')
-                                ? 'text-rose-500'
+                                ? 'text-danger-500'
                                 : 'text-amber-500'
                             }
                           />
@@ -889,7 +889,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                       {/* D5.1: Critical path indicator */}
                       {isCritical && (
                         <div className="shrink-0" title="On critical path">
-                          <Route size={12} className="text-rose-500" />
+                          <Route size={12} className="text-danger-500" />
                         </div>
                       )}
                       <div
@@ -947,7 +947,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                       <span
                         className={`px-1.5 py-0.5 rounded ${
                           init.priority === 'high' || init.priority === 'critical'
-                            ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                            ? 'bg-danger-100 text-danger-600 dark:bg-danger-900/30 dark:text-danger-400'
                             : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                         }`}
                       >
@@ -962,7 +962,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                                 : init.readinessPercent >= 50
                                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                                  : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                                  : 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300'
                             }`}
                             title={
                               init.missingReadiness?.length
@@ -978,10 +978,10 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                         <>
                           <span>•</span>
                           <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300"
                             title="Conflicts detected"
                           >
-                            <AlertTriangle size={10} className="text-rose-500" />
+                            <AlertTriangle size={10} className="text-danger-500" />
                             {init.conflictCount}
                           </span>
                         </>
@@ -1034,7 +1034,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                       onHoverEnd={() => setHoveredInitiative(null)}
                       className={`rounded-lg shadow-md cursor-grab active:cursor-grabbing flex items-center text-white ${barColor} ${statusBorder} text-xs font-medium overflow-hidden ${
                         isActive ? 'ring-2 ring-white ring-offset-2' : ''
-                      } ${isCritical ? 'ring-2 ring-rose-500 ring-offset-1' : ''} ${
+                      } ${isCritical ? 'ring-2 ring-danger-500 ring-offset-1' : ''} ${
                         hasWarning ? 'ring-1 ring-amber-400' : ''
                       }`}
                       whileHover={{ scale: 1.01 }}
@@ -1107,7 +1107,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
           <>
             <div className="w-px h-3 bg-slate-300 dark:bg-navy-600" />
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded ring-2 ring-rose-500 bg-rose-500/20" />
+              <div className="w-3 h-3 rounded ring-2 ring-danger-500 bg-danger-500/20" />
               <span>Critical Path</span>
             </div>
           </>

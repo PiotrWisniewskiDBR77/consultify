@@ -216,9 +216,9 @@ export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
   },
   [InitiativeStatus.BLOCKED]: {
     label: 'Blocked',
-    color: 'text-rose-500',
-    bgColor: 'bg-rose-500/10',
-    dotColor: 'bg-rose-400',
+    color: 'text-danger-500',
+    bgColor: 'bg-danger-500/10',
+    dotColor: 'bg-danger-400',
     description: 'Blocked by an issue',
   },
   [InitiativeStatus.DONE]: {
