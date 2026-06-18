@@ -25,6 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import type {
@@ -784,6 +785,7 @@ function WorkCanvasMarkdownDocumentPanel({
   onCanvasSelectionChange,
   onClose,
 }: WorkCanvasDocumentPanelProps) {
+  const { t } = useTranslation();
   const [mode, setMode] = React.useState<CanvasMode>(() => getInitialCanvasMode());
   const [documentState, setDocumentState] = React.useState<CanvasDocumentState>(() =>
     createDocumentState(
@@ -910,10 +912,14 @@ function WorkCanvasMarkdownDocumentPanel({
       ) {
         expandSourceNoticeShownRef.current = true;
         const sourceTitle = String(provenance.sourceTitle || '').trim();
-        setStatusFeedback(sourceTitle ? `Źródło: notatka „${sourceTitle}”` : 'Źródło: notatka');
+        setStatusFeedback(
+          sourceTitle
+            ? `${t('canvas.panel.source.note', 'Source: note')} „${sourceTitle}”`
+            : t('canvas.panel.source.note', 'Source: note')
+        );
       }
     },
-    [setStatusFeedback]
+    [setStatusFeedback, t]
   );
 
   React.useEffect(() => {
@@ -1893,7 +1899,7 @@ function WorkCanvasMarkdownDocumentPanel({
   const applyBuiltTemplate = () => {
     const name = templateBuilderName.trim();
     if (!name) {
-      setAlertFeedback('Podaj nazwę template’u.');
+      setAlertFeedback(t('canvas.panel.templates.nameRequired', 'Provide a template name.'));
       return;
     }
     const goal = templateBuilderGoal.trim() || 'Use this template to guide Teresa and your team.';
@@ -2369,7 +2375,7 @@ function WorkCanvasMarkdownDocumentPanel({
       return;
     }
     setIsRevokingShare(true);
-    setStatusFeedback('Cofanie udostępniania... / Revoking share link...');
+    setStatusFeedback(t('canvas.panel.share.revoking', 'Revoking share link...'));
     try {
       const result = await Api.workCanvasRevokeShare(draftId);
       setDocumentState((current) =>
@@ -2380,7 +2386,10 @@ function WorkCanvasMarkdownDocumentPanel({
       );
       setShareInfo(null);
       setStatusFeedback(
-        'Udostępnianie cofnięte — link publiczny przestał działać. / Share revoked — the public link no longer works.'
+        t(
+          'canvas.panel.share.revoked',
+          'Share revoked — the public link no longer works.'
+        )
       );
     } catch (error) {
       setCanvasErrorFeedback(error, 'Failed to revoke Canvas share link.');
@@ -3039,60 +3048,81 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Najczęstsze działania
+                    {t('canvas.panel.common.title', 'Most common actions')}
                   </div>
                   {[
                     {
-                      title: 'Rozwiń zaznaczoną myśl',
-                      detail:
-                        'Użyj AI, aby rozwinąć aktualnie zaznaczony fragment w bardziej kompletny tekst.',
-                      actionLabel: 'Rozwiń',
+                      title: t('canvas.panel.common.expandTitle', 'Expand selected idea'),
+                      detail: t(
+                        'canvas.panel.common.expandDetail',
+                        'Use AI to expand the currently selected fragment into more complete text.'
+                      ),
+                      actionLabel: t('canvas.panel.common.expandAction', 'Expand'),
                       onClick: () => applySelectionMenuAction('expand'),
                       disabled: !canvasSelection?.selectedText?.trim(),
                     },
                     {
-                      title: 'Skróć lub przepisz zaznaczenie',
-                      detail:
-                        'Szybko skróć, przepisz lub popraw ton wybranego fragmentu bez ręcznego przepisywania.',
-                      actionLabel: 'Rewrite',
+                      title: t('canvas.panel.common.rewriteTitle', 'Shorten or rewrite the selection'),
+                      detail: t(
+                        'canvas.panel.common.rewriteDetail',
+                        'Quickly shorten, rewrite, or adjust the tone of the chosen fragment without rewriting by hand.'
+                      ),
+                      actionLabel: t('canvas.panel.common.rewriteAction', 'Rewrite'),
                       onClick: () => applySelectionMenuAction('rewrite'),
                       disabled: !canvasSelection?.selectedText?.trim(),
                     },
                     {
-                      title: 'Dodaj nowy element do canvas',
-                      detail: 'Wybierz typ elementu i opisz Teresie co ma dodać do dokumentu.',
-                      actionLabel: 'Dodaj element',
+                      title: t('canvas.panel.common.addTitle', 'Add a new element to the canvas'),
+                      detail: t(
+                        'canvas.panel.common.addDetail',
+                        'Choose an element type and describe to Teresa what to add to the document.'
+                      ),
+                      actionLabel: t('canvas.panel.common.addAction', 'Add element'),
                       onClick: () => setQuickAddElement('text'),
                     },
                     {
-                      title: 'Zbuduj template pod konkretny cel',
-                      detail:
-                        'Utwórz własny szablon pracy z nazwą, celem i sekcjami dopasowanymi do zadania.',
-                      actionLabel: 'Nowy template',
+                      title: t('canvas.panel.hints.templateTitle', 'Build a template for a specific goal'),
+                      detail: t(
+                        'canvas.panel.hints.templateDetail',
+                        'Create your own work template with a name, goal, and sections tailored to the task.'
+                      ),
+                      actionLabel: t('canvas.panel.hints.templateAction', 'New template'),
                       onClick: () => setIsTemplateBuilderOpen((open) => !open),
                     },
                     {
-                      title: 'Przełącz widok Rich/Dock/MD',
-                      detail: 'Rich = edytor z toolbarem, Dock = podgląd, MD = surowy markdown.',
+                      title: t('canvas.panel.hints.viewTitle', 'Switch Rich/Dock/MD view'),
+                      detail: t(
+                        'canvas.panel.hints.viewDetail',
+                        'Rich = editor with toolbar, Dock = preview, MD = raw markdown.'
+                      ),
                       actionLabel: mode === 'rich' ? 'Dock' : mode === 'document' ? 'MD' : 'Rich',
                       onClick: () =>
                         setMode(mode === 'rich' ? 'document' : mode === 'document' ? 'md' : 'rich'),
                     },
                     {
-                      title: 'Zapisz i eksportuj wersję roboczą',
-                      detail:
-                        'Zapisz zmiany oraz pobierz dokument jako Markdown lub CSV do dalszej pracy.',
-                      actionLabel: documentState.saveState === 'unsaved' ? 'Zapisz' : 'Pobierz MD',
+                      title: t('canvas.panel.hints.saveTitle', 'Save and export the draft'),
+                      detail: t(
+                        'canvas.panel.hints.saveDetail',
+                        'Save changes and download the document as Markdown or CSV for further work.'
+                      ),
+                      actionLabel:
+                        documentState.saveState === 'unsaved'
+                          ? t('canvas.panel.hints.saveActionSave', 'Save')
+                          : t('canvas.panel.hints.saveActionDownload', 'Download MD'),
                       onClick:
                         documentState.saveState === 'unsaved'
                           ? () => void persistDraft()
                           : () => void exportDocument('markdown'),
                     },
                     {
-                      title: 'Pracuj na danych z pliku',
-                      detail:
-                        'Wgraj CSV/JSON/XLSX i generuj tabele, wykresy lub raporty w tym samym canvas.',
-                      actionLabel: pendingDataset ? 'Użyj datasetu' : 'Wgraj plik',
+                      title: t('canvas.panel.hints.dataTitle', 'Work on data from a file'),
+                      detail: t(
+                        'canvas.panel.hints.dataDetail',
+                        'Upload CSV/JSON/XLSX and generate tables, charts, or reports in the same canvas.'
+                      ),
+                      actionLabel: pendingDataset
+                        ? t('canvas.panel.hints.dataActionUse', 'Use dataset')
+                        : t('canvas.panel.hints.dataActionUpload', 'Upload file'),
                       onClick: pendingDataset
                         ? () => setQuickAddElement('table')
                         : triggerDatasetUpload,
@@ -3126,17 +3156,17 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Dodaj element
+                    {t('canvas.panel.addElement.title', 'Add element')}
                   </div>
                   <div className="grid grid-cols-3 gap-1.5 px-2.5">
                     {(
                       [
-                        ['text', 'Tekst'],
-                        ['heading', 'Nagłówek'],
-                        ['table', 'Tabela'],
-                        ['diagram', 'Diagram'],
-                        ['list', 'Lista'],
-                        ['summary', 'Podsumowanie'],
+                        ['text', t('canvas.panel.addElement.text', 'Text')],
+                        ['heading', t('canvas.panel.addElement.heading', 'Heading')],
+                        ['table', t('canvas.panel.addElement.table', 'Table')],
+                        ['diagram', t('canvas.panel.addElement.diagram', 'Diagram')],
+                        ['list', t('canvas.panel.addElement.list', 'List')],
+                        ['summary', t('canvas.panel.addElement.summary', 'Summary')],
                       ] as Array<[CanvasQuickAddElement, string]>
                     ).map(([id, label]) => (
                       <button
@@ -3157,7 +3187,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     <textarea
                       value={quickAddPrompt}
                       onChange={(event) => setQuickAddPrompt(event.target.value)}
-                      placeholder="Opisz Teresie co dodać..."
+                      placeholder={t('canvas.panel.addElement.promptPlaceholder', 'Describe to Teresa what to add...')}
                       aria-label="Element instruction for Teresa"
                       className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                     />
@@ -3166,19 +3196,19 @@ function WorkCanvasMarkdownDocumentPanel({
                       onClick={insertQuickAddElement}
                       className="mt-2 w-full rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
                     >
-                      Dodaj do canvas
+                      {t('canvas.panel.addElement.submit', 'Add to canvas')}
                     </button>
                   </div>
                 </div>
 
                 <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    AI na zaznaczeniu
+                    {t('canvas.panel.selection.title', 'AI on selection')}
                   </div>
                   <div className="px-2.5 text-[11px] text-slate-500 dark:text-slate-400">
                     {canvasSelection?.selectedText?.trim()
-                      ? `Zaznaczenie: ${canvasSelection.selectedText.slice(0, 120)}${canvasSelection.selectedText.length > 120 ? '…' : ''}`
-                      : 'Zaznacz fragment tekstu, aby użyć akcji AI.'}
+                      ? `${t('canvas.panel.selection.selected', 'Selection')}: ${canvasSelection.selectedText.slice(0, 120)}${canvasSelection.selectedText.length > 120 ? '…' : ''}`
+                      : t('canvas.panel.selection.empty', 'Select a fragment of text to use AI actions.')}
                   </div>
                   <div className="grid grid-cols-2 gap-1.5 px-2.5">
                     <button
@@ -3186,28 +3216,28 @@ function WorkCanvasMarkdownDocumentPanel({
                       onClick={() => applySelectionMenuAction('expand')}
                       className="rounded-lg bg-slate-100 px-2 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/15"
                     >
-                      Rozwiń myśl
+                      {t('canvas.panel.selection.expand', 'Expand idea')}
                     </button>
                     <button
                       type="button"
                       onClick={() => applySelectionMenuAction('shorten')}
                       className="rounded-lg bg-slate-100 px-2 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/15"
                     >
-                      Skróć
+                      {t('canvas.panel.selection.shorten', 'Shorten')}
                     </button>
                     <button
                       type="button"
                       onClick={() => applySelectionMenuAction('rewrite')}
                       className="rounded-lg bg-slate-100 px-2 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/15"
                     >
-                      Rewrite
+                      {t('canvas.panel.selection.rewrite', 'Rewrite')}
                     </button>
                     <button
                       type="button"
                       onClick={() => applySelectionMenuAction('suggest')}
                       className="rounded-lg bg-slate-100 px-2 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/15"
                     >
-                      Daj sugestie
+                      {t('canvas.panel.selection.suggest', 'Suggest')}
                     </button>
                   </div>
                   <div className="px-2.5">
@@ -3215,7 +3245,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       value={selectionAiPrompt}
                       onChange={(event) => setSelectionAiPrompt(event.target.value)}
                       aria-label="Selection AI instruction"
-                      placeholder="Instrukcja dla Teresy na zaznaczonym fragmencie..."
+                      placeholder={t('canvas.panel.selection.promptPlaceholder', 'Instruction for Teresa on the selected fragment...')}
                       className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                     />
                     <div className="mt-2 flex gap-2">
@@ -3224,14 +3254,14 @@ function WorkCanvasMarkdownDocumentPanel({
                         onClick={() => void previewSelectionMenuPrompt()}
                         className="flex-1 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
                       >
-                        Podgląd AI edit
+                        {t('canvas.panel.selection.preview', 'Preview AI edit')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectionAiPrompt('')}
                         className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                       >
-                        Wyczyść
+                        {t('canvas.panel.selection.clear', 'Clear')}
                       </button>
                     </div>
                   </div>
@@ -3239,14 +3269,14 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Ręczna edycja
+                    {t('canvas.panel.manualEdit.title', 'Manual editing')}
                   </div>
                   <button
                     type="button"
                     onClick={() => setMode('md')}
                     className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
-                    <span>Edytuj Markdown ręcznie</span>
+                    <span>{t('canvas.panel.manualEdit.editMarkdown', 'Edit Markdown manually')}</span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">MD</span>
                   </button>
                   <button
@@ -3254,7 +3284,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     onClick={() => setMode('document')}
                     className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
-                    <span>Wróć do widoku dokumentu</span>
+                    <span>{t('canvas.panel.manualEdit.backToDocument', 'Back to document view')}</span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">Dock</span>
                   </button>
                 </div>
@@ -3262,14 +3292,14 @@ function WorkCanvasMarkdownDocumentPanel({
                 <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="flex items-center justify-between gap-2 px-2.5 pb-1">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                      Szablony startowe
+                      {t('canvas.panel.templates.title', 'Starter templates')}
                     </div>
                     <button
                       type="button"
                       onClick={() => setIsTemplateBuilderOpen((open) => !open)}
                       className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                     >
-                      + Nowy template
+                      + {t('canvas.panel.templates.new', 'New template')}
                     </button>
                   </div>
                   {isTemplateBuilderOpen ? (
@@ -3277,21 +3307,21 @@ function WorkCanvasMarkdownDocumentPanel({
                       <input
                         value={templateBuilderName}
                         onChange={(event) => setTemplateBuilderName(event.target.value)}
-                        placeholder="Nazwa template'u"
+                        placeholder={t('canvas.panel.templates.namePlaceholder', 'Template name')}
                         aria-label="Template name"
                         className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                       />
                       <input
                         value={templateBuilderGoal}
                         onChange={(event) => setTemplateBuilderGoal(event.target.value)}
-                        placeholder="Cel template'u w jednym zdaniu"
+                        placeholder={t('canvas.panel.templates.goalPlaceholder', 'Template goal in one sentence')}
                         aria-label="Template goal"
                         className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                       />
                       <input
                         value={templateBuilderSections}
                         onChange={(event) => setTemplateBuilderSections(event.target.value)}
-                        placeholder="Sekcje (po przecinku)"
+                        placeholder={t('canvas.panel.templates.sectionsPlaceholder', 'Sections (comma-separated)')}
                         aria-label="Template sections"
                         className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                       />
@@ -3301,14 +3331,14 @@ function WorkCanvasMarkdownDocumentPanel({
                           onClick={applyBuiltTemplate}
                           className="flex-1 rounded-lg bg-primary-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
                         >
-                          Zastosuj template
+                          {t('canvas.panel.templates.apply', 'Apply template')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setIsTemplateBuilderOpen(false)}
                           className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                         >
-                          Zamknij
+                          {t('canvas.panel.templates.close', 'Close')}
                         </button>
                       </div>
                     </div>
@@ -3340,7 +3370,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Akcje workspace
+                    {t('canvas.panel.workspaceActions.title', 'Workspace actions')}
                   </div>
                   {menuWorkspaceActionIds.map((actionId) => (
                     <div key={actionId} className="px-1">
@@ -3451,7 +3481,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left font-semibold text-crimson-700 transition-colors hover:bg-crimson-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-crimson-300 dark:hover:bg-crimson-900/20"
                   >
                     <FolderInput size={14} />
-                    <span>{isSavingToOutputs ? 'Saving…' : 'Save to Outputs'}</span>
+                    <span>{isSavingToOutputs ? t('canvas.panel.export.saving', 'Saving…') : t('canvas.panel.export.saveToOutputs', 'Save to Outputs')}</span>
                   </button>
                   <button
                     type="button"
@@ -3585,9 +3615,9 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                     aria-expanded={isMdPropertiesOpen}
                   >
-                    <span className="font-medium">Właściwości pliku MD</span>
+                    <span className="font-medium">{t('canvas.panel.mdProps.title', 'MD file properties')}</span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {isMdPropertiesOpen ? 'Ukryj' : 'Pokaż'}
+                      {isMdPropertiesOpen ? t('canvas.panel.mdProps.hide', 'Hide') : t('canvas.panel.mdProps.show', 'Show')}
                     </span>
                   </button>
                   {isMdPropertiesOpen ? (
@@ -3634,7 +3664,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-slate-600 dark:border-white/10 dark:text-slate-300">
                   <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Możliwości i workflow
+                    {t('canvas.panel.capabilities.title', 'Capabilities and workflow')}
                   </div>
                   <div className="flex items-start justify-between gap-3 px-2.5">
                     <span>Capability</span>
@@ -4110,7 +4140,7 @@ function WorkCanvasMarkdownDocumentPanel({
           data-testid="canvas-share-strip"
         >
           <Share2 size={12} className="shrink-0 text-slate-400" />
-          <span className="font-semibold">Link publiczny / Public link:</span>
+          <span className="font-semibold">{t('canvas.panel.share.publicLink', 'Public link')}:</span>
           <a
             href={absoluteShareUrl(shareInfo)}
             target="_blank"
@@ -4124,26 +4154,26 @@ function WorkCanvasMarkdownDocumentPanel({
             type="button"
             onClick={() => void copyShareLink()}
             className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 shadow-sm hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
-            title="Kopiuj link / Copy link"
+            title={t('canvas.panel.share.copyLinkTitle', 'Copy link')}
             data-testid="canvas-share-copy"
           >
             <Copy size={11} />
-            Kopiuj
+            {t('canvas.panel.share.copy', 'Copy')}
           </button>
           <button
             type="button"
             onClick={() => void revokeShareAction()}
             disabled={isRevokingShare}
             className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-semibold text-danger-600 shadow-sm hover:text-danger-700 disabled:opacity-60 dark:bg-white/10 dark:text-danger-400 dark:hover:text-danger-300"
-            title="Cofnij udostępnianie / Revoke share"
+            title={t('canvas.panel.share.revokeTitle', 'Revoke share')}
             data-testid="canvas-share-revoke"
           >
             {isRevokingShare ? <RefreshCw size={11} className="animate-spin" /> : <X size={11} />}
-            Cofnij udostępnianie
+            {t('canvas.panel.share.revoke', 'Revoke share')}
           </button>
           {shareInfo.expiresAt ? (
             <span className="text-[10px] text-slate-400 dark:text-slate-500">
-              wygasa / expires {new Date(shareInfo.expiresAt).toLocaleDateString()}
+              {t('canvas.panel.share.expires', 'expires')} {new Date(shareInfo.expiresAt).toLocaleDateString()}
             </span>
           ) : null}
         </div>
