@@ -46,7 +46,7 @@ const DOT_TONE_CLASS: Record<Exclude<TopBarChipDotTone, null>, string> = {
   neutral: 'bg-slate-400',
   success: 'bg-emerald-500',
   warning: 'bg-amber-500',
-  danger: 'bg-rose-500',
+  danger: 'bg-danger-500',
   info: 'bg-sky-500',
 };
 

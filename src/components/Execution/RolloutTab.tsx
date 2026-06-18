@@ -1360,6 +1360,7 @@ const KpiSparkline: React.FC<{ points: number[]; target: number }> = ({ points, 
   );
 };
 
+// §27-exempt: document-layout — renders JSX children with styled badges/signals, not a flat data array
 const RegisterTable: React.FC<{ headers: string[]; children: React.ReactNode }> = ({
   headers,
   children,

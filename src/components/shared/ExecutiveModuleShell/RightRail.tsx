@@ -63,7 +63,7 @@ const ICON_STRIP_WIDTH = 56;
 const DOT_TONE_CLASS: Record<NonNullable<RightRailToolDescriptor['dotTone']>, string> = {
   success: 'bg-emerald-500',
   warning: 'bg-amber-500',
-  danger: 'bg-rose-500',
+  danger: 'bg-danger-500',
   info: 'bg-sky-500',
 };
 
@@ -101,7 +101,7 @@ const ToolIcon: React.FC<{
       ) : null}
       {badge !== undefined && badge !== null ? (
         <span
-          className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 text-[10px] leading-4 font-medium text-white bg-rose-500 rounded-full text-center"
+          className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 text-[10px] leading-4 font-medium text-white bg-danger-500 rounded-full text-center"
           aria-hidden="true"
         >
           {badge}

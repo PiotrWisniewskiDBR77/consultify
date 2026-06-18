@@ -217,6 +217,7 @@ const Section: React.FC<{
 
 /* ── Data table (glass) ─────────────────────────────────────────────────── */
 
+// §27-exempt: document-layout — report renderer accepts JSX node arrays (ALink, IssueTag, etc.)
 const DataTable: React.FC<{
   headers: string[];
   rows: React.ReactNode[][];
