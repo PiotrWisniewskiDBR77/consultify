@@ -492,7 +492,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
             disabled={!newComment.trim() || submitting}
             className={`p-2 rounded-lg transition-colors ${
               newComment.trim() && !submitting
-                ? 'bg-primary-600 text-white hover:bg-primary-500'
+                ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >

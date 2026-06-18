@@ -467,7 +467,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   <button
                     type="submit"
                     disabled={!allRequirementsMet || !passwordsMatch || savingPassword}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {savingPassword ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -751,7 +751,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                       <button
                         onClick={handleSaveRecovery}
                         disabled={savingRecovery}
-                        className="px-3 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                        className="px-3 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
                       >
                         {savingRecovery
                           ? t('common.saving', 'Saving...')
@@ -817,7 +817,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                       <button
                         onClick={handleSaveRecovery}
                         disabled={savingRecovery}
-                        className="px-3 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                        className="px-3 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
                       >
                         {savingRecovery
                           ? t('common.saving', 'Saving...')

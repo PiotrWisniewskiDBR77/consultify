@@ -154,7 +154,7 @@ export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: bo
           <button
             onClick={addAssumption}
             disabled={!assumptionDraft.trim()}
-            className="px-4 py-3 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+            className="px-4 py-3 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
             {isPolish ? 'Dodaj' : 'Add'}
           </button>

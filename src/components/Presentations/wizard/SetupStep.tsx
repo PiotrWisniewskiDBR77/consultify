@@ -279,7 +279,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
             onClick={() => onChange('visualsEnabled', !settings.visualsEnabled)}
             className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
               settings.visualsEnabled
-                ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-500'
+                ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] border-primary-600 hover:bg-navy-800'
                 : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-navy-600 hover:border-slate-300'
             }`}
           >
@@ -398,7 +398,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
         <button
           onClick={onNext}
           disabled={!canProceed}
-          className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-500 disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-xl hover:bg-navy-800 disabled:opacity-50"
         >
           <Sparkles size={16} /> {t('presentations.setup.generateOutline', 'Generate Outline')}
         </button>

@@ -675,7 +675,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(false)}
-                  className="h-8 px-3 rounded-full text-[11px] font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+                  className="h-8 px-3 rounded-full text-[11px] font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors"
                 >
                   {t('common.done', 'Done')}
                 </button>

@@ -228,7 +228,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
           </div>
           <button
             onClick={handleCreateNew}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium hover:bg-navy-800 transition-colors"
           >
             <Plus size={18} />
             {t('superadmin.emailTemplates.newTemplate')}

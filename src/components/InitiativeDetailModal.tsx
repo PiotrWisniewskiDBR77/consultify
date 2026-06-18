@@ -2614,7 +2614,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           ],
                         });
                       }}
-                      className="px-3 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                      className="px-3 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                     >
                       <Link2 size={14} /> {t('initiative.linkInitiative')}
                     </button>
@@ -2838,7 +2838,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         `Clone created: "${clone.name}"\n\nIn production, this would save as a new initiative.`
                       );
                     }}
-                    className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                    className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
                   >
                     <Copy size={16} /> {t('initiative.cloneAsTemplate')}
                   </button>

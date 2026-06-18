@@ -45,6 +45,7 @@ import {
   getNextStep,
 } from '../../utils/initiativeHelpers';
 import { PortfolioAiPanel } from './PortfolioAiPanel';
+import { SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
 /** Map raw initiative priority → PriorityChip level (canon §4.2 — dot carries the signal). */
 const PRIORITY_LEVEL: Record<string, PriorityLevel> = {
@@ -449,7 +450,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   key={initiative.id}
                   className={`group cursor-pointer transition-colors ${
                     selected
-                      ? 'bg-primary-500/8 dark:bg-primary-500/10 shadow-[inset_4px_0_0_0_var(--c-accent,theme(colors.primary.500))]'
+                      ? SELECTED_ROW_CLASS
                       : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]'
                   } ${terminal ? 'opacity-50' : ''}`}
                   onClick={() => onInitiativeClick(initiative)}

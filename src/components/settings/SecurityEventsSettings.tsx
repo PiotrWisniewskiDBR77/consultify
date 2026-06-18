@@ -363,7 +363,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             <button
               onClick={handleSaveAlertSettings}
               disabled={savingAlerts}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {savingAlerts ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

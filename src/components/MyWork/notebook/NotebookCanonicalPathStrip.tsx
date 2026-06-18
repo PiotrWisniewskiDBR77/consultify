@@ -35,19 +35,19 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
   onHandoffInitiatives,
 }) => {
   return (
-    <div className="mt-3 rounded-2xl border border-indigo-200/70 bg-indigo-50/80 px-3 py-3 dark:border-indigo-500/20 dark:bg-indigo-500/10">
+    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-white/[0.07] dark:bg-white/[0.04]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-700 dark:text-slate-300">
             {isPolish ? 'Kanoniczna ścieżka notatki' : 'Canonical notebook path'}
           </div>
-          <div className="mt-1 text-[11px] text-indigo-700/80 dark:text-indigo-200/80">
+          <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
             {isPolish
               ? 'Edytuj notatkę, dodaj źródła, wygeneruj propozycję AI, zrób review i dopiero potem konwertuj.'
               : 'Edit the note, add sources, draft an AI proposal, review it, and only then convert.'}
           </div>
         </div>
-        <div className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-medium text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200">
+        <div className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-medium text-slate-700 dark:bg-navy-800/60 dark:text-slate-300">
           <CheckCircle2 size={11} />
           {hasPendingAIProposals
             ? isPolish
@@ -117,15 +117,15 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
       </div>
 
       {(onHandoffRadar || onHandoffInitiatives) && (
-        <div className="mt-3 flex items-center gap-2 border-t border-indigo-200/50 pt-3 dark:border-indigo-500/15">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-600/70 dark:text-indigo-300/60">
+        <div className="mt-3 flex items-center gap-2 border-t border-slate-200/50 pt-3 dark:border-white/[0.06]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {isPolish ? 'Przekaż do:' : 'Send to:'}
           </span>
           {onHandoffRadar && (
             <button
               type="button"
               onClick={onHandoffRadar}
-              className="inline-flex items-center gap-1 rounded-full border border-indigo-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-500/20 dark:bg-navy-950/40 dark:text-indigo-300 dark:hover:bg-indigo-500/15"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-slate-300 dark:hover:bg-white/[0.08]"
             >
               <Radar size={12} />
               Radar
@@ -135,7 +135,7 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
             <button
               type="button"
               onClick={onHandoffInitiatives}
-              className="inline-flex items-center gap-1 rounded-full border border-indigo-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-500/20 dark:bg-navy-950/40 dark:text-indigo-300 dark:hover:bg-indigo-500/15"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-slate-300 dark:hover:bg-white/[0.08]"
             >
               <Lightbulb size={12} />
               {isPolish ? 'Inicjatywy' : 'Initiatives'}
@@ -156,8 +156,8 @@ function WorkflowStep(props: {
   disabled?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-indigo-200/70 bg-white/80 p-3 dark:border-indigo-400/15 dark:bg-navy-950/40">
-      <div className="flex items-center gap-2 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+    <div className="rounded-xl border border-slate-200 bg-white/80 p-3 dark:border-white/[0.06] dark:bg-navy-900/40">
+      <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
         {props.icon}
         {props.title}
       </div>
@@ -168,7 +168,7 @@ function WorkflowStep(props: {
         type="button"
         onClick={props.onClick}
         disabled={props.disabled}
-        className="mt-3 inline-flex items-center gap-1 rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
+        className="mt-3 inline-flex items-center gap-1 rounded-full bg-navy-900 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
       >
         {props.actionLabel}
         <ArrowRight size={12} />

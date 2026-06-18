@@ -410,7 +410,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               <button
                 onClick={handleApplyAllProposals}
                 disabled={aiRunning}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50 transition-colors"
               >
                 <Check size={12} />
                 {t('initiatives.analysis.resources.applyAll', 'Apply all')}
@@ -745,9 +745,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               return (
                 <React.Fragment key={a.resourceId}>
                   <tr
-                    className={`border-b border-slate-200 dark:border-navy-800/50 cursor-pointer
-                      hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
-                      ${a.status === 'overallocated' ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
+                    className="border-b border-slate-200 dark:border-navy-800/50 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors"
                     onClick={() => setExpandedResourceId(isExpanded ? null : a.resourceId)}
                   >
                     <td className="px-4 py-3 text-slate-600">

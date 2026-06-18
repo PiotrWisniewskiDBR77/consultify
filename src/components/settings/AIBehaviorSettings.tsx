@@ -264,9 +264,9 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 <button
                   key={tpl.id}
                   onClick={() => applyTemplate(tpl)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-navy-700/50 hover:bg-navy-700
-                    border border-white/10 rounded-lg text-sm text-slate-600
-                    hover:text-white transition-all duration-200"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-navy-700/50 hover:bg-slate-200 dark:hover:bg-navy-700
+                    border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-700 dark:text-slate-300
+                    hover:text-slate-900 dark:hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />
                   {t(`settings.ai.behaviorTemplates.${tpl.id}.name`, tpl.name)}
@@ -326,12 +326,12 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
 
           {/* Tone & Communication */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <Sparkles size={14} className="text-primary-400" />
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Sparkles size={14} className="text-primary-600 dark:text-primary-400" />
               {t('settings.ai.toneSection', 'Tone & Communication')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <SettingsFormRow label={t('settings.ai.tone', 'Tone')}>
+              <SettingsFormRow label={t('settings.ai.toneLabel', 'Tone')}>
                 <SettingsSelect
                   options={toneOptions}
                   value={preferences.tone}
@@ -339,7 +339,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 />
               </SettingsFormRow>
 
-              <SettingsFormRow label={t('settings.ai.formality', 'Formality')}>
+              <SettingsFormRow label={t('settings.ai.formalityLabel', 'Formality')}>
                 <SettingsButtonGroup
                   options={formalityOptions}
                   value={preferences.formality}
@@ -348,7 +348,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 />
               </SettingsFormRow>
 
-              <SettingsFormRow label={t('settings.ai.verbosity', 'Verbosity')}>
+              <SettingsFormRow label={t('settings.ai.verbosityLabel', 'Verbosity')}>
                 <SettingsSelect
                   options={verbosityOptions}
                   value={preferences.verbosity}

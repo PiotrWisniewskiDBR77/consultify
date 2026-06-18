@@ -424,7 +424,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           {onCreateReport && (
             <button
               onClick={onCreateReport}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl text-sm font-medium transition-colors"
             >
               <Plus size={16} />
               {t('rbHub.newReport', 'Nowy raport')}
@@ -663,7 +663,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                     {statusBadge(latest.status)}
                     <button
                       onClick={() => onOpenReport?.(latest.id)}
-                      className="px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
                     >
                       {t('common.open', 'Otwórz')}
                     </button>
@@ -751,7 +751,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
             <div className="flex items-center gap-2 mt-auto">
               <button
                 onClick={() => onCreateReport?.()}
-                className="flex-1 px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors text-center"
+                className="flex-1 px-3 py-1.5 text-xs font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors text-center"
               >
                 {t('rbHub.useTemplate', 'Użyj szablonu')}
               </button>

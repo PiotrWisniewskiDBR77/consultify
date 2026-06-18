@@ -351,7 +351,7 @@ export const AuditsShowcasePage: React.FC = () => {
             </button>
             <button
               onClick={handleToolsHubClick}
-              className="px-12 py-6 bg-primary-600 text-white font-black rounded-2xl hover:bg-primary-500 transition-all text-xl uppercase tracking-widest shadow-xl shadow-primary-600/30 flex items-center justify-center gap-3"
+              className="px-12 py-6 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-black rounded-2xl hover:bg-navy-800 transition-all text-xl uppercase tracking-widest shadow-xl shadow-primary-600/30 flex items-center justify-center gap-3"
             >
               {t('showcase.common.moreTools')}
               <ChevronRight size={24} />

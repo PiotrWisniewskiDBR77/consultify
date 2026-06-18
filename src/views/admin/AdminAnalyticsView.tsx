@@ -460,7 +460,7 @@ export const AdminAnalyticsView: React.FC = () => {
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
               {t('admin.analytics.ideasBoard', 'Strategic Ideas Board')}
             </h2>
-            <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm transition-colors flex items-center gap-2">
               <Lightbulb className="w-4 h-4" />
               {t('admin.analytics.submitIdea', 'Submit New Idea')}
             </button>
@@ -537,7 +537,7 @@ export const AdminAnalyticsView: React.FC = () => {
                 <p className="text-slate-500 dark:text-slate-400">
                   {t('admin.analytics.noIdeas', 'No strategic ideas yet. Start by creating one!')}
                 </p>
-                <button className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm transition-colors">
+                <button className="mt-4 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm transition-colors">
                   {t('admin.analytics.createFirst', 'Create First Idea')}
                 </button>
               </div>

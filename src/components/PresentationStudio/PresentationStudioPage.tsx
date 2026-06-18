@@ -582,7 +582,7 @@ export const PresentationStudioPage: React.FC = () => {
                 type="button"
                 onClick={confirmGenerate}
                 disabled={!canConfirmGenerate}
-                className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-primary-500 dark:hover:bg-primary-400"
+                className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:cursor-not-allowed disabled:opacity-70"
                 data-testid="presentation-studio-confirm-generate"
               >
                 {approval.pending === 'executing' ? (

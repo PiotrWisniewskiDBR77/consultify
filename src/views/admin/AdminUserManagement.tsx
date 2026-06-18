@@ -411,7 +411,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           <button
             onClick={openAddModal}
             disabled={!!loadError}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-primary-900/20"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors text-sm font-medium shadow-lg shadow-primary-900/20"
           >
             <Plus size={16} /> Add User
           </button>
@@ -685,7 +685,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               </select>
               <button
                 type="submit"
-                className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-semibold mt-4"
+                className="w-full py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-semibold mt-4"
               >
                 Save
               </button>

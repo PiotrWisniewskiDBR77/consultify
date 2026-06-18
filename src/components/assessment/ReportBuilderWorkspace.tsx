@@ -561,7 +561,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
       {!showComments && (
         <button
           onClick={() => setShowComments(true)}
-          className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+          className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl shadow-lg hover:shadow-xl transition-all"
           title={isPolish ? 'Pokaż komentarze' : 'Show comments'}
         >
           <MessageCircle className="w-5 h-5" />
@@ -660,7 +660,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             <div className="absolute top-4 left-4 z-10">
               <button
                 onClick={() => setShowChat(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg shadow-lg transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
                 <span className="text-sm font-medium">{isPolish ? 'Pokaż czat' : 'Show chat'}</span>

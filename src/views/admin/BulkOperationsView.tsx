@@ -369,7 +369,7 @@ export const BulkOperationsView: React.FC = () => {
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
+                className="px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2"
               >
                 <Upload size={18} />
                 Select CSV File
@@ -497,7 +497,7 @@ export const BulkOperationsView: React.FC = () => {
             </button>
             <button
               onClick={handleStartImport}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2"
             >
               <UserPlus size={18} />
               Import {csvData.length} Users
@@ -575,7 +575,7 @@ export const BulkOperationsView: React.FC = () => {
           <div className="flex justify-center">
             <button
               onClick={resetImport}
-              className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium"
+              className="px-6 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
             >
               Import More Users
             </button>

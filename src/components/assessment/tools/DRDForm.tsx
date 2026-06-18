@@ -484,7 +484,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
 
         <button
           onClick={handleNextAxis}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors"
         >
           {activeAxisId === 7
             ? isPolish

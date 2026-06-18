@@ -405,7 +405,7 @@ export const SSOConfigurationView: React.FC = () => {
         </select>
         <button
           onClick={() => setShowConfigModal(true)}
-          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+          className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2 transition-colors"
         >
           <Key size={18} />
           Configure SSO
@@ -929,7 +929,7 @@ export const SSOConfigurationView: React.FC = () => {
             <button
               onClick={handleSaveSaml}
               disabled={savingSaml || !samlForm.organizationId}
-              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               {savingSaml && <Loader2 size={16} className="animate-spin" />}
               Save SAML Configuration
@@ -955,7 +955,7 @@ export const SSOConfigurationView: React.FC = () => {
           </div>
           <button
             onClick={() => setShowAddDomainModal(true)}
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
             <Globe size={16} />
             Add Domain

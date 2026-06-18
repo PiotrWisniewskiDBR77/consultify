@@ -278,7 +278,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
           {canAction && (
             <button
               onClick={() => clickTryItNow(selected)}
-              className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
+              className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold transition-colors"
             >
               {t('help.updates.tryItNow', 'Try it now')}
               <ExternalLink size={16} />
@@ -315,7 +315,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
           </div>
           <button
             onClick={() => setShowComposer(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-semibold transition-colors"
           >
             <Plus size={14} />
             {t('help.updates.admin.new', 'New update')}

@@ -895,7 +895,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               dtPendingConfirm.agentAudit?.suggested?.agents?.length > 0 &&
                               (dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0) === 0)
                           }
-                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Confirm & proceed
                         </button>
@@ -1346,7 +1346,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     <button
                       onClick={handleCommitEditMessage}
                       disabled={editBusy || !editingText.trim()}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
                     >
                       {editBusy ? t('common.saving', 'Saving…') : t('common.save', 'Save')}
                     </button>
@@ -1958,7 +1958,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               <button
                 onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 transition-colors flex items-center gap-1"
               >
                 <Bookmark size={12} />
                 {dtSavingDecision === msg.id
@@ -2068,7 +2068,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 onClick={() =>
                   handleSendMessage(t('deepThinking.narrowFocus', 'Narrow focus on the first path'))
                 }
-                className="px-3 py-1 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
               >
                 {t('deepThinking.narrowFocusBtn', 'Narrow focus')}
               </button>
@@ -2134,7 +2134,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               {isLastMessage && selectedMultiOptions.length > 0 && (
                 <button
                   onClick={handleMultiSelectConfirm}
-                  className="self-start px-4 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                  className="self-start px-4 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium rounded-lg transition-colors shadow-sm"
                 >
                   {t('chat.confirmSelection', 'Confirm Selection')}
                 </button>

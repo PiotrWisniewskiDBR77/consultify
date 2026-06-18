@@ -496,7 +496,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             {currentReport.status === 'APPROVED' && (
               <button
                 onClick={handlePublish}
-                className="px-3 py-1.5 bg-primary-600 text-white rounded text-sm font-medium hover:bg-primary-500"
+                className="px-3 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded text-sm font-medium hover:bg-navy-800"
               >
                 Publish
               </button>
@@ -774,7 +774,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
               </button>
               <button
                 onClick={handleDistribute}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
+                className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800"
               >
                 <Send size={16} />
                 Send

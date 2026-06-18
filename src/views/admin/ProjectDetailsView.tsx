@@ -295,7 +295,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                   <div className="flex gap-4">
                     <button
                       type="submit"
-                      className="flex-1 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold shadow-lg shadow-primary-900/30 transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-4 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl font-bold shadow-lg shadow-primary-900/30 transition-all flex items-center justify-center gap-2"
                     >
                       <Check size={20} /> Save Changes
                     </button>
@@ -507,7 +507,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
           <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-white">Project Assessments</h3>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary-900/20">
+              <button className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl text-sm font-bold shadow-lg shadow-primary-900/20">
                 <Plus size={16} /> Run New Assessment
               </button>
             </div>

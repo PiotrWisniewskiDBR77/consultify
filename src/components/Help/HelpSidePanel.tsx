@@ -540,7 +540,7 @@ export const HelpSidePanel: React.FC = () => {
                 </p>
                 <button
                   onClick={openAiNow}
-                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold transition-colors"
                 >
                   <TeresaMark size={16} />
                   {getLocalizedText(help.promptAction.label, lang)}
@@ -638,7 +638,7 @@ export const HelpSidePanel: React.FC = () => {
 
               <button
                 onClick={openAiNow}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold transition-colors"
               >
                 <TeresaMark size={16} />
                 {getLocalizedText(help.promptAction.label, lang)}

@@ -740,7 +740,7 @@ export const PartnerSettlementsView: React.FC = () => {
                 )}
               </p>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium">
+            <button className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium">
               <Plus className="w-4 h-4" />
               {t('superadmin.settlements.createAttribution', 'Create Attribution')}
             </button>

@@ -396,7 +396,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                       reportName.trim() &&
                                       !creating &&
                                       (!projectId || canGenerateReport)
-                                        ? 'bg-primary-600 hover:bg-primary-500 text-white'
+                                        ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}

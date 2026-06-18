@@ -506,7 +506,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                             selected time period.
                           </p>
                           <div className="flex items-center gap-2">
-                            <button className="px-3 py-1.5 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
+                            <button className="px-3 py-1.5 text-xs bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg">
                               PDF
                             </button>
                             <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">

@@ -143,7 +143,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                       }}
                       disabled={regeneratingIndex === index}
                       title={t('presentations.builder.regenerateSlide', 'Regenerate slide')}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
                     >
                       <RefreshCw
                         size={11}

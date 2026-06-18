@@ -192,7 +192,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           </div>
           <button
             onClick={onNewAssessment}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg transition-colors"
           >
             <Plus size={18} />
             New Assessment
@@ -267,7 +267,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
             {!searchQuery && (
               <button
                 onClick={onNewAssessment}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg"
+                className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg"
               >
                 <Plus size={16} />
                 {t('assessment.emptyState.createFirst', 'Create First Assessment')}

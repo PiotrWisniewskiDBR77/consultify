@@ -317,7 +317,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
           {onCreateDecision && (
             <button
               onClick={onCreateDecision}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors"
             >
               <Plus size={12} />
               {t('decisions.create', 'New decision')}
@@ -345,7 +345,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
             {onCreateDecision && (
               <button
                 onClick={onCreateDecision}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors"
               >
                 <Plus size={14} />
                 {t('decisions.create', 'New decision')}

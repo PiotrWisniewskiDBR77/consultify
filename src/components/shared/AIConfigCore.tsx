@@ -215,7 +215,7 @@ export const OrgAIPolicy: React.FC<{
 
         <button
           onClick={onSave}
-          className="w-full py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors"
+          className="w-full py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors"
         >
           Save Policy
         </button>
@@ -412,7 +412,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
         <div className="pt-6 mt-6 border-t border-slate-200 dark:border-navy-700 flex justify-end">
           <button
             type="submit"
-            className="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            className="px-6 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
             {isSaved ? <Check size={16} /> : null}
             {isSaved ? 'Configuration Saved' : 'Save Configuration'}

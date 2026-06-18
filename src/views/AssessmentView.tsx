@@ -261,7 +261,7 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
               </p>
               <button
                 onClick={() => handleSelectFramework('DRD')}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg transition-colors"
               >
                 <Plus size={16} />
                 {isPolish ? 'Nowa ocena DRD' : 'New DRD Assessment'}

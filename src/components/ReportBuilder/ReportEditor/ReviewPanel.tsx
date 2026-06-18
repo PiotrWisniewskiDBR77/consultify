@@ -442,7 +442,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             <button
               onClick={doSendExt}
               disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded hover:bg-navy-800 disabled:opacity-50 transition-colors flex items-center gap-1"
             >
               {isSubmitting ? (
                 <Loader2 className="w-2.5 h-2.5 animate-spin" />

@@ -200,7 +200,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </p>
           <button
             onClick={() => setIsCreateOrgModalOpen(true)}
-            className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 rounded-lg font-medium transition-colors"
           >
             Create Organization
           </button>
@@ -247,7 +247,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   <button
                     onClick={handleCreateOrganization}
                     disabled={creatingOrg || !newOrgName.trim()}
-                    className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {creatingOrg && <Loader2 size={16} className="animate-spin" />}
                     {creatingOrg ? 'Creating...' : 'Create Organization'}
@@ -531,7 +531,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           <button
             onClick={handleSaveFinanceSettings}
             disabled={savingFinance}
-            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             {savingFinance ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {savingFinance ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -548,7 +548,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </h3>
           <button
             onClick={() => setIsAddMemberOpen(!isAddMemberOpen)}
-            className="flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Member

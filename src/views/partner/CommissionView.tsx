@@ -7,6 +7,7 @@
 
 import { AlertTriangle, FileText, HelpCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PMODomainBadge } from '../../components/Partner/EcosystemAnalytics';
 import { Api } from '../../services/api';
@@ -106,6 +107,7 @@ function buildLiveStatements(
 }
 
 export const CommissionView: React.FC = () => {
+  const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
   const [statements, setStatements] = useState<CommissionStatement[]>([]);
   const [statementsLoading, setStatementsLoading] = useState(true);
@@ -269,7 +271,7 @@ export const CommissionView: React.FC = () => {
         <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-6">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10">
                 <FileText size={20} className="text-slate-600 dark:text-slate-300" />
               </div>
               <div>
@@ -384,16 +386,34 @@ export const CommissionView: React.FC = () => {
 
           <div className="space-y-4 text-sm">
             <FaqItem
-              question="Jak działa process payouts?"
-              answer="Commission statements są generowane kwartalnie. Po zamknięciu kwartału, Finance Team weryfikuje wszystkie deals i generuje statement. Payout następuje w ciągu 30 dni od approval."
+              question={t(
+                'partner.commission.faq.payoutProcess',
+                'How does the payout process work?'
+              )}
+              answer={t(
+                'partner.commission.faq.payoutProcessAnswer',
+                'Commission statements are generated quarterly. After quarter close, the Finance Team verifies all deals and generates the statement. Payout occurs within 30 days of approval.'
+              )}
             />
             <FaqItem
-              question="Co zrobić jeśli kwota jest nieprawidłowa?"
-              answer="Użyj formularza inquiry powyżej, wybierając 'Statement question'. Dołącz numer statement i szczegóły rozbieżności. Finance Team odpowie w ciągu 2 dni roboczych."
+              question={t(
+                'partner.commission.faq.incorrectAmount',
+                'What if the amount is incorrect?'
+              )}
+              answer={t(
+                'partner.commission.faq.incorrectAmountAnswer',
+                "Use the inquiry form above, selecting 'Statement question'. Include the statement number and details of the discrepancy. Finance Team will respond within 2 business days."
+              )}
             />
             <FaqItem
-              question="Jak są mapowane deals do PMO standards?"
-              answer="Każdy deal registration jest automatycznie mapowany do GOVERNANCE_DECISION_MAKING (ISO 21500 Clause 4.3.4), a commission settlement do BENEFITS_REALIZATION (Clause 4.4.1)."
+              question={t(
+                'partner.commission.faq.pmoMapping',
+                'How are deals mapped to PMO standards?'
+              )}
+              answer={t(
+                'partner.commission.faq.pmoMappingAnswer',
+                'Each deal registration is automatically mapped to GOVERNANCE_DECISION_MAKING (ISO 21500 Clause 4.3.4), and commission settlement to BENEFITS_REALIZATION (Clause 4.4.1).'
+              )}
             />
           </div>
 

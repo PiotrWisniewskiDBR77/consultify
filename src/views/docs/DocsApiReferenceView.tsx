@@ -62,7 +62,7 @@ export function DocsApiReferenceView() {
           </Link>
           <a
             href="mailto:support@consultify.ai?subject=API%20Reference%20Access"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium hover:bg-navy-800 transition-colors"
           >
             <ExternalLink size={16} />
             {t('docs.api.contactSupport', 'Contact support')}

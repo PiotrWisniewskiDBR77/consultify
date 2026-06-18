@@ -209,7 +209,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
               <button
                 onClick={handleCommentSubmit}
                 disabled={isSubmitting || !comment.trim()}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
               >
                 <Send size={14} />
                 {tTrans.submit}

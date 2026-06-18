@@ -412,7 +412,7 @@ const SCIMProvisioningView: React.FC = () => {
           {!serviceProvider?.isActive && (
             <button
               onClick={handleEnableSCIM}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
             >
               Enable SCIM
             </button>
@@ -567,7 +567,7 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowTokenModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
         >
           <Plus size={18} />
           Generate Token
@@ -784,7 +784,7 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowMappingModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
         >
           <Plus size={18} />
           Add Mapping

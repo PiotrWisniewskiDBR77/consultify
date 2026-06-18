@@ -352,7 +352,7 @@ export function PortfolioAiPanel(props: {
           <button
             onClick={run}
             disabled={loading}
-            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium transition-colors bg-hig-primary text-white hover:bg-hig-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium transition-colors bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             {t('portfolio.ai.analyzeSelection', 'AI: Analyze selection')}

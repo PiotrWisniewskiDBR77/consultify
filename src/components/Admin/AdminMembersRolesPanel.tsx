@@ -310,7 +310,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
             <button
               onClick={handleInvite}
               disabled={inviting}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
             >
               {inviting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -239,7 +239,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
         </button>
         <button
           onClick={handleExport}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-900/20 transition-all text-xs font-bold uppercase tracking-wide"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-900/20 transition-all text-xs font-bold uppercase tracking-wide"
         >
           <Download size={14} /> {t.buttons.export}
         </button>

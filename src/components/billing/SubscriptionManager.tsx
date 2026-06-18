@@ -355,7 +355,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                     className={`w-full py-3 rounded-xl font-semibold transition-all ${
                       isPopular
                         ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                        : 'bg-primary-600 hover:bg-primary-700 text-white'
+                        : 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                     }`}
                   >
                     {currentPlan && plan.price_monthly > currentPlan.price_monthly
@@ -493,7 +493,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
               <button
                 onClick={handleConfirmChange}
                 disabled={processing}
-                className="flex-1 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {processing ? (
                   <>

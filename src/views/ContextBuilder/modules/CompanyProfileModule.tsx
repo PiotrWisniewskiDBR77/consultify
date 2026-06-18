@@ -269,7 +269,7 @@ export const CompanyProfileModule: React.FC = () => {
                 setCompanyProfile({ industry: 'Manufacturing', subIndustry: 'Automotive Parts' });
                 setShowContextBanner(false);
               }}
-              className="px-4 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 shadow-sm transition shadow-primary-200 dark:shadow-none whitespace-nowrap"
+              className="px-4 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-semibold rounded-lg hover:bg-navy-800 shadow-sm transition shadow-primary-200 dark:shadow-none whitespace-nowrap"
             >
               Accept
             </button>

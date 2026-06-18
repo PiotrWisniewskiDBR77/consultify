@@ -1,0 +1,296 @@
+{
+  "toast.scheduleUpdated": {
+    "en": "Harmonogram zaktualizowany"
+  },
+  "toast.scheduleUpdateError": {
+    "en": "Nie udało się zaktualizować harmonogramu"
+  },
+  "toast.gateActionSuccess": {
+    "en": "Akcja \"{{gate}}\" wykonana pomyślnie"
+  },
+  "toast.gateActionError": {
+    "en": "Nie udało się wykonać {{gate}}"
+  },
+  "document.untitled": {
+    "en": "Untitled initiative"
+  },
+  "decisions.decision": {
+    "en": "Decision"
+  },
+  "decisions.openFailed": {
+    "en": "Failed to open decision"
+  },
+  "tasks.task": {
+    "en": "Task"
+  },
+  "tasks.openFailed": {
+    "en": "Failed to open task"
+  },
+  "toast.notFound": {
+    "en": "Nie znaleziono inicjatywy"
+  },
+  "toast.openFailed": {
+    "en": "Nie udało się otworzyć inicjatywy"
+  },
+  "toast.statusUpdated": {
+    "en": "Status zaktualizowany"
+  },
+  "toast.statusUpdateFailed": {
+    "en": "Nie udało się zaktualizować statusu"
+  },
+  "toast.updateFailed": {
+    "en": "Nie udało się zaktualizować"
+  },
+  "toast.archived": {
+    "en": "Initiative archived"
+  },
+  "toast.archiveFailed": {
+    "en": "Could not archive initiative"
+  },
+  "bulk.exportFailed": {
+    "en": "Export failed"
+  },
+  "toast.chatOpened": {
+    "en": "Chat opened"
+  },
+  "toast.chatOpenError": {
+    "en": "Failed to open chat"
+  },
+  "scope.label": {
+    "en": "Scope"
+  },
+  "scope.active": {
+    "en": "Active"
+  },
+  "scope.all": {
+    "en": "All"
+  },
+  "bulk.exportCsv": {
+    "en": "Export CSV"
+  },
+  "bulk.tag": {
+    "en": "Tag"
+  },
+  "bulk.assign": {
+    "en": "Assign"
+  },
+  "bulk.changeDueDate": {
+    "en": "Change due date"
+  },
+  "charter.short": {
+    "en": "Charter"
+  },
+  "pilot.createLocked": {
+    "en": "Available in the next project phase"
+  },
+  "toast.statusChanged": {
+    "en": "Status zmieniony na {{status}}"
+  },
+  "toast.statusChangeError": {
+    "en": "Nie udało się zmienić statusu"
+  },
+  "toast.statusChangeFailed": {
+    "en": "Zmiana statusu nie powiodła się"
+  },
+  "toast.statusChangedLabel": {
+    "en": "Status zmieniony na {{label}}"
+  },
+  "preview.resultsAndReports": {
+    "en": "Results & KPI reports"
+  },
+  "toast.statusUpdateError": {
+    "en": "Nie udało się zaktualizować statusu"
+  },
+  "toast.watchError": {
+    "en": "Nie udało się zmienić obserwowania"
+  },
+  "toast.saveError": {
+    "en": "Nie udało się zapisać"
+  },
+  "toast.createTaskError": {
+    "en": "Nie udało się utworzyć zadania"
+  },
+  "toast.createDecisionError": {
+    "en": "Nie udało się utworzyć decyzji"
+  },
+  "toast.createRaidError": {
+    "en": "Nie udało się dodać elementu RAID"
+  },
+  "toast.aiGenerationError": {
+    "en": "Generowanie AI nie powiodło się"
+  },
+  "toast.approvalRequestError": {
+    "en": "Nie udało się wysłać prośby o zatwierdzenie"
+  },
+  "toast.archiveError": {
+    "en": "Nie udało się zarchiwizować"
+  },
+  "toast.deleteError": {
+    "en": "Nie udało się usunąć"
+  },
+  "analysis.logic.needMore": {
+    "en": "Need at least 2 initiatives"
+  },
+  "analysis.logic.depAccepted": {
+    "en": "Dependency saved: {{from}} → {{to}}"
+  },
+  "analysis.logic.depAcceptFailed": {
+    "en": "Failed to save dependency"
+  },
+  "analysis.logic.noCycles": {
+    "en": "No cycles detected"
+  },
+  "analysis.fixApplied": {
+    "en": "AI suggestion applied"
+  },
+  "analysis.fixFailed": {
+    "en": "Failed to apply fix"
+  },
+  "analysis.logic.noNewDeps": {
+    "en": "No additional dependencies discovered"
+  },
+  "analysis.logic.cyclesFound": {
+    "en": "{{count}} cycle(s) detected"
+  },
+  "analysis.logic.criticalPathTitle": {
+    "en": "Critical Path"
+  },
+  "analysis.logic.blockersTitle": {
+    "en": "Blockers"
+  },
+  "analysis.logic.blockerBadge": {
+    "en": "{{count}} dependent(s)"
+  },
+  "analysis.logic.sequencerTitle": {
+    "en": "AI Recommended Execution Sequence"
+  },
+  "analysis.logic.noInitiatives": {
+    "en": "No initiatives to sequence"
+  },
+  "analysis.logic.totalDeps": {
+    "en": "Total dependencies"
+  },
+  "analysis.logic.timingConflicts": {
+    "en": "Timing conflicts"
+  },
+  "analysis.logic.blockers": {
+    "en": "Blockers"
+  },
+  "analysis.logic.criticalPathLen": {
+    "en": "Critical path length"
+  },
+  "analysis.logic.from": {
+    "en": "Predecessor"
+  },
+  "analysis.logic.to": {
+    "en": "Successor"
+  },
+  "analysis.logic.type": {
+    "en": "Type"
+  },
+  "analysis.logic.status": {
+    "en": "Status"
+  },
+  "analysis.logic.aiDiscover": {
+    "en": "AI Discover Dependencies"
+  },
+  "analysis.logic.graph.noOwner": {
+    "en": "No owner"
+  },
+  "analysis.logic.graph.criticalPath": {
+    "en": "Critical path"
+  },
+  "analysis.logic.graph.title": {
+    "en": "Dependency Graph"
+  },
+  "analysis.logic.graph.hint": {
+    "en": "Drag from predecessor to successor"
+  },
+  "analysis.logic.graph.timingConflict": {
+    "en": "Timing conflict"
+  },
+  "analysis.logic.graph.removeEdge": {
+    "en": "Remove edge"
+  },
+  "analysis.resources.ownerReassigned": {
+    "en": "Owner reassigned"
+  },
+  "analysis.resources.reassignFailed": {
+    "en": "Failed to reassign owner"
+  },
+  "analysis.resources.proposalApplied": {
+    "en": "Reassignment applied"
+  },
+  "analysis.resources.aiProposals": {
+    "en": "AI rebalancing proposals"
+  },
+  "analysis.resources.applyAll": {
+    "en": "Apply all"
+  },
+  "analysis.resources.selectPerson": {
+    "en": "— Select person —"
+  },
+  "analysis.resources.accept": {
+    "en": "Accept"
+  },
+  "analysis.resources.teamMembers": {
+    "en": "Team members"
+  },
+  "analysis.resources.totalInitiatives": {
+    "en": "Initiatives"
+  },
+  "analysis.resources.overloaded": {
+    "en": "Overloaded"
+  },
+  "analysis.resources.available": {
+    "en": "Available"
+  },
+  "analysis.resources.teamWorkload": {
+    "en": "Team workload"
+  },
+  "analysis.resources.person": {
+    "en": "Person"
+  },
+  "analysis.resources.allRoles": {
+    "en": "All roles"
+  },
+  "analysis.resources.workload": {
+    "en": "Workload"
+  },
+  "analysis.resources.reassign": {
+    "en": "Reassign"
+  },
+  "analysis.previewInitiative": {
+    "en": "Preview"
+  },
+  "analysis.timeline.invalidDates": {
+    "en": "Start must be before end"
+  },
+  "analysis.timeline.datesUpdated": {
+    "en": "Dates updated"
+  },
+  "analysis.timeline.updateFailed": {
+    "en": "Failed"
+  },
+  "analysis.feasibility.updated": {
+    "en": "Initiative updated"
+  },
+  "analysis.feasibility.updateFailed": {
+    "en": "Failed to update"
+  },
+  "analysis.feasibility.aiProposals": {
+    "en": "AI optimization proposals"
+  },
+  "analysis.feasibility.total": {
+    "en": "Initiatives"
+  },
+  "analysis.feasibility.highRisk": {
+    "en": "High risk (<50%)"
+  },
+  "analysis.feasibility.criticalDims": {
+    "en": "With critical dimension"
+  },
+  "analysis.feasibility.filterBy": {
+    "en": "Filtered by:"
+  }
+}

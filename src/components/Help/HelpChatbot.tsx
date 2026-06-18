@@ -562,7 +562,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             disabled={!input.trim() || isLoading}
             className={`p-3 rounded-xl transition-all ${
               input.trim() && !isLoading
-                ? 'bg-primary-600 text-white hover:bg-primary-700'
+                ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >

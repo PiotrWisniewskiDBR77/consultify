@@ -60,7 +60,7 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
       />
       <button
         onClick={handleSave}
-        className="mt-2 w-full py-1.5 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 transition-colors"
+        className="mt-2 w-full py-1.5 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium hover:bg-navy-800 transition-colors"
       >
         {isPl ? 'Zapisz' : 'Save'}
       </button>
@@ -157,7 +157,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
         />
         <button
           onClick={addTag}
-          className="h-7 w-7 flex items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+          className="h-7 w-7 flex items-center justify-center rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors"
         >
           <Plus size={12} />
         </button>
@@ -221,7 +221,7 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
       />
       <button
         onClick={handleSave}
-        className="mt-2 w-full py-1.5 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 transition-colors"
+        className="mt-2 w-full py-1.5 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium hover:bg-navy-800 transition-colors"
       >
         {isPl ? 'Zapisz' : 'Save'}
       </button>

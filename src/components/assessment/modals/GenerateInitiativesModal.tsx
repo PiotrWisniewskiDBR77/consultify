@@ -783,7 +783,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                         flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                         ${
                                           selectedReportId
-                                            ? 'bg-primary-600 hover:bg-primary-500 text-white'
+                                            ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                         }
                                     `}
@@ -797,7 +797,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-all"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-all"
                 >
                   {generating ? (
                     <>

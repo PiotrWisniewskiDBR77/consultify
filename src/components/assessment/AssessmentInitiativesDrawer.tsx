@@ -119,7 +119,7 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
               disabled={!canGoToInitiatives}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 canGoToInitiatives
-                  ? 'bg-primary-600 text-white hover:bg-primary-500'
+                  ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
               }`}
               title={

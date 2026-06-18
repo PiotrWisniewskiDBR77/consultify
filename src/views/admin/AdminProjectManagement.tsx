@@ -465,7 +465,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold shadow-lg shadow-primary-900/40 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl font-bold shadow-lg shadow-primary-900/40 transition-all flex items-center justify-center gap-2"
                 >
                   Initialize Project
                 </button>

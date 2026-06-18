@@ -714,7 +714,7 @@ const OnboardingChecklistSection: React.FC = () => {
                 {!step.completed && (
                   <button
                     onClick={goToOnboarding}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg transition-colors"
                   >
                     {step.cta}
                     <ChevronRight className="w-4 h-4" />
@@ -846,7 +846,7 @@ const CommissionCalculatorSection: React.FC = () => {
 
         <button
           onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold rounded-lg transition-colors"
         >
           <Rocket className="w-5 h-5" />
           {t('partner.home.calculator.cta', 'Zacznij zarabiać — wygeneruj swój kod')}
@@ -1037,7 +1037,7 @@ const AcademyPreviewSection: React.FC = () => {
                         event.stopPropagation();
                         navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded transition-colors"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded transition-colors"
                     >
                       {t('partner.home.academy.startCourse', 'Rozpocznij kurs')}
                       <ArrowRight className="w-4 h-4" />

@@ -1348,7 +1348,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             {!isPilotParticipant && (
               <button
                 onClick={() => setShowNewModal(true)}
-                className="mt-6 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium hover:from-primary-400 hover:to-primary-500 transition-all"
+                className="mt-6 px-4 py-2 bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors duration-150"
               >
                 <Plus size={14} className="inline mr-2" />
                 {t('initiatives.form.newInitiative')}
@@ -1967,7 +1967,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <button
               type="button"
               onClick={() => setShowInitiativeWizard(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary/90 transition-colors duration-150"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
             >
               <span>{t('initiatives.form.newInitiative')}</span>
             </button>

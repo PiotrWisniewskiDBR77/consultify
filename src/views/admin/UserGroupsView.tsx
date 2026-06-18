@@ -398,7 +398,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         <button
           onClick={openCreateModal}
           disabled={!!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
         >
           <Plus size={18} />
           Create Team
@@ -454,7 +454,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
           <button
             onClick={openCreateModal}
             disabled={!!loadError}
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
+            className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
           >
             Create Team
           </button>
@@ -792,7 +792,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 <button
                   onClick={handleSaveGroup}
                   disabled={saving || !formData.name}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50"
                 >
                   {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                   {editingGroup ? 'Save Changes' : 'Create Team'}
@@ -873,7 +873,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
               <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end">
                 <button
                   onClick={() => setShowMembersModal(false)}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
                 >
                   Done
                 </button>

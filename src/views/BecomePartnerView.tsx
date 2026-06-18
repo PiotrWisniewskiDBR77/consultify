@@ -93,7 +93,7 @@ export const BecomePartnerView: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={handleApplyClick}
-                className="group relative inline-flex items-center gap-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold text-lg px-8 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)] hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
+                className="group relative inline-flex items-center gap-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold text-lg px-8 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)] hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <span>{t('pages.partner.hero.applyBtn', 'Apply for Partnership')}</span>
@@ -320,7 +320,7 @@ export const BecomePartnerView: React.FC = () => {
             </p>
             <button
               onClick={handleApplyClick}
-              className="group relative inline-flex items-center gap-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold text-xl px-10 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)] hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
+              className="group relative inline-flex items-center gap-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold text-xl px-10 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)] hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
               <span>{t('pages.partner.cta.applyBtn', 'Start Application')}</span>

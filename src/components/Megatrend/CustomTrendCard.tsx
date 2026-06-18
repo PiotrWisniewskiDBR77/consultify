@@ -48,7 +48,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
         {!isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition"
           >
             <Plus size={16} /> Add Custom Trend
           </button>
@@ -191,7 +191,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm bg-primary-600 text-white rounded hover:bg-primary-700"
+              className="px-4 py-2 text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded hover:bg-navy-800"
             >
               Save Trend
             </button>

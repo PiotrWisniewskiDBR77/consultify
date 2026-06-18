@@ -127,7 +127,7 @@ interface RaidItem {
 // ==========================================
 
 const PRIORITY_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  critical: { bg: 'bg-rose-500/10', text: 'text-rose-500', dot: 'bg-rose-500' },
+  critical: { bg: 'bg-danger-100 dark:bg-danger-500/20', text: 'text-danger-800 dark:text-danger-400', dot: 'bg-danger-500' },
   high: { bg: 'bg-amber-500/10', text: 'text-amber-500', dot: 'bg-amber-500' },
   medium: { bg: 'bg-amber-500/10', text: 'text-amber-500', dot: 'bg-amber-500' },
   low: { bg: 'bg-emerald-500/10', text: 'text-emerald-500', dot: 'bg-emerald-500' },

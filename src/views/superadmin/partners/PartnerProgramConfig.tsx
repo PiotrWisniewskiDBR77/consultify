@@ -567,7 +567,7 @@ export const PartnerProgramConfig: React.FC = () => {
           <button
             onClick={handleSaveDiscountConfig}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             Save Discount Settings
@@ -640,7 +640,7 @@ export const PartnerProgramConfig: React.FC = () => {
                     <button
                       onClick={() => handlePartnerApplicationDecision(item.id, 'needs_follow_up')}
                       disabled={saving}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm disabled:opacity-50"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm disabled:opacity-50"
                     >
                       <RefreshCw className="w-4 h-4" />
                       Follow up

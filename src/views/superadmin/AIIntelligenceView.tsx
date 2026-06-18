@@ -445,7 +445,7 @@ const PromptTemplateManager: React.FC = () => {
           <button
             disabled
             title="Template creation is managed through the canonical Prompts Library workflow."
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             <FileText size={16} />
             New Template

@@ -1202,7 +1202,7 @@ export const FeedbackSidePanel: React.FC = () => {
       <button
         type="submit"
         disabled={isSubmitting || !featureName.trim() || !featureDescription.trim()}
-        className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <>

@@ -250,7 +250,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
             type="button"
             disabled={atCap}
             onClick={onAddClick}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold bg-primary-600 hover:bg-primary-700 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 disabled:cursor-not-allowed"
             data-testid={`${testId}-add`}
           >
             <Plus size={12} aria-hidden />

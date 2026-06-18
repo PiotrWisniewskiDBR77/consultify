@@ -385,7 +385,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} />
           Add Item
@@ -510,7 +510,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
               </button>
               <button
                 onClick={handleEditItem}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
+                className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800"
               >
                 Save Changes
               </button>
@@ -681,7 +681,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
               </button>
               <button
                 onClick={handleAddItem}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
+                className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800"
               >
                 Add Item
               </button>

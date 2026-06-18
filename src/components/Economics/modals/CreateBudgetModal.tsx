@@ -126,7 +126,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
           <button
             onClick={handleCreate}
             disabled={!title.trim() || creating}
-            className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-500 disabled:opacity-50"
+            className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg hover:bg-navy-800 disabled:opacity-50"
           >
             {t('common.create', 'Create')}
           </button>

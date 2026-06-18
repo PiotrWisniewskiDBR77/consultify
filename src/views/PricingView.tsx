@@ -423,7 +423,7 @@ export const PricingView: React.FC = () => {
                       tier.ctaVariant === 'primary'
                         ? 'bg-white text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
-                          ? 'bg-primary-600 text-white hover:bg-primary-500'
+                          ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
                           : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >
@@ -635,7 +635,7 @@ export const PricingView: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handleTrialClick}
-              className="px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="px-8 py-4 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               Start Free Trial
               <ArrowRight size={18} />

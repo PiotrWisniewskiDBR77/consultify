@@ -638,7 +638,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           <button
             onClick={saveTemplate}
             disabled={saving}
-            className="flex items-center gap-2 p-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 p-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors disabled:opacity-50"
           >
             <Save size={16} />
             {saving ? 'Saving...' : 'Save Template'}
@@ -750,7 +750,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           <h3 className="text-lg font-semibold text-white">Sections</h3>
           <button
             onClick={addSection}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Section

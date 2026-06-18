@@ -314,7 +314,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
             onClick={() => openEditor()}
             disabled={saving || !!loadError}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
-              bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors disabled:opacity-50"
+              bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors disabled:opacity-50"
           >
             <Plus size={14} />
             {t('settings.ai.newPrompt', 'New Prompt')}
@@ -487,7 +487,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                       <button
                         onClick={savePrompt}
                         disabled={saving}
-                        className="px-4 py-1.5 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors"
+                        className="px-4 py-1.5 text-sm font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors"
                       >
                         {editingPrompt ? t('common.save', 'Save') : t('common.create', 'Create')}
                       </button>

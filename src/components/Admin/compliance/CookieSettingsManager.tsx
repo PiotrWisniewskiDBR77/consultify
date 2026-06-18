@@ -368,7 +368,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
               {settings.bannerDescription || 'We use cookies to improve your experience.'}
             </p>
             <div className="flex flex-wrap gap-2">
-              <button className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700">
+              <button className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg hover:bg-navy-800">
                 {settings.acceptButtonText || 'Accept All'}
               </button>
               <button

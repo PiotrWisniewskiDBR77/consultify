@@ -153,7 +153,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
             onClick={handleSubmit}
             disabled={submitting || success || !title.trim()}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50
-              bg-primary-600 hover:bg-primary-500 text-white"
+              bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />

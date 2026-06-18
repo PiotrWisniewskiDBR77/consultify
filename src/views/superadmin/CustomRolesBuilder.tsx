@@ -283,7 +283,7 @@ const CustomRolesBuilder: React.FC = () => {
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Roles</h3>
           <button
             onClick={() => setShowRoleModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg transition-colors"
           >
             <Plus size={16} />
             New Role
@@ -627,7 +627,7 @@ const CustomRolesBuilder: React.FC = () => {
             </div>
             <button
               onClick={() => handleCreateFromTemplate(template.name)}
-              className="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm"
+              className="w-full py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors text-sm"
             >
               Create Role from Template
             </button>

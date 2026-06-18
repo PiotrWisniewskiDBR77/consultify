@@ -526,7 +526,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
             <button
               onClick={handleSave}
               disabled={saving || !!loadError}
-              className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-500 disabled:opacity-50 transition-colors font-medium"
+              className="flex items-center gap-2 px-6 py-2.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 disabled:opacity-50 transition-colors font-medium"
             >
               {saving && <RefreshCw size={16} className="animate-spin" />}
               {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}

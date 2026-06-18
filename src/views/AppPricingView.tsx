@@ -441,7 +441,7 @@ export const AppPricingView: React.FC = () => {
                       tier.ctaVariant === 'primary'
                         ? 'bg-white text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
-                          ? 'bg-primary-600 text-white hover:bg-primary-500'
+                          ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
                           : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >

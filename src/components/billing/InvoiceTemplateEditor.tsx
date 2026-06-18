@@ -176,7 +176,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
           <h3 className="font-semibold text-slate-900 dark:text-white">Templates</h3>
           <button
             onClick={createNewTemplate}
-            className="p-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+            className="p-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
           >
             <Plus className="w-4 h-4" />
           </button>

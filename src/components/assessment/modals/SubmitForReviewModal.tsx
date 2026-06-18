@@ -294,7 +294,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                     ${
                                       selectedReviewers.length > 0 && !submitting
-                                        ? 'bg-primary-600 hover:bg-primary-500 text-white'
+                                        ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}

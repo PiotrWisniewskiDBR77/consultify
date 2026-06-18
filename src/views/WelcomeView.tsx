@@ -214,7 +214,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
                   ))}
                 </div>
 
-                <button className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded transition-colors flex items-center justify-center gap-2">
+                <button className="w-full py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded transition-colors flex items-center justify-center gap-2">
                   <Lock size={16} />
                   {text.fullBtn}
                 </button>

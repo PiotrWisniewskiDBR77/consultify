@@ -370,7 +370,7 @@ export const HealthMonitoringTab: React.FC = () => {
                 <button
                   onClick={runAllTestsWithAlerts}
                   disabled={runningAllTests}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
                 >
                   {runningAllTests ? (
                     <RefreshCw size={14} className="animate-spin" />
@@ -429,7 +429,7 @@ export const HealthMonitoringTab: React.FC = () => {
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                         results[cap.id]?.status === 'FAILED'
                           ? 'bg-danger-600 hover:bg-danger-700 text-white'
-                          : 'bg-primary-600 hover:bg-primary-700 text-white'
+                          : 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                       }`}
                     >
                       {loading[cap.id] && <RefreshCw size={14} className="animate-spin" />}

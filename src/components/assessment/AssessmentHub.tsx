@@ -1454,7 +1454,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     <div className="flex justify-center gap-3">
                       <button
                         onClick={() => navigate(`/assessment/${framework.toLowerCase()}/${doc.id}`)}
-                        className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
+                        className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg transition-colors"
                       >
                         Open Full Editor
                       </button>

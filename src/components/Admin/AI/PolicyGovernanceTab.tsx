@@ -181,7 +181,7 @@ export const PolicyGovernanceTab: React.FC = () => {
             disabled={saving || !hasChanges}
             className={`flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all ${
               hasChanges
-                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20'
+                ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-500/20'
                 : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >

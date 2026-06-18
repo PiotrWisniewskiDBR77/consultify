@@ -461,7 +461,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             </h2>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="p-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors"
+              className="p-1.5 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
               title={tp('newSchedule')}
             >
               <Plus size={14} />
@@ -536,7 +536,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             <p className="text-sm text-slate-600 mb-6 max-w-md">{tp('noSchedulesHint')}</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl font-medium transition-colors"
             >
               <Plus size={18} />
               {tp('newSchedule')}
@@ -1067,7 +1067,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             <button
               onClick={handleCreate}
               disabled={!formName.trim() || actionLoading === 'create'}
-              className="flex items-center gap-2 px-5 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >
               {actionLoading === 'create' ? (
                 <Loader2 size={14} className="animate-spin" />

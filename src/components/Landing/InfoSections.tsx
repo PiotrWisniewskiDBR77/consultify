@@ -720,7 +720,7 @@ export const InfoSections: React.FC = () => {
             <div className="pt-6 flex flex-col sm:flex-row justify-center gap-3">
               <button
                 onClick={() => navigate('/register')}
-                className="px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold shadow-lg shadow-primary-500/20 transition-colors"
+                className="px-6 py-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold shadow-lg shadow-primary-500/20 transition-colors"
               >
                 {t('landing.faq.ctaPrimary', 'Launch Free Trial')}
               </button>

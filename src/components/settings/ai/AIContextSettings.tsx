@@ -503,7 +503,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
             />
             <button
               onClick={addCustomSource}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
+              className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800"
             >
               <Plus size={18} />
             </button>

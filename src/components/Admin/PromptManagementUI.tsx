@@ -575,7 +575,7 @@ export function PromptManagementUI() {
                 <p>Select a prompt to view or edit</p>
                 <button
                   onClick={handleCreateNew}
-                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 mx-auto"
+                  className="mt-4 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors flex items-center gap-2 mx-auto"
                 >
                   <Plus size={16} />
                   Create New Prompt
@@ -628,7 +628,7 @@ export function PromptManagementUI() {
                         <button
                           onClick={handleSave}
                           disabled={isSaving}
-                          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors disabled:opacity-50"
                         >
                           {isSaving ? (
                             <Loader2 size={16} className="animate-spin" />

@@ -553,7 +553,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-500 disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg hover:bg-navy-800 disabled:opacity-50"
                 >
                   {generating ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
                   {t('finance.budget.project', 'Generate Projections')}
@@ -805,7 +805,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                     </h3>
                     <button
                       onClick={handleOpenLinkPicker}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-500"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg hover:bg-navy-800"
                     >
                       <Plus size={14} />
                       {t('finance.budget.linkInitiative', 'Link Initiative')}
@@ -1029,7 +1029,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               </button>
               <button
                 onClick={handleCreate}
-                className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500"
+                className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg hover:bg-navy-800"
               >
                 {t('common.create', 'Create')}
               </button>

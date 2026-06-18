@@ -242,7 +242,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
         <button
           onClick={runTests}
           disabled={!templateCode || selectedLanguages.length === 0 || isRunning}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isRunning ? (
             <>

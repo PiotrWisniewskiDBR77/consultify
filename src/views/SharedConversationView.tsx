@@ -122,7 +122,7 @@ export const SharedConversationView: React.FC = () => {
               />
               <button
                 onClick={() => void load(password)}
-                className="rounded-xl bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 text-sm font-semibold"
+                className="rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 text-sm font-semibold"
               >
                 View
               </button>

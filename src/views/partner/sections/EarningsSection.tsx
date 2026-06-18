@@ -632,7 +632,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         <p className="text-slate-600 dark:text-slate-500 mb-4">{error}</p>
         <button
           onClick={fetchEarnings}
-          className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
         >
           {t('common.retry', 'Try Again')}
         </button>
@@ -704,7 +704,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         </div>
 
         {/* Statements / Payments Tabs - HubSpot style */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-0">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-0">
           <div className="flex items-center gap-1">
             <button
               onClick={() => setActiveTab('statements')}
@@ -759,7 +759,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-emerald-500/20">
                 <Wallet className="w-5 h-5 text-emerald-400" />
@@ -792,7 +792,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             )}
           </div>
 
-          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-primary-500/20">
                 <TrendingUp className="w-5 h-5 text-primary-400" />
@@ -811,7 +811,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </p>
           </div>
 
-          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-amber-500/20">
                 <Clock className="w-5 h-5 text-amber-400" />
@@ -828,7 +828,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </p>
           </div>
 
-          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-blue-500/20">
                 <Banknote className="w-5 h-5 text-blue-400" />
@@ -846,7 +846,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'mt-2 px-3 py-1 text-xs font-medium rounded-lg transition-colors',
                 (summary?.readyForPayout || 0) >= 100
-                  ? 'bg-primary-600 hover:bg-primary-500 text-white'
+                  ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                   : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
               )}
             >
@@ -860,7 +860,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         {/* Tab Content */}
         {activeTab === 'statements' ? (
           /* Statements Tab - Recent Transactions */
-          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('partner.earnings.recentTransactions', 'Recent Commission Statements')}
@@ -960,7 +960,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           </div>
         ) : (
           /* Payments Tab - Payout History */
-          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('partner.earnings.paymentHistory', 'Payment History')}
@@ -978,7 +978,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 {payouts.map((payout) => (
                   <div
                     key={payout.id}
-                    className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-white/5"
+                    className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-white/5"
                   >
                     <div className="flex items-center gap-4">
                       <div
@@ -1067,7 +1067,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             {payouts.map((payout) => (
               <div
                 key={payout.id}
-                className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4"
+                className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -1158,7 +1158,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       </div>
 
       {/* Payout Method */}
-      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Payout Method</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
@@ -1169,7 +1169,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               'p-4 rounded-xl border-2 text-left',
               payoutSettings.payoutMethod === 'BANK_TRANSFER'
                 ? 'border-primary-500 bg-primary-500/10'
-                : 'border-white/10 hover:border-white/20'
+                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
             )}
           >
             <Wallet className="w-6 h-6 text-primary-400 mb-2" />
@@ -1184,7 +1184,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               'p-4 rounded-xl border text-left',
               payoutSettings.payoutMethod === 'PAYPAL'
                 ? 'border-primary-500 bg-primary-500/10'
-                : 'border-white/10 hover:border-white/20'
+                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
             )}
           >
             <DollarSign className="w-6 h-6 text-slate-600 dark:text-slate-500 mb-2" />
@@ -1197,7 +1197,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               'p-4 rounded-xl border text-left',
               payoutSettings.payoutMethod === 'STRIPE'
                 ? 'border-primary-500 bg-primary-500/10'
-                : 'border-white/10 hover:border-white/20'
+                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
             )}
           >
             <ExternalLink className="w-6 h-6 text-slate-600 dark:text-slate-500 mb-2" />
@@ -1208,7 +1208,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       </div>
 
       {/* Bank Details */}
-      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           Bank Account Details
         </h3>
@@ -1260,7 +1260,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           <button
             onClick={handleSavePayoutSettings}
             disabled={savingPayoutSettings}
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+            className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium disabled:opacity-50"
           >
             {savingPayoutSettings ? 'Saving...' : 'Save Changes'}
           </button>
@@ -1268,7 +1268,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       </div>
 
       {/* Payout Preferences */}
-      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           Payout Preferences
         </h3>

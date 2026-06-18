@@ -136,7 +136,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
 
             <button
               onClick={() => setStep('questions')}
-              className="bg-primary-600 hover:bg-primary-500 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto"
+              className="bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-10 py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto"
             >
               {wizT.startBtn}
               <ArrowRight size={20} />

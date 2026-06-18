@@ -356,7 +356,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
       {/* Submit */}
       <button
         onClick={handleSubmitDetailed}
-        className="w-full px-3 py-1.5 text-[11px] font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
+        className="w-full px-3 py-1.5 text-[11px] font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
       >
         {t('aiChat.feedback.submit', 'Wyślij opinię')}
       </button>

@@ -223,7 +223,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
         <button
           type="submit"
           disabled={loading || !currentPassword || !newPassword || newPassword !== confirmPassword}
-          className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Updating...' : t('settings.password.update', 'Update Password')}
         </button>

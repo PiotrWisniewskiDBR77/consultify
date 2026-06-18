@@ -270,7 +270,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
         <button
           onClick={handleExportAll}
           disabled={exportingAll || !!statsLoadError}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50"
         >
           {exportingAll ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />}
           Export All Data
@@ -437,7 +437,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
           <button
             onClick={handleSaveRetention}
             disabled
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
+            className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
           >
             Save Retention Settings
           </button>

@@ -497,7 +497,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
         <button
           onClick={runCheck}
           disabled={loading}
-          className="w-full py-2 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-500 disabled:opacity-50"
+          className="w-full py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium hover:bg-navy-800 disabled:opacity-50"
         >
           {loading
             ? t('presentations.qualityGates.checking', 'Checking...')

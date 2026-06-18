@@ -387,7 +387,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
 
             <button
               onClick={handleNew}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium transition-colors"
             >
               <Plus size={16} />
               New update

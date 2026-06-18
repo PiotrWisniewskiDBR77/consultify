@@ -84,7 +84,7 @@ export const SOURCE_COLORS: Record<CalendarEventSource, string> = {
   initiative: '#A51C30',
   decision: '#d97706',
   google: '#059669',
-  outlook: '#4f46e5',
+  outlook: '#5566b8',
   consultify: '#D42B3D',
 };
 

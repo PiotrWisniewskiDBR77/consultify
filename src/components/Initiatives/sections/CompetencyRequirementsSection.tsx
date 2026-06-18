@@ -398,7 +398,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
-              className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 font-medium"
+              className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg hover:bg-navy-800 font-medium"
             >
               {t('competency.requirements.addBtn', 'Add')}
             </button>

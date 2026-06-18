@@ -5244,9 +5244,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       { dot: string; bg: string; text: string; label: string; labelPl: string }
     > = {
       critical: {
-        dot: 'bg-rose-500',
-        bg: 'bg-rose-500/10',
-        text: 'text-rose-600',
+        dot: 'bg-danger-500',
+        bg: 'bg-danger-100 dark:bg-danger-500/20',
+        text: 'text-danger-800 dark:text-danger-400',
         label: 'Critical',
         labelPl: 'Krytyczny',
       },

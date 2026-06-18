@@ -51,7 +51,7 @@ export const AppIntroView: React.FC = () => {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => navigate(ROUTES.INTERVIEW)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-sm font-semibold transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2.5 text-sm font-semibold transition-colors"
               >
                 {lang === 'pl' ? 'Przejdź do Interview' : 'Go to Interview'}
                 <ArrowRight size={15} />

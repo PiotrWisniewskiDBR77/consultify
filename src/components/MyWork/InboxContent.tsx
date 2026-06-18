@@ -103,6 +103,7 @@ import {
 } from '@/services/api/v8/my-work';
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS, FOCUSED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
 type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 type InboxItemType =
@@ -527,9 +528,9 @@ const urgencyConfig: Record<
 > = {
   critical: {
     icon: AlertTriangle,
-    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-rose-600 dark:bg-rose-500/15 dark:text-rose-300 dark:border-transparent dark:[&>svg]:text-rose-300',
+    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-danger-600 dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent dark:[&>svg]:text-danger-300',
     label: 'Critical',
-    heatColor: 'border-l-rose-500',
+    heatColor: 'border-l-danger-500',
   },
   high: {
     icon: AlertCircle,
@@ -603,14 +604,14 @@ const SMART_SECTIONS: {
     labelEn: 'Blocked — Needs Unblocking',
     labelPl: 'Zablokowane — do odblokowania',
     icon: AlertTriangle,
-    color: 'text-rose-500',
+    color: 'text-danger-500',
   },
   {
     id: 'overdue_sla_breach',
     labelEn: 'Overdue / SLA Breach',
     labelPl: 'Po terminie / SLA',
     icon: Clock,
-    color: 'text-rose-600',
+    color: 'text-danger-600',
   },
   {
     id: 'assigned_tasks',
@@ -678,7 +679,7 @@ const AGING_STYLES = {
   fresh: 'text-emerald-600 dark:text-emerald-400',
   warm: 'text-amber-600 dark:text-amber-400',
   hot: 'text-amber-700 dark:text-amber-300',
-  critical: 'text-rose-700 dark:text-rose-300',
+  critical: 'text-danger-700 dark:text-danger-300',
 };
 
 // ── SLA pill ──
@@ -703,8 +704,8 @@ const slaPill = (
       ? 'border border-slate-200 bg-white text-slate-700 dark:bg-navy-800 dark:text-slate-200 dark:border-transparent'
       : sla.level === 'L1'
         ? 'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent'
-        : 'border border-slate-200 bg-white text-slate-700 dark:bg-rose-500/15 dark:text-rose-300 dark:border-transparent';
-  const dot = sla.level === 'none' ? 'bg-slate-400' : isOverdue ? 'bg-rose-500' : 'bg-amber-500';
+        : 'border border-slate-200 bg-white text-slate-700 dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent';
+  const dot = sla.level === 'none' ? 'bg-slate-400' : isOverdue ? 'bg-danger-500' : 'bg-amber-500';
   return { label, className, dot, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
 };
 
@@ -725,7 +726,7 @@ const INBOX_STATUS_FILTER_OPTIONS = [
 ];
 
 const INBOX_URGENCY_FILTER_OPTIONS = [
-  { value: 'critical', label: 'Critical', color: 'text-rose-500' },
+  { value: 'critical', label: 'Critical', color: 'text-danger-500' },
   { value: 'high', label: 'High', color: 'text-amber-500' },
   { value: 'normal', label: 'Normal', color: 'text-slate-500' },
   { value: 'low', label: 'Low', color: 'text-slate-600' },
@@ -2425,17 +2426,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         data-index={index}
         className={`
           group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
-          ${
-            isSelected
-              ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
-              : ''
-          }
-          ${
-            isPreviewed
-              ? 'bg-primary-50/70 dark:bg-primary-500/[0.10] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/20 ring-inset'
-              : ''
-          }
-          ${isFocused && !isPreviewed ? 'ring-2 ring-inset ring-primary-500/35 bg-primary-50/30 dark:bg-primary-500/[0.08]' : ''}
+          ${isSelected ? SELECTED_ROW_CLASS : ''}
+          ${isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
+          ${isFocused && !isPreviewed ? FOCUSED_ROW_CLASS : ''}
           transition-colors duration-150
           hover:bg-slate-50 dark:hover:bg-navy-800/50
         `}

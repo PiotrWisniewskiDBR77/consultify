@@ -658,7 +658,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                 canGoNext && !isLoading && !isGenerating
                   ? activeStepId === 3
                     ? 'bg-gradient-to-r from-primary-500 to-crimson-500 hover:from-primary-600 hover:to-crimson-600 text-white shadow-md hover:shadow-lg'
-                    : 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm'
+                    : 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 shadow-sm'
                   : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
               }
             `}

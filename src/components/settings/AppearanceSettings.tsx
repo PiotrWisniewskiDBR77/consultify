@@ -226,7 +226,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
@@ -486,8 +486,8 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               {/* Progress bar */}
               <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full">
                 <div
-                  className="h-full bg-indigo-500 rounded-full transition-all"
-                  style={{ width: `${((preferences.fontScale - 90) / 30) * 100}%` }}
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${((preferences.fontScale - 90) / 30) * 100}%`, backgroundColor: 'var(--c-info)' }}
                 />
               </div>
             </div>

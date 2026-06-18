@@ -34,7 +34,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
   const pillBase =
     'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors';
   const pillActive =
-    'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/15';
+    'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-300 dark:hover:bg-white/[0.08]';
   const pillDisabled =
     'cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-white/[0.04] dark:text-slate-500';
   const pillHighlight =
@@ -42,7 +42,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
   const sep = <span className="text-slate-300 dark:text-slate-600 select-none">·</span>;
 
   return (
-    <div className="mt-3 flex items-center flex-wrap gap-1.5 rounded-xl border border-indigo-200/60 bg-indigo-50/50 dark:border-indigo-500/15 dark:bg-indigo-500/[0.06] px-3 py-1.5">
+    <div className="mt-3 flex items-center flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.07] dark:bg-white/[0.03] px-3 py-1.5">
       {/* Step 1: Sources */}
       <button
         type="button"
@@ -99,7 +99,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         onClick={onConvert}
         disabled={!canConvertDeliverable}
         title={canConvertDeliverable ? (isPolish ? 'Konwertuj do raportu' : 'Convert to report') : convertBlockedReason}
-        className={`${pillBase} ${canConvertDeliverable ? 'bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500' : pillDisabled}`}
+        className={`${pillBase} ${canConvertDeliverable ? 'bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]' : pillDisabled}`}
       >
         <FileOutput size={11} />
         {isPolish ? '④ Konwertuj' : '④ Convert'}
@@ -108,7 +108,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
       {/* Handoff buttons */}
       {(onHandoffRadar || onHandoffInitiatives) && (
         <>
-          <span className="mx-1 h-3 w-px bg-indigo-200/70 dark:bg-indigo-500/20" />
+          <span className="mx-1 h-3 w-px bg-slate-200 dark:bg-white/[0.07]" />
           {onHandoffRadar && (
             <button
               type="button"

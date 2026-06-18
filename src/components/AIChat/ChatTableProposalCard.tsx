@@ -165,7 +165,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
           <button
             onClick={handleRefine}
             disabled={loading}
-            className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium hover:bg-navy-800 disabled:opacity-50"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : isPl ? 'Wyślij' : 'Send'}
           </button>

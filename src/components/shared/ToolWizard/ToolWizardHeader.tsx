@@ -95,7 +95,7 @@ export const ToolWizardHeader: React.FC<ToolWizardHeaderProps> = ({
           <button
             onClick={onSave}
             disabled={saving}
-            className="h-9 px-3 flex items-center gap-1.5 rounded-lg text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-50"
+            className="h-9 px-3 flex items-center gap-1.5 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50"
           >
             <Save size={14} />
             {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}

@@ -230,7 +230,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
             <button
               onClick={() => onApply(selectedAddIdx)}
               disabled={selectedCount === 0 && removeCount === 0}
-              className="px-4 py-1.5 rounded-hig-lg text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-1.5 rounded-hig-lg text-xs font-semibold bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {isPl ? `Zastosuj wybrane (${selectedCount})` : `Apply selected (${selectedCount})`}
             </button>

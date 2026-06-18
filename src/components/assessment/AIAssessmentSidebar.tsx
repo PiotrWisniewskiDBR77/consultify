@@ -387,7 +387,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                   <div className="flex gap-2 mt-4">
                     <button
                       onClick={handleApplySuggestion}
-                      className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 text-white text-xs font-medium rounded-lg transition-colors"
+                      className="flex-1 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium rounded-lg transition-colors"
                     >
                       Zastosuj
                     </button>
@@ -640,7 +640,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
             // Open full chat with assessment context
             // This would trigger opening ChatPanel with assessment mode
           }}
-          className="w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
         >
           <MessageSquare size={16} />
           Otwórz pełny chat AI

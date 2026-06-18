@@ -149,7 +149,7 @@ export const ConsultantInviteView = () => {
               <button
                 type="submit"
                 disabled={isCreating}
-                className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium shadow-md transition-colors disabled:opacity-50"
+                className="w-full py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium shadow-md transition-colors disabled:opacity-50"
               >
                 {isCreating
                   ? t('consultant.invites.generating')

@@ -269,7 +269,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
           />
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition"
           >
             <Plus size={18} />
             {t('superadmin.playbookTemplates.newTemplate')}
@@ -330,7 +330,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800"
           >
             <Plus size={18} />
             {t('superadmin.playbookTemplates.empty.cta')}
@@ -552,7 +552,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
                   !newTemplate.key.trim() ||
                   !newTemplate.triggerSignal.trim()
                 }
-                className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="px-4 py-2 text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {creating
                   ? t('superadmin.playbookTemplates.modal.creating')

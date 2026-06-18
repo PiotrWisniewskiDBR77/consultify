@@ -47,7 +47,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
   const getButtonClasses = (variant: EmptyStateAction['variant']) => {
     switch (variant) {
       case 'primary':
-        return 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-900/20';
+        return 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-900/20';
       case 'secondary':
         return 'bg-slate-100 dark:bg-navy-900 hover:bg-slate-200 dark:hover:bg-navy-800 text-navy-900 dark:text-white';
       case 'ghost':

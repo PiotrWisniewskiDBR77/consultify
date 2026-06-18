@@ -343,7 +343,7 @@ export function ABTestingDashboard() {
               onClick={() => setShowCreateModal(true)}
               disabled={!!error}
               title={error || undefined}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               <Plus size={16} />
               New Experiment
@@ -833,7 +833,7 @@ export function ABTestingDashboard() {
               <button
                 onClick={handleCreateExperiment}
                 disabled={creating || !!error}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors disabled:opacity-50"
               >
                 {creating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 Create Experiment

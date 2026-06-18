@@ -1196,8 +1196,10 @@
       "quickLinks": "Quick links"
     },
     "earnings": {
-      "title": "Commission Earnings",
+      "title": "Partner Commissions",
       "subtitle": "Track your commissions and payouts",
+      "statementsHeading": "Commission Statements",
+      "statementsSubtitle": "Commission statement history by period",
       "totalEarnings": "Total Earnings",
       "pendingPayout": "Pending Payout",
       "paidOut": "Paid Out",
@@ -1205,8 +1207,77 @@
       "noEarnings": "No earnings yet",
       "noEarningsDesc": "Earnings will appear here once your referrals convert.",
       "statements": "Statements",
+      "payments": "Payments",
       "payouts": "Payout History",
-      "noPayouts": "No payouts yet"
+      "noPayouts": "No payouts yet",
+      "loadError": "Failed to load earnings data",
+      "nextPayment": "NEXT COMMISSION PAYMENT",
+      "howItWorksUnavailable": "Commission help routing unavailable",
+      "commissionDocsUnavailable": "Commission help links return only when a governed partner help contract lands.",
+      "ticketUnavailable": "Commission inquiry routing is intentionally disabled until a governed partner-user contract exists.",
+      "submitTicketUnavailable": "Commission inquiry routing unavailable",
+      "totalEarnedYtd": "Total earned (year-to-date)",
+      "momChange": "{{value}}% month-over-month",
+      "fromReferrals": "From {{n}} referrals",
+      "pendingApproval": "Pending approval",
+      "processing": "Processing...",
+      "readyForPayout": "Ready for payout",
+      "requesting": "Requesting...",
+      "requestPayout": "Request Payout",
+      "minimumNotReached": "Minimum payout amount is {{amount}}",
+      "bankInfoRequired": "Up-to-date bank and tax information is required to receive commission payments.",
+      "bankInfoRuntimeNotice": "Use the governed payout settings surface to keep payout details up to date.",
+      "recentTransactions": "Recent Commission Statements",
+      "noDataToExport": "No transactions to export",
+      "exported": "Exported {{n}} transactions",
+      "payoutRequested": "Payout request submitted!",
+      "payoutFailed": "Failed to request payout",
+      "paymentHistory": "Payment History",
+      "paymentHistoryDesc": "A list of payments made from Consultify to your organization.",
+      "noPayments": "We couldn't find any payments to show.",
+      "noPaymentsDesc": "Payments are processed on the 15th of each month.",
+      "noStatements": "We couldn't find any statements",
+      "v8RuntimeTitle": "V8 Earnings Summary",
+      "v8RuntimeSubtitle": "Governed partner payout readiness and earnings totals from the V8 namespace.",
+      "v8TotalEarned": "Governed total earned",
+      "v8ThisMonth": "Governed this month",
+      "v8Pending": "Governed pending",
+      "v8ReadyForPayout": "Governed ready for payout",
+      "col": {
+        "customer": "Customer",
+        "type": "Type",
+        "amount": "Amount",
+        "commission": "Commission",
+        "status": "Status",
+        "date": "Date"
+      },
+      "status": {
+        "paid": "Paid",
+        "approved": "Approved",
+        "pending": "Pending"
+      }
+    },
+    "payouts": {
+      "title": "Payout History",
+      "subtitle": "View your past and pending payouts",
+      "empty": "No payouts yet",
+      "emptyDesc": "Your payout history will appear here after payout processing."
+    },
+    "payoutSettings": {
+      "title": "Payout Settings",
+      "subtitle": "Configure your payout preferences and bank details",
+      "saved": "Payout settings updated",
+      "saveFailed": "Failed to update payout settings"
+    },
+    "commission": {
+      "faq": {
+        "payoutProcess": "How does the payout process work?",
+        "payoutProcessAnswer": "Commission statements are generated quarterly. After quarter close, the Finance Team verifies all deals and generates the statement. Payout occurs within 30 days of approval.",
+        "incorrectAmount": "What if the amount is incorrect?",
+        "incorrectAmountAnswer": "Use the inquiry form above, selecting 'Statement question'. Include the statement number and details of the discrepancy. Finance Team will respond within 2 business days.",
+        "pmoMapping": "How are deals mapped to PMO standards?",
+        "pmoMappingAnswer": "Each deal registration is automatically mapped to GOVERNANCE_DECISION_MAKING (ISO 21500 Clause 4.3.4), and commission settlement to BENEFITS_REALIZATION (Clause 4.4.1)."
+      }
     }
   },
   "common": {
@@ -5951,6 +6022,9 @@
         "detailed": "Detailed",
         "comprehensive": "Comprehensive"
       },
+      "toneLabel": "Tone",
+      "formalityLabel": "Formality",
+      "verbosityLabel": "Verbosity",
       "promptRequired": "Name and prompt text are required",
       "promptUpdated": "Prompt updated",
       "promptCreated": "Prompt created",

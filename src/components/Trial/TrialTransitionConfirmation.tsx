@@ -217,7 +217,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
                             flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all
                             ${
                               allConfirmed && !state.isSubmitting
-                                ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/20'
+                                ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-500/20'
                                 : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                             }
                         `}

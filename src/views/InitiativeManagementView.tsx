@@ -503,7 +503,7 @@ export const InitiativeManagementView: React.FC = () => {
                       {activeTab === 'approved' && (
                         <button
                           onClick={() => handleTransferToRoadmap(initiative)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
                         >
                           <MapPin size={14} />
                           Start Execution

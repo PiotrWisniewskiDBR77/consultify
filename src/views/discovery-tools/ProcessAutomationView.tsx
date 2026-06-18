@@ -468,7 +468,7 @@ export const ProcessAutomationView: React.FC = () => {
 
         {/* Generate Initiative Button */}
         <div className="mt-6 flex justify-end">
-          <button className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors">
+          <button className="px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg flex items-center gap-2 transition-colors">
             <Lightbulb className="w-5 h-5" />
             {isPolish ? 'Generuj Inicjatywę' : 'Generate Initiative'}
           </button>

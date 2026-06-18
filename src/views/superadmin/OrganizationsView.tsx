@@ -915,7 +915,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             <button
               onClick={() => setShowCodeModal(true)}
               disabled={!!loadErrors.codes}
-              className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              className="bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
             >
               <Plus size={16} /> Generate New Code
             </button>

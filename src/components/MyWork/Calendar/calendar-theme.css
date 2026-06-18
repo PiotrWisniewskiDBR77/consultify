@@ -2,8 +2,8 @@
 
 .fc-consultify .fc {
   --fc-border-color: rgba(255, 255, 255, 0.06);
-  --fc-today-bg-color: rgba(124, 58, 237, 0.06);
-  --fc-now-indicator-color: #7c3aed;
+  --fc-today-bg-color: rgba(59, 40, 131, 0.06);
+  --fc-now-indicator-color: var(--c-info);
   --fc-event-border-color: transparent;
   --fc-page-bg-color: transparent;
   --fc-neutral-bg-color: rgba(255, 255, 255, 0.02);
@@ -36,7 +36,7 @@
 }
 
 .fc-consultify .fc-day-today .fc-daygrid-day-number {
-  color: #7c3aed;
+  color: var(--c-info);
   font-weight: 700;
 }
 
@@ -70,18 +70,18 @@
 }
 
 .fc-consultify .fc-timegrid-now-indicator-line {
-  border-color: #7c3aed;
+  border-color: var(--c-info);
   border-width: 2px;
 }
 
 .fc-consultify .fc-timegrid-now-indicator-arrow {
-  border-color: #7c3aed;
+  border-color: var(--c-info);
 }
 
 .fc-consultify .fc-more-link {
   font-size: 11px;
   font-weight: 600;
-  color: #7c3aed;
+  color: var(--c-info);
 }
 
 .fc-consultify .fc-list-event:hover td {
@@ -102,7 +102,7 @@
 /* Light mode overrides */
 :root:not(.dark) .fc-consultify .fc {
   --fc-border-color: #e2e8f0;
-  --fc-today-bg-color: rgba(124, 58, 237, 0.04);
+  --fc-today-bg-color: rgba(59, 40, 131, 0.04);
   --fc-neutral-bg-color: #f8fafc;
   --fc-list-event-hover-bg-color: #f1f5f9;
 }
@@ -116,7 +116,7 @@
 }
 
 :root:not(.dark) .fc-consultify .fc-day-today .fc-daygrid-day-number {
-  color: #7c3aed;
+  color: var(--c-info);
 }
 
 :root:not(.dark) .fc-consultify .fc-list-day-text,

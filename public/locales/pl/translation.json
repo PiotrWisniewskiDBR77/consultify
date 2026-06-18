@@ -5190,6 +5190,9 @@
         "detailed": "Szczegółowy",
         "comprehensive": "Kompleksowy"
       },
+      "toneLabel": "Ton",
+      "formalityLabel": "Formalność",
+      "verbosityLabel": "Szczegółowość",
       "promptRequired": "Nazwa i treść promptu są wymagane",
       "promptUpdated": "Prompt zaktualizowany",
       "promptCreated": "Prompt utworzony",
@@ -8189,8 +8192,10 @@
       "quickLinks": "Szybkie linki"
     },
     "earnings": {
-      "title": "Prowizje",
-      "subtitle": "Śledź swoje prowizje i wypłaty",
+      "title": "Prowizja partnerska",
+      "subtitle": "Śledź swoje przychody i prowizje",
+      "statementsHeading": "Wyciągi prowizyjne",
+      "statementsSubtitle": "Wyciągi i historia rozliczeń prowizji w ujęciu okresowym",
       "totalEarnings": "Łączne prowizje",
       "pendingPayout": "Oczekująca wypłata",
       "paidOut": "Wypłacone",
@@ -8198,8 +8203,77 @@
       "noEarnings": "Brak prowizji",
       "noEarningsDesc": "Prowizje pojawią się tutaj, gdy Twoje polecenia zostaną zrealizowane.",
       "statements": "Zestawienia",
+      "payments": "Wypłaty",
       "payouts": "Historia wypłat",
-      "noPayouts": "Brak wypłat"
+      "noPayouts": "Brak wypłat",
+      "loadError": "Nie udało się załadować danych prowizyjnych",
+      "nextPayment": "KOLEJNA WYPŁATA PROWIZJI",
+      "howItWorksUnavailable": "Routing pomocy prowizyjnej niedostępny",
+      "commissionDocsUnavailable": "Linki pomocy prowizyjnej dostępne dopiero po zawarciu umowy partnerskiej.",
+      "ticketUnavailable": "Routing zapytań prowizyjnych jest celowo wyłączony do momentu zawarcia umowy partner-użytkownik.",
+      "submitTicketUnavailable": "Routing zapytań prowizyjnych niedostępny",
+      "totalEarnedYtd": "Łącznie zarobione (od początku roku)",
+      "momChange": "{{value}}% mies./mies.",
+      "fromReferrals": "Z {{n}} poleceń",
+      "pendingApproval": "Oczekuje na zatwierdzenie",
+      "processing": "Przetwarzanie...",
+      "readyForPayout": "Gotowe do wypłaty",
+      "requesting": "Wysyłanie...",
+      "requestPayout": "Zażądaj wypłaty",
+      "minimumNotReached": "Minimalna kwota wypłaty to {{amount}}",
+      "bankInfoRequired": "Aktualne dane bankowe i podatkowe są wymagane do otrzymania prowizji.",
+      "bankInfoRuntimeNotice": "Użyj ustawień wypłaty, aby zaktualizować dane płatnicze.",
+      "recentTransactions": "Ostatnie zestawienia prowizji",
+      "noDataToExport": "Brak transakcji do eksportu",
+      "exported": "Wyeksportowano {{n}} transakcji",
+      "payoutRequested": "Żądanie wypłaty zostało wysłane!",
+      "payoutFailed": "Nie udało się wysłać żądania wypłaty",
+      "paymentHistory": "Historia płatności",
+      "paymentHistoryDesc": "Lista płatności przekazanych z Consultify do Twojej organizacji.",
+      "noPayments": "Nie znaleziono żadnych płatności.",
+      "noPaymentsDesc": "Płatności są przetwarzane 15. dnia każdego miesiąca.",
+      "noStatements": "Nie znaleziono żadnych zestawień",
+      "v8RuntimeTitle": "Podsumowanie zarobków V8",
+      "v8RuntimeSubtitle": "Zarządzana gotowość do wypłaty i łączne zarobki partnera z przestrzeni V8.",
+      "v8TotalEarned": "Łącznie zarobione (zarządzane)",
+      "v8ThisMonth": "W tym miesiącu (zarządzane)",
+      "v8Pending": "Oczekujące (zarządzane)",
+      "v8ReadyForPayout": "Gotowe do wypłaty (zarządzane)",
+      "col": {
+        "customer": "Klient",
+        "type": "Typ",
+        "amount": "Kwota",
+        "commission": "Prowizja",
+        "status": "Status",
+        "date": "Data"
+      },
+      "status": {
+        "paid": "Wypłacone",
+        "approved": "Zatwierdzone",
+        "pending": "Oczekujące"
+      }
+    },
+    "payouts": {
+      "title": "Historia wypłat",
+      "subtitle": "Przeglądaj swoje minione i oczekujące wypłaty",
+      "empty": "Brak wypłat",
+      "emptyDesc": "Historia wypłat pojawi się tutaj po przetworzeniu pierwszej wypłaty."
+    },
+    "payoutSettings": {
+      "title": "Ustawienia wypłat",
+      "subtitle": "Skonfiguruj preferencje wypłat i dane bankowe",
+      "saved": "Ustawienia wypłat zaktualizowane",
+      "saveFailed": "Nie udało się zaktualizować ustawień wypłat"
+    },
+    "commission": {
+      "faq": {
+        "payoutProcess": "Jak działa proces wypłat?",
+        "payoutProcessAnswer": "Wyciągi prowizyjne są generowane kwartalnie. Po zamknięciu kwartału Finance Team weryfikuje wszystkie transakcje i generuje wyciąg. Wypłata następuje w ciągu 30 dni od zatwierdzenia.",
+        "incorrectAmount": "Co zrobić, jeśli kwota jest nieprawidłowa?",
+        "incorrectAmountAnswer": "Użyj formularza zapytania powyżej, wybierając 'Pytanie o wyciąg'. Dołącz numer wyciągu i szczegóły rozbieżności. Finance Team odpowie w ciągu 2 dni roboczych.",
+        "pmoMapping": "Jak transakcje są mapowane do standardów PMO?",
+        "pmoMappingAnswer": "Każda rejestracja transakcji jest automatycznie mapowana do GOVERNANCE_DECISION_MAKING (ISO 21500 Klauzula 4.3.4), a rozliczenie prowizji do BENEFITS_REALIZATION (Klauzula 4.4.1)."
+      }
     }
   },
   "thinking": {

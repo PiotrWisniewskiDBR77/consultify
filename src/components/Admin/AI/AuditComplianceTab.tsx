@@ -531,7 +531,7 @@ export const AuditComplianceTab: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => toast.success('Exporting all reports as PDF...')}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm"
                 >
                   <FileText size={16} />
                   Export All (PDF)
@@ -622,7 +622,7 @@ export const AuditComplianceTab: React.FC = () => {
                 setEditingTemplate(null);
                 setShowTemplateEditor(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
             >
               <Plus size={16} />
               Create Template
@@ -708,7 +708,7 @@ export const AuditComplianceTab: React.FC = () => {
                   setEditingTemplate(null);
                   setShowTemplateEditor(true);
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
               >
                 <Plus size={16} />
                 Create Your First Template

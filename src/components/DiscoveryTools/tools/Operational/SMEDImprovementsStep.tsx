@@ -100,7 +100,7 @@ export const SMEDImprovementsStep: React.FC<SMEDImprovementsStepProps> = ({
           <button
             onClick={handleAdd}
             disabled={!title.trim()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
             {isPolish ? 'Dodaj' : 'Add'}

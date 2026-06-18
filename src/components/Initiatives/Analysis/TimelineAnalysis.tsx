@@ -536,7 +536,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   <button
                     onClick={handleApplyAllSchedule}
                     disabled={scheduleRunning}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50 transition-colors"
                   >
                     {scheduleRunning ? (
                       <Loader2 size={12} className="animate-spin" />
@@ -965,7 +965,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   onClick={handleApplyAllSchedule}
                   disabled={scheduleRunning}
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                    bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
+                    bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50 transition-colors"
                 >
                   {scheduleRunning ? (
                     <Loader2 size={12} className="animate-spin" />

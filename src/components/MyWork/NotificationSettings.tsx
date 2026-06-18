@@ -244,7 +244,7 @@ export const NotificationSettings: React.FC = () => {
           <button
             onClick={saveSettings}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors disabled:opacity-50 text-sm font-medium"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {t('notifications.save', 'Save Changes')}
@@ -434,7 +434,7 @@ export const NotificationSettings: React.FC = () => {
         <button
           onClick={saveSettings}
           disabled={saving || !hasChanges}
-          className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          className="flex items-center gap-2 px-6 py-2.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
         >
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           {t('notifications.saveSettings', 'Save Settings')}

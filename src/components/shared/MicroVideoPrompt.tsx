@@ -186,7 +186,7 @@ export const MicroVideoPrompt: React.FC<MicroVideoPromptProps> = ({
                   className="absolute inset-0 flex items-center justify-center group"
                   aria-label={t('help.microVideo.watch', 'Watch')}
                 >
-                  <span className="w-14 h-14 flex items-center justify-center rounded-full bg-primary-600 hover:bg-primary-500 text-white shadow-lg transition-colors group-hover:scale-105">
+                  <span className="w-14 h-14 flex items-center justify-center rounded-full bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg transition-colors group-hover:scale-105">
                     <Play size={24} fill="currentColor" />
                   </span>
                 </button>
@@ -245,7 +245,7 @@ export const MicroVideoPrompt: React.FC<MicroVideoPromptProps> = ({
               <button
                 type="button"
                 onClick={handlePlay}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-sm font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl text-sm font-semibold transition-colors"
               >
                 <Play size={16} fill="currentColor" />
                 {t('help.microVideo.watch', 'Watch')}

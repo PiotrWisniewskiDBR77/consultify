@@ -218,7 +218,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                 <button
                                   onClick={handleAiDiagnose}
                                   disabled={aiLoading || !aiInput.trim()}
-                                  className="px-3 py-1.5 bg-primary-600 text-white text-[10px] font-bold rounded-lg hover:bg-primary-500 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                                  className="px-3 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-[10px] font-bold rounded-lg hover:bg-navy-800 disabled:opacity-50 transition-colors flex items-center gap-1.5"
                                 >
                                   {aiLoading ? (
                                     <span className="animate-spin">⌛</span>

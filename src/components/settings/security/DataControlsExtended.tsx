@@ -439,7 +439,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
         <button
           onClick={handleExportAll}
           disabled={exporting === 'all'}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
         >
           {exporting === 'all' ? (
             <Loader2 size={18} className="animate-spin" />

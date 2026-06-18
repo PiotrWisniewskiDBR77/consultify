@@ -328,7 +328,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
               <button
                 onClick={() => executeTransition(pendingStatus, reason)}
                 disabled={!reason.trim() || isLoading}
-                className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Updating...' : 'Confirm'}
               </button>

@@ -284,7 +284,7 @@ export const ClientAccessView: React.FC = () => {
         <p className="text-slate-500 mb-4">{error}</p>
         <button
           onClick={fetchData}
-          className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
         >
           {t('common.retry', 'Try Again')}
         </button>

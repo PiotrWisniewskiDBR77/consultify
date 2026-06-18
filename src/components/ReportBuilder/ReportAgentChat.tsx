@@ -303,7 +303,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                       <button
                         onClick={() => handleApply(msg.id)}
                         disabled={applying === msg.id}
-                        className="mt-2 w-full px-3 py-1.5 text-xs bg-primary-600 hover:bg-primary-500 text-white rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                        className="mt-2 w-full px-3 py-1.5 text-xs bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                       >
                         {applying === msg.id ? (
                           <>
@@ -361,7 +361,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || sending}
-            className="p-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-30 shrink-0"
+            className="p-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-30 shrink-0"
           >
             <Send size={16} />
           </button>

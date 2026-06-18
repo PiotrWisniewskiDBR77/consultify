@@ -149,7 +149,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
           disabled={!sessionData.step3Completed}
           className={`flex-1 flex items-center justify-center gap-2 px-8 py-4 rounded-lg font-semibold text-sm transition-all shadow-lg group ${
             sessionData.step3Completed
-              ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-primary-900/30'
+              ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-primary-900/30'
               : 'bg-slate-50 dark:bg-navy-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
           }`}
         >

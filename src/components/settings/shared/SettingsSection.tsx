@@ -52,15 +52,15 @@ interface SettingsSectionProps {
 export const SettingsSectionSkeleton: React.FC<{ rows?: number }> = ({ rows = 3 }) => (
   <div className="space-y-6 animate-pulse p-6">
     <div className="flex items-start gap-4">
-      <div className="w-10 h-10 bg-navy-700 rounded-lg" />
+      <div className="w-10 h-10 bg-slate-200 dark:bg-navy-700 rounded-lg" />
       <div className="flex-1 space-y-2">
-        <div className="h-5 bg-navy-700 rounded w-1/3" />
-        <div className="h-4 bg-navy-700 rounded w-2/3" />
+        <div className="h-5 bg-slate-200 dark:bg-navy-700 rounded w-1/3" />
+        <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-2/3" />
       </div>
     </div>
     <div className="space-y-4">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-12 bg-navy-700 rounded-lg" />
+        <div key={i} className="h-12 bg-slate-200 dark:bg-navy-700 rounded-lg" />
       ))}
     </div>
   </div>
@@ -87,8 +87,8 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
     return (
       <div
         className={cn(
-          'bg-navy-800/50 rounded-xl overflow-hidden',
-          bordered && 'border border-white/5',
+          'bg-white dark:bg-navy-800/50 rounded-xl overflow-hidden',
+          bordered && 'border border-slate-200 dark:border-white/5',
           className
         )}
       >
@@ -103,8 +103,8 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   return (
     <div
       className={cn(
-        'bg-navy-800/50 rounded-xl overflow-hidden transition-all duration-200',
-        bordered && 'border border-white/5',
+        'bg-white dark:bg-navy-800/50 rounded-xl overflow-hidden transition-all duration-200',
+        bordered && 'border border-slate-200 dark:border-white/5',
         isDirty && 'ring-2 ring-amber-500/20',
         className
       )}
@@ -114,15 +114,15 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
         className={cn(
           'flex items-start justify-between',
           headerPadding,
-          onSave && 'border-b border-white/5'
+          onSave && 'border-b border-slate-200 dark:border-white/5'
         )}
       >
         <div className="flex items-start gap-4">
-          <div className="p-2.5 bg-primary-600/10 rounded-lg flex-shrink-0">
-            <Icon size={20} className="text-primary-400" />
+          <div className="p-2.5 bg-primary-100 dark:bg-primary-600/10 rounded-lg flex-shrink-0">
+            <Icon size={20} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white leading-tight">{title}</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white leading-tight">{title}</h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mt-1 leading-relaxed">
               {description}
             </p>
@@ -139,7 +139,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
 
       {/* Footer with Save (if onSave provided) */}
       {onSave && (
-        <div className="flex items-center justify-between px-6 py-4 bg-navy-900/50 border-t border-white/5">
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-white/5">
           <div className="flex items-center gap-2 text-sm">
             {isDirty ? (
               <>
@@ -161,8 +161,8 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
               'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
               isDirty
-                ? 'bg-primary-600 hover:bg-primary-500 text-white'
-                : 'bg-white/5 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
             )}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -216,10 +216,10 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({ error, className, 
     <input
       {...props}
       className={cn(
-        'w-full px-4 py-2.5 bg-navy-800 border rounded-lg text-white',
-        'placeholder:text-slate-500 dark:text-slate-400 transition-all duration-200',
+        'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
+        'placeholder:text-slate-400 transition-all duration-200',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-        error ? 'border-rose-500 focus:ring-rose-500' : 'border-white/10 hover:border-white/20',
+        error ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
     />
@@ -243,10 +243,10 @@ export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
     <textarea
       {...props}
       className={cn(
-        'w-full px-4 py-3 bg-navy-800 border rounded-lg text-white resize-none',
-        'placeholder:text-slate-500 dark:text-slate-400 transition-all duration-200',
+        'w-full px-4 py-3 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white resize-none',
+        'placeholder:text-slate-400 transition-all duration-200',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-        error ? 'border-rose-500 focus:ring-rose-500' : 'border-white/10 hover:border-white/20',
+        error ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
     />
@@ -272,10 +272,10 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
     <select
       {...props}
       className={cn(
-        'w-full px-4 py-2.5 bg-navy-800 border rounded-lg text-white',
+        'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
         'transition-all duration-200 cursor-pointer',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-        error ? 'border-rose-500 focus:ring-rose-500' : 'border-white/10 hover:border-white/20',
+        error ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
     >
@@ -309,7 +309,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
 }) => (
   <div className="flex items-start justify-between gap-4">
     <div className="flex-1">
-      <span className="text-sm font-medium text-white">{label}</span>
+      <span className="text-sm font-medium text-slate-900 dark:text-white">{label}</span>
       {description && (
         <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">{description}</p>
       )}
@@ -322,7 +322,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
       className={cn(
         'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
-        checked ? 'bg-primary-600' : 'bg-white/10',
+        checked ? 'bg-primary-600' : 'bg-slate-200 dark:bg-white/10',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >
@@ -340,7 +340,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
  * Settings divider - visual separator
  */
 export const SettingsDivider: React.FC<{ className?: string }> = ({ className }) => (
-  <div className={cn('border-t border-white/5 my-6', className)} />
+  <div className={cn('border-t border-slate-200 dark:border-white/5 my-6', className)} />
 );
 
 /**
@@ -366,7 +366,7 @@ export const SettingsButtonGroup: React.FC<SettingsButtonGroupProps> = ({
   };
 
   return (
-    <div className="inline-flex rounded-lg bg-navy-900/50 p-1">
+    <div className="inline-flex rounded-lg bg-slate-100 dark:bg-navy-900/50 p-1">
       {options.map((option) => {
         const isActive = value === option.value;
         const Icon = option.icon;
@@ -378,8 +378,8 @@ export const SettingsButtonGroup: React.FC<SettingsButtonGroupProps> = ({
               'flex items-center gap-2 rounded-md font-medium transition-all duration-200',
               sizeClasses[size],
               isActive
-                ? 'bg-primary-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 shadow-sm'
+                : 'text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-navy-800/20'
             )}
           >
             {Icon && <Icon size={size === 'sm' ? 14 : size === 'md' ? 16 : 18} />}

@@ -209,7 +209,7 @@ export const AccessLimitsTab: React.FC = () => {
             disabled={saving || !hasChanges}
             className={`flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all ${
               hasChanges
-                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20'
+                ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-500/20'
                 : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
@@ -380,7 +380,7 @@ export const AccessLimitsTab: React.FC = () => {
                   placeholder="Alert email (optional)"
                   className="flex-1 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-navy-900 dark:text-white text-sm"
                 />
-                <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg">
+                <button className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg">
                   Add Email
                 </button>
               </div>

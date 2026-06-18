@@ -565,7 +565,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                 disabled={isLoading}
                 className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                   action.variant === 'primary'
-                    ? 'bg-primary-600 hover:bg-primary-500 text-white'
+                    ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                     : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300'
                 } disabled:opacity-50`}
               >

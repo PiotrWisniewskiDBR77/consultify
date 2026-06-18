@@ -374,7 +374,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
 
                   <button
                     onClick={currentStep === TOUR_STEPS.length - 1 ? handleComplete : handleNext}
-                    className="px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-xl transition-all duration-150 flex items-center gap-2"
+                    className="px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold rounded-xl transition-all duration-150 flex items-center gap-2"
                   >
                     {currentStep === TOUR_STEPS.length - 1
                       ? t('tour.startExploring', 'Start Exploring')

@@ -3770,7 +3770,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     <button
                       type="button"
                       onClick={() => openOutput(item as any)}
-                      className="inline-flex items-center gap-2 h-8 px-3 rounded-full bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 active:scale-[0.98]"
+                      className="inline-flex items-center gap-2 h-8 px-3 rounded-full bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium hover:bg-navy-800 active:scale-[0.98]"
                     >
                       <ExternalLink size={14} />
                       {t('common.open', 'Open')}
@@ -4266,7 +4266,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       <button
         type="button"
         onClick={() => setIsAddMenuOpen((v) => !v)}
-        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors duration-150"
+        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
         aria-expanded={isAddMenuOpen}
       >
         <span>{isPolish ? 'Dodaj' : t('common.add', 'Add')}</span>

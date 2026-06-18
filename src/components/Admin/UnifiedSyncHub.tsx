@@ -1768,7 +1768,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 {isConnected ? null : connectable ? (
                                   <button
                                     onClick={() => handleConnect(conn.id)}
-                                    className="px-3 py-1 text-xs bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
+                                    className="px-3 py-1 text-xs bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
                                   >
                                     {t('integrations.syncHub.connect', 'Connect')}
                                   </button>
@@ -3041,7 +3041,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
         <button
           onClick={() => window.location.assign('/settings/integrations')}
-          className="h-9 px-4 bg-primary-600 hover:bg-primary-500 text-white text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
+          className="h-9 px-4 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
         >
           <Plus size={16} />
           {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
@@ -3141,7 +3141,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               setActiveTab('apps');
               window.location.assign('/settings/integrations');
             }}
-            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors"
+            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
           >
             <Plus size={14} />
             {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}

@@ -496,7 +496,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="px-3 py-2 rounded-lg text-sm bg-primary-600 text-white hover:bg-primary-500 inline-flex items-center gap-2"
+            className="px-3 py-2 rounded-lg text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 inline-flex items-center gap-2"
           >
             <Plus size={16} /> {t('valuation.create.cta', 'New valuation')}
           </button>
@@ -830,7 +830,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <button
                           disabled={busy}
                           onClick={handleSaveAssumptions}
-                          className="w-full px-3 py-2 rounded-lg text-sm bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-60"
+                          className="w-full px-3 py-2 rounded-lg text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60"
                         >
                           {t('valuation.assumptions.save', 'Save assumptions')}
                         </button>
@@ -919,7 +919,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <button
                           disabled={busy}
                           onClick={handleSaveComps}
-                          className="w-full px-3 py-2 rounded-lg text-sm bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-60"
+                          className="w-full px-3 py-2 rounded-lg text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60"
                         >
                           {t('valuation.comps.save', 'Save comps')}
                         </button>
@@ -1025,7 +1025,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <button
                           disabled={busy || selected?.status !== 'APPROVED'}
                           onClick={handleGenerateAdvisory}
-                          className="px-3 py-1.5 rounded-lg text-xs bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-60"
+                          className="px-3 py-1.5 rounded-lg text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60"
                         >
                           {t('valuation.advisory.generate', 'Generate')}
                         </button>
@@ -1162,7 +1162,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     <button
                                       disabled={busy}
                                       onClick={() => handleConvertRecommendation(String(r.id))}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-60 transition-colors"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60 transition-colors"
                                     >
                                       <Plus size={12} />
                                       {t('valuation.advisory.convert', 'Create initiative')}
@@ -1443,7 +1443,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                     <button
                       disabled={busy}
                       onClick={handleExportPptx}
-                      className="px-3 py-2 rounded-lg text-sm bg-primary-600 text-white hover:bg-primary-500 inline-flex items-center gap-2 disabled:opacity-60"
+                      className="px-3 py-2 rounded-lg text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 inline-flex items-center gap-2 disabled:opacity-60"
                     >
                       {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download size={16} />}
                       {t('valuation.export.pptx', 'Export PPTX')}
@@ -1557,7 +1557,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               <button
                 disabled={busy}
                 onClick={handleCreate}
-                className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500 disabled:opacity-60"
+                className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg hover:bg-navy-800 disabled:opacity-60"
               >
                 {busy ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

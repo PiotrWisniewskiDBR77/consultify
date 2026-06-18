@@ -277,7 +277,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
                 <button
                   onClick={() => handleSubmitComment()}
                   disabled={!newComment.trim() || submitting}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send size={14} />
                   Post
@@ -413,7 +413,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                   <button
                     onClick={onSubmitReply}
                     disabled={!replyText.trim() || submitting}
-                    className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                    className="p-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 disabled:opacity-50"
                   >
                     <Send size={14} />
                   </button>

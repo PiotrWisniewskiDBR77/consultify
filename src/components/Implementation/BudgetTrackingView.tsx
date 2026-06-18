@@ -283,7 +283,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
         <p className="text-sm mb-4">Set up budget tracking for this initiative</p>
         <button
           onClick={() => setShowCreateBudgetModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} />
           Create Budget
@@ -357,7 +357,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 </button>
                 <button
                   onClick={handleCreateBudget}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
+                  className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800"
                 >
                   Create Budget
                 </button>
@@ -394,7 +394,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
           </button>
           <button
             onClick={() => setShowAddExpenseModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Expense
@@ -715,7 +715,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
               </button>
               <button
                 onClick={handleAddExpense}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
+                className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800"
               >
                 Add Expense
               </button>

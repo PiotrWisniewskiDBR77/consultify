@@ -67,7 +67,7 @@ const AIActionButton: React.FC<AIActionButtonProps> = ({
     'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all';
   const variantClasses =
     variant === 'primary'
-      ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-900/20'
+      ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-900/20'
       : 'bg-slate-100 dark:bg-navy-950/50 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700';
 
   return (
@@ -678,7 +678,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 disabled={!data.actual || !data.target}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg ${
                   data.actual && data.target
-                    ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-primary-900/30'
+                    ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-primary-900/30'
                     : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                 }`}
               >
@@ -991,7 +991,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     <div className="flex gap-2">
                       <button
                         onClick={aiSuggestion ? handleApplySuggestion : handleApplyEvidence}
-                        className="px-3 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-medium rounded-lg transition-colors"
+                        className="px-3 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium rounded-lg transition-colors"
                       >
                         Zastosuj
                       </button>

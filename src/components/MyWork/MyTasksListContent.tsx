@@ -83,6 +83,7 @@ import { type ColumnConfig, ColumnConfigMenu } from './shared/ColumnConfigMenu';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { SavedViewsMenu, type TaskViewPreset } from './shared/SavedViewsMenu';
+import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent' | 'new';
 type TaskTimeGroup = 'all' | 'overdue' | 'today' | 'week' | 'later' | 'no-date';
@@ -120,10 +121,8 @@ interface MyTasksListContentProps {
 const TASK_TABLE_VIEW_STORAGE_KEY = 'consultify-tasks-table-view';
 const TASK_TABLE_ROW_DESCRIPTION_STORAGE_KEY = 'consultify-tasks-show-row-description';
 const TASK_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
-const TASK_SELECTED_ROW_CLASS =
-  'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset';
-const TASK_PREVIEW_ROW_CLASS =
-  'bg-primary-50/70 dark:bg-primary-500/[0.10] ring-1 ring-primary-500/20 ring-inset';
+const TASK_SELECTED_ROW_CLASS = SELECTED_ROW_CLASS;
+const TASK_PREVIEW_ROW_CLASS = PREVIEW_SELECTED_ROW_CLASS;
 
 function loadTasksHiddenColumns(): string[] {
   try {
@@ -161,7 +160,7 @@ const getPriorityConfig = (priority?: string) => {
       return {
         color: 'text-slate-700 dark:text-slate-200',
         bg: 'bg-slate-400',
-        dot: 'bg-rose-500',
+        dot: 'bg-danger-500',
         label: 'Critical',
       };
     case 'high':
@@ -232,9 +231,9 @@ const getStatusConfig = (status?: string) => {
       };
     case 'blocked':
       return {
-        color: 'text-rose-700 dark:text-rose-300',
-        bg: 'bg-rose-100 dark:bg-rose-500/20',
-        dot: 'bg-rose-500',
+        color: 'text-danger-700 dark:text-danger-300',
+        bg: 'bg-danger-100 dark:bg-danger-500/20',
+        dot: 'bg-danger-500',
         label: 'Blocked',
       };
     case 'cancelled':
@@ -482,12 +481,12 @@ const INLINE_STATUS_OPTIONS = [
   { value: 'todo', label: 'To Do', dot: 'bg-slate-400' },
   { value: 'in_progress', label: 'In Progress', dot: 'bg-blue-500' },
   { value: 'review', label: 'Review', dot: 'bg-amber-500' },
-  { value: 'blocked', label: 'Blocked', dot: 'bg-rose-500' },
+  { value: 'blocked', label: 'Blocked', dot: 'bg-danger-500' },
   { value: 'completed', label: 'Done', dot: 'bg-emerald-500' },
 ];
 
 const INLINE_PRIORITY_OPTIONS = [
-  { value: 'critical', label: 'Critical', dot: 'bg-rose-500' },
+  { value: 'critical', label: 'Critical', dot: 'bg-danger-500' },
   { value: 'high', label: 'High', dot: 'bg-amber-500' },
   { value: 'medium', label: 'Medium', dot: 'bg-blue-500' },
   { value: 'low', label: 'Low', dot: 'bg-slate-400' },

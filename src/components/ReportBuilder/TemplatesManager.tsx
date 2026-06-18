@@ -45,6 +45,7 @@ import {
 import { Api } from '../../services/api';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { ReportEditor } from './ReportEditor/ReportEditor';
+import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS } from '../shared/selectionTokens';
 
 // ==========================================
 // TYPES
@@ -1000,9 +1001,9 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                           group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
                           ${
                             previewId === template.id
-                              ? 'bg-primary-500/[0.08] dark:bg-primary-500/10 shadow-[inset_4px_0_0_0_var(--tw-shadow-color)] shadow-primary-500'
+                              ? PREVIEW_SELECTED_ROW_CLASS
                               : selectedIds.has(template.id)
-                                ? 'bg-primary-500/[0.08] dark:bg-primary-500/10'
+                                ? SELECTED_ROW_CLASS
                                 : ''
                           }
                           transition-colors duration-150

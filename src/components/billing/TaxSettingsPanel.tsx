@@ -302,7 +302,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                   setEditingRate(null);
                   setShowEditModal(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
               >
                 <Plus className="w-4 h-4" />
                 Add Tax Rate
@@ -590,7 +590,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
               <button
                 onClick={handleCalculateTax}
                 disabled={!calcAmount || !calcCountry || calculating}
-                className="w-full px-6 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {calculating ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : 'Calculate'}
               </button>
@@ -806,7 +806,7 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+              className="flex-1 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
             >
               {rate ? 'Update' : 'Create'}
             </button>

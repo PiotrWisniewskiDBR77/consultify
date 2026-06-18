@@ -4299,7 +4299,7 @@ Return ONLY the final comment text.`;
                     setEditingStakeholderId(null);
                     setStakeholderDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
+                  className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                 >
                   {isPolish ? 'Zapisz' : 'Save'}
                 </button>
@@ -4564,7 +4564,7 @@ Return ONLY the final comment text.`;
                     setEditingReminderId(null);
                     setReminderDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
+                  className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                 >
                   {isPolish ? 'Zapisz' : 'Save'}
                 </button>
@@ -4856,7 +4856,7 @@ Return ONLY the final comment text.`;
                     setEditingEscalationId(null);
                     setEscalationDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
+                  className="px-3 py-1.5 rounded-md text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
                 >
                   {isPolish ? 'Zapisz' : 'Save'}
                 </button>

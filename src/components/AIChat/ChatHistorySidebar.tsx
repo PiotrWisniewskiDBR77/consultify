@@ -963,7 +963,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
             <button
               onClick={handleNewChat}
               data-testid="chat-history-new-chat"
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
             >
               {t('aiChat.newChat', 'Nowy czat')}
             </button>

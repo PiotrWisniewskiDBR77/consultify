@@ -1027,7 +1027,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </p>
         </div>
 
-        <button className="w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary-500/20 dark:shadow-primary-900/20 group text-sm">
+        <button className="w-full py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary-500/20 dark:shadow-primary-900/20 group text-sm">
           {t('auth.createStart')}
           <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
         </button>
@@ -1168,7 +1168,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <button
           type="submit"
           data-testid="login-button"
-          className="w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-primary-500/20 dark:shadow-primary-900/20 mt-2 text-sm"
+          className="w-full py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold rounded-lg transition-colors shadow-lg shadow-primary-500/20 dark:shadow-primary-900/20 mt-2 text-sm"
         >
           {t('auth.logIn')}
         </button>

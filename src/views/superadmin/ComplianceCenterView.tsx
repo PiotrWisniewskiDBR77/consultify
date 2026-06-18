@@ -1086,7 +1086,7 @@ export const ComplianceCenterView: React.FC = () => {
         <button
           onClick={() => setDsarCreateModal(true)}
           disabled={!!dsarLoadError}
-          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           New Request
@@ -1198,7 +1198,7 @@ export const ComplianceCenterView: React.FC = () => {
         <button
           onClick={() => setAuditCreateModal(true)}
           disabled={!!auditsLoadError}
-          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           Schedule Audit
@@ -1285,7 +1285,7 @@ export const ComplianceCenterView: React.FC = () => {
         <button
           onClick={() => setRecordCreateModal(true)}
           disabled={!!processingRecordsLoadError}
-          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           Add Processing Record
@@ -1562,7 +1562,7 @@ export const ComplianceCenterView: React.FC = () => {
               <button
                 onClick={handleSaveControl}
                 disabled={editControlSaving}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
               >
                 {editControlSaving && <Loader2 size={16} className="animate-spin" />}
                 Save
@@ -1658,7 +1658,7 @@ export const ComplianceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateDsar}
                 disabled={dsarCreateSaving}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
               >
                 {dsarCreateSaving && <Loader2 size={16} className="animate-spin" />}
                 Create Request
@@ -1924,7 +1924,7 @@ export const ComplianceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateAudit}
                 disabled={auditCreateSaving}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
               >
                 {auditCreateSaving && <Loader2 size={16} className="animate-spin" />}
                 Schedule
@@ -2041,7 +2041,7 @@ export const ComplianceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateRecord}
                 disabled={recordCreateSaving}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
               >
                 {recordCreateSaving && <Loader2 size={16} className="animate-spin" />}
                 Add Record

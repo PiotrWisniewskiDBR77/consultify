@@ -818,7 +818,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             disabled={aiFreezeStatus.isFrozen || !inputValue.trim()}
             className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
               inputValue.trim()
-                ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-md shadow-primary-500/30'
+                ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 shadow-md shadow-primary-500/30'
                 : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
             } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Send message"

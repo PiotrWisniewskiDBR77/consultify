@@ -328,7 +328,7 @@ export const SystemSettings: React.FC = () => {
               <button
                 onClick={() => handleSaveSetting('app_name', settings['app_name'])}
                 disabled={isSavingSetting('app_name')}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-60"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-60"
               >
                 <Save size={16} />
               </button>
@@ -401,7 +401,7 @@ export const SystemSettings: React.FC = () => {
                 handleSaveSetting('system_announcement', settings['system_announcement'])
               }
               disabled={isSavingSetting('system_announcement')}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
+              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-60"
             >
               <Save size={18} />
             </button>
@@ -455,7 +455,7 @@ export const SystemSettings: React.FC = () => {
                   handleSaveSetting('session_timeout_mins', settings['session_timeout_mins'])
                 }
                 disabled={isSavingSetting('session_timeout_mins')}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-60"
               >
                 <Save size={18} />
               </button>
@@ -488,7 +488,7 @@ export const SystemSettings: React.FC = () => {
               <button
                 onClick={() => handleSaveSetting('smtp_host', settings['smtp_host'])}
                 disabled={isSavingSetting('smtp_host')}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-60"
               >
                 <Save size={18} />
               </button>
@@ -510,7 +510,7 @@ export const SystemSettings: React.FC = () => {
                 <button
                   onClick={() => handleSaveSetting('smtp_port', settings['smtp_port'])}
                   disabled={isSavingSetting('smtp_port')}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
+                  className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-60"
                 >
                   <Save size={18} />
                 </button>
@@ -531,7 +531,7 @@ export const SystemSettings: React.FC = () => {
                 <button
                   onClick={() => handleSaveSetting('smtp_from', settings['smtp_from'])}
                   disabled={isSavingSetting('smtp_from')}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
+                  className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-60"
                 >
                   <Save size={18} />
                 </button>
@@ -567,7 +567,7 @@ export const SystemSettings: React.FC = () => {
               <button
                 onClick={() => handleSaveSetting('legal_tos_url', settings['legal_tos_url'])}
                 disabled={isSavingSetting('legal_tos_url')}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-60"
               >
                 <Save size={18} />
               </button>
@@ -592,7 +592,7 @@ export const SystemSettings: React.FC = () => {
                   handleSaveSetting('legal_privacy_url', settings['legal_privacy_url'])
                 }
                 disabled={isSavingSetting('legal_privacy_url')}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-60"
               >
                 <Save size={18} />
               </button>
@@ -612,7 +612,7 @@ export const SystemSettings: React.FC = () => {
         <button
           onClick={() => setShowAddAdmin(true)}
           disabled={adminsLoading || savingAdmin}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-60"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-60"
         >
           <Plus size={16} /> Add Super Admin
         </button>

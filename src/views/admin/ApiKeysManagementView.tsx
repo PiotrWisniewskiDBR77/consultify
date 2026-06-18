@@ -269,7 +269,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         <button
           onClick={() => setShowCreateModal(true)}
           disabled={!!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
         >
           <Plus size={18} />
           Create API Key
@@ -307,7 +307,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
           <button
             onClick={() => setShowCreateModal(true)}
             disabled={!!loadError}
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
+            className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
           >
             Create API Key
           </button>
@@ -523,7 +523,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                 <button
                   onClick={handleCreateKey}
                   disabled={creating || !newKeyForm.name || newKeyForm.permissions.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50"
                 >
                   {creating && <RefreshCw className="w-4 h-4 animate-spin" />}
                   Create Key
@@ -580,7 +580,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     </code>
                     <button
                       onClick={() => copyToClipboard(newKeyValue)}
-                      className="flex-shrink-0 p-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg"
+                      className="flex-shrink-0 p-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg"
                     >
                       {copiedKey === 'new' ? <Check size={18} /> : <Copy size={18} />}
                     </button>
@@ -593,7 +593,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     setShowNewKeyModal(false);
                     setNewKeyValue('');
                   }}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
                 >
                   I've Copied the Key
                 </button>

@@ -731,7 +731,7 @@ export const PresentationsHub: React.FC = () => {
                   </p>
                   <button
                     onClick={() => navigate(`/presentations/builder/${activeDocumentId}`)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white hover:bg-primary-500 transition-colors font-medium mb-4"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors font-medium mb-4"
                   >
                     <Presentation size={16} />
                     {t('presentations.openEditor', 'Open Editor')}

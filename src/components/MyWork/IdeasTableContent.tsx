@@ -54,6 +54,7 @@ import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
+import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS, FOCUSED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
 type IdeaConvertTarget = 'initiative' | 'task_set' | 'decision' | 'team_chat';
 type IdeasTableOptionalColumn = 'stage' | 'tags' | 'tool' | 'date';
@@ -168,8 +169,8 @@ const STAGE_META: Record<
     labelPl: 'Promowany',
     icon: Rocket,
     badge:
-      'border border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
-    iconClass: 'text-rose-600 dark:text-rose-300',
+      'border border-danger-300/80 bg-danger-50 text-danger-900 dark:border-danger-300/[0.25] dark:bg-danger-300/[0.12] dark:text-danger-100',
+    iconClass: 'text-danger-600 dark:text-danger-300',
   },
 };
 
@@ -1116,11 +1117,11 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   onDoubleClick={() => onOpenIdea(idea)}
                   className={`group cursor-pointer border-b border-slate-200/95 transition-colors dark:border-white/[0.085] ${
                     isPreviewSelected
-                      ? 'bg-primary-200/70 shadow-[inset_0_0_0_1px_rgba(165,28,48,0.28),inset_4px_0_0_rgba(165,28,48,0.95)] dark:bg-primary-500/[0.20] dark:shadow-[inset_0_0_0_1px_rgba(228,88,104,0.30),inset_4px_0_0_rgba(228,88,104,0.95)]'
+                      ? SELECTED_ROW_CLASS
                       : isChecked
-                        ? 'bg-primary-100/85 shadow-[inset_0_0_0_1px_rgba(165,28,48,0.18),inset_4px_0_0_rgba(165,28,48,0.75)] dark:bg-primary-500/[0.13] dark:shadow-[inset_0_0_0_1px_rgba(228,88,104,0.20),inset_4px_0_0_rgba(228,88,104,0.70)]'
+                        ? SELECTED_ROW_CLASS
                         : isFocused
-                          ? 'bg-primary-100/95 shadow-[inset_0_0_0_1px_rgba(165,28,48,0.24),inset_4px_0_0_rgba(165,28,48,0.82)] dark:bg-primary-500/[0.16] dark:shadow-[inset_0_0_0_1px_rgba(228,88,104,0.24),inset_4px_0_0_rgba(228,88,104,0.80)]'
+                          ? FOCUSED_ROW_CLASS
                           : 'bg-white hover:bg-slate-100/80 hover:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.22)] dark:bg-navy-950 dark:hover:bg-white/[0.04] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]'
                   }`}
                 >

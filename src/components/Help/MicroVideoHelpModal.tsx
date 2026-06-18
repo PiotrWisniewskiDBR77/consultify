@@ -142,7 +142,7 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
             {!isPlaying && (
               <button
                 onClick={handleWatch}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl text-sm font-semibold transition-colors"
               >
                 <PlayCircle size={16} />
                 {t('help.microVideo.watch', 'Watch')}

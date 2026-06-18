@@ -504,7 +504,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             <button
               onClick={openCreateModal}
               disabled
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={18} />
               Create Custom Role
@@ -779,7 +779,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                 <button
                   onClick={handleSaveRole}
                   disabled={saving || !formData.name}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50"
                 >
                   {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                   {editingRole ? 'Save Changes' : 'Create Role'}

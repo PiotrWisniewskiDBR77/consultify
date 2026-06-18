@@ -176,7 +176,7 @@ export const PlanCard: React.FC<{
         <button
           onClick={() => onSelect(plan.id)}
           disabled={isSelecting}
-          className="w-full py-2 rounded-lg text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-50"
+          className="w-full py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50"
         >
           {isSelecting ? 'Processing...' : 'Select Plan'}
         </button>
