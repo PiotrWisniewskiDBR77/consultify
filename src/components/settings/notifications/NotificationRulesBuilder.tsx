@@ -621,7 +621,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   deviceSettings.desktop.enabled
-                    ? 'bg-primary-600'
+                    ? 'bg-navy-900'
                     : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >

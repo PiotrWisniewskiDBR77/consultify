@@ -362,7 +362,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             <Key size={14} className="text-primary-400" />
             {t('settings.authAccess.passwordSection', 'Password')}
           </h4>
-          <div className="bg-navy-900/30 border border-white/5 rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden">
             <button
               onClick={() => togglePanel('password')}
               className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
@@ -404,7 +404,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         type={showPasswords ? 'text' : 'password'}
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        className="w-full px-3 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       />
                     </div>
                   </div>
@@ -418,7 +418,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         type={showPasswords ? 'text' : 'password'}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        className="w-full px-3 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       />
                       <button
                         type="button"
@@ -455,7 +455,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                       type={showPasswords ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      className="w-full px-3 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     />
                     {confirmPassword && !passwordsMatch && (
                       <p className="text-xs text-rose-400 mt-1">
@@ -492,7 +492,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             <Fingerprint size={14} className="text-primary-400" />
             {t('settings.authAccess.mfaSection', 'Two-Factor Authentication')}
           </h4>
-          <div className="bg-navy-900/30 border border-white/5 rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden">
             <button
               onClick={() => togglePanel('mfa')}
               className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
@@ -591,7 +591,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               return (
                 <div
                   key={session.id}
-                  className="flex items-center justify-between p-3 bg-navy-900/30 border border-white/5 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-1.5 bg-white/5 rounded-lg">
@@ -659,7 +659,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               {loginHistory.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center justify-between p-3 bg-navy-900/30 border border-white/5 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     {getStatusIcon(event.status)}
@@ -702,7 +702,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             {!recoveryLoadError && (
               <>
                 {/* Recovery Email */}
-                <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+                <div className="bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-1.5 bg-blue-500/10 rounded-lg">
@@ -746,7 +746,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           'settings.authAccess.emailPlaceholder',
                           'Enter recovery email'
                         )}
-                        className="flex-1 px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="flex-1 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                       <button
                         onClick={handleSaveRecovery}
@@ -771,7 +771,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                 </div>
 
                 {/* Recovery Phone */}
-                <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+                <div className="bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-1.5 bg-emerald-500/10 rounded-lg">
@@ -812,7 +812,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         placeholder={t('settings.authAccess.phonePlaceholder', '+48...')}
-                        className="flex-1 px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="flex-1 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                       <button
                         onClick={handleSaveRecovery}
@@ -837,7 +837,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                 </div>
 
                 {/* Backup Codes */}
-                <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+                <div className="bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-1.5 bg-primary-500/10 rounded-lg">

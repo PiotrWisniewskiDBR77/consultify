@@ -178,7 +178,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 onClick={() => onChange(option.value)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   value === option.value
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
                     : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
@@ -215,7 +215,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
         <button
           onClick={() => onChange(!value)}
           className={`relative w-12 h-6 rounded-full transition-colors ${
-            value ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+            value ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
           }`}
         >
           <span

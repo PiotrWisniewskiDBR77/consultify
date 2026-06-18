@@ -690,7 +690,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 updatePreference('showCompletedTasks', !preferences.showCompletedTasks)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showCompletedTasks ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showCompletedTasks ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -715,7 +715,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('showSubtasks', !preferences.showSubtasks)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showSubtasks ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showSubtasks ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span

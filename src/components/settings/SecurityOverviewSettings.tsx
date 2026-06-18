@@ -439,12 +439,12 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
   return (
     <div className="space-y-6">
       {/* ── Security Score + Status Cards ── */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 overflow-hidden">
+      <div className="bg-white dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden">
         <div className="p-6">
           <div className="flex items-start gap-6">
             <SecurityScoreRing score={score} max={securityChecks.length} />
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('settings.security.overviewTitle', 'Security Overview')}
               </h3>
               <p className="text-sm text-slate-600 mt-1">
@@ -652,7 +652,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={6}
                 placeholder="000000"
-                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               />
               <button
                 onClick={disableMfa}
@@ -749,7 +749,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                     {t('security.mfa.cantScan', "Can't scan? Enter this code manually:")}
                   </p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-navy-800 px-3 py-2 rounded-lg text-xs font-mono text-slate-600 select-all overflow-x-auto border border-white/5">
+                    <code className="flex-1 bg-slate-50 dark:bg-navy-800 px-3 py-2 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300 select-all overflow-x-auto border border-slate-200 dark:border-white/5">
                       {showSecret ? secret : '•'.repeat(32)}
                     </code>
                     <button
@@ -781,7 +781,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                       onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                       maxLength={6}
                       placeholder="000000"
-                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       onKeyDown={(e) => e.key === 'Enter' && verifyMfa()}
                     />
                     <button
@@ -841,12 +841,12 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 bg-navy-900/50 p-3 rounded-xl border border-white/5">
+            <div className="grid grid-cols-2 gap-1.5 bg-slate-50 dark:bg-navy-900/50 p-3 rounded-xl border border-slate-200 dark:border-white/5">
               {backupCodes.map((code, i) => (
                 <button
                   key={i}
                   onClick={() => copyCode(code, i)}
-                  className="flex items-center justify-between px-2.5 py-1.5 bg-navy-800/50 rounded-lg hover:bg-navy-800 transition-colors group text-left"
+                  className="flex items-center justify-between px-2.5 py-1.5 bg-slate-100 dark:bg-navy-800/50 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-800 transition-colors group text-left"
                 >
                   <code className="font-mono text-xs text-slate-600">{code}</code>
                   {copiedIndex === i ? (
@@ -986,7 +986,7 @@ const StepProgress: React.FC<{ current: 1 | 2 | 3 }> = ({ current }) => {
                   isCompleted
                     ? 'bg-emerald-500 text-white'
                     : isActive
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'bg-white/[0.06] text-slate-500'
                 )}
               >

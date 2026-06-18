@@ -274,7 +274,7 @@ const WebAuthnSettings: React.FC = () => {
         <button
           onClick={handleRegister}
           disabled={registering}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
         >
           {registering ? <RefreshCw className="animate-spin" size={18} /> : <Plus size={18} />}
           {registering ? 'Registering...' : 'Add Passkey'}

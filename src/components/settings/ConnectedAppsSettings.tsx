@@ -1394,7 +1394,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
 
       {/* Mapping Drift Panel (per-integration detail view) */}
       {mappingIntegrationId && (
-        <div className="rounded-xl border border-navy-700/50 bg-navy-800/40 p-4">
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700/50 bg-white dark:bg-navy-800/40 p-4">
           <MappingDriftPanel
             integrationId={mappingIntegrationId}
             onBack={() => setMappingIntegrationId(null)}

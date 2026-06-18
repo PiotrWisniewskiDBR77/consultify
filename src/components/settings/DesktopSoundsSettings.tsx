@@ -239,11 +239,11 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
 
                 {/* Mobile push has no delivery backend yet — surface it as gated
                     rather than offering a toggle that records a no-op flag. */}
-                <div className="flex items-start justify-between gap-4 p-3.5 bg-navy-900/30 border border-white/5 rounded-lg">
+                <div className="flex items-start justify-between gap-4 p-3.5 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg">
                   <div className="flex items-start gap-3">
                     <Bell size={16} className="text-slate-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">
                         {t('settings.desktopSounds.mobilePush', 'Mobile push notifications')}
                       </p>
                       <p className="text-xs text-slate-500">
@@ -330,7 +330,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
 
               <div className="space-y-4">
                 {/* Master toggle */}
-                <div className="flex items-center justify-between p-3.5 bg-navy-900/30 border border-white/5 rounded-lg">
+                <div className="flex items-center justify-between p-3.5 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg">
                   <div className="flex items-center gap-3">
                     {prefs.soundEnabled ? (
                       <Volume2 size={18} className="text-primary-400" />
@@ -338,7 +338,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                       <VolumeX size={18} className="text-slate-500" />
                     )}
                     <div>
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">
                         {t('settings.desktopSounds.enableSounds', 'Enable Sounds')}
                       </p>
                       <p className="text-xs text-slate-500">
@@ -356,7 +356,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                     className={cn(
                       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
-                      prefs.soundEnabled ? 'bg-primary-600' : 'bg-white/10'
+                      prefs.soundEnabled ? 'bg-navy-900' : 'bg-white/10'
                     )}
                   >
                     <span
@@ -387,7 +387,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                               soundPerType: { ...prev.soundPerType, [type.id]: e.target.value },
                             }))
                           }
-                          className="px-3 py-1.5 bg-navy-800 border border-white/10 rounded-lg text-sm text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+                          className="px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
                         >
                           {SOUND_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>

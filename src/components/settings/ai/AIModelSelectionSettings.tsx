@@ -284,7 +284,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-navy-900 text-white'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
               }`}
             >
@@ -480,7 +480,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             <button
               onClick={() => setSettings({ ...settings, streamResponse: !settings.streamResponse })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.streamResponse ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+                settings.streamResponse ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <span

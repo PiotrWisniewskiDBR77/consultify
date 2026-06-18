@@ -320,7 +320,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                   <div
                     className={`w-4 h-4 rounded-full border-2 ${
                       sameEveryDay
-                        ? 'border-primary-500 bg-primary-500'
+                        ? 'border-navy-900 bg-navy-900'
                         : 'border-slate-300 dark:border-slate-600'
                     }`}
                   >
@@ -349,7 +349,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                   <div
                     className={`w-4 h-4 rounded-full border-2 ${
                       !sameEveryDay
-                        ? 'border-primary-500 bg-primary-500'
+                        ? 'border-navy-900 bg-navy-900'
                         : 'border-slate-300 dark:border-slate-600'
                     }`}
                   >
@@ -394,7 +394,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     <button
                       onClick={() => handleDayToggle(day.key)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        daySchedule.enabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'
+                        daySchedule.enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
                       }`}
                     >
                       <span

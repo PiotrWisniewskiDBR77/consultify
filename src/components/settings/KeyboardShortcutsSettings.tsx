@@ -217,7 +217,7 @@ const KeyBadge = ({ keys }: { keys: string }) => (
     {keys.split('+').map((key, i) => (
       <React.Fragment key={i}>
         {i > 0 && <span className="text-slate-500 text-xs">+</span>}
-        <kbd className="px-2 py-1 text-xs font-mono bg-navy-900/80 border border-white/10 rounded text-slate-600">
+        <kbd className="px-2 py-1 text-xs font-mono bg-slate-100 dark:bg-navy-900/80 border border-slate-200 dark:border-white/10 rounded text-slate-700 dark:text-slate-300">
           {key === 'Cmd' ? <Command size={12} className="inline" /> : key}
         </kbd>
       </React.Fragment>
@@ -475,7 +475,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
-              className="w-full pl-10 pr-4 py-2.5 bg-navy-800/50 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:ring-2 focus:ring-primary-500/50 focus:border-transparent outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-primary-500/50 focus:border-transparent outline-none transition-all"
             />
           </div>
 
@@ -483,7 +483,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
           {Object.entries(groupedShortcuts).map(([category, categoryShortcuts]) => (
             <div
               key={category}
-              className="bg-navy-800/50 border border-white/5 rounded-xl overflow-hidden"
+              className="bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden"
             >
               <div className="px-6 py-3 border-b border-white/5">
                 <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
@@ -526,7 +526,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 'settings.shortcuts.pressKeysPlaceholder',
                                 'Press keys...'
                               )}
-                              className="w-32 px-2 py-1 text-sm bg-navy-900 border border-primary-500 rounded text-white outline-none placeholder:text-slate-600"
+                              className="w-32 px-2 py-1 text-sm bg-white dark:bg-navy-900 border border-primary-400 dark:border-primary-500 rounded text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
                             />
                             <button
                               onClick={() => saveCustomShortcut(shortcut.id)}
@@ -557,7 +557,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                               onClick={() => toggleShortcut(shortcut.id)}
                               className={cn(
                                 'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
-                                isDisabled ? 'bg-white/10' : 'bg-primary-600'
+                                isDisabled ? 'bg-white/10' : 'bg-navy-900'
                               )}
                             >
                               <span

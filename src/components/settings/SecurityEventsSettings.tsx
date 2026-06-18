@@ -546,7 +546,7 @@ const AlertToggle: React.FC<AlertToggleProps> = ({
       <button
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
+          checked ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
         }`}
       >
         <span

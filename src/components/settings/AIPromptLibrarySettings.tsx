@@ -343,7 +343,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     className={cn(
                       'px-3 py-1 text-xs rounded-md transition-colors',
                       filterCategory === cat
-                        ? 'bg-primary-600 text-white'
+                        ? 'bg-navy-900 text-white'
                         : 'bg-white/5 text-slate-600 hover:text-white hover:bg-white/10'
                     )}
                   >
@@ -366,12 +366,12 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                   filteredPrompts.map((prompt) => (
                     <div
                       key={prompt.id}
-                      className="p-3 bg-navy-900/50 border border-white/5 rounded-lg hover:border-white/10 transition-colors group"
+                      className="p-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/5 rounded-lg hover:border-slate-300 dark:hover:border-white/10 transition-colors group"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium text-white">{prompt.name}</span>
+                            <span className="text-sm font-medium text-slate-900 dark:text-white">{prompt.name}</span>
                             <span
                               className={cn(
                                 'px-1.5 py-0.5 text-[10px] font-medium rounded',
@@ -423,9 +423,9 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
               {showEditor && (
                 <>
                   <SettingsDivider />
-                  <div className="p-4 bg-navy-900/80 border border-primary-500/20 rounded-lg space-y-4">
+                  <div className="p-4 bg-white dark:bg-navy-900/80 border border-primary-200 dark:border-primary-500/20 rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-white">
+                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                         {editingPrompt
                           ? t('settings.ai.editPrompt', 'Edit Prompt')
                           : t('settings.ai.createPrompt', 'Create Prompt')}

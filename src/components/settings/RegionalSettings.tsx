@@ -363,7 +363,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           isSelected
-                            ? 'border-primary-500 bg-primary-500'
+                            ? 'border-navy-900 bg-navy-900'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}
                       >
@@ -420,7 +420,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           isSelected
-                            ? 'border-primary-500 bg-primary-500'
+                            ? 'border-navy-900 bg-navy-900'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}
                       >
@@ -460,7 +460,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                   onClick={() => updatePreference('firstDayOfWeek', 'monday')}
                   className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     preferences.firstDayOfWeek === 'monday'
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'bg-slate-100 dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -470,7 +470,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                   onClick={() => updatePreference('firstDayOfWeek', 'sunday')}
                   className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     preferences.firstDayOfWeek === 'sunday'
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'bg-slate-100 dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >

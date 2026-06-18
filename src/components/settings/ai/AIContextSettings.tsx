@@ -473,7 +473,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   (settings.knowledgeBases as any)[kb.key]
-                    ? 'bg-primary-600'
+                    ? 'bg-navy-900'
                     : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >

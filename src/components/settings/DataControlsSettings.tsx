@@ -400,7 +400,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 
   const sectionLabel =
     'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
-  const cardClass = 'bg-navy-900/30 border border-white/5 rounded-lg p-5';
+  const cardClass = 'bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-5';
 
   return (
     <SettingsSection
@@ -502,8 +502,8 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     className={cn(
                       'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                       retention.period === option.value
-                        ? 'bg-primary-600/20 text-primary-300 border-primary-500 shadow-sm'
-                        : 'bg-navy-800/50 text-slate-600 border-white/5 hover:border-white/20'
+                        ? 'bg-navy-900 text-white border-navy-900 shadow-sm dark:bg-primary-600/20 dark:text-primary-300 dark:border-primary-500'
+                        : 'bg-white dark:bg-navy-800/50 text-slate-600 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                     )}
                   >
                     {t(option.labelKey, option.labelDefault)}
@@ -596,7 +596,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 </div>
 
                 {showDeleteConfirm && (
-                  <div className="mt-4 p-4 bg-navy-900/50 border border-rose-500/20 rounded-lg">
+                  <div className="mt-4 p-4 bg-rose-50 dark:bg-navy-900/50 border border-rose-200 dark:border-rose-500/20 rounded-lg">
                     <div className="flex items-center gap-2 text-rose-400 mb-3">
                       <AlertTriangle size={16} />
                       <span className="text-sm font-medium">
@@ -618,7 +618,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       type="text"
                       value={deleteConfirmText}
                       onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      className="w-full px-3 py-2 bg-navy-800 border border-rose-500/30 rounded-lg text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
+                      className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-rose-300 dark:border-rose-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
                       placeholder={deleteConfirmationPhrase}
                     />
                     <label className="text-xs font-medium text-slate-600 mb-1.5 block">
@@ -629,7 +629,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       value={deletePassword}
                       onChange={(e) => setDeletePassword(e.target.value)}
                       autoComplete="current-password"
-                      className="w-full px-3 py-2 bg-navy-800 border border-rose-500/30 rounded-lg text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
+                      className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-rose-300 dark:border-rose-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
                       placeholder={t(
                         'settings.data.deletePasswordPlaceholder',
                         'Your account password'
@@ -722,7 +722,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <Link
                       key={doc.to}
                       to={doc.to}
-                      className="flex items-start gap-3 p-3 bg-navy-900/30 border border-white/5 rounded-lg hover:border-primary-500/30 hover:bg-primary-600/5 transition-all group"
+                      className="flex items-start gap-3 p-3 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg hover:border-slate-300 dark:hover:border-primary-500/30 hover:bg-slate-50 dark:hover:bg-primary-600/5 transition-all group"
                     >
                       <Icon
                         size={14}

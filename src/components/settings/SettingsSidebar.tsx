@@ -599,7 +599,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           className={cn(
                             'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                             isActive
-                              ? 'bg-primary-50 text-primary-700 font-medium dark:bg-primary-600/20 dark:text-primary-300'
+                              ? 'bg-slate-100 text-slate-900 font-medium dark:bg-white/[0.08] dark:text-white'
                               : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-navy-900 dark:hover:text-white'
                           )}
                         >
@@ -607,7 +607,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
                               isActive
-                                ? 'text-primary-600 dark:text-primary-400'
+                                ? 'text-[var(--c-info)]'
                                 : 'text-slate-600 dark:text-slate-400'
                             )}
                           />

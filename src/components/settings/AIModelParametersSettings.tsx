@@ -49,7 +49,7 @@ interface UserModelPrefs {
 }
 
 const TIER_BADGE: Record<string, { label: string; className: string } | null> = {
-  PLATFORM: { label: 'PLATFORM', className: 'bg-primary-600 text-white' },
+  PLATFORM: { label: 'PLATFORM', className: 'bg-navy-900 text-white dark:bg-white dark:text-navy-950' },
   PREMIUM: { label: 'PRO', className: 'bg-amber-500/20 text-amber-400' },
   REASONING: { label: 'REASONING', className: 'bg-blue-500/20 text-blue-400' },
   STANDARD: null,
@@ -209,7 +209,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
             ? isPlatform
               ? 'border-primary-500/50 bg-gradient-to-r from-primary-600/10 to-primary-500/5'
               : 'border-primary-500/40 bg-primary-600/5'
-            : 'border-white/5 bg-navy-900/30 hover:border-white/10'
+            : 'border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900/30 hover:border-slate-300 dark:hover:border-white/10'
         )}
         onClick={() => toggleModel(model.id)}
       >
@@ -248,7 +248,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
                 </span>
               )}
               {isPreferred && (
-                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-primary-600 text-white rounded">
+                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-navy-900 text-white rounded dark:bg-white dark:text-navy-950">
                   {t('settings.ai.preferred', 'PREFERRED')}
                 </span>
               )}
@@ -269,8 +269,8 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
             className={cn(
               'px-2.5 py-1 text-xs rounded-md transition-colors flex-shrink-0',
               isPreferred
-                ? 'bg-primary-600 text-white'
-                : 'bg-white/5 text-slate-600 hover:bg-primary-600/20 hover:text-primary-300'
+                ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
+                : 'bg-white/5 text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-slate-200'
             )}
           >
             {isPreferred

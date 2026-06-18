@@ -253,7 +253,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     disabled={isReadOnly}
                     className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                       rule.rule_type === type
-                        ? 'bg-primary-600 text-white'
+                        ? 'bg-navy-900 text-white'
                         : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
                     }`}
                   >
@@ -381,7 +381,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             onClick={() => setDigestSettings((prev) => ({ ...prev, enabled: !prev.enabled }))}
             disabled={isReadOnly}
             className={`w-12 h-6 rounded-full transition-colors ${
-              digestSettings.enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+              digestSettings.enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div

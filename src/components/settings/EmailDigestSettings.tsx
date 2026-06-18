@@ -238,7 +238,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                 {EMAIL_CATEGORIES.map(({ key, label, desc }) => (
                   <div
                     key={key}
-                    className="flex items-center justify-between p-3.5 bg-navy-900/30 border border-white/5 rounded-lg"
+                    className="flex items-center justify-between p-3.5 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg"
                   >
                     <div>
                       <p className="text-sm font-medium text-white">
@@ -253,7 +253,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       className={cn(
                         'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
                         emailSettings[key]
-                          ? 'bg-primary-600 border-primary-600 text-white'
+                          ? 'bg-navy-900 border-navy-900 text-white dark:bg-white dark:border-white dark:text-navy-950'
                           : 'border-white/20 hover:border-white/40'
                       )}
                     >

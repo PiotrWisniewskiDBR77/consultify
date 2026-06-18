@@ -322,7 +322,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
       className={cn(
         'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
-        checked ? 'bg-primary-600' : 'bg-slate-200 dark:bg-white/10',
+        checked ? 'bg-navy-900' : 'bg-slate-200 dark:bg-white/10',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >

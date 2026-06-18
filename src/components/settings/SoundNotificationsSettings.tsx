@@ -163,7 +163,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            soundEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+            soundEnabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
           }`}
         >
           <span

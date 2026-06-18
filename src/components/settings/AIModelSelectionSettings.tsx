@@ -160,7 +160,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                         {model.name}
                       </h4>
                       {isPreferred && (
-                        <span className="px-2 py-0.5 bg-primary-600 text-white text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-navy-900 text-white text-xs rounded-full dark:bg-white dark:text-navy-950">
                           {t('settings.ai.modelSelection.preferred', 'Preferred')}
                         </span>
                       )}
@@ -175,8 +175,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     onClick={() => setPreferredModel(isPreferred ? '' : model.id)}
                     className={`px-3 py-1 text-xs rounded-lg transition-colors ${
                       isPreferred
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-primary-100 dark:hover:bg-primary-500/20'
+                        ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
+                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20'
                     }`}
                   >
                     {isPreferred

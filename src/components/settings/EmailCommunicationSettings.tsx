@@ -131,7 +131,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
     'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'
+      enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
     `absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;

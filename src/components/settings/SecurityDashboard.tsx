@@ -405,7 +405,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary-500 rounded-full transition-all"
+                      className="h-full bg-navy-900 rounded-full transition-all dark:bg-slate-300"
                       style={{
                         width: `${(score.breakdown.recentActivity.score / score.breakdown.recentActivity.max) * 100}%`,
                       }}

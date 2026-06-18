@@ -621,7 +621,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary-600 text-white text-xs font-bold rounded-full">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-navy-900 text-white text-xs font-bold rounded-full dark:bg-white dark:text-navy-950">
                       {t('access.upgrade.popular')}
                     </div>
                   )}

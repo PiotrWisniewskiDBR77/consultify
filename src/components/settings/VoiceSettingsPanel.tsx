@@ -425,7 +425,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                 onClick={() => updateSetting('autoSpeakResponses', !settings.autoSpeakResponses)}
                 className={`
                             relative w-11 h-6 rounded-full transition-colors
-                            ${settings.autoSpeakResponses ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
+                            ${settings.autoSpeakResponses ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'}
                         `}
               >
                 <span
@@ -446,7 +446,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                 onClick={() => updateSetting('showLiveTranscript', !settings.showLiveTranscript)}
                 className={`
                             relative w-11 h-6 rounded-full transition-colors
-                            ${settings.showLiveTranscript ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
+                            ${settings.showLiveTranscript ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'}
                         `}
               >
                 <span

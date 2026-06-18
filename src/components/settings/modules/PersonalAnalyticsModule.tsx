@@ -223,7 +223,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             value={`${stats.productivityScore}%`}
             change={stats.productivityChange}
             icon={TrendingUp}
-            color="bg-primary-500"
+            color="bg-navy-900"
           />
           <StatCard
             label="Focus Time"

@@ -542,7 +542,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               preferences.keyboardShortcutsEnabled
-                ? 'bg-primary-600'
+                ? 'bg-navy-900'
                 : 'bg-slate-200 dark:bg-slate-700'
             }`}
           >

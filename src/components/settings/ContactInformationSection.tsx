@@ -524,7 +524,7 @@ const EmailCard: React.FC<EmailCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-navy-900 text-white rounded-lg text-sm hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
             {t('common.save', 'Save')}
           </button>
@@ -647,7 +647,7 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-navy-900 text-white rounded-lg text-sm hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
             {t('common.save', 'Save')}
           </button>
@@ -769,7 +769,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-navy-900 text-white rounded-lg text-sm hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
             {t('common.save', 'Save')}
           </button>
@@ -885,7 +885,7 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-navy-900 text-white rounded-lg text-sm hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
             {t('common.save', 'Save')}
           </button>

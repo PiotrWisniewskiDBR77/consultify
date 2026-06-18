@@ -250,11 +250,11 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
     return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
   };
 
-  const cardClass = 'bg-navy-900/30 border border-white/5 rounded-lg p-5';
+  const cardClass = 'bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-5';
   const sectionLabel =
     'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
   const inputClass =
-    'w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
 
   return (
     <SettingsSection
@@ -318,7 +318,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                     <button
                       key={preset.label}
                       onClick={() => handleDndPreset(preset)}
-                      className="px-4 py-2.5 bg-navy-800/50 border border-white/5 rounded-lg hover:border-primary-500/30 hover:bg-primary-600/5 transition-all text-sm text-slate-600"
+                      className="px-4 py-2.5 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/5 rounded-lg hover:border-primary-500/30 hover:bg-primary-600/5 transition-all text-sm text-slate-600"
                     >
                       {t(`settings.availability.${preset.labelKey}`, preset.label)}
                     </button>
@@ -435,7 +435,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                             'px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
                             quietHours.daysOfWeek.includes(day.value)
                               ? 'bg-primary-600/20 text-primary-300 border-primary-500'
-                              : 'bg-navy-800/50 text-slate-600 border-white/5 hover:border-white/20'
+                              : 'bg-white dark:bg-navy-800/50 text-slate-600 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                           )}
                         >
                           {t(`settings.availability.days.${day.key}.short`, day.label)}
@@ -449,7 +449,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                         <button
                           key={preset.key}
                           onClick={() => applyQuietPreset(preset)}
-                          className="px-3 py-1.5 text-xs bg-navy-800/50 border border-white/5 rounded-lg text-slate-600 hover:text-white hover:border-primary-500/30 transition-all"
+                          className="px-3 py-1.5 text-xs bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/5 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-white hover:border-primary-500/30 transition-all"
                         >
                           {t(`settings.availability.preset_${preset.key}`, preset.label)}
                         </button>

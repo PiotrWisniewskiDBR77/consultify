@@ -61,7 +61,7 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
       {/* Tone */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-          {t('settings.ai.tone', 'Tone')}
+          {t('settings.ai.toneLabel', 'Tone')}
         </label>
         <div className="grid grid-cols-3 gap-3">
           {TONES.map((t_) => (

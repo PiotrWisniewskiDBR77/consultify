@@ -349,7 +349,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                   ? '[&>div]:bg-rose-500'
                   : isNearLimit
                     ? '[&>div]:bg-amber-500'
-                    : '[&>div]:bg-primary-500'
+                    : '[&>div]:bg-navy-900'
               )}
             />
             {isNearLimit && !isOverLimit && (

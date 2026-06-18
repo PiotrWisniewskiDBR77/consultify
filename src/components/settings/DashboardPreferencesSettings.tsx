@@ -352,7 +352,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 <button
                   onClick={() => updatePreference('compactMode', !preferences.compactMode)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.compactMode ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
+                    preferences.compactMode ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
                   }`}
                 >
                   <span
@@ -378,7 +378,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 <button
                   onClick={() => updatePreference('showGreeting', !preferences.showGreeting)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.showGreeting ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
+                    preferences.showGreeting ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
                   }`}
                 >
                   <span

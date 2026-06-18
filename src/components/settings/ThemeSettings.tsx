@@ -261,7 +261,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
                         ? 'border-primary-500 bg-primary-500/5'
-                        : 'border-white/10 hover:border-white/20 bg-navy-800/50'
+                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-navy-800/50'
                     )}
                   >
                     <div
@@ -286,7 +286,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                     </div>
                     <p className="text-xs text-slate-500 mt-1 text-center">{description}</p>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 p-1 bg-primary-500 rounded-full">
+                      <div className="absolute top-2 right-2 p-1 bg-navy-900 rounded-full dark:bg-white">
                         <Check size={12} className="text-white" />
                       </div>
                     )}
@@ -401,11 +401,11 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
                         ? 'border-primary-500 bg-primary-500/5'
-                        : 'border-white/10 hover:border-white/20 bg-navy-800/50'
+                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-navy-800/50'
                     )}
                   >
                     {/* Mini density preview */}
-                    <div className="w-full h-14 rounded-lg bg-navy-900/60 mb-3 flex flex-col justify-center px-2 gap-[3px]">
+                    <div className="w-full h-14 rounded-lg bg-slate-100 dark:bg-navy-900/60 mb-3 flex flex-col justify-center px-2 gap-[3px]">
                       {Array.from({ length: opt.lines }).map((_, i) => {
                         const widths = [85, 70, 90, 65, 78];
                         return (
@@ -436,7 +436,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
                     </div>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 p-1 bg-primary-500 rounded-full">
+                      <div className="absolute top-2 right-2 p-1 bg-navy-900 rounded-full dark:bg-white">
                         <Check size={12} className="text-white" />
                       </div>
                     )}

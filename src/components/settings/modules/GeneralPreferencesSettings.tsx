@@ -388,7 +388,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
                   setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  (settings as any)[item.key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+                  (settings as any)[item.key] ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >
                 <span

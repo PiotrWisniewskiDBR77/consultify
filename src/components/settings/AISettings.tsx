@@ -1854,7 +1854,7 @@ const NavTab = ({ id, label, icon, active, onClick }: any) => (
     onClick={onClick}
     className={`flex items-center gap-2 px-4 py-2 rounded-full border transition font-medium text-xs whitespace-nowrap ${
       active
-        ? 'bg-primary-600 dark:bg-white text-white dark:text-slate-900 border-primary-600 dark:border-white shadow-lg'
+        ? 'bg-navy-900 dark:bg-white text-white dark:text-navy-950 border-navy-900 dark:border-white shadow-sm'
         : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20'
     }`}
   >

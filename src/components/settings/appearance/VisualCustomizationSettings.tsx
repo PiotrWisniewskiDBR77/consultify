@@ -434,7 +434,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   onClick={() => setSettings({ ...settings, borderRadius: radius })}
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium capitalize transition-all ${
                     settings.borderRadius === radius
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -460,7 +460,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             <button
               onClick={() => setSettings({ ...settings, animations: !settings.animations })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.animations ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
+                settings.animations ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <span

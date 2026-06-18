@@ -454,7 +454,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                 <button
                   key={card.id}
                   onClick={card.action}
-                  className="bg-navy-900/30 border border-white/5 rounded-lg p-4 text-left hover:border-primary-500/30 hover:bg-primary-600/5 transition-all group"
+                  className="bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-4 text-left hover:border-primary-500/30 hover:bg-primary-600/5 transition-all group"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -551,7 +551,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
               {recentEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center justify-between p-3 bg-navy-900/30 border border-white/5 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     {getStatusIcon(event.status)}
