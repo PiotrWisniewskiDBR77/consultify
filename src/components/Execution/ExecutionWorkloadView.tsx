@@ -220,7 +220,7 @@ const WorkloadCell: React.FC<WorkloadCellProps> = ({ allocations, onClick, viewM
             >
               {totalPercentage}%
             </span>
-            {isOverallocated && <AlertTriangle size={11} className="text-rose-500" />}
+            {isOverallocated && <AlertTriangle size={11} className="text-danger-500" />}
           </div>
           {viewMode === 'monthly' && taskCount > 0 && (
             <span className="text-[10px] text-slate-500">
@@ -302,7 +302,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
                       allocation.status === InitiativeStatus.EXECUTING
                         ? 'bg-blue-500/20 text-blue-400'
                         : allocation.status === InitiativeStatus.BLOCKED
-                          ? 'bg-rose-500/20 text-rose-400'
+                          ? 'bg-danger-500/20 text-danger-400'
                           : 'bg-slate-500/20 text-slate-600'
                     }`}
                   >
@@ -727,8 +727,8 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             <>
               <div className="w-px h-3 bg-slate-300 dark:bg-navy-700 mx-1" />
               <div className="flex items-center gap-1.5">
-                <AlertTriangle size={11} className="text-rose-500" />
-                <span className="text-rose-400">Peak: {maxAllocation}%</span>
+                <AlertTriangle size={11} className="text-danger-500" />
+                <span className="text-danger-400">Peak: {maxAllocation}%</span>
               </div>
             </>
           )}

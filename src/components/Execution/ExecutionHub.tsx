@@ -290,7 +290,7 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
           </h4>
         </div>
         {isPastDue(task.dueDate) && (
-          <span className="text-[10px] text-rose-400 uppercase tracking-wide flex-shrink-0">
+          <span className="text-[10px] text-danger-400 uppercase tracking-wide flex-shrink-0">
             {t('execution.badges.overdue')}
           </span>
         )}
@@ -2267,7 +2267,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <span className="text-[11px] font-semibold tabular-nums text-emerald-500">
             {execTopline.executing}
           </span>
-          <span className="text-[11px] font-semibold tabular-nums text-rose-500">
+          <span className="text-[11px] font-semibold tabular-nums text-danger-500">
             {execTopline.blocked}
           </span>
           <span className="text-[11px] font-semibold tabular-nums text-amber-500">
@@ -2713,7 +2713,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {
           id: 'blocked',
           label: t('execution.kanban.blocked'),
-          accent: 'text-rose-300',
+          accent: 'text-danger-300',
           icon: <AlertTriangle size={14} />,
         },
         {
@@ -2999,7 +2999,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 {portfolioMetrics.blockedCount}
               </p>
             </div>
-            <AlertTriangle className="text-rose-400" />
+            <AlertTriangle className="text-danger-400" />
           </div>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
@@ -3077,7 +3077,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                   key={`${blocker.type}-${idx}`}
                   className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
                 >
-                  <AlertTriangle className="text-rose-400 mt-0.5" size={14} />
+                  <AlertTriangle className="text-danger-400 mt-0.5" size={14} />
                   <span>{blocker.message}</span>
                 </div>
               ))}
@@ -3200,7 +3200,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           </div>
           <div className="text-right text-xs text-slate-500 dark:text-slate-400 shrink-0">
             <div>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</div>
-            {overdue ? <div className="text-rose-400">{t('execution.badges.overdue')}</div> : null}
+            {overdue ? <div className="text-danger-400">{t('execution.badges.overdue')}</div> : null}
           </div>
         </button>
       );
@@ -3282,7 +3282,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <div className="flex gap-4 overflow-x-auto">
           <BucketColumn
             title={t('execution.tasks.overdue', 'Overdue')}
-            accent="text-rose-400"
+            accent="text-danger-400"
             tasks={taskBuckets.overdue}
           />
           <BucketColumn
@@ -3387,7 +3387,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           </div>
           <div className="flex items-center justify-between mt-2 text-[11px] text-slate-500 dark:text-slate-400">
             <span>{d.ownerName || '—'}</span>
-            <span className={overdue ? 'text-rose-400' : undefined}>
+            <span className={overdue ? 'text-danger-400' : undefined}>
               {dueStr ? new Date(dueStr).toLocaleDateString() : '—'}
             </span>
           </div>
@@ -3450,7 +3450,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           />
           <Bucket
             title={t('execution.decisionsBuckets.due7', 'Due ≤7d')}
-            accent="text-rose-400"
+            accent="text-danger-400"
             items={decisionBuckets.due7}
           />
           <Bucket
@@ -3504,7 +3504,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             attention === 'missing_dates'
               ? 'text-amber-500'
               : attention === 'overdue_decisions'
-                ? 'text-rose-500'
+                ? 'text-danger-500'
                 : attention === 'due_soon_tasks'
                   ? 'text-blue-500'
                   : 'text-slate-500',
@@ -3580,7 +3580,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         count: blockedCount,
         active: activeStatusFilter === InitiativeStatus.BLOCKED,
         disabled: blockedCount === 0,
-        icon: <AlertTriangle size={14} className="text-rose-400" />,
+        icon: <AlertTriangle size={14} className="text-danger-400" />,
         onClick: () => {
           if (activeStatusFilter === InitiativeStatus.BLOCKED) {
             resetExecutionCommandRow();
@@ -3904,7 +3904,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Escalate to governance',
           'Replan affected work',
         ],
-        icon: <AlertTriangle size={18} className="text-rose-500" />,
+        icon: <AlertTriangle size={18} className="text-danger-500" />,
         highlights: [
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
           { label: 'Due soon', value: actionCenter.dueSoonTasks.length },
@@ -4351,7 +4351,7 @@ Please return:
                   key={h.label}
                   className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
                     h.variant === 'critical'
-                      ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                      ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                       : h.variant === 'warn'
                         ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
                         : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
@@ -4447,7 +4447,7 @@ Please return:
                     key={h.label}
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
                       h.variant === 'critical'
-                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                        ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                         : h.variant === 'warn'
                           ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
                           : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
@@ -4831,7 +4831,7 @@ Please return:
                           key={h.label}
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
                             h.variant === 'critical'
-                              ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                              ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                               : h.variant === 'warn'
                                 ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
                                 : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
@@ -4887,7 +4887,7 @@ Please return:
         /transport safeguard|auth loop guard/i.test(initiativesLoadError || '');
       return (
         <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-          <AlertTriangle className="mb-4 h-12 w-12 text-rose-500" />
+          <AlertTriangle className="mb-4 h-12 w-12 text-danger-500" />
           <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
             {isTransportBlock
               ? t('execution.hub.transportBlockedTitle', 'Requests temporarily blocked')

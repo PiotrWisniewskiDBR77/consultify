@@ -83,7 +83,7 @@ export const WhyRedChain: React.FC<WhyRedChainProps> = ({ data, compact }) => {
         {items.slice(0, 3).map((msg, i) => (
           <span
             key={i}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-danger-500/10 text-danger-600 dark:text-danger-400"
           >
             {msg}
           </span>
@@ -97,13 +97,13 @@ export const WhyRedChain: React.FC<WhyRedChainProps> = ({ data, compact }) => {
       {data.signals && data.signals.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-            <AlertTriangle size={12} className="text-rose-500" />
+            <AlertTriangle size={12} className="text-danger-500" />
             {t('execution.whyRed.signals', 'Signals')}
           </div>
           <ul className="space-y-1 text-sm text-slate-700 dark:text-slate-300">
             {data.signals.map((s, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-rose-500">•</span>
+                <span className="text-danger-500">•</span>
                 <span>{s.message}</span>
               </li>
             ))}
@@ -141,7 +141,7 @@ export const WhyRedChain: React.FC<WhyRedChainProps> = ({ data, compact }) => {
                 <span className="text-blue-500">•</span>
                 <span className="truncate">{d.title}</span>
                 {d.overdue && (
-                  <span className="text-[10px] text-rose-500 shrink-0">
+                  <span className="text-[10px] text-danger-500 shrink-0">
                     {t('execution.whyRed.overdue', 'Overdue')}
                   </span>
                 )}

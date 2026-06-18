@@ -52,11 +52,11 @@ interface ProblemTableProps {
 function TypeBadge({ type }: { type: string }) {
   const label = type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   const colors: Record<string, string> = {
-    critical_risk: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
+    critical_risk: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400',
     high_risk: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-    overdue_task: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
-    blocked_task: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
-    blocked_initiative: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
+    overdue_task: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400',
+    blocked_task: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400',
+    blocked_initiative: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400',
     overdue_decision: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
     pending_decision: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
     unassigned_task: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400',
@@ -262,7 +262,7 @@ export function ProblemTable({
         render: (r: any) => {
           if (r.daysOverdue !== null && r.daysOverdue > 0) {
             return (
-              <span className="text-xs tabular-nums font-medium text-rose-600 dark:text-rose-400">
+              <span className="text-xs tabular-nums font-medium text-danger-600 dark:text-danger-400">
                 {r.daysOverdue}d
               </span>
             );

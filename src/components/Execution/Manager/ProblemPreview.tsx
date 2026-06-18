@@ -26,9 +26,9 @@ const SEVERITY_COLORS: Record<
   { bg: string; text: string; border: string; label: string }
 > = {
   critical: {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    text: 'text-rose-700 dark:text-rose-400',
-    border: 'border-rose-200 dark:border-rose-800/40',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    text: 'text-danger-700 dark:text-danger-400',
+    border: 'border-danger-200 dark:border-danger-800/40',
     label: 'Critical',
   },
   warning: {
@@ -69,7 +69,7 @@ function ActionButton({ action, onClick }: { action: ProblemAction; onClick: () 
     'h-8 px-3 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5';
   const variants: Record<string, string> = {
     primary: `${base} bg-blue-600 text-white hover:bg-blue-700`,
-    danger: `${base} bg-rose-600 text-white hover:bg-rose-700`,
+    danger: `${base} bg-danger-600 text-white hover:bg-danger-700`,
     default: `${base} bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700`,
   };
   return (
@@ -168,7 +168,7 @@ export function ProblemPreview({
                 label="Deadline"
                 value={
                   problem.daysOverdue > 0 ? (
-                    <span className="text-rose-600 dark:text-rose-400 font-medium">
+                    <span className="text-danger-600 dark:text-danger-400 font-medium">
                       {problem.daysOverdue} days overdue
                     </span>
                   ) : problem.daysOverdue < 0 ? (

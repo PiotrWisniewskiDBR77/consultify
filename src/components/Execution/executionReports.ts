@@ -154,9 +154,9 @@ export const RAG_CONFIG: Record<string, RagConf> = {
   },
   red: {
     icon: AlertTriangle,
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    text: 'text-rose-700 dark:text-rose-400',
-    border: 'border-rose-200 dark:border-rose-800',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    text: 'text-danger-700 dark:text-danger-400',
+    border: 'border-danger-200 dark:border-danger-800',
     label: 'At Risk',
   },
 };
