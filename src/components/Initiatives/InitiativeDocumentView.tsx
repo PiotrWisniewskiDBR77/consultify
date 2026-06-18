@@ -5210,7 +5210,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     // Status color mapping
     const statusAlertBorder = (() => {
-      if (status === 'BLOCKED') return 'border-rose-400/60';
+      if (status === 'BLOCKED') return 'border-danger-400/60';
       if (status === 'EXECUTING') return 'border-emerald-400/60';
       if (status === 'DONE' || status === 'TRACKING') return 'border-blue-400/60';
       if (status === 'CANCELLED' || status === 'ARCHIVED') return 'border-slate-400/60';
@@ -5219,7 +5219,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     // Priority color mapping
     const priorityAlertBorder = (() => {
-      if (priority === 'critical') return 'border-rose-400/60';
+      if (priority === 'critical') return 'border-danger-400/60';
       if (priority === 'high') return 'border-amber-400/60';
       return undefined;
     })();
@@ -5611,12 +5611,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
 
   const getPriorityDotClass = (p: CommentPriority) =>
-    p === 'high' ? 'bg-rose-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
+    p === 'high' ? 'bg-danger-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
   const getCommentPriority = (_c: CommentItem): CommentPriority => 'normal';
   const getPriorityButtonClass = (p: CommentPriority, active: boolean) =>
     active
       ? p === 'high'
-        ? 'border-rose-400/80 text-rose-300 bg-rose-500/20 shadow-[0_0_0_1px_rgba(239,68,68,0.3)]'
+        ? 'border-danger-400/80 text-danger-300 bg-danger-500/20 shadow-[0_0_0_1px_rgba(239,68,68,0.3)]'
         : p === 'low'
           ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
           : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]'
@@ -6060,7 +6060,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         deadline: {
           icon: <Calendar size={12} />,
           label: t('initiatives.deadline2'),
-          style: 'text-rose-500 bg-rose-500/10 border-rose-400/30',
+          style: 'text-danger-500 bg-danger-500/10 border-danger-400/30',
         },
         priority: {
           icon: <Flag size={12} />,
@@ -6326,7 +6326,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(item.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-600 hover:text-danger-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6532,7 +6532,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(item.id)}
-                className="mt-0.5 opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
+                className="mt-0.5 opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-600 hover:text-danger-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6695,7 +6695,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div key={idx} className="group flex items-center gap-2 py-1">
               <span
                 className={`w-2 h-2 rounded-full shrink-0 ${
-                  dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-400'
+                  dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-danger-400'
                 }`}
               />
               <input
@@ -6722,7 +6722,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(idx)}
-                className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-600 hover:text-danger-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6806,7 +6806,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="flex-1 space-y-2 pl-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-rose-400 shrink-0" />
+                      <span className="w-3 h-3 rounded-full bg-danger-400 shrink-0" />
                       <div>
                         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                           {t('initiatives.outOfScope3')}
@@ -6819,7 +6819,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={addOutScope}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-danger-500 dark:hover:text-danger-400 transition-colors"
                       >
                         <Plus size={14} />
                         {t('initiatives.addItem2')}
@@ -6870,7 +6870,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-rose-500 shrink-0" />
+                    <span className="w-3 h-3 rounded-full bg-danger-500 shrink-0" />
                     <div>
                       <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         {t('initiatives.killCriteria5')}
@@ -6883,7 +6883,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={addKillCriteria}
-                      className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                      className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
                     >
                       <Plus size={14} />
                       {t('initiatives.addItem2')}
@@ -6906,10 +6906,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     />
                   </div>
                 </div>
-                <div className="border-b border-rose-200/40 dark:border-rose-500/20 pb-2 min-h-[40px]">
+                <div className="border-b border-danger-200/40 dark:border-danger-500/20 pb-2 min-h-[40px]">
                   {killCriteriaItems.map((item, i) => (
                     <div key={i} className="group flex items-center gap-2 py-1">
-                      <AlertTriangle size={12} className="text-rose-500 shrink-0" />
+                      <AlertTriangle size={12} className="text-danger-500 shrink-0" />
                       <input
                         type="text"
                         value={item}
@@ -6936,7 +6936,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       />
                       <button
                         onClick={() => removeKill(i)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-600 hover:text-danger-500 transition-all"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -8006,7 +8006,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     );
                                     if (ok) removeKpi(kpi.id);
                                   }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
                                 >
                                   <Trash2 size={13} />
                                   {t('initiatives.delete2')}
@@ -8291,7 +8291,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           onClick={() =>
                             persistDeliverables(deliverableItems.filter((x) => x.id !== d.id))
                           }
-                          className="text-slate-400 hover:text-rose-500"
+                          className="text-slate-400 hover:text-danger-500"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -8368,7 +8368,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {canEditCards && (
                         <button
                           onClick={() => removeChangeLogEntry(e.id)}
-                          className="text-slate-400 hover:text-rose-500"
+                          className="text-slate-400 hover:text-danger-500"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -8444,7 +8444,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         {canEditCards && (
                           <button
                             onClick={() => removeOkr(o.id)}
-                            className="text-slate-400 hover:text-rose-500"
+                            className="text-slate-400 hover:text-danger-500"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -10083,7 +10083,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           setShowToolbarKebab(false);
                                           void handleStatusAction(sa);
                                         }}
-                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
+                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
                                       >
                                         <KebabIcon size={13} className="shrink-0" />
                                         <span>{isPolish ? sa.labelPl : sa.label}</span>

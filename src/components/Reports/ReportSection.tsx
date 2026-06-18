@@ -387,7 +387,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
           <button
             onClick={handleCancel}
-            className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
             title={t('common.cancel', 'Cancel')}
           >
             <X className="w-4 h-4" />

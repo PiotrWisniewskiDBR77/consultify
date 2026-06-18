@@ -259,7 +259,7 @@ const SIMILARITY_CHIP_CONFIG: Record<
     label: { pl: 'PODOBNA', en: 'SIMILAR' },
   },
   duplicate: {
-    className: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+    className: 'bg-danger-100 text-danger-700 dark:bg-danger-500/15 dark:text-danger-300',
     label: { pl: 'DUPLIKAT', en: 'DUPLICATE' },
   },
 };
@@ -1506,7 +1506,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           </div>
         )}
         {!insightsLoading && insightsError && (
-          <div className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100">
+          <div className="rounded-xl border border-danger-300 bg-danger-50 px-3 py-2 text-xs text-danger-800 dark:border-danger-400/30 dark:bg-danger-500/10 dark:text-danger-100">
             {insightsError}
           </div>
         )}
@@ -1652,7 +1652,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           data-testid="initiative-wizard-capacity"
           className={`rounded-xl border px-3 py-2 text-xs ${
             capacity.overload === 'red'
-              ? 'border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100'
+              ? 'border-danger-300 bg-danger-50 text-danger-900 dark:border-danger-400/30 dark:bg-danger-500/10 dark:text-danger-100'
               : capacity.overload === 'amber'
                 ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100'
                 : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-100'
@@ -2062,7 +2062,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             <button
               type="button"
               onClick={() => triageCandidate(selectedCandidate, 'rejected')}
-              className="inline-flex items-center justify-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-rose-500"
+              className="inline-flex items-center justify-center gap-1 rounded-xl bg-danger-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-danger-500"
             >
               <X className="h-3 w-3" />
               Reject
@@ -2131,13 +2131,13 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       {!shortlistGateOk && (
         <div
           data-testid="initiative-wizard-shortlist-gate-blocked"
-          className="rounded-2xl border border-rose-300 bg-rose-50 p-3 text-sm text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100"
+          className="rounded-2xl border border-danger-300 bg-danger-50 p-3 text-sm text-danger-900 dark:border-danger-400/30 dark:bg-danger-500/10 dark:text-danger-100"
         >
           <div className="flex items-center gap-2 font-semibold">
             <AlertTriangle className="h-4 w-4" />
             {t.shortlistGateBlockedTitle}
           </div>
-          <p className="mt-1 text-xs text-rose-800 dark:text-rose-100/80">
+          <p className="mt-1 text-xs text-danger-800 dark:text-danger-100/80">
             {t.shortlistGateBlockedBody}
           </p>
           <ul className="mt-2 space-y-1 text-xs">
@@ -2164,7 +2164,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               key={candidate.id}
               className={`rounded-xl border p-2.5 transition-all ${
                 blocker
-                  ? 'border-rose-300 bg-rose-50/60 dark:border-rose-400/30 dark:bg-rose-500/10'
+                  ? 'border-danger-300 bg-danger-50/60 dark:border-danger-400/30 dark:bg-danger-500/10'
                   : 'border-slate-200 bg-white dark:border-white/[0.08] dark:bg-navy-900/70'
               }`}
             >
@@ -2247,7 +2247,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 <span
                   className={`rounded-full px-2 py-0.5 text-[11px] ${
                     blocker
-                      ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-100'
+                      ? 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-100'
                       : 'bg-slate-100 text-slate-600 dark:bg-white/[0.08] dark:text-slate-300'
                   }`}
                 >
@@ -2325,7 +2325,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 meta.tone === 'success'
                   ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-100'
                   : meta.tone === 'block'
-                    ? 'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100'
+                    ? 'border-danger-200 bg-danger-50 text-danger-900 dark:border-danger-400/30 dark:bg-danger-500/10 dark:text-danger-100'
                     : meta.tone === 'warn'
                       ? 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100'
                       : 'border-slate-200 bg-white text-slate-800 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200';
@@ -2516,7 +2516,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                     shortlistGateOk
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200'
-                      : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-200'
+                      : 'bg-danger-100 text-danger-700 dark:bg-danger-500/15 dark:text-danger-200'
                   }`}
                 >
                   {shortlistGateOk

@@ -73,8 +73,8 @@ const ARTIFACT_COLOR_MAP: Record<string, string> = {
   budget: 'text-emerald-400',
   valuation: 'text-emerald-400',
   execution_status: 'text-blue-400',
-  risk: 'text-rose-400',
-  raid: 'text-rose-400',
+  risk: 'text-danger-400',
+  raid: 'text-danger-400',
   tool_session: 'text-blue-400',
 };
 

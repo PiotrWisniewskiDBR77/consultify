@@ -67,13 +67,13 @@ interface FeasibilityAnalysisProps {
 const DIM_BG: Record<DimColor, string> = {
   green: 'bg-emerald-500',
   amber: 'bg-amber-500',
-  red: 'bg-rose-500',
+  red: 'bg-danger-500',
 };
 
 const DIM_RING: Record<DimColor, string> = {
   green: 'ring-emerald-400/60',
   amber: 'ring-amber-400/60',
-  red: 'ring-rose-400/60',
+  red: 'ring-danger-400/60',
 };
 
 const DIM_ORDER: Record<DimColor, number> = { red: 0, amber: 1, green: 2 };
@@ -480,7 +480,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                 f.rank <= 3
                   ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                   : f.overallScore < 50
-                    ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                    ? 'bg-danger-500/20 text-danger-700 dark:text-danger-300'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
               }`}
             >
@@ -506,7 +506,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             <span
               className={`text-xs font-semibold tabular-nums w-10 text-right ${
                 f.overallScore < 50
-                  ? 'text-rose-600 dark:text-rose-400'
+                  ? 'text-danger-600 dark:text-danger-400'
                   : f.overallScore < 75
                     ? 'text-amber-600 dark:text-amber-400'
                     : 'text-emerald-600 dark:text-emerald-400'
@@ -655,8 +655,8 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
               {t('initiatives.analysis.feasibility.total', 'Initiatives')}
             </div>
           </div>
-          <div className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10 p-3">
-            <div className="text-xl font-semibold text-rose-600 dark:text-rose-400">
+          <div className="rounded-xl border border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10 p-3">
+            <div className="text-xl font-semibold text-danger-600 dark:text-danger-400">
               {highRiskCount}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -752,7 +752,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                   <tr
                     className={`border-b border-slate-200 dark:border-navy-800/50 cursor-pointer
                       hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
-                      ${f.overallScore < 50 ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
+                      ${f.overallScore < 50 ? 'bg-danger-500/5 dark:bg-danger-500/10' : ''}`}
                     onClick={() => toggleExpand(f)}
                   >
                     <td className="px-4 py-3 text-slate-600">
@@ -783,7 +783,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                       <span
                         className={`font-semibold tabular-nums ${
                           f.overallScore < 50
-                            ? 'text-rose-600 dark:text-rose-400'
+                            ? 'text-danger-600 dark:text-danger-400'
                             : f.overallScore < 75
                               ? 'text-amber-600 dark:text-amber-400'
                               : 'text-emerald-600 dark:text-emerald-400'

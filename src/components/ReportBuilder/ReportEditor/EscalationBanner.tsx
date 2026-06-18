@@ -63,10 +63,10 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
 
   const isCritical = trigger.severity === 'critical';
   const bannerBg = isCritical
-    ? 'bg-rose-500/10 border-rose-500/30'
+    ? 'bg-danger-500/10 border-danger-500/30'
     : 'bg-amber-500/10 border-amber-500/30';
-  const bannerText = isCritical ? 'text-rose-300' : 'text-amber-300';
-  const iconColor = isCritical ? 'text-rose-400' : 'text-amber-400';
+  const bannerText = isCritical ? 'text-danger-300' : 'text-amber-300';
+  const iconColor = isCritical ? 'text-danger-400' : 'text-amber-400';
 
   return (
     <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${bannerBg} mb-4`}>

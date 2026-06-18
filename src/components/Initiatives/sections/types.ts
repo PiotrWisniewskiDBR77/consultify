@@ -673,8 +673,8 @@ export const PRIORITY_CONFIG = {
   critical: {
     label: 'Critical',
     labelPl: 'Krytyczny',
-    color: 'text-rose-500',
-    bgColor: 'bg-rose-500/10',
+    color: 'text-danger-500',
+    bgColor: 'bg-danger-500/10',
   },
   high: { label: 'High', labelPl: 'Wysoki', color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
   medium: {
@@ -690,7 +690,7 @@ export const RAID_TYPE_CONFIG = {
   risk: {
     label: 'Risk',
     labelPl: 'Ryzyko',
-    color: 'bg-rose-500/20 text-rose-400',
+    color: 'bg-danger-500/20 text-danger-400',
   },
   assumption: {
     label: 'Assumption',
@@ -700,7 +700,7 @@ export const RAID_TYPE_CONFIG = {
   issue: {
     label: 'Issue',
     labelPl: 'Problem',
-    color: 'bg-rose-500/20 text-rose-400',
+    color: 'bg-danger-500/20 text-danger-400',
   },
   dependency: {
     label: 'Dependency',
@@ -713,7 +713,7 @@ export const SEVERITY_CONFIG = {
   LOW: { label: 'Low', labelPl: 'Niski', color: 'bg-slate-500/20 text-slate-600' },
   MEDIUM: { label: 'Medium', labelPl: 'Średni', color: 'bg-amber-500/20 text-amber-400' },
   HIGH: { label: 'High', labelPl: 'Wysoki', color: 'bg-amber-500/20 text-amber-400' },
-  CRITICAL: { label: 'Critical', labelPl: 'Krytyczny', color: 'bg-rose-500/20 text-rose-400' },
+  CRITICAL: { label: 'Critical', labelPl: 'Krytyczny', color: 'bg-danger-500/20 text-danger-400' },
 };
 
 // ==========================================

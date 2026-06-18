@@ -175,7 +175,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
       {content.blockers.length > 0 && (
         <TaskListSection
           title="Blockers & Issues"
-          icon={<AlertTriangle size={16} className="text-rose-500" />}
+          icon={<AlertTriangle size={16} className="text-danger-500" />}
           variant="blocked"
           items={content.blockers.map((item: any) => ({
             id: item.id,
@@ -268,7 +268,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           project.blockers > 0
-                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                            ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                         }`}
                       >

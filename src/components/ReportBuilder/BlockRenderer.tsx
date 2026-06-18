@@ -81,7 +81,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
             {/* Delete */}
             <button
               onClick={onDelete}
-              className="p-1.5 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-600 dark:text-slate-500 hover:text-rose-500"
+              className="p-1.5 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 dark:text-slate-500 hover:text-danger-500"
               title="Delete"
             >
               <Trash2 size={14} />

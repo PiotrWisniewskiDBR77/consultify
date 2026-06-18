@@ -163,8 +163,8 @@ const GATE_UI: Record<
   },
   BLOCK: {
     icon: Lock,
-    color: 'text-rose-700 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-500/15',
+    color: 'text-danger-700 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-500/15',
     actionLabel: { en: 'Block', pl: 'Zablokuj' },
   },
   UNBLOCK: {
@@ -187,8 +187,8 @@ const GATE_UI: Record<
   },
   CANCEL: {
     icon: X,
-    color: 'text-rose-700 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-500/15',
+    color: 'text-danger-700 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-500/15',
     actionLabel: { en: 'Cancel', pl: 'Anuluj' },
   },
   ARCHIVE: {
@@ -225,8 +225,8 @@ const STATUS_UI: Record<
   },
   REJECTED: {
     label: { en: 'Rejected', pl: 'Odrzucone' },
-    color: 'text-rose-700 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-500/20',
+    color: 'text-danger-700 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-500/20',
     icon: X,
   },
 };
@@ -914,7 +914,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     className={`
                       group cursor-pointer transition-colors duration-150
                       ${isCurrent ? 'bg-primary-500/[0.04] dark:bg-primary-500/[0.07]' : ''}
-                      ${hasBlocking && isCurrent ? 'bg-rose-500/[0.04] dark:bg-rose-500/[0.06]' : ''}
+                      ${hasBlocking && isCurrent ? 'bg-danger-500/[0.04] dark:bg-danger-500/[0.06]' : ''}
                       hover:bg-slate-50/80 dark:hover:bg-white/[0.02]
                     `}
                   >
@@ -928,7 +928,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                               ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                               : isCurrent
                                 ? hasBlocking
-                                  ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 ring-1 ring-rose-500/30'
+                                  ? 'bg-danger-100 dark:bg-danger-500/15 text-danger-600 dark:text-danger-400 ring-1 ring-danger-500/30'
                                   : 'bg-navy-900 text-white'
                                 : 'bg-slate-200/80 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                           }
@@ -1075,7 +1075,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     <td className="px-3 py-2">
                       {requirements.length > 0 ? (
                         hasBlocking ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-danger-600 dark:text-danger-400">
                             <X size={10} />
                             {
                               requirements.filter((r) => r.severity === 'blocking' && !r.pass)
@@ -1155,7 +1155,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                         req.pass
                                           ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
                                           : req.severity === 'blocking'
-                                            ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400'
+                                            ? 'bg-danger-50 dark:bg-danger-500/15 text-danger-700 dark:text-danger-400'
                                             : 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400'
                                       }
                                     `}
@@ -1421,7 +1421,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                   pass
                                     ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
                                     : req.severity === 'blocking'
-                                      ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400'
+                                      ? 'bg-danger-50 dark:bg-danger-500/15 text-danger-700 dark:text-danger-400'
                                       : 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400'
                                 }`}
                               >

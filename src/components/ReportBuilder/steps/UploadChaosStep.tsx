@@ -262,10 +262,10 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-sm text-rose-700 dark:text-rose-300">
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 text-sm text-danger-700 dark:text-danger-300">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span className="flex-1">{error}</span>
-          <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-600">
+          <button onClick={() => setError(null)} className="text-danger-400 hover:text-danger-600">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -306,7 +306,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                     </span>
                   )}
                   {f.status === 'done' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-                  {f.status === 'error' && <AlertCircle className="w-4 h-4 text-rose-500" />}
+                  {f.status === 'error' && <AlertCircle className="w-4 h-4 text-danger-500" />}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

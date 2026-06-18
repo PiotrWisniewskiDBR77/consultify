@@ -458,7 +458,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                         {proposal.initiativeName}
                       </span>
                       <span className="text-slate-600 dark:text-slate-500">:</span>
-                      <span className="text-rose-600 dark:text-rose-400 line-through text-xs">
+                      <span className="text-danger-600 dark:text-danger-400 line-through text-xs">
                         {proposal.fromUserName}
                       </span>
                       <span className="text-slate-600">→</span>
@@ -595,8 +595,8 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               {t('initiatives.analysis.resources.totalInitiatives', 'Initiatives')}
             </div>
           </div>
-          <div className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10 p-3">
-            <div className="text-xl font-semibold text-rose-600 dark:text-rose-400">
+          <div className="rounded-xl border border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10 p-3">
+            <div className="text-xl font-semibold text-danger-600 dark:text-danger-400">
               {overallocatedCount}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -756,7 +756,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
                             a.status === 'overallocated'
-                              ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                              ? 'bg-danger-500/20 text-danger-700 dark:text-danger-300'
                               : a.status === 'underutilized'
                                 ? 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                                 : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
@@ -784,7 +784,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                           <div
                             className={`h-2.5 rounded-full transition-all duration-300 ${
                               a.utilizationPercent > 100
-                                ? 'bg-rose-500'
+                                ? 'bg-danger-500'
                                 : a.utilizationPercent > 80
                                   ? 'bg-amber-500'
                                   : a.utilizationPercent > 0
@@ -799,7 +799,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                         <span
                           className={`text-xs font-semibold tabular-nums w-12 text-right ${
                             a.utilizationPercent > 100
-                              ? 'text-rose-600 dark:text-rose-400'
+                              ? 'text-danger-600 dark:text-danger-400'
                               : 'text-slate-700 dark:text-slate-300'
                           }`}
                         >
@@ -811,7 +811,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                           a.status === 'overallocated'
-                            ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                            ? 'bg-danger-500/20 text-danger-700 dark:text-danger-300'
                             : a.status === 'underutilized'
                               ? 'bg-slate-200/70 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
                               : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'

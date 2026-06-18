@@ -157,7 +157,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
       {content.decisionsRequired?.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle size={18} className="text-rose-500" />
+            <AlertTriangle size={18} className="text-danger-500" />
             <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
               Decisions Required
             </h3>
@@ -180,12 +180,12 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
       )}
 
       {content.warnings?.length > 0 && (
-        <div className="bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-500/30 p-6">
+        <div className="bg-danger-50 dark:bg-danger-900/10 rounded-xl border border-danger-200 dark:border-danger-500/30 p-6">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle size={18} className="text-rose-500" />
-            <h3 className="text-lg font-semibold text-rose-700 dark:text-rose-400">Escalations</h3>
+            <AlertTriangle size={18} className="text-danger-500" />
+            <h3 className="text-lg font-semibold text-danger-700 dark:text-danger-400">Escalations</h3>
           </div>
-          <ul className="space-y-2 text-sm text-rose-700 dark:text-rose-300">
+          <ul className="space-y-2 text-sm text-danger-700 dark:text-danger-300">
             {content.warnings.map((warning: string, index: number) => (
               <li key={index} className="flex items-start gap-2">
                 <span>•</span>

@@ -130,7 +130,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
   const getHealthColor = (health: string) => {
     switch (health) {
       case 'critical':
-        return 'bg-rose-500';
+        return 'bg-danger-500';
       case 'warning':
         return 'bg-amber-500';
       default:
@@ -239,19 +239,19 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
           {report.blockers.length > 0 && (
             <div>
               <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-                <AlertTriangle size={16} className="text-rose-500" />
+                <AlertTriangle size={16} className="text-danger-500" />
                 Blocking Issues ({report.blockers.length})
               </h4>
               <div className="space-y-2">
                 {report.blockers.map((blocker, idx) => (
                   <div
                     key={idx}
-                    className="bg-rose-50 dark:bg-rose-900/10 border-l-4 border-rose-500 p-3 rounded-r-lg"
+                    className="bg-danger-50 dark:bg-danger-900/10 border-l-4 border-danger-500 p-3 rounded-r-lg"
                   >
-                    <div className="text-sm font-medium text-rose-800 dark:text-rose-300">
+                    <div className="text-sm font-medium text-danger-800 dark:text-danger-300">
                       {blocker.title}
                     </div>
-                    <div className="text-xs text-rose-600 dark:text-rose-400">
+                    <div className="text-xs text-danger-600 dark:text-danger-400">
                       {blocker.type} • {blocker.daysBlocked || 0} days blocked
                     </div>
                   </div>
@@ -287,7 +287,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
           <div
             className={`rounded-xl p-4 ${
               report.forecast.includes('HIGH')
-                ? 'bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30'
+                ? 'bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800/30'
                 : report.forecast.includes('MEDIUM')
                   ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30'
                   : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30'

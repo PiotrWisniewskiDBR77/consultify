@@ -152,7 +152,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
               {/* Error */}
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-600 dark:text-rose-400">
+                <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg text-danger-600 dark:text-danger-400">
                   <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                   <span className="text-sm">{error}</span>
                 </div>

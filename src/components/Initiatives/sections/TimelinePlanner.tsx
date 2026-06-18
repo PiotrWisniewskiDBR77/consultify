@@ -178,8 +178,8 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
     icon: Flag,
     label: 'Finish',
     labelPl: 'Koniec',
-    color: 'text-rose-500',
-    bgTint: 'bg-rose-500/5',
+    color: 'text-danger-500',
+    bgTint: 'bg-danger-500/5',
     shortLabel: 'F',
   },
 };
@@ -188,13 +188,13 @@ const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-blue-500',
   review: 'bg-sky-500',
-  blocked: 'bg-rose-500',
+  blocked: 'bg-danger-500',
   done: 'bg-emerald-500',
 };
 
 const DECISION_OUTCOME_STYLES: Record<string, { dot: string; label: string; labelPl: string }> = {
   GO: { dot: 'bg-emerald-500', label: 'GO', labelPl: 'GO' },
-  NO_GO: { dot: 'bg-rose-500', label: 'NO-GO', labelPl: 'NO-GO' },
+  NO_GO: { dot: 'bg-danger-500', label: 'NO-GO', labelPl: 'NO-GO' },
   ESCALATE: { dot: 'bg-amber-500', label: 'Escalate', labelPl: 'Eskalacja' },
 };
 
@@ -1379,7 +1379,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                         />
                         {submitAttempted && !infoEventReferenceEventValid && (
-                          <p className="mt-1 text-[10px] text-rose-500">
+                          <p className="mt-1 text-[10px] text-danger-500">
                             {t('initiatives.timelinePlanner.validationReferenceEvent')}
                           </p>
                         )}
@@ -1387,7 +1387,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     )}
                   </div>
                   {submitAttempted && !infoEventDateModeValid && (
-                    <p className="text-[10px] text-rose-500">
+                    <p className="text-[10px] text-danger-500">
                       {t('initiatives.timelinePlanner.validationSpecificDate')}
                     </p>
                   )}
@@ -1460,7 +1460,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         </select>
                       )}
                       {submitAttempted && !infoEventParticipantValid && (
-                        <p className="mt-1 text-[10px] text-rose-500">
+                        <p className="mt-1 text-[10px] text-danger-500">
                           {t('initiatives.timelinePlanner.validationParticipant')}
                         </p>
                       )}
@@ -1492,7 +1492,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       </p>
                     )}
                     {submitAttempted && !infoEventMaterialValid && (
-                      <p className="mt-1 text-[10px] text-rose-500">
+                      <p className="mt-1 text-[10px] text-danger-500">
                         {t('initiatives.timelinePlanner.validationMaterialSource')}
                       </p>
                     )}
@@ -2594,7 +2594,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                   />
                   {submitAttempted && !infoEventReferenceEventValid && (
-                    <p className="mt-1 text-[10px] text-rose-500">
+                    <p className="mt-1 text-[10px] text-danger-500">
                       {t('initiatives.timelinePlanner.validationReferenceEvent')}
                     </p>
                   )}
@@ -2602,7 +2602,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               )}
             </div>
             {submitAttempted && !infoEventDateModeValid && (
-              <p className="text-[10px] text-rose-500">
+              <p className="text-[10px] text-danger-500">
                 {t('initiatives.timelinePlanner.validationSpecificDate')}
               </p>
             )}
@@ -2662,7 +2662,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   </select>
                 )}
                 {submitAttempted && !infoEventParticipantValid && (
-                  <p className="mt-1 text-[10px] text-rose-500">
+                  <p className="mt-1 text-[10px] text-danger-500">
                     {t('initiatives.timelinePlanner.validationParticipant')}
                   </p>
                 )}
@@ -2694,7 +2694,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 </p>
               )}
               {submitAttempted && !infoEventMaterialValid && (
-                <p className="mt-1 text-[10px] text-rose-500">
+                <p className="mt-1 text-[10px] text-danger-500">
                   {t('initiatives.timelinePlanner.validationMaterialSource')}
                 </p>
               )}
@@ -3750,7 +3750,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           onRemoveRow(row.id);
                           setMenuOpenId(null);
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-rose-500 hover:bg-rose-500/5 transition-colors"
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-danger-500 hover:bg-danger-500/5 transition-colors"
                       >
                         <Trash2 size={12} />
                         {t('initiatives.timelinePlanner.delete')}
@@ -3850,7 +3850,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   // Shape colors per type
   const shapeColor: Record<TimelineRowType, string> = {
     start: 'bg-emerald-500',
-    finish: 'bg-rose-500',
+    finish: 'bg-danger-500',
     milestone: 'bg-navy-900',
     decision: 'bg-amber-500',
     info_event: 'bg-blue-500',
@@ -3962,7 +3962,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                     >
                       {isDecision ? (
                         <div
-                          className={`w-4 h-4 ${row.decisionOutcome === 'GO' ? 'bg-emerald-500' : row.decisionOutcome === 'NO_GO' ? 'bg-rose-500' : 'bg-amber-500'} rounded-sm rotate-45 border-2 border-white dark:border-navy-900`}
+                          className={`w-4 h-4 ${row.decisionOutcome === 'GO' ? 'bg-emerald-500' : row.decisionOutcome === 'NO_GO' ? 'bg-danger-500' : 'bg-amber-500'} rounded-sm rotate-45 border-2 border-white dark:border-navy-900`}
                         />
                       ) : isEsc ? (
                         <AlertTriangle size={14} className="text-amber-500 fill-amber-500/20" />
@@ -3992,7 +3992,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                       : row.status === 'in_progress'
                         ? 'bg-blue-500/70'
                         : row.status === 'blocked'
-                          ? 'bg-rose-500/70'
+                          ? 'bg-danger-500/70'
                           : 'bg-blue-500/50';
 
               return (

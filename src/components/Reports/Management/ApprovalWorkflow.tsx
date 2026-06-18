@@ -63,7 +63,7 @@ const getStatusColor = (status: string) => {
     case 'APPROVED':
       return 'text-emerald-500 bg-emerald-500/10';
     case 'REJECTED':
-      return 'text-rose-500 bg-rose-500/10';
+      return 'text-danger-500 bg-danger-500/10';
     case 'PENDING':
       return 'text-amber-500 bg-amber-500/10';
     case 'SKIPPED':
@@ -88,7 +88,7 @@ const SLACountdown: React.FC<{ dueAt: string }> = ({ dueAt }) => {
   if (isOverdue) {
     const overdueHours = Math.abs(diffHours);
     return (
-      <span className="flex items-center gap-1 text-xs font-medium text-rose-500">
+      <span className="flex items-center gap-1 text-xs font-medium text-danger-500">
         <AlertTriangle size={12} />
         {overdueHours}h overdue
       </span>
@@ -214,7 +214,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
       case 'APPROVED':
         return { label: 'Approved', color: 'bg-emerald-500 text-white' };
       case 'REJECTED':
-        return { label: 'Rejected', color: 'bg-rose-500 text-white' };
+        return { label: 'Rejected', color: 'bg-danger-500 text-white' };
       case 'PENDING':
         return { label: 'Pending Approval', color: 'bg-amber-500 text-white' };
       default:
@@ -359,7 +359,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
               {approvalStatus.canReject && (
                 <button
                   onClick={() => setShowDecisionModal('reject')}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-danger-500 hover:bg-danger-600 text-white rounded-lg font-medium transition-colors"
                 >
                   <XCircle size={18} />
                   Reject
@@ -429,7 +429,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                 className={`flex-1 px-4 py-2 rounded-lg font-medium text-white transition-colors ${
                   showDecisionModal === 'approve'
                     ? 'bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300'
-                    : 'bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300'
+                    : 'bg-danger-500 hover:bg-danger-600 disabled:bg-danger-300'
                 }`}
               >
                 {submitting

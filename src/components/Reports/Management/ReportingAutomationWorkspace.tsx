@@ -400,7 +400,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
     }
     const colors: Record<string, string> = {
       success: 'bg-emerald-600 text-white',
-      failed: 'bg-rose-600 text-white',
+      failed: 'bg-danger-600 text-white',
       running: 'bg-blue-600 text-white',
       pending: 'bg-amber-600 text-white',
     };
@@ -604,7 +604,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleDelete(selectedSchedule.id)}
-                    className="p-2 text-slate-600 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors"
+                    className="p-2 text-slate-600 hover:text-danger-400 rounded-lg hover:bg-danger-500/10 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -713,7 +713,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                       </span>
                       <button
                         onClick={() => handleDeleteTrigger(rule.id)}
-                        className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
+                        className="p-1 text-slate-500 hover:text-danger-400 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -856,7 +856,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   {tp('triggerReason')}: {exec.triggerReason}
                 </p>
               )}
-              {exec.error && <p className="text-xs text-rose-400 mt-1">{exec.error}</p>}
+              {exec.error && <p className="text-xs text-danger-400 mt-1">{exec.error}</p>}
               <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-600">
                 <span>Started: {new Date(exec.startedAt).toLocaleString()}</span>
                 {exec.completedAt && (
@@ -871,7 +871,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                       className={`px-1.5 py-0.5 text-[10px] rounded ${
                         dr.status === 'success'
                           ? 'bg-emerald-600/20 text-emerald-300'
-                          : 'bg-rose-600/20 text-rose-300'
+                          : 'bg-danger-600/20 text-danger-300'
                       }`}
                     >
                       {dr.method}: {dr.status}

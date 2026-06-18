@@ -240,7 +240,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="text-center">
-          <AlertTriangle className="w-12 h-12 text-rose-400 mx-auto mb-4" />
+          <AlertTriangle className="w-12 h-12 text-danger-400 mx-auto mb-4" />
           <p className="text-slate-900 dark:text-white text-lg mb-2">Failed to load initiative</p>
           <p className="text-slate-500 dark:text-slate-400">{error || 'Initiative not found'}</p>
         </div>
@@ -304,7 +304,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
       case 'EXECUTING':
         return 'bg-blue-500/20 text-blue-400';
       case 'BLOCKED':
-        return 'bg-rose-500/20 text-rose-400';
+        return 'bg-danger-500/20 text-danger-400';
       case 'DONE':
         return 'bg-green-500/20 text-green-400';
       default:
@@ -415,7 +415,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                     ? 'text-green-400'
                     : readiness.total >= 40
                       ? 'text-amber-400'
-                      : 'text-rose-400'
+                      : 'text-danger-400'
                 }`}
               >
                 {readiness.total}%

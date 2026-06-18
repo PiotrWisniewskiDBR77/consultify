@@ -715,7 +715,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                       const ok = window.confirm(t('initiatives.kpisSection.deleteThisKpi'));
                       if (ok) removeKpi(row.id);
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
                   >
                     <Trash2 size={13} />
                     {t('initiatives.kpisSection.delete')}

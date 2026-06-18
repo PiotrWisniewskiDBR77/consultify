@@ -97,9 +97,9 @@ const STATUS_CONFIG = {
   },
   missing: {
     icon: XCircle,
-    color: 'text-rose-500',
-    bg: 'bg-rose-50 dark:bg-rose-500/10',
-    border: 'border-rose-200 dark:border-rose-500/20',
+    color: 'text-danger-500',
+    bg: 'bg-danger-50 dark:bg-danger-500/10',
+    border: 'border-danger-200 dark:border-danger-500/20',
   },
   unknown: {
     icon: HelpCircle,
@@ -110,7 +110,7 @@ const STATUS_CONFIG = {
 };
 
 const RECOMMENDATION_LABELS: Record<string, { en: string; pl: string; color: string }> = {
-  hire: { en: 'Hire', pl: 'Rekrutuj', color: 'text-rose-600 bg-rose-50 dark:bg-rose-500/10' },
+  hire: { en: 'Hire', pl: 'Rekrutuj', color: 'text-danger-600 bg-danger-50 dark:bg-danger-500/10' },
   train: { en: 'Train', pl: 'Szkolenie', color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10' },
   outsource: {
     en: 'Outsource',
@@ -282,7 +282,7 @@ const RequirementsView: React.FC<{ gap: GapSummary; isPl: boolean }> = ({ gap, i
               </div>
               <div className="flex items-center gap-2">
                 {req.priority === 'required' && (
-                  <span className="text-[10px] font-medium text-rose-600 dark:text-rose-400">
+                  <span className="text-[10px] font-medium text-danger-600 dark:text-danger-400">
                     {t('skillsGap.mustHave', 'Must-have')}
                   </span>
                 )}
@@ -382,10 +382,10 @@ const PersonsView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
               {person.gaps.map((g) => (
                 <div
                   key={g.capabilityId}
-                  className="flex items-center justify-between text-[10px] px-2 py-1 rounded bg-rose-50 dark:bg-rose-500/10"
+                  className="flex items-center justify-between text-[10px] px-2 py-1 rounded bg-danger-50 dark:bg-danger-500/10"
                 >
-                  <span className="text-rose-700 dark:text-rose-400">{g.capabilityName}</span>
-                  <span className="text-rose-500 font-mono">
+                  <span className="text-danger-700 dark:text-danger-400">{g.capabilityName}</span>
+                  <span className="text-danger-500 font-mono">
                     L{g.actual} &rarr; L{g.required}
                   </span>
                 </div>
@@ -449,7 +449,7 @@ const SummaryView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
           )}
           {gap.missing > 0 && (
             <div
-              className="bg-rose-500 transition-all"
+              className="bg-danger-500 transition-all"
               style={{ width: `${(gap.missing / total) * 100}%` }}
             />
           )}
@@ -477,7 +477,7 @@ const SummaryView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
           <div className="text-xs text-slate-500 mb-1">
             {t('skillsGap.summary.mustHaveGaps', 'Must-Have Gaps')}
           </div>
-          <div className="text-lg font-bold text-rose-600 dark:text-rose-400">
+          <div className="text-lg font-bold text-danger-600 dark:text-danger-400">
             {
               gap.requirements.filter((r) => r.priority === 'required' && r.status !== 'covered')
                 .length

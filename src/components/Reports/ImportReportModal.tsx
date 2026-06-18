@@ -387,7 +387,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
 
           {/* Error */}
           {error && (
-            <div className="mt-4 flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
+            <div className="mt-4 flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 rounded-lg text-sm">
               <AlertCircle size={16} />
               {error}
             </div>

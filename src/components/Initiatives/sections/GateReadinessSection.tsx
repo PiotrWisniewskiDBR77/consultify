@@ -1768,7 +1768,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                   {t('initiatives.gateReadinessSection.readinessSystem')}
                 </span>
                 {blockingMissing.length > 0 ? (
-                  <span className="text-[10px] font-semibold text-rose-500">
+                  <span className="text-[10px] font-semibold text-danger-500">
                     {t('initiatives.gateReadinessSection.blockingMissing')}
                   </span>
                 ) : (
@@ -1797,7 +1797,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                       key={r.key}
                       className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border ${
                         isFail && isBlocking
-                          ? 'bg-rose-500/5 border-rose-500/20'
+                          ? 'bg-danger-500/5 border-danger-500/20'
                           : isFail
                             ? 'bg-amber-500/5 border-amber-500/20'
                             : 'bg-emerald-500/5 border-emerald-500/20'
@@ -1805,7 +1805,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     >
                       <div
                         className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          r.pass ? 'bg-emerald-500' : isBlocking ? 'bg-rose-500' : 'bg-amber-500'
+                          r.pass ? 'bg-emerald-500' : isBlocking ? 'bg-danger-500' : 'bg-amber-500'
                         }`}
                       >
                         {r.pass ? (
@@ -1822,7 +1822,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                           <span
                             className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
                               isBlocking
-                                ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                                ? 'bg-danger-500/10 text-danger-600 dark:text-danger-400'
                                 : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
                             }`}
                           >
@@ -1926,7 +1926,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                         key={f.key || idx}
                         className={`p-2.5 rounded-lg border ${
                           f.severity === 'blocking' && !f.pass
-                            ? 'bg-rose-500/5 border-rose-500/20'
+                            ? 'bg-danger-500/5 border-danger-500/20'
                             : !f.pass
                               ? 'bg-amber-500/5 border-amber-500/20'
                               : 'bg-emerald-500/5 border-emerald-500/20'
@@ -1938,7 +1938,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                               f.pass
                                 ? 'bg-emerald-500'
                                 : f.severity === 'blocking'
-                                  ? 'bg-rose-500'
+                                  ? 'bg-danger-500'
                                   : 'bg-amber-500'
                             }`}
                           >

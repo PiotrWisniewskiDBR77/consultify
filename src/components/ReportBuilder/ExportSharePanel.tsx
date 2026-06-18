@@ -274,7 +274,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
               key={idx}
               className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
                 warning.type === 'error'
-                  ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                  ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300 border border-danger-200 dark:border-danger-800'
                   : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
               }`}
             >
@@ -511,7 +511,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                           </button>
                           <button
                             onClick={() => handleRevokeLink(link.id)}
-                            className="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
+                            className="p-2 text-slate-600 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
                             title={isPl ? 'Usuń link' : 'Revoke link'}
                           >
                             <Trash2 className="w-4 h-4" />

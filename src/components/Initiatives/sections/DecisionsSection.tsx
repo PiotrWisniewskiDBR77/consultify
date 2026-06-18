@@ -54,9 +54,9 @@ const DECISION_STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: { en: 'Rejected', pl: 'Odrzucona' },
-    dotColor: 'bg-rose-500',
-    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
-    textColor: 'text-rose-600 dark:text-rose-400',
+    dotColor: 'bg-danger-500',
+    bgColor: 'bg-danger-100 dark:bg-danger-500/20',
+    textColor: 'text-danger-600 dark:text-danger-400',
   },
   ESCALATED: {
     label: { en: 'Escalated', pl: 'Eskalowana' },
@@ -99,7 +99,7 @@ const PRIORITY_CONFIG: Record<string, { label: { en: string; pl: string }; color
   LOW: { label: { en: 'Low', pl: 'Niski' }, color: 'text-slate-500' },
   MEDIUM: { label: { en: 'Medium', pl: 'Średni' }, color: 'text-blue-500' },
   HIGH: { label: { en: 'High', pl: 'Wysoki' }, color: 'text-amber-500' },
-  CRITICAL: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-rose-600 font-bold' },
+  CRITICAL: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-danger-600 font-bold' },
 };
 
 // ==========================================
@@ -1372,12 +1372,12 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                     <td className="py-2.5 pr-2 text-xs text-slate-500 dark:text-slate-400">
                       {decision.dueDate ? (
                         <span
-                          className={`inline-flex items-center gap-1 ${decision.isOverdue ? 'text-rose-500 font-medium' : ''}`}
+                          className={`inline-flex items-center gap-1 ${decision.isOverdue ? 'text-danger-500 font-medium' : ''}`}
                         >
                           <Calendar size={11} />
                           {formatDueDate(decision.dueDate)}
                           {decision.isOverdue && (
-                            <span className="text-[9px] px-1 py-0.5 rounded bg-rose-500/20 text-rose-400 font-medium ml-1">
+                            <span className="text-[9px] px-1 py-0.5 rounded bg-danger-500/20 text-danger-400 font-medium ml-1">
                               {t('initiatives.decisionsSection.overdue')}
                             </span>
                           )}
@@ -1438,7 +1438,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                                   closeMenu();
                                   void handleRemove(decision.id);
                                 }}
-                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
                               >
                                 <Trash2 size={13} />
                                 {t('initiatives.decisionsSection.delete')}

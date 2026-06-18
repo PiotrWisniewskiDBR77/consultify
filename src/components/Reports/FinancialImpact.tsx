@@ -239,7 +239,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
             </span>
           </div>
           <div
-            className={`text-2xl font-bold ${metrics.roi5Year > 0 ? 'text-green-600' : 'text-rose-600'}`}
+            className={`text-2xl font-bold ${metrics.roi5Year > 0 ? 'text-green-600' : 'text-danger-600'}`}
           >
             {metrics.roi5Year > 0 ? '+' : ''}
             {metrics.roi5Year}%

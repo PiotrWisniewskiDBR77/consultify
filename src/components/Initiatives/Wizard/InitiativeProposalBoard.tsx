@@ -85,8 +85,8 @@ const RELATION_META: Record<ProposalRelation, RelationMeta> = {
   conflict: {
     pl: 'Konflikt',
     en: 'Conflict',
-    dot: 'bg-rose-500',
-    chip: 'text-rose-700 bg-rose-50 dark:text-rose-300 dark:bg-rose-500/15',
+    dot: 'bg-danger-500',
+    chip: 'text-danger-700 bg-danger-50 dark:text-danger-300 dark:bg-danger-500/15',
     kind: 'change',
   },
   depends_on: {
@@ -254,7 +254,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
               </div>
             )}
             {coverage.overlaps.length > 0 && (
-              <div className="text-rose-700 dark:text-rose-300">
+              <div className="text-danger-700 dark:text-danger-300">
                 {tr('Nakładania (MECE):', 'Overlaps (MECE):')}{' '}
                 <span className="font-medium">{coverage.overlaps.length}</span>
               </div>

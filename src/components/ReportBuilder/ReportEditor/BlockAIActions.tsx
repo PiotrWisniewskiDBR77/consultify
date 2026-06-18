@@ -335,7 +335,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
               })
             }
             disabled={isProcessing}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 transition-all"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-danger-50 dark:hover:bg-danger-900/20 hover:text-danger-600 transition-all"
           >
             <RefreshCw className="w-4 h-4 text-slate-600" />
             <span className="text-xs font-medium">

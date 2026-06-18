@@ -378,10 +378,10 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                         {onDownloadPDF && report.pdfPath && (
                           <button
                             onClick={() => onDownloadPDF(report.id)}
-                            className="p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                             title="Download PDF"
                           >
-                            <FileText size={16} className="text-rose-500" />
+                            <FileText size={16} className="text-danger-500" />
                           </button>
                         )}
                         {onDownloadPPTX && report.pptxPath && (

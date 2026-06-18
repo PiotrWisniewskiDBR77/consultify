@@ -36,8 +36,8 @@ const getGapColor = (gap: number, scheme: 'redGreen' | 'blueOrange'): string => 
     if (gap <= 1.0) return 'bg-green-200 text-green-900';
     if (gap <= 1.5) return 'bg-yellow-100 text-yellow-800';
     if (gap <= 2.0) return 'bg-amber-200 text-amber-900';
-    if (gap <= 2.5) return 'bg-rose-200 text-rose-900';
-    return 'bg-rose-400 text-white';
+    if (gap <= 2.5) return 'bg-danger-200 text-danger-900';
+    return 'bg-danger-400 text-white';
   } else {
     if (gap <= 0.5) return 'bg-blue-100 text-blue-800';
     if (gap <= 1.0) return 'bg-blue-200 text-blue-900';
@@ -276,7 +276,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
         </span>
         <span className="flex items-center gap-1">
           <span
-            className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-rose-300' : 'bg-amber-400'}`}
+            className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-danger-300' : 'bg-amber-400'}`}
           ></span>
           Duża luka (2+)
         </span>

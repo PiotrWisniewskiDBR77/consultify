@@ -143,7 +143,7 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
               <span
                 className={`text-[9px] font-medium ${
                   item.severity === 'CRITICAL' || item.severity === 'HIGH'
-                    ? 'text-rose-400'
+                    ? 'text-danger-400'
                     : 'text-slate-500'
                 }`}
               >
@@ -490,7 +490,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             <div
               className={`text-sm font-semibold ${
                 initiative.priority === 'CRITICAL'
-                  ? 'text-rose-400'
+                  ? 'text-danger-400'
                   : initiative.priority === 'HIGH'
                     ? 'text-amber-400'
                     : initiative.priority === 'MEDIUM'
@@ -622,7 +622,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                       : milestone.status === 'IN_PROGRESS'
                         ? 'bg-blue-500 animate-pulse'
                         : milestone.status === 'DELAYED'
-                          ? 'bg-rose-500'
+                          ? 'bg-danger-500'
                           : 'bg-navy-600'
                   }`}
                 />
@@ -649,7 +649,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                           : milestone.status === 'IN_PROGRESS'
                             ? 'bg-blue-500/20 text-blue-400'
                             : milestone.status === 'DELAYED'
-                              ? 'bg-rose-500/20 text-rose-400'
+                              ? 'bg-danger-500/20 text-danger-400'
                               : 'bg-slate-500/20 text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -814,7 +814,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                         decision.status === 'APPROVED'
                           ? 'bg-green-500/20 text-green-400'
                           : decision.status === 'REJECTED'
-                            ? 'bg-rose-500/20 text-rose-400'
+                            ? 'bg-danger-500/20 text-danger-400'
                             : 'bg-amber-500/20 text-amber-400'
                       }`}
                     >

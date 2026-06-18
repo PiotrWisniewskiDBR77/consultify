@@ -310,7 +310,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                     >
-                      <FileText className="w-4 h-4 text-rose-500" />
+                      <FileText className="w-4 h-4 text-danger-500" />
                       <span className="text-navy-900 dark:text-white">
                         {t('reports.exportPdf', 'Export as PDF')}
                       </span>

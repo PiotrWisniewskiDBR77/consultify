@@ -21,7 +21,7 @@ const VARIANT_STYLES = {
   primary: 'bg-gradient-to-br from-blue-500 to-indigo-600',
   success: 'bg-gradient-to-br from-green-500 to-emerald-600',
   warning: 'bg-gradient-to-br from-amber-500 to-amber-600',
-  danger: 'bg-gradient-to-br from-rose-500 to-rose-600',
+  danger: 'bg-gradient-to-br from-danger-500 to-danger-600',
 };
 
 const TrendIcon: React.FC<{ trend?: 'up' | 'down' | 'neutral' }> = ({ trend }) => {
@@ -29,7 +29,7 @@ const TrendIcon: React.FC<{ trend?: 'up' | 'down' | 'neutral' }> = ({ trend }) =
     case 'up':
       return <TrendingUp className="w-4 h-4 text-green-300" />;
     case 'down':
-      return <TrendingDown className="w-4 h-4 text-rose-300" />;
+      return <TrendingDown className="w-4 h-4 text-danger-300" />;
     default:
       return <Minus className="w-4 h-4 text-white/50" />;
   }
@@ -60,7 +60,7 @@ const MetricCardComponent: React.FC<{
             <div className="flex gap-1">
               <button
                 onClick={() => setIsEditing(false)}
-                className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500"
+                className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-500"
               >
                 <X className="w-4 h-4" />
               </button>

@@ -120,7 +120,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
         <button
           onClick={handleExportPDF}
           disabled={disabled || exportingPDF}
-          className="flex items-center gap-2 px-4 py-2 bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white rounded-lg font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-danger-500 hover:bg-danger-600 disabled:bg-danger-300 text-white rounded-lg font-medium transition-colors"
         >
           {exportingPDF ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
           <span>Export PDF</span>

@@ -269,7 +269,7 @@ const getAudienceBadgeConfig = (audience?: string) => {
     case 'team':
       return { dot: 'bg-amber-400', label: 'Team' };
     case 'external':
-      return { dot: 'bg-rose-400', label: 'External' };
+      return { dot: 'bg-danger-400', label: 'External' };
     default:
       return { dot: 'bg-slate-400', label: 'General' };
   }

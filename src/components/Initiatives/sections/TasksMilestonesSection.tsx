@@ -89,10 +89,10 @@ const TASK_STATUS_CONFIG: Record<
   },
   blocked: {
     label: { en: 'Blocked', pl: 'Zablokowane' },
-    color: 'bg-rose-500',
-    dotColor: 'bg-rose-500',
-    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
-    textColor: 'text-rose-600 dark:text-rose-400',
+    color: 'bg-danger-500',
+    dotColor: 'bg-danger-500',
+    bgColor: 'bg-danger-100 dark:bg-danger-500/20',
+    textColor: 'text-danger-600 dark:text-danger-400',
   },
   done: {
     label: { en: 'Done', pl: 'Ukończone' },
@@ -107,8 +107,8 @@ const PRIORITY_CONFIG: Record<string, { label: { en: string; pl: string }; color
   low: { label: { en: 'Low', pl: 'Niski' }, color: 'text-slate-500' },
   medium: { label: { en: 'Medium', pl: 'Średni' }, color: 'text-blue-500' },
   high: { label: { en: 'High', pl: 'Wysoki' }, color: 'text-amber-500' },
-  urgent: { label: { en: 'Urgent', pl: 'Pilny' }, color: 'text-rose-500' },
-  critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-rose-600 font-bold' },
+  urgent: { label: { en: 'Urgent', pl: 'Pilny' }, color: 'text-danger-500' },
+  critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-danger-600 font-bold' },
 };
 
 // ==========================================
@@ -1454,7 +1454,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                                   closeMenu();
                                   void handleRemoveTask(task.id);
                                 }}
-                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
                               >
                                 <Trash2 size={13} />
                                 {t('initiatives.tasksMilestonesSection.delete')}

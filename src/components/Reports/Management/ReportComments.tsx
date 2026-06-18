@@ -138,7 +138,7 @@ const CommentItem: React.FC<{
                         onDelete();
                         setShowMenu(false);
                       }}
-                      className="w-full px-3 py-2 text-left text-sm text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-left text-sm text-danger-600 dark:text-danger-400 hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
                     >
                       <Trash2 size={14} />
                       Delete

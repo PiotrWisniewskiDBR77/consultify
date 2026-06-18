@@ -159,12 +159,12 @@ const getBlockColor = (type: string) => {
     action_plan: 'from-amber-500 to-amber-600',
     table: 'from-slate-500 to-slate-600',
     chart_bar: 'from-pink-500 to-pink-600',
-    chart_pie: 'from-rose-500 to-rose-600',
+    chart_pie: 'from-danger-500 to-danger-600',
     initiatives: 'from-crimson-500 to-primary-600',
     dashboard: 'from-blue-500 to-blue-600',
     scorecard: 'from-sky-500 to-sky-600',
     kpis: 'from-blue-500 to-blue-600',
-    risk: 'from-rose-500 to-rose-600',
+    risk: 'from-danger-500 to-danger-600',
     prioritization: 'from-primary-500 to-primary-600',
     roadmap: 'from-lime-500 to-lime-600',
     findings: 'from-blue-400 to-blue-500',
@@ -1618,7 +1618,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                   onRemove();
                   setShowMenu(false);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
               >
                 <Trash2 className="w-3.5 h-3.5" /> {isPl ? 'Usuń' : 'Remove'}
               </button>
@@ -1936,7 +1936,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                   return next;
                                 })
                               }
-                              className="ml-0.5 hover:text-rose-500"
+                              className="ml-0.5 hover:text-danger-500"
                             >
                               <X className="w-2.5 h-2.5" />
                             </button>

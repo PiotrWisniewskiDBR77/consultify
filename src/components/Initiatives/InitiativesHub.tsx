@@ -1303,20 +1303,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       return (
         <div className="flex items-center justify-center h-full px-6">
           <div
-            className="max-w-xl w-full p-5 rounded-2xl border border-rose-500/20 bg-rose-900/10"
+            className="max-w-xl w-full p-5 rounded-2xl border border-danger-500/20 bg-danger-900/10"
             role="alert"
           >
-            <div className="text-sm font-semibold text-rose-300">
+            <div className="text-sm font-semibold text-danger-300">
               {t('initiatives.hub.failedToLoad')}
             </div>
-            <div className="text-sm text-rose-200/80 mt-1">{loadError}</div>
+            <div className="text-sm text-danger-200/80 mt-1">{loadError}</div>
             {loadErrorCode ? (
-              <p className="mt-1 text-xs text-rose-200/70 font-mono">code: {loadErrorCode}</p>
+              <p className="mt-1 text-xs text-danger-200/70 font-mono">code: {loadErrorCode}</p>
             ) : null}
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => fetchData(true)}
-                className="h-9 rounded-lg border border-rose-400/40 px-3 text-sm text-rose-100 hover:bg-rose-500/20"
+                className="h-9 rounded-lg border border-danger-400/40 px-3 text-sm text-danger-100 hover:bg-danger-500/20"
               >
                 {t('initiatives.hub.retry')}
               </button>
@@ -1710,7 +1710,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     {
       id: 'completeness',
       labelKey: 'initiatives.analysis.completeness.title',
-      icon: <CheckCircle2 size={14} className="text-rose-400" />,
+      icon: <CheckCircle2 size={14} className="text-danger-400" />,
     },
   ];
 

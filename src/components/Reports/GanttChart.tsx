@@ -429,7 +429,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             onClick={() => setShowCriticalPath((v) => !v)}
             className={`p-1.5 rounded-lg transition-colors ${
               showCriticalPath
-                ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
                 : 'text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
             }`}
             title={
@@ -536,7 +536,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           <>
             <div className="w-px h-3 bg-slate-300 dark:bg-navy-600" />
             <div className="flex items-center gap-1.5">
-              <Route className="w-3 h-3 text-rose-500" />
+              <Route className="w-3 h-3 text-danger-500" />
               <span className="text-slate-600 dark:text-slate-400">
                 {isPolish ? 'Ścieżka krytyczna' : 'Critical Path'}
               </span>
@@ -660,7 +660,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: phaseIndex * 0.1 }}
                   className={`flex border-b border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
-                    isCritical ? 'bg-rose-50/40 dark:bg-rose-900/5' : ''
+                    isCritical ? 'bg-danger-50/40 dark:bg-danger-900/5' : ''
                   }`}
                 >
                   {/* Phase name */}
@@ -673,7 +673,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                         </span>
                       )}
                       {/* D5.1: Critical path indicator */}
-                      {isCritical && <Route className="w-3.5 h-3.5 text-rose-500 shrink-0" />}
+                      {isCritical && <Route className="w-3.5 h-3.5 text-danger-500 shrink-0" />}
                       {React.createElement(status.icon, {
                         className: 'w-4 h-4 shrink-0',
                         style: { color: status.color },
@@ -709,7 +709,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                     {/* Phase bar */}
                     <motion.div
                       className={`absolute h-8 rounded-lg flex items-center px-2 shadow-sm ${
-                        isCritical ? 'ring-2 ring-rose-500 ring-offset-1' : ''
+                        isCritical ? 'ring-2 ring-danger-500 ring-offset-1' : ''
                       } ${hasWarning ? 'ring-1 ring-amber-400' : ''}`}
                       style={{
                         left: `${barStart}%`,
@@ -783,7 +783,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
               <>
                 {' '}
                 •{' '}
-                <span className="text-rose-500 font-medium">
+                <span className="text-danger-500 font-medium">
                   {criticalPathIds.size} {isPolish ? 'na ścieżce krytycznej' : 'on critical path'}
                 </span>
               </>

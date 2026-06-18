@@ -229,7 +229,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
           <span
             className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
               row.priority === 'required'
-                ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                ? 'bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400'
                 : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
             }`}
           >

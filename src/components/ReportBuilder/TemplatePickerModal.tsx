@@ -74,7 +74,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   finance: 'from-amber-500 to-amber-600',
   steering: 'from-primary-500 to-primary-600',
   workshop: 'from-blue-500 to-blue-600',
-  assessment: 'from-pink-500 to-rose-600',
+  assessment: 'from-pink-500 to-danger-600',
   general: 'from-slate-500 to-slate-600',
 };
 

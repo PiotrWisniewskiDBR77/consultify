@@ -716,7 +716,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                                   e.stopPropagation();
                                   deactivate(block);
                                 }}
-                                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
                                 title="Deactivate"
                               >
                                 <Trash2 size={15} />

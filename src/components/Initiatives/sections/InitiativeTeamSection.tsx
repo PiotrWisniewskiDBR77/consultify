@@ -666,7 +666,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                   <button
                     type="button"
                     onClick={() => void revokePendingConsultant(c.accessId)}
-                    className="p-2 rounded-xl border border-rose-200/60 dark:border-rose-500/20 bg-rose-50/60 dark:bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-50 transition-colors"
+                    className="p-2 rounded-xl border border-danger-200/60 dark:border-danger-500/20 bg-danger-50/60 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200 hover:bg-danger-50 transition-colors"
                     title={t('initiatives.initiativeTeamSection.revokeAccess')}
                   >
                     <Trash2 size={16} />

@@ -110,8 +110,8 @@ const STATUS_META: Record<
   },
   BLOCKED: {
     label: 'Blocked',
-    color: 'text-rose-400',
-    bgColor: 'bg-rose-500/20',
+    color: 'text-danger-400',
+    bgColor: 'bg-danger-500/20',
     icon: <AlertTriangle size={14} />,
   },
   DONE: {
@@ -398,7 +398,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'reject',
           label: 'Reject',
           gate: 'REJECT',
-          color: 'bg-rose-600 hover:bg-rose-500',
+          color: 'bg-danger-600 hover:bg-danger-500',
           icon: <XCircle size={16} />,
         });
         break;
@@ -450,7 +450,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'block',
           label: 'Block',
           gate: 'BLOCK',
-          color: 'bg-rose-600 hover:bg-rose-500',
+          color: 'bg-danger-600 hover:bg-danger-500',
           icon: <AlertTriangle size={16} />,
         });
         break;
@@ -537,7 +537,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       case 'IN_PROGRESS':
         return 'bg-blue-500/20 text-blue-400';
       case 'BLOCKED':
-        return 'bg-rose-500/20 text-rose-400';
+        return 'bg-danger-500/20 text-danger-400';
       default:
         return 'bg-slate-500/20 text-slate-500 dark:text-slate-400';
     }
@@ -546,7 +546,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return 'text-rose-400';
+        return 'text-danger-400';
       case 'HIGH':
         return 'text-amber-400';
       case 'MEDIUM':
@@ -594,7 +594,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="text-center">
-          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-rose-400" />
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-danger-400" />
           <p className="text-lg text-slate-900 dark:text-white mb-2">Failed to load initiative</p>
           <p className="text-slate-500 dark:text-slate-400 mb-4">
             {error || 'Initiative not found'}
@@ -792,7 +792,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     <span className="text-green-400">{taskStats.done} Done</span>
                     <span className="text-blue-400">{taskStats.inProgress} In Progress</span>
                     {taskStats.blocked > 0 && (
-                      <span className="text-rose-400">{taskStats.blocked} Blocked</span>
+                      <span className="text-danger-400">{taskStats.blocked} Blocked</span>
                     )}
                   </div>
                 </div>
@@ -831,7 +831,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                               : task.status === 'IN_PROGRESS'
                                 ? 'bg-blue-400'
                                 : task.status === 'BLOCKED'
-                                  ? 'bg-rose-400'
+                                  ? 'bg-danger-400'
                                   : 'bg-slate-400'
                           }`}
                         />
@@ -1027,7 +1027,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                         : task.status === 'IN_PROGRESS'
                           ? 'bg-blue-400'
                           : task.status === 'BLOCKED'
-                            ? 'bg-rose-400'
+                            ? 'bg-danger-400'
                             : 'bg-slate-400'
                     }`}
                   />

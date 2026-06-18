@@ -90,22 +90,22 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
 
       {/* Warnings Section - AI Transparency */}
       {content.warnings && content.warnings.length > 0 && (
-        <div className="bg-rose-50 dark:bg-rose-900/10 rounded-xl border-2 border-rose-200 dark:border-rose-500/30 p-6">
+        <div className="bg-danger-50 dark:bg-danger-900/10 rounded-xl border-2 border-danger-200 dark:border-danger-500/30 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <AlertCircle size={20} className="text-rose-500" />
-            <h2 className="text-lg font-bold text-rose-700 dark:text-rose-400">
+            <AlertCircle size={20} className="text-danger-500" />
+            <h2 className="text-lg font-bold text-danger-700 dark:text-danger-400">
               ⚠️ Attention Required
             </h2>
           </div>
           <ul className="space-y-2">
             {content.warnings.map((warning, idx: number) => (
-              <li key={idx} className="flex items-start gap-2 text-rose-800 dark:text-rose-300">
+              <li key={idx} className="flex items-start gap-2 text-danger-800 dark:text-danger-300">
                 <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
                 <span>{warning}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-xs text-rose-600 dark:text-rose-400 italic">
+          <p className="mt-4 text-xs text-danger-600 dark:text-danger-400 italic">
             AI Transparency: These warnings are automatically generated. AI never hides bad news.
           </p>
         </div>
@@ -177,7 +177,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                         className={`px-2 py-1 text-xs font-medium rounded ${
                           item.type === 'RISK'
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                            : 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                         }`}
                       >
                         {item.type}
@@ -190,9 +190,9 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                       <span
                         className={`px-2 py-1 text-xs font-bold rounded ${
                           item.severity === 'CRITICAL'
-                            ? 'bg-rose-500 text-white'
+                            ? 'bg-danger-500 text-white'
                             : item.severity === 'HIGH'
-                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                              ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                               : item.severity === 'MEDIUM'
                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                 : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
@@ -235,7 +235,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                   key={decision.id}
                   className={`p-4 rounded-lg border-2 ${
                     isOverdue
-                      ? 'border-rose-300 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-900/10'
+                      ? 'border-danger-300 bg-danger-50 dark:border-danger-500/30 dark:bg-danger-900/10'
                       : 'border-primary-200 bg-primary-50/50 dark:border-primary-500/20 dark:bg-primary-900/10'
                   }`}
                 >
@@ -243,19 +243,19 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded ${
-                          isOverdue ? 'bg-rose-500 text-white' : 'bg-navy-900 text-white'
+                          isOverdue ? 'bg-danger-500 text-white' : 'bg-navy-900 text-white'
                         }`}
                       >
                         {decision.decisionType}
                       </span>
                       {isOverdue && (
-                        <span className="px-2 py-1 text-xs font-bold bg-rose-500 text-white rounded">
+                        <span className="px-2 py-1 text-xs font-bold bg-danger-500 text-white rounded">
                           OVERDUE
                         </span>
                       )}
                     </div>
                     <span
-                      className={`text-sm ${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-sm ${isOverdue ? 'text-danger-600 font-bold' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {isOverdue
                         ? `${Math.abs(decision.daysUntilDeadline)} days overdue`

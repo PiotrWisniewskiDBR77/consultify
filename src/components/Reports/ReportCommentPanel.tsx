@@ -71,7 +71,7 @@ const COMMENT_TYPE_CONFIG = {
   },
   REJECTION: {
     label: 'Rejection',
-    color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
   },
 };
 
@@ -407,7 +407,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                     )}
                     <button
                       onClick={() => handleDelete(comment.id)}
-                      className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded"
+                      className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-500 rounded"
                     >
                       <Trash2 size={14} />
                     </button>

@@ -24,8 +24,8 @@ function severityStyles(severity: ConflictSeverity) {
   switch (severity) {
     case 'high':
       return {
-        pill: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',
-        dot: 'bg-rose-400',
+        pill: 'bg-danger-500/15 text-danger-300 border border-danger-500/30',
+        dot: 'bg-danger-400',
       };
     case 'medium':
       return {

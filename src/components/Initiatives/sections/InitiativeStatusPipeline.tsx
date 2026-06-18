@@ -133,7 +133,7 @@ export const InitiativeStatusPipeline: React.FC = () => {
         return {
           icon: Lock,
           text: t('initiatives.initiativeStatusPipeline.blockingGaps'),
-          cls: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+          cls: 'bg-danger-500/10 text-danger-600 dark:text-danger-400 border-danger-500/20',
         };
       default:
         return {

@@ -1984,7 +1984,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                             setMenuId(null);
                             void onDelete(item.id);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10"
                         >
                           <Trash2 size={13} />
                           {t('initiatives.resourcesSection.delete')}
@@ -2312,7 +2312,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                             setMenuId(null);
                             void onDelete(item.id);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10"
                         >
                           <Trash2 size={13} />
                           {t('initiatives.resourcesSection.delete')}
@@ -2631,7 +2631,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                             setMenuId(null);
                             void onDelete(item.id);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10"
                         >
                           <Trash2 size={13} />
                           {t('initiatives.resourcesSection.delete')}
@@ -3005,7 +3005,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                             setMenuId(null);
                             void onDelete(item.id);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10"
                         >
                           <Trash2 size={13} />
                           {t('initiatives.resourcesSection.delete')}

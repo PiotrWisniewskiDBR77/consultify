@@ -298,7 +298,7 @@ export const ReportScheduleView: React.FC = () => {
                 </div>
                 <button
                   onClick={() => handleDelete(schedule.id)}
-                  className="text-slate-400 hover:text-rose-500"
+                  className="text-slate-400 hover:text-danger-500"
                 >
                   <Trash2 size={16} />
                 </button>

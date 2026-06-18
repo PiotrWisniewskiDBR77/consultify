@@ -57,9 +57,9 @@ interface QualityGatesPanelProps {
 const SEVERITY_CONFIG = {
   error: {
     icon: <XCircle size={14} />,
-    color: 'text-rose-400',
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/20',
+    color: 'text-danger-400',
+    bg: 'bg-danger-500/10',
+    border: 'border-danger-500/20',
   },
   warning: {
     icon: <AlertTriangle size={14} />,
@@ -221,17 +221,17 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
       ? 'text-emerald-400'
       : (report?.score ?? 0) >= 50
         ? 'text-amber-400'
-        : 'text-rose-400';
+        : 'text-danger-400';
 
   const summaryBg =
     errorCount > 0
-      ? 'bg-rose-500/10 border-rose-500/30'
+      ? 'bg-danger-500/10 border-danger-500/30'
       : warningCount > 0
         ? 'bg-amber-500/10 border-amber-500/30'
         : 'bg-emerald-500/10 border-emerald-500/30';
 
   const summaryText =
-    errorCount > 0 ? 'text-rose-400' : warningCount > 0 ? 'text-amber-400' : 'text-emerald-400';
+    errorCount > 0 ? 'text-danger-400' : warningCount > 0 ? 'text-amber-400' : 'text-emerald-400';
 
   return (
     <div className={`rounded-xl bg-navy-900/50 border border-navy-700/50 p-4 ${className}`}>
@@ -272,7 +272,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
                     {t('reports.qualityGates.exportReady', 'Export ready')}
                   </span>
                 ) : (
-                  <span className="text-xs text-rose-400 flex items-center gap-1">
+                  <span className="text-xs text-danger-400 flex items-center gap-1">
                     <XCircle size={11} />
                     {t('reports.qualityGates.notExportReady', 'Not export ready')}
                   </span>
@@ -297,7 +297,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
                     .join(', ')}
             </span>
             {!report.canExport && (
-              <span className="ml-auto text-[10px] text-rose-400/80 uppercase tracking-wide font-semibold">
+              <span className="ml-auto text-[10px] text-danger-400/80 uppercase tracking-wide font-semibold">
                 {t('reports.qualityGates.exportBlocked', 'Export blocked')}
               </span>
             )}

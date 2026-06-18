@@ -89,7 +89,7 @@ interface TimelineAnalysisProps {
 
 const BAR_COLORS = {
   'on-schedule': 'bg-blue-500',
-  delayed: 'bg-rose-500',
+  delayed: 'bg-danger-500',
   'at-risk': 'bg-amber-500',
   'no-dates': 'bg-slate-400 dark:bg-slate-500',
 } as const;
@@ -596,22 +596,22 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     ) : null;
 
   const conflictsPanel = showConflicts ? (
-    <div className="m-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-200 dark:border-rose-900/50 flex items-center justify-between">
+    <div className="m-4 rounded-xl border border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-danger-50 dark:bg-danger-900/20 border-b border-danger-200 dark:border-danger-900/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={16} className="text-rose-600 dark:text-rose-400" />
-          <h3 className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+          <AlertTriangle size={16} className="text-danger-600 dark:text-danger-400" />
+          <h3 className="text-sm font-semibold text-danger-700 dark:text-danger-300">
             Conflicts ({conflicts.length})
           </h3>
         </div>
         <button
           onClick={closeWorkspacePanels}
-          className="p-1 rounded text-rose-500 hover:bg-rose-200/30"
+          className="p-1 rounded text-danger-500 hover:bg-danger-200/30"
         >
           <X size={14} />
         </button>
       </div>
-      <div className="divide-y divide-rose-200/40 dark:divide-rose-900/20">
+      <div className="divide-y divide-danger-200/40 dark:divide-danger-900/20">
         {conflicts.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
             No owner overlaps detected
@@ -626,7 +626,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 >
                   {c.nameA}
                 </button>
-                <span className="text-xs text-rose-500">↔</span>
+                <span className="text-xs text-danger-500">↔</span>
                 <button
                   onClick={() => onOpenInitiative(c.initiativeB)}
                   className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]"
@@ -704,7 +704,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           delayImpacts.map((d) => (
             <div key={d.delayedId} className="px-4 py-3">
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle size={14} className="text-rose-500" />
+                <AlertTriangle size={14} className="text-danger-500" />
                 <button
                   onClick={() => onOpenInitiative(d.delayedId)}
                   className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors"
@@ -888,8 +888,8 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 label: 'Delayed',
                 count: counts.delayed,
                 color: 'red',
-                border: 'border-rose-200 dark:border-rose-900/50',
-                bg: 'bg-rose-500/5 dark:bg-rose-500/10',
+                border: 'border-danger-200 dark:border-danger-900/50',
+                bg: 'bg-danger-500/5 dark:bg-danger-500/10',
               },
               {
                 key: 'no-dates' as StatusFilter,
@@ -1039,14 +1039,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
         <div
           className={`rounded-xl border overflow-hidden ${
             conflicts.length > 0
-              ? 'border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10'
+              ? 'border-danger-200 dark:border-danger-900/50 bg-danger-500/5 dark:bg-danger-500/10'
               : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
           }`}
         >
           <div
             className={`px-4 py-3 border-b flex items-center justify-between ${
               conflicts.length > 0
-                ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/50'
+                ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-900/50'
                 : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
             }`}
           >
@@ -1055,12 +1055,12 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 size={16}
                 className={
                   conflicts.length > 0
-                    ? 'text-rose-600 dark:text-rose-400'
+                    ? 'text-danger-600 dark:text-danger-400'
                     : 'text-emerald-600 dark:text-emerald-400'
                 }
               />
               <h3
-                className={`text-sm font-semibold ${conflicts.length > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}
+                className={`text-sm font-semibold ${conflicts.length > 0 ? 'text-danger-700 dark:text-danger-300' : 'text-emerald-700 dark:text-emerald-300'}`}
               >
                 {conflicts.length > 0
                   ? `${conflicts.length} owner overlap conflict(s)`
@@ -1074,7 +1074,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               <X size={14} />
             </button>
           </div>
-          <div className="divide-y divide-rose-200/40 dark:divide-rose-900/20">
+          <div className="divide-y divide-danger-200/40 dark:divide-danger-900/20">
             {conflicts.map((c, idx) => (
               <div key={idx} className="px-4 py-3 text-sm">
                 <div className="flex items-center gap-2 mb-1">
@@ -1084,14 +1084,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   >
                     {c.nameA}
                   </button>
-                  <span className="text-xs text-rose-500">↔</span>
+                  <span className="text-xs text-danger-500">↔</span>
                   <button
                     onClick={() => onOpenInitiative(c.initiativeB)}
                     className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[180px]"
                   >
                     {c.nameB}
                   </button>
-                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 font-medium">
+                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-danger-500/15 text-danger-600 dark:text-danger-400 font-medium">
                     {c.overlapDays}d overlap
                   </span>
                 </div>
@@ -1175,14 +1175,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             {delayImpacts.map((d) => (
               <div key={d.delayedId} className="px-4 py-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle size={14} className="text-rose-500" />
+                  <AlertTriangle size={14} className="text-danger-500" />
                   <button
                     onClick={() => onOpenInitiative(d.delayedId)}
                     className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors"
                   >
                     {d.delayedName}
                   </button>
-                  <span className="text-xs text-rose-500 font-medium">DELAYED</span>
+                  <span className="text-xs text-danger-500 font-medium">DELAYED</span>
                 </div>
                 <div className="ml-6 space-y-1">
                   {d.affected.map((a) => (
@@ -1297,7 +1297,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                           <span
                             className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded ${
                               bar.status === 'delayed'
-                                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                                ? 'bg-danger-500/20 text-danger-700 dark:text-danger-300'
                                 : bar.status === 'at-risk'
                                   ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
                                   : bar.status === 'no-dates'

@@ -371,7 +371,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
     if (state === 'blocked')
       return (
         <div
-          className={`${sz} rounded-full bg-rose-500/80 flex items-center justify-center flex-shrink-0`}
+          className={`${sz} rounded-full bg-danger-500/80 flex items-center justify-center flex-shrink-0`}
         >
           <Lock className="w-2 h-2 text-white" />
         </div>
@@ -481,14 +481,14 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                     : st === 'active'
                       ? 'text-amber-300'
                       : st === 'blocked'
-                        ? 'text-rose-400/80'
+                        ? 'text-danger-400/80'
                         : 'text-slate-500/70'
                 }`}
               >
                 {isPolish ? step.pl : step.en}
               </span>
               {st === 'blocked' && step.key === 'APPROVED' && (
-                <span className="text-[8px] text-rose-400/70 flex items-center gap-0.5">
+                <span className="text-[8px] text-danger-400/70 flex items-center gap-0.5">
                   <AlertTriangle className="w-2 h-2" />
                   {openCount}
                 </span>
@@ -539,7 +539,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           <button
             onClick={doReject}
             disabled={isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-rose-400/80 border border-rose-800/40 rounded-md hover:bg-rose-950/30 hover:text-rose-300 transition-all"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-danger-400/80 border border-danger-800/40 rounded-md hover:bg-danger-900/30 hover:text-danger-300 transition-all"
           >
             <XCircle className="w-3 h-3" /> {isPolish ? 'Odrzuć' : 'Reject'}
           </button>
@@ -550,7 +550,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         <button
           onClick={doReject}
           disabled={isSubmitting}
-          className="w-full py-1.5 text-[10px] font-medium text-rose-400/70 border border-rose-800/30 rounded-md hover:bg-rose-950/20 hover:text-rose-300 transition-all flex items-center justify-center gap-1"
+          className="w-full py-1.5 text-[10px] font-medium text-danger-400/70 border border-danger-800/30 rounded-md hover:bg-danger-900/20 hover:text-danger-300 transition-all flex items-center justify-center gap-1"
         >
           <XCircle className="w-3 h-3" /> {isPolish ? 'Cofnij' : 'Revoke'}
         </button>
@@ -752,7 +752,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   const exp = expandedComments.has(c.id);
                   const open = c.status === 'OPEN';
                   const tc: Record<string, string> = {
-                    ISSUE: 'text-rose-400 bg-rose-900/20',
+                    ISSUE: 'text-danger-400 bg-danger-900/20',
                     QUESTION: 'text-blue-400 bg-blue-900/20',
                     SUGGESTION: 'text-primary-400 bg-primary-900/20',
                     GENERAL: 'text-slate-600 bg-slate-700/40',
@@ -795,7 +795,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                           )}
                           <button
                             onClick={() => deleteComment(c.id)}
-                            className="p-0.5 text-slate-600 hover:text-rose-400 rounded"
+                            className="p-0.5 text-slate-600 hover:text-danger-400 rounded"
                           >
                             <Trash2 className="w-2 h-2" />
                           </button>

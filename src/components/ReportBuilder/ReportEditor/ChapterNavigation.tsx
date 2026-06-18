@@ -187,7 +187,7 @@ interface SortableBlockItemProps {
 const RAG_DOT_CLASSES: Record<string, string> = {
   green: 'bg-green-500',
   amber: 'bg-amber-500',
-  red: 'bg-rose-500',
+  red: 'bg-danger-500',
 };
 
 const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
@@ -545,7 +545,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                             >
                               <button
                                 onClick={() => handleDeleteChapter(chapter.key)}
-                                className="p-0.5 text-rose-500 hover:text-rose-700 rounded"
+                                className="p-0.5 text-danger-500 hover:text-danger-700 rounded"
                                 title={isPl ? 'Potwierdź' : 'Confirm'}
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -563,7 +563,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                                 e.stopPropagation();
                                 setConfirmDeleteChapter(chapter.key);
                               }}
-                              className="p-0.5 text-slate-600 hover:text-rose-500 rounded"
+                              className="p-0.5 text-slate-600 hover:text-danger-500 rounded"
                               title={isPl ? 'Usuń rozdział' : 'Delete chapter'}
                             >
                               <Trash2 className="w-3 h-3" />

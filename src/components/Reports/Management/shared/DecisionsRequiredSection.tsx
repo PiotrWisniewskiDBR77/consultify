@@ -74,7 +74,7 @@ const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-        isCritical ? 'bg-rose-500 text-white animate-pulse' : 'bg-amber-500 text-white'
+        isCritical ? 'bg-danger-500 text-white animate-pulse' : 'bg-amber-500 text-white'
       }`}
     >
       {isCritical ? <Zap size={10} /> : <Flag size={10} />}
@@ -92,7 +92,7 @@ const EscalationBadge: React.FC<{ level?: string }> = ({ level }) => {
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-        isRed ? 'bg-rose-600 text-white animate-pulse' : 'bg-amber-500 text-white'
+        isRed ? 'bg-danger-600 text-white animate-pulse' : 'bg-amber-500 text-white'
       }`}
     >
       {isRed ? <Flame size={10} /> : <TrendingUp size={10} />}
@@ -115,20 +115,20 @@ const DecisionCard: React.FC<{
 
   const getBorderColor = () => {
     if (isEscalated || (isOverdue && Math.abs(decision.daysUntilDeadline || 0) > 7)) {
-      return 'border-rose-300 dark:border-rose-500/30';
+      return 'border-danger-300 dark:border-danger-500/30';
     }
     if (isWarning || isOverdue) {
       return 'border-amber-300 dark:border-amber-500/30';
     }
     if (decision.priority === 'CRITICAL') {
-      return 'border-rose-200 dark:border-rose-500/20';
+      return 'border-danger-200 dark:border-danger-500/20';
     }
     return 'border-primary-200 dark:border-primary-500/20';
   };
 
   const getBgColor = () => {
     if (isEscalated || (isOverdue && Math.abs(decision.daysUntilDeadline || 0) > 7)) {
-      return 'bg-rose-50 dark:bg-rose-900/10';
+      return 'bg-danger-50 dark:bg-danger-900/10';
     }
     if (isWarning || isOverdue) {
       return 'bg-amber-50 dark:bg-amber-900/10';
@@ -161,7 +161,7 @@ const DecisionCard: React.FC<{
 
           {/* Overdue */}
           {isOverdue && decision.escalationLevel !== 'red' && (
-            <span className="px-2 py-1 text-xs font-bold bg-rose-500 text-white rounded">
+            <span className="px-2 py-1 text-xs font-bold bg-danger-500 text-white rounded">
               OVERDUE
             </span>
           )}
@@ -170,7 +170,7 @@ const DecisionCard: React.FC<{
         {/* Deadline */}
         <div className="flex items-center gap-1 text-sm">
           {isOverdue ? (
-            <span className="text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1">
+            <span className="text-danger-600 dark:text-danger-400 font-bold flex items-center gap-1">
               <AlertTriangle size={14} />
               {Math.abs(decision.daysUntilDeadline || 0)}d overdue
             </span>
@@ -213,7 +213,7 @@ const DecisionCard: React.FC<{
           </span>
         )}
         {(decision.blockedItemsCount || 0) > 0 && (
-          <span className="text-rose-500 dark:text-rose-400 font-medium">
+          <span className="text-danger-500 dark:text-danger-400 font-medium">
             {decision.blockedItemsCount} items blocked
           </span>
         )}
@@ -255,13 +255,13 @@ const DecisionsSummary: React.FC<{ decisions: DecisionRequiredItem[] }> = ({ dec
   return (
     <div className="flex items-center gap-4 mb-4 text-sm flex-wrap">
       {escalated > 0 && (
-        <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-medium">
+        <span className="flex items-center gap-1 text-danger-600 dark:text-danger-400 font-medium">
           <Flame size={14} className="animate-pulse" />
           {escalated} escalated
         </span>
       )}
       {overdue > 0 && overdue !== escalated && (
-        <span className="flex items-center gap-1 text-rose-500 dark:text-rose-400">
+        <span className="flex items-center gap-1 text-danger-500 dark:text-danger-400">
           <AlertTriangle size={14} />
           {overdue} overdue
         </span>
@@ -273,7 +273,7 @@ const DecisionsSummary: React.FC<{ decisions: DecisionRequiredItem[] }> = ({ dec
         </span>
       )}
       {critical > 0 && (
-        <span className="flex items-center gap-1 text-rose-500 dark:text-rose-400">
+        <span className="flex items-center gap-1 text-danger-500 dark:text-danger-400">
           <Zap size={14} />
           {critical} critical
         </span>

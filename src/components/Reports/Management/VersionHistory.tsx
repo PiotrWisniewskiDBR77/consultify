@@ -43,7 +43,7 @@ interface VersionHistoryProps {
 const ChangeTypeBadge: React.FC<{ type: 'added' | 'removed' | 'modified' }> = ({ type }) => {
   const config = {
     added: { icon: Plus, color: 'text-emerald-500 bg-emerald-500/10', label: 'Added' },
-    removed: { icon: Minus, color: 'text-rose-500 bg-rose-500/10', label: 'Removed' },
+    removed: { icon: Minus, color: 'text-danger-500 bg-danger-500/10', label: 'Removed' },
     modified: { icon: Edit3, color: 'text-amber-500 bg-amber-500/10', label: 'Modified' },
   };
   const { icon: Icon, color, label } = config[type];
@@ -191,7 +191,7 @@ const ComparisonView: React.FC<{
                 </span>
                 {change.type === 'modified' && (
                   <div className="mt-1 text-xs">
-                    <div className="text-rose-500 line-through truncate">
+                    <div className="text-danger-500 line-through truncate">
                       {JSON.stringify(change.oldValue)?.substring(0, 100)}
                     </div>
                     <div className="text-emerald-500 truncate">

@@ -50,8 +50,8 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
     <CollapsibleSection
       id="problemDefinition"
       title={t('initiatives.problemDefinitionSection.problemDefinition')}
-      icon={<AlertTriangle size={18} className="text-rose-500 dark:text-rose-400" />}
-      iconBg="bg-gradient-to-br from-rose-500/10 to-rose-500/10 dark:from-rose-500/20 dark:to-rose-500/20"
+      icon={<AlertTriangle size={18} className="text-danger-500 dark:text-danger-400" />}
+      iconBg="bg-gradient-to-br from-danger-500/10 to-danger-500/10 dark:from-danger-500/20 dark:to-danger-500/20"
       expanded={expanded}
       onToggle={onToggle}
       badge={
@@ -127,7 +127,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
         {/* Symptom */}
         <div>
           <label className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-xs font-bold text-rose-500">
+            <div className="w-6 h-6 rounded-full bg-danger-500/20 flex items-center justify-center text-xs font-bold text-danger-500">
               1
             </div>
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -152,7 +152,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/10 resize-none transition-all text-sm"
+            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-danger-400 focus:ring-2 focus:ring-danger-500/10 resize-none transition-all text-sm"
             placeholder={t('initiatives.problemDefinitionSection.symptomPlaceholder')}
           />
         </div>
@@ -193,7 +193,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
         {/* Cost of Inaction */}
         <div>
           <label className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-xs font-bold text-rose-500">
+            <div className="w-6 h-6 rounded-full bg-danger-500/20 flex items-center justify-center text-xs font-bold text-danger-500">
               3
             </div>
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -218,7 +218,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             value={costOfInaction}
             onChange={(e) => setCostOfInaction(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/10 resize-none transition-all text-sm"
+            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-danger-400 focus:ring-2 focus:ring-danger-500/10 resize-none transition-all text-sm"
             placeholder={t('initiatives.problemDefinitionSection.costOfInactionPlaceholder')}
           />
         </div>
@@ -237,7 +237,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(filledCount / 3) * 100}%` }}
-              className="h-full bg-gradient-to-r from-rose-500 to-rose-500 rounded-full"
+              className="h-full bg-gradient-to-r from-danger-500 to-danger-500 rounded-full"
             />
           </div>
         </div>

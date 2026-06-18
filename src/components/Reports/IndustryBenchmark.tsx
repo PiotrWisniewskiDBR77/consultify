@@ -246,7 +246,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
             {stats.avgActual > stats.avgIndustry ? (
               <TrendingUp className="w-4 h-4 text-green-500" />
             ) : stats.avgActual < stats.avgIndustry ? (
-              <TrendingDown className="w-4 h-4 text-rose-500" />
+              <TrendingDown className="w-4 h-4 text-danger-500" />
             ) : (
               <Minus className="w-4 h-4" />
             )}
@@ -259,7 +259,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
               stats.avgActual > stats.avgIndustry
                 ? 'text-green-600'
                 : stats.avgActual < stats.avgIndustry
-                  ? 'text-rose-600'
+                  ? 'text-danger-600'
                   : 'text-slate-600 dark:text-slate-400'
             }`}
           >

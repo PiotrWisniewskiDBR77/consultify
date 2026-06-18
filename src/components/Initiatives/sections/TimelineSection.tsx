@@ -388,7 +388,7 @@ const TimelineBar: React.FC<{
                 isCompleted
                   ? 'bg-emerald-500 border-emerald-500'
                   : isMissed
-                    ? 'bg-rose-500 border-rose-500'
+                    ? 'bg-danger-500 border-danger-500'
                     : 'bg-white dark:bg-navy-800 border-primary-500'
               }`}
             />
@@ -448,7 +448,7 @@ const HealthIndicators: React.FC<{
         ? 'text-emerald-500'
         : startVariance <= 7
           ? 'text-amber-500'
-          : 'text-rose-500';
+          : 'text-danger-500';
 
   const cards = [
     { label: t('initiatives.timelineSection.variance'), value: spiLabel, color: spiColor },
@@ -464,7 +464,7 @@ const HealthIndicators: React.FC<{
       label: t('initiatives.timelineSection.openRisks'),
       value: String(openRisks),
       color:
-        openRisks > 2 ? 'text-rose-500' : openRisks > 0 ? 'text-amber-500' : 'text-emerald-500',
+        openRisks > 2 ? 'text-danger-500' : openRisks > 0 ? 'text-amber-500' : 'text-emerald-500',
     },
   ];
 
@@ -1331,7 +1331,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 const n = normalizeProposal();
                 if (!n) {
                   return (
-                    <div className="text-sm text-rose-500">
+                    <div className="text-sm text-danger-500">
                       {t('initiatives.timelineSection.invalidProposalFormat')}
                     </div>
                   );
@@ -1782,7 +1782,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${
                   isOverdue
-                    ? 'bg-rose-500/10 text-rose-500'
+                    ? 'bg-danger-500/10 text-danger-500'
                     : daysRemaining <= 14
                       ? 'bg-amber-500/10 text-amber-500'
                       : 'bg-blue-500/10 text-blue-500'
@@ -2069,7 +2069,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <span
                         className={
                           startVariance > 0
-                            ? 'text-rose-500'
+                            ? 'text-danger-500'
                             : startVariance < 0
                               ? 'text-emerald-500'
                               : 'text-slate-600'
@@ -2098,7 +2098,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <span
                         className={
                           endVariance > 0
-                            ? 'text-rose-500'
+                            ? 'text-danger-500'
                             : endVariance < 0
                               ? 'text-emerald-500'
                               : 'text-slate-600'
@@ -2145,7 +2145,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                   {t('initiatives.timelineSection.timeProgress')}
                 </span>
                 <span
-                  className={`text-xs font-medium ${isOverdue ? 'text-rose-500' : 'text-blue-500'}`}
+                  className={`text-xs font-medium ${isOverdue ? 'text-danger-500' : 'text-blue-500'}`}
                 >
                   {timelineProgress}%
                 </span>
@@ -2156,7 +2156,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                   animate={{ width: `${Math.min(timelineProgress, 100)}%` }}
                   className={`h-full rounded-full ${
                     isOverdue
-                      ? 'bg-gradient-to-r from-rose-500 to-rose-400'
+                      ? 'bg-gradient-to-r from-danger-500 to-danger-400'
                       : timelineProgress > 80
                         ? 'bg-gradient-to-r from-amber-500 to-amber-500'
                         : 'bg-gradient-to-r from-blue-500 to-blue-500'
@@ -2217,7 +2217,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         )}
                         {msVariance !== null && (
                           <span
-                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-rose-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-600'}`}
+                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-danger-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-600'}`}
                           >
                             {msVariance > 0 ? '+' : ''}
                             {msVariance}d
@@ -2281,7 +2281,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <span
                         className={
                           startVariance > 0
-                            ? 'text-rose-500'
+                            ? 'text-danger-500'
                             : startVariance < 0
                               ? 'text-emerald-500'
                               : 'text-slate-600'
@@ -2306,7 +2306,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <span
                         className={
                           endVariance > 0
-                            ? 'text-rose-500'
+                            ? 'text-danger-500'
                             : endVariance < 0
                               ? 'text-emerald-500'
                               : 'text-slate-600'
@@ -2345,7 +2345,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                             ms.status === 'completed'
                               ? 'bg-emerald-500'
                               : ms.status === 'missed'
-                                ? 'bg-rose-500'
+                                ? 'bg-danger-500'
                                 : 'bg-slate-300 dark:bg-navy-600'
                           }`}
                         >
@@ -2375,7 +2375,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         )}
                         {msVariance !== null && (
                           <span
-                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-rose-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-600'}`}
+                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-danger-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-600'}`}
                           >
                             {msVariance > 0 ? '+' : ''}
                             {msVariance}d

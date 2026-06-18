@@ -276,7 +276,7 @@ export const QuickStats: React.FC<{
                 stat.trend === 'up'
                   ? 'text-green-500'
                   : stat.trend === 'down'
-                    ? 'text-rose-500'
+                    ? 'text-danger-500'
                     : 'text-slate-500 dark:text-slate-400'
               }`}
             >

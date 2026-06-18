@@ -226,7 +226,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'List of most important findings',
     descriptionPl: 'Lista najważniejszych wniosków',
     icon: <MessageSquare className="w-6 h-6" />,
-    color: 'from-rose-500 to-rose-600',
+    color: 'from-danger-500 to-danger-600',
     category: 'data',
   },
   {
@@ -259,7 +259,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Where we are vs where we want to be',
     descriptionPl: 'Różnice: stan obecny vs docelowy',
     icon: <Target className="w-6 h-6" />,
-    color: 'from-rose-500 to-rose-600',
+    color: 'from-danger-500 to-danger-600',
     category: 'data',
   },
 

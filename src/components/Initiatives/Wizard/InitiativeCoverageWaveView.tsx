@@ -120,7 +120,7 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
             {tr('Pokrycie (MECE)', 'Coverage (MECE)')}
           </h3>
           {overlapCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-[11px] font-semibold text-danger-700 dark:bg-danger-500/15 dark:text-danger-300">
               {tr(`${overlapCount} nakładań`, `${overlapCount} overlaps`)}
             </span>
           )}
@@ -157,7 +157,7 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
               </div>
             )}
             {overlapCount > 0 && (
-              <div className="rounded-xl border border-rose-300/50 bg-rose-50/70 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+              <div className="rounded-xl border border-danger-300/50 bg-danger-50/70 px-3.5 py-2.5 text-xs text-danger-700 dark:border-danger-500/20 dark:bg-danger-500/10 dark:text-danger-300">
                 {tr(
                   'Wykryto nakładania zakresów (naruszenie MECE):',
                   'Overlapping scopes detected (MECE violation):'
@@ -204,7 +204,7 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
                 </div>
 
                 {overCapacity && (
-                  <div className="mb-2 flex items-start gap-1.5 rounded-lg border border-rose-300/50 bg-rose-50/70 px-2 py-1.5 text-[11px] font-medium text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+                  <div className="mb-2 flex items-start gap-1.5 rounded-lg border border-danger-300/50 bg-danger-50/70 px-2 py-1.5 text-[11px] font-medium text-danger-700 dark:border-danger-500/20 dark:bg-danger-500/10 dark:text-danger-300">
                     <AlertTriangle size={12} className="mt-0.5 shrink-0" />
                     <span>
                       {tr(

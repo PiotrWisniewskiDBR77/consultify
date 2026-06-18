@@ -248,9 +248,9 @@ function toneClasses(tone: RoleDef['tone']) {
       };
     case 'rose':
       return {
-        icon: 'text-rose-600 dark:text-rose-400',
-        chip: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30',
-        active: 'border-rose-300 dark:border-rose-500/50 bg-rose-50/80 dark:bg-rose-500/10',
+        icon: 'text-danger-600 dark:text-danger-400',
+        chip: 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/30',
+        active: 'border-danger-300 dark:border-danger-500/50 bg-danger-50/80 dark:bg-danger-500/10',
       };
     case 'indigo':
       return {

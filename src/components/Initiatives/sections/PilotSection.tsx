@@ -42,7 +42,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
       color: 'bg-blue-500/20 text-blue-400',
     },
     success: { label: 'Success', labelPl: 'Sukces', color: 'bg-emerald-500/20 text-emerald-400' },
-    failure: { label: 'Failed', labelPl: 'Niepowodzenie', color: 'bg-rose-500/20 text-rose-400' },
+    failure: { label: 'Failed', labelPl: 'Niepowodzenie', color: 'bg-danger-500/20 text-danger-400' },
     inconclusive: {
       label: 'Inconclusive',
       labelPl: 'Niejednoznaczny',
@@ -127,7 +127,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                 <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{h}</span>
                 <button
                   onClick={() => setHypotheses(hypotheses.filter((_, j) => j !== i))}
-                  className="text-slate-600 hover:text-rose-500"
+                  className="text-slate-600 hover:text-danger-500"
                 >
                   <X size={14} />
                 </button>
@@ -177,7 +177,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                 <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{c}</span>
                 <button
                   onClick={() => setSuccessCriteria(successCriteria.filter((_, j) => j !== i))}
-                  className="text-slate-600 hover:text-rose-500"
+                  className="text-slate-600 hover:text-danger-500"
                 >
                   <X size={14} />
                 </button>
@@ -215,19 +215,19 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
 
         {/* Failure Criteria */}
         <div>
-          <label className="text-sm font-semibold text-rose-600 dark:text-rose-400 mb-2 block">
+          <label className="text-sm font-semibold text-danger-600 dark:text-danger-400 mb-2 block">
             {t('initiatives.pilotSection.failureCriteria')}
           </label>
           <div className="space-y-2 mb-3">
             {failureCriteria.map((c, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 p-2 rounded-lg bg-rose-50/50 dark:bg-rose-500/5 border border-rose-200/50 dark:border-rose-500/20"
+                className="flex items-center gap-2 p-2 rounded-lg bg-danger-50/50 dark:bg-danger-500/5 border border-danger-200/50 dark:border-danger-500/20"
               >
                 <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{c}</span>
                 <button
                   onClick={() => setFailureCriteria(failureCriteria.filter((_, j) => j !== i))}
-                  className="text-slate-600 hover:text-rose-500"
+                  className="text-slate-600 hover:text-danger-500"
                 >
                   <X size={14} />
                 </button>
@@ -256,7 +256,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                 }
               }}
               disabled={!newFailure.trim()}
-              className="px-3 py-2 rounded-lg text-rose-500 border border-rose-200 dark:border-rose-500/30 disabled:opacity-50"
+              className="px-3 py-2 rounded-lg text-danger-500 border border-danger-200 dark:border-danger-500/30 disabled:opacity-50"
             >
               <Plus size={16} />
             </button>

@@ -1352,7 +1352,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         />
                         <button
                           onClick={() => removeCustomColor(color)}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1398,7 +1398,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         onClick={() =>
                           onStylingChange({ clientLogoUrl: undefined, showLogo: false })
                         }
-                        className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center"
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-danger-500 text-white rounded-full flex items-center justify-center"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>

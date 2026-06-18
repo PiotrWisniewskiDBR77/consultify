@@ -285,7 +285,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                               c.type === 'add'
                                 ? 'bg-emerald-500/10 text-emerald-400'
                                 : c.type === 'remove'
-                                  ? 'bg-rose-500/10 text-rose-400'
+                                  ? 'bg-danger-500/10 text-danger-400'
                                   : c.type === 'modify'
                                     ? 'bg-blue-500/10 text-blue-400'
                                     : 'bg-amber-500/10 text-amber-400'

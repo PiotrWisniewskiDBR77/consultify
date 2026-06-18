@@ -114,7 +114,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <p className="text-sm text-rose-500 dark:text-rose-400">{error}</p>
+        <p className="text-sm text-danger-500 dark:text-danger-400">{error}</p>
         <button
           onClick={() => {
             setFetching(true);
@@ -208,7 +208,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               className={`flex-shrink-0 p-1.5 rounded-md transition-colors ${
                 section.required
                   ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
-                  : 'text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20'
+                  : 'text-slate-600 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20'
               }`}
               title={
                 section.required

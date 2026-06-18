@@ -54,9 +54,9 @@ const variantStyles = {
     icon: <CheckCircle2 size={16} className="text-emerald-500" />,
   },
   blocked: {
-    container: 'bg-rose-50/50 dark:bg-rose-900/10',
-    itemBorder: 'border-rose-100 dark:border-rose-500/10',
-    icon: <AlertTriangle size={16} className="text-rose-500" />,
+    container: 'bg-danger-50/50 dark:bg-danger-900/10',
+    itemBorder: 'border-danger-100 dark:border-danger-500/10',
+    icon: <AlertTriangle size={16} className="text-danger-500" />,
   },
   pending: {
     container: 'bg-amber-50/50 dark:bg-amber-900/10',
@@ -129,7 +129,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({
                       <span
                         className={`px-2 py-0.5 text-xs font-medium rounded ${
                           item.severity === 'CRITICAL' || item.severity === 'HIGH'
-                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                            ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                             : item.severity === 'MEDIUM'
                               ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                               : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'

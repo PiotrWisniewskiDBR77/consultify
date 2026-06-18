@@ -34,8 +34,8 @@ interface RecommendationAttrs {
 
 const PRIORITY_STYLES = {
   critical: {
-    badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
-    border: 'border-l-rose-500',
+    badge: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
+    border: 'border-l-danger-500',
     label: 'Krytyczny',
   },
   high: {
@@ -62,7 +62,7 @@ const IMPACT_LABELS = {
 };
 
 const EFFORT_LABELS = {
-  high: { label: 'Duży', color: 'text-rose-500' },
+  high: { label: 'Duży', color: 'text-danger-500' },
   medium: { label: 'Średni', color: 'text-yellow-600' },
   low: { label: 'Mały', color: 'text-green-600' },
 };
@@ -105,7 +105,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={handleCancel}
-                className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500"
+                className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500"
               >
                 <X className="w-4 h-4" />
               </button>

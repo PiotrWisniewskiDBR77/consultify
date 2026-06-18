@@ -20,7 +20,7 @@ import type {
 const toneText: Record<string, string> = {
   good: 'text-emerald-700 dark:text-emerald-400',
   warn: 'text-amber-700 dark:text-amber-400',
-  critical: 'text-rose-700 dark:text-rose-400',
+  critical: 'text-danger-700 dark:text-danger-400',
   default: 'text-slate-700 dark:text-slate-300',
 };
 
@@ -29,14 +29,14 @@ const ragBadge: Record<string, string> = {
     'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
   amber:
     'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-  red: 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800',
+  red: 'bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 border-danger-200 dark:border-danger-800',
 };
 
 const calloutTone: Record<string, string> = {
   good: 'bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300',
   warn: 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300',
   critical:
-    'bg-rose-50 dark:bg-rose-900/15 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300',
+    'bg-danger-50 dark:bg-danger-900/15 border-danger-200 dark:border-danger-800 text-danger-800 dark:text-danger-300',
   info: 'bg-slate-50 dark:bg-navy-800/60 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300',
 };
 

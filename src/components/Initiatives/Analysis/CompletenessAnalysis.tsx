@@ -530,7 +530,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                     ? 'bg-blue-500'
                     : item.effort === 'medium'
                       ? 'bg-amber-500'
-                      : 'bg-rose-500'
+                      : 'bg-danger-500'
               }`}
             />
             <button
@@ -854,7 +854,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                         ? 'bg-blue-500'
                         : item.effort === 'medium'
                           ? 'bg-amber-500'
-                          : 'bg-rose-500'
+                          : 'bg-danger-500'
                   }`}
                 />
                 <button
@@ -869,7 +869,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       ? 'text-emerald-600 dark:text-emerald-400'
                       : item.completeness >= 50
                         ? 'text-amber-600 dark:text-amber-400'
-                        : 'text-rose-600 dark:text-rose-400'
+                        : 'text-danger-600 dark:text-danger-400'
                   }`}
                 >
                   {item.completeness}%
@@ -880,7 +880,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                       : item.effort === 'medium'
                         ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                        : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                        : 'bg-danger-500/15 text-danger-600 dark:text-danger-400'
                   }`}
                 >
                   {item.effort} effort
@@ -981,7 +981,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                         <span
                           className={
                             row.completeness < 50
-                              ? 'font-semibold text-rose-600 dark:text-rose-400'
+                              ? 'font-semibold text-danger-600 dark:text-danger-400'
                               : row.completeness < 100
                                 ? 'text-amber-600 dark:text-amber-400'
                                 : 'text-emerald-600 dark:text-emerald-400'
@@ -992,7 +992,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {row.missingCritical > 0 ? (
-                          <span className="font-medium text-rose-600 dark:text-rose-400">
+                          <span className="font-medium text-danger-600 dark:text-danger-400">
                             {row.missingCritical}
                           </span>
                         ) : (
@@ -1032,7 +1032,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                                   READY
                                 </span>
                               ) : (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 font-medium">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-danger-500/15 text-danger-600 dark:text-danger-400 font-medium">
                                   NOT READY
                                 </span>
                               )}
@@ -1044,7 +1044,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                                     {h.status === 'ok' ? (
                                       <Check size={12} className="text-emerald-500 shrink-0" />
                                     ) : (
-                                      <X size={12} className="text-rose-500 shrink-0" />
+                                      <X size={12} className="text-danger-500 shrink-0" />
                                     )}
                                     <span
                                       className={

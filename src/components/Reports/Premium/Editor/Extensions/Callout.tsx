@@ -38,10 +38,10 @@ const CALLOUT_STYLES = {
     defaultTitle: 'Sukces',
   },
   danger: {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    border: 'border-l-rose-500',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    border: 'border-l-danger-500',
     icon: XCircle,
-    iconColor: 'text-rose-500',
+    iconColor: 'text-danger-500',
     defaultTitle: 'Ważne',
   },
   tip: {

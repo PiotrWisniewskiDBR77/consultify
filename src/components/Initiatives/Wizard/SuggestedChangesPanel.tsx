@@ -43,8 +43,8 @@ const KIND_META: Record<SuggestedChangeKind, KindMeta> = {
   conflict: {
     pl: 'Konflikt',
     en: 'Conflict',
-    dot: 'bg-rose-500',
-    chip: 'text-rose-700 bg-rose-50 dark:text-rose-300 dark:bg-rose-500/15',
+    dot: 'bg-danger-500',
+    chip: 'text-danger-700 bg-danger-50 dark:text-danger-300 dark:bg-danger-500/15',
   },
   re_prioritize: {
     pl: 'Re-priorytet',

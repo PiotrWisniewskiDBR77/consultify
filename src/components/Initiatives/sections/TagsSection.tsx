@@ -32,7 +32,7 @@ export const TagsSection: React.FC<InitiativeSectionProps> = ({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/10 to-rose-500/10 dark:from-pink-500/20 dark:to-rose-500/20">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/10 to-danger-500/10 dark:from-pink-500/20 dark:to-danger-500/20">
             <Tag size={18} className="text-pink-500 dark:text-pink-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">

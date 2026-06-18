@@ -140,20 +140,20 @@ const TASK_STATUS_COLORS: Record<string, string> = {
   IN_PROGRESS: 'text-blue-500',
   todo: 'text-slate-500 dark:text-slate-400',
   TODO: 'text-slate-500 dark:text-slate-400',
-  blocked: 'text-rose-500',
-  BLOCKED: 'text-rose-500',
+  blocked: 'text-danger-500',
+  BLOCKED: 'text-danger-500',
 };
 
 const DECISION_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   PENDING: { bg: 'bg-amber-500/10', text: 'text-amber-500' },
   APPROVED: { bg: 'bg-emerald-500/10', text: 'text-emerald-500' },
-  REJECTED: { bg: 'bg-rose-500/10', text: 'text-rose-500' },
+  REJECTED: { bg: 'bg-danger-500/10', text: 'text-danger-500' },
   DEFERRED: { bg: 'bg-slate-500/10', text: 'text-slate-500' },
 };
 
 const RAID_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string }> = {
-  risk: { icon: AlertTriangle, color: 'text-rose-500' },
-  RISK: { icon: AlertTriangle, color: 'text-rose-500' },
+  risk: { icon: AlertTriangle, color: 'text-danger-500' },
+  RISK: { icon: AlertTriangle, color: 'text-danger-500' },
   issue: { icon: AlertTriangle, color: 'text-amber-500' },
   ISSUE: { icon: AlertTriangle, color: 'text-amber-500' },
   assumption: { icon: Target, color: 'text-blue-500' },
@@ -574,7 +574,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               {blockingItems.slice(0, 3).map((item: any) => (
                 <span
                   key={item.key || item.label}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-danger-100 dark:bg-danger-500/15 text-danger-600 dark:text-danger-400"
                 >
                   <AlertTriangle size={10} />
                   {item.label || item.key}
@@ -686,15 +686,15 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             icon={AlertTriangle}
             label={t('initiatives.compact.risks')}
             value={`${riskCount}R/${issueCount}I`}
-            color={riskCount > 0 ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'}
+            color={riskCount > 0 ? 'text-danger-500' : 'text-slate-500 dark:text-slate-400'}
           />
         </div>
       </div>
 
       {/* V4-EXEC-01: Why red? chain — shown when initiative is RED/AMBER and we have chain data */}
       {whyRed && (
-        <div className="flex-shrink-0 px-4 py-2.5 border-b border-rose-200 dark:border-rose-800/30 bg-rose-50/80 dark:bg-rose-900/10">
-          <p className="text-[10px] font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider mb-2">
+        <div className="flex-shrink-0 px-4 py-2.5 border-b border-danger-200 dark:border-danger-800/30 bg-danger-50/80 dark:bg-danger-900/10">
+          <p className="text-[10px] font-semibold text-danger-700 dark:text-danger-400 uppercase tracking-wider mb-2">
             {t('execution.whyRed.title', 'Why red?')}
           </p>
           <WhyRedChain data={whyRed} compact={false} />
@@ -936,12 +936,12 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {/* Kill Criteria / Scope */}
       {init.killCriteria?.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider mb-1.5">
+          <p className="text-[10px] font-semibold text-danger-400 uppercase tracking-wider mb-1.5">
             {t('initiatives.compact.killCriteria')}
           </p>
           <ul className="space-y-1">
             {init.killCriteria.map((kc: string, i: number) => (
-              <li key={i} className="flex items-start gap-1.5 text-xs text-rose-500/80">
+              <li key={i} className="flex items-start gap-1.5 text-xs text-danger-500/80">
                 <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" />
                 <span>{kc}</span>
               </li>
@@ -1029,7 +1029,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
       {/* Blocked first — B7.3: truncated */}
       {byStatus.blocked.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider mb-1">
+          <p className="text-[10px] font-semibold text-danger-400 uppercase tracking-wider mb-1">
             {t('initiatives.compact.blocked', { count: byStatus.blocked.length })}
           </p>
           {visibleBlocked.map((t) => (
@@ -1038,7 +1038,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
           {byStatus.blocked.length > MAX_VISIBLE_TASKS && (
             <button
               onClick={() => setShowAllBlocked((v) => !v)}
-              className="w-full text-center py-1 text-[10px] font-medium text-rose-400 hover:text-rose-300 transition-colors"
+              className="w-full text-center py-1 text-[10px] font-medium text-danger-400 hover:text-danger-300 transition-colors"
             >
               {showAllBlocked
                 ? t('initiatives.compact.showLess')
@@ -1246,7 +1246,7 @@ const RaidTab: React.FC<{ items: RaidItem[]; onMitigationSaved?: () => void }> =
                   </span>
                   {item.severity && (
                     <span
-                      className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-danger-500' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {item.severity}
                     </span>
@@ -1363,7 +1363,7 @@ const FinanceTab: React.FC<{
           <ProgressBar
             value={Number(spent)}
             max={Number(budget)}
-            color={Number(spent) > Number(budget) ? 'bg-rose-500' : 'bg-blue-500'}
+            color={Number(spent) > Number(budget) ? 'bg-danger-500' : 'bg-blue-500'}
           />
         </div>
       )}

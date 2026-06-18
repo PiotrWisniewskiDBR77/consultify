@@ -610,7 +610,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               {!section.required && section.sectionKey.startsWith('custom_') && (
                 <button
                   onClick={() => handleRemoveSection(section.sectionKey)}
-                  className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
+                  className="p-1.5 text-slate-600 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

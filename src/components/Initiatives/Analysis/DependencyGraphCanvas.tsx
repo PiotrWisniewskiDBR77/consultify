@@ -249,7 +249,7 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
             {t('initiatives.analysis.logic.graph.hint', 'Drag from predecessor to successor')}
           </span>
           {selectedEdge?.hasTimingConflict && (
-            <span className="inline-flex items-center gap-1 text-rose-500">
+            <span className="inline-flex items-center gap-1 text-danger-500">
               <AlertTriangle size={12} />
               {t('initiatives.analysis.logic.graph.timingConflict', 'Timing conflict')}
             </span>
@@ -259,7 +259,7 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
               type="button"
               onClick={handleDeleteSelected}
               disabled={graphBusy}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-danger-500/30 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 disabled:opacity-50 transition-colors"
             >
               <Trash2 size={12} />
               {t('initiatives.analysis.logic.graph.removeEdge', 'Remove edge')}

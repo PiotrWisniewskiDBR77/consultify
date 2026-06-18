@@ -56,8 +56,8 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
   completed: 'bg-green-500/20 text-green-400',
   done: 'bg-green-500/20 text-green-400',
   APPROVED: 'bg-emerald-500/20 text-emerald-400',
-  REJECTED: 'bg-rose-500/20 text-rose-400',
-  CANCELLED: 'bg-rose-500/20 text-rose-400',
+  REJECTED: 'bg-danger-500/20 text-danger-400',
+  CANCELLED: 'bg-danger-500/20 text-danger-400',
   BLOCKED: 'bg-amber-500/20 text-amber-400',
 };
 
@@ -118,7 +118,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
 
   if (error) {
     return (
-      <div className="px-4 py-6 text-center text-sm text-rose-400">
+      <div className="px-4 py-6 text-center text-sm text-danger-400">
         <p>{error}</p>
         <button
           onClick={fetchLinks}

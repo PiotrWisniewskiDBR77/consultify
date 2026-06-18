@@ -322,7 +322,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
             <div className="flex items-center gap-1.5">
               {ctx.riskCount > 0 && (
                 <span
-                  className={`text-[9px] font-medium px-1 py-0.5 rounded ${ctx.criticalRaids > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}
+                  className={`text-[9px] font-medium px-1 py-0.5 rounded ${ctx.criticalRaids > 0 ? 'bg-danger-500/10 text-danger-500' : 'bg-amber-500/10 text-amber-500'}`}
                 >
                   {ctx.riskCount}R/{ctx.issueCount}I
                 </span>

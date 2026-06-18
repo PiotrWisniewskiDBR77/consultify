@@ -163,7 +163,7 @@ function getIntentColor(intent?: string): string {
     case 'Grow':
       return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
     case 'Fix':
-      return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800';
+      return 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400 border-danger-200 dark:border-danger-800';
     case 'Stabilize':
       return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800';
     case 'De-risk':
@@ -210,7 +210,7 @@ function getPriorityBadge(priority?: string): { color: string; label: string } {
     case 'high':
     case 'critical':
       return {
-        color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+        color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
         label: priority.charAt(0).toUpperCase() + priority.slice(1),
       };
     case 'medium':
@@ -232,7 +232,7 @@ function getConfidenceDot(confidence?: string | number): { color: string; label:
   if (typeof confidence === 'number') {
     if (confidence >= 70) return { color: 'bg-emerald-500', label: 'High' };
     if (confidence >= 40) return { color: 'bg-amber-500', label: 'Medium' };
-    if (confidence > 0) return { color: 'bg-rose-500', label: 'Low' };
+    if (confidence > 0) return { color: 'bg-danger-500', label: 'Low' };
     return { color: 'bg-slate-300', label: '' };
   }
   switch (confidence) {
@@ -241,7 +241,7 @@ function getConfidenceDot(confidence?: string | number): { color: string; label:
     case 'Medium':
       return { color: 'bg-amber-500', label: 'Medium' };
     case 'Low':
-      return { color: 'bg-rose-500', label: 'Low' };
+      return { color: 'bg-danger-500', label: 'Low' };
     default:
       return { color: 'bg-slate-300', label: '' };
   }
@@ -257,7 +257,7 @@ const EffortBars: React.FC<{ profile: NonNullable<InitiativeItem['effortProfile'
   const bars = [
     { label: 'Analytical', value: profile.analytical || 0, color: 'bg-blue-500' },
     { label: 'Operational', value: profile.operational || 0, color: 'bg-emerald-500' },
-    { label: 'Change', value: profile.change || 0, color: 'bg-rose-500' },
+    { label: 'Change', value: profile.change || 0, color: 'bg-danger-500' },
   ];
 
   return (
@@ -432,9 +432,9 @@ const InitiativeCardItem: React.FC<{
         {/* Problem Statement */}
         {item.problemStatement && !item.relatedGap && (
           <div className="flex gap-2 mb-3">
-            <div className="min-w-[3px] w-[3px] bg-rose-400/50 rounded-full" />
+            <div className="min-w-[3px] w-[3px] bg-danger-400/50 rounded-full" />
             <div>
-              <span className="text-[9px] font-bold text-rose-500 uppercase flex items-center gap-1">
+              <span className="text-[9px] font-bold text-danger-500 uppercase flex items-center gap-1">
                 <AlertTriangle className="w-2.5 h-2.5" />
                 Problem
               </span>
@@ -577,7 +577,7 @@ export const InitiativeCards: React.FC<InitiativeCardsProps> = ({
         <div className="flex items-center gap-3 text-[10px] text-slate-600">
           {data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length >
             0 && (
-            <span className="flex items-center gap-1 text-rose-500">
+            <span className="flex items-center gap-1 text-danger-500">
               <AlertTriangle className="w-3 h-3" />
               {
                 data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length
@@ -591,7 +591,7 @@ export const InitiativeCards: React.FC<InitiativeCardsProps> = ({
             </span>
           )}
           {data.items.filter((i) => i.strategicIntent === 'Fix').length > 0 && (
-            <span className="text-rose-500">
+            <span className="text-danger-500">
               {data.items.filter((i) => i.strategicIntent === 'Fix').length} fix
             </span>
           )}

@@ -212,9 +212,9 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
 
         {/* Summary badges */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-100 dark:bg-rose-500/20 rounded-full">
-            <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-            <span className="text-sm font-medium text-rose-700 dark:text-rose-300">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-danger-100 dark:bg-danger-500/20 rounded-full">
+            <AlertTriangle className="w-4 h-4 text-danger-600 dark:text-danger-400" />
+            <span className="text-sm font-medium text-danger-700 dark:text-danger-300">
               {stats.critical} {isPolish ? 'krytycznych' : 'critical'}
             </span>
           </div>
@@ -486,7 +486,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                 <div
                   className={`p-3 rounded-lg ${
                     selectedRisk.impact === 'high'
-                      ? 'bg-rose-50 dark:bg-rose-500/10'
+                      ? 'bg-danger-50 dark:bg-danger-500/10'
                       : 'bg-green-50 dark:bg-green-500/10'
                   }`}
                 >
@@ -496,7 +496,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                   <p
                     className={`font-semibold ${
                       selectedRisk.impact === 'high'
-                        ? 'text-rose-600 dark:text-rose-400'
+                        ? 'text-danger-600 dark:text-danger-400'
                         : 'text-green-600 dark:text-green-400'
                     }`}
                   >
@@ -543,7 +543,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                     onRiskRemove(selectedRisk.id);
                     setSelectedRisk(null);
                   }}
-                  className="w-full mt-4 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                  className="w-full mt-4 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
                 >
                   {isPolish ? 'Usuń ryzyko' : 'Remove risk'}
                 </button>

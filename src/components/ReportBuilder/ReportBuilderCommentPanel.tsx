@@ -90,7 +90,7 @@ const COMMENT_TYPE_CONFIG: Record<CommentType, { label: string; labelPl: string;
     REJECTION: {
       label: 'Rejection',
       labelPl: 'Odrzucenie',
-      color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+      color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
     },
     CHANGE_REQUEST: {
       label: 'Change Request',
@@ -427,7 +427,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                     )}
                     <button
                       onClick={() => onDeleteComment(comment.id)}
-                      className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded"
+                      className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-500 rounded"
                     >
                       <Trash2 size={14} />
                     </button>

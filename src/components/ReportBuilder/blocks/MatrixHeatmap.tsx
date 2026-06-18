@@ -50,7 +50,7 @@ function getScoreColor(score: number, max: number): string {
   if (pct >= 0.6) return 'bg-blue-500';
   if (pct >= 0.4) return 'bg-amber-500';
   if (pct >= 0.2) return 'bg-amber-500';
-  return 'bg-rose-500';
+  return 'bg-danger-500';
 }
 
 function getScoreTextColor(score: number, max: number): string {
@@ -59,7 +59,7 @@ function getScoreTextColor(score: number, max: number): string {
   if (pct >= 0.6) return 'text-blue-600 dark:text-blue-400';
   if (pct >= 0.4) return 'text-amber-600 dark:text-amber-400';
   if (pct >= 0.2) return 'text-amber-600 dark:text-amber-400';
-  return 'text-rose-600 dark:text-rose-400';
+  return 'text-danger-600 dark:text-danger-400';
 }
 
 function getGapSeverity(gap: number): { label: string; color: string } {
@@ -69,7 +69,7 @@ function getGapSeverity(gap: number): { label: string; color: string } {
     return { label: 'Moderate', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' };
   if (gap <= 2.5)
     return { label: 'Significant', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' };
-  return { label: 'Critical', color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30' };
+  return { label: 'Critical', color: 'text-danger-600 bg-danger-50 dark:bg-danger-900/30' };
 }
 
 // ==========================================

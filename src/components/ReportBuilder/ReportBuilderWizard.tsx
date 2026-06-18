@@ -729,15 +729,15 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
 
       {/* Error Banner */}
       {error && (
-        <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl flex items-start gap-3">
-          <XCircle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+        <div className="mb-6 p-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl flex items-start gap-3">
+          <XCircle className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <div className="font-medium text-rose-800 dark:text-rose-200">
+            <div className="font-medium text-danger-800 dark:text-danger-200">
               {isPl ? 'Wystąpił błąd' : 'An error occurred'}
             </div>
-            <div className="text-sm text-rose-600 dark:text-rose-300 mt-1">{error}</div>
+            <div className="text-sm text-danger-600 dark:text-danger-300 mt-1">{error}</div>
           </div>
-          <button onClick={clearError} className="text-rose-500 hover:text-rose-700">
+          <button onClick={clearError} className="text-danger-500 hover:text-danger-700">
             <XCircle className="w-5 h-5" />
           </button>
         </div>

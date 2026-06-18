@@ -356,7 +356,7 @@ const SmartContentRenderer: React.FC<{
                       </td>
                       <td className="py-3 px-4 text-center">
                         <span
-                          className={`font-medium ${axis.gap > 2 ? 'text-rose-500' : axis.gap > 1 ? 'text-amber-500' : 'text-green-500'}`}
+                          className={`font-medium ${axis.gap > 2 ? 'text-danger-500' : axis.gap > 1 ? 'text-amber-500' : 'text-green-500'}`}
                         >
                           {axis.gap}
                         </span>
@@ -2466,7 +2466,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   disabled={!!isExporting}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
                 >
-                  <FileText className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
+                  <FileText className="w-3.5 h-3.5 text-danger-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">PDF</div>
                     <div className="text-[10px] text-slate-500">

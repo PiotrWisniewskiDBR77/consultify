@@ -174,14 +174,14 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
     <CollapsibleSection
       id="raid"
       title={t('initiatives.raidSection.riskAndRaid')}
-      icon={<AlertTriangle size={18} className="text-rose-500 dark:text-rose-400" />}
-      iconBg="bg-gradient-to-br from-rose-500/10 to-rose-500/10 dark:from-rose-500/20 dark:to-rose-500/20"
+      icon={<AlertTriangle size={18} className="text-danger-500 dark:text-danger-400" />}
+      iconBg="bg-gradient-to-br from-danger-500/10 to-danger-500/10 dark:from-danger-500/20 dark:to-danger-500/20"
       expanded={expanded}
       onToggle={onToggle}
       badge={
         <div className="flex items-center gap-2">
           {criticalRaids > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-medium">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-danger-500/20 text-danger-400 font-medium">
               {criticalRaids} {t('initiatives.raidSection.crit')}
             </span>
           )}

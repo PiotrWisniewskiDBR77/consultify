@@ -61,7 +61,7 @@ const EFFORT_LABELS: Record<string, { en: string; pl: string; color: string }> =
   high: {
     en: 'High',
     pl: 'Wysoki',
-    color: 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/20',
+    color: 'text-danger-600 dark:text-danger-400 bg-danger-100 dark:bg-danger-500/20',
   },
 };
 
@@ -191,7 +191,7 @@ const InitiativeCard: React.FC<{
           <PriorityIcon
             className={`w-5 h-5 ${
               initiative.priority === 'high'
-                ? 'text-rose-500'
+                ? 'text-danger-500'
                 : initiative.priority === 'medium'
                   ? 'text-yellow-500'
                   : 'text-slate-600 dark:text-slate-500'
@@ -276,7 +276,7 @@ const EffortImpactMatrix: React.FC<{ initiatives: Initiative[]; isPolish: boolea
     'high-low': {
       en: 'Avoid',
       pl: 'Unikaj',
-      color: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20',
+      color: 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/20',
     },
   };
 
@@ -421,9 +421,9 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
   // Error state
   if (error) {
     return (
-      <div className="bg-rose-50 dark:bg-rose-500/10 rounded-lg p-4 text-center">
-        <AlertCircle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
-        <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
+      <div className="bg-danger-50 dark:bg-danger-500/10 rounded-lg p-4 text-center">
+        <AlertCircle className="w-8 h-8 text-danger-500 mx-auto mb-2" />
+        <p className="text-sm text-danger-600 dark:text-danger-400">{error}</p>
       </div>
     );
   }

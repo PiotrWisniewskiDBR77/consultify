@@ -207,7 +207,7 @@ const ItemRow: React.FC<ItemRowProps> = ({ children, onRemove, color, badge }) =
       </span>
       <button
         onClick={onRemove}
-        className="text-slate-600 hover:text-rose-500 transition-colors shrink-0"
+        className="text-slate-600 hover:text-danger-500 transition-colors shrink-0"
       >
         <X size={12} />
       </button>
