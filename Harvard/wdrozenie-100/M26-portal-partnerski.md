@@ -108,14 +108,14 @@ REALNE: connection/connect, referrals (tools/analytics/campaign-links), earnings
 | L-06 | resource download bez partner-org scope | W-01 | `partners.routes.ts` resource download | P2 | 3 | **ZAMKNIĘTA 2026-06-17 `d574ccac14`** (D-03) — shared-catalog by design; gate `requirePartnerOrgId`+`min_partner_tier`; audit z `partner_org_id`+`user_id` już obecny; udokumentowane komentarzem. |
 | L-07 | duplikat API surface legacy vs v8 earnings | W-01 | `/api/partners/earnings` vs `/api/v8/partner/earnings-summary` | P2 | 3/4 | **NAPRAWIONA 2026-06-17 `d574ccac14`** — legacy `@deprecated` + nagłówki `Deprecation`/`Link`→v8 (RFC 8594). Usunięcie po migracji 2 callerów FE (`PartnerRuntimeSummaryStrip:86`,`EarningsSection:304`). |
 | L-08 | schema drift na prod (5 migracji partner) | W-01,W-06 | prod 2026-05-18 < migracje partner | P1 env | 3 | **UDOKUMENTOWANE 2026-06-17** — runbook `M26_SCHEMA_DRIFT_RUNBOOK.md` (dry-run→verify→apply→verify). Migracja prod = Piotr (centerbeam, za zgodą), NIE agent. |
-| L-09 | `PARTNER_SELF_CONNECT_ENABLED` default false | W-01 | flaga | decyzja | 3 | **D-02 — opcje+rekom `_DECYZJE_RUNDA3.md` #10 (rekom: OFF w v1)** |
-| L-10 | 5+ stubów Client Management | W-01,W-05 | `partners.routes.ts:1354,1367,1420,1437,1454,1903,2195` | decyzja | 1/3 | **D-01 — opcje+rekom `_DECYZJE_RUNDA3.md` #9 (rekom: DP-5 flaga+„wkrótce")** |
+| L-09 | `PARTNER_SELF_CONNECT_ENABLED` default false | W-01 | flaga (default false) | decyzja | 3 | **ZAMKNIĘTA 2026-06-17 — DECYZJA PIOTRA: OFF w v1, self-connect → v1.1; flaga już default false (zgodna), brak zmiany kodu** |
+| L-10 | 5+ stubów Client Management | W-01,W-05 | `partners.routes.ts:1354,1367,1420,1437,1454,1903,2195` | decyzja | 1/3 | **ZAMKNIĘTA 2026-06-17 `901f042212` — DP-5 wykonane**: serwer `featureNotAvailable` 503 (honest); FE `PartnerPortalView` „Add Organization"→disabled+„Wkrótce", martwy „Add New Client" quick action usunięty; `ClientAccessView` już pokazuje „Wkrótce dostępne". /stats,/licenses,/tiers,/access-links = brak callera FE. Klucz `partner.common.comingSoon`→H2. Wizual 🟦 (partner auth) |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
 | D-01 | 5+ stubów Client Management | budować / **trzymać jako jawny `FEATURE_NOT_AVAILABLE` stub** | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce" (stuby Client Management)** |
-| D-02 | `PARTNER_SELF_CONNECT_ENABLED` na prod | włączyć (self-connect) / inny proces onboardingu | Piotr | TBD | otwarta (modułowa) |
+| D-02 | `PARTNER_SELF_CONNECT_ENABLED` na prod | włączyć (self-connect) / inny proces onboardingu | Piotr | 2026-06-17 | **ROZSTRZYGNIĘTE → OFF w v1, self-connect → v1.1 (flaga zostaje false)** |
 | D-03 | resource shared-catalog | zostaw shared + audit log / ogranicz per partner-tier | Piotr | TBD | otwarta (modułowa) |
 
 ### 05 · Flagi/rollout — `PARTNER_SELF_CONNECT_ENABLED` (false), `PARTNER_DEMO_SEED_ENABLED` (false, no-op prod), `DEMO_WRITES_ENABLED` (false), `APP_BASE_URL`. Moduł poza `betaAccess.ts` (route `requireAuth`, ochrona serwer-first celowa).
