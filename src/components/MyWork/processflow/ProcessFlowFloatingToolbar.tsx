@@ -66,6 +66,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           onClick={onRename}
           disabled={locked}
           title={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
+          aria-label={isPl ? 'Zmień nazwę' : 'Rename'}
         >
           <Edit3 size={14} />
         </button>
@@ -78,6 +79,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           onClick={onDuplicate}
           disabled={locked}
           title={isPl ? 'Duplikuj' : 'Duplicate'}
+          aria-label={isPl ? 'Duplikuj' : 'Duplicate'}
         >
           <Copy size={14} />
         </button>
@@ -90,6 +92,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           onClick={onInsertBetween}
           disabled={locked}
           title={isPl ? 'Wstaw między' : 'Insert between'}
+          aria-label={isPl ? 'Wstaw między' : 'Insert between'}
         >
           <GitMerge size={14} />
         </button>
@@ -101,6 +104,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           className={`${BTN} relative`}
           onClick={() => setShowLinks((v) => !v)}
           title={isPl ? 'Powiązania' : 'Artifact links'}
+          aria-label={isPl ? 'Powiązania' : 'Artifact links'}
         >
           <Link2 size={14} />
           {linkCount > 0 && (
@@ -117,6 +121,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           className={BTN}
           onClick={onOpenChat}
           title={isPl ? 'Zapytaj AI' : 'Ask AI'}
+          aria-label={isPl ? 'Zapytaj AI' : 'Ask AI'}
         >
           <MessageSquare size={14} />
         </button>
@@ -131,6 +136,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           onClick={onDelete}
           disabled={locked}
           title={isPl ? 'Usuń' : 'Delete'}
+          aria-label={isPl ? 'Usuń' : 'Delete'}
         >
           <Trash2 size={14} />
         </button>

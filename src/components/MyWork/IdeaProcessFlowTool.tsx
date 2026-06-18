@@ -1993,7 +1993,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               type="button"
               onClick={() => setShowCoach(false)}
-              className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-slate-600 hover:text-slate-800 dark:hover:text-slate-300"
+              aria-label={isPl ? 'Zamknij' : 'Close'}
             >
               <X size={14} />
             </button>
@@ -2118,7 +2119,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               type="button"
               onClick={() => setShowSummary(false)}
-              className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-slate-600 hover:text-slate-800 dark:hover:text-slate-300"
+              aria-label={isPl ? 'Zamknij' : 'Close'}
             >
               <X size={14} />
             </button>
@@ -2383,6 +2385,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               onClick={() => setShowValidationPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+              aria-label={isPl ? 'Zamknij' : 'Close'}
             >
               <X size={14} className="text-slate-600" />
             </button>
@@ -2409,6 +2412,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               onClick={() => setShowAIPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+              aria-label={isPl ? 'Zamknij' : 'Close'}
             >
               <X size={14} className="text-slate-600" />
             </button>
@@ -2439,6 +2443,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               onClick={() => setShowReadbackPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+              aria-label={isPl ? 'Zamknij' : 'Close'}
             >
               <X size={14} className="text-slate-600" />
             </button>
@@ -2464,6 +2469,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               onClick={() => setShowPropertiesPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+              aria-label={isPl ? 'Zamknij' : 'Close'}
             >
               <X size={14} className="text-slate-600" />
             </button>
@@ -2591,7 +2597,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               <button
                 type="button"
                 onClick={() => setMetricsEditorNodeId(null)}
-                className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-navy-800 dark:hover:text-slate-200"
+                className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-navy-800 dark:hover:text-slate-200"
+                aria-label={isPl ? 'Zamknij' : 'Close'}
               >
                 <X size={14} />
               </button>

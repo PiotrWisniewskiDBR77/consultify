@@ -400,6 +400,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={!canUndo || locked}
               className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-30"
               title={isPl ? 'Cofnij (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
+              aria-label={isPl ? 'Cofnij' : 'Undo'}
             >
               <Undo2 size={14} />
             </button>
@@ -409,6 +410,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={!canRedo || locked}
               className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-30"
               title={isPl ? 'Ponów (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
+              aria-label={isPl ? 'Ponów' : 'Redo'}
             >
               <Redo2 size={14} />
             </button>
