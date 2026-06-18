@@ -651,7 +651,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                     <div
                       className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                         isVisible
-                          ? 'bg-primary-500 border-primary-500'
+                          ? 'bg-navy-900 border-navy-900'
                           : 'border-slate-300 dark:border-navy-600'
                       }`}
                     >
@@ -776,7 +776,7 @@ const FieldMultiSelect: React.FC<{
               <div
                 className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
                   isSelected
-                    ? 'bg-primary-500 border-primary-500'
+                    ? 'bg-navy-900 border-navy-900'
                     : 'border-slate-300 dark:border-navy-600'
                 }`}
               >

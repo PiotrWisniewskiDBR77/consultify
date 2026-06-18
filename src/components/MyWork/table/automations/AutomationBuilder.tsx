@@ -216,7 +216,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           type="button"
           onClick={() => setEnabled((v) => !v)}
           className={`relative h-6 w-11 rounded-full transition-colors ${
-            enabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+            enabled ? 'bg-navy-900' : 'bg-gray-300 dark:bg-gray-600'
           }`}
         >
           <span

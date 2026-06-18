@@ -267,7 +267,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
             disabled={locked}
             className="sr-only peer"
           />
-          <div className="w-9 h-5 rounded-full bg-slate-200 dark:bg-navy-700 peer-checked:bg-primary-500 peer-disabled:opacity-50 peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
+          <div className="w-9 h-5 rounded-full bg-slate-200 dark:bg-navy-700 peer-checked:bg-navy-900 peer-disabled:opacity-50 peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
           <span className="ml-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
             {isPl ? 'Pomijaj weekendy' : 'Skip weekends'}
           </span>

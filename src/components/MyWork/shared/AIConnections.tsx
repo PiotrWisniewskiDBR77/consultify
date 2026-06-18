@@ -128,7 +128,7 @@ export const AIConnections: React.FC<AIConnectionsProps> = ({ entityType, entity
                 </div>
                 <div className="w-8 h-1 rounded-full bg-slate-200 dark:bg-navy-700 shrink-0">
                   <div
-                    className="h-full rounded-full bg-primary-500"
+                    className="h-full rounded-full bg-navy-900 dark:bg-slate-300"
                     style={{ width: `${item.strength * 100}%` }}
                   />
                 </div>

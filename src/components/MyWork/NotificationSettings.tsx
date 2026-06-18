@@ -101,7 +101,7 @@ const SettingToggle: React.FC<{
       <button
         onClick={() => onChange(!value)}
         className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-          value ? 'bg-primary-600' : 'bg-slate-200 dark:bg-white/10'
+          value ? 'bg-navy-900' : 'bg-slate-200 dark:bg-white/10'
         }`}
       >
         <motion.div

@@ -237,7 +237,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                               disabled={readOnly}
                               className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
                                 reminder.enabled
-                                  ? 'bg-primary-500 border-primary-500 text-white'
+                                  ? 'bg-navy-900 border-navy-900 text-white'
                                   : 'border-slate-300 dark:border-navy-600'
                               }`}
                             >
@@ -348,7 +348,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                               <div
                                 className={`w-8 h-5 rounded-full transition-colors relative ${
                                   reminder.inAppNotification
-                                    ? 'bg-primary-500'
+                                    ? 'bg-navy-900'
                                     : 'bg-slate-300 dark:bg-navy-600'
                                 }`}
                               >

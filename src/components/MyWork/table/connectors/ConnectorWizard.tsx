@@ -745,7 +745,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={() => setScheduleEnabled((v) => !v)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            scheduleEnabled ? 'bg-primary-500' : 'bg-slate-200 dark:bg-navy-700'
+            scheduleEnabled ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
           }`}
         >
           <span
@@ -879,7 +879,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             {idx > 0 && (
               <div
                 className={`flex-1 h-px ${
-                  isDone ? 'bg-primary-500' : 'bg-slate-200 dark:bg-navy-700'
+                  isDone ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
                 }`}
               />
             )}
@@ -892,7 +892,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
                 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors
                 ${
                   isActive
-                    ? 'bg-primary-500 text-white'
+                    ? 'bg-navy-900 text-white'
                     : isDone
                       ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 cursor-pointer hover:bg-primary-100'
                       : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'

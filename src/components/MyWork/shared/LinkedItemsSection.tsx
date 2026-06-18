@@ -312,7 +312,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                           onClick={() => setSelectedType('all')}
                           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                             selectedType === 'all'
-                              ? 'bg-primary-500 text-white'
+                              ? 'bg-navy-900 text-white'
                               : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
                           }`}
                         >
@@ -324,7 +324,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                             onClick={() => setSelectedType(type)}
                             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                               selectedType === type
-                                ? 'bg-primary-500 text-white'
+                                ? 'bg-navy-900 text-white'
                                 : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
                             }`}
                           >

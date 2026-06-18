@@ -55,7 +55,7 @@ const PRIORITIES = [
 const STATUSES = [
   { value: 'todo', label: { en: 'To Do', pl: 'Do zrobienia' }, color: 'bg-slate-400' },
   { value: 'in_progress', label: { en: 'In Progress', pl: 'W trakcie' }, color: 'bg-blue-500' },
-  { value: 'review', label: { en: 'Review', pl: 'Przegląd' }, color: 'bg-primary-500' },
+  { value: 'review', label: { en: 'Review', pl: 'Przegląd' }, color: 'bg-sky-500' },
   { value: 'done', label: { en: 'Done', pl: 'Ukończone' }, color: 'bg-emerald-500' },
   { value: 'blocked', label: { en: 'Blocked', pl: 'Zablokowane' }, color: 'bg-danger-500' },
 ];

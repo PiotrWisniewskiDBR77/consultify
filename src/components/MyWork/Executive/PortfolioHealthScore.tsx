@@ -354,7 +354,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                   label={t('executive.health.capacity', 'Team Capacity')}
                   value={breakdown!.capacity}
                   icon={<CheckCircle2 size={16} className="text-slate-900 dark:text-white" />}
-                  color="bg-primary-500"
+                  color="bg-navy-900"
                 />
               )}
               {breakdown!.risk > 0 && (

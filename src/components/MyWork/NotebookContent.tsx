@@ -2027,7 +2027,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     >
                       <div className="flex items-start gap-2">
                         <span className="text-lg leading-none mt-0.5 shrink-0">
-                          {p.icon || matCfg.icon}
+                          {p.icon && /\p{Emoji}/u.test(p.icon) ? p.icon : matCfg.icon}
                         </span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
@@ -2382,7 +2382,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         className="text-3xl mt-1 cursor-default select-none"
                         title={isPolish ? 'Ikona strony' : 'Page icon'}
                       >
-                        {activePage.icon ||
+                        {(activePage.icon && /\p{Emoji}/u.test(activePage.icon)
+                          ? activePage.icon
+                          : null) ||
                           (
                             MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] ||
                             MATURITY_CONFIG.seed

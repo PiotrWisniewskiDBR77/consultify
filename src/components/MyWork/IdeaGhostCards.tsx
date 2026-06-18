@@ -170,7 +170,7 @@ export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
                   {ghost.text}
                 </div>
               </div>
-              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-navy-900 text-white flex items-center justify-center dark:bg-white dark:text-navy-950 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
                 <Plus size={10} />
               </div>
               <div className="mt-1.5 text-[8px] text-primary-400 flex items-center gap-1">

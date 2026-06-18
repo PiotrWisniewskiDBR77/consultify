@@ -543,7 +543,7 @@ const DecisionTableRow: React.FC<{
             h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-primary-500 border-primary-500 text-white opacity-100'
+                ? 'bg-navy-900 border-navy-900 text-white opacity-100'
                 : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
             }
           `}
@@ -820,7 +820,7 @@ const AwaitingDecisionTableRow: React.FC<{
             h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-primary-500 border-primary-500 text-white opacity-100'
+                ? 'bg-navy-900 border-navy-900 text-white opacity-100'
                 : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
             }
           `}
@@ -1890,7 +1890,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                           h-4 w-4 rounded-[4px] border flex items-center justify-center transition-colors
                           ${
                             allSelected
-                              ? 'bg-primary-500 border-primary-500 text-white'
+                              ? 'bg-navy-900 border-navy-900 text-white'
                               : someSelected
                                 ? 'bg-primary-500/50 border-primary-500 text-white'
                                 : 'border-slate-300 dark:border-white/[0.10] hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'

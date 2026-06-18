@@ -257,7 +257,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
         fill: 'from-amber-400 to-amber-500',
       },
       purple: {
-        bg: 'bg-primary-500',
+        bg: 'bg-navy-900',
         text: 'text-primary-600 dark:text-primary-400',
         border: 'border-primary-300 dark:border-primary-600',
         fill: 'from-primary-400 to-primary-500',

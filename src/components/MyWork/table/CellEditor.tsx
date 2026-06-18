@@ -350,7 +350,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
               <span
                 className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
                   isSelected
-                    ? 'bg-primary-500 border-primary-500'
+                    ? 'bg-navy-900 border-navy-900'
                     : 'border-slate-300 dark:border-navy-600'
                 }`}
               >

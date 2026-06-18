@@ -198,9 +198,9 @@ function ModuleLinkSection({
         <div className="flex items-center gap-4 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-navy-800">
           <span className="text-[10px] text-slate-500">
             {status.linked ? (
-              <span className="text-emerald-600">{isPl ? 'Aktywne' : 'Active'}</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">{isPl ? 'Aktywne' : 'Active'}</span>
             ) : (
-              <span className="text-slate-600">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
             )}
           </span>
           {status.lastSync && (

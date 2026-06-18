@@ -738,7 +738,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
       label: t('myWork.projectNotifications', 'Project'),
       icon: Building2,
       count: counts.project,
-      activeColor: 'bg-primary-500 text-white',
+      activeColor: 'bg-navy-900 text-white dark:bg-white dark:text-navy-950',
     },
     {
       key: 'personal',

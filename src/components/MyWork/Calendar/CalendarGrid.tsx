@@ -18,7 +18,7 @@ const SOURCE_ICONS: Partial<Record<CalendarEventSource, string>> = {
 
 const CONSULTIFY_BADGE = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="24" height="24" rx="6" fill="#6d28d9" />
+    <rect width="24" height="24" rx="6" fill="#1e3a5f" />
     <text x="12" y="17" textAnchor="middle" fontSize="14" fontWeight="700" fill="white">
       C
     </text>

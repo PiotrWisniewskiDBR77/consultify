@@ -138,7 +138,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                 onClick={() => onDateChange(new Date(year, month, day))}
                 className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
                   isSelected
-                    ? 'bg-primary-500 text-white'
+                    ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
                     : isToday
                       ? 'bg-primary-500/10 text-primary-500 font-bold'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'

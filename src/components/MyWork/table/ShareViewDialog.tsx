@@ -92,7 +92,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
             onClick={handleToggleShare}
             disabled={loading}
             className={`w-10 h-5 rounded-full transition-colors ${
-              shared ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'
+              shared ? 'bg-navy-900' : 'bg-slate-300 dark:bg-navy-600'
             }`}
           >
             <div

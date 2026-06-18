@@ -138,7 +138,7 @@ const ForecastDay: React.FC<{
 
       {/* Today indicator */}
       {isToday && (
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full border-2 border-white dark:border-navy-950" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-navy-900 rounded-full border-2 border-white dark:border-navy-950" />
       )}
     </motion.div>
   );

@@ -593,7 +593,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
             <div
               className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
                 msg.role === 'user'
-                  ? 'bg-primary-600 text-white rounded-br-md'
+                  ? 'bg-navy-900 text-white rounded-br-md'
                   : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-bl-md'
               }`}
             >

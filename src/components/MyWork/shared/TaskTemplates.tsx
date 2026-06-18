@@ -678,7 +678,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                                   px-2 py-1 rounded text-xs font-medium transition-colors
                                   ${
                                     formData.recurringPattern?.daysOfWeek?.includes(day.value)
-                                      ? 'bg-primary-500 text-white'
+                                      ? 'bg-navy-900 text-white'
                                       : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-600'
                                   }
                                 `}

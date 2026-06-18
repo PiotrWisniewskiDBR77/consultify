@@ -125,7 +125,7 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
                 </div>
               </div>
               {isActive && (
-                <div className="ml-auto mt-0.5 w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0" />
+                <div className="ml-auto mt-0.5 w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white shrink-0" />
               )}
             </button>
           );

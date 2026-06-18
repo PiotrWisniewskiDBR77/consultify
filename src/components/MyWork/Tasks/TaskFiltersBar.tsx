@@ -246,7 +246,7 @@ const PMOCategoryFilter: React.FC<{
         <Layers size={14} />
         <span>PMO Category</span>
         {hasSelection && (
-          <span className="ml-1 px-1.5 py-0.5 bg-primary-500 text-white text-[10px] rounded-full">
+          <span className="ml-1 px-1.5 py-0.5 bg-navy-900 text-white text-[10px] rounded-full dark:bg-white dark:text-navy-950">
             {selected.length}
           </span>
         )}

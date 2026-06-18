@@ -528,13 +528,13 @@ const urgencyConfig: Record<
 > = {
   critical: {
     icon: AlertTriangle,
-    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-danger-600 dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent dark:[&>svg]:text-danger-300',
+    pill: 'border border-danger-200 bg-danger-100 text-danger-800 [&>svg]:text-danger-700 dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent dark:[&>svg]:text-danger-300',
     label: 'Critical',
     heatColor: 'border-l-danger-500',
   },
   high: {
     icon: AlertCircle,
-    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-amber-600 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent dark:[&>svg]:text-amber-300',
+    pill: 'border border-amber-200 bg-amber-100 text-amber-800 [&>svg]:text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent dark:[&>svg]:text-amber-300',
     label: 'High',
     heatColor: 'border-l-amber-500',
   },
@@ -2444,7 +2444,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             }}
             className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all ${
               isSelected
-                ? 'bg-primary-500 border-primary-500 text-white opacity-100'
+                ? 'bg-navy-900 border-navy-900 text-white opacity-100'
                 : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
             }`}
           >
@@ -2765,7 +2765,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             onClick={() => handleSelectAll(!allSelected)}
             className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors ${
               allSelected
-                ? 'bg-primary-500 border-primary-500 text-white'
+                ? 'bg-navy-900 border-navy-900 text-white'
                 : someSelected
                   ? 'bg-primary-500/50 border-primary-500 text-white'
                   : 'border-slate-300 text-transparent hover:border-primary-400 hover:text-slate-400 dark:border-white/[0.10] dark:text-slate-400'
@@ -2964,7 +2964,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 }}
                 className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${
                   isSelected
-                    ? 'bg-primary-500 border-primary-500 text-white'
+                    ? 'bg-navy-900 border-navy-900 text-white'
                     : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                 }`}
                 aria-label={

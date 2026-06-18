@@ -96,7 +96,7 @@ interface DependenciesSectionProps {
 const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-blue-500',
-  review: 'bg-primary-500',
+  review: 'bg-sky-500',
   done: 'bg-emerald-500',
   blocked: 'bg-danger-500',
   cancelled: 'bg-slate-300',

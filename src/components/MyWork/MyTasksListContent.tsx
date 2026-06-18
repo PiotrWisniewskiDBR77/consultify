@@ -158,14 +158,16 @@ const getPriorityConfig = (priority?: string) => {
     case 'urgent':
     case 'critical':
       return {
-        color: 'text-slate-700 dark:text-slate-200',
-        bg: 'bg-slate-400',
+        color: 'text-danger-800 dark:text-danger-400',
+        badgeClass: 'bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-md px-1.5 py-0.5',
+        bg: 'bg-danger-50',
         dot: 'bg-danger-500',
         label: 'Critical',
       };
     case 'high':
       return {
         color: 'text-slate-700 dark:text-slate-200',
+        badgeClass: '',
         bg: 'bg-amber-500',
         dot: 'bg-amber-500',
         label: 'High',
@@ -173,6 +175,7 @@ const getPriorityConfig = (priority?: string) => {
     case 'medium':
       return {
         color: 'text-slate-700 dark:text-slate-200',
+        badgeClass: '',
         bg: 'bg-blue-500',
         dot: 'bg-blue-500',
         label: 'Medium',
@@ -180,6 +183,7 @@ const getPriorityConfig = (priority?: string) => {
     case 'low':
       return {
         color: 'text-slate-500 dark:text-slate-400',
+        badgeClass: '',
         bg: 'bg-slate-400',
         dot: 'bg-slate-400',
         label: 'Low',
@@ -187,6 +191,7 @@ const getPriorityConfig = (priority?: string) => {
     default:
       return {
         color: 'text-slate-500 dark:text-slate-400',
+        badgeClass: '',
         bg: 'bg-slate-400',
         dot: 'bg-slate-400',
         label: 'Normal',
@@ -631,7 +636,7 @@ const TaskTableRow: React.FC<{
             h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-primary-500 border-primary-500 text-white opacity-100'
+                ? 'bg-navy-900 border-navy-900 text-white opacity-100'
                 : 'border-slate-400/75 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 group-hover:border-slate-300 dark:group-hover:border-white/[0.22] group-hover:bg-white/90 dark:group-hover:bg-white/[0.08] group-focus-within:opacity-100 group-focus-within:border-primary-400 group-focus-within:bg-white/90 dark:group-focus-within:bg-white/[0.08] focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035]'
             }
           `}
@@ -730,7 +735,7 @@ const TaskTableRow: React.FC<{
           }}
         >
           <span
-            className={`inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer hover:underline decoration-dotted ${priorityConfig.color}`}
+            className={`inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer ${priorityConfig.badgeClass ? '' : 'hover:underline decoration-dotted'} ${priorityConfig.color} ${priorityConfig.badgeClass}`}
           >
             <span
               className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
@@ -2185,7 +2190,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors
                           ${
                             allSelected
-                              ? 'bg-primary-500 border-primary-500 text-white'
+                              ? 'bg-navy-900 border-navy-900 text-white'
                               : someSelected
                                 ? 'bg-primary-500/50 border-primary-500 text-white'
                                 : 'border-slate-300 dark:border-white/[0.10] hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'

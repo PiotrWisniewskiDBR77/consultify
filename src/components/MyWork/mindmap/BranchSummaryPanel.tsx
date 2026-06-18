@@ -212,7 +212,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
               </section>
               <BulletList
                 items={summary.keyPoints}
-                color="bg-primary-500"
+                color="bg-navy-900"
                 label={isPl ? 'Kluczowe punkty' : 'Key Points'}
               />
               <BulletList

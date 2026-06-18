@@ -405,7 +405,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 className="absolute top-0 bottom-0 w-0.5 bg-primary-500/60 z-20"
                 style={{ left: todayOffset }}
               >
-                <div className="absolute -top-1 -left-1.5 w-3 h-3 rounded-full bg-primary-500" />
+                <div className="absolute -top-1 -left-1.5 w-3 h-3 rounded-full bg-navy-900 dark:bg-white" />
               </div>
             )}
 

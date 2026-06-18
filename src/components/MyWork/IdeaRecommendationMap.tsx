@@ -1321,7 +1321,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* MM-15: Converted indicator */}
         {nodeStatus === 'converted' && data._convertedTo && (
           <div
-            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-primary-500 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm"
+            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-navy-900 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm dark:bg-white dark:text-navy-950"
             title={
               isPl ? `Skonwertowano na: ${data._convertedTo}` : `Converted to: ${data._convertedTo}`
             }

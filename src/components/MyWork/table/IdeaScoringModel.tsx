@@ -255,7 +255,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
               <div className="flex items-center gap-2 pt-1">
                 <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-primary-500 transition-all"
+                    className="h-full rounded-full bg-navy-900 transition-all dark:bg-slate-300"
                     style={{ width: `${Math.min(totalWeight, 100)}%` }}
                   />
                 </div>

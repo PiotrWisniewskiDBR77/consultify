@@ -73,7 +73,7 @@ function getStatusIndicator(status: OperationStatus): React.ReactNode {
       );
     case 'running':
       return (
-        <div className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
+        <div className="w-5 h-5 rounded-full bg-navy-900 flex items-center justify-center">
           <Loader2 size={12} className="text-white animate-spin" />
         </div>
       );
@@ -121,7 +121,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
     ? 'bg-danger-500'
     : stats.allDone
       ? 'bg-emerald-500'
-      : 'bg-primary-500';
+      : 'bg-navy-900';
 
   const statusLabel = stats.allDone
     ? stats.hasErrors
@@ -254,7 +254,6 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
       {/* Error summary */}
       {stats.allDone && stats.hasErrors && (
 
-        <div className="px-4 py-3 border-t border-danger-200/60 dark:border-danger-800/40 bg-danger-50/50 dark:bg-danger-900/20">
         <div className="px-4 py-3 border-t border-danger-200/60 dark:border-danger-800/40 bg-danger-50/50 dark:bg-danger-950/20">
           <p className="text-xs text-danger-700 dark:text-danger-300 font-medium">
             {isPl

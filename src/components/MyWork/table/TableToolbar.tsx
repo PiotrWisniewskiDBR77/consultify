@@ -607,7 +607,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           >
             <v.icon size={12} />
             {viewLayout === v.id && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-primary-500" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-navy-900 dark:bg-white" />
             )}
           </button>
         ))}

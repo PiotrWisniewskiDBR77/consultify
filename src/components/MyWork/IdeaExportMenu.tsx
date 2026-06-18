@@ -684,7 +684,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
               type="button"
               onClick={handleImport}
               disabled={!importPayload.trim() || !onImportGraph}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
             >
               <Download size={14} />
               {isPl ? 'Importuj do workspace' : 'Import into workspace'}

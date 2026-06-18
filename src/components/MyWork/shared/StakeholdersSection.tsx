@@ -401,7 +401,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                     disabled={readOnly}
                                                     className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
                                                       isActive
-                                                        ? 'bg-primary-500 text-white'
+                                                        ? 'bg-navy-900 text-white'
                                                         : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-600'
                                                     } ${readOnly ? 'cursor-not-allowed' : ''}`}
                                                   >

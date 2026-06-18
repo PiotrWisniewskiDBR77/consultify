@@ -66,9 +66,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       defaultIcon: <AlertTriangle size={20} />,
     },
     default: {
-      iconBg: 'bg-primary-100 dark:bg-primary-500/15',
-      iconColor: 'text-primary-600 dark:text-primary-400',
-      confirmBg: 'bg-primary-600 hover:bg-primary-700 focus:ring-primary-500/40',
+      iconBg: 'bg-slate-100 dark:bg-white/10',
+      iconColor: 'text-slate-600 dark:text-slate-300',
+      confirmBg: 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus:ring-navy-900/40',
       defaultIcon: null,
     },
   };

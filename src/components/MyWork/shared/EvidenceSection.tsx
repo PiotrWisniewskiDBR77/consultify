@@ -315,7 +315,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                     }
                     disabled={readOnly}
                     className={`w-10 h-5 rounded-full transition-colors ${
-                      requiresAcceptance ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'
+                      requiresAcceptance ? 'bg-navy-900' : 'bg-slate-300 dark:bg-navy-600'
                     }`}
                   >
                     <div

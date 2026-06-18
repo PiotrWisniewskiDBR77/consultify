@@ -100,7 +100,7 @@ const STATUS_COLORS: Record<NodeStatusType, string> = {
   exploring: 'bg-blue-500',
   validated: 'bg-emerald-500',
   ready_to_convert: 'bg-amber-500',
-  converted: 'bg-primary-500',
+  converted: 'bg-sky-500',
 };
 
 export const StatusDot: React.FC<StatusDotProps> = ({ status, size = 6 }) => (

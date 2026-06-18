@@ -133,7 +133,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
       }}
       className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
         checked
-          ? 'bg-primary-500 border-primary-500'
+          ? 'bg-navy-900 border-navy-900'
           : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'
       }`}
     >

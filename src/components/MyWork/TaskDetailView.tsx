@@ -148,8 +148,8 @@ const STATUS_CONFIG = {
   },
   review: {
     label: { en: 'Review', pl: 'Przegląd' },
-    color: 'bg-primary-500',
-    textColor: 'text-primary-500',
+    color: 'bg-sky-500',
+    textColor: 'text-sky-600',
     icon: Edit3,
   },
   done: {
@@ -5996,7 +5996,7 @@ Return ONLY the final comment text.`;
                                   case 'status_change':
                                     return 'bg-blue-500 text-white';
                                   case 'assignment':
-                                    return 'bg-primary-500 text-white';
+                                    return 'bg-sky-500 text-white';
                                   case 'comment':
                                     return 'bg-amber-500 text-white';
                                   case 'edit':

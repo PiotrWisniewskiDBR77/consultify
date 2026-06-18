@@ -700,9 +700,9 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   }}
                   className={`flex h-4 w-4 items-center justify-center rounded-[4px] border text-[10px] transition-all ${
                     allSelected
-                      ? 'border-primary-500 bg-primary-500 text-white'
+                      ? 'border-navy-900 bg-navy-900 text-white'
                       : someSelected
-                        ? 'border-primary-500 bg-primary-500/50 text-white'
+                        ? 'border-navy-900 bg-navy-900/50 text-white'
                         : 'border-slate-400/70 bg-white/70 text-transparent opacity-20 hover:border-primary-500 hover:bg-white hover:text-slate-500 hover:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.03] dark:hover:bg-white/[0.07]'
                   }`}
                   title={isPolish ? 'Zaznacz widoczne' : 'Select visible'}

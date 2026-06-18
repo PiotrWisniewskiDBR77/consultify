@@ -147,7 +147,7 @@ const CheckboxDisplay: React.FC<{ value: unknown; onChange?: (v: unknown) => voi
         }}
         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
           checked
-            ? 'bg-primary-500 border-primary-500 text-white'
+            ? 'bg-navy-900 border-navy-900 text-white'
             : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'
         }`}
       >
