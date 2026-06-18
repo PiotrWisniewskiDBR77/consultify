@@ -1,0 +1,70 @@
+{
+  "ai.observations": {
+    "pl": "Obserwacje i ryzyka",
+    "en": "Observations & risks"
+  },
+  "ai.recommendations": {
+    "pl": "Rekomendacje",
+    "en": "Recommendations"
+  },
+  "ai.optimization": {
+    "pl": "Uzasadnienie optymalizacji",
+    "en": "Optimization reasoning"
+  },
+  "ai.applyProposedSchedule": {
+    "pl": "Zastosuj proponowany harmonogram",
+    "en": "Apply proposed schedule"
+  },
+  "aiChat.menu.toast.docDeleted": {
+    "pl": "Usunięto: {{name}}",
+    "en": "Deleted: {{name}}"
+  },
+  "chat.header": {
+    "pl": "Asystent AI",
+    "en": "AI Assistant"
+  },
+  "chat.subHeader": {
+    "pl": "Zadaj pytanie lub poproś o pomoc",
+    "en": "Ask a question or request help"
+  },
+  "comingSoon": {
+    "pl": "Już wkrótce",
+    "en": "Coming soon"
+  },
+  "demo.indicator": {
+    "pl": "Tryb demo",
+    "en": "Demo mode"
+  },
+  "demo.badge.getFullAccess": {
+    "pl": "Uzyskaj pełny dostęp",
+    "en": "Get full access"
+  },
+  "step1.months": {
+    "pl": "miesięcy",
+    "en": "months"
+  },
+  "execution.rollout.deleteConfirm.body": {
+    "pl": "„{{title}}” zostanie trwale usunięty. Tej operacji nie można cofnąć.",
+    "en": "\"{{title}}\" will be permanently removed. This cannot be undone."
+  },
+  "kimi.tabele.preview.kpiSection": {
+    "pl": "Metryki tabeli",
+    "en": "Table metrics"
+  },
+  "kimi.tabele.preview.emptyRationale": {
+    "pl": "Do tego podglądu nie dołączono jeszcze uzasadnienia AI.",
+    "en": "No AI rationale has been attached to this preview yet."
+  },
+  "partner.home.contact.role": {
+    "pl": "Opiekun sukcesu partnera",
+    "en": "Partner Success Manager"
+  },
+  "prezentacje.reopenSummary": {
+    "pl": "Prezentacja „{{title}}” — {{count}} slajdów.",
+    "en": "Presentation \"{{title}}\" — {{count}} slides."
+  },
+  "showcase.common.whatYouGet": {
+    "pl": "Co otrzymasz",
+    "en": "What you get"
+  }
+}

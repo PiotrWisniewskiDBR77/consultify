@@ -1,0 +1,414 @@
+{
+  "admin.desktopOnly.body": {
+    "pl": "{{surface}} jest zoptymalizowany na desktop. Na telefonie część układu (tabele, podgląd boczny) może być trudna w obsłudze.",
+    "en": "{{surface}} is optimized for desktop. On a phone, part of the layout (tables, side preview) may be hard to use."
+  },
+  "admin.select": {
+    "pl": "Wybierz…",
+    "en": "Select…"
+  },
+  "intelligence.analyzing": {
+    "pl": "Analizowanie…",
+    "en": "Analyzing…"
+  },
+  "intelligence.autoGenerate": {
+    "pl": "Wygeneruj automatycznie",
+    "en": "Auto-generate"
+  },
+  "intelligence.detectPatterns": {
+    "pl": "Wykryj wzorce",
+    "en": "Detect patterns"
+  },
+  "intelligence.detectedPatternsLabel": {
+    "pl": "Wykryte wzorce",
+    "en": "Detected patterns"
+  },
+  "intelligence.differentlyPlaceholder": {
+    "pl": "Co zrobilibyśmy inaczej następnym razem?",
+    "en": "What would we do differently next time?"
+  },
+  "intelligence.differentlyTitle": {
+    "pl": "Co zrobić inaczej",
+    "en": "What to do differently"
+  },
+  "intelligence.knowledgeGraphSharing": {
+    "pl": "Udostępnianie grafu wiedzy",
+    "en": "Knowledge graph sharing"
+  },
+  "intelligence.knowledgeGraphSimilarity": {
+    "pl": "Podobieństwo grafu wiedzy",
+    "en": "Knowledge graph similarity"
+  },
+  "intelligence.knowledgeGraphTitle": {
+    "pl": "Graf wiedzy",
+    "en": "Knowledge graph"
+  },
+  "intelligence.learnedPlaceholder": {
+    "pl": "Czego się nauczyliśmy z tej inicjatywy?",
+    "en": "What did we learn from this initiative?"
+  },
+  "intelligence.learnedTitle": {
+    "pl": "Czego się nauczyliśmy",
+    "en": "What we learned"
+  },
+  "intelligence.noPatterns": {
+    "pl": "Brak wzorców",
+    "en": "No patterns"
+  },
+  "intelligence.noPatternsDesc": {
+    "pl": "Nie wykryto jeszcze żadnych wzorców.",
+    "en": "No patterns detected yet."
+  },
+  "intelligence.patternsTitle": {
+    "pl": "Wzorce",
+    "en": "Patterns"
+  },
+  "intelligence.surprisedPlaceholder": {
+    "pl": "Co nas zaskoczyło?",
+    "en": "What surprised us?"
+  },
+  "intelligence.surprisedTitle": {
+    "pl": "Co nas zaskoczyło",
+    "en": "What surprised us"
+  },
+  "intelligence.title": {
+    "pl": "Inteligencja",
+    "en": "Intelligence"
+  },
+  "intelligence.viewRelated": {
+    "pl": "Zobacz powiązane",
+    "en": "View related"
+  },
+  "relation.BLOCKS": {
+    "pl": "Blokuje",
+    "en": "Blocks"
+  },
+  "relation.CHILD_OF": {
+    "pl": "Element podrzędny",
+    "en": "Child of"
+  },
+  "relation.DEPENDS_ON": {
+    "pl": "Zależy od",
+    "en": "Depends on"
+  },
+  "relation.PARENT_OF": {
+    "pl": "Element nadrzędny",
+    "en": "Parent of"
+  },
+  "relation.RELATED_TO": {
+    "pl": "Powiązane z",
+    "en": "Related to"
+  },
+  "role.CONTRIBUTOR": {
+    "pl": "Współtwórca",
+    "en": "Contributor"
+  },
+  "role.OBSERVER": {
+    "pl": "Obserwator",
+    "en": "Observer"
+  },
+  "role.REVIEWER": {
+    "pl": "Recenzent",
+    "en": "Reviewer"
+  },
+  "role.SME": {
+    "pl": "Ekspert dziedzinowy",
+    "en": "SME"
+  },
+  "role.STAKEHOLDER": {
+    "pl": "Interesariusz",
+    "en": "Stakeholder"
+  },
+  "status.APPROVED": {
+    "pl": "Zatwierdzona",
+    "en": "Approved"
+  },
+  "status.ARCHIVED": {
+    "pl": "Zarchiwizowana",
+    "en": "Archived"
+  },
+  "status.CANCELLED": {
+    "pl": "Anulowana",
+    "en": "Cancelled"
+  },
+  "status.DONE": {
+    "pl": "Zakończona",
+    "en": "Done"
+  },
+  "status.DRAFT": {
+    "pl": "Szkic",
+    "en": "Draft"
+  },
+  "status.EXECUTING": {
+    "pl": "W realizacji",
+    "en": "Executing"
+  },
+  "status.PLANNING": {
+    "pl": "Planowanie",
+    "en": "Planning"
+  },
+  "status.REVIEW": {
+    "pl": "Przegląd",
+    "en": "Review"
+  },
+  "superadmin.aiCoreRuntime.auditTrailTitle": {
+    "pl": "Ślad audytowy",
+    "en": "Audit trail"
+  },
+  "superadmin.aiCoreRuntime.fields.contract": {
+    "pl": "Kontrakt",
+    "en": "Contract"
+  },
+  "superadmin.aiCoreRuntime.fields.healthy": {
+    "pl": "Sprawny",
+    "en": "Healthy"
+  },
+  "superadmin.aiCoreRuntime.fields.layers": {
+    "pl": "Warstwy",
+    "en": "Layers"
+  },
+  "superadmin.aiCoreRuntime.fields.toolCount": {
+    "pl": "Narzędzia",
+    "en": "Tools"
+  },
+  "superadmin.aiCoreRuntime.healthyNo": {
+    "pl": "Nie",
+    "en": "No"
+  },
+  "superadmin.aiCoreRuntime.healthyYes": {
+    "pl": "Tak",
+    "en": "Yes"
+  },
+  "superadmin.aiCoreRuntime.layerSummary": {
+    "pl": "Status warstw",
+    "en": "Layer status"
+  },
+  "superadmin.aiCoreRuntime.loadTrust": {
+    "pl": "Wczytaj zaufanie",
+    "en": "Load trust"
+  },
+  "superadmin.aiCoreRuntime.noAuditTrail": {
+    "pl": "Brak śladów wsparcia dla tego snapshotu.",
+    "en": "No support traces returned for this snapshot."
+  },
+  "superadmin.aiCoreRuntime.noLayers": {
+    "pl": "Brak podsumowania warstw.",
+    "en": "No layer summary returned."
+  },
+  "superadmin.aiCoreRuntime.noPolicy": {
+    "pl": "Wybierz nadzorowane narzędzie, aby odczytać jego efektywną politykę.",
+    "en": "Select a governed tool to read its effective policy."
+  },
+  "superadmin.aiCoreRuntime.noProvenance": {
+    "pl": "Brak rejestru pochodzenia dla tego snapshotu.",
+    "en": "No provenance ledger returned for this snapshot."
+  },
+  "superadmin.aiCoreRuntime.noTools": {
+    "pl": "Brak nadzorowanych narzędzi.",
+    "en": "No governed tools returned."
+  },
+  "superadmin.aiCoreRuntime.noTrust": {
+    "pl": "Wprowadź id snapshotu, aby odczytać nadzorowane zaufanie i pochodzenie.",
+    "en": "Enter a snapshot id to read governed trust and provenance."
+  },
+  "superadmin.aiCoreRuntime.policyFields.allowed": {
+    "pl": "Dozwolone",
+    "en": "Allowed"
+  },
+  "superadmin.aiCoreRuntime.policyFields.approvalClass": {
+    "pl": "Klasa zatwierdzenia",
+    "en": "Approval class"
+  },
+  "superadmin.aiCoreRuntime.policyFields.approvalOverride": {
+    "pl": "Nadpisanie zatwierdzenia",
+    "en": "Approval override"
+  },
+  "superadmin.aiCoreRuntime.policyFields.blockReason": {
+    "pl": "Powód blokady",
+    "en": "Block reason"
+  },
+  "superadmin.aiCoreRuntime.policyFields.maxInvocations": {
+    "pl": "Maks. wywołań na uruchomienie",
+    "en": "Max invocations per run"
+  },
+  "superadmin.aiCoreRuntime.policyFields.policyRef": {
+    "pl": "Referencja polityki",
+    "en": "Policy ref"
+  },
+  "superadmin.aiCoreRuntime.policyFields.state": {
+    "pl": "Stan",
+    "en": "State"
+  },
+  "superadmin.aiCoreRuntime.policyLoadError": {
+    "pl": "Nie udało się wczytać polityki narzędzia: {{message}}",
+    "en": "Could not load tool policy: {{message}}"
+  },
+  "superadmin.aiCoreRuntime.policyLoading": {
+    "pl": "Wczytywanie polityki narzędzia…",
+    "en": "Loading tool policy…"
+  },
+  "superadmin.aiCoreRuntime.policySubtitle": {
+    "pl": "Tylko do odczytu efektywna polityka dla wybranego narzędzia w klasie konsumenta chat.",
+    "en": "Read-only effective policy for the selected tool under consumer class chat."
+  },
+  "superadmin.aiCoreRuntime.policyTitle": {
+    "pl": "Odczyt polityki narzędzia",
+    "en": "Tool policy readback"
+  },
+  "superadmin.aiCoreRuntime.provenanceTitle": {
+    "pl": "Rejestr pochodzenia",
+    "en": "Provenance ledger"
+  },
+  "superadmin.aiCoreRuntime.snapshotLabel": {
+    "pl": "Id snapshotu",
+    "en": "Snapshot id"
+  },
+  "superadmin.aiCoreRuntime.snapshotPlaceholder": {
+    "pl": "Wprowadź id snapshotu",
+    "en": "Enter snapshot id"
+  },
+  "superadmin.aiCoreRuntime.subtitle": {
+    "pl": "Tylko do odczytu podsumowanie z GET /api/v8/ai-core/environment i GET /api/v8/ai-core/tools",
+    "en": "Read-only summary from GET /api/v8/ai-core/environment and GET /api/v8/ai-core/tools"
+  },
+  "superadmin.aiCoreRuntime.title": {
+    "pl": "Środowisko AI core (V8)",
+    "en": "AI core runtime (V8)"
+  },
+  "superadmin.aiCoreRuntime.toolsSubtitle": {
+    "pl": "Tylko do odczytu katalog z nadzorowanego rejestru narzędzi AI core V8.",
+    "en": "Read-only catalog from the governed V8 AI core tool registry."
+  },
+  "superadmin.aiCoreRuntime.toolsTitle": {
+    "pl": "Katalog nadzorowanych narzędzi",
+    "en": "Governed tool catalog"
+  },
+  "superadmin.aiCoreRuntime.trustLoadError": {
+    "pl": "Nie udało się wczytać odczytu zaufania: {{message}}",
+    "en": "Could not load trust readback: {{message}}"
+  },
+  "superadmin.aiCoreRuntime.trustLoading": {
+    "pl": "Wczytywanie zaufania…",
+    "en": "Loading trust…"
+  },
+  "superadmin.aiCoreRuntime.trustSubtitle": {
+    "pl": "Tylko do odczytu ślad audytowy i rejestr pochodzenia z nadzorowanych endpointów zaufania V8 dla jednego id snapshotu/wyjścia.",
+    "en": "Read-only audit trail and provenance ledger from the governed V8 trust endpoints for one snapshot/output id."
+  },
+  "superadmin.aiCoreRuntime.trustTitle": {
+    "pl": "Odczyt zaufania i pochodzenia",
+    "en": "Trust and provenance readback"
+  },
+  "superadmin.customers.compliance.errorLoad": {
+    "pl": "Nie udało się wczytać danych zgodności.",
+    "en": "Could not load compliance data."
+  },
+  "superadmin.customers.compliance.stats.auditPassed": {
+    "pl": "Audyt zaliczony",
+    "en": "Audit passed"
+  },
+  "superadmin.customers.compliance.stats.fullyCompliant": {
+    "pl": "W pełni zgodne",
+    "en": "Fully compliant"
+  },
+  "superadmin.customers.compliance.stats.requiresAttention": {
+    "pl": "Wymaga uwagi",
+    "en": "Requires attention"
+  },
+  "superadmin.customers.compliance.subtitle": {
+    "pl": "Status zgodności organizacji klientów",
+    "en": "Compliance status of customer organizations"
+  },
+  "superadmin.customers.compliance.table.columns.dataRetention": {
+    "pl": "Retencja danych",
+    "en": "Data retention"
+  },
+  "superadmin.customers.compliance.table.columns.dpa": {
+    "pl": "Umowa powierzenia (DPA)",
+    "en": "DPA"
+  },
+  "superadmin.customers.compliance.table.columns.gdpr": {
+    "pl": "RODO",
+    "en": "GDPR"
+  },
+  "superadmin.customers.compliance.table.columns.lastAudit": {
+    "pl": "Ostatni audyt",
+    "en": "Last audit"
+  },
+  "superadmin.customers.compliance.table.columns.securityAudit": {
+    "pl": "Audyt bezpieczeństwa",
+    "en": "Security audit"
+  },
+  "superadmin.customers.compliance.table.never": {
+    "pl": "Nigdy",
+    "en": "Never"
+  },
+  "superadmin.customers.compliance.table.title": {
+    "pl": "Zgodność organizacji",
+    "en": "Organization compliance"
+  },
+  "superadmin.customers.compliance.title": {
+    "pl": "Zgodność klientów",
+    "en": "Customer compliance"
+  },
+  "superadmin.customers.compliance.unknownOrganization": {
+    "pl": "Nieznana organizacja",
+    "en": "Unknown organization"
+  },
+  "superadmin.customers.playbooks.actionsCount": {
+    "pl": "{{count}} akcji",
+    "en": "{{count}} actions"
+  },
+  "superadmin.customers.playbooks.empty.createFirst": {
+    "pl": "Utwórz pierwszy playbook",
+    "en": "Create your first playbook"
+  },
+  "superadmin.customers.playbooks.empty.noPlaybooks": {
+    "pl": "Brak playbooków",
+    "en": "No playbooks"
+  },
+  "superadmin.customers.playbooks.playbooks": {
+    "pl": "Playbooki",
+    "en": "Playbooks"
+  },
+  "superadmin.customers.playbooks.stats.completedActions": {
+    "pl": "Ukończone akcje",
+    "en": "Completed actions"
+  },
+  "superadmin.customers.playbooks.stats.totalActions": {
+    "pl": "Łączna liczba akcji",
+    "en": "Total actions"
+  },
+  "superadmin.customers.playbooks.stats.totalPlaybooks": {
+    "pl": "Łączna liczba playbooków",
+    "en": "Total playbooks"
+  },
+  "superadmin.promptOsRuntime.fields.activeBundleCount": {
+    "pl": "Aktywne pakiety",
+    "en": "Active bundles"
+  },
+  "superadmin.promptOsRuntime.fields.bundleCount": {
+    "pl": "Pakiety",
+    "en": "Bundles"
+  },
+  "superadmin.promptOsRuntime.fields.contract": {
+    "pl": "Kontrakt",
+    "en": "Contract"
+  },
+  "superadmin.promptOsRuntime.fields.presetCount": {
+    "pl": "Presety",
+    "en": "Presets"
+  },
+  "superadmin.promptOsRuntime.fields.purposeFamilies": {
+    "pl": "Obsługiwane rodziny przeznaczeń",
+    "en": "Purpose families supported"
+  },
+  "superadmin.promptOsRuntime.subtitle": {
+    "pl": "Tylko do odczytu podsumowanie z GET /api/v8/prompt-os/runtime/summary",
+    "en": "Read-only summary from GET /api/v8/prompt-os/runtime/summary"
+  },
+  "superadmin.promptOsRuntime.title": {
+    "pl": "Środowisko Prompt OS (V8)",
+    "en": "Prompt OS runtime (V8)"
+  }
+}

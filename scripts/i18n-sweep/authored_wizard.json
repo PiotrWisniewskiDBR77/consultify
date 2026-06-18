@@ -1,0 +1,8 @@
+{
+  "assessment.wizard.cancel": {"pl":"Anuluj","en":"Cancel"},
+  "assessment.wizard.startDesc": {"pl":"Odpowiedz na kilka pytań, a my zarekomendujemy poziom dojrzałości dla tej osi.","en":"Answer a few questions and we'll recommend a maturity level for this axis."},
+  "assessment.wizard.startBtn": {"pl":"Rozpocznij ocenę","en":"Start assessment"},
+  "assessment.wizard.recommendedLevel": {"pl":"Rekomendowany poziom","en":"Recommended level"},
+  "assessment.wizard.acceptResult": {"pl":"Zaakceptuj wynik","en":"Accept result"},
+  "assessment.wizard.adjustManually": {"pl":"Dostosuj ręcznie","en":"Adjust manually"}
+}

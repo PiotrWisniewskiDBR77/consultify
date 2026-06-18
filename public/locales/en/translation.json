@@ -1193,7 +1193,10 @@
       "welcome": "Welcome to the Partner Portal",
       "subtitle": "Your hub for referrals, earnings, clients and resources",
       "getStarted": "Get started",
-      "quickLinks": "Quick links"
+      "quickLinks": "Quick links",
+      "contact": {
+        "role": "Partner Success Manager"
+      }
     },
     "earnings": {
       "title": "Partner Commissions",
@@ -1369,7 +1372,31 @@
     "noOrganizations": "No organizations found",
     "retry": "Try again",
     "saved": "Saved",
-    "optional": "optional"
+    "optional": "optional",
+    "analysis": "Analysis",
+    "analyzing": "Analyzing…",
+    "clickLabelToAutoFill": "click the label to auto-fill",
+    "columns": "Columns",
+    "complete": "Complete",
+    "errorTitle": "Something went wrong",
+    "first": "first",
+    "generating": "Generating…",
+    "high": "High",
+    "level": "Level",
+    "locked": "Locked",
+    "low": "Low",
+    "medium": "Medium",
+    "notAssigned": "Not assigned",
+    "notDefined": "Not defined",
+    "notSpecified": "Not specified",
+    "previousStep": "Previous step",
+    "react": "React",
+    "reason": "Reason",
+    "reply": "Reply",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "statusLabel": "Status",
+    "you": "You"
   },
   "superadmin": {
     "confirm": {
@@ -1444,7 +1471,9 @@
         },
         "empty": {
           "selectTitle": "Select a Playbook",
-          "selectSubtitle": "Choose a playbook from the list to view details."
+          "selectSubtitle": "Choose a playbook from the list to view details.",
+          "createFirst": "Create your first playbook",
+          "noPlaybooks": "No playbooks"
         },
         "validation": {
           "nameRequired": "Playbook name is required",
@@ -1457,16 +1486,37 @@
           "executed": "Playbook executed"
         },
         "stats": {
-          "active": "Active"
-        }
+          "active": "Active",
+          "completedActions": "Completed actions",
+          "totalActions": "Total actions",
+          "totalPlaybooks": "Total playbooks"
+        },
+        "actionsCount": "{{count}} actions",
+        "playbooks": "Playbooks"
       },
       "compliance": {
         "table": {
           "empty": "No presentations yet.",
           "columns": {
-            "organization": "Organization"
-          }
-        }
+            "organization": "Organization",
+            "dataRetention": "Data retention",
+            "dpa": "DPA",
+            "gdpr": "GDPR",
+            "lastAudit": "Last audit",
+            "securityAudit": "Security audit"
+          },
+          "never": "Never",
+          "title": "Organization compliance"
+        },
+        "errorLoad": "Could not load compliance data.",
+        "stats": {
+          "auditPassed": "Audit passed",
+          "fullyCompliant": "Fully compliant",
+          "requiresAttention": "Requires attention"
+        },
+        "subtitle": "Compliance status of customer organizations",
+        "title": "Customer compliance",
+        "unknownOrganization": "Unknown organization"
       }
     },
     "playbookTemplates": {
@@ -1582,12 +1632,62 @@
     "aiCoreRuntime": {
       "refresh": "Refresh",
       "loading": "Loading…",
-      "none": "none"
+      "none": "none",
+      "auditTrailTitle": "Audit trail",
+      "fields": {
+        "contract": "Contract",
+        "healthy": "Healthy",
+        "layers": "Layers",
+        "toolCount": "Tools"
+      },
+      "healthyNo": "No",
+      "healthyYes": "Yes",
+      "layerSummary": "Layer status",
+      "loadTrust": "Load trust",
+      "noAuditTrail": "No support traces returned for this snapshot.",
+      "noLayers": "No layer summary returned.",
+      "noPolicy": "Select a governed tool to read its effective policy.",
+      "noProvenance": "No provenance ledger returned for this snapshot.",
+      "noTools": "No governed tools returned.",
+      "noTrust": "Enter a snapshot id to read governed trust and provenance.",
+      "policyFields": {
+        "allowed": "Allowed",
+        "approvalClass": "Approval class",
+        "approvalOverride": "Approval override",
+        "blockReason": "Block reason",
+        "maxInvocations": "Max invocations per run",
+        "policyRef": "Policy ref",
+        "state": "State"
+      },
+      "policyLoadError": "Could not load tool policy: {{message}}",
+      "policyLoading": "Loading tool policy…",
+      "policySubtitle": "Read-only effective policy for the selected tool under consumer class chat.",
+      "policyTitle": "Tool policy readback",
+      "provenanceTitle": "Provenance ledger",
+      "snapshotLabel": "Snapshot id",
+      "snapshotPlaceholder": "Enter snapshot id",
+      "subtitle": "Read-only summary from GET /api/v8/ai-core/environment and GET /api/v8/ai-core/tools",
+      "title": "AI core runtime (V8)",
+      "toolsSubtitle": "Read-only catalog from the governed V8 AI core tool registry.",
+      "toolsTitle": "Governed tool catalog",
+      "trustLoadError": "Could not load trust readback: {{message}}",
+      "trustLoading": "Loading trust…",
+      "trustSubtitle": "Read-only audit trail and provenance ledger from the governed V8 trust endpoints for one snapshot/output id.",
+      "trustTitle": "Trust and provenance readback"
     },
     "promptOsRuntime": {
       "refresh": "Refresh",
       "loading": "Loading…",
-      "none": "none"
+      "none": "none",
+      "fields": {
+        "activeBundleCount": "Active bundles",
+        "bundleCount": "Bundles",
+        "contract": "Contract",
+        "presetCount": "Presets",
+        "purposeFamilies": "Purpose families supported"
+      },
+      "subtitle": "Read-only summary from GET /api/v8/prompt-os/runtime/summary",
+      "title": "Prompt OS runtime (V8)"
     }
   },
   "dynamicTabBar": {
@@ -1662,7 +1762,16 @@
     "excele": "Table Studio",
     "prezentacje": "Presentation Studio",
     "tabele": "Table Studio",
-    "meeting": "Meeting"
+    "meeting": "Meeting",
+    "assessmentDRD": "DRD assessment",
+    "context": {
+      "challenges": "Challenges",
+      "goals": "Goals",
+      "megatrends": "Megatrends",
+      "profile": "Profile",
+      "strategy": "Strategy"
+    },
+    "realization": "Execution"
   },
   "widgets": {
     "help": {
@@ -2348,7 +2457,8 @@
     }
   },
   "step1": {
-    "title": "Step 1"
+    "title": "Step 1",
+    "months": "months"
   },
   "interview": {
     "title": "Discovery Interview",
@@ -2583,6 +2693,24 @@
       "wasteKnowledge": "Waste Analysis Guide",
       "whatToLookFor": "What to Look For",
       "typicalEvidence": "Typical Evidence"
+    },
+    "card": {
+      "defaultDesc": "No description for this level."
+    },
+    "workspace": {
+      "actual_only": "Current",
+      "actual_target": "Current + target",
+      "levelDetailsHint": "Select a level to see details",
+      "maturityLevels": "Maturity levels",
+      "target_only": "Target"
+    },
+    "wizard": {
+      "cancel": "Cancel",
+      "startDesc": "Answer a few questions and we'll recommend a maturity level for this axis.",
+      "startBtn": "Start assessment",
+      "recommendedLevel": "Recommended level",
+      "acceptResult": "Accept result",
+      "adjustManually": "Adjust manually"
     }
   },
   "initiatives": {
@@ -2721,7 +2849,32 @@
       "creating": "Creating...",
       "create": "Create",
       "cancel": "Cancel",
-      "descriptionOptional": "Description (optional):"
+      "descriptionOptional": "Description (optional):",
+      "addObjective": "Add objective",
+      "budget": "Budget",
+      "budgetRequired": "Budget is required",
+      "categoryOptional": "Category (optional)",
+      "categoryPlaceholder": "e.g. Operations, Sales...",
+      "description": "Description",
+      "descriptionMinLength": "Description is too short",
+      "descriptionPlaceholder": "Describe the initiative...",
+      "edit": "Edit initiative",
+      "expectedROI": "Expected ROI",
+      "highRiskHighBudget": "High risk and high budget",
+      "highRiskHighBudgetDesc": "This initiative requires extra oversight and approval.",
+      "nameMinLength": "Name is too short",
+      "namePlaceholder": "Initiative name...",
+      "nameRequired": "Name",
+      "objectives": "Objectives",
+      "priority": "Priority",
+      "risk": "Risk",
+      "riskLevel": "Risk level",
+      "roiRequired": "ROI is required",
+      "save": "Save",
+      "sourceAxis": "Source axis",
+      "timeline": "Timeline",
+      "title": "Title",
+      "titleTooShort": "Title is too short"
     },
     "axis": {
       "operational": "Operational",
@@ -4464,6 +4617,11 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
+    },
+    "risk": {
+      "high": "High",
+      "low": "Low",
+      "medium": "Medium"
     }
   },
   "execution": {
@@ -4705,7 +4863,10 @@
       },
       "addClosureItem": "Add Item",
       "addKpi": "Add KPI",
-      "addRisk": "Add Risk"
+      "addRisk": "Add Risk",
+      "deleteConfirm": {
+        "body": "\"{{title}}\" will be permanently removed. This cannot be undone."
+      }
     },
     "reporting": {
       "tasksTitle": "Tasks",
@@ -5328,7 +5489,46 @@
     "completed": "Completed",
     "more": "more",
     "loading": "Loading decks...",
-    "error": "Error"
+    "error": "Error",
+    "activeBlockers": "Active blockers",
+    "blocked": "Blocked",
+    "blockers": "Blockers",
+    "complete": "complete",
+    "copyAndShare": "Copy the link and share it",
+    "createLink": "Create link",
+    "day": "day",
+    "days": "days",
+    "digitalMaturity": "Digital maturity",
+    "dueDate": "Due date",
+    "expiresOn": "Expires",
+    "exportPDF": "Export PDF",
+    "generatedAt": "Generated at",
+    "generating": "Generating…",
+    "inProgress": "In progress",
+    "initiatives": "initiatives",
+    "keyInitiatives": "Key initiatives",
+    "linkCreated": "Link created",
+    "linkExpired": "Link expired",
+    "linkExpiredDescription": "This share link has expired and is no longer active.",
+    "linkExpiry": "Link expiry",
+    "nextSteps": "Next steps",
+    "noLoginRequired": "No login required",
+    "overallProgress": "Overall progress",
+    "owner": "Owner",
+    "progress": "Progress",
+    "readOnly": "Read-only",
+    "requestNewLink": "Request a new link",
+    "share": "Share",
+    "shareDescription": "Anyone with this link can view this report:",
+    "shareReport": "Share report",
+    "sharedReport": "Shared report",
+    "showAll": "Show all",
+    "showLess": "Show less",
+    "snapshotOnly": "A snapshot from when the link was created",
+    "tasks": "Tasks",
+    "todo": "To do",
+    "transformationGoals": "Transformation goals",
+    "upcomingDeadlines": "Upcoming deadlines"
   },
   "auth": {
     "logIn": "Log in",
@@ -5368,7 +5568,17 @@
     "enterDemo": "Enter Demo Mode",
     "contactSales": "Contact Sales for Full Access",
     "back": "Back",
-    "companyName": "Company name"
+    "companyName": "Company name",
+    "backToLogin": "Back to login",
+    "verifyEmail": {
+      "errorTitle": "Verification failed",
+      "failedMessage": "Failed to verify your email. Please try again.",
+      "invalidToken": "Invalid or missing verification token.",
+      "redirecting": "Redirecting you to login…",
+      "successMessage": "Your email has been verified.",
+      "successTitle": "Email verified",
+      "verifying": "Verifying your email…"
+    }
   },
   "help": {
     "onboarding": {
@@ -5432,8 +5642,15 @@
       "browseTitle": "Or browse:",
       "helpOverviewLink": "Open Help overview",
       "footer": {
-        "close": "Close"
-      }
+        "close": "Close",
+        "navigate": "navigate",
+        "results": "results",
+        "select": "select"
+      },
+      "clear": "Clear",
+      "popular": "Popular searches",
+      "recentSearches": "Recent searches",
+      "suggestions": "Suggestions"
     },
     "widget": {
       "label": "Help",
@@ -5499,11 +5716,46 @@
       "error": "Could not send feedback. Please try again."
     },
     "whatsNew": {
-      "version": "version"
+      "version": "version",
+      "breaking": "Breaking changes",
+      "changelog": "Full changelog",
+      "dontShow": "Don't show again",
+      "features": "New features",
+      "fixes": "Bug fixes",
+      "gotIt": "Got it",
+      "improvements": "Improvements",
+      "learnMore": "Learn more",
+      "title": "What's new",
+      "watchDemo": "Watch demo"
     },
     "panel": {
       "next": "Next",
-      "completed": "Completed"
+      "completed": "Completed",
+      "backToPlaybooks": "Back to playbooks",
+      "complete": "Complete",
+      "dismiss": "Dismiss",
+      "header": "Help & guides",
+      "moreTopics": "More topics",
+      "previous": "Previous",
+      "recommended": "Recommended for you",
+      "stepProgress": "Step {{current}} of {{total}}"
+    },
+    "video": {
+      "chapters": "Chapters",
+      "controls": {
+        "exitFullscreen": "Exit fullscreen",
+        "fullscreen": "Fullscreen",
+        "mute": "Mute",
+        "next10": "Skip forward 10s",
+        "pause": "Pause",
+        "play": "Play",
+        "prev10": "Skip back 10s",
+        "unmute": "Unmute"
+      },
+      "settings": "Settings",
+      "shortcuts": "Space: play/pause · ← →: seek · F: fullscreen",
+      "speed": "Playback speed",
+      "watched": "Watched"
     }
   },
   "settings": {
@@ -7503,6 +7755,10 @@
         "title": "Settings History",
         "subtitle": "View and restore previous settings"
       }
+    },
+    "recovery": {
+      "readOnlyDescription": "Recovery email, phone, backup codes, and trusted device changes are read-only until the recovery backend is connected.",
+      "unavailable": "Account recovery is temporarily unavailable."
     }
   },
   "showcase": {
@@ -7517,7 +7773,8 @@
       "watchTeaser": "Watch our 90-second teaser explaining this methodology.",
       "readyToTry": "Ready to try it? Start your transformation today.",
       "startTrial": "Start Free Trial",
-      "integratedHint": "Knowledge base and audits integrated in the Discovery panel"
+      "integratedHint": "Knowledge base and audits integrated in the Discovery panel",
+      "whatYouGet": "What you get"
     },
     "audits": {
       "hero": {
@@ -7971,7 +8228,9 @@
     },
     "reasoning": {
       "title": "Reasoning"
-    }
+    },
+    "header": "AI Assistant",
+    "subHeader": "Ask a question or request help"
   },
   "aiChat": {
     "composer": {
@@ -8453,7 +8712,8 @@
         "cloudComingSoon": "Cloud integrations will be added soon",
         "openingProvider": "Opening {{provider}}…",
         "redirectIntegrations": "Redirecting to integration settings",
-        "recentReattached": "Re-attached \"{{name}}\""
+        "recentReattached": "Re-attached \"{{name}}\"",
+        "docDeleted": "Deleted: {{name}}"
       },
       "recentReupload": "re-upload to attach"
     },
@@ -9022,7 +9282,11 @@
       "actions": "Actions",
       "sendBack": "Send Back"
     },
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "desktopOnly": {
+      "body": "{{surface}} is optimized for desktop. On a phone, part of the layout (tables, side preview) may be hard to use."
+    },
+    "select": "Select…"
   },
   "access": {
     "banner": {
@@ -9744,6 +10008,23 @@
       "importLines": "Import Lines",
       "docImported": "Budget lines imported",
       "confirmWithAI": "Confirm with AI"
+    },
+    "statements": {
+      "currentDocument": "Current",
+      "documentsLoaded": "Documents loaded into the system",
+      "documentsLoadedHint": "This is both the loading area and a quick check that the expected statements and tables are present in the system.",
+      "ingestRunsSection": "Import audit",
+      "loadedDataTable": "Data table",
+      "noRelatedDocuments": "No loaded documents to compare yet",
+      "openDocument": "Open",
+      "qualityRunsSection": "Quality runs",
+      "ratiosSection": "Ratios table",
+      "rows": "rows",
+      "sourceDocuments": "Source documents",
+      "sourceDocumentsHelper": "3 documents to compare with what the user expected.",
+      "systemTables": "System data tables",
+      "systemTablesHint": "Use these quick links to open loaded data sections and compare what the system already contains.",
+      "validationSection": "Validation"
     }
   },
   "portfolio": {
@@ -10246,6 +10527,10 @@
       "startDemo": "Sign up & Enter Demo",
       "subtitle": "Explore the Atelier Toys guided workspace",
       "title": "Experience Consultify Demo"
+    },
+    "indicator": "Demo mode",
+    "badge": {
+      "getFullAccess": "Get full access"
     }
   },
   "ui": {
@@ -11000,6 +11285,10 @@
       "approvalRejected": "Rejected",
       "approvalPending": "Pending approval",
       "approvalPendingHint": "Dispatch is blocked until this schedule is approved"
+    },
+    "sort": {
+      "activeAria": "Sorted by {{col}} {{dir}}",
+      "byAria": "Sort by {{col}}"
     }
   },
   "traceability": {
@@ -11493,7 +11782,9 @@
         "collapseSection": "Collapse",
         "rationaleTitle": "AI Rationale",
         "openGrid": "Open grid editor",
-        "openGridEmpty": "Open grid editor to add records"
+        "openGridEmpty": "Open grid editor to add records",
+        "kpiSection": "Table metrics",
+        "emptyRationale": "No AI rationale has been attached to this preview yet."
       },
       "schema": {
         "committed": "Committed",
@@ -12250,7 +12541,167 @@
     "confidence": "confidence"
   },
   "initiative": {
-    "decision": "Decision"
+    "decision": "Decision",
+    "addAttachmentMock": "Add attachment",
+    "addBullet": "Add bullet",
+    "addCommentPlaceholder": "Add a comment...",
+    "addCriteria": "Add criterion",
+    "addDeliverable": "Add deliverable",
+    "addLogEntry": "Add log entry",
+    "addMember": "Add member",
+    "addRisk": "Add risk",
+    "adjust": "Adjust",
+    "alignmentWithAxis": "Alignment with axis",
+    "allocation": "Allocation",
+    "analytical": "Analytical",
+    "approvalWorkflow": "Approval workflow",
+    "autoFill": "Auto-fill",
+    "autoFillDescription": "Let AI fill in this section based on the initiative context.",
+    "autoFillExecution": "Auto-fill execution",
+    "autoFillWithAI": "Auto-fill with AI",
+    "autoSuggest": "Auto-suggest",
+    "behavior": "Behavior",
+    "budgetResources": "Budget & resources",
+    "budgetResourcesPlaceholder": "Budget and resource assumptions...",
+    "businessOwner": "Business owner",
+    "businessOwnerDescription": "Accountable for the business value and outcomes of the initiative.",
+    "businessValue": "Business value",
+    "capability": "Capability",
+    "capabilityPlay": "Capability play",
+    "capexEst": "Est. CAPEX",
+    "capitalEfficiency": "Capital efficiency",
+    "cashPlay": "Cash play",
+    "changeMgmt": "Change management",
+    "charterReadiness": "Charter readiness",
+    "charterTitle": "Initiative charter",
+    "cloneAsTemplate": "Clone as template",
+    "competenciesPlaceholder": "Required competencies (comma-separated)...",
+    "completedSuccessfully": "Completed successfully",
+    "confidenceLevel": "Confidence level",
+    "confidencePlaceholder": "Select confidence level",
+    "continue": "Continue",
+    "corporateGoal": "Corporate goal",
+    "costOfInaction": "Cost of inaction",
+    "costOptimization": "Cost optimization",
+    "criteriaDescriptionPlaceholder": "Describe the success criterion...",
+    "currentStatus": "Current status",
+    "currentVersion": "Current version",
+    "dataTech": "Data & technology",
+    "dataTechPlaceholder": "Data and technology assumptions...",
+    "decisionGate": "Decision gate",
+    "decisionOwner": "Decision owner",
+    "decisionRequired": "Decision required",
+    "decisionToMake": "Decision to make",
+    "effortProfile": "Effort profile",
+    "endDate": "End date",
+    "evidenceTitle": "Evidence",
+    "executionOwner": "Execution owner",
+    "executionOwnerDescription": "Responsible for delivering the initiative and its execution.",
+    "expectedRealizationPlaceholder": "Select value realization horizon",
+    "explicitAssumptions": "Explicit assumptions",
+    "exportCharter": "Export charter",
+    "financialSummary": "Financial summary",
+    "fullDescriptionLabel": "Full description",
+    "governanceAuditTrail": "Governance audit trail",
+    "idLabel": "ID",
+    "inScope": "In scope",
+    "incompleteLabel": "Incomplete",
+    "initialCreation": "Initial creation",
+    "initiativeIdOrNamePlaceholder": "Initiative ID or name...",
+    "keyDeliverables": "Key deliverables",
+    "keyRisks": "Key risks",
+    "keyRisksDescription": "Identify the main risks and their mitigation strategies.",
+    "killCriteriaMandatory": "Kill criteria (mandatory)",
+    "killCriteriaPlaceholder": "Conditions under which the initiative will be stopped...",
+    "linkInitiative": "Link initiative",
+    "live": "Live",
+    "maxRisksReached": "Max risks reached",
+    "metric": "Metric",
+    "milestoneNamePlaceholder": "Milestone name...",
+    "milestonesAndGates": "Milestones & gates",
+    "missingValueDriverWarning": "Value driver is missing — add it to assess the return.",
+    "mitigationStrategyPlaceholder": "Mitigation strategy...",
+    "nameLabel": "Name",
+    "newInitiative": "New initiative",
+    "nextAction": "Next action",
+    "nextActionApproved": "Begin work to move to",
+    "nextActionDraft": "Complete the charter to move to",
+    "nextActionExecuting": "Complete deliverables to move to",
+    "nextActionPlanning": "Finalize the plan to move to",
+    "nextActionReview": "Obtain",
+    "noCommentsYet": "No comments yet",
+    "noGovernanceEvents": "No governance events",
+    "noLinkedInitiatives": "No linked initiatives",
+    "noTeamMembersAssigned": "No team members assigned",
+    "oneLiner": "One-liner",
+    "operational": "Operational",
+    "opexEst": "Est. OPEX",
+    "organizational": "Organizational",
+    "organizationalPlaceholder": "Organizational assumptions...",
+    "outOfScope": "Out of scope",
+    "painPoint": "Pain point",
+    "peopleSkills": "People & skills",
+    "peopleSkillsPlaceholder": "People and skills assumptions...",
+    "pilotEnd": "Pilot end",
+    "placementReason": "Placement reason",
+    "placementReasonPlaceholder": "Why the initiative is placed here...",
+    "postComment": "Post comment",
+    "problemStatement": "Problem statement",
+    "process": "Process",
+    "progressLabel": "Progress",
+    "readinessLabel": "Readiness",
+    "relatedInitiatives": "Related initiatives",
+    "requiredCompetencies": "Required competencies",
+    "revenueGrowth": "Revenue growth",
+    "riskDescriptionPlaceholder": "Risk description...",
+    "riskReduction": "Risk reduction",
+    "rolesOwnership": "Roles & ownership",
+    "rootCause": "Root cause",
+    "scopeGuard": "Scope guard",
+    "selectBusinessOwnerPlaceholder": "Select business owner",
+    "selectDriverPlaceholder": "Select value driver",
+    "selectExecutionOwnerPlaceholder": "Select execution owner",
+    "selectMember": "Select member",
+    "selectSponsorPlaceholder": "Select sponsor",
+    "socialImpact": "Social impact",
+    "sponsor": "Sponsor",
+    "sponsorApproval": "Sponsor approval",
+    "sponsorDescription": "Provides the mandate and resources for the initiative.",
+    "startDate": "Start date",
+    "startDiscussion": "Start the discussion",
+    "stop": "Stop",
+    "stopConditions": "Stop conditions",
+    "strategicCapability": "Strategic capability",
+    "strategicChangeLog": "Strategic change log",
+    "strategicFitTitle": "Strategic fit",
+    "strategicIntentLabel": "Strategic intent",
+    "strategicRoadmapAttributes": "Strategic roadmap attributes",
+    "strategicRole": "Strategic role",
+    "successCriteriaTyped": "Success criteria",
+    "symptom": "Symptom",
+    "tabs": {
+      "definition": "Definition",
+      "discussion": "Discussion",
+      "economics": "Economics",
+      "execution": "Execution",
+      "governance": "Governance",
+      "history": "History",
+      "intelligence": "Intelligence",
+      "overview": "Overview",
+      "tasks": "Tasks",
+      "team": "Team"
+    },
+    "targetStateSnapshot": "Target state snapshot",
+    "teamMembers": "Team members",
+    "timelineMilestones": "Timeline & milestones",
+    "totalInvestment": "Total investment",
+    "valueDriver": "Value driver",
+    "valueTiming": "Value timing",
+    "valueTimingImmediate": "Immediate",
+    "valueTimingLongTerm": "Long term",
+    "valueTimingShortTerm": "Short term",
+    "versionHistory": "Version history",
+    "viewBrief": "View brief"
   },
   "table": {
     "incorrectPassword": "Incorrect password",
@@ -12265,11 +12716,145 @@
   },
   "documents": {
     "upload": "Upload",
-    "delete": "Delete"
+    "delete": "Delete",
+    "download": "Download",
+    "library": "Document library",
+    "moveToProject": "Move to project",
+    "myDocs": "My documents",
+    "noProjectDocs": "No project documents",
+    "noUserDocs": "No documents yet",
+    "projectDocs": "Project documents",
+    "projectHint": "Documents shared within this project.",
+    "uploading": "Uploading…",
+    "userHint": "Your private documents, visible only to you."
   },
   "consultant": {
     "panel": {
-      "loading": "Loading decks..."
+      "loading": "Loading decks...",
+      "activeCount": "{{count}} active",
+      "createInvite": "Create invitation",
+      "inviteClient": "Invite a client",
+      "linkedOrgs": "Linked organizations",
+      "loadingError": "Failed to load organizations",
+      "noOrgsMessage": "You don't have any linked organizations yet. Invite a client to get started.",
+      "noOrgsTitle": "No linked organizations",
+      "openWorkspace": "Open workspace",
+      "role": "Role: {{role}}",
+      "title": "Consultant panel",
+      "welcome": "Welcome, {{name}}"
+    },
+    "invites": {
+      "backToPanel": "Back to panel",
+      "companyName": "Company name",
+      "companyPlaceholder": "e.g. Acme Inc.",
+      "emailHint": "Leave empty to create an open, reusable code.",
+      "emailPlaceholder": "client@company.com",
+      "generateCode": "Generate code",
+      "generateInvites": "Generate invitations",
+      "generating": "Generating...",
+      "inviteType": "Invitation type",
+      "labelExp": "Expires:",
+      "labelTo": "To:",
+      "labelType": "Type:",
+      "labelUses": "Uses:",
+      "newInvitation": "New invitation",
+      "noInvites": "No invitations generated yet.",
+      "recentInvites": "Recent invitations",
+      "targetEmail": "Recipient email",
+      "typeAddMe": "Add me as a consultant to an organization",
+      "typeTrialOrg": "Trial for an organization",
+      "typeTrialUser": "Trial for a user"
     }
+  },
+  "intelligence": {
+    "analyzing": "Analyzing…",
+    "autoGenerate": "Auto-generate",
+    "detectPatterns": "Detect patterns",
+    "detectedPatternsLabel": "Detected patterns",
+    "differentlyPlaceholder": "What would we do differently next time?",
+    "differentlyTitle": "What to do differently",
+    "knowledgeGraphSharing": "Knowledge graph sharing",
+    "knowledgeGraphSimilarity": "Knowledge graph similarity",
+    "knowledgeGraphTitle": "Knowledge graph",
+    "learnedPlaceholder": "What did we learn from this initiative?",
+    "learnedTitle": "What we learned",
+    "noPatterns": "No patterns",
+    "noPatternsDesc": "No patterns detected yet.",
+    "patternsTitle": "Patterns",
+    "surprisedPlaceholder": "What surprised us?",
+    "surprisedTitle": "What surprised us",
+    "title": "Intelligence",
+    "viewRelated": "View related"
+  },
+  "relation": {
+    "BLOCKS": "Blocks",
+    "CHILD_OF": "Child of",
+    "DEPENDS_ON": "Depends on",
+    "PARENT_OF": "Parent of",
+    "RELATED_TO": "Related to"
+  },
+  "role": {
+    "CONTRIBUTOR": "Contributor",
+    "OBSERVER": "Observer",
+    "REVIEWER": "Reviewer",
+    "SME": "SME",
+    "STAKEHOLDER": "Stakeholder"
+  },
+  "status": {
+    "APPROVED": "Approved",
+    "ARCHIVED": "Archived",
+    "CANCELLED": "Cancelled",
+    "DONE": "Done",
+    "DRAFT": "Draft",
+    "EXECUTING": "Executing",
+    "PLANNING": "Planning",
+    "REVIEW": "Review"
+  },
+  "welcome": {
+    "consultingBtn": "Go to consultant area",
+    "consultingDesc": "Manage client projects, generate invitations and run transformations in one place — with the full consulting toolkit.",
+    "consultingTag": "For consultants & partners",
+    "consultingTitle": "I work as a consultant",
+    "demoBtn": "Launch demo",
+    "demoDesc": "Explore a ready-made diagnosis and recommendations on sample data. No account needed — just step in and see how it works.",
+    "demoNoReg": "No registration",
+    "demoTime": "2 min",
+    "demoTitle": "Explore the demo",
+    "fullBtn": "Start full transformation",
+    "fullDesc": "An end-to-end journey that takes your organization from diagnosis to implementation — with a roadmap, initiatives and AI support at every step.",
+    "fullFeatures": {
+      "ai": "AI assistant guiding the whole process",
+      "drd": "Complete Digital Readiness Diagnosis (DRD)",
+      "roadmap": "Transformation roadmap with initiatives"
+    },
+    "fullSteps": "Full process",
+    "fullTime": "45–60 min",
+    "fullTitle": "Full transformation",
+    "masterclassDesc": "Discover the methodology behind the platform and learn to lead digital transformation step by step.",
+    "masterclassLink": "Go to the masterclass",
+    "masterclassTitle": "Digital Transformation Masterclass",
+    "northStar": "We help organizations move from digital uncertainty to measurable advantage — with a clear diagnosis, a concrete plan and support every step of the way.",
+    "northStarLabel": "Our mission",
+    "quickBtn": "Start quick assessment",
+    "quickDesc": "A short diagnosis that pinpoints your key areas for improvement in just a few minutes.",
+    "quickSteps": "Quick assessment",
+    "quickTime": "10 min",
+    "quickTitle": "Quick assessment",
+    "subtitle": "Choose the path that best fits where you are today.",
+    "titleEnd": "starts here",
+    "titleStart": "Your digital transformation",
+    "videoPerson": "Paweł Bochniarz",
+    "videoRole": "Digital Transformation Expert",
+    "videoTitle": "Meet Consultify in 2 minutes"
+  },
+  "ai": {
+    "observations": "Observations & risks",
+    "recommendations": "Recommendations",
+    "optimization": "Optimization reasoning",
+    "applyProposedSchedule": "Apply proposed schedule"
+  },
+  "comingSoon": "Coming soon",
+  "prezentacje": {
+    "reopenSummary": "Presentation \"{{title}}\" — {{count}} slides."
   }
 }

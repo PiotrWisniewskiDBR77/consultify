@@ -1,0 +1,410 @@
+{
+  "consultant.invites.backToPanel": {
+    "pl": "Powrót do panelu",
+    "en": "Back to panel"
+  },
+  "consultant.invites.companyName": {
+    "pl": "Nazwa firmy",
+    "en": "Company name"
+  },
+  "consultant.invites.companyPlaceholder": {
+    "pl": "np. Acme Sp. z o.o.",
+    "en": "e.g. Acme Inc."
+  },
+  "consultant.invites.emailHint": {
+    "pl": "Pozostaw puste, aby utworzyć otwarty kod do wielokrotnego użytku.",
+    "en": "Leave empty to create an open, reusable code."
+  },
+  "consultant.invites.emailPlaceholder": {
+    "pl": "klient@firma.pl",
+    "en": "client@company.com"
+  },
+  "consultant.invites.generateCode": {
+    "pl": "Wygeneruj kod",
+    "en": "Generate code"
+  },
+  "consultant.invites.generateInvites": {
+    "pl": "Generowanie zaproszeń",
+    "en": "Generate invitations"
+  },
+  "consultant.invites.generating": {
+    "pl": "Generowanie...",
+    "en": "Generating..."
+  },
+  "consultant.invites.inviteType": {
+    "pl": "Typ zaproszenia",
+    "en": "Invitation type"
+  },
+  "consultant.invites.labelExp": {
+    "pl": "Wygasa:",
+    "en": "Expires:"
+  },
+  "consultant.invites.labelTo": {
+    "pl": "Dla:",
+    "en": "To:"
+  },
+  "consultant.invites.labelType": {
+    "pl": "Typ:",
+    "en": "Type:"
+  },
+  "consultant.invites.labelUses": {
+    "pl": "Wykorzystania:",
+    "en": "Uses:"
+  },
+  "consultant.invites.newInvitation": {
+    "pl": "Nowe zaproszenie",
+    "en": "New invitation"
+  },
+  "consultant.invites.noInvites": {
+    "pl": "Brak wygenerowanych zaproszeń.",
+    "en": "No invitations generated yet."
+  },
+  "consultant.invites.recentInvites": {
+    "pl": "Ostatnie zaproszenia",
+    "en": "Recent invitations"
+  },
+  "consultant.invites.targetEmail": {
+    "pl": "Adres e-mail odbiorcy",
+    "en": "Recipient email"
+  },
+  "consultant.invites.typeAddMe": {
+    "pl": "Dołącz mnie jako konsultanta do organizacji",
+    "en": "Add me as a consultant to an organization"
+  },
+  "consultant.invites.typeTrialOrg": {
+    "pl": "Wersja próbna dla organizacji",
+    "en": "Trial for an organization"
+  },
+  "consultant.invites.typeTrialUser": {
+    "pl": "Wersja próbna dla użytkownika",
+    "en": "Trial for a user"
+  },
+  "consultant.panel.activeCount": {
+    "pl": "{{count}} aktywnych",
+    "en": "{{count}} active"
+  },
+  "consultant.panel.createInvite": {
+    "pl": "Utwórz zaproszenie",
+    "en": "Create invitation"
+  },
+  "consultant.panel.inviteClient": {
+    "pl": "Zaproś klienta",
+    "en": "Invite a client"
+  },
+  "consultant.panel.linkedOrgs": {
+    "pl": "Powiązane organizacje",
+    "en": "Linked organizations"
+  },
+  "consultant.panel.loadingError": {
+    "pl": "Nie udało się wczytać organizacji",
+    "en": "Failed to load organizations"
+  },
+  "consultant.panel.noOrgsMessage": {
+    "pl": "Nie masz jeszcze powiązanych organizacji. Zaproś klienta, aby rozpocząć współpracę.",
+    "en": "You don't have any linked organizations yet. Invite a client to get started."
+  },
+  "consultant.panel.noOrgsTitle": {
+    "pl": "Brak powiązanych organizacji",
+    "en": "No linked organizations"
+  },
+  "consultant.panel.openWorkspace": {
+    "pl": "Otwórz przestrzeń",
+    "en": "Open workspace"
+  },
+  "consultant.panel.role": {
+    "pl": "Rola: {{role}}",
+    "en": "Role: {{role}}"
+  },
+  "consultant.panel.title": {
+    "pl": "Panel konsultanta",
+    "en": "Consultant panel"
+  },
+  "consultant.panel.welcome": {
+    "pl": "Witaj, {{name}}",
+    "en": "Welcome, {{name}}"
+  },
+  "help.panel.backToPlaybooks": {
+    "pl": "Powrót do przewodników",
+    "en": "Back to playbooks"
+  },
+  "help.panel.complete": {
+    "pl": "Zakończ",
+    "en": "Complete"
+  },
+  "help.panel.dismiss": {
+    "pl": "Odrzuć",
+    "en": "Dismiss"
+  },
+  "help.panel.header": {
+    "pl": "Pomoc i przewodniki",
+    "en": "Help & guides"
+  },
+  "help.panel.moreTopics": {
+    "pl": "Więcej tematów",
+    "en": "More topics"
+  },
+  "help.panel.previous": {
+    "pl": "Wstecz",
+    "en": "Previous"
+  },
+  "help.panel.recommended": {
+    "pl": "Polecane dla Ciebie",
+    "en": "Recommended for you"
+  },
+  "help.panel.stepProgress": {
+    "pl": "Krok {{current}} z {{total}}",
+    "en": "Step {{current}} of {{total}}"
+  },
+  "help.search.clear": {
+    "pl": "Wyczyść",
+    "en": "Clear"
+  },
+  "help.search.footer.navigate": {
+    "pl": "nawigacja",
+    "en": "navigate"
+  },
+  "help.search.footer.results": {
+    "pl": "wyników",
+    "en": "results"
+  },
+  "help.search.footer.select": {
+    "pl": "wybierz",
+    "en": "select"
+  },
+  "help.search.popular": {
+    "pl": "Popularne wyszukiwania",
+    "en": "Popular searches"
+  },
+  "help.search.recentSearches": {
+    "pl": "Ostatnie wyszukiwania",
+    "en": "Recent searches"
+  },
+  "help.search.suggestions": {
+    "pl": "Sugestie",
+    "en": "Suggestions"
+  },
+  "help.video.chapters": {
+    "pl": "Rozdziały",
+    "en": "Chapters"
+  },
+  "help.video.controls.exitFullscreen": {
+    "pl": "Zamknij pełny ekran",
+    "en": "Exit fullscreen"
+  },
+  "help.video.controls.fullscreen": {
+    "pl": "Pełny ekran",
+    "en": "Fullscreen"
+  },
+  "help.video.controls.mute": {
+    "pl": "Wycisz",
+    "en": "Mute"
+  },
+  "help.video.controls.next10": {
+    "pl": "Przewiń 10 s do przodu",
+    "en": "Skip forward 10s"
+  },
+  "help.video.controls.pause": {
+    "pl": "Wstrzymaj",
+    "en": "Pause"
+  },
+  "help.video.controls.play": {
+    "pl": "Odtwórz",
+    "en": "Play"
+  },
+  "help.video.controls.prev10": {
+    "pl": "Cofnij 10 s",
+    "en": "Skip back 10s"
+  },
+  "help.video.controls.unmute": {
+    "pl": "Wyłącz wyciszenie",
+    "en": "Unmute"
+  },
+  "help.video.settings": {
+    "pl": "Ustawienia",
+    "en": "Settings"
+  },
+  "help.video.shortcuts": {
+    "pl": "Spacja: odtwórz/pauza · ← →: przewiń · F: pełny ekran",
+    "en": "Space: play/pause · ← →: seek · F: fullscreen"
+  },
+  "help.video.speed": {
+    "pl": "Szybkość odtwarzania",
+    "en": "Playback speed"
+  },
+  "help.video.watched": {
+    "pl": "Obejrzane",
+    "en": "Watched"
+  },
+  "help.whatsNew.breaking": {
+    "pl": "Zmiany niezgodne wstecznie",
+    "en": "Breaking changes"
+  },
+  "help.whatsNew.changelog": {
+    "pl": "Pełna lista zmian",
+    "en": "Full changelog"
+  },
+  "help.whatsNew.dontShow": {
+    "pl": "Nie pokazuj ponownie",
+    "en": "Don't show again"
+  },
+  "help.whatsNew.features": {
+    "pl": "Nowe funkcje",
+    "en": "New features"
+  },
+  "help.whatsNew.fixes": {
+    "pl": "Poprawki błędów",
+    "en": "Bug fixes"
+  },
+  "help.whatsNew.gotIt": {
+    "pl": "Rozumiem",
+    "en": "Got it"
+  },
+  "help.whatsNew.improvements": {
+    "pl": "Usprawnienia",
+    "en": "Improvements"
+  },
+  "help.whatsNew.learnMore": {
+    "pl": "Dowiedz się więcej",
+    "en": "Learn more"
+  },
+  "help.whatsNew.title": {
+    "pl": "Co nowego",
+    "en": "What's new"
+  },
+  "help.whatsNew.watchDemo": {
+    "pl": "Obejrzyj demo",
+    "en": "Watch demo"
+  },
+  "welcome.consultingBtn": {
+    "pl": "Przejdź do strefy konsultanta",
+    "en": "Go to consultant area"
+  },
+  "welcome.consultingDesc": {
+    "pl": "Zarządzaj projektami klientów, generuj zaproszenia i prowadź transformacje w jednym miejscu — z pełnym zestawem narzędzi konsultingowych.",
+    "en": "Manage client projects, generate invitations and run transformations in one place — with the full consulting toolkit."
+  },
+  "welcome.consultingTag": {
+    "pl": "Dla konsultantów i partnerów",
+    "en": "For consultants & partners"
+  },
+  "welcome.consultingTitle": {
+    "pl": "Pracuję jako konsultant",
+    "en": "I work as a consultant"
+  },
+  "welcome.demoBtn": {
+    "pl": "Uruchom demo",
+    "en": "Launch demo"
+  },
+  "welcome.demoDesc": {
+    "pl": "Zobacz gotową diagnozę i rekomendacje na przykładowych danych. Bez zakładania konta — wejdź i sprawdź, jak to działa.",
+    "en": "Explore a ready-made diagnosis and recommendations on sample data. No account needed — just step in and see how it works."
+  },
+  "welcome.demoNoReg": {
+    "pl": "Bez rejestracji",
+    "en": "No registration"
+  },
+  "welcome.demoTime": {
+    "pl": "2 min",
+    "en": "2 min"
+  },
+  "welcome.demoTitle": {
+    "pl": "Obejrzyj demo",
+    "en": "Explore the demo"
+  },
+  "welcome.fullBtn": {
+    "pl": "Rozpocznij pełną transformację",
+    "en": "Start full transformation"
+  },
+  "welcome.fullDesc": {
+    "pl": "Kompleksowy proces, który przeprowadzi Twoją organizację od diagnozy po wdrożenie — z mapą drogową, inicjatywami i wsparciem AI na każdym etapie.",
+    "en": "An end-to-end journey that takes your organization from diagnosis to implementation — with a roadmap, initiatives and AI support at every step."
+  },
+  "welcome.fullFeatures.ai": {
+    "pl": "Asystent AI prowadzący przez cały proces",
+    "en": "AI assistant guiding the whole process"
+  },
+  "welcome.fullFeatures.drd": {
+    "pl": "Pełna diagnoza gotowości cyfrowej (DRD)",
+    "en": "Complete Digital Readiness Diagnosis (DRD)"
+  },
+  "welcome.fullFeatures.roadmap": {
+    "pl": "Mapa drogowa transformacji z inicjatywami",
+    "en": "Transformation roadmap with initiatives"
+  },
+  "welcome.fullSteps": {
+    "pl": "Pełen proces",
+    "en": "Full process"
+  },
+  "welcome.fullTime": {
+    "pl": "45–60 min",
+    "en": "45–60 min"
+  },
+  "welcome.fullTitle": {
+    "pl": "Pełna transformacja",
+    "en": "Full transformation"
+  },
+  "welcome.masterclassDesc": {
+    "pl": "Poznaj metodykę stojącą za platformą i naucz się prowadzić transformację cyfrową krok po kroku.",
+    "en": "Discover the methodology behind the platform and learn to lead digital transformation step by step."
+  },
+  "welcome.masterclassLink": {
+    "pl": "Przejdź do masterclass",
+    "en": "Go to the masterclass"
+  },
+  "welcome.masterclassTitle": {
+    "pl": "Masterclass transformacji cyfrowej",
+    "en": "Digital Transformation Masterclass"
+  },
+  "welcome.northStar": {
+    "pl": "Pomagamy organizacjom przejść od cyfrowej niepewności do mierzalnej przewagi — z jasną diagnozą, konkretnym planem i wsparciem na każdym kroku.",
+    "en": "We help organizations move from digital uncertainty to measurable advantage — with a clear diagnosis, a concrete plan and support every step of the way."
+  },
+  "welcome.northStarLabel": {
+    "pl": "Nasza misja",
+    "en": "Our mission"
+  },
+  "welcome.quickBtn": {
+    "pl": "Rozpocznij szybką ocenę",
+    "en": "Start quick assessment"
+  },
+  "welcome.quickDesc": {
+    "pl": "Krótka diagnoza, która w kilka minut wskaże najważniejsze obszary do poprawy.",
+    "en": "A short diagnosis that pinpoints your key areas for improvement in just a few minutes."
+  },
+  "welcome.quickSteps": {
+    "pl": "Szybka ocena",
+    "en": "Quick assessment"
+  },
+  "welcome.quickTime": {
+    "pl": "10 min",
+    "en": "10 min"
+  },
+  "welcome.quickTitle": {
+    "pl": "Szybka ocena",
+    "en": "Quick assessment"
+  },
+  "welcome.subtitle": {
+    "pl": "Wybierz ścieżkę, która najlepiej pasuje do Twojej sytuacji.",
+    "en": "Choose the path that best fits where you are today."
+  },
+  "welcome.titleEnd": {
+    "pl": "zaczyna się tutaj",
+    "en": "starts here"
+  },
+  "welcome.titleStart": {
+    "pl": "Twoja transformacja cyfrowa",
+    "en": "Your digital transformation"
+  },
+  "welcome.videoPerson": {
+    "pl": "Paweł Bochniarz",
+    "en": "Paweł Bochniarz"
+  },
+  "welcome.videoRole": {
+    "pl": "Ekspert ds. transformacji cyfrowej",
+    "en": "Digital Transformation Expert"
+  },
+  "welcome.videoTitle": {
+    "pl": "Poznaj Consultify w 2 minuty",
+    "en": "Meet Consultify in 2 minutes"
+  }
+}

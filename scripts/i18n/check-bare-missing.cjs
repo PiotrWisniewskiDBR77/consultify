@@ -26,8 +26,10 @@ const known = new Set();
 function flatten(obj, prefix) {
   for (const [k, v] of Object.entries(obj || {})) {
     const dot = prefix ? `${prefix}.${k}` : k;
+    // Add EVERY path — leaves AND object parents — so `t('ns.obj', {returnObjects:true})`
+    // calls that resolve to an existing object are not falsely flagged as missing.
+    known.add(dot);
     if (v && typeof v === 'object' && !Array.isArray(v)) flatten(v, dot);
-    else known.add(dot);
   }
 }
 for (const dir of LOCALE_DIRS) {
