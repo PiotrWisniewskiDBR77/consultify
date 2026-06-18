@@ -8714,7 +8714,38 @@
     },
     "context": {
       "saved": "Saved",
-      "saveFailed": "Save failed"
+      "saveFailed": "Save failed",
+      "alreadySaved": "Message is already in Context OS"
+    },
+    "toggle": {
+      "assistant": "AI Assistant"
+    },
+    "titles": {
+      "idea": "Idea",
+      "note": "Note"
+    },
+    "deliverable": {
+      "sheetTitle": "Sheet from chat",
+      "docTitle": "Document from chat",
+      "deckTitle": "Presentation from chat"
+    },
+    "working": {
+      "mindMap": "Working on mind map…",
+      "processFlow": "Building process flow…",
+      "whiteboard": "Running whiteboard action…"
+    },
+    "confirmSelection": "Confirm Selection",
+    "suggestions": {
+      "openInitiative": "Open initiative",
+      "generateInsights": "Generate AI insights from completed sessions",
+      "generateInsightsPrompt": "Generate AI insights from completed interview sessions",
+      "submitReview": "Submit this insight for review",
+      "submitReviewPrompt": "Submit this insight for review",
+      "exportInsight": "Export insight to initiative",
+      "exportInsightPrompt": "Export this insight to an initiative",
+      "viewEvidence": "View evidence map",
+      "openOutputs": "Open Outputs Library",
+      "reviewPending": "Review pending artifacts"
     }
   },
   "aiChat": {
@@ -14057,6 +14088,101 @@
       "empty": "No presentations yet.",
       "loading": "Loading…",
       "failed": "Failed"
+    },
+    "panel": {
+      "common": {
+        "title": "Most common actions",
+        "expandTitle": "Expand selected idea",
+        "expandDetail": "Use AI to expand the currently selected fragment into more complete text.",
+        "expandAction": "Expand",
+        "rewriteTitle": "Shorten or rewrite the selection",
+        "rewriteDetail": "Quickly shorten, rewrite, or adjust the tone of the chosen fragment without rewriting by hand.",
+        "rewriteAction": "Rewrite",
+        "addTitle": "Add a new element to the canvas",
+        "addDetail": "Choose an element type and describe to Teresa what to add to the document.",
+        "addAction": "Add element"
+      },
+      "hints": {
+        "templateTitle": "Build a template for a specific goal",
+        "templateDetail": "Create your own work template with a name, goal, and sections tailored to the task.",
+        "templateAction": "New template",
+        "viewTitle": "Switch Rich/Dock/MD view",
+        "viewDetail": "Rich = editor with toolbar, Dock = preview, MD = raw markdown.",
+        "saveTitle": "Save and export the draft",
+        "saveDetail": "Save changes and download the document as Markdown or CSV for further work.",
+        "saveActionSave": "Save",
+        "saveActionDownload": "Download MD",
+        "dataTitle": "Work on data from a file",
+        "dataDetail": "Upload CSV/JSON/XLSX and generate tables, charts, or reports in the same canvas.",
+        "dataActionUse": "Use dataset",
+        "dataActionUpload": "Upload file"
+      },
+      "addElement": {
+        "title": "Add element",
+        "text": "Text",
+        "heading": "Heading",
+        "table": "Table",
+        "diagram": "Diagram",
+        "list": "List",
+        "summary": "Summary",
+        "promptPlaceholder": "Describe to Teresa what to add...",
+        "submit": "Add to canvas"
+      },
+      "selection": {
+        "title": "AI on selection",
+        "selected": "Selection",
+        "empty": "Select a fragment of text to use AI actions.",
+        "expand": "Expand idea",
+        "shorten": "Shorten",
+        "rewrite": "Rewrite",
+        "suggest": "Suggest",
+        "promptPlaceholder": "Instruction for Teresa on the selected fragment...",
+        "preview": "Preview AI edit",
+        "clear": "Clear"
+      },
+      "manualEdit": {
+        "title": "Manual editing",
+        "editMarkdown": "Edit Markdown manually",
+        "backToDocument": "Back to document view"
+      },
+      "templates": {
+        "title": "Starter templates",
+        "new": "New template",
+        "namePlaceholder": "Template name",
+        "goalPlaceholder": "Template goal in one sentence",
+        "sectionsPlaceholder": "Sections (comma-separated)",
+        "apply": "Apply template",
+        "close": "Close",
+        "nameRequired": "Provide a template name."
+      },
+      "workspaceActions": {
+        "title": "Workspace actions"
+      },
+      "export": {
+        "saving": "Saving…",
+        "saveToOutputs": "Save to Outputs"
+      },
+      "mdProps": {
+        "title": "MD file properties",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "capabilities": {
+        "title": "Capabilities and workflow"
+      },
+      "share": {
+        "publicLink": "Public link",
+        "copyLinkTitle": "Copy link",
+        "copy": "Copy",
+        "revokeTitle": "Revoke share",
+        "revoke": "Revoke share",
+        "expires": "expires",
+        "revoking": "Revoking share link...",
+        "revoked": "Share revoked — the public link no longer works."
+      },
+      "source": {
+        "note": "Source: note"
+      }
     }
   },
   "chatProposal": {

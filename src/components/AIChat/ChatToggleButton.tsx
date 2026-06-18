@@ -30,8 +30,8 @@ const chatAnimationStyle = `
 
 export const ChatToggleButton: React.FC = () => {
   const { toggleChat, pmoContext, isChatOpen } = useAIContext();
-  const { i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const { t } = useTranslation();
+  const assistantLabel = t('chat.toggle.assistant', 'AI Assistant');
 
   // We assume regulatory mode is handled by context or we fetch specific to this component if needed.
   // For simplicity, we'll keep the context badge.
@@ -51,7 +51,7 @@ export const ChatToggleButton: React.FC = () => {
           style={{
             animation: 'chatColorPulse 5s ease-in-out infinite',
           }}
-          title={lang === 'pl' ? 'Asystent AI' : 'AI Assistant'}
+          title={assistantLabel}
         >
           <MessageCircle
             size={20}
@@ -79,7 +79,7 @@ export const ChatToggleButton: React.FC = () => {
                         shadow-lg
                     `}
           >
-            {lang === 'pl' ? 'Asystent AI' : 'AI Assistant'}
+            {assistantLabel}
             <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 bg-slate-900 dark:bg-slate-800 rotate-45" />
           </div>
         </button>

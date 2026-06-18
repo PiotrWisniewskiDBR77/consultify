@@ -9337,7 +9337,38 @@
     },
     "context": {
       "saved": "Zapisane",
-      "saveFailed": "Nie udało się zapisać"
+      "saveFailed": "Nie udało się zapisać",
+      "alreadySaved": "Wiadomość jest już w Context OS"
+    },
+    "toggle": {
+      "assistant": "Asystent AI"
+    },
+    "titles": {
+      "idea": "Pomysł",
+      "note": "Notatka"
+    },
+    "deliverable": {
+      "sheetTitle": "Arkusz z czatu",
+      "docTitle": "Dokument z czatu",
+      "deckTitle": "Prezentacja z czatu"
+    },
+    "working": {
+      "mindMap": "Pracuję nad mapą myśli…",
+      "processFlow": "Buduję przepływ procesu…",
+      "whiteboard": "Wykonuję akcję na tablicy…"
+    },
+    "confirmSelection": "Potwierdź zaznaczenie",
+    "suggestions": {
+      "openInitiative": "Otwórz inicjatywę",
+      "generateInsights": "Wygeneruj insighty AI z ukończonych sesji",
+      "generateInsightsPrompt": "Wygeneruj insighty AI z ukończonych sesji wywiadów",
+      "submitReview": "Prześlij ten insight do recenzji",
+      "submitReviewPrompt": "Prześlij ten insight do recenzji",
+      "exportInsight": "Eksportuj insight do inicjatywy",
+      "exportInsightPrompt": "Eksportuj ten insight do inicjatywy",
+      "viewEvidence": "Zobacz mapę dowodów",
+      "openOutputs": "Otwórz Bibliotekę Outputs",
+      "reviewPending": "Przejrzyj oczekujące artefakty"
     }
   },
   "aiChat": {
@@ -15107,6 +15138,101 @@
       "empty": "Brak prezentacji.",
       "loading": "Ładowanie…",
       "failed": "Błąd"
+    },
+    "panel": {
+      "common": {
+        "title": "Najczęstsze działania",
+        "expandTitle": "Rozwiń zaznaczoną myśl",
+        "expandDetail": "Użyj AI, aby rozwinąć aktualnie zaznaczony fragment w bardziej kompletny tekst.",
+        "expandAction": "Rozwiń",
+        "rewriteTitle": "Skróć lub przepisz zaznaczenie",
+        "rewriteDetail": "Szybko skróć, przepisz lub popraw ton wybranego fragmentu bez ręcznego przepisywania.",
+        "rewriteAction": "Przepisz",
+        "addTitle": "Dodaj nowy element do canvas",
+        "addDetail": "Wybierz typ elementu i opisz Teresie co ma dodać do dokumentu.",
+        "addAction": "Dodaj element"
+      },
+      "hints": {
+        "templateTitle": "Zbuduj template pod konkretny cel",
+        "templateDetail": "Utwórz własny szablon pracy z nazwą, celem i sekcjami dopasowanymi do zadania.",
+        "templateAction": "Nowy template",
+        "viewTitle": "Przełącz widok Rich/Dock/MD",
+        "viewDetail": "Rich = edytor z toolbarem, Dock = podgląd, MD = surowy markdown.",
+        "saveTitle": "Zapisz i eksportuj wersję roboczą",
+        "saveDetail": "Zapisz zmiany oraz pobierz dokument jako Markdown lub CSV do dalszej pracy.",
+        "saveActionSave": "Zapisz",
+        "saveActionDownload": "Pobierz MD",
+        "dataTitle": "Pracuj na danych z pliku",
+        "dataDetail": "Wgraj CSV/JSON/XLSX i generuj tabele, wykresy lub raporty w tym samym canvas.",
+        "dataActionUse": "Użyj datasetu",
+        "dataActionUpload": "Wgraj plik"
+      },
+      "addElement": {
+        "title": "Dodaj element",
+        "text": "Tekst",
+        "heading": "Nagłówek",
+        "table": "Tabela",
+        "diagram": "Diagram",
+        "list": "Lista",
+        "summary": "Podsumowanie",
+        "promptPlaceholder": "Opisz Teresie co dodać...",
+        "submit": "Dodaj do canvas"
+      },
+      "selection": {
+        "title": "AI na zaznaczeniu",
+        "selected": "Zaznaczenie",
+        "empty": "Zaznacz fragment tekstu, aby użyć akcji AI.",
+        "expand": "Rozwiń myśl",
+        "shorten": "Skróć",
+        "rewrite": "Przepisz",
+        "suggest": "Daj sugestie",
+        "promptPlaceholder": "Instrukcja dla Teresy na zaznaczonym fragmencie...",
+        "preview": "Podgląd AI edit",
+        "clear": "Wyczyść"
+      },
+      "manualEdit": {
+        "title": "Ręczna edycja",
+        "editMarkdown": "Edytuj Markdown ręcznie",
+        "backToDocument": "Wróć do widoku dokumentu"
+      },
+      "templates": {
+        "title": "Szablony startowe",
+        "new": "Nowy template",
+        "namePlaceholder": "Nazwa template'u",
+        "goalPlaceholder": "Cel template'u w jednym zdaniu",
+        "sectionsPlaceholder": "Sekcje (po przecinku)",
+        "apply": "Zastosuj template",
+        "close": "Zamknij",
+        "nameRequired": "Podaj nazwę template'u."
+      },
+      "workspaceActions": {
+        "title": "Akcje workspace"
+      },
+      "export": {
+        "saving": "Zapisywanie…",
+        "saveToOutputs": "Zapisz do Outputs"
+      },
+      "mdProps": {
+        "title": "Właściwości pliku MD",
+        "hide": "Ukryj",
+        "show": "Pokaż"
+      },
+      "capabilities": {
+        "title": "Możliwości i workflow"
+      },
+      "share": {
+        "publicLink": "Link publiczny",
+        "copyLinkTitle": "Kopiuj link",
+        "copy": "Kopiuj",
+        "revokeTitle": "Cofnij udostępnianie",
+        "revoke": "Cofnij udostępnianie",
+        "expires": "wygasa",
+        "revoking": "Cofanie udostępniania...",
+        "revoked": "Udostępnianie cofnięte — link publiczny przestał działać."
+      },
+      "source": {
+        "note": "Źródło: notatka"
+      }
     }
   },
   "chatProposal": {

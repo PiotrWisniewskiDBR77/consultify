@@ -1061,7 +1061,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           .split('\n')
           .map((l) => l.replace(/^#+\s*/, '').trim())
           .find((l) => !!l) || '';
-      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Pomysł' : 'Idea');
+      const title = firstLine.slice(0, 120) || t('chat.titles.idea', 'Idea');
 
       const navigateToMyWork = options?.navigateToMyWork !== false;
       const autoTriggered = options?.autoTriggered === true;
@@ -1166,7 +1166,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           .split('\n')
           .map((l) => l.replace(/^#+\s*/, '').trim())
           .find((l) => !!l) || '';
-      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Notatka' : 'Note');
+      const title = firstLine.slice(0, 120) || t('chat.titles.note', 'Note');
 
       const navigateToMyWork = options?.navigateToMyWork !== false;
       const autoTriggered = options?.autoTriggered === true;
@@ -2244,7 +2244,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         if (isDeliverablesLightEnabled()) {
           const sheetTitle = deckTitleFromIntent(
             text,
-            uiLang === 'pl' ? 'Arkusz z czatu' : 'Sheet from chat'
+            t('chat.deliverable.sheetTitle', 'Sheet from chat')
           );
           if (!useConversationStore.getState().activeConversationId) {
             try {
@@ -2464,7 +2464,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         if (isDeliverablesLightEnabled()) {
           const docTitle = deckTitleFromIntent(
             text,
-            uiLangDoc === 'pl' ? 'Dokument z czatu' : 'Document from chat'
+            t('chat.deliverable.docTitle', 'Document from chat')
           );
           // Bez aktywnej konwersacji wiadomości lokalne giną w resecie stanu —
           // zapewniamy ją jak intercept Canvasa i dopiero wtedy piszemy.
@@ -2711,7 +2711,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         if (isDeliverablesLightEnabled()) {
           const deckTitle = deckTitleFromIntent(
             text,
-            uiLangPrez === 'pl' ? 'Prezentacja z czatu' : 'Presentation from chat'
+            t('chat.deliverable.deckTitle', 'Presentation from chat')
           );
           // Bez aktywnej konwersacji wiadomości lokalne giną w resecie stanu —
           // zapewniamy ją jak intercept Canvasa i dopiero wtedy piszemy.
@@ -2941,11 +2941,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         };
         addChatMessage(userMessage);
 
-        const uiLang = (i18n.language || 'en').split('-')[0];
         addChatMessage({
           id: `mm-intent-${Date.now()}`,
           role: 'ai',
-          content: uiLang === 'pl' ? 'Pracuję nad mapą myśli…' : 'Working on mind map…',
+          content: t('chat.working.mindMap', 'Working on mind map…'),
           timestamp: new Date(),
         });
 
@@ -2970,11 +2969,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         };
         addChatMessage(userMessage);
 
-        const uiLang = (i18n.language || 'en').split('-')[0];
         addChatMessage({
           id: `pf-intent-${Date.now()}`,
           role: 'ai',
-          content: uiLang === 'pl' ? 'Buduję przepływ procesu…' : 'Building process flow…',
+          content: t('chat.working.processFlow', 'Building process flow…'),
           timestamp: new Date(),
         });
 
@@ -3059,11 +3057,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         };
         addChatMessage(userMessage);
 
-        const uiLang = (i18n.language || 'en').split('-')[0];
         addChatMessage({
           id: `wb-intent-${Date.now()}`,
           role: 'ai',
-          content: uiLang === 'pl' ? 'Wykonuję akcję na tablicy…' : 'Running whiteboard action…',
+          content: t('chat.working.whiteboard', 'Running whiteboard action…'),
           timestamp: new Date(),
         });
 
