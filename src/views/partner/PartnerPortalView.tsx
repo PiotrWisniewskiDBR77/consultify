@@ -29,7 +29,6 @@ import {
   FolderKanban,
   GraduationCap,
   MapPin,
-  Plus,
   RefreshCw,
   Target,
   TrendingUp,
@@ -233,8 +232,10 @@ const DashboardSection: React.FC = () => {
     void fetchOnboardingStatus();
   }, [fetchDashboard, fetchOnboardingStatus, fetchV8RuntimeSummary]);
 
+  // DP-5 (M26 L-10): "Add New Client" dropped — client creation is a
+  // FEATURE_NOT_AVAILABLE stub (503), so we don't surface a dead create action.
+  // Client management lands in v1.1.
   const quickActions = [
-    { label: 'Add New Client', icon: Plus, action: 'add-client' },
     { label: 'Start Project', icon: FolderKanban, action: 'start-project' },
     { label: 'View Resources', icon: BookOpen, action: 'resources' },
     { label: 'Download Materials', icon: Download, action: 'download' },
@@ -1156,8 +1157,18 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             >
               <RefreshCw className="w-4 h-4" />
             </button>
-            <button className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500">
+            {/* DP-5 (M26 L-10): client-creation is a FEATURE_NOT_AVAILABLE stub (server
+                returns 503). Surface it honestly as a disabled "coming soon" affordance
+                rather than a dead button. Self-connect/client-mgmt lands in v1.1. */}
+            <button
+              disabled
+              title={t('partner.clientAccess.featureSoon', 'Wkrótce dostępne')}
+              className="inline-flex h-9 cursor-not-allowed items-center gap-2 rounded-lg bg-slate-200 px-4 text-sm font-medium text-slate-500 dark:bg-navy-800 dark:text-slate-400"
+            >
               {t('partner.clients.addOrganization', 'Add Organization')}
+              <span className="rounded bg-slate-300/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-navy-700 dark:text-slate-300">
+                {t('partner.common.comingSoon', 'Wkrótce')}
+              </span>
             </button>
           </div>
         </div>
