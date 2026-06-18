@@ -25,32 +25,35 @@ export interface TemplateLifecycleFilterProps {
 
 const ORDER: TemplateStatus[] = ['approved', 'draft', 'deprecated'];
 
+// Token-based filter-pill palette. `activeClass` = active (selected) pill;
+// inactive pills share a neutral token style. Dark: variants per
+// 00-foundation dark-mode.
 const META: Record<
   TemplateStatus,
-  { en: string; pl: string; icon: React.ReactNode; activeBg: string; activeFg: string }
+  { en: string; icon: React.ReactNode; activeClass: string }
 > = {
   approved: {
     en: 'Approved',
-    pl: 'Zatwierdzone',
     icon: <CheckCircle2 size={12} />,
-    activeBg: '#dcfce7',
-    activeFg: '#166534',
+    activeClass:
+      'bg-emerald-100 text-emerald-800 border-emerald-400 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-600',
   },
   draft: {
     en: 'Draft',
-    pl: 'Szkice',
     icon: <Circle size={12} />,
-    activeBg: '#e2e8f0',
-    activeFg: '#334155',
+    activeClass:
+      'bg-slate-200 text-slate-700 border-slate-400 dark:bg-slate-700/50 dark:text-slate-200 dark:border-slate-500',
   },
   deprecated: {
     en: 'Deprecated',
-    pl: 'Wycofane',
     icon: <MinusCircle size={12} />,
-    activeBg: '#fef3c7',
-    activeFg: '#92400e',
+    activeClass:
+      'bg-amber-100 text-amber-800 border-amber-400 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-600',
   },
 };
+
+const INACTIVE_CLASS =
+  'bg-transparent text-slate-500 border-slate-300 dark:text-slate-400 dark:border-slate-600';
 
 export const TemplateLifecycleFilter: React.FC<TemplateLifecycleFilterProps> = ({
   value,
@@ -81,16 +84,11 @@ export const TemplateLifecycleFilter: React.FC<TemplateLifecycleFilterProps> = (
             aria-checked={active}
             onClick={() => onChange(status)}
             data-testid={`${testId}-${status}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400"
-            style={{
-              backgroundColor: active ? meta.activeBg : 'transparent',
-              color: active ? meta.activeFg : '#64748b',
-              border: active ? `1px solid ${meta.activeFg}` : '1px solid #cbd5e1',
-            }}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+              active ? meta.activeClass : INACTIVE_CLASS
+            }`}
           >
-            <span aria-hidden style={{ color: active ? meta.activeFg : '#94a3b8' }}>
-              {meta.icon}
-            </span>
+            <span aria-hidden>{meta.icon}</span>
             <span>{label}</span>
           </button>
         );

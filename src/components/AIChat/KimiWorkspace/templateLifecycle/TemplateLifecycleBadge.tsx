@@ -20,33 +20,33 @@ export interface TemplateLifecycleBadgeProps {
   testId?: string;
 }
 
+// Token-based status palette (Tailwind scales w/ dark: variants per
+// 00-foundation dark-mode + VISUAL_STANDARD §5.3). `dotClass` drives the
+// `dot` variant + the chip icon colour.
 const STYLES: Record<
   TemplateStatus,
-  { bg: string; fg: string; border: string; icon: React.ReactNode; en: string; pl: string }
+  { chipClass: string; dotClass: string; icon: React.ReactNode; en: string }
 > = {
   draft: {
-    bg: '#f1f5f9',
-    fg: '#475569',
-    border: '#cbd5e1',
+    chipClass:
+      'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-700/40 dark:text-slate-300 dark:border-slate-600',
+    dotClass: 'text-slate-500 dark:text-slate-400',
     icon: <Circle size={11} />,
     en: 'Draft',
-    pl: 'Szkic',
   },
   approved: {
-    bg: '#dcfce7',
-    fg: '#166534',
-    border: '#86efac',
+    chipClass:
+      'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700',
+    dotClass: 'text-emerald-600 dark:text-emerald-400',
     icon: <CheckCircle2 size={11} />,
     en: 'Approved',
-    pl: 'Zatwierdzony',
   },
   deprecated: {
-    bg: '#fef3c7',
-    fg: '#92400e',
-    border: '#fcd34d',
+    chipClass:
+      'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700',
+    dotClass: 'text-amber-600 dark:text-amber-400',
     icon: <MinusCircle size={11} />,
     en: 'Deprecated',
-    pl: 'Wycofany',
   },
 };
 
@@ -64,8 +64,7 @@ export const TemplateLifecycleBadge: React.FC<TemplateLifecycleBadgeProps> = ({
     return (
       <span
         data-testid={testId}
-        className="inline-block w-2 h-2 rounded-full"
-        style={{ backgroundColor: style.fg }}
+        className={`inline-block w-2 h-2 rounded-full bg-current ${style.dotClass}`}
         title={label}
         aria-label={`${statusPrefix}: ${label}`}
       />
@@ -75,13 +74,10 @@ export const TemplateLifecycleBadge: React.FC<TemplateLifecycleBadgeProps> = ({
   return (
     <span
       data-testid={testId}
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border"
-      style={{ backgroundColor: style.bg, color: style.fg, borderColor: style.border }}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${style.chipClass}`}
       aria-label={`${statusPrefix}: ${label}`}
     >
-      <span aria-hidden style={{ color: style.fg }}>
-        {style.icon}
-      </span>
+      <span aria-hidden>{style.icon}</span>
       <span>{label}</span>
     </span>
   );

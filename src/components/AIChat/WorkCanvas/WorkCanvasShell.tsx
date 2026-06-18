@@ -1064,7 +1064,7 @@ export function WorkCanvasShell() {
             </div>
           </div>
           {errorMessage ? (
-            <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+            <div className="mt-3 rounded-2xl border border-danger-200 bg-danger-50 px-3 py-2 text-xs text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200">
               {errorMessage}
             </div>
           ) : null}

@@ -1,0 +1,17 @@
+{
+  "canvas.versionHistory.title": { "pl": "Historia wersji", "en": "Version history" },
+  "canvas.versionHistory.close": { "pl": "Zamknij", "en": "Close" },
+  "canvas.versionHistory.closeAria": { "pl": "Zamknij historię wersji", "en": "Close version history" },
+  "canvas.versionHistory.loading": { "pl": "Ładowanie wersji...", "en": "Loading versions..." },
+  "canvas.versionHistory.empty": { "pl": "Brak wersji.", "en": "No versions." },
+  "canvas.versionHistory.confirmRestore": { "pl": "Przywrócić tę wersję?", "en": "Restore this version?" },
+  "canvas.versionHistory.confirmYes": { "pl": "Tak, przywróć", "en": "Yes, restore" },
+  "canvas.versionHistory.restoring": { "pl": "Przywracanie...", "en": "Restoring..." },
+  "canvas.versionHistory.cancel": { "pl": "Anuluj", "en": "Cancel" },
+  "canvas.versionHistory.restore": { "pl": "Przywróć", "en": "Restore" },
+  "canvas.versionHistory.preview": { "pl": "Podgląd", "en": "Preview" },
+  "canvas.versionHistory.justNow": { "pl": "przed chwilą", "en": "just now" },
+  "canvas.versionHistory.minutesAgo": { "pl": "min temu", "en": "min ago" },
+  "canvas.versionHistory.hoursAgo": { "pl": "godz. temu", "en": "h ago" },
+  "canvas.versionHistory.daysAgo": { "pl": "dni temu", "en": "d ago" }
+}
