@@ -298,7 +298,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
         <button
           onClick={handleRecalculate}
           disabled={recalculating || !hasValidConfig || locked}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors disabled:opacity-40"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors disabled:opacity-40"
         >
           {recalculating ? <Loader2 size={10} className="animate-spin" /> : <Calendar size={10} />}
           {isPl ? 'Przelicz daty' : 'Recalculate'}

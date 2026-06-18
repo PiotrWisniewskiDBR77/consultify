@@ -4583,7 +4583,7 @@ Please return:
           <button
             type="button"
             onClick={() => handleGenerateReport(report)}
-            className="h-8 px-4 rounded-lg text-xs font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 transition-colors"
+            className="h-8 px-4 rounded-lg text-xs font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
           >
             {t('execution.reportPanel.generateAI', 'Generate with AI')}
           </button>
