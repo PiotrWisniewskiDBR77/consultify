@@ -455,7 +455,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 disabled={!data.actual || !data.target}
                 className={`touch-target flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
                   data.actual && data.target
-                    ? 'bg-primary-600 text-white shadow-lg'
+                    ? 'bg-navy-900 text-white shadow-sm'
                     : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                 }`}
               >
@@ -642,7 +642,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                   <MessageSquare size={16} />
                   <span className="text-sm font-medium">Komentarze</span>
                   {commentCount > 0 && (
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary-600 text-white text-xs font-bold">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-navy-900 text-white text-xs font-bold">
                       {commentCount}
                     </span>
                   )}

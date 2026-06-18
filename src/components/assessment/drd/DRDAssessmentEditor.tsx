@@ -606,7 +606,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       return (
                         <div className="mt-1.5 h-1 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-primary-500 transition-all duration-300"
+                            className="h-full bg-navy-900 transition-all duration-300"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -684,7 +684,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   <div className="flex flex-col gap-2 text-xs text-slate-700 dark:text-slate-200">
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <span className="h-3.5 w-3.5 rounded-full bg-primary-500 shadow-[0_0_18px_rgba(168,85,247,0.45)]" />
+                        <span className="h-3.5 w-3.5 rounded-full bg-navy-900 " />
                         <span>AS-IS</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1102,7 +1102,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             <div
                               className={`h-10 w-10 rounded-xl flex items-center justify-center text-lg font-bold ${
                                 isPopupAchieved
-                                  ? 'bg-primary-500 text-white'
+                                  ? 'bg-navy-900 text-white'
                                   : isPopupTarget
                                     ? 'bg-blue-500/50 text-blue-100'
                                     : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
@@ -1877,7 +1877,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     <div className="flex flex-col gap-2 text-xs text-slate-700 dark:text-slate-200">
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
-                          <span className="h-3.5 w-3.5 rounded-full bg-primary-500 shadow-[0_0_18px_rgba(168,85,247,0.45)]" />
+                          <span className="h-3.5 w-3.5 rounded-full bg-navy-900 " />
                           <span>AS-IS</span>
                         </div>
                         <div className="flex items-center gap-2">

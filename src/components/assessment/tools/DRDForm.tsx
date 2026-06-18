@@ -367,7 +367,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           </div>
           <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary-500 rounded-full transition-all duration-300"
+              className="h-full bg-navy-900 rounded-full transition-all duration-300"
               style={{ width: `${progress.percent}%` }}
             />
           </div>
@@ -394,7 +394,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                 onClick={() => setActiveAxisId(axis.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   isActive
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-navy-900 text-white'
                     : isComplete
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30'
                       : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700'

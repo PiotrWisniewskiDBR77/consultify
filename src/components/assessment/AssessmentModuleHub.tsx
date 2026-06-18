@@ -781,7 +781,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                         key={item.id}
                         className={`flex items-center justify-between gap-2 px-2 py-2 rounded-md text-xs transition-colors ${
                           isActive
-                            ? 'bg-primary-600 text-white'
+                            ? 'bg-navy-900 text-white'
                             : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                         }`}
                       >
@@ -1256,7 +1256,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                 </span>
                 <div className="w-32 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-primary-500 rounded-full transition-all duration-300"
+                    className="h-full bg-navy-900 rounded-full transition-all duration-300"
                     style={{ width: `${calculateProgress()}%` }}
                   />
                 </div>

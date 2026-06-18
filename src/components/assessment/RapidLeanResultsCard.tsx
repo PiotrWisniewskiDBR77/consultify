@@ -162,7 +162,7 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary-500 transition-all"
+                      className="h-full bg-navy-900 transition-all"
                       style={{ width: `${(level / 7) * 100}%` }}
                     />
                   </div>

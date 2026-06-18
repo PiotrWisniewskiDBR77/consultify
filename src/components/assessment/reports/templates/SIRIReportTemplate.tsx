@@ -74,7 +74,7 @@ const COLOR_CLASSES: Record<ColorKey, ColorClasses> = {
   purple: {
     bg50: 'bg-primary-50 dark:bg-primary-900/20',
     bg100: 'bg-primary-100 dark:bg-primary-900/30',
-    bg500: 'bg-primary-500',
+    bg500: 'bg-navy-900',
     bg900_20: 'bg-primary-900/20',
     bg900_30: 'bg-primary-900/30',
     text400: 'text-primary-400',

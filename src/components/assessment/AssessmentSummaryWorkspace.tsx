@@ -233,7 +233,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
             </div>
             <div className="mt-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary-500 rounded-full transition-all"
+                className="h-full bg-navy-900 rounded-full transition-all"
                 style={{ width: `${(overallProgress.axesWorked / axes.length) * 100}%` }}
               />
             </div>

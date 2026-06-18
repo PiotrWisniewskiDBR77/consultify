@@ -745,7 +745,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                                           isCompleted
                                             ? 'bg-green-500 text-white'
                                             : isActive
-                                              ? 'bg-primary-600 text-white'
+                                              ? 'bg-navy-900 text-white'
                                               : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                                         }
                                     `}
@@ -820,7 +820,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
               <button
                 onClick={handleNext}
                 disabled={!canProceed() || isGenerating || isGeneratingCharter}
-                className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
+                className="flex items-center gap-2 px-6 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
               >
                 {isGenerating || isGeneratingCharter ? (
                   <>

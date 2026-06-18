@@ -157,7 +157,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
               </div>
               <div className="h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary-500 transition-all duration-500 ease-out"
+                  className="h-full bg-navy-900 transition-all duration-500 ease-out"
                   style={{ width: `${(currentAreaIdx / areaKeys.length) * 100}%` }}
                 ></div>
               </div>
@@ -200,7 +200,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
         {step === 'result' && (
           <div className="text-center max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="mb-6 relative inline-block">
-              <div className="absolute inset-0 bg-primary-500 blur-2xl opacity-20 rounded-full"></div>
+              <div className="absolute inset-0 bg-slate-400 blur-2xl opacity-20 rounded-full"></div>
               <Award size={80} className="text-primary-500 dark:text-primary-400 relative z-10" />
             </div>
 

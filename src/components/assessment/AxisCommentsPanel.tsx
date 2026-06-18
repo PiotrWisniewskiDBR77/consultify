@@ -247,7 +247,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
       {!isReadOnly && (
         <div className="p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/50">
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary-500 flex-shrink-0 flex items-center justify-center text-white text-xs font-medium">
+            <div className="w-8 h-8 rounded-full bg-navy-900 flex-shrink-0 flex items-center justify-center text-white text-xs font-medium">
               {currentUser
                 ? getInitials(
                     `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() ||
@@ -336,7 +336,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
         <div className="flex gap-3">
           <div
             className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-medium ${
-              comment.user_id === currentUserId ? 'bg-primary-500' : 'bg-slate-500'
+              comment.user_id === currentUserId ? 'bg-navy-700' : 'bg-slate-500'
             }`}
           >
             {getInitials(comment.author_name || 'User')}

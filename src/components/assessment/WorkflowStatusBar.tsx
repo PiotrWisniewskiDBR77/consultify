@@ -121,7 +121,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         };
       case 'current':
         return {
-          bg: 'bg-primary-500',
+          bg: 'bg-navy-900',
           text: 'text-primary-600 dark:text-primary-400',
           border: 'border-primary-500',
           connector: 'bg-primary-200 dark:bg-primary-900/50',

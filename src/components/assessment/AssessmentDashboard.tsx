@@ -427,7 +427,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                           </div>
                           <div className="h-1.5 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-primary-500 rounded-full"
+                              className="h-full bg-navy-900 rounded-full"
                               style={{ width: `${assessment.progress}%` }}
                             />
                           </div>

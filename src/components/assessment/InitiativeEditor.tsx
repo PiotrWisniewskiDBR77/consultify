@@ -339,7 +339,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
               <button
                 onClick={handleAddObjective}
                 disabled={!newObjective.trim()}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-colors"
               >
                 <Plus size={18} />
               </button>
@@ -373,7 +373,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
           <button
             onClick={handleSave}
             disabled={!isValid}
-            className="flex items-center gap-2 p-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
+            className="flex items-center gap-2 p-4 py-2.5 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
           >
             <Save size={18} />
             {t('initiatives.form.save')}

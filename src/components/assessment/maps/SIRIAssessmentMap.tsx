@@ -91,7 +91,7 @@ const COLOR_CLASSES: Record<ColorKey, ColorClasses> = {
     bg100: 'bg-primary-100 dark:bg-primary-900/30',
     bg200: 'bg-primary-200 dark:bg-primary-900/50',
     bg300: 'bg-primary-300 dark:bg-primary-700',
-    bg500: 'bg-primary-500',
+    bg500: 'bg-navy-900',
     bg700: 'bg-primary-700',
     bg900_30: 'bg-primary-900/30',
     text400: 'text-primary-400',

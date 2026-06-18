@@ -553,7 +553,7 @@ const ReviewsList: React.FC<{
         <div key={review.id} className="p-3 bg-slate-50 dark:bg-navy-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-medium">
+              <div className="w-8 h-8 rounded-full bg-navy-900 flex items-center justify-center text-white text-sm font-medium">
                 {review.reviewer_role?.charAt(0) || 'R'}
               </div>
               <div>
@@ -636,7 +636,7 @@ const VersionHistory: React.FC<{
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 version.version === currentVersion
-                  ? 'bg-primary-500 text-white'
+                  ? 'bg-navy-900 text-white'
                   : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
               }`}
             >
@@ -744,7 +744,7 @@ const SubmitForReviewModal: React.FC<{
                       : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm">
+                  <div className="w-8 h-8 rounded-full bg-navy-900 flex items-center justify-center text-white text-sm">
                     {user.name?.charAt(0) || 'U'}
                   </div>
                   <div className="flex-1 min-w-0">

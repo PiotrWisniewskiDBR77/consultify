@@ -393,7 +393,7 @@ const WorkflowStageRow: FC<{
               stage.isCompleted
                 ? 'bg-emerald-500 text-white'
                 : stage.isCurrent
-                  ? 'bg-primary-500 text-white animate-pulse'
+                  ? 'bg-navy-900 text-white animate-pulse'
                   : stage.isBlocked
                     ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-2 border-rose-500/50'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
@@ -437,7 +437,7 @@ const WorkflowStageRow: FC<{
                   {stage.label}
                 </span>
                 {stage.isCurrent && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-primary-500 text-white">
+                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-navy-900 text-white">
                     CURRENT
                   </span>
                 )}
@@ -1008,7 +1008,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
             <span>Completed</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-primary-500 animate-pulse" />
+            <div className="w-3 h-3 rounded-full bg-navy-900 animate-pulse" />
             <span>Current</span>
           </div>
           <div className="flex items-center gap-1.5">

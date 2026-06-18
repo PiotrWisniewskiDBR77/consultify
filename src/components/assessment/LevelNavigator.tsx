@@ -54,7 +54,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
               );
             } else if (isTarget) {
               statusDot = (
-                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary-500" />
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-navy-900 dark:bg-white" />
               );
             }
 

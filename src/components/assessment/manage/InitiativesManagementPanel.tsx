@@ -313,7 +313,7 @@ const GenerateInitiativesModal: FC<{
         <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-500/10 to-amber-500/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-500 text-white rounded-lg">
+              <div className="p-2 bg-navy-900 text-white rounded-lg">
                 <Sparkles size={18} />
               </div>
               <div>

@@ -181,7 +181,7 @@ export const AssessmentStageGate: React.FC<Props> = ({
       border: 'border-blue-500',
     },
     purple: {
-      bg: 'bg-primary-500',
+      bg: 'bg-navy-900',
       light: 'bg-primary-100 dark:bg-primary-900/30',
       text: 'text-primary-600 dark:text-primary-400',
       border: 'border-primary-500',
@@ -218,7 +218,7 @@ export const AssessmentStageGate: React.FC<Props> = ({
       <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-slate-50 to-white dark:from-navy-800 dark:to-navy-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-navy-900 flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>

@@ -225,7 +225,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
           </button>
           <button
             type="button"
-            className="rounded-lg bg-primary-600 text-white px-3 py-1.5 text-sm disabled:opacity-50"
+            className="rounded-lg bg-navy-900 text-white px-3 py-1.5 text-sm disabled:opacity-50"
             onClick={() =>
               void runAction(
                 () =>
