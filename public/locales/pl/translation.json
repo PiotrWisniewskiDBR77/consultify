@@ -118,7 +118,22 @@
     "selectAll": "Zaznacz wszystko",
     "selectRow": "Zaznacz wiersz",
     "statusLabel": "Status",
-    "you": "Ty"
+    "you": "Ty",
+    "done": "Zrobione",
+    "draft": "Szkic",
+    "completed": "Zakończony",
+    "name": "Nazwa",
+    "backToList": "Wróć do listy",
+    "missing": "brak danych",
+    "today": "Dziś",
+    "unknown": "nieznana",
+    "actions": "Akcje",
+    "custom": "Własny",
+    "target": "cel",
+    "none": "brak",
+    "runNow": "Uruchom teraz",
+    "organization": "Organizacja",
+    "loadMore": "Załaduj więcej"
   },
   "superadmin": {
     "confirm": {
@@ -410,6 +425,14 @@
       },
       "subtitle": "Tylko do odczytu podsumowanie z GET /api/v8/prompt-os/runtime/summary",
       "title": "Środowisko Prompt OS (V8)"
+    },
+    "ai": {
+      "observatory": {
+        "refresh": "Odśwież",
+        "cost": "koszt",
+        "providers": "Dostawcy",
+        "status": "Status"
+      }
     }
   },
   "dynamicTabBar": {
@@ -542,7 +565,8 @@
       "kpi_roi": "KPI i ROI",
       "raid": "Ryzyka i problemy",
       "assessment": "Wyniki oceny",
-      "valuation": "Wycena przedsiębiorstwa"
+      "valuation": "Wycena przedsiębiorstwa",
+      "loadMore": "Załaduj więcej"
     },
     "setup": {
       "title": "Skonfiguruj swój deck",
@@ -811,7 +835,8 @@
         "refreshAll": "Odśwież wszystkie dane",
         "outdated": "Dane mogą być nieaktualne",
         "refreshing": "Odświeżanie...",
-        "upToDate": "Aktualne"
+        "upToDate": "Aktualne",
+        "stale": "Przestarzały"
       },
       "collaboration": {
         "onlyYou": "Tylko Ty",
@@ -822,7 +847,10 @@
       "sourceTraceability": {
         "dataFrom": "Dane z",
         "clickToOpen": "Kliknij aby otworzyć źródło"
-      }
+      },
+      "loading": "Ładowanie…",
+      "back": "Wstecz",
+      "slides": "slajdów"
     },
     "agent": {
       "title": "Agent AI",
@@ -867,7 +895,40 @@
     "deleteFailed": "Nie udało się usunąć prezentacji",
     "openEditor": "Otwórz edytor",
     "deckPreview": "Podgląd prezentacji",
-    "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć."
+    "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.",
+    "governance": {
+      "loading": "Ładowanie…",
+      "retry": "Spróbuj ponownie"
+    },
+    "qualityGates": {
+      "failed": "Błąd"
+    },
+    "analytics": {
+      "refresh": "Odśwież"
+    },
+    "tabs": {
+      "templates": "Wzorce",
+      "recent": "Ostatnie"
+    },
+    "columns": {
+      "status": "Status",
+      "slides": "slajdów"
+    },
+    "status": {
+      "draft": "Szkic",
+      "generated": "Wygenerowana",
+      "ready": "Gotowy",
+      "archived": "Zarchiwizowany"
+    },
+    "shared": {
+      "loading": "Ładowanie…"
+    },
+    "sourceType": {
+      "tool": "Narzędzie",
+      "assessment": "Ocena",
+      "finance": "Finanse",
+      "upload": "Przesłane"
+    }
   },
   "sidebar": {
     "module3_1": "Inicjatywy",
@@ -915,7 +976,9 @@
       "profile": "Profil",
       "strategy": "Strategia"
     },
-    "realization": "Realizacja"
+    "realization": "Realizacja",
+    "expand": "Rozwiń",
+    "finance": "Finanse"
   },
   "widgets": {
     "help": {
@@ -1028,7 +1091,8 @@
           "high": "Wysoki",
           "critical": "Krytyczny"
         }
-      }
+      },
+      "removeFromFocus": "Usuń z fokusu"
     },
     "radar": {
       "pulseLabel": "Radar · kontekst, pomysły i spokojny kierunek",
@@ -1166,13 +1230,18 @@
         "score": "Wynik"
       },
       "empty": "Brak sygnałów. Teresa skanuje.",
-      "emptyHint": "W miarę rozwoju Twoich projektów i kontekstu pojawią się tu sygnały warte uwagi."
+      "emptyHint": "W miarę rozwoju Twoich projektów i kontekstu pojawią się tu sygnały warte uwagi.",
+      "filter": {
+        "all": "Wszystkie",
+        "saved": "Zapisane"
+      }
     },
     "calendar": "Kalendarz",
     "tasks": "Zadania",
     "notifications": {
       "emptyTitle": "Brak powiadomień",
-      "emptySubtitle": "Jesteś na bieżąco!"
+      "emptySubtitle": "Jesteś na bieżąco!",
+      "empty": "Brak prezentacji."
     },
     "decisions": {
       "addDecision": "Dodaj decyzję",
@@ -1598,6 +1667,21 @@
     "processFlow": {
       "degraded": "Dane przepływu niedostępne — ponowne łączenie",
       "degradedHint": "Zmiany strukturalne są zapisywane lokalnie i zsynchronizują się po przywróceniu usługi."
+    },
+    "dashboard": {
+      "completed": "Zakończony"
+    },
+    "timeGroup": {
+      "today": "Dziś"
+    },
+    "today": "Dziś",
+    "filters": {
+      "clearSearch": "Wyczyść wyszukiwanie",
+      "status": "Status"
+    },
+    "dueDate": {
+      "today": "Dziś",
+      "completed": "Zakończony"
     }
   },
   "step1": {
@@ -1855,6 +1939,12 @@
       "recommendedLevel": "Rekomendowany poziom",
       "acceptResult": "Zaakceptuj wynik",
       "adjustManually": "Dostosuj ręcznie"
+    },
+    "table": {
+      "assessment": "Ocena",
+      "status": "Status",
+      "updated": "Data",
+      "actions": "Akcje"
     }
   },
   "initiatives": {
@@ -3766,6 +3856,12 @@
       "high": "Wysokie",
       "low": "Niskie",
       "medium": "Średnie"
+    },
+    "table": {
+      "status": "Status",
+      "initiative": "Inicjatywa",
+      "missing": "brak danych",
+      "updated": "Data"
     }
   },
   "execution": {
@@ -3963,7 +4059,10 @@
         "seedDemo": "Wczytaj przykład Atelier Toys",
         "baseline": "Bazowa",
         "current": "Obecna",
-        "target": "Cel"
+        "target": "Cel",
+        "col": {
+          "name": "Nazwa"
+        }
       },
       "risks": {
         "title": "Rejestr ryzyk",
@@ -4003,7 +4102,14 @@
         "title": "Lista zamknięcia",
         "subtitle": "Przekazanie, akceptacja i działania zamknięcia projektu.",
         "add": "Dodaj pozycję",
-        "empty": "Brak pozycji zamknięcia."
+        "empty": "Brak pozycji zamknięcia.",
+        "col": {
+          "status": "Status",
+          "done": "Zrobione"
+        },
+        "status": {
+          "done": "Zrobione"
+        }
       },
       "addClosureItem": "Dodaj pozycję",
       "addKpi": "Dodaj KPI",
@@ -4672,7 +4778,25 @@
     "tasks": "Zadania",
     "todo": "Do zrobienia",
     "transformationGoals": "Cele transformacji",
-    "upcomingDeadlines": "Nadchodzące terminy"
+    "upcomingDeadlines": "Nadchodzące terminy",
+    "target": "cel",
+    "col": {
+      "status": "Status",
+      "version": "wersja",
+      "generated": "Wygenerowana",
+      "name": "Nazwa"
+    },
+    "schedule": {
+      "active": "Aktywny"
+    },
+    "preview": {
+      "project": "Projekt",
+      "version": "wersja"
+    },
+    "toast": {
+      "chatOpened": "Czat otwarty",
+      "chatOpenError": "Nie udało się otworzyć czatu"
+    }
   },
   "auth": {
     "logIn": "Zaloguj się",
@@ -4733,7 +4857,11 @@
           "later": "Później",
           "start": "Otwórz wprowadzenie"
         }
-      }
+      },
+      "back": "Wstecz",
+      "next": "następne",
+      "completed": "Zakończony",
+      "empty": "Brak prezentacji."
     },
     "microVideo": {
       "header": "Szybki samouczek",
@@ -4835,6 +4963,9 @@
         "superadmin_ai_development": "Rozwój AI",
         "superadmin_ai_operations": "Operacje AI",
         "billing": "Płatności i subskrypcja"
+      },
+      "thisStep": {
+        "next": "następne"
       }
     },
     "chatbot": {
@@ -4900,6 +5031,13 @@
       "shortcuts": "Spacja: odtwórz/pauza · ← →: przewiń · F: pełny ekran",
       "speed": "Szybkość odtwarzania",
       "watched": "Obejrzane"
+    },
+    "updates": {
+      "back": "Wstecz",
+      "empty": "Brak prezentacji.",
+      "admin": {
+        "recent": "Ostatnie"
+      }
     }
   },
   "settings": {
@@ -5147,6 +5285,29 @@
         "support": "Wsparcie",
         "executive": "Zarząd",
         "other": "Inne"
+      },
+      "professional": {
+        "saved": "Zapisane",
+        "error": "Błąd"
+      },
+      "bio": {
+        "saved": "Zapisane",
+        "error": "Błąd"
+      },
+      "completeness": {
+        "missing": "brak danych"
+      },
+      "social": {
+        "saved": "Zapisane",
+        "error": "Błąd"
+      },
+      "status": {
+        "saved": "Zapisane",
+        "error": "Błąd"
+      },
+      "workHours": {
+        "saved": "Zapisane",
+        "error": "Błąd"
       }
     },
     "signatures": {
@@ -5515,6 +5676,15 @@
           "name": "Raport zarządczy",
           "prompt": "Pisz w stylu executive summary. Zacznij od wniosków, potem pokaż dowody. Stosuj krótkie akapity i wypunktowania dla najważniejszych obserwacji."
         }
+      },
+      "all": "Wszystkie",
+      "modelSelection": {
+        "saved": "Zapisane",
+        "error": "Błąd"
+      },
+      "parameters": {
+        "saved": "Zapisane",
+        "error": "Błąd"
       }
     },
     "aiUsage": {
@@ -5689,7 +5859,15 @@
       "pushDenied": "Odmówiono uprawnień",
       "pushEnabled": "Włączono powiadomienia na pulpicie",
       "blockedTitle": "Powiadomienia są zablokowane",
-      "blocked": "Twoja przeglądarka blokuje powiadomienia dla tej witryny. Włącz je w ustawieniach przeglądarki, aby otrzymywać alerty na pulpicie."
+      "blocked": "Twoja przeglądarka blokuje powiadomienia dla tej witryny. Włącz je w ustawieniach przeglądarki, aby otrzymywać alerty na pulpicie.",
+      "dnd": {
+        "saved": "Zapisane",
+        "error": "Błąd",
+        "active": "Aktywny"
+      },
+      "vip": {
+        "empty": "Brak prezentacji."
+      }
     },
     "integrations": {
       "title": "Integracje",
@@ -5728,7 +5906,15 @@
         "calendar": "Kalendarz",
         "taskMgmt": "Zarządzanie zadaniami",
         "cloud": "Chmura"
-      }
+      },
+      "readiness": {
+        "connected": "Połączony",
+        "error": "Błąd",
+        "disconnected": "Odłączony"
+      },
+      "error": "Błąd",
+      "disconnect": "Odłącz",
+      "deprecated": "Wycofany"
     },
     "availability": {
       "title": "Dostępność i skupienie",
@@ -6013,7 +6199,8 @@
         "team": "Tylko zespół",
         "teamDesc": "Tylko członkowie Twojego zespołu",
         "private": "Prywatne",
-        "privateDesc": "Tylko Ty widzisz"
+        "privateDesc": "Tylko Ty widzisz",
+        "organization": "Organizacja"
       },
       "profile": {
         "public": "Publiczny",
@@ -6272,7 +6459,8 @@
         "general": "Ogólne",
         "ai": "AI",
         "focus": "Skupienie"
-      }
+      },
+      "connected": "Połączony"
     },
     "accessibility": {
       "saved": "Preferencje dostępności zapisane",
@@ -6959,7 +7147,76 @@
     },
     "recovery": {
       "readOnlyDescription": "E-mail odzyskiwania, telefon, kody zapasowe i zaufane urządzenia są tylko do odczytu, dopóki backend odzyskiwania nie zostanie podłączony.",
-      "unavailable": "Odzyskiwanie konta jest chwilowo niedostępne."
+      "unavailable": "Odzyskiwanie konta jest chwilowo niedostępne.",
+      "saved": "Zapisane",
+      "error": "Błąd",
+      "saveFailed": "Nie udało się zapisać"
+    },
+    "modules": {
+      "notifications": "Powiadomienia"
+    },
+    "api": {
+      "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć."
+    },
+    "account": {
+      "exportSuccess": "Rozpoczęto eksport",
+      "delete": "Usuń",
+      "status": "Status"
+    },
+    "contact": {
+      "saved": "Zapisane",
+      "error": "Błąd",
+      "type": {
+        "personal": "Osobisty"
+      },
+      "name": "Nazwa"
+    },
+    "dashboard": {
+      "saved": "Zapisane",
+      "error": "Błąd",
+      "widgets": {
+        "quickActions": "Szybkie akcje"
+      }
+    },
+    "dataPrivacy": {
+      "saveFailed": "Nie udało się zapisać",
+      "exportFailed": "Eksport nie powiódł się",
+      "deleteFailed": "Nie udało się usunąć prezentacji"
+    },
+    "export": {
+      "error": "Błąd"
+    },
+    "analytics": {
+      "exported": "Wyeksportowany",
+      "status": "Status",
+      "error": "Błąd"
+    },
+    "password": {
+      "error": "Błąd"
+    },
+    "webhooks": {
+      "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.",
+      "name": "Nazwa",
+      "empty": "Brak prezentacji.",
+      "failed": "Błąd",
+      "retry": "Spróbuj ponownie"
+    },
+    "preferences": {
+      "saved": "Zapisane",
+      "error": "Błąd"
+    },
+    "dataControls": {
+      "saved": "Zapisane",
+      "error": "Błąd"
+    },
+    "saveFailed": "Nie udało się zapisać",
+    "responseStyle": {
+      "tone": "Ton"
+    },
+    "tabs": {
+      "personal": "Osobisty",
+      "status": "Status",
+      "connected": "Połączony"
     }
   },
   "showcase": {
@@ -8412,7 +8669,10 @@
       "allRegions": "Wszystkie regiony",
       "statusActive": "Aktywny",
       "statusDeactivated": "Dezaktywowany",
-      "featureSoon": "Wkrótce dostępne"
+      "featureSoon": "Wkrótce dostępne",
+      "col": {
+        "status": "Status"
+      }
     },
     "dashboard": {
       "welcome": "Witaj ponownie",
@@ -8458,7 +8718,15 @@
       "noProjects": "Brak aktywnych projektów",
       "users": "Członkowie zespołu",
       "usersDesc": "Osoby w Twojej organizacji partnerskiej",
-      "usersEmpty": "Brak członków zespołu"
+      "usersEmpty": "Brak członków zespołu",
+      "col": {
+        "organization": "Organizacja",
+        "assessment": "Ocena",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Aktywny"
+      }
     },
     "resources": {
       "desc": "Pobierz zasoby pakietu partnerskiego",
@@ -8567,6 +8835,9 @@
         "pmoMapping": "Jak transakcje są mapowane do standardów PMO?",
         "pmoMappingAnswer": "Każda rejestracja transakcji jest automatycznie mapowana do GOVERNANCE_DECISION_MAKING (ISO 21500 Klauzula 4.3.4), a rozliczenie prowizji do BENEFITS_REALIZATION (Klauzula 4.4.1)."
       }
+    },
+    "referrals": {
+      "deleteFailed": "Nie udało się usunąć prezentacji"
     }
   },
   "thinking": {
@@ -8598,7 +8869,8 @@
       "prev": "Poprzedni artykuł",
       "next": "Następny artykuł",
       "related": "Powiązane artykuły",
-      "backToCategory": "Wróć do kategorii"
+      "backToCategory": "Wróć do kategorii",
+      "deprecated": "Wycofany"
     },
     "lane": {
       "failurePatterns": "Wzorce porażek",
@@ -8654,6 +8926,9 @@
     },
     "section": {
       "viewAll": "Zobacz wszystkie"
+    },
+    "category": {
+      "all": "Wszystkie"
     }
   },
   "cloud": {
@@ -8676,7 +8951,8 @@
       "onedrive": "OneDrive",
       "dropbox": "Dropbox",
       "sharepoint": "SharePoint"
-    }
+    },
+    "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć."
   },
   "chat": {
     "business": "Akcje biznesowe",
@@ -8691,7 +8967,8 @@
       "retry": "Spróbuj ponownie"
     },
     "action": {
-      "unsupported": "Akcja nieobsługiwana"
+      "unsupported": "Akcja nieobsługiwana",
+      "failed": "Błąd"
     },
     "actions": {
       "navigate": {
@@ -8734,7 +9011,10 @@
         "label": "Zapisz KPI",
         "description": "Zapisz wartość KPI w szeregu czasowym"
       },
-      "branch": "Rozgałęź stąd"
+      "branch": "Rozgałęź stąd",
+      "delete": "Usuń",
+      "report": "Raport",
+      "more": "więcej"
     },
     "coThinker": {
       "title": "Co-Thinker",
@@ -8753,7 +9033,43 @@
       "title": "Tok rozumowania"
     },
     "header": "Asystent AI",
-    "subHeader": "Zadaj pytanie lub poproś o pomoc"
+    "subHeader": "Zadaj pytanie lub poproś o pomoc",
+    "signals": {
+      "savedToIdeas": "Zapisano do My Ideas",
+      "saveFailed": "Nie udało się zapisać",
+      "savedToNotebook": "Zapisano do Notebook",
+      "snoozed": "Wyciszono sygnał",
+      "snoozeFailed": "Nie udało się wyciszyć",
+      "typeMuted": "Wyciszono typ sygnału",
+      "muteFailed": "Nie udało się wyciszyć",
+      "dismissFailed": "Nie udało się ukryć"
+    },
+    "message": {
+      "emitDocumentTooltip": "Utwórz dokument z tej odpowiedzi",
+      "openAsDocument": "Otwórz jako dokument"
+    },
+    "artifacts": "Artefakty",
+    "orgMemory": {
+      "untitledAnalysis": "Analiza bez tytułu",
+      "problemLabel": "Problem:",
+      "recommendationLabel": "Rekomendacja:",
+      "contextFromHistory": "Kontekst z historii decyzji",
+      "useInConversation": "Użyj w rozmowie",
+      "viewConversation": "Otwórz rozmowę",
+      "showDetails": "Pokaż szczegóły ▾",
+      "usedCount": "Użyto {{count}}×",
+      "title": "Pamięć organizacji",
+      "tabDecisions": "Decyzje",
+      "tabPatterns": "Wzorce",
+      "searchPlaceholder": "Szukaj w historii decyzji…",
+      "noResults": "Brak wyników dla tego zapytania",
+      "noDecisions": "Jeszcze nie zapisano żadnych decyzji. Użyj „Zapisz jako decyzję\" po analizie Deep Thinking.",
+      "noPatterns": "System uczy się wzorców z Twoich projektów. Pojawią się tutaj automatycznie."
+    },
+    "context": {
+      "saved": "Zapisane",
+      "saveFailed": "Nie udało się zapisać"
+    }
   },
   "aiChat": {
     "composer": {
@@ -8824,7 +9140,11 @@
         "editor": {
           "label": "Redaktor",
           "desc": "Popraw strukturę, jasność i czytelność dla zarządu"
-        }
+        },
+        "empty": "Brak prezentacji."
+      },
+      "mentions": {
+        "empty": "Brak prezentacji."
       }
     },
     "voice": {
@@ -9361,7 +9681,11 @@
     },
     "moveToFolderShort": "Przenieś do folderu",
     "moveToTopLevel": "↥ Najwyższy poziom",
-    "noTargetFolders": "Brak innych folderów"
+    "noTargetFolders": "Brak innych folderów",
+    "teresaProposal": {
+      "failed": "Błąd",
+      "reject": "Odrzuć"
+    }
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
@@ -9702,7 +10026,10 @@
       "resetColumns": "Przywróć domyślne",
       "required": "Wymagane",
       "noColumnsFound": "Brak kolumn pasujących do wyszukiwania",
-      "columnsTip": "Przeciągnij, aby zmienić kolejność; kliknij oko, aby pokazać/ukryć"
+      "columnsTip": "Przeciągnij, aby zmienić kolejność; kliknij oko, aby pokazać/ukryć",
+      "actions": "Akcje",
+      "next": "następne",
+      "done": "Zrobione"
     },
     "nav": {
       "people": {
@@ -9779,7 +10106,8 @@
         "aiCalls": "Wywołania AI dziennie",
         "save": "Przydziel plan i limity",
         "saved": "Przydzielono plan i limity"
-      }
+      },
+      "code": "kod"
     },
     "interviewAssignmentsPanel": {
       "sendBackReason": "Powód odesłania (Send Back):",
@@ -9809,7 +10137,91 @@
     "desktopOnly": {
       "body": "{{surface}} jest zoptymalizowany na desktop. Na telefonie część układu (tabele, podgląd boczny) może być trudna w obsłudze."
     },
-    "select": "Wybierz…"
+    "select": "Wybierz…",
+    "initiativeCreator": {
+      "completed": "Zakończony"
+    },
+    "branding": {
+      "saved": "Zapisane"
+    },
+    "integrations": {
+      "disconnect": "Odłącz"
+    },
+    "roles": {
+      "delete": "Usuń",
+      "name": "Nazwa"
+    },
+    "templates": {
+      "exported": "Wyeksportowany",
+      "name": "Nazwa"
+    },
+    "defaults": {
+      "saved": "Zapisane"
+    },
+    "compliance": {
+      "cookies": {
+        "saved": "Zapisane",
+        "error": "Błąd"
+      },
+      "dataRequests": {
+        "completed": "Zakończony",
+        "delete": "Usuń"
+      },
+      "gdpr": {
+        "error": "Błąd"
+      }
+    },
+    "org": {
+      "dataHosting": {
+        "active": "Aktywny"
+      },
+      "name": "Nazwa"
+    },
+    "team": {
+      "import": {
+        "failed": "Błąd"
+      },
+      "bounced": {
+        "unknown": "nieznana",
+        "cancel": "Anuluj"
+      },
+      "activity": {
+        "today": "Dziś",
+        "user": "Użytkownik",
+        "status": "Status",
+        "actions": "Akcje"
+      },
+      "routing": {
+        "actions": "Akcje",
+        "delete": "Usuń"
+      }
+    },
+    "features": {
+      "total": "Łącznie",
+      "delete": "Usuń"
+    },
+    "analytics": {
+      "refresh": "Odśwież"
+    },
+    "feedback": {
+      "statuses": {
+        "archived": "Zarchiwizowany"
+      },
+      "stats": {
+        "total": "Łącznie"
+      },
+      "filters": {
+        "archived": "Zarchiwizowany"
+      },
+      "status": "Status"
+    },
+    "security": {
+      "saved": "Zapisane",
+      "loading": "Ładowanie…"
+    },
+    "tabs": {
+      "templates": "Wzorce"
+    }
   },
   "access": {
     "banner": {
@@ -10113,6 +10525,12 @@
         "chatOpened": "Otwarto czat",
         "chatOpenError": "Nie udało się otworzyć czatu",
         "closeDocForAi": "Wróć do listy, aby użyć AI."
+      },
+      "defaultSessionName": "Sesja",
+      "initiatives": {
+        "columns": {
+          "status": "Status"
+        }
       }
     },
     "integrations": {
@@ -10184,6 +10602,14 @@
       "hypotheses": "Hipotezy",
       "candidates": "Kandydaci",
       "sizing": "Sizing"
+    },
+    "wizard": {
+      "assumptions": "założenia",
+      "finalize": {
+        "done": "Zrobione",
+        "ready": "Gotowy"
+      },
+      "next": "następne"
     }
   },
   "aiAuthoring": {
@@ -10409,7 +10835,8 @@
       "deleted": "Usunięto",
       "deleteFailed": "Nie udało się usunąć",
       "duplicated": "Zduplikowano",
-      "duplicateFailed": "Nie udało się zduplikować"
+      "duplicateFailed": "Nie udało się zduplikować",
+      "exportFailed": "Eksport nie powiódł się"
     },
     "prediction": {
       "budget": "Budżet",
@@ -10477,7 +10904,8 @@
       "dropOrBrowse": "Kliknij, aby wybrać plik lub upuść tutaj",
       "importLines": "Importuj pozycje",
       "docImported": "Zaimportowano pozycje budżetowe",
-      "confirmWithAI": "Potwierdź z AI"
+      "confirmWithAI": "Potwierdź z AI",
+      "project": "Projekt"
     },
     "statements": {
       "currentDocument": "Aktualny",
@@ -10494,7 +10922,24 @@
       "sourceDocumentsHelper": "3 dokumenty do porównania z tym, czego użytkownik szukał.",
       "systemTables": "Tabele danych w systemie",
       "systemTablesHint": "Tutaj użytkownik może szybko otworzyć sekcje z danymi i porównać, czy system ma dokładnie to, czego szukał.",
-      "validationSection": "Walidacja"
+      "validationSection": "Walidacja",
+      "status": "Status"
+    },
+    "counters": {
+      "all": "Wszystkie",
+      "draft": "Szkic"
+    },
+    "importWizard": {
+      "completed": "Zakończony",
+      "confidence": "pewność"
+    },
+    "lane": {
+      "kpi": {
+        "stale": "Przestarzały"
+      }
+    },
+    "ratios": {
+      "missing": "brak danych"
     }
   },
   "portfolio": {
@@ -11580,7 +12025,21 @@
         "tablet": "tablet",
         "desktop": "komputer"
       }
-    }
+    },
+    "attach": {
+      "upload": "Przesłane"
+    },
+    "backlog": {
+      "empty": "Brak prezentacji."
+    },
+    "pipeline": {
+      "delivery": "Dostarczenie"
+    },
+    "counter": {
+      "more": "więcej",
+      "all": "Wszystkie"
+    },
+    "loadMore": "Załaduj więcej"
   },
   "behaviorIntelligence": {
     "journeyTracked": "Zdarzenie ścieżki zarejestrowane",
@@ -11644,7 +12103,8 @@
       "team": "Zespół",
       "teamDesc": "Analityka i obciążenie",
       "settings": "Ustawienia",
-      "settingsDesc": "Preferencje i powiadomienia"
+      "settingsDesc": "Preferencje i powiadomienia",
+      "finance": "Finanse"
     },
     "action": {
       "createTask": "Utwórz zadanie",
@@ -11680,6 +12140,38 @@
         "planPrompt": "Stwórz 3‑krokowy plan poprawy KPI (wraz z właścicielami i pierwszym checkpointem pomiaru).",
         "measurement": "Plan pomiaru",
         "measurementPrompt": "Zaproponuj plan pomiaru: źródła danych, rytm, definicję i typowe pułapki."
+      },
+      "freshness": "aktualność",
+      "source": {
+        "custom": "Własny"
+      },
+      "overview": {
+        "cards": {
+          "total": "Łącznie"
+        },
+        "empty": "Brak prezentacji."
+      },
+      "signals": {
+        "readiness": {
+          "ready": "Gotowy"
+        },
+        "due": {
+          "today": "Dziś"
+        },
+        "required": {
+          "source": "źródło"
+        },
+        "sheet": {
+          "source": "źródło"
+        }
+      },
+      "workspace": {
+        "catalog": "Katalog"
+      },
+      "scorecards": {
+        "name": "Nazwa",
+        "total": "Łącznie",
+        "empty": "Brak prezentacji."
       }
     },
     "tabs": {
@@ -11726,7 +12218,12 @@
         "createFailed": "Nie udało się utworzyć zadań",
         "empty": "Brak działań w snapshotcie raportu.",
         "noSnapshot": "Ten raport nie ma podpiętego snapshotu."
-      }
+      },
+      "relation": {
+        "actions": "Akcje"
+      },
+      "refresh": "Odśwież",
+      "approval": "akceptacja"
     },
     "emptyState": "Brak KPI",
     "columns": {
@@ -11739,7 +12236,8 @@
       "trend": "Trend",
       "frequency": "Częstotliwość",
       "owner": "Właściciel",
-      "lastUpdated": "Aktualizacja"
+      "lastUpdated": "Aktualizacja",
+      "source": "źródło"
     },
     "actions": {
       "openDetail": "Otwórz szczegóły",
@@ -11777,7 +12275,18 @@
       "historyDate": "Data",
       "historyValue": "Wartość",
       "historyNotes": "Notatki",
-      "historyBy": "Autor"
+      "historyBy": "Autor",
+      "saved": "Zapisane",
+      "saveFailed": "Nie udało się zapisać",
+      "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.",
+      "deleteFailed": "Nie udało się usunąć prezentacji",
+      "definitionSource": "Źródło definicji",
+      "timeline": {
+        "baseline": "bazowy"
+      },
+      "ai": {
+        "askAi": "Teresa"
+      }
     },
     "operational": {
       "totalTracked": "Łącznie śledzonych KPI",
@@ -11874,18 +12383,62 @@
       "historyNotes": "Notatki",
       "historyBy": "Autor",
       "historyDate": "Data",
-      "noHistory": "Brak historii"
+      "noHistory": "Brak historii",
+      "openModal": {
+        "search": "Wyszukiwanie",
+        "empty": "Brak prezentacji."
+      }
     },
     "reportingSchedules": {
       "approvalAuto": "Automatyczne",
       "approvalApproved": "Zatwierdzone",
       "approvalRejected": "Odrzucone",
       "approvalPending": "Oczekuje na zatwierdzenie",
-      "approvalPendingHint": "Wysyłka jest zablokowana do czasu zatwierdzenia harmonogramu"
+      "approvalPendingHint": "Wysyłka jest zablokowana do czasu zatwierdzenia harmonogramu",
+      "name": "Nazwa",
+      "total": "Łącznie",
+      "empty": "Brak prezentacji."
     },
     "sort": {
       "activeAria": "Posortowano wg {{col}} {{dir}}",
       "byAria": "Sortuj wg {{col}}"
+    },
+    "deviation": {
+      "askAi": "Teresa",
+      "close": "Zamknij",
+      "actions": "Akcje",
+      "empty": "Brak prezentacji."
+    },
+    "reconciliation": {
+      "col": {
+        "status": "Status"
+      },
+      "empty": "Brak prezentacji."
+    },
+    "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.",
+    "reporting": {
+      "workspace": {
+        "reports": "Raporty"
+      }
+    },
+    "initiatives": {
+      "empty": "Brak prezentacji.",
+      "status": "Status",
+      "reports": "Raporty",
+      "name": "Nazwa"
+    },
+    "wallboards": {
+      "name": "Nazwa",
+      "refresh": "Odśwież",
+      "total": "Łącznie",
+      "active": "Aktywny",
+      "empty": "Brak prezentacji."
+    },
+    "connectors": {
+      "name": "Nazwa",
+      "total": "Łącznie",
+      "active": "Aktywny",
+      "empty": "Brak prezentacji."
     }
   },
   "traceability": {
@@ -11920,7 +12473,9 @@
     "tabs": {
       "templates": "Biblioteka wzorców",
       "reports": "Raporty",
-      "presentations": "Prezentacje"
+      "presentations": "Prezentacje",
+      "all": "Wszystkie",
+      "documents": "Dokumenty"
     },
     "columns": {
       "name": "Nazwa",
@@ -11969,14 +12524,17 @@
     },
     "preview": {
       "useTemplate": "Użyj tego wzorca",
-      "openFull": "Otwórz pełny"
+      "openFull": "Otwórz pełny",
+      "slides": "slajdów",
+      "deprecated": "Wycofany"
     },
     "toast": {
       "exported": "Wyeksportowano",
       "exportFailed": "Eksport nie powiódł się",
       "archived": "Zarchiwizowano",
       "archiveFailed": "Archiwizacja nie powiodła się",
-      "exportBlocked": "Zatwierdź artefakt przed eksportem"
+      "exportBlocked": "Zatwierdź artefakt przed eksportem",
+      "deleteFailed": "Nie udało się usunąć prezentacji"
     },
     "sheets": {
       "error": "Nie można załadować arkuszy"
@@ -11988,6 +12546,31 @@
     },
     "error": {
       "retry": "Spróbuj ponownie"
+    },
+    "outputs": {
+      "kind": {
+        "presentation": "Prezentacja",
+        "sheet": "Tabela"
+      },
+      "columns": {
+        "source": "źródło"
+      },
+      "preview": {
+        "status": "Status",
+        "source": "źródło"
+      },
+      "tabs": {
+        "all": "Wszystkie",
+        "documents": "Dokumenty"
+      },
+      "visibility": {
+        "project": "Projekt",
+        "organization": "Organizacja"
+      },
+      "review": {
+        "published": "Opublikowano",
+        "archived": "Zarchiwizowany"
+      }
     }
   },
   "rbHub": {
@@ -12452,6 +13035,72 @@
         "noSources": "Brak cytowanych źródeł",
         "reviewProposals": "Przejrzyj propozycje"
       }
+    },
+    "artifactHome": {
+      "hero": {
+        "wordy": "Raporty, briefy, analizy, artykuły i dokumenty biznesowe",
+        "excele": "Budżety, modele finansowe, harmonogramy, matryce ryzyk",
+        "tabele": "Tabele operacyjne, master data, rejestry, logi, OKR-y, decyzje",
+        "deck": "Decki zarządcze, pitch, status update, prezentacje warsztatowe"
+      },
+      "laneLabel": {
+        "wordy": "Dokumenty",
+        "excele": "Tabele",
+        "tabele": "Tabele Studio",
+        "deck": "Prezentacje"
+      },
+      "tab": {
+        "templates": "Wzorce",
+        "recent": "Ostatnie",
+        "saved": "Zapisane"
+      },
+      "startNew": "Zacznij nowy",
+      "emptyRecent": "Brak ostatnich dokumentów",
+      "emptySaved": "Brak zapisanych dokumentów"
+    },
+    "preview": {
+      "provenance": {
+        "header": "Pochodzenie",
+        "none": "Brak pochodzenia"
+      }
+    },
+    "template": {
+      "grid": {
+        "loading": "Wczytywanie…",
+        "empty": "Brak szablonów w statusie \"{{status}}\".",
+        "featured": "⭐ Wyróżniony · ",
+        "used": "Użyć",
+        "governanceTitle": "Governance",
+        "governanceShort": "Govern."
+      },
+      "governance": {
+        "title": "Governance szablonu",
+        "close": "Zamknij",
+        "loading": "Wczytywanie…",
+        "approvalHistory": "Historia zatwierdzeń",
+        "noEntries": "Brak wpisów.",
+        "actor": "Aktor",
+        "previousStatus": "Poprzedni status",
+        "rules": "Reguły governance"
+      },
+      "actions": {
+        "operationFailed": "Operacja nieudana.",
+        "approve": "Zatwierdź",
+        "deprecate": "Wycofaj",
+        "approveTitle": "Zatwierdź szablon",
+        "deprecateTitle": "Wycofaj szablon",
+        "close": "Zamknij",
+        "approveBody": "Zatwierdzenie sprawia, że szablon staje się widoczny dla wszystkich użytkowników. Operacja zapisuje wpis w historii zatwierdzeń.",
+        "deprecateBody": "Wycofanie ukrywa szablon przed nowymi użytkownikami. Istniejące bazy korzystające z szablonu pozostają nienaruszone. Operacja jest zapisywana w historii zatwierdzeń.",
+        "noteLabel": "Notatka (opcjonalnie)",
+        "cancel": "Anuluj"
+      },
+      "badge": {
+        "statusPrefix": "Status szablonu"
+      },
+      "filter": {
+        "ariaLabel": "Filtr statusu szablonów"
+      }
     }
   },
   "tabele": {
@@ -12490,6 +13139,13 @@
         "label": "Odwołanie do źródła",
         "description": "Link provenance do źródła rekordu (UUID) lub URL zewnętrznego, gdy dozwolone."
       }
+    },
+    "rightRail": {
+      "search": "Wyszukiwanie"
+    },
+    "back": "Wstecz",
+    "leftRail": {
+      "empty": "Brak prezentacji."
     }
   },
   "contact": {
@@ -12987,6 +13643,10 @@
       "subtitle": "Po szczegóły bezpieczeństwa specyficzne dla wdrożenia, przegląd prawny lub walkthrough architektury — skontaktuj się z nami przed procurement lub rolloutem.",
       "review": "Umów przegląd bezpieczeństwa",
       "walkthrough": "Zaplanuj walkthrough architektury"
+    },
+    "events": {
+      "exportSuccess": "Rozpoczęto eksport",
+      "search": "Wyszukiwanie"
     }
   },
   "v8": {
@@ -13012,7 +13672,8 @@
       "manage": "Informacje o rozliczeniach",
       "manualNote": "Rozliczenia są obecnie obsługiwane ręcznie przez nasz zespół. Karta nie jest wymagana.",
       "emptyManual": "Rozliczenia obsługiwane są ręcznie",
-      "learnMore": "Dowiedz się więcej"
+      "learnMore": "Dowiedz się więcej",
+      "empty": "Brak prezentacji."
     },
     "analytics": {
       "unavailableTitle": "Analityka przychodów wkrótce",
@@ -13021,6 +13682,12 @@
     "pending": {
       "title": "Jeszcze niedostępne",
       "description": "Ta funkcja rozliczeń nie jest jeszcze włączona. Pojawi się tutaj po włączeniu samoobsługowych rozliczeń."
+    },
+    "tax": {
+      "saved": "Zapisane"
+    },
+    "alerts": {
+      "saved": "Zapisane"
     }
   },
   "firstRun": {
@@ -13278,7 +13945,12 @@
     "open2": "Otwarte",
     "completed2": "Zamknięte",
     "scheduled2": "Zaplanowane",
-    "noOperatorBrief": "Brak briefingu operatora dla tego spotkania."
+    "noOperatorBrief": "Brak briefingu operatora dla tego spotkania.",
+    "notes": {
+      "notifications": {
+        "generated": "Wygenerowana"
+      }
+    }
   },
   "manager": {
     "col": {
@@ -13766,7 +14438,9 @@
     "verifying": "Weryfikacja…",
     "viewTable": "Wyświetl tabelę",
     "viewUnavailable": "Widok niedostępny",
-    "sharedViewReadOnly": "Widok udostępniony — tylko do odczytu"
+    "sharedViewReadOnly": "Widok udostępniony — tylko do odczytu",
+    "search": "Wyszukiwanie",
+    "empty": "Brak prezentacji."
   },
   "documents": {
     "upload": "Przesłane",
@@ -13780,7 +14454,8 @@
     "projectDocs": "Dokumenty projektu",
     "projectHint": "Dokumenty współdzielone w ramach tego projektu.",
     "uploading": "Przesyłanie…",
-    "userHint": "Twoje prywatne dokumenty, widoczne tylko dla Ciebie."
+    "userHint": "Twoje prywatne dokumenty, widoczne tylko dla Ciebie.",
+    "ready": "Gotowy"
   },
   "consultant": {
     "panel": {
@@ -13905,10 +14580,259 @@
     "observations": "Obserwacje i ryzyka",
     "recommendations": "Rekomendacje",
     "optimization": "Uzasadnienie optymalizacji",
-    "applyProposedSchedule": "Zastosuj proponowany harmonogram"
+    "applyProposedSchedule": "Zastosuj proponowany harmonogram",
+    "actions": {
+      "reject": "Odrzuć"
+    }
   },
   "comingSoon": "Już wkrótce",
   "prezentacje": {
-    "reopenSummary": "Prezentacja „{{title}}” — {{count}} slajdów."
+    "reopenSummary": "Prezentacja „{{title}}” — {{count}} slajdów.",
+    "kpi": {
+      "slides": "slajdów",
+      "status": "Status"
+    },
+    "intentRouted": {
+      "failed": "Błąd"
+    }
+  },
+  "aiActions": {
+    "report": "Raport",
+    "failed": "Błąd",
+    "completed": "Zakończony"
+  },
+  "artifacts": {
+    "next": "następne",
+    "version": "wersja"
+  },
+  "diagram": {
+    "code": "kod"
+  },
+  "html": {
+    "code": "kod",
+    "refresh": "Odśwież"
+  },
+  "pmo": {
+    "version": "wersja",
+    "name": "Nazwa"
+  },
+  "branch": {
+    "delete": "Usuń"
+  },
+  "canvas": {
+    "aiMenu": {
+      "promptPlaceholder": "Co Teresa ma zrobić z tym tekstem?",
+      "explanation": "Wyjaśnienie",
+      "close": "Zamknij",
+      "explaining": "Teresa wyjaśnia...",
+      "explainError": "Nie udało się pobrać wyjaśnienia. Spróbuj ponownie.",
+      "askTeresaTitle": "Zapytaj Teresę",
+      "askTeresa": "Teresa",
+      "condenseTitle": "Skróć zaznaczenie ~40%",
+      "condense": "Skróć",
+      "expandTitle": "Rozwiń zaznaczenie (maks. 2x)",
+      "expand": "Rozwiń",
+      "changeToneTitle": "Zmień ton tekstu",
+      "tone": {
+        "label": "Ton"
+      },
+      "explainTitle": "Wyjaśnij zaznaczenie (nie zmienia dokumentu)",
+      "explain": "Wyjaśnij",
+      "quickActionsTitle": "Szybkie akcje",
+      "actions": "Akcje",
+      "teresaSuggestion": "Propozycja Teresy",
+      "accept": "Akceptuj",
+      "reject": "Odrzuć"
+    },
+    "editor": {
+      "teresaWriting": "Teresa pisze..."
+    },
+    "versionHistory": {
+      "justNow": "przed chwilą",
+      "minutesAgo": "min temu",
+      "hoursAgo": "godz. temu",
+      "daysAgo": "dni temu",
+      "title": "Historia wersji",
+      "closeAria": "Zamknij historię wersji",
+      "close": "Zamknij",
+      "loading": "Ładowanie wersji...",
+      "empty": "Brak wersji.",
+      "confirmRestore": "Przywrócić tę wersję?",
+      "restoring": "Przywracanie...",
+      "confirmYes": "Tak, przywróć",
+      "cancel": "Anuluj",
+      "restore": "Przywróć",
+      "preview": "Podgląd"
+    },
+    "presentation": {
+      "empty": "Brak prezentacji.",
+      "loading": "Ładowanie…",
+      "failed": "Błąd"
+    }
+  },
+  "chatProposal": {
+    "step": {
+      "more": "więcej"
+    },
+    "state": {
+      "failed": "Błąd",
+      "unknown": "nieznana"
+    },
+    "action": {
+      "reject": "Odrzuć"
+    }
+  },
+  "focusMode": {
+    "all": "Wszystkie"
+  },
+  "trust": {
+    "badge": {
+      "more": "więcej"
+    }
+  },
+  "voice": {
+    "legend": {
+      "copy": {
+        "failed": "Błąd"
+      }
+    }
+  },
+  "integrations": {
+    "syncHub": {
+      "disconnected": "Odłączony",
+      "ready": "Gotowy",
+      "runNow": "Uruchom teraz",
+      "disconnect": "Odłącz",
+      "search": "Wyszukiwanie",
+      "loading": "Ładowanie…",
+      "total": "Łącznie",
+      "user": "Użytkownik",
+      "status": "Status"
+    },
+    "health": {
+      "disconnected": "Odłączony"
+    },
+    "mappings": {
+      "saved": "Zapisane"
+    }
+  },
+  "decisions": {
+    "reject": "Odrzuć",
+    "error": "Błąd",
+    "all": "Wszystkie",
+    "search": "Wyszukiwanie",
+    "cancel": "Anuluj"
+  },
+  "discovery": {
+    "conversion": {
+      "error": "Błąd"
+    },
+    "nodes": {
+      "recommendation": {
+        "confidence": "pewność"
+      }
+    }
+  },
+  "docs": {
+    "auditAction": {
+      "proposalCreated": "utworzono_propozycje",
+      "proposalApproved": "zatwierdzono_propozycje",
+      "proposalRejected": "odrzucono_propozycje",
+      "proposalExecuted": "wykonano_propozycje"
+    },
+    "home": {
+      "search": "Wyszukiwanie"
+    }
+  },
+  "documentStudio": {
+    "editor": {
+      "target": "cel",
+      "reject": "Odrzuć"
+    }
+  },
+  "priority": {
+    "critical": "Krytyczny",
+    "high": "Wysoki",
+    "medium": "Średni",
+    "low": "Niski"
+  },
+  "notifications": {
+    "saved": "Zapisane",
+    "actions": {
+      "reject": "Odrzuć",
+      "delete": "Usuń"
+    },
+    "error": "Błąd",
+    "col": {
+      "source": "źródło",
+      "actions": "Akcje"
+    },
+    "delete": "Usuń"
+  },
+  "task": {
+    "status": "Status"
+  },
+  "team": {
+    "velocity": {
+      "target": "cel"
+    }
+  },
+  "formBuilder": {
+    "published": "Opublikowano",
+    "draft": "Szkic",
+    "delete": "Usuń"
+  },
+  "formsIndex": {
+    "active": "Aktywny",
+    "draft": "Szkic",
+    "backToList": "Wróć do listy",
+    "saved": "Zapisane",
+    "cancel": "Anuluj",
+    "delete": "Usuń"
+  },
+  "interfacesIndex": {
+    "backToList": "Wróć do listy",
+    "saved": "Zapisane",
+    "cancel": "Anuluj",
+    "delete": "Usuń"
+  },
+  "onboarding": {
+    "toast": {
+      "completed": "Zakończony"
+    }
+  },
+  "editor": {
+    "code": "kod",
+    "link": "Powiąż"
+  },
+  "mfa": {
+    "challenge": {
+      "failed": "Błąd",
+      "error": "Błąd"
+    },
+    "setup": {
+      "next": "następne",
+      "done": "Zrobione"
+    }
+  },
+  "tour": {
+    "back": "Wstecz",
+    "next": "następne"
+  },
+  "dashboard": {
+    "shortcuts": {
+      "error": "Błąd"
+    }
+  },
+  "aiPlatform": {
+    "controlPlane": {
+      "kpi": {
+        "ready": "Gotowy"
+      },
+      "operator": {
+        "policy": "Polityka"
+      },
+      "cost": "koszt"
+    }
   }
 }

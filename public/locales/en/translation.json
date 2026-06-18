@@ -1126,7 +1126,10 @@
       "allRegions": "All Regions",
       "statusActive": "Active",
       "statusDeactivated": "Deactivated",
-      "featureSoon": "Coming soon"
+      "featureSoon": "Coming soon",
+      "col": {
+        "status": "Status"
+      }
     },
     "dashboard": {
       "welcome": "Welcome back",
@@ -1172,7 +1175,15 @@
       "noProjects": "No active projects",
       "users": "Team Members",
       "usersDesc": "People in your partner organization",
-      "usersEmpty": "No team members yet"
+      "usersEmpty": "No team members yet",
+      "col": {
+        "organization": "Organization",
+        "assessment": "Assessment",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active"
+      }
     },
     "resources": {
       "desc": "Download partner toolkit resources",
@@ -1281,6 +1292,9 @@
         "pmoMapping": "How are deals mapped to PMO standards?",
         "pmoMappingAnswer": "Each deal registration is automatically mapped to GOVERNANCE_DECISION_MAKING (ISO 21500 Clause 4.3.4), and commission settlement to BENEFITS_REALIZATION (Clause 4.4.1)."
       }
+    },
+    "referrals": {
+      "deleteFailed": "Failed to delete deck"
     }
   },
   "common": {
@@ -1396,7 +1410,22 @@
     "selectAll": "Select all",
     "selectRow": "Select row",
     "statusLabel": "Status",
-    "you": "You"
+    "you": "You",
+    "done": "Done",
+    "draft": "Draft",
+    "completed": "Completed",
+    "name": "Name",
+    "backToList": "Back to list",
+    "missing": "missing",
+    "today": "Today",
+    "unknown": "unknown",
+    "actions": "Actions",
+    "custom": "Custom",
+    "target": "target",
+    "none": "none",
+    "runNow": "Run now",
+    "organization": "Organization",
+    "loadMore": "Load more"
   },
   "superadmin": {
     "confirm": {
@@ -1688,6 +1717,14 @@
       },
       "subtitle": "Read-only summary from GET /api/v8/prompt-os/runtime/summary",
       "title": "Prompt OS runtime (V8)"
+    },
+    "ai": {
+      "observatory": {
+        "refresh": "Refresh",
+        "cost": "cost",
+        "providers": "Providers",
+        "status": "Status"
+      }
     }
   },
   "dynamicTabBar": {
@@ -1771,7 +1808,9 @@
       "profile": "Profile",
       "strategy": "Strategy"
     },
-    "realization": "Execution"
+    "realization": "Execution",
+    "expand": "Expand",
+    "finance": "Finance"
   },
   "widgets": {
     "help": {
@@ -1884,7 +1923,8 @@
           "high": "High",
           "critical": "Critical"
         }
-      }
+      },
+      "removeFromFocus": "Remove from focus"
     },
     "radar": {
       "pulseLabel": "Radar · context, ideas, and a gentle steer",
@@ -2022,13 +2062,18 @@
         "score": "Score"
       },
       "empty": "No signals yet. Teresa is scanning.",
-      "emptyHint": "As your projects and context grow, signals worth your attention will appear here."
+      "emptyHint": "As your projects and context grow, signals worth your attention will appear here.",
+      "filter": {
+        "all": "All",
+        "saved": "Saved"
+      }
     },
     "calendar": "Calendar",
     "tasks": "Tasks",
     "notifications": {
       "emptyTitle": "No notifications",
-      "emptySubtitle": "You're all caught up!"
+      "emptySubtitle": "You're all caught up!",
+      "empty": "No presentations yet."
     },
     "decisions": {
       "addDecision": "Add decision",
@@ -2454,6 +2499,21 @@
     "processFlow": {
       "degraded": "Flow data unavailable — reconnecting",
       "degradedHint": "Structural changes are saved locally and will sync once the service is back."
+    },
+    "dashboard": {
+      "completed": "Completed"
+    },
+    "timeGroup": {
+      "today": "Today"
+    },
+    "today": "Today",
+    "filters": {
+      "clearSearch": "Clear search",
+      "status": "Status"
+    },
+    "dueDate": {
+      "today": "Today",
+      "completed": "Completed"
     }
   },
   "step1": {
@@ -2711,6 +2771,12 @@
       "recommendedLevel": "Recommended level",
       "acceptResult": "Accept result",
       "adjustManually": "Adjust manually"
+    },
+    "table": {
+      "assessment": "Assessment",
+      "status": "Status",
+      "updated": "Updated",
+      "actions": "Actions"
     }
   },
   "initiatives": {
@@ -4622,6 +4688,12 @@
       "high": "High",
       "low": "Low",
       "medium": "Medium"
+    },
+    "table": {
+      "status": "Status",
+      "initiative": "Initiative",
+      "missing": "missing",
+      "updated": "Updated"
     }
   },
   "execution": {
@@ -4819,7 +4891,10 @@
         "seedDemo": "Load Atelier Toys example",
         "baseline": "Baseline",
         "current": "Current",
-        "target": "Target"
+        "target": "Target",
+        "col": {
+          "name": "Name"
+        }
       },
       "risks": {
         "title": "Risk Register",
@@ -4859,7 +4934,14 @@
         "title": "Closure Checklist",
         "subtitle": "Handover, sign-off, and project closure actions.",
         "add": "Add Item",
-        "empty": "No closure items yet."
+        "empty": "No closure items yet.",
+        "col": {
+          "status": "Status",
+          "done": "Done"
+        },
+        "status": {
+          "done": "Done"
+        }
       },
       "addClosureItem": "Add Item",
       "addKpi": "Add KPI",
@@ -5528,7 +5610,25 @@
     "tasks": "Tasks",
     "todo": "To do",
     "transformationGoals": "Transformation goals",
-    "upcomingDeadlines": "Upcoming deadlines"
+    "upcomingDeadlines": "Upcoming deadlines",
+    "target": "target",
+    "col": {
+      "status": "Status",
+      "version": "version",
+      "generated": "Generated",
+      "name": "Name"
+    },
+    "schedule": {
+      "active": "Active"
+    },
+    "preview": {
+      "project": "Project",
+      "version": "version"
+    },
+    "toast": {
+      "chatOpened": "Chat opened",
+      "chatOpenError": "Failed to open chat"
+    }
   },
   "auth": {
     "logIn": "Log in",
@@ -5589,7 +5689,11 @@
           "later": "Later",
           "start": "Open intro"
         }
-      }
+      },
+      "back": "Back",
+      "next": "next",
+      "completed": "Completed",
+      "empty": "No presentations yet."
     },
     "microVideo": {
       "header": "Quick Tutorial",
@@ -5691,6 +5795,9 @@
         "superadmin_ai_development": "AI Development",
         "superadmin_ai_operations": "AI Operations",
         "billing": "Billing & Subscription"
+      },
+      "thisStep": {
+        "next": "next"
       }
     },
     "chatbot": {
@@ -5756,6 +5863,13 @@
       "shortcuts": "Space: play/pause · ← →: seek · F: fullscreen",
       "speed": "Playback speed",
       "watched": "Watched"
+    },
+    "updates": {
+      "back": "Back",
+      "empty": "No presentations yet.",
+      "admin": {
+        "recent": "Recent"
+      }
     }
   },
   "settings": {
@@ -6003,6 +6117,29 @@
         "support": "Support",
         "executive": "Executive",
         "other": "Other"
+      },
+      "professional": {
+        "saved": "Saved",
+        "error": "Error"
+      },
+      "bio": {
+        "saved": "Saved",
+        "error": "Error"
+      },
+      "completeness": {
+        "missing": "missing"
+      },
+      "social": {
+        "saved": "Saved",
+        "error": "Error"
+      },
+      "status": {
+        "saved": "Saved",
+        "error": "Error"
+      },
+      "workHours": {
+        "saved": "Saved",
+        "error": "Error"
       }
     },
     "signatures": {
@@ -6350,6 +6487,15 @@
           "name": "Executive Report",
           "prompt": "Write in executive summary style. Lead with conclusions, then supporting evidence. Keep paragraphs short. Use bullet points for key takeaways."
         }
+      },
+      "all": "All",
+      "modelSelection": {
+        "saved": "Saved",
+        "error": "Error"
+      },
+      "parameters": {
+        "saved": "Saved",
+        "error": "Error"
       }
     },
     "aiUsage": {
@@ -6524,7 +6670,15 @@
       "pushDenied": "Permission denied",
       "pushEnabled": "Desktop notifications enabled",
       "blockedTitle": "Notifications are blocked",
-      "blocked": "Your browser is blocking notifications for this site. Enable them in your browser settings to receive desktop alerts."
+      "blocked": "Your browser is blocking notifications for this site. Enable them in your browser settings to receive desktop alerts.",
+      "dnd": {
+        "saved": "Saved",
+        "error": "Error",
+        "active": "Active"
+      },
+      "vip": {
+        "empty": "No presentations yet."
+      }
     },
     "integrations": {
       "title": "Integrations",
@@ -6563,7 +6717,15 @@
         "calendar": "Calendar",
         "taskMgmt": "Task Management",
         "cloud": "Cloud Storage"
-      }
+      },
+      "readiness": {
+        "connected": "Connected",
+        "error": "Error",
+        "disconnected": "Disconnected"
+      },
+      "error": "Error",
+      "disconnect": "Disconnect",
+      "deprecated": "Deprecated"
     },
     "availability": {
       "title": "Availability & Focus",
@@ -6848,7 +7010,8 @@
         "team": "Team Only",
         "teamDesc": "Only your team members",
         "private": "Private",
-        "privateDesc": "Only you can see"
+        "privateDesc": "Only you can see",
+        "organization": "Organization"
       },
       "profile": {
         "public": "Public",
@@ -7107,7 +7270,8 @@
         "general": "General",
         "ai": "AI",
         "focus": "Focus"
-      }
+      },
+      "connected": "Connected"
     },
     "accessibility": {
       "saved": "Accessibility preferences saved",
@@ -7758,7 +7922,76 @@
     },
     "recovery": {
       "readOnlyDescription": "Recovery email, phone, backup codes, and trusted device changes are read-only until the recovery backend is connected.",
-      "unavailable": "Account recovery is temporarily unavailable."
+      "unavailable": "Account recovery is temporarily unavailable.",
+      "saved": "Saved",
+      "error": "Error",
+      "saveFailed": "Save failed"
+    },
+    "modules": {
+      "notifications": "Notifications"
+    },
+    "api": {
+      "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone."
+    },
+    "account": {
+      "exportSuccess": "Export started",
+      "delete": "Delete",
+      "status": "Status"
+    },
+    "contact": {
+      "saved": "Saved",
+      "error": "Error",
+      "type": {
+        "personal": "Personal"
+      },
+      "name": "Name"
+    },
+    "dashboard": {
+      "saved": "Saved",
+      "error": "Error",
+      "widgets": {
+        "quickActions": "Quick actions"
+      }
+    },
+    "dataPrivacy": {
+      "saveFailed": "Save failed",
+      "exportFailed": "Export failed",
+      "deleteFailed": "Failed to delete deck"
+    },
+    "export": {
+      "error": "Error"
+    },
+    "analytics": {
+      "exported": "Exported",
+      "status": "Status",
+      "error": "Error"
+    },
+    "password": {
+      "error": "Error"
+    },
+    "webhooks": {
+      "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone.",
+      "name": "Name",
+      "empty": "No presentations yet.",
+      "failed": "Failed",
+      "retry": "Retry"
+    },
+    "preferences": {
+      "saved": "Saved",
+      "error": "Error"
+    },
+    "dataControls": {
+      "saved": "Saved",
+      "error": "Error"
+    },
+    "saveFailed": "Save failed",
+    "responseStyle": {
+      "tone": "Tone"
+    },
+    "tabs": {
+      "personal": "Personal",
+      "status": "Status",
+      "connected": "Connected"
     }
   },
   "showcase": {
@@ -8075,7 +8308,8 @@
       "prev": "Previous article",
       "next": "Next article",
       "related": "Related Articles",
-      "backToCategory": "Back to category"
+      "backToCategory": "Back to category",
+      "deprecated": "Deprecated"
     },
     "lane": {
       "failurePatterns": "Failure patterns",
@@ -8131,6 +8365,9 @@
     },
     "section": {
       "viewAll": "View all"
+    },
+    "category": {
+      "all": "All"
     }
   },
   "cloud": {
@@ -8153,7 +8390,8 @@
       "onedrive": "OneDrive",
       "dropbox": "Dropbox",
       "sharepoint": "SharePoint"
-    }
+    },
+    "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone."
   },
   "chat": {
     "business": "Business actions",
@@ -8168,7 +8406,8 @@
       "retry": "Try again"
     },
     "action": {
-      "unsupported": "Action not supported"
+      "unsupported": "Action not supported",
+      "failed": "Failed"
     },
     "actions": {
       "navigate": {
@@ -8211,7 +8450,10 @@
         "label": "Record KPI",
         "description": "Record KPI time-series value"
       },
-      "branch": "Branch from here"
+      "branch": "Branch from here",
+      "delete": "Delete",
+      "report": "Report",
+      "more": "more"
     },
     "coThinker": {
       "title": "Co-Thinker",
@@ -8230,7 +8472,43 @@
       "title": "Reasoning"
     },
     "header": "AI Assistant",
-    "subHeader": "Ask a question or request help"
+    "subHeader": "Ask a question or request help",
+    "signals": {
+      "savedToIdeas": "Saved to My Ideas",
+      "saveFailed": "Save failed",
+      "savedToNotebook": "Saved to Notebook",
+      "snoozed": "Signal snoozed",
+      "snoozeFailed": "Snooze failed",
+      "typeMuted": "Muted signal type",
+      "muteFailed": "Mute failed",
+      "dismissFailed": "Dismiss failed"
+    },
+    "message": {
+      "emitDocumentTooltip": "Create a document from this answer",
+      "openAsDocument": "Open as document"
+    },
+    "artifacts": "Artifacts",
+    "orgMemory": {
+      "untitledAnalysis": "Untitled analysis",
+      "problemLabel": "Problem:",
+      "recommendationLabel": "Recommendation:",
+      "contextFromHistory": "Context from decision history",
+      "useInConversation": "Use in conversation",
+      "viewConversation": "View conversation",
+      "showDetails": "Show details ▾",
+      "usedCount": "Used {{count}}×",
+      "title": "Organization Memory",
+      "tabDecisions": "Decisions",
+      "tabPatterns": "Patterns",
+      "searchPlaceholder": "Search decision history…",
+      "noResults": "No results for this query",
+      "noDecisions": "No decisions saved yet. Use \"Save as Decision\" after a Deep Thinking analysis.",
+      "noPatterns": "System learns patterns from your projects. They will appear here automatically."
+    },
+    "context": {
+      "saved": "Saved",
+      "saveFailed": "Save failed"
+    }
   },
   "aiChat": {
     "composer": {
@@ -8301,7 +8579,11 @@
         "editor": {
           "label": "Editor",
           "desc": "Improve structure, clarity and executive readability"
-        }
+        },
+        "empty": "No presentations yet."
+      },
+      "mentions": {
+        "empty": "No presentations yet."
       }
     },
     "voice": {
@@ -8838,7 +9120,11 @@
     },
     "moveToFolderShort": "Move to folder",
     "moveToTopLevel": "↥ Top level",
-    "noTargetFolders": "No other folders"
+    "noTargetFolders": "No other folders",
+    "teresaProposal": {
+      "failed": "Failed",
+      "reject": "Reject"
+    }
   },
   "agentAudit": {
     "title": "Agent Audit Layer",
@@ -9179,7 +9465,10 @@
       "resetColumns": "Reset to default",
       "required": "Required",
       "noColumnsFound": "No columns match your search",
-      "columnsTip": "Drag to reorder, click eye to toggle visibility"
+      "columnsTip": "Drag to reorder, click eye to toggle visibility",
+      "actions": "Actions",
+      "next": "next",
+      "done": "Done"
     },
     "nav": {
       "people": {
@@ -9256,7 +9545,8 @@
         "aiCalls": "AI calls per day",
         "save": "Assign plan & limits",
         "saved": "Plan and limits assigned"
-      }
+      },
+      "code": "code"
     },
     "interviewAssignmentsPanel": {
       "sendBackReason": "Send back reason:",
@@ -9286,7 +9576,91 @@
     "desktopOnly": {
       "body": "{{surface}} is optimized for desktop. On a phone, part of the layout (tables, side preview) may be hard to use."
     },
-    "select": "Select…"
+    "select": "Select…",
+    "initiativeCreator": {
+      "completed": "Completed"
+    },
+    "branding": {
+      "saved": "Saved"
+    },
+    "integrations": {
+      "disconnect": "Disconnect"
+    },
+    "roles": {
+      "delete": "Delete",
+      "name": "Name"
+    },
+    "templates": {
+      "exported": "Exported",
+      "name": "Name"
+    },
+    "defaults": {
+      "saved": "Saved"
+    },
+    "compliance": {
+      "cookies": {
+        "saved": "Saved",
+        "error": "Error"
+      },
+      "dataRequests": {
+        "completed": "Completed",
+        "delete": "Delete"
+      },
+      "gdpr": {
+        "error": "Error"
+      }
+    },
+    "org": {
+      "dataHosting": {
+        "active": "Active"
+      },
+      "name": "Name"
+    },
+    "team": {
+      "import": {
+        "failed": "Failed"
+      },
+      "bounced": {
+        "unknown": "unknown",
+        "cancel": "Cancel"
+      },
+      "activity": {
+        "today": "Today",
+        "user": "User",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "routing": {
+        "actions": "Actions",
+        "delete": "Delete"
+      }
+    },
+    "features": {
+      "total": "Total",
+      "delete": "Delete"
+    },
+    "analytics": {
+      "refresh": "Refresh"
+    },
+    "feedback": {
+      "statuses": {
+        "archived": "Archived"
+      },
+      "stats": {
+        "total": "Total"
+      },
+      "filters": {
+        "archived": "Archived"
+      },
+      "status": "Status"
+    },
+    "security": {
+      "saved": "Saved",
+      "loading": "Loading…"
+    },
+    "tabs": {
+      "templates": "Templates"
+    }
   },
   "access": {
     "banner": {
@@ -9590,6 +9964,12 @@
         "chatOpened": "Chat opened",
         "chatOpenError": "Failed to open chat",
         "closeDocForAi": "Return to list to use AI."
+      },
+      "defaultSessionName": "Session",
+      "initiatives": {
+        "columns": {
+          "status": "Status"
+        }
       }
     },
     "integrations": {
@@ -9661,6 +10041,14 @@
       "hypotheses": "Hypotheses",
       "candidates": "Candidates",
       "sizing": "Sizing"
+    },
+    "wizard": {
+      "assumptions": "assumptions",
+      "finalize": {
+        "done": "Done",
+        "ready": "Ready"
+      },
+      "next": "next"
     }
   },
   "aiAuthoring": {
@@ -9733,13 +10121,16 @@
   "presentations": {
     "tabs": {
       "allDecks": "All Decks",
-      "recent": "Recent"
+      "recent": "Recent",
+      "templates": "Templates"
     },
     "columns": {
       "title": "Title",
       "sourceType": "Source",
       "owner": "Owner",
-      "date": "Date"
+      "date": "Date",
+      "status": "Status",
+      "slides": "slides"
     },
     "sourceType": {
       "tool": "Tool",
@@ -9781,7 +10172,37 @@
     "deleteFailed": "Failed to delete deck",
     "openEditor": "Open Editor",
     "deckPreview": "Deck preview",
-    "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone."
+    "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone.",
+    "builder": {
+      "loading": "Loading…",
+      "back": "Back",
+      "slides": "slides",
+      "dataRefresh": {
+        "stale": "Stale"
+      }
+    },
+    "governance": {
+      "loading": "Loading…",
+      "retry": "Retry"
+    },
+    "qualityGates": {
+      "failed": "Failed"
+    },
+    "analytics": {
+      "refresh": "Refresh"
+    },
+    "status": {
+      "draft": "Draft",
+      "generated": "Generated",
+      "ready": "Ready",
+      "archived": "Archived"
+    },
+    "shared": {
+      "loading": "Loading…"
+    },
+    "sources": {
+      "loadMore": "Load more"
+    }
   },
   "finance": {
     "export": {
@@ -9875,14 +10296,17 @@
       "models": "Models",
       "analysis": "Analysis",
       "prediction": "Prediction",
-      "valuation": "Enterprise valuation"
+      "valuation": "Enterprise valuation",
+      "investment": "Investment analysis"
     },
     "cta": {
       "newModel": "+ New model",
       "newAnalysis": "+ New analysis",
       "newScenario": "+ New scenario",
       "newValuation": "+ New valuation",
-      "importPdf": "Import PDF"
+      "importPdf": "Import PDF",
+      "newInvestment": "+ New investment case",
+      "importStatement": "Import statement"
     },
     "columns": {
       "scenario": "Scenario",
@@ -9939,7 +10363,8 @@
       "deleted": "Deleted",
       "deleteFailed": "Failed to delete",
       "duplicated": "Duplicated",
-      "duplicateFailed": "Failed to duplicate"
+      "duplicateFailed": "Failed to duplicate",
+      "exportFailed": "Export failed"
     },
     "prediction": {
       "budget": "Budget",
@@ -10007,7 +10432,8 @@
       "dropOrBrowse": "Click to browse or drop file",
       "importLines": "Import Lines",
       "docImported": "Budget lines imported",
-      "confirmWithAI": "Confirm with AI"
+      "confirmWithAI": "Confirm with AI",
+      "project": "Project"
     },
     "statements": {
       "currentDocument": "Current",
@@ -10024,7 +10450,24 @@
       "sourceDocumentsHelper": "3 documents to compare with what the user expected.",
       "systemTables": "System data tables",
       "systemTablesHint": "Use these quick links to open loaded data sections and compare what the system already contains.",
-      "validationSection": "Validation"
+      "validationSection": "Validation",
+      "status": "Status"
+    },
+    "counters": {
+      "all": "All",
+      "draft": "Draft"
+    },
+    "importWizard": {
+      "completed": "Completed",
+      "confidence": "confidence"
+    },
+    "lane": {
+      "kpi": {
+        "stale": "Stale"
+      }
+    },
+    "ratios": {
+      "missing": "missing"
     }
   },
   "portfolio": {
@@ -10983,7 +11426,21 @@
         "tablet": "tablet",
         "desktop": "desktop"
       }
-    }
+    },
+    "attach": {
+      "upload": "Upload"
+    },
+    "backlog": {
+      "empty": "No presentations yet."
+    },
+    "pipeline": {
+      "delivery": "Delivery"
+    },
+    "counter": {
+      "more": "more",
+      "all": "All"
+    },
+    "loadMore": "Load more"
   },
   "behaviorIntelligence": {
     "journeyTracked": "Journey event tracked",
@@ -11047,7 +11504,8 @@
       "team": "Team Performance",
       "teamDesc": "Team analytics & capacity",
       "settings": "Settings",
-      "settingsDesc": "Preferences & notifications"
+      "settingsDesc": "Preferences & notifications",
+      "finance": "Finance"
     },
     "action": {
       "createTask": "Create Task",
@@ -11083,6 +11541,38 @@
         "planPrompt": "Create a 3-step action plan to improve this KPI, including owners and first measurement checkpoint.",
         "measurement": "Measurement plan",
         "measurementPrompt": "Propose a measurement plan: data sources, cadence, definition, and common pitfalls."
+      },
+      "freshness": "freshness",
+      "source": {
+        "custom": "Custom"
+      },
+      "overview": {
+        "cards": {
+          "total": "Total"
+        },
+        "empty": "No presentations yet."
+      },
+      "signals": {
+        "readiness": {
+          "ready": "Ready"
+        },
+        "due": {
+          "today": "Today"
+        },
+        "required": {
+          "source": "source"
+        },
+        "sheet": {
+          "source": "source"
+        }
+      },
+      "workspace": {
+        "catalog": "Catalog"
+      },
+      "scorecards": {
+        "name": "Name",
+        "total": "Total",
+        "empty": "No presentations yet."
       }
     },
     "tabs": {
@@ -11129,7 +11619,12 @@
         "createFailed": "Failed to create tasks",
         "empty": "No actions found in this report snapshot.",
         "noSnapshot": "This report has no snapshot linked."
-      }
+      },
+      "relation": {
+        "actions": "Actions"
+      },
+      "refresh": "Refresh",
+      "approval": "approval"
     },
     "emptyState": "No KPIs found",
     "columns": {
@@ -11142,7 +11637,8 @@
       "trend": "Trend",
       "frequency": "Frequency",
       "owner": "Owner",
-      "lastUpdated": "Updated"
+      "lastUpdated": "Updated",
+      "source": "source"
     },
     "actions": {
       "openDetail": "Open detail",
@@ -11180,7 +11676,18 @@
       "historyDate": "Date",
       "historyValue": "Value",
       "historyNotes": "Notes",
-      "historyBy": "By"
+      "historyBy": "By",
+      "saved": "Saved",
+      "saveFailed": "Save failed",
+      "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone.",
+      "deleteFailed": "Failed to delete deck",
+      "definitionSource": "Definition source",
+      "timeline": {
+        "baseline": "baseline"
+      },
+      "ai": {
+        "askAi": "Ask AI"
+      }
     },
     "operational": {
       "totalTracked": "Total KPIs Tracked",
@@ -11277,18 +11784,62 @@
       "historyNotes": "Notes",
       "historyBy": "By",
       "historyDate": "Date",
-      "noHistory": "No history yet"
+      "noHistory": "No history yet",
+      "openModal": {
+        "search": "Search",
+        "empty": "No presentations yet."
+      }
     },
     "reportingSchedules": {
       "approvalAuto": "Auto",
       "approvalApproved": "Approved",
       "approvalRejected": "Rejected",
       "approvalPending": "Pending approval",
-      "approvalPendingHint": "Dispatch is blocked until this schedule is approved"
+      "approvalPendingHint": "Dispatch is blocked until this schedule is approved",
+      "name": "Name",
+      "total": "Total",
+      "empty": "No presentations yet."
     },
     "sort": {
       "activeAria": "Sorted by {{col}} {{dir}}",
       "byAria": "Sort by {{col}}"
+    },
+    "deviation": {
+      "askAi": "Ask AI",
+      "close": "Close",
+      "actions": "Actions",
+      "empty": "No presentations yet."
+    },
+    "reconciliation": {
+      "col": {
+        "status": "Status"
+      },
+      "empty": "No presentations yet."
+    },
+    "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone.",
+    "reporting": {
+      "workspace": {
+        "reports": "Reports"
+      }
+    },
+    "initiatives": {
+      "empty": "No presentations yet.",
+      "status": "Status",
+      "reports": "Reports",
+      "name": "Name"
+    },
+    "wallboards": {
+      "name": "Name",
+      "refresh": "Refresh",
+      "total": "Total",
+      "active": "Active",
+      "empty": "No presentations yet."
+    },
+    "connectors": {
+      "name": "Name",
+      "total": "Total",
+      "active": "Active",
+      "empty": "No presentations yet."
     }
   },
   "traceability": {
@@ -11323,7 +11874,9 @@
     "tabs": {
       "templates": "Template Library",
       "reports": "Reports",
-      "presentations": "Presentations"
+      "presentations": "Presentations",
+      "all": "All",
+      "documents": "Documents"
     },
     "columns": {
       "name": "Name",
@@ -11372,14 +11925,17 @@
     },
     "preview": {
       "useTemplate": "Use this template",
-      "openFull": "Open full"
+      "openFull": "Open full",
+      "slides": "slides",
+      "deprecated": "Deprecated"
     },
     "toast": {
       "exported": "Exported successfully",
       "exportFailed": "Export failed",
       "archived": "Archived",
       "archiveFailed": "Failed to archive",
-      "exportBlocked": "Approve the artifact before exporting"
+      "exportBlocked": "Approve the artifact before exporting",
+      "deleteFailed": "Failed to delete deck"
     },
     "sheets": {
       "error": "Could not load sheets"
@@ -11391,6 +11947,31 @@
     },
     "error": {
       "retry": "Retry"
+    },
+    "outputs": {
+      "kind": {
+        "presentation": "Presentation",
+        "sheet": "Sheet"
+      },
+      "columns": {
+        "source": "source"
+      },
+      "preview": {
+        "status": "Status",
+        "source": "source"
+      },
+      "tabs": {
+        "all": "All",
+        "documents": "Documents"
+      },
+      "visibility": {
+        "project": "Project",
+        "organization": "Organization"
+      },
+      "review": {
+        "published": "Published",
+        "archived": "Archived"
+      }
     }
   },
   "rbHub": {
@@ -11815,6 +12396,72 @@
         "noSources": "No cited sources",
         "reviewProposals": "Review proposals"
       }
+    },
+    "artifactHome": {
+      "hero": {
+        "wordy": "Reports, briefs, analyses, articles and business documents",
+        "excele": "Budgets, financial models, timelines, risk matrices",
+        "tabele": "Operational tables, master data, registers, logs, OKRs, decisions",
+        "deck": "Executive decks, pitch, status updates, workshop presentations"
+      },
+      "laneLabel": {
+        "wordy": "Documents",
+        "excele": "Tables",
+        "tabele": "Table Studio",
+        "deck": "Presentations"
+      },
+      "tab": {
+        "templates": "Templates",
+        "recent": "Recent",
+        "saved": "Saved"
+      },
+      "startNew": "Start new",
+      "emptyRecent": "No recent documents",
+      "emptySaved": "No saved documents"
+    },
+    "preview": {
+      "provenance": {
+        "header": "Provenance",
+        "none": "No provenance"
+      }
+    },
+    "template": {
+      "grid": {
+        "loading": "Loading…",
+        "empty": "No templates in status \"{{status}}\".",
+        "featured": "⭐ Featured · ",
+        "used": "Used",
+        "governanceTitle": "Governance",
+        "governanceShort": "Govern."
+      },
+      "governance": {
+        "title": "Template governance",
+        "close": "Close",
+        "loading": "Loading…",
+        "approvalHistory": "Approval history",
+        "noEntries": "No entries yet.",
+        "actor": "Actor",
+        "previousStatus": "Previous status",
+        "rules": "Governance rules"
+      },
+      "actions": {
+        "operationFailed": "Operation failed.",
+        "approve": "Approve",
+        "deprecate": "Deprecate",
+        "approveTitle": "Approve template",
+        "deprecateTitle": "Deprecate template",
+        "close": "Close",
+        "approveBody": "Approving makes this template visible to all tenants. The action is logged in approval_history.",
+        "deprecateBody": "Deprecating hides the template from new users. Existing bases that already used it remain untouched. The action is logged in approval_history.",
+        "noteLabel": "Note (optional)",
+        "cancel": "Cancel"
+      },
+      "badge": {
+        "statusPrefix": "Template status"
+      },
+      "filter": {
+        "ariaLabel": "Template status filter"
+      }
     }
   },
   "tabele": {
@@ -11853,6 +12500,13 @@
         "label": "Source Reference",
         "description": "Provenance link to a record source (UUID) or external URL when allowed."
       }
+    },
+    "rightRail": {
+      "search": "Search"
+    },
+    "back": "Back",
+    "leftRail": {
+      "empty": "No presentations yet."
     }
   },
   "contact": {
@@ -11940,7 +12594,8 @@
       "manage": "Billing info",
       "manualNote": "Billing is currently handled manually by our team. No card is required.",
       "emptyManual": "Billing is handled manually",
-      "learnMore": "Learn more"
+      "learnMore": "Learn more",
+      "empty": "No presentations yet."
     },
     "analytics": {
       "unavailableTitle": "Revenue analytics coming soon",
@@ -11949,6 +12604,12 @@
     "pending": {
       "title": "Not available yet",
       "description": "This billing capability is not enabled yet. It will appear here once self-serve billing is turned on."
+    },
+    "tax": {
+      "saved": "Saved"
+    },
+    "alerts": {
+      "saved": "Saved"
     }
   },
   "firstRun": {
@@ -12206,7 +12867,12 @@
     "open2": "Open",
     "completed2": "Completed",
     "scheduled2": "Scheduled",
-    "noOperatorBrief": "No operator brief for this meeting."
+    "noOperatorBrief": "No operator brief for this meeting.",
+    "notes": {
+      "notifications": {
+        "generated": "Generated"
+      }
+    }
   },
   "manager": {
     "col": {
@@ -12712,7 +13378,9 @@
     "verifying": "Verifying…",
     "viewTable": "View Table",
     "viewUnavailable": "View Unavailable",
-    "sharedViewReadOnly": "Shared view — read only"
+    "sharedViewReadOnly": "Shared view — read only",
+    "search": "Search",
+    "empty": "No presentations yet."
   },
   "documents": {
     "upload": "Upload",
@@ -12726,7 +13394,8 @@
     "projectDocs": "Project documents",
     "projectHint": "Documents shared within this project.",
     "uploading": "Uploading…",
-    "userHint": "Your private documents, visible only to you."
+    "userHint": "Your private documents, visible only to you.",
+    "ready": "Ready"
   },
   "consultant": {
     "panel": {
@@ -12851,10 +13520,265 @@
     "observations": "Observations & risks",
     "recommendations": "Recommendations",
     "optimization": "Optimization reasoning",
-    "applyProposedSchedule": "Apply proposed schedule"
+    "applyProposedSchedule": "Apply proposed schedule",
+    "actions": {
+      "reject": "Reject"
+    }
   },
   "comingSoon": "Coming soon",
   "prezentacje": {
-    "reopenSummary": "Presentation \"{{title}}\" — {{count}} slides."
+    "reopenSummary": "Presentation \"{{title}}\" — {{count}} slides.",
+    "kpi": {
+      "slides": "slides",
+      "status": "Status"
+    },
+    "intentRouted": {
+      "failed": "Failed"
+    }
+  },
+  "aiActions": {
+    "report": "Report",
+    "failed": "Failed",
+    "completed": "Completed"
+  },
+  "artifacts": {
+    "next": "next",
+    "version": "version"
+  },
+  "diagram": {
+    "code": "code"
+  },
+  "html": {
+    "code": "code",
+    "refresh": "Refresh"
+  },
+  "pmo": {
+    "version": "version",
+    "name": "Name"
+  },
+  "branch": {
+    "delete": "Delete"
+  },
+  "canvas": {
+    "aiMenu": {
+      "promptPlaceholder": "What should Teresa do with this text?",
+      "explanation": "Explanation",
+      "close": "Close",
+      "explaining": "Teresa is explaining...",
+      "explainError": "Could not get an explanation. Please try again.",
+      "askTeresaTitle": "Ask Teresa",
+      "askTeresa": "Ask AI",
+      "condenseTitle": "Condense selection ~40%",
+      "condense": "Condense",
+      "expandTitle": "Expand selection (max 2x)",
+      "expand": "Expand",
+      "changeToneTitle": "Change tone",
+      "tone": {
+        "label": "Tone"
+      },
+      "explainTitle": "Explain selection (does not modify the document)",
+      "explain": "Explain",
+      "quickActionsTitle": "Quick actions",
+      "actions": "Actions",
+      "teresaSuggestion": "Teresa suggestion",
+      "accept": "Accept",
+      "reject": "Reject"
+    },
+    "editor": {
+      "teresaWriting": "Teresa is writing..."
+    },
+    "versionHistory": {
+      "justNow": "just now",
+      "minutesAgo": "min ago",
+      "hoursAgo": "h ago",
+      "daysAgo": "d ago",
+      "title": "Version history",
+      "closeAria": "Close version history",
+      "close": "Close",
+      "loading": "Loading versions...",
+      "empty": "No versions.",
+      "confirmRestore": "Restore this version?",
+      "restoring": "Restoring...",
+      "confirmYes": "Yes, restore",
+      "cancel": "Cancel",
+      "restore": "Restore",
+      "preview": "Preview"
+    },
+    "presentation": {
+      "empty": "No presentations yet.",
+      "loading": "Loading…",
+      "failed": "Failed"
+    }
+  },
+  "chatProposal": {
+    "step": {
+      "more": "more"
+    },
+    "state": {
+      "failed": "Failed",
+      "unknown": "unknown"
+    },
+    "action": {
+      "reject": "Reject"
+    }
+  },
+  "focusMode": {
+    "all": "All"
+  },
+  "trust": {
+    "badge": {
+      "more": "more"
+    }
+  },
+  "voice": {
+    "legend": {
+      "copy": {
+        "failed": "Failed"
+      }
+    }
+  },
+  "integrations": {
+    "syncHub": {
+      "disconnected": "Disconnected",
+      "ready": "Ready",
+      "runNow": "Run now",
+      "disconnect": "Disconnect",
+      "search": "Search",
+      "loading": "Loading…",
+      "total": "Total",
+      "user": "User",
+      "status": "Status"
+    },
+    "health": {
+      "disconnected": "Disconnected"
+    },
+    "mappings": {
+      "saved": "Saved"
+    }
+  },
+  "decisions": {
+    "reject": "Reject",
+    "error": "Error",
+    "all": "All",
+    "search": "Search",
+    "cancel": "Cancel"
+  },
+  "discovery": {
+    "conversion": {
+      "error": "Error"
+    },
+    "nodes": {
+      "recommendation": {
+        "confidence": "confidence"
+      }
+    }
+  },
+  "docs": {
+    "auditAction": {
+      "proposalCreated": "proposal_created",
+      "proposalApproved": "proposal_approved",
+      "proposalRejected": "proposal_rejected",
+      "proposalExecuted": "proposal_executed"
+    },
+    "home": {
+      "search": "Search"
+    }
+  },
+  "documentStudio": {
+    "editor": {
+      "target": "target",
+      "reject": "Reject"
+    }
+  },
+  "priority": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "notifications": {
+    "saved": "Saved",
+    "actions": {
+      "reject": "Reject",
+      "delete": "Delete"
+    },
+    "error": "Error",
+    "col": {
+      "source": "source",
+      "actions": "Actions"
+    },
+    "delete": "Delete"
+  },
+  "task": {
+    "status": "Status"
+  },
+  "team": {
+    "velocity": {
+      "target": "target"
+    }
+  },
+  "formBuilder": {
+    "published": "Published",
+    "draft": "Draft",
+    "delete": "Delete"
+  },
+  "formsIndex": {
+    "active": "Active",
+    "draft": "Draft",
+    "backToList": "Back to list",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "interfacesIndex": {
+    "backToList": "Back to list",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "onboarding": {
+    "toast": {
+      "completed": "Completed"
+    }
+  },
+  "editor": {
+    "code": "code",
+    "link": "Link"
+  },
+  "mfa": {
+    "challenge": {
+      "failed": "Failed",
+      "error": "Error"
+    },
+    "setup": {
+      "next": "next",
+      "done": "Done"
+    }
+  },
+  "tour": {
+    "back": "Back",
+    "next": "next"
+  },
+  "security": {
+    "events": {
+      "exportSuccess": "Export started",
+      "search": "Search"
+    }
+  },
+  "dashboard": {
+    "shortcuts": {
+      "error": "Error"
+    }
+  },
+  "aiPlatform": {
+    "controlPlane": {
+      "kpi": {
+        "ready": "Ready"
+      },
+      "operator": {
+        "policy": "Policy"
+      },
+      "cost": "cost"
+    }
   }
 }
