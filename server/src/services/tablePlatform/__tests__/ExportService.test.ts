@@ -15,7 +15,11 @@ vi.mock('../ViewQueryEngine.js', () => ({
   default: { executeQuery: (...args: unknown[]) => mockExecuteQuery(...args) },
 }));
 
-import exportService, { escapeCsvValue, formatFieldValue } from '../ExportService.js';
+import exportService, {
+  escapeCsvValue,
+  formatFieldValue,
+  neutralizeFormula,
+} from '../ExportService.js';
 
 describe('ExportService', () => {
   beforeEach(() => {
@@ -57,6 +61,44 @@ describe('ExportService', () => {
 
     it('handles numeric values', () => {
       expect(escapeCsvValue(42)).toBe('42');
+    });
+
+    // ---- B4: CSV/formula-injection neutralization ----
+    it('neutralizes a leading = formula (=HYPERLINK)', () => {
+      expect(escapeCsvValue('=HYPERLINK("http://evil","x")')).toBe(
+        '"\'=HYPERLINK(""http://evil"",""x"")"'
+      );
+    });
+
+    it("prefixes leading + / @ / - formula triggers with apostrophe", () => {
+      // No comma/quote/newline → apostrophe-prefixed but not RFC-wrapped.
+      expect(escapeCsvValue('+SUM(A1:A2)')).toBe("'+SUM(A1:A2)");
+      expect(escapeCsvValue('@cmd')).toBe("'@cmd");
+      expect(escapeCsvValue('-1+1')).toBe("'-1+1");
+    });
+
+    it('neutralizes leading tab injection (tab is not an RFC quote trigger)', () => {
+      expect(escapeCsvValue('\t=1+1')).toBe("'\t=1+1");
+    });
+
+    it('leaves genuine numbers (including negatives) intact', () => {
+      expect(escapeCsvValue('-5')).toBe('-5');
+      expect(escapeCsvValue('+3.2e1')).toBe('+3.2e1');
+      expect(escapeCsvValue(-5)).toBe('-5');
+    });
+  });
+
+  describe('neutralizeFormula', () => {
+    it('prefixes formula-trigger cells', () => {
+      expect(neutralizeFormula('=1+1')).toBe("'=1+1");
+      expect(neutralizeFormula('+x')).toBe("'+x");
+      expect(neutralizeFormula('@x')).toBe("'@x");
+      expect(neutralizeFormula('-cmd')).toBe("'-cmd");
+    });
+    it('does not touch plain text or numbers', () => {
+      expect(neutralizeFormula('hello')).toBe('hello');
+      expect(neutralizeFormula('-5')).toBe('-5');
+      expect(neutralizeFormula('')).toBe('');
     });
   });
 

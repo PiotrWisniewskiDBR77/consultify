@@ -11,9 +11,24 @@ import viewQueryEngine, { type QueryOptions } from './ViewQueryEngine.js';
 // CSV Value Formatting
 // ---------------------------------------------------------------------------
 
+/**
+ * CSV/formula-injection neutralization. A cell that begins with = + - @ (or a
+ * tab / carriage return) is interpreted as a formula by Excel/Google Sheets when
+ * the exported file is opened — `=HYPERLINK(...)`, `=cmd|...`, `+SUM(...)` etc.
+ * Prefix such cells with an apostrophe to force text, while leaving genuine
+ * numbers (e.g. "-5", "+3.2e1") untouched.
+ */
+export function neutralizeFormula(value: string): string {
+  if (!value) return value;
+  if (/^[=+\-@\t\r]/.test(value) && !Number.isFinite(Number(value))) {
+    return "'" + value;
+  }
+  return value;
+}
+
 export function escapeCsvValue(value: unknown): string {
   if (value === null || value === undefined) return '';
-  const str = String(value);
+  const str = neutralizeFormula(String(value));
   if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
     return '"' + str.replace(/"/g, '""') + '"';
   }
@@ -211,7 +226,9 @@ async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
   const fields = await loadFields(tableId, fieldIds);
 
   const rows: unknown[][] = [];
-  rows.push(fields.map((f) => f.name));
+  // Neutralize formula-injection in XLSX cells too (aoa_to_sheet writes values
+  // verbatim, so a leading =/+/-/@ would land as a live formula).
+  rows.push(fields.map((f) => neutralizeFormula(f.name)));
 
   let cursor: string | undefined;
   let hasMore = true;
@@ -228,7 +245,9 @@ async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
 
     for (const record of batch.records) {
       const data = (record as any).data ?? record;
-      rows.push(fields.map((f) => formatFieldValue(data[f.id] ?? data[f.name], f)));
+      rows.push(
+        fields.map((f) => neutralizeFormula(formatFieldValue(data[f.id] ?? data[f.name], f)))
+      );
     }
 
     cursor = batch.cursor;
