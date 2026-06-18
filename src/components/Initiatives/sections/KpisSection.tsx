@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
@@ -79,6 +80,7 @@ const toEnglishKpiName = (name: string, isPolish: boolean): string => {
 };
 
 export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onToggle, readonly }) => {
+  const { t } = useTranslation();
   const { initiative, initiativeId, isPolish, kpisAiRequest, clearKpisAiRequest } =
     useInitiativeContext();
   const artifactContext = {
@@ -133,7 +135,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
       );
     } catch {
       setKpis([]);
-      toast.error(isPolish ? 'Nie udało się pobrać KPI' : 'Failed to load KPIs');
+      toast.error(t('initiatives.kpisSection.failedToLoadKpis'));
     } finally {
       setIsLoading(false);
     }
@@ -283,11 +285,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
       const hasAny = proposal.add.length > 0 || proposal.remove.length > 0;
       const note =
         proposal.note ||
-        (hasAny
-          ? ''
-          : isPolish
-            ? 'AI nie znalazło sugestii zmian — zestaw KPI wygląda OK.'
-            : 'AI found no change suggestions — the KPI set looks good.');
+        (hasAny ? '' : t('initiatives.kpisSection.aiFoundNoChangeSuggestionsKpiSet'));
 
       setAiProposal(proposal);
       setAiNote(note || null);
@@ -307,13 +305,11 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
         }, 8000);
       }
     } catch (e: any) {
-      toast.error(
-        e?.message || (isPolish ? 'Nie udało się wygenerować propozycji AI' : 'AI proposal failed')
-      );
+      toast.error(e?.message || t('initiatives.kpisSection.aiProposalFailed'));
     } finally {
       setIsAIProposing(false);
     }
-  }, [artifactContext, initiative, initiativeId, isPolish, kpis, readonly]);
+  }, [artifactContext, initiative, initiativeId, isPolish, kpis, readonly, t]);
 
   const applyAIProposal = useCallback(async () => {
     if (!aiProposal || readonly) return;
@@ -322,15 +318,13 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
     const toRemove = aiProposal.remove.filter((r) => selectedRemoveIds[r.kpiId]);
 
     if (toAdd.length === 0 && toRemove.length === 0) {
-      toast(isPolish ? 'Brak wybranych zmian' : 'No selected changes');
+      toast(t('initiatives.kpisSection.noSelectedChanges'));
       return;
     }
 
     if (toRemove.length > 0) {
       const ok = window.confirm(
-        isPolish
-          ? `Usunąć ${toRemove.length} KPI? To działanie może być nieodwracalne.`
-          : `Delete ${toRemove.length} KPI(s)? This action may be irreversible.`
+        t('initiatives.kpisSection.deleteKpisConfirm', { count: toRemove.length })
       );
       if (!ok) return;
     }
@@ -397,16 +391,16 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
       }
 
       toast.success(
-        isPolish
-          ? `Zastosowano propozycje AI (${toAdd.length} dodano${toRemove.length ? `, ${toRemove.length} usunięto` : ''})`
-          : `Applied AI proposals (${toAdd.length} added${toRemove.length ? `, ${toRemove.length} removed` : ''})`
+        toRemove.length
+          ? t('initiatives.kpisSection.appliedAiProposalsAddedRemoved', {
+              added: toAdd.length,
+              removed: toRemove.length,
+            })
+          : t('initiatives.kpisSection.appliedAiProposalsAdded', { added: toAdd.length })
       );
       closeAIModal();
     } catch (e: any) {
-      toast.error(
-        e?.message ||
-          (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
-      );
+      toast.error(e?.message || t('initiatives.kpisSection.failedToApplyProposals'));
     } finally {
       setIsAIApplying(false);
     }
@@ -419,6 +413,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
     readonly,
     selectedAddIdx,
     selectedRemoveIds,
+    t,
   ]);
 
   // Triggered from CTA bar (InitiativeDocumentView)
@@ -465,9 +460,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
     const baselineValue = parseNumber(newBaseline);
     const targetValue = parseNumber(newTarget);
     if (baselineValue === targetValue) {
-      toast.error(
-        isPolish ? 'Target musi być różny od baseline' : 'Target must be different from baseline'
-      );
+      toast.error(t('initiatives.kpisSection.targetMustDifferFromBaseline'));
       return;
     }
 
@@ -503,13 +496,13 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
         ...prev,
       ]);
       resetCreateForm();
-      toast.success(isPolish ? 'KPI dodane' : 'KPI created');
+      toast.success(t('initiatives.kpisSection.kpiCreated'));
     } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Nie udało się dodać KPI' : 'Failed to create KPI'));
+      toast.error(e?.message || t('initiatives.kpisSection.failedToCreateKpi'));
     } finally {
       setIsSubmitting(false);
     }
-  }, [initiativeId, isPolish, newBaseline, newName, newTarget, newUnit, resetCreateForm]);
+  }, [initiativeId, isPolish, newBaseline, newName, newTarget, newUnit, resetCreateForm, t]);
 
   const startEditKpi = useCallback((kpi: KPI) => {
     setEditingKpiId(kpi.id);
@@ -545,7 +538,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
           : k
       )
     );
-    toast.success(isPolish ? 'KPI zaktualizowane' : 'KPI updated');
+    toast.success(t('initiatives.kpisSection.kpiUpdated'));
     cancelEditKpi();
   }, [
     cancelEditKpi,
@@ -556,17 +549,19 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
     editUnit,
     editingKpiId,
     isPolish,
+    t,
   ]);
 
   const duplicateKpi = useCallback(
     async (kpi: KPI) => {
       if (!initiativeId) return;
       setIsSubmitting(true);
+      const copyWord = t('initiatives.kpisSection.copy');
       try {
         const baselineValue = parseNumber(kpi.baseline);
         const targetValue = parseNumber(kpi.target);
         const res = await Api.post(`/initiatives/${initiativeId}/kpis`, {
-          name: `${kpi.name} (${isPolish ? 'kopia' : 'copy'})`,
+          name: `${kpi.name} (${copyWord})`,
           description: null,
           category: kpi.category || 'benefits',
           unit: kpi.unit || '%',
@@ -579,7 +574,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
         setKpis((prev) => [
           {
             id: String(created.id || `kpi-${Date.now()}`),
-            name: String(created.name || `${kpi.name} (${isPolish ? 'kopia' : 'copy'})`),
+            name: String(created.name || `${kpi.name} (${copyWord})`),
             category: String(created.category || 'benefits'),
             unit: String(created.unit || kpi.unit || '%'),
             baseline: String(created.baselineValue ?? baselineValue),
@@ -594,32 +589,30 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
           },
           ...prev,
         ]);
-        toast.success(isPolish ? 'KPI zduplikowane' : 'KPI duplicated');
+        toast.success(t('initiatives.kpisSection.kpiDuplicated'));
       } catch (e: any) {
-        toast.error(
-          e?.message || (isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI')
-        );
+        toast.error(e?.message || t('initiatives.kpisSection.failedToDuplicateKpi'));
       } finally {
         setIsSubmitting(false);
       }
     },
-    [initiativeId, isPolish]
+    [initiativeId, isPolish, t]
   );
 
   const removeKpi = useCallback(
     (id: string) => {
       setKpis((prev) => prev.filter((k) => k.id !== id));
       if (editingKpiId === id) cancelEditKpi();
-      toast.success(isPolish ? 'KPI usunięte' : 'KPI deleted');
+      toast.success(t('initiatives.kpisSection.kpiDeleted'));
     },
-    [cancelEditKpi, editingKpiId, isPolish]
+    [cancelEditKpi, editingKpiId, isPolish, t]
   );
 
   const columns = useMemo(
     () => [
       {
         key: 'name',
-        header: isPolish ? 'KPI' : 'KPI',
+        header: 'KPI',
         render: (row: KPI) => (
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {toEnglishKpiName(row.name || '—', isPolish)}
@@ -628,7 +621,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
       },
       {
         key: 'unit',
-        header: isPolish ? 'Jednostka' : 'Unit',
+        header: t('initiatives.kpisSection.unit'),
         render: (row: KPI) => (
           <span className="text-xs text-slate-500 dark:text-slate-400">{row.unit || '—'}</span>
         ),
@@ -644,7 +637,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
       },
       {
         key: 'current',
-        header: isPolish ? 'Obecnie' : 'Current',
+        header: t('initiatives.kpisSection.current'),
         render: (row: KPI) => (
           <span className="text-xs text-slate-500 dark:text-slate-400">
             {formatMetric(row.current, row.unit)}
@@ -662,7 +655,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
       },
       {
         key: 'tracking',
-        header: isPolish ? 'Tracking' : 'Tracking',
+        header: 'Tracking',
         align: 'right' as const,
         render: (row: KPI) => (
           <span
@@ -672,13 +665,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                 : 'border-amber-300/50 dark:border-amber-500/40 bg-amber-50/70 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300'
             }`}
           >
-            {row.isOnTarget
-              ? isPolish
-                ? 'On track'
-                : 'On track'
-              : isPolish
-                ? 'Do poprawy'
-                : 'Needs attention'}
+            {row.isOnTarget ? 'On track' : t('initiatives.kpisSection.needsAttention')}
           </span>
         ),
       },
@@ -695,7 +682,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   setKpiMenuId((prev) => (prev === row.id ? null : row.id));
                 }}
                 className="inline-flex items-center justify-center p-1 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
-                title={isPolish ? 'Akcje KPI' : 'KPI actions'}
+                title={t('initiatives.kpisSection.kpiActions')}
               >
                 <MoreVertical size={14} />
               </button>
@@ -709,7 +696,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                   >
                     <Edit3 size={13} />
-                    {isPolish ? 'Edytuj' : 'Edit'}
+                    {t('initiatives.kpisSection.edit')}
                   </button>
                   <button
                     onClick={() => {
@@ -719,19 +706,19 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                   >
                     <Copy size={13} />
-                    {isPolish ? 'Duplikuj' : 'Duplicate'}
+                    {t('initiatives.kpisSection.duplicate')}
                   </button>
                   <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                   <button
                     onClick={() => {
                       setKpiMenuId(null);
-                      const ok = window.confirm(isPolish ? 'Usunąć to KPI?' : 'Delete this KPI?');
+                      const ok = window.confirm(t('initiatives.kpisSection.deleteThisKpi'));
                       if (ok) removeKpi(row.id);
                     }}
                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                   >
                     <Trash2 size={13} />
-                    {isPolish ? 'Usuń' : 'Delete'}
+                    {t('initiatives.kpisSection.delete')}
                   </button>
                 </div>
               )}
@@ -739,7 +726,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
           ),
       },
     ],
-    [duplicateKpi, isPolish, kpiMenuId, readonly, removeKpi, startEditKpi]
+    [duplicateKpi, isPolish, kpiMenuId, readonly, removeKpi, startEditKpi, t]
   );
 
   return (
@@ -751,19 +738,17 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Propozycje zmian w KPI (AI)' : 'Proposed KPI changes (AI)'}
+                  {t('initiatives.kpisSection.proposedKpiChangesAi')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish
-                    ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
-                    : 'Select items to add/remove, then click “Apply”.'}
+                  {t('initiatives.kpisSection.selectItemsToAddRemove')}
                 </p>
               </div>
               <button
                 onClick={closeAIModal}
                 disabled={isAIApplying}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
-                title={isPolish ? 'Zamknij' : 'Close'}
+                title={t('initiatives.kpisSection.close')}
               >
                 <X size={16} />
               </button>
@@ -771,12 +756,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
 
             <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
               {aiNote ? (
-                <Callout
-                  variant="purple"
-                  compact
-                  title={isPolish ? 'AI' : 'AI'}
-                  className="rounded-xl"
-                >
+                <Callout variant="purple" compact title="AI" className="rounded-xl">
                   {aiNote}
                 </Callout>
               ) : null}
@@ -785,7 +765,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do wywalenia' : 'To remove'} ({aiProposal.remove.length})
+                    {t('initiatives.kpisSection.toRemove')} ({aiProposal.remove.length})
                   </span>
                   {aiProposal.remove.length > 0 && (
                     <button
@@ -798,7 +778,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.kpisSection.selectAll')}
                     </button>
                   )}
                 </div>
@@ -808,14 +788,8 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                     icon={Trash2}
                     dashed={false}
                     className="p-5"
-                    message={
-                      isPolish ? 'AI nie zasugerowało usunięć.' : 'No removal suggestions from AI.'
-                    }
-                    hint={
-                      isPolish
-                        ? 'Jeśli KPI są OK, AI może zaproponować tylko dodania.'
-                        : 'If your KPIs are already good, AI may propose only additions.'
-                    }
+                    message={t('initiatives.kpisSection.noRemovalSuggestions')}
+                    hint={t('initiatives.kpisSection.kpisOkOnlyAdditions')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -857,7 +831,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
+                    {t('initiatives.kpisSection.toAdd')} ({aiProposal.add.length})
                   </span>
                   {aiProposal.add.length > 0 && (
                     <button
@@ -871,7 +845,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.kpisSection.selectAll')}
                     </button>
                   )}
                 </div>
@@ -881,12 +855,8 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                     icon={Plus}
                     dashed={false}
                     className="p-5"
-                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
-                    hint={
-                      isPolish
-                        ? 'Jeśli zestaw KPI jest kompletny, AI może nie dodać nic.'
-                        : 'If the KPI set is complete, AI may propose nothing.'
-                    }
+                    message={t('initiatives.kpisSection.noAdditionsProposed')}
+                    hint={t('initiatives.kpisSection.kpiSetCompleteNothing')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -940,22 +910,15 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
               </div>
 
               {/* Plan */}
-              <Callout
-                variant="purple"
-                title={isPolish ? 'Plan' : 'Plan'}
-                compact
-                className="rounded-xl"
-              >
+              <Callout variant="purple" title="Plan" compact className="rounded-xl">
                 <ul className="list-disc pl-4 space-y-1">
                   <li>
-                    {isPolish
-                      ? `Usuń zaznaczone KPI: ${selectedRemoveCount}.`
-                      : `Remove selected KPIs: ${selectedRemoveCount}.`}
+                    {t('initiatives.kpisSection.removeSelectedKpis', {
+                      count: selectedRemoveCount,
+                    })}
                   </li>
                   <li>
-                    {isPolish
-                      ? `Dodaj zaznaczone KPI: ${selectedAddCount} (source: AI).`
-                      : `Add selected KPIs: ${selectedAddCount} (source: AI).`}
+                    {t('initiatives.kpisSection.addSelectedKpis', { count: selectedAddCount })}
                   </li>
                 </ul>
               </Callout>
@@ -967,7 +930,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                 disabled={isAIApplying}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.kpisSection.cancel')}
               </button>
               <button
                 onClick={() => void applyAIProposal()}
@@ -979,7 +942,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                 ) : (
                   <Sparkles size={13} />
                 )}
-                {isPolish ? 'Zastosuj' : 'Apply'}
+                {t('initiatives.kpisSection.apply')}
               </button>
             </div>
           </div>
@@ -988,7 +951,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
 
       <CollapsibleSection
         id="kpis"
-        title={isPolish ? 'KPI i korzyści' : 'KPIs & Benefits'}
+        title={t('initiatives.kpisSection.kpisAndBenefits')}
         icon={<TrendingUp size={18} className="text-blue-500 dark:text-blue-400" />}
         iconBg="bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20"
         expanded={expanded}
@@ -1002,7 +965,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
               {isAIProposing ? (
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-navy-800/50 px-2 py-0.5 rounded-full">
                   <Loader2 size={12} className="animate-spin" />
-                  {isPolish ? 'AI pracuje...' : 'AI working...'}
+                  {t('initiatives.kpisSection.aiWorking')}
                 </span>
               ) : null}
             </div>
@@ -1023,7 +986,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium transition-colors"
               >
                 <Plus size={14} />
-                <span>{isPolish ? 'Nowy' : 'New'}</span>
+                <span>{t('initiatives.kpisSection.new')}</span>
               </motion.button>
             )}
           </div>
@@ -1041,13 +1004,13 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  placeholder={isPolish ? 'Nazwa KPI...' : 'KPI name...'}
+                  placeholder={t('initiatives.kpisSection.kpiNamePlaceholder')}
                   className="flex-1 w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
                   autoFocus
                 />
                 <AIFieldEnhancer
                   fieldKey="kpis.create.name"
-                  sectionLabel={isPolish ? 'KPI — nazwa' : 'KPI — name'}
+                  sectionLabel={t('initiatives.kpisSection.kpiNameLabel')}
                   currentValue={newName}
                   onApply={setNewName}
                   artifactContext={artifactContext}
@@ -1061,12 +1024,12 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                     type="text"
                     value={newUnit}
                     onChange={(e) => setNewUnit(e.target.value)}
-                    placeholder={isPolish ? 'Jednostka' : 'Unit'}
+                    placeholder={t('initiatives.kpisSection.unit')}
                     className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
                   />
                   <AIFieldEnhancer
                     fieldKey="kpis.create.unit"
-                    sectionLabel={isPolish ? 'KPI — jednostka' : 'KPI — unit'}
+                    sectionLabel={t('initiatives.kpisSection.kpiUnitLabel')}
                     currentValue={newUnit}
                     onApply={setNewUnit}
                     artifactContext={artifactContext}
@@ -1094,7 +1057,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   onClick={resetCreateForm}
                   className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('initiatives.kpisSection.cancel')}
                 </button>
                 <button
                   onClick={() => void addKpi()}
@@ -1102,12 +1065,8 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-lg disabled:opacity-50 hover:bg-blue-600 transition-colors"
                 >
                   {isSubmitting
-                    ? isPolish
-                      ? 'Dodawanie...'
-                      : 'Adding...'
-                    : isPolish
-                      ? 'Dodaj KPI'
-                      : 'Add KPI'}
+                    ? t('initiatives.kpisSection.adding')
+                    : t('initiatives.kpisSection.addKpi')}
                 </button>
               </div>
             </motion.div>
@@ -1124,12 +1083,12 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder={isPolish ? 'Nazwa KPI...' : 'KPI name...'}
+                  placeholder={t('initiatives.kpisSection.kpiNamePlaceholder')}
                   className="flex-1 w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
                 />
                 <AIFieldEnhancer
                   fieldKey="kpis.edit.name"
-                  sectionLabel={isPolish ? 'KPI — nazwa' : 'KPI — name'}
+                  sectionLabel={t('initiatives.kpisSection.kpiNameLabel')}
                   currentValue={editName}
                   onApply={setEditName}
                   artifactContext={artifactContext}
@@ -1143,12 +1102,12 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                     type="text"
                     value={editUnit}
                     onChange={(e) => setEditUnit(e.target.value)}
-                    placeholder={isPolish ? 'Jednostka' : 'Unit'}
+                    placeholder={t('initiatives.kpisSection.unit')}
                     className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
                   />
                   <AIFieldEnhancer
                     fieldKey="kpis.edit.unit"
-                    sectionLabel={isPolish ? 'KPI — jednostka' : 'KPI — unit'}
+                    sectionLabel={t('initiatives.kpisSection.kpiUnitLabel')}
                     currentValue={editUnit}
                     onApply={setEditUnit}
                     artifactContext={artifactContext}
@@ -1167,7 +1126,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   type="text"
                   value={editCurrent}
                   onChange={(e) => setEditCurrent(e.target.value)}
-                  placeholder={isPolish ? 'Obecnie' : 'Current'}
+                  placeholder={t('initiatives.kpisSection.current')}
                   className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
                 />
                 <input
@@ -1183,14 +1142,14 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   onClick={cancelEditKpi}
                   className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('initiatives.kpisSection.cancel')}
                 </button>
                 <button
                   onClick={saveEditedKpi}
                   disabled={!editName.trim() || !editUnit.trim()}
                   className="px-3 py-1.5 text-xs bg-indigo-500 text-white rounded-lg disabled:opacity-50 hover:bg-indigo-600 transition-colors"
                 >
-                  {isPolish ? 'Zapisz' : 'Save'}
+                  {t('initiatives.kpisSection.save')}
                 </button>
               </div>
             </motion.div>
@@ -1199,17 +1158,13 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
           {!isLoading && kpis.length === 0 ? (
             <EmptyStateInline
               icon={TrendingUp}
-              message={isPolish ? 'Brak zdefiniowanych KPI' : 'No KPIs defined yet'}
-              hint={
-                isPolish
-                  ? 'Dodaj pierwszy KPI dla tej inicjatywy.'
-                  : 'Add your first KPI for this initiative.'
-              }
+              message={t('initiatives.kpisSection.noKpisDefined')}
+              hint={t('initiatives.kpisSection.addFirstKpi')}
               action={
                 readonly
                   ? undefined
                   : {
-                      label: isPolish ? 'Nowy KPI' : 'New KPI',
+                      label: t('initiatives.kpisSection.newKpi'),
                       onClick: () => setShowAdd(true),
                     }
               }
@@ -1221,7 +1176,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
               rowKey={(row) => row.id}
               compact
               striped
-              emptyMessage={isPolish ? 'Brak KPI' : 'No KPIs'}
+              emptyMessage={t('initiatives.kpisSection.noKpis')}
             />
           )}
         </div>

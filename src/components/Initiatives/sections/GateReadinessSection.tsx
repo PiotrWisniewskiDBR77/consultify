@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import Api from '@/services/api';
@@ -176,6 +177,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
+  const { t } = useTranslation();
   const {
     initiative,
     initiativeId,
@@ -352,13 +354,11 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       });
       setAiReadinessResult(res as any);
     } catch (err: any) {
-      toast.error(
-        err?.message || (isPolish ? 'AI analiza nie powiodła się' : 'AI analysis failed')
-      );
+      toast.error(err?.message || t('initiatives.gateReadinessSection.aiAnalysisFailed'));
     } finally {
       setIsAIReadinessLoading(false);
     }
-  }, [initiativeId, initiative, status, isPolish]);
+  }, [initiativeId, initiative, status, isPolish, t]);
 
   const handleFix = useCallback(
     (key: string) => {
@@ -409,7 +409,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
 
   const proposeGatesWithAI = useCallback(async () => {
     if (!initiativeId) {
-      toast.error(isPolish ? 'Brak ID inicjatywy' : 'Missing initiative ID');
+      toast.error(t('initiatives.gateReadinessSection.missingInitiativeId'));
       return;
     }
     setIsAIProposing(true);
@@ -743,9 +743,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         proposal.raid.update.length > 0;
 
       if (!hasAny) {
-        const msg = isPolish
-          ? 'AI nie znalazło sugestii zmian — bramki wyglądają OK.'
-          : 'AI found no change suggestions — the gates look good.';
+        const msg = t('initiatives.gateReadinessSection.aiFoundNoChangeSuggestionsGates');
         setNoSuggestionsMessage(msg);
         if (noSuggestionsTimerRef.current) window.clearTimeout(noSuggestionsTimerRef.current);
         noSuggestionsTimerRef.current = window.setTimeout(() => {
@@ -792,9 +790,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         >
       );
     } catch (e: any) {
-      toast.error(
-        e?.message || (isPolish ? 'Nie udało się przeanalizować bramek' : 'Failed to analyze gates')
-      );
+      toast.error(e?.message || t('initiatives.gateReadinessSection.failedToAnalyzeGates'));
     } finally {
       setIsAIProposing(false);
     }
@@ -811,6 +807,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
     targetDate,
     tasks,
     users,
+    t,
   ]);
 
   useEffect(() => {
@@ -873,15 +870,15 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       taskUpdates.length === 0 &&
       raidUpdates.length === 0
     ) {
-      toast.error(isPolish ? 'Zaznacz zmiany do zastosowania' : 'Select changes to apply');
+      toast.error(t('initiatives.gateReadinessSection.selectChangesToApply'));
       return;
     }
 
     if (roleRemoves.length > 0) {
       const ok = window.confirm(
-        isPolish
-          ? `Usunąć ${roleRemoves.length} przypisań ról bramkowych?`
-          : `Remove ${roleRemoves.length} gate role assignments?`
+        t('initiatives.gateReadinessSection.removeGateRoleAssignmentsConfirm', {
+          count: roleRemoves.length,
+        })
       );
       if (!ok) return;
     }
@@ -954,11 +951,11 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         }
       }
 
-      toast.success(isPolish ? 'Zastosowano sugestie AI' : 'Applied AI suggestions');
+      toast.success(t('initiatives.gateReadinessSection.appliedAiSuggestions'));
       await fetchAll();
       closeAIModal();
     } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Nie udało się zastosować zmian' : 'Failed to apply'));
+      toast.error(e?.message || t('initiatives.gateReadinessSection.failedToApply'));
     } finally {
       setIsAIProposing(false);
     }
@@ -975,6 +972,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
     selectedRoleRemove,
     selectedTaskUpdate,
     selectedRaidUpdate,
+    t,
   ]);
 
   const reqLabels: Record<string, { en: string; pl: string }> = {
@@ -1002,7 +1000,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   return (
     <CollapsibleSection
       id="gateReadiness"
-      title={isPolish ? 'Gotowość bramki i harmonogram' : 'Gate Readiness & Timeline'}
+      title={t('initiatives.gateReadinessSection.gateReadinessTimeline')}
       icon={<Flag size={18} className="text-indigo-500 dark:text-indigo-400" />}
       iconBg="bg-gradient-to-br from-crimson-500/10 to-primary-500/10 dark:from-crimson-500/20 dark:to-primary-500/20"
       expanded={expanded}
@@ -1011,7 +1009,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         <div className="flex items-center gap-2">
           {nextGate && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
-              {isPolish ? 'Następna' : 'Next'}: {nextGate}
+              {t('initiatives.gateReadinessSection.next')}: {nextGate}
             </span>
           )}
           {requiredGates.length > 0 && (
@@ -1041,7 +1039,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium transition-colors disabled:opacity-50"
             >
               <Send size={14} />
-              <span>{isPolish ? 'Wyślij' : 'Request'}</span>
+              <span>{t('initiatives.gateReadinessSection.request')}</span>
             </motion.button>
           )}
           <motion.button
@@ -1057,9 +1055,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
             disabled={!!gatesAiRequest || aiBlockedForStatus}
             title={
               aiBlockedForStatus
-                ? isPolish
-                  ? 'AI niedostępne dla tego statusu inicjatywy'
-                  : 'AI is not available for this initiative status'
+                ? t('initiatives.gateReadinessSection.aiNotAvailableForStatus')
                 : undefined
             }
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1077,7 +1073,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       {/* AI "no suggestions" callout (auto-dismiss) */}
       {noSuggestionsMessage && !showAIModal && (
         <div className="mb-4">
-          <Callout variant="purple" title={isPolish ? 'AI: brak sugestii' : 'AI: no suggestions'}>
+          <Callout variant="purple" title={t('initiatives.gateReadinessSection.aiNoSuggestions')}>
             {noSuggestionsMessage}
           </Callout>
         </div>
@@ -1094,12 +1090,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'AI: przegląd bramek' : 'AI: gates review'}
+                    {t('initiatives.gateReadinessSection.aiGatesReview')}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish
-                      ? 'Zmiany nie są stosowane automatycznie — wybierz i zaakceptuj.'
-                      : 'Nothing is applied automatically — select and accept changes.'}
+                    {t('initiatives.gateReadinessSection.nothingAppliedAutomatically')}
                   </div>
                 </div>
               </div>
@@ -1113,7 +1107,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
 
             <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
               {aiProposal.note ? (
-                <Callout variant="purple" title={isPolish ? 'Notatka AI' : 'AI note'}>
+                <Callout variant="purple" title={t('initiatives.gateReadinessSection.aiNote')}>
                   {aiProposal.note}
                 </Callout>
               ) : null}
@@ -1122,19 +1116,15 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Inicjatywa (top bar)' : 'Initiative (top bar)'}
+                    {t('initiatives.gateReadinessSection.initiativeTopBar')}
                   </span>
                 </div>
 
                 {!aiProposal.initiative.update ? (
                   <EmptyStateInline
                     icon={Flag}
-                    message={isPolish ? 'Brak zmian w top bar' : 'No top-bar changes'}
-                    hint={
-                      isPolish
-                        ? 'AI nie sugeruje zmian owner/sponsor/termin/prioritet.'
-                        : 'AI suggests no owner/sponsor/date/priority changes.'
-                    }
+                    message={t('initiatives.gateReadinessSection.noTopBarChanges')}
+                    hint={t('initiatives.gateReadinessSection.aiSuggestsNoTopBarChanges')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -1157,7 +1147,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                           u.ownerId;
                         items.push({
                           key: 'ownerId',
-                          label: isPolish ? 'Owner' : 'Owner',
+                          label: 'Owner',
                           value: name,
                         });
                       }
@@ -1169,21 +1159,21 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                           u.sponsorId;
                         items.push({
                           key: 'sponsorId',
-                          label: isPolish ? 'Sponsor' : 'Sponsor',
+                          label: 'Sponsor',
                           value: name,
                         });
                       }
                       if (u.plannedEndDate) {
                         items.push({
                           key: 'plannedEndDate',
-                          label: isPolish ? 'Termin (end)' : 'Target date (end)',
+                          label: t('initiatives.gateReadinessSection.targetDateEnd'),
                           value: u.plannedEndDate,
                         });
                       }
                       if (u.priority) {
                         items.push({
                           key: 'priority',
-                          label: isPolish ? 'Priorytet' : 'Priority',
+                          label: t('initiatives.gateReadinessSection.priority'),
                           value: u.priority,
                         });
                       }
@@ -1223,7 +1213,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Role bramkowe' : 'Gate roles'}
+                    {t('initiatives.gateReadinessSection.gateRoles')}
                   </span>
                 </div>
 
@@ -1231,12 +1221,8 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 aiProposal.gateRoles.remove.length === 0 ? (
                   <EmptyStateInline
                     icon={User}
-                    message={isPolish ? 'Brak zmian ról bramkowych' : 'No gate role changes'}
-                    hint={
-                      isPolish
-                        ? 'AI nie sugeruje przypisań/usunięć ról.'
-                        : 'AI suggests no role adds/removes.'
-                    }
+                    message={t('initiatives.gateReadinessSection.noGateRoleChanges')}
+                    hint={t('initiatives.gateReadinessSection.aiSuggestsNoRoleChanges')}
                   />
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1244,7 +1230,8 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 p-3 bg-slate-50/60 dark:bg-navy-800/40">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                          {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.gateRoles.add.length})
+                          {t('initiatives.gateReadinessSection.toAdd')} (
+                          {aiProposal.gateRoles.add.length})
                         </span>
                         {aiProposal.gateRoles.add.length > 0 && (
                           <button
@@ -1257,7 +1244,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             }
                             className="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline"
                           >
-                            {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                            {t('initiatives.gateReadinessSection.selectAll')}
                           </button>
                         )}
                       </div>
@@ -1306,7 +1293,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 p-3 bg-slate-50/60 dark:bg-navy-800/40">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                          {isPolish ? 'Do usunięcia' : 'To remove'} (
+                          {t('initiatives.gateReadinessSection.toRemove')} (
                           {aiProposal.gateRoles.remove.length})
                         </span>
                         {aiProposal.gateRoles.remove.length > 0 && (
@@ -1323,7 +1310,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             }
                             className="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline"
                           >
-                            {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                            {t('initiatives.gateReadinessSection.selectAll')}
                           </button>
                         )}
                       </div>
@@ -1376,18 +1363,14 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Decyzje bramkowe' : 'Gate decisions'}
+                    {t('initiatives.gateReadinessSection.gateDecisions')}
                   </span>
                 </div>
                 {aiProposal.gateDecisions.update.length === 0 ? (
                   <EmptyStateInline
                     icon={Flag}
-                    message={isPolish ? 'Brak aktualizacji decyzji' : 'No decision updates'}
-                    hint={
-                      isPolish
-                        ? 'AI nie sugeruje zmian dla istniejących decyzji bramkowych.'
-                        : 'AI suggests no updates for existing gate decisions.'
-                    }
+                    message={t('initiatives.gateReadinessSection.noDecisionUpdates')}
+                    hint={t('initiatives.gateReadinessSection.aiSuggestsNoDecisionUpdates')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -1431,21 +1414,15 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             </div>
                             <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Owner' : 'Owner'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Owner:</span>{' '}
                                 <span className="font-medium">{ownerName || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Due' : 'Due'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Due:</span>{' '}
                                 <span className="font-medium">{u.dueDate || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Note' : 'Note'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Note:</span>{' '}
                                 <span className="font-medium">{u.description ? '✓' : '—'}</span>
                               </div>
                             </div>
@@ -1461,18 +1438,14 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Zadania' : 'Tasks'}
+                    {t('initiatives.gateReadinessSection.tasks')}
                   </span>
                 </div>
                 {aiProposal.tasks.update.length === 0 ? (
                   <EmptyStateInline
                     icon={CheckCircle2}
-                    message={isPolish ? 'Brak aktualizacji zadań' : 'No task updates'}
-                    hint={
-                      isPolish
-                        ? 'AI nie sugeruje zmian assignee/due/status.'
-                        : 'AI suggests no assignee/due/status changes.'
-                    }
+                    message={t('initiatives.gateReadinessSection.noTaskUpdates')}
+                    hint={t('initiatives.gateReadinessSection.aiSuggestsNoTaskChanges')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -1516,21 +1489,15 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             </div>
                             <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Owner' : 'Owner'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Owner:</span>{' '}
                                 <span className="font-medium">{assigneeName || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Due' : 'Due'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Due:</span>{' '}
                                 <span className="font-medium">{u.dueDate || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Status' : 'Status'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Status:</span>{' '}
                                 <span className="font-medium">{u.status || '—'}</span>
                               </div>
                             </div>
@@ -1546,18 +1513,14 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'RAID' : 'RAID'}
+                    RAID
                   </span>
                 </div>
                 {aiProposal.raid.update.length === 0 ? (
                   <EmptyStateInline
                     icon={User}
-                    message={isPolish ? 'Brak aktualizacji RAID' : 'No RAID updates'}
-                    hint={
-                      isPolish
-                        ? 'AI nie sugeruje zmian dla istniejących ryzyk/issue.'
-                        : 'AI suggests no changes to existing risks/issues.'
-                    }
+                    message={t('initiatives.gateReadinessSection.noRaidUpdates')}
+                    hint={t('initiatives.gateReadinessSection.aiSuggestsNoRaidChanges')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -1602,40 +1565,30 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
                                 <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Severity' : 'Severity'}:
+                                  Severity:
                                 </span>{' '}
                                 <span className="font-medium">{u.severity || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Status' : 'Status'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Status:</span>{' '}
                                 <span className="font-medium">{u.status || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Owner' : 'Owner'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Owner:</span>{' '}
                                 <span className="font-medium">{ownerName || '—'}</span>
                               </div>
                             </div>
                             <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Due' : 'Due'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Due:</span>{' '}
                                 <span className="font-medium">{u.dueDate || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Title' : 'Title'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Title:</span>{' '}
                                 <span className="font-medium">{u.title ? '✓' : '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {isPolish ? 'Desc' : 'Desc'}:
-                                </span>{' '}
+                                <span className="text-slate-500 dark:text-slate-400">Desc:</span>{' '}
                                 <span className="font-medium">{u.description ? '✓' : '—'}</span>
                               </div>
                             </div>
@@ -1659,16 +1612,14 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     <thead className="bg-slate-50/80 dark:bg-navy-800/60">
                       <tr>
                         <th className="text-left px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Wynik analizy' : 'Analysis result'}
+                          {t('initiatives.gateReadinessSection.analysisResult')}
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
                         <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                          {isPolish
-                            ? 'AI nie zaproponowało żadnych zmian do wprowadzenia.'
-                            : 'AI did not propose any changes to apply.'}
+                          {t('initiatives.gateReadinessSection.aiDidNotProposeChanges')}
                         </td>
                       </tr>
                     </tbody>
@@ -1683,7 +1634,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 disabled={isAIProposing}
                 className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
               >
-                {isPolish ? 'Zamknij' : 'Close'}
+                {t('initiatives.gateReadinessSection.close')}
               </button>
               <button
                 onClick={() => void applyAIProposal()}
@@ -1703,7 +1654,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 ) : (
                   <Check size={16} />
                 )}
-                <span>{isPolish ? 'Zastosuj zaznaczone' : 'Apply selected'}</span>
+                <span>{t('initiatives.gateReadinessSection.applySelected')}</span>
               </button>
             </div>
           </div>
@@ -1726,7 +1677,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-            {isPolish ? 'Przebieg bramek' : 'Gate Timeline'}
+            {t('initiatives.gateReadinessSection.gateTimeline')}
           </span>
         </div>
         <div className="relative">
@@ -1799,7 +1750,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {isPolish ? 'Aktualna bramka' : 'Current Gate'}:{' '}
+                  {t('initiatives.gateReadinessSection.currentGate')}:{' '}
                   {isPolish ? nextGateConfig.namePl : nextGateConfig.name}
                 </h4>
                 <p className="text-xs text-slate-500">
@@ -1814,15 +1765,15 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
             <div className="space-y-2 mb-4">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  {isPolish ? 'Gotowość (system)' : 'Readiness (system)'}
+                  {t('initiatives.gateReadinessSection.readinessSystem')}
                 </span>
                 {blockingMissing.length > 0 ? (
                   <span className="text-[10px] font-semibold text-rose-500">
-                    {isPolish ? 'Blokujące braki' : 'Blocking missing'}
+                    {t('initiatives.gateReadinessSection.blockingMissing')}
                   </span>
                 ) : (
                   <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    {isPolish ? 'OK' : 'OK'}
+                    OK
                   </span>
                 )}
               </div>
@@ -1831,11 +1782,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 <Callout
                   variant="warning"
                   compact
-                  title={isPolish ? 'Nie możesz przejść dalej' : "You can't progress yet"}
+                  title={t('initiatives.gateReadinessSection.cantProgressYet')}
                 >
-                  {isPolish
-                    ? 'Uzupełnij brakujące elementy (blokujące), a następnie ponów akcję gate.'
-                    : 'Fill missing blocking items, then retry the gate action.'}
+                  {t('initiatives.gateReadinessSection.fillMissingBlockingItems')}
                 </Callout>
               )}
 
@@ -1877,19 +1826,15 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                 : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
                             }`}
                           >
-                            {isPolish
-                              ? isBlocking
-                                ? 'blokuje'
-                                : 'ostrzeżenie'
-                              : isBlocking
-                                ? 'blocking'
-                                : 'warning'}
+                            {isBlocking
+                              ? t('initiatives.gateReadinessSection.blocking')
+                              : t('initiatives.gateReadinessSection.warning')}
                           </span>
                         </div>
                         {!r.pass && r.suggestedAction && (
                           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                             <span className="font-medium">
-                              {isPolish ? 'Sugerowana akcja' : 'Suggested action'}:
+                              {t('initiatives.gateReadinessSection.suggestedAction')}:
                             </span>{' '}
                             {r.suggestedAction}
                             {r.suggestedActor && (
@@ -1907,13 +1852,11 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                           className="px-2 py-1 rounded-md text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors shrink-0"
                           title={
                             !canEditCards
-                              ? isPolish
-                                ? 'Masz podgląd, ale brak uprawnień do edycji na tym etapie.'
-                                : 'You can view, but you lack edit permission at this stage.'
+                              ? t('initiatives.gateReadinessSection.viewOnlyNoEditPermission')
                               : undefined
                           }
                         >
-                          {isPolish ? 'Napraw' : 'Fix'}
+                          {t('initiatives.gateReadinessSection.fix')}
                         </button>
                       )}
                     </div>
@@ -1927,7 +1870,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {isPolish ? 'Analiza gotowości AI' : 'AI Readiness Analysis'}
+                {t('initiatives.gateReadinessSection.aiReadinessAnalysis')}
               </span>
               <button
                 onClick={requestAIReadiness}
@@ -1939,7 +1882,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 ) : (
                   <Brain size={12} />
                 )}
-                {isPolish ? 'Zapytaj AI' : 'Ask AI'}
+                {t('initiatives.gateReadinessSection.askAi')}
               </button>
             </div>
 
@@ -1947,7 +1890,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               <div className="flex items-center gap-2 p-3 rounded-lg bg-primary-500/5 border border-primary-500/20">
                 <Loader2 size={14} className="animate-spin text-primary-500" />
                 <span className="text-xs text-primary-600 dark:text-primary-400">
-                  {isPolish ? 'AI analizuje gotowość...' : 'AI is analyzing readiness...'}
+                  {t('initiatives.gateReadinessSection.aiAnalyzingReadiness')}
                 </span>
               </div>
             )}
@@ -1960,12 +1903,12 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                       {aiReadinessResult.overallScore}%
                     </div>
                     <div className="text-[10px] text-primary-500">
-                      {isPolish ? 'Ocena' : 'Score'}
+                      {t('initiatives.gateReadinessSection.score')}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
-                      {isPolish ? 'Podsumowanie' : 'Summary'}
+                      {t('initiatives.gateReadinessSection.summary')}
                     </div>
                     <p className="text-xs text-slate-700 dark:text-slate-300">
                       {aiReadinessResult.summary}
@@ -1976,7 +1919,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 {aiReadinessResult.findings.length > 0 ? (
                   <div className="space-y-1">
                     <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                      {isPolish ? 'Wnioski AI' : 'AI Findings'}
+                      {t('initiatives.gateReadinessSection.aiFindings')}
                     </span>
                     {aiReadinessResult.findings.map((f: any, idx: number) => (
                       <div
@@ -2012,7 +1955,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             {f.suggestedAction && (
                               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                                 <span className="font-medium">
-                                  {isPolish ? 'Akcja' : 'Action'}:
+                                  {t('initiatives.gateReadinessSection.action')}:
                                 </span>{' '}
                                 {f.suggestedAction}
                                 {f.suggestedActor && (
@@ -2029,9 +1972,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                   </div>
                 ) : (
                   <div className="text-xs text-slate-500 dark:text-slate-400 italic p-2">
-                    {isPolish
-                      ? 'AI nie znalazło dodatkowych problemów.'
-                      : 'AI found no additional issues.'}
+                    {t('initiatives.gateReadinessSection.aiFoundNoAdditionalIssues')}
                   </div>
                 )}
               </div>
@@ -2041,7 +1982,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           {/* Requirements Checklist */}
           <div className="space-y-2 mb-4">
             <span className="text-[10px] font-semibold text-slate-500 uppercase">
-              {isPolish ? 'Lista kontrolna wymagań' : 'Requirements Checklist'}
+              {t('initiatives.gateReadinessSection.requirementsChecklist')}
             </span>
             <div className="grid grid-cols-2 gap-2">
               {nextGateConfig.requirements.map((req) => {
@@ -2078,7 +2019,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           {/* Readiness Score */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-500">{isPolish ? 'Gotowość' : 'Readiness'}</span>
+              <span className="text-xs text-slate-500">
+                {t('initiatives.gateReadinessSection.readiness')}
+              </span>
               <span className="text-xs font-semibold text-primary-500">{readinessPercent}%</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
@@ -2096,7 +2039,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
             <div className="flex items-center gap-2">
               <User size={14} className="text-slate-600" />
               <span className="text-xs text-slate-500">
-                {isPolish ? 'Wymagana aprobata' : 'Required approval'}:
+                {t('initiatives.gateReadinessSection.requiredApproval')}:
               </span>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 {getRoleLabel(nextGateConfig.requiredRole, isPolish)}
@@ -2116,7 +2059,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       {requiredGates.length > 0 && (
         <div className="space-y-2">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase block mb-2">
-            {isPolish ? 'Wymagane zatwierdzenia dla statusu' : 'Required approvals for status'}
+            {t('initiatives.gateReadinessSection.requiredApprovalsForStatus')}
           </span>
           {requiredGates.map((g) => {
             const gs = getGateStatus(g.pmoDomain);
@@ -2143,7 +2086,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 <span
                   className={`px-2 py-0.5 text-[10px] font-medium rounded ${ok ? 'bg-emerald-500/20 text-emerald-400' : gs === 'PENDING' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-600'}`}
                 >
-                  {gs === 'MISSING' ? (isPolish ? 'Nie zgłoszono' : 'Not requested') : gs}
+                  {gs === 'MISSING' ? t('initiatives.gateReadinessSection.notRequested') : gs}
                 </span>
               </div>
             );
@@ -2155,7 +2098,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
           <CheckCircle2 size={24} className="mx-auto mb-2 text-emerald-500" />
           <p className="text-sm text-slate-500">
-            {isPolish ? 'Wszystkie bramki przejdzone!' : 'All gates passed!'}
+            {t('initiatives.gateReadinessSection.allGatesPassed')}
           </p>
         </div>
       )}

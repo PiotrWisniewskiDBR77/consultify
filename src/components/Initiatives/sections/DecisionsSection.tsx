@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
@@ -265,6 +266,7 @@ const GATE_TYPES = new Set([
 // ==========================================
 
 export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly }) => {
+  const { t } = useTranslation();
   const {
     decisions,
     setDecisions,
@@ -401,7 +403,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
   const handleCreateDecision = useCallback(async () => {
     if (isCreatingDecision || !newDecisionTitle.trim()) return;
     if (!initiativeId) {
-      toast.error(isPolish ? 'Brak ID inicjatywy' : 'Missing initiative ID');
+      toast.error(t('initiatives.decisionsSection.missingInitiativeId'));
       return;
     }
     setIsCreatingDecision(true);
@@ -443,11 +445,9 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       setDecisions((prev) => [...prev, created]);
       setShowCreateModal(false);
       resetCreateForm();
-      toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
+      toast.success(t('initiatives.decisionsSection.decisionCreated'));
     } catch (e: any) {
-      toast.error(
-        e?.message || (isPolish ? 'Nie udało się utworzyć decyzji' : 'Failed to create decision')
-      );
+      toast.error(e?.message || t('initiatives.decisionsSection.failedToCreateDecision'));
     } finally {
       setIsCreatingDecision(false);
     }
@@ -462,25 +462,23 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     setDecisions,
     isPolish,
     resetCreateForm,
+    t,
   ]);
 
   const handleDuplicateDecision = useCallback(
     async (decision: Decision) => {
       if (readonly) return;
       if (!initiativeId) {
-        toast.error(isPolish ? 'Brak ID inicjatywy' : 'Missing initiative ID');
+        toast.error(t('initiatives.decisionsSection.missingInitiativeId'));
         return;
       }
       try {
         const title = (decision.title || '').trim();
-        const copySuffix = isPolish ? ' (kopia)' : ' (copy)';
+        const copySuffix = ` (${t('initiatives.decisionsSection.copy')})`;
+        const newDecisionFallbackTitle = `${t('initiatives.decisionsSection.newDecision')}${copySuffix}`;
         const priorityLower = String(decision.priority || '').toLowerCase();
         const res = await Api.post('/decisions', {
-          title: title
-            ? `${title}${copySuffix}`
-            : isPolish
-              ? `Nowa decyzja${copySuffix}`
-              : `New decision${copySuffix}`,
+          title: title ? `${title}${copySuffix}` : newDecisionFallbackTitle,
           description: decision.description || undefined,
           type: decision.type || 'GENERAL',
           decisionType: decision.type || 'GENERAL',
@@ -497,7 +495,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         });
         const duplicated: Decision = {
           id: res.id,
-          title: res.title || (title ? `${title}${copySuffix}` : `New decision${copySuffix}`),
+          title: res.title || (title ? `${title}${copySuffix}` : newDecisionFallbackTitle),
           description: res.description || decision.description,
           type: res.decisionType || res.type || decision.type || 'GENERAL',
           status: res.status || 'PENDING',
@@ -512,14 +510,12 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
           source: 'manual',
         };
         setDecisions((prev) => [...prev, duplicated]);
-        toast.success(isPolish ? 'Decyzja zduplikowana' : 'Decision duplicated');
+        toast.success(t('initiatives.decisionsSection.decisionDuplicated'));
       } catch {
-        toast.error(
-          isPolish ? 'Nie udało się zduplikować decyzji' : 'Failed to duplicate decision'
-        );
+        toast.error(t('initiatives.decisionsSection.failedToDuplicateDecision'));
       }
     },
-    [initiativeId, isPolish, readonly, setDecisions]
+    [initiativeId, isPolish, readonly, setDecisions, t]
   );
 
   const handleRemove = useCallback(
@@ -645,7 +641,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       const rationale = String(parsed?.rationale || '').trim();
 
       if (!title) {
-        toast.error(isPolish ? 'AI nie zwróciło tytułu decyzji' : 'AI returned no decision title');
+        toast.error(t('initiatives.decisionsSection.aiReturnedNoDecisionTitle'));
         return;
       }
 
@@ -658,10 +654,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       setNewDecisionPriority('MEDIUM');
       setShowCreateModal(true);
     } catch (e: any) {
-      toast.error(
-        e?.message ||
-          (isPolish ? 'Nie udało się zaproponować decyzji' : 'Failed to propose a decision')
-      );
+      toast.error(e?.message || t('initiatives.decisionsSection.failedToProposeDecision'));
     } finally {
       setIsAIProposing(false);
     }
@@ -674,6 +667,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     decisions?.length,
     tasks,
     raidItems,
+    t,
   ]);
 
   const proposeDecisionsWithAI = useCallback(async () => {
@@ -848,9 +842,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       const hasAny =
         proposal.add.length > 0 || proposal.remove.length > 0 || !!proposal.reorder?.order?.length;
       if (!hasAny) {
-        const msg = isPolish
-          ? 'AI nie znalazło sugestii zmian — log decyzji wygląda OK.'
-          : 'AI found no change suggestions — the decisions log looks good.';
+        const msg = t('initiatives.decisionsSection.aiFoundNoChangeSuggestionsDecisions');
         setAiNoSuggestionsMessage(msg);
         if (aiNoSuggestionsTimerRef.current) {
           window.clearTimeout(aiNoSuggestionsTimerRef.current);
@@ -880,14 +872,11 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       );
       setShowAIModal(true);
     } catch (e: any) {
-      toast.error(
-        e?.message ||
-          (isPolish ? 'Nie udało się przeanalizować decyzji' : 'Failed to analyze decisions')
-      );
+      toast.error(e?.message || t('initiatives.decisionsSection.failedToAnalyzeDecisions'));
     } finally {
       setIsAIProposing(false);
     }
-  }, [decisions, initiative, isPolish, normalizeDecisionType, readonly, tasks, raidItems]);
+  }, [decisions, initiative, isPolish, normalizeDecisionType, readonly, tasks, raidItems, t]);
 
   const selectedAddCount = useMemo(() => {
     if (!aiProposal) return 0;
@@ -903,7 +892,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     if (!aiProposal) return;
     if (readonly) return;
     if (!initiativeId) {
-      toast.error(isPolish ? 'Brak ID inicjatywy' : 'Missing initiative ID');
+      toast.error(t('initiatives.decisionsSection.missingInitiativeId'));
       return;
     }
     setIsAIProposing(true);
@@ -919,9 +908,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
 
       if (removeIds.length > 0) {
         const ok = window.confirm(
-          isPolish
-            ? `Usunąć ${removeIds.length} decyzję/decyzje? To działanie jest nieodwracalne.`
-            : `Delete ${removeIds.length} decision(s)? This action cannot be undone.`
+          t('initiatives.decisionsSection.deleteDecisionsConfirm', { count: removeIds.length })
         );
         if (!ok) return;
       }
@@ -961,13 +948,10 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         setDecisions((prev) => [...prev, created]);
       }
 
-      toast.success(isPolish ? 'Zastosowano sugestie AI' : 'Applied AI suggestions');
+      toast.success(t('initiatives.decisionsSection.appliedAiSuggestions'));
       closeAIModal();
     } catch (e: any) {
-      toast.error(
-        e?.message ||
-          (isPolish ? 'Nie udało się zastosować sugestii AI' : 'Failed to apply AI suggestions')
-      );
+      toast.error(e?.message || t('initiatives.decisionsSection.failedToApplyAiSuggestions'));
     } finally {
       setIsAIProposing(false);
     }
@@ -982,6 +966,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     selectedAddIdx,
     selectedRemoveIds,
     setDecisions,
+    t,
   ]);
 
   // Triggered from CTA bar (InitiativeDocumentView)
@@ -1018,7 +1003,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-            {isPolish ? 'Decyzje' : 'Decisions'}
+            {t('initiatives.decisionsSection.decisions')}
           </h2>
           {decisions.length > 0 && (
             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
@@ -1028,7 +1013,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
           {isAIProposing && (
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-navy-800/50 px-2 py-0.5 rounded-full">
               <Loader2 size={12} className="animate-spin" />
-              {isPolish ? 'AI pracuje...' : 'AI working...'}
+              {t('initiatives.decisionsSection.aiWorking')}
             </span>
           )}
         </div>
@@ -1038,7 +1023,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
             className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
             <Plus size={12} />
-            {isPolish ? 'Dodaj decyzję' : 'Add decision'}
+            {t('initiatives.decisionsSection.addDecision')}
           </button>
         )}
       </div>
@@ -1047,12 +1032,12 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         <Callout
           variant="purple"
           compact
-          title={isPolish ? 'AI' : 'AI'}
+          title="AI"
           action={
             readonly
               ? undefined
               : {
-                  label: isPolish ? 'AI: dodaj decyzję' : 'AI: add decision',
+                  label: t('initiatives.decisionsSection.aiAddDecision'),
                   onClick: () => void proposeOneDecisionWithAI(),
                 }
           }
@@ -1068,20 +1053,16 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isPolish
-                    ? 'Propozycje zmian w decyzjach (AI)'
-                    : 'Proposed decision changes (AI)'}
+                  {t('initiatives.decisionsSection.proposedDecisionChangesAi')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish
-                    ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
-                    : 'Select items to add/remove, then click “Apply”.'}
+                  {t('initiatives.decisionsSection.selectItemsToAddRemove')}
                 </p>
               </div>
               <button
                 onClick={closeAIModal}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPolish ? 'Zamknij' : 'Close'}
+                title={t('initiatives.decisionsSection.close')}
               >
                 <X size={16} />
               </button>
@@ -1092,7 +1073,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do wywalenia' : 'To remove'} ({aiProposal.remove.length})
+                    {t('initiatives.decisionsSection.toRemove')} ({aiProposal.remove.length})
                   </span>
                   {aiProposal.remove.length > 0 && (
                     <button
@@ -1105,7 +1086,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.decisionsSection.selectAll')}
                     </button>
                   )}
                 </div>
@@ -1115,14 +1096,8 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                     icon={Trash2}
                     dashed={false}
                     className="p-5"
-                    message={
-                      isPolish ? 'AI nie zasugerowało usunięć.' : 'No removal suggestions from AI.'
-                    }
-                    hint={
-                      isPolish
-                        ? 'Jeśli log decyzji jest OK, AI może zaproponować tylko dodania lub kolejność.'
-                        : 'If the decisions log is already good, AI may propose only additions or ordering.'
-                    }
+                    message={t('initiatives.decisionsSection.noRemovalSuggestions')}
+                    hint={t('initiatives.decisionsSection.decisionsLogOkOnlyAdditionsOrdering')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -1163,7 +1138,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
+                    {t('initiatives.decisionsSection.toAdd')} ({aiProposal.add.length})
                   </span>
                   {aiProposal.add.length > 0 && (
                     <button
@@ -1177,7 +1152,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.decisionsSection.selectAll')}
                     </button>
                   )}
                 </div>
@@ -1187,12 +1162,8 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                     icon={Plus}
                     dashed={false}
                     className="p-5"
-                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
-                    hint={
-                      isPolish
-                        ? 'AI może zwrócić tylko usunięcia lub kolejność.'
-                        : 'AI may return only removals or ordering.'
-                    }
+                    message={t('initiatives.decisionsSection.noAdditionsProposed')}
+                    hint={t('initiatives.decisionsSection.aiMayReturnOnlyRemovalsOrdering')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -1237,7 +1208,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (
+                    {t('initiatives.decisionsSection.suggestedOrder')} (
                     {aiProposal.reorder?.order?.length || 0})
                   </span>
                   <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
@@ -1247,7 +1218,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                       onChange={(e) => setApplySuggestedOrder(e.target.checked)}
                       disabled={!aiProposal.reorder?.order?.length}
                     />
-                    {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
+                    {t('initiatives.decisionsSection.applyOrder')}
                   </label>
                 </div>
 
@@ -1256,12 +1227,8 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                     icon={Sparkles}
                     dashed={false}
                     className="p-5"
-                    message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
-                    hint={
-                      isPolish
-                        ? 'AI może zwrócić tylko dodania/usunięcia bez re-order.'
-                        : 'AI may return only additions/removals without re-ordering.'
-                    }
+                    message={t('initiatives.decisionsSection.noOrderingSuggestion')}
+                    hint={t('initiatives.decisionsSection.aiMayReturnWithoutReordering')}
                   />
                 ) : (
                   <>
@@ -1285,31 +1252,22 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
               </div>
 
               {/* Plan (bottom) */}
-              <Callout
-                variant="purple"
-                title={isPolish ? 'Plan' : 'Plan'}
-                compact
-                className="rounded-xl"
-              >
+              <Callout variant="purple" title="Plan" compact className="rounded-xl">
                 <ul className="list-disc pl-4 space-y-1">
                   <li>
-                    {isPolish
-                      ? `Usuń zaznaczone decyzje: ${selectedRemoveCount}.`
-                      : `Remove selected decisions: ${selectedRemoveCount}.`}
+                    {t('initiatives.decisionsSection.removeSelectedDecisions', {
+                      count: selectedRemoveCount,
+                    })}
                   </li>
                   <li>
-                    {isPolish
-                      ? `Dodaj zaznaczone decyzje: ${selectedAddCount} (status: Pending, source: AI).`
-                      : `Add selected decisions: ${selectedAddCount} (status: Pending, source: AI).`}
+                    {t('initiatives.decisionsSection.addSelectedDecisions', {
+                      count: selectedAddCount,
+                    })}
                   </li>
                   <li>
-                    {isPolish
-                      ? applySuggestedOrder && aiProposal.reorder?.order?.length
-                        ? 'Zastosuj proponowaną kolejność dla czytelności.'
-                        : 'Opcjonalnie: zastosuj proponowaną kolejność.'
-                      : applySuggestedOrder && aiProposal.reorder?.order?.length
-                        ? 'Apply the suggested ordering to make the list read better.'
-                        : 'Optional: apply the suggested ordering.'}
+                    {applySuggestedOrder && aiProposal.reorder?.order?.length
+                      ? t('initiatives.decisionsSection.applySuggestedOrderingReadability')
+                      : t('initiatives.decisionsSection.optionalApplySuggestedOrdering')}
                   </li>
                 </ul>
               </Callout>
@@ -1321,7 +1279,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                 disabled={isAIProposing}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.decisionsSection.cancel')}
               </button>
               <button
                 onClick={() => void applyAIProposal()}
@@ -1329,7 +1287,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {isAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
-                {isPolish ? 'Zastosuj' : 'Apply'}
+                {t('initiatives.decisionsSection.apply')}
               </button>
             </div>
           </div>
@@ -1341,12 +1299,16 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         <table className="w-full text-sm">
           <thead className="sticky top-0 z-10">
             <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
-              <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Decyzja' : 'Decision'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Status' : 'Status'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Decydent' : 'Owner'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Termin' : 'Due'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Priorytet' : 'Priority'}</th>
+              <th className="text-left py-2.5 pl-3 pr-2">
+                {t('initiatives.decisionsSection.decision')}
+              </th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.decisionsSection.type')}</th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.decisionsSection.status')}</th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.decisionsSection.owner')}</th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.decisionsSection.due')}</th>
+              <th className="text-left py-2.5 pr-2">
+                {t('initiatives.decisionsSection.priority')}
+              </th>
               <th className="text-right py-2.5 pr-3"></th>
             </tr>
           </thead>
@@ -1377,7 +1339,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                         className="text-left text-slate-700 dark:text-slate-200 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors flex items-center gap-2"
                       >
                         <span className="truncate max-w-[220px]">
-                          {decision.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                          {decision.title || t('initiatives.decisionsSection.untitled')}
                         </span>
                         {isGate && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary-500/20 text-primary-400 font-semibold flex-shrink-0">
@@ -1416,7 +1378,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                           {formatDueDate(decision.dueDate)}
                           {decision.isOverdue && (
                             <span className="text-[9px] px-1 py-0.5 rounded bg-rose-500/20 text-rose-400 font-medium ml-1">
-                              {isPolish ? 'PRZETERMIN.' : 'OVERDUE'}
+                              {t('initiatives.decisionsSection.overdue')}
                             </span>
                           )}
                         </span>
@@ -1442,7 +1404,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                           setMenuDecisionId((prev) => (prev === decision.id ? null : decision.id));
                         }}
                         className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/10 transition-colors"
-                        title={isPolish ? 'Akcje' : 'Actions'}
+                        title={t('initiatives.decisionsSection.actions')}
                       >
                         <MoreVertical size={14} />
                       </button>
@@ -1456,7 +1418,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                           >
                             <ExternalLink size={13} />
-                            {isPolish ? 'Otwórz decyzję' : 'Open decision'}
+                            {t('initiatives.decisionsSection.openDecision')}
                           </button>
                           <button
                             onClick={() => {
@@ -1466,7 +1428,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                           >
                             <Edit3 size={13} />
-                            {isPolish ? 'Duplikuj' : 'Duplicate'}
+                            {t('initiatives.decisionsSection.duplicate')}
                           </button>
                           {!readonly && (
                             <>
@@ -1479,7 +1441,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                                 className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                               >
                                 <Trash2 size={13} />
-                                {isPolish ? 'Usuń' : 'Delete'}
+                                {t('initiatives.decisionsSection.delete')}
                               </button>
                             </>
                           )}
@@ -1499,11 +1461,9 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                   className="py-8 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   <Scale size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
-                  <p>{isPolish ? 'Brak decyzji' : 'No decisions yet'}</p>
+                  <p>{t('initiatives.decisionsSection.noDecisionsYet')}</p>
                   <p className="text-xs text-slate-600 mt-1">
-                    {isPolish
-                      ? 'Dodaj decyzje bramkowe lub operacyjne'
-                      : 'Add gate or operational decisions'}
+                    {t('initiatives.decisionsSection.addGateOrOperationalDecisions')}
                   </p>
                   {!readonly && (
                     <button
@@ -1511,7 +1471,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                       className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <Plus size={12} />
-                      {isPolish ? 'Dodaj decyzję' : 'Add decision'}
+                      {t('initiatives.decisionsSection.addDecision')}
                     </button>
                   )}
                 </td>
@@ -1526,7 +1486,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
           <div className="w-full max-w-xl rounded-2xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 shadow-2xl">
             <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700/70 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {isPolish ? 'Nowa decyzja' : 'New decision'}
+                {t('initiatives.decisionsSection.newDecisionTitle')}
               </h3>
               <button
                 onClick={() => {
@@ -1542,20 +1502,20 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
             <div className="p-4 space-y-3">
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                  {isPolish ? 'Tytuł' : 'Title'}
+                  {t('initiatives.decisionsSection.title')}
                 </label>
                 <input
                   ref={createTitleInputRef}
                   value={newDecisionTitle}
                   onChange={(e) => setNewDecisionTitle(e.target.value)}
-                  placeholder={isPolish ? 'Np. Zatwierdź budżet' : 'E.g. Approve budget allocation'}
+                  placeholder={t('initiatives.decisionsSection.titlePlaceholder')}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
                 />
               </div>
 
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                  {isPolish ? 'Kontekst / notatki' : 'Context / notes'}
+                  {t('initiatives.decisionsSection.contextNotes')}
                 </label>
                 <textarea
                   value={newDecisionDescription}
@@ -1568,7 +1528,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                    {isPolish ? 'Typ' : 'Type'}
+                    {t('initiatives.decisionsSection.type')}
                   </label>
                   <select
                     value={newDecisionType}
@@ -1585,7 +1545,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
 
                 <div>
                   <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                    {isPolish ? 'Priorytet' : 'Priority'}
+                    {t('initiatives.decisionsSection.priority')}
                   </label>
                   <select
                     value={newDecisionPriority}
@@ -1596,24 +1556,28 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                     }
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
                   >
-                    <option value="LOW">{isPolish ? 'Niski' : 'Low'}</option>
-                    <option value="MEDIUM">{isPolish ? 'Średni' : 'Medium'}</option>
-                    <option value="HIGH">{isPolish ? 'Wysoki' : 'High'}</option>
-                    <option value="CRITICAL">{isPolish ? 'Krytyczny' : 'Critical'}</option>
+                    <option value="LOW">{t('initiatives.decisionsSection.priorityLow')}</option>
+                    <option value="MEDIUM">
+                      {t('initiatives.decisionsSection.priorityMedium')}
+                    </option>
+                    <option value="HIGH">{t('initiatives.decisionsSection.priorityHigh')}</option>
+                    <option value="CRITICAL">
+                      {t('initiatives.decisionsSection.priorityCritical')}
+                    </option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                  {isPolish ? 'Owner' : 'Owner'}
+                  Owner
                 </label>
                 <select
                   value={newDecisionOwnerId}
                   onChange={(e) => setNewDecisionOwnerId(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
                 >
-                  <option value="">{isPolish ? '— Brak —' : '— None —'}</option>
+                  <option value="">{t('initiatives.decisionsSection.none')}</option>
                   {(users || []).map((u) => (
                     <option key={u.id} value={u.id}>
                       {`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}
@@ -1631,7 +1595,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                 }}
                 className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.decisionsSection.cancel')}
               </button>
               <button
                 onClick={() => void handleCreateDecision()}
@@ -1639,12 +1603,8 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                 className="px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
               >
                 {isCreatingDecision
-                  ? isPolish
-                    ? 'Tworzenie...'
-                    : 'Creating...'
-                  : isPolish
-                    ? 'Utwórz decyzję'
-                    : 'Create decision'}
+                  ? t('initiatives.decisionsSection.creating')
+                  : t('initiatives.decisionsSection.createDecision')}
               </button>
             </div>
           </div>
@@ -1654,7 +1614,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       {/* Footer summary */}
       {decisions.length > 0 && (
         <div className="pt-2 border-t border-slate-200/70 dark:border-navy-700/50 text-xs text-slate-500 dark:text-slate-400">
-          {approvedCount}/{decisions.length} {isPolish ? 'zatwierdzonych' : 'approved'}
+          {approvedCount}/{decisions.length} {t('initiatives.decisionsSection.approved')}
         </div>
       )}
     </motion.div>

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
@@ -255,6 +256,7 @@ const formatDueDate = (value?: string) => {
 // ==========================================
 
 export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ readonly }) => {
+  const { t } = useTranslation();
   const {
     tasks,
     setTasks,
@@ -395,7 +397,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       const rationale = String(parsed?.rationale || '').trim();
 
       if (!title) {
-        toast.error(isPolish ? 'AI nie zwróciło tytułu taska' : 'AI returned no task title');
+        toast.error(t('initiatives.tasksMilestonesSection.aiReturnedNoTaskTitle'));
         return;
       }
 
@@ -406,13 +408,11 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       setNewTaskAssigneeId('');
       setShowCreateModal(true);
     } catch (e: any) {
-      toast.error(
-        e?.message || (isPolish ? 'Nie udało się zaproponować taska' : 'Failed to propose a task')
-      );
+      toast.error(e?.message || t('initiatives.tasksMilestonesSection.failedToProposeTask'));
     } finally {
       setIsAIProposing(false);
     }
-  }, [initiative, isPolish, parseAIJson, readonly, tasks]);
+  }, [initiative, isPolish, parseAIJson, readonly, tasks, t]);
 
   const proposeTasksWithAI = useCallback(
     async (mode: 'generate' | 'review') => {
@@ -571,9 +571,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           proposal.remove.length === 0 &&
           (!proposal.reorder || proposal.reorder.order.length === 0)
         ) {
-          const msg = isPolish
-            ? 'AI nie znalazło sugestii zmian — backlog wygląda OK.'
-            : 'AI found no change suggestions — the backlog looks good.';
+          const msg = t('initiatives.tasksMilestonesSection.aiFoundNoChangeSuggestionsBacklog');
           setAiNoSuggestionsMessage(msg);
           if (aiNoSuggestionsTimerRef.current) {
             window.clearTimeout(aiNoSuggestionsTimerRef.current);
@@ -600,15 +598,12 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
         );
         setApplySuggestedOrder(!!proposal.reorder?.order?.length);
       } catch (e: any) {
-        toast.error(
-          e?.message ||
-            (isPolish ? 'Nie udało się wygenerować propozycji AI' : 'AI proposal failed')
-        );
+        toast.error(e?.message || t('initiatives.tasksMilestonesSection.aiProposalFailed'));
       } finally {
         setIsAIProposing(false);
       }
     },
-    [readonly, isPolish, tasks, initiative, parseAIJson]
+    [readonly, isPolish, tasks, initiative, parseAIJson, t]
   );
 
   useEffect(() => {
@@ -720,7 +715,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       }
     ) => {
       if (!initiativeId) return;
-      const safeTitle = (title || '').trim() || (isPolish ? 'Nowe zadanie' : 'New task');
+      const safeTitle = (title || '').trim() || t('initiatives.tasksMilestonesSection.newTask');
 
       const res = await Api.post('/tasks', {
         title: safeTitle,
@@ -759,7 +754,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       setTasks((prev) => [...prev, newTask]);
       return newTask;
     },
-    [initiativeId, isPolish, projectId, setTasks, users]
+    [initiativeId, isPolish, projectId, setTasks, users, t]
   );
 
   const handleStartInlineAdd = useCallback(() => {
@@ -788,7 +783,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       setNewTaskAssigneeId('');
       // Keep user in list context after creation; task appears immediately with first status.
     } catch (e: any) {
-      toast.error(isPolish ? 'Nie udało się utworzyć zadania' : 'Failed to create task');
+      toast.error(t('initiatives.tasksMilestonesSection.failedToCreateTask'));
     } finally {
       setIsCreatingTask(false);
     }
@@ -800,6 +795,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     newTaskAssigneeId,
     isPolish,
     onOpenTask,
+    t,
   ]);
 
   // Remove task
@@ -807,20 +803,22 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     async (id: string) => {
       try {
         await Api.delete(`/tasks/${id}`);
-        setTasks((prev) => prev.filter((t) => t.id !== id));
-        toast.success(isPolish ? 'Zadanie usunięte' : 'Task removed');
+        setTasks((prev) => prev.filter((task) => task.id !== id));
+        toast.success(t('initiatives.tasksMilestonesSection.taskRemoved'));
       } catch {
-        toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to remove');
+        toast.error(t('initiatives.tasksMilestonesSection.failedToRemove'));
       }
     },
-    [isPolish, setTasks]
+    [isPolish, setTasks, t]
   );
 
   const handleDuplicateTask = useCallback(
     async (task: TaskItem) => {
       try {
+        const fallbackTitle = task.title || t('initiatives.tasksMilestonesSection.newTask');
+        const copyWord = t('initiatives.tasksMilestonesSection.copy');
         const created = await createTaskArtifact(
-          `${task.title || (isPolish ? 'Nowe zadanie' : 'New task')} ${isPolish ? '(kopia)' : '(copy)'}`,
+          `${fallbackTitle} (${copyWord})`,
           task.source === 'ai' ? 'ai' : 'manual',
           {
             description: task.description || '',
@@ -831,13 +829,13 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           }
         );
         if (created?.id) {
-          toast.success(isPolish ? 'Task zduplikowany' : 'Task duplicated');
+          toast.success(t('initiatives.tasksMilestonesSection.taskDuplicated'));
         }
       } catch {
-        toast.error(isPolish ? 'Nie udało się zduplikować taska' : 'Failed to duplicate task');
+        toast.error(t('initiatives.tasksMilestonesSection.failedToDuplicateTask'));
       }
     },
-    [createTaskArtifact, isPolish]
+    [createTaskArtifact, isPolish, t]
   );
 
   const applyAIProposal = useCallback(async () => {
@@ -847,24 +845,22 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     const hasOrder = !!aiProposal.reorder?.order?.length;
 
     if (toAdd.length === 0 && toRemove.length === 0 && !(applySuggestedOrder && hasOrder)) {
-      toast(isPolish ? 'Brak wybranych zmian' : 'No selected changes');
+      toast(t('initiatives.tasksMilestonesSection.noSelectedChanges'));
       return;
     }
 
     if (toRemove.length > 0) {
       const ok = window.confirm(
-        isPolish
-          ? `Usunąć ${toRemove.length} task(ów)? To działanie jest nieodwracalne.`
-          : `Delete ${toRemove.length} task(s)? This action cannot be undone.`
+        t('initiatives.tasksMilestonesSection.deleteTasksConfirm', { count: toRemove.length })
       );
       if (!ok) return;
     }
 
     try {
       // Add tasks sequentially to keep API load predictable
-      for (const t of toAdd) {
-        await createTaskArtifact(t.title, 'ai', {
-          description: t.description || '',
+      for (const item of toAdd) {
+        await createTaskArtifact(item.title, 'ai', {
+          description: item.description || '',
           status: 'todo',
           priority: 'medium',
           dueDate: null,
@@ -886,14 +882,29 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
         }
       }
 
-      toast.success(
-        isPolish
-          ? `Zastosowano propozycje AI (${toAdd.length} dodano${toRemove.length ? `, ${toRemove.length} usunięto` : ''}${applySuggestedOrder && hasOrder ? ', uporządkowano listę' : ''})`
-          : `Applied AI proposals (${toAdd.length} added${toRemove.length ? `, ${toRemove.length} removed` : ''}${applySuggestedOrder && hasOrder ? ', reordered list' : ''})`
-      );
+      const appliedReordered = applySuggestedOrder && hasOrder;
+      const appliedSummary =
+        appliedReordered && toRemove.length
+          ? t('initiatives.tasksMilestonesSection.appliedAiProposalsAddedRemovedReordered', {
+              added: toAdd.length,
+              removed: toRemove.length,
+            })
+          : appliedReordered
+            ? t('initiatives.tasksMilestonesSection.appliedAiProposalsAddedReordered', {
+                added: toAdd.length,
+              })
+            : toRemove.length
+              ? t('initiatives.tasksMilestonesSection.appliedAiProposalsAddedRemoved', {
+                  added: toAdd.length,
+                  removed: toRemove.length,
+                })
+              : t('initiatives.tasksMilestonesSection.appliedAiProposalsAdded', {
+                  added: toAdd.length,
+                });
+      toast.success(appliedSummary);
       closeAIModal();
     } catch {
-      toast.error(isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals');
+      toast.error(t('initiatives.tasksMilestonesSection.failedToApplyProposals'));
     }
   }, [
     aiProposal,
@@ -904,6 +915,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     handleRemoveTask,
     closeAIModal,
     applySuggestedOrder,
+    t,
   ]);
 
   const selectedAddCount = useMemo(() => {
@@ -940,9 +952,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-            {isPolish ? 'Tasks' : 'Tasks'}
-          </h2>
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Tasks</h2>
           {tasks.length > 0 && (
             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
               {tasks.length}
@@ -951,7 +961,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           {isAIProposing && (
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-navy-800/50 px-2 py-0.5 rounded-full">
               <Loader2 size={12} className="animate-spin" />
-              {isPolish ? 'AI pracuje...' : 'AI working...'}
+              {t('initiatives.tasksMilestonesSection.aiWorking')}
             </span>
           )}
         </div>
@@ -962,7 +972,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
               <Plus size={12} />
-              {isPolish ? 'Dodaj task' : 'Add task'}
+              {t('initiatives.tasksMilestonesSection.addTask')}
             </button>
           )}
         </div>
@@ -972,12 +982,12 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
         <Callout
           variant="purple"
           compact
-          title={isPolish ? 'AI' : 'AI'}
+          title="AI"
           action={
             readonly
               ? undefined
               : {
-                  label: isPolish ? 'AI: dodaj task' : 'AI: add task',
+                  label: t('initiatives.tasksMilestonesSection.aiAddTask'),
                   onClick: () => void proposeOneTaskWithAI(),
                 }
           }
@@ -994,23 +1004,17 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
                   {aiMode === 'generate'
-                    ? isPolish
-                      ? 'Propozycja backlogu tasków (AI)'
-                      : 'Proposed task backlog (AI)'
-                    : isPolish
-                      ? 'Propozycje zmian w taskach (AI)'
-                      : 'Proposed task changes (AI)'}
+                    ? t('initiatives.tasksMilestonesSection.proposedTaskBacklogAi')
+                    : t('initiatives.tasksMilestonesSection.proposedTaskChangesAi')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish
-                    ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
-                    : 'Select items to add/remove, then click “Apply”.'}
+                  {t('initiatives.tasksMilestonesSection.selectItemsToAddRemove')}
                 </p>
               </div>
               <button
                 onClick={closeAIModal}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPolish ? 'Zamknij' : 'Close'}
+                title={t('initiatives.tasksMilestonesSection.close')}
               >
                 <X size={16} />
               </button>
@@ -1021,7 +1025,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do wywalenia' : 'To remove'} ({aiProposal.remove.length})
+                    {t('initiatives.tasksMilestonesSection.toRemove')} ({aiProposal.remove.length})
                   </span>
                   {aiProposal.remove.length > 0 && (
                     <button
@@ -1034,7 +1038,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.tasksMilestonesSection.selectAll')}
                     </button>
                   )}
                 </div>
@@ -1045,18 +1049,10 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                     className="p-5"
                     message={
                       aiMode === 'generate'
-                        ? isPolish
-                          ? 'Tryb generowania: brak usuwania.'
-                          : 'Generate mode: no removals.'
-                        : isPolish
-                          ? 'AI nie zasugerowało usunięć.'
-                          : 'No removal suggestions from AI.'
+                        ? t('initiatives.tasksMilestonesSection.generateModeNoRemovals')
+                        : t('initiatives.tasksMilestonesSection.noRemovalSuggestions')
                     }
-                    hint={
-                      isPolish
-                        ? 'Jeśli backlog jest OK, AI może zaproponować tylko dodania lub kolejność.'
-                        : 'If the backlog is already good, AI may propose only additions or ordering.'
-                    }
+                    hint={t('initiatives.tasksMilestonesSection.backlogOkOnlyAdditionsOrdering')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -1097,7 +1093,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
+                    {t('initiatives.tasksMilestonesSection.toAdd')} ({aiProposal.add.length})
                   </span>
                   {aiProposal.add.length > 0 && (
                     <button
@@ -1111,7 +1107,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.tasksMilestonesSection.selectAll')}
                     </button>
                   )}
                 </div>
@@ -1120,16 +1116,12 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                     icon={Plus}
                     dashed={false}
                     className="p-5"
-                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
-                    hint={
-                      isPolish
-                        ? 'Jeśli backlog jest kompletny, AI może zaproponować tylko kolejność.'
-                        : 'If the backlog is complete, AI may propose only an ordering.'
-                    }
+                    message={t('initiatives.tasksMilestonesSection.noAdditionsProposed')}
+                    hint={t('initiatives.tasksMilestonesSection.backlogCompleteOnlyOrdering')}
                   />
                 ) : (
                   <div className="space-y-1.5">
-                    {aiProposal.add.map((t, idx) => (
+                    {aiProposal.add.map((item, idx) => (
                       <label
                         key={idx}
                         className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
@@ -1145,17 +1137,17 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium text-slate-800 dark:text-white">
-                              {t.title}
+                              {item.title}
                             </span>
                           </div>
-                          {t.description ? (
+                          {item.description ? (
                             <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
-                              {t.description}
+                              {item.description}
                             </p>
                           ) : null}
-                          {t.rationale ? (
+                          {item.rationale ? (
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                              {t.rationale}
+                              {item.rationale}
                             </p>
                           ) : null}
                         </div>
@@ -1169,7 +1161,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (
+                    {t('initiatives.tasksMilestonesSection.suggestedOrder')} (
                     {aiProposal.reorder?.order?.length || 0})
                   </span>
                   <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
@@ -1179,7 +1171,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                       onChange={(e) => setApplySuggestedOrder(e.target.checked)}
                       disabled={!aiProposal.reorder?.order?.length}
                     />
-                    {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
+                    {t('initiatives.tasksMilestonesSection.applyOrder')}
                   </label>
                 </div>
                 {!aiProposal.reorder?.order?.length ? (
@@ -1187,12 +1179,8 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                     icon={Sparkles}
                     dashed={false}
                     className="p-5"
-                    message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
-                    hint={
-                      isPolish
-                        ? 'AI może zwrócić tylko dodania/usunięcia bez re-order.'
-                        : 'AI may return only additions/removals without re-ordering.'
-                    }
+                    message={t('initiatives.tasksMilestonesSection.noOrderingSuggestion')}
+                    hint={t('initiatives.tasksMilestonesSection.aiMayReturnWithoutReordering')}
                   />
                 ) : (
                   <>
@@ -1216,31 +1204,22 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               </div>
 
               {/* Plan (bottom) */}
-              <Callout
-                variant="purple"
-                title={isPolish ? 'Plan' : 'Plan'}
-                compact
-                className="rounded-xl"
-              >
+              <Callout variant="purple" title="Plan" compact className="rounded-xl">
                 <ul className="list-disc pl-4 space-y-1">
                   <li>
-                    {isPolish
-                      ? `Usuń zaznaczone taski: ${selectedRemoveCount}.`
-                      : `Remove selected tasks: ${selectedRemoveCount}.`}
+                    {t('initiatives.tasksMilestonesSection.removeSelectedTasks', {
+                      count: selectedRemoveCount,
+                    })}
                   </li>
                   <li>
-                    {isPolish
-                      ? `Dodaj zaznaczone taski: ${selectedAddCount} (status: To Do, source: AI).`
-                      : `Add selected tasks: ${selectedAddCount} (status: To Do, source: AI).`}
+                    {t('initiatives.tasksMilestonesSection.addSelectedTasks', {
+                      count: selectedAddCount,
+                    })}
                   </li>
                   <li>
-                    {isPolish
-                      ? applySuggestedOrder && aiProposal.reorder?.order?.length
-                        ? 'Zastosuj proponowaną kolejność dla czytelności backlogu.'
-                        : 'Opcjonalnie: zastosuj proponowaną kolejność.'
-                      : applySuggestedOrder && aiProposal.reorder?.order?.length
-                        ? 'Apply the suggested ordering to make the backlog read better.'
-                        : 'Optional: apply the suggested ordering.'}
+                    {applySuggestedOrder && aiProposal.reorder?.order?.length
+                      ? t('initiatives.tasksMilestonesSection.applySuggestedOrderingBacklog')
+                      : t('initiatives.tasksMilestonesSection.optionalApplySuggestedOrdering')}
                   </li>
                 </ul>
               </Callout>
@@ -1251,13 +1230,13 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                 onClick={closeAIModal}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.tasksMilestonesSection.cancel')}
               </button>
               <button
                 onClick={() => void applyAIProposal()}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors"
               >
-                {isPolish ? 'Zastosuj' : 'Apply'}
+                {t('initiatives.tasksMilestonesSection.apply')}
               </button>
             </div>
           </div>
@@ -1279,12 +1258,12 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           <thead className="sticky top-0 z-10">
             <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
-              <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Task' : 'Task'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Status' : 'Status'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Priority' : 'Priority'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Owner' : 'Owner'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Due' : 'Due'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Source' : 'Source'}</th>
+              <th className="text-left py-2.5 pl-3 pr-2">Task</th>
+              <th className="text-left py-2.5 pr-2">Status</th>
+              <th className="text-left py-2.5 pr-2">Priority</th>
+              <th className="text-left py-2.5 pr-2">Owner</th>
+              <th className="text-left py-2.5 pr-2">Due</th>
+              <th className="text-left py-2.5 pr-2">Source</th>
               <th className="text-right py-2.5 pr-3"></th>
             </tr>
             <tr className="bg-slate-50 dark:bg-navy-800 border-b border-slate-200/60 dark:border-navy-700/40">
@@ -1293,7 +1272,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                 <input
                   value={taskQuery}
                   onChange={(e) => setTaskQuery(e.target.value)}
-                  placeholder={isPolish ? 'Filtruj...' : 'Filter...'}
+                  placeholder={t('initiatives.tasksMilestonesSection.filter')}
                   className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                 />
               </th>
@@ -1303,7 +1282,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                 >
-                  <option value="all">{isPolish ? 'Wszystkie' : 'All'}</option>
+                  <option value="all">{t('initiatives.tasksMilestonesSection.all')}</option>
                   {Object.entries(TASK_STATUS_CONFIG).map(([key, cfg]) => (
                     <option key={key} value={key}>
                       {isPolish ? cfg.label.pl : cfg.label.en}
@@ -1317,7 +1296,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                   onChange={(e) => setPriorityFilter(e.target.value)}
                   className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                 >
-                  <option value="all">{isPolish ? 'Wszystkie' : 'All'}</option>
+                  <option value="all">{t('initiatives.tasksMilestonesSection.all')}</option>
                   {Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => (
                     <option key={key} value={key}>
                       {isPolish ? cfg.label.pl : cfg.label.en}
@@ -1331,8 +1310,10 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                   onChange={(e) => setOwnerFilter(e.target.value)}
                   className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                 >
-                  <option value="all">{isPolish ? 'Wszyscy' : 'All'}</option>
-                  <option value="__none">{isPolish ? 'Bez ownera' : 'Unassigned'}</option>
+                  <option value="all">{t('initiatives.tasksMilestonesSection.allPeople')}</option>
+                  <option value="__none">
+                    {t('initiatives.tasksMilestonesSection.unassigned')}
+                  </option>
                   {ownerFilterOptions.map((name) => (
                     <option key={name} value={name}>
                       {name}
@@ -1348,10 +1329,14 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                   }
                   className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                 >
-                  <option value="all">{isPolish ? 'Wszystkie' : 'All'}</option>
-                  <option value="upcoming">{isPolish ? 'Nadchodzące' : 'Upcoming'}</option>
-                  <option value="overdue">{isPolish ? 'Po terminie' : 'Overdue'}</option>
-                  <option value="no_due">{isPolish ? 'Bez terminu' : 'No due date'}</option>
+                  <option value="all">{t('initiatives.tasksMilestonesSection.all')}</option>
+                  <option value="upcoming">
+                    {t('initiatives.tasksMilestonesSection.upcoming')}
+                  </option>
+                  <option value="overdue">{t('initiatives.tasksMilestonesSection.overdue')}</option>
+                  <option value="no_due">
+                    {t('initiatives.tasksMilestonesSection.noDueDate')}
+                  </option>
                 </select>
               </th>
               <th className="py-1.5 pr-2">
@@ -1360,8 +1345,8 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                   onChange={(e) => setSourceFilter(e.target.value as 'all' | 'manual' | 'ai')}
                   className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                 >
-                  <option value="all">{isPolish ? 'Wszystkie' : 'All'}</option>
-                  <option value="manual">{isPolish ? 'Manualne' : 'Manual'}</option>
+                  <option value="all">{t('initiatives.tasksMilestonesSection.all')}</option>
+                  <option value="manual">{t('initiatives.tasksMilestonesSection.manual')}</option>
                   <option value="ai">AI</option>
                 </select>
               </th>
@@ -1390,9 +1375,9 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                       <button
                         onClick={() => onOpenTask?.(task.id)}
                         className="block w-full truncate text-left text-slate-700 dark:text-slate-200 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
-                        title={task.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                        title={task.title || t('initiatives.tasksMilestonesSection.untitled')}
                       >
-                        {task.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                        {task.title || t('initiatives.tasksMilestonesSection.untitled')}
                       </button>
                     </td>
                     <td className="py-2.5 pr-2">
@@ -1435,7 +1420,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                           setMenuTaskId((prev) => (prev === task.id ? null : task.id));
                         }}
                         className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/10 transition-colors"
-                        title={isPolish ? 'Akcje' : 'Actions'}
+                        title={t('initiatives.tasksMilestonesSection.actions')}
                       >
                         <MoreVertical size={14} />
                       </button>
@@ -1449,7 +1434,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                           >
                             <ExternalLink size={13} />
-                            {isPolish ? 'Otwórz task' : 'Open task'}
+                            {t('initiatives.tasksMilestonesSection.openTask')}
                           </button>
                           <button
                             onClick={() => {
@@ -1459,7 +1444,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                           >
                             <Edit3 size={13} />
-                            {isPolish ? 'Duplikuj' : 'Duplicate'}
+                            {t('initiatives.tasksMilestonesSection.duplicate')}
                           </button>
                           {!readonly && (
                             <>
@@ -1472,7 +1457,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                                 className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                               >
                                 <Trash2 size={13} />
-                                {isPolish ? 'Usuń' : 'Delete'}
+                                {t('initiatives.tasksMilestonesSection.delete')}
                               </button>
                             </>
                           )}
@@ -1490,12 +1475,8 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                   className="py-8 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   {tasks.length === 0
-                    ? isPolish
-                      ? 'Brak tasków'
-                      : 'No tasks yet'
-                    : isPolish
-                      ? 'Brak wyników dla aktualnych filtrów'
-                      : 'No results for current filters'}
+                    ? t('initiatives.tasksMilestonesSection.noTasksYet')
+                    : t('initiatives.tasksMilestonesSection.noResultsForFilters')}
                 </td>
               </tr>
             )}
@@ -1508,7 +1489,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           <div className="w-full max-w-xl rounded-2xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 shadow-2xl">
             <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700/70 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {isPolish ? 'Nowy task' : 'New task'}
+                {t('initiatives.tasksMilestonesSection.newTaskTitle')}
               </h3>
               <button
                 onClick={() => {
@@ -1523,21 +1504,19 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
             <div className="p-4 space-y-3">
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                  {isPolish ? 'Tytuł' : 'Title'}
+                  {t('initiatives.tasksMilestonesSection.title')}
                 </label>
                 <input
                   ref={createTitleInputRef}
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder={
-                    isPolish ? 'Np. Przygotuj raport wdrożenia' : 'E.g. Prepare rollout report'
-                  }
+                  placeholder={t('initiatives.tasksMilestonesSection.titlePlaceholder')}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
                 />
               </div>
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                  {isPolish ? 'Założenia / notatki' : 'Assumptions / notes'}
+                  {t('initiatives.tasksMilestonesSection.assumptionsNotes')}
                 </label>
                 <textarea
                   value={newTaskDescription}
@@ -1548,14 +1527,14 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               </div>
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                  {isPolish ? 'Owner' : 'Owner'}
+                  Owner
                 </label>
                 <select
                   value={newTaskAssigneeId}
                   onChange={(e) => setNewTaskAssigneeId(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
                 >
-                  <option value="">{isPolish ? '— Brak —' : '— None —'}</option>
+                  <option value="">{t('initiatives.tasksMilestonesSection.none')}</option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
                       {`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}
@@ -1572,7 +1551,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                 }}
                 className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.tasksMilestonesSection.cancel')}
               </button>
               <button
                 onClick={() => void handleCreateInlineTask()}
@@ -1580,12 +1559,8 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                 className="px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
               >
                 {isCreatingTask
-                  ? isPolish
-                    ? 'Tworzenie...'
-                    : 'Creating...'
-                  : isPolish
-                    ? 'Utwórz task'
-                    : 'Create task'}
+                  ? t('initiatives.tasksMilestonesSection.creating')
+                  : t('initiatives.tasksMilestonesSection.createTask')}
               </button>
             </div>
           </div>
@@ -1594,7 +1569,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
 
       {tasks.length > 0 && (
         <div className="pt-2 border-t border-slate-200/70 dark:border-navy-700/50 text-xs text-slate-500 dark:text-slate-400">
-          {tasksDone}/{tasks.length} {isPolish ? 'ukończone' : 'done'}
+          {tasksDone}/{tasks.length} {t('initiatives.tasksMilestonesSection.done')}
         </div>
       )}
     </motion.div>
