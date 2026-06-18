@@ -147,8 +147,8 @@ const getCompletionLevel = (
     };
   return {
     label: 'Just Beginning',
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-500',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-500',
   };
 };
 
@@ -405,7 +405,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                   size={16}
                   className={`mt-0.5 ${
                     suggestion.priority === 'high'
-                      ? 'text-rose-500'
+                      ? 'text-danger-500'
                       : suggestion.priority === 'medium'
                         ? 'text-yellow-500'
                         : 'text-blue-500'

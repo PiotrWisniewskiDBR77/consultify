@@ -654,7 +654,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                         handleDelete(initiative.id);
                                         setActiveRowMenu(null);
                                       }}
-                                      className="w-full text-left px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-2"
+                                      className="w-full text-left px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/10 flex items-center gap-2"
                                     >
                                       <Trash2 size={14} />
                                       Delete

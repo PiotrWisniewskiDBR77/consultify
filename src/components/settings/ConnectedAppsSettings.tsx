@@ -1217,7 +1217,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </button>
                                 <button
                                   onClick={() => handleDisconnect(app.id)}
-                                  className="px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                                  className="px-2.5 py-1 text-xs font-medium text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                                 >
                                   {t('common.disconnect', 'Disconnect')}
                                 </button>
@@ -1257,7 +1257,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
 
                         {/* Error detail */}
                         {connection?.lastError && (
-                          <div className="mt-2 p-2 bg-rose-50 dark:bg-rose-900/20 rounded text-xs text-rose-600 dark:text-rose-400">
+                          <div className="mt-2 p-2 bg-danger-50 dark:bg-danger-900/20 rounded text-xs text-danger-600 dark:text-danger-400">
                             {connection.lastError}
                           </div>
                         )}

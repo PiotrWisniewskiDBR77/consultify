@@ -567,14 +567,14 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 
             {/* ─── Danger Zone: Delete Account ─── */}
             <div>
-              <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+              <h4 className="text-xs font-bold text-danger-400 uppercase tracking-wider flex items-center gap-2 mb-4">
                 <AlertTriangle size={14} />
                 {t('settings.data.dangerZone', 'Danger Zone')}
               </h4>
-              <div className="bg-rose-500/5 border border-rose-500/20 rounded-lg p-5">
+              <div className="bg-danger-500/5 border border-danger-500/20 rounded-lg p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-rose-300">
+                    <p className="text-sm font-medium text-danger-300">
                       {t('settings.data.deleteAccount', 'Delete Account & Data')}
                     </p>
                     <p className="text-xs text-slate-600 mt-1">
@@ -587,7 +587,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                   {!showDeleteConfirm && (
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 hover:border-rose-500/50"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 bg-danger-500/10 text-danger-400 border border-danger-500/30 hover:bg-danger-500/20 hover:border-danger-500/50"
                     >
                       <Trash2 size={14} />
                       {t('settings.data.requestDeletion', 'Delete Account')}
@@ -596,8 +596,8 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 </div>
 
                 {showDeleteConfirm && (
-                  <div className="mt-4 p-4 bg-rose-50 dark:bg-navy-900/50 border border-rose-200 dark:border-rose-500/20 rounded-lg">
-                    <div className="flex items-center gap-2 text-rose-400 mb-3">
+                  <div className="mt-4 p-4 bg-danger-50 dark:bg-navy-900/50 border border-danger-200 dark:border-danger-500/20 rounded-lg">
+                    <div className="flex items-center gap-2 text-danger-400 mb-3">
                       <AlertTriangle size={16} />
                       <span className="text-sm font-medium">
                         {t('settings.data.deleteConfirmTitle', 'Are you absolutely sure?')}
@@ -618,7 +618,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       type="text"
                       value={deleteConfirmText}
                       onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-rose-300 dark:border-rose-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
+                      className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-danger-300 dark:border-danger-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-danger-500/50 outline-none transition-all mb-3"
                       placeholder={deleteConfirmationPhrase}
                     />
                     <label className="text-xs font-medium text-slate-600 mb-1.5 block">
@@ -629,7 +629,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       value={deletePassword}
                       onChange={(e) => setDeletePassword(e.target.value)}
                       autoComplete="current-password"
-                      className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-rose-300 dark:border-rose-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
+                      className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-danger-300 dark:border-danger-500/30 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-danger-500/50 outline-none transition-all mb-3"
                       placeholder={t(
                         'settings.data.deletePasswordPlaceholder',
                         'Your account password'
@@ -643,7 +643,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                           !deletePassword.trim() ||
                           deleteConfirmText.toLowerCase() !== deleteConfirmationPhrase.toLowerCase()
                         }
-                        className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                       >
                         {requestingDeletion ? (
                           <Loader2 size={14} className="animate-spin" />

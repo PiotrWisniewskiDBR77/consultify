@@ -235,7 +235,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
+        <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.ai.modelSelection.error', 'Failed to save model preferences')}
         </div>

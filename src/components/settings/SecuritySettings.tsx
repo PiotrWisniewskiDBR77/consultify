@@ -307,7 +307,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                   {passwordRequirements.passwordsMatch ? (
                     <CheckCircle className="w-5 h-5 text-emerald-500" />
                   ) : (
-                    <AlertCircle className="w-5 h-5 text-rose-500" />
+                    <AlertCircle className="w-5 h-5 text-danger-500" />
                   )}
                 </div>
               )}
@@ -316,7 +316,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
           {/* Error/Success Messages */}
           {passwordError && (
-            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 text-danger-700 dark:text-danger-300 text-sm flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {passwordError}
             </div>
@@ -371,7 +371,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           {sessions.length > 1 && (
             <button
               onClick={handleRevokeAllSessions}
-              className="px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-sm font-medium text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
               {t('settings.security.logoutAll', 'Log Out All Others')}
@@ -425,7 +425,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                   <button
                     onClick={() => handleRevokeSession(session.id)}
                     disabled={isRevokingSession === session.id}
-                    className="px-3 py-1.5 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
+                    className="px-3 py-1.5 text-sm font-medium text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {isRevokingSession === session.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

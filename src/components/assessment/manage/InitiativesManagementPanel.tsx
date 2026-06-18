@@ -180,9 +180,9 @@ const STATUS_CONFIG: Partial<
   },
   [InitiativeStatus.BLOCKED]: {
     label: 'Blocked',
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-500/10',
-    borderColor: 'border-rose-200 dark:border-rose-500/30',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-500/10',
+    borderColor: 'border-danger-200 dark:border-danger-500/30',
     icon: AlertCircle,
   },
   [InitiativeStatus.DONE]: {
@@ -201,9 +201,9 @@ const STATUS_CONFIG: Partial<
   },
   [InitiativeStatus.CANCELLED]: {
     label: 'Cancelled',
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-500/10',
-    borderColor: 'border-rose-200 dark:border-rose-500/30',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-500/10',
+    borderColor: 'border-danger-200 dark:border-danger-500/30',
     icon: X,
   },
   [InitiativeStatus.ARCHIVED]: {
@@ -240,8 +240,8 @@ const PRIORITY_CONFIG: Record<
   },
   critical: {
     label: 'Critical',
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-100 dark:bg-danger-500/20',
   },
 };
 
@@ -552,7 +552,7 @@ const InitiativeRow: FC<{
                       onClick={() => handleStatusChange(action.targetStatus)}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${
                         action.variant === 'danger'
-                          ? 'text-rose-600 dark:text-rose-400'
+                          ? 'text-danger-600 dark:text-danger-400'
                           : action.variant === 'primary'
                             ? 'text-primary-700 dark:text-primary-300'
                             : 'text-slate-700 dark:text-slate-200'
@@ -685,7 +685,7 @@ const InitiativeRow: FC<{
                           handleDelete();
                           setShowActions(false);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/10"
                       >
                         <Trash2 size={14} />
                         Delete
@@ -1347,7 +1347,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               <span>Completed</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Flag size={12} className="text-rose-500" />
+              <Flag size={12} className="text-danger-500" />
               <span>Critical Priority</span>
             </div>
           </div>

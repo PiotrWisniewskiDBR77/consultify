@@ -521,7 +521,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -656,7 +656,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -781,7 +781,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>

@@ -74,7 +74,7 @@ const PRIORITY_OPTIONS = [
   {
     value: 'CRITICAL',
     label: 'Krytyczny',
-    color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
   },
 ];
 
@@ -191,7 +191,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
                   <Calendar size={16} className="text-primary-500" />
-                  Docelowy kwartał <span className="text-rose-500">*</span>
+                  Docelowy kwartał <span className="text-danger-500">*</span>
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {quarters.slice(0, 8).map((quarter) => (
@@ -258,7 +258,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
 
               {/* Error */}
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
+                <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 rounded-lg text-sm">
                   <AlertTriangle size={16} />
                   {error}
                 </div>

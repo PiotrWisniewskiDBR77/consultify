@@ -53,8 +53,8 @@ const insightConfig: Record<string, { icon: React.ReactNode; color: string; bgCo
   },
   RISK: {
     icon: <AlertTriangle size={16} />,
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-900/20',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-900/20',
   },
   OPPORTUNITY: {
     icon: <Lightbulb size={16} />,
@@ -466,7 +466,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                           : gapAnalysis.gapSeverity === 'MEDIUM'
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                            : 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                       }`}
                     >
                       {gapAnalysis.gapSeverity}
@@ -579,7 +579,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                 <span
                                   className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                     rec.priority === 'HIGH'
-                                      ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                                      ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                                       : rec.priority === 'MEDIUM'
                                         ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                         : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'

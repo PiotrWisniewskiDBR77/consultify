@@ -105,7 +105,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
           <Icon size={24} className="text-white" />
         </div>
         <div
-          className={`flex items-center gap-1 text-sm ${change >= 0 ? 'text-green-600' : 'text-rose-600'}`}
+          className={`flex items-center gap-1 text-sm ${change >= 0 ? 'text-green-600' : 'text-danger-600'}`}
         >
           {change >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
           {Math.abs(change)}%

@@ -210,8 +210,8 @@ const UploadStep: React.FC<{
       ) : (
         <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-rose-500" />
+            <div className="w-12 h-12 bg-danger-100 dark:bg-danger-900/30 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-danger-500" />
             </div>
             <div>
               <p className="font-medium text-navy-900 dark:text-white">{file.name}</p>
@@ -225,7 +225,7 @@ const UploadStep: React.FC<{
               e.stopPropagation();
               onFileRemove();
             }}
-            className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+            className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
           >
             <Trash2 size={18} />
           </button>
@@ -417,7 +417,7 @@ const ExtractionStep: React.FC<{
                         ? 'bg-green-100 text-green-700'
                         : score.confidence >= 0.5
                           ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-rose-100 text-rose-700'
+                          : 'bg-danger-100 text-danger-700'
                     }`}
                   >
                     {score.confidence >= 0.8 ? (
@@ -851,9 +851,9 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {error && (
-            <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-3 mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-rose-500" />
-              <span className="text-rose-700 dark:text-rose-400">{error}</span>
+            <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg p-3 mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-danger-500" />
+              <span className="text-danger-700 dark:text-danger-400">{error}</span>
             </div>
           )}
 

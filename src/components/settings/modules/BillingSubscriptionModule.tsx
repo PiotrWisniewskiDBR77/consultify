@@ -162,11 +162,11 @@ const normalizeInvoice = (invoice: InvoiceRow): Invoice => ({
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
   trialing: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
-  past_due: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
+  past_due: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-400',
   canceling: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400',
   renewal_due: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-  suspended: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
+  suspended: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-400',
 };
 
 export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps> = ({
@@ -359,7 +359,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 {Math.round(percentage)}%
               </span>
             )}
-            {(isHigh || isExceeded) && <AlertCircle size={14} className="text-rose-500" />}
+            {(isHigh || isExceeded) && <AlertCircle size={14} className="text-danger-500" />}
           </div>
         </div>
         {!isUnlimited && (
@@ -367,7 +367,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <div
               className={`h-full rounded-full transition-all ${
                 isExceeded
-                  ? 'bg-rose-500'
+                  ? 'bg-danger-500'
                   : isHigh
                     ? 'bg-amber-500'
                     : isApproaching
@@ -413,16 +413,16 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Past Due Banner */}
       {effectiveStatus === 'past_due' && (
-        <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4 flex items-center gap-3">
-          <AlertCircle size={20} className="text-rose-500 flex-shrink-0" />
+        <div className="bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle size={20} className="text-danger-500 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
+            <p className="text-sm font-medium text-danger-800 dark:text-danger-300">
               {t('access.banner.pastDue')}
             </p>
           </div>
           <button
             onClick={() => setActiveTab('payment')}
-            className="px-3 py-1.5 text-sm font-medium bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm font-medium bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
           >
             {t('access.cta.fixPayment')}
           </button>
@@ -677,7 +677,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <div className="text-center">
               <button
                 onClick={handleCancelSubscription}
-                className="text-sm text-slate-600 dark:text-slate-500 hover:text-rose-400 transition-colors"
+                className="text-sm text-slate-600 dark:text-slate-500 hover:text-danger-400 transition-colors"
               >
                 Cancel Subscription
               </button>
@@ -839,14 +839,14 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       {activeTab === 'payment' && (
         <div className="space-y-4">
           {effectiveStatus === 'past_due' && (
-            <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4">
+            <div className="bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <AlertCircle size={16} className="text-rose-500" />
-                <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
+                <AlertCircle size={16} className="text-danger-500" />
+                <p className="text-sm font-medium text-danger-800 dark:text-danger-300">
                   {t('access.upgrade.subscription.past_due')}
                 </p>
               </div>
-              <p className="text-xs text-rose-600 dark:text-rose-400">
+              <p className="text-xs text-danger-600 dark:text-danger-400">
                 {t('access.banner.pastDue')}
               </p>
             </div>
@@ -900,7 +900,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                             Default
                           </span>
                         )}
-                        <button className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg">
+                        <button className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg">
                           <Trash2 size={16} />
                         </button>
                       </div>

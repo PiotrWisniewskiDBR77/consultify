@@ -44,7 +44,7 @@ const AXIS_COLORS: Record<DRDAxis, string> = {
   businessModels: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
   dataManagement: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   culture: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  cybersecurity: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  cybersecurity: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
   aiMaturity: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
 };
 
@@ -60,7 +60,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'HIGH':
-        return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400';
+        return 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400';
       case 'MEDIUM':
         return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
       case 'LOW':
@@ -73,7 +73,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
   const getROIColor = (roi: number) => {
     if (roi >= 2.5) return 'text-green-600 dark:text-green-400';
     if (roi >= 1.5) return 'text-amber-600 dark:text-amber-400';
-    return 'text-rose-600 dark:text-rose-400';
+    return 'text-danger-600 dark:text-danger-400';
   };
 
   return (
@@ -126,7 +126,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
             </button>
             <button
               onClick={onRemove}
-              className="p-2 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
               title="Remove"
             >
               <Trash2 size={18} />
@@ -226,9 +226,9 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
           )}
 
           {initiative.riskLevel === 'HIGH' && (
-            <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-500/20 flex items-start gap-2">
-              <AlertTriangle size={16} className="text-rose-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-rose-600 dark:text-rose-400">
+            <div className="mt-4 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200 dark:border-danger-500/20 flex items-start gap-2">
+              <AlertTriangle size={16} className="text-danger-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-danger-600 dark:text-danger-400">
                 High-risk initiative. Ensure proper governance and risk mitigation strategies are in
                 place.
               </p>

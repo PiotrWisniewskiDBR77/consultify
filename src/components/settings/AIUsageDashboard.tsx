@@ -329,7 +329,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                 className={cn(
                   'text-sm font-medium',
                   isOverLimit
-                    ? 'text-rose-600'
+                    ? 'text-danger-600'
                     : isNearLimit
                       ? 'text-amber-600'
                       : 'text-slate-600 dark:text-slate-400'
@@ -346,7 +346,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
               className={cn(
                 'h-3',
                 isOverLimit
-                  ? '[&>div]:bg-rose-500'
+                  ? '[&>div]:bg-danger-500'
                   : isNearLimit
                     ? '[&>div]:bg-amber-500'
                     : '[&>div]:bg-navy-900'
@@ -361,7 +361,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
               </div>
             )}
             {isOverLimit && (
-              <div className="flex items-center gap-2 mt-3 text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2 mt-3 text-danger-600 dark:text-danger-400">
                 <AlertCircle className="w-4 h-4" />
                 <span className="text-sm">
                   {t('settings.aiUsage.overLimit', 'You have exceeded your usage limit')}

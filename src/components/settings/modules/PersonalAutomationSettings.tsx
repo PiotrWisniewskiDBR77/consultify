@@ -384,7 +384,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                   </button>
                   <button
                     onClick={() => deleteRule(rule.id)}
-                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                    className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -480,7 +480,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                     {log.status === 'success' ? (
                       <CheckCircle size={18} className="text-green-500" />
                     ) : (
-                      <AlertCircle size={18} className="text-rose-500" />
+                      <AlertCircle size={18} className="text-danger-500" />
                     )}
                     <div>
                       <p className="font-medium text-slate-900 dark:text-white">{log.ruleName}</p>

@@ -88,7 +88,7 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
           <span className="text-xs text-gray-500 dark:text-gray-400">
             Benchmark: {assessment.industry_benchmark.toFixed(1)}
           </span>
-          <span className={`text-xs font-medium ${gap > 0 ? 'text-rose-500' : 'text-green-500'}`}>
+          <span className={`text-xs font-medium ${gap > 0 ? 'text-danger-500' : 'text-green-500'}`}>
             {gap > 0 ? `Gap: -${gap.toFixed(1)}` : `Ahead: +${Math.abs(gap).toFixed(1)}`}
           </span>
         </div>
@@ -115,7 +115,7 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
                 <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
-                      score >= 4 ? 'bg-green-500' : score >= 3 ? 'bg-yellow-500' : 'bg-rose-500'
+                      score >= 4 ? 'bg-green-500' : score >= 3 ? 'bg-yellow-500' : 'bg-danger-500'
                     }`}
                     style={{ width: `${percentage}%` }}
                   />
@@ -128,14 +128,14 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
 
       {/* Top Gaps */}
       {assessment.top_gaps && assessment.top_gaps.length > 0 && (
-        <div className="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4 mb-6">
-          <h4 className="font-semibold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-2">
+        <div className="bg-danger-50 dark:bg-danger-900/20 border-l-4 border-danger-500 p-4 mb-6">
+          <h4 className="font-semibold text-danger-700 dark:text-danger-400 flex items-center gap-2 mb-2">
             <Target className="w-4 h-4" />
             Priority Improvement Areas
           </h4>
           <ul className="space-y-1">
             {assessment.top_gaps.map((gap, index) => (
-              <li key={index} className="text-sm text-rose-600 dark:text-rose-300">
+              <li key={index} className="text-sm text-danger-600 dark:text-danger-300">
                 • {DIMENSION_NAMES[gap] || gap}
               </li>
             ))}

@@ -333,11 +333,11 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
               {/* Problem Template */}
               {previewTemplate.problemStructured && (
-                <div className="bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg">
-                  <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400 mb-2">
+                <div className="bg-danger-50 dark:bg-danger-500/10 p-3 rounded-lg">
+                  <h4 className="text-xs font-bold text-danger-700 dark:text-danger-400 mb-2">
                     Problem Template
                   </h4>
-                  <div className="space-y-1 text-xs text-rose-600 dark:text-rose-300">
+                  <div className="space-y-1 text-xs text-danger-600 dark:text-danger-300">
                     {previewTemplate.problemStructured.symptom && (
                       <p>
                         <strong>Symptom:</strong> {previewTemplate.problemStructured.symptom}

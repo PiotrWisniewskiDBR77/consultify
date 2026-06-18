@@ -357,7 +357,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                         e.stopPropagation();
                         deleteRule(rule.id);
                       }}
-                      className="p-2 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg"
+                      className="p-2 text-danger-600 hover:bg-danger-100 dark:hover:bg-danger-500/20 rounded-lg"
                     >
                       <Trash2 size={16} />
                     </button>

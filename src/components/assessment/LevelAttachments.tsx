@@ -250,7 +250,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="mb-3 p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs rounded-md">
+        <div className="mb-3 p-2 bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 text-xs rounded-md">
           {error}
         </div>
       )}
@@ -307,7 +307,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                     <button
                       onClick={() => handleDelete(attachment.id)}
                       disabled={isCurrentDeleting}
-                      className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors disabled:opacity-50"
+                      className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-danger-500 transition-colors disabled:opacity-50"
                       title="Delete"
                     >
                       {isCurrentDeleting ? (

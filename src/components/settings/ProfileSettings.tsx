@@ -530,7 +530,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
   const inputClass =
     'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
   const firstNameInputClass = firstNameValidationError
-    ? 'w-full px-3 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-500 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-rose-500/50 outline-none transition-all'
+    ? 'w-full px-3 py-2 bg-danger-50 dark:bg-danger-900/20 border border-danger-500 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-danger-500/50 outline-none transition-all'
     : inputClass;
   const inputWithIconClass =
     'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
@@ -775,7 +775,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                 {firstNameValidationError && (
                   <p
                     id="first-name-validation-error"
-                    className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400"
+                    className="mt-1 text-xs font-medium text-danger-600 dark:text-danger-400"
                   >
                     {firstNameValidationError}
                   </p>
@@ -1130,7 +1130,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
       {saveStatus === 'error' && saveError && (
         <div
           role="alert"
-          className="fixed bottom-8 right-8 bg-rose-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2"
+          className="fixed bottom-8 right-8 bg-danger-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2"
         >
           {saveError}
         </div>

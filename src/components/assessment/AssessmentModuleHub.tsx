@@ -1018,8 +1018,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     return (
       <SplitLayout title="Assessment" currentView={AppView.ASSESSMENT_OVERVIEW}>
         <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
-          <div className="text-center max-w-md bg-white dark:bg-navy-900 p-8 rounded-xl shadow-lg border border-rose-200 dark:border-rose-900/30">
-            <div className="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-900/20 flex items-center justify-center mx-auto mb-4 text-rose-600 dark:text-rose-400">
+          <div className="text-center max-w-md bg-white dark:bg-navy-900 p-8 rounded-xl shadow-lg border border-danger-200 dark:border-danger-900/30">
+            <div className="w-16 h-16 rounded-full bg-danger-100 dark:bg-danger-900/20 flex items-center justify-center mx-auto mb-4 text-danger-600 dark:text-danger-400">
               <AlertCircle size={32} />
             </div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
@@ -1284,7 +1284,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               {/* Save Button & Status */}
               <div className="flex items-center gap-3">
                 {saveError && (
-                  <span className="text-xs text-rose-500 dark:text-rose-400">{saveError}</span>
+                  <span className="text-xs text-danger-500 dark:text-danger-400">{saveError}</span>
                 )}
                 {lastSaved && !saveError && (
                   <span className="text-xs text-slate-600 dark:text-slate-500">

@@ -270,8 +270,8 @@ const STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-100 dark:bg-danger-500/20',
     icon: X,
   },
   SKIPPED: {
@@ -380,7 +380,7 @@ const WorkflowStageRow: FC<{
           group border-b border-slate-200 dark:border-navy-700/50 transition-colors
           ${stage.isCurrent ? 'bg-primary-50/50 dark:bg-primary-500/5' : ''}
           ${stage.isCompleted ? 'bg-emerald-50/30 dark:bg-emerald-500/5' : ''}
-          ${stage.isBlocked ? 'bg-rose-50/30 dark:bg-rose-500/5' : ''}
+          ${stage.isBlocked ? 'bg-danger-50/30 dark:bg-danger-500/5' : ''}
           hover:bg-slate-50 dark:hover:bg-navy-800/50
         `}
       >
@@ -395,7 +395,7 @@ const WorkflowStageRow: FC<{
                 : stage.isCurrent
                   ? 'bg-navy-900 text-white animate-pulse'
                   : stage.isBlocked
-                    ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-2 border-rose-500/50'
+                    ? 'bg-danger-500/20 text-danger-600 dark:text-danger-400 border-2 border-danger-500/50'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
             }
           `}
@@ -471,7 +471,7 @@ const WorkflowStageRow: FC<{
           {stage.requirements.length > 0 ? (
             <div className="flex items-center gap-1.5">
               {hasBlockingRequirements ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-danger-100 dark:bg-danger-500/20 text-danger-700 dark:text-danger-300">
                   <X size={10} />
                   {
                     stage.requirements.filter((r) => r.severity === 'blocking' && !r.pass).length
@@ -644,7 +644,7 @@ const WorkflowStageRow: FC<{
             <button
               onClick={() => handleAction('request')}
               disabled={actionBusy}
-              className="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white text-xs font-semibold transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-danger-500 hover:bg-danger-600 disabled:bg-danger-300 text-white text-xs font-semibold transition-colors"
             >
               {actionBusy ? <Loader2 size={12} className="animate-spin" /> : 'Generate Initiatives'}
             </button>
@@ -676,7 +676,7 @@ const WorkflowStageRow: FC<{
                   <button
                     onClick={() => handleAction('reject')}
                     disabled={actionBusy}
-                    className="p-1.5 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/30 transition-colors"
+                    className="p-1.5 rounded-lg bg-danger-500/20 text-danger-600 dark:text-danger-400 hover:bg-danger-500/30 transition-colors"
                     title="Reject"
                   >
                     <X size={14} />
@@ -691,7 +691,7 @@ const WorkflowStageRow: FC<{
               )}
             </div>
           ) : stage.gate && hasBlockingRequirements ? (
-            <span className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
+            <span className="text-xs text-danger-600 dark:text-danger-400 flex items-center gap-1">
               <Lock size={12} />
               Blocked
             </span>
@@ -730,7 +730,7 @@ const WorkflowStageRow: FC<{
                           req.pass
                             ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30'
                             : req.severity === 'blocking'
-                              ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
+                              ? 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/30'
                               : 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
                         }
                       `}
@@ -743,7 +743,7 @@ const WorkflowStageRow: FC<{
                             req.pass
                               ? 'bg-emerald-500 text-white'
                               : req.severity === 'blocking'
-                                ? 'bg-rose-500 text-white'
+                                ? 'bg-danger-500 text-white'
                                 : 'bg-amber-500 text-white'
                           }
                         `}
@@ -762,7 +762,7 @@ const WorkflowStageRow: FC<{
                               req.pass
                                 ? 'text-emerald-800 dark:text-emerald-200'
                                 : req.severity === 'blocking'
-                                  ? 'text-rose-800 dark:text-rose-200'
+                                  ? 'text-danger-800 dark:text-danger-200'
                                   : 'text-amber-800 dark:text-amber-200'
                             }`}
                           >
@@ -793,7 +793,7 @@ const WorkflowStageRow: FC<{
                             req.pass
                               ? 'bg-emerald-200 dark:bg-emerald-500/30 text-emerald-800 dark:text-emerald-200'
                               : req.severity === 'blocking'
-                                ? 'bg-rose-200 dark:bg-rose-500/30 text-rose-800 dark:text-rose-200'
+                                ? 'bg-danger-200 dark:bg-danger-500/30 text-danger-800 dark:text-danger-200'
                                 : 'bg-amber-200 dark:bg-amber-500/30 text-amber-800 dark:text-amber-200'
                           }
                         `}
@@ -1016,7 +1016,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
             <span>Pending</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-rose-500/50 border border-rose-500" />
+            <div className="w-3 h-3 rounded-full bg-danger-500/50 border border-danger-500" />
             <span>Blocked</span>
           </div>
           <div className="flex items-center gap-1.5">

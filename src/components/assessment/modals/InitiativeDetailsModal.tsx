@@ -221,7 +221,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
     if (embedded) {
       return (
         <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-navy-900 p-8 text-center">
-          <AlertCircle className="w-12 h-12 text-rose-400 mb-3" />
+          <AlertCircle className="w-12 h-12 text-danger-400 mb-3" />
           <p className="text-slate-500 dark:text-slate-400">
             {error || 'Nie znaleziono inicjatywy'}
           </p>
@@ -234,7 +234,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-navy-900 rounded-xl p-8 text-center max-w-sm">
-          <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
+          <AlertCircle className="w-12 h-12 text-danger-400 mx-auto mb-3" />
           <p className="text-slate-500 dark:text-slate-400">
             {error || 'Nie znaleziono inicjatywy'}
           </p>
@@ -386,19 +386,19 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
         {initiative.keyRisks && initiative.keyRisks.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
-              <AlertTriangle size={16} className="text-rose-500" />
+              <AlertTriangle size={16} className="text-danger-500" />
               Kluczowe ryzyka ({initiative.keyRisks.length})
             </h3>
             <div className="space-y-2">
               {initiative.keyRisks.map((risk, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-2 p-3 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-200 dark:border-rose-500/20"
+                  className="flex items-start gap-2 p-3 bg-danger-50 dark:bg-danger-900/10 rounded-lg border border-danger-200 dark:border-danger-500/20"
                 >
-                  <span className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-danger-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
                     {index + 1}
                   </span>
-                  <p className="text-sm text-rose-700 dark:text-rose-300">{risk}</p>
+                  <p className="text-sm text-danger-700 dark:text-danger-300">{risk}</p>
                 </div>
               ))}
             </div>
@@ -478,7 +478,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
             {onDelete && initiative.status === 'DRAFT' && (
               <button
                 onClick={() => onDelete(initiative.id)}
-                className="flex items-center gap-1.5 px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg text-sm font-medium transition-colors"
               >
                 <Trash2 size={16} />
                 Usuń

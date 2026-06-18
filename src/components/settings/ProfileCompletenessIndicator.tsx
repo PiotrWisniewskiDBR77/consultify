@@ -67,7 +67,7 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
     if (percentage >= 75) return 'bg-blue-500';
     if (percentage >= 50) return 'bg-yellow-500';
     if (percentage >= 25) return 'bg-amber-500';
-    return 'bg-rose-500';
+    return 'bg-danger-500';
   };
 
   return (

@@ -313,7 +313,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             </div>
             <button
               onClick={() => disconnectChannel(id)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
             >
               <Unlink size={16} />
               {t('common.disconnect', 'Disconnect')}
@@ -654,7 +654,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-rose-500">
+            <div className="p-3 rounded-xl bg-danger-500">
               <Mail size={24} className="text-white" />
             </div>
             <div>
@@ -672,7 +672,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               })
             }
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              channels.email.enabled ? 'bg-rose-600' : 'bg-slate-300 dark:bg-slate-600'
+              channels.email.enabled ? 'bg-danger-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <span

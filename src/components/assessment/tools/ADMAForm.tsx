@@ -466,7 +466,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 ring-1 ring-green-500'
                             : level === 'medium'
                               ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500'
-                              : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 ring-1 ring-rose-500'
+                              : 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 ring-1 ring-danger-500'
                           : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                       } ${readOnly ? 'cursor-default' : 'cursor-pointer hover:opacity-80'}`}
                     >

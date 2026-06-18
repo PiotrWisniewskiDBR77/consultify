@@ -171,7 +171,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
         icon: <AlertTriangle className="w-3 h-3" />,
       },
       error: {
-        color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+        color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
         icon: <XCircle className="w-3 h-3" />,
       },
       stale: {
@@ -402,12 +402,12 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                 onChange={(e) => handleJsonChange(e.target.value)}
                 className={`w-full h-64 p-3 text-xs font-mono rounded-lg border ${
                   jsonError
-                    ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/20'
+                    ? 'border-danger-400 bg-danger-50 dark:bg-danger-900/20'
                     : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900'
                 } text-slate-900 dark:text-white`}
                 spellCheck={false}
               />
-              {jsonError && <p className="text-xs text-rose-500">{jsonError}</p>}
+              {jsonError && <p className="text-xs text-danger-500">{jsonError}</p>}
             </div>
           )}
 

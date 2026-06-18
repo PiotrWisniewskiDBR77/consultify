@@ -270,7 +270,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
 
           {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 mt-4 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
+            <div className="flex items-center gap-2 p-3 mt-4 bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 rounded-lg text-sm">
               <AlertCircle size={16} />
               {error}
             </div>

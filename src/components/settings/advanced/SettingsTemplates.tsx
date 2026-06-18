@@ -234,7 +234,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
       {actionError && (
         <div
           role="alert"
-          className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+          className="p-4 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400"
         >
           {actionError}
         </div>
@@ -355,7 +355,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template.id)}
-                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -379,7 +379,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
               {actionError && (
                 <div
                   role="alert"
-                  className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
+                  className="p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 text-sm"
                 >
                   {actionError}
                 </div>

@@ -55,7 +55,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
           >
             <button
               onClick={() => onRemoveAudit(audit.id)}
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-opacity"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:text-danger-400 transition-opacity"
             >
               <Trash2 size={16} />
             </button>

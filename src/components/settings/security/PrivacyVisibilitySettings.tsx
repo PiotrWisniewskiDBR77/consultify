@@ -153,7 +153,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       { value: 'public', label: 'Public', icon: Globe, color: 'text-green-600' },
       { value: 'organization', label: 'Organization', icon: Building2, color: 'text-blue-600' },
       { value: 'team', label: 'Team Only', icon: Users, color: 'text-primary-600' },
-      { value: 'private', label: 'Private', icon: Lock, color: 'text-rose-600' },
+      { value: 'private', label: 'Private', icon: Lock, color: 'text-danger-600' },
     ];
 
     return (

@@ -541,7 +541,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -593,7 +593,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg text-rose-600"
+            className="p-2 hover:bg-danger-100 dark:hover:bg-danger-500/10 rounded-lg text-danger-600"
           >
             <Trash2 size={16} />
           </button>

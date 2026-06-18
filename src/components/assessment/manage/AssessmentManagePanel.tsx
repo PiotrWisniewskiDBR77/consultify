@@ -674,7 +674,7 @@ export function AssessmentManagePanel(props: {
         {loading ? (
           <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Loading…</div>
         ) : error ? (
-          <div className="p-6 text-sm text-rose-600 dark:text-rose-300">{error}</div>
+          <div className="p-6 text-sm text-danger-600 dark:text-danger-300">{error}</div>
         ) : tab === 'team' ? (
           <div className="p-4">
             <TeamManagementPanel
@@ -833,7 +833,7 @@ export function AssessmentManagePanel(props: {
                               setRequestBusyId(null);
                             }
                           }}
-                          className="h-8 px-3 rounded-lg bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white text-[12px] font-semibold transition-colors"
+                          className="h-8 px-3 rounded-lg bg-danger-500 hover:bg-danger-600 disabled:bg-danger-300 text-white text-[12px] font-semibold transition-colors"
                         >
                           Reject
                         </button>

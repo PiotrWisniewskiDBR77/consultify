@@ -230,7 +230,7 @@ function getIntegrationReadinessMeta(
       isReady: false,
       isPending: false,
       badgeLabel: t('settings.integrations.readiness.error', 'Error'),
-      badgeClassName: 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300',
+      badgeClassName: 'bg-danger-50 text-danger-700 dark:bg-danger-900/20 dark:text-danger-300',
       guidance: t(
         'settings.integrations.readiness.errorGuidance',
         'The last governed sync run failed. Review the latest error before resuming sync.'
@@ -1093,7 +1093,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                             </span>
                           </div>
                           {connected.last_error ? (
-                            <div className="text-rose-600 dark:text-rose-400 mt-1">
+                            <div className="text-danger-600 dark:text-danger-400 mt-1">
                               Last error: {String(connected.last_error).slice(0, 120)}
                             </div>
                           ) : null}
@@ -1155,7 +1155,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </button>
                         <button
                           onClick={() => handleDelete(connected.id)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-danger-50 hover:text-danger-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-danger-900/20 dark:hover:text-danger-400"
                         >
                           Disconnect
                         </button>
@@ -1205,7 +1205,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         )}
                         <button
                           onClick={() => handleDelete(connected.id)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-danger-50 hover:text-danger-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-danger-900/20 dark:hover:text-danger-400"
                         >
                           Disconnect
                         </button>
@@ -1325,7 +1325,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-300"
+                          className="px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-600 hover:text-danger-600 hover:bg-danger-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-300"
                         >
                           Remove
                         </button>
@@ -1452,7 +1452,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               l.status === 'success'
                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                                 : l.status === 'failed'
-                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400'
+                                  ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/20 dark:text-danger-400'
                                   : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
                             }`}
                           >
@@ -1563,7 +1563,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       </button>
                       <button
                         onClick={() => handleDeleteWebhook(webhook.id)}
-                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600 transition-colors"
+                        className="p-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600 transition-colors"
                         title="Delete webhook"
                       >
                         <Trash2 size={18} />
@@ -1801,7 +1801,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </span>
                       </div>
                       {p.last_error ? (
-                        <div className="text-sm text-rose-600 dark:text-rose-400 mt-2">
+                        <div className="text-sm text-danger-600 dark:text-danger-400 mt-2">
                           {t('common.error', 'Error')}: {String(p.last_error).slice(0, 160)}
                         </div>
                       ) : null}
@@ -1859,7 +1859,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           }
                         }}
                         disabled={!isAdmin}
-                        className="px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10 flex items-center gap-2 disabled:opacity-60"
                       >
                         <Trash2 size={16} />
                         {t('common.delete', 'Delete')}

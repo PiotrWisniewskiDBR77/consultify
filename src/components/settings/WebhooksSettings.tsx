@@ -446,7 +446,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('settings.webhooks.name', 'Name')} <span className="text-rose-500">*</span>
+              {t('settings.webhooks.name', 'Name')} <span className="text-danger-500">*</span>
             </label>
             <input
               type="text"
@@ -459,7 +459,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('settings.webhooks.url', 'Endpoint URL')} <span className="text-rose-500">*</span>
+              {t('settings.webhooks.url', 'Endpoint URL')} <span className="text-danger-500">*</span>
             </label>
             <input
               type="url"
@@ -472,7 +472,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('settings.webhooks.events', 'Events')} <span className="text-rose-500">*</span>
+              {t('settings.webhooks.events', 'Events')} <span className="text-danger-500">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
               {AVAILABLE_EVENTS.map((event) => (
@@ -624,7 +624,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                       </button>
                       <button
                         onClick={() => deleteWebhook(webhook.id)}
-                        className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                        className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                         title={t('common.delete', 'Delete')}
                       >
                         <Trash2 size={16} />
@@ -662,7 +662,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                       </div>
                     )}
                     {failedDeliveries.length > 0 && (
-                      <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                      <div className="flex items-center gap-1 text-danger-600 dark:text-danger-400">
                         <AlertTriangle size={12} />
                         <span>
                           {failedDeliveries.length} {t('settings.webhooks.failed', 'failed')}
@@ -829,7 +829,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                               delivery.status === 'success'
                                 ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
                                 : delivery.status === 'failed'
-                                  ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-900/30'
+                                  ? 'bg-danger-50/50 dark:bg-danger-900/10 border-danger-200 dark:border-danger-900/30'
                                   : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-700'
                             }`}
                           >
@@ -839,7 +839,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                                   {delivery.status === 'success' ? (
                                     <CheckCircle size={14} className="text-green-500" />
                                   ) : (
-                                    <XCircle size={14} className="text-rose-500" />
+                                    <XCircle size={14} className="text-danger-500" />
                                   )}
                                   <span className="text-xs font-medium text-slate-900 dark:text-white">
                                     {delivery.event_type}
@@ -857,7 +857,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                                   </p>
                                 )}
                                 {delivery.error_message && (
-                                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+                                  <p className="text-xs text-danger-600 dark:text-danger-400 mt-1">
                                     {delivery.error_message}
                                   </p>
                                 )}

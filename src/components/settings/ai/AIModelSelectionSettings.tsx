@@ -335,7 +335,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                         ? 'bg-green-100 text-green-700'
                         : model.speed === 'medium'
                           ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-rose-100 text-rose-700'
+                          : 'bg-danger-100 text-danger-700'
                     }`}
                   >
                     <Clock size={10} className="inline mr-1" />

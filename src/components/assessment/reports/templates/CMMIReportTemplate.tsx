@@ -57,7 +57,7 @@ const getLevelColor = (level: number): string => {
 
 const getLevelBgColor = (level: number): string => {
   const colors: Record<number, string> = {
-    1: 'bg-rose-100 dark:bg-rose-900/30',
+    1: 'bg-danger-100 dark:bg-danger-900/30',
     2: 'bg-amber-100 dark:bg-amber-900/30',
     3: 'bg-yellow-100 dark:bg-yellow-900/30',
     4: 'bg-blue-100 dark:bg-blue-900/30',
@@ -422,7 +422,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                   <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     Luka
                   </div>
-                  <div className="text-lg font-bold text-rose-600">
+                  <div className="text-lg font-bold text-danger-600">
                     +{pa.gap} poziom{pa.gap > 1 ? 'y' : ''}
                   </div>
                 </div>

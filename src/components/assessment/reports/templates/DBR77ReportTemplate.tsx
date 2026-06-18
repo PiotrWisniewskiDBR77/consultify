@@ -130,7 +130,7 @@ const WorkstationPage: React.FC<{
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">Błędy:</span>
-              <span className="font-bold text-rose-600">{workstation.currentState.errorRate}%</span>
+              <span className="font-bold text-danger-600">{workstation.currentState.errorRate}%</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">Nadgodziny:</span>
@@ -159,7 +159,7 @@ const WorkstationPage: React.FC<{
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">Standard Work:</span>
               <span
-                className={`font-bold ${workstation.leanAssessment.standardizedWork ? 'text-green-600' : 'text-rose-600'}`}
+                className={`font-bold ${workstation.leanAssessment.standardizedWork ? 'text-green-600' : 'text-danger-600'}`}
               >
                 {workstation.leanAssessment.standardizedWork ? 'TAK' : 'NIE'}
               </span>

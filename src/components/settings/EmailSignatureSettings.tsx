@@ -355,7 +355,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   </button>
                   <button
                     onClick={() => handleDelete(signature.id)}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

@@ -404,7 +404,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                                     px-3 py-1 rounded-full text-xs font-semibold
                                     ${
                                       gap.priority === 'CRITICAL'
-                                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                                        ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                                         : gap.priority === 'HIGH'
                                           ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                           : gap.priority === 'MEDIUM'
@@ -642,12 +642,12 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
           )}
 
           {transferResult.failed.length > 0 && (
-            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-500/20">
+            <div className="p-4 bg-danger-50 dark:bg-danger-900/20 rounded-xl border border-danger-200 dark:border-danger-500/20">
               <div className="flex items-center gap-3">
-                <AlertCircle className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+                <AlertCircle className="w-6 h-6 text-danger-600 dark:text-danger-400" />
                 <div>
-                  <h4 className="font-medium text-rose-900 dark:text-rose-300">Transfer Failed</h4>
-                  <p className="text-sm text-rose-700 dark:text-rose-400">
+                  <h4 className="font-medium text-danger-900 dark:text-danger-300">Transfer Failed</h4>
+                  <p className="text-sm text-danger-700 dark:text-danger-400">
                     {transferResult.failed.length} initiative(s) could not be transferred
                   </p>
                 </div>
@@ -701,7 +701,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                                     px-2 py-1 rounded text-xs font-medium
                                     ${
                                       init.riskLevel === 'HIGH'
-                                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                                        ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                                         : init.riskLevel === 'MEDIUM'
                                           ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                           : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
@@ -785,7 +785,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto">
           {error && (
-            <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center gap-2">
+            <div className="mb-6 p-4 bg-danger-50 dark:bg-danger-900/20 rounded-xl border border-danger-200 dark:border-danger-500/20 text-danger-600 dark:text-danger-400 flex items-center gap-2">
               <AlertCircle size={18} />
               {error}
             </div>

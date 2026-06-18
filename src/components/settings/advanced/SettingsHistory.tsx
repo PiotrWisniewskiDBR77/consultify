@@ -137,7 +137,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
       case 'updated':
         return 'text-blue-600 bg-blue-100 dark:bg-blue-500/20';
       case 'deleted':
-        return 'text-rose-600 bg-rose-100 dark:bg-rose-500/20';
+        return 'text-danger-600 bg-danger-100 dark:bg-danger-500/20';
       case 'restored':
         return 'text-primary-600 bg-primary-100 dark:bg-primary-500/20';
       default:
@@ -264,7 +264,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                               <span className="text-sm text-slate-500 dark:text-slate-400 w-20">
                                 Before:
                               </span>
-                              <span className="text-sm text-rose-600 dark:text-rose-400 line-through">
+                              <span className="text-sm text-danger-600 dark:text-danger-400 line-through">
                                 {entry.oldValue}
                               </span>
                             </div>

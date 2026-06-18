@@ -233,7 +233,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 <button
                   onClick={() => handleDeleteRule(rule.id)}
                   disabled={isReadOnly}
-                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

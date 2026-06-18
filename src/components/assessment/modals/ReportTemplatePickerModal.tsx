@@ -372,7 +372,7 @@ export function ReportTemplatePickerModal(props: {
               <span>Loading templates…</span>
             </div>
           ) : error ? (
-            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm">
+            <div className="p-4 rounded-xl bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-300 text-sm">
               {error}
             </div>
           ) : filtered.length === 0 ? (

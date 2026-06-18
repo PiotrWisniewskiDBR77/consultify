@@ -239,7 +239,7 @@ const ADMAPillarCard: React.FC<{
                 {pillarScore.target.toFixed(1)}
               </span>
             </div>
-            {gap > 0 && <span className="text-xs text-rose-500">Gap: {gap.toFixed(1)}</span>}
+            {gap > 0 && <span className="text-xs text-danger-500">Gap: {gap.toFixed(1)}</span>}
           </div>
           {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         </div>
@@ -465,11 +465,11 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
               </div>
               <div className="text-xs text-blue-600/70">Progress</div>
             </div>
-            <div className="bg-rose-100 dark:bg-rose-900/30 px-4 py-2 rounded-xl text-center">
-              <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+            <div className="bg-danger-100 dark:bg-danger-900/30 px-4 py-2 rounded-xl text-center">
+              <div className="text-2xl font-bold text-danger-600 dark:text-danger-400">
                 {stats.totalGap.toFixed(1)}
               </div>
-              <div className="text-xs text-rose-600/70">Total Gap</div>
+              <div className="text-xs text-danger-600/70">Total Gap</div>
             </div>
           </div>
         </div>

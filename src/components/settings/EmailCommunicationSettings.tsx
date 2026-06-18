@@ -225,7 +225,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                 <span className="text-sm text-navy-900 dark:text-white flex-1">{alias}</span>
                 <button
                   onClick={() => removeAlias(alias)}
-                  className="text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-colors"
+                  className="text-slate-600 dark:text-slate-500 hover:text-danger-500 transition-colors"
                 >
                   <X size={14} />
                 </button>

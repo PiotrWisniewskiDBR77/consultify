@@ -467,7 +467,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 key={category.id}
                 className={`p-4 rounded-lg border transition-all ${
                   isConfirming
-                    ? 'border-rose-300 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/5'
+                    ? 'border-danger-300 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/5'
                     : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950'
                 }`}
               >
@@ -507,8 +507,8 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                         disabled={deleting === category.id}
                         className={`p-2 rounded-lg transition-colors ${
                           isConfirming
-                            ? 'bg-rose-600 text-white'
-                            : 'hover:bg-white dark:hover:bg-white/10 text-rose-600'
+                            ? 'bg-danger-600 text-white'
+                            : 'hover:bg-white dark:hover:bg-white/10 text-danger-600'
                         }`}
                         title={isConfirming ? 'Click again to confirm' : 'Delete'}
                       >
@@ -522,15 +522,15 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                   </div>
                 </div>
                 {isConfirming && (
-                  <div className="mt-3 p-3 bg-rose-100 dark:bg-rose-500/20 rounded-lg">
-                    <p className="text-sm text-rose-700 dark:text-rose-300 flex items-center gap-2">
+                  <div className="mt-3 p-3 bg-danger-100 dark:bg-danger-500/20 rounded-lg">
+                    <p className="text-sm text-danger-700 dark:text-danger-300 flex items-center gap-2">
                       <AlertTriangle size={16} />
                       Click delete again to permanently remove all {category.name.toLowerCase()}.
                       This cannot be undone.
                     </p>
                     <button
                       onClick={() => setConfirmDelete(null)}
-                      className="mt-2 text-sm text-rose-600 hover:underline"
+                      className="mt-2 text-sm text-danger-600 hover:underline"
                     >
                       Cancel
                     </button>

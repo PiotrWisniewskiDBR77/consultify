@@ -900,7 +900,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => removeLocalProvider(p.id)}
-                          className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-2 rounded hover:bg-rose-500/10 transition-colors"
+                          className="text-slate-500 dark:text-slate-400 hover:text-danger-400 p-2 rounded hover:bg-danger-500/10 transition-colors"
                           title="Remove Key"
                         >
                           <Trash2 size={16} />
@@ -967,7 +967,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   {(currentUser.aiConfig as any)?.provider === 'ollama' ? (
                     <button
                       onClick={disableLocalInference}
-                      className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-rose-300 border border-rose-500/30 rounded-lg hover:bg-rose-500/10 transition-colors"
+                      className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-danger-300 border border-danger-500/30 rounded-lg hover:bg-danger-500/10 transition-colors"
                     >
                       Disable
                     </button>
@@ -1091,7 +1091,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                           )}
                           <button
                             onClick={() => removeLocalProvider(p.id)}
-                            className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-2 rounded hover:bg-rose-500/10 transition-colors"
+                            className="text-slate-500 dark:text-slate-400 hover:text-danger-400 p-2 rounded hover:bg-danger-500/10 transition-colors"
                             title="Disconnect"
                           >
                             <Trash2 size={16} />
@@ -1728,7 +1728,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div className="p-6 rounded-xl border border-white/5 bg-slate-50/30 dark:bg-navy-950/20 hover:border-white/10 transition-colors">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400">
+                    <div className="p-2 rounded-lg bg-danger-500/20 text-danger-400">
                       <Fingerprint size={20} />
                     </div>
                     <div>

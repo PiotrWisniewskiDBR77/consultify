@@ -71,9 +71,9 @@ interface ContextReadinessGateProps {
 
 const LEVEL_COLORS = {
   Insufficient: {
-    bg: 'bg-rose-50 dark:bg-rose-500/10',
-    border: 'border-rose-200 dark:border-rose-500/30',
-    text: 'text-rose-700 dark:text-rose-400',
+    bg: 'bg-danger-50 dark:bg-danger-500/10',
+    border: 'border-danger-200 dark:border-danger-500/30',
+    text: 'text-danger-700 dark:text-danger-400',
     icon: AlertCircle,
   },
   Minimal: {
@@ -178,8 +178,8 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
 
   if (error) {
     return (
-      <div className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg">
-        <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400">
+      <div className="p-4 bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-lg">
+        <div className="flex items-center gap-2 text-danger-700 dark:text-danger-400">
           <AlertCircle className="w-5 h-5" />
           <span>{error}</span>
         </div>
@@ -210,7 +210,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
             </span>
           </div>
           {!readiness.canFinalize && (
-            <span className="text-xs text-rose-600 dark:text-rose-400 font-medium">
+            <span className="text-xs text-danger-600 dark:text-danger-400 font-medium">
               Required: {readiness.requiredThreshold}%
             </span>
           )}
@@ -255,7 +255,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                   ? 'bg-green-500'
                   : readiness.score >= 40
                     ? 'bg-amber-500'
-                    : 'bg-rose-500'
+                    : 'bg-danger-500'
               }`}
               style={{ width: `${readiness.score}%` }}
             />
@@ -303,7 +303,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                         ? 'text-green-600'
                         : percentage >= 50
                           ? 'text-amber-600'
-                          : 'text-rose-600'
+                          : 'text-danger-600'
                     }`}
                   >
                     {scores.score}/{scores.total}pts
@@ -320,7 +320,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                     {categoryGaps.map((gap) => (
                       <div key={gap.key} className="flex items-center justify-between text-sm py-1">
                         <span className="text-slate-600 dark:text-slate-400">{gap.label}</span>
-                        <span className="text-rose-500 font-medium">-{gap.weight}pts</span>
+                        <span className="text-danger-500 font-medium">-{gap.weight}pts</span>
                       </div>
                     ))}
                   </div>
@@ -344,7 +344,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                 key={idx}
                 className={`p-3 rounded-lg text-sm ${
                   rec.priority === 'HIGH'
-                    ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400'
+                    ? 'bg-danger-100 dark:bg-danger-500/20 text-danger-700 dark:text-danger-400'
                     : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
                 }`}
               >
@@ -362,7 +362,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
       <div className="p-4 border-t border-inherit bg-white/30 dark:bg-black/10">
         {!readiness.canFinalize ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+            <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400">
               <AlertCircle className="w-5 h-5" />
               <span className="text-sm font-medium">
                 Cannot finalize assessment - context score below {readiness.requiredThreshold}%

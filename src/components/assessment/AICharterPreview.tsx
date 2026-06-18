@@ -183,7 +183,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
       case 'MEDIUM':
         return 'text-amber-500 bg-amber-500/10';
       case 'LOW':
-        return 'text-rose-500 bg-rose-500/10';
+        return 'text-danger-500 bg-danger-500/10';
       default:
         return 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800/300/10';
     }
@@ -378,9 +378,9 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                   )}
 
                   {section.id === 'problem' && charter.problemStructured && (
-                    <div className="space-y-3 bg-white dark:bg-navy-900 p-4 rounded-lg border border-rose-200 dark:border-rose-500/20">
+                    <div className="space-y-3 bg-white dark:bg-navy-900 p-4 rounded-lg border border-danger-200 dark:border-danger-500/20">
                       <div>
-                        <label className="text-xs text-rose-500 uppercase font-bold flex items-center gap-1">
+                        <label className="text-xs text-danger-500 uppercase font-bold flex items-center gap-1">
                           <Lightbulb size={10} /> Symptom
                         </label>
                         <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">
@@ -393,7 +393,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs text-rose-500 uppercase font-bold">
+                        <label className="text-xs text-danger-500 uppercase font-bold">
                           Root Cause
                         </label>
                         <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">
@@ -406,7 +406,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs text-rose-500 uppercase font-bold">
+                        <label className="text-xs text-danger-500 uppercase font-bold">
                           Cost of Inaction
                         </label>
                         <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">
@@ -467,7 +467,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               const updated = charter.killCriteria.filter((_, idx) => idx !== i);
                               onUpdate({ killCriteria: updated });
                             }}
-                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-danger-500"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -490,7 +490,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                             <span
                               className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                                 risk.metric === 'High'
-                                  ? 'bg-rose-100 text-rose-600'
+                                  ? 'bg-danger-100 text-danger-600'
                                   : risk.metric === 'Medium'
                                     ? 'bg-amber-100 text-amber-600'
                                     : 'bg-green-100 text-green-600'
@@ -542,7 +542,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               const updated = charter.suggestedTasks.filter((_, idx) => idx !== i);
                               onUpdate({ suggestedTasks: updated });
                             }}
-                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-danger-500"
                           >
                             <Trash2 size={14} />
                           </button>

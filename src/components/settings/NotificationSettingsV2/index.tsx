@@ -298,7 +298,7 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({
           className={`p-3 rounded-lg flex items-center gap-2 ${
             saveMessage.type === 'success'
               ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-              : 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400'
+              : 'bg-danger-50 text-danger-700 dark:bg-danger-900/20 dark:text-danger-400'
           }`}
         >
           {saveMessage.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}

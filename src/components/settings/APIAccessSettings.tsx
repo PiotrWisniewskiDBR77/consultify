@@ -576,7 +576,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   </button>
                   <button
                     onClick={() => deleteKey(key.id)}
-                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                    className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                     title={t('common.delete', 'Delete')}
                   >
                     <Trash2 size={16} />
@@ -599,7 +599,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     <div
                       className={`h-2 rounded-full transition-all ${
                         quotaPercent >= 90
-                          ? 'bg-rose-500'
+                          ? 'bg-danger-500'
                           : quotaPercent >= 70
                             ? 'bg-amber-500'
                             : 'bg-green-500'

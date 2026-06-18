@@ -61,7 +61,7 @@ const PRIORITY_OPTIONS: { value: Priority; label: string; color: string }[] = [
   { value: 'LOW', label: 'Low', color: 'text-slate-500' },
   { value: 'NORMAL', label: 'Normal', color: 'text-blue-500' },
   { value: 'HIGH', label: 'High', color: 'text-amber-500' },
-  { value: 'URGENT', label: 'Urgent', color: 'text-rose-500' },
+  { value: 'URGENT', label: 'Urgent', color: 'text-danger-500' },
 ];
 
 // ==========================================
@@ -255,7 +255,7 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
           {/* Justification */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Justification <span className="text-rose-500">*</span>
+              Justification <span className="text-danger-500">*</span>
             </label>
             <textarea
               value={justification}
@@ -271,7 +271,7 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-600 dark:text-rose-400 text-sm">
+            <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-600 dark:text-danger-400 text-sm">
               <AlertCircle size={16} />
               {error}
             </div>

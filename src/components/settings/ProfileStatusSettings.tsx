@@ -24,7 +24,7 @@ const STATUS_OPTIONS = [
   { value: 'online', label: 'Online', icon: Circle, color: 'text-green-500' },
   { value: 'away', label: 'Away', icon: Clock, color: 'text-yellow-500' },
   { value: 'busy', label: 'Busy', icon: Zap, color: 'text-amber-500' },
-  { value: 'dnd', label: 'Do Not Disturb', icon: Moon, color: 'text-rose-500' },
+  { value: 'dnd', label: 'Do Not Disturb', icon: Moon, color: 'text-danger-500' },
 ] as const;
 
 type AvailabilityStatus = 'available' | 'away' | 'busy' | 'dnd' | 'offline';
@@ -206,7 +206,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
+        <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.profile.status.error', 'Failed to update status')}
         </div>

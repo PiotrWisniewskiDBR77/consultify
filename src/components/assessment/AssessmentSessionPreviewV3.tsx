@@ -184,7 +184,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
       <div className="px-5 pt-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wide text-rose-400">
+            <div className="text-xs font-semibold uppercase tracking-wide text-danger-400">
               {isPolish ? 'Assessment session' : 'Assessment session'}
             </div>
             <div

@@ -664,7 +664,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 },
                 failed: {
                   label: 'Failed',
-                  color: 'bg-rose-500/15 text-rose-400 border-rose-500/20',
+                  color: 'bg-danger-500/15 text-danger-400 border-danger-500/20',
                 },
               };
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
@@ -712,7 +712,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             { value: 'PLANNING', label: 'Planning', color: 'bg-blue-500' },
             { value: 'APPROVED', label: 'Approved', color: 'bg-emerald-500' },
             { value: 'EXECUTING', label: 'Executing', color: 'bg-blue-500' },
-            { value: 'CANCELLED', label: 'Cancelled', color: 'bg-rose-500' },
+            { value: 'CANCELLED', label: 'Cancelled', color: 'bg-danger-500' },
           ],
         },
         {
@@ -721,14 +721,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           width: '100px',
           filterable: true,
           filterOptions: [
-            { value: 'critical', label: 'Critical', color: 'bg-rose-500' },
+            { value: 'critical', label: 'Critical', color: 'bg-danger-500' },
             { value: 'high', label: 'High', color: 'bg-amber-500' },
             { value: 'medium', label: 'Medium', color: 'bg-blue-500' },
             { value: 'low', label: 'Low', color: 'bg-slate-500' },
           ],
           render: (row) => {
             const dots: Record<string, string> = {
-              critical: 'bg-rose-500',
+              critical: 'bg-danger-500',
               high: 'bg-amber-500',
               medium: 'bg-blue-500',
               low: 'bg-slate-400',
@@ -1919,8 +1919,8 @@ const REPORT_STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'text-rose-600 dark:text-rose-300',
-    bgColor: 'bg-rose-500/20 border-rose-500/30',
+    color: 'text-danger-600 dark:text-danger-300',
+    bgColor: 'bg-danger-500/20 border-danger-500/30',
     icon: 'clock',
   },
   UTILIZED: {
@@ -1942,8 +1942,8 @@ const EXPORT_FORMAT_CONFIG: Record<
   pdf: {
     label: 'PDF',
     icon: <FileText size={14} />,
-    color: 'text-rose-400',
-    bgColor: 'bg-rose-500/15',
+    color: 'text-danger-400',
+    bgColor: 'bg-danger-500/15',
   },
   pptx: {
     label: 'PowerPoint',

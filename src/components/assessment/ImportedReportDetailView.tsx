@@ -120,7 +120,7 @@ const IMPORT_STATUS_CONFIG: Record<
   },
   failed: {
     label: 'Failed',
-    color: 'text-rose-400 bg-rose-500/15 border-rose-500/20',
+    color: 'text-danger-400 bg-danger-500/15 border-danger-500/20',
     icon: 'alert',
   },
 };
@@ -230,8 +230,8 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-3" />
-          <p className="text-sm text-rose-400 mb-4">{error || 'Report not found'}</p>
+          <AlertCircle className="w-8 h-8 text-danger-400 mx-auto mb-3" />
+          <p className="text-sm text-danger-400 mb-4">{error || 'Report not found'}</p>
           <button
             onClick={onBack}
             className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
@@ -439,8 +439,8 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
 
             {/* Processing error */}
             {data.processingError && (
-              <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg">
-                <p className="text-xs text-rose-400">{data.processingError}</p>
+              <div className="mt-4 p-3 bg-danger-500/10 border border-danger-500/20 rounded-lg">
+                <p className="text-xs text-danger-400">{data.processingError}</p>
               </div>
             )}
           </div>
@@ -530,7 +530,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                           <span
                             className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                               init.priority === 'critical'
-                                ? 'bg-rose-500/15 text-rose-400'
+                                ? 'bg-danger-500/15 text-danger-400'
                                 : init.priority === 'high'
                                   ? 'bg-amber-500/15 text-amber-400'
                                   : init.priority === 'medium'

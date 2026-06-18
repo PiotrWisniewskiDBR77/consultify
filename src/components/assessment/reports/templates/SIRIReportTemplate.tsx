@@ -82,14 +82,14 @@ const COLOR_CLASSES: Record<ColorKey, ColorClasses> = {
     text600_70: 'text-primary-600/70',
   },
   red: {
-    bg50: 'bg-rose-50 dark:bg-rose-900/20',
-    bg100: 'bg-rose-100 dark:bg-rose-900/30',
-    bg500: 'bg-rose-500',
-    bg900_20: 'bg-rose-900/20',
-    bg900_30: 'bg-rose-900/30',
-    text400: 'text-rose-400',
-    text600: 'text-rose-600 dark:text-rose-400',
-    text600_70: 'text-rose-600/70',
+    bg50: 'bg-danger-50 dark:bg-danger-900/20',
+    bg100: 'bg-danger-100 dark:bg-danger-900/30',
+    bg500: 'bg-danger-500',
+    bg900_20: 'bg-danger-900/20',
+    bg900_30: 'bg-danger-900/30',
+    text400: 'text-danger-400',
+    text600: 'text-danger-600 dark:text-danger-400',
+    text600_70: 'text-danger-600/70',
   },
   orange: {
     bg50: 'bg-amber-50 dark:bg-amber-900/20',
@@ -374,7 +374,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                   </td>
                   <td className="py-2 pr-0 text-center">
                     {s.gap > 0 ? (
-                      <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded font-bold text-xs">
+                      <span className="px-2 py-0.5 bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 rounded font-bold text-xs">
                         -{s.gap.toFixed(1)}
                       </span>
                     ) : (
@@ -433,7 +433,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                         {dim.target}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded font-bold text-sm">
+                        <span className="px-2 py-1 bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 rounded font-bold text-sm">
                           -{dim.gap}
                         </span>
                       </td>

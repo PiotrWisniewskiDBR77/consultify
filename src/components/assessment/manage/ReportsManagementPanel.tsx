@@ -459,7 +459,7 @@ const ReportRow: FC<{
                           handleDelete();
                           setShowActions(false);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/10"
                       >
                         <Trash2 size={14} />
                         Delete

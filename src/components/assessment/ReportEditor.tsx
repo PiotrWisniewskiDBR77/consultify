@@ -298,7 +298,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     return (
       <div className="h-full flex items-center justify-center bg-white dark:bg-navy-900">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
+          <AlertCircle className="w-12 h-12 text-danger-400 mx-auto mb-3" />
           <p className="text-slate-500 dark:text-slate-400">Nie znaleziono raportu</p>
           <button onClick={onClose} className="mt-4 text-primary-600 hover:underline">
             Wróć
@@ -362,7 +362,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
-            {error && <span className="text-xs text-rose-500">{error}</span>}
+            {error && <span className="text-xs text-danger-500">{error}</span>}
 
             {!isReadOnly && (
               <>
@@ -466,7 +466,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   {!isReadOnly && (
                     <button
                       onClick={() => removeFinding(index)}
-                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                     >
                       <X size={16} />
                     </button>
@@ -515,7 +515,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   {!isReadOnly && (
                     <button
                       onClick={() => removeRecommendation(index)}
-                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                     >
                       <X size={16} />
                     </button>

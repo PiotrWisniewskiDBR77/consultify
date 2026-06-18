@@ -48,8 +48,8 @@ const statusConfig: Record<
 > = {
   online: { label: 'Online', color: 'bg-emerald-500', icon: Circle },
   away: { label: 'Away', color: 'bg-amber-500', icon: Clock },
-  busy: { label: 'Busy', color: 'bg-rose-500', icon: Circle },
-  dnd: { label: 'Do Not Disturb', color: 'bg-rose-600', icon: Moon },
+  busy: { label: 'Busy', color: 'bg-danger-500', icon: Circle },
+  dnd: { label: 'Do Not Disturb', color: 'bg-danger-600', icon: Moon },
   offline: { label: 'Offline', color: 'bg-slate-400', icon: Circle },
 };
 

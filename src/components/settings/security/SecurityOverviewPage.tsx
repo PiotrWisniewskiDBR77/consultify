@@ -152,21 +152,21 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       ? 'text-emerald-400'
       : scorePercentage >= 50
         ? 'text-amber-400'
-        : 'text-rose-400';
+        : 'text-danger-400';
 
   const scoreRingColor =
     scorePercentage >= 80
       ? 'stroke-emerald-500'
       : scorePercentage >= 50
         ? 'stroke-amber-500'
-        : 'stroke-rose-500';
+        : 'stroke-danger-500';
 
   const scoreBgColor =
     scorePercentage >= 80
       ? 'bg-emerald-500/10 border-emerald-500/20'
       : scorePercentage >= 50
         ? 'bg-amber-500/10 border-amber-500/20'
-        : 'bg-rose-500/10 border-rose-500/20';
+        : 'bg-danger-500/10 border-danger-500/20';
 
   const scoreLabel =
     scorePercentage >= 80
@@ -309,7 +309,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       case 'success':
         return <CheckCircle size={16} className="text-emerald-500" />;
       case 'failed':
-        return <XCircle size={16} className="text-rose-500" />;
+        return <XCircle size={16} className="text-danger-500" />;
       case 'suspicious':
         return <AlertTriangle size={16} className="text-amber-500" />;
       default:
@@ -331,7 +331,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     blue: {
       icon: 'bg-blue-500/10 text-blue-400',
       statusOk: 'text-emerald-400',
-      statusBad: 'text-rose-400',
+      statusBad: 'text-danger-400',
     },
     emerald: {
       icon: 'bg-emerald-500/10 text-emerald-400',
@@ -503,7 +503,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                       className={cn(
                         'flex items-start gap-3 p-3 rounded-lg border',
                         rec.priority === 'high'
-                          ? 'bg-rose-500/5 border-rose-500/15'
+                          ? 'bg-danger-500/5 border-danger-500/15'
                           : rec.priority === 'medium'
                             ? 'bg-amber-500/5 border-amber-500/15'
                             : 'bg-white/[0.02] border-white/5'
@@ -514,7 +514,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                         className={cn(
                           'flex-shrink-0 mt-0.5',
                           rec.priority === 'high'
-                            ? 'text-rose-400'
+                            ? 'text-danger-400'
                             : rec.priority === 'medium'
                               ? 'text-amber-400'
                               : 'text-slate-500'

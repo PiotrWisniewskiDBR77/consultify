@@ -166,13 +166,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                 ${
                                   errors.name
-                                    ? 'border-rose-300 dark:border-rose-500/50 focus:ring-rose-500'
+                                    ? 'border-danger-300 dark:border-danger-500/50 focus:ring-danger-500'
                                     : 'border-slate-200 dark:border-navy-700 focus:ring-primary-500'
                                 }
                             `}
               placeholder={t('initiatives.form.namePlaceholder')}
             />
-            {errors.name && <p className="text-xs text-rose-500">{errors.name}</p>}
+            {errors.name && <p className="text-xs text-danger-500">{errors.name}</p>}
           </div>
 
           {/* Description */}
@@ -188,13 +188,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white resize-none
                                 ${
                                   errors.description
-                                    ? 'border-rose-300 dark:border-rose-500/50 focus:ring-rose-500'
+                                    ? 'border-danger-300 dark:border-danger-500/50 focus:ring-danger-500'
                                     : 'border-slate-200 dark:border-navy-700 focus:ring-primary-500'
                                 }
                             `}
               placeholder={t('initiatives.form.descriptionPlaceholder')}
             />
-            {errors.description && <p className="text-xs text-rose-500">{errors.description}</p>}
+            {errors.description && <p className="text-xs text-danger-500">{errors.description}</p>}
           </div>
 
           {/* Grid: Axis + Risk */}
@@ -248,13 +248,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                     w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                     ${
                                       errors.estimatedBudget
-                                        ? 'border-rose-300 dark:border-rose-500/50'
+                                        ? 'border-danger-300 dark:border-danger-500/50'
                                         : 'border-slate-200 dark:border-navy-700'
                                     }
                                 `}
               />
               {errors.estimatedBudget && (
-                <p className="text-xs text-rose-500">{errors.estimatedBudget}</p>
+                <p className="text-xs text-danger-500">{errors.estimatedBudget}</p>
               )}
             </div>
 
@@ -271,13 +271,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                     w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                     ${
                                       errors.estimatedROI
-                                        ? 'border-rose-300 dark:border-rose-500/50'
+                                        ? 'border-danger-300 dark:border-danger-500/50'
                                         : 'border-slate-200 dark:border-navy-700'
                                     }
                                 `}
               />
               {errors.estimatedROI && (
-                <p className="text-xs text-rose-500">{errors.estimatedROI}</p>
+                <p className="text-xs text-danger-500">{errors.estimatedROI}</p>
               )}
             </div>
 
@@ -318,7 +318,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                     <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{obj}</span>
                     <button
                       onClick={() => handleRemoveObjective(idx)}
-                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
+                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>

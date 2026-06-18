@@ -292,7 +292,7 @@ const TechnologyCard: React.FC<{
               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
               : technology.implementationComplexity === 'medium'
                 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300'
           }`}
         >
           {isPolish ? 'Złożoność:' : 'Complexity:'}{' '}
@@ -685,8 +685,8 @@ export const AISuggestionPanel: React.FC<Props> = ({
         )}
 
         {error && (
-          <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+          <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400">
               <AlertTriangle size={18} />
               <span>{error}</span>
             </div>

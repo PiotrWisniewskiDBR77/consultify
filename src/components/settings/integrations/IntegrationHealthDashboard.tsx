@@ -265,7 +265,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       case 'warning':
         return <AlertTriangle size={18} className="text-amber-500" />;
       case 'error':
-        return <XCircle size={18} className="text-rose-500" />;
+        return <XCircle size={18} className="text-danger-500" />;
       default:
         return <AlertCircle size={18} className="text-slate-600 dark:text-slate-500" />;
     }
@@ -278,7 +278,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       case 'warning':
         return 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5';
       case 'error':
-        return 'border-rose-500/50 bg-rose-50 dark:bg-rose-500/5';
+        return 'border-danger-500/50 bg-danger-50 dark:bg-danger-500/5';
       default:
         return 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950';
     }
@@ -324,7 +324,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
         {selectedIntegrations.length > 0 && !loadError && (
           <button
             onClick={bulkDisconnect}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
           >
             <Trash2 size={16} />
             {t('integrations.health.bulkDisconnect', 'Disconnect')} ({selectedIntegrations.length})
@@ -411,7 +411,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                           ? new Date(integration.lastSync).toLocaleString()
                           : '—'}
                         {integration.errorCount > 0 && (
-                          <span className="ml-2 text-rose-500 font-medium">
+                          <span className="ml-2 text-danger-500 font-medium">
                             ({integration.errorCount} {t('integrations.health.errors', 'errors')})
                           </span>
                         )}
@@ -495,8 +495,8 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
 
                 {/* Error message */}
                 {integration.lastError && (
-                  <div className="mt-4 p-3 bg-rose-100 dark:bg-rose-500/20 rounded-lg">
-                    <p className="text-sm text-rose-700 dark:text-rose-300 flex items-center gap-2">
+                  <div className="mt-4 p-3 bg-danger-100 dark:bg-danger-500/20 rounded-lg">
+                    <p className="text-sm text-danger-700 dark:text-danger-300 flex items-center gap-2">
                       <AlertTriangle size={16} />
                       {integration.lastError}
                     </p>
@@ -583,7 +583,7 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
               run.status === 'completed'
                 ? 'text-green-600'
                 : run.status === 'failed'
-                  ? 'text-rose-500'
+                  ? 'text-danger-500'
                   : 'text-amber-600'
             }`}
           >

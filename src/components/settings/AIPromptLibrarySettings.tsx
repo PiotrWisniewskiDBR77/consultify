@@ -329,7 +329,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
               {actionError && (
                 <div
                   role="alert"
-                  className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200"
+                  className="rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-sm text-danger-200"
                 >
                   {actionError}
                 </div>
@@ -406,7 +406,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                           {!prompt.id.startsWith('builtin-') && (
                             <button
                               onClick={() => deletePrompt(prompt.id)}
-                              className="p-1.5 text-slate-500 hover:text-rose-400 rounded transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-danger-400 rounded transition-colors"
                               title={t('common.delete', 'Delete')}
                             >
                               <Trash2 size={14} />

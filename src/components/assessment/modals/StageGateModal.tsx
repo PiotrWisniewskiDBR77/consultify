@@ -197,11 +197,11 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
 
               {/* Error state */}
               {error && (
-                <div className="mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+                <div className="mb-4 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-rose-700 dark:text-rose-300">{error}</p>
-                    <p className="text-xs text-rose-500 dark:text-rose-400 mt-1">
+                    <p className="text-sm font-medium text-danger-700 dark:text-danger-300">{error}</p>
+                    <p className="text-xs text-danger-500 dark:text-danger-400 mt-1">
                       Nie można ocenić bramki. Sprawdź konfigurację projektu lub skontaktuj się z
                       administratorem.
                     </p>

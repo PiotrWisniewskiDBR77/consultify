@@ -261,7 +261,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       case 'high':
         return 'bg-amber-500';
       case 'urgent':
-        return 'bg-rose-500';
+        return 'bg-danger-500';
       default:
         return 'bg-slate-400';
     }

@@ -429,7 +429,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <UserPlus size={20} className="text-rose-500" />
+            <UserPlus size={20} className="text-danger-500" />
             {t('settings.contact.emergency', 'Emergency Contacts')}
           </h3>
           <button
@@ -536,7 +536,7 @@ const EmailCard: React.FC<EmailCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -659,7 +659,7 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -781,7 +781,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -897,7 +897,7 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -911,7 +911,7 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <UserPlus size={18} className="text-rose-500" />
+            <UserPlus size={18} className="text-danger-500" />
             <span className="font-medium text-slate-900 dark:text-white">{contact.name}</span>
           </div>
           <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">

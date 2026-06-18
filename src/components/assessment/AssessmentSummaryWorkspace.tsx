@@ -263,7 +263,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
           </div>
           {/* Total Gap */}
           <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-navy-700 text-center min-w-[100px]">
-            <div className="text-3xl font-bold text-rose-400">{totalGap}</div>
+            <div className="text-3xl font-bold text-danger-400">{totalGap}</div>
             <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-bold">
               Total Gap Points
             </div>
@@ -290,7 +290,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
               <span className="text-slate-600 dark:text-slate-400">Docelowy</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-rose-500/20 border border-dashed border-rose-500 rounded-sm"></div>
+              <div className="w-3 h-3 bg-danger-500/20 border border-dashed border-danger-500 rounded-sm"></div>
               <span className="text-slate-600 dark:text-slate-400">Luka</span>
             </div>
           </div>
@@ -324,7 +324,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                 {gap > 0 && (
                   <div
                     style={{ height: `${gap * 10}%` }}
-                    className="w-full bg-rose-500/10 border border-dashed border-rose-500/30 rounded-t relative overflow-hidden"
+                    className="w-full bg-danger-500/10 border border-dashed border-danger-500/30 rounded-t relative overflow-hidden"
                   ></div>
                 )}
 

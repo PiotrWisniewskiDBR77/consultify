@@ -304,14 +304,14 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
       ) : null}
 
       {workbench?.pendingPromotion ? (
-        <div className="mt-4 rounded-xl border border-rose-300/70 bg-rose-50/70 dark:bg-rose-500/10 p-3 text-sm text-rose-900 dark:text-rose-200">
+        <div className="mt-4 rounded-xl border border-danger-300/70 bg-danger-50/70 dark:bg-danger-500/10 p-3 text-sm text-danger-900 dark:text-danger-200">
           Pending promotion retry for `{workbench.pendingPromotion.targetKind}`:{' '}
           {workbench.pendingPromotion.error}
         </div>
       ) : null}
 
       {inlineError ? (
-        <div className="mt-4 rounded-xl border border-rose-300/70 bg-rose-50/70 dark:bg-rose-500/10 p-3 text-sm text-rose-900 dark:text-rose-200">
+        <div className="mt-4 rounded-xl border border-danger-300/70 bg-danger-50/70 dark:bg-danger-500/10 p-3 text-sm text-danger-900 dark:text-danger-200">
           <div className="font-medium">{inlineError}</div>
           {inlineErrorSteps.length ? (
             <ul className="mt-2 space-y-1">

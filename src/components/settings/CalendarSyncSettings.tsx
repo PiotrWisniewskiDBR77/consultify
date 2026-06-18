@@ -229,7 +229,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
                   </span>
                   <button
                     onClick={() => disconnectCalendar(cal.id)}
-                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded transition-colors"
+                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 rounded transition-colors"
                     title={t('common.disconnect', 'Disconnect')}
                   >
                     <X size={16} />

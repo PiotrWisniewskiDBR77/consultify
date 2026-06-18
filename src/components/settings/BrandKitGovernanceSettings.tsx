@@ -278,7 +278,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
       {saveError && (
         <div
           role="alert"
-          className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+          className="flex items-start gap-3 rounded-lg border border-danger-200 bg-danger-50 p-3 text-sm text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200"
         >
           <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
           <span>{saveError}</span>
@@ -399,7 +399,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                         />
                       </div>
                       {!isValidHex && value && (
-                        <p className="text-xs text-rose-500 mt-1">Invalid hex color</p>
+                        <p className="text-xs text-danger-500 mt-1">Invalid hex color</p>
                       )}
                     </div>
                   );

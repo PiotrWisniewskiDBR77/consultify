@@ -66,7 +66,7 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span>Gap Points:</span>
-              <span className={`font-bold ${gap > 0 ? 'text-rose-400' : 'text-green-400'}`}>
+              <span className={`font-bold ${gap > 0 ? 'text-danger-400' : 'text-green-400'}`}>
                 {gap > 0 ? `-${gap.toFixed(1)}` : 'Optimized'}
               </span>
             </div>

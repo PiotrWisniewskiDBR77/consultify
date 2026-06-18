@@ -274,10 +274,10 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4 rounded">
+          <div className="mb-6 bg-danger-50 dark:bg-danger-900/20 border-l-4 border-danger-500 p-4 rounded">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-rose-500" />
-              <p className="text-rose-700 dark:text-rose-300">{error}</p>
+              <AlertCircle className="w-5 h-5 text-danger-500" />
+              <p className="text-danger-700 dark:text-danger-300">{error}</p>
             </div>
           </div>
         )}
@@ -387,7 +387,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                     trend.direction === 'up'
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                       : trend.direction === 'down'
-                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                        ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300'
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
                 >
@@ -546,7 +546,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                               itemTrend.direction === 'up'
                                 ? 'text-green-600'
                                 : itemTrend.direction === 'down'
-                                  ? 'text-rose-600'
+                                  ? 'text-danger-600'
                                   : 'text-gray-500 dark:text-gray-400'
                             }`}
                           >
@@ -670,7 +670,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                     <span
                       className={`px-2 py-1 text-xs rounded ${
                         rec.priority === 'HIGH'
-                          ? 'bg-rose-100 text-rose-700'
+                          ? 'bg-danger-100 text-danger-700'
                           : 'bg-yellow-100 text-yellow-700'
                       }`}
                     >

@@ -32,7 +32,7 @@ const ACCENT_COLORS = [
   { key: 'crimson', name: 'Crimson', value: '#A51C30', class: 'bg-primary-500' },
   { key: 'blue', name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
   { key: 'emerald', name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
-  { key: 'rose', name: 'Rose', value: '#f43f5e', class: 'bg-rose-500' },
+  { key: 'rose', name: 'Rose', value: '#f43f5e', class: 'bg-danger-500' },
   { key: 'amber', name: 'Amber', value: '#f59e0b', class: 'bg-amber-500' },
   { key: 'cyan', name: 'Cyan', value: '#3b82f6', class: 'bg-blue-500' },
 ];

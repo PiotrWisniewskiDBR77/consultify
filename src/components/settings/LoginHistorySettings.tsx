@@ -51,7 +51,7 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
       case 'success':
         return <CheckCircle className="text-green-500" size={18} aria-label="Successful" />;
       case 'failed':
-        return <XCircle className="text-rose-500" size={18} aria-label="Failed" />;
+        return <XCircle className="text-danger-500" size={18} aria-label="Failed" />;
       case 'suspicious':
         return <AlertTriangle className="text-amber-500" size={18} aria-label="Suspicious" />;
       default:

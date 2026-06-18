@@ -174,7 +174,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                   toast.error('Failed to export PDF');
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded-lg text-sm font-semibold transition-colors"
             >
               <FileText size={16} />
               {t('assessment.reports.exportPDF', 'Export PDF')}

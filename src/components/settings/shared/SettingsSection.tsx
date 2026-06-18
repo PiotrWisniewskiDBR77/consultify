@@ -197,7 +197,7 @@ export const SettingsFormRow: React.FC<SettingsFormRowProps> = ({
   <div className={cn('space-y-2', className)}>
     <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-600">
       {label}
-      {required && <span className="text-rose-400 ml-1">*</span>}
+      {required && <span className="text-danger-400 ml-1">*</span>}
     </label>
     {children}
     {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
@@ -219,11 +219,11 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({ error, className, 
         'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
         'placeholder:text-slate-400 transition-all duration-200',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-        error ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+        error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
     />
-    {error && <p className="mt-1 text-xs text-rose-400">{error}</p>}
+    {error && <p className="mt-1 text-xs text-danger-400">{error}</p>}
   </div>
 );
 
@@ -246,11 +246,11 @@ export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
         'w-full px-4 py-3 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white resize-none',
         'placeholder:text-slate-400 transition-all duration-200',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-        error ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+        error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
     />
-    {error && <p className="mt-1 text-xs text-rose-400">{error}</p>}
+    {error && <p className="mt-1 text-xs text-danger-400">{error}</p>}
   </div>
 );
 
@@ -275,7 +275,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
         'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
         'transition-all duration-200 cursor-pointer',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-        error ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
+        error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
     >
@@ -285,7 +285,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
         </option>
       ))}
     </select>
-    {error && <p className="mt-1 text-xs text-rose-400">{error}</p>}
+    {error && <p className="mt-1 text-xs text-danger-400">{error}</p>}
   </div>
 );
 

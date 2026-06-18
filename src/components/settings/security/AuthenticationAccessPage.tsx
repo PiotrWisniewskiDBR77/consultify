@@ -332,7 +332,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       case 'success':
         return <CheckCircle size={14} className="text-emerald-500" />;
       case 'failed':
-        return <XCircle size={14} className="text-rose-500" />;
+        return <XCircle size={14} className="text-danger-500" />;
       case 'suspicious':
         return <AlertTriangle size={14} className="text-amber-500" />;
       default:
@@ -458,7 +458,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                       className="w-full px-3 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     />
                     {confirmPassword && !passwordsMatch && (
-                      <p className="text-xs text-rose-400 mt-1">
+                      <p className="text-xs text-danger-400 mt-1">
                         {t('settings.password.mismatch', 'Passwords do not match')}
                       </p>
                     )}
@@ -577,7 +577,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               {sessions.length > 1 && (
                 <button
                   onClick={revokeAllSessions}
-                  className="text-xs text-rose-400 hover:text-rose-300 transition-colors px-2 py-1 rounded-md hover:bg-rose-500/10"
+                  className="text-xs text-danger-400 hover:text-danger-300 transition-colors px-2 py-1 rounded-md hover:bg-danger-500/10"
                 >
                   {t('settings.authAccess.revokeAll', 'Revoke All Others')}
                 </button>
@@ -618,7 +618,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   {!session.current && (
                     <button
                       onClick={() => terminateSession(session.id)}
-                      className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                      className="p-1.5 text-danger-400 hover:bg-danger-500/10 rounded-lg transition-colors"
                       title={t('settings.authAccess.terminate', 'Terminate')}
                     >
                       <Trash2 size={14} />

@@ -474,19 +474,19 @@ const GateDetailsPanel: React.FC<{
             className={`flex items-center gap-2 p-2 rounded-lg ${
               criterion.isMet
                 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                : 'bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800'
+                : 'bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800'
             }`}
           >
             {criterion.isMet ? (
               <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
             ) : (
-              <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
+              <XCircle className="w-4 h-4 text-danger-600 dark:text-danger-400 flex-shrink-0" />
             )}
             <span
               className={`text-sm ${
                 criterion.isMet
                   ? 'text-green-700 dark:text-green-300'
-                  : 'text-rose-700 dark:text-rose-300'
+                  : 'text-danger-700 dark:text-danger-300'
               }`}
             >
               {criterion.criterion}

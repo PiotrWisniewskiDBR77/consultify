@@ -417,9 +417,9 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
 
               {/* Error Message */}
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg">
-                  <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
-                  <span className="text-sm text-rose-400">{error}</span>
+                <div className="flex items-center gap-2 p-3 bg-danger-500/10 border border-danger-500/30 rounded-lg">
+                  <AlertCircle size={16} className="text-danger-400 flex-shrink-0" />
+                  <span className="text-sm text-danger-400">{error}</span>
                 </div>
               )}
 

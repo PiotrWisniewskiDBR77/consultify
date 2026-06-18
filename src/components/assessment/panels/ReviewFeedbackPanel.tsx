@@ -175,8 +175,8 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
       id: 'REJECT',
       label: 'Odrzuć',
       icon: <XCircle size={20} />,
-      color: 'text-rose-600 dark:text-rose-400',
-      bgColor: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-500/30',
+      color: 'text-danger-600 dark:text-danger-400',
+      bgColor: 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-500/30',
     },
   ];
 
@@ -267,7 +267,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                 {/* Recommendation */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Twoja rekomendacja <span className="text-rose-500">*</span>
+                    Twoja rekomendacja <span className="text-danger-500">*</span>
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     {recommendations.map((rec) => (
@@ -310,7 +310,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Komentarze i feedback
-                    {recommendation === 'REJECT' && <span className="text-rose-500"> *</span>}
+                    {recommendation === 'REJECT' && <span className="text-danger-500"> *</span>}
                   </label>
                   <textarea
                     value={comments}
@@ -356,7 +356,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
 
                 {/* Error */}
                 {error && (
-                  <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
+                  <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 rounded-lg text-sm">
                     <AlertTriangle size={16} />
                     {error}
                   </div>

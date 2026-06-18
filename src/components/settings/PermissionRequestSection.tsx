@@ -78,7 +78,7 @@ const PRIORITY_OPTIONS: { value: PermissionRequestPriority; label: string; color
   { value: 'LOW', label: 'Low', color: 'text-slate-500 dark:text-slate-400' },
   { value: 'NORMAL', label: 'Normal', color: 'text-blue-500' },
   { value: 'HIGH', label: 'High', color: 'text-amber-500' },
-  { value: 'URGENT', label: 'Urgent', color: 'text-rose-500' },
+  { value: 'URGENT', label: 'Urgent', color: 'text-danger-500' },
 ];
 
 const STATUS_CONFIG = {
@@ -94,7 +94,7 @@ const STATUS_CONFIG = {
   },
   REJECTED: {
     icon: XCircle,
-    color: 'text-rose-500 bg-rose-50 dark:bg-rose-500/10',
+    color: 'text-danger-500 bg-danger-50 dark:bg-danger-500/10',
     label: 'Rejected',
   },
   CANCELLED: {
@@ -493,7 +493,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                     {request.status === 'PENDING' && (
                       <button
                         onClick={() => handleCancel(request.id)}
-                        className="text-sm text-rose-500 hover:text-rose-600 font-medium transition-colors"
+                        className="text-sm text-danger-500 hover:text-danger-600 font-medium transition-colors"
                       >
                         Cancel
                       </button>

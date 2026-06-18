@@ -340,7 +340,7 @@ const ProcessCard: React.FC<{
                 e.stopPropagation();
                 onDelete();
               }}
-              className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+              className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
             >
               <Trash2 size={16} />
             </button>
@@ -727,7 +727,7 @@ const WorkstationCard: React.FC<{
                 e.stopPropagation();
                 onDelete();
               }}
-              className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
+              className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg"
             >
               <Trash2 size={16} />
             </button>
@@ -1370,7 +1370,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                           </span>
                         )}
                         {!p.leanAssessment.standardWorkDefined && (
-                          <span className="text-xs px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 rounded">
+                          <span className="text-xs px-2 py-0.5 bg-danger-100 dark:bg-danger-900/30 text-danger-700 rounded">
                             {t('assessment.lean.noStdWork', 'No Std Work')}
                           </span>
                         )}

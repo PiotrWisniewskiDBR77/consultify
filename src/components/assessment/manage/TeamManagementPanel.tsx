@@ -280,9 +280,9 @@ const ROLE_CONFIG: Record<
   DECISION_OWNER: {
     label: 'Decision Owner',
     icon: ShieldCheck,
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-500/10',
-    borderColor: 'border-rose-200 dark:border-rose-500/30',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-500/10',
+    borderColor: 'border-danger-200 dark:border-danger-500/30',
     description: 'Final authority for a decision stream',
     permissions: ['Approve'],
   },
@@ -901,7 +901,7 @@ const TeamMemberRow: FC<{
             <button
               onClick={handleRemove}
               disabled={busy}
-              className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors disabled:opacity-50"
               title="Remove member"
             >
               <Trash2 size={14} />
@@ -1211,7 +1211,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                       {canManageTeam && (
                         <button
                           onClick={() => onRemoveAssignment(assignment.id)}
-                          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>

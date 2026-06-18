@@ -301,7 +301,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
               <div className="flex items-start justify-between mb-2">
                 <label className="font-medium text-sm flex-1">
                   {item.text}
-                  {item.required && <span className="text-rose-500 ml-1">*</span>}
+                  {item.required && <span className="text-danger-500 ml-1">*</span>}
                 </label>
                 {isCompleted && <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />}
               </div>
@@ -331,7 +331,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                     onClick={() => handleAnswer(item.id, false)}
                     className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${
                       answer === false
-                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25'
+                        ? 'bg-danger-500 text-white shadow-lg shadow-danger-500/25'
                         : forceDarkMode
                           ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
@@ -401,7 +401,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                           />
                           <button
                             onClick={() => handleRemovePhoto(idx)}
-                            className="absolute top-1 right-1 bg-rose-500 text-white rounded-full p-1"
+                            className="absolute top-1 right-1 bg-danger-500 text-white rounded-full p-1"
                           >
                             <X className="w-3 h-3" />
                           </button>

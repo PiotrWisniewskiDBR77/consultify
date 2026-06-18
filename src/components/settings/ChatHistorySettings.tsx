@@ -76,7 +76,7 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
         </button>
         <button
           onClick={handleClearHistory}
-          className="flex items-center gap-2 px-4 py-2 border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 border border-danger-300 dark:border-danger-800 text-danger-600 dark:text-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
         >
           <Trash2 size={16} />
           {t('settings.chat.clear', 'Clear All History')}

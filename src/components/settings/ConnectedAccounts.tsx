@@ -246,7 +246,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                     <button
                       onClick={() => handleDisconnect(provider.id)}
                       disabled={isDisconnecting}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-danger-600 hover:text-danger-700 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
                     >
                       {isDisconnecting ? (
                         <Loader2 size={14} className="animate-spin" />

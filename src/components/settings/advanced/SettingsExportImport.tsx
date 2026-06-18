@@ -393,12 +393,12 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
             {/* Validation Results */}
             {importValidation.errors.length > 0 && (
-              <div className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-lg">
-                <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-medium mb-2">
+              <div className="p-4 bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/20 rounded-lg">
+                <div className="flex items-center gap-2 text-danger-700 dark:text-danger-400 font-medium mb-2">
                   <AlertTriangle size={16} />
                   {t('settings.importExport.errorsFound', 'Errors Found')}
                 </div>
-                <ul className="text-sm text-rose-600 dark:text-rose-300 space-y-1">
+                <ul className="text-sm text-danger-600 dark:text-danger-300 space-y-1">
                   {importValidation.errors.map((err, i) => (
                     <li key={i}>- {err}</li>
                   ))}

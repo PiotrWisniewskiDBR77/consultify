@@ -387,7 +387,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(signature.id)}
-                      className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                      className="text-danger-600 hover:text-danger-700 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                       title={t('settings.signatures.delete', 'Delete')}
                     >
                       <Trash2 className="w-4 h-4" />

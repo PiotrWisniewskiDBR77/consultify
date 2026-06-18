@@ -1013,8 +1013,8 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
             {/* AI Error Display */}
             {ai.error && (
-              <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg">
-                <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 text-sm">
+              <div className="mt-4 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg">
+                <div className="flex items-center gap-2 text-danger-700 dark:text-danger-400 text-sm">
                   <AlertTriangle size={14} />
                   <span>AI Error: {ai.error}</span>
                   <button onClick={ai.clearError} className="ml-auto text-xs underline">

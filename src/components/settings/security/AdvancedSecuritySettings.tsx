@@ -366,7 +366,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Shield size={28} className="text-rose-500" />
+            <Shield size={28} className="text-danger-500" />
             {t('settings.security.advanced.title', 'Advanced Security')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -385,7 +385,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-rose-600 text-white'
+                  ? 'bg-danger-600 text-white'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
               }`}
             >
@@ -489,7 +489,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             </h3>
             <button
               onClick={() => setShowAddIP(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
             >
               <Plus size={16} />
               Add Rule
@@ -497,7 +497,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
           </div>
 
           {showAddIP && (
-            <div className="p-4 border border-rose-200 dark:border-rose-500/30 rounded-lg bg-rose-50 dark:bg-rose-500/5 space-y-4">
+            <div className="p-4 border border-danger-200 dark:border-danger-500/30 rounded-lg bg-danger-50 dark:bg-danger-500/5 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input
                   type="text"
@@ -526,7 +526,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 <button
                   onClick={handleAddIPRule}
                   disabled={saving}
-                  className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm disabled:opacity-50"
+                  className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm disabled:opacity-50"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : 'Add Rule'}
                 </button>
@@ -547,14 +547,14 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 className={`flex items-center justify-between p-4 rounded-lg border ${
                   rule.rule_type === 'allow'
                     ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
-                    : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
+                    : 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/30'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {rule.rule_type === 'allow' ? (
                     <Unlock size={18} className="text-green-600" />
                   ) : (
-                    <Lock size={18} className="text-rose-600" />
+                    <Lock size={18} className="text-danger-600" />
                   )}
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">{rule.ip_address}</p>
@@ -567,7 +567,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 </div>
                 <button
                   onClick={() => handleDeleteIPRule(rule.id)}
-                  className="p-2 hover:bg-white/50 dark:hover:bg-white/10 rounded-lg text-rose-600"
+                  className="p-2 hover:bg-white/50 dark:hover:bg-white/10 rounded-lg text-danger-600"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -592,7 +592,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             </h3>
             <button
               onClick={() => setShowAddQuestion(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
             >
               <Plus size={16} />
               Add Question
@@ -641,7 +641,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 <button
                   onClick={handleAddQuestion}
                   disabled={saving}
-                  className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm disabled:opacity-50"
+                  className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm disabled:opacity-50"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : 'Save Question'}
                 </button>
@@ -667,7 +667,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 </div>
                 <button
                   onClick={() => handleDeleteQuestion(q.id)}
-                  className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-rose-600"
+                  className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-danger-600"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -692,7 +692,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             </h3>
             <button
               onClick={() => setShowAddRecovery(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
             >
               <Plus size={16} />
               Add Recovery Contact
@@ -740,7 +740,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 <button
                   onClick={handleAddRecovery}
                   disabled={saving}
-                  className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm disabled:opacity-50"
+                  className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm disabled:opacity-50"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : 'Add Contact'}
                 </button>
@@ -792,7 +792,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 </div>
                 <button
                   onClick={() => handleDeleteRecovery(contact.id)}
-                  className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-rose-600"
+                  className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-danger-600"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -823,7 +823,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   location.is_trusted
                     ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
                     : location.risk_score > 50
-                      ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
+                      ? 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/30'
                       : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-navy-700'
                 }`}
               >
@@ -834,7 +834,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       location.is_trusted
                         ? 'text-green-600'
                         : location.risk_score > 50
-                          ? 'text-rose-600'
+                          ? 'text-danger-600'
                           : 'text-slate-600 dark:text-slate-500'
                     }
                   />
@@ -857,7 +857,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         </span>
                       )}
                       {location.is_tor && (
-                        <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded">
+                        <span className="text-xs bg-danger-100 text-danger-700 px-2 py-0.5 rounded">
                           Tor
                         </span>
                       )}
@@ -906,7 +906,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   activity.is_acknowledged
                     ? 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-navy-700 opacity-60'
                     : activity.severity === 'critical'
-                      ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
+                      ? 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/30'
                       : activity.severity === 'high'
                         ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
                         : 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/30'
@@ -918,7 +918,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       size={18}
                       className={
                         activity.severity === 'critical'
-                          ? 'text-rose-600'
+                          ? 'text-danger-600'
                           : activity.severity === 'high'
                             ? 'text-amber-600'
                             : 'text-yellow-600'
@@ -967,7 +967,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             <button
               onClick={handleSaveSettings}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               Save Settings
@@ -993,7 +993,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   securitySettings.enable_geolocation_alerts
-                    ? 'bg-rose-500'
+                    ? 'bg-danger-500'
                     : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >
@@ -1023,7 +1023,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   securitySettings.single_session_only
-                    ? 'bg-rose-500'
+                    ? 'bg-danger-500'
                     : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >

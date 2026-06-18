@@ -55,7 +55,7 @@ const AXIS_COLORS: Record<string, { bg: string; border: string; text: string }> 
   businessModels: { bg: 'bg-primary-50', border: 'border-primary-200', text: 'text-primary-700' },
   dataManagement: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' },
   culture: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' },
-  cybersecurity: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700' },
+  cybersecurity: { bg: 'bg-danger-50', border: 'border-danger-200', text: 'text-danger-700' },
   aiMaturity: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
 };
 

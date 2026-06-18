@@ -383,7 +383,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                         {dim.target}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded font-bold text-sm">
+                        <span className="px-2 py-1 bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 rounded font-bold text-sm">
                           -{dim.gap}
                         </span>
                       </td>
@@ -461,7 +461,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                   <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     Luka
                   </div>
-                  <div className="text-lg font-bold text-rose-600">-{dim.gap}</div>
+                  <div className="text-lg font-bold text-danger-600">-{dim.gap}</div>
                 </div>
               </div>
             );

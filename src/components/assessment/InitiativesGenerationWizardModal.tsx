@@ -694,7 +694,7 @@ export function InitiativesGenerationWizardModal(props: {
               </div>
 
               {progress?.error && (
-                <div className="text-sm text-rose-600 dark:text-rose-300">{progress.error}</div>
+                <div className="text-sm text-danger-600 dark:text-danger-300">{progress.error}</div>
               )}
 
               {runInitiatives.length > 0 && (

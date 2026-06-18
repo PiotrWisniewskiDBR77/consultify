@@ -80,7 +80,7 @@ const STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
     icon: <AlertCircle size={14} />,
   },
   ARCHIVED: {
@@ -393,7 +393,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                                 <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
                                   Duplicate
                                 </button>
-                                <button className="w-full text-left px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10">
+                                <button className="w-full text-left px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/10">
                                   Delete
                                 </button>
                               </div>

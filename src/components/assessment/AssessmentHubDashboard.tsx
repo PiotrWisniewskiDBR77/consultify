@@ -260,7 +260,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
 
           {/* Weakest Areas */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-rose-600">
+            <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-danger-600">
               <AlertCircle className="w-6 h-6" />
               Priority Gaps
             </h3>
@@ -271,7 +271,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     key={index}
                     className="flex items-center gap-2 text-gray-700 dark:text-gray-300"
                   >
-                    <div className="w-2 h-2 bg-rose-500 rounded-full" />
+                    <div className="w-2 h-2 bg-danger-500 rounded-full" />
                     {area}
                   </li>
                 ))}

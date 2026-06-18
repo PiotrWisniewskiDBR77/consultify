@@ -1675,7 +1675,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                       <button
                                         type="button"
                                         disabled={readOnly}
-                                        className="text-xs font-semibold text-slate-500 hover:text-rose-500"
+                                        className="text-xs font-semibold text-slate-500 hover:text-danger-500"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           removeLevelLink(lvl.level, u);

@@ -263,7 +263,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
             {filteredShortcuts.map((shortcut) => (
               <div
                 key={shortcut.id}
-                className={`grid grid-cols-[2fr,1fr,auto] gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-navy-950 ${shortcut.isConflicting ? 'bg-rose-50 dark:bg-rose-500/10' : ''}`}
+                className={`grid grid-cols-[2fr,1fr,auto] gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-navy-950 ${shortcut.isConflicting ? 'bg-danger-50 dark:bg-danger-500/10' : ''}`}
               >
                 <div>
                   <p className="font-medium text-slate-900 dark:text-white">
@@ -279,7 +279,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
                       </span>
                     )}
                     {shortcut.isConflicting && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-danger-100 dark:bg-danger-500/20 text-danger-600 dark:text-danger-400">
                         {t('settings.shortcuts.editor.conflict', 'Conflict')}
                       </span>
                     )}

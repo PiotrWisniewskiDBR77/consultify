@@ -233,7 +233,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
               ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
               : recoveryScore >= 1
                 ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
-                : 'border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-900/20'
+                : 'border-danger-200 bg-danger-50 dark:border-danger-800 dark:bg-danger-900/20'
           )}
         >
           <Shield
@@ -243,7 +243,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 ? 'text-emerald-600'
                 : recoveryScore >= 1
                   ? 'text-amber-600'
-                  : 'text-rose-600'
+                  : 'text-danger-600'
             )}
           />
           <AlertTitle
@@ -252,7 +252,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 ? 'text-emerald-800 dark:text-emerald-200'
                 : recoveryScore >= 1
                   ? 'text-amber-800 dark:text-amber-200'
-                  : 'text-rose-800 dark:text-rose-200'
+                  : 'text-danger-800 dark:text-danger-200'
             )}
           >
             {recoveryScore === 3
@@ -267,7 +267,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 ? 'text-emerald-700 dark:text-emerald-300'
                 : recoveryScore >= 1
                   ? 'text-amber-700 dark:text-amber-300'
-                  : 'text-rose-700 dark:text-rose-300'
+                  : 'text-danger-700 dark:text-danger-300'
             )}
           >
             {recoveryScore === 3

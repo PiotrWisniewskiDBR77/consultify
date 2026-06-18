@@ -65,7 +65,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   ASSESSMENT_DELETED: {
     label: 'Assessment deleted',
     icon: <FileText className="w-4 h-4" />,
-    color: 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30',
+    color: 'text-danger-600 dark:text-danger-400 bg-danger-100 dark:bg-danger-900/30',
   },
   LEVEL_ACHIEVED: {
     label: 'Level marked as achieved',
@@ -130,7 +130,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   TEAM_MEMBER_REMOVED: {
     label: 'Team member removed',
     icon: <User className="w-4 h-4" />,
-    color: 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30',
+    color: 'text-danger-600 dark:text-danger-400 bg-danger-100 dark:bg-danger-900/30',
   },
 };
 
@@ -259,11 +259,11 @@ export const ActivityLogPanel: React.FC<Props> = ({ assessmentId, className }) =
   if (error) {
     return (
       <div className={`p-6 ${className || ''}`}>
-        <div className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg text-rose-700 dark:text-rose-300">
+        <div className="flex items-center gap-3 p-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg text-danger-700 dark:text-danger-300">
           <span>{error}</span>
           <button
             onClick={handleRefresh}
-            className="ml-auto px-3 py-1 text-sm font-medium bg-rose-100 dark:bg-rose-900/30 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/50"
+            className="ml-auto px-3 py-1 text-sm font-medium bg-danger-100 dark:bg-danger-900/30 rounded-lg hover:bg-danger-200 dark:hover:bg-danger-900/50"
           >
             Retry
           </button>

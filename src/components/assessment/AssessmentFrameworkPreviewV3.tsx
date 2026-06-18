@@ -27,7 +27,7 @@ export const AssessmentFrameworkPreviewV3Body: React.FC<{
           <span className="inline-flex items-center h-6 px-2 rounded-full text-[11px] border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 font-mono">
             {String(item.framework || '').toUpperCase()}
           </span>
-          <span className="inline-flex items-center h-6 px-2 rounded-full text-[11px] border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-300">
+          <span className="inline-flex items-center h-6 px-2 rounded-full text-[11px] border border-danger-500/30 bg-danger-500/10 text-danger-600 dark:text-danger-300">
             {isPolish ? 'Assessment' : 'Assessment'}
           </span>
         </div>

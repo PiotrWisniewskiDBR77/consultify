@@ -85,7 +85,7 @@ const STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
     icon: <AlertCircle className="w-3.5 h-3.5" />,
   },
   ARCHIVED: {
@@ -381,7 +381,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg text-rose-700 dark:text-rose-300">
+        <div className="flex items-center gap-3 p-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg text-danger-700 dark:text-danger-300">
           <AlertCircle className="w-5 h-5" />
           <span>{error}</span>
         </div>
@@ -564,7 +564,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                               setDeleteConfirmId(assessment.id);
                               setOpenMenuId(null);
                             }}
-                            className="w-full px-4 py-2 text-left text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                            className="w-full px-4 py-2 text-left text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 flex items-center gap-2"
                           >
                             <Trash2 className="w-4 h-4" />
                             Delete
@@ -585,8 +585,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
-                <AlertCircle className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+              <div className="p-2 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-danger-600 dark:text-danger-400" />
               </div>
               <h3 className="text-lg font-bold text-navy-900 dark:text-white">Confirm Deletion</h3>
             </div>
@@ -602,7 +602,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-lg transition-colors"
+                className="flex-1 py-2.5 bg-danger-600 hover:bg-danger-500 text-white font-medium rounded-lg transition-colors"
               >
                 Delete
               </button>
