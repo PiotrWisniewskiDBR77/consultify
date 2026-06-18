@@ -137,7 +137,7 @@ export const IdeaCanvasToolSelector: React.FC<IdeaCanvasToolSelectorProps> = ({
               relative flex items-center justify-center p-2 rounded-full
               text-slate-500 dark:text-slate-400
               transition-all duration-200 ease-out
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 focus-visible:ring-offset-1
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-1
               ${
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed'

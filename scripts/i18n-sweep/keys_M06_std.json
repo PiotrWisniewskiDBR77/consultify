@@ -1,0 +1,21 @@
+{
+  "mindmap.scenes.addScene": { "pl": "Dodaj widok", "en": "Add scene" },
+  "mindmap.scenes.closePanel": { "pl": "Zamknij panel widoków", "en": "Close scenes panel" },
+  "mindmap.scenes.close": { "pl": "Zamknij", "en": "Close" },
+  "mindmap.scenes.moveUp": { "pl": "Przesuń w górę", "en": "Move up" },
+  "mindmap.scenes.moveDown": { "pl": "Przesuń w dół", "en": "Move down" },
+  "mindmap.scenes.rename": { "pl": "Zmień nazwę", "en": "Rename" },
+  "mindmap.scenes.deleteScene": { "pl": "Usuń widok", "en": "Delete scene" },
+  "mindmap.scenes.previous": { "pl": "Poprzedni widok", "en": "Previous scene" },
+  "mindmap.scenes.next": { "pl": "Następny widok", "en": "Next scene" },
+  "mindmap.scenes.sceneN": { "pl": "Widok", "en": "Scene" },
+  "mindmap.scenes.exitPresentation": { "pl": "Zakończ prezentację", "en": "Exit presentation" },
+
+  "mindmap.drawing.decreaseStroke": { "pl": "Zmniejsz grubość", "en": "Decrease stroke width" },
+  "mindmap.drawing.increaseStroke": { "pl": "Zwiększ grubość", "en": "Increase stroke width" },
+  "mindmap.drawing.color": { "pl": "Kolor", "en": "Color" },
+  "mindmap.drawing.undo": { "pl": "Cofnij", "en": "Undo" },
+  "mindmap.drawing.redo": { "pl": "Ponów", "en": "Redo" },
+  "mindmap.drawing.clear": { "pl": "Wyczyść rysunek", "en": "Clear drawing" },
+  "mindmap.drawing.close": { "pl": "Zamknij rysowanie", "en": "Close drawing" }
+}

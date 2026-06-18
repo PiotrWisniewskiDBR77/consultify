@@ -167,12 +167,16 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
               )}
               <button
                 onClick={handleAddScene}
+                aria-label={isPl ? 'Dodaj widok' : 'Add scene'}
+                title={isPl ? 'Dodaj widok' : 'Add scene'}
                 className="p-1 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <Plus size={12} />
               </button>
               <button
                 onClick={() => setExpanded(false)}
+                aria-label={isPl ? 'Zamknij panel widoków' : 'Close scenes panel'}
+                title={isPl ? 'Zamknij' : 'Close'}
                 className="p-1 rounded-lg text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <X size={12} />
@@ -212,6 +216,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleMoveScene(scene.id, 'up');
                     }}
+                    aria-label={isPl ? 'Przesuń w górę' : 'Move up'}
+                    title={isPl ? 'Przesuń w górę' : 'Move up'}
                     className="p-0.5 text-slate-600 hover:text-slate-600"
                   >
                     <ChevronUp size={10} />
@@ -221,6 +227,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleMoveScene(scene.id, 'down');
                     }}
+                    aria-label={isPl ? 'Przesuń w dół' : 'Move down'}
+                    title={isPl ? 'Przesuń w dół' : 'Move down'}
                     className="p-0.5 text-slate-600 hover:text-slate-600"
                   >
                     <ChevronDown size={10} />
@@ -231,6 +239,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       setEditingId(scene.id);
                       setEditName(scene.name);
                     }}
+                    aria-label={isPl ? 'Zmień nazwę' : 'Rename'}
+                    title={isPl ? 'Zmień nazwę' : 'Rename'}
                     className="p-0.5 text-slate-600 hover:text-primary-500"
                   >
                     <Edit3 size={10} />
@@ -240,6 +250,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleDeleteScene(scene.id);
                     }}
+                    aria-label={isPl ? 'Usuń widok' : 'Delete scene'}
+                    title={isPl ? 'Usuń widok' : 'Delete scene'}
                     className="p-0.5 text-slate-600 hover:text-danger-500"
                   >
                     <Trash2 size={10} />
@@ -262,6 +274,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 if (scenes[prev]) onNavigateToScene(scenes[prev].viewport);
               }}
               disabled={currentSlide === 0}
+              aria-label={isPl ? 'Poprzedni widok' : 'Previous scene'}
               className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
             >
               <ArrowLeft size={18} />
@@ -275,6 +288,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                     setCurrentSlide(i);
                     if (scenes[i]) onNavigateToScene(scenes[i].viewport);
                   }}
+                  aria-label={`${isPl ? 'Widok' : 'Scene'} ${i + 1}`}
+                  aria-current={i === currentSlide}
                   className={`w-2 h-2 rounded-full transition-all ${
                     i === currentSlide ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/60'
                   }`}
@@ -289,6 +304,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 if (scenes[next]) onNavigateToScene(scenes[next].viewport);
               }}
               disabled={currentSlide === scenes.length - 1}
+              aria-label={isPl ? 'Następny widok' : 'Next scene'}
               className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
             >
               <ArrowRight size={18} />
@@ -305,6 +321,8 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 setPresentationMode(false);
                 if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
               }}
+              aria-label={isPl ? 'Zakończ prezentację' : 'Exit presentation'}
+              title={isPl ? 'Zakończ prezentację' : 'Exit presentation'}
               className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors ml-2"
             >
               <Minimize2 size={16} />
