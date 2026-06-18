@@ -48,15 +48,15 @@ const STATUS_META: Record<
   },
   pending: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-500', icon: Clock },
   disputed: {
-    bg: 'bg-rose-500/10',
-    text: 'text-rose-400',
-    dot: 'bg-rose-500',
+    bg: 'bg-danger-500/10',
+    text: 'text-danger-400',
+    dot: 'bg-danger-500',
     icon: AlertTriangle,
   },
   escalated: {
-    bg: 'bg-rose-500/15',
-    text: 'text-rose-300',
-    dot: 'bg-rose-600',
+    bg: 'bg-danger-500/15',
+    text: 'text-danger-300',
+    dot: 'bg-danger-600',
     icon: AlertTriangle,
   },
 };
@@ -255,7 +255,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
         </div>
         <div className="flex items-center gap-3">
           {summary && summary.mismatchCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-400">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-danger-500/10 px-2.5 py-0.5 text-xs font-medium text-danger-400">
               <AlertTriangle size={12} />
               {t('results.reconciliation.mismatches', '{{count}} mismatch', {
                 count: summary.mismatchCount,

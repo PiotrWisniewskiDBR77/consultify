@@ -84,7 +84,7 @@ function normalizePortfolioSummary(
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
   'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
-  below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
+  below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
 
@@ -349,7 +349,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
 
   const statusFilterOptions: FilterOption[] = [
     { value: 'on-track', label: t('results.roi.statusOnTrack', 'On track'), color: 'bg-slate-400' },
-    { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-rose-500' },
+    { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-danger-500' },
     { value: 'above', label: t('results.roi.statusAbove', 'Above plan'), color: 'bg-emerald-500' },
   ];
 
@@ -391,7 +391,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
             {totalVariance >= 0 ? (
               <TrendingUp size={16} className="text-emerald-400" />
             ) : (
-              <TrendingDown size={16} className="text-rose-400" />
+              <TrendingDown size={16} className="text-danger-400" />
             )}
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roi.overallVariance', 'Overall Variance')}
@@ -402,7 +402,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
               totalVariance > 0
                 ? 'text-emerald-400'
                 : totalVariance < 0
-                  ? 'text-rose-400'
+                  ? 'text-danger-400'
                   : 'text-slate-600'
             }`}
           >
@@ -496,7 +496,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                     varPct > 0
                       ? 'text-emerald-400'
                       : varPct < 0
-                        ? 'text-rose-400'
+                        ? 'text-danger-400'
                         : 'text-slate-600';
 
                   return (

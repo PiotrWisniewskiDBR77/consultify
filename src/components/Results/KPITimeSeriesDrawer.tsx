@@ -613,12 +613,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         label: t('results.columns.current', 'Current'),
         value:
           kpi.latestValue != null ? `${kpi.latestValue}${kpi.unit ? ' ' + kpi.unit : ''}` : '—',
-        color: kpi.isOnTarget ? 'text-emerald-400' : 'text-rose-400',
+        color: kpi.isOnTarget ? 'text-emerald-400' : 'text-danger-400',
       },
       {
         label: t('results.drawer.gap', 'Gap'),
         value: gap != null ? `${gap > 0 ? '+' : ''}${gap}${kpi.unit ? ' ' + kpi.unit : ''}` : '—',
-        color: gap != null ? (gap <= 0 ? 'text-emerald-400' : 'text-rose-400') : undefined,
+        color: gap != null ? (gap <= 0 ? 'text-emerald-400' : 'text-danger-400') : undefined,
       },
     ];
   }, [kpi, t]);
@@ -810,7 +810,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         hint: previous
           ? `${measurementLabel(previous)} -> ${measurementLabel(latest!)}`
           : t('results.drawer.periodOnPeriodHint', 'Need at least two measurements'),
-        color: delta == null ? undefined : delta >= 0 ? 'text-emerald-400' : 'text-rose-400',
+        color: delta == null ? undefined : delta >= 0 ? 'text-emerald-400' : 'text-danger-400',
         icon: <GitBranch size={14} className="text-sky-400" />,
       },
       {
@@ -837,7 +837,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             ? undefined
             : projection >= Number(kpi.targetValue)
               ? 'text-emerald-400'
-              : 'text-rose-400',
+              : 'text-danger-400',
         icon: <TrendingUp size={14} className="text-emerald-400" />,
       },
     ] satisfies MetricStat[];
@@ -896,11 +896,11 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         ),
         color:
           kpi.status === 'below'
-            ? 'text-rose-400'
+            ? 'text-danger-400'
             : kpi.status === 'on-target'
               ? 'text-emerald-400'
               : 'text-slate-600',
-        icon: <AlertTriangle size={14} className="text-rose-400" />,
+        icon: <AlertTriangle size={14} className="text-danger-400" />,
       },
       {
         label: t('results.drawer.alertReconciliation', 'Reconciliation'),
@@ -913,7 +913,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         ),
         color: openCase
           ? openCase.severity === 'RED'
-            ? 'text-rose-400'
+            ? 'text-danger-400'
             : 'text-amber-400'
           : 'text-emerald-400',
         icon: <ShieldAlert size={14} className="text-blue-400" />,
@@ -930,7 +930,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         ),
         color:
           actionAgeing != null && actionAgeing > 7
-            ? 'text-rose-400'
+            ? 'text-danger-400'
             : 'text-slate-900 dark:text-white',
         icon: <Calendar size={14} className="text-primary-400" />,
       },
@@ -997,7 +997,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
   const caseBadgeCls =
     openCase?.severity === 'RED'
-      ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+      ? 'bg-danger-500/10 text-danger-400 border-danger-500/30'
       : openCase?.severity === 'AMBER'
         ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
         : 'bg-slate-500/10 text-slate-600 border-slate-500/30';
@@ -1148,7 +1148,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       kpi.isOnTarget
                         ? 'bg-emerald-500/10 text-emerald-400'
                         : kpi.latestValue != null
-                          ? 'bg-rose-500/10 text-rose-400'
+                          ? 'bg-danger-500/10 text-danger-400'
                           : 'bg-slate-500/10 text-slate-600'
                     }`}
                   >
@@ -1157,7 +1157,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         kpi.isOnTarget
                           ? 'bg-emerald-500'
                           : kpi.latestValue != null
-                            ? 'bg-rose-500'
+                            ? 'bg-danger-500'
                             : 'bg-slate-400'
                       }`}
                     />
@@ -1334,7 +1334,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${caseBadgeCls}`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-rose-500' : 'bg-amber-500'}`}
+                          className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-danger-500' : 'bg-amber-500'}`}
                         />
                         {openCase.severity} · {openCase.status}
                       </span>
@@ -1562,7 +1562,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           >
                             <div
                               className={`w-full rounded-t transition-all ${
-                                isAboveTarget ? 'bg-emerald-500/60' : 'bg-rose-500/40'
+                                isAboveTarget ? 'bg-emerald-500/60' : 'bg-danger-500/40'
                               } group-hover/bar:opacity-80`}
                               style={{ height: `${Math.max(pct, 2)}%` }}
                             />
@@ -1722,7 +1722,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                                     kpi?.targetValue != null &&
                                     Number(m.value) >= Number(kpi.targetValue)
                                       ? 'text-emerald-400'
-                                      : 'text-rose-400'
+                                      : 'text-danger-400'
                                   }
                                 >
                                   {kpi?.targetValue != null
@@ -2145,13 +2145,13 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   {normalizedSection === 'definition' && (
                     <div
                       id="kpi-drawer-danger"
-                      className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 scroll-mt-4"
+                      className="rounded-lg border border-danger-500/20 bg-danger-500/5 p-4 scroll-mt-4"
                     >
                       <button
                         type="button"
                         disabled={deleting}
                         onClick={() => void handleDeleteKpi()}
-                        className="w-full h-9 text-sm font-medium rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-300 hover:bg-rose-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        className="w-full h-9 text-sm font-medium rounded-full border border-danger-500/30 bg-danger-500/10 text-danger-600 dark:text-danger-300 hover:bg-danger-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                       >
                         <Trash2 size={16} />
                         {deleting
@@ -2230,7 +2230,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                               type="button"
                               disabled={mappingBusy}
                               onClick={() => void handleUnlinkMapping(m.id)}
-                              className="text-slate-600 hover:text-rose-400 transition-colors disabled:opacity-60"
+                              className="text-slate-600 hover:text-danger-400 transition-colors disabled:opacity-60"
                               title={t('common.remove', 'Remove')}
                             >
                               <X size={12} />

@@ -80,7 +80,7 @@ const statusToneToChip = (tone: SignalSheetRecord['statusTone']): StatusTone => 
 
 const toneClassName = (tone: SignalSheetRecord['statusTone']) => {
   if (tone === 'amber') return 'bg-amber-500/10 text-amber-600 dark:text-amber-300';
-  if (tone === 'red') return 'bg-rose-500/10 text-rose-500';
+  if (tone === 'red') return 'bg-danger-500/10 text-danger-500';
   if (tone === 'emerald') return 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-300';
   if (tone === 'primary') return 'bg-primary-500/10 text-primary-600 dark:text-primary-300';
   return 'bg-slate-500/10 text-slate-500 dark:text-slate-300';
