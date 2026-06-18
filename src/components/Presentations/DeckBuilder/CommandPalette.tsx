@@ -269,7 +269,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('presentations.builder.commandPalette.placeholder', 'Type a command...')}
-            className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-white placeholder-slate-400"
+            className="flex-1 bg-transparent text-sm outline-none focus:ring-2 focus:ring-primary-500/30 text-slate-700 dark:text-white placeholder-slate-400"
           />
           <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 border border-slate-200 dark:border-navy-700">
             ESC

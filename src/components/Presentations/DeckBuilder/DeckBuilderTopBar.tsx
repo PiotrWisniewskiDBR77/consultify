@@ -148,7 +148,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
             onChange={(e) => onTitleChange(e.target.value)}
             onBlur={() => setEditing(false)}
             onKeyDown={(e) => e.key === 'Enter' && setEditing(false)}
-            className="bg-transparent border-b border-primary-500 text-slate-900 dark:text-white text-sm font-medium outline-none min-w-[200px]"
+            className="bg-transparent border-b border-primary-500 text-slate-900 dark:text-white text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/30 min-w-[200px]"
           />
         ) : (
           <button
@@ -301,7 +301,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
 
       <button
         onClick={onPresent}
-        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800"
+        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800"
       >
         <Monitor size={14} />
         <span>{t('presentations.builder.topBar.present', 'Present')}</span>

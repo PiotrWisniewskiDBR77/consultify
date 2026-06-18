@@ -247,7 +247,7 @@ const TemplateCard: React.FC<{
           {onSelect && (
             <button
               onClick={onSelect}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg hover:bg-navy-800"
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm font-medium rounded-lg hover:bg-navy-800"
             >
               <Sparkles size={14} /> {t('presentations.templates.use', 'Use')}
             </button>

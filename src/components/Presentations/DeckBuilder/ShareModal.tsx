@@ -150,7 +150,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     placeholder="email@example.com"
                     className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm"
                   />
-                  <button className="px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm hover:bg-navy-800">
+                  <button className="px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm hover:bg-navy-800">
                     <Mail size={14} />
                   </button>
                 </div>
@@ -297,7 +297,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   <button
                     onClick={generateShareLink}
                     disabled={generatingLink}
-                    className="px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm hover:bg-navy-800 disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm hover:bg-navy-800 disabled:opacity-50"
                   >
                     {generatingLink ? (
                       <Loader2 size={14} className="animate-spin inline mr-1" />
