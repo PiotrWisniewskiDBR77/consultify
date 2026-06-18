@@ -2508,46 +2508,18 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.status }}>
             {(() => {
               const st = item.itemStatus || (item.triaged ? 'done' : 'open');
-              const cfg: Record<string, { color: string; dot: string; label: string }> = {
-                open: {
-                  // VISUAL_STANDARD.md §5.3 — Open = info (blue), never orange.
-                  color:
-                    'border border-slate-200 bg-white text-slate-700 dark:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] dark:text-c-info dark:border-transparent',
-                  dot: 'bg-c-info',
-                  label: isPolish ? 'Otwarte' : 'Open',
-                },
-                done: {
-                  color:
-                    'border border-slate-200 bg-white text-slate-700 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-transparent',
-                  dot: 'bg-emerald-500',
-                  label: isPolish ? 'Gotowe' : 'Done',
-                },
-                saved: {
-                  color:
-                    'border border-slate-200 bg-white text-slate-700 dark:bg-blue-500/15 dark:text-blue-300 dark:border-transparent',
-                  dot: 'bg-blue-500',
-                  label: isPolish ? 'Zapisane' : 'Saved',
-                },
-                snoozed: {
-                  color:
-                    'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent',
-                  dot: 'bg-amber-500',
-                  label: isPolish ? 'Odłożone' : 'Snoozed',
-                },
-                dismissed: {
-                  color:
-                    'border border-slate-200 bg-white text-slate-600 dark:bg-slate-500/15 dark:text-slate-300 dark:border-transparent',
-                  dot: 'bg-slate-400',
-                  label: isPolish ? 'Odłożone' : 'Dismissed',
-                },
+              const labels: Record<string, string> = {
+                open: isPolish ? 'Otwarte' : 'Open',
+                done: isPolish ? 'Gotowe' : 'Done',
+                saved: isPolish ? 'Zapisane' : 'Saved',
+                snoozed: isPolish ? 'Odłożone' : 'Snoozed',
+                dismissed: isPolish ? 'Odłożone' : 'Dismissed',
               };
-              const c = cfg[st] || cfg.open;
               return (
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${c.color}`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-                  {c.label}
+                <span className="inline-flex items-center gap-1.5">
+                  {/* EntityStatusChip carries the canonical filled signal shell
+                      (info/success/… ) in both light and dark — §5 / SYS-3. */}
+                  <EntityStatusChip status={st} label={labels[st] || labels.open} />
                   {item.isActionable && <Zap size={10} className="text-amber-500" />}
                 </span>
               );
@@ -2948,8 +2920,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             'group relative rounded-xl border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
             'bg-white dark:bg-navy-900',
             'hover:shadow-md',
-            isSelected ? 'ring-2 ring-primary-400/50' : '',
-            isPreviewed ? 'ring-2 ring-primary-400/40' : '',
+            isSelected ? 'ring-2 ring-[var(--c-info)]/50' : '',
+            isPreviewed ? 'ring-2 ring-[var(--c-info)]/40' : '',
           ].join(' ')}
           onClick={() => preview(item)}
           onDoubleClick={() => open(item)}
