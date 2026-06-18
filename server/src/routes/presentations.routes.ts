@@ -1391,7 +1391,11 @@ router.get(
     try {
       await ensureDeckLineageSchema();
       const rows = await dbAll(
-        `SELECT id, title, description, deck_type, audience, goal, language, theme, presentation_mode, slide_count, status, export_format, exported_at, created_at, updated_at, source_id, thumbnail_url, source_refs_json FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
+        `SELECT pd.id, pd.title, pd.description, pd.deck_type, pd.audience, pd.goal, pd.language, pd.theme, pd.presentation_mode, pd.slide_count, pd.status, pd.export_format, pd.exported_at, pd.created_at, pd.updated_at, pd.source_id, pd.thumbnail_url, pd.source_refs_json, pd.created_by,
+                (u.first_name || ' ' || u.last_name) AS created_by_name
+         FROM presentation_decks pd
+         LEFT JOIN users u ON u.id = pd.created_by
+         WHERE pd.organization_id = ? ORDER BY pd.updated_at DESC`,
         [orgId]
       );
       res.json({ success: true, data: rows || [] });
