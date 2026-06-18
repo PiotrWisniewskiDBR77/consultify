@@ -42,6 +42,7 @@ import {
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { type RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { AssigneeCell } from '../ui/primitives/cells/AssigneeCell';
 import { DeckTemplateGallery } from './DeckTemplateGallery';
 
 // ---------------------------------------------------------------------------
@@ -133,7 +134,7 @@ export const PresentationsHub: React.FC = () => {
         id: r.id,
         title: r.title || 'Untitled',
         createdAt: r.created_at || r.createdAt || new Date().toISOString(),
-        createdBy: r.created_by || r.createdBy || '—',
+        createdBy: r.created_by_name || r.createdByName || r.created_by || r.createdBy || '—',
         sourceType: r.deck_type || r.sourceType || 'tool',
         sourceId: r.source_id || r.sourceId,
         lastExportAt: r.exported_at || r.lastExportAt,
@@ -273,12 +274,12 @@ export const PresentationsHub: React.FC = () => {
         label: t('presentations.columns.owner', 'Owner'),
         width: '140px',
         filterable: true,
-        filterOptions: [...new Set(allDecks.map((d) => d.createdBy))].map((owner) => ({
-          value: owner,
-          label: owner,
-        })),
+        filterOptions: [...new Set(allDecks.map((d) => d.createdBy))]
+          .filter(Boolean)
+          .filter((o) => o !== '—')
+          .map((owner) => ({ value: owner, label: owner })),
         render: (row) => (
-          <span className="text-sm text-slate-600 dark:text-slate-300">{row.createdBy || '—'}</span>
+          <AssigneeCell name={row.createdBy === '—' ? null : row.createdBy} />
         ),
       },
       {
