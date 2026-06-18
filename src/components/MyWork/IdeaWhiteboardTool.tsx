@@ -129,6 +129,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   onContextMenu: externalOnContextMenu,
 }) => {
   const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
+  const { t } = useTranslation();
   const isDarkCanvas = useIsDark();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [showMiniMap, setShowMiniMap] = React.useState(false);
@@ -1420,7 +1421,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       setEdges((eds: Edge[]) => {
         const next = addEdge({ ...connection, type: 'labeled' }, eds);
         // L-02: broadcast the newly created edge to collaborators.
-        const added = next.find((e) => !eds.some((prev) => prev.id === e.id));
+        const added = next.find((e: Edge) => !eds.some((prev) => prev.id === e.id));
         if (added) collab.broadcastEdgeAdd(added);
         return next;
       });
