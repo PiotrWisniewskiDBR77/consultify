@@ -200,7 +200,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               'presentations.sources.searchArtifacts',
               'Search project, study, report, initiative...'
             )}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
           />
           <select
             value={typeFilter}
@@ -208,7 +208,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               setTypeFilter(event.target.value);
               setVisibleCount(12);
             }}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
           >
             {artifactTypes.map((type) => (
               <option key={type} value={type}>
@@ -336,7 +336,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
         <button
           onClick={onNext}
           disabled={selectedSources.length === 0}
-          className="flex items-center gap-2 px-6 py-3 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-xl hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-6 py-3 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 font-medium rounded-xl hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('common.next', 'Next')} <ArrowRight size={16} />
         </button>

@@ -165,7 +165,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
               'presentations.builder.editCard.prompt',
               'How would you like to edit this card?'
             )}
-            className="flex-1 text-xs bg-transparent border-none outline-none text-slate-700 dark:text-slate-300"
+            className="flex-1 text-xs bg-transparent border-none outline-none focus:ring-2 focus:ring-primary-500/30 text-slate-700 dark:text-slate-300"
           />
           <button
             onClick={handleSend}
