@@ -10,8 +10,8 @@
  */
 
 
-const request = require('supertest');
-const app = require('../../server/index');
+import request from 'supertest';
+import app from '../../server/src/index.js';
 
 // Skip if no test database configured
 const SKIP_INTEGRATION = process.env.SKIP_INTEGRATION_TESTS === 'true';
