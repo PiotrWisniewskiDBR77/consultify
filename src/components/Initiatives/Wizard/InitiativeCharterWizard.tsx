@@ -135,12 +135,12 @@ const Disclosure: React.FC<{
 const QuadrantMatrix: React.FC<{ impact: Band; effort: Effort; isPolish: boolean }> = ({
   impact,
   effort,
-  isPolish,
 }) => {
+  const { t } = useTranslation();
   const active = deriveQuadrant(impact, effort).key;
   const impactHigh = IMPACT_RANK[impact] >= 3;
   const effortHigh = effort === 'L';
-  const cell = (key: string, labelPl: string, labelEn: string) => (
+  const cell = (key: string, label: string) => (
     <div
       className={`flex h-12 items-center justify-center rounded-lg border text-[11px] font-semibold transition-all ${
         active === key
@@ -148,25 +148,25 @@ const QuadrantMatrix: React.FC<{ impact: Band; effort: Effort; isPolish: boolean
           : 'border-slate-200 bg-white text-slate-400 dark:border-navy-700/60 dark:bg-navy-800/40'
       }`}
     >
-      {isPolish ? labelPl : labelEn}
+      {label}
     </div>
   );
   return (
     <div className="flex items-stretch gap-2">
       <div className="flex flex-col justify-between py-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-        <span>{isPolish ? 'Duży wpływ' : 'High impact'}</span>
-        <span>{isPolish ? 'Mały wpływ' : 'Low impact'}</span>
+        <span>{t('initiatives.initiativeCharterWizard.highImpact')}</span>
+        <span>{t('initiatives.initiativeCharterWizard.lowImpact')}</span>
       </div>
       <div className="flex-1">
         <div className="grid grid-cols-2 gap-2">
-          {cell('quick_win', 'Quick win', 'Quick win')}
-          {cell('big_bet', 'Duży zakład', 'Big bet')}
-          {cell('fill_in', 'Uzupełnienie', 'Fill-in')}
-          {cell('reconsider', 'Do rozważenia', 'Reconsider')}
+          {cell('quick_win', 'Quick win')}
+          {cell('big_bet', t('initiatives.initiativeCharterWizard.bigBet'))}
+          {cell('fill_in', t('initiatives.initiativeCharterWizard.fillIn'))}
+          {cell('reconsider', t('initiatives.initiativeCharterWizard.reconsider'))}
         </div>
         <div className="mt-1 flex justify-between text-[10px] font-medium uppercase tracking-wide text-slate-400">
-          <span>{isPolish ? 'Mały wysiłek' : 'Low effort'}</span>
-          <span>{isPolish ? 'Duży wysiłek' : 'High effort'}</span>
+          <span>{t('initiatives.initiativeCharterWizard.lowEffort')}</span>
+          <span>{t('initiatives.initiativeCharterWizard.highEffort')}</span>
         </div>
       </div>
       <span className="sr-only">

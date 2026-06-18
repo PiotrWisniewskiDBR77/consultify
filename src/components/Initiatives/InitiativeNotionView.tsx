@@ -18,6 +18,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useContext, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { SECTION_REGISTRY } from './sections';
 import { InitiativeContext } from './sections/InitiativeContext';
@@ -167,6 +168,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
   onSelectSection,
   isPolish,
 }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
 
   // B7.2: Access initiative context for key info bar (null when outside provider)
@@ -227,12 +229,12 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
     if (rest.length) {
       groups.push({
         id: 'other',
-        label: isPolish ? 'Pozostałe' : 'Other',
+        label: t('initiatives.initiativeNotionView.other'),
         sections: rest,
       });
     }
     return groups;
-  }, [queryFiltered, isPolish]);
+  }, [queryFiltered, isPolish, t]);
 
   const selectedSection = useMemo(() => {
     return allSorted.find((s) => s.key === selectedSectionKey) || allSorted[0] || null;
@@ -277,14 +279,14 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
         <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Spis treści' : 'Contents'}
+              {t('initiatives.initiativeNotionView.contents')}
             </div>
             <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50/80 dark:bg-navy-800/70 border border-slate-200/70 dark:border-navy-700/60">
               <Search size={14} className="text-slate-600" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={isPolish ? 'Szukaj sekcji…' : 'Search sections…'}
+                placeholder={t('initiatives.initiativeNotionView.searchSections')}
                 className="w-full bg-transparent outline-none text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
               />
             </div>
@@ -326,7 +328,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
               <div className="flex items-center gap-1.5 mb-1">
                 <Target size={11} className="text-blue-500" />
                 <span className="text-[9px] font-semibold text-slate-600 uppercase">
-                  {isPolish ? 'Cel' : 'Goal'}
+                  {t('initiatives.initiativeNotionView.goal')}
                 </span>
               </div>
               <p className="text-[11px] text-slate-700 dark:text-slate-300 line-clamp-1">
@@ -337,7 +339,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
               <div className="flex items-center gap-1.5 mb-1">
                 <CheckSquare size={11} className="text-emerald-500" />
                 <span className="text-[9px] font-semibold text-slate-600 uppercase">
-                  {isPolish ? 'Zadania' : 'Tasks'}
+                  {t('initiatives.initiativeNotionView.tasks')}
                 </span>
               </div>
               <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
@@ -348,7 +350,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
               <div className="flex items-center gap-1.5 mb-1">
                 <Users size={11} className="text-primary-500" />
                 <span className="text-[9px] font-semibold text-slate-600 uppercase">
-                  {isPolish ? 'Zespół' : 'Team'}
+                  {t('initiatives.initiativeNotionView.team')}
                 </span>
               </div>
               <p className="text-[11px] text-slate-700 dark:text-slate-300 truncate">
@@ -359,7 +361,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
               <div className="flex items-center gap-1.5 mb-1">
                 <Calendar size={11} className="text-blue-500" />
                 <span className="text-[9px] font-semibold text-slate-600 uppercase">
-                  {isPolish ? 'Zasoby' : 'Resources'}
+                  {t('initiatives.initiativeNotionView.resources')}
                 </span>
               </div>
               <p className="text-[11px] text-slate-700 dark:text-slate-300">
@@ -382,7 +384,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
               <div className="flex items-center gap-1.5 mb-1">
                 <DollarSign size={11} className="text-amber-500" />
                 <span className="text-[9px] font-semibold text-slate-600 uppercase">
-                  {isPolish ? 'Finanse' : 'Finance'}
+                  {t('initiatives.initiativeNotionView.finance')}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -416,7 +418,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
                 {selectedGroup.label}
               </div>
               <div className="text-xs text-slate-600 dark:text-slate-500">
-                {selectedGroup.sections.length} {isPolish ? 'sekcji' : 'sections'}
+                {selectedGroup.sections.length} {t('initiatives.initiativeNotionView.sections')}
               </div>
               {/* Quick chips to jump to a single section */}
               <div className="flex flex-wrap gap-1.5 ml-auto">
@@ -449,7 +451,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
           renderSection(selectedSection)
         ) : (
           <div className="p-6 rounded-2xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak sekcji do wyświetlenia.' : 'No sections to display.'}
+            {t('initiatives.initiativeNotionView.noSectionsToDisplay')}
           </div>
         )}
       </main>

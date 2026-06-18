@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { SECTION_REGISTRY } from './sections';
 import { useInitiativeContext } from './sections/InitiativeContext';
@@ -84,56 +85,59 @@ const TableOfContents: React.FC<TOCProps> = ({
   onNavigate,
   isCompact,
   onToggleCompact,
-}) => (
-  <nav className={`sticky top-6 transition-all duration-300 ${isCompact ? 'w-10' : 'w-56'}`}>
-    <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
-      {/* TOC Header */}
-      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200 dark:border-navy-700/60">
-        {!isCompact && (
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            {isPolish ? 'Spis treści' : 'Contents'}
-          </span>
-        )}
-        <button
-          onClick={onToggleCompact}
-          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 transition-colors"
-          title={isCompact ? 'Expand TOC' : 'Collapse TOC'}
-        >
-          {isCompact ? <List size={16} /> : <X size={14} />}
-        </button>
-      </div>
+}) => {
+  const { t } = useTranslation();
+  return (
+    <nav className={`sticky top-6 transition-all duration-300 ${isCompact ? 'w-10' : 'w-56'}`}>
+      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
+        {/* TOC Header */}
+        <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200 dark:border-navy-700/60">
+          {!isCompact && (
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {t('initiatives.initiativeScrollView.contents')}
+            </span>
+          )}
+          <button
+            onClick={onToggleCompact}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 transition-colors"
+            title={isCompact ? 'Expand TOC' : 'Collapse TOC'}
+          >
+            {isCompact ? <List size={16} /> : <X size={14} />}
+          </button>
+        </div>
 
-      {/* TOC Items */}
-      <div className="py-1.5 max-h-[70vh] overflow-y-auto scrollbar-thin">
-        {sections.map((section) => {
-          const isActive = activeSectionKey === section.key;
-          const emoji = SECTION_ICON_MAP[section.key] || '📋';
+        {/* TOC Items */}
+        <div className="py-1.5 max-h-[70vh] overflow-y-auto scrollbar-thin">
+          {sections.map((section) => {
+            const isActive = activeSectionKey === section.key;
+            const emoji = SECTION_ICON_MAP[section.key] || '📋';
 
-          return (
-            <button
-              key={section.key}
-              onClick={() => onNavigate(section.key)}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-all duration-150 ${
-                isActive
-                  ? 'bg-primary-500/10 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 font-medium border-l-2 border-primary-500'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/50 hover:text-slate-700 dark:hover:text-slate-300 border-l-2 border-transparent'
-              }`}
-              title={getSectionLabel(section, isPolish)}
-            >
-              <span className="text-sm flex-shrink-0">{emoji}</span>
-              {!isCompact && (
-                <span className="text-xs truncate">{getSectionLabel(section, isPolish)}</span>
-              )}
-              {!isCompact && isActive && (
-                <ChevronRight size={12} className="ml-auto flex-shrink-0 text-primary-500" />
-              )}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={section.key}
+                onClick={() => onNavigate(section.key)}
+                className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-all duration-150 ${
+                  isActive
+                    ? 'bg-primary-500/10 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 font-medium border-l-2 border-primary-500'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/50 hover:text-slate-700 dark:hover:text-slate-300 border-l-2 border-transparent'
+                }`}
+                title={getSectionLabel(section, isPolish)}
+              >
+                <span className="text-sm flex-shrink-0">{emoji}</span>
+                {!isCompact && (
+                  <span className="text-xs truncate">{getSectionLabel(section, isPolish)}</span>
+                )}
+                {!isCompact && isActive && (
+                  <ChevronRight size={12} className="ml-auto flex-shrink-0 text-primary-500" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+};
 
 /* ─────────────── Main Scroll View ─────────────── */
 
@@ -148,6 +152,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
   rightSections,
   readonly = false,
 }) => {
+  const { t } = useTranslation();
   const ctx = useInitiativeContext();
   const { isPolish, pendingGates } = ctx;
 
@@ -255,7 +260,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
             <div className="flex items-center gap-1.5 mb-1">
               <Target size={12} className="text-blue-500" />
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                {isPolish ? 'Cel' : 'Goal'}
+                {t('initiatives.initiativeScrollView.goal')}
               </span>
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2">
@@ -266,7 +271,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
             <div className="flex items-center gap-1.5 mb-1">
               <CheckSquare size={12} className="text-emerald-500" />
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                {isPolish ? 'Zadania' : 'Tasks'}
+                {t('initiatives.initiativeScrollView.tasks')}
               </span>
             </div>
             <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -277,7 +282,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
             <div className="flex items-center gap-1.5 mb-1">
               <Users size={12} className="text-primary-500" />
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                {isPolish ? 'Zespół' : 'Team'}
+                {t('initiatives.initiativeScrollView.team')}
               </span>
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300 truncate">
@@ -288,7 +293,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
             <div className="flex items-center gap-1.5 mb-1">
               <Calendar size={12} className="text-blue-500" />
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                {isPolish ? 'Zasoby' : 'Resources'}
+                {t('initiatives.initiativeScrollView.resources')}
               </span>
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300">
@@ -311,7 +316,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
             <div className="flex items-center gap-1.5 mb-1">
               <DollarSign size={12} className="text-amber-500" />
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                {isPolish ? 'Finanse/Ryzyko' : 'Finance/Risk'}
+                {t('initiatives.initiativeScrollView.financeRisk')}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -339,7 +344,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
               </div>
               <div>
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                  {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
+                  {t('initiatives.initiativeScrollView.gateDecisionRequired')}
                 </p>
                 <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
                   {pendingGates.map((g) => g.label).join(', ')}

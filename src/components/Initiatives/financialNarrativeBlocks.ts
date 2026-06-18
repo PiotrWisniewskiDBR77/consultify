@@ -14,6 +14,8 @@
  * Pure module (no React) so it unit-tests without mounting the heavy document view.
  */
 
+import i18n from '@/i18n';
+
 export type FinancialSection = 'financial-analysis' | 'financial-impact';
 
 export const FINANCIAL_BLOCK_MARKER: Record<FinancialSection, string> = {
@@ -21,11 +23,11 @@ export const FINANCIAL_BLOCK_MARKER: Record<FinancialSection, string> = {
   'financial-impact': 'FIN:IMPACT',
 };
 
-function headingFor(section: FinancialSection, isPolish: boolean): string {
+function headingFor(section: FinancialSection): string {
   if (section === 'financial-analysis') {
-    return isPolish ? 'Analiza finansowa (sizing + ROI)' : 'Financial analysis (sizing + ROI)';
+    return i18n.t('initiatives.financialNarrativeBlocks.financialAnalysisSizingRoi');
   }
-  return isPolish ? 'Wpływ finansowy' : 'Financial impact';
+  return i18n.t('initiatives.financialNarrativeBlocks.financialImpact');
 }
 
 /**
@@ -39,10 +41,10 @@ export function upsertFinancialBlock(
   existing: string,
   section: FinancialSection,
   content: string,
-  isPolish: boolean
+  _isPolish?: boolean
 ): string {
   const marker = FINANCIAL_BLOCK_MARKER[section];
-  const heading = headingFor(section, isPolish);
+  const heading = headingFor(section);
   const body = String(content || '').trim();
   const headerLine = `=== [${marker}] ${heading} ===`;
   const block = `${headerLine}\n${body}`;

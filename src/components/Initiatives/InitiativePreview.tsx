@@ -15,6 +15,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
+import i18n from '@/i18n';
 
 /** Initiative data for preview (core/domain shape) */
 export interface Initiative {
@@ -45,7 +46,7 @@ export interface InitiativePreviewProps {
 }
 
 const getInitiativeLevelLabel = (status?: string, isPolish?: boolean): string => {
-  if (!status) return isPolish ? 'Inicjatywa' : 'Initiative';
+  if (!status) return i18n.t('initiatives.initiativePreview.initiative');
   const upper = String(status).toUpperCase();
   const labels: Record<string, { en: string; pl: string }> = {
     DRAFT: { en: 'Draft', pl: 'Szkic' },

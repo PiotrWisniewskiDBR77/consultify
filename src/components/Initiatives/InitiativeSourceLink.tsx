@@ -6,21 +6,23 @@
 
 import { ClipboardList, ExternalLink, FileText, Sparkles } from 'lucide-react';
 
+import i18n from '@/i18n';
+
 /** Helper to get display label for source type (tool/tool_session/idea -> Idea Workspace) */
-export function getSourceDisplayLabel(sourceType: string, isPolish = false): string {
+export function getSourceDisplayLabel(sourceType: string, _isPolish = false): string {
   const t = String(sourceType || '')
     .trim()
     .toLowerCase();
   const ideaTypes = ['tool', 'tool_session', 'idea'];
   if (ideaTypes.includes(t)) {
-    return isPolish ? 'Workspace pomysłu' : 'Idea Workspace';
+    return i18n.t('initiatives.initiativeSourceLink.ideaWorkspace');
   }
-  if (t === 'assessment') return isPolish ? 'Ocena' : 'Assessment';
+  if (t === 'assessment') return i18n.t('initiatives.initiativeSourceLink.assessment');
   if (t === 'interview' || t === 'interview_insight' || t === 'insight') {
-    return isPolish ? 'Interview Insight' : 'Interview Insight';
+    return 'Interview Insight';
   }
-  if (t === 'conclusion') return isPolish ? 'Insight' : 'Insight';
-  if (t === 'conclusion_readout') return isPolish ? 'Readout audytu' : 'Audit readout';
+  if (t === 'conclusion') return 'Insight';
+  if (t === 'conclusion_readout') return i18n.t('initiatives.initiativeSourceLink.auditReadout');
   return sourceType || '';
 }
 import React from 'react';
@@ -44,7 +46,7 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
   isPolish: isPolishProp,
 }) => {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = isPolishProp ?? i18n.language === 'pl';
 
   if (!sourceType || !sourceId) {
@@ -102,7 +104,7 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
       <div className="flex items-center gap-2 mb-2">
         {getSourceIcon()}
         <span className="text-xs font-semibold text-slate-600 uppercase">
-          {isPolish ? 'Źródło' : 'Source'} {getSourceLabel()}
+          {t('initiatives.initiativeSourceLink.source')} {getSourceLabel()}
         </span>
       </div>
       <button
