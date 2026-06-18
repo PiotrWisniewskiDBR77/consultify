@@ -133,8 +133,8 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
   const hoverBg =
     theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-slate-50 dark:hover:bg-navy-800/20';
   const hoverText = theme === 'dark' ? 'hover:text-white' : 'hover:text-navy-900';
-  const activeBg = theme === 'dark' ? 'bg-primary-900/20' : 'bg-primary-50';
-  const activeText = theme === 'dark' ? 'text-primary-300' : 'text-primary-600';
+  const activeBg = theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-50';
+  const activeText = theme === 'dark' ? 'text-blue-300' : 'text-blue-700';
 
   const hasItems = items && items.length > 0;
 
@@ -687,7 +687,7 @@ export const Sidebar: React.FC = () => {
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${
               isActive || (item.id === 'AI_CHAT' && isChatHistorySidebarOpen)
-                ? 'bg-primary-600/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 border-r-2 border-blue-500'
                 : isParentActive
                   ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'
                   : 'text-slate-500 dark:text-slate-400 active:text-navy-900 dark:active:text-white active:bg-slate-100 dark:active:bg-white/10 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5'
@@ -700,7 +700,7 @@ export const Sidebar: React.FC = () => {
           >
             {item.icon && (
               <span
-                className={`transition-colors ${isActive || isParentActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+                className={`transition-colors ${isActive || isParentActive ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
               >
                 {React.cloneElement(item.icon as React.ReactElement<{ size: number }>, {
                   size: 20,

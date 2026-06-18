@@ -65,13 +65,13 @@ Light mode używa **czterech warstw surface**, nie trzech. Każda warstwa ma jaw
 | `surface-app` | `bg-slate-100` | Tło całej aplikacji (nie `bg-white`, nie `bg-slate-50`) |
 | `surface-default` | `bg-white border-slate-200` | Główne karty, panele modali, kontenery zawartości |
 | `surface-subtle` | `bg-slate-50 border-slate-200` | Nested surfaces, sekcje grupujące, toolbary |
-| `surface-selected` | `bg-primary-50 border-primary-200 ring-1 ring-primary-200` | Aktywny wiersz, wybrany tab, aktywny filtr |
+| `surface-selected` | `bg-slate-100 ring-1 ring-inset ring-slate-300/60 shadow-[inset_4px_0_0_var(--c-info)]` | Aktywny wiersz, wybrany tab, aktywny filtr — **neutralna powierzchnia + niebieski (info) accent bar**, NIGDY crimson/primary (czyta się jako alarm) |
 
 ### Zasady
 
 - Każdy ważny kontener musi mieć **co najmniej dwa** środki separacji: tło + border, albo tło + shadow `hig-sm`, albo border + inset shadow.
 - Hover ma zmieniać tło **lub** border (nie sam kolor tekstu).
-- Selected state musi być widoczny bez zgadywania — `bg` + `border` + `ring` razem.
+- Selected state musi być widoczny bez zgadywania — neutralne `bg` (slate-100) + `ring` + niebieski (info) accent bar razem. **Selekcja NIE używa primary/crimson** — crimson to sygnał „alarm/destructive", nie „aktywny". Kanoniczne klasy: `src/components/shared/selectionTokens.ts`.
 - Focus-visible (§7) jest dodatkiem do selected, nie zastępstwem.
 
 ### Zakazy
@@ -160,7 +160,7 @@ Każdy badge statusu w light mode musi mieć:
 | --- | --- |
 | Default | `bg-white` |
 | Hover | `bg-slate-50` (nie `bg-slate-100` — zbyt mocne przy szybkim mouse-over) |
-| Active / Selected | `bg-primary-50 ring-1 ring-inset ring-primary-200` |
+| Active / Selected | `bg-slate-100 ring-1 ring-inset ring-slate-300/60 shadow-[inset_4px_0_0_var(--c-info)]` (neutral + info accent bar — `selectionTokens.ts`) |
 | Current focus (keyboard) | `outline outline-2 outline-primary-500 outline-offset-[-2px]` |
 | Grouped section | `bg-slate-50` z `text-slate-600` na headerze grupy |
 
@@ -283,7 +283,7 @@ Każdy nowy lub refaktorowany komponent musi jawnie zdefiniować:
 | --- | --- | --- |
 | `default` | czytelny kontrast | `surface-default` |
 | `hover` | zmiana surface lub border (nie tylko tekst) | `surface-subtle` lub `surface-hover` |
-| `selected` | `bg` + `border` + `ring` razem | `surface-selected` |
+| `selected` | neutralne `bg` + `ring` + info accent bar (nie crimson) | `surface-selected` |
 | `focus-visible` | outline 2 px, kontrast ≥ 3:1, offset | `focus-ring` |
 | `pressed` | subtle scale lub inner shadow | — |
 | `disabled` | `opacity-50` + `cursor-not-allowed`, bez interakcji | — |
@@ -462,7 +462,7 @@ Od v3.2 light mode operuje **tokenami semantycznymi**, nie bezpośrednimi utilit
 - `surface-app` → `slate-100`
 - `surface-default` → `white` + `border-slate-200`
 - `surface-subtle` → `slate-50` + `border-slate-200`
-- `surface-selected` → `primary-50` + `border-primary-200` + `ring-primary-200`
+- `surface-selected` → `slate-100` + `ring-slate-300/60` + info accent bar `shadow-[inset_4px_0_0_var(--c-info)]` (NIE `primary-50` — crimson czyta się jako alarm; SSOT klas: `src/components/shared/selectionTokens.ts`)
 
 ### Status
 
@@ -476,7 +476,7 @@ Od v3.2 light mode operuje **tokenami semantycznymi**, nie bezpośrednimi utilit
 
 - `focus-ring` → `ring-primary-500` + `ring-offset-2 ring-offset-white`
 - `hover-surface` → `slate-50`
-- `active-surface` → `primary-50`
+- `active-surface` → `slate-100` + info accent (selekcja = neutral/blue, nie crimson)
 
 Każdy nowy komponent musi konsumować te tokeny; każdy istniejący komponent refaktorowany musi zostać przełączony na tokeny.
 

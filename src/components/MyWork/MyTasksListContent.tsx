@@ -57,6 +57,11 @@ import {
   type RowActionSection,
   RowActionsMenu,
 } from '@/components/shared/RowActionsMenu';
+import {
+  FOCUSED_ROW_CLASS,
+  PREVIEW_SELECTED_ROW_CLASS,
+  SELECTED_ROW_CLASS,
+} from '@/components/shared/selectionTokens';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { ErrorState } from '@/components/ui/primitives';
 import { deriveDueRisk, DueChip } from '@/components/ui/primitives/chips/DueChip';
@@ -77,13 +82,12 @@ import { Task } from '@/types';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { usePersistedColumnWidths } from './shared/usePersistedColumnWidths';
 import { BulkDatePicker, BulkPriorityPicker } from './shared/BulkEditPopovers';
 import { type ColumnConfig, ColumnConfigMenu } from './shared/ColumnConfigMenu';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { SavedViewsMenu, type TaskViewPreset } from './shared/SavedViewsMenu';
-import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
+import { usePersistedColumnWidths } from './shared/usePersistedColumnWidths';
 
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent' | 'new';
 type TaskTimeGroup = 'all' | 'overdue' | 'today' | 'week' | 'later' | 'no-date';
@@ -159,7 +163,8 @@ const getPriorityConfig = (priority?: string) => {
     case 'critical':
       return {
         color: 'text-danger-800 dark:text-danger-400',
-        badgeClass: 'bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-md px-1.5 py-0.5',
+        badgeClass:
+          'bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/30 rounded-md px-1.5 py-0.5',
         bg: 'bg-danger-50',
         dot: 'bg-danger-500',
         label: 'Critical',
@@ -620,7 +625,7 @@ const TaskTableRow: React.FC<{
         ${isCompleted ? 'opacity-60' : ''}
         ${isSelected ? TASK_SELECTED_ROW_CLASS : ''}
         ${isPreviewed ? TASK_PREVIEW_ROW_CLASS : ''}
-        ${isFocused ? 'ring-2 ring-primary-500/35 ring-inset' : ''}
+        ${isFocused && !isPreviewed && !isSelected ? FOCUSED_ROW_CLASS : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
@@ -2179,7 +2184,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               </div>
             ) : (
               <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
-                <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
+                <table
+                  /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full table-fixed"
+                  style={{ minWidth: tableMinWidth }}
+                >
                   <thead>
                     <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-navy-900/60 sticky top-0 z-10">
                       {/* Select All */}
