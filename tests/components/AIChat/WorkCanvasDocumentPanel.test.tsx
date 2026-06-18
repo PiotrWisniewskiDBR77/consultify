@@ -2179,8 +2179,8 @@ describe('WorkCanvasDocumentPanel', () => {
 
     await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
     // Save/projection/action diagnostics now live under the collapsible
-    // "Właściwości pliku MD" section inside the Canvas menu.
-    await user.click(screen.getByRole('button', { name: /Właściwości pliku MD/i }));
+    // "MD file properties" (i18n: canvas.panel.mdProps.title) section inside the Canvas menu.
+    await user.click(screen.getByRole('button', { name: /MD file properties/i }));
     expect(screen.getByTestId('canvas-diagnostics-save-state')).toHaveTextContent(
       'Unsaved changes'
     );
@@ -2310,8 +2310,9 @@ describe('WorkCanvasDocumentPanel', () => {
 
     await screen.findByTestId('canvas-document-view');
     await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
-    // Projection status lives under the collapsible "Właściwości pliku MD" section.
-    await user.click(screen.getByRole('button', { name: /Właściwości pliku MD/i }));
+    // Projection status lives under the collapsible "MD file properties"
+    // (i18n: canvas.panel.mdProps.title) section.
+    await user.click(screen.getByRole('button', { name: /MD file properties/i }));
     expect(await screen.findByTestId('canvas-projection-status')).toHaveTextContent(
       'Projection failed'
     );

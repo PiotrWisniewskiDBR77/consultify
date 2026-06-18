@@ -549,7 +549,7 @@ describe('UnifiedChatPanel (L2)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Canvas menu' }));
     expect(screen.getByRole('button', { name: 'Dock view' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Markdown view' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Właściwości pliku MD/i }));
+    fireEvent.click(screen.getByRole('button', { name: /MD file properties/i }));
     expect(screen.getByText('Markdown canonical')).toBeInTheDocument();
     expect(screen.queryByTestId('chat-full-welcome')).not.toBeInTheDocument();
     expect(screen.getByTestId('chat-work-panel-empty-state')).toBeInTheDocument();
