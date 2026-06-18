@@ -56,10 +56,10 @@ import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
-import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
+import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
 import { useWhiteboardQuickActions } from './whiteboard/useWhiteboardQuickActions';
 import {
@@ -286,7 +286,9 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           if (file.type.startsWith('image/')) {
             // L-05/D-02: cap inline base64 images at 10MB (request body limit).
             if (file.size > MAX_WHITEBOARD_IMAGE_BYTES) {
-              toast.error(t('myWork.whiteboard.errors.imageTooLarge', 'Image too large (max 10MB)'));
+              toast.error(
+                t('myWork.whiteboard.errors.imageTooLarge', 'Image too large (max 10MB)')
+              );
               continue;
             }
             const reader = new FileReader();
@@ -877,7 +879,30 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               );
             };
           }
-          return {
+          // L-05b: ensure resizable node types have a concrete style box so the
+          // 100%-fill wrapper + NodeResizer work even on boards saved before resize.
+          // Use a narrow style shape (not React.CSSProperties) to keep type-checking light.
+          let hydratedStyle:
+            | { width: number; height: number }
+            | Record<string, unknown>
+            | undefined;
+          if (normalizedNode?.style) {
+            hydratedStyle = normalizedNode.style as Record<string, unknown>;
+          } else if (normalizedNode?.type === 'shapeNode') {
+            const sh = normalizedNode?.data?.shape;
+            hydratedStyle = {
+              width: sh === 'circle' ? 120 : sh === 'diamond' ? 100 : sh === 'hexagon' ? 140 : 160,
+              height: sh === 'circle' ? 120 : sh === 'diamond' ? 100 : sh === 'hexagon' ? 120 : 80,
+            };
+          } else if (normalizedNode?.type === 'imageNode') {
+            hydratedStyle = {
+              width: Number(normalizedNode?.data?.width || 200),
+              height: Number(normalizedNode?.data?.height || 150),
+            };
+          } else if (normalizedNode?.type === 'textBlock') {
+            hydratedStyle = { width: 220, height: 80 };
+          }
+          const hydratedNode: Node = {
             id: nid,
             type: normalizedNode?.type || 'stickyNote',
             position: normalizedNode?.position || { x: 100, y: 100 },
@@ -896,8 +921,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                     normalizedNode?.data?.parentId,
                 }
               : {}),
-            ...(normalizedNode?.style ? { style: normalizedNode.style } : {}),
+            ...(hydratedStyle ? { style: hydratedStyle as React.CSSProperties } : {}),
           };
+          return hydratedNode;
         });
       setNodes(hydratedNodes);
       setEdges(
@@ -1054,26 +1080,68 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   const ensureFacilitationSession = useCallback(async () => {
     if (sessionState.sessionId) return sessionState.sessionId;
+    // Idempotent on the server (M09 L-04): a 2nd participant on the same board resolves
+    // to the SAME shared session (shared timer/phase/voting/roles), not a private one.
     const created = await Api.facilitationCreateSession({
       toolSessionId,
       settings: { tool: 'whiteboard', ideaId },
     });
     const sessionId = String(created?.id || '');
     if (!sessionId) throw new Error(t('myWork.whiteboard.errors.missingSessionId'));
+
+    // M09 L-04: READ the shared session state from the server (previously 0 call-sites).
+    // Role is derived from the server's facilitator_id (the session creator) — NOT
+    // self-assigned on the client; joiners become participants automatically.
+    const server: any = await Api.facilitationGetSession(sessionId).catch(() => null);
+    const facilitatorId = String(server?.facilitator_id || server?.facilitatorId || '');
+    const serverRole =
+      facilitatorId && facilitatorId === currentUserId ? 'facilitator' : 'participant';
+    const rawTimer = server?.timer_state ?? server?.timerState;
+    const timerState: Record<string, unknown> =
+      rawTimer && typeof rawTimer === 'object'
+        ? (rawTimer as Record<string, unknown>)
+        : typeof rawTimer === 'string'
+          ? ((): Record<string, unknown> => {
+              try {
+                return JSON.parse(rawTimer);
+              } catch {
+                return {};
+              }
+            })()
+          : {};
+    const serverPhase = server?.current_phase ?? server?.currentPhase;
+
     setSessionState((prev) => ({
       ...prev,
       active: true,
       sessionId,
       toolSessionId,
+      role: serverRole as typeof prev.role,
+      facilitationPhase: ((typeof serverPhase === 'string' && serverPhase) ||
+        prev.facilitationPhase) as typeof prev.facilitationPhase,
+      timerEndsAt:
+        typeof timerState.endsAt === 'number' ? (timerState.endsAt as number) : prev.timerEndsAt,
+      // Voting-open is signalled by the server phase ('voting'); toggleSessionVoting
+      // persists it via facilitationUpdatePhase, so joiners pick it up here.
+      votingOpen:
+        serverPhase === 'voting' ||
+        (typeof timerState.votingOpen === 'boolean'
+          ? (timerState.votingOpen as boolean)
+          : prev.votingOpen),
       updatedAt: Date.now(),
     }));
-    await Api.facilitationAssignRole(sessionId, {
-      userId: currentUserId,
-      roleName: sessionState.role,
-      permissions: sessionState.role === 'facilitator' ? ['timer', 'voting', 'follow'] : [],
-    }).catch(() => toast.error(t('myWork.whiteboard.errors.roleChangeFailed')));
+
+    // Only the facilitator (session creator) records the facilitator role row; joiners
+    // are participants by default and must not override the facilitator.
+    if (serverRole === 'facilitator') {
+      await Api.facilitationAssignRole(sessionId, {
+        userId: currentUserId,
+        roleName: 'facilitator',
+        permissions: ['timer', 'voting', 'follow'],
+      }).catch(() => toast.error(t('myWork.whiteboard.errors.roleChangeFailed')));
+    }
     return sessionId;
-  }, [currentUserId, ideaId, isPl, sessionState.role, sessionState.sessionId, toolSessionId]);
+  }, [currentUserId, ideaId, sessionState.sessionId, t, toolSessionId]);
 
   const syncFacilitationVotes = useCallback(
     async (sessionId: string) => {
@@ -1525,22 +1593,48 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         };
       }
 
+      // L-05b: give resizable nodes an initial style box so NodeResizer has a
+      // concrete size to grow from (the node element provides the 100% wrapper box).
+      const nodeType = typeMap[kind];
+      let initialStyle: { width: number; height: number } | undefined;
+      if (kind === 'group' || kind === 'frame') {
+        initialStyle = {
+          width: Number(extraData?.width || 400),
+          height: Number(extraData?.height || 300),
+        };
+      } else if (nodeType === 'shapeNode') {
+        const sh = shapeMap[kind];
+        initialStyle = {
+          width: Number(
+            extraData?.width ??
+              (sh === 'circle' ? 120 : sh === 'diamond' ? 100 : sh === 'hexagon' ? 140 : 160)
+          ),
+          height: Number(
+            extraData?.height ??
+              (sh === 'circle' ? 120 : sh === 'diamond' ? 100 : sh === 'hexagon' ? 120 : 80)
+          ),
+        };
+      } else if (nodeType === 'textBlock') {
+        initialStyle = {
+          width: Number(extraData?.width || 220),
+          height: Number(extraData?.height || 80),
+        };
+      } else if (nodeType === 'imageNode') {
+        initialStyle = {
+          width: Number(extraData?.width || 200),
+          height: Number(extraData?.height || 150),
+        };
+      }
+
       const newNode: Node = {
         id,
-        type: typeMap[kind],
+        type: nodeType,
         position: explicitPosition || { x: 100 + offset, y: 100 + offset },
         data: nodeData,
         draggable: !nodeData.locked,
         connectable: !nodeData.locked,
         deletable: !nodeData.locked,
-        ...(kind === 'group' || kind === 'frame'
-          ? {
-              style: {
-                width: Number(extraData?.width || 400),
-                height: Number(extraData?.height || 300),
-              },
-            }
-          : {}),
+        ...(initialStyle ? { style: initialStyle } : {}),
       };
       if (extraData?.semanticType === 'theme') {
         newNode.type = 'summaryCard';
@@ -2036,6 +2130,57 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     }, 5000);
     return () => window.clearInterval(interval);
   }, [open, sessionState.sessionId, sessionState.votingOpen, syncFacilitationVotes]);
+
+  // M09 L-04: live cross-participant sync of facilitation state. While the session is
+  // active, re-read the SHARED server session so a 2nd participant sees the facilitator's
+  // phase / voting / timer / role changes without a reload (votes are polled separately
+  // above once votingOpen flips true).
+  useEffect(() => {
+    const sessionId = sessionState.sessionId;
+    if (!open || !sessionId || !sessionState.active) return;
+    let cancelled = false;
+    const refresh = async () => {
+      const server: any = await Api.facilitationGetSession(sessionId).catch(() => null);
+      if (cancelled || !server) return;
+      const facilitatorId = String(server.facilitator_id || server.facilitatorId || '');
+      const serverRole =
+        facilitatorId && facilitatorId === currentUserId ? 'facilitator' : 'participant';
+      const rawTimer = server.timer_state ?? server.timerState;
+      let timerState: Record<string, unknown> = {};
+      if (rawTimer && typeof rawTimer === 'object') timerState = rawTimer;
+      else if (typeof rawTimer === 'string') {
+        try {
+          timerState = JSON.parse(rawTimer);
+        } catch {
+          timerState = {};
+        }
+      }
+      const serverPhase = server.current_phase ?? server.currentPhase;
+      setSessionState((prev) => {
+        if (!prev.active || prev.sessionId !== sessionId) return prev;
+        return {
+          ...prev,
+          role: serverRole as typeof prev.role,
+          facilitationPhase: ((typeof serverPhase === 'string' && serverPhase) ||
+            prev.facilitationPhase) as typeof prev.facilitationPhase,
+          votingOpen:
+            serverPhase === 'voting' ||
+            (typeof timerState.votingOpen === 'boolean'
+              ? (timerState.votingOpen as boolean)
+              : prev.votingOpen),
+          timerEndsAt:
+            typeof timerState.endsAt === 'number'
+              ? (timerState.endsAt as number)
+              : prev.timerEndsAt,
+        };
+      });
+    };
+    const interval = window.setInterval(refresh, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [open, sessionState.sessionId, sessionState.active, currentUserId]);
 
   useEffect(() => {
     if (!open) return;
