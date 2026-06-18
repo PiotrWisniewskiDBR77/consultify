@@ -394,14 +394,14 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
 
   const aiProposalsPanel =
     aiProposals !== null ? (
-      <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden m-4">
-        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+      <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] overflow-hidden m-4">
+        <div className="px-4 py-3 bg-white dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+            <Sparkles size={16} className="text-[var(--c-info)]" />
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('initiatives.analysis.resources.aiProposals', 'AI rebalancing proposals')}
             </h3>
-            <span className="text-xs text-primary-500 dark:text-primary-400">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               ({aiProposals.length})
             </span>
           </div>
@@ -418,7 +418,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
             )}
             <button
               onClick={closeAiWorkspace}
-              className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30 transition-colors"
+              className="p-1 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
             >
               <X size={14} />
             </button>
@@ -436,7 +436,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+          <div className="divide-y divide-slate-200 dark:divide-white/5">
             {aiProposals.map((proposal, idx) => {
               const overrideUserId = proposalOverrides[idx];
               const effectiveUserId = overrideUserId ?? proposal.toUserId;
@@ -475,7 +475,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                     }}
                     className={`shrink-0 px-2 py-1.5 text-xs rounded-lg border transition-colors bg-white dark:bg-navy-950 text-slate-900 dark:text-white ${
                       isOverridden
-                        ? 'border-primary-400 dark:border-primary-500 ring-1 ring-primary-400/30'
+                        ? 'border-[var(--c-info)]/60 ring-1 ring-[var(--c-info)]/20'
                         : 'border-slate-200 dark:border-navy-700'
                     }`}
                   >
@@ -627,8 +627,8 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
             <button
               onClick={() => setRoleFilter('all')}
               className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
-                bg-primary-500/10 text-primary-600 dark:text-primary-400
-                hover:bg-primary-500/20 transition-colors"
+                bg-slate-200 text-slate-700 dark:bg-white/10 dark:text-slate-300
+                hover:bg-slate-300 dark:hover:bg-white/15 transition-colors"
             >
               <X size={10} />
               {roleFilter}
@@ -699,7 +699,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                           }}
                           className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
                             roleFilter === role
-                              ? 'font-semibold text-primary-600 dark:text-primary-400'
+                              ? 'font-semibold text-slate-900 dark:text-white'
                               : 'text-slate-700 dark:text-slate-300'
                           }`}
                         >
@@ -916,8 +916,8 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                                           onOpenInitiative(initId);
                                         }}
                                         className="inline-flex items-center gap-1 px-2 py-1 rounded-lg
-                                          text-xs font-medium bg-primary-500/10 text-primary-600
-                                          dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                                          text-xs font-medium bg-slate-100 text-slate-700
+                                          dark:bg-white/10 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/15 transition-colors"
                                       >
                                         <ExternalLink size={12} />
                                         {t('initiatives.analysis.previewInitiative', 'Preview')}

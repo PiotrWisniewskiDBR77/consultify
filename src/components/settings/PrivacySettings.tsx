@@ -281,18 +281,18 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       className={cn(
                         'p-4 rounded-lg border transition-all text-left',
                         isSelected
-                          ? 'bg-primary-600/10 border-primary-500 shadow-sm'
+                          ? 'bg-slate-50 border-slate-700 shadow-sm dark:bg-white/[0.06] dark:border-white/30'
                           : 'bg-white dark:bg-navy-800/50 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                       )}
                     >
                       <Icon
                         size={20}
-                        className={isSelected ? 'text-primary-400' : 'text-slate-500'}
+                        className={isSelected ? 'text-[var(--c-info)]' : 'text-slate-500'}
                       />
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-primary-300' : 'text-slate-600'
+                          isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}
@@ -331,18 +331,18 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       className={cn(
                         'p-4 rounded-lg border transition-all text-left',
                         isSelected
-                          ? 'bg-primary-600/10 border-primary-500 shadow-sm'
+                          ? 'bg-slate-50 border-slate-700 shadow-sm dark:bg-white/[0.06] dark:border-white/30'
                           : 'bg-white dark:bg-navy-800/50 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                       )}
                     >
                       <Icon
                         size={20}
-                        className={isSelected ? 'text-primary-400' : 'text-slate-500'}
+                        className={isSelected ? 'text-[var(--c-info)]' : 'text-slate-500'}
                       />
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-primary-300' : 'text-slate-600'
+                          isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}

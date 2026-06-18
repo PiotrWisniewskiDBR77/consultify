@@ -550,8 +550,8 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                       onClick={() => setWeekCount(w)}
                       className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                         weekCount === w
-                          ? 'bg-primary-500/20 text-primary-400'
-                          : 'text-slate-600 hover:text-slate-200'
+                          ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       {w}W
@@ -563,8 +563,8 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                       onClick={() => setMonthCount(m)}
                       className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                         monthCount === m
-                          ? 'bg-primary-500/20 text-primary-400'
-                          : 'text-slate-600 hover:text-slate-200'
+                          ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       {m}M

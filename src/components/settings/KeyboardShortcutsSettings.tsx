@@ -438,8 +438,8 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         className={cn(
                           'p-3 rounded-lg border-2 text-left transition-all duration-200',
                           isSelected
-                            ? 'border-primary-500 bg-primary-500/5'
-                            : 'border-white/10 hover:border-white/20'
+                            ? 'border-slate-700 bg-slate-50 dark:border-white/30 dark:bg-white/[0.08]'
+                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                         )}
                       >
                         <p
@@ -578,10 +578,10 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
           ))}
 
           {/* Tip */}
-          <div className="flex items-start gap-3 p-4 bg-primary-500/5 border border-primary-500/10 rounded-xl">
-            <Info size={16} className="text-primary-400 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl">
+            <Info size={16} className="text-[var(--c-info)] mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-primary-300">
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {t('settings.shortcuts.tip', 'Tip')}
               </p>
               <p className="text-sm text-slate-600 mt-0.5">

@@ -178,7 +178,7 @@ export const NavItem: React.FC<NavItemProps> = ({
         {isHighlighted && (
           <motion.div
             layoutId="activeIndicator"
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-crimson-500 rounded-r-full"
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[var(--c-info)] rounded-r-full"
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
         )}
