@@ -551,18 +551,18 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             >
               {/* Policy gateway (P34-B): refusal + uncertainty visibility */}
               {isPolicyRefusal && (
-                <div className="not-prose mb-3 p-3 rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50/70 dark:bg-rose-950/30">
-                  <div className="text-xs font-semibold text-rose-800 dark:text-rose-200">
+                <div className="not-prose mb-3 p-3 rounded-lg border border-danger-200 dark:border-danger-900/40 bg-danger-50/70 dark:bg-danger-900/30">
+                  <div className="text-xs font-semibold text-danger-800 dark:text-danger-200">
                     {t('policy.refusal.title', 'Request blocked by policy')}
                   </div>
                   {String(policyDecision?.rationale || '').trim() ? (
-                    <div className="mt-1 text-[11px] text-rose-700 dark:text-rose-300">
+                    <div className="mt-1 text-[11px] text-danger-700 dark:text-danger-300">
                       {String(policyDecision.rationale).trim()}
                     </div>
                   ) : null}
                   {Array.isArray(policyDecision?.refusal?.nextSteps) &&
                   policyDecision.refusal.nextSteps.length ? (
-                    <div className="mt-2 text-[11px] text-rose-700 dark:text-rose-300">
+                    <div className="mt-2 text-[11px] text-danger-700 dark:text-danger-300">
                       <div className="font-medium">
                         {t('policy.refusal.nextSteps', 'What to do next')}
                       </div>
@@ -1524,7 +1524,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               isDone
                                 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
                                 : isError
-                                  ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                                  ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-300'
                                   : isActive
                                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
                                     : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
@@ -1533,7 +1533,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             {isDone ? (
                               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                             ) : isError ? (
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-danger-500" />
                             ) : isActive ? (
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                             ) : (
@@ -1801,7 +1801,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               }}
               className={`p-1 rounded-md transition-colors ${
                 voiceState.isSpeaking
-                  ? 'text-rose-500'
+                  ? 'text-danger-500'
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
               }`}
               title={

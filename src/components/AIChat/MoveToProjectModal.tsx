@@ -364,7 +364,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
           </div>
 
           {error && (
-            <div className="mb-4 text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/40 rounded-xl px-3 py-2">
+            <div className="mb-4 text-xs text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-900/40 rounded-xl px-3 py-2">
               {error}
             </div>
           )}

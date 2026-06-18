@@ -115,7 +115,7 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
 
         {!loading && error && (
           <p
-            className="px-4 py-6 text-[12px] text-rose-600 dark:text-rose-300"
+            className="px-4 py-6 text-[12px] text-danger-600 dark:text-danger-300"
             role="alert"
             data-testid={`${testId}-error`}
           >

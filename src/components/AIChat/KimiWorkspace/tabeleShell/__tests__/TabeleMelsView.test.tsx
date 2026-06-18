@@ -163,6 +163,6 @@ describe('TabeleMelsView', () => {
       />
     );
     const internalChip = screen.getByTestId('mels-chip-internal');
-    expect(internalChip.querySelector('.bg-rose-500')).toBeTruthy();
+    expect(internalChip.querySelector('.bg-danger-500')).toBeTruthy();
   });
 });

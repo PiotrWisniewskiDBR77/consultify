@@ -15,7 +15,7 @@ import React from 'react';
 import type { AiEditorLevel, QaSuggestion } from '@/services/api/tablePlatform.api';
 
 const SEVERITY_DOT: Record<QaSuggestion['severity'], string> = {
-  high: 'bg-rose-500',
+  high: 'bg-danger-500',
   medium: 'bg-amber-500',
   low: 'bg-slate-400',
 };

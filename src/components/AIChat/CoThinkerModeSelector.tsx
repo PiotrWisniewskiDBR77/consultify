@@ -53,8 +53,8 @@ const MODES: ModeConfig[] = [
     icon: Target,
     labelKey: 'chat.coThinker.competitiveAnalyst',
     descKey: 'chat.coThinker.competitiveAnalystDesc',
-    color: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800',
+    color: 'text-danger-600 dark:text-danger-400',
+    bgColor: 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-800',
   },
   {
     id: 'risk_challenger',

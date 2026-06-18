@@ -98,7 +98,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
     ),
     searching: <Loader2 size={16} className="animate-spin text-primary-500" />,
     done: <CheckCircle2 size={16} className="text-green-500" />,
-    error: <XCircle size={16} className="text-rose-500" />,
+    error: <XCircle size={16} className="text-danger-500" />,
   };
 
   const isFollowUp = query.round === 'followup';
@@ -160,7 +160,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
           )}
 
           {query.status === 'error' && query.error && (
-            <p className="text-xs text-rose-500 mt-1">{query.error}</p>
+            <p className="text-xs text-danger-500 mt-1">{query.error}</p>
           )}
         </div>
       </div>

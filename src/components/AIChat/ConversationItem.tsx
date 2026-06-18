@@ -53,8 +53,8 @@ const ENTITY_CONFIG: Record<
   },
   decision: {
     icon: Scale,
-    color: 'text-rose-500',
-    activeColor: 'text-rose-600',
+    color: 'text-danger-500',
+    activeColor: 'text-danger-600',
     label: 'Decision',
   },
 };

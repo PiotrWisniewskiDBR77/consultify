@@ -112,9 +112,9 @@ const getColorClasses = (color: string) => {
       border: 'border-amber-200 dark:border-amber-800',
     },
     red: {
-      bg: 'bg-rose-50 dark:bg-rose-900/20',
-      text: 'text-rose-600 dark:text-rose-400',
-      border: 'border-rose-200 dark:border-rose-800',
+      bg: 'bg-danger-50 dark:bg-danger-900/20',
+      text: 'text-danger-600 dark:text-danger-400',
+      border: 'border-danger-200 dark:border-danger-800',
     },
     emerald: {
       bg: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -213,7 +213,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
             <button
               onClick={() => onDismiss(action.id)}
               disabled={disabled}
-              className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400"
+              className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-danger-600 dark:text-danger-400"
               title={t('aiActions.dismiss', 'Odrzuć')}
             >
               <X size={12} />
@@ -253,7 +253,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                 className={`
                   text-[10px] px-1.5 py-0.5 rounded-full font-medium
                   ${riskColor === 'amber' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : ''}
-                  ${riskColor === 'red' ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : ''}
+                  ${riskColor === 'red' ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400' : ''}
                 `}
               >
                 {action.risk === 'medium'
@@ -371,8 +371,8 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               disabled={disabled}
               className={`
                 flex items-center justify-center gap-1.5 px-3 py-2
-                hover:bg-rose-50 dark:hover:bg-rose-900/20
-                text-rose-600 dark:text-rose-400
+                hover:bg-danger-50 dark:hover:bg-danger-900/20
+                text-danger-600 dark:text-danger-400
                 rounded-lg text-xs font-medium transition-colors
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
@@ -432,7 +432,7 @@ export const AIActionList: React.FC<AIActionListProps> = ({
         {onDismissAll && actions.length > 1 && (
           <button
             onClick={onDismissAll}
-            className="text-xs text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400"
+            className="text-xs text-slate-500 hover:text-danger-500 dark:text-slate-400 dark:hover:text-danger-400"
           >
             {t('aiActions.dismissAll', 'Odrzuć wszystkie')}
           </button>

@@ -374,8 +374,8 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
             }}
             className="
                             w-full flex items-center gap-2 px-3 py-2 text-sm
-                            text-rose-600 dark:text-rose-400
-                            hover:bg-rose-50 dark:hover:bg-rose-900/20
+                            text-danger-600 dark:text-danger-400
+                            hover:bg-danger-50 dark:hover:bg-danger-900/20
                             transition-colors
                         "
           >
@@ -398,8 +398,8 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
               }}
               className="
                               w-full flex items-center gap-2 px-3 py-2 text-sm
-                              text-rose-700 dark:text-rose-300 font-medium
-                              hover:bg-rose-100 dark:hover:bg-rose-900/30
+                              text-danger-700 dark:text-danger-300 font-medium
+                              hover:bg-danger-100 dark:hover:bg-danger-900/30
                               transition-colors
                           "
             >

@@ -116,9 +116,9 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
         };
       case 'POOR':
         return {
-          bg: 'bg-rose-50 dark:bg-rose-900/20',
-          border: 'border-rose-200 dark:border-rose-800',
-          text: 'text-rose-700 dark:text-rose-400',
+          bg: 'bg-danger-50 dark:bg-danger-900/20',
+          border: 'border-danger-200 dark:border-danger-800',
+          text: 'text-danger-700 dark:text-danger-400',
           icon: AlertCircle,
         };
       default:
@@ -137,7 +137,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
     if (score >= 0.9) return 'text-green-600 dark:text-green-400';
     if (score >= 0.7) return 'text-blue-600 dark:text-blue-400';
     if (score >= 0.5) return 'text-amber-600 dark:text-amber-400';
-    return 'text-rose-600 dark:text-rose-400';
+    return 'text-danger-600 dark:text-danger-400';
   };
 
   const qualityStyle = getQualityColor(metrics?.qualityLevel || 'FAIR');

@@ -15,13 +15,13 @@ import type { QaAxisName, QaBand, QaReport } from '@/services/api/tablePlatform.
 const BAND_COLORS: Record<QaBand, string> = {
   green: 'bg-emerald-500/80',
   amber: 'bg-amber-500/80',
-  red: 'bg-rose-500/80',
+  red: 'bg-danger-500/80',
 };
 
 const BAND_TEXT: Record<QaBand, string> = {
   green: 'text-emerald-700 dark:text-emerald-300',
   amber: 'text-amber-700 dark:text-amber-300',
-  red: 'text-rose-700 dark:text-rose-300',
+  red: 'text-danger-700 dark:text-danger-300',
 };
 
 const AXIS_ORDER: QaAxisName[] = [

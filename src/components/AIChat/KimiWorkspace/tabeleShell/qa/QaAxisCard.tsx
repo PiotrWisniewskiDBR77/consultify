@@ -12,7 +12,7 @@ import type { QaAxisDetail, QaAxisName, QaBand } from '@/services/api/tablePlatf
 const BAND_DOT: Record<QaBand, string> = {
   green: 'bg-emerald-500',
   amber: 'bg-amber-500',
-  red: 'bg-rose-500',
+  red: 'bg-danger-500',
 };
 
 const AXIS_LABEL: Record<QaAxisName, string> = {

@@ -225,8 +225,8 @@ function lifecycleVisual(
         label: t('chatProposal.state.failed', 'Execution failed'),
         Icon: AlertTriangle,
         pillClassName:
-          'bg-rose-50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-900/40',
-        cardAccentClassName: 'border-rose-200 dark:border-rose-900/40',
+          'bg-danger-50 dark:bg-danger-900/30 text-danger-800 dark:text-danger-200 border-danger-200 dark:border-danger-900/40',
+        cardAccentClassName: 'border-danger-200 dark:border-danger-900/40',
       };
     case 'audited':
       return {
@@ -273,7 +273,7 @@ function riskVisual(
     return {
       label: t('chatProposal.risk.high', 'High risk'),
       className:
-        'bg-rose-50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-900/40',
+        'bg-danger-50 dark:bg-danger-900/30 text-danger-800 dark:text-danger-200 border-danger-200 dark:border-danger-900/40',
     };
   }
   if (normalized === 'medium' || normalized === 'med') {

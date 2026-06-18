@@ -339,7 +339,7 @@ export const VoiceModeLegend: React.FC<VoiceModeLegendProps> = ({
                   copyFeedback === 'copied'
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-600/60 dark:bg-emerald-900/30 dark:text-emerald-200'
                     : copyFeedback === 'failed'
-                      ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-600/60 dark:bg-rose-900/30 dark:text-rose-200'
+                      ? 'border-danger-300 bg-danger-50 text-danger-700 dark:border-danger-600/60 dark:bg-danger-900/30 dark:text-danger-200'
                       : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                 }`}
               >

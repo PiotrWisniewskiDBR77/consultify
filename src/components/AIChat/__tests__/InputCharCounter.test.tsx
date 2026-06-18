@@ -68,9 +68,9 @@ describe('InputCharCounter', () => {
     expect(screen.getByTestId('input-char-counter').getAttribute('data-tone')).toBe('amber');
   });
 
-  it('escalates to rose at the soft max', () => {
+  it('escalates to danger at the soft max', () => {
     render(<InputCharCounter value={longString(8000)} isEnabled={() => true} />);
-    expect(screen.getByTestId('input-char-counter').getAttribute('data-tone')).toBe('rose');
+    expect(screen.getByTestId('input-char-counter').getAttribute('data-tone')).toBe('danger');
   });
 
   it('honours a custom max for tone escalation', () => {

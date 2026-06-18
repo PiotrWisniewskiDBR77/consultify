@@ -81,7 +81,7 @@ const getActionIcon = (actionType: string) => {
     case 'GENERATE_REPORT':
       return <FileText size={12} className="text-amber-500" />;
     case 'ANALYZE_RISKS':
-      return <AlertTriangle size={12} className="text-rose-500" />;
+      return <AlertTriangle size={12} className="text-danger-500" />;
     default:
       return <Zap size={12} className="text-primary-500" />;
   }
@@ -116,7 +116,7 @@ const getRiskBadge = (risk?: string) => {
   const colors = {
     LOW: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    HIGH: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    HIGH: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
   };
 
   return (
@@ -345,7 +345,7 @@ export const PendingActionsIndicator: React.FC<PendingActionsIndicatorProps> = (
                   <button
                     onClick={(e) => handleReject(action.id, e)}
                     disabled={isProcessing}
-                    className="p-1.5 bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-800/40 text-rose-600 dark:text-rose-400 rounded-md transition-colors disabled:opacity-50"
+                    className="p-1.5 bg-danger-100 dark:bg-danger-900/30 hover:bg-danger-200 dark:hover:bg-danger-800/40 text-danger-600 dark:text-danger-400 rounded-md transition-colors disabled:opacity-50"
                     title={t('ai.actions.reject', 'Reject')}
                   >
                     <X size={12} />

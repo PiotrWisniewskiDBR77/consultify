@@ -84,7 +84,7 @@ function statusTone(status: TableConversionRecord['status']): {
       };
     case 'failed':
       return {
-        className: 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-200',
+        className: 'bg-danger-50 text-danger-700 dark:bg-danger-900 dark:text-danger-200',
         label: 'Failed',
       };
     case 'running':

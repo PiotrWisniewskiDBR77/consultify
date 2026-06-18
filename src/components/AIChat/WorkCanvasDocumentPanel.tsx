@@ -593,7 +593,7 @@ function capabilityBadgeClass(status: CanvasCapabilityStatus): string {
     return 'bg-sky-500/10 text-sky-700 dark:text-sky-300';
   }
   if (status === 'missing') {
-    return 'bg-rose-500/10 text-rose-700 dark:text-rose-300';
+    return 'bg-danger-500/10 text-danger-700 dark:text-danger-300';
   }
   return 'bg-slate-500/10 text-slate-600 dark:text-slate-300';
 }
@@ -2680,7 +2680,7 @@ function WorkCanvasMarkdownDocumentPanel({
           isUnavailable
             ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300'
             : isDirtySaveAction
-              ? 'text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 dark:text-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-300'
+              ? 'text-danger-500 hover:bg-danger-500/10 hover:text-danger-600 dark:text-danger-400 dark:hover:bg-danger-500/15 dark:hover:text-danger-300'
               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
         data-action-status={isLoading ? 'loading' : availability.status}
@@ -4134,7 +4134,7 @@ function WorkCanvasMarkdownDocumentPanel({
             type="button"
             onClick={() => void revokeShareAction()}
             disabled={isRevokingShare}
-            className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-semibold text-rose-600 shadow-sm hover:text-rose-700 disabled:opacity-60 dark:bg-white/10 dark:text-rose-400 dark:hover:text-rose-300"
+            className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-semibold text-danger-600 shadow-sm hover:text-danger-700 disabled:opacity-60 dark:bg-white/10 dark:text-danger-400 dark:hover:text-danger-300"
             title="Cofnij udostępnianie / Revoke share"
             data-testid="canvas-share-revoke"
           >
@@ -4178,15 +4178,15 @@ function WorkCanvasMarkdownDocumentPanel({
                   data-testid="canvas-operation-diff-preview"
                 >
                   {pendingOperation.preview.markdownDiff?.removedLineSamples?.length ? (
-                    <div className="rounded-xl border border-rose-200 bg-white/70 p-2 dark:border-rose-300/20 dark:bg-white/10">
-                      <div className="mb-1 font-semibold text-rose-700 dark:text-rose-200">
+                    <div className="rounded-xl border border-danger-200 bg-white/70 p-2 dark:border-danger-300/20 dark:bg-white/10">
+                      <div className="mb-1 font-semibold text-danger-700 dark:text-danger-200">
                         Removed
                       </div>
                       {pendingOperation.preview.markdownDiff.removedLineSamples.map(
                         (line, index) => (
                           <div
                             key={`removed-${index}-${line}`}
-                            className="truncate font-mono text-[11px] text-rose-800 dark:text-rose-100"
+                            className="truncate font-mono text-[11px] text-danger-800 dark:text-danger-100"
                           >
                             - {line}
                           </div>

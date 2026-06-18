@@ -490,7 +490,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                 onDeleteProject(project.id);
                                 setMenuId(null);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                             >
                               <Trash2 size={13} />
                               {t('common.delete', 'Delete')}
@@ -998,7 +998,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   onClick={() => void runBulk('delete')}
                   disabled={bulkBusy || selectedIds.size === 0}
                   title={t('common.delete', 'Delete')}
-                  className="p-1 rounded text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 disabled:opacity-40"
+                  className="p-1 rounded text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 disabled:opacity-40"
                 >
                   <Trash2 size={14} />
                 </button>

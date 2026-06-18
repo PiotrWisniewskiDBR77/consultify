@@ -135,10 +135,10 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
   if (error) {
     return (
       <div
-        className={`bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-800/50 p-4 ${className}`}
+        className={`bg-danger-50 dark:bg-danger-900/20 rounded-xl border border-danger-200 dark:border-danger-800/50 p-4 ${className}`}
       >
-        <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
-        <button onClick={handleSkip} className="mt-2 text-xs text-rose-500 hover:underline">
+        <p className="text-sm text-danger-600 dark:text-danger-400">{error}</p>
+        <button onClick={handleSkip} className="mt-2 text-xs text-danger-500 hover:underline">
           {t('research.skipAndSearch', 'Skip and start research')}
         </button>
       </div>

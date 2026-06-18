@@ -104,7 +104,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
     cyan: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20',
     indigo: 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20',
     orange: 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20',
-    red: 'border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20',
+    red: 'border-danger-200 dark:border-danger-800 bg-danger-50 dark:bg-danger-900/20',
     emerald: 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20',
     slate: 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50',
     violet: 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20',
@@ -118,7 +118,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
     cyan: 'text-blue-600 dark:text-blue-400',
     indigo: 'text-primary-600 dark:text-primary-400',
     orange: 'text-amber-600 dark:text-amber-400',
-    red: 'text-rose-600 dark:text-rose-400',
+    red: 'text-danger-600 dark:text-danger-400',
     emerald: 'text-emerald-600 dark:text-emerald-400',
     slate: 'text-slate-600 dark:text-slate-400',
     violet: 'text-primary-600 dark:text-primary-400',
@@ -204,7 +204,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
             </button>
             <button
               onClick={() => onDismiss(action.id)}
-              className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-500 dark:text-rose-400 transition-colors"
+              className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-danger-500 dark:text-danger-400 transition-colors"
               title={t('aiActions.dismiss', 'Odrzuć')}
             >
               <X size={12} />
@@ -219,7 +219,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
         )}
 
         {isFailed && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400">
             !
           </span>
         )}
@@ -258,7 +258,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
                                 ${
                                   action.risk === 'high'
-                                    ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                                    ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400'
                                     : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                                 }`}
               >
@@ -319,7 +319,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
 
           <button
             onClick={() => onDismiss(action.id)}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-xs font-medium rounded-lg transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-danger-600 dark:text-danger-400 hover:bg-danger-100 dark:hover:bg-danger-900/30 text-xs font-medium rounded-lg transition-colors"
           >
             <X size={12} />
             {t('aiActions.dismiss', 'Odrzuć')}
@@ -334,7 +334,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                     ${
                       isCompleted
                         ? 'bg-green-100/50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                        : 'bg-rose-100/50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
+                        : 'bg-danger-100/50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400'
                     }`}
         >
           {isCompleted ? (

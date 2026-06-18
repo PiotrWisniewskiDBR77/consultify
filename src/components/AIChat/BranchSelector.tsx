@@ -152,7 +152,7 @@ const BranchItem: React.FC<BranchItemProps> = ({
                     onDelete();
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                 >
                   <Trash2 size={12} />
                   {t('branch.delete', 'Delete')}

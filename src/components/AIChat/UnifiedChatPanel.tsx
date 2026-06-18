@@ -5738,9 +5738,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 </div>
               )}
               {_activeConversationState === 'deleted' && (
-                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200/60 dark:border-rose-700/40 flex items-center gap-2">
+                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200/60 dark:border-danger-700/40 flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0"
+                    className="w-4 h-4 text-danger-600 dark:text-danger-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -5752,7 +5752,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
-                  <span className="text-xs text-rose-700 dark:text-rose-400">
+                  <span className="text-xs text-danger-700 dark:text-danger-400">
                     {_activeConversationStateMessage ||
                       t('aiChat.deletedBanner', 'This conversation has been deleted.')}
                   </span>

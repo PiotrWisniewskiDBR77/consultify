@@ -242,7 +242,7 @@ function TaskProgressBar({
               ) : step.status === 'completed' ? (
                 <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" />
               ) : step.status === 'failed' ? (
-                <X size={12} className="text-rose-500 flex-shrink-0" />
+                <X size={12} className="text-danger-500 flex-shrink-0" />
               ) : (
                 <div className="w-3 h-3 rounded-hig-full border border-slate-300 dark:border-navy-600 flex-shrink-0" />
               )}
@@ -333,15 +333,15 @@ function ArtifactPreviewPane({
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="text-center space-y-4 max-w-md px-6">
-          <div className="w-16 h-16 rounded-hig-lg bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center mx-auto">
-            <AlertTriangle size={28} className="text-rose-500 dark:text-rose-400" />
+          <div className="w-16 h-16 rounded-hig-lg bg-danger-50 dark:bg-danger-900/20 flex items-center justify-center mx-auto">
+            <AlertTriangle size={28} className="text-danger-500 dark:text-danger-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
+            <p className="text-sm font-medium text-danger-700 dark:text-danger-300">
               {t('kimi.generationFailed', 'Generation failed')}
             </p>
             {failureReason && (
-              <p className="text-xs text-rose-600/80 dark:text-rose-400/80 mt-1.5 leading-relaxed">
+              <p className="text-xs text-danger-600/80 dark:text-danger-400/80 mt-1.5 leading-relaxed">
                 {failureReason}
               </p>
             )}

@@ -61,7 +61,7 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
             className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+              <div className="w-10 h-10 rounded-lg bg-danger-100 dark:bg-danger-900/30 flex items-center justify-center text-danger-600 dark:text-danger-400">
                 <Download size={20} />
               </div>
               <div className="text-left">

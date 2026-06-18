@@ -26,7 +26,7 @@ const STATUS_COLORS: Record<TeresaVoiceStatus, string> = {
   idle: 'bg-slate-500',
   connecting: 'bg-amber-500',
   live: 'bg-emerald-500',
-  error: 'bg-rose-500',
+  error: 'bg-danger-500',
 };
 
 const BUBBLE_BG: Record<TeresaVoiceStatus, string> = {
@@ -34,7 +34,7 @@ const BUBBLE_BG: Record<TeresaVoiceStatus, string> = {
   connecting: 'from-slate-600 to-slate-700',
   // Crimson brand moment for the live voice state.
   live: 'from-crimson-600 to-crimson-800',
-  error: 'from-rose-600 to-rose-700',
+  error: 'from-danger-600 to-danger-700',
 };
 
 /**
@@ -93,7 +93,7 @@ export const VoiceConversationOverlay: React.FC = () => {
       >
         <button
           onClick={() => void handleEnd()}
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white shadow-lg transition-all hover:scale-110 hover:bg-rose-500 active:scale-95"
+          className="flex h-6 w-6 items-center justify-center rounded-full bg-danger-600 text-white shadow-lg transition-all hover:scale-110 hover:bg-danger-500 active:scale-95"
           title={t('aiChat.voice.stopVoice', 'End voice')}
         >
           <X size={12} strokeWidth={2.5} />
@@ -142,7 +142,7 @@ export const VoiceConversationOverlay: React.FC = () => {
           </button>
           <button
             onClick={() => void handleEnd()}
-            className="rounded-md p-1 text-slate-600 transition-colors hover:bg-rose-600/80 hover:text-white"
+            className="rounded-md p-1 text-slate-600 transition-colors hover:bg-danger-600/80 hover:text-white"
             title={t('aiChat.voice.stopVoice', 'End voice')}
           >
             <PhoneOff size={14} />
@@ -179,7 +179,7 @@ export const VoiceConversationOverlay: React.FC = () => {
 
         {voiceStatus === 'error' && (
           <>
-            <p className="text-center text-xs text-rose-400">
+            <p className="text-center text-xs text-danger-400">
               {voiceError || t('aiChat.voice.voiceError', 'Voice unavailable. Try again.')}
             </p>
             <button

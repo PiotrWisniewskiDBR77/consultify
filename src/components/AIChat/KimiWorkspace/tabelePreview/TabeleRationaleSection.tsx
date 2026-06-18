@@ -16,7 +16,7 @@ const PROPOSAL_STYLES = {
   approved:
     'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
   rejected:
-    'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
+    'border-danger-300/80 bg-danger-50 text-danger-900 dark:border-danger-300/[0.25] dark:bg-danger-300/[0.12] dark:text-danger-100',
   none: 'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
 } as const;
 

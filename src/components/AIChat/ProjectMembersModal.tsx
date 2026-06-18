@@ -335,7 +335,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                     {isOwner && (
                       <button
                         onClick={() => void handleRemove(m.user_id)}
-                        className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                        className="p-1 rounded text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                         title={t('aiChat.members.remove', 'Remove')}
                       >
                         <Trash2 size={13} />
@@ -441,7 +441,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                     {canManage && (
                       <button
                         onClick={() => void handleDeleteKnowledge(k.id)}
-                        className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                        className="p-1 rounded text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                         title={t('aiChat.knowledge.delete', 'Remove')}
                       >
                         <Trash2 size={12} />

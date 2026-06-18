@@ -16,7 +16,7 @@ const GOVERNANCE_STYLES = {
   proposed:
     'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
   rejected:
-    'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
+    'border-danger-300/80 bg-danger-50 text-danger-900 dark:border-danger-300/[0.25] dark:bg-danger-300/[0.12] dark:text-danger-100',
 } as const;
 
 function getGovernanceIcon(state: NonNullable<TabelePreviewSchemaField['governanceState']>) {

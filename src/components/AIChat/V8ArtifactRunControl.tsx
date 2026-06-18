@@ -611,12 +611,12 @@ export function V8ArtifactRunControl({
                 </div>
               )}
               {currentRun.failureReason && (
-                <div className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">
+                <div className="mt-1 text-[11px] text-danger-600 dark:text-danger-300">
                   {currentRun.failureReason}
                 </div>
               )}
               {currentRun.failurePackage && (
-                <div className="mt-1 text-[11px] text-rose-700 dark:text-rose-200">
+                <div className="mt-1 text-[11px] text-danger-700 dark:text-danger-200">
                   {t('v8.artifactRun.failureStage', 'Failure stage')}:{' '}
                   {String(currentRun.failurePackage.stage || 'materialize')}
                 </div>
@@ -788,7 +788,7 @@ export function V8ArtifactRunControl({
                         data-testid="v8-artifact-run-reject-review"
                         onClick={handleRejectReview}
                         disabled={isBusy}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-danger-200 bg-danger-50 px-3 py-2 text-xs font-medium text-danger-700 transition hover:bg-danger-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
                       >
                         {rejectExecutionRun.isPending ? (
                           <Loader2 size={14} className="animate-spin" />

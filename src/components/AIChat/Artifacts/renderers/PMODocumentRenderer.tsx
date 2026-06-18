@@ -83,7 +83,7 @@ const RACIMatrixRenderer: React.FC<{ data: any }> = ({ data }) => {
   const getRACIColor = (value: string) => {
     switch (value?.toUpperCase()) {
       case 'R':
-        return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
+        return 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300';
       case 'A':
         return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
       case 'C':
@@ -197,7 +197,7 @@ const RiskRegisterRenderer: React.FC<{ data: any }> = ({ data }) => {
     switch (level?.toLowerCase()) {
       case 'critical':
       case 'very high':
-        return 'bg-rose-500 text-white';
+        return 'bg-danger-500 text-white';
       case 'high':
         return 'bg-amber-500 text-white';
       case 'medium':
@@ -318,7 +318,7 @@ const StatusReportRenderer: React.FC<{ data: any }> = ({ data }) => {
         return 'bg-amber-500';
       case 'red':
       case 'off track':
-        return 'bg-rose-500';
+        return 'bg-danger-500';
       default:
         return 'bg-slate-400';
     }

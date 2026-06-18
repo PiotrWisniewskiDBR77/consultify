@@ -83,7 +83,7 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
                 status === 'verified'
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                   : status === 'rejected'
-                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'
+                    ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300'
                     : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
               ].join(' ')}
             >

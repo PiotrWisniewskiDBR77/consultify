@@ -97,7 +97,7 @@ function defaultNotify(message: string, options: InputSoftLimitToastNotifyOption
         role="status"
         aria-live="polite"
         data-testid="chat-v9-input-soft-limit-toast"
-        className={`pointer-events-auto flex items-start gap-3 rounded-xl border border-rose-200 bg-white px-4 py-3 text-[13px] text-slate-700 shadow-lg dark:border-rose-500/30 dark:bg-navy-900 dark:text-slate-200 ${
+        className={`pointer-events-auto flex items-start gap-3 rounded-xl border border-danger-200 bg-white px-4 py-3 text-[13px] text-slate-700 shadow-lg dark:border-danger-500/30 dark:bg-navy-900 dark:text-slate-200 ${
           t.visible ? 'animate-enter' : 'animate-leave'
         }`}
       >

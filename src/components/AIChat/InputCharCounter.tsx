@@ -58,18 +58,18 @@ const DEFAULT_THRESHOLD = 400;
 const DEFAULT_MAX = 8000;
 const WARN_RATIO = 0.8;
 
-function resolveTone(length: number, max: number): 'slate' | 'amber' | 'rose' {
-  if (length >= max) return 'rose';
+function resolveTone(length: number, max: number): 'slate' | 'amber' | 'danger' {
+  if (length >= max) return 'danger';
   if (length >= max * WARN_RATIO) return 'amber';
   return 'slate';
 }
 
-const TONE_CLASS: Record<'slate' | 'amber' | 'rose', string> = {
+const TONE_CLASS: Record<'slate' | 'amber' | 'danger', string> = {
   slate:
     'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-300',
   amber:
     'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-600/60 dark:bg-amber-900/30 dark:text-amber-200',
-  rose: 'border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-600/60 dark:bg-rose-900/30 dark:text-rose-200',
+  rose: 'border-danger-300 bg-danger-50 text-danger-800 dark:border-danger-600/60 dark:bg-danger-900/30 dark:text-danger-200',
 };
 
 export const InputCharCounter: React.FC<InputCharCounterProps> = ({
@@ -84,7 +84,7 @@ export const InputCharCounter: React.FC<InputCharCounterProps> = ({
 
   const tone = resolveTone(length, max);
   const ariaLabel =
-    tone === 'rose'
+    tone === 'danger'
       ? `Message is ${length} characters, over the ${max}-character soft limit`
       : `Message is ${length} of ${max} characters`;
 
