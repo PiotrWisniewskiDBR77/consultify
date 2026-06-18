@@ -1640,13 +1640,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       case 'ocr_required':
         return {
           label: isPolish ? 'Wymaga OCR' : 'OCR required',
-          className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+          className: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300',
         };
       case 'unreadable':
       case 'failed':
         return {
           label: isPolish ? 'Błąd odczytu' : 'Unreadable',
-          className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+          className: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300',
         };
       default:
         return {
@@ -2037,7 +2037,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <button
               type="button"
               onClick={() => handleDeleteBasket(activeBasket.id)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-rose-600 transition-colors hover:bg-rose-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-danger-600 transition-colors hover:bg-danger-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-danger-300 dark:hover:bg-danger-500/10"
               aria-label={isPolish ? 'Usuń koszyk' : 'Delete basket'}
               title={isPolish ? 'Usuń koszyk' : 'Delete basket'}
             >
@@ -2613,7 +2613,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       {doc.chunkCount ? <span>{doc.chunkCount} chunks</span> : null}
                     </div>
                     {doc.processingError ? (
-                      <p className="mt-0.5 text-[11px] text-rose-500">{doc.processingError}</p>
+                      <p className="mt-0.5 text-[11px] text-danger-500">{doc.processingError}</p>
                     ) : null}
                   </div>
                 </label>

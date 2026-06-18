@@ -245,7 +245,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             {/* Pain Points */}
             <section>
               <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
-                <XCircle size={16} className="text-rose-500" />
+                <XCircle size={16} className="text-danger-500" />
                 Current Pain Points
               </h3>
               {session.summaryPainPoints.length === 0 ? (
@@ -257,7 +257,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryPainPoints.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800/30 rounded-lg"
+                      className="flex items-start gap-3 p-3 bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-800/30 rounded-lg"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">

@@ -385,7 +385,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                         <span
                           className={`px-1.5 py-0.5 text-xs rounded ${
                             person.influence === 'high'
-                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                              ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                               : person.influence === 'medium'
                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                 : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
@@ -436,7 +436,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                       key={gap.id}
                       className={`p-2 rounded-lg border-l-2 ${
                         gap.priority === 'high'
-                          ? 'bg-rose-50 dark:bg-rose-900/10 border-rose-500'
+                          ? 'bg-danger-50 dark:bg-danger-900/10 border-danger-500'
                           : gap.priority === 'medium'
                             ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-500'
                             : 'bg-slate-50 dark:bg-navy-950 border-slate-300'

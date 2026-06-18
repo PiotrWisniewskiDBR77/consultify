@@ -515,7 +515,7 @@ const STATUS_CONFIG: Record<
     color: 'bg-primary-500',
     textColor: 'text-primary-500',
   },
-  failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-rose-500', textColor: 'text-rose-500' },
+  failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-danger-500', textColor: 'text-danger-500' },
 };
 
 // Colored-pill visual map for the Properties Strip STATUS field (parity with
@@ -547,9 +547,9 @@ const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
     dot: 'bg-teal-500',
   },
   failed: {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    text: 'text-rose-600 dark:text-rose-300',
-    dot: 'bg-rose-500',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    text: 'text-danger-600 dark:text-danger-300',
+    dot: 'bg-danger-500',
   },
 };
 
@@ -2726,7 +2726,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   );
 
   const getPriorityDotClass = useCallback((p: CommentPriority) => {
-    if (p === 'high') return 'bg-rose-500';
+    if (p === 'high') return 'bg-danger-500';
     if (p === 'low') return 'bg-slate-400';
     return 'bg-blue-500';
   }, []);
@@ -3078,7 +3078,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             },
             weak: {
               label: isPolish ? 'Słaby materiał decyzyjny' : 'Weak decision material',
-              className: 'border-rose-500/20 bg-rose-500/[0.08] text-rose-700 dark:text-rose-200',
+              className: 'border-danger-500/20 bg-danger-500/[0.08] text-danger-700 dark:text-danger-200',
             },
           }[truthReviewSummary.posture];
 
@@ -3195,7 +3195,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       truthReviewSummary.contradictionSignals.slice(0, 4).map((signal) => (
                         <div
                           key={`${signal.title}-${signal.description}`}
-                          className="rounded-xl bg-rose-500/[0.07] px-3 py-2 text-sm text-rose-800 dark:text-rose-200"
+                          className="rounded-xl bg-danger-500/[0.07] px-3 py-2 text-sm text-danger-800 dark:text-danger-200"
                         >
                           <div className="font-medium">{signal.title}</div>
                           {signal.description && (
@@ -3242,8 +3242,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     {officialAnswers.length}
                   </div>
                 </div>
-                <div className="rounded-xl border border-rose-200/40 dark:border-rose-900/30 bg-rose-50/60 dark:bg-rose-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.rose.400)]">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-rose-500 dark:text-rose-400">
+                <div className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.danger.400)]">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-danger-500 dark:text-danger-400">
                     {isPolish ? 'Issues / Risks' : 'Issues / risks'}
                   </div>
                   <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -3329,14 +3329,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-500 dark:text-rose-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-danger-500 dark:text-danger-400">
                     {isPolish ? 'Issues / Risks' : 'Issues / Risks'}
                   </div>
                   {issuesReadout.length > 0 ? (
                     issuesReadout.map((item) => (
                       <div
                         key={item}
-                        className="rounded-xl border border-rose-200/40 dark:border-rose-900/30 bg-rose-50/60 dark:bg-rose-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 shadow-[inset_3px_0_0_theme(colors.rose.400)]"
+                        className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 shadow-[inset_3px_0_0_theme(colors.danger.400)]"
                       >
                         {item}
                       </div>
@@ -3393,7 +3393,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 ? 'text-blue-400'
                 : score >= 40
                   ? 'text-amber-400'
-                  : 'text-rose-400';
+                  : 'text-danger-400';
           component = (
             <div className="space-y-5">
               <Callout
@@ -4006,7 +4006,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Zakwestionowane' : 'Challenged'}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
+                  <div className="mt-1 text-lg font-semibold text-danger-600 dark:text-danger-300">
                     {readbackSummary.challenged}
                   </div>
                 </div>
@@ -4128,7 +4128,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               case 'contradicted':
                 return {
                   label: isPolish ? 'Sprzeczne' : 'Contradicted',
-                  className: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+                  className: 'bg-danger-500/10 text-danger-700 dark:text-danger-300',
                 };
               case 'local_only':
                 return {
@@ -4564,12 +4564,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Hipoteza',
                       },
                       insufficient: {
-                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+                        bg: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
                         label: 'Insufficient data',
                         labelPl: 'Niewystarczające dane',
                       },
                       contradicted: {
-                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+                        bg: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                       },
@@ -4619,7 +4619,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                         </div>
                         {findingConfidence === 'contradicted' && (
-                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-danger-500/10 border border-danger-500/20 text-danger-600 dark:text-danger-400 text-xs font-medium">
                             <AlertCircle size={14} />
                             {isPolish
                               ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
@@ -4809,13 +4809,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         .length || 0;
                     const severityStyles =
                       issue.severity === 'high'
-                        ? 'border-l-rose-500 bg-rose-500/[0.04] dark:bg-rose-500/10'
+                        ? 'border-l-danger-500 bg-danger-500/[0.04] dark:bg-danger-500/10'
                         : issue.severity === 'medium'
                           ? 'border-l-amber-500 bg-amber-500/[0.04] dark:bg-amber-500/10'
                           : 'border-l-slate-400 bg-slate-50 dark:bg-navy-900/50';
                     const severityBadge =
                       issue.severity === 'high'
-                        ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                        ? 'bg-danger-500/15 text-danger-600 dark:text-danger-400'
                         : issue.severity === 'medium'
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                           : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
@@ -4839,12 +4839,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Hipoteza',
                       },
                       insufficient: {
-                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+                        bg: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
                         label: 'Insufficient data',
                         labelPl: 'Niewystarczające dane',
                       },
                       contradicted: {
-                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+                        bg: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                       },
@@ -4888,7 +4888,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                         </div>
                         {findingConfidence === 'contradicted' && (
-                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-danger-500/10 border border-danger-500/20 text-danger-600 dark:text-danger-400 text-xs font-medium">
                             <AlertCircle size={14} />
                             {isPolish
                               ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
@@ -5086,12 +5086,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Hipoteza',
                       },
                       insufficient: {
-                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+                        bg: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
                         label: 'Insufficient data',
                         labelPl: 'Niewystarczające dane',
                       },
                       contradicted: {
-                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+                        bg: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                       },
@@ -5135,7 +5135,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                         </div>
                         {findingConfidence === 'contradicted' && (
-                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-danger-500/10 border border-danger-500/20 text-danger-600 dark:text-danger-400 text-xs font-medium">
                             <AlertCircle size={14} />
                             {isPolish
                               ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
@@ -5297,7 +5297,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       { bg: string; label: string; labelPl: string; icon: React.ReactNode }
                     > = {
                       tension: {
-                        bg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+                        bg: 'bg-danger-500/10 text-danger-600 dark:text-danger-400',
                         label: 'Tension',
                         labelPl: 'Napięcie',
                         icon: <Flame size={10} />,
@@ -5447,7 +5447,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 {row.linked_issues?.map((i: string) => (
                                   <span
                                     key={`i-${i}`}
-                                    className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px]"
+                                    className="px-1.5 py-0.5 rounded bg-danger-500/10 text-danger-600 dark:text-danger-400 text-[10px]"
                                   >
                                     {i}
                                   </span>
@@ -5496,7 +5496,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               case 'needs_split':
                 return {
                   label: isPolish ? 'Do rozbicia' : 'Needs split',
-                  className: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+                  className: 'bg-danger-500/10 text-danger-700 dark:text-danger-300',
                 };
               case 'rejected':
                 return {
@@ -5560,7 +5560,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Do rozbicia' : 'Needs split'}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
+                  <div className="mt-1 text-lg font-semibold text-danger-600 dark:text-danger-300">
                     {candidateSummary.needsSplit}
                   </div>
                 </div>
@@ -5700,7 +5700,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   handleReadbackStatus(linkedFinding, 'challenged_by_client')
                                 }
                                 disabled={readbackLoadingId === linkedFinding.id}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-medium disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-danger-500/10 text-danger-700 dark:text-danger-300 hover:bg-danger-500/20 text-xs font-medium disabled:opacity-50"
                               >
                                 <AlertCircle size={12} />
                                 {isPolish ? 'Zakwestionowane' : 'Challenged'}
@@ -5735,7 +5735,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <button
                             onClick={() => handleCandidateAction(candidate, 'mark_needs_split')}
                             disabled={isBusy}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-medium disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-danger-500/10 text-danger-700 dark:text-danger-300 hover:bg-danger-500/20 text-xs font-medium disabled:opacity-50"
                           >
                             {isBusy ? (
                               <Loader2 size={12} className="animate-spin" />
@@ -5967,7 +5967,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                     <span
                                       className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                                         topic.isContradicted
-                                          ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                                          ? 'bg-danger-500/15 text-danger-600 dark:text-danger-400'
                                           : topic.supportingSessionIds.length <= 1
                                             ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                                             : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
@@ -6317,7 +6317,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       title: isPolish
                         ? 'Rozbieżności / sprzeczności'
                         : 'Divergence / contradiction',
-                      tone: 'border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300',
+                      tone: 'border-danger-500/20 bg-danger-500/[0.06] text-danger-700 dark:text-danger-300',
                       empty: isPolish ? 'Brak sprzeczności' : 'No contradictions',
                     },
                   ] as const
@@ -6640,7 +6640,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       key: 'tense',
                       topics: toneBuckets.tense,
                       title: isPolish ? 'Napięcie / sprzeczność' : 'Tension / contradiction',
-                      tone: 'border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300',
+                      tone: 'border-danger-500/20 bg-danger-500/[0.06] text-danger-700 dark:text-danger-300',
                     },
                   ] as const
                 ).map((col) => (
@@ -7802,8 +7802,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-white dark:bg-navy-950 gap-4">
-        <AlertCircle size={48} className="text-rose-400" />
-        <p className="text-rose-500">{error}</p>
+        <AlertCircle size={48} className="text-danger-400" />
+        <p className="text-danger-500">{error}</p>
         <button onClick={onClose} className="text-sm text-slate-500 hover:text-slate-700 underline">
           {isPolish ? 'Wróć' : 'Go back'}
         </button>
