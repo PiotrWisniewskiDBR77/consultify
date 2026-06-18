@@ -10,37 +10,5 @@
   [
     "finance.cta.newInvestment",
     "src/components/Economics/FinanceHub.tsx"
-  ],
-  [
-    "presentations.tabs.allDecks",
-    "src/components/Presentations/PresentationsHub.tsx"
-  ],
-  [
-    "presentations.columns.title",
-    "src/components/Presentations/PresentationsHub.tsx"
-  ],
-  [
-    "presentations.columns.sourceType",
-    "src/components/Presentations/PresentationsHub.tsx"
-  ],
-  [
-    "presentations.columns.owner",
-    "src/components/Presentations/PresentationsHub.tsx"
-  ],
-  [
-    "presentations.columns.date",
-    "src/components/Presentations/PresentationsHub.tsx"
-  ],
-  [
-    "presentations.actions.export",
-    "src/components/Presentations/PresentationsHub.tsx"
-  ],
-  [
-    "presentations.actions.openSource",
-    "src/components/Presentations/PresentationsHub.tsx"
-  ],
-  [
-    "presentations.actions.rename",
-    "src/components/Presentations/PresentationsHub.tsx"
   ]
 ]
