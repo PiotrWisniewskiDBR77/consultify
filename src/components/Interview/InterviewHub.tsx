@@ -13622,7 +13622,7 @@ Return ONLY the answer text (no markdown fences).`;
                   type="button"
                   onClick={handleChangeDueDate}
                   disabled={manageAssignmentBusy}
-                  className="flex-1 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {manageAssignmentBusy ? (
                     <Loader2 size={16} className="inline mr-2 animate-spin" />
