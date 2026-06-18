@@ -67,8 +67,8 @@ const STATUS_CONFIG: Record<BenefitStatus, { color: string; bgColor: string; lab
     label: 'Achieved',
   },
   NOT_ACHIEVED: {
-    color: 'text-rose-600',
-    bgColor: 'bg-rose-100 dark:bg-rose-900/20',
+    color: 'text-danger-600',
+    bgColor: 'bg-danger-100 dark:bg-danger-900/20',
     label: 'Not Achieved',
   },
 };
@@ -337,7 +337,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                             ? 'bg-green-500'
                             : realizationPercent >= 50
                               ? 'bg-amber-500'
-                              : 'bg-rose-500'
+                              : 'bg-danger-500'
                       }`}
                       style={{ width: `${Math.min(realizationPercent, 100)}%` }}
                     />
@@ -371,7 +371,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                             ? 'text-green-500'
                             : realizationPercent >= 50
                               ? 'text-amber-500'
-                              : 'text-rose-500'
+                              : 'text-danger-500'
                       }
                     />
                   </svg>
@@ -384,7 +384,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                             ? 'text-green-600'
                             : realizationPercent >= 50
                               ? 'text-amber-600'
-                              : 'text-rose-600'
+                              : 'text-danger-600'
                       }`}
                     >
                       {realizationPercent}%

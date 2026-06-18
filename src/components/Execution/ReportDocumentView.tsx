@@ -98,18 +98,18 @@ const isDoneLike = (status?: string) =>
 const RAG_BAR: Record<string, string> = {
   green: 'from-emerald-500 to-emerald-400',
   amber: 'from-amber-500 to-amber-400',
-  red: 'from-rose-500 to-rose-400',
+  red: 'from-danger-500 to-danger-400',
 };
 
 const RAG_DOT: Record<string, string> = {
   green: 'bg-emerald-500 shadow-emerald-500/40',
   amber: 'bg-amber-500 shadow-amber-500/40',
-  red: 'bg-rose-500 shadow-rose-500/40',
+  red: 'bg-danger-500 shadow-danger-500/40',
 };
 
 const SEVERITY_TEXT: Record<string, string> = {
-  critical: 'text-rose-400',
-  high: 'text-rose-400',
+  critical: 'text-danger-400',
+  high: 'text-danger-400',
   warning: 'text-amber-400',
   warn: 'text-amber-400',
   medium: 'text-amber-400',
@@ -123,7 +123,7 @@ const confidenceTone = (score: number): 'critical' | 'warn' | 'default' =>
   score < 45 ? 'critical' : score < 70 ? 'warn' : 'default';
 
 const TONE_RING: Record<string, string> = {
-  critical: 'ring-rose-500/20',
+  critical: 'ring-danger-500/20',
   warn: 'ring-amber-500/20',
   default: 'ring-white/[0.04]',
 };
@@ -168,7 +168,7 @@ const MetricPill: React.FC<{
         className={[
           'mt-0.5 text-xl font-semibold tabular-nums',
           tone === 'critical'
-            ? 'text-rose-500'
+            ? 'text-danger-500'
             : tone === 'warn'
               ? 'text-amber-500'
               : 'text-slate-900 dark:text-white',
@@ -192,7 +192,7 @@ const Section: React.FC<{
     violet: 'bg-primary-500',
     cyan: 'bg-blue-500',
     amber: 'bg-amber-500',
-    rose: 'bg-rose-500',
+    rose: 'bg-danger-500',
     emerald: 'bg-emerald-500',
   };
   return (
@@ -300,7 +300,7 @@ const ActionCards: React.FC<{ actions: ReportAiRecommendation[] }> = ({ actions 
           className={[
             'rounded-xl border p-3 transition-colors',
             'border-slate-200/60 bg-white/50 dark:border-white/[0.05] dark:bg-white/[0.02]',
-            a.severity === 'critical' ? 'ring-1 ring-rose-500/20' : '',
+            a.severity === 'critical' ? 'ring-1 ring-danger-500/20' : '',
             a.severity === 'warn' ? 'ring-1 ring-amber-500/20' : '',
           ]
             .filter(Boolean)
@@ -511,7 +511,7 @@ const ConfBadge: React.FC<{ score: number }> = ({ score }) => {
   const tone = confidenceTone(score);
   const cls =
     tone === 'critical'
-      ? 'bg-rose-500/10 text-rose-400'
+      ? 'bg-danger-500/10 text-danger-400'
       : tone === 'warn'
         ? 'bg-amber-500/10 text-amber-400'
         : 'bg-emerald-500/10 text-emerald-400';
@@ -528,7 +528,7 @@ const StatusDot: React.FC<{ status?: string }> = ({ status }) => {
   const n = String(status ?? '').toUpperCase();
   const bg =
     n === 'BLOCKED'
-      ? 'bg-rose-500'
+      ? 'bg-danger-500'
       : n === 'DONE' || n === 'APPROVED'
         ? 'bg-emerald-500'
         : n === 'EXECUTING' || n === 'IN_PROGRESS' || n === 'PENDING'
@@ -547,7 +547,7 @@ const StatusDot: React.FC<{ status?: string }> = ({ status }) => {
 const IssueTag: React.FC<{ row: InitiativeRow }> = ({ row }) => {
   if (row.blocked)
     return (
-      <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-medium text-rose-400">
+      <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-medium text-danger-400">
         {row.blockedReason || 'Blocked'}
       </span>
     );
@@ -643,7 +643,7 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
               {r.name}
             </ALink>,
             r.owner ?? '—',
-            <span className={r.overdueTasks > 0 ? 'text-rose-400' : ''}>
+            <span className={r.overdueTasks > 0 ? 'text-danger-400' : ''}>
               {r.overdueTasks}/{r.openTasks}
             </span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>
@@ -668,7 +668,7 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
               </ALink>,
               t.initiativeName ?? '—',
               t.assigneeName ?? '—',
-              <span className={t.overdue ? 'text-rose-400 font-medium' : ''}>
+              <span className={t.overdue ? 'text-danger-400 font-medium' : ''}>
                 {formatDate(t.dueDate)}
               </span>,
             ]),
@@ -699,7 +699,7 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
             d.ownerName ?? '—',
             <span
               className={
-                d.ageDays > 7 ? 'text-rose-400 font-medium' : d.ageDays > 0 ? 'text-amber-400' : ''
+                d.ageDays > 7 ? 'text-danger-400 font-medium' : d.ageDays > 0 ? 'text-amber-400' : ''
               }
             >
               {d.ageDays > 0 ? `${d.ageDays}d overdue` : 'Due now'}
@@ -814,7 +814,7 @@ const monthlyPmoRenderer: Renderer = (data, _report, nav) => {
               .map((s) => [
                 s.initiativeName,
                 s.signalType,
-                <span className="text-rose-400 font-medium">{Math.round(s.variancePercent)}%</span>,
+                <span className="text-danger-400 font-medium">{Math.round(s.variancePercent)}%</span>,
                 s.message,
               ]),
             ...data.capacityAlerts
@@ -934,7 +934,7 @@ const programHealthRenderer: Renderer = (data, report, nav) => {
               <ALink id={r.id} type="initiative" nav={nav}>
                 {r.name}
               </ALink>,
-              <span className={r.overdueTasks > 0 ? 'text-rose-400' : ''}>{r.overdueTasks}</span>,
+              <span className={r.overdueTasks > 0 ? 'text-danger-400' : ''}>{r.overdueTasks}</span>,
               <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>
                 {r.overdueDecisions}
               </span>,
@@ -973,7 +973,7 @@ const blockersRecoveryRenderer: Renderer = (data, report, nav) => {
               {r.name}
             </ALink>,
             r.owner ?? '—',
-            <span className="text-rose-400">{r.blockedReason || 'Blocked'}</span>,
+            <span className="text-danger-400">{r.blockedReason || 'Blocked'}</span>,
             `${r.overdueTasks}/${r.openTasks}`,
             `${r.overdueDecisions}/${r.pendingDecisions}`,
           ])}
@@ -1065,7 +1065,7 @@ const milestoneSlippageRenderer: Renderer = (data, report, nav) => {
               {r.name}
             </ALink>,
             formatDate(r.targetDate),
-            <span className={r.delayCount > 0 ? 'text-rose-400 font-medium' : ''}>
+            <span className={r.delayCount > 0 ? 'text-danger-400 font-medium' : ''}>
               {r.delayCount}
             </span>,
             <span className={r.timelineWarnings > 0 ? 'text-amber-400' : ''}>
@@ -1179,7 +1179,7 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
             <span className="font-medium text-slate-900 dark:text-white">{a.name}</span>,
             a.allocatedHours,
             a.capacityHours,
-            <span className="text-rose-400 font-medium">{a.overloadHours}h</span>,
+            <span className="text-danger-400 font-medium">{a.overloadHours}h</span>,
             a.suggestion,
           ])}
           emptyText="No governed capacity alerts."
@@ -1199,14 +1199,14 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
               <span
                 className={
                   overloaded.has(name)
-                    ? 'font-semibold text-rose-400'
+                    ? 'font-semibold text-danger-400'
                     : 'text-slate-900 dark:text-white'
                 }
               >
                 {name}
               </span>,
               s.open,
-              <span className={s.overdue > 0 ? 'text-rose-400' : ''}>{s.overdue}</span>,
+              <span className={s.overdue > 0 ? 'text-danger-400' : ''}>{s.overdue}</span>,
               s.dueSoon,
             ])}
         />
@@ -1226,7 +1226,7 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
               w.allocatedHours,
               w.capacityHours,
               <span
-                className={w.availableHours < 0 ? 'text-rose-400 font-medium' : 'text-emerald-400'}
+                className={w.availableHours < 0 ? 'text-danger-400 font-medium' : 'text-emerald-400'}
               >
                 {w.availableHours}
               </span>,
@@ -1285,7 +1285,7 @@ const budgetVarianceRenderer: Renderer = (data, report, nav) => {
             s.signalType,
             s.plannedAmount.toLocaleString(),
             s.actualAmount.toLocaleString(),
-            <span className="text-rose-400 font-medium">{Math.round(s.variancePercent)}%</span>,
+            <span className="text-danger-400 font-medium">{Math.round(s.variancePercent)}%</span>,
           ])}
           emptyText="No overspend signals."
         />
@@ -1302,8 +1302,8 @@ const budgetVarianceRenderer: Renderer = (data, report, nav) => {
             <ALink id={r.id} type="initiative" nav={nav}>
               {r.name}
             </ALink>,
-            r.blocked ? <span className="text-rose-400">Yes</span> : 'No',
-            <span className={r.overdueTasks > 0 ? 'text-rose-400' : ''}>{r.overdueTasks}</span>,
+            r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
+            <span className={r.overdueTasks > 0 ? 'text-danger-400' : ''}>{r.overdueTasks}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>
               {r.overdueDecisions}
             </span>,
@@ -1374,7 +1374,7 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
             d.ownerName ?? '—',
             <span
               className={
-                d.ageDays > 14 ? 'text-rose-400 font-medium' : d.ageDays > 7 ? 'text-amber-400' : ''
+                d.ageDays > 14 ? 'text-danger-400 font-medium' : d.ageDays > 7 ? 'text-amber-400' : ''
               }
             >
               {d.ageDays > 0 ? `${d.ageDays}d` : 'Due now'}
@@ -1390,7 +1390,7 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
           headers={['Bucket', 'Count']}
           rows={Object.entries(buckets).map(([bucket, count]) => [
             bucket,
-            <span className={count > 0 && bucket === '15d+' ? 'text-rose-400 font-medium' : ''}>
+            <span className={count > 0 && bucket === '15d+' ? 'text-danger-400 font-medium' : ''}>
               {count}
             </span>,
           ])}
@@ -1409,10 +1409,10 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
               {r.name}
             </ALink>,
             r.pendingDecisions,
-            <span className={r.overdueDecisions > 0 ? 'text-rose-400' : ''}>
+            <span className={r.overdueDecisions > 0 ? 'text-danger-400' : ''}>
               {r.overdueDecisions}
             </span>,
-            r.blocked ? <span className="text-rose-400">Yes</span> : 'No',
+            r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
           ])}
           emptyText="No initiatives waiting on decisions."
         />
@@ -1491,8 +1491,8 @@ const crossDependencyRenderer: Renderer = (data, report, nav) => {
             .slice(0, 8)
             .map((r) => [
               r.name,
-              r.blocked ? <span className="text-rose-400">Yes</span> : 'No',
-              <span className={r.overdueTasks > 0 ? 'text-rose-400' : ''}>{r.overdueTasks}</span>,
+              r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
+              <span className={r.overdueTasks > 0 ? 'text-danger-400' : ''}>{r.overdueTasks}</span>,
               formatDate(data.nextMilestones.find((m) => m.initiativeId === r.id)?.targetDate),
             ])}
         />
@@ -1528,8 +1528,8 @@ const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
               {r.name}
             </ALink>,
             <ConfBadge score={r.confidence} />,
-            r.blocked ? <span className="text-rose-400">Yes</span> : 'No',
-            <span className={r.highRiskCount > 0 ? 'text-rose-400' : ''}>{r.highRiskCount}</span>,
+            r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
+            <span className={r.highRiskCount > 0 ? 'text-danger-400' : ''}>{r.highRiskCount}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>
               {r.overdueDecisions}
             </span>,
@@ -1817,7 +1817,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
               className={[
                 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium',
                 h.variant === 'critical'
-                  ? 'bg-rose-500/10 text-rose-400'
+                  ? 'bg-danger-500/10 text-danger-400'
                   : h.variant === 'warn'
                     ? 'bg-amber-500/10 text-amber-400'
                     : 'bg-slate-100/80 text-slate-500 dark:bg-white/[0.04] dark:text-slate-400',

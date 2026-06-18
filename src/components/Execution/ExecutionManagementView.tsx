@@ -83,13 +83,13 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         id: 'blockers' as const,
         label: 'Blockers',
         count: laneCount('blockers').total,
-        icon: <AlertTriangle size={14} className="text-rose-400" />,
+        icon: <AlertTriangle size={14} className="text-danger-400" />,
       },
       {
         id: 'risk' as const,
         label: 'Risk',
         count: laneCount('risk').total,
-        icon: <Shield size={14} className="text-rose-400" />,
+        icon: <Shield size={14} className="text-danger-400" />,
       },
       {
         id: 'workload' as const,
@@ -153,7 +153,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
       },
       {
         id: 'blockers' as ManagerModuleId,
-        icon: <AlertTriangle size={20} className="text-rose-500" />,
+        icon: <AlertTriangle size={20} className="text-danger-500" />,
         title: t('execution.manager.tile.blockers', 'Blockers & Escalations'),
         description: t(
           'execution.manager.tile.blockersDesc',
@@ -195,7 +195,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
       },
       {
         id: 'risk' as ManagerModuleId,
-        icon: <Shield size={20} className="text-rose-500" />,
+        icon: <Shield size={20} className="text-danger-500" />,
         title: t('execution.manager.tile.risk', 'Execution Risk'),
         description: t(
           'execution.manager.tile.riskDesc',
@@ -345,7 +345,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                           <div
                             className={`text-lg font-bold tabular-nums ${
                               metric.variant === 'critical'
-                                ? 'text-rose-600 dark:text-rose-400'
+                                ? 'text-danger-600 dark:text-danger-400'
                                 : metric.variant === 'warn'
                                   ? 'text-amber-600 dark:text-amber-400'
                                   : 'text-slate-900 dark:text-white'

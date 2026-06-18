@@ -59,9 +59,9 @@ interface AiRecommendationPanelProps {
 
 const SEVERITY_COLORS: Record<string, { dot: string; bg: string; text: string }> = {
   critical: {
-    dot: 'bg-rose-500',
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    text: 'text-rose-700 dark:text-rose-400',
+    dot: 'bg-danger-500',
+    bg: 'bg-danger-50 dark:bg-danger-900/20',
+    text: 'text-danger-700 dark:text-danger-400',
   },
   warning: {
     dot: 'bg-amber-500',
@@ -152,7 +152,7 @@ const ConfidenceBadge: React.FC<{ value: number }> = ({ value }) => {
       ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
       : value >= 50
         ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
-        : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20';
+        : 'text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20';
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${color}`}
@@ -446,7 +446,7 @@ const TriageView: React.FC<{
     <CollapsibleSection
       title="Top Priority"
       badge={
-        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-400">
+        <span className="rounded-full bg-danger-100 px-2 py-0.5 text-[10px] font-semibold text-danger-700 dark:bg-danger-900/20 dark:text-danger-400">
           {data.topPriority.length} items
         </span>
       }
@@ -457,7 +457,7 @@ const TriageView: React.FC<{
             key={id}
             type="button"
             onClick={() => onSelectProblem?.(id)}
-            className="flex w-full items-center gap-2 rounded bg-rose-50/50 px-2 py-1.5 text-left text-[11px] text-rose-700 transition-colors hover:bg-rose-100/60 dark:bg-rose-900/10 dark:text-rose-400 dark:hover:bg-rose-900/20"
+            className="flex w-full items-center gap-2 rounded bg-danger-50/50 px-2 py-1.5 text-left text-[11px] text-danger-700 transition-colors hover:bg-danger-100/60 dark:bg-danger-900/10 dark:text-danger-400 dark:hover:bg-danger-900/20"
           >
             <AlertTriangle size={12} />
             <span className="truncate">{id}</span>

@@ -80,7 +80,7 @@ interface BudgetControlPanelProps {
 const STATUS_STYLES = {
   GREEN: { bg: 'bg-green-500/15', text: 'text-green-400', label: 'On Track' },
   AMBER: { bg: 'bg-amber-500/15', text: 'text-amber-400', label: 'Warning' },
-  RED: { bg: 'bg-rose-500/15', text: 'text-rose-400', label: 'Over Budget' },
+  RED: { bg: 'bg-danger-500/15', text: 'text-danger-400', label: 'Over Budget' },
 };
 
 // ── Component ──────────────────────────────────────────────────
@@ -366,7 +366,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             <div
               className={`h-full rounded-full transition-all ${
                 initSummary.burnRate >= 100
-                  ? 'bg-rose-500'
+                  ? 'bg-danger-500'
                   : initSummary.burnRate >= 80
                     ? 'bg-amber-500'
                     : 'bg-green-500'
@@ -377,7 +377,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           <div className="flex justify-between mt-1 text-[10px] text-slate-600">
             <span>0%</span>
             <span className="text-amber-400">80%</span>
-            <span className="text-rose-400">100%</span>
+            <span className="text-danger-400">100%</span>
           </div>
         </div>
 
@@ -581,7 +581,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           {t('execution.budget.portfolioTitle')}
         </h3>
         {portfolio.overspendCount > 0 && (
-          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-500/20 text-rose-400">
+          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-danger-500/20 text-danger-400">
             {portfolio.overspendCount} {t('execution.budget.overspendRisks')}
           </span>
         )}
@@ -602,7 +602,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             {t('execution.budget.actual')}
           </div>
           <div
-            className={`text-base font-bold ${portfolio.variancePercent >= 90 ? 'text-rose-400' : portfolio.variancePercent >= 80 ? 'text-amber-400' : 'text-green-400'}`}
+            className={`text-base font-bold ${portfolio.variancePercent >= 90 ? 'text-danger-400' : portfolio.variancePercent >= 80 ? 'text-amber-400' : 'text-green-400'}`}
           >
             {formatCurrency(portfolio.totalActual, portfolio.currency)}
           </div>
@@ -612,7 +612,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             {t('execution.budget.variance')}
           </div>
           <div
-            className={`text-base font-bold flex items-center gap-1 ${portfolio.totalVariance > 0 ? 'text-rose-400' : 'text-green-400'}`}
+            className={`text-base font-bold flex items-center gap-1 ${portfolio.totalVariance > 0 ? 'text-danger-400' : 'text-green-400'}`}
           >
             {portfolio.totalVariance > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             {formatCurrency(Math.abs(portfolio.totalVariance), portfolio.currency)}
@@ -631,7 +631,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
               key={sig.id}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
                 sig.severity === 'CRITICAL'
-                  ? 'bg-rose-500/10 border-rose-500/30'
+                  ? 'bg-danger-500/10 border-danger-500/30'
                   : sig.severity === 'HIGH'
                     ? 'bg-amber-500/10 border-amber-500/30'
                     : 'bg-amber-500/10 border-amber-500/30'
@@ -641,7 +641,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                 size={14}
                 className={
                   sig.severity === 'CRITICAL'
-                    ? 'text-rose-400'
+                    ? 'text-danger-400'
                     : sig.severity === 'HIGH'
                       ? 'text-amber-400'
                       : 'text-amber-400'
@@ -702,7 +702,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                     <div
                       className={`h-full rounded-full ${
                         summary.burnRate >= 100
-                          ? 'bg-rose-500'
+                          ? 'bg-danger-500'
                           : summary.burnRate >= 80
                             ? 'bg-amber-500'
                             : 'bg-green-500'
