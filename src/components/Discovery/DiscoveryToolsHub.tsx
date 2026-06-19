@@ -1762,11 +1762,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           { value: 'free', label: t('tools.hub.license.free', 'Free') },
         ],
         render: (row) => (
-          <span
-            className={`text-xs font-medium ${
-              row.isLicensed ? 'text-amber-500' : 'text-emerald-500'
-            }`}
-          >
+          // canon §4.0a: neutral chip shell; signal carried by the leading dot.
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 bg-white/60 text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-300">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                row.isLicensed ? 'bg-amber-500' : 'bg-emerald-500'
+              }`}
+            />
             {row.isLicensed
               ? t('tools.hub.license.licensed', 'Licensed')
               : t('tools.hub.license.free', 'Free')}
