@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 import { OpenAI } from 'openai';
 import path from 'path';
@@ -9,6 +10,7 @@ export class VoiceService {
   private static instance: VoiceService;
   private openai: OpenAI | null = null;
   private groq: OpenAI | null = null;
+  private gemini: GoogleGenerativeAI | null = null;
 
   private constructor() {}
 
@@ -68,27 +70,125 @@ export class VoiceService {
   }
 
   /**
-   * Transcribe audio using Whisper (OpenAI or Groq)
+   * Resolve the Google/Gemini API key (the same key Teresa's voice uses).
+   * Env first (GEMINI_API_KEY / GOOGLE_AI_API_KEY / GOOGLE_API_KEY), then llmConfig.
+   */
+  private async resolveGeminiKey(): Promise<string> {
+    const envKey =
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_AI_API_KEY ||
+      (process.env as Record<string, string | undefined>).GOOGLE_API_KEY ||
+      '';
+    if (envKey && envKey !== 'YOUR_GEMINI_API_KEY_HERE') return envKey;
+    for (const provider of ['google', 'gemini']) {
+      try {
+        const cfg = await llmConfigService.getProviderConfig(provider);
+        if (cfg?.api_key) return cfg.api_key;
+      } catch {
+        /* provider not configured — ignore */
+      }
+    }
+    return '';
+  }
+
+  private mimeForAudio(filePath: string): string {
+    switch (path.extname(filePath).toLowerCase()) {
+      case '.mp3':
+        return 'audio/mp3';
+      case '.wav':
+        return 'audio/wav';
+      case '.ogg':
+      case '.oga':
+        return 'audio/ogg';
+      case '.m4a':
+      case '.mp4':
+        return 'audio/mp4';
+      case '.aac':
+        return 'audio/aac';
+      case '.flac':
+        return 'audio/flac';
+      case '.webm':
+        return 'audio/webm';
+      default:
+        return 'audio/ogg';
+    }
+  }
+
+  /**
+   * Transcribe audio with Gemini (reuses the Google key already powering Teresa's voice).
+   * Used as the STT provider when no OpenAI/Groq Whisper key is configured.
+   */
+  private async transcribeWithGemini(
+    audioFilePath: string,
+    language: string | undefined,
+    apiKey: string
+  ): Promise<string> {
+    if (!this.gemini) this.gemini = new GoogleGenerativeAI(apiKey);
+    const modelName = process.env.GEMINI_STT_MODEL || 'gemini-2.0-flash';
+    const model = this.gemini.getGenerativeModel({ model: modelName });
+
+    const base64 = fs.readFileSync(audioFilePath).toString('base64');
+    const langHint = language ? ` The spoken language is "${language}".` : '';
+    const prompt =
+      `Transcribe the following audio recording verbatim into text.${langHint} ` +
+      'Return ONLY the spoken transcript — no commentary, speaker labels, timestamps, or quotation marks. ' +
+      'If there is no intelligible speech, return an empty string.';
+
+    const result = await model.generateContent([
+      { inlineData: { mimeType: this.mimeForAudio(audioFilePath), data: base64 } },
+      { text: prompt },
+    ]);
+
+    return (result.response.text() || '').trim();
+  }
+
+  /**
+   * Transcribe audio. Prefers Whisper (OpenAI/Groq) when a key is set;
+   * otherwise falls back to Gemini using the existing Google key (Teresa's).
    */
   public async transcribe(audioFilePath: string, language?: string): Promise<string> {
+    let whisper: { client: OpenAI; model: string } | null = null;
     try {
-      const { client, model } = await this.getClient();
-
-      const transcription = await client.audio.transcriptions.create({
-        file: fs.createReadStream(audioFilePath),
-        model,
-        language: language || undefined,
-      });
-
-      return transcription.text;
-    } catch (error) {
-      if (error instanceof Error) {
-        logger.error(`[VoiceService] Transcription failed: ${error.message}`);
-      }
-      this.openai = null;
-      this.groq = null;
-      throw error;
+      whisper = await this.getClient();
+    } catch {
+      whisper = null; // no Whisper key configured — Gemini fallback below
     }
+
+    if (whisper) {
+      try {
+        const transcription = await whisper.client.audio.transcriptions.create({
+          file: fs.createReadStream(audioFilePath),
+          model: whisper.model,
+          language: language || undefined,
+        });
+        return transcription.text;
+      } catch (error) {
+        if (error instanceof Error) {
+          logger.error(`[VoiceService] Whisper transcription failed: ${error.message}`);
+        }
+        this.openai = null;
+        this.groq = null;
+        // fall through to Gemini
+      }
+    }
+
+    const geminiKey = await this.resolveGeminiKey();
+    if (geminiKey) {
+      try {
+        logger.info('[VoiceService] Using Gemini as STT provider');
+        return await this.transcribeWithGemini(audioFilePath, language, geminiKey);
+      } catch (error) {
+        if (error instanceof Error) {
+          logger.error(`[VoiceService] Gemini transcription failed: ${error.message}`);
+        }
+        this.gemini = null;
+        throw error;
+      }
+    }
+
+    throw new Error(
+      'No STT provider available. Set GEMINI_API_KEY (Google — reused from Teresa voice), OPENAI_API_KEY, or GROQ_API_KEY.'
+    );
   }
 
   /**
