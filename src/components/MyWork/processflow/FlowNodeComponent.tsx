@@ -171,7 +171,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-primary-500/60' : ''}`}
+      className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''}`}
       style={{
         borderLeftColor: laneColor,
         borderLeftWidth: shape === 'action' ? 4 : undefined,

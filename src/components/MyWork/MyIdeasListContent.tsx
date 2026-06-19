@@ -1829,7 +1829,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         'border border-slate-200/60 dark:border-white/[0.06]',
                         'bg-white dark:bg-navy-900',
                         'hover:shadow-md hover:-translate-y-px transition-all duration-150',
-                        isPreviewSelected || isSelected ? 'ring-2 ring-primary-500/40' : '',
+                        isPreviewSelected || isSelected ? 'ring-2 ring-slate-400/50 dark:ring-white/20' : '',
                       ].join(' ')}
                     >
                       {/* Zone 1 — Badge row (stage · tool) + kebab */}

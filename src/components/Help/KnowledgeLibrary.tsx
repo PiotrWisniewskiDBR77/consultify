@@ -154,7 +154,7 @@ const CategoryChip: React.FC<CategoryChipProps> = ({ category, isActive, onClick
   >
     <DynamicIcon name={category.icon} size={12} />
     {category.name}
-    <span className={`text-[10px] ${isActive ? 'text-primary-200' : 'text-slate-600'}`}>
+    <span className={`text-[10px] ${isActive ? 'text-slate-300 dark:text-slate-400' : 'text-slate-600'}`}>
       ({category.article_count})
     </span>
   </button>
@@ -218,11 +218,11 @@ const TagChip: React.FC<TagChipProps> = ({ tag, isActive, onClick }) => {
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-all whitespace-nowrap
-        ${isActive ? 'bg-primary-600 text-white shadow-sm ring-1 ring-primary-400' : kindColors[tag.kind] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
+        ${isActive ? 'bg-navy-900 dark:bg-white/15 text-white shadow-sm ring-1 ring-slate-500/40 dark:ring-white/30' : kindColors[tag.kind] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'}
       `}
     >
       {tag.label}
-      <span className={`text-[9px] ${isActive ? 'text-primary-200' : 'opacity-60'}`}>
+      <span className={`text-[9px] ${isActive ? 'text-slate-300' : 'opacity-60'}`}>
         ({tag.article_count})
       </span>
     </button>

@@ -122,7 +122,7 @@ const ApprovalStep: React.FC<{
           className={`
                     w-10 h-10 rounded-full flex items-center justify-center
                     ${statusColor}
-                    ${isActive ? 'ring-2 ring-offset-2 ring-primary-500' : ''}
+                    ${isActive ? 'ring-2 ring-offset-2 ring-slate-500 dark:ring-white/40' : ''}
                 `}
         >
           {approval.status === 'APPROVED' && <CheckCircle2 size={20} />}

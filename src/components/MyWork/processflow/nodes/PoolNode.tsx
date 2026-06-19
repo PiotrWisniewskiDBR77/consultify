@@ -25,7 +25,7 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
   return (
     <div
       className={`relative flex items-stretch min-w-[200px] min-h-[80px] rounded-lg border-2 border-slate-500 dark:border-navy-400 bg-white/50 dark:bg-navy-900/40 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-primary-500/60' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''
       }`}
       onDoubleClick={() => {
         if (!data?.locked) {

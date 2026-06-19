@@ -161,7 +161,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   const cardContent = (
     <div
       className={`relative rounded-xl overflow-hidden shadow-lg transition-shadow ${
-        isActive ? 'ring-2 ring-primary-500 shadow-xl' : 'shadow-md'
+        isActive ? 'ring-2 ring-slate-500 dark:ring-white/50 shadow-xl' : 'shadow-md'
       }`}
       style={{
         aspectRatio: '16/9',

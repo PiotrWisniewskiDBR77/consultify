@@ -21,7 +21,7 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
   return (
     <div
       className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border-2 border-dashed border-slate-400 dark:border-navy-500 bg-white dark:bg-navy-800 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-primary-500/60' : ''
+        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''
       }`}
       style={{
         borderLeftColor: laneColor,
