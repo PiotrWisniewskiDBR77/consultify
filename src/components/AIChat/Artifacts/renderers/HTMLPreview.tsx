@@ -102,7 +102,7 @@ ${safe}
             onClick={() => setShowCode(false)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
               !showCode
-                ? 'bg-brand text-white'
+                ? 'bg-slate-800 dark:bg-white/[0.12] text-white'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
             }`}
           >
@@ -113,7 +113,7 @@ ${safe}
             onClick={() => setShowCode(true)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
               showCode
-                ? 'bg-brand text-white'
+                ? 'bg-slate-800 dark:bg-white/[0.12] text-white'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
             }`}
           >

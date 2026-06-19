@@ -349,7 +349,7 @@ function ArtifactPreviewPane({
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-hig-sm bg-brand text-white hover:bg-brand/90 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-hig-sm bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors"
               >
                 <RefreshCw size={14} />
                 {t('kimi.retry', 'Try again')}
@@ -402,7 +402,7 @@ function ArtifactPreviewPane({
               <button
                 onClick={handleGenerate}
                 disabled={!goalInput.trim() || isStarting}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-hig-md bg-brand text-white text-sm font-medium hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-hig-md bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 text-sm font-medium hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isStarting ? (
                   <Loader2 size={16} className="animate-spin" />

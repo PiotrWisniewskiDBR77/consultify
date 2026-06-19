@@ -413,7 +413,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
         <button
           onClick={() => setShowNew(true)}
           disabled={!!loadError}
-          className="flex items-center gap-2 px-3 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] transition-colors"
         >
           <Plus size={16} />
           {t('settings.api.createKey', 'Create Key')}
@@ -481,7 +481,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
             />
             <button
               onClick={createKey}
-              className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark"
+              className="px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF]"
             >
               {t('common.create', 'Create')}
             </button>
@@ -544,7 +544,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     onClick={() => setSelectedKey(isSelected ? null : key.id)}
                     className={`p-2 rounded-lg transition-colors ${
                       isSelected
-                        ? 'bg-brand text-white'
+                        ? 'bg-navy-900 text-white'
                         : 'text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                     }`}
                     title={t('settings.api.viewUsage', 'View usage')}
@@ -555,7 +555,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     onClick={() => setShowSettings(showKeySettings ? null : key.id)}
                     className={`p-2 rounded-lg transition-colors ${
                       showKeySettings
-                        ? 'bg-brand text-white'
+                        ? 'bg-navy-900 text-white'
                         : 'text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                     }`}
                     title={t('common.settings', 'Settings')}
@@ -738,7 +738,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   <div className="flex gap-2 pt-2">
                     <button
                       onClick={() => saveKeySettings(key.id)}
-                      className="flex-1 px-3 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark text-sm font-medium"
+                      className="flex-1 px-3 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] text-sm font-medium"
                     >
                       {t('common.save', 'Save')}
                     </button>

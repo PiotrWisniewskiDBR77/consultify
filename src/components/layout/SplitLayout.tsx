@@ -393,8 +393,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                                     flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
                                     ${
                                       isArtifactsPanelOpen
-                                        ? 'bg-brand text-white'
-                                        : 'bg-brand/10 text-brand hover:bg-brand/20'
+                                        ? 'bg-slate-700 dark:bg-white/[0.15] text-white'
+                                        : 'bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.10]'
                                     }
                                 `}
               >
@@ -415,8 +415,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                                 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
                                 ${
                                   isArtifactsPanelOpen
-                                    ? 'bg-brand text-white'
-                                    : 'bg-brand/10 text-brand hover:bg-brand/20'
+                                    ? 'bg-slate-700 dark:bg-white/[0.15] text-white'
+                                    : 'bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.10]'
                                 }
                             `}
             >

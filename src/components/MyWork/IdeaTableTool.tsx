@@ -1207,9 +1207,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         data-node-id={row.id}
         className={`border-b border-slate-200/30 dark:border-white/[0.04] cursor-pointer transition-colors group/row touch-manipulation ${
           isSelected
-            ? 'bg-primary-500/5'
+            ? 'bg-slate-50 dark:bg-white/[0.06]'
             : detailNodeId === row.id
-              ? 'bg-primary-500/5'
+              ? 'bg-slate-50 dark:bg-white/[0.06]'
               : selectedNodeForLines === row.id
                 ? 'bg-indigo-500/5'
                 : 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'

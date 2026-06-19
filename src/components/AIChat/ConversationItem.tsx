@@ -119,7 +119,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   const config = entityType ? ENTITY_CONFIG[entityType] : null;
   const IconComponent = config?.icon || MessageSquare;
   const iconColor = isActive
-    ? config?.activeColor || 'text-primary-500'
+    ? config?.activeColor || 'text-[var(--c-info)]'
     : config?.color || 'text-slate-600 group-hover:text-slate-500 dark:text-slate-400';
 
   // Determine if this is an auto-titled "New conversation" that should show a hint
@@ -156,9 +156,9 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         group relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all
         ${
           selectMode && selected
-            ? 'bg-primary-500/15 dark:bg-primary-500/20 ring-1 ring-primary-400/40'
+            ? 'bg-slate-100 dark:bg-white/[0.08] ring-1 ring-slate-300/60 dark:ring-white/[0.12]'
             : isActive
-              ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-200'
+              ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white'
               : 'hover:bg-slate-100/70 dark:hover:bg-navy-800/70 text-slate-600 dark:text-slate-400'
         }
       `}
@@ -192,7 +192,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             isDefaultTitle
               ? 'text-slate-600 dark:text-slate-500 italic'
               : isActive
-                ? 'text-primary-900 dark:text-primary-100 font-medium'
+                ? 'text-slate-900 dark:text-white font-medium'
                 : 'text-slate-700 dark:text-slate-300'
           }`}
         >

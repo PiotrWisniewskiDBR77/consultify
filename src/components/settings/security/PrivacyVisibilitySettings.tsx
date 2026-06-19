@@ -179,7 +179,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   value === option.value
                     ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                    : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                    : 'bg-white dark:bg-navy-900 dark:bg-[#F4F7FB] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF]'
                 }`}
               >
                 <OptionIcon size={14} />

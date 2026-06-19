@@ -184,7 +184,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
         {/* New button */}
         <button
           onClick={handleNewClick}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors mt-2"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 text-sm font-medium hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors mt-2"
         >
           <Plus size={16} />
           {t('kimi.artifactHome.startNew', 'Start new')}
@@ -202,7 +202,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
               onClick={() => setActiveTab(tab.id)}
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 isActive
-                  ? 'bg-brand/10 text-brand dark:bg-brand/20'
+                  ? 'bg-white shadow-sm text-slate-900 dark:bg-white/[0.12] dark:text-[var(--c-info)]'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
               }`}
             >

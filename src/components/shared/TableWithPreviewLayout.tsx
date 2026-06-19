@@ -273,7 +273,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             onClick={handlePin}
             className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
               pinnedId === selectedItem.id
-                ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                ? 'text-[var(--c-info)] bg-slate-100 dark:bg-white/[0.10]'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
             }`}
             title={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}

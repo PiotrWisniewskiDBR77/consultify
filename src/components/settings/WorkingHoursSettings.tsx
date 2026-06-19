@@ -312,8 +312,8 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 onClick={() => setSameEveryDay(true)}
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   sameEveryDay
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                    ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -341,8 +341,8 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 onClick={() => setSameEveryDay(false)}
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   !sameEveryDay
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                    ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-3">

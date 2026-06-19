@@ -1080,7 +1080,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
             onClick={() => setSelectedCategory(cat.id)}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               selectedCategory === cat.id
-                ? 'bg-brand text-white shadow-sm'
+                ? 'bg-navy-900 text-white shadow-sm'
                 : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
             }`}
           >
@@ -1246,7 +1246,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                             {!isConnected && !needsReauth && !unavailable && (
                               <button
                                 onClick={() => openConnectModal(app)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors shadow-sm"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white dark:text-navy-950 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors shadow-sm"
                               >
                                 <ExternalLink size={12} />
                                 {t('common.connect', 'Connect')}
@@ -1381,7 +1381,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               <button
                 onClick={submitConnectModal}
                 disabled={connecting}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-brand hover:bg-brand-dark text-white transition-colors disabled:opacity-50 shadow-sm"
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 transition-colors disabled:opacity-50 shadow-sm"
               >
                 {connecting
                   ? t('common.connecting', 'Connecting...')

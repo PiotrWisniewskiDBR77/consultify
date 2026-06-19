@@ -122,7 +122,7 @@ export const DynamicTabBar: React.FC<DynamicTabBarProps> = ({
             flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-sm font-medium transition-colors
             ${
               isCollectionActive
-                ? 'bg-navy-800 text-white border-b-2 border-primary-400 -mb-px'
+                ? 'bg-navy-800 text-white border-b-2 border-[var(--c-info)] -mb-px'
                 : 'text-slate-600 hover:text-slate-200 hover:bg-white/5'
             }
           `}
@@ -159,7 +159,7 @@ export const DynamicTabBar: React.FC<DynamicTabBarProps> = ({
                 group flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-sm font-medium cursor-pointer transition-colors
                 ${
                   isActive
-                    ? 'bg-navy-800 text-white border-b-2 border-primary-400 -mb-px'
+                    ? 'bg-navy-800 text-white border-b-2 border-[var(--c-info)] -mb-px'
                     : 'text-slate-600 hover:text-slate-200 hover:bg-white/5'
                 }
               `}

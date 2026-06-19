@@ -852,8 +852,8 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                           onClick={() => setSelectedUserId(sug.userId)}
                           className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-all text-left ${
                             selectedUserId === sug.userId
-                              ? 'border-brand bg-brand/5'
-                              : 'border-primary-200 dark:border-primary-900/30 bg-primary-50/30 dark:bg-primary-950/10 hover:border-primary-300 dark:hover:border-primary-800/40'
+                              ? 'border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/[0.05]'
+                              : 'border-slate-200 dark:border-white/[0.08] bg-slate-50/30 dark:bg-white/[0.03] hover:border-slate-300 dark:hover:border-white/[0.15]'
                           }`}
                         >
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-brand flex items-center justify-center shrink-0">
@@ -905,7 +905,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                           onClick={() => setSelectedUserId(user.id)}
                           className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                             selectedUserId === user.id
-                              ? 'border-brand bg-brand/5'
+                              ? 'border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/[0.05]'
                               : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                           }`}
                         >
@@ -949,7 +949,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
               }
             }}
             disabled={!selectedUserId}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-brand text-white hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('myWork.focus.actions.delegate', 'Delegate')}
           </button>
@@ -1720,7 +1720,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                     }
                     className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
                       active
-                        ? 'border-brand/40 bg-brand/10 text-brand'
+                        ? 'border-slate-300 dark:border-white/[0.15] bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)]'
                         : 'border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
                     }`}
                   >
@@ -2007,7 +2007,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
             onNavigateToInbox && (
               <button
                 onClick={onNavigateToInbox}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand text-white font-medium hover:bg-brand-dark transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 font-medium hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors"
               >
                 {t('myWork.focus.goToInbox', 'Go to Inbox')}
                 <ChevronRight size={16} />

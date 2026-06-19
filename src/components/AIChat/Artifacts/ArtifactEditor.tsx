@@ -126,7 +126,7 @@ export const ArtifactEditor: React.FC<ArtifactEditorProps> = ({ artifact, onSave
               flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors
               ${
                 hasChanges
-                  ? 'bg-brand text-white hover:bg-brand-dark'
+                  ? 'bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF]'
                   : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
               }
             `}

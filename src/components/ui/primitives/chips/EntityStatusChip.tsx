@@ -28,11 +28,13 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   draft: 'info',
   open: 'info',
   generating: 'info',
+  generated: 'info',
   planning: 'info',
   new: 'info',
   scheduled: 'info',
   executing: 'info',
   promoted: 'info',
+  proposed: 'info',
 
   // warning — waiting on someone
   submitted: 'warning',
@@ -43,12 +45,16 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   in_review: 'warning',
   review: 'warning',
   escalated: 'warning',
+  on_hold: 'warning',
+  paused: 'warning',
 
   // success — closed positively
   approved: 'success',
+  accepted: 'success',
   completed: 'success',
   done: 'success',
   published: 'success',
+  ready: 'success',
   active: 'success',
   utilized: 'success',
   tracking: 'success',
@@ -61,10 +67,14 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   cancelled: 'danger',
   overdue: 'danger',
 
-  // neutral
+  // neutral — terminal-inert or unassigned (explicit, not accidental fallback)
   archived: 'neutral',
   trashed: 'neutral',
   final: 'neutral',
+  inactive: 'neutral',
+  assigned: 'neutral',
+  not_started: 'neutral',
+  todo: 'neutral',
   unknown: 'neutral',
 };
 

@@ -1141,7 +1141,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </button>
                         <button
                           onClick={() => handleOpenLogs(connected.id, p.displayName)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:bg-[#F4F7FB] dark:text-slate-200 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF] flex items-center justify-center gap-2"
                         >
                           <Eye size={16} />
                           View logs
@@ -1197,7 +1197,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           connected.status === 'error') && (
                           <button
                             onClick={() => handleOpenLogs(connected.id, p.displayName)}
-                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:bg-[#F4F7FB] dark:text-slate-200 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF] flex items-center justify-center gap-2"
                           >
                             <Eye size={16} />
                             View governed status
@@ -1822,7 +1822,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <button
                         onClick={() => openMcpTools(p.id, p.name)}
                         disabled={!isAdmin}
-                        className="px-3 py-2 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:bg-[#F4F7FB] dark:text-slate-200 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF] flex items-center gap-2 disabled:opacity-60"
                       >
                         <Eye size={16} />
                         {t('settings.mcp.viewTools', 'View tools')}

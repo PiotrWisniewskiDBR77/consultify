@@ -426,7 +426,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
         <button
           onClick={() => setShowNew(true)}
           disabled={!!loadError}
-          className="flex items-center gap-2 px-3 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] transition-colors"
         >
           <Plus size={16} />
           {t('settings.webhooks.add', 'Add Webhook')}
@@ -481,7 +481,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                   onClick={() => toggleEvent(event)}
                   className={`px-3 py-1 text-sm rounded-full transition-colors ${
                     newWebhook.events.includes(event)
-                      ? 'bg-brand text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'bg-white dark:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300'
                   }`}
                 >
@@ -516,7 +516,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
             <button
               onClick={createWebhook}
               disabled={!newWebhook.url.trim() || newWebhook.events.length === 0}
-              className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark disabled:opacity-50"
+              className="px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] disabled:opacity-50"
             >
               {t('common.create', 'Create')}
             </button>
@@ -608,7 +608,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                         }
                         className={`p-2 rounded-lg transition-colors ${
                           showSettings === webhook.id
-                            ? 'bg-brand text-white'
+                            ? 'bg-navy-900 text-white'
                             : 'text-slate-500 dark:text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                         }`}
                         title={t('common.settings', 'Settings')}
@@ -788,7 +788,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                     <div className="flex gap-2 pt-2">
                       <button
                         onClick={() => saveWebhookSettings(webhook.id)}
-                        className="flex-1 px-3 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark text-sm font-medium"
+                        className="flex-1 px-3 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] text-sm font-medium"
                       >
                         {t('common.save', 'Save')}
                       </button>

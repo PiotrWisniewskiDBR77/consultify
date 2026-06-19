@@ -27,7 +27,7 @@ const Toggle: React.FC<{ checked: boolean; onChange: () => void; disabled?: bool
     onClick={onChange}
     disabled={disabled}
     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-      checked ? 'bg-brand' : 'bg-slate-200 dark:bg-navy-700'
+      checked ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
     }`}
   >
     <span
@@ -171,7 +171,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 
         {/* Footer */}
         <div className="px-6 py-4 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-navy-700 flex justify-end">
-          <button className="px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg text-sm font-medium transition-colors">
+          <button className="px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 rounded-lg text-sm font-medium transition-colors">
             {t('settings.notifications.savePreferences', 'Save Preferences')}
           </button>
         </div>

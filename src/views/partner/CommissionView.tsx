@@ -370,7 +370,7 @@ export const CommissionView: React.FC = () => {
 
             <button
               onClick={navigate(AppView.PARTNER_RESOURCES)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] px-4 py-3 text-sm font-semibold text-white dark:text-navy-950 transition hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF]"
             >
               Open Partner Resources
             </button>

@@ -821,7 +821,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                 <button
                   onClick={sendResponse}
                   disabled={!responseText.trim() || sendingResponse}
-                  className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <Send size={16} />
                   {sendingResponse

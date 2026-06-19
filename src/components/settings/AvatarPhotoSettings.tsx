@@ -330,7 +330,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
                   handleUpload();
                 }}
                 disabled={isUploading}
-                className="px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 {isUploading ? (
                   <>

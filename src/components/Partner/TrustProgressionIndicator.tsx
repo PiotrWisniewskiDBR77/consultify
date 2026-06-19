@@ -47,7 +47,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                   isCompleted
                     ? 'bg-emerald-500 text-white'
                     : isCurrent
-                      ? 'bg-brand text-white ring-4 ring-brand/20'
+                      ? 'bg-navy-900 text-white ring-4 ring-brand/20'
                       : 'bg-slate-100 text-slate-400 dark:text-slate-500 dark:bg-white/10'
                 }`}
                 title={phase.label}
@@ -117,7 +117,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                   isCompleted
                     ? 'bg-emerald-500 text-white'
                     : isCurrent
-                      ? 'bg-brand text-white'
+                      ? 'bg-navy-900 text-white'
                       : 'bg-slate-100 text-slate-400 dark:text-slate-500 dark:bg-white/10'
                 }`}
               >
@@ -208,7 +208,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                 <span className="font-semibold">{trustProgression[currentIndex + 1]?.label}</span>
               </div>
             </div>
-            <button className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark">
+            <button className="rounded-xl bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-sm font-semibold text-white dark:text-navy-950 transition hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF]">
               View Tasks
             </button>
           </div>

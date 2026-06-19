@@ -152,7 +152,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
             ) : (
               <button
                 onClick={onConnect}
-                className="px-4 py-2 text-sm font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-white dark:text-navy-950 bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
               >
                 {t('settings.integrations.connect', 'Connect')}
               </button>

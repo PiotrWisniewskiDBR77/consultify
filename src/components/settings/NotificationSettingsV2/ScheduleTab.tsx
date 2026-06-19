@@ -98,7 +98,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
             onChange={handleQuietHoursToggle}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+          <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
         </label>
       </div>
 
@@ -144,7 +144,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
                     onClick={() => handleDayToggle(key)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       isSelected
-                        ? 'bg-brand text-white'
+                        ? 'bg-navy-900 text-white'
                         : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-600'
                     }`}
                   >

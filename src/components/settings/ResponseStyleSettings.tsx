@@ -43,15 +43,15 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
               onClick={() => setResponseLength(length)}
               className={`p-3 rounded-lg border-2 transition-all ${
                 responseLength === length
-                  ? 'border-brand bg-brand/5 dark:bg-brand/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-brand/50'
+                  ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-slate-900 dark:text-white capitalize">
                   {t(`settings.ai.length.${length}`, length)}
                 </span>
-                {responseLength === length && <Check size={16} className="text-brand" />}
+                {responseLength === length && <Check size={16} className="text-[var(--c-info)]" />}
               </div>
             </button>
           ))}
@@ -70,15 +70,15 @@ export const ResponseStyleSettings: React.FC<ResponseStyleSettingsProps> = ({ cl
               onClick={() => setTone(t_)}
               className={`p-3 rounded-lg border-2 transition-all ${
                 tone === t_
-                  ? 'border-brand bg-brand/5 dark:bg-brand/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-brand/50'
+                  ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-slate-900 dark:text-white capitalize">
                   {t(`settings.ai.tone.${t_}`, t_)}
                 </span>
-                {tone === t_ && <Check size={16} className="text-brand" />}
+                {tone === t_ && <Check size={16} className="text-[var(--c-info)]" />}
               </div>
             </button>
           ))}

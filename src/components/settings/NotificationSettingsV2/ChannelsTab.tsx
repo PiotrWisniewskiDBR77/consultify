@@ -126,7 +126,7 @@ const ChannelsTab: React.FC<ChannelsTabProps> = ({
                 onClick={() => toggleEmail(key)}
                 className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                   enabled
-                    ? 'bg-brand border-brand text-white'
+                    ? 'bg-navy-900 border-brand text-white'
                     : 'border-slate-300 dark:border-navy-600'
                 }`}
               >

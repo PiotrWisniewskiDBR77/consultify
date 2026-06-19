@@ -251,7 +251,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
         </div>
         <button
           onClick={fetchBenchmarkData}
-          className="mt-3 px-3 py-1.5 text-sm rounded-lg bg-brand text-white hover:opacity-90"
+          className="mt-3 px-3 py-1.5 text-sm rounded-lg bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
         >
           Retry
         </button>

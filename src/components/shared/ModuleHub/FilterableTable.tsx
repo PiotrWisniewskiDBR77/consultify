@@ -541,7 +541,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     className={[
                       'group cursor-pointer transition-colors',
                       row.id === selectedRowId
-                        ? 'bg-primary-500/8 dark:bg-primary-500/10'
+                        ? 'bg-slate-50 dark:bg-white/[0.06]'
                         : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
                     ].join(' ')}
                   >

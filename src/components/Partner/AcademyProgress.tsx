@@ -363,7 +363,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
         {!isCompleted && (
           <button
             onClick={onStart}
-            className="flex items-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-dark"
+            className="flex items-center gap-1 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-semibold text-white dark:text-navy-950 transition hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF]"
           >
             Start <ChevronRight size={12} />
           </button>

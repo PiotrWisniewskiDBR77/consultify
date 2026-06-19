@@ -112,13 +112,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               onMouseEnter={() => onHover(index)}
               className={`
                 w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors
-                ${isActive ? 'bg-primary-50/70 dark:bg-primary-900/15' : 'hover:bg-slate-50/80 dark:hover:bg-white/[0.04]'}
+                ${isActive ? 'bg-slate-100 dark:bg-white/[0.08]' : 'hover:bg-slate-50/80 dark:hover:bg-white/[0.04]'}
               `}
             >
               {Icon && (
                 <Icon
                   size={16}
-                  className={`shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'}`}
+                  className={`shrink-0 ${isActive ? 'text-[var(--c-info)]' : 'text-slate-600 dark:text-slate-500'}`}
                 />
               )}
               <span className="flex flex-col min-w-0 flex-1">

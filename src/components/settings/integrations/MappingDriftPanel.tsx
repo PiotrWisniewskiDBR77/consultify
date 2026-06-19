@@ -387,7 +387,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                 <button
                   onClick={handleSave}
                   disabled={saving || !!jsonError}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand rounded-lg hover:bg-brand-dark disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white dark:text-navy-950 bg-navy-900 dark:bg-[#F4F7FB] rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] disabled:opacity-50 transition-colors"
                 >
                   {saving ? (
                     <Loader2 className="w-3 h-3 animate-spin" />

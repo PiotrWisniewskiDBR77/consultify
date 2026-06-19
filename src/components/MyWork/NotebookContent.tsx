@@ -2014,7 +2014,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     key={p.id}
                     className={`group relative rounded-xl transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-r from-crimson-500/10 to-primary-500/8 border border-indigo-500/20 dark:border-indigo-400/15 shadow-sm'
+                        ? 'bg-slate-100 dark:bg-white/[0.08] border border-slate-200 dark:border-white/[0.10] shadow-sm'
                         : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] border border-transparent'
                     }`}
                   >
@@ -2039,7 +2039,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             <span
                               className={`font-semibold text-[13px] truncate flex-1 ${
                                 isActive
-                                  ? 'text-indigo-700 dark:text-indigo-300'
+                                  ? 'text-slate-900 dark:text-white'
                                   : 'text-slate-800 dark:text-slate-200'
                               }`}
                             >

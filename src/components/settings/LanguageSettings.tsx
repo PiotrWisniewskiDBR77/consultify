@@ -139,7 +139,7 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
             onClick={() => handleLanguageChange(lang.code)}
             className={`w-full flex items-center justify-between p-4 rounded-lg transition-colors ${
               currentLang === lang.code
-                ? 'bg-brand/10 border-2 border-brand'
+                ? 'bg-slate-100 dark:bg-white/[0.08] border-2 border-[var(--c-info)]'
                 : 'bg-slate-50 dark:bg-navy-800/50 border-2 border-transparent hover:border-slate-200 dark:border-navy-700 dark:hover:border-navy-600'
             }`}
           >
@@ -147,7 +147,7 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
               <span className="text-2xl">{lang.flag}</span>
               <span className="font-medium text-slate-900 dark:text-white">{lang.name}</span>
             </div>
-            {currentLang === lang.code && <Check size={20} className="text-brand" />}
+            {currentLang === lang.code && <Check size={20} className="text-[var(--c-info)]" />}
           </button>
         ))}
       </div>

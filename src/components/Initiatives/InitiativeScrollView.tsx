@@ -118,7 +118,7 @@ const TableOfContents: React.FC<TOCProps> = ({
                 onClick={() => onNavigate(section.key)}
                 className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-all duration-150 ${
                   isActive
-                    ? 'bg-primary-500/10 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 font-medium border-l-2 border-primary-500'
+                    ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium border-l-2 border-[var(--c-info)]'
                     : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/50 hover:text-slate-700 dark:hover:text-slate-300 border-l-2 border-transparent'
                 }`}
                 title={getSectionLabel(section, isPolish)}
@@ -128,7 +128,7 @@ const TableOfContents: React.FC<TOCProps> = ({
                   <span className="text-xs truncate">{getSectionLabel(section, isPolish)}</span>
                 )}
                 {!isCompact && isActive && (
-                  <ChevronRight size={12} className="ml-auto flex-shrink-0 text-primary-500" />
+                  <ChevronRight size={12} className="ml-auto flex-shrink-0 text-[var(--c-info)]" />
                 )}
               </button>
             );
