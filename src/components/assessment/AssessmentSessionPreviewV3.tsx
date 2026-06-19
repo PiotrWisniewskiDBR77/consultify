@@ -136,28 +136,28 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
 
   const metaRows = useMemo(
     () => [
-      { label: isPolish ? 'Framework' : 'Framework', value: framework || '—' },
-      { label: isPolish ? 'Status' : 'Status', value: status || '—' },
-      { label: isPolish ? 'Postęp' : 'Progress', value: `${Math.round(progress || 0)}%` },
+      { label: t('assessment.preview.framework', 'Framework'), value: framework || '—' },
+      { label: t('assessment.preview.status', 'Status'), value: status || '—' },
+      { label: t('assessment.preview.progress', 'Progress'), value: `${Math.round(progress || 0)}%` },
       {
-        label: isPolish ? 'Utworzono' : 'Created',
+        label: t('assessment.preview.created', 'Created'),
         value: createdAt ? createdAt.toLocaleDateString() : '—',
       },
       {
-        label: isPolish ? 'Aktualizacja' : 'Updated',
+        label: t('assessment.preview.updated', 'Updated'),
         value: updatedAt ? updatedAt.toLocaleDateString() : '—',
       },
     ],
-    [createdAt, framework, isPolish, progress, status, updatedAt]
+    [createdAt, framework, t, progress, status, updatedAt]
   );
 
   const handleCopyJson = useCallback(async () => {
     const payload = safeJsonString(bestDetails?.scoreSummary || bestDetails?.contextSnapshot || {});
     try {
       await navigator.clipboard.writeText(payload || itemName || '');
-      toast.success(isPolish ? 'Skopiowano' : 'Copied');
+      toast.success(t('assessment.preview.copied', 'Copied'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+      toast.error(t('assessment.preview.copyFailed', 'Copy failed'));
     } finally {
       setDetailsMenuOpen(false);
     }
@@ -171,7 +171,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
         const txt = await runAssessmentAi({ intent, isPolish, details: bestDetails });
         setAiText(txt);
       } catch {
-        toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
+        toast.error(t('assessment.preview.aiUnavailable', 'AI unavailable'));
       } finally {
         setAiLoading(false);
       }
@@ -185,7 +185,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-wide text-danger-400">
-              {isPolish ? 'Assessment session' : 'Assessment session'}
+              {'Assessment session'}
             </div>
             <div
               className="mt-1 text-lg font-semibold text-slate-900 dark:text-white truncate"
@@ -212,7 +212,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
                   className="w-full px-3 py-2.5 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.05] inline-flex items-center gap-2"
                 >
                   <Copy size={14} />
-                  {isPolish ? 'Kopiuj JSON' : 'Copy JSON'}
+                  {t('assessment.preview.copyJson', 'Copy JSON')}
                 </button>
               </div>
             ) : null}
@@ -233,7 +233,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
           <div className="flex items-center justify-between gap-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {isPolish ? 'AI hints' : 'AI hints'}
+              {'AI hints'}
             </div>
             {aiLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-600" /> : null}
           </div>
@@ -246,7 +246,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.06] disabled:opacity-50"
             >
               <Sparkles size={14} />
-              {isPolish ? 'Executive brief' : 'Executive brief'}
+              {'Executive brief'}
             </button>
             <button
               type="button"
@@ -255,7 +255,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.06] disabled:opacity-50"
             >
               <Sparkles size={14} />
-              {isPolish ? 'Top luki' : 'Top gaps'}
+              {t('assessment.preview.topGaps', 'Top gaps')}
             </button>
             <button
               type="button"
@@ -264,14 +264,14 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.06] disabled:opacity-50"
             >
               <Sparkles size={14} />
-              {isPolish ? 'Kąty inicjatyw' : 'Initiative angles'}
+              {t('assessment.preview.initiativeAngles', 'Initiative angles')}
             </button>
           </div>
 
           {detailsLoading ? (
             <div className="mt-4 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              {isPolish ? 'Ładowanie…' : 'Loading…'}
+              {t('common.loading', 'Loading…')}
             </div>
           ) : aiText ? (
             <pre className="mt-4 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
@@ -280,12 +280,8 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
           ) : (
             <div className="mt-4 text-sm text-slate-500 dark:text-slate-400">
               {bestDetails
-                ? isPolish
-                  ? 'Uruchom jeden z promptów AI aby uzyskać insighty.'
-                  : 'Run one of the AI prompts to get insights.'
-                : isPolish
-                  ? 'Wybierz sesję, aby zobaczyć szczegóły.'
-                  : 'Select a session to see details.'}
+                ? t('assessment.preview.runAiPrompt', 'Run one of the AI prompts to get insights.')
+                : t('assessment.preview.selectSession', 'Select a session to see details.')}
             </div>
           )}
         </div>
@@ -302,9 +298,7 @@ export const AssessmentSessionPreviewV3Footer: React.FC<{
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="text-xs text-slate-500 dark:text-slate-400">
-        {isPolish
-          ? 'Otwórz sesję assessment aby kontynuować.'
-          : 'Open assessment session to continue.'}
+        {t('assessment.preview.openSessionHint', 'Open assessment session to continue.')}
       </div>
       <button
         type="button"

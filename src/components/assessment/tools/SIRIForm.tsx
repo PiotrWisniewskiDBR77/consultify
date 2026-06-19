@@ -322,7 +322,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                 {dimension.name}
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {areas.length} {isPolish ? 'obszarów' : 'areas'}
+                {areas.length} {t('assessment.form.areas', 'areas')}
               </span>
             </div>
           </div>
@@ -334,7 +334,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                   {dimData.current || 0}
                 </span>
                 <span className="text-slate-500 dark:text-slate-400 text-xs block">
-                  {isPolish ? 'Akt.' : 'Cur.'}
+                  {t('assessment.form.cur', 'Cur.')}
                 </span>
               </div>
               <div className="text-center">
@@ -342,7 +342,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                   {dimData.target || 0}
                 </span>
                 <span className="text-slate-500 dark:text-slate-400 text-xs block">
-                  {isPolish ? 'Cel' : 'Tgt.'}
+                  {t('assessment.form.tgt', 'Tgt.')}
                 </span>
               </div>
               {(dimData.gap || 0) > 0 && (
@@ -366,7 +366,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
             {/* Target Score */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                {isPolish ? 'Docelowy poziom' : 'Target Level'}
+                {t('assessment.form.targetLevel', 'Target Level')}
               </label>
               {renderLevelSelector(
                 dimData.target || 0,
@@ -378,7 +378,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
             {/* Prioritisation Areas */}
             <div>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                {isPolish ? 'Obszary priorytetyzacji:' : 'Prioritisation Areas:'}
+                {t('assessment.form.prioritisationAreas', 'Prioritisation Areas:')}
               </p>
               <div className="space-y-2">
                 {areas.map((area) => {
@@ -422,7 +422,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                           </p>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {isPolish ? 'Wynik:' : 'Score:'}
+                              {t('assessment.form.score', 'Score:')}
                             </span>
                             {renderLevelSelector(
                               areaScore,
@@ -441,7 +441,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
             {/* Maturity Levels Reference */}
             <details className="text-sm">
               <summary className="text-slate-600 dark:text-slate-400 cursor-pointer hover:text-primary-600">
-                {isPolish ? 'Opisy poziomów dojrzałości' : 'Maturity Level Descriptions'}
+                {t('assessment.form.maturityLevelDescriptions', 'Maturity Level Descriptions')}
               </summary>
               <div className="mt-2 space-y-2 pl-4">
                 {SIRI_MATURITY_LEVELS.map((level) => (
@@ -466,7 +466,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
             <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-navy-700">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Notatki' : 'Notes'}
+                  {t('assessment.notes', 'Notes')}
                 </label>
                 <textarea
                   value={dimData.notes || ''}
@@ -485,7 +485,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Dowody (evidence)' : 'Evidence'}
+                  {t('assessment.evidence', 'Evidence')}
                 </label>
                 <textarea
                   value={dimData.evidence || ''}
@@ -504,7 +504,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Pewność oceny' : 'Assessment Confidence'}
+                  {t('assessment.confidence', 'Assessment Confidence')}
                 </label>
                 <div className="flex gap-2">
                   {(['low', 'medium', 'high'] as const).map((level) => (
@@ -523,16 +523,10 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                       } ${readOnly ? 'cursor-default' : 'cursor-pointer hover:opacity-80'}`}
                     >
                       {level === 'low'
-                        ? isPolish
-                          ? 'Niska'
-                          : 'Low'
+                        ? t('assessment.confidenceLow', 'Low')
                         : level === 'medium'
-                          ? isPolish
-                            ? 'Średnia'
-                            : 'Medium'
-                          : isPolish
-                            ? 'Wysoka'
-                            : 'High'}
+                          ? t('assessment.confidenceMedium', 'Medium')
+                          : t('assessment.confidenceHigh', 'High')}
                     </button>
                   ))}
                 </div>
@@ -574,10 +568,10 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
         <div className="px-6 py-4 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Postęp oceny SIRI' : 'SIRI Assessment Progress'}
+              {t('assessment.form.siriProgress', 'SIRI Assessment Progress')}
             </span>
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              {progress.completed}/{progress.total} {isPolish ? 'wymiarów' : 'dimensions'} (
+              {progress.completed}/{progress.total} {t('assessment.dimensions', 'dimensions')} (
               {progress.percent}%)
             </span>
           </div>
@@ -589,11 +583,11 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
           </div>
           <div className="mt-3 flex items-center gap-4">
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Wynik ogólny' : 'Overall Score'}:{' '}
+              {t('assessment.overallScore', 'Overall Score')}:{' '}
               <span className="font-medium text-navy-900 dark:text-white">{scores.overall}/5</span>
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Z dowodami' : 'With evidence'}:{' '}
+              {t('assessment.withEvidence', 'With evidence')}:{' '}
               <span className="font-medium text-navy-900 dark:text-white">
                 {progress.evidenceCount}/{progress.completed}
               </span>
@@ -655,7 +649,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                 {blockConfig.name}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {isPolish ? blockConfig.namePL : blockConfig.name} - {blockConfig.description}
+                {blockConfig.name} - {blockConfig.description}
               </p>
             </div>
           </div>
@@ -666,7 +660,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
               className={`bg-${blockColor}-50 dark:bg-${blockColor}-900/20 rounded-xl p-4 border border-${blockColor}-200 dark:border-${blockColor}-500/30`}
             >
               <p className={`text-sm text-${blockColor}-600 dark:text-${blockColor}-400 mb-1`}>
-                {isPolish ? 'Aktualny poziom' : 'Current Level'}
+                {t('assessment.form.currentLevel', 'Current Level')}
               </p>
               <p
                 className={`text-2xl font-bold text-${blockColor}-700 dark:text-${blockColor}-300`}
@@ -676,7 +670,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
             </div>
             <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-500/30">
               <p className="text-sm text-green-600 dark:text-green-400 mb-1">
-                {isPolish ? 'Docelowy poziom' : 'Target Level'}
+                {t('assessment.form.targetLevel', 'Target Level')}
               </p>
               <p className="text-2xl font-bold text-green-700 dark:text-green-300">
                 {scores.blockScores[activeBlock].target || '-'}/5
@@ -684,7 +678,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
             </div>
             <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-500/30">
               <p className="text-sm text-amber-600 dark:text-amber-400 mb-1">
-                {isPolish ? 'Luka' : 'Gap'}
+                {t('assessment.gap', 'Gap')}
               </p>
               <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">
                 {scores.blockScores[activeBlock].target
@@ -697,7 +691,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
           {/* Dimensions */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Wymiary' : 'Dimensions'}
+              {t('assessment.form.dimensions', 'Dimensions')}
             </h3>
             {blockDimensions.map((dim) => renderDimensionCard(dim))}
           </div>
@@ -716,7 +710,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
           }`}
         >
           <ChevronLeft size={20} />
-          {isPolish ? 'Poprzedni blok' : 'Previous Block'}
+          {t('assessment.form.previousBlock', 'Previous Block')}
         </button>
 
         <button
@@ -724,12 +718,8 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
           className={`flex items-center gap-2 px-4 py-2 bg-${blockColor}-600 hover:bg-${blockColor}-500 text-white rounded-lg font-medium transition-colors`}
         >
           {currentBlockIndex === blocks.length - 1
-            ? isPolish
-              ? 'Zakończ ocenę'
-              : 'Complete Assessment'
-            : isPolish
-              ? 'Następny blok'
-              : 'Next Block'}
+            ? t('assessment.form.completeAssessment', 'Complete Assessment')
+            : t('assessment.form.nextBlock', 'Next Block')}
           <ArrowRight size={20} />
         </button>
       </div>

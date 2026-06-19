@@ -187,7 +187,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
   initialAssessmentId,
   onNavigate,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { currentProjectId, setCurrentView } = useAppStore();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
@@ -488,8 +488,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
           if (!createResponse.ok) {
             const errorData = await createResponse.json().catch(() => ({}));
             throw new Error(
-              errorData.error ||
-                (isPolish ? 'Nie udało się utworzyć assessmentu' : 'Failed to create assessment')
+              errorData.error || t('assessment.hub.createFailed', 'Failed to create assessment')
             );
           }
           const created = await createResponse.json();
@@ -498,7 +497,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
       }
 
       if (!assessmentId) {
-        throw new Error(isPolish ? 'Brak identyfikatora assessmentu' : 'Missing assessment id');
+        throw new Error(t('assessment.hub.missingId', 'Missing assessment id'));
       }
 
       try {
@@ -512,7 +511,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         if (!updateResponse.ok) {
           const errorData = await updateResponse.json().catch(() => ({}));
           throw new Error(
-            errorData.error || (isPolish ? 'Nie udało się zapisać' : 'Failed to save assessment')
+            errorData.error || t('assessment.hub.saveFailed', 'Failed to save assessment')
           );
         }
       }
@@ -754,7 +753,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             <LoadingState
               variant="spinner"
               className="h-full bg-slate-50 dark:bg-navy-950/50"
-              label={isPolish ? 'Ładowanie danych assessmentu...' : 'Loading assessment data...'}
+              label={t('assessment.hub.loadingData', 'Loading assessment data...')}
             />
           );
         }
@@ -1252,7 +1251,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               {/* Progress Indicator */}
               <div className="flex items-center gap-3">
                 <span className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Postęp:' : 'Progress:'}
+                  {t('assessment.hub.progress', 'Progress:')}
                 </span>
                 <div className="w-32 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                   <div
@@ -1320,7 +1319,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   {isSaving ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      {isPolish ? 'Zapisuję...' : 'Saving...'}
+                      {t('assessment.hub.saving', 'Saving...')}
                     </>
                   ) : lastSaved && !hasUnsavedChanges ? (
                     <>

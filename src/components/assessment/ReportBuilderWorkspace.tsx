@@ -50,8 +50,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   reportId,
   onClose,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
 
   // Global state for chat
   const { addChatMessage, setIsBotTyping, isBotTyping, activeChatMessages } = useAppStore();
@@ -106,12 +105,12 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     async (sectionId: string, content: string, title?: string) => {
       const success = await updateSection(sectionId, content, title);
       if (success) {
-        toast.success(isPolish ? 'Sekcja zapisana' : 'Section saved');
+        toast.success(t('assessment.reportBuilder.sectionSaved', 'Section saved'));
       } else {
-        toast.error(isPolish ? 'Błąd zapisu sekcji' : 'Failed to save section');
+        toast.error(t('assessment.reportBuilder.sectionSaveFailed', 'Failed to save section'));
       }
     },
-    [updateSection, isPolish]
+    [updateSection, t]
   );
 
   // Handle section add
@@ -121,12 +120,12 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         orderIndex: afterIndex + 1,
       });
       if (newSection) {
-        toast.success(isPolish ? 'Sekcja dodana' : 'Section added');
+        toast.success(t('assessment.reportBuilder.sectionAdded', 'Section added'));
         setFocusSectionId(newSection.id);
       }
       return newSection;
     },
-    [addSection, isPolish]
+    [addSection, t]
   );
 
   // Handle section delete
@@ -134,12 +133,12 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     async (sectionId: string) => {
       const success = await deleteSection(sectionId);
       if (success) {
-        toast.success(isPolish ? 'Sekcja usunięta' : 'Section deleted');
+        toast.success(t('assessment.reportBuilder.sectionDeleted', 'Section deleted'));
       } else {
-        toast.error(isPolish ? 'Błąd usuwania sekcji' : 'Failed to delete section');
+        toast.error(t('assessment.reportBuilder.sectionDeleteFailed', 'Failed to delete section'));
       }
     },
-    [deleteSection, isPolish]
+    [deleteSection, t]
   );
 
   // Handle section reorder
@@ -148,45 +147,43 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
       const sectionIds = newOrder.sort((a, b) => a.orderIndex - b.orderIndex).map((o) => o.id);
       const success = await reorderSections(sectionIds);
       if (!success) {
-        toast.error(isPolish ? 'Błąd zmiany kolejności' : 'Failed to reorder sections');
+        toast.error(t('assessment.reportBuilder.reorderFailed', 'Failed to reorder sections'));
       }
     },
-    [reorderSections, isPolish]
+    [reorderSections, t]
   );
 
   // Handle AI action on section
   const handleAIAction = useCallback(
     async (sectionId: string, action: string) => {
-      toast.loading(isPolish ? 'AI przetwarza...' : 'AI processing...', { id: 'ai-action' });
+      toast.loading(t('assessment.reportBuilder.aiProcessing', 'AI processing...'), { id: 'ai-action' });
 
       const success = await aiAction(sectionId, action as AIAction);
 
       if (success) {
-        toast.success(isPolish ? 'Sekcja zaktualizowana przez AI' : 'Section updated by AI', {
+        toast.success(t('assessment.reportBuilder.aiUpdated', 'Section updated by AI'), {
           id: 'ai-action',
         });
       } else {
-        toast.error(isPolish ? 'AI nie mogło przetworzyć sekcji' : 'AI failed to process section', {
+        toast.error(t('assessment.reportBuilder.aiFailed', 'AI failed to process section'), {
           id: 'ai-action',
         });
       }
     },
-    [aiAction, isPolish]
+    [aiAction, t]
   );
 
   // Handle save
   const handleSave = useCallback(() => {
     // Sections are auto-saved, this just marks them as saved
     markChangesSaved();
-    toast.success(isPolish ? 'Raport zapisany' : 'Report saved');
-  }, [markChangesSaved, isPolish]);
+    toast.success(t('assessment.reportBuilder.reportSaved', 'Report saved'));
+  }, [markChangesSaved, t]);
 
   // Handle finalize
   const handleFinalize = useCallback(async () => {
     const confirmed = window.confirm(
-      isPolish
-        ? 'Wysłać raport do zatwierdzenia (status FINAL)? Nadal będzie można go edytować do momentu zatwierdzenia.'
-        : 'Submit the report for approval (set status FINAL)? You can still edit it until it is approved.'
+      t('assessment.reportBuilder.confirmFinalize', 'Submit the report for approval (set status FINAL)? You can still edit it until it is approved.')
     );
 
     if (!confirmed) return;
@@ -196,17 +193,15 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     setIsFinalizing(false);
 
     if (success) {
-      toast.success(isPolish ? 'Raport sfinalizowany' : 'Report finalized');
+      toast.success(t('assessment.reportBuilder.reportFinalized', 'Report finalized'));
     } else {
-      toast.error(isPolish ? 'Błąd finalizacji raportu' : 'Failed to finalize report');
+      toast.error(t('assessment.reportBuilder.finalizeFailed', 'Failed to finalize report'));
     }
-  }, [finalizeReport, isPolish]);
+  }, [finalizeReport, t]);
 
   const handleApprove = useCallback(async () => {
     const confirmed = window.confirm(
-      isPolish
-        ? 'Zatwierdzić raport? Po zatwierdzeniu będzie widoczny globalnie i zablokowany do edycji.'
-        : 'Approve the report? It will become globally visible and locked for editing.'
+      t('assessment.reportBuilder.confirmApprove', 'Approve the report? It will become globally visible and locked for editing.')
     );
     if (!confirmed) return;
 
@@ -215,24 +210,22 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     setIsFinalizing(false);
 
     if (success) {
-      toast.success(isPolish ? 'Raport zatwierdzony' : 'Report approved');
+      toast.success(t('assessment.reportBuilder.reportApproved', 'Report approved'));
     } else {
-      toast.error(isPolish ? 'Błąd zatwierdzenia' : 'Failed to approve report');
+      toast.error(t('assessment.reportBuilder.approveFailed', 'Failed to approve report'));
     }
-  }, [approveReport, isPolish]);
+  }, [approveReport, t]);
 
   // Handle regenerate
   const handleRegenerate = useCallback(async () => {
     const confirmed = window.confirm(
-      isPolish
-        ? 'Czy na pewno chcesz wygenerować raport od nowa? Wszystkie edycje zostaną utracone.'
-        : 'Are you sure you want to regenerate the report? All edits will be lost.'
+      t('assessment.reportBuilder.confirmRegenerate', 'Are you sure you want to regenerate the report? All edits will be lost.')
     );
 
     if (!confirmed) return;
 
     setIsRegenerating(true);
-    toast.loading(isPolish ? 'Generowanie raportu...' : 'Generating report...', {
+    toast.loading(t('assessment.reportBuilder.generating', 'Generating report...'), {
       id: 'regenerate',
     });
 
@@ -240,29 +233,29 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     setIsRegenerating(false);
 
     if (success) {
-      toast.success(isPolish ? 'Raport wygenerowany' : 'Report regenerated', { id: 'regenerate' });
+      toast.success(t('assessment.reportBuilder.reportRegenerated', 'Report regenerated'), { id: 'regenerate' });
     } else {
-      toast.error(isPolish ? 'Błąd generowania raportu' : 'Failed to regenerate report', {
+      toast.error(t('assessment.reportBuilder.regenerateFailed', 'Failed to regenerate report'), {
         id: 'regenerate',
       });
     }
-  }, [regenerateReport, isPolish]);
+  }, [regenerateReport, t]);
 
   // Handle export PDF
   const handleExportPdf = useCallback(async () => {
-    toast.loading(isPolish ? 'Eksportowanie PDF...' : 'Exporting PDF...', { id: 'export-pdf' });
+    toast.loading(t('assessment.reportBuilder.exportingPdf', 'Exporting PDF...'), { id: 'export-pdf' });
     await exportPdf();
-    toast.success(isPolish ? 'PDF pobrany' : 'PDF downloaded', { id: 'export-pdf' });
-  }, [exportPdf, isPolish]);
+    toast.success(t('assessment.reportBuilder.pdfDownloaded', 'PDF downloaded'), { id: 'export-pdf' });
+  }, [exportPdf, t]);
 
   // Handle export Excel
   const handleExportExcel = useCallback(async () => {
-    toast.loading(isPolish ? 'Eksportowanie Excel...' : 'Exporting Excel...', {
+    toast.loading(t('assessment.reportBuilder.exportingExcel', 'Exporting Excel...'), {
       id: 'export-excel',
     });
     await exportExcel();
-    toast.success(isPolish ? 'Excel pobrany' : 'Excel downloaded', { id: 'export-excel' });
-  }, [exportExcel, isPolish]);
+    toast.success(t('assessment.reportBuilder.excelDownloaded', 'Excel downloaded'), { id: 'export-excel' });
+  }, [exportExcel, t]);
 
   // Handle TOC section click
   const handleTocSectionClick = useCallback(
@@ -346,16 +339,14 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
           addChatMessage({
             id: `ai-edit-${Date.now()}`,
             role: 'ai',
-            content: isPolish
-              ? `Wykonuję akcję "${action}" na wybranej sekcji...`
-              : `Executing "${action}" on the selected section...`,
+            content: t('assessment.reportBuilder.executingAction', `Executing "${action}" on the selected section...`, { action }),
             timestamp: new Date(),
           });
           setIsBotTyping(false);
         }, 500);
       }
     }
-  }, [activeChatMessages, activeSection, handleAIAction, addChatMessage, setIsBotTyping, isPolish]);
+  }, [activeChatMessages, activeSection, handleAIAction, addChatMessage, setIsBotTyping, t]);
 
   // Loading state
   if (isLoading && !report) {
@@ -363,7 +354,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
       <LoadingState
         variant="spinner"
         className="h-full bg-slate-50 dark:bg-navy-950"
-        label={isPolish ? 'Ładowanie raportu...' : 'Loading report...'}
+        label={t('assessment.reportBuilder.loading', 'Loading report...')}
       />
     );
   }
@@ -375,7 +366,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         <div className="text-center max-w-md px-6">
           <FileWarning className="w-16 h-16 text-danger-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
-            {isPolish ? 'Błąd ładowania raportu' : 'Error loading report'}
+            {t('assessment.reportBuilder.errorLoading', 'Error loading report')}
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
           <div className="flex items-center justify-center gap-3">
@@ -383,7 +374,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
             >
-              {isPolish ? 'Wróć' : 'Go back'}
+              {t('assessment.reportBuilder.goBack', 'Go back')}
             </button>
             <button
               onClick={() => {
@@ -393,7 +384,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
-              {isPolish ? 'Spróbuj ponownie' : 'Try again'}
+              {t('assessment.reportBuilder.tryAgain', 'Try again')}
             </button>
           </div>
         </div>
@@ -428,12 +419,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
           <div className="text-center max-w-md px-6">
             <Sparkles className="w-16 h-16 text-primary-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
-              {isPolish ? 'Raport jest pusty' : 'Report is empty'}
+              {t('assessment.reportBuilder.emptyReport', 'Report is empty')}
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mb-6">
-              {isPolish
-                ? 'Ten raport nie ma jeszcze sekcji. Wygeneruj raport, aby rozpocząć.'
-                : 'This report has no sections yet. Generate the report to get started.'}
+              {t('assessment.reportBuilder.emptyReportDesc', 'This report has no sections yet. Generate the report to get started.')}
             </p>
             <button
               onClick={handleRegenerate}
@@ -445,7 +434,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
               ) : (
                 <Sparkles className="w-5 h-5" />
               )}
-              {isPolish ? 'Generuj raport z AI' : 'Generate report with AI'}
+              {t('assessment.reportBuilder.generateWithAI', 'Generate report with AI')}
             </button>
           </div>
         </div>
@@ -562,10 +551,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         <button
           onClick={() => setShowComments(true)}
           className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl shadow-lg hover:shadow-xl transition-all"
-          title={isPolish ? 'Pokaż komentarze' : 'Show comments'}
+          title={t('assessment.reportBuilder.showComments', 'Show comments')}
         >
           <MessageCircle className="w-5 h-5" />
-          <span className="text-sm font-medium">{isPolish ? 'Komentarze' : 'Comments'}</span>
+          <span className="text-sm font-medium">{t('assessment.reportBuilder.comments', 'Comments')}</span>
         </button>
       )}
 
@@ -602,7 +591,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
               onClick={clearError}
               className="text-xs text-danger-600 dark:text-danger-400 hover:underline mt-1"
             >
-              {isPolish ? 'Zamknij' : 'Dismiss'}
+              {t('assessment.reportBuilder.dismiss', 'Dismiss')}
             </button>
           </div>
         </div>
@@ -621,13 +610,13 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-primary-500" />
                 <span className="font-semibold text-navy-900 dark:text-white">
-                  {isPolish ? 'Czat AI' : 'AI Chat'}
+                  {t('assessment.reportBuilder.aiChat', 'AI Chat')}
                 </span>
               </div>
               <button
                 onClick={() => setShowChat(false)}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                title={isPolish ? 'Ukryj czat' : 'Hide chat'}
+                title={t('assessment.reportBuilder.hideChat', 'Hide chat')}
               >
                 <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               </button>
@@ -647,7 +636,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                 showModeToggle={false}
                 showHistoryTrigger={false}
                 showFocusMode={false}
-                title={isPolish ? 'Czat AI' : 'AI Chat'}
+                title={t('assessment.reportBuilder.aiChat', 'AI Chat')}
               />
             </div>
           </div>
@@ -663,7 +652,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                 className="flex items-center gap-2 px-3 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg shadow-lg transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
-                <span className="text-sm font-medium">{isPolish ? 'Pokaż czat' : 'Show chat'}</span>
+                <span className="text-sm font-medium">{t('assessment.reportBuilder.showChat', 'Show chat')}</span>
               </button>
             </div>
           )}
@@ -684,12 +673,12 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             <span>{report.name}</span>
             {report.status === 'FINAL' && (
               <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full">
-                {isPolish ? 'Finalny' : 'Final'}
+                {t('assessment.reportBuilder.statusFinal', 'Final')}
               </span>
             )}
           </span>
         }
-        subtitle={isPolish ? 'Edytor Raportu DRD' : 'DRD Report Editor'}
+        subtitle={t('assessment.reportBuilder.editorTitle', 'DRD Report Editor')}
         hideSidebar={true}
       >
         {reportContent}

@@ -241,11 +241,11 @@ export const DRDForm: React.FC<DRDFormProps> = ({
             {/* Current scores */}
             <div className="flex items-center gap-2 text-sm">
               <span className="text-blue-600 dark:text-blue-400">
-                {isPolish ? 'Aktualny' : 'Current'}: {scores[0] || '-'}
+                {t('assessment.form.current', 'Current')}: {scores[0] || '-'}
               </span>
               <span className="text-slate-500 dark:text-slate-400">/</span>
               <span className="text-green-600 dark:text-green-400">
-                {isPolish ? 'Cel' : 'Target'}: {scores[1] || '-'}
+                {t('assessment.form.target', 'Target')}: {scores[1] || '-'}
               </span>
               {gap > 0 && (
                 <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded text-xs">
@@ -267,13 +267,13 @@ export const DRDForm: React.FC<DRDFormProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Aktualny poziom' : 'Current Level'}
+                  {t('assessment.form.currentLevel', 'Current Level')}
                 </label>
                 {renderLevelSelector(area.id, 'actual', scores[0])}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Docelowy poziom' : 'Target Level'}
+                  {t('assessment.form.targetLevel', 'Target Level')}
                 </label>
                 {renderLevelSelector(area.id, 'target', scores[1])}
               </div>
@@ -282,7 +282,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
             {/* Level Descriptions */}
             <div className="space-y-2">
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {isPolish ? 'Opis poziomów:' : 'Level descriptions:'}
+                {t('assessment.form.levelDescriptions', 'Level descriptions:')}
               </p>
               {area.levels.map((level) => {
                 const levelKey = `${area.id}-${level.level}`;
@@ -322,12 +322,12 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                         </span>
                         {isCurrentLevel && (
                           <span className="px-2 py-0.5 bg-blue-600 text-white rounded text-xs">
-                            {isPolish ? 'Aktualny' : 'Current'}
+                            {t('assessment.form.current', 'Current')}
                           </span>
                         )}
                         {isTargetLevel && (
                           <span className="px-2 py-0.5 bg-green-600 text-white rounded text-xs">
-                            {isPolish ? 'Cel' : 'Target'}
+                            {t('assessment.form.target', 'Target')}
                           </span>
                         )}
                       </div>
@@ -358,10 +358,10 @@ export const DRDForm: React.FC<DRDFormProps> = ({
         <div className="px-6 py-4 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Postęp oceny' : 'Assessment Progress'}
+              {t('assessment.form.assessmentProgress', 'Assessment Progress')}
             </span>
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              {progress.completedAxes}/{progress.totalAxes} {isPolish ? 'osi' : 'axes'} (
+              {progress.completedAxes}/{progress.totalAxes} {t('assessment.form.axes', 'axes')} (
               {progress.percent}%)
             </span>
           </div>
@@ -373,7 +373,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           </div>
           {progress.avgScore > 0 && (
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Średni wynik' : 'Average score'}: {progress.avgScore}/5
+              {t('assessment.form.avgScore', 'Average score')}: {progress.avgScore}/5
             </p>
           )}
         </div>
@@ -423,10 +423,10 @@ export const DRDForm: React.FC<DRDFormProps> = ({
               </div>
               <div>
                 <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-                  {isPolish ? 'Oś' : 'Axis'} {currentAxis.id}: {currentAxis.name}
+                  {t('assessment.form.axis', 'Axis')} {currentAxis.id}: {currentAxis.name}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {currentAxis.areas.length} {isPolish ? 'obszarów do oceny' : 'areas to assess'}
+                  {currentAxis.areas.length} {t('assessment.form.areasToAssess', 'areas to assess')}
                 </p>
               </div>
             </div>
@@ -435,7 +435,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-500/30">
                 <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">
-                  {isPolish ? 'Aktualny poziom' : 'Current Level'}
+                  {t('assessment.form.currentLevel', 'Current Level')}
                 </p>
                 <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                   {currentAxisData.actual || '-'}/5
@@ -443,7 +443,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
               </div>
               <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-500/30">
                 <p className="text-sm text-green-600 dark:text-green-400 mb-1">
-                  {isPolish ? 'Docelowy poziom' : 'Target Level'}
+                  {t('assessment.form.targetLevel', 'Target Level')}
                 </p>
                 <p className="text-2xl font-bold text-green-700 dark:text-green-300">
                   {currentAxisData.target || '-'}/5
@@ -451,7 +451,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
               </div>
               <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-500/30">
                 <p className="text-sm text-amber-600 dark:text-amber-400 mb-1">
-                  {isPolish ? 'Luka do zamknięcia' : 'Gap to Close'}
+                  {t('assessment.form.gapToClose', 'Gap to Close')}
                 </p>
                 <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">
                   {currentAxisData.target && currentAxisData.actual
@@ -479,7 +479,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           }`}
         >
           <ChevronLeft size={20} />
-          {isPolish ? 'Poprzednia oś' : 'Previous Axis'}
+          {t('assessment.form.previousAxis', 'Previous Axis')}
         </button>
 
         <button

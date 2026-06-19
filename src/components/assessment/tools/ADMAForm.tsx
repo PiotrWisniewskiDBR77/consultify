@@ -416,7 +416,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
             <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-navy-700">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Notatki' : 'Notes'}
+                  {t('assessment.notes', 'Notes')}
                 </label>
                 <textarea
                   value={dimScore.notes || ''}
@@ -433,7 +433,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Dowody (evidence)' : 'Evidence'}
+                  {t('assessment.evidence', 'Evidence')}
                 </label>
                 <textarea
                   value={dimScore.evidence || ''}
@@ -452,7 +452,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Pewność oceny' : 'Assessment Confidence'}
+                  {t('assessment.confidence', 'Assessment Confidence')}
                 </label>
                 <div className="flex gap-2">
                   {(['low', 'medium', 'high'] as const).map((level) => (
@@ -471,16 +471,10 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                       } ${readOnly ? 'cursor-default' : 'cursor-pointer hover:opacity-80'}`}
                     >
                       {level === 'low'
-                        ? isPolish
-                          ? 'Niska'
-                          : 'Low'
+                        ? t('assessment.confidenceLow', 'Low')
                         : level === 'medium'
-                          ? isPolish
-                            ? 'Średnia'
-                            : 'Medium'
-                          : isPolish
-                            ? 'Wysoka'
-                            : 'High'}
+                          ? t('assessment.confidenceMedium', 'Medium')
+                          : t('assessment.confidenceHigh', 'High')}
                     </button>
                   ))}
                 </div>
@@ -514,7 +508,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                 <span className="text-white font-medium">{progress.avgScore || '-'}</span>
               </span>
               <span className="text-sm text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Z dowodami' : 'With evidence'}:{' '}
+                {t('assessment.withEvidence', 'With evidence')}:{' '}
                 <span className="text-white font-medium">
                   {progress.evidenceCount}/{progress.completedDimensions}
                 </span>
