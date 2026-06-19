@@ -34,7 +34,7 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 
 ## BRAMKA WSTĘPNA (przed M01)
 
-- ⬜ **Triaż 49 untracked plików** (build-integrity, `git archive` → próbny build) — żeby egzekucja nie stała na zatrutym working-tree. *(robi Claude)*
+- ✅ **Triaż 49 untracked plików — ZWERYFIKOWANE 2026-06-19: BUILD NIE JEST ZEPSUTY.** Rygorystyczne rozwiązanie importów (z lazy `import()` + sprawdzenie trackowanych bliźniaków) wykazało **0 krawędzi trackowany→untracked**. Pierwszy grep-check dawał fałszywe alarmy przez podciąg (`FullExecutionView`⊃`ExecutionView`, `BlockInsertMenu`⊃`InsertMenu`, `ProcessKPIDashboard`⊃`KPIDashboard`, `ExecutionWorkloadView`⊃`WorkloadView`, `SuperAdminSidebar`⊃`AdminSidebar`). Wszystkie **49 untracked = martwe sieroty (0 realnych importerów)** → bezpieczne do usunięcia, NIE blokują buildu ani egzekucji. *(opcjonalny batch-`rm` później; lista w `/tmp/orphans.txt` / komendzie poniżej)*
 - ⬜ **Odblokowania env/konta** *(Piotr; prod=centerbeam za jawną zgodą)*:
   - ⬜ Klucz Gemini na demo (M10 głos/STT live-verify)
   - ⬜ Flaga `VITE_ENABLE_DELIVERABLES_LIGHT` na Railway (M02 Canvas)
