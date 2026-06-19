@@ -81,7 +81,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
           flex items-center gap-1 p-1 rounded transition-colors
           ${
             activeCount > 0
-              ? 'text-primary-500 bg-primary-500/10'
+              ? 'text-[var(--c-info)] bg-[var(--c-info)]/10'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }
         `}
@@ -133,7 +133,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                         transition-colors
                         ${
                           isSelected
-                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                            ? 'bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)] dark:text-[var(--c-info)]'
                             : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
                         }
                       `}

@@ -309,7 +309,7 @@ export const ModelSelector: React.FC = () => {
                   <button
                     key={opt.id}
                     onClick={() => handleSelect(opt)}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}`}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${isSelected ? 'bg-slate-100 dark:bg-white/[0.08]' : ''}`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div
@@ -317,13 +317,13 @@ export const ModelSelector: React.FC = () => {
                       />
                       <div className="flex flex-col items-start min-w-0">
                         <span
-                          className={`truncate font-medium text-xs ${isSelected ? 'text-primary-600 dark:text-primary-300' : 'text-slate-700 dark:text-white'}`}
+                          className={`truncate font-medium text-xs ${isSelected ? 'text-[var(--c-info)]' : 'text-slate-700 dark:text-white'}`}
                         >
                           {opt.name}
                         </span>
                       </div>
                     </div>
-                    {isSelected && <Check size={14} className="text-primary-500 flex-shrink-0" />}
+                    {isSelected && <Check size={14} className="text-[var(--c-info)] flex-shrink-0" />}
                   </button>
                 );
               })

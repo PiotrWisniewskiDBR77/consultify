@@ -254,8 +254,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
             : isDegraded
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
               : isOpen
-                ? 'bg-slate-100 dark:bg-white/10 border-brand/50'
-                : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
+                ? 'bg-slate-100 dark:bg-white/10 border-[var(--c-info)]/50'
+                : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-[var(--c-info)]/50 hover:bg-slate-50 dark:hover:bg-white/5'
         } text-xs font-medium text-navy-900 dark:text-white`}
       >
         {/* Status Dot / Icon */}
@@ -323,7 +323,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                 onClick={() => handleTierSelect(tier.id)}
                 className={`w-full text-left px-3 py-3 flex items-center justify-between rounded-lg transition-colors group ${
                   aiConfig.selectedTier === tier.id
-                    ? 'bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500/20'
+                    ? 'bg-slate-100 dark:bg-white/[0.08] ring-1 ring-[var(--c-info)]/20'
                     : 'hover:bg-slate-100 dark:hover:bg-white/5'
                 }`}
               >
@@ -334,7 +334,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                     <div
                       className={
                         tier.id === aiConfig.selectedTier
-                          ? 'text-primary-600 dark:text-primary-400'
+                          ? 'text-[var(--c-info)]'
                           : 'text-slate-500 dark:text-slate-400'
                       }
                     >
@@ -353,7 +353,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                   </div>
                 </div>
                 {aiConfig.selectedTier === tier.id && (
-                  <div className="text-xs font-mono text-primary-600 dark:text-primary-400 bg-white dark:bg-black/20 px-1.5 py-0.5 rounded border border-primary-100 dark:border-primary-500/20">
+                  <div className="text-xs font-mono text-[var(--c-info)] bg-white dark:bg-black/20 px-1.5 py-0.5 rounded border border-[var(--c-info)]/20">
                     {t('llm.active', 'Active')}
                   </div>
                 )}

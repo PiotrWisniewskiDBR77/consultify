@@ -346,7 +346,7 @@ export const DropdownItem = React.forwardRef<HTMLButtonElement, DropdownItemProp
             destructive
               ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
               : isSelected
-                ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                ? 'text-[var(--c-info)] dark:text-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
                 : 'text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5'
           }
           ${className}

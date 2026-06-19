@@ -203,7 +203,7 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
               px-4 py-3 text-sm border-b-2 -mb-px
               ${
                 isActive
-                  ? 'text-primary-600 dark:text-primary-400 border-primary-500'
+                  ? 'text-[var(--c-info)] dark:text-[var(--c-info)] border-[var(--c-info)]'
                   : 'text-slate-600 dark:text-slate-400 border-transparent hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:border-navy-700 dark:hover:border-slate-600'
               }
             `
