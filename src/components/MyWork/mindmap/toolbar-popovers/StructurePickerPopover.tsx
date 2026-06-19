@@ -100,21 +100,21 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
               }}
               className={`w-full flex items-start gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
                 isActive
-                  ? 'bg-primary-500/10 dark:bg-primary-500/15'
+                  ? 'bg-slate-100 dark:bg-white/[0.07]'
                   : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'
               }`}
             >
               <Icon
                 size={14}
                 className={`mt-0.5 shrink-0 ${
-                  isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600'
+                  isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'
                 }`}
               />
               <div className="min-w-0">
                 <div
                   className={`text-[11px] font-semibold ${
                     isActive
-                      ? 'text-primary-700 dark:text-primary-300'
+                      ? 'text-slate-900 dark:text-white'
                       : 'text-slate-700 dark:text-slate-200'
                   }`}
                 >

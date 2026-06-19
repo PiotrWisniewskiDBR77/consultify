@@ -86,13 +86,13 @@ const BranchItem: React.FC<BranchItemProps> = ({
         group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors
         ${
           isActive
-            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+            ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white'
             : 'hover:bg-slate-100 dark:hover:bg-navy-800'
         }
       `}
       onClick={() => !isEditing && onSelect()}
     >
-      <GitBranch size={14} className={isActive ? 'text-primary-500' : 'text-slate-400'} />
+      <GitBranch size={14} className={isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'} />
 
       {isEditing ? (
         <input

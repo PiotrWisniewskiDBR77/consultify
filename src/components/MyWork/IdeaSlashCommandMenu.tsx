@@ -327,11 +327,11 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
                   onMouseEnter={() => setSelectedIdx(idx)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
                     isSelected
-                      ? 'bg-primary-50 dark:bg-primary-900/20'
+                      ? 'bg-slate-100 dark:bg-white/[0.07]'
                       : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]'
                   }`}
                 >
-                  <Icon size={14} className={isSelected ? 'text-primary-500' : 'text-slate-600'} />
+                  <Icon size={14} className={isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'} />
                   <div className="flex-1 min-w-0">
                     <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200">
                       {isPl ? cmd.labelPl : cmd.labelEn}

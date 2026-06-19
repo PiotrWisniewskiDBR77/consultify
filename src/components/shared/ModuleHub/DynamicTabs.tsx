@@ -167,7 +167,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
               >
                 {/* Type Badge */}
                 <span
-                  className={`font-mono text-xs ${isActive ? 'text-primary-600 dark:text-primary-300' : 'text-slate-500'}`}
+                  className={`font-mono text-xs ${isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500'}`}
                 >
                   {doc.subType}
                 </span>

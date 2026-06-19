@@ -246,12 +246,12 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 }}
                 className={`flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors ${
                   isActive
-                    ? 'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/20'
+                    ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
                     : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500'
                 }`}
               >
                 <span
-                  className={`mt-0.5 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600'}`}
+                  className={`mt-0.5 ${isActive ? 'text-slate-700 dark:text-slate-200' : 'text-gray-600'}`}
                 >
                   {opt.icon}
                 </span>

@@ -491,7 +491,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 transition-colors cursor-pointer text-left
                                 ${
                                   isSelected
-                                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-900 dark:text-primary-100'
+                                    ? 'bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white'
                                     : 'hover:bg-slate-100 dark:hover:bg-white/5 text-navy-900 dark:text-white'
                                 }
                             `}
@@ -499,7 +499,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                   isSelected
-                    ? 'bg-primary-200 dark:bg-primary-800/50 text-primary-700 dark:text-primary-300'
+                    ? 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200'
                     : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                 }`}
               >
@@ -519,7 +519,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                     hidden sm:flex items-center gap-0.5 px-2 py-1 rounded text-[10px] font-mono font-medium
                                     ${
                                       isSelected
-                                        ? 'bg-primary-200/50 dark:bg-primary-700/50 text-primary-700 dark:text-primary-300'
+                                        ? 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300'
                                         : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                                     }
                                 `}
@@ -530,7 +530,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <ArrowRight
                 size={14}
                 className={`shrink-0 ${
-                  isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-400'
+                  isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'
                 }`}
               />
             </motion.button>
