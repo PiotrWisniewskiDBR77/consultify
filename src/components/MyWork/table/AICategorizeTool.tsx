@@ -210,14 +210,14 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           <div className="flex items-center gap-1 px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
             <button
               onClick={() => setActiveTab('clusters')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600'}`}
             >
               <Layers size={10} className="inline mr-1" />
               {isPl ? 'Klastry' : 'Clusters'} ({clusters.length})
             </button>
             <button
               onClick={() => setActiveTab('duplicates')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600'}`}
             >
               <GitMerge size={10} className="inline mr-1" />
               {isPl ? 'Duplikaty' : 'Duplicates'} ({duplicates.length})

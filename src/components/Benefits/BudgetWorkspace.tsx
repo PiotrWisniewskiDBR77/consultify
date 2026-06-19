@@ -515,7 +515,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 <button
                   key={b.id}
                   onClick={() => selectBudget(b)}
-                  className={`w-full text-left p-2 rounded-lg text-sm transition ${selected?.id === b.id ? 'bg-primary-500/20 text-primary-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                  className={`w-full text-left p-2 rounded-lg text-sm transition ${selected?.id === b.id ? 'bg-slate-200/70 dark:bg-white/[0.09] text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                 >
                   <div className="font-medium truncate">{b.title}</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
@@ -604,7 +604,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   role="tab"
                   aria-selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-primary-500 text-primary-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                  className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-slate-800 dark:border-white/70 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
                   {tab.label}
                 </button>

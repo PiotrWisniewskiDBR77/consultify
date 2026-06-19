@@ -366,13 +366,13 @@ export const AdminLLMView: React.FC = () => {
       <div className="flex gap-4 border-b border-white/5 pb-1">
         <button
           onClick={() => setActiveTab('providers')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-white/80 text-white' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
         >
           LLM Providers
         </button>
         <button
           onClick={() => setActiveTab('health')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-white/80 text-white' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
         >
           <Activity size={14} />
           Health Dashboard
@@ -390,7 +390,7 @@ export const AdminLLMView: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('prompts')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-white/80 text-white' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
         >
           System Personas (Prompts)
         </button>

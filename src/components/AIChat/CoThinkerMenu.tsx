@@ -270,7 +270,7 @@ export const CoThinkerMenu: React.FC<{
                   w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors
                   ${
                     isActive
-                      ? 'bg-primary-50/60 dark:bg-primary-900/10'
+                      ? 'bg-slate-100 dark:bg-white/[0.07]'
                       : 'hover:bg-slate-50/80 dark:hover:bg-white/[0.04]'
                   }
                 `}
@@ -278,18 +278,18 @@ export const CoThinkerMenu: React.FC<{
               >
                 <Icon
                   size={16}
-                  className={`shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'}`}
+                  className={`shrink-0 ${isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-500'}`}
                 />
                 <span
                   className={`flex-1 min-w-0 text-[13px] ${
                     isActive
-                      ? 'text-primary-700 dark:text-primary-300 font-medium'
+                      ? 'text-slate-900 dark:text-white font-medium'
                       : 'text-slate-700 dark:text-slate-200'
                   }`}
                 >
                   {label}
                 </span>
-                {isActive && <Check size={16} className="shrink-0 text-primary-500" />}
+                {isActive && <Check size={16} className="shrink-0 text-slate-700 dark:text-slate-200" />}
               </button>
             );
           })}

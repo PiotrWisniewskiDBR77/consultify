@@ -384,7 +384,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                   <div
                     className={`
                                         flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-                                        ${isActive ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : ''}
+                                        ${isActive ? 'bg-slate-200/80 dark:bg-white/[0.1] text-slate-900 dark:text-white' : ''}
                                         ${isPast ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : ''}
                                         ${!isActive && !isPast ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400' : ''}
                                     `}

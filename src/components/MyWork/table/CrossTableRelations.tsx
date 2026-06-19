@@ -235,7 +235,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === tab ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === tab ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600'}`}
             >
               {tab === 'relations'
                 ? isPl
@@ -268,7 +268,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                       <button
                         key={map.id}
                         onClick={() => handleSelectMap(map)}
-                        className={`w-full text-left px-2 py-1.5 rounded-lg text-[10px] transition-colors ${selectedMap?.id === map.id ? 'bg-primary-500/10 text-primary-600 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'}`}
+                        className={`w-full text-left px-2 py-1.5 rounded-lg text-[10px] transition-colors ${selectedMap?.id === map.id ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'}`}
                       >
                         <div className="font-medium truncate">{map.title}</div>
                         <div className="text-[8px] text-slate-600">

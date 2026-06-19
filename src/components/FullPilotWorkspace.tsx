@@ -302,7 +302,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as PilotTab)}
-            className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-600 hover:text-white'}`}
+            className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-white/80 text-white' : 'border-transparent text-slate-600 hover:text-white'}`}
           >
             <tab.icon size={16} />
             {tab.label}

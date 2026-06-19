@@ -80,7 +80,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
     <div
       className={`
             rounded-xl border-2 overflow-hidden transition-all
-            ${isSelected ? 'border-primary-500 shadow-lg shadow-primary-500/10' : 'border-slate-200 dark:border-navy-700'}
+            ${isSelected ? 'border-slate-600 dark:border-white/50 shadow-lg shadow-slate-900/10' : 'border-slate-200 dark:border-navy-700'}
         `}
     >
       {/* Header */}

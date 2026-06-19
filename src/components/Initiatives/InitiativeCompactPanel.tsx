@@ -721,7 +721,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  ? 'border-navy-900 dark:border-white/80 text-slate-900 dark:text-white'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -729,7 +729,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               {t(tab.labelKey)}
               {count !== undefined && count > 0 && (
                 <span
-                  className={`ml-0.5 px-1 py-0 rounded text-[9px] font-bold ${activeTab === tab.id ? 'bg-primary-500/15 text-primary-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500'}`}
+                  className={`ml-0.5 px-1 py-0 rounded text-[9px] font-bold ${activeTab === tab.id ? 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200' : 'bg-slate-200 dark:bg-navy-700 text-slate-500'}`}
                 >
                   {count}
                 </span>

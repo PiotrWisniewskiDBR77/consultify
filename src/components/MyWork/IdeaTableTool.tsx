@@ -1465,7 +1465,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         }}
                         className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                           activeViewId === v.id
-                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                            ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white'
                             : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                         }`}
                       >
@@ -1621,7 +1621,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={() => setShowFilterPanel(!showFilterPanel)}
                   className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                     _filters.rules.length > 0
-                      ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                      ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                   }`}
                 >
@@ -1674,7 +1674,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 }
                 className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                   _groupBy
-                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                    ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
                 title={isPl ? 'Grupuj' : 'Group'}
@@ -1698,7 +1698,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     key={v.id}
                     onClick={() => (usePlatform ? effectiveSetViewLayout : setViewLayout)(v.id)}
-                    className={`relative p-1.5 transition-colors ${_vl === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`relative p-1.5 transition-colors ${_vl === v.id ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={v.label}
                   >
                     <v.icon size={12} />
@@ -1819,7 +1819,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* History / Audit */}
                 <button
                   onClick={() => setShowAuditTrail((p) => !p)}
-                  className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Historia zmian' : 'History'}
                 >
                   <History size={12} />
@@ -1828,7 +1828,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Activity Feed */}
                 <button
                   onClick={() => setShowActivityFeed((p) => !p)}
-                  className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Aktywność' : 'Activity'}
                 >
                   <Activity size={12} />
@@ -1880,7 +1880,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Conditional formatting */}
                 <button
                   onClick={() => setShowConditionalFmt(true)}
-                  className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
                 >
                   <Paintbrush size={12} />
@@ -1890,7 +1890,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <div className="relative">
                   <button
                     onClick={() => setShowColorPalette(!showColorPalette)}
-                    className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={isPl ? 'Paleta kolorów' : 'Color Palette'}
                   >
                     <Palette size={12} />
@@ -1967,7 +1967,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {usePlatform && (
                   <button
                     onClick={() => setShowInterfaceDesigner(true)}
-                    className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
                   >
                     <Layout size={12} />

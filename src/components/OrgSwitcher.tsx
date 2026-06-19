@@ -151,11 +151,11 @@ const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ className = '', compact = fal
                     disabled={isSwitching}
                     className={`w-full px-3 py-2 text-left transition-colors flex items-center gap-2
                       hover:bg-slate-50 dark:hover:bg-slate-700/50
-                      ${isCurrent ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''}
+                      ${isCurrent ? 'bg-slate-100/70 dark:bg-white/[0.06]' : ''}
                       disabled:opacity-50`}
                   >
                     <div className="w-4 shrink-0 flex items-center justify-center">
-                      {isCurrent && <Check size={14} className="text-primary-500" />}
+                      {isCurrent && <Check size={14} className="text-slate-700 dark:text-slate-200" />}
                     </div>
 
                     <div className="flex-1 min-w-0">

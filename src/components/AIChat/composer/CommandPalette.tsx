@@ -123,7 +123,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               )}
               <span className="flex flex-col min-w-0 flex-1">
                 <span
-                  className={`text-[13px] truncate ${isActive ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-200'}`}
+                  className={`text-[13px] truncate ${isActive ? 'text-slate-900 dark:text-white font-medium' : 'text-slate-700 dark:text-slate-200'}`}
                 >
                   {item.label}
                 </span>
