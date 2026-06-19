@@ -1728,7 +1728,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     </motion.div>
                     <div className={`mt-2 text-center ${isCurrent ? 'font-semibold' : ''}`}>
                       <p
-                        className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-primary-500' : 'text-slate-600'}`}
+                        className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-600'}`}
                       >
                         {isPolish ? config.namePl.split(' ')[0] : config.name.split(' ')[0]}
                       </p>

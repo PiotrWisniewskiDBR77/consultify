@@ -913,7 +913,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     onClick={() => handleToggleExpand(stage.id)}
                     className={`
                       group cursor-pointer transition-colors duration-150
-                      ${isCurrent ? 'bg-primary-500/[0.04] dark:bg-primary-500/[0.07]' : ''}
+                      ${isCurrent ? 'bg-slate-50/60 dark:bg-white/[0.03]' : ''}
                       ${hasBlocking && isCurrent ? 'bg-danger-500/[0.04] dark:bg-danger-500/[0.06]' : ''}
                       hover:bg-slate-50/80 dark:hover:bg-white/[0.02]
                     `}

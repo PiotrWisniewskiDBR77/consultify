@@ -4238,7 +4238,7 @@ Return ONLY the final comment text.`;
                                 },
                               });
                             }}
-                            className={`${channelChipClass} ${selected ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${selected ? 'border-slate-500/70 text-slate-800 dark:text-white bg-slate-200/70 dark:bg-white/[0.08]' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                             title={channel.scope}
                           >
                             {channel.label}

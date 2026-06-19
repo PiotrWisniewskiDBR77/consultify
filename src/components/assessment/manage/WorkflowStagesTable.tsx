@@ -378,7 +378,7 @@ const WorkflowStageRow: FC<{
         animate={{ opacity: 1, y: 0 }}
         className={`
           group border-b border-slate-200 dark:border-navy-700/50 transition-colors
-          ${stage.isCurrent ? 'bg-primary-50/50 dark:bg-primary-500/5' : ''}
+          ${stage.isCurrent ? 'bg-slate-50/70 dark:bg-white/[0.03]' : ''}
           ${stage.isCompleted ? 'bg-emerald-50/30 dark:bg-emerald-500/5' : ''}
           ${stage.isBlocked ? 'bg-danger-50/30 dark:bg-danger-500/5' : ''}
           hover:bg-slate-50 dark:hover:bg-navy-800/50

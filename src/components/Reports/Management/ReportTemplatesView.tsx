@@ -242,7 +242,7 @@ export const ReportTemplatesView: React.FC = () => {
                       onClick={() => handleToggleSection(section.id)}
                       className={`flex items-center gap-2 p-2 rounded-lg text-left border text-sm transition-colors ${
                         isSelected
-                          ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                          ? 'border-slate-400 dark:border-white/30 bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
                           : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400'
                       }`}
                     >
@@ -258,7 +258,7 @@ export const ReportTemplatesView: React.FC = () => {
                       {section.icon && (
                         <span
                           className={
-                            isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+                            isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
                           }
                         >
                           {section.icon}

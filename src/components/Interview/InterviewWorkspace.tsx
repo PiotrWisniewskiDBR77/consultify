@@ -2317,13 +2317,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     onClick={() => setActiveCategory(cat)}
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                       isActive
-                        ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-primary-500/30'
+                        ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white border-slate-400/40 dark:border-white/20'
                         : 'bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
                     }`}
                   >
                     <cfg.icon
                       size={14}
-                      className={isActive ? 'text-primary-500' : 'text-slate-600'}
+                      className={isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'}
                     />
                     {isPolish ? cfg.labelPl : cfg.labelEn}
                   </button>

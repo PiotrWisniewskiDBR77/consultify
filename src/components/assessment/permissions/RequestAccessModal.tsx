@@ -185,8 +185,8 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
                       p-4 rounded-lg border-2 text-left transition-all
                       ${
                         isSelected
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                          : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
+                          ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
+                          : 'border-slate-200 dark:border-navy-700 hover:border-slate-400 dark:hover:border-white/30'
                       }
                     `}
                   >
@@ -194,14 +194,14 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
                       <div
                         className={`p-2 rounded-lg ${
                           isSelected
-                            ? 'bg-primary-100 dark:bg-primary-500/20'
+                            ? 'bg-slate-200 dark:bg-white/10'
                             : 'bg-slate-100 dark:bg-white/10'
                         }`}
                       >
                         <Icon
                           size={18}
                           className={
-                            isSelected ? 'text-primary-600' : 'text-slate-500 dark:text-slate-400'
+                            isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'
                           }
                         />
                       </div>
@@ -209,7 +209,7 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
                         <p
                           className={`font-medium ${
                             isSelected
-                              ? 'text-primary-700 dark:text-primary-300'
+                              ? 'text-slate-900 dark:text-white'
                               : 'text-slate-700 dark:text-slate-200'
                           }`}
                         >
