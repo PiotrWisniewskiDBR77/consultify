@@ -1012,7 +1012,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                               <div
                                 key={view.id}
                                 className={`group flex items-center gap-1 rounded-md px-1 ${
-                                  isActive ? 'bg-primary-500/10' : ''
+                                  isActive ? 'bg-slate-200/70 dark:bg-white/[0.08]' : ''
                                 }`}
                               >
                                 <button

@@ -238,7 +238,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
                   onClick={() => onToggleSource(artifact)}
                   className={`rounded-lg border p-4 text-left transition-all ${
                     selected
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                      ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
                       : 'border-slate-200 hover:border-slate-300 dark:border-navy-700 dark:hover:border-navy-600'
                   }`}
                 >
@@ -249,7 +249,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
                         {artifact.type.replace(/_/g, ' ')} · {artifact.readiness || 'ready'}
                       </p>
                     </div>
-                    {selected && <Check className="h-4 w-4 text-primary-500" />}
+                    {selected && <Check className="h-4 w-4 text-slate-700 dark:text-slate-200" />}
                   </div>
                 </button>
               );
@@ -296,7 +296,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               }
               className={`p-5 rounded-xl border-2 text-left transition-all ${
                 selected
-                  ? 'border-primary-500 bg-primary-500/5 shadow-lg shadow-primary-500/10'
+                  ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.06] shadow-sm'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >
@@ -305,7 +305,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
                 {t(`presentations.sources.${type}`, type.replace(/_/g, ' '))}
               </p>
               {selected && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-primary-500 font-medium">
+                <div className="mt-2 flex items-center gap-1 text-xs text-slate-700 dark:text-slate-200 font-medium">
                   <Check size={12} /> {t('common.selected', 'Selected')}
                 </div>
               )}

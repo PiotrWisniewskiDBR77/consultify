@@ -32,7 +32,7 @@ const StepIndicator = ({ activeIdx }: { activeIdx: number }) => {
         return (
           <div key={step} className="flex items-center">
             <div
-              className={`flex items-center justify-center w-6 h-6 rounded-full border transition-all ${isActive ? 'bg-primary-600 border-primary-500 text-white' : isCompleted ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-navy-900 border-white/10 text-slate-500 dark:text-slate-400'}`}
+              className={`flex items-center justify-center w-6 h-6 rounded-full border transition-all ${isActive ? 'bg-navy-900 border-white/50 text-white' : isCompleted ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-navy-900 border-white/10 text-slate-500 dark:text-slate-400'}`}
             >
               {isCompleted ? (
                 <Check size={12} />

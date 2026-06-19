@@ -37,12 +37,12 @@ export const PresentationModeSelector: React.FC<PresentationModeSelectorProps> =
               onClick={() => onChange(mode.id)}
               className={`p-4 rounded-xl border-2 text-left transition-all ${
                 selected
-                  ? 'border-primary-500 bg-primary-500/5 shadow-md shadow-primary-500/10'
+                  ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.06] shadow-sm'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >
               <Icon
-                className={`w-6 h-6 mb-2 ${selected ? 'text-primary-500' : 'text-slate-600'}`}
+                className={`w-6 h-6 mb-2 ${selected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'}`}
               />
               <p className="font-semibold text-sm text-slate-900 dark:text-white">
                 {t(mode.labelKey, mode.id)}

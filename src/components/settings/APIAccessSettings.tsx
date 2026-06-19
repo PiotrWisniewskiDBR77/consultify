@@ -512,7 +512,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
             <div
               key={key.id}
               className={`p-4 bg-white dark:bg-navy-900 rounded-lg border transition-all ${
-                isSelected ? 'border-brand' : 'border-slate-200 dark:border-navy-700'
+                isSelected ? 'border-slate-500 dark:border-white/40' : 'border-slate-200 dark:border-navy-700'
               }`}
             >
               {/* Key Header */}

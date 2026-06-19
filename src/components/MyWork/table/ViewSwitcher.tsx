@@ -160,11 +160,11 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                   }}
                   className={`group/view w-full text-left px-3 py-2 text-[11px] flex items-center gap-2 transition-colors ${
                     isActive
-                      ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300'
+                      ? 'bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                   }`}
                 >
-                  <Icon size={13} className={isActive ? 'text-primary-500' : 'text-slate-600'} />
+                  <Icon size={13} className={isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'} />
                   <span className="flex-1 truncate">{view.name}</span>
                   {view.isPersonal && <Lock size={10} className="text-slate-600 flex-shrink-0" />}
                   {view.isShared && <Share2 size={10} className="text-emerald-500 flex-shrink-0" />}
@@ -174,7 +174,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                       e.stopPropagation();
                       setSharingViewId(view.id);
                     }}
-                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-600 hover:text-primary-500 flex-shrink-0 opacity-0 group-hover/view:opacity-100 transition-opacity"
+                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-600 hover:text-slate-800 flex-shrink-0 opacity-0 group-hover/view:opacity-100 transition-opacity"
                     title={isPl ? 'Udostępnij' : 'Share'}
                   >
                     <Share2 size={10} />
@@ -182,7 +182,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                   <span className="text-[9px] text-slate-600">
                     {isPl ? meta.labelPl : meta.labelEn}
                   </span>
-                  {isActive && <Check size={12} className="text-primary-500 flex-shrink-0" />}
+                  {isActive && <Check size={12} className="text-slate-700 dark:text-slate-200 flex-shrink-0" />}
                 </button>
               );
             })}

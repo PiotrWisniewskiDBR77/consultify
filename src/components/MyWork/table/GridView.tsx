@@ -602,13 +602,13 @@ const DataGrid: React.FC<DataGridProps> = ({
               return (
                 <tr
                   key={row.id}
-                  className={`${selected ? 'bg-primary-50 dark:bg-primary-900/20' : ''} hover:bg-slate-50 dark:hover:bg-navy-800/30`}
+                  className={`${selected ? 'bg-slate-100/70 dark:bg-white/[0.05]' : ''} hover:bg-slate-50 dark:hover:bg-navy-800/30`}
                   onClick={() => onOpenDetail(row.id)}
                 >
                   <td
                     style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
                     className={`${bodyCell} sticky left-0 z-[8] border-r border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 ${
-                      selected ? 'bg-primary-50 dark:bg-primary-900/20' : ''
+                      selected ? 'bg-slate-100/70 dark:bg-white/[0.05]' : ''
                     } text-center relative`}
                     onClick={(e) => e.stopPropagation()}
                   >

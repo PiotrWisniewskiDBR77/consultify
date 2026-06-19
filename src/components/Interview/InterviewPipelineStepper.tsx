@@ -90,9 +90,9 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
                 type="button"
                 onClick={() => onStepChange(step.id)}
                 aria-current={isActive ? 'step' : undefined}
-                className={`group relative w-full rounded-xl border px-2 py-1.5 text-left transition-all hover:border-primary-500/50 ${
+                className={`group relative w-full rounded-xl border px-2 py-1.5 text-left transition-all hover:border-slate-400/60 dark:hover:border-white/20 ${
                   isActive
-                    ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/20 dark:bg-primary-500/15'
+                    ? 'border-slate-400 dark:border-white/30 bg-slate-100 dark:bg-white/[0.08] ring-1 ring-slate-300/60'
                     : isComplete
                       ? 'border-emerald-300/50 bg-white text-slate-600 dark:border-emerald-500/20 dark:bg-navy-900/70 dark:text-slate-300'
                       : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
@@ -113,7 +113,7 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
                   <span className="min-w-0 flex-1">
                     <span
                       className={`flex items-center gap-1.5 truncate text-xs font-semibold leading-tight ${
-                        isActive ? 'text-primary-700 dark:text-primary-200' : ''
+                        isActive ? 'text-slate-900 dark:text-white' : ''
                       }`}
                     >
                       <span className="truncate">{step.label}</span>
