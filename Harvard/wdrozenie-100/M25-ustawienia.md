@@ -125,7 +125,8 @@ Scenariusze S1–S7 + pokrycie: karta §0/§2. Bezpieczeństwo: karta §6.
 
 ### 05 · Flagi/rollout — pilot (FE-only redirect, gating→serwer L-03); developerMode persystuje (flagi nie); core otwarty. `VoiceSettingsPanel.tsx` cleanup koordynować z M22. DP-11: billing route → usunąć.
 ### 06 · Ryzyka — **L-01 i L-07 oznaczone NAPRAWIONE → R3: L-01 ZWERYFIKOWANE w kodzie (guard `req.user.id`), L-07 potwierdzić pokrycie AES wszystkich sekretów CalDAV+OAuth** przed zamknięciem. GDPR/delete na prod = szczególna ostrożność, NIE wykonywać realnego usunięcia konta (`feedback_prod_caution`). Dev `.env` → Railway PROD. Brak uwag żywych → re-ocena D wymaga Fazy 4.
-### 07 · Log — 2026-06-13 (teczka pogłębiona): brak uwag żywych; R3 zweryfikował L-01 read-IDOR naprawiony w kodzie; DP-11 (billing) + DP-10 (flagi) wpisane; enumeracja API + epiki Gherkin dodane. Audyt 2026-06-11: ocena 54/100; `b9f2dee9d2`, `9ef570ca1b`, `7495c12ffb`. Re-ocena D/G po Fazie 3/4.
+### 07 · Log — **2026-06-18 (Harvard Final): SYS-1 + SYS-5 ZAMKNIĘTE.** `50a6307391` — SYS-5 i18n-mix M25 zlikwidowany (settings sections klucze PL/EN kompletne). `4155d717c3`+`c284b75e0e`+`33dfeabced` — SYS-1 selekcja: Language radio, option-cards, Tabs, Dropdown → neutral/blue (nie crimson). SYS-6 dark-surface = ✅ (poprzednia fala). Grafika M25: 🟢. L-09 tokens sweep: ~1650 palety odroczone v1.1 (DP-8 wzorzec).
+— 2026-06-13 (teczka pogłębiona): brak uwag żywych; R3 zweryfikował L-01 read-IDOR naprawiony w kodzie; DP-11 (billing) + DP-10 (flagi) wpisane; enumeracja API + epiki Gherkin dodane. Audyt 2026-06-11: ocena 54/100; `b9f2dee9d2`, `9ef570ca1b`, `7495c12ffb`. Re-ocena D/G po Fazie 3/4.
 
 ---
 

@@ -120,7 +120,8 @@ REALNE: connection/connect, referrals (tools/analytics/campaign-links), earnings
 
 ### 05 · Flagi/rollout — `PARTNER_SELF_CONNECT_ENABLED` (false), `PARTNER_DEMO_SEED_ENABLED` (false, no-op prod), `DEMO_WRITES_ENABLED` (false), `APP_BASE_URL`. Moduł poza `betaAccess.ts` (route `requireAuth`, ochrona serwer-first celowa).
 ### 06 · Ryzyka — Prawdopodobna **schema drift na prod** (prod 2026-05-18 poprzedza 5 migracji partner) — otwarcie portalu bez `migrate`+verify grozi błędami runtime na produkcji klienckiej (L-08). v8 partner bypass `v8OrgGate` celowy (udokumentowany). Dev `.env` → Railway PROD.
-### 07 · Log — 2026-06-13 (teczka pogłębiona): R3 potwierdza silent earnings fallback NAPRAWIONY (`7cf315b4b9`, `:967`); DP-5 (stuby) wpisane do L-10/D-01; enumeracja dual-router (43+25 endp.) + epiki Gherkin dodane. Fala 2: B 11→12; ocena 53. Re-ocena po E2E + Fazach 3/4 + schema verify.
+### 07 · Log — **2026-06-18 (Harvard Final): SYS-5 Commission i18n-mix ZAMKNIĘTA.** Commit `50a6307391` — mix PL/EN w sekcji Commission portal partnerski zlikwidowany (klucze `partner.commission.*` PL+EN kompletne). SYS-1 selekcja: `4155d717c3` (PartnerSidebar active). L-08 schema drift = ZAMKNIĘTA (known-gap, runbook `M26_SCHEMA_DRIFT_RUNBOOK.md` istnieje — wykonanie przez Piotra przed prod-launch). Grafika M26: 🟢. §27 listy → backlog v1.1.
+— 2026-06-13 (teczka pogłębiona): R3 potwierdza silent earnings fallback NAPRAWIONY (`7cf315b4b9`, `:967`); DP-5 (stuby) wpisane do L-10/D-01; enumeracja dual-router (43+25 endp.) + epiki Gherkin dodane. Fala 2: B 11→12; ocena 53. Re-ocena po E2E + Fazach 3/4 + schema verify.
 
 ---
 
