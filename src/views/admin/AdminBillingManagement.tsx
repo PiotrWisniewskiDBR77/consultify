@@ -29,6 +29,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { BillingAddress, Invoice, OrganizationOwnership } from '../../types';
@@ -568,14 +569,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span
-                      className={`admin-status ${
-                        invoice.status === 'paid' ? 'admin-status-healthy' : 'admin-status-warning'
-                      }`}
-                    >
-                      <span className="admin-status-dot" />
-                      {invoice.status}
-                    </span>
+                    <EntityStatusChip status={invoice.status} />
                     {invoice.downloadUrl && (
                       <a
                         href={invoice.downloadUrl}

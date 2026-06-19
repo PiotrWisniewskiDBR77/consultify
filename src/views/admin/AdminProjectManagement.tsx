@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { ProjectGovernance } from '../../components/Admin/ProjectGovernance';
+import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useUserCan } from '../../hooks/useUserCan';
 import { Api } from '../../services/api';
@@ -272,7 +273,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center text-[10px] text-navy-900 dark:text-white">
                     {p.owner?.firstName?.[0] || (p as any).owner_first_name?.[0] || 'U'}
                   </div>
-                  <span className="text-slate-600 dark:text-slate-400 capitalize">{p.status}</span>
+                  <EntityStatusChip status={p.status} />
                 </div>
                 <span className="text-slate-400 dark:text-slate-600">
                   {new Date(p.createdAt || (p as any).created_at).toLocaleDateString()}
@@ -352,9 +353,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 text-[10px] font-bold uppercase border border-green-500/20">
-                      {p.status}
-                    </span>
+                    <EntityStatusChip status={p.status} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-slate-600 dark:text-slate-400 text-sm">

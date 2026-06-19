@@ -18,6 +18,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Api } from '@/services/api';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 
 import {
   DecisionImpact,
@@ -145,25 +146,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 </span>
               </div>
               <div className="flex-1" />
-              <span
-                className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                  initiative.status === 'DRAFT'
-                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                    : initiative.status === 'PLANNING'
-                      ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                      : initiative.status === 'REVIEW'
-                        ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-400'
-                        : initiative.status === 'APPROVED'
-                          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
-                          : initiative.status === 'EXECUTING'
-                            ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
-                            : initiative.status === 'DONE'
-                              ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                {initiative.status}
-              </span>
+              <EntityStatusChip status={initiative.status} />
               <span className="text-xs text-slate-500 dark:text-slate-500">
                 {initiative.priority} Priority • {initiative.axis}
               </span>

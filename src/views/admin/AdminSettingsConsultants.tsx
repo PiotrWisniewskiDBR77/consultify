@@ -33,6 +33,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { useAppStore } from '../../store/useAppStore';
 
 interface ConsultantProject {
@@ -537,15 +538,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span
-                                  className={`text-xs px-2 py-1 rounded ${
-                                    project.status === 'ACTIVE'
-                                      ? 'bg-green-500/10 text-green-400'
-                                      : 'bg-amber-500/10 text-amber-400'
-                                  }`}
-                                >
-                                  {project.status}
-                                </span>
+                                <EntityStatusChip status={project.status} />
                                 <button
                                   onClick={() => {
                                     setSelectedProjectAccess(project);
@@ -814,9 +807,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                       <Briefcase className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                       <div>
                         <p className="font-medium text-white">{project.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
-                          {project.status}
-                        </p>
+                        <EntityStatusChip status={project.status} />
                       </div>
                     </button>
                   ))}

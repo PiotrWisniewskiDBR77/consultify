@@ -32,6 +32,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -693,15 +694,7 @@ export const BulkOperationsView: React.FC = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      user.status === 'active'
-                        ? 'bg-emerald-500/10 text-emerald-600'
-                        : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    {user.status}
-                  </span>
+                  <EntityStatusChip status={user.status} />
                 </td>
               </tr>
             ))}

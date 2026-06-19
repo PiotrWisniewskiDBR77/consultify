@@ -19,6 +19,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
@@ -806,15 +807,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <span
-                                className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
-                                  doc.status === 'indexed'
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-amber-100 text-amber-700'
-                                }`}
-                              >
-                                {doc.status}
-                              </span>
+                              <EntityStatusChip status={doc.status} />
                               <button
                                 onClick={() => {
                                   setEditingDoc(doc);

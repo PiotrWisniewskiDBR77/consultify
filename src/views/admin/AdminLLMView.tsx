@@ -32,6 +32,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
+import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
@@ -544,15 +545,7 @@ export const AdminLLMView: React.FC = () => {
                       {logs.map((log: any) => (
                         <tr key={log.id} className="hover:bg-white/5 transition-colors text-sm">
                           <td className="px-4 py-3">
-                            <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
-                                log.status === 'success'
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : 'bg-danger-500/10 text-danger-400 border-danger-500/20'
-                              }`}
-                            >
-                              {log.status}
-                            </span>
+                            <EntityStatusChip status={log.status} />
                           </td>
                           <td className="px-4 py-3 text-slate-600 dark:text-slate-500 font-mono text-xs">
                             {new Date(log.timestamp).toLocaleTimeString()}
