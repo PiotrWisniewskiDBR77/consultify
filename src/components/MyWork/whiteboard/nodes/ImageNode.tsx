@@ -14,7 +14,7 @@ export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
         keepAspectRatio
       />
       <div
-        className={`relative w-full h-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-500/20 shadow-sm dark:shadow-[0_0_12px_rgba(148,163,184,0.1)] transition-shadow ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''}`}
+        className={`relative w-full h-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-500/20 shadow-sm dark:shadow-[0_0_12px_rgba(148,163,184,0.1)] transition-shadow ${selected ? 'ring-2 ring-slate-500/60 shadow-lg' : ''}`}
       >
         <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
         {imgSrc ? (

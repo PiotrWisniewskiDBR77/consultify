@@ -24,7 +24,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
     <>
       <NodeResizer isVisible={selected && !data?.locked} minWidth={100} minHeight={40} />
       <div
-        className={`relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-slate-200/80 dark:border-slate-400/25 bg-white/95 dark:bg-navy-900/80 dark:backdrop-blur-md shadow-lg shadow-slate-200/50 dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-primary-500/60 shadow-xl' : ''}`}
+        className={`relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-slate-200/80 dark:border-slate-400/25 bg-white/95 dark:bg-navy-900/80 dark:backdrop-blur-md shadow-lg shadow-slate-200/50 dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-slate-500/60 shadow-xl' : ''}`}
         onDoubleClick={() => {
           if (!data?.locked) {
             setEditValue(String(data?.label || ''));
@@ -46,7 +46,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
                 commitEdit();
               }
             }}
-            className="w-full min-h-[40px] bg-transparent text-xs text-slate-800 dark:text-slate-200 outline-none resize-none border-b border-primary-400"
+            className="w-full min-h-[40px] bg-transparent text-xs text-slate-800 dark:text-slate-200 outline-none resize-none border-b border-slate-400 dark:border-slate-500"
             rows={2}
           />
         ) : (

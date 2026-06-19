@@ -100,7 +100,7 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
                 if (e.key === 'Enter') commitEdit();
                 if (e.key === 'Escape') setEditing(false);
               }}
-              className="w-full bg-white dark:bg-navy-800 text-[10px] text-center border border-primary-400 rounded px-1 py-0.5 outline-none"
+              className="w-full bg-white dark:bg-navy-800 text-[10px] text-center border border-slate-400 dark:border-slate-500 rounded px-1 py-0.5 outline-none"
             />
           ) : (
             <div

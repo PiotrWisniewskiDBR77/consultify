@@ -23,7 +23,7 @@ export const ToolbarBtn: React.FC<{
       danger
         ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
         : active
-          ? 'bg-primary-500/10 text-primary-700 dark:text-primary-300'
+          ? 'bg-slate-200 dark:bg-navy-700 text-slate-900 dark:text-slate-100'
           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
     }`}
     title={label}

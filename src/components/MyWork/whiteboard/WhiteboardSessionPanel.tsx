@@ -68,7 +68,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
           </div>
         </div>
         <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-          <span className="px-2 py-1 rounded-full bg-primary-500/10 text-[10px] font-medium text-primary-700 dark:text-primary-300">
+          <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-medium text-slate-700 dark:text-slate-200">
             {whiteboardModeCopy.exitHint}
           </span>
           <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-medium text-slate-600 dark:text-slate-300">
@@ -109,7 +109,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
             <button
               type="button"
               onClick={onCycleGovernance}
-              className="text-[10px] font-semibold text-primary-600 dark:text-primary-400"
+              className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
             >
               {t('myWork.whiteboard.sessionPanel.cyclePolicy')}
             </button>

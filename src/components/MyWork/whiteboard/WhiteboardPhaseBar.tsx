@@ -65,7 +65,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
               {idx > 0 && (
                 <ChevronRight
                   size={10}
-                  className={`shrink-0 ${idx <= currentIdx ? 'text-primary-500' : 'text-slate-600 dark:text-slate-400'}`}
+                  className={`shrink-0 ${idx <= currentIdx ? 'text-slate-700 dark:text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}
                 />
               )}
               <button
@@ -85,7 +85,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
                 }}
                 className={`${TRANSITION_COLORS} inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold whitespace-nowrap disabled:opacity-40 ${
                   isCurrent
-                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/20'
+                    ? 'bg-slate-200 dark:bg-navy-700 text-slate-900 dark:text-slate-100 ring-1 ring-slate-300 dark:ring-white/10'
                     : isCompleted
                       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'

@@ -37,7 +37,7 @@ export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
         minHeight={120}
       />
       <div
-        className={`relative p-3 rounded-2xl border-2 transition-all ${selected ? 'ring-2 ring-primary-500/60 border-primary-400/80 shadow-lg shadow-primary-500/10' : 'border-slate-300/80 dark:border-indigo-400/25'} shadow-xl shadow-slate-300/25 dark:shadow-[0_0_20px_rgba(99,102,241,0.12)]`}
+        className={`relative p-3 rounded-2xl border-2 transition-all ${selected ? 'ring-2 ring-slate-500/60 border-slate-400/80 shadow-lg' : 'border-slate-300/80 dark:border-slate-600/40'} shadow-xl shadow-slate-300/25 dark:shadow-[0_0_20px_rgba(0,0,0,0.15)]`}
         style={{
           width: collapsed ? data?.width || 400 : '100%',
           height: collapsed ? 'auto' : '100%',
@@ -83,7 +83,7 @@ export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
                   if (e.key === 'Enter') commitEdit();
                   if (e.key === 'Escape') setEditing(false);
                 }}
-                className="w-full bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 outline-none border-b border-primary-400 uppercase tracking-wider"
+                className="w-full bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 outline-none border-b border-slate-400 dark:border-slate-500 uppercase tracking-wider"
               />
             ) : (
               <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 truncate">
