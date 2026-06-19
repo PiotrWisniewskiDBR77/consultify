@@ -193,22 +193,22 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
                                     flex flex-col items-start gap-2 p-4 rounded-lg border-2 transition-all text-left
                                     ${
                                       isSelected
-                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                                        ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
+                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-400'
                                     }
                                 `}
               >
                 <Icon
                   size={20}
                   className={
-                    isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600'
+                    isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'
                   }
                 />
                 <div>
                   <div
                     className={`text-sm font-medium ${
                       isSelected
-                        ? 'text-primary-700 dark:text-primary-300'
+                        ? 'text-slate-900 dark:text-white'
                         : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >

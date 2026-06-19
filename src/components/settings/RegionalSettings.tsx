@@ -342,8 +342,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                     key={format.code}
                     className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                        ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
+                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-400'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -370,13 +370,13 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                         {isSelected && <Check size={10} className="text-white" />}
                       </div>
                       <span
-                        className={`text-sm font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
+                        className={`text-sm font-medium ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
                       >
                         {t(`settings.regional.dateFormats.${format.code}`, format.label)}
                       </span>
                     </div>
                     <span
-                      className={`text-xs font-mono ${isSelected ? 'text-primary-600' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-xs font-mono ${isSelected ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {format.example}
                     </span>
@@ -399,8 +399,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                     key={format.code}
                     className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                        ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
+                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-400'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -430,18 +430,18 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                         <Clock
                           size={16}
                           className={
-                            isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'
+                            isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-500'
                           }
                         />
                         <span
-                          className={`text-sm font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
+                          className={`text-sm font-medium ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
                         >
                           {t(`settings.regional.timeFormats.${format.code}`, format.label)}
                         </span>
                       </div>
                     </div>
                     <span
-                      className={`text-xs font-mono ${isSelected ? 'text-primary-600' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-xs font-mono ${isSelected ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {format.example}
                     </span>

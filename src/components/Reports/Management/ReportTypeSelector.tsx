@@ -216,8 +216,8 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                 className={`flex flex-col p-4 rounded-xl border-2 transition-all text-left
                                     ${
                                       isSelected
-                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
+                                        ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
+                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-400 dark:hover:border-white/30'
                                     }`}
               >
                 <div className="flex items-center gap-3 mb-2">
@@ -228,7 +228,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                   </div>
                   <div>
                     <h3
-                      className={`font-semibold ${isSelected ? 'text-primary-900 dark:text-primary-100' : 'text-navy-900 dark:text-white'}`}
+                      className={`font-semibold ${isSelected ? 'text-slate-900 dark:text-white' : 'text-navy-900 dark:text-white'}`}
                     >
                       {option.title}
                     </h3>
@@ -258,8 +258,8 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border transition-all
                             ${
                               scope === 'PORTFOLIO'
-                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
+                                ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
+                                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-400'
                             }`}
           >
             <Briefcase size={18} />
@@ -270,8 +270,8 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border transition-all
                             ${
                               scope === 'PROJECT'
-                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
+                                ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07] text-slate-900 dark:text-white'
+                                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-400'
                             }`}
           >
             <FileText size={18} />
@@ -369,13 +369,13 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                       className={`flex items-center gap-2 p-2 rounded-lg text-left text-sm transition-all
                                                 ${
                                                   isEnabled
-                                                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                                                    ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white'
                                                     : 'bg-white dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                                                 }
                                                 ${
                                                   isRequired
                                                     ? 'cursor-not-allowed opacity-70'
-                                                    : 'hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                                                    : 'hover:bg-slate-100 dark:hover:bg-white/[0.05]'
                                                 }
                                             `}
                       title={isRequired ? 'Required section' : undefined}
