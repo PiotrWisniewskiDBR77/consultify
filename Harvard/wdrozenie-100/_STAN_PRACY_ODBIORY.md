@@ -48,7 +48,7 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 
 | # | Moduł | Faza | Epiki | Ekrany | Status | Funkcja | UI |
 |---|---|---|:--:|:--:|---|:--:|:--:|
-| M01 | Czat | 2 | 5 | 20 | ⬜ NIE ROZPOCZĘTY | ⬜ | ⬜ |
+| M01 | Czat | 2 | 5 | 20 | 🟡 W TOKU | ⬜ | ⬜ |
 | M02 | Canvas | 3 | 6 | 16 | ⬜ | ⬜ | ⬜ |
 | M03 | My Work — organizer | 2/3 | 6 | 15 | ⬜ | ⬜ | ⬜ |
 | M04 | Notatnik | 3 | 6 | 16 | ⬜ | ⬜ | ⬜ |
@@ -85,21 +85,21 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 > Każdy moduł: 8 etapów + linia DoD. Odhaczamy `⬜→✅`, wpisujemy datę/kto przy odbiorach 7–8.
 
 ### M01 — Czat · Faza 2 · 5 epików · 20 ekranów
-**Status:** ⬜ NIE ROZPOCZĘTY
+**Status:** 🟡 W TOKU (start 2026-06-19) — funkcjonalnie ~domknięty; zostaje L-03 testy + odbiory
 
 | # | Etap | ✓ | Odbiór (data / kto) |
 |---|---|:--:|---|
-| 1 | Kod — luki funkcjonalne/security domknięte | ⬜ | |
-| 2 | DoD 7/7 | ⬜ | |
-| 3 | Epiki 0/5 | ⬜ | |
-| 4 | Testy unit+E2E zielone | ⬜ | |
-| 5 | Zgodność UI/UX (kryt. 7) | ⬜ | |
-| 6 | Deploy na demo | ⬜ | |
+| 1 | Kod — luki funkcjonalne/security domknięte | ✅ | L-01/02/05/07/08/09/10 ZAMKNIĘTE, L-04/06 false-pos (zweryf. 2026-06-19) |
+| 2 | DoD 7/7 | 🟡 | do potwierdzenia per kryterium |
+| 3 | Epiki 0/5 | 🟡 | do potwierdzenia |
+| 4 | Testy unit+E2E zielone | 🟡 | **L-03 otwarta: pokrycie S3/S4/S6 + smoke w PR-gate (2/4)** ← następny krok kodowy |
+| 5 | Zgodność UI/UX (kryt. 7) | ⬜ | korupcja „rose" nie występuje; §27 N/D; a11y/dark do sprawdzenia |
+| 6 | Deploy na demo | ⬜ | (Londyn już na demo — potwierdzić na M01) |
 | 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
 | 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
 | ✔ | **MODUŁ ZAMKNIĘTY (8/8)** | ⬜ | |
 
-DoD: 1⬜front↔back 2⬜security 3⬜i18n 4⬜tokeny 5⬜§27(N/D) 6⬜E2E 7⬜UI/UX · 📁 [M01-czat.md](M01-czat.md)
+DoD: 1⬜front↔back 2⬜security 3✅i18n(L-10) 4✅tokeny 5⬜§27(N/D) 6🟡E2E(L-03) 7⬜UI/UX · 📁 [M01-czat.md](M01-czat.md)
 
 ### M02 — Canvas · Faza 3 · 6 epików · 16 ekranów
 **Status:** ⬜ NIE ROZPOCZĘTY
