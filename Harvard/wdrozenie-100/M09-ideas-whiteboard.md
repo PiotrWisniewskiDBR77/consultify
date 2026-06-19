@@ -184,6 +184,39 @@ Scenariusze S1–S5 + testy: karta §0/§2. Bezpieczeństwo: karta §6.
 - 2026-06-13: pogłębienie teczki; **D-01 rozstrzygnięta DP-3 (per-resource)**; zweryfikowano L-03 (WS org-scope + PG datetime naprawione w kodzie); zweryfikowano L-02 (`graph_patch` w workspace, nie whiteboard); DoD przeliczone grepem (i18n ~30, hex 33, table 0).
 - Audyt 2026-06-11: 49/100 (najniższa w puli). Re-ocena po FAZA 1 (shared board — najcięższy L) + sesji żywej (R6).
 
+## AUDYT WIZUALNY 2026-06-18
+**Status:** 🟡 P1 (0 P0, usunięte P1 — po naprawie stan 🟢)
+**Scope plików:** `IdeaWhiteboardTool.tsx` + `whiteboard/` (13 plików: WhiteboardEmptyState, WhiteboardToolbar, WhiteboardToolbarPrimitives, WhiteboardPhaseBar, WhiteboardSelectionBar, WhiteboardSessionPanel + nodes: StickyNoteNode, TextBlockNode, ShapeNode, FrameNode, GroupNode, ImageNode, LinkNode, LabeledEdge)
+
+**Findings (przed naprawą):**
+- **[SYS-1 P1]** `ring-primary-500/60` na zaznaczonych węzłach (Sticky, TextBlock, Shape, Frame, Group, Image, Link) — 7 plików node'ów
+- **[SYS-1 P1]** `bg-primary-500/10 text-primary-700` jako aktywny stan przycisku toolbar (`ToolbarBtn`) i fazy (`WhiteboardPhaseBar`)
+- **[SYS-1 P1]** `bg-primary-500/10 text-primary-600` w `WhiteboardEmptyState` — ikona, 2 szybkie-starty
+- **[SYS-1 P1]** `bg-primary-500/10` w `WhiteboardSessionPanel` badge trybu
+- **[SYS-1 P1]** `text-primary-600/400` link "cyclePolicy" w SessionPanel
+- **[SYS-1 P1]** `border-primary-400` edit-underline w TextBlock, Shape, Frame, LabeledEdge, StickyNote — 5 plików
+- **[SYS-1 P1]** `text-primary-500` chevron aktywnej fazy w PhaseBar
+- **[SYS-1 P1]** `focus:border-primary-400` textarea outline-import w głównym pliku
+
+**Naprawione (commit `0fd33bfa97`):**
+- Wszystkie `ring-primary` → `ring-slate-500/60`
+- Aktywny stan ToolbarBtn → `bg-slate-200 dark:bg-navy-700 text-slate-900 dark:text-slate-100`
+- PhaseBar aktywna faza → `bg-slate-200 dark:bg-navy-700` + `ring-slate-300`
+- PhaseBar chevron → `text-slate-700 dark:text-slate-300`
+- EmptyState ikona → `bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-300`
+- EmptyState quick-start buttons → neutral slate
+- EmptyState primary CTA "Add sticky" → **SYS-2 `bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950`** ✅
+- SessionPanel badge trybu → slate
+- SessionPanel cyclePolicy link → slate
+- Edit-underline w 5 node-plikach → `border-slate-400 dark:border-slate-500`
+- Focus textarea → `focus:border-slate-400`
+- GroupNode dark border → `dark:border-slate-600/40` (usunięto `dark:border-primary-500/30`)
+
+**Pozostałe P2/P3 (nie naprawiane):**
+- `whiteboardNodeHelpers.ts`: indigo/primary jako jeden ze swatchów kolorów sticky-note — **P3 dekoracyjny** (paleta narzędzia twórczego, analogicznie jak rose/yellow; komentarz `rose-exempt` już w pliku)
+- Minimapa używa rawHex kolorów dla węzłów — P3, celowe
+- `bg-[#0b1020]` canvas background — OK (custom dark token)
+
 ---
 
 ## Bramka teczki: 8/9 dokumentacyjnie
