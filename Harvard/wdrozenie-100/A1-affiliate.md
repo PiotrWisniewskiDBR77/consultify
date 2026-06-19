@@ -8,7 +8,7 @@
 - **Żywy bloker:** brak (zero powierzchni ataku — wszystko 503). Pula nietestowana na żywo (nic do testowania poza pustką).
 - **Właściciel:** Piotr · **Daty:** karta 2026-06-11 · teczka 2026-06-13
 - **Karta:** `Harvard/modules/A1-affiliate/KARTA_AUDYTU.md` · **Evidence:** weryfikacja inline (plik:linia)
-- **Kod:** `AffiliateDashboardView` (`AppRoutes.tsx:2336`, `requireAuth`) · `server/src/routes/referrals.routes.ts:12-20` (catch-all 503) · `api.ts:12910-12915` (atrapy klienckie)
+- **Kod (stan po Ścieżce A `b294bfb718`):** route/mount/atrapy/serwer `referrals.routes.ts` USUNIĘTE (grep = 0 ref). Pozostałość: `src/views/AffiliateDashboardView.tsx` (373 l.) — orphan na dysku, 0 importerów, niedostępny (do fizycznego usunięcia). *(skoryg. 2026-06-19: cytaty `AppRoutes.tsx:2336` / `referrals.routes.ts:12-20` / `api.ts:12910-12915` opisują stan SPRZED descope — już nieaktualne, kod usunięty.)*
 
 ## MAPA POKRYCIA (co już jest vs co dokłada teczka)
 | Warstwa | Stan | Źródło (istnieje) | Co dokłada teczka |
@@ -35,6 +35,7 @@
 - **EPIK B2:** klient `api.ts` realny zamiast atrap; FE zasilane danymi.
 - **EPIK B3:** pełny protokół V1 od nowa + Faza 4 żywa + testy cross-org/role.
 *(Ścieżka A — wyciąć: usunąć view + route + `referrals.routes.ts` + atrapy + warunek sidebar; weryfikacja `grep` = 0 referencji.)*
+*(skoryg. 2026-06-19: route/mount/atrapy usunięte (descope PRAWDA), ALE plik `src/views/AffiliateDashboardView.tsx` (373 l.) pozostał na dysku jako orphan, 0 importerów — do fizycznego usunięcia.)*
 
 ## G · JAKOŚĆ / DoD
 **Bramka 6/6 NIE aplikuje się do czasu decyzji zakresu (D-01).** Po decyzji:
@@ -60,12 +61,12 @@
 Serwer 503 catch-all (uczciwy, czytelny komunikat); klient hardkodowane atrapy (pusta lista/kod); view zamontowany ale zawsze pusty; sidebar warunkowy `ECOSYSTEM_NODE`. Zero powierzchni ataku.
 
 ### 03 · Rejestr luk
-Brak luk technicznych do „dokończenia" — moduł nie ma funkcjonalności. Jedyny dług: zajmuje nawigację i kod bez wartości (rozstrzygnięcie = D-01).
+Brak luk technicznych do „dokończenia" — moduł nie ma funkcjonalności. **Jedyny pozostały dług (skoryg. 2026-06-19):** plik `src/views/AffiliateDashboardView.tsx` (373 l.) nie został fizycznie usunięty mimo descope — orphan na dysku, 0 importerów, niedostępny. Dług kosmetyczny (sweep porządkowy), nie luka funkcjonalna/security. Do fizycznego `rm`.
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | A1 Ecosystem/Affiliate — co dalej? | **wyciąć** (rekomendacja audytu) / budować od zera | Piotr | 2026-06-13 | **WYKONANE Ścieżka A `b294bfb718` 2026-06-17** — usunięto view, referrals.routes.ts, referrals.validators.ts, Gateway import+mount, routes/index, AppRoutes redirect, ROUTES.AFFILIATE, AppView.AFFILIATE_DASHBOARD, useBreadcrumbs case, api.ts stubs, users.api.ts REFERRALS, TrialEntryView Ecosystem block, moduleHelpContent partner-referrals. grep = 0 referencji (pozostały: string 'AFFILIATE' w metrics = typ partnera M26, PartnerReferralService = live M26). |
+| D-01 | A1 Ecosystem/Affiliate — co dalej? | **wyciąć** (rekomendacja audytu) / budować od zera | Piotr | 2026-06-13 | **WYKONANE Ścieżka A `b294bfb718` 2026-06-17** — usunięto referrals.routes.ts, referrals.validators.ts, Gateway import+mount, routes/index, AppRoutes redirect, ROUTES.AFFILIATE, AppView.AFFILIATE_DASHBOARD, useBreadcrumbs case, api.ts stubs, users.api.ts REFERRALS, TrialEntryView Ecosystem block, moduleHelpContent partner-referrals. grep = 0 referencji (pozostały: string 'AFFILIATE' w metrics = typ partnera M26, PartnerReferralService = live M26). **(skoryg. 2026-06-19: route/mount/atrapy usunięte = PRAWDA, ALE plik `src/views/AffiliateDashboardView.tsx` (373 l.) NIE został usunięty — istnieje na dysku jako orphan, 0 importerów, niedostępny; do fizycznego usunięcia. Pierwotna deklaracja „usunięto view" była fałszywa.)** |
 
 ### 05 · Flagi/rollout — brak; sidebar warunkowy `journeyState === 'ECOSYSTEM_NODE'`. Moduł poza fazami implementacyjnymi do czasu D-01.
 ### 06 · Ryzyka — Bez decyzji zakresu moduł trwa jako uczciwy, ale bezwartościowy stub zajmujący nawigację i kod; rekomendacja audytu: wyciąć, chyba że ekosystem/affiliate jest w roadmapie — wtedy budować od zera z org-scope/auth/role od początku.
@@ -77,3 +78,15 @@ Brak luk technicznych do „dokończenia" — moduł nie ma funkcjonalności. Je
 R1 wejścia pełne (karta + kod; uwagi żywe = brak, karta pusta funkcjonalnie) · R2 N/D (brak luk technicznych) · R3 stan zweryfikowany w kodzie (503 catch-all + atrapy) · R5 decyzja D-01 z właścicielem (termin TBD) · A–E = N/D (stub) · F epiki tylko Ścieżki B · G DoD warunkowe (per ścieżka). **Teczka kompletna jako stub-decyzja; egzekucja po D-01.**
 
 **Ryzyko (1 zdanie):** Bez decyzji właściciela (D-01) A1 pozostaje uczciwym, ale bezwartościowym stubem zajmującym nawigację i kod — audyt rekomenduje wycięcie, chyba że ekosystem/affiliate wraca do roadmapy.
+
+---
+
+## EKRANY (inwentarz) — 2026-06-19
+
+**Werdykt weryfikacji:** A1 = DESCOPED, Ścieżka A WYKONANA i potwierdzona w kodzie. Route/mount/atrapy/import usunięte (`grep` = 0 referencji live; jedyne trafienia w `server/dist/` = stale build artifacts, w `server/src/_backup/` = backup). KOREKTA do teczki: teczka twierdzi "usunięto view" — w rzeczywistości plik `src/views/AffiliateDashboardView.tsx` (373 l.) NADAL ISTNIEJE na dysku jako orphan (0 importerów, nigdzie nie zamontowany). Funkcjonalnie martwy (niedostępny), ale fizycznie nieusunięty. To kosmetyczny dług, nie luka funkcjonalna/security.
+
+| Ekran | Cel | Plik komponentu | Stan |
+|---|---|---|---|
+| Affiliate Dashboard (orphan) | (był) dashboard ekosystemu/affiliate — KPI, kody, polecenia | `src/views/AffiliateDashboardView.tsx` | ORPHAN — 0 importerów, brak route, niedostępny; plik nieusunięty mimo deklaracji teczki |
+
+**Liczba realnych (dostępnych) ekranów: 0.** Moduł wycięty z nawigacji. Pozostały plik źródłowy to martwy kod do fizycznego usunięcia (sweep porządkowy).

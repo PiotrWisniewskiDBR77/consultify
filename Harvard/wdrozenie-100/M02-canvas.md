@@ -143,6 +143,10 @@ Pełna tabela: karta §1g. **→** M17 Outputs (rejestracja/eksport), M03 (Decyz
 
 ### 05 · Flagi / rollout / beta — `ENABLE_DELIVERABLES_LIGHT` strict `=== 'true'` (OFF→404 backend / legacy redirect FE); `ENABLE_TERESA_RETRIEVAL` (cicha pustka READ-tooli); beta core otwarty.
 ### 06 · Ryzyka i założenia — kręgosłup #1 dotyka M18/M19/M20 (re-ocena D po fixie). Inwentarz/brief STALE (4/6 czerwonych flag obalonych). Dev `.env` → Railway PROD (flagi decydują czy triada żyje). `regenerateSlide` — R3: nie kwalifikować „naprawione" bez potwierdzenia runtime.
+> **⚠ ŻYWY BLOKER WERYFIKACJI (skoryg. 2026-06-19, NIE braki w kodzie):** kod triady deck/doc/sheet jest GOTOWY i live-proven lokalnie (06-10), ALE Canvas jest sterowany DWIEMA flagami, które MUSZĄ być ustawione na Railway w czasie deployu:
+> - **`VITE_ENABLE_DELIVERABLES_LIGHT === 'true'`** (build-time, FE) — gate `src/services/deliverablesGeneration.ts:46` (`isDeliverablesLightEnabled()`). Obecnie ustawiona TYLKO w `.env.local` → na Railway staging/prod jest **OFF** = Canvas wygląda jakby „nigdy nie działał" (root cause z `finding_deliverables_vite_flag_deploy`).
+> - **`ENABLE_DELIVERABLES_LIGHT`** (runtime, BE) — gate `server/src/routes/deliverablesGenerations.routes.ts:40` → OFF=404 na całej rodzinie generacji.
+> Bez OBU ustawionych na Railway weryfikacja triady jest niemożliwa mimo gotowego kodu. Instrukcja dla Piotra: `M02_RAILWAY_DELIVERABLES_FLAG_INSTRUKCJA.md`. Deploy czeka na zgodę Piotra (prod=centerbeam → osobna zgoda).
 ### 07 · Log + re-ocena — **2026-06-17 (Harvard 1) — R3 rekonsyliacja + 2 naprawy:**
 > Teczka była nieaktualna (wzorzec jak M01). Zweryfikowane w runtime + testy zielone:
 > - **ZAMKNIĘTE:** L-02 (Tryb B montaż deterministyczny, 33/33) · L-05 (generate→400, 3/3) · L-06 (regenerateSlide realny, R3) · L-10b SEC-M02-4 (token-shape walidacja, +2) · L-14 (mock 29/29).
@@ -161,3 +165,25 @@ Pełna tabela: karta §1g. **→** M17 Outputs (rejestracja/eksport), M03 (Decyz
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia pełne (karta+SPEC_01+uwaga żywa #1+formuła+DP-2/DP-5+feedback prod) · R2 zero sierot (W→L→DoD) · R3 statusy z dowodem (L-06 `36a6f240ff` zakres do potwierdzenia; org-scope zweryfikowany) · R4 DoD z liczbami grep (useTranslation 0, hex 0, util ~34, table 0) · R5 decyzje rozstrzygnięte (D-03=DP-5; D-01/D-02 modułowe) · A–E docelowy z layoutem+stanami+enumeracją ~30 endp.+maszyna `kind` · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = weryfikacja kręgosłupa #1 (Faza 0). **Teczka kompletna do egzekucji.**
+
+## EKRANY (inwentarz) — 2026-06-19
+> Inwentarz ekranów/widoków/stanów M02 Canvas (prawy slot `UnifiedChatPanel`, brak własnego route). Ugruntowane w `src/components/AIChat/` (panel + CanvasEditor).
+
+| # | Ekran | Cel | Plik komponentu |
+|---|-------|-----|-----------------|
+| 1 | Panel canvas (prawy slot) — nagłówek + kanwa | Główny host artefaktu (doc/sheet/deck) | `src/components/AIChat/WorkCanvasDocumentPanel.tsx` |
+| 2 | Stan pusty — szablon „Company Work Note" (`base`) | Pusty canvas z szablonem | `WorkCanvasDocumentPanel.tsx:735` |
+| 3 | Edytor doc/sheet (TipTap, markdown) | Edycja dokumentu/arkusza | `src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx` |
+| 4 | Widok prezentacji (deck) | Render slajdów | `src/components/AIChat/CanvasPresentationView.tsx` |
+| 5 | Floating AI menu (diff accept/reject) | Patch-mode propozycje AI | `src/components/AIChat/CanvasEditor/CanvasAIFloatingMenu.tsx` |
+| 6 | Toolbar edytora | Formatowanie + akcje | `src/components/AIChat/CanvasEditor/CanvasEditorToolbar.tsx` |
+| 7 | Historia wersji / switcher | Wersje append-only + przełączanie | `src/components/AIChat/CanvasEditor/CanvasVersionHistory.tsx` |
+| 8 | Switcher artefaktów (chip) | Reload-safe wybór artefaktu | `src/components/AIChat/CanvasArtifactSwitcher.tsx` |
+| 9 | Stan ładowania (generacja w tle) | Poll `GET /deliverables/generations/:id`, hydracja draftu | `WorkCanvasDocumentPanel.tsx` (`:898-1028`) |
+| 10 | Stan błędu generacji | Komunikat o niepowodzeniu | `WorkCanvasDocumentPanel.tsx` |
+| 11 | Pasek share (link publiczny / kopiuj / cofnij udostępnianie / wygasa) | Public share + revoke | `WorkCanvasDocumentPanel.tsx` (share-strip, i18n `canvas.panel.*`) |
+| 12 | Akcje materializacji / save-to-workspace / export | Handoff do encji + eksport 7 formatów | `WorkCanvasDocumentPanel.tsx` (workspace-actions) |
+| 13 | Checklista planu (planned.sources read-only) | Postęp generacji deliverable | `UnifiedChatPanel.tsx:2311/2557/2776` |
+| 14 | Legacy redirect przy fladze OFF (z komunikatem czatu) | `/wordy`/`/excele`/`/prezentacje` przekierowanie | `UnifiedChatPanel.tsx` (excele/doc/prez-redirect) |
+| 15 | Publiczny viewer artefaktu (`/public/artifacts/:token`) | Read-only odbiorca przez share | trasa `GET /shared/:token` (`work-canvas.routes.ts:3954`) |
+| 16 | Legacy panel artefaktów (drugi silnik, L-01) | `ArtifactsPanel` (store `useArtifactsStore`) | `src/components/AIChat/Artifacts/ArtifactsPanel.tsx` |

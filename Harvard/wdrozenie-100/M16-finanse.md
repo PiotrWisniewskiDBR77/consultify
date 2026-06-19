@@ -112,7 +112,7 @@ Scenariusze S1–S8: karta §0 (510 PASS/14 FAIL drift). Bezpieczeństwo: karta 
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
 | L-01 | beta-lock tylko nawigacyjny (`/finance`/`/economics` direct URL omija) | W-01 | `Sidebar.tsx:152` + `RouterSyncProvider` bez guarda | P1 | 2 | **NAPRAWIONA — `AppRoutes.tsx:1755`/`:1771` owinięte `<BetaGate moduleId="MODULE_ECONOMICS">` (R3: audyt zawyżał — guard już istniał)** | 2026-06-16 |
-| L-02 | obliczenia finansowe częściowo testowane / fałszywa zieleń (test definiuje własny kalkulator) | W-01 | `tests/unit/backend/financialCalculatorService.test.js:83` (inline kalkulator, brak importu produkcji) | P0-test | 2 | **NAPRAWIONA — B1 (test→realne serwisy) + B2 (DCF hand-derived) + B3 (`ratioAnalysisService.test.ts`, +fix bug Infinity-leak); 149/149 PASS** | 2026-06-16 |
+| L-02 | obliczenia finansowe częściowo testowane / fałszywa zieleń (test definiuje własny kalkulator) | W-01 | `tests/unit/backend/financialCalculatorService.test.js:83` (inline kalkulator, brak importu produkcji) | P0-test | 2 | **NAPRAWIONA — B1 (test→realne serwisy) + B2 (DCF hand-derived) + B3 (`tests/unit/services/ratioAnalysisService.test.ts` (skoryg. 2026-06-19: ścieżka zweryfikowana grepem — `tests/unit/services/`, NIE `tests/unit/backend/`; obok `ratioAnalysisService.growth.test.ts`), +fix bug Infinity-leak); 149/149 PASS** | 2026-06-16 |
 | L-03 | 14 FAIL drift (label/schema/mock-sekwencja p05) | W-01 | testy finance p05 (8×404), FinanceHub label, economicsFlow env | P0-test | 2 | **NAPRAWIONA — finance-suite zielony (p05-finance-lane + Economics 82/82)** | 2026-06-16 |
 | L-04 | empty-messages mieszane PL/EN (literały) | W-01 | `FinanceHub.tsx:1739` EN vs `:1763-1771` PL | P3 | 3 | **NAPRAWIONA — 9 empty-messages przez klucze `finance.empty` (PL+EN walidne). Uwaga: masowa migracja ~125 ternarów `isPl?:` świadomie odłożona (osobna fala, wysokoregresyjna)** | 2026-06-16 |
 | L-05 | brak `EntityStatusChip` (własne chipy) | W-01 | `FinanceHub.tsx:1609,1034` | P3 | 3 | **ZAMKNIĘTA 2026-06-17 — N/D POTWIERDZONE (read-only verify): chipy statusu Finance są kanoniczne — `baseStatusCol` (`FinanceHub.tsx:841-850`, `id:'status'`, brak `render`) renderuje się przez kanoniczną gałąź `FilterableTable.tsx:570-571` → `<EntityStatusChip status={row.status}>` (shared primitive `ui/primitives/chips/EntityStatusChip.tsx:112`). `MetaChip:1034` = chip metadanej typu (Budżet/Model) w kolumnie `predictionSubtype`, NIE status. Korekta dowodu: `:1609` to `runtimeChips` telemetrii V8 (Ingestion/Escalations/Linkages), nie status — kanon statusu z `:841`. Luka nie istnieje.** | 2026-06-17 |
@@ -138,3 +138,35 @@ Scenariusze S1–S8: karta §0 (510 PASS/14 FAIL drift). Bezpieczeństwo: karta 
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia pełne (karta+commit+DP-6/8+feedback; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→story Gherkin→DoD→dowód) · R3 statusy z dowodem (**L-07 `e3945bc7fc` zweryfikowany w git; korekta i18n 19→0 grepem; fałszywa zieleń L-02 zweryfikowana w teście**) · R4 DoD z liczbami (isPolish 0, hex 51 chart-skoncentrowane DP-8, table 5) · R5 **obie decyzje rozstrzygnięte (D-01→DP-6, D-02→DP-8)** · A–E docelowy zlinkowany (DCF/WACC anchory) · F epiki→stories Gherkin→zadania↔luki · G DoD+S+sec+wydajność+telemetria · R6 sesja żywa = DCF/WACC spot-check + IDOR proof (pozostaje, Faza 4). **9/9; teczka kompletna do egzekucji.**
+
+## EKRANY (inwentarz) — 2026-06-19
+
+Weryfikacja kodu (read-only): top-3 = PRAWDA. L-07 legacy IDOR: `getModel(modelId, req.user?.organizationId)` na wszystkich by-id verbach (`financial-modeling.routes.ts:283,333,347,371,432,451,473,540`); events `WHERE m.organization_id=?` (`:558,577`); commit `e3945bc7fc` w git log. L-02 fałszywa zieleń: `financialCalculatorService.test.js` PRZEPISANY — importuje `computeValuation` z `valuationService` + `DbPromise` (`:49-54`); `ratioAnalysisService.test.ts` istnieje (`tests/unit/services/ratioAnalysisService.test.ts` + `.growth.test.ts`, ścieżka inna niż implikowana w teczce, ale test realny). L-01 beta-guard: `<BetaGate moduleId="MODULE_ECONOMICS">` ×5 (`src/routes/AppRoutes.tsx:1754,1771,1788,1805,1822`).
+
+Hub: `FinanceHub.tsx` (ModuleHub).
+| Ekran / widok | Cel | Plik |
+|---|---|---|
+| Finance Lane (strip/panel) | Pasmo finansowe egzekucji | `FinanceLaneStrip.tsx`, `FinanceLanePanel.tsx` |
+| Statements / Preview | Sprawozdania canonical + preview | `FinancePreviewPanel.tsx`, `CanonicalStatementTable` (w hubie), `FinanceModelDocumentView.tsx` |
+| Excel Import Wizard | Import xlsx→canonical | `ExcelImportWizard.tsx` |
+| Analysis Catalog | Lista analiz | `AnalysisCatalog.tsx` |
+| Analysis Create | Tworzenie analizy | `AnalysisCreateModal.tsx`, `modals/CreateAnalysisModal.tsx` |
+| Analysis Results | Wyniki analizy wskaźnikowej | `AnalysisResultsPanel.tsx`, `FinancialAnalysisPanel.tsx` |
+| Analysis Compare | Porównanie analiz | `AnalysisCompareView.tsx` |
+| Financial Input Form | Wejście danych modelu | `FinancialInputForm.tsx` |
+| Model Create | Tworzenie modelu monthly | `modals/CreateModelModal.tsx` |
+| Valuation Create (DCF/WACC) | Tworzenie wyceny | `modals/CreateValuationModal.tsx` |
+| Budget Create | Tworzenie budżetu/forecastu | `modals/CreateBudgetModal.tsx` |
+| Business Case Generator | Generator business case (NPV/IRR) | `BusinessCaseGenerator.tsx` |
+| Benefits Tracking | Dashboard benefitów | `BenefitsTrackingDashboard.tsx` |
+| Cash Flow Chart | Wykres przepływów (palety DP-8) | `CashFlowChart.tsx` |
+| Sensitivity Chart | Heatmapa wrażliwości WACC×growth | `SensitivityChart` (`types.tsx`/preview) |
+| Version History / Timeline | Historia wersji modeli | `VersionHistoryPanel.tsx`, `FinanceVersionTimeline.tsx` |
+| Evidence Panel | Dowody/źródła | `EvidencePanel.tsx` |
+| Initiative Linking / Integration | Powiązanie z inicjatywą (M13) | `InitiativeLinkingPanel.tsx`, `InitiativeFinancialIntegration.tsx` |
+| AI Recommendations | Objaśnienia AI (nie generacja liczb) | `AIRecommendationsPanel.tsx` |
+| Digitization Tool Tab | Narzędzie cyfryzacji | `DigitizationToolTab.tsx` |
+| PDF Export Modal | Eksport PDF | `PDFExportModal.tsx` |
+| Stan: degraded banner V8→legacy | Widoczny baner (wzorzec) | `FinanceDegradedBanner.tsx` |
+
+Martwe usunięte (zweryf.): `EconomicsHub.tsx`+`EconomicsViewPlaceholder.tsx` fizycznie nieobecne. Liczba ekranów: ~22.

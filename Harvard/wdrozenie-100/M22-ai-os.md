@@ -46,7 +46,7 @@ Ocena powierzchni §27 + stany: karta §5. Wszystkie panele Wave używają włas
 | `ResearchSessionsDock.tsx` | `POST/GET /api/research/sessions` | `research_evidence`, `research_sessions` | `607_research_evidence_v3.sql` | REALNE (HTTP do EDGAR/GDELT/OpenAlex/Crossref) |
 | `Wave5ArtifactRuntimePanel.tsx` | `/api/artifacts/*` (`v8FeatureGate`) | `wave5_artifacts`, `_versions`, `_mutation_proposals` | `20260425_wave5_*` | REALNE **za `ENABLE_V8_GLOBAL`** → L-01 |
 | `Wave6ContextLearningPanel.tsx` | `/api/ai-context/*` | `wave6_context_snapshots`, `_ledger`, `_memory_candidates`, `_stewardship_decisions` | `20260425_wave6_*` | REALNE (Teresa memory) |
-| `Wave7ConnectorAdminPanel.tsx` | `/api/ai-connectors/*` | `wave7_connectors`, `_runs` | `20260425_wave7_*` | REALNE (OAuth symulowany — L-05) |
+| `Wave7ConnectorAdminPanel.tsx` | `/api/ai-connectors/*` | `wave7_connectors`, `_runs` | `20260425_wave7_*` | REALNE; **OAuth symulowany** (status = `req.body.status \|\| 'connected'`, `wave7-connectors.routes.ts:51-60`, brak realnego provider-flow) — L-05/D-02 czeka na decyzję Piotra |
 | `Wave8AgentCatalogPanel.tsx` | `/api/ai-agents/*` | `wave8_agent_definitions`, `_runs`, `_schedules`, `_notifications` | `20260425_wave8_*` | REALNE |
 | `Wave9OutcomeAIOpsPanel.tsx` | `/api/ai-outcomes/*` | `wave9_outcomes`, `_evidence_registry`, `_provider_health`, `_eval_runs`, `_acceptance_runs`, `_incidents`, `_acceptance_decisions` | `20260425_wave9_*` | REALNE |
 | `AIOSHub.tsx` | (V10 voice-config live; Build Milestones = statyczny) | — | — | REALNE + 1 STUB UI |
@@ -147,3 +147,21 @@ REALNE 6 wave-service'ów (5–9 + research) + ActionCenter + AI Memory. STUB: A
 R1 wejścia pełne (karta + re-audit + kod-R3 + DP-7/10; uwagi żywe = brak, jawnie dziedziczone z karty) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-02 USUNIĘTY, L-03 „7 guardów" STALE-nie-dotyczy — routery zamontowane, L-09 BRAK-IDOR** zweryfikowane w kodzie) · R4 DoD z liczbami (i18n 5/9, hex 0, table 1) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-7, D-03=DP-10; D-02 modułowa otwarta); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany (C = panele Wave 5-9 + maszyna flag + Gateway mounts) · F epiki→stories Gherkin→L-xx · G DoD+SC+sec · R6 sesja żywa = Fazy 3+4 (wymagają staging + INTERNAL_TOOLS=true). **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Karta podwójnie myli się co do `_actionDecisionRoutes` (USUNIĘTY, nie martwy/zamontowany — DP-7 descope) ORAZ co do „7 guardów bez routerów" (routery JUŻ zamontowane `:486-512`) — planowanie wokół obu byłoby pracą nad nieaktualnym stanem kodu.
+
+## EKRANY (inwentarz) — 2026-06-19
+
+Audyt weryfikacyjny: teczka SOLID, deklaracje napraw zgodne z kodem (zweryfikowane plik:linia).
+
+| # | Ekran / widok | Cel | Plik komponentu |
+|---|---|---|---|
+| 1 | AIOS Hub | Strona główna AI OS (V10 voice-config live + Build Milestones statyczny) | `src/components/AIChat/AIOSHub.tsx` |
+| 2 | Wave 0 Gate Report | Raport bramki Wave 0 (1× surowy `<table>`→FilterableTable, L-07) | `src/components/AIChat/AIOSWave0GateReport.tsx` |
+| 3 | Action Center | Governance run-ledger: approve/reject/execute + audit (org-scoped, `ai_runs`) | `src/components/AIChat/ActionCenter.tsx` |
+| 4 | Research Sessions Dock | Lifecycle sesji research + evidence graph + final artifact (master-detail dock) | `src/components/AIChat/ResearchSessionsDock.tsx` |
+| 5 | Wave 5 Artifact Runtime Panel | Artefakty (za `ENABLE_V8_GLOBAL`); banner „unavailable" przy V8-off (L-01 zweryf. early-return `:253`) | `src/components/AIChat/Wave5ArtifactRuntimePanel.tsx` |
+| 6 | Wave 6 Context Learning Panel | Pamięć kontekstu Teresy: snapshots/ledger/memory-candidates/stewardship | `src/components/AIChat/Wave6ContextLearningPanel.tsx` |
+| 7 | Wave 7 Connector Admin Panel | Konektory (OAuth symulowany — L-05/D-02 otwarta) | `src/components/AIChat/Wave7ConnectorAdminPanel.tsx` |
+| 8 | Wave 8 Agent Catalog Panel | Katalog agentów: definitions/runs/schedules/notifications | `src/components/AIChat/Wave8AgentCatalogPanel.tsx` |
+| 9 | Wave 9 Outcome AIOps Panel | Outcomes/KPI: evidence/provider-health/eval/acceptance/incidents | `src/components/AIChat/Wave9OutcomeAIOpsPanel.tsx` |
+
+**Liczba ekranów: 9.** Wszystkie gatowane potrójnie (betaAccess `dbr77.com` + `InternalToolsGate` FE + `internalTools.middleware.ts` BE → non-dbr77 = 404, zweryf. test 32/32).

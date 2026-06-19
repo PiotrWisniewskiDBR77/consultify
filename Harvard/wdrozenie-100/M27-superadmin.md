@@ -5,6 +5,7 @@
 ## 00 · Nagłówek
 - **Moduł:** M27 SuperAdmin (control plane) · **Pula:** internal (SUPERADMIN, cross-tenant)
 - **Ocena audytu:** 58/100 · **Tier:** Alpha górny · **Status:** 🟦 NIEPEŁNY · 🟦 **WYMAGA KONTA SUPERADMIN** do pełnej weryfikacji (Fazy 3/4)
+- **execution_readiness (skoryg. 2026-06-19): WYMAGA konta superadmin do live-verify — NIE traktować jako „gotowe".** Część STATYCZNA potwierdzona w kodzie (security-gate'y `verifySuperAdmin`/`requireRole`/middleware fail-closed 403 — zweryfikowane 2026-06-19). **NIE domknięte bez konta superadmin:** DoD #2/#6 (żywy dowód RBAC-reject na control-plane), L-11 (testy maskowane mock-gate/mock-DB — OTWARTA), §27 (~73–80 surowych `<table>`, 0 `FilterableTable`/`EntityStatusChip` — **NAJWIĘKSZY dług §27 programu**, odroczony do dedykowanego sprintu z preview), i18n DP-10 (~114 plików hardkod EN — świadomy dług internal, odroczony). D-02 otwarta.
 - **Żywy bloker:** brak P0 — **oba P0 boczne NAPRAWIONE** (`91c8245559`, zweryfikowane w kodzie 2026-06-13); P1 llm purposes/market global writes pozostają. Pula nietestowana na żywo (internal).
 - **Właściciel:** Piotr · **Daty:** karta 2026-06-11 + Fala 2 · teczka 2026-06-13 (pogłębiona)
 - **Karta:** `Harvard/modules/M27-superadmin/KARTA_AUDYTU.md` · **Evidence:** `…/evidence/f1_code_truth.md, f2_tests_report.md, f56_kanon_sec.md` · `[[finding_feedback_system_audit]]`
@@ -83,7 +84,7 @@ Pełna tabela: karta §1g. Skrót: **→** wszystkie org (tenant ops/billing/mod
 | 2 | Bezpieczeństwo | oba P0 boczne zamknięte ✅ (`91c8245559`: tiers/assign+priority `verifySuperAdmin` `:793/799/805`, virtual-workers `requireRole('super_admin')` `:22`) + testy; P1 llm purposes/market → `verifySuperAdmin` (admin→403) |
 | 3 | i18n | **~150/165** tsx bez `t()` (tylko **15** ma `useTranslation`); hardkody EN ~114/124 plików — **DP-10 = świadomy dług internal** (udokumentować, NIE tłumaczyć v1) |
 | 4 | Tokeny | **70** hex w surface superadmin → tokeny (DP-8: palety legalne) |
-| 5 | §27 | **73** surowych `<table>` → A-S (organizations/users/audit/invoices/flags) |
+| 5 | §27 | **~73–80** surowych `<table>` (zweryf. 2026-06-19: 80 tagów `<table>` w 60 plikach; 0 importów `FilterableTable` — adnotacje `§27-todo`/`→ FilterableTable` w kodzie to komentarze, nie użycia) → A-S (organizations/users/audit/invoices/flags) |
 | 6 | E2E w PR-gate | RBAC-reject (non-superadmin→403, twarde `===`) na każdej sekcji + bocznych routerach llm/virtual-workers zielone na `Londyn`; zacieśnić `[401,403,404]`→`403` |
 
 Scenariusze S1–S7 + ~502 PASS/9 FAIL: karta §0/§2. Bezpieczeństwo: karta §6. Pułapka: `*.test.js` uderzają w realny PG (`role "iris"`) maskowane permisywnym `VALID_STATUSES`; „REAL integration" mockuje gate.
@@ -167,3 +168,51 @@ REALNE ~95% z 60+ zakładek (Tenant Ops, AI Operations 27 pod-zakł., System, Go
 R1 wejścia pełne (karta + re-audit + kod-R3 + feedback-finding + DP-10/DP-8; uwagi żywe = brak, 🟦 wymaga konta superadmin) · R2 zero sierot (wejście→luka→story→DoD) · R3 statusy z dowodem (L-01/02 NAPRAWIONE — gate zweryfikowany w kodzie 2026-06-13; L-09/10 z commitami, live-verify pending) · R4 DoD z liczbami (i18n ~150/165, hex 70, table 73) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-10; D-02 otwarta — wymaga konta superadmin); pozostaje R6/żywa weryfikacja (M27 wymaga konta superadmin) · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4 (🟦 konto superadmin). **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Domknięcie DoD #2/#6 (live proof P0/P1 na control-plane) WYMAGA konta superadmin, a ponieważ dev `.env` może wskazywać Railway PROD, testy zapisu na control-plane są szczególnie ryzykowne — stąd 🟦 deferred-status pozostaje do świadomej, read-only sesji właściciela.
+
+---
+
+## EKRANY (inwentarz) — 2026-06-19
+
+**Werdykt weryfikacji:** teczka SOLID (static-verifiable część potwierdzona); pełna live-weryfikacja nadal 🟦 (wymaga konta superadmin — D-02 otwarta). Potwierdzone statycznie w kodzie 2026-06-19: L-01 tiers/assign+DELETE+priority `verifySuperAdmin` (`llm.routes.ts:793/799/805`) — PRAWDA; L-02 virtual-workers `requireRole('super_admin')` (`virtual-workers.routes.ts:22`) — PRAWDA; L-03/L-04 purposes+market writes `verifySuperAdmin` (`:1479/1704/1970/2012`) — PRAWDA; middleware fail-closed 403 z DB-role jako SoT (`superAdmin.middleware.ts:403-426`) — PRAWDA; L-05 flat `AIPlatformModule.tsx` + `IAMModuleView.tsx` usunięte, folder `AIPlatformModule/` żyje (598 l.) — PRAWDA; L-08 test asercja `toBe(403)` dla org-admin + `not.toBe(403)` dla superadmin (`tests/integration/llm-superadmin-gate.test.ts`, 8×403) — PRAWDA; L-09 regresja `tests/integration/superadmin-l09-regression.test.tsx` istnieje — PRAWDA. Otwarte: L-11 (mock-gate testy), §27 (~73-80 `<table>`, dług odroczony), i18n DP-10, live-verify (🟦).
+
+**Layout:** dedykowany SuperAdmin shell + `SuperAdminSidebar`. Surface = 60 top-level views (`src/views/superadmin/`) + 35 paneli (`src/components/SuperAdmin/`) + folder `AIPlatformModule/` (32 sub-tabs).
+
+### Główne ekrany (views — `src/views/superadmin/`)
+| Ekran | Cel | Plik |
+|---|---|---|
+| SuperAdmin Dashboard / Root | strona główna control-plane | `SuperAdminDashboard.tsx`, `SuperAdminView.tsx`, `OverviewModule.tsx` |
+| Tenant Command Center | cross-tenant ops na organizacjach (SYS-1 fix) | `TenantCommandCenterView.tsx` |
+| Organizations | lista/zarządzanie organizacjami cross-tenant | `OrganizationsView.tsx`, `OrganizationResourceManager.tsx`, `SuperAdminOrgDetailsModal.tsx` |
+| User Management | zarządzanie userami cross-tenant | `SuperAdminUserManagement.tsx`, `CustomersModule.tsx` |
+| Security Policies | polityki bezpieczeństwa per-org (SYS-1 fix) | `SecurityPoliciesView.tsx`, `SecurityModule.tsx`, `GlobalSecurityPostureView.tsx` |
+| Custom Roles Builder | builder ról/uprawnień (SYS-1 fix) | `CustomRolesBuilder.tsx` |
+| SSO Configuration | konfiguracja SSO (L-09 crash-guard) | `SSOConfigurationView.tsx` |
+| SCIM Provisioning | provisioning SCIM | `SCIMProvisioningView.tsx` |
+| Module Access Control | dostęp do modułów per-org | `ModuleAccessControlView.tsx`, `ModuleWaitlistView.tsx` |
+| API Management | zarządzanie API/kluczami (SYS-1 fix) | `APIManagementView.tsx` |
+| Invoice Center | faktury (SYS-1 fix) | `InvoiceCenterView.tsx` |
+| Billing Center | rozliczenia | `BillingCenterView.tsx` |
+| Revenue | przychody/Stripe | `RevenueModule.tsx`, `SuperAdminRevenueView.tsx` |
+| Plans / Subscriptions | plany i subskrypcje | `SuperAdminPlansView.tsx`, `SubscriptionPlansManager.tsx` |
+| Compliance Center | zgodność/audyt | `ComplianceCenterView.tsx`, `GovernanceModule.tsx` |
+| Legal | dokumenty prawne | `SuperAdminLegalView.tsx` |
+| Feedback Backlog | backlog feedbacku (L-09 secret-leak fix) | `SuperAdminFeedbackBacklogView.tsx`, `SuperAdminFeedbackView.tsx`, `SuperAdminFeedbackAnalyticsView.tsx` |
+| Signals / Access Requests | sygnały + prośby o dostęp | `SuperAdminSignalsView.tsx`, `SuperAdminAccessRequestsView.tsx` |
+| Metrics / Storage | metryki platformy + storage | `SuperAdminMetricsView.tsx`, `SuperAdminStorageDetailModal.tsx` |
+| AI Operations (hub) | operacje AI: providers/tiers/routing | `AIOperationsModule.tsx`, `AIConfigurationView.tsx`, `LLMManagementView.tsx` |
+| AI Budgets / Intelligence / Observability | budżety, inteligencja, obserwowalność AI | `AIBudgetsView.tsx`, `AIIntelligenceView.tsx`, `AIObservabilityDashboard.tsx`, `SuperAdminAIAnalyticsView.tsx` |
+| AI Development / Infrastructure | dev/infra AI | `AIDevelopmentModule.tsx`, `AIInfrastructureModule.tsx` |
+| Presentation Governance (suite) | governance prezentacji: watchlist, telemetria, alerty, health, benchmark | `PresentationGovernanceWatchlistView.tsx`, `PresentationTelemetryView.tsx`, `PresentationGovernanceAlertSubscriptionsView.tsx`, `PresentationOperationsHealthView.tsx`, `PresentationBenchmarkTrendView.tsx`, `PresentationTemplateGovernanceView.tsx` |
+| Playbook Templates | edytor + lista szablonów playbook (SYS-1 fix) | `PlaybookTemplatesListView.tsx`, `PlaybookEditorView.tsx` |
+| Feature Updates Admin | komunikaty/aktualizacje (SYS-1 fix) | `FeatureUpdatesAdminView.tsx` |
+| Email Templates | szablony email | `EmailTemplatesView.tsx` |
+| Whitelabel Studio | whitelabel/branding | `WhitelabelStudioView.tsx` |
+| System Settings / Modules | ustawienia systemu, feature flags | `SystemSettings.tsx`, `SystemModule.tsx`, `ConfigurationModule.tsx`, `ContentModule.tsx` |
+
+### Panele (`src/components/SuperAdmin/`)
+FeatureFlagsPanel, SecurityPanel, ApiManagementPanel, ConfigurationPanel, AnalyticsPanel, UsageStatsPanel, LegalPanel, IntegrationsPanel, EmailConfigurationPanel/TemplatesPanel/TemplateEditor, BackupPanel, BulkActions, ModelTierAssignments, SuperAdminAISettings, SuperAdminSignalCenter/SignalNode, SuperadminRootClosurePanel, PartnerOutreachPanel, ContentAnalyticsDashboard/CategoriesManager/TagsManager/Filters/Search, PlaybookTemplate{Analytics,Comments,Reviews,VersionHistory}, OperationsHealthDrilldownPanel, AlertPlaygroundTester, IncidentRunbooksCard, SubscriberTokenManagementPanel, ResourceLimitInput, SuperAdminStatusIndicators, TabLayout.
+
+### AI Platform Module (folder `src/views/superadmin/AIPlatformModule/`)
+Hub `AIPlatformModule.tsx` (598 l.) + 32 sub-taby w 9 grupach (Configuration/Security/Development/Operations/Knowledge/Policy/Analytics/Executive). Realne (>100 l.): OrgAIPolicyTab, RoutingRulesTab, PurposeAssignmentsTab, AIGovernanceTab, ComplianceTab, ModelRegistryTab, MarketInboxTab, DocumentsRAGTab, StrategicDirectionsTab, PolicyEnforcementTab, LLMObservatoryTab, PerformanceMetricsTab, PricingRegistryTab, AIUseCaseControlPlane. Pozostałe (~14 l.) = placeholder-taby (GlobalSettings/LLMProviders/ModelTiers/APIKeys/AccessControl/AuditLogs/Experiments/Prompts/Health/MissionControl/Usage/Cost/CustomReports/KnowledgeBase).
+
+**Liczba ekranów: ~60 top-level views + 35 paneli + 32 sub-taby AI Platform (≈14 realnych, ~18 placeholder).** Największy moduł programu; brak `FilterableTable`/`EntityStatusChip` (dług §27, odroczony do dedykowanego sprintu z kontem superadmin).

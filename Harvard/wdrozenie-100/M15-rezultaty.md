@@ -6,6 +6,7 @@
 - **Moduł:** M15 Rezultaty (Results / Benefits Realization) · **Pula:** beta CLOSED (kliencki: VTS/Apator/Elkomtech) · **Faza:** FAZA 2
 - **Ocena audytu:** 54/100 · **Tier:** Alpha · **Rozmiar:** M (1–3 dni)
 - **Żywy bloker:** brak — **oba P0 (cross-org time-series KPI write + RBAC bypass `x-kpi-role`) NAPRAWIONE** (`91c8245559`)
+- **Execution readiness:** WYMAGA drobnej korekty/cleanup (skoryg. 2026-06-19) — `ResultsSummaryView.tsx`+`OperationalAnalysisView.tsx` wróciły na dysk jako untracked przez git-race (martwe, 0 importerów); do `rm`. Reszta teczki PRAWDA.
 - **Właściciel:** Piotr · **Daty:** karta 2026-06-11 · teczka 2026-06-13
 - **Karta:** `Harvard/modules/M15-rezultaty/KARTA_AUDYTU.md` · **Evidence:** `…/evidence/f1_code_truth.md`, `f2_tests_report.md`, `f56_kanon_sec.md`
 - **Kod:** `src/components/Results/` (`ResultsHub`, `ResultsKpisTableV3`, `ResultsGridView`/`ResultsKPITable`, `kpiRuntime.ts`, `resultsShowcaseData.ts`) · `server/src/services/resultsEnterpriseService.ts` · `server/src/routes/benefits.routes.ts` (35 verbs) · `routes/v8/results.routes.ts` (37 verbs) · `results-enterprise.routes.ts` (19) + `results-kpi-reports.routes.ts` (6) · tabele `v8_kpi_definitions`, `kpi_time_series`, `v8_roi_realization_entries`, `kpi_financial_mappings`, `initiative_kpis`
@@ -117,7 +118,7 @@ Scenariusze S1–S7: karta §0 (239 PASS/5 FAIL drift). Bezpieczeństwo: karta �
 | L-03 | beta-lock tylko nawigacyjny (`/benefits` direct URL omija) | W-01 | `AppRoutes.tsx:2136` (tylko `ProductionModuleGate`) | P2 | 2 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_BENEFITS">` owija `/benefits` route (`AppRoutes.tsx:2164`); zweryfikowane grepem** | 2026-06-16 |
 | L-04 | SEC-3 INSERT/UPSERT deviation/roi bez weryfikacji własności rodzica | W-01 | UPSERT deviation/roi | P3 | 2 | **NAPRAWIONA — `SELECT id FROM initiatives WHERE id=? AND organization_id=?` przed INSERT deviation/roi (`v8/results.routes.ts:290,332`); commit `5903ddcb68`** | 2026-06-16 |
 | L-05 | sync-from-M20 dead-end (M20 pisze log, Results nie czyta) | W-01,W-04 | `table-platform.routes.ts:3413` (0 odbiorców) | INTEGRACJA | 2 | **PODGLĄD-DP6** (was PREVIEW-DONE) **(DP-6 PREVIEW-DONE / realny odbiór = D-01, read-only verify 2026-06-17):** PREVIEW-DONE: przycisk sync uczciwie wyłączony („Wkrótce/Coming soon", `ConsultifyLinkPanel.tsx:282-298`, commit `b074760074`) — nie kłamie już „Synchronizacja zakończona"; mapowanie pól używalne. Potwierdzone: `syncToModule` (`ModuleSyncService.ts:89-108`) pisze tylko do `tp_module_sync_results`; jedyny czytelnik = badge link-status (`getLinkStatus`→route `:3563`), **0 odbiorców w Results/Finance**. **AWAITS D-01:** `publishToResults` (`table-platform.routes.ts:3430-3460`) musi rzutować zmapowane wiersze KPI do tabel Results (np. `v8_roi_realization_entries`) + Results odczyt; potem re-enable przycisku (`ConsultifyLinkPanel.tsx:282-293`). Jedna decyzja, trzy teczki (M15/M16/M20). Zależność: M15 beta-CLOSED. | 2026-06-17 |
-| L-06 | martwy `BenefitsHub.tsx`/`BenefitsRealizationView` (0 ścieżek renderu) | W-01 | `AppRoutes:115` lazy, nigdy w JSX | MARTWY | 3 | **NAPRAWIONA — 0 referencji `BenefitsHub`/`BenefitsRealizationView` w src/ (grep 2026-06-16 = 0)** | 2026-06-16 |
+| L-06 | martwy `BenefitsHub.tsx`/`BenefitsRealizationView` (0 ścieżek renderu) + `ResultsSummaryView`/`OperationalAnalysisView` | W-01 | `AppRoutes:115` lazy, nigdy w JSX | MARTWY | 3 | **WYMAGA CLEANUP (skoryg. 2026-06-19):** 0 referencji `BenefitsHub`/`BenefitsRealizationView` w src/ (grep 2026-06-16 = 0). ALE `ResultsSummaryView.tsx`+`OperationalAnalysisView.tsx`: usunięte w gicie (`8bb8459193`) — na czystym checkout ich nie ma, HEAD ich nie śledzi (`git ls-files` = puste) — wróciły na dysk jako **untracked przez git-race** (`git status` = `??`, 0 importerów w src/ poza własnymi deklaracjami eksportu, martwe). Do sprzątnięcia (rm + barrel już czysty). | 2026-06-19 |
 | L-07 | `ResultsGridView`/`ResultsKPITable` raw `<table>` bez `TableWithPreviewLayout` | W-01,W-04 | grep 7× `<table>` | P3 | 3/4 | **ZAMKNIĘTA 2026-06-17** — `ResultsKPITable` → `FilterableTable` (`23840a69dd`); `ReconciliationPanel.tsx` raw `<table>` → `FilterableTable` 5-kolumnowy (`fd8c6a9c8c`, Fala 5); `ROITrackingView`/`ROIAnalysisView`/`ROIDetailDrawer`/`ROIAssumptionEditor` = §27-exempt: financial-calculation (sort state→KPI cards, sort state→bar chart, side-drawer variance, editable form). `ResultsGridView` = grid kart (poza zakresem). Finding: FilterableTable bez row-sort/search — rekom impl w shared component. | 2026-06-17 |
 | L-08 | 5 FAIL test-drift (mock `notificationService.send`+`toMatchObject`) | W-01 | testy Results | P0-test | — | **NAPRAWIONA — `p04-kpi-workflow.contract.test.ts`: `budget_health` → `toHaveLength(6)` (`cbcbe3fce2`); suite Results 32/32 PASS** | 2026-06-16 |
 | L-09 | brak testu szczelności showcase demo=ON | W-01 | brak B3 | P0-test | — | **NAPRAWIONA — `kpiRuntime.loadResultsKpis.test.ts` pokrywa fallback+legacy+rethrow (`cbcbe3fce2`)**  | 2026-06-16 |
@@ -135,9 +136,39 @@ Scenariusze S1–S7: karta §0 (239 PASS/5 FAIL drift). Bezpieczeństwo: karta �
 ### 06 · Ryzyka — **WZORZEC SYSTEMOWY** `x-kpi-role` (autoryzacja z nagłówka klienta) → audyt innych v8-routerów cross-module. Zapis KPI na PROD ostrożnie (dev `.env` może wskazywać PROD). sync-from-M20 wspólne z M20/M16 (DP-6). Brak uwag żywych → re-ocena D wymaga Fazy 4.
 ### 07 · Log — 2026-06-18 (Harvard 4 Faza 5 — COLD-START): Staging persistence confirmed — `kpi_measurements` + `kpi_time_series` tables EXIST on trolley (to_regclass 2026-06-18). Architecture: `resultsROIService.ts` Maps = in-request aggregacja only (groupBy/reduce), 0 Maps między requestami. Dane w PG → przeżywają restart z definicji. Dowód: `COLD_START_PROOF_2026-06-18.md`.
 ### 07 · Log — 2026-06-17 (Harvard 4 Fala 5): §27 — `ReconciliationPanel.tsx` raw `<table>` → `FilterableTable` z 5 kolumnami (KPI/Status[filterable]/Projected/Realized/Variance), `render:` callbacks zachowują `StatusChip`+`AlertTriangle`+color-coded variance — commit `fd8c6a9c8c`. Pozostałe 4 pliki (`ROITrackingView`, `ROIAnalysisView`, `ROIDetailDrawer`, `ROIAssumptionEditor`) — §27-exempt: financial-calculation (sort state→KPI cards, sort state→bar chart order, per-row computed variance w side-drawer, editable form table z `<input>/<select>/<tfoot>`). L-07 ZAMKNIĘTA (§27 ReconciliationPanel) + 4 exempt. i18n M15: L-10 n/d potwierdzone. rose→danger sweep: 67 zmian w 13 plikach Results/ + 4 post-merge fixes ReconciliationPanel.tsx — commit `7292d4cac5` + `9d7d202def`.
-### 07 · Log — 2026-06-17 (Harvard 4 runda 3) **DEAD-CODE USUNIĘTY `8bb8459193` (2026-06-17):** `ResultsSummaryView.tsx` + `OperationalAnalysisView.tsx` usunięte; `Results/index.ts` barrel oczyszczony (usunięto `OperationalAnalysisView` re-export; `ResultsSummaryView` nigdy nie był w barelu). 1223 linii usunięte. TSC: 0 nowych błędów. Testy Results genuine; showcase poprawnie gated (`shouldAllowDemoData`). — 2026-06-16: L-01..L-04+L-06+L-08..L-10 NAPRAWIONE/N/D (grepem); L-05 DP-6; L-07 DP-9 Faza 4; 32/32 tests PASS. 2026-06-13: brak uwag żywych (jawnie); teczka pogłębiona do M13-level. **R3: `91c8245559` zweryfikowany** (oba P0). i18n najzdrowszy (0× isPolish, 0 hex). Re-ocena D po Fazie 4.
+### 07 · Log — 2026-06-19 (cleanup-korekta): `ResultsSummaryView.tsx`+`OperationalAnalysisView.tsx` usunięte w gicie (`8bb8459193`) i NIESZUKANE z HEAD (`git ls-files` = puste, czysty checkout = brak), ALE **wróciły na dysk jako untracked przez git-race** (`git status` = `??`, mtime 2026-06-19). 0 importerów w src/ (jedyne trafienia grepem = własne `export const`/`export default` w tych plikach; barrel `index.ts` nie referuje). Martwe — do `rm` (sierota untracked, nie regresja kodu). L-06 → WYMAGA CLEANUP.
+### 07 · Log — 2026-06-17 (Harvard 4 runda 3) **DEAD-CODE USUNIĘTY `8bb8459193` (2026-06-17):** `ResultsSummaryView.tsx` + `OperationalAnalysisView.tsx` usunięte w gicie; `Results/index.ts` barrel oczyszczony (usunięto `OperationalAnalysisView` re-export; `ResultsSummaryView` nigdy nie był w barelu). 1223 linii usunięte. TSC: 0 nowych błędów. *(skoryg. 2026-06-19: pliki wróciły na dysk jako untracked — patrz log 2026-06-19.)* Testy Results genuine; showcase poprawnie gated (`shouldAllowDemoData`). — 2026-06-16: L-01..L-04+L-06+L-08..L-10 NAPRAWIONE/N/D (grepem); L-05 DP-6; L-07 DP-9 Faza 4; 32/32 tests PASS. 2026-06-13: brak uwag żywych (jawnie); teczka pogłębiona do M13-level. **R3: `91c8245559` zweryfikowany** (oba P0). i18n najzdrowszy (0× isPolish, 0 hex). Re-ocena D po Fazie 4.
 
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia pełne (karta+commit+DP-6/9+feedback; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→story Gherkin→DoD→dowód) · R3 statusy z dowodem (**L-11/L-12 `91c8245559` zweryfikowany w historii git**; read-only proof = Faza 4) · R4 DoD z liczbami (isPolish 0, hex 0, table 7; 35+37 verbs) · R5 **obie decyzje rozstrzygnięte (D-01→DP-6, D-02→DP-9)** · A–E docelowy zlinkowany · F epiki→stories Gherkin→zadania↔luki · G DoD+S+sec+wydajność+telemetria · R6 sesja żywa = read-only proof cross-org + showcase szczelność (pozostaje, Faza 4). **9/9; teczka kompletna do egzekucji.**
+
+## EKRANY (inwentarz) — 2026-06-19
+
+Weryfikacja kodu (read-only): top-3 = PRAWDA. L-01 degraded banner: `resultsSource==='legacy'`→`<Banner variant="degraded">` (`ResultsHub.tsx:1412-1415`), chip showcase (`:910`), chip legacy (`:917`). L-11/L-12 (oba P0, `91c8245559`): `x-kpi-role` USUNIĘTY (komentarz `v8/results.routes.ts:102` "header removed — allowed self-escalation"; nagłówek pojawia się już TYLKO w testach atakujących); time-series UPDATE org-scoped `WHERE id=? AND organization_id=?` (`v8/results.routes.ts:523,1111`). L-02: `GET /providers` za `verifyAdmin` (`mcp.routes.ts:177-179`).
+
+Hub: `ResultsHub.tsx` (ModuleHub).
+| Ekran / widok | Cel | Plik |
+|---|---|---|
+| KPI Overview | Przegląd KPI | `KpiOverviewView.tsx` |
+| KPI Queue | Kolejka KPI do uzupełnienia | `KpiQueueView.tsx` |
+| KPI Catalog | Katalog definicji KPI (FilterableTable §27) | `ResultsKpisTableV3.tsx` |
+| KPI Scorecards | Scorecardy | `ResultsKpiScorecardsView.tsx` |
+| KPI Table (alt) | Tabela KPI (→FilterableTable) | `ResultsKPITable.tsx` |
+| KPI Time-Series Drawer | Seria czasowa KPI | `KPITimeSeriesDrawer.tsx` |
+| KPI Signal Sheet | Arkusz sygnałów | `KpiSignalSheetView.tsx` |
+| KPI Create Modal | Tworzenie KPI | `KPICreateModal.tsx` |
+| ROI Tracking | Śledzenie ROI | `ROITrackingView.tsx` |
+| ROI Analysis | Analiza ROI (NPV/payback) | `ROIAnalysisView.tsx` |
+| ROI Detail Drawer | Szczegóły ROI/variance | `ROIDetailDrawer.tsx` |
+| ROI Assumption Editor | Edytor założeń ROI | `ROIAssumptionEditor.tsx` |
+| ROI Open Modal | Otwarcie pozycji ROI | `ROIOpenModal.tsx` |
+| Reconciliation | Uzgodnienie projected/realized (FilterableTable) | `ReconciliationPanel.tsx` |
+| Reports (Enterprise) | 5 trybów + approval gating | `ResultsKpiReportsView.tsx`, `ResultsReportingEnterpriseViews.tsx` |
+| Results Initiatives | Inicjatywy w kontekście rezultatów | `ResultsInitiativesView.tsx` |
+| Results Grid | Siatka kart (poza §27, grid) | `ResultsGridView` (w hubie) |
+| Stan: degraded banner legacy | Banner gdy V8-OFF | `ResultsHub.tsx:1412` |
+| Stan: showcase chip | "Showcase data — local" gdy realne puste | `ResultsHub.tsx:910` |
+
+Martwe usunięte: `ResultsSummaryView`, `OperationalAnalysisView` (pliki istnieją w katalogu lecz wyrejestrowane z barrel — UWAGA: pliki fizycznie obecne, sprawdzić ponowne osierocenie). Liczba ekranów: ~17.

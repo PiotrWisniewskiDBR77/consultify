@@ -142,7 +142,7 @@ Otwarte: share_password (L-03 = FALSE POSITIVE, czeka na decyzję Piotra o bcryp
 | L-02 | SSO config + webhook hmac plaintext at rest | W-01 | `SSOService.ts:47-63` · `WebhookDispatcherService.ts:37,182` | P1 | 1 | **NAPRAWIONA** — SSO już szyfrowane; webhook `hmac_secret`: `encryptSecret` przed INSERT + `decryptSecret` przed HMAC (2026-06-17) | 2026-06-17 |
 | L-03 | `share_password` zapisywane, NIGDY nieweryfikowane | W-01 | `MetadataService.ts` (`shareView`+`verifySharePassword`) | P2 | 1 | **ZAMKNIĘTA (decyzja CTO)** — weryfikacja istniała; dołożony **bcrypt hash at-rest** na zapisie + `verifySharePassword` z fallbackiem na legacy plaintext (zero zepsucia istniejących share'ów); 2 consume-sites przepięte; test `share-password.contract.test.ts` (3/3 PASS) | 2026-06-17 |
 | L-04 | kręgosłup czat→sheet (generacja z czatu) | W-02 | `SPEC_ZADANIE_01` | P0-program | 0 | **NAPRAWIONA-SPEC_01 2026-06-17 `a6aea8d2d5`+`e7bd755b04`** — Tryb A function-calling: Teresa woła `generate_deliverable(type:sheet)`→`plan/start` (planSheet)→SSE `deliverable`→montaż sheet (kind='table') w canvasie. Testy 6/6. Żywe S-A E2E (auth+LLM staging) pending. | |
-| L-05 | governed sync STUB (log-only, 0 czytelników M15/M16) | W-01,W-03,W-04 | `ModuleSyncService.ts:57-110,90` | P1→preview | 3 | **PODGLĄD-DP6 (backlog v1.1)** — governed sync STUB (log-only) jest świadomą decyzją architektoniczną; implementacja governed→preview event planowana na v1.1; aktualne zachowanie (log + 0 czytelników) = poprawny placeholder; D-01 rozstrzygnięte: NIE implementować teraz | 2026-06-17 |
+| L-05 | governed sync STUB (log-only, 0 czytelników M15/M16) | W-01,W-03,W-04 | `ModuleSyncService.ts:57-110,90` | P1→preview | 3 | **PODGLĄD-DP6 (backlog v1.1)** — governed sync = **STUB log-only** (`syncToModule` pisze WYŁĄCZNIE `INSERT INTO tp_module_sync_results` `:90/:122` — tabela-bridge/log; ZERO zapisu do Results/Finance/Execution; zweryfikowane w kodzie 2026-06-19) — świadoma decyzja architektoniczna (DP-6, backlog v1.1); aktualne zachowanie = poprawny placeholder. **(skoryg. 2026-06-19: STUB NIE udaje sukcesu — log-only, bez fałszywego `success:true` udającego realny odbiór; DP-6 nakazuje oznaczyć „preview" + ukryć przyciski sync w UI.)** D-01 rozstrzygnięte: NIE implementować teraz | 2026-06-17 |
 | L-06 | rozjazd 4 flag komentarz↔runtime | W-01 | `FeatureFlags.ts:83-84` (SSOT spójny) + `…ai-editor.routes.ts:36` (stary komentarz) | **P3-doc** (był P2) | 3 | **częściowo ZAMKNIĘTA R3** — uspójnić 1 komentarz route-header | 2026-06-13 |
 | L-07 | fundament Records API w 100% zmockowany (0 dot. real `tp_records`) | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | **ZAMKNIĘTA** — kontrakt round-trip uruchamia REALNY `RecordsService` (INSERT/SELECT/UPDATE/DELETE `tp_records`, optimistic-lock, reload-persist) przeciw wiernemu in-memory pool; caboose niedostępny → fallback kontraktowy wg briefu; `tests/integration/table-platform/records-roundtrip.contract.test.ts` (6/6 PASS 2026-06-17) | 2026-06-17 |
 | L-08 | cicha degradacja flag-OFF (`catch→null`, brak 503/404) | W-01 | `TabeleView.tsx:122,171,361` | P2 | 3 | **NAPRAWIONA `a8f0e5dd0f` (2026-06-17)** — TabeleView preview fallback wyróżnia 503/404 zamiast cichego null | 2026-06-17 |
@@ -164,3 +164,26 @@ Otwarte: share_password (L-03 = FALSE POSITIVE, czeka na decyzję Piotra o bcryp
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia (karta+INV_E+uwaga #1 jako zależność + DP-6/8/9) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-01 NAPRAWIONA `e9c6cb9c0a` zweryfikowana w kodzie msg+guards; L-06 rozjazd flag częściowo ZAMKNIĘTY — korekta vs karta**; L-11 z commitem) · R4 DoD z liczbami (193 EP enum, grep i18n/hex/<table> 2026-06-13) · R5 **obie decyzje rozstrzygnięte (D-01→DP-6, D-04→DP-9)** · A–E docelowy zlinkowany (C = pełna enumeracja + org-scope + grid-canon) · F epiki→stories Gherkin→L-xx · G DoD+S+sec · R6 sesja żywa = Faza 4 (pozostaje). **9/9; teczka kompletna do egzekucji.**
+
+## EKRANY (inwentarz) — 2026-06-19
+
+> Inwentarz powierzchni Table Studio (FE `src/components/AIChat/KimiWorkspace/`). Format: ekran — cel — plik. Główny data-grid = świadomie poza §27 (grid-canon D-04).
+
+### Powierzchnia główna + shell
+- **Tabele View (root)** — kontener modułu; routing MELS (`melsTabeleFlag`) vs `KimiWorkspaceShell` fallback; degradacja flag-OFF (503/404 zamiast cichego null) — `src/components/AIChat/KimiWorkspace/TabeleView.tsx`
+- **Tabele MELS shell** — TopBar chips / left rail / right rail / panele prawej szyny — `tabeleShell/TabeleMelsView.tsx`, `TabeleTopBarChips.tsx`, `TabeleLeftRail.tsx`, `TabeleRightRail.tsx`, `useTabeleRightRailPanels.tsx`
+
+### Data-grid (grid-canon)
+- **Grid View (data-grid Airtable-like)** — edytowalny grid kolumn/komórek; render/edycja komórki — `src/components/MyWork/table/GridView.tsx` (+ `CellEditor`/`CellRenderer` w `MyWork/table/`)
+- **Public View Page (publiczny widok/formularz)** — read/submit przez token slug; stany pusty/błąd/hasło/read-only (i18n `table.*` PL/EN) — `src/components/MyWork/table/PublicViewPage.tsx`
+
+### Preview (split-view podgląd schematu)
+- **Tabele Preview Layout** — podgląd zaproponowanej tabeli — `tabelePreview/TabelePreviewLayout.tsx`
+- **Schema / Provenance / Relation / Rationale** — bloki podglądu schematu i uzasadnień — `tabelePreview/TabeleSchemaBlock.tsx`, `TabeleProvenanceColumn.tsx`, `TabeleRelationChip.tsx`, `TabeleRationaleSection.tsx`
+
+### Panele prawej szyny (right-rail)
+- **AI Editor Panel** — AI Editor 8 poziomów (applyProposal/reject, budżet serwerowy) — `tabeleShell/aiEditor/TabeleAiEditorPanel.tsx`
+- **QA Panel** — kontrola jakości tabeli — `tabeleShell/qa/TabeleQaPanel.tsx`
+- **Source Pack Panel** — pakiety źródeł — `tabeleShell/sourcePack/TabeleSourcePackPanel.tsx`
+- **Share Panel** — share-token (revoke+expiry) — `tabeleShell/share/TabeleSharePanel.tsx`
+- **Templates Grid** — lifecycle szablonów tabel — `templateLifecycle/TabeleTemplatesGrid.tsx`

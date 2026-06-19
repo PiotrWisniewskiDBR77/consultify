@@ -76,7 +76,7 @@ Pełna tabela: karta §1g. Skrót: **←** M27 SuperAdmin (settlements `superAdm
 | 2 | Bezpieczeństwo | `requirePartnerOrgId` konsekwentny (już OK); resource download udokumentowany/audytowany; zero cross-partner WRITE |
 | 3 | i18n | **0/15** plików z `isPolish` — PL/EN już kompletny (`partner.*` identyczne klucze, 99×`useTranslation`) ✅ |
 | 4 | Tokeny | **2** hex w plikach partner — zweryfikować/zamienić na tokeny |
-| 5 | §27 | **4** surowe `<table>` → A-S (Referred Customers/Campaign Links/Payouts) |
+| 5 | §27 | **4** tabele → `FilterableTable` (ZROBIONE R3 `60ca5b0ce4`, zweryf. w kodzie 2026-06-19: 4× `FilterableTable`, 0 raw `<table>` w `src/views/partner/`); **render wizualny portalu NIE zweryfikowany na żywo (auth — pula internal)** |
 | 6 | E2E w PR-gate | S1 (connect→dashboard) + S3 (payout lifecycle) zielone na `Londyn` |
 
 Scenariusze S1–S5 + ~23 pliki testów (w CI): karta §0/§2. Bezpieczeństwo: karta §6. Pułapka: `v8-partner-read.test.ts` mockuje serwisy (routing+auth, nie SQL).
@@ -107,7 +107,7 @@ REALNE: connection/connect, referrals (tools/analytics/campaign-links), earnings
 | L-05 | §27 niezastosowany (4 `<table>`) | W-01 | `PartnerPortalView`,`EarningsSection`,`ReferralToolsSection`,`ClientAccessView` | P2 | 4 | **NAPRAWIONA 2026-06-17 `60ca5b0ce4`** — 4 tabele → `FilterableTable` (align §3.3, `EntityStatusChip`, filtry, `persistKey`, Copy/Delete→`RowActionsMenu` §9, empty/loading kanon). Zero `<table>`. Weryf.: tsc 0, Vite 200 ESM, 0 błędów konsoli. Render wizualny portalu pending (auth). i18n dla H2: `partner.clients.col.*`/`.status.*`, `partner.earnings.col.*`/`.status.*`, `partner.referrals.copyLink`, `partner.clientAccess.col.status`. |
 | L-06 | resource download bez partner-org scope | W-01 | `partners.routes.ts` resource download | P2 | 3 | **ZAMKNIĘTA 2026-06-17 `d574ccac14`** (D-03) — shared-catalog by design; gate `requirePartnerOrgId`+`min_partner_tier`; audit z `partner_org_id`+`user_id` już obecny; udokumentowane komentarzem. |
 | L-07 | duplikat API surface legacy vs v8 earnings | W-01 | `/api/partners/earnings` vs `/api/v8/partner/earnings-summary` | P2 | 3/4 | **NAPRAWIONA 2026-06-17 `d574ccac14`** — legacy `@deprecated` + nagłówki `Deprecation`/`Link`→v8 (RFC 8594). Usunięcie po migracji 2 callerów FE (`PartnerRuntimeSummaryStrip:86`,`EarningsSection:304`). |
-| L-08 | schema drift na prod (5 migracji partner) | W-01,W-06 | prod 2026-05-18 < migracje partner | P1 env | 3 | **ZAMKNIĘTA 2026-06-18 (known-gap, udokumentowane)** — runbook `M26_SCHEMA_DRIFT_RUNBOOK.md` (dry-run→verify→apply→verify) jest jedynym wymaganym artefaktem po stronie kodu/dokumentacji i istnieje. Decyzja: 5 migracji partner (partner_users/payout/certification) NIE są aplikowane na prod (centerbeam) przez agenta — to operacja na produkcji klienckiej wykonywana przez Piotra za jawną zgodą przed otwarciem portalu (reguła prod-caution). Luka domknięta jako świadomy known-gap: drift jest znany, zmapowany i obsłużony runbookiem; właściwa migracja = krok wdrożeniowy poza zakresem tej teczki. |
+| L-08 | schema drift na prod (5 migracji partner) | W-01,W-06 | prod 2026-05-18 < migracje partner | P1 env | 3 | **ZAMKNIĘTA jako KNOWN-GAP 2026-06-18 (udokumentowane, NIE zaaplikowane)** — runbook `M26_SCHEMA_DRIFT_RUNBOOK.md` (dry-run→verify→apply→verify) jest jedynym wymaganym artefaktem po stronie kodu/dokumentacji i istnieje. **PRE-CONDITION OTWARCIA PORTALU: 5 migracji partner (partner_users/payout/certification) MUSZĄ zostać zaaplikowane przez Piotra na prod (centerbeam) ZA JAWNĄ ZGODĄ PRZED otwarciem portalu** — agent NIE wykonuje migracji na produkcji klienckiej (reguła prod-caution). Luka domknięta wyłącznie dokumentacyjnie: drift jest znany, zmapowany i obsłużony runbookiem; właściwa migracja = krok wdrożeniowy/operacyjny, blokujący live-launch, poza zakresem zamknięcia tej teczki. |
 | L-09 | `PARTNER_SELF_CONNECT_ENABLED` default false | W-01 | flaga (default false) | decyzja | 3 | **ZAMKNIĘTA 2026-06-17 — DECYZJA PIOTRA: OFF w v1, self-connect → v1.1; flaga już default false (zgodna), brak zmiany kodu** |
 | L-10 | 5+ stubów Client Management | W-01,W-05 | `partners.routes.ts:1354,1367,1420,1437,1454,1903,2195` | decyzja | 1/3 | **ZAMKNIĘTA 2026-06-17 `901f042212` — DP-5 wykonane**: serwer `featureNotAvailable` 503 (honest); FE `PartnerPortalView` „Add Organization"→disabled+„Wkrótce", martwy „Add New Client" quick action usunięty; `ClientAccessView` już pokazuje „Wkrótce dostępne". /stats,/licenses,/tiers,/access-links = brak callera FE. Klucz `partner.common.comingSoon`→H2. Wizual 🟦 (partner auth) |
 
@@ -129,3 +129,35 @@ REALNE: connection/connect, referrals (tools/analytics/campaign-links), earnings
 R1 wejścia pełne (karta + Fala 2 + kod-R3 + DP-5; uwagi żywe = brak) · R2 zero sierot (wejście→luka→story→DoD) · R3 status z dowodem (L-01 NAPRAWIONY — `:967` zweryfikowany w kodzie 2026-06-13) · R4 DoD z liczbami (i18n 0/15, hex 2, table 4, 43+25 endp.) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-5; D-02/D-03 modułowe otwarte); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany (D N/D) · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4 + schema verify prod. **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Prawdopodobna schema drift na prod (prod = 2026-05-18 poprzedza 5 migracji partner_users/payout/certification) oznacza, że otwarcie portalu dla partnerów na produkcji bez wcześniejszego `migrate`+verify (L-08) grozi błędami runtime u klienta.
+
+---
+
+## EKRANY (inwentarz) — 2026-06-19
+
+**Werdykt weryfikacji:** teczka SOLID i aktualna. Zweryfikowano w kodzie: legacy `/earnings` zwraca 503 DB_ERROR + nagłówki Deprecation/Link (RFC 8594) — PRAWDA (`partners.routes.ts`); stuby Client Management zwracają `FEATURE_NOT_AVAILABLE` 503 (`:1354/1367/1420/1437/...`) — PRAWDA; happy-path test `tests/integration/partners/partners.happy-path-and-fallback.test.ts` istnieje — PRAWDA. Boundary `requirePartnerOrgId` obecny. Brak żywej weryfikacji (pula internal) pozostaje znanym ograniczeniem.
+
+**Layout:** własny `PartnerLayout` + `PartnerSidebar` (nie ModuleHub). Główny kontener = `PartnerPortalView.tsx` (3311 l., wieloekranowy hub z sekcjami).
+
+| Ekran / sekcja | Cel | Plik komponentu |
+|---|---|---|
+| Portal Hub (kontener) | shell portalu partnera; routing sekcji + Connect screen (stan disconnected) | `src/views/partner/PartnerPortalView.tsx` |
+| Partner Dashboard | przegląd KPI partnera, runtime summary | `src/views/partner/PartnerDashboardView.tsx` |
+| Provider Home | strona startowa providera/partnera | `src/views/partner/ProviderHomeView.tsx` |
+| Earnings / Commission | prowizje, wypłaty, lifecycle payout | `src/views/partner/CommissionView.tsx` + `src/views/partner/sections/EarningsSection.tsx` |
+| Referral Tools | narzędzia poleceń, campaign-links, kody | `src/views/partner/sections/ReferralToolsSection.tsx` |
+| Resources | zasoby z tier-check + download | `src/views/partner/ResourcesView.tsx` |
+| Directory / Listing | profil partnera w katalogu | `src/views/partner/DirectoryView.tsx` |
+| Pricing | cennik partnerski | `src/views/partner/PartnerPricingView.tsx` |
+| Client Access (stub) | zarządzanie klientami — "Wkrótce dostępne" (FEATURE_NOT_AVAILABLE) | `src/views/partner/ClientAccessView.tsx` |
+| Partner Layout (shell) | layout + nawigacja portalu | `src/components/Partner/PartnerLayout.tsx` |
+| Partner Sidebar | nawigacja boczna (active = SYS-1 fix) | `src/components/Partner/PartnerSidebar.tsx` |
+| Runtime Summary Strip | pasek runtime (caller legacy /earnings) | `src/components/Partner/PartnerRuntimeSummaryStrip.tsx` |
+| Commission Intelligence | analityka prowizji | `src/components/Partner/CommissionIntelligence.tsx` |
+| Ecosystem Analytics | analityka ekosystemu | `src/components/Partner/EcosystemAnalytics.tsx` |
+| Academy Progress | postęp certyfikacji/akademii | `src/components/Partner/AcademyProgress.tsx` |
+| Trust Progression | wskaźnik progresji zaufania/tier | `src/components/Partner/TrustProgressionIndicator.tsx` |
+| Lifecycle Canon Panel | panel lifecycle partnera | `src/components/Partner/PartnerLifecycleCanonPanel.tsx` |
+| Partner Code Input (admin) | wprowadzenie kodu partnera (strona admin/connect) | `src/components/Admin/PartnerCodeInput.tsx` |
+| Partner Outreach (M27-side) | panel outreach po stronie SuperAdmin (settlements/config) | `src/components/SuperAdmin/PartnerOutreachPanel.tsx` |
+
+**Liczba ekranów: ~18** (8 view-ekranów + 10 sekcji/paneli; bez orphanów). Stub Client Access liczony jako honest-degraded.

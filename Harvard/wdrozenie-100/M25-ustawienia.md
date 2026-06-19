@@ -44,12 +44,12 @@ Stany + kanony: karta §5.
 - **Model danych:** `user_preferences (user_id,key,value)`, `gdpr_requests`, `api_keys`, `webhooks`, `user_sessions`, `integration_*`. Pułapki bigint/jsonb → `pgFlags.ts`.
 - **API kluczowe (`settings.routes.ts` = 123 endp., self-scoped `req.user.id`):**
   - `GET/PUT /settings/preferences/:key` — rdzeń, persist+read-back (próbka 6/6).
-  - `GET /settings/notifications` (`:868`) / `POST` (`:912`) — **R3: oba mają guard** `requesterId = req.user?.id` (`:904`) + `if (requesterId !== userId && actorRole∉{owner,admin})→403` (`:912`); read-IDOR L-01 **NAPRAWIONE** `b9f2dee9d2`.
+  - `GET /settings/notifications` (`:868`) / `POST` (`:903`) — **(skoryg. 2026-06-19:** GET jest **self-scoped przez `req.user?.id` (`:871`)** — brak query `userId`, strukturalnie odporny na read-IDOR, NIE przez guard `:904/:912`; POST ma guard `requesterId = req.user?.id` (`:907`) + `if (requesterId !== userId && actorRole∉{owner,admin})→403` (`:915`).) Read-IDOR L-01 **NAPRAWIONE** `b9f2dee9d2`. Outcome bezpieczeństwa = ten sam.
   - `POST /settings/gdpr/deletion-request` (`:3028`) — jedyna ścieżka = weryfikacja hasła bcrypt, self-scoped, 30d grace, export 410 po wygaśnięciu.
   - `POST /settings/request-deletion` (`:2634`) — **duplikat bezhasłowy** (status 'scheduled', `gdprService.ts:175`) omija bramkę hasła → dodać bramkę ALBO usunąć (L-02).
   - `/settings/api-keys`, `/settings/webhooks` — hash+prefix, mutacje `WHERE id=? AND user_id=?`.
 - **Reguła GDPR (kanon):** jedyna droga usunięcia konta = password-gated bcrypt + grace; duplikat bezhasłowy = luka L-02.
-- **Reguła IDOR (L-01, NAPRAWIONA):** `GET /notifications` ma teraz `req.user.id` guard (był `req.query.userId` bez `requesterId !== userId`).
+- **Reguła IDOR (L-01, NAPRAWIONA):** `GET /notifications` jest self-scoped przez `req.user?.id` (`:871`) — brak query `userId`, więc read-IDOR strukturalnie niemożliwy by-design (skoryg. 2026-06-19: guard `requesterId≠userId&&role∉{owner,admin}→403` dotyczy POST `:915`, nie GET).
 
 ## D · AI / TERESA *(link)*
 - AI prefs (8 sekcji, `AIBehavior:103,132,146` — dawne 503 NIE występuje na surface usera) → M01 Czat/Teresa. **Voice & TTS false-negative OBALONY** — żywy `VoiceSettings.tsx` nie ma logiki „not configured"; defekt żyje w `VoiceSettingsPanel.tsx` (0 importerów, należy do M22 AI OS — błędna atrybucja w inwentarzu, `finding_v10_voice_config_false_negative`).
@@ -59,7 +59,7 @@ Pełna tabela: karta §1g. Skrót: **→** cała app (theme/language app-wide), 
 
 ## F · EPIKI → STORIES → ZADANIA *(z karty §7, forma Gherkin)*
 - **EPIK 1 — Integralność bezpieczeństwa (P1):** read-IDOR + AES + amber baner naprawione; pozostaje duplikat delete.
-  - **Story 1.1:** jako user A chcę nie czytać prefs usera B. *Dane* user A; *gdy* `GET /notifications?userId=B`; *wtedy* własne dane/403 (nie cudze). → **Z→L-01 (NAPRAWIONE `b9f2dee9d2`, R3 zweryfikowane: guard `req.user.id` `:904/:912`)**
+  - **Story 1.1:** jako user A chcę nie czytać prefs usera B. *Dane* user A; *gdy* `GET /notifications?userId=B`; *wtedy* własne dane/403 (nie cudze). → **Z→L-01 (NAPRAWIONE `b9f2dee9d2`; GET self-scoped `req.user?.id` `:871` — skoryg. 2026-06-19, guard `:907/:915`=POST)**
   - **Story 1.2:** jako user chcę by jedyna droga delete wymagała hasła. *Dane* `POST /request-deletion` (bezhasłowy); *gdy* wywołanie; *wtedy* bramka hasła lub endpoint usunięty. → **Z→L-02**
   - **Story 1.3:** sekrety CalDAV/OAuth szyfrowane AES-256-GCM. → **Z→L-07 (NAPRAWIONE `9ef570ca1b`, R3 potwierdzić pokrycie CalDAV+OAuth)**
 - **EPIK 2 — Domknięcie front↔back (P1):** billing/shortcuts/flags.
@@ -79,7 +79,7 @@ Pełna tabela: karta §1g. Skrót: **→** cała app (theme/language app-wide), 
 | # | Kryterium | Miara M25 |
 |---|-----------|-----------|
 | 1 | Front↔back | koniec „Section not found" (billing usunięty/wpięty, DP-11); Shortcuts działa/ukryty; Feature flags jawnie read-only; 0 martwych kontrolek |
-| 2 | Bezpieczeństwo | read-IDOR `/notifications` ✅ `b9f2dee9d2` (R3: guard `req.user.id` zweryfikowany `:904/:912`); jedyna ścieżka delete = hasło; sekrety AES ✅ `9ef570ca1b` (R3: potwierdzić pokrycie CalDAV+OAuth); pilot gating serwerowy (403) |
+| 2 | Bezpieczeństwo | read-IDOR `/notifications` ✅ `b9f2dee9d2` (GET self-scoped `req.user?.id` `:871`; POST guard `:907/:915` — skoryg. 2026-06-19); jedyna ścieżka delete = hasło; sekrety AES ✅ `9ef570ca1b` (R3: potwierdzić pokrycie CalDAV+OAuth); pilot gating serwerowy (403) |
 | 3 | i18n | **53** inline (`i18n.language==='pl'`/`isPolish` — 2 pliki) w `src/components/settings/`; klucze `settings.sections.*` w PL (nie EN-fallback); helper mocka `defaultValue` |
 | 4 | Tokeny | **119** hex w `src/components/settings/` (+ **9** w `src/views/settings/`); dług palety = **~1650** hardkodów Tailwind `(bg/text/border)-{rose,blue,amber}-NNN` (zmierzone wąsko; karta podaje 2237 szeroko) → tokeny (DP-8) |
 | 5 | §27 | **7** surowych `<table>` w `src/components/settings/`; sesje/api-keys/webhooks/login-history przez FilterableTable + sort + empty gdzie zasadne (dziś N/D = luka) |
@@ -97,7 +97,7 @@ Scenariusze S1–S7 + pokrycie: karta §0/§2. Bezpieczeństwo: karta §6.
 | W-02 | **Uwagi żywe** (`UWAGI_TESTY_2026-06-13.md`) | 2026-06-13 | **BRAK uwag M25** (dziedziczy z karty) | — |
 | W-03 | `finding_v10_voice_config_false_negative` | 2026-06-08 | voice false-negative = `VoiceSettingsPanel.tsx` (M22), nie M25 | cleanup (L-08) |
 | W-04 | `_DECYZJE.md` DP-11 + decyzje produktowe (D9 GDPR) | 2026-06-02/13 | billing żyje w Admin (jedno miejsce, label managed) | L-04 |
-| W-05 | Kod (R3) | 2026-06-13 | grep: `GET/POST /notifications` mają guard `req.user.id`(:904)+`requesterId!==userId→403`(:912); paleta ~1650 (rose/blue/amber) | L-01 (potwierdza naprawę) |
+| W-05 | Kod (R3) | 2026-06-13 | grep: `GET /notifications` self-scoped `req.user?.id`(:871, brak query userId); `POST` guard `requesterId=req.user?.id`(:907)+`requesterId!==userId&&role∉{owner,admin}→403`(:915); paleta ~1650 (rose/blue/amber) (skoryg. 2026-06-19: `:904/:912`→`:907/:915`, guard=POST) | L-01 (potwierdza naprawę) |
 | W-06 | Feedback prod (`finding_railway_db_topology`, `feedback_prod_caution`) | — | dev `.env` → Railway PROD; ostrożność przy GDPR/delete | ryzyko (niżej) |
 
 ### 02 · Stan obecny (prawda kodu) — karta §1 (REALNE 10/12 · Shortcuts UKRYTE/no-op · Feature flags read-only · Billing route-only). Naprawione: `b9f2dee9d2` (read-IDOR notifications — R3 zweryfikowany guard), `9ef570ca1b` (Bramka D AES-256-GCM CalDAV/OAuth), `7495c12ffb` (login-history/connected-accounts amber baner).
@@ -105,7 +105,7 @@ Scenariusze S1–S7 + pokrycie: karta §0/§2. Bezpieczeństwo: karta §6.
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | read-IDOR `GET /settings/notifications` | W-01,W-05 | `settings.routes.ts:868` (guard `:904/:912`) | P1 | 2 | **ZAMKNIĘTA 2026-06-17 `b9f2dee9d2` — ZWERYFIKOWANE w kodzie 2026-06-17** |
+| L-01 | read-IDOR `GET /settings/notifications` | W-01,W-05 | `settings.routes.ts:868` (GET self-scoped `req.user?.id` `:871`); POST guard `:907/:915` | P1 | 2 | **ZAMKNIĘTA 2026-06-17 `b9f2dee9d2` — ZWERYFIKOWANE w kodzie 2026-06-17 + 2026-06-19** (skoryg. 2026-06-19: GET self-scoped by-design, brak query userId; guard `requesterId≠userId→403` dotyczy POST `:903`, nie GET; outcome = ten sam) |
 | L-02 | bezhasłowy duplikat usuwania konta | W-01 | `settings.routes.ts:2634` usunięty; FE→`/gdpr/deletion-request`+hasło | P1 | 2 | **ZAMKNIĘTA 2026-06-17 `407ec5b1b5`** |
 | L-03 | pilot gating tylko FE (serwer nie zna pilota) | W-01 | `pilotAccess.ts:14`, `SettingsView.tsx:261-270` | P2 | 3 | **ODROCZONA** — właściwy fix = guard w `middleware/` (strefa zakazana); realny path (initiative writes) już strzeżony serwer-first w `initiativeGovernanceGuard.ts:81-116`; settings = self-scoped (niskie ryzyko) |
 | L-04 | billing „Section not found" (route bez case) | W-01,W-04 | `views/settings/syncEntryResolver.ts:10-11` (redirect) | P1 | 2 | **ZAMKNIĘTA 2026-06-17 — NIEAKTUALNA: redirect egzekwuje DP-11 (`/settings/billing`→Admin/Org przed renderem); brak pułapki "Section not found"; `case 'billing'` osiągalny tylko po obejściu redirectu** |
@@ -134,3 +134,23 @@ Scenariusze S1–S7 + pokrycie: karta §0/§2. Bezpieczeństwo: karta §6.
 R1 wejścia pełne (karta + jawne „brak uwag żywych M25" + voice finding + DP-11/DP-10 + feedback prod) · R2 zero sierot (wejście→luka→story→DoD) · R3 L-01 „NAPRAWIONE — ZWERYFIKOWANE w kodzie" + L-07 „potwierdzić pokrycie" (nie dziedziczone) · R4 DoD z liczbami (53 inline + ~1650 palety · 7 table · 119+9 hex · 123 endp.) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-11; D-02/D-03 modułowe otwarte); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Read-IDOR `/notifications` (L-01) jest jedynym byłym blokerem bezpieczeństwa i R3 potwierdził naprawę w kodzie (guard `req.user.id`), więc po dopięciu testów S3/S5 + sweepie palety (DP-8) moduł realnie kandyduje do Beta jako najzdrowszy w puli core.
+
+## EKRANY (inwentarz) — 2026-06-19
+
+Audyt weryfikacyjny: teczka SOLID (najzdrowszy moduł core). Bug 500 lazy-DDL = NIE dotyczy M25 surface (był w Theme/Webhooks/Lang/AI panels, naprawiony osobno `fallback:true`+try/catch — patrz MEMORY finding_settings_500_lazy_ddl). L-01 read-IDOR zweryfikowane: GET `/settings/notifications:868` jest **self-scoped przez `req.user?.id` (`:871`)** (brak query userId → strukturalnie odporny, silniejsze niż guard); POST `:903` ma `requesterId=req.user?.id` (`:907`) + `requesterId!==userId && role∉{owner,admin}→403` (`:915`). Korekta: teczka cytowała guard `:904/:912` jako dowód L-01 dla GET — faktycznie te linie (realnie `:907/:915`) dotyczą POST; GET jest self-scoped by-design. Outcome bezpieczeństwa = ten sam. L-02 zweryf.: bezhasłowy `/request-deletion` USUNIĘTY (został tylko `/gdpr/deletion-request` bcrypt-gated `:2977`).
+
+Shell = `src/views/SettingsView.tsx` (router ~50 sub-case'ów) + `src/views/settings/` (6 modułów) + `SettingsSidebar`. Inwentarz po sekcjach kanonicznych (7 top-level wg teczki):
+
+| # | Sekcja / ekran | Cel | Plik(i) komponentu |
+|---|---|---|---|
+| 1 | Profile | Profil, avatar, podpisy, godziny pracy, dashboard, regional | `src/views/settings/ProfileModule.tsx`, `components/settings/ProfileSettings.tsx`, `AvatarPhotoSettings.tsx`, `EmailSignaturesSettings.tsx`, `WorkingHoursSettings.tsx`, `RegionalSettings.tsx` |
+| 2 | AI Preferences | Behavior, model params, autocomplete, memory, chat-history, privacy, prompt-library, voice, usage (9 pod) | `src/views/settings/AIPreferencesModule.tsx`, `components/settings/AIBehaviorSettings.tsx`, `VoiceSettings.tsx`, `AIMemorySettings.tsx`, … |
+| 3 | Notifications | Overview, email-digest, desktop-sounds, availability | `src/views/settings/NotificationsModule.tsx`, `components/settings/NotificationSettings.tsx`, … |
+| 4 | Security & Privacy | Dashboard, auth-access, sesje, login-history, hasło, MFA, data-controls, privacy | `src/views/settings/SecurityPrivacyModule.tsx`, `components/settings/SecuritySettings.tsx`, `ActiveSessionsSettings.tsx`, `LoginHistorySettings.tsx`, `PasswordSecuritySettings.tsx` |
+| 5 | Integrations | Integracje OAuth/CalDAV org-scoped (AES-256-GCM), Calendar Sync, connected apps | `src/views/settings/IntegrationsModule.tsx`, `components/settings/IntegrationSettings.tsx`, `CalendarSyncSettings.tsx`, `ConnectedAccounts.tsx` |
+| 6 | GDPR / Data | Eksport danych + usunięcie konta (bcrypt+30d grace, jedyna ścieżka) | `components/settings/ExportDataSettings.tsx`, `DataPrivacySettings.tsx`, `DataControlsSettings.tsx` |
+| 7 | Appearance / Theme & Language | Motyw app-wide, język app-wide, accessibility | `src/views/settings/AppearanceModule.tsx`, `components/settings/ThemeSettings.tsx`, `LanguageSettings.tsx`, `AccessibilitySettings.tsx` |
+| 8 | Developer (warunkowy) | Feature flags read-only viewer (L-06, „managed by administrators"), shortcuts (ukryte/no-op L-05) | `components/settings/DeveloperSettings.tsx`, `KeyboardShortcutsSettings.tsx` |
+| 9 | Billing (martwy route) | `/settings/billing`→redirect Admin/Org (DP-11; L-04 NIEAKTUALNA — redirect egzekwuje, brak „Section not found") | `components/settings/BillingSettings.tsx` (niewpięty), `views/settings/syncEntryResolver.ts` |
+
+**Liczba sekcji top-level: 7 kanonicznych (+ Developer warunkowy + Billing martwy-route).** Router SettingsView ma ~50 sub-case'ów. Martwy kod: `layout/SettingsSidebar.tsx` usunięty `f1b14603ee`; `VoiceSettingsPanel.tsx` (0 importerów, należy do M22 — błędna atrybucja voice false-negative) do cleanu (L-08 częściowo odroczona).

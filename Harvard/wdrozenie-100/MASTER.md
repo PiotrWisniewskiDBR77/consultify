@@ -50,15 +50,17 @@ Każdy moduł przechodzi pełną pętlę; pętla chodzi samodzielnie, pauzuje ty
 
 ## 2. ŻYWE BLOKERY — po weryfikacji R3 w kodzie (2026-06-13)
 
-> **Kluczowa korekta:** teczki zweryfikowały każdy „bloker" w kodzie (R3: dowód > dziedziczenie). **Większość była już naprawiona albo nieaktualna.** Realnie żywe = **3** (nie 9). Faza 1 znacząco mniejsza, niż sugerowały karty.
+> **AKTUALNOŚĆ (stan 2026-06-19):** ta sekcja opisuje stan z 2026-06-13. Po ponownej weryfikacji dokumentacji przeciw kodowi — patrz [`_WERYFIKACJA_DOKUMENTACJI_2026-06-19.md`](_WERYFIKACJA_DOKUMENTACJI_2026-06-19.md) — żywe blokery §2a **M07 i M09 są ZAMKNIĘTE** (M07: L-01 V8 mirror = DP-7 CUT 2026-06-17; M09: L-01 multiplayer = `5928262e0f`/`org-read fallback`, decyzja realtime=v1, shared-WRITE → v1.1). Pozycje §2b (M05/M06/M20) są zweryfikowane jako naprawione w kodzie (pozostaje cold-start/test regresji). Jedyny realnie otwarty żywy bloker = **M10 głos/STT (PROD/VTS), wymaga `OPENAI_API_KEY` na Railway centerbeam + zgody Piotra.** Statusy poniżej zachowane jako rekord 2026-06-13.
+>
+> **Kluczowa korekta (2026-06-13):** teczki zweryfikowały każdy „bloker" w kodzie (R3: dowód > dziedziczenie). **Większość była już naprawiona albo nieaktualna.** Realnie żywe = **3** (nie 9). Faza 1 znacząco mniejsza, niż sugerowały karty.
 
 **Naprawione P0 (pula core, w audycie):** M01, M03, M10, M13, M14, M15, M16, M24, M27.
 
 ### 2a. REALNIE ŻYWE (do naprawy w Fazie 1)
 | Moduł | Bloker | Klasa | WP |
 |---|---|---|---|
-| M07 | V8 mirror ID mismatch (serwer UUID ≠ klient) → DELETE/GET martwe; decyzja: napraw kontrakt vs wytnij | **P0 struct** | `M07-ideas-process-flow.md` |
-| M09 | per-user dokument (`my_idea_maps` keyed user) → multiplayer niemożliwy (2. uczestnik 404); brak commitu | **P0 struct** | `M09-ideas-whiteboard.md` |
+| M07 | ~~V8 mirror ID mismatch → DELETE/GET martwe~~ **ZAMKNIĘTE 2026-06-19: DP-7 CUT (wycięto mirror, blob-sync działa)** | ~~P0 struct~~ | `M07-ideas-process-flow.md` |
+| M09 | ~~per-user dokument → multiplayer niemożliwy (2. uczestnik 404)~~ **ZAMKNIĘTE 2026-06-19: `5928262e0f` org-read fallback (200), realtime=v1; shared-WRITE → v1.1** | ~~P0 struct~~ | `M09-ideas-whiteboard.md` |
 | M10 | **PROD P0**: głos w wywiadzie nie zapisuje (VTS żywy); FE-fix **ZACOMMITOWANY `1522f3de32`**; **BLOKUJĄCE: server STT = OPENAI_API_KEY na Railway centerbeam (wymaga zgody Piotra)** | **P0 prod** | `M10-wywiad.md` |
 
 ### 2b. DO WERYFIKACJI ŻYWEJ (kod naprawiony — potwierdzić apply/runtime)
@@ -145,9 +147,9 @@ Każdy plik w `Harvard/wdrozenie-100/` = pełna teczka 8 warstw (00 nagłówek �
 | M04 | Notatnik | `M04-notatnik.md` | beta | L | handoff pół-martwy (z M21) |
 | M05 | Ideas — Zarządzanie | `M05-ideas-zarzadzanie.md` | ideas | M-L | do weryfikacji (kod `0b81310448`; apply migracji?) |
 | M06 | Ideas — Mind Map | `M06-ideas-mind-map.md` | ideas | M | do weryfikacji (WS org-scope naprawiony) |
-| M07 | Ideas — Process Flow | `M07-ideas-process-flow.md` | ideas | M | **ŻYWY P0 struct** (V8 mirror — DP-7 cut) |
+| M07 | Ideas — Process Flow | `M07-ideas-process-flow.md` | ideas | M | ✅ ZAMKNIĘTE 2026-06-19 (V8 mirror — DP-7 CUT) |
 | M08 | Ideas — Table | `M08-ideas-table.md` | ideas | M | — |
-| M09 | Ideas — Whiteboard | `M09-ideas-whiteboard.md` | ideas | L | **ŻYWY P0 struct** (multiplayer — DP-3) |
+| M09 | Ideas — Whiteboard | `M09-ideas-whiteboard.md` | ideas | L | ✅ ZAMKNIĘTE 2026-06-19 (multiplayer — `5928262e0f` org-read; shared-WRITE→v1.1) |
 | M10 | Wywiad | `M10-wywiad.md` | core | M-L | **P0 prod (VTS)** |
 | M12 | Audyty | `M12-audyty.md` | beta | M | — |
 | M13 | Inicjatywy | `M13-inicjatywy.md` | core | M→L (i18n ~1820×) | — |
@@ -165,7 +167,7 @@ Każdy plik w `Harvard/wdrozenie-100/` = pełna teczka 8 warstw (00 nagłówek �
 | M25 | Ustawienia | `M25-ustawienia.md` | core | S | — |
 | M26 | Portal Partnerski | `M26-portal-partnerski.md` | internal | S-M | — |
 | M27 | SuperAdmin | `M27-superadmin.md` | internal | M | 🟦 wymaga konta superadmin |
-| A1 | Affiliate (stub) | `A1-affiliate.md` | aneks | — | descoped/stub — do potwierdzenia |
+| A1 | Affiliate (stub) | `A1-affiliate.md` | aneks | — | DESCOPED (Ścieżka A wykonana); pozostał orphan `AffiliateDashboardView.tsx` 373 l. do `rm` (skoryg. 2026-06-19) |
 
 > M11 Narzędzia — **descoped** (pusty szablon karty, brak realnego kodu). Nie planujemy.
 

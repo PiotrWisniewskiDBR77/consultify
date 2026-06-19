@@ -5,7 +5,7 @@
 
 ## 00 · Nagłówek
 - **Moduł:** M09 Ideas-Whiteboard (tablica warsztatowa: node'y, rysowanie, frames, sceny, facilitation) · **Pula:** ideas (najlepiej wykonane narzędzie canvas, najgłębszy bloker strukturalny puli)
-- **Ocena audytu:** 49/100 (najniższa w puli) · **Status:** FAZA 1 (shared board) → FAZA 3 · **Rozmiar:** **L (3–5 dni — najcięższy)** · **Żywy bloker:** **P0-struct — per-user dokument `my_idea_maps` → multiplayer strukturalnie niemożliwy**
+- **Ocena audytu:** 49/100 (najniższa w puli) · **Status:** FAZA 1 (shared board) → FAZA 3 · **Rozmiar:** **L (3–5 dni — najcięższy)** · **Żywy bloker:** brak (skoryg. 2026-06-19: pierwotny P0-struct „per-user dokument → multiplayer niemożliwy" = L-01 ZAMKNIĘTY 2026-06-18 `5928262e0f` decyzją realtime=v1 — org-read fallback daje 2. uczestnikowi 200 zamiast 404; shared-WRITE persistence = świadomy v1.1 backlog. Pozostaje R6 sesja żywa.)
 - **Decyzja kierunkowa:** **DP-3 ZATWIERDZONA (2026-06-13) = per-resource multiplayer** (przebudowa `my_idea_maps` na model współdzielony + membership/share; koordynacja z M05). Patrz [`_DECYZJE.md`](_DECYZJE.md).
 - **Właściciel:** Piotr · **Daty:** karta 2026-06-11 · teczka 2026-06-13 (pogłębiona)
 - **Karta:** `Harvard/modules/M09-ideas-whiteboard/KARTA_AUDYTU.md` (§1e · §1g · §5 · §6 · §7) · **Analiza:** `Harvard/podzial/ideas/MODULE_02E_whiteboard.md` · **Evidence:** `…/evidence/`
@@ -154,12 +154,12 @@ Scenariusze S1–S5 + testy: karta §0/§2. Bezpieczeństwo: karta §6.
 - **WS resource-auth = REALNY:** `ideaCollabWs.gateway.ts:237-242` (wspólny M06/M07) — **POTWIERDZONY** (claim `b9f2dee9d2`).
 - **PG datetime = NAPRAWIONE:** `realtimePlatformService.ts:138` + `:500` parametryzowane interwały — **POTWIERDZONE w kodzie** (claim `1b67579d7a`). [Smoke na PG do domknięcia.]
 - **`graph_patch` = nadawany przez workspace/mindmap, NIE przez whiteboard** — zweryfikowane grepem (`IdeaMapWorkspace.tsx:2361,2381,3122`; whiteboard 0 trafień). L-02 realna.
-- **Per-user dokument = ŻYWY P0-struct:** `my-work.routes.ts:3752,3897,4175` keyed `user_id` — niezmieniony; **najcięższy żywy bloker puli, żaden commit go nie adresuje** (to zmiana data-modelu, nie patch). **DP-3 zatwierdza kierunek naprawy.**
+- **Per-user dokument WRITE = nadal per-user, ALE bloker odczytu ZAADRESOWANY (skoryg. 2026-06-19):** klucz WRITE `my-work.routes.ts:3752,3897,4175` keyed `user_id` — niezmieniony (zweryf. `:3784` `WHERE … user_id = ? …` 2026-06-19). **L-01 ZAMKNIĘTY decyzją realtime=v1 (`5928262e0f`):** GET `/map` dostał org-read fallback → 2. uczestnik org czyta kanoniczną tablicę właściciela (200, nie 404) → multiplayer-READ + realtime `graph_patch` (L-02 `e23e36b856`) działają. **Pełne shared-WRITE (per-resource doc + membership, kierunek DP-3) = świadomy v1.1 backlog** (data-model+migracja prod) — NIE „żaden commit nie adresuje": bloker odczytu rozwiązany w v1, trwała współedycja odłożona celowo.
 
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | Per-user dokument blokuje multiplayer (→ per-resource + membership/share) | W-01,W-04,W-05 | `my-work.routes.ts` GET /map | P0-struct | 1 | **ZAMKNIĘTA 2026-06-18 `5928262e0f` (decyzja: realtime=v1)** — org-read fallback na GET `/map`: nie-właściciel z org czyta kanoniczną tablicę właściciela (200, nie 404); WRITE per-user → zero regresu M05/M07/M08. Testy 4/4 (200 non-owner, 404 cross-org, default-empty). **shared-WRITE persistence = v1.1 backlog** (design niżej §C5). Live 2-sesje = sesja Piotra (auth/beta-closed). |
+| L-01 | Per-user dokument blokuje multiplayer (→ per-resource + membership/share) | W-01,W-04,W-05 | `my-work.routes.ts` GET /map | P0-struct | 1 | **ZAMKNIĘTA 2026-06-18 `5928262e0f` (decyzja: realtime=v1)** — org-read fallback na GET `/map`: nie-właściciel z org czyta kanoniczną tablicę właściciela (200, nie 404); WRITE per-user → zero regresu M05/M07/M08. Testy 4/4 (200 non-owner, 404 cross-org, default-empty). **shared-WRITE persistence = ŚWIADOMY v1.1 BACKLOG (skoryg. 2026-06-19): nie-właściciel widzi zmiany na żywo (org-scope WS `graph_patch`) ale NIE utrwala ich do kanonicznej tablicy właściciela (WRITE pozostaje per-user, `my-work.routes.ts:3784`) — AKCEPTOWALNE dla warsztatu (sesja efemeryczna + eksport), nie dla długotrwałej współedycji. Pełna współedycja = realna robota data-model+migracja prod, odłożona celowo (design §C5).** Live 2-sesje E2E (Playwright, 2 auth-context) = **R6 PENDING** (sesja Piotra; beta MYWORK_IDEAS closed). |
 | L-02 | Whiteboard nie nadaje/odbiera realtime `graph_patch` | W-01,W-05 | `IdeaWhiteboardTool.tsx` + `whiteboard/useWhiteboardCollab.ts` | P1 | 1 | **ZAMKNIĘTA 2026-06-18 `e23e36b856` (decyzja: realtime=v1)** — whiteboard wpięty w org-scope WS (wzór M06): `useWhiteboardCollab` emit/odbiór `graph_patch` (add/move/**resize**/remove node, add/remove edge) + guard echa + remote-apply; `CollaborationOverlay onRegisterSend`. Testy 6/6 (`useWhiteboardCollab.test.tsx`). Live 2-sesje = sesja Piotra. |
 | L-03 | WS resource-auth + facilitation org-scope + PG datetime | W-01,W-03,W-05 | `ideaCollabWs.gateway.ts:237-242`, `realtimePlatformService.ts` | P0/P1 | 1 | **ZAMKNIĘTA 2026-06-17 `5928262e0f`** — WS+PG już naprawione (R3); 4 facilitation GET-y (votes/voteSummary/roles/outcomes) dostały `orgId` + org-check subquery (defense-in-depth, 4 callerów). tsc czysto. Smoke PG na staging do domknięcia. |
 | L-04 | Stan sesji nieczytany (0 call-sites); role samonadawane; governance FE-only; voting niespójny | W-01 | `IdeaWhiteboardTool.tsx:1085,1095,1137,1149`, `realtimePlatformService.ts` | P1/P2 | 3 | **ZAMKNIĘTA 2026-06-18 (decyzja: realtime=v1)** — facilitation czytane SERWEROWO i trwałe w PG: `facilitationCreateSession` (shared session) `:1085`; `facilitationGetSession` `:1095/2143` → timer (`timer_state`)+faza (`current_phase`)+votingOpen czytane przez joinera; `facilitationGetVoteSummary/GetVotes` `:1149-1150`; `facilitationAssignRole` `:1137`. Org-scope + PG datetime = L-03 (`5928262e0f`). Pozostaje P2 polish (enforcement ról serwerowo, dot-voting semantyka) → backlog. |
@@ -221,3 +221,22 @@ Scenariusze S1–S5 + testy: karta §0/§2. Bezpieczeństwo: karta §6.
 
 ## Bramka teczki: 8/9 dokumentacyjnie
 R1 wejścia pełne (karta + `MODULE_02E` + DP-3 + kod) ✅ · R2 zero sierot (wejście→luka→DoD) ✅ · R3 statusy z dowodem (L-03 WS+PG zweryfikowane; L-01 żywy bez commitu, DP-3 zatwierdza kierunek — jawnie) ✅ · R4 DoD z liczbami (i18n ~30 · hex 33 · table 0) ✅ · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTE → DP-3**; D-02 modułowa TBD) ✅ · A–E docelowy zlinkowany (+ docelowy model multiplayer) ✅ · F epiki↔stories Gherkin↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula Ideas nietestowana żywo) — W-02 puste.** **8/9 (R6 = warunek domknięcia).**
+
+## EKRANY (inwentarz) — 2026-06-19
+Ugruntowane w realnych ścieżkach. Canvas warsztatowy (`IdeaWhiteboardTool.tsx`) + `whiteboard/`. Realtime collab (org-scope WS, L-02 `e23e36b856`) + org-read fallback (L-01 `5928262e0f`); WRITE per-user (shared-WRITE = v1.1 backlog).
+
+| # | Ekran / widok | Cel | Plik komponentu |
+|---|---|---|---|
+| 1 | Kanwa whiteboard | 11 typów node, frames, sceny, tryb prezentacji, undo/redo 25 | `src/components/MyWork/IdeaWhiteboardTool.tsx` |
+| 2 | Warstwa rysowania | pen/highlighter | `src/components/MyWork/IdeaDrawingLayer.tsx` |
+| 3 | Toolbar | node-types, draw, frames, scenes (kształty: rectangle w UI; circle/diamond/hexagon = quick-actions) | `src/components/MyWork/whiteboard/WhiteboardToolbar.tsx` |
+| 4 | Empty-state | quick-start (Burza mózgów / Mapa / import) + CTA „Add sticky" | `src/components/MyWork/whiteboard/WhiteboardEmptyState.tsx` |
+| 5 | Selection bar | akcje na zaznaczeniu (align/distribute/lock/group) | `src/components/MyWork/whiteboard/WhiteboardSelectionBar.tsx` |
+| 6 | Phase bar (facilitation) | faza/chevron sesji warsztatowej | `src/components/MyWork/whiteboard/WhiteboardPhaseBar.tsx` |
+| 7 | Session panel (facilitation) | timer / faza / role / voting / outcomes — czytane serwerowo (L-04 `facilitationGetSession`) | `src/components/MyWork/whiteboard/WhiteboardSessionPanel.tsx` |
+| 8 | Node'y kanwy | Sticky / TextBlock / Shape / Frame / Group / Image / Link (NodeResizer L-05) | `src/components/MyWork/whiteboard/nodes/*.tsx` |
+| 9 | Overlay współpracy | presence/kursory; `useWhiteboardCollab` emit/odbiór `graph_patch` (L-02) | `src/components/MyWork/whiteboard/useWhiteboardCollab.ts` |
+| 10 | Menu eksportu (modal) | PNG/SVG/MD/JSON; watermark governance FE-only (delta P2 BE) | `src/components/MyWork/IdeaExportMenu.tsx` |
+| 11 | Panel propozycji AI | 5+ generatorów (brainstorm/find-themes/…) propose→accept/reject | `src/components/MyWork/IdeaProposalReview.tsx` (mount w whiteboard) |
+
+**Stany przekrojowe:** pusty (quick-start) / ładowanie (skeleton) / błąd `/map` → baner / WS down → „Tryb offline" / brak-uprawnień (cudza idea: org-read 200 dla członka org, 404 cross-org). §27 N.D. (canvas). Audyt wizualny SYS-1 naprawiony `0fd33bfa97`.

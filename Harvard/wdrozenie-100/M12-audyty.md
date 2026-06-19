@@ -75,7 +75,7 @@
 - **EPIK 2 — Bezpieczeństwo:**
   - *Story 2.1:* jako system blokuję direct-URL do beta-modułu.
     - *Gherkin:* dane `MODULE_AUDITS:'closed'` · gdy non-admin wchodzi `/audit-programs` przez URL · wtedy beta-guard blokuje (dziś tylko sidebar).
-    - *Zadania:* [Z-04 → L-04] beta-guard na route `AppRoutes.tsx:1198`.
+    - *Zadania:* [Z-04 → L-04] beta-guard na route `src/routes/AppRoutes.tsx:1189-1201` (skoryg. 2026-06-19: NIE `src/AppRoutes.tsx:1198`).
 - **EPIK 3 — Kanony:**
   - *Zadania:* [Z-05 → L-05] `ModuleHub` zamiast self-contained; [Z-06 → L-06] §27 `FilterableTable` dla listy.
 - **EPIK 4 — Szlif:**
@@ -117,7 +117,7 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 | L-01 | edycja programu = martwy FE (PATCH bez ekranu) | W-01,W-05 | `audit-programs.routes.ts:122` (`updateProgram`) bez wołającego FE | P3 | 3 | **NAPRAWIONA (DP-5) — kill-switch `src/utils/auditProgramEditStubFlag.ts` (`isAuditProgramEditEnabled()`, default OFF) gatuje przyszły ekran edycji; `updateProgram` wrapper jawnie udokumentowany jako gated orphan (`auditApi.ts:158-170`). Zero półbudowy.** | 2026-06-17 |
 | L-02 | search/filter kliencki (gubi spoza strony) | W-01 | `AuditsHub.tsx:154` (TODO serwerowy) | P3 | 3 | **NAPRAWIONA — search+status SERWEROWE: klient `listPrograms({search,status})` (`auditApi.ts:129-146`) → route `?search/?q + ?status` (`audit-programs.routes.ts:62-83`) → serwis LIKE name/objective/description nad PEŁNYM org-zbiorem (`auditProgramService.ts:226-280`); zweryf. kodem** | 2026-06-17 |
 | L-03 | nieaktualny baner kreatora „MVP" | W-01 | `AuditOrchestratorWizard.tsx:467-473` | P3 | 3 | **NAPRAWIONA — grep 2026-06-17: zero „MVP"/„generowanie nie jest zautomatyzowane" w `AuditOrchestratorWizard.tsx`; komentarz :23 potwierdza realna architektura (nie nieukończone MVP)** | 2026-06-17 |
-| L-04 | beta-lock tylko nawigacyjny (direct URL omija) | W-01 | `AppRoutes.tsx:1198` bez beta-guarda | P3 | 3 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_AUDITS">` owija `/audit-programs` route (`AppRoutes.tsx:1191-1201`); zweryfikowane grepem** | 2026-06-17 |
+| L-04 | beta-lock tylko nawigacyjny (direct URL omija) | W-01 | `src/routes/AppRoutes.tsx:1189-1201` (przed fixem bez beta-guarda) | P3 | 3 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_AUDITS">` owija `/audit-programs` route (`src/routes/AppRoutes.tsx:1191`, blok 1189-1201); zweryfikowane grepem 2026-06-19. (skoryg. 2026-06-19: teczka podawała `src/AppRoutes.tsx:1198` — plik nie istnieje; realna ścieżka `src/routes/AppRoutes.tsx`)** | 2026-06-17 |
 | L-05 | brak `ModuleHub` (self-contained layout) | W-01 | `AuditsHub.tsx:235-283` | P3 | 3/4 | **NAPRAWIONA — `ModuleHub` shell przyjęty (`AuditsHub.tsx:384`): header/search/tabs/view-mode/CTA/status-filters; zweryf. kodem. (wyprzedził DP-9 — zrobione end-to-end)** | 2026-06-17 |
 | L-06 | lista = karty `<ul>/<li>`, nie §27 | W-01 | `AuditsHub.tsx:343-462` (0 `<table>`) | P3 | 3/4 | **NAPRAWIONA — `FilterableTable` §27 (5 kolumn: name+chip/objective/templates/assignees/surveys) w `TableWithPreviewLayout` (preview = per-program dashboard) (`AuditsHub.tsx:436-469`); row-actions ⋮ Generuj/Usuń** | 2026-06-17 |
 | L-07 | i18n inline `isPolish`+`tr(en,pl)` | W-01,W-05 | Wizard 45 + Hub 48 + presets 3 = **~96** (grep) | P3 | 4 | **ZAMKNIĘTA `fe7470fedd`+`abc2b9a33a` (2026-06-18, Harvard 2)** — wzorzec `tr('EN','PL')`→`t('audit.*')` w `AuditsHub`+`AuditOrchestratorWizard` (74 wywołania), helper `tr` + prop usunięte, `ProgramDashboard` własny `useTranslation`. 62 klucze `audit.*` w pl I en; pozostałe `isPolish ?` (7) = selektory danych dwujęzycznych presetów (`preset.label.pl`) + `buildPlanFromPreset(isPolish)`. tsc+rules-of-hooks czyste. | 2026-06-18 |
@@ -132,7 +132,7 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 | D-02 | §27/`ModuleHub` dla listy: teraz czy sweep FAZA 4? | teraz / FAZA 4 | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-9: §27 do sweepu Faza 4** (nie per-moduł) |
 
 ### 05 · Flagi / rollout / beta-gating
-`MODULE_AUDITS:'closed'` w sidebarze (beta-lock nawigacyjny; route bez guarda = L-04). API org-scoped (direct URL = tylko UX, dane chronione).
+`MODULE_AUDITS:'closed'` w sidebarze (beta-lock nawigacyjny). Route `/audit-programs` owinięty `<BetaGate moduleId="MODULE_AUDITS">` (`src/routes/AppRoutes.tsx:1191`, blok 1189-1201) — direct-URL omijanie zamknięte (L-04 NAPRAWIONA). API org-scoped.
 
 ### 06 · Ryzyka i założenia
 - Fan-out tworzy **REALNE przydziały + mirror-taski + notyfikacje** → ostrożność z migracją/smoke na PROD (dev `.env` może wskazywać PROD, `feedback_prod_caution`).
@@ -149,3 +149,30 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia pełne (karta + 17 testów + commit + kod; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-10 `7df4b22d6d` zweryfikowany w git; L-03 baner do re-weryfikacji runtime**) · R4 DoD z liczbami (**isPolish ~96 — korekta zaniżenia karty**; hex 1; table 0) · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTE → DP-5; D-02 → DP-9**) · A–E docelowy zlinkowany (+ endpointy/fan-out/org-walidacja) · F epiki↔stories Gherkin↔luki · G DoD+S+sec+17 testów · R6 sesja żywa = E2E S2→S5→S6 + smoke żywy (Faza 4). **Teczka kompletna do egzekucji.**
+
+---
+
+## EKRANY (inwentarz) — 2026-06-19
+
+> Audyt weryfikacyjny: deklaracje teczki sprawdzone PRZECIW kodowi. Ścieżki pod `src/components/Audit/`. **Korekta:** teczka podawała ścieżkę beta-guarda jako `src/AppRoutes.tsx:1198` — realna lokalizacja to `src/routes/AppRoutes.tsx:1189-1201` (claim L-04 POPRAWNY, ścieżka w teczce nieprecyzyjna).
+
+### Ekran główny + tryby widoku
+- **Hub Audytów (ModuleHub shell)** — header/search/tabs/view-mode/CTA/status-filters; lista programów audytowych — `AuditsHub.tsx` (`:384` ModuleHub shell)
+- **Lista programów: tabela §27 (FilterableTable)** — 5 kolumn (name+chip/objective/templates/assignees/surveys) w `TableWithPreviewLayout`, row-actions ⋮ Generuj/Usuń — `AuditsHub.tsx:436-469`
+- **Preview programu (dashboard, split-view)** — per-program dashboard jako pane podglądu + completion rollup — `AuditsHub.tsx` (`ProgramDashboard`)
+
+### Kreator 4-krokowy (wizard)
+- **AuditOrchestratorWizard (4 kroki, walidacja per-krok)** — `canProceed`/`maxReachableIndex`; presety iso27001 (14 obszarów Annex A) / new-company (6 funkcjonalnych) → `audit_programs`; fan-out do M10 — `AuditOrchestratorWizard.tsx`
+  - Krok 1–4: wybór presetu → obszary → przydziały (assignee) → podsumowanie/generowanie (baner „MVP" USUNIĘTY — zweryf. grepem)
+
+### Historia + showcase
+- **Widok historii audytu** — `AuditHistoryView.tsx`
+- **Strona pokazowa (public showcase, `/audits`)** — `src/views/AuditsShowcasePage.tsx` (poza app-shell; funkcjonalny hub = `/audit-programs`)
+
+### Stany ekranu
+- empty / loading / error rozróżnione (poprawny wzorzec) / pełny / brak-uprawnień (beta-lock `<BetaGate moduleId="MODULE_AUDITS">` na route, `src/routes/AppRoutes.tsx:1189-1201`).
+
+### Ekran martwy/gated (nie renderowany domyślnie)
+- **Edycja programu (stub)** — `updateProgram` PATCH istnieje, ekran FE gated za `isAuditProgramEditEnabled()` (default OFF, `src/utils/auditProgramEditStubFlag.ts`) — celowo ukryty, nie półbudowa.
+
+**Liczba odrębnych ekranów/widoków/modali: ~7** (hub + tabela §27 + preview-dashboard + wizard 4-krok + historia + showcase + edit-stub gated).

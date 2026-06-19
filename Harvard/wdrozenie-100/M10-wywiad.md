@@ -5,7 +5,7 @@
 ## 00 · Nagłówek
 - **Moduł:** M10 Wywiad (szablony → przydziały → sesje → wnioski → inicjatywy) · **Pula:** core (kliencki: **VTS wave 2 ŻYWY na prod**, ~131 osób)
 - **Ocena audytu:** 60/100 · **Status:** **FAZA 1** (PROD P0 głos) → FAZA 2 (SPEC_13 flow) → FAZA 4 · **Rozmiar:** M-L (i18n 2090 inline + szlif kanonu)
-- **Żywy bloker:** **#12 PROD P0 — głos w wywiadzie nie zapisuje odpowiedzi (VTS)**
+- **Żywy bloker:** **#12 PROD P0 — głos w wywiadzie nie zapisuje odpowiedzi (VTS)** — **L-01 KOD ZAMKNIĘTY, ale NIEZWERYFIKOWANY live; FUNKCJONALNIE OTWARTY do live-verify** (czeka na żywy smoke na staging + ew. env prod, zgoda Piotra)
 - **2 uwagi żywe:** **#12** głos VTS (P0 PROD) · **#13** jeden przepływ + bramka oceny AI+człowiek (P1-design, `SPEC_ZADANIE_13`)
 - **Decyzje kierunkowe:** **DP-1 ZATWIERDZONA (2026-06-13) = OPENAI** (STT na prod = OpenAI/Whisper; egzekucja = klucz na Railway centerbeam + commit FE interim-flush, Faza 1, wymaga zgody na env prod). **#13 decyzje produktowe ZATWIERDZONE** (`SPEC_ZADANIE_13` §5). Patrz [`_DECYZJE.md`](_DECYZJE.md).
 - **Właściciel:** Piotr · **Daty:** karta 2026-06-11 · teczka 2026-06-13 (pogłębiona)
@@ -105,7 +105,7 @@ bigint=string, jsonb=object (`ai_review_snapshot_json`/`review_decision_memory_j
 ## G · JAKOŚĆ / DoD *(skwantyfikowane — grep 2026-06-13, R4)*
 | # | Kryterium | Miara M10 |
 |---|-----------|-----------|
-| 1 | Front↔back | głos→submit→reload trwałość (PROD P0 #12 zamknięty, FE commit + DP-1 env); bramka #13 wyegzekwowana+uwidoczniona; stepper/pending_review rozstrzygnięte; pełny cykl trwały |
+| 1 | Front↔back | głos→submit→reload trwałość (PROD P0 #12 KOD ZAMKNIĘTY, NIEZWERYFIKOWANY live — DoD spełnione dopiero po żywym smoke na staging/prod; FE commit `1522f3de32` + server STT OPENAI→GROQ→Gemini fallback); bramka #13 wyegzekwowana+uwidoczniona; stepper/pending_review rozstrzygnięte; pełny cykl trwały |
 | 2 | Bezpieczeństwo | cross-org get/delete wniosku ✅ `b9f2dee9d2` (potwierdzić testem); 23/25 endp. scoped (2 naprawione) |
 | 3 | i18n | 0 z **2090** inline (`i18n.language==='pl'`/`isPolish`) w `src/components/Interview/` (grep 2026-06-13) |
 | 4 | Tokeny | korupcja „rose" → 0 (`InterviewHub.tsx:4772`, **21×** grep); **15** hex w `src/components/Interview/` (zweryfikować ile = ikony vs hardkod, DP-8) |
@@ -128,12 +128,12 @@ Scenariusze S1–S6 + pułapka CI (test-suite tylko main/develop): karta §0/§2
 | W-06 | `CARD_CONTENT_FORMULA.md` + inference service | — | formuła treści wniosków/inicjatyw | jakość treści (poza M10) |
 | W-07 | Feedback prod (`finding_interview_voice_stt_bug`, `project_vts_survey_wave2`) | 2026-06-13 | VTS żywy ~131 osób; server STT do potwierdzenia | L-01 |
 
-### 02 · Stan obecny (prawda kodu) — karta §1 (REALNE 13 · MOCK 0 · ZEPSUTE 0 · UKRYTE-celowo 1 · CZĘŚCIOWE 1). Naprawione: `b9f2dee9d2` (get/delete wniosku org-scope), `ea77dc678c` (martwy import, 26 testów S5), `7ab1b8aace` (cross-org testy). W TOKU Londyn: `30c06e51d6` (per-question hint), `b4586a7c16` (voice-echo), `7ee1fb481d` (inline record/attachments), **`1522f3de32` (`InterviewSingleQuestionRuntime.tsx` — `liveInterimRef` interim-flush głosu #12 ZACOMMITOWANY)**. Testy 273/273 PASS (weryfikacja 2026-06-16).
+### 02 · Stan obecny (prawda kodu) — karta §1 (REALNE 13 · MOCK 0 · ZEPSUTE 0 · UKRYTE-celowo 1 · CZĘŚCIOWE 1). Naprawione: `b9f2dee9d2` (get/delete wniosku org-scope), `ea77dc678c` (martwy import, 26 testów S5), `7ab1b8aace` (cross-org testy). W TOKU Londyn: `30c06e51d6` (per-question hint), `b4586a7c16` (voice-echo), `7ee1fb481d` (inline record/attachments), **`1522f3de32` (`InterviewSingleQuestionRuntime.tsx` — `liveInterimRef` interim-flush głosu #12 ZACOMMITOWANY; skoryg. 2026-06-19: hash poprawny wg `git log -S liveInterimRef`, ale subject commita „fix(ui): T2/T4/T6 — button standardization…" — opis mylący)**. Testy 273/273 PASS (weryfikacja 2026-06-16). **L-01 = KOD ZAMKNIĘTY, NIEZWERYFIKOWANY live (FUNKCJONALNIE OTWARTY do live-verify).**
 
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | głos nie zapisuje odpowiedzi (FE interim + server STT) | W-02,W-05,W-07 | `InterviewSingleQuestionRuntime.tsx:838-839,903` + `VoiceService.ts:23-66` | **P0 PROD** | 1 | **KOD ZAMKNIĘTY `9cdb40787d` (2026-06-18) — Gemini STT fallback:** `VoiceService.ts` rozszerzony: OPENAI→GROQ→**Gemini** (`gemini-2.0-flash` `speech-to-text`) jako trzeci fallback; `GEMINI_API_KEY` = klucz Teresy (już na Railway prod/staging) → zero nowych sekretów. FE-fix `1522f3de32` (`liveInterimRef`) + Gemini fallback = pełny łańcuch STT bez `OPENAI_API_KEY`. **Czeka: live-verify na staging (deploy Railway demo) + potwierdzenie przez Piotra.** Testy 2/2. |
+| L-01 | głos nie zapisuje odpowiedzi (FE interim + server STT) | W-02,W-05,W-07 | `InterviewSingleQuestionRuntime.tsx:838-839,903` + `VoiceService.ts:23-66` | **P0 PROD** | 1 | **KOD ZAMKNIĘTY, ale NIEZWERYFIKOWANY live — FUNKCJONALNIE OTWARTY do live-verify.** Kod gotowy: FE-fix `1522f3de32` (`liveInterimRef` interim-flush) + server STT łańcuch OPENAI→GROQ→**Gemini** fallback `9cdb40787d` (2026-06-18; `gemini-2.0-flash` `speech-to-text`; `GEMINI_API_KEY` = klucz Teresy już na Railway prod/staging → zero nowych sekretów; działa BEZ `OPENAI_API_KEY`). Testy 2/2. **NIE jest zweryfikowany na żywym mikrofonie/prodzie** → **czeka na żywy smoke na staging (deploy Railway demo) + ew. env prod (zgoda Piotra) + potwierdzenie przez Piotra.** NIE traktować jako „naprawione/zamknięte" — zamknięcie L-01 = po live-verify (R6). (skoryg. 2026-06-19: hash `1522f3de32` poprawny — zawiera fix głosu wg `git log -S liveInterimRef` — ale subject commita dotyczy standaryzacji przycisków „fix(ui): T2/T4/T6 — button standardization…", opis w teczce mylący.) |
 | L-02 | ~~9 FAIL drift testów~~ | W-01 | f2_tests_report | P1-test | 2 | **NAPRAWIONA — 273/273 PASS (2026-06-16); drift zamknięty przez poprzednie commity** |
 | L-03 | brak unitów S4 (konwersacyjny) | W-01 | `interviewTranscriptService`/`interviewInferenceService` | P1-test | 2 | **NAPRAWIONA (R3: teczka stale, testy ISTNIEJĄ). Zweryf. 2026-06-17: `interviewTranscriptService.test.ts` (5 testów „S4 conversational transcript": addMessage/getMessages/count/delete org+session-scoped + JSONB round-trip) + `interviewInferenceService.test.ts` (6 testów „S4 inference": startRun/executeInference + cross-org early-return + LLM-throw + zero-sessions) = 11/11 PASS** |
 | L-04 | korupcja „rose" w status-chipach | W-01 | `InterviewHub.tsx:4772-4778` (**21×** grep) | P1 | 4 | **NAPRAWIONA — grep 2026-06-17: `rose-` w `InterviewHub.tsx` = **0** (korupcja status-chip usunięta). Pozostałe 76× `rose-` w innych plikach Interview/ (NewSessionModal urgent, SufficiencyIndicator danger, CompanyFactsPanel, QuestionsList, ConversationalPanel) = semantycznie LEGALNE (danger/urgent), NIE korupcja → poza zakresem L-04** |
@@ -173,3 +173,50 @@ Brak dedykowanych flag blokujących core (moduł otwarty). **VTS wave 2 żywy na
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia pełne (karta + 2 uwagi żywe #12/#13 + SPEC_13 + DP-1 + formuła + feedback prod VTS) · R2 zero sierot (wejście→luka→DoD) · R3 L-01 „FE-fix wdrożony niezacommitowany niezweryf. live + DP-1 env do potwierdzenia" (nie dziedziczone, status `M` zweryfikowany) · R4 DoD z liczbami (2090 i18n · 7 table · 15 hex · 21× rose) · R5 decyzje z właścicielem (**D-01/D-02 ROZSTRZYGNIĘTE #13; D-05 → DP-1 OPENAI**; D-03/D-04 modułowe TBD) · A–E docelowy zlinkowany (+ endpointy/maszyna stanów/głos/bramka) · F epiki↔stories Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 + żywy smoke głosu VTS (zaplanowane). **Teczka kompletna do egzekucji.**
+
+---
+
+## EKRANY (inwentarz) — 2026-06-19
+
+> Audyt weryfikacyjny: deklaracje teczki sprawdzone PRZECIW kodowi. Ścieżki pod `src/components/Interview/` o ile nie wskazano inaczej.
+
+### Ekran główny + zakładki (pipeline ①–⑥)
+- **Hub Wywiad (kontener 6 zakładek)** — orkiestrator całego modułu, nawigacja pipeline ①–⑥ — `InterviewHub.tsx`
+- **① Inbox / Moje przydziały** — respondent widzi sesje do wypełnienia — zakładka `my_assignments` (`InterviewHub.tsx:2718`)
+- **② Sesje** — lista sesji wywiadu (twórca/manager), tabela §27 z preview — zakładka `sessions` (`InterviewHub.tsx:2727`)
+- **③ Szablony** — CRUD szablonów + publish — zakładka `templates` (`InterviewHub.tsx:2743`)
+- **④ Wnioski (Insights)** — wygenerowane wnioski z sesji — zakładka `insights` (`InterviewHub.tsx:2767`)
+- **⑤ Inicjatywy** — handoff do M13 (`generate_from_evidence`) — zakładka `initiatives` (`InterviewHub.tsx:2774`)
+- **④ Dopuszczenia (pending_review)** — inbox sesji do oceny, flaga DP-5 `isInterviewPendingReviewTabEnabled()` (default OFF) — w `InterviewHub.tsx`
+- **Numerowany stepper pipeline ①–⑥** — wizualny top-level pasek kroków, flaga `isInterviewPipelineStepperEnabled()` (default OFF) — `InterviewPipelineStepper.tsx`
+
+### Proces 4-krokowy + runtime sesji
+- **Workspace sesji (review/reviewer-mode)** — twórca przegląda odpowiedzi, score AI, przyciski Zatwierdź/Wyślij-do-poprawy — `InterviewWorkspace.tsx`
+- **Runtime: pojedyncze pytanie** — respondent odpowiada (tekst/głos), ścieżka głosu interim-flush — `InterviewSingleQuestionRuntime.tsx`
+- **Runtime: tryb konwersacyjny (panel)** — czat-wywiad AI, `aiParseSessionAnswers` — `ConversationalPanel.tsx`
+- **Selektor trybu runtime** — wybór single_question / task_list / conversational — `RuntimeModeSelector.tsx`
+- **Lista pytań (z preview)** — edycja/AI-suggest/improve/explain pytań, `TableWithPreviewLayout` — `QuestionsList.tsx`
+- **Wskaźnik dostateczności** — sygnalizuje braki/kompletność odpowiedzi — `SufficiencyIndicator.tsx`
+
+### Budowanie + przydział
+- **Builder szablonu** — projektowanie szablonu wywiadu — `TemplateBuilder.tsx`
+- **Modal nowej sesji** — start sesji z szablonu — `NewSessionModal.tsx`
+- **Modal przydziału wywiadu** — przypisanie respondentów (+ mirror-task) — `AssignInterviewModal.tsx`
+
+### Wnioski / insighty
+- **InsightViewer** — pełny widok wniosku, material_quality, guard partial JSON (`:1551-1626`); matryca topic×stakeholder (`:4419`) — `InsightViewer.tsx`
+- **Modal tworzenia wniosku** — ręczne stworzenie insightu — `InsightCreatorModal.tsx`
+- **Widok podsumowania** — `SummaryView.tsx` / `InterviewSummary.tsx`
+
+### Panele kontekstowe + preview (split-view)
+- **Panel faktów o firmie** — kontekst org — `CompanyFactsPanel.tsx`
+- **Panel dowodów (evidence)** — `EvidencePanel.tsx`
+- **Panel notatek** — `NotesPanel.tsx`
+- **Baner kontekstu wywiadu** — `InterviewContextBanner.tsx`
+- **Chat kategorii / sidebar kategorii** — `CategoryChat.tsx` / `CategorySidebar.tsx`
+- **Preview: sesja / szablon / przydział / wniosek / inicjatywa** — panele podglądu w split-view — `InterviewSessionPreview.tsx`, `InterviewTemplatePreview.tsx`, `InterviewAssignmentPreview.tsx`, `InterviewInsightPreview.tsx`, `InterviewInitiativePreview.tsx`
+
+### Stany ekranu (każda lista)
+- pusty / ładowanie / błąd (jawne banery, demo-data za jawnym togglem — nie cichy fallback) / pełny / brak-uprawnień (per-permission).
+
+**Liczba odrębnych ekranów/widoków/modali: ~28** (6 zakładek + ④ flagowana + stepper + 4-krok runtime/workspace + buildery/modale + insighty + panele kontekstowe + 5 preview).

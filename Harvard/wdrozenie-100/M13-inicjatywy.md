@@ -84,7 +84,7 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 
 *(Korekta zaniżeń karty: „7 dok. INITIATIVE_*" → realnie ~15 w `docs/product/`+`docs/initiatives/`.)*
 
-### 02 · Stan obecny — karta §1 (REALNE 12+2 · disabled 2 · ukryte 1 · martwe 1). Naprawione: `b9f2dee9d2` (governance), `ea77dc678c` (CRUD 5/5), `3aec45a21d` (Wizard CTA), `dc1dd6154d` (ROI nav), `2dbebfdd74` (ConflictsPanel usunięty), **`18ed3e44f7` (Otwórz CTA, 2026-06-13)**.
+### 02 · Stan obecny — karta §1 (REALNE 12+2 · disabled 2 · ukryte 1 · martwe 1). Naprawione: `b9f2dee9d2` (governance), `ea77dc678c` (CRUD 5/5), `3aec45a21d` (Wizard CTA), `dc1dd6154d` (ROI nav), `2dbebfdd74` (ConflictsPanel usunięty), **`18ed3e44f7` (Otwórz CTA, 2026-06-13)**. **MARTWY KOD do usunięcia:** `src/components/Initiatives/InitiativeConflictsPanel.tsx` — usunięty w `2dbebfdd74`, przypadkowo przywrócony przez build-integrity git-race `8c3d290ab9` („commit 99 untracked components"); grep zweryf. 2026-06-19 = **0 importerów** → orphan, do usunięcia.
 
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód | Klasa | Faza | Status |
@@ -114,6 +114,7 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 ### 05 · Flagi/rollout — V8 Planning (env, degraduje); pilot VTS (rola, gating→serwer); beta core (otwarty); demo Atelier Toys (jawny toggle).
 ### 06 · Ryzyka — SSOT statusów (~15 dok.) może być rozjechany z `stageGateService.ts` → #14 najpierw pogodzić docs↔kod. Governance IDOR (`b9f2dee9d2`) wymaga testu cross-org. Dev `.env` → Railway PROD.
 ### 07 · Log
+- **2026-06-19 (audyt teczek): martwy kod `InitiativeConflictsPanel.tsx`.** Zweryf. grepem: `src/components/Initiatives/InitiativeConflictsPanel.tsx` = **0 importerów** (martwy kod). Usunięty w `2dbebfdd74`, przypadkowo przywrócony do drzewa przez build-integrity git-race `8c3d290ab9` („commit 99 untracked components"). NIE renderowany ekran → orphan **do usunięcia** (poza scope tej teczki, edytuje tylko .md). Doprecyzowano: UI #14 (pipeline/CTA per status×rola, L-03) = **design-blocked D-02** (odroczone slice'y B/D + Slice A behavior-change na żywych klientach).
 - **2026-06-17 (Harvard 3, runda 3): §27 sweep + L-04 zamknięte.** Fan-out 2 sub-agentów (rozłączne pliki) + lider. **L-11b ZAMKNIĘTA `5ff719a12f`**: odkryto że shared FilterableTable nie sortuje + brak expand → reguła zero-regresji; `CompetencyRequirements`→FilterableTable, 12 bogatych tabel→§27 sticky-thead (migracja by zregresowała sort/expand/AI-menu na żywym core; pełna unifikacja wymaga sortu w shared component = poza strefą). **L-04 ZAMKNIĘTA `2ffc02b101`**: spięcie #16 AI-fill↔formuła zweryfikowane + test 5/5. **L-07** → DP-2, implementacja w MyWork (Harvard 2). **L-11a** → ZABLOKOWANA-i18n (locales). tsc clean, 10 modułów Vite-OK. Pozostają tylko: L-04-breadth (decyzja kosztowa), L-07 (H2), L-11a (i18n locales).
 - **2026-06-17 (Harvard 3): L-09 R3 + L-03 SSOT reconciliation.** L-09: dopisany test cross-org IDOR `be0dd36d88` (10/10). L-03: pełna reconciliation SSOT statusów (subagent extract 7 źródeł + weryfikacja kodu) → enum/transitions/gate-perms/gate-transitions zgodne 1:1 FE↔serwer↔docs; 2 rozbieżności tekstowe nie-runtime (serwer `MODULES.initiatives` nieużywany — adnotacja `53daa3e227`; `getLifecycleOrder` BLOCKED/CANCELLED). UI #14 nadal design-blocked (D-02). Agent-flagged „KPI-validation/auto-start cron" = poza ekstraktem, należą do L-04/#14 (design-blocked) — nie potwierdzone jako luki. Pozostają OTWARTE design-blocked: L-03(UI #14)/L-04(#16). L-07 in-context open = strefa MyWork (Harvard 2). Faza-4 sweep: L-11a/b/c (i18n/§27/hex).
 - 2026-06-16: L-01+L-05+L-06 zamknięte (EPIK 1 gotowy). 2026-06-13: L-08 (`18ed3e44f7`). Audyt 2026-06-11/12: L-09/L-10 naprawione; ocena 54/100. Re-ocena D po Fazie 2/4.
@@ -122,3 +123,49 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia pełne (karta+15 dok.+4 uwagi żywe) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (L-08/09/10 z commitami) · R4 DoD z liczbami · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTE → DP-2; D-03 → DP-5**; D-02 modułowa #14 TBD) · A–E docelowy zlinkowany · F epiki↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 (zaplanowana). **Teczka kompletna do egzekucji.**
+
+---
+
+## EKRANY (inwentarz) — 2026-06-19
+
+> Audyt weryfikacyjny: deklaracje teczki sprawdzone PRZECIW kodowi. Ścieżki pod `src/components/Initiatives/`.
+
+### Hub + tryby widoku portfolio
+- **Hub Inicjatyw (kontener)** — orkiestrator; zakładki + view-mode — `InitiativesHub.tsx`
+- **Widok: Tabela** — lista inicjatyw, view-mode `table` — `InitiativesHub.tsx:528`
+- **Widok: Kanban (domyślny)** — board statusów, view-mode `kanban` (default `:206`) — `InitiativesHub.tsx`
+- **Widok: Timeline** — oś czasu — `InitiativesTimelineView.tsx`
+- **Widok: Grid** — siatka kart — `InitiativesHub.tsx:528`
+- **Zakładka: Analiza (analysis)** — workspace analityczny (bez view-modes) — `Analysis/AnalysisWorkspacePanel.tsx`
+
+### Analiza (8 widoków)
+- **Completeness / Feasibility / Logic / Resources / Timeline** — `Analysis/{Completeness,Feasibility,Logic,Resources,Timeline}Analysis.tsx`
+- **Portfolio analysis** — `Analysis/PortfolioAnalysisView.tsx`
+- **Graf zależności (DependencyGraphCanvas)** — paleta severity data-viz — `Analysis/DependencyGraphCanvas.tsx`
+
+### Dokument inicjatywy (~34 sekcje)
+- **InitiativeDocumentView** — pełny dokument inicjatywy, AI-fill per sekcja wg CARD_CONTENT_FORMULA + chip `sectionReview` (`:585,4256,7246`) — `InitiativeDocumentView.tsx`
+- **Rejestr sekcji** — `SECTION_REGISTRY` + `DEFAULT_SECTION_ORDER` (~34 plików sekcji) — `sections/registry.ts` + `sections/*.tsx`
+- **Widoki alternatywne dokumentu** — Notion-style / scroll / full / compact — `InitiativeNotionView.tsx`, `InitiativeScrollView.tsx`, `InitiativeFullView.tsx` (in-context open DP-2, L-07), `InitiativeCompactPanel.tsx`
+
+### Charter / Wizard / Generator (tworzenie)
+- **Charter Wizard** — `Wizard/InitiativeCharterWizard.tsx`
+- **WizardModal (per-wizard accent violet)** — `Wizard/InitiativeWizardModal.tsx`
+- **Generator z M10 (Modal)** — `generate_from_evidence` — `Wizard/InitiativeGeneratorModal.tsx`
+- **Proposal Board** — `Wizard/InitiativeProposalBoard.tsx`
+- **Coverage Wave View** — `Wizard/InitiativeCoverageWaveView.tsx`
+- **Panel sugerowanych zmian** — `Wizard/SuggestedChangesPanel.tsx`
+
+### Karty / preview / drawer (split-view + #14 pipeline)
+- **InitiativePreviewV3** — board-preview z CTA „Otwórz" (L-08 `18ed3e44f7`); pipeline statusów (#14, ~90% pre-built) — `InitiativePreviewV3.tsx`
+- **InitiativePreview / DetailCard / Drawer / Notion / Scroll** — warianty podglądu — `InitiativePreview.tsx`, `InitiativeDetailCard.tsx`, `InitiativeDrawer.tsx`
+- **SourceLink (link do źródłowego wniosku M10)** — `InitiativeSourceLink.tsx`
+- **ConflictsPanel — MARTWY KOD (zero importów):** `2dbebfdd74` usunął plik, ale `8c3d290ab9` („commit 99 untracked components") przywrócił go do drzewa; grep potwierdza 0 importów → NIE renderowany ekran, orphan do usunięcia — `InitiativeConflictsPanel.tsx`
+
+### Szablony
+- **Selektor poziomu / szablony** — `templates/InitiativeLevelSelector.tsx` (+ `templates/`)
+
+### Stany ekranu
+- pusty / ładowanie / błąd (+ baner degradacji V8 `v8PlanningDegraded`, L-05, `InitiativesHub.tsx:234,1979-1993`) / pełny / brak-uprawnień (gating pilota serwerowo, L-06 `requireInitiativeWriteAccess()`).
+
+**Liczba odrębnych ekranów/widoków/modali: ~30+** (hub + 4 view-modes + 8 analiz + dokument z ~34 sekcjami + 4 warianty dokumentu + 6 wizard/generator + ~6 preview/drawer/card + szablony).

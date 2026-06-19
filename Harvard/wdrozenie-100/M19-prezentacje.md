@@ -103,7 +103,7 @@ Scenariusze S1–S8: karta §0/§2 (293 PASS/0 FAIL, ale **15/21 integracyjnych 
 | L-02 | override quality-gate „bez roli" | W-01,W-04 | `presentationExportGate.ts` (`canOverrideQualityGate`) | P2 (był) | 1 | **ZAMKNIĘTA** — predykat role-gate wydzielony (behaviour-identyczny, 4 call-site DRY) + test regresji: nie-admin+param → 422 nie omija; `export-quality-gate.regression.test.ts` (10/10 PASS) | 2026-06-17 |
 | L-03 | beta-lock nawigacyjny + share bez rate-limit/revoke | W-01 | `presentations.routes.ts` (share POST/DELETE) | P2 | 3 | **ZAMKNIĘTA** — beta-lock (`<BetaGate MODULE_PRESENTATIONS>` `AppRoutes.tsx:1989`) + **rate-limit 30/min** na share + **`DELETE /decks/:id/share` revoke** (nuluje `share_token` → viewer `WHERE share_token=?` martwy, org-scoped+audited) | 2026-06-17 |
 | L-04 | analytics-beacon cross-org (`WHERE id=?` bez org) | W-01 | `presentations.routes.ts:5980-5981` | P3 | 3 | **ZAMKNIĘTA** — beacon org-scoped: `WHERE id=? AND organization_id=?` (linia 5980-5981); nieznany deck innej org → 404; komentarz w kodzie „SEC (M17 wave-5): org-scope the deck lookup"; false positive | 2026-06-17 |
-| L-05 | DeckBuilder 25× `isPolish` (grep całość 30×) | W-01 | `Presentations/*` | P2 | 4 | **NAPRAWIONA 2026-06-17 (i18n) `091064b8f9`** — `src/components/Presentations/` ma **0 `isPolish`** (zweryfikowane grepem) + 0 bare-missing kluczy (skrypt `check-bare-missing.cjs`). Żywy preview PL/EN pending auth → flip do ZAMKNIĘTA po sesji Piotra. |  |
+| L-05 | DeckBuilder 25× `isPolish` (grep całość 30×) | W-01 | `Presentations/*` | P2 | 4 | **NAPRAWIONA (kod) — NIE ZAMKNIĘTA** `091064b8f9` — `src/components/Presentations/` ma **0 `isPolish`** (zweryfikowane grepem) + 0 bare-missing kluczy (skrypt `check-bare-missing.cjs`). **(skoryg. 2026-06-19: status TRZYMANY jako PENDING, nie ZAMKNIĘTA — żywy preview PL/EN wymaga auth i czeka na sesję żywą Piotra; flip do ZAMKNIĘTA dopiero po wizualnym potwierdzeniu PL/EN.)** |  |
 | L-06 | hardkody kolorów (127 hex grep — część legitna render) | W-01 | `Presentations/*` (grep 2026-06-17=139) | P3 | 4 | **ZAMKNIĘTA jako LEGALNE** — pomiar 139 hex; 100% data-viz/deck-theme/brand-palette wg DP-8 (wizard/types.ts 117 motywy+chartPalette, useCollaboration 12 kursory, DeckThemeContext 5 + ThemeSwitcher 4 model DeckTheme, DeckBuilder 1 gradient cover); 0 chrome; 0 zamienione — przekraczają granicę app→eksport (PPTX/PDF nie rozwiąże `var(--)`), muszą być literalne. Audit confirmed: Fala 5 sweep. | 2026-06-17 |
 | L-07 | 15/21 testów p20 fałszywa zieleń + S4/S5 niezweryfikowane | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | **ZAMKNIĘTA `e33bd8fe56` (2026-06-17)** — S4 round-trip `deck-version-roundtrip.contract.test.ts` (6/6 PASS) + S5 422-gate `export-quality-gate.regression.test.ts` (10/10 PASS) + **15 vacuous network-testów → `it.skip([caboose])` z komentarzem** (`p20-lifecycle.test.ts` 10×, `p20-export-resilience.test.ts` 2×, `confidentiality-controls.test.ts` 3×); usunięto `expect(true).toBe(true)` safety-nety; etykieta `[caboose]` umożliwia grep re-enable; 0 testów always-pass, 0 fake-FAIL | 2026-06-17 |
 | L-08 | kręgosłup czat→deck (auto-trigger z czatu) | W-02 | `SPEC_ZADANIE_01` | P0-program | 0 | **NAPRAWIONA-SPEC_01 2026-06-17 `a6aea8d2d5`+`e7bd755b04`** — Tryb A function-calling: Teresa woła `generate_deliverable(type:presentation)`→`plan/start` (generateOutline/generateDeck, domyślny DeckSetup)→SSE `deliverable`→montaż deck w canvasie. Wymaga `ENABLE_V8_GLOBAL=true` (staging ON; prod centerbeam do ustawienia). Testy 6/6. Żywe S-A E2E (auth+LLM staging) pending. | |
@@ -122,3 +122,32 @@ Scenariusze S1–S8: karta §0/§2 (293 PASS/0 FAIL, ale **15/21 integracyjnych 
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia (karta+INV_E+uwaga #1+weryfikacja override) · R2 zero sierot · R3 statusy z dowodem (**L-02 STALE-zweryfikowane: override `allowOverride:[ADMIN/OWNER/SUPERADMIN]` `:1465`+`:366` w kodzie — korekta karty**; L-09 z commitem) · R4 DoD z liczbami (grep i18n=30, hex=127, `<table>`=1) · R5 **decyzja rozstrzygnięta (D-01→DP-5: ukryj Invite-by-email)** · A–E docelowy zlinkowany (Hub §27 wzorcowy + C model wersji + enum API) · F epiki→stories Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 (pozostaje). **9/9; teczka kompletna do egzekucji.**
+
+## EKRANY (inwentarz) — 2026-06-19
+
+> Inwentarz powierzchni Presentation Studio (FE `src/components/Presentations/`). Format: ekran — cel — plik.
+
+### Powierzchnie top-level
+- **Presentations Hub** — lista decków = `TableWithPreviewLayout` + `EntityStatusChip` + `RowActionsMenu` (§27 wzorcowy); preview pane — `src/components/Presentations/PresentationsHub.tsx`
+- **Presentation Wizard** — kreator generacji decka (pipeline V8 / DeckSetup); motywy/chartPalette — `src/components/Presentations/PresentationWizard.tsx` (+ `wizard/`)
+- **Shared Presentation View (public viewer)** — publiczny, sanitizowany viewer `/presentations/shared/:token` (`normalizeDeckRow` whitelist) — `src/components/Presentations/SharedPresentationView.tsx`
+- **Brand Kit Settings** — konfiguracja brand-kit/motywów — `src/components/Presentations/BrandKitSettings.tsx`
+- **Deck Template Gallery** — galeria szablonów decków — `src/components/Presentations/DeckTemplateGallery.tsx`
+
+### DeckBuilder (edytor WYSIWYG, `src/components/Presentations/DeckBuilder/`)
+- **DeckBuilder (root) / MELS View** — kontener edytora; adapter `ExecutiveModuleShell` (`melsDeckBuilder` ON) — `DeckBuilder.tsx`, `DeckBuilderMelsView.tsx`, `DeckBuilderTopBar.tsx`, `DeckBuilderBottomBar.tsx`, `DeckBuilderMelsChips.tsx`, `DeckBuilderMelsRightRail.tsx`
+- **Card Canvas / Card Renderer** — render i edycja kart/slajdów; TipTap edytor — `CardCanvas.tsx`, `CardRenderer.tsx`, `EditableBlock.tsx`, `TipTapEditor.tsx`, `EditCardPopup.tsx`, `BlockToolbar.tsx`, `CardFloatingToolbar.tsx`
+- **Slide Sorter** — reorganizacja kolejności slajdów — `SlideSorter.tsx`
+- **Present Mode** — tryb prezentacji pełnoekranowej — `PresentMode.tsx`
+- **Command Palette** — szybkie akcje klawiaturowe — `CommandPalette.tsx`
+- **Agent Panel (Teresa)** — agent-edit accept/reject + historia — `AgentPanel.tsx`, `AgentActivityPanel.tsx`
+- **Version History Panel** — snapshoty/restore (mig.752) — `VersionHistoryPanel.tsx`
+- **Theme Switcher** — zmiana motywu/brand-kit — `ThemeSwitcher.tsx`, `DeckThemeContext.tsx`
+- **Share Modal** — share + (zakładka Collaborate ukryta za `VITE_ENABLE_DECK_COLLABORATE`) — `ShareModal.tsx`
+- **Share Analytics Panel** — analityka wyświetleń share (mig.610) — `ShareAnalyticsPanel.tsx`
+- **Deck Quality Gates Panel** — bramka jakości eksportu (override role-gated) — `DeckQualityGatesPanel.tsx`
+- **Deck Governance Card Modal** — karta governance decka — `DeckGovernanceCardModal.tsx`
+- **Deck Audit Log Modal** — log audytu — `DeckAuditLogModal.tsx`
+- **Media Library Browser** — przeglądarka mediów — `MediaLibraryBrowser.tsx`
+- **Source Traceability** — śledzenie źródeł — `SourceTraceability.tsx`
+- **Presence Indicators** — wskaźniki obecności (collaboration) — `PresenceIndicators.tsx`

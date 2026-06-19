@@ -137,7 +137,7 @@
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Canonical drawer szczegółów węzła | `NodeDetailDrawer` / `IdeaNodeDetailDrawer` (wytnij drugi) | Piotr | TBD | otwarta (modułowa — przy wejściu w moduł) |
+| D-01 | Canonical drawer szczegółów węzła | `NodeDetailDrawer` / `IdeaNodeDetailDrawer` (wytnij drugi) | Piotr | TBD | **ODROCZONA (skoryg. 2026-06-19): NIE prosty duplikat do wycięcia — obie powierzchnie ŻYWE z różnymi konsumentami (zweryf. grepem): `mindmap/NodeDetailDrawer.tsx` ← `IdeaRecommendationMap.tsx` + `mindmap/floating-toolbar/QuickEditPopovers.tsx` (mind-map); `IdeaNodeDetailDrawer.tsx` ← `IdeaMapWorkspace.tsx` (M05 map-workspace). Konsolidacja = ryzykowny refaktor ~2400l spanning M05+M06, nie correctness-bug → osobny pass refaktorowy, nie blokuje domknięcia.** |
 | D-02 | AI overlays (sentiment/clustering) | dedykowany endpoint LLM / oznaczyć jako heurystyki | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce" (nie półbuduj)** |
 | D-03 | Kontrakt `my_idea_maps` per-resource (DP-3) | single-player / shared+membership | Piotr | TBD | **DP-3 = per-resource multiplayer — M09 zmienia kontrakt; WS gateway WSPÓLNY z M06/M07/M09, membership wpływa na org-check** |
 
@@ -149,3 +149,27 @@
 
 ## Bramka teczki: 8/9 dokumentacyjnie
 R1 ✅ · R2 ✅ · R3 statusy z dowodem (L-01/L-03 zweryfikowane w kodzie — silne) ✅ · R4 DoD z liczbami (872/289/1, rose=0) ✅ · R5 decyzje rozstrzygnięte (D-02=DP-5; D-01 modułowa; D-03=DP-3); R6 sesja żywa pozostaje ✅ · A-E ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula nietestowana żywo) — W-02 puste.** **8/9.**
+
+## EKRANY (inwentarz) — 2026-06-19
+Ugruntowane w realnych ścieżkach. Canvas mind-map (`IdeaRecommendationMap.tsx`) + `mindmap/` (~50 plików). Binding record-based `my_idea_maps`; collab przez WS `ideaCollabWs.gateway.ts`.
+
+| # | Ekran / widok | Cel | Plik komponentu |
+|---|---|---|---|
+| 1 | Kanwa mind-map | węzły rekomendacji + krawędzie, 4 layouty, gramatyka klawiaturowa, undo/redo 50 | `src/components/MyWork/IdeaRecommendationMap.tsx` |
+| 2 | Lewy toolbar kanwy | dodaj węzeł / narzędzia | `src/components/MyWork/mindmap/CanvasLeftToolbar.tsx` |
+| 3 | Floating node toolbar | akcje na zaznaczonym węźle | `src/components/MyWork/mindmap/FloatingNodeToolbar.tsx` |
+| 4 | Drawer szczegółów (mind-map) | notatki/kolor/metadane węzła (canonical mindmap, D-01 odroczone) | `src/components/MyWork/mindmap/NodeDetailDrawer.tsx` |
+| 5 | Drawer szczegółów (workspace) | druga powierzchnia (M05 map-workspace) | `src/components/MyWork/IdeaNodeDetailDrawer.tsx` |
+| 6 | Command palette | szybkie komendy mind-map | `src/components/MyWork/mindmap/MindmapCommandPalette.tsx` |
+| 7 | Inspector | inspekcja struktury mapy | `src/components/MyWork/mindmap/MindmapInspector.tsx` |
+| 8 | Widok 3D | alternatywna wizualizacja | `src/components/MyWork/mindmap/MindMap3DView.tsx` |
+| 9 | Overlay współpracy (presence) | awatary/kursory uczestników org, odbiór `graph_patch` | `src/components/MyWork/mindmap/CollaborationOverlay.tsx` |
+| 10 | Panele AI (overlays) | sentiment/clustering/priority/blind-spots — realny LLM (`Api.getMyIdeaAISuggestions`) | `src/components/MyWork/mindmap/AISentimentOverlay.tsx`, `AIAutoClustering.tsx`, `AIPriorityRecommender.tsx`, … |
+| 11 | Panel propozycji AI (diff modal) | propose→accept/reject węzłów | `src/components/MyWork/mindmap/AIProposalDiffModal.tsx` |
+| 12 | Import zewnętrznej mapy (modal) | FreeMind/XMind/OPML | `src/components/MyWork/mindmap/ImportExternalMap.tsx` |
+| 13 | Eksport PowerPoint/diagram (modal) | „Pobierz HTML (do PDF/PPTX)" (L-04 etykieta uczciwa) | `src/components/MyWork/mindmap/ExportPowerPoint.tsx`, `ExportDiagramCode.tsx` |
+| 14 | Wątek komentarzy węzła | komentarze per-węzeł | `src/components/MyWork/mindmap/NodeCommentThread.tsx` |
+| 15 | Health score mapy | metryka jakości mapy | `src/components/MyWork/mindmap/MapHealthScore.tsx` |
+| 16 | Document/Interview → Map (modale) | generacja mapy z dokumentu/wywiadu | `src/components/MyWork/mindmap/DocumentToMap.tsx`, `InterviewToMap.tsx` |
+
+**Stany przekrojowe:** pełny/edycja / collab cross-org → 403 (`ideaCollabWs.gateway.ts:240-242`) / konflikt 409 → rehydracja. §27 N.D. (canvas).

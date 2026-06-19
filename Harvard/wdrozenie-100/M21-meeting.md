@@ -124,7 +124,7 @@ Otwarte: beta/role-gate (L-03/04), testy S6/S7+PG (L-05), i18n 79× (L-06).
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | `persistNote` cichy catch (INSERT do `notebook_pages`) | W-01,W-02,W-03,W-04 | `meetingIntelligenceService.ts:222-249` | P2 | 3 | **ZAMKNIĘTA** — cichy `.catch(debug)` był MARTWY (dbRun resolves `{success:false}`, nie rzuca); teraz inspekcja `result.success` → `logger.warn` + flaga `MeetingNote.persisted` (caller widzi "save skipped"); cold-start PG proof = osobny krok (potrzebuje caboose) | 2026-06-17 |
+| L-01 | `persistNote` cichy catch (INSERT do `notebook_pages`) | W-01,W-02,W-03,W-04 | `meetingIntelligenceService.ts:239-259` (INSERT `notebook_pages` `:246`) | P2 | 3 | **ZAMKNIĘTA** — cichy `.catch(debug)` był MARTWY (dbRun resolves `{success:false}`, nie rzuca); teraz inspekcja `result.success` → `logger.warn` + flaga `MeetingNote.persisted` (caller widzi "save skipped"). **(skoryg. 2026-06-19: cold-start PG proof DLA `notebook_pages` = dowód POZA repo — niewykonany w kodzie/CI; staging cold-start 2026-06-18 potwierdził tylko tabelę `meetings`, NIE INSERT `notebook_pages` na PG; tabela istnieje (mig.`20260306`), ale runtime-INSERT na PG czeka na żywy proof — potrzebuje caboose.)** | 2026-06-17 |
 | L-02 | transkrypt prompt-injection (subtelna; limit+delimiter-strip JUŻ jest) | W-01 | `meetingIntelligenceService.ts:105-145` | **P3** (był P2) | 3 | **ZAMKNIĘTA** — dane↔instrukcje rozdzielone: instrukcje=`system`, surowy transkrypt=osobna wiadomość `user` (DATA); limit 5000+strip utrzymany jako obrona w głąb; test injection 6/6 PASS | 2026-06-17 |
 | L-03 | beta-gating tylko FE (`/api/meeting` auth-only) | W-01 | `meeting.routes.ts:26-31` | P2 | 3 | **ZAMKNIĘTA** — `betaGate` (SSOT-mirror middleware) podpięty `router.use` na `/api/meeting`; pass-through gdy 'open', 403 BETA_LOCKED gdy MODULE_MEETING→'closed' w `betaAccess.ts` | 2026-06-17 |
 | L-04 | brak rozróżnienia uprawnień (auth org-scope, bez ról) | W-01 | `meeting.routes.ts:32-45,142,157` | P3 | 3 | **ZAMKNIĘTA** — server-side role-gate (`requireMeetingAdmin`, `['admin','owner','superadmin']`) na operacjach destrukcyjnych: `DELETE /:id` + `PATCH /:id/status`; read/create/decisions/follow-ups otwarte dla członków org; wzorzec z `document-studio.routes.ts:623`; test `meeting.routes.test.ts` 18/18 (6 nowych) | 2026-06-17 |
@@ -138,7 +138,7 @@ Otwarte: beta/role-gate (L-03/04), testy S6/S7+PG (L-05), i18n 79× (L-06).
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
 | D-01 | „otwórz jako dokument" + `persistNote` → M04 | realny handoff do Canvas/Doc Studio / świadomy lokalny split-view | Piotr (wspólnie z WP M04) | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-2: globalny dok** (IDE-tabs, in-context notatka/dokument; egzekucja wspólna z M04) |
-| D-02 | archive spotkań | wpiąć backend archive / zostawić świadomie zaślepione | Piotr | TBD | otwarta (modułowa) |
+| D-02 | archive spotkań | wpiąć backend archive / zostawić świadomie zaślepione | Piotr | TBD | **OTWARTA (modułowa)** — archive w UI świadomie zaślepiony (brak backendu); NIE udaje działania, czeka na decyzję Piotra (wpiąć backend vs zostawić zaślepione w v1) |
 
 ### 05 · Flagi / rollout — `ProductionModuleGate` (ukrycie na public-prod); poza public-prod w pełni dostępny; **brak beta/role-gate na `/api/meeting`** (L-03). Migracje `meetings`/`meeting_follow_ups`/`notebook_pages` — testowane TYLKO sqlite, sprawdzić schemat PG (ryzyko drift).
 ### 06 · Ryzyka — persystencja testowana tylko sqlite → schema-drift PG niewykryty (L-05); `persistNote` cichy catch maskuje ew. rozjazd schematu `notebook_pages` na PG; transkrypt injection subtelna persystuje realne rekordy (L-02, częściowo mitygowane); handoff M04 = DP-2 (egzekucja wspólna); dev `.env` → Railway PROD.
@@ -149,3 +149,18 @@ Otwarte: beta/role-gate (L-03/04), testy S6/S7+PG (L-05), i18n 79× (L-06).
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia (karta+INV_E+MASTER handoff+DP-2; brak uwagi żywej M21 — odnotowane) · R2 zero sierot · R3 statusy z dowodem (**L-01 [do cold-start proof]: `notebook_pages` istnieje, karta mylnie podawała `notebook_entries`; L-02 transkrypt guard częściowo ZAMKNIĘTY — korekta vs karta**; L-08/L-09 z commitami) · R4 DoD z liczbami (grep i18n=79, hex=0, `<table>`=0, 9 EP) · R5 **D-01 rozstrzygnięte (→DP-2, wspólnie z M04); D-02 modułowa** · A–E docelowy zlinkowany (D = pipeline AI notes + transkrypt guard + persistNote) · F epiki→stories Gherkin→L-xx · G DoD+S+sec · R6 sesja żywa = Faza 4 (handoff wspólny z M04, pozostaje). **9/9; teczka kompletna do egzekucji.**
+
+## EKRANY (inwentarz) — 2026-06-19
+
+> Inwentarz powierzchni Meeting (FE `src/components/Meeting/`). Format: ekran/widok — cel — plik. Moduł skupiony w jednym hubie z wewnętrznymi widokami.
+
+- **Meeting Hub (lista + kalendarz)** — `TableWithPreviewLayout` + `FilterableTable` + preview pane; `selectedRowId`, click→preview / dblclick→open; filtry statusu; `EntityStatusChip` (scheduled→info / completed→success); §27 zgodny — `src/components/Meeting/MeetingHub.tsx`
+- **Preview pane (szczegóły spotkania)** — podgląd wybranego spotkania: attendees/preRead/agenda/decyzje/follow-upy — wewnątrz `MeetingHub.tsx`
+- **Create/Edit Meeting (formularz)** — CRUD spotkania (JSON attendees/preRead/agenda; status scheduled/completed) — wewnątrz `MeetingHub.tsx`
+- **Decisions / Follow-ups (panele)** — dodawanie decyzji (`decisions_json`) + follow-upów (`meeting_follow_ups`, toggle open/done) — wewnątrz `MeetingHub.tsx`
+- **AI Notes (notatki AI z transkryptu)** — generacja summary/keyPoints/decisions/actionItems; transparentność `source:'ai'|'heuristic'` + amber Callout przy heurystyce; flaga `persisted` (handoff `notebook_pages`) — wewnątrz `MeetingHub.tsx` (BE: `meetingIntelligenceService.ts`)
+- **Operator Brief** — read-only brief czytający tasks/decisions — wewnątrz `MeetingHub.tsx`
+- **„Otwórz jako dokument" (lokalny split-view)** — split-view tab w hubie (NIE handoff Canvas/Doc Studio; D-01 → DP-2) — wewnątrz `MeetingHub.tsx`
+- **Archive (świadomie zaślepiony)** — brak backendu archive (D-02 otwarta) — wewnątrz `MeetingHub.tsx`
+
+*(M21 nie ma osobnych plików-ekranów poza `MeetingHub.tsx` — widoki są wewnętrznymi sekcjami/modalami huba.)*

@@ -104,7 +104,7 @@ Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY 
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | bramka aprobaty eksportu tylko UI (publish-approval) | W-01,W-04 | `OutputsAggregateTabContent.tsx:1000-1004` (FE-only) | P2 | 3 | **ZAMKNIĘTA** — `assertArtifactExportable()` helper dodany w `artifacts.routes.ts`; bramkuje OBA endpointy: `GET /wave5/:id/export-manifest` + `POST /wave5/:id/exported` → 403 `EXPORT_NOT_APPROVED` gdy `publishState` nie in `['approved','published']`; `approved/published` przechodzą; commit `904224c484`. Pełne zamknięcie (report-builder/presentations/table-platform) → v1.1. | 2026-06-17 |
+| L-01 | bramka aprobaty eksportu tylko UI (publish-approval) | W-01,W-04 | `OutputsAggregateTabContent.tsx:1000-1004` (FE-only) | P2 | 3 | **ZAMKNIĘTA (częściowo — wave5; pełny cross-route = v1.1, doprecyz. 2026-06-19)** — `assertArtifactExportable()` helper dodany w `artifacts.routes.ts`; bramkuje OBA endpointy wave5: `GET /wave5/:id/export-manifest` + `POST /wave5/:id/exported` → 403 `EXPORT_NOT_APPROVED` gdy `publishState` nie in `['approved','published']`; `approved/published` przechodzą; commit `904224c484`. **PEŁNE ZAMKNIĘCIE cross-route export-gate (report-builder/presentations/table-platform) = v1.1 (JAWNIE ODŁOŻONE).** Zależność BLOKUJĄCA: gate czyta stan publish/wersji z **M18** → pełna polityka po domknięciu trwałości publish M18 (MASTER §5; W-04). | 2026-06-17 |
 | L-02 | beta-lock tylko nawigacyjny | W-01 | `Sidebar.tsx:156` vs route bez beta-guarda | P2 | 3 | **NAPRAWIONA — `<BetaGate moduleId="MODULE_PRESENTATIONS">` owija `/presentations` route (`AppRoutes.tsx:1989`); zweryfikowane grepem 2026-06-17** | 2026-06-17 |
 | L-03 | share decku bez rate-limit/revoke; expired→404 nie 410 | W-01 | `presentations.routes.ts` (viewer+mint+revoke) | P2 | 3 | **ZAMKNIĘTA** — rate-limit na publicznym viewerze `/shared/:token` (`publicViewerLimiter` 60/min) + mint (`shareRateLimiter` 30/min) + **revoke `DELETE /decks/:id/share`** (nuluje token→viewer 404). **expired→410 świadomie ODRZUCONE**: single-404 surface = anty-enumeracja (spójne z M18; 410 leakowałoby istnienie tokenu) | 2026-06-17 |
 | L-04 | brak testu serwerowej bramki aprobaty (T4) | W-01 | `evidence/f2_tests_report.md` (S3 quality-only) | P0-test | 2 | **ZAMKNIĘTA** — `tests/integration/artifacts/export-approval-guard.contract.test.ts` (9/9 PASS, mutation-verified): `draft`→403 `EXPORT_NOT_APPROVED`, `in_review`→403, `approved`→proceeds (export-manifest), `published`→proceeds (exported), `not found`→404; commit `904224c484` | 2026-06-17 |
@@ -131,3 +131,24 @@ Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY 
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
 R1 wejścia (karta+INV_E+uwaga #1 jako zależność+MASTER) · R2 zero sierot · R3 statusy z dowodem (L-11/L-12 z commitami; L-01 potwierdzone w kodzie 2026-06-13; INV_E 2 pkt STALE skorygowane) · R4 DoD z liczbami (grep i18n=96, hex=0, `<table>`=0) · R5 decyzja z właścicielem (D-01) · A–E docelowy zlinkowany (C 2-warstwowy model bramek + enum API) · F epiki→stories Gherkin↔luki (zależność M18 jawna) · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
+
+## EKRANY (inwentarz) — 2026-06-19
+
+Weryfikacja kodu (read-only): top-3 = PRAWDA. L-01 bramka aprobaty serwerowa: `assertArtifactExportable()` (`artifacts.routes.ts:654`) → `EXPORT_NOT_APPROVED` 403 (`:674`), wpięta w dwa wave5 endpointy (`:686,702`). L-04 test: `tests/integration/artifacts/export-approval-guard.contract.test.ts` istnieje. L-03 share: `publicViewerLimiter` 60/min (`presentations.routes.ts:601,611`), `shareRateLimiter` mint/revoke (`:1808,1819,1877`), revoke→404 komentarz (`:623`). L-06/L-07: `persistKey="rap.outputs.aggregate"` (`OutputsAggregateTabContent.tsx:1076`), `EntityStatusChip` (`:410`).
+
+Hub: `ReportsAndPresentationsHub.tsx` (ModuleHub — Menu 1/2/3, 7 zakładek, breadcrumbs).
+| Ekran / widok | Cel | Plik |
+|---|---|---|
+| Outputs Aggregate (rejestr) | Główna tabela artefaktów (FilterableTable+TableWithPreview, persistKey) | `OutputsAggregateTabContent.tsx` |
+| Reports tab | Zakładka raportów + preview | `ReportsTabContent.tsx`, `previews/ReportPreview.tsx` |
+| Presentations tab | Zakładka decków + preview | `PresentationsTabContent.tsx`, `previews/PresentationPreview.tsx` |
+| Sheets tab | Zakładka arkuszy | `SheetsTabContent.tsx` |
+| Templates tab | Zakładka szablonów + preview | `TemplatesTabContent.tsx`, `previews/TemplatePreview.tsx` |
+| Documents tab | Zakładka dokumentów (taksonomia) | w hubie / aggregate query |
+| Trust-State Preview | 5 filarów trust + lineage | `TrustStatePreviewSection.tsx` |
+| Public Share Viewer | Sanitizowany podgląd decku (`/shared/:token`) | `presentations.routes.ts` (BE) |
+| Stan: pusty | empty-state domenowy | `OutputsAggregateTabContent.tsx` |
+| Stan: błąd | panel błędu + retry | `useRapData.ts:807`→`OutputsAggregateTabContent.tsx:702` |
+| Stan: v8 OFF | dedykowany baner "moduł wyłączony" (moduleDisabled) | `useRapData.ts`→`ReportsAndPresentationsHub.tsx` |
+
+Liczba ekranów: ~11 (7 zakładek taksonomii + trust-state + public viewer + stany).

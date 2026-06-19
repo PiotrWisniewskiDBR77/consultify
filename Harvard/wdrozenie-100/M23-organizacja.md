@@ -42,7 +42,7 @@ Drift admin + §27 + i18n: karta §5. Org-switch wzorcowy.
 - **Model danych:** `organization_profiles` (strategia/cele = najwrażliwsze), `organization_members` (membership+rola), `org_context_store` (Goals/Challenges/Strategy per-org, W3), KG tables, competency tables. Pułapki bigint/jsonb → `pgFlags.ts`.
 - **API per router (metoda · gate · zweryfikowane 2026-06-13):**
   - **`organization-profiles.routes.ts`** (WZORCOWY, najwrażliwsze dane): `userOrgId!==orgId→403` na `:189,378,622` + role-gate na PUT. Martwy `POST /:orgId/analyze` (404, L-09).
-  - **`competency.routes.ts`** (14 endpointów: `GET/POST/PUT/DELETE categories`, `seed-defaults`, skills CRUD): `router.use(verifyToken)` (`:10`) + `requireRole('admin','owner')` na write (`:14`). **NAPRAWIONE** (był P1 no-auth, mount `Gateway.ts:644` bez gatewayVerifyToken).
+  - **`competency.routes.ts`** (14 endpointów: `GET/POST/PUT/DELETE categories`, `seed-defaults`, skills CRUD): `router.use(verifyToken)` (`:10`) + **guard = middleware-wrapper `router.use((req,res,next)=>…)` (`:12-15`): GET przepuszczany (`req.method==='GET'→next()`), write (POST/PUT/DELETE) gated przez `requireRole('admin','owner')` (`:14`)** (skoryg. 2026-06-19: nie „`:14` na PUT" — to nie per-PUT guard, lecz wrapper-`router.use` gatujący wszystkie mutacje). **NAPRAWIONE** (był P1 no-auth, mount `Gateway.ts:644` bez gatewayVerifyToken).
   - **`organization/organization-data.routes.ts`** (5 endp.: `GET /`, `POST /export/:category` `:210`, `POST /export/all` `:349`, `GET/PUT`): `router.use(verifyToken)` (`:14`) + `requireRole('admin','owner')` na export (`:212,:351`). **NAPRAWIONE** (był P1 export bez role-gate → member eksfiltrował audit_log/activity_log).
   - **`organization-context-store.routes.ts`** (2 endp.: `GET /` `:24`, `PUT /` `:64`): `router.use(verifyToken)` (`:15`), per-org, mount `Gateway.ts:700`. **REALNY backend** (była fasada localStorage `useContextBuilderStore.ts:414`).
   - **`auth.routes.ts:707`** — org-switch membership-verified (ACTIVE w `organization_members` przed wydaniem tokenu).
@@ -104,7 +104,7 @@ REALNE: profil firmy (org+role scoped), KG, Members, Domains, Branding, org-swit
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
 | L-01 | Goals/Challenges/Strategy fasada localStorage (nie per-org, nie Teresa) | W-01,W-03 | `organization-context-store.routes.ts:15,64` + `Gateway.ts:700` | P1 fasada | 1/2 | **NIEAKTUALNA** — backend per-org naprawiony `d013ab7c4c`. Zweryfikowane kodem 2026-06-13 + 2026-06-17. |
-| L-02 | `/api/competency/*` bez auth | W-01,W-03,W-04 | `competency.routes.ts:10` (`verifyToken`) `:14` (`requireRole admin,owner`) | P1 sec | 1 | **NIEAKTUALNA** — `verifyToken+requireRole` naprawione `fd8707c5b2`/`e3945bc7fc`. Zweryfikowane 2026-06-13 + 2026-06-17. |
+| L-02 | `/api/competency/*` bez auth | W-01,W-03,W-04 | `competency.routes.ts:10` (`verifyToken`) + `:12-15` (wrapper-middleware: GET przepuszczany, write gated `requireRole('admin','owner')` `:14`) | P1 sec | 1 | **NIEAKTUALNA** — `verifyToken`+wrapper-`requireRole` naprawione `fd8707c5b2`/`e3945bc7fc`. Zweryfikowane 2026-06-13 + 2026-06-17 + 2026-06-19. |
 | L-03 | org-data export bez role-gate | W-01,W-03,W-04 | `organization/organization-data.routes.ts:212,351` (`requireRole admin,owner`) | P1 sec | 1 | **NIEAKTUALNA** — `requireRole` naprawione `fd8707c5b2`. Zweryfikowane 2026-06-13 + 2026-06-17. |
 | L-04 | route `/organization/*` bez role-gate (deep-link member→admin) + drift admin | W-01 | `OrganizationView.tsx` (gate `<Navigate>` zamiast `null`); `AppRoutes.tsx:2207` | P1 sec | 3 | **ZAMKNIĘTA 2026-06-17 a9498afcd6** — 3 warstwy: useEffect-redirect→M24 gated + view-gate `<Navigate AI_CHAT>` gdy admin-section&&!isOrgAdmin (panel nie montuje się) + API role-gate. Test `tests/components/organization-route-role-gate.test.tsx` 9/9 |
 | L-05 | Billing/Limits CTA martwe | W-01,W-05 | `OrganizationAdminPanel.tsx:292,474` | P2 | 3 | **ZAMKNIĘTA 2026-06-17 e8c5b39c51** — DP-11: martwe no-op CTA → honest „Managed by DBR77" (muted chip + nota + info-toast + tooltip); funnel-tracking zachowany, zero pretense checkout |
@@ -130,3 +130,18 @@ REALNE: profil firmy (org+role scoped), KG, Members, Domains, Branding, org-swit
 R1 wejścia pełne (karta + re-audit + kod-R3 + DP-11; uwagi żywe = brak, jawnie dziedziczone) · R2 zero sierot (wejście→luka→story→DoD) · R3 statusy z dowodem (L-01/02/03 NAPRAWIONE — zweryfikowane w kodzie 2026-06-13, korekta rozjazdu karty) · R4 DoD z liczbami (i18n 1/5, hex 15, table 2, 45 SKIP) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-11, D-03=DP-5; D-02 modułowa otwarta); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4. **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Karta nadal opisuje 3×P1 (competency no-auth, export no-role, Goals localStorage) jako żywe blokery, ale weryfikacja kodu potwierdza że WSZYSTKIE są naprawione — bez tej korekty zespół ponownie budowałby już istniejące fixy zamiast dopiąć brakujące testy regresji (L-07).
+
+## EKRANY (inwentarz) — 2026-06-19
+
+Audyt weryfikacyjny: teczka SOLID. 3×P1 (competency no-auth, export no-role, Goals localStorage) zweryfikowane jako NAPRAWIONE w kodzie — `competency.routes.ts` `verifyToken`+method-guard `requireRole('admin','owner')` na write; `organization-data.routes.ts:212` export `requireRole`; `organization-context-store.routes.ts` backend per-org z `verifyToken`. Korekta drobna: teczka cytuje competency requireRole „`:14` na PUT" — faktycznie to wrapper-middleware (GET przepuszczany, write gated), funkcjonalnie zgodne.
+
+| # | Ekran / widok | Cel | Plik komponentu |
+|---|---|---|---|
+| 1 | Organization Admin Panel | Główny panel org: profil firmy, członkowie, Goals/Challenges/Strategy, Billing/Limits (label „Managed by DBR77", L-05 zamknięta) | `src/components/Organization/OrganizationAdminPanel.tsx` |
+| 2 | Competency Catalog | Katalog kompetencji/kategorii/skills (14 endp., CRUD admin/owner-gated) | `src/components/Organization/CompetencyCatalog.tsx` |
+| 3 | Knowledge Graph Explorer | Eksploracja grafu wiedzy organizacji (scope serwerowy) | `src/components/Organization/KnowledgeGraphExplorer.tsx` |
+| 4 | Org Context Summary Banner | Baner kontekstu org dla Teresy (profil + strategia per-org) | `src/components/Organization/OrgContextSummaryBanner.tsx` |
+| 5 | Organization Sidebar | Nawigacja sekcji workspace organizacji | `src/components/Organization/OrganizationSidebar.tsx` |
+| 6 | Organization V8 Canon Panel | Panel kanonu V8 (org-scope) | `src/components/Organization/OrganizationV8CanonPanel.tsx` |
+
+**Liczba ekranów: 6** (teczka §00 wymieniała 5 — `OrganizationV8CanonPanel.tsx` dołożony). Route-gate member→admin (L-04) zamknięty 3-warstwowo (`a9498afcd6`, test 9/9). Branding SVG-XSS (L-09) zamknięty DOMPurify+CSP (test 6/6).
