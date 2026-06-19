@@ -67,7 +67,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                                     min-w-[60px] px-3 py-2 rounded-xl border transition-all touch-ripple
                                     ${
                                       isActive
-                                        ? 'bg-primary-600 border-primary-500 text-white shadow-lg shadow-primary-600/30'
+                                        ? 'bg-navy-900 dark:bg-white/15 border-navy-800 dark:border-white/30 text-white shadow-lg shadow-navy-900/20 dark:shadow-black/20'
                                         : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 active:bg-slate-100 dark:active:bg-white/10'
                                     }
                                 `}
@@ -75,7 +75,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                 {statusDot}
                 <span className={`text-lg font-bold ${isActive ? 'text-white' : ''}`}>{key}</span>
                 <span
-                  className={`text-[9px] font-medium uppercase tracking-wide ${isActive ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
+                  className={`text-[9px] font-medium uppercase tracking-wide ${isActive ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                 >
                   {t('common.level')}
                 </span>

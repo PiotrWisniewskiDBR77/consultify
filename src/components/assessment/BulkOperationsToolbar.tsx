@@ -78,7 +78,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
   minLevel = 1,
   readOnly = false,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
   const [showBatchDialog, setShowBatchDialog] = useState(false);
@@ -219,7 +219,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                   ? 'bg-blue-500 text-white'
                   : 'bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-900'
               }`}
-              title={isPolish ? 'Zaznacz wszystko (Ctrl+A)' : 'Select all (Ctrl+A)'}
+              title={t('assessment.bulk.selectAll', 'Select all (Ctrl+A)')}
             >
               {allSelected ? <CheckSquare size={18} /> : <Square size={18} />}
             </button>
@@ -228,12 +228,12 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
               <>
                 <div className="h-6 w-px bg-slate-300 dark:bg-navy-600" />
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  {selectionStats.count} {isPolish ? 'zaznaczonych' : 'selected'}
+                  {selectionStats.count} {t('assessment.bulk.selected', 'selected')}
                 </span>
                 <button
                   onClick={handleClearSelection}
                   className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
-                  title={isPolish ? 'Wyczyść zaznaczenie (Esc)' : 'Clear selection (Esc)'}
+                  title={t('assessment.bulk.clearSelection', 'Clear selection (Esc)')}
                 >
                   <X size={16} />
                 </button>
@@ -250,7 +250,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                   onClick={handleDecrementLevel}
                   disabled={selectionStats.minLevel <= minLevel}
                   className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-900 rounded-l-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={isPolish ? 'Zmniejsz poziom (-1)' : 'Decrease level (-1)'}
+                  title={t('assessment.bulk.decreaseLevel', 'Decrease level (-1)')}
                 >
                   <Minus size={16} />
                 </button>
@@ -261,7 +261,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                   onClick={handleIncrementLevel}
                   disabled={selectionStats.maxLevel >= maxLevel}
                   className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-900 rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={isPolish ? 'Zwiększ poziom (+1)' : 'Increase level (+1)'}
+                  title={t('assessment.bulk.increaseLevel', 'Increase level (+1)')}
                 >
                   <Plus size={16} />
                 </button>
@@ -278,7 +278,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                         ? 'bg-blue-500 text-white'
                         : 'bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-900 border border-slate-200 dark:border-navy-700'
                     }`}
-                    title={`${isPolish ? 'Ustaw poziom' : 'Set level'} ${level}`}
+                    title={`${t('assessment.bulk.setLevel', 'Set level')} ${level}`}
                   >
                     {level}
                   </button>
@@ -292,7 +292,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                 <button
                   onClick={handleCopy}
                   className="p-2 bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700"
-                  title={isPolish ? 'Kopiuj (Ctrl+C)' : 'Copy (Ctrl+C)'}
+                  title={t('assessment.bulk.copy', 'Copy (Ctrl+C)')}
                 >
                   <Copy size={16} />
                 </button>
@@ -303,7 +303,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                   onClick={onPaste}
                   disabled={!clipboardHasData}
                   className="p-2 bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={isPolish ? 'Wklej (Ctrl+V)' : 'Paste (Ctrl+V)'}
+                  title={t('assessment.bulk.paste', 'Paste (Ctrl+V)')}
                 >
                   <Clipboard size={16} />
                 </button>
@@ -317,7 +317,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                 className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm"
               >
                 <Edit3 size={16} />
-                {isPolish ? 'Edycja grupowa' : 'Batch Edit'}
+                {t('assessment.bulk.batchEdit', 'Batch Edit')}
               </button>
             </div>
           )}
@@ -326,7 +326,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
           {hasSelection && (
             <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
               <span>
-                {isPolish ? 'Śr. poziom:' : 'Avg level:'} {selectionStats.avgLevel}
+                {t('assessment.bulk.avgLevel', 'Avg level:')} {selectionStats.avgLevel}
               </span>
               <span>
                 {isPolish ? 'Zakres:' : 'Range:'} {selectionStats.minLevel}-
@@ -348,7 +348,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
           <div className="bg-white dark:bg-navy-900 rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="p-4 border-b border-slate-200 dark:border-navy-700">
               <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                {isPolish ? 'Edycja grupowa' : 'Batch Edit'}
+                {t('assessment.bulk.batchEdit', 'Batch Edit')}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {isPolish

@@ -88,7 +88,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       onClick={() => onTabChange(tab)}
       className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
         activeTab === tab
-          ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+          ? 'bg-slate-800 text-white dark:bg-white/[0.12]'
           : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/[0.06]'
       }`}
     >

@@ -136,7 +136,7 @@ const DecisionItem: React.FC<{
               }
               onApprove?.(decision.id);
             }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors duration-150"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors duration-150"
             title={t('executive.decisions.approve', 'Approve')}
           >
             <Check size={15} />

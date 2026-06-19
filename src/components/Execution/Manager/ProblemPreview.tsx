@@ -10,6 +10,7 @@ import { CheckCircle2, ChevronRight, ExternalLink, Info, Link2, X, XCircle } fro
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { actionPillClass } from '../../shared/PreviewPane/previewStyles';
 import type { ManagerProblemRow, ProblemAction, ProblemSeverity } from './types';
 
 interface ProblemPreviewProps {
@@ -65,15 +66,10 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
 }
 
 function ActionButton({ action, onClick }: { action: ProblemAction; onClick: () => void }) {
-  const base =
-    'h-8 px-3 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5';
-  const variants: Record<string, string> = {
-    primary: `${base} bg-blue-600 text-white hover:bg-blue-700`,
-    danger: `${base} bg-danger-600 text-white hover:bg-danger-700`,
-    default: `${base} bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700`,
-  };
+  // canon §7.3b: action pills use the shared actionPillClass SSOT (h-9, border, palette schemes).
+  const scheme = action.variant === 'primary' ? 'primary' : action.variant === 'danger' ? 'red' : 'neutral';
   return (
-    <button type="button" onClick={onClick} className={variants[action.variant || 'default']}>
+    <button type="button" onClick={onClick} className={actionPillClass(scheme)}>
       {action.label}
     </button>
   );

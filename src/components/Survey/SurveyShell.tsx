@@ -425,8 +425,8 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
             <div className="mb-6">
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-2">
                 <div
-                  className="bg-indigo-500 h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${progressPct}%` }}
+                  className="h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPct}%`, backgroundColor: 'var(--c-info)' }}
                 />
               </div>
               <p className="text-xs text-gray-600 text-center">

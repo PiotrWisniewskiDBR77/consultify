@@ -71,14 +71,14 @@ export const InitiativeLevelSelector: React.FC<InitiativeLevelSelectorProps> = (
               transition-all
               ${
                 isSelected
-                  ? 'border-primary-500 bg-primary-500/10 ring-2 ring-primary-400 dark:ring-primary-400'
-                  : 'border-slate-200 dark:border-navy-600 hover:border-slate-300 dark:hover:border-navy-500 hover:ring-2 hover:ring-primary-400/50'
+                  ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07] ring-2 ring-slate-400/40 dark:ring-white/10'
+                  : 'border-slate-200 dark:border-navy-600 hover:border-slate-300 dark:hover:border-navy-500 hover:ring-2 hover:ring-slate-400/30'
               }
               ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
             `}
           >
             {isRecommended && (
-              <span className="absolute right-2 top-2 rounded-full bg-primary-500/20 px-2 py-0.5 text-xs font-medium text-primary-600 dark:text-primary-400">
+              <span className="absolute right-2 top-2 rounded-full bg-slate-200/80 dark:bg-white/10 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200">
                 {t('initiatives.templates.recommended')}
               </span>
             )}
@@ -87,7 +87,7 @@ export const InitiativeLevelSelector: React.FC<InitiativeLevelSelectorProps> = (
                 size={20}
                 className={
                   isSelected
-                    ? 'text-primary-600 dark:text-primary-400'
+                    ? 'text-slate-700 dark:text-slate-200'
                     : 'text-slate-500 dark:text-slate-400'
                 }
               />
