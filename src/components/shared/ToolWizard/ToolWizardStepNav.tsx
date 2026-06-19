@@ -76,7 +76,7 @@ export const ToolWizardStepNav: React.FC<ToolWizardStepNavProps> = ({
                 transition-colors duration-150 group
                 ${
                   isCurrent
-                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                    ? 'bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white'
                     : completed
                       ? 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                       : accessible
@@ -91,7 +91,7 @@ export const ToolWizardStepNav: React.FC<ToolWizardStepNavProps> = ({
                 ) : completed ? (
                   <Check size={16} className="text-emerald-500" />
                 ) : isCurrent ? (
-                  <Circle size={16} className="text-primary-500 fill-primary-500/20" />
+                  <Circle size={16} className="text-slate-700 dark:text-slate-200 fill-slate-200/50 dark:fill-white/10" />
                 ) : (
                   <Circle size={16} />
                 )}
@@ -99,7 +99,7 @@ export const ToolWizardStepNav: React.FC<ToolWizardStepNavProps> = ({
 
               <span className="flex-1 min-w-0">
                 <span
-                  className={`block text-sm font-medium truncate ${isCurrent ? 'text-primary-600 dark:text-primary-400' : ''}`}
+                  className={`block text-sm font-medium truncate ${isCurrent ? 'text-slate-900 dark:text-white' : ''}`}
                 >
                   {step.label[lang]}
                 </span>

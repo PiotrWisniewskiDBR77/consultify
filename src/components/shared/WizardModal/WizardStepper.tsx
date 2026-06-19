@@ -84,11 +84,11 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
                 aria-current={isActive ? 'step' : undefined}
                 className={`group relative w-full rounded-xl border px-2 py-1.5 text-left transition-all ${
                   isActive
-                    ? 'border-transparent bg-primary-50 ring-1 ring-primary-500/20 dark:bg-primary-500/15'
+                    ? 'border-transparent bg-slate-100 ring-1 ring-slate-300/60 dark:bg-white/[0.08]'
                     : isComplete
                       ? 'border-emerald-300/50 bg-white text-slate-600 dark:border-emerald-500/20 dark:bg-navy-900/70 dark:text-slate-300'
                       : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
-                } ${isReachable ? 'hover:border-primary-500/50' : 'cursor-not-allowed opacity-60'}`}
+                } ${isReachable ? 'hover:border-slate-400/60 dark:hover:border-white/20' : 'cursor-not-allowed opacity-60'}`}
                 style={isActive ? { borderColor: accentColor } : undefined}
               >
                 <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
                   <span className="min-w-0 flex-1">
                     <span
                       className={`block truncate text-xs font-semibold leading-tight ${
-                        isActive ? 'text-primary-700 dark:text-primary-200' : ''
+                        isActive ? 'text-slate-900 dark:text-white' : ''
                       }`}
                     >
                       {label}
@@ -121,7 +121,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
                       <span
                         className={`mt-0.5 hidden truncate text-[10px] leading-tight sm:block ${
                           isActive
-                            ? 'text-primary-500/80 dark:text-primary-300/70'
+                            ? 'text-slate-600 dark:text-slate-300'
                             : 'text-slate-400'
                         }`}
                       >

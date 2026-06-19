@@ -497,7 +497,7 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
                               text-left transition-colors duration-75
                               ${
                                 isSelected
-                                  ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                                  ? 'bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white'
                                   : 'text-navy-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                               }
                             `}

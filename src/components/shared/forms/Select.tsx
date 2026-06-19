@@ -119,12 +119,12 @@ export const Select: React.FC<SelectProps> = ({
                         onChange(option.value);
                         setOpen(false);
                       }}
-                      className={cn(OPTION_CLASS, isSelected && 'bg-primary-500/10')}
+                      className={cn(OPTION_CLASS, isSelected && 'bg-slate-100 dark:bg-white/[0.07]')}
                     >
                       {option.icon}
                       <span className="min-w-0 flex-1 truncate">{option.label}</span>
                       {isSelected ? (
-                        <Check size={15} className="shrink-0 text-primary-500" />
+                        <Check size={15} className="shrink-0 text-slate-700 dark:text-slate-200" />
                       ) : null}
                     </button>
                   );

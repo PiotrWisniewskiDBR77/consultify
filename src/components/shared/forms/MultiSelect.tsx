@@ -52,8 +52,8 @@ const PANEL_CLASS =
   'bg-white dark:bg-navy-800 shadow-[0_8px_30px_rgba(15,23,42,0.18)] focus:outline-none overflow-hidden';
 
 const CHIP_CLASS =
-  'inline-flex items-center gap-1 rounded-full bg-primary-500/15 px-2 py-0.5 ' +
-  'text-xs text-primary-600 dark:text-primary-300';
+  'inline-flex items-center gap-1 rounded-full bg-slate-200/80 dark:bg-white/10 px-2 py-0.5 ' +
+  'text-xs text-slate-700 dark:text-slate-200';
 
 export const MultiSelect: React.FC<MultiSelectProps> = ({
   values,
@@ -127,7 +127,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                     e.stopPropagation();
                     toggle(option.value);
                   }}
-                  className="rounded-full p-0.5 hover:bg-primary-500/25"
+                  className="rounded-full p-0.5 hover:bg-slate-300/60 dark:hover:bg-white/20"
                 >
                   <X size={11} />
                 </span>
@@ -188,14 +188,14 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                         className={cn(
                           'flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors',
                           'hover:bg-slate-100 dark:hover:bg-white/[0.06]',
-                          isSelected && 'bg-primary-500/10'
+                          isSelected && 'bg-slate-100 dark:bg-white/[0.07]'
                         )}
                       >
                         <span
                           className={cn(
                             'flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors',
                             isSelected
-                              ? 'border-primary-500 bg-primary-500 text-white'
+                              ? 'border-slate-500 bg-slate-700 dark:border-slate-400 dark:bg-slate-500 text-white'
                               : 'border-slate-300 bg-white dark:border-white/20 dark:bg-navy-900'
                           )}
                         >
