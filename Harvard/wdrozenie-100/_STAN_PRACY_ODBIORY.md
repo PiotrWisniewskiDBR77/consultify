@@ -44,39 +44,45 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 
 ---
 
-## Tabela zbiorcza
+## Tabela zbiorcza (dashboard PM)
 
-| # | Moduł | Faza | Epiki | Ekrany | Status | Funkcja | UI |
-|---|---|---|:--:|:--:|---|:--:|:--:|
-| M01 | Czat | 2 | 5 | 20 | 🟡 W TOKU | ⬜ | ⬜ |
-| M02 | Canvas | 3 | 6 | 16 | ⬜ | ⬜ | ⬜ |
-| M03 | My Work — organizer | 2/3 | 6 | 15 | ⬜ | ⬜ | ⬜ |
-| M04 | Notatnik | 3 | 6 | 16 | ⬜ | ⬜ | ⬜ |
-| M05 | Ideas — Zarządzanie | 1 | 7 | 11 | ⬜ | ⬜ | ⬜ |
-| M06 | Ideas — Mind Map | 1/3 | 7 | 16 | ⬜ | ⬜ | ⬜ |
-| M07 | Ideas — Process Flow | 1/3 | 6 | 12 | ⬜ | ⬜ | ⬜ |
-| M08 | Ideas — Table | 3/4 | 5 | 17 | ⬜ | ⬜ | ⬜ |
-| M09 | Ideas — Whiteboard | 1 | 6 | 11 | ⬜ | ⬜ | ⬜ |
-| M10 | Wywiad | 1 | 6 | 28 | ⬜ | ⬜ | ⬜ |
-| M12 | Audyty | 3 | 5 | 7 | ⬜ | ⬜ | ⬜ |
-| M13 | Inicjatywy | 2 | 6 | 30 | ⬜ | ⬜ | ⬜ |
-| M14 | Wdrożenie | 2/4 | 6 | 18 | ⬜ | ⬜ | ⬜ |
-| M15 | Rezultaty | 2 | 6 | 17 | ⬜ | ⬜ | ⬜ |
-| M16 | Finanse | 2 | 5 | 22 | ⬜ | ⬜ | ⬜ |
-| M17 | Outputs | 3 | 4 | 11 | ⬜ | ⬜ | ⬜ |
-| M18 | Dokumenty | 1 | 6 | 7 | ⬜ | ⬜ | ⬜ |
-| M19 | Prezentacje | 3/4 | 4 | 21 | ⬜ | ⬜ | ⬜ |
-| M20 | Tabele Studio | 1 | 4 | 13 | ⬜ | ⬜ | ⬜ |
-| M21 | Meeting | 3/4 | 4 | 8 | ⬜ | ⬜ | ⬜ |
-| M22 | AI OS | 1 | 5 | 9 | ⬜ | ⬜ | ⬜ |
-| M23 | Organizacja | 1 | 5 | 6 | ⬜ | ⬜ | ⬜ |
-| M24 | Admin | 3 | 6 | 5 | ⬜ | ⬜ | ⬜ |
-| M25 | Ustawienia | 2/3 | 5 | 7 | ⬜ | ⬜ | ⬜ |
-| M26 | Portal Partnerski | 4 | 5 | 18 | ⬜ | ⬜ | ⬜ |
-| M27 | SuperAdmin | 3 | 5 | 60 | ⬜ | ⬜ | ⬜ |
-| A1 | Affiliate (descoped) | — | 0 | 0 | ⬜ | ⬜ | ⬜ |
+**Bramki realizacji** (czy zrobione): **Epiki** x/N · **DoD** x/7 · **Testy** zielone w CI · **UI** zrealizowane wg standardu (kryt. 7).
+**Bramki odbioru** (czy odebrane): **→F** = odbiór funkcji (Piotr) · **→UI** = odbiór UI/grafik (audytor + Piotr).
+Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6 bramek = ✅ (Epiki N/N, DoD 7/7, Testy ✅, UI ✅, →F ✅, →UI ✅).
 
-**Postęp programu:** 0 / 27 zamkniętych.
+| # | Moduł | Faza | Epiki | DoD | Testy | UI | →F | →UI | Ekr. | Status |
+|---|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
+| M01 | Czat | 2 | 0/5 | 2/7 | 🟡 | ⬜ | ⬜ | ⬜ | 20 | 🟡 W TOKU |
+| M02 | Canvas | 3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
+| M03 | My Work — organizer | 2/3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 15 | ⬜ NIE ROZP. |
+| M04 | Notatnik | 3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
+| M05 | Ideas — Zarządzanie | 1 | 0/7 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
+| M06 | Ideas — Mind Map | 1/3 | 0/7 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
+| M07 | Ideas — Process Flow | 1/3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 12 | ⬜ NIE ROZP. |
+| M08 | Ideas — Table | 3/4 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
+| M09 | Ideas — Whiteboard | 1 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
+| M10 | Wywiad | 1 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 28 | ⬜ NIE ROZP. |
+| M12 | Audyty | 3 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
+| M13 | Inicjatywy | 2 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 30 | ⬜ NIE ROZP. |
+| M14 | Wdrożenie | 2/4 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 18 | ⬜ NIE ROZP. |
+| M15 | Rezultaty | 2 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
+| M16 | Finanse | 2 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 22 | ⬜ NIE ROZP. |
+| M17 | Outputs | 3 | 0/4 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
+| M18 | Dokumenty | 1 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
+| M19 | Prezentacje | 3/4 | 0/4 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 21 | ⬜ NIE ROZP. |
+| M20 | Tabele Studio | 1 | 0/4 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 13 | ⬜ NIE ROZP. |
+| M21 | Meeting | 3/4 | 0/4 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 8 | ⬜ NIE ROZP. |
+| M22 | AI OS | 1 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 9 | ⬜ NIE ROZP. |
+| M23 | Organizacja | 1 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 6 | ⬜ NIE ROZP. |
+| M24 | Admin | 3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 5 | ⬜ NIE ROZP. |
+| M25 | Ustawienia | 2/3 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
+| M26 | Portal Partnerski | 4 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 18 | ⬜ NIE ROZP. |
+| M27 | SuperAdmin | 3 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 60 | ⬜ NIE ROZP. |
+| A1 | Affiliate (descoped) | — | — | — | — | — | — | — | 0 | ⬜ rm orphan |
+
+**Status modułu (słownik PM):** ⬜ NIE ROZPOCZĘTY · 🟡 W TOKU · 🟢 GOTOWY DO ODBIORU (6 bramek realizacji ✅, czeka na →F/→UI) · ✅ ZAMKNIĘTY (wszystkie 6 ✅).
+
+**Postęp programu:** 0 / 27 zamkniętych · 1 w toku (M01) · bramki realizacji zaliczone: Epiki 0/27 · DoD 0/27 · Testy 0/27 · UI 0/27.
 
 ---
 
