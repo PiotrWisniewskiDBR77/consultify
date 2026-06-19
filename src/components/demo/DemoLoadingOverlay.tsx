@@ -127,7 +127,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                         isCompleted
                           ? 'bg-emerald-500/20'
                           : isActive
-                            ? 'bg-primary-500/20'
+                            ? 'bg-white/15'
                             : 'bg-white/5'
                       }`}
                     >
@@ -136,7 +136,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                       ) : (
                         <Icon
                           size={20}
-                          className={isActive ? 'text-primary-400' : 'text-white/30'}
+                          className={isActive ? 'text-white/90' : 'text-white/30'}
                         />
                       )}
                     </div>

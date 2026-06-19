@@ -268,7 +268,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                           onClick={() => setSelectedScenario(scenario.id)}
                           className={`rounded-xl border px-4 py-3 text-left transition-colors ${
                             selectedScenario === scenario.id
-                              ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                              ? 'border-slate-400 dark:border-slate-500 bg-slate-100 dark:bg-slate-700/40'
                               : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                           }`}
                         >
