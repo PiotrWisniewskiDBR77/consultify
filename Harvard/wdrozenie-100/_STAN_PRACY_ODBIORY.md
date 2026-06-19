@@ -46,43 +46,44 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 
 ## Tabela zbiorcza (dashboard PM)
 
-**Bramki realizacji** (czy zrobione): **Epiki** x/N · **DoD** x/7 · **Testy** zielone w CI · **UI** zrealizowane wg standardu (kryt. 7).
+**Bramki realizacji** (czy zrobione): **Epiki** x/N · **DoD** x/7 · **Testy** zrealizowane/spec (scenariusze manualne E2E) · **UI** zrealizowane wg standardu (kryt. 7).
 **Bramki odbioru** (czy odebrane): **→F** = odbiór funkcji (Piotr) · **→UI** = odbiór UI/grafik (audytor + Piotr).
-Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6 bramek = ✅ (Epiki N/N, DoD 7/7, Testy ✅, UI ✅, →F ✅, →UI ✅).
+Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6 bramek = ✅ (Epiki N/N, DoD 7/7, Testy spec/spec, UI ✅, →F ✅, →UI ✅).
+**Testy x/N:** N = scenariusze ze specyfikacji manualnej E2E [`../Testy manualne/`](../Testy%20manualne/) (łącznie **1954**); x = zrealizowane+PASS (z dowodem). Plus automaty `tests/` (unit/integ/e2e).
 
 | # | Moduł | Faza | Epiki | DoD | Testy | UI | →F | →UI | Ekr. | Status |
 |---|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| M01 | Czat | 2 | 0/5 | 2/7 | 🟡 | ⬜ | ⬜ | ⬜ | 20 | 🟡 W TOKU |
-| M02 | Canvas | 3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
-| M03 | My Work — organizer | 2/3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 15 | ⬜ NIE ROZP. |
-| M04 | Notatnik | 3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
-| M05 | Ideas — Zarządzanie | 1 | 0/7 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
-| M06 | Ideas — Mind Map | 1/3 | 0/7 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
-| M07 | Ideas — Process Flow | 1/3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 12 | ⬜ NIE ROZP. |
-| M08 | Ideas — Table | 3/4 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
-| M09 | Ideas — Whiteboard | 1 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
-| M10 | Wywiad | 1 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 28 | ⬜ NIE ROZP. |
-| M12 | Audyty | 3 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
-| M13 | Inicjatywy | 2 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 30 | ⬜ NIE ROZP. |
-| M14 | Wdrożenie | 2/4 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 18 | ⬜ NIE ROZP. |
-| M15 | Rezultaty | 2 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
-| M16 | Finanse | 2 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 22 | ⬜ NIE ROZP. |
-| M17 | Outputs | 3 | 0/4 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
-| M18 | Dokumenty | 1 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
-| M19 | Prezentacje | 3/4 | 0/4 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 21 | ⬜ NIE ROZP. |
-| M20 | Tabele Studio | 1 | 0/4 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 13 | ⬜ NIE ROZP. |
-| M21 | Meeting | 3/4 | 0/4 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 8 | ⬜ NIE ROZP. |
-| M22 | AI OS | 1 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 9 | ⬜ NIE ROZP. |
-| M23 | Organizacja | 1 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 6 | ⬜ NIE ROZP. |
-| M24 | Admin | 3 | 0/6 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 5 | ⬜ NIE ROZP. |
-| M25 | Ustawienia | 2/3 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
-| M26 | Portal Partnerski | 4 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 18 | ⬜ NIE ROZP. |
-| M27 | SuperAdmin | 3 | 0/5 | 0/7 | ⬜ | ⬜ | ⬜ | ⬜ | 60 | ⬜ NIE ROZP. |
-| A1 | Affiliate (descoped) | — | — | — | — | — | — | — | 0 | ⬜ rm orphan |
+| M01 | Czat | 2 | 0/5 | 2/7 | 0/13 🟡 | ⬜ | ⬜ | ⬜ | 20 | 🟡 W TOKU |
+| M02 | Canvas | 3 | 0/6 | 0/7 | 0/20 | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
+| M03 | My Work — organizer | 2/3 | 0/6 | 0/7 | 0/39 | ⬜ | ⬜ | ⬜ | 15 | ⬜ NIE ROZP. |
+| M04 | Notatnik | 3 | 0/6 | 0/7 | 0/54 | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
+| M05 | Ideas — Zarządzanie | 1 | 0/7 | 0/7 | 0/62 | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
+| M06 | Ideas — Mind Map | 1/3 | 0/7 | 0/7 | 0/121 | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
+| M07 | Ideas — Process Flow | 1/3 | 0/6 | 0/7 | 0/94 | ⬜ | ⬜ | ⬜ | 12 | ⬜ NIE ROZP. |
+| M08 | Ideas — Table | 3/4 | 0/5 | 0/7 | 0/103 | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
+| M09 | Ideas — Whiteboard | 1 | 0/6 | 0/7 | 0/126 | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
+| M10 | Wywiad | 1 | 0/6 | 0/7 | 0/75 | ⬜ | ⬜ | ⬜ | 28 | ⬜ NIE ROZP. |
+| M12 | Audyty | 3 | 0/5 | 0/7 | 0/49 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
+| M13 | Inicjatywy | 2 | 0/6 | 0/7 | 0/68 | ⬜ | ⬜ | ⬜ | 30 | ⬜ NIE ROZP. |
+| M14 | Wdrożenie | 2/4 | 0/6 | 0/7 | 0/63 | ⬜ | ⬜ | ⬜ | 18 | ⬜ NIE ROZP. |
+| M15 | Rezultaty | 2 | 0/6 | 0/7 | 0/58 | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
+| M16 | Finanse | 2 | 0/5 | 0/7 | 0/70 | ⬜ | ⬜ | ⬜ | 22 | ⬜ NIE ROZP. |
+| M17 | Outputs | 3 | 0/4 | 0/7 | 0/84 | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
+| M18 | Dokumenty | 1 | 0/6 | 0/7 | 0/72 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
+| M19 | Prezentacje | 3/4 | 0/4 | 0/7 | 0/81 | ⬜ | ⬜ | ⬜ | 21 | ⬜ NIE ROZP. |
+| M20 | Tabele Studio | 1 | 0/4 | 0/7 | 0/95 | ⬜ | ⬜ | ⬜ | 13 | ⬜ NIE ROZP. |
+| M21 | Meeting | 3/4 | 0/4 | 0/7 | 0/59 | ⬜ | ⬜ | ⬜ | 8 | ⬜ NIE ROZP. |
+| M22 | AI OS | 1 | 0/5 | 0/7 | 0/92 | ⬜ | ⬜ | ⬜ | 9 | ⬜ NIE ROZP. |
+| M23 | Organizacja | 1 | 0/5 | 0/7 | 0/80 | ⬜ | ⬜ | ⬜ | 6 | ⬜ NIE ROZP. |
+| M24 | Admin | 3 | 0/6 | 0/7 | 0/53 | ⬜ | ⬜ | ⬜ | 5 | ⬜ NIE ROZP. |
+| M25 | Ustawienia | 2/3 | 0/5 | 0/7 | 0/71 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
+| M26 | Portal Partnerski | 4 | 0/5 | 0/7 | 0/70 | ⬜ | ⬜ | ⬜ | 18 | ⬜ NIE ROZP. |
+| M27 | SuperAdmin | 3 | 0/5 | 0/7 | 0/89 | ⬜ | ⬜ | ⬜ | 60 | ⬜ NIE ROZP. |
+| A1 | Affiliate (descoped) | — | — | — | 0/31 | — | — | — | 0 | ⬜ rm orphan |
 
 **Status modułu (słownik PM):** ⬜ NIE ROZPOCZĘTY · 🟡 W TOKU · 🟢 GOTOWY DO ODBIORU (6 bramek realizacji ✅, czeka na →F/→UI) · ✅ ZAMKNIĘTY (wszystkie 6 ✅).
 
-**Postęp programu:** 0 / 27 zamkniętych · 1 w toku (M01) · bramki realizacji zaliczone: Epiki 0/27 · DoD 0/27 · Testy 0/27 · UI 0/27.
+**Postęp programu:** 0 / 27 zamkniętych · 1 w toku (M01) · bramki realizacji zaliczone: Epiki 0/27 · DoD 0/27 · Testy 0/1923 scenariuszy (M01–M27, bez M11) · UI 0/27.
 
 ---
 
