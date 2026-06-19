@@ -1206,7 +1206,7 @@ export const InvoiceCenterView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-[var(--c-info)] shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >

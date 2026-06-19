@@ -1488,13 +1488,13 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.selectInsightsHint}</p>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-primary-300/60 bg-primary-50 px-3 py-2 text-xs text-primary-900 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
+      <div className="flex items-center justify-between rounded-xl border border-[var(--c-info)]/30 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:border-[var(--c-info)]/20 dark:bg-white/[0.05] dark:text-slate-200">
         <span className="font-medium">
           {t.selectedSummary}: {selectedInsightSummary.count} · {selectedInsightSummary.findings}{' '}
           {t.findings}
         </span>
         {selectedInsightSummary.count === 0 && (
-          <span className="text-[11px] text-primary-700/80 dark:text-primary-200/70">{t.none}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">{t.none}</span>
         )}
       </div>
 
@@ -1534,14 +1534,14 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 aria-pressed={checked}
                 className={`flex w-full items-start gap-2.5 rounded-xl border p-2.5 text-left transition-all ${
                   checked
-                    ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                    ? 'border-[var(--c-info)]/50 bg-slate-100 dark:bg-white/[0.08]'
                     : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
                 }`}
               >
                 <span
                   className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
                     checked
-                      ? 'border-primary-500 bg-primary-500 text-white'
+                      ? 'border-[var(--c-info)] bg-[var(--c-info)] text-white'
                       : 'border-slate-300 bg-white dark:border-white/[0.2] dark:bg-navy-900'
                   }`}
                 >
@@ -1582,15 +1582,15 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     return (
       <div
         data-testid="initiative-wizard-core-panel"
-        className="rounded-2xl border border-primary-300/60 bg-primary-50/60 p-3 dark:border-primary-400/20 dark:bg-primary-500/10"
+        className="rounded-2xl border border-[var(--c-info)]/30 bg-slate-50 p-3 dark:border-[var(--c-info)]/20 dark:bg-white/[0.05]"
       >
         <div className="flex items-start gap-2">
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-300" />
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--c-info)]" />
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-primary-900 dark:text-primary-100">
+            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               {t.coreTitle}
             </div>
-            <p className="mt-0.5 text-xs text-primary-800/80 dark:text-primary-100/70">
+            <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
               {t.coreHint}
             </p>
           </div>
@@ -1618,7 +1618,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                     onClick={() => void fillFieldWithAi(def.key)}
                     disabled={aiFillingField !== null}
                     title={t.fillWithAi}
-                    className="inline-flex items-center gap-1 rounded-lg border border-primary-300 bg-white px-1.5 py-0.5 text-[10px] font-medium text-primary-700 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-400/30 dark:bg-navy-900/60 dark:text-primary-200 dark:hover:bg-primary-500/10"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-info)]/40 bg-white px-1.5 py-0.5 text-[10px] font-medium text-[var(--c-info)] transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[var(--c-info)]/30 dark:bg-navy-900/60 dark:hover:bg-white/[0.08]"
                   >
                     {isFilling ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -1633,7 +1633,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   onChange={(event) => setCoreField(def.key, event.target.value)}
                   rows={def.rows}
                   placeholder={isEmpty ? `${t[def.labelKey]}…` : undefined}
-                  className="w-full resize-none rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+                  className="w-full resize-none rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 transition-all focus:border-[var(--c-info)] focus:ring-1 focus:ring-[var(--c-info)]/30 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
                 />
               </div>
             );
@@ -1705,8 +1705,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 onClick={() => togglePriority(priority.id)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                   active
-                    ? 'border-primary-500/50 bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-200'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
+                    ? 'border-[var(--c-info)]/50 bg-slate-100 text-[var(--c-info)] dark:bg-white/[0.08] dark:text-[var(--c-info)]'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-[var(--c-info)]/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
                 }`}
               >
                 {priority.label[language]}
@@ -1725,7 +1725,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             max={10}
             value={targetCount}
             onChange={(event) => setTargetCount(Number(event.target.value))}
-            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-[var(--c-info)] focus:ring-1 focus:ring-[var(--c-info)]/30 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
           />
         </label>
         <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -1770,7 +1770,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           onChange={(event) => setManualNotes(event.target.value)}
           rows={4}
           placeholder={t.consultantNotePlaceholder}
-          className="w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+          className="w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 transition-all focus:border-[var(--c-info)] focus:ring-1 focus:ring-[var(--c-info)]/30 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
       </div>
     </div>
@@ -1872,8 +1872,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 aria-pressed={active}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                   active
-                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400/40 dark:bg-primary-500/15 dark:text-primary-200'
-                    : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400/50 dark:border-white/[0.12] dark:bg-navy-900/60 dark:text-slate-200'
+                    ? 'border-[var(--c-info)] bg-slate-100 text-[var(--c-info)] dark:border-[var(--c-info)]/40 dark:bg-white/[0.08] dark:text-[var(--c-info)]'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-[var(--c-info)]/50 dark:border-white/[0.12] dark:bg-navy-900/60 dark:text-slate-200'
                 }`}
               >
                 {resolving && active ? (
@@ -1936,7 +1936,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               onClick={() => setSelectedCandidateId(candidate.id)}
               className={`w-full rounded-xl border p-2.5 text-left transition-all ${
                 active
-                  ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                  ? 'border-[var(--c-info)]/50 bg-slate-100 dark:bg-white/[0.08]'
                   : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
               }`}
             >
@@ -1993,7 +1993,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           </div>
 
           {selectedCandidate.suggestedKpi && (
-            <div className="mt-2.5 rounded-xl border border-primary-300/60 bg-primary-50 px-2.5 py-1.5 text-xs text-primary-800 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
+            <div className="mt-2.5 rounded-xl border border-[var(--c-info)]/30 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 dark:border-[var(--c-info)]/20 dark:bg-white/[0.05] dark:text-slate-200">
               KPI: {selectedCandidate.suggestedKpi}
             </div>
           )}
@@ -2036,7 +2036,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                         return (
                           <span
                             key={`${type}-${id}-${idx}`}
-                            className="mr-1 inline-flex items-center rounded-full bg-primary-50 px-1.5 py-0.5 text-[10px] text-primary-700 dark:bg-primary-500/10 dark:text-primary-200"
+                            className="mr-1 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 dark:bg-white/[0.08] dark:text-slate-300"
                             title={title}
                           >
                             {type}
@@ -2077,7 +2077,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             <button
               type="button"
               onClick={() => triageCandidate(selectedCandidate, 'ready_for_charter')}
-              className="rounded-xl border border-primary-300 bg-white px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-50 dark:border-primary-400/30 dark:bg-navy-900/50 dark:text-primary-200 dark:hover:bg-primary-500/10"
+              className="rounded-xl border border-[var(--c-info)]/40 bg-white px-3 py-2 text-xs font-medium text-[var(--c-info)] transition-colors hover:bg-slate-50 dark:border-[var(--c-info)]/30 dark:bg-navy-900/50 dark:hover:bg-white/[0.05]"
             >
               Ready
             </button>
@@ -2090,7 +2090,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 const match = findExistingMatch(selectedCandidate, existingInitiatives);
                 void triageCandidate(selectedCandidate, 'already_covered', match?.id || null);
               }}
-              className="mt-1.5 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-primary-300 bg-white px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-50 dark:border-primary-400/30 dark:bg-navy-900/50 dark:text-primary-200 dark:hover:bg-primary-500/10"
+              className="mt-1.5 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-[var(--c-info)]/40 bg-white px-3 py-2 text-xs font-medium text-[var(--c-info)] transition-colors hover:bg-slate-50 dark:border-[var(--c-info)]/30 dark:bg-navy-900/50 dark:hover:bg-white/[0.05]"
             >
               <Link2 className="h-3 w-3" />
               {t.linkAlreadyCovered}
@@ -2112,9 +2112,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
 
   const renderGovernance = () => (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-primary-300/60 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
+      <div className="rounded-2xl border border-[var(--c-info)]/30 bg-slate-50 p-3 text-sm text-slate-800 dark:border-[var(--c-info)]/20 dark:bg-white/[0.05] dark:text-slate-100">
         <div className="font-medium">{t.bulkSelectTitle}</div>
-        <div className="mt-0.5 text-xs text-primary-800/80 dark:text-primary-100/70">
+        <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
           {t.bulkSelectHint}
         </div>
       </div>
@@ -2177,7 +2177,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                     data-testid="initiative-wizard-create-toggle"
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
                       checked
-                        ? 'border-primary-500 bg-primary-500 text-white'
+                        ? 'border-[var(--c-info)] bg-[var(--c-info)] text-white'
                         : 'border-slate-300 bg-white dark:border-white/[0.2] dark:bg-navy-900'
                     }`}
                   >
@@ -2223,7 +2223,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   {!resolved && similarTopMatch(candidate) && (
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
                       {similarResolutions[candidate.id] === 'create_anyway' ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-1.5 py-0.5 font-medium text-primary-700 dark:bg-primary-500/15 dark:text-primary-200">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 font-medium text-slate-700 dark:bg-white/[0.08] dark:text-slate-200">
                           <Check className="h-2.5 w-2.5" />
                           {t.createAnywayOption}
                         </span>

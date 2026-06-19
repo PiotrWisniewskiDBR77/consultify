@@ -129,6 +129,36 @@ REALNE ~95% z 60+ zakładek (Tenant Ops, AI Operations 27 pod-zakł., System, Go
 ### 06 · Ryzyka — Pełna weryfikacja Fazy 3/4 (live P0/P1 proof na control-plane) **WYMAGA konta superadmin (🟦)** — bez niego DoD #2/#6 nie domknie się, deferred pozostaje. Dev `.env` → Railway PROD czyni testy zapisu na control-plane szczególnie ryzykownymi (NAJWYŻSZA ostrożność, read-only). Side-router-weak-gate to wzorzec systemowy (skan wszystkich mountów).
 
 ### 06b · §27 + tokeny (audyt 2026-06-17) — **§27: ~80 surowych `<table>` w 60 plikach** (`superadmin/` + `components/SuperAdmin/`), zero `FilterableTable` w module = **największy dług §27 programu**. Priorytet konwersji: OrganizationsView, InvoiceCenterView, BillingCenterView, ComplianceCenterView, PartnerSettlementsView, IAM audit/log. **ODROCZONE — wymaga konta superadmin do wizualnej weryfikacji każdej tabeli (🟦); wielosesyjny dedykowany sprint, NIE blind-convert bez preview.** **Tokeny: ZERO raw-hex leak** — `rose`/`red` = skonfigurowany token „HBS Red" (danger), `crimson` = brand (DP-8 legalne, `tailwind.config.js:543/556/71`); ~460 dekoracyjnych `rose-*` to dług SEMANTYCZNY (danger-token użyty ozdobnie), nie hex-leak — backlog polish, nie blocker v1.
+### 08 · AUDYT WIZUALNY 2026-06-18 (z kodu — bez konta superadmin)
+
+**Status:** 🟡 (audyt kodu, brak live-screenshots — wymaga konta superadmin do pełnego zamknięcia)
+
+**SYS-1 — crimson w stanach zaznaczenia (naprawione w tym sesji):**
+| Plik | Instancja | Fix |
+|------|-----------|-----|
+| `TenantCommandCenterView.tsx:379` | `border-primary-500 bg-primary-50` (org row selected) | → `border-[var(--c-info)] bg-slate-100` |
+| `SecurityPoliciesView.tsx:600` | `bg-primary-50 border-primary-300` (org card selected) | → `bg-slate-100 border-[var(--c-info)]/40` |
+| `SecurityPoliciesView.tsx:606` | `bg-gradient from-primary-500` (org avatar) | → `from-slate-600 to-slate-700` |
+| `SecurityPoliciesView.tsx:617` | `bg-primary-500/10 text-primary-600` (Custom Policy badge) | → `bg-[var(--c-info)]/10 text-[var(--c-info)]` |
+| `SecurityPoliciesView.tsx:1016` | `text-primary-600` (tab active) | → `text-[var(--c-info)]` |
+| `CustomRolesBuilder.tsx:300` | `bg-primary-500/10 border-primary-500/50` (role selected) | → `bg-slate-100 border-[var(--c-info)]/50` |
+| `CustomRolesBuilder.tsx:441` | `bg-primary-500/10 border-primary-500/30` (permission assigned) | → `bg-slate-100 border-[var(--c-info)]/30` |
+| `SystemSettings.tsx:1022` | `bg-primary-600/10 text-primary-700` (table row selected) | → `bg-slate-100 text-[var(--c-info)]` |
+| `PlaybookTemplatesListView.tsx:293` | `bg-primary-600/10 text-primary-700` (filter "All" active) | → `bg-slate-100 text-[var(--c-info)]` |
+| `APIManagementView.tsx:1035` | `text-primary-600` (tab active) | → `text-[var(--c-info)]` |
+| `InvoiceCenterView.tsx:1209` | `text-primary-600` (tab active) | → `text-[var(--c-info)]` |
+| `FeatureUpdatesAdminView.tsx:709` | `border-primary-400 bg-primary-50/60` (item active) | → `border-[var(--c-info)]/50 bg-slate-50` |
+
+**SYS-2 — CTA przyciski:** SuperAdminSidebar używa `danger-` (czerwień dla SuperAdmin console) — to deliberate design dla control-plane, NIE SYS-2 naruszenie.
+
+**SYS-7 — surowe `{item.status}` bez EntityStatusChip:** ~73 surowych `<table>` potwierdzone (§27 dług). Triage: ODROCZONY — wymaga konta superadmin do wizualnej weryfikacji każdej tabeli (patrz §06b).
+
+**Empty states:** Brak ilustrowanych stanów pustych we wszystkich views — wisząca obserwacja, NIE bloker v1.
+
+**Spójność komponentów:** Brak `FilterableTable`, zero `EntityStatusChip` w module — największy dług §27 programu. Biblioteka komponentów z reszty systemu NIE używana (dedykowany shell). Dług odroczony (patrz §06b).
+
+**Naprawione commitami:** patrz log commit `fix(M27+M13)` w tym PR.
+
 ### 07 · Log — 2026-06-13 (teczka pogłębiona): R3 potwierdza oba P0 boczne NAPRAWIONE (`91c8245559`, `:793/799/805` + `:22`), L-09 `69ffc1fd86`, L-10 `36ceb52c60` (live-verify pending); DP-10 (i18n internal) + DP-8 (palety) wpisane; tabela superadmin-gate per router zweryfikowana + epiki Gherkin dodane. Re-audit 2026-06-11: F 3→7; Fala 2: A 23→24; ocena 58. Re-ocena po Fazach 3/4 (🟦 konto superadmin).
 
 ---

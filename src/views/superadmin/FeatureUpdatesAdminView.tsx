@@ -706,7 +706,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
                   key={item.id}
                   className={`rounded-xl border p-4 transition-colors ${
                     active
-                      ? 'border-primary-400 bg-primary-50/60 dark:border-primary-700 dark:bg-primary-900/10'
+                      ? 'border-[var(--c-info)]/50 bg-slate-50 dark:border-[var(--c-info)]/30 dark:bg-white/[0.06]'
                       : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
                   }`}
                 >

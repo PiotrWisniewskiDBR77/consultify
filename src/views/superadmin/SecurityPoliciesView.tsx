@@ -597,13 +597,13 @@ export const SecurityPoliciesView: React.FC = () => {
             }}
             className={`p-4 rounded-xl border cursor-pointer transition-all ${
               selectedOrg === org.id
-                ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-300 dark:border-primary-500/30'
-                : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30'
+                ? 'bg-slate-100 dark:bg-white/[0.08] border-[var(--c-info)]/40 dark:border-[var(--c-info)]/30'
+                : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-[var(--c-info)]/30 dark:hover:border-[var(--c-info)]/20'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white font-bold">
                   {org.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -614,7 +614,7 @@ export const SecurityPoliciesView: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               {org.hasCustomPolicy ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--c-info)]/10 text-[var(--c-info)]">
                   <Settings size={12} />
                   Custom Policy
                 </span>
@@ -1013,7 +1013,7 @@ export const SecurityPoliciesView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-[var(--c-info)] shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
