@@ -82,7 +82,7 @@ describe('NavItem (L2)', () => {
       />
     );
 
-    expect(screen.getByRole('button').className).toContain('bg-white/[0.08]');
+    expect(screen.getByRole('button').className).toContain('bg-slate-200/60');
 
     rerender(
       <NavItem
@@ -102,7 +102,7 @@ describe('NavItem (L2)', () => {
       />
     );
 
-    expect(screen.getByRole('button').className).toContain('bg-white/[0.08]');
+    expect(screen.getByRole('button').className).toContain('bg-slate-200/60');
     expect(screen.getByRole('button')).toHaveAttribute('data-chat-toggle', 'true');
   });
 

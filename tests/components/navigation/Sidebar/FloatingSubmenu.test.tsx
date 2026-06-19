@@ -174,7 +174,7 @@ describe('FloatingSubmenu (L2)', () => {
     expect(onItemClick).toHaveBeenCalledTimes(2);
 
     // active style (light)
-    expect(screen.getByRole('button', { name: 'Active' }).className).toContain('bg-primary-50');
+    expect(screen.getByRole('button', { name: 'Active' }).className).toContain('bg-slate-200/60');
 
     rerender(
       <FloatingSubmenu
@@ -190,7 +190,7 @@ describe('FloatingSubmenu (L2)', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Active' }).className).toContain('bg-white/[0.08]');
+    expect(screen.getByRole('button', { name: 'Active' }).className).toContain('bg-white/10');
     expect(screen.getByRole('button', { name: /Inactive/ }).className).toContain(
       'hover:bg-white/[0.05]'
     );

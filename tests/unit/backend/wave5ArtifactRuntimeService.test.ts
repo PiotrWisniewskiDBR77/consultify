@@ -462,10 +462,10 @@ describe('Wave 5 artifact runtime', () => {
     expect(appRoutes).toContain('path={ROUTES.AI_OS.ARTIFACTS}');
     expect(menu).toContain('AI_OS_ARTIFACTS');
     expect(menu).toContain('AI_OS_RESEARCH');
-    expect(panel).toContain('Create mutation proposal');
+    expect(panel).toContain('createMutationProposal');
     expect(panel).toContain('commitMutation');
-    expect(panel).toContain('Missing fields return questions');
-    expect(panel).toContain('Generate Output');
+    expect(panel).toContain('missingFieldsReturnQuestionsNotGuesses');
+    expect(panel).toContain('generateOutput');
     expect(chat).toContain('Api.createWave5Artifact');
     expect(chat).toContain('mapChatArtifactToWave5Type');
     expect(chat).toContain('trustBundleId');
