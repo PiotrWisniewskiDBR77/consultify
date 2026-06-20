@@ -30,6 +30,9 @@ Masz narzędzie Agent/Task — **możesz i POWINIENEŚ odpalać wielu sub-agent�
 2. **Zalogowana przeglądarka Piotra** (Claude in Chrome MCP): `list_connected_browsers` → `navigate http://localhost:3000/my-work/notebook`. NIE preview-przeglądarka.
 3. Dowód = screenshot + payload Network + logi backendu.
 
+## Testy manualne = Playwright + screenshoty (bramka „Manual N/N")
+54 scenariusze z `TESTY_M04_NOTATNIK.md` MUSZĄ być wykonane jako **specy Playwright** w `tests/e2e/` (NIE tylko live-klik). Wzór: istniejące `tests/e2e/smoke/*`. Rozdaj sub-agentom per obszar — każdy pisze specy Playwright + zapisuje screenshoty: **`await page.screenshot({ path: 'tests/e2e/screenshots/m04/<obszar>-<id>.png' })`** (min. 1 .png/scenariusz). Krytyczne: edytor autosave-persist po reload, handoff→inicjatywa (realny INSERT), slash-menu — każde ze screenshotem. Uruchom: `npx playwright test`. Bramka „Manual" zalicza się **TYLKO z zapisanymi .png**.
+
 ## Twarde zasady
 - Tylko M04. NIGDY `git add -A`/`.` — jawne ścieżki. prod=centerbeam: zero zmian bez zgody (Londyn→demo).
 - Sekrety/env: nie ustawiasz — zgłaszasz Piotrowi.

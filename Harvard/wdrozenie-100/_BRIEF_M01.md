@@ -35,6 +35,9 @@ Czat wymaga zalogowanej, działającej apki. Środowisko:
 3. Dowód = screenshot + payload Network + logi backendu (`preview_logs`).
 4. ⚠ Provider AI bywa bez balansu (deepseek/openrouter) — jeśli „AI returned no output", sprawdź logi backendu czy to balans (środowisko) czy realny bug; przełącz model (selektor „Model" prawy-góra) jeśli trzeba.
 
+## Testy manualne = Playwright + screenshoty (bramka „Manual N/N")
+13 scenariuszy z `TESTY_M01_CZAT.md` MUSZĄ być wykonane jako **specy Playwright** w `tests/e2e/` (NIE tylko live-klik). Wzór: istniejące `tests/e2e/smoke/*` + `tests/e2e/ai/ai-chat.spec.ts`. Każdy scenariusz: setup auth, przejście kroków, asercje, **`await page.screenshot({ path: 'tests/e2e/screenshots/m01/<id>.png' })`** (min. 1 .png/scenariusz, w krokach krytycznych więcej). Uruchom: `npx playwright test tests/e2e/<twoje-specy>`. Bramka „Manual" w tabeli zalicza się **TYLKO z zapisanymi .png**. Live-Chrome = eksploracja/diagnoza; dowód odbioru = spec + screenshoty (zapisz je też do `Harvard/Testy manualne/screens/m01/` albo zlinkuj w raporcie).
+
 ## Twarde zasady
 - Tylko M01. NIGDY `git add -A`/`.` — jawne ścieżki. prod=centerbeam: zero zmian bez osobnej zgody Piotra (pracujesz Londyn→demo).
 - Sekrety/env/flagi Railway: nie ustawiasz — zgłaszasz Piotrowi.

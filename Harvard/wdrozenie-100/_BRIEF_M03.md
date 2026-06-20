@@ -29,6 +29,9 @@ Masz narzędzie Agent/Task — **możesz i POWINIENEŚ odpalać wielu sub-agent�
 2. Sterujesz **zalogowaną przeglądarką Piotra** (Claude in Chrome MCP): `list_connected_browsers` → `navigate http://localhost:3000/my-work`. NIE preview-przeglądarka (niezalogowana).
 3. Dowód = screenshot + payload Network + logi backendu (`preview_logs`).
 
+## Testy manualne = Playwright + screenshoty (bramka „Manual N/N")
+39 scenariuszy z `TESTY_M03_MOJA_PRACA.md` MUSZĄ być wykonane jako **specy Playwright** w `tests/e2e/` (NIE tylko live-klik). Wzór: istniejące `tests/e2e/smoke/*`. Rozdaj sub-agentom per powierzchnia — każdy pisze specy Playwright dla swojej powierzchni + zapisuje screenshoty: **`await page.screenshot({ path: 'tests/e2e/screenshots/m03/<powierzchnia>-<id>.png' })`** (min. 1 .png/scenariusz). Uruchom: `npx playwright test`. Bramka „Manual" zalicza się **TYLKO z zapisanymi .png**. Live-Chrome = eksploracja; dowód = spec + screenshoty.
+
 ## Twarde zasady
 - Tylko M03. NIGDY `git add -A`/`.` — jawne ścieżki. prod=centerbeam: zero zmian bez osobnej zgody (Londyn→demo).
 - Env/OAuth/sekrety: nie ustawiasz — zgłaszasz Piotrowi (L-07 OAuth = jego).

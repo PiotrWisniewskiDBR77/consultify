@@ -32,6 +32,9 @@ Jesteś agentem-wykonawcą **modułu M02 Canvas** (split-view w czacie + deliver
 3. Sterujesz **zalogowaną przeglądarką Piotra** (Claude in Chrome): `list_connected_browsers` → `navigate http://localhost:3000/chat`. W czacie poproś Teresę o dokument/arkusz/deck → canvas montuje się po prawej. Dowód = screenshot + payload Network (`/api/deliverables/generations`) + logi backendu.
 4. ⚠ Provider AI bywa bez balansu — odróżnij błąd środowiska (balans) od realnego buga (logi backendu).
 
+## Testy manualne = Playwright + screenshoty (bramka „Manual N/N")
+20 scenariuszy z `TESTY_M02_CANVAS.md` MUSZĄ być wykonane jako **specy Playwright** w `tests/e2e/` (NIE tylko live-klik). Wzór: istniejące `tests/e2e/smoke/work-canvas-*.spec.ts`. Każdy scenariusz: setup auth + flaga deliverables, przejście kroków, asercje, **`await page.screenshot({ path: 'tests/e2e/screenshots/m02/<id>.png' })`** (min. 1 .png/scenariusz). Uruchom: `npx playwright test tests/e2e/<twoje-specy>`. Bramka „Manual" zalicza się **TYLKO z zapisanymi .png**. Krytyczne: handoff czat→canvas, generacja triady, autosave-persist po reload, viewer publiczny — każde ze screenshotem.
+
 ## Twarde zasady
 - Tylko M02. NIGDY `git add -A`/`.` — jawne ścieżki. prod=centerbeam: zero zmian bez osobnej zgody (Londyn→demo).
 - Sekrety/env/flagi Railway: nie ustawiasz — zgłaszasz Piotrowi (flaga deliverables to KLUCZOWY bloker odbioru na demo/prod).

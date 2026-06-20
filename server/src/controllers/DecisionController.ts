@@ -304,16 +304,23 @@ export class DecisionController {
       const orgId = req.user?.organizationId;
       const decisionCols = await getTableColumns('decisions');
       const hasEscalationLevelCol = decisionCols.has('escalation_level');
+      // Guard the blocker subquery: if `decision_impacts` is absent (schema drift
+      // on an under-migrated env) the whole query would error and queryAll would
+      // swallow it to [], silently emptying the decisions list. Default to 0.
+      const hasDecisionImpacts = (await getTableColumns('decision_impacts')).has('is_blocker');
+      const blockedItemsCountSelect = hasDecisionImpacts
+        ? `(SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE)`
+        : `0`;
       // Mirror the Initiatives `?source` filter semantics (e.g. ?source=interview_insight).
       const normalizedSourceFilter = source ? source.toString().trim().toLowerCase() : '';
 
       let sql = `
-        SELECT 
+        SELECT
           d.*,
           owner.first_name || ' ' || owner.last_name as owner_name,
           requester.first_name || ' ' || requester.last_name as requested_by_name,
           p.name as project_name,
-          (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE) as blocked_items_count
+          ${blockedItemsCountSelect} as blocked_items_count
         FROM decisions d
         LEFT JOIN users owner ON d.decision_maker_id = owner.id
         LEFT JOIN users requester ON d.created_by = requester.id
