@@ -54,7 +54,9 @@ describe('PriorityCell', () => {
     const { container: cLast } = render(
       <PriorityCell value="P3" fieldOptions={{ levels: 'P0_P1_P2_P3' }} />
     );
-    expect(cFirst.innerHTML).toMatch(/rose/);
+    // Highest priority uses the semantic `danger` token (migrated from rose by the
+    // Visual Quality program); lowest stays neutral slate.
+    expect(cFirst.innerHTML).toMatch(/danger/);
     expect(cLast.innerHTML).toMatch(/slate/);
   });
 

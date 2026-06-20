@@ -4,6 +4,7 @@
  */
 import { Loader2, Wand2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type { ColumnDef, TableNode } from './tableTypes';
@@ -37,9 +38,14 @@ export const InlineAIFill: React.FC<InlineAIFillProps> = ({ node, column, ideaId
         const filled = result?.[0]?.value;
         if (filled != null) {
           onFill(node.id, column.key, filled);
+        } else {
+          // AI returned nothing — surface it instead of leaving the cell silently empty (Z-06).
+          const isPl = i18n.language?.startsWith('pl');
+          toast(isPl ? 'AI nie zwróciło wartości' : 'AI returned no value', { icon: '🤔' });
         }
       } catch {
-        // silent fail — cell stays empty
+        const isPl = i18n.language?.startsWith('pl');
+        toast.error(isPl ? 'Nie udało się wypełnić komórki' : 'Failed to fill cell');
       } finally {
         setLoading(false);
       }
@@ -93,6 +99,7 @@ export const BatchAIFillButton: React.FC<BatchAIFillButtonProps> = ({
   const handleBatchFill = useCallback(async () => {
     if (loading || emptyCount === 0) return;
     setLoading(true);
+    let filledCount = 0;
     try {
       const { Api } = await import('@/services/api');
       const targetNodes = selectedIds.size > 0 ? nodes.filter((n) => selectedIds.has(n.id)) : nodes;
@@ -115,16 +122,27 @@ export const BatchAIFillButton: React.FC<BatchAIFillButtonProps> = ({
           for (const item of result) {
             if (item?.rowId && item?.value != null) {
               onFill(item.rowId, col.key, item.value);
+              filledCount++;
             }
           }
         }
       }
+      // Summarise the batch instead of failing silently (Z-06).
+      if (filledCount > 0) {
+        toast.success(isPl ? `Wypełniono ${filledCount} komórek` : `Filled ${filledCount} cells`);
+      } else {
+        toast(isPl ? 'AI nie zwróciło żadnych wartości' : 'AI returned no values', { icon: '🤔' });
+      }
     } catch {
-      // silent
+      toast.error(
+        isPl
+          ? `Wypełnianie nie powiodło się${filledCount > 0 ? ` (wypełniono ${filledCount})` : ''}`
+          : `AI fill failed${filledCount > 0 ? ` (filled ${filledCount})` : ''}`
+      );
     } finally {
       setLoading(false);
     }
-  }, [columns, emptyCount, i18n.language, ideaId, loading, nodes, onFill, selectedIds]);
+  }, [columns, emptyCount, i18n.language, ideaId, isPl, loading, nodes, onFill, selectedIds]);
 
   if (emptyCount === 0) return null;
 

@@ -5100,6 +5100,17 @@ router.post(
         .json({ error: 'Invalid request body', details: parsed.error.flatten() });
     }
 
+    // M08 L-03 (sibling): verify the idea is owned by this user+org before spending
+    // LLM budget. ai-generate takes :id from the path and calls an LLM; without this
+    // guard an authenticated user can burn the org's budget on arbitrary idea UUIDs
+    // (cost vector — context comes from the body, so it is not a data leak). Mirrors
+    // the ai-suggestions / ai-table-action / ai-fill guards.
+    const ownsGenerate = await queryHelpers.queryOne<any>(
+      `SELECT 1 AS ok FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!ownsGenerate) return res.status(404).json({ error: 'Idea not found' });
+
     const { generatorType, tool, context } = parsed.data;
 
     try {

@@ -21,6 +21,7 @@ const mockQueryAll = vi.hoisted(() => vi.fn<[string, unknown[]], Promise<unknown
 const mockGenerateSuggestions = vi.hoisted(() => vi.fn());
 const mockGenerateTableAction = vi.hoisted(() => vi.fn());
 const mockGenerateAIFill = vi.hoisted(() => vi.fn());
+const mockGenerateIdeaAI = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -81,6 +82,10 @@ vi.mock('../../../server/src/services/ideaAISuggestionsService.js', () => ({
   generateAIFill: (...a: unknown[]) => mockGenerateAIFill(...a),
 }));
 
+vi.mock('../../../server/src/services/ideaAIGeneratorService.js', () => ({
+  generateIdeaAI: (...a: unknown[]) => mockGenerateIdeaAI(...a),
+}));
+
 import myWorkRoutes from '../../../server/src/routes/my-work.routes.ts';
 
 const USER_ID = 'user-1';
@@ -113,6 +118,12 @@ const AI_ENDPOINTS = [
     body: { prompt: 'fill it', rows: [], language: 'en' },
     spy: mockGenerateAIFill,
   },
+  {
+    name: 'ai-generate',
+    path: (id: string) => `/api/my-work/my-ideas/${id}/ai-generate`,
+    body: { generatorType: 'table_columns', tool: 'table', context: { title: 'x' } },
+    spy: mockGenerateIdeaAI,
+  },
 ] as const;
 
 describe('M08 L-03 — AI endpoint ownership guard', () => {
@@ -124,6 +135,7 @@ describe('M08 L-03 — AI endpoint ownership guard', () => {
     mockGenerateSuggestions.mockResolvedValue({ suggestions: [] });
     mockGenerateTableAction.mockResolvedValue({ type: 'noop' });
     mockGenerateAIFill.mockResolvedValue([]);
+    mockGenerateIdeaAI.mockResolvedValue({ proposals: [] });
   });
 
   for (const ep of AI_ENDPOINTS) {
