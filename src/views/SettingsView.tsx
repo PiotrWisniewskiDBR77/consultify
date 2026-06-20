@@ -275,6 +275,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   //  - 'shortcuts': the Keyboard Shortcuts customizer is hidden until a global
   //    shortcut-dispatch system exists (rebinds are otherwise not wired app-wide).
   useEffect(() => {
+    // A legacy alias (e.g. /settings/integrations) resolves to 'overview' here
+    // before its own redirect lands, so it would falsely match a hidden section.
+    // Let the legacy resolver redirect win instead of bouncing to Profile —
+    // otherwise this effect clobbers it (both fire on the same mount commit).
+    if (resolveLegacySyncSettingsEntry(location.pathname, currentUser?.role)) return;
     const hiddenSections: SettingsSection[] = [
       'overview',
       'tenant-defaults',
@@ -286,7 +291,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (hiddenSections.includes(activeSection)) {
       navigate(ROUTES.SETTINGS.PROFILE, { replace: true });
     }
-  }, [activeSection, navigate]);
+  }, [activeSection, currentUser?.role, location.pathname, navigate]);
 
   // Handle section change - update URL
   const handleSectionChange = useCallback(

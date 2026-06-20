@@ -3295,14 +3295,23 @@ export class InitiativeController {
         return;
       }
 
-      if (!['done', 'cancelled'].includes(initiative.status)) {
-        res.status(400).json({ error: 'Only done or cancelled initiatives can be archived' });
+      // Status is persisted with the canonical UPPERCASE enum values
+      // (InitiativeStatus.DONE/CANCELLED). A previous lowercase guard
+      // ('done'/'cancelled') never matched, so archive was effectively
+      // always rejected — normalize before comparing. DRAFT initiatives
+      // are not archivable; use hard delete to discard them.
+      const currentStatus = normalizeStatus(initiative.status);
+      if (!['DONE', 'CANCELLED'].includes(currentStatus)) {
+        res.status(400).json({
+          error: 'Only done or cancelled initiatives can be archived',
+          status: currentStatus,
+        });
         return;
       }
 
       await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
-                status = 'archived',
+        `UPDATE initiatives SET
+                status = 'ARCHIVED',
                 updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
         [initiativeId]
@@ -3312,8 +3321,116 @@ export class InitiativeController {
         success: true,
         message: 'Initiative archived',
         initiativeId,
-        newStatus: 'archived',
+        newStatus: 'ARCHIVED',
       });
+    }
+  );
+
+  /**
+   * Hard-delete an initiative (DELETE /api/initiatives/:id).
+   *
+   * Object-level authorization: org isolation (a foreign-org id resolves to
+   * 404, never leaks) plus owner-or-admin (any owner/sponsor/creator column,
+   * or an organization admin). Most child rows are removed by ON DELETE
+   * CASCADE FKs; this handler additionally clears the references the schema
+   * does NOT cascade:
+   *   - digitization_analyses.initiative_id (RESTRICT FK — would otherwise
+   *     block the delete with a FK violation on Postgres),
+   *   - link_graph_edges (no FK — edges on either side),
+   *   - v8_provenance_ledger (referenced by output_id, no FK).
+   *
+   * This is the path that lets DRAFT initiatives created via the notebook
+   * "convert" flow be discarded (previously unreachable: the only DELETE
+   * handler lived in an unmounted legacy router).
+   */
+  static deleteInitiative = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const role = (req.user as any)?.role as string | undefined;
+      const initiativeId = req.params.id;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Org-scoped read: a cross-org id never resolves here, so the response
+      // is an indistinguishable 404 (no existence leak).
+      const existing = await queryHelpers.queryOne<{
+        id: string;
+        owner_business_id: string | null;
+        owner_execution_id: string | null;
+        sponsor_id: string | null;
+        created_by: string | null;
+      }>(
+        `SELECT id, owner_business_id, owner_execution_id, sponsor_id, created_by
+           FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+
+      if (!existing) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const ownerIds = [
+        existing.owner_business_id,
+        existing.owner_execution_id,
+        existing.sponsor_id,
+        existing.created_by,
+      ]
+        .filter(Boolean)
+        .map((v) => String(v));
+      const isOwner = !!userId && ownerIds.includes(String(userId));
+      const isAdmin = String(role || '')
+        .toUpperCase()
+        .includes('ADMIN');
+      if (!isOwner && !isAdmin) {
+        res.status(403).json({
+          error: 'Only the initiative owner or an organization admin can delete it',
+          code: 'INITIATIVE_DELETE_FORBIDDEN',
+        });
+        return;
+      }
+
+      // Clear references the DB FKs do not cascade. Each is best-effort: a
+      // table absent in a given schema variant must not block the delete.
+      try {
+        await queryHelpers.queryRun(
+          'UPDATE digitization_analyses SET initiative_id = NULL WHERE initiative_id = ?',
+          [initiativeId]
+        );
+      } catch (e: any) {
+        logger.warn('[initiatives] delete: digitization_analyses unlink skipped:', e?.message);
+      }
+      try {
+        await queryHelpers.queryRun(
+          `DELETE FROM link_graph_edges
+             WHERE organization_id = ?
+               AND ((source_type = 'initiative' AND source_id = ?)
+                 OR (target_type = 'initiative' AND target_id = ?))`,
+          [orgId, initiativeId, initiativeId]
+        );
+      } catch (e: any) {
+        logger.warn('[initiatives] delete: link_graph_edges cleanup skipped:', e?.message);
+      }
+      try {
+        await queryHelpers.queryRun(
+          'DELETE FROM v8_provenance_ledger WHERE organization_id = ? AND output_id = ?',
+          [orgId, initiativeId]
+        );
+      } catch (e: any) {
+        logger.warn('[initiatives] delete: provenance cleanup skipped:', e?.message);
+      }
+
+      // Hard delete — child tables with ON DELETE CASCADE clean themselves up.
+      await queryHelpers.queryRun('DELETE FROM initiatives WHERE id = ? AND organization_id = ?', [
+        initiativeId,
+        orgId,
+      ]);
+
+      res.json({ success: true, message: 'Initiative deleted', initiativeId });
     }
   );
 

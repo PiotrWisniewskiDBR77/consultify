@@ -446,14 +446,17 @@ describe('L3: Decision Management Integration', () => {
                 title: 'Concurrent Approval Test',
             });
 
-            // Multiple users try to approve simultaneously
+            // Multiple users try to approve simultaneously via the canonical
+            // decide endpoint (PATCH /:id/decide with { decision: 'approved' }).
             const promises = [
                 request(app)
-                    .post(`/api/decisions/${newDecision.id}/approve`)
-                    .set('Authorization', `Bearer ${managerToken}`),
+                    .patch(`/api/decisions/${newDecision.id}/decide`)
+                    .set('Authorization', `Bearer ${managerToken}`)
+                    .send({ decision: 'approved' }),
                 request(app)
-                    .post(`/api/decisions/${newDecision.id}/approve`)
-                    .set('Authorization', `Bearer ${adminToken}`),
+                    .patch(`/api/decisions/${newDecision.id}/decide`)
+                    .set('Authorization', `Bearer ${adminToken}`)
+                    .send({ decision: 'approved' }),
             ];
 
             const results = await Promise.all(promises);

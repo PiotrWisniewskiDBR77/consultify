@@ -692,9 +692,11 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 label: t('common.delete', 'Usuń'),
                                 icon: Trash2,
                                 variant: 'danger' as const,
-                                disabled: true,
-                                description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
-                                onClick: () => {},
+                                disabled: !onDelete,
+                                description: !onDelete
+                                  ? t('common.comingSoonBackend', 'Wkrótce (backend)')
+                                  : undefined,
+                                onClick: () => onDelete?.(initiative),
                               },
                             ],
                           },

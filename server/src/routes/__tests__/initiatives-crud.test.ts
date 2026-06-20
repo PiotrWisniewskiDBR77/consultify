@@ -308,3 +308,88 @@ describe('initiatives CRUD routes', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('DELETE /api/initiatives/:id — hard delete (owner/org-scope)', () => {
+  const OTHER_USER = 'user-someone-else';
+
+  it('owner (non-admin) can delete their initiative (200) + runs the final DELETE', async () => {
+    currentRole = 'project_manager'; // passes write-guard, NOT an admin
+    // Org-scoped queryOne resolves an initiative owned by the caller.
+    mockQueryFirst.mockResolvedValue({
+      id: INITIATIVE_ID,
+      owner_business_id: UID,
+      owner_execution_id: UID,
+      sponsor_id: UID,
+      created_by: UID,
+    });
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const res = await request(app).delete(`/api/initiatives/${INITIATIVE_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.initiativeId).toBe(INITIATIVE_ID);
+    // The hard DELETE FROM initiatives ran with the org guard in the WHERE clause.
+    const ranInitiativeDelete = mockQueryRun.mock.calls.some(
+      ([sql, params]) =>
+        /DELETE FROM initiatives/i.test(String(sql)) &&
+        Array.isArray(params) &&
+        params.includes(INITIATIVE_ID) &&
+        params.includes(ORG)
+    );
+    expect(ranInitiativeDelete).toBe(true);
+  });
+
+  it('returns 404 for an initiative in another org (no existence leak)', async () => {
+    // Org-scoped read misses → handler cannot distinguish "missing" from "foreign org".
+    mockQueryFirst.mockResolvedValue(null);
+    mockQueryRun.mockResolvedValue({ changes: 0 });
+
+    const res = await request(app).delete(`/api/initiatives/${INITIATIVE_ID}`);
+
+    expect(res.status).toBe(404);
+    // Crucially: no DELETE was attempted against the row.
+    const attemptedDelete = mockQueryRun.mock.calls.some(([sql]) =>
+      /DELETE FROM initiatives/i.test(String(sql))
+    );
+    expect(attemptedDelete).toBe(false);
+  });
+
+  it('returns 403 for a non-owner, non-admin caller (object-level authz)', async () => {
+    currentRole = 'project_manager';
+    mockQueryFirst.mockResolvedValue({
+      id: INITIATIVE_ID,
+      owner_business_id: OTHER_USER,
+      owner_execution_id: OTHER_USER,
+      sponsor_id: OTHER_USER,
+      created_by: OTHER_USER,
+    });
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const res = await request(app).delete(`/api/initiatives/${INITIATIVE_ID}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('INITIATIVE_DELETE_FORBIDDEN');
+    const attemptedDelete = mockQueryRun.mock.calls.some(([sql]) =>
+      /DELETE FROM initiatives/i.test(String(sql))
+    );
+    expect(attemptedDelete).toBe(false);
+  });
+
+  it('an org admin can delete an initiative they do not own (200)', async () => {
+    currentRole = 'admin';
+    mockQueryFirst.mockResolvedValue({
+      id: INITIATIVE_ID,
+      owner_business_id: OTHER_USER,
+      owner_execution_id: OTHER_USER,
+      sponsor_id: OTHER_USER,
+      created_by: OTHER_USER,
+    });
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const res = await request(app).delete(`/api/initiatives/${INITIATIVE_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+});

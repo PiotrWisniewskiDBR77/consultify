@@ -25,7 +25,8 @@ vi.mock('framer-motion', () => ({
 // Mock i18next
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, defaultValue: string) => defaultValue,
+    t: (key: string, opts?: string | { defaultValue?: string }) =>
+      (typeof opts === 'string' ? opts : opts?.defaultValue) ?? key,
   }),
 }));
 

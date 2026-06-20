@@ -18,7 +18,8 @@ vi.mock('@/store/useAppStore', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, defaultValue?: string) => defaultValue || key,
+    t: (key: string, opts?: string | { defaultValue?: string }) =>
+      (typeof opts === 'string' ? opts : opts?.defaultValue) ?? key,
   }),
 }));
 

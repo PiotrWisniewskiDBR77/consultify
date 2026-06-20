@@ -22,7 +22,7 @@ afterEach(() => {
 describe('useProcessFlowValidation', () => {
   it('validate calls backend and stores result', async () => {
     const validationResult = { valid: true, issues: [], validated_at: '2026-04-11T00:00:00Z' };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => validationResult });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: validationResult }) });
 
     const { result } = renderHook(() =>
       useProcessFlowValidation({ processId: 'p1', nodes: [], edges: [], autoValidate: false })
@@ -48,7 +48,7 @@ describe('useProcessFlowValidation', () => {
       ],
       validated_at: '2026-04-11T00:00:00Z',
     };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => validationResult });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: validationResult }) });
 
     const { result } = renderHook(() =>
       useProcessFlowValidation({ processId: 'p1', nodes: [], edges: [], autoValidate: false })
@@ -163,7 +163,10 @@ describe('useProcessFlowReadback', () => {
     });
 
     expect(result.current.result).toEqual(readback);
-    expect(mockFetch).toHaveBeenCalledWith('/api/v8/process-flow/p1/readback');
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/v8/process-flow/p1/readback',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
   });
 
   it('does nothing when processId is null', async () => {
@@ -190,6 +193,9 @@ describe('useProcessFlowExport', () => {
     await act(async () => {
       await result.current.exportAs('json');
     });
-    expect(mockFetch).toHaveBeenCalledWith('/api/v8/process-flow/p1/export/json');
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/v8/process-flow/p1/export/json',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
   });
 });

@@ -1,13 +1,16 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import {
-  expectAppMounted,
-  gotoRuntimeGateRoute,
-  isStrictCanvasGate,
-  seedE2EAuthWithBootstrap,
-} from './runtime-gate-helpers';
-import { collectPageSignals, expectNoRawInternals } from './work-canvas-helpers';
+  collectPageSignals,
+  createWorkCanvasDraft,
+  expectNoRawInternals,
+  loginAsOwner,
+  openWorkCanvasDraft,
+  suppressOnboarding,
+} from './work-canvas-helpers';
 
+// Selects an exact phrase inside the Markdown textarea and fires the events the panel's
+// selection listener (captureMarkdownSelection → onSelect/onMouseUp) depends on.
 async function selectTextInMarkdown(page: Page, selectedText: string) {
   const mdView = page.locator('[data-testid="canvas-md-view"]');
   await expect(mdView).toBeVisible({ timeout: 30000 });
@@ -24,82 +27,58 @@ async function selectTextInMarkdown(page: Page, selectedText: string) {
   }, selectedText);
 }
 
+test.beforeEach(async ({ page }) => {
+  await suppressOnboarding(page);
+});
+
 test.describe('Work Canvas editor flow Playwright gate', () => {
   test.setTimeout(120000);
 
-  test('opens DocumentCanvas and runs selection edit preview loop', async ({ page }, testInfo) => {
-    const strictCanvasGate = isStrictCanvasGate();
+  test('runs the deterministic selection edit → preview → apply loop', async ({
+    page,
+  }, testInfo) => {
     const signals = collectPageSignals(page);
-    await seedE2EAuthWithBootstrap(page);
-    const workPanelButton = page
-      .locator('button[aria-label="Open work panel"], [data-testid="chat-work-panel-button"]')
-      .first();
-    let ready = false;
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      await gotoRuntimeGateRoute(page, '/chat');
-      try {
-        await workPanelButton.waitFor({ state: 'visible', timeout: 10000 });
-        await expectAppMounted(page);
-        ready = true;
-        break;
-      } catch {
-        await page.waitForTimeout(1200);
-        continue;
-      }
-    }
-    if (!ready && strictCanvasGate) {
-      throw new Error(
-        'Strict Canvas gate: chat work-panel trigger did not mount in runtime after retries.'
-      );
-    }
-    if (ready) {
-      await expect(workPanelButton).toBeVisible({ timeout: 30000 });
-      await workPanelButton.click();
-    } else {
-      // Fallback for non-strict runtimes where chat shell mounts slower than Canvas route.
-      await gotoRuntimeGateRoute(page, '/ai/work-canvas?kind=document');
-    }
-    await expect(page.locator('[data-testid="canvas-document-view"]')).toBeVisible({
-      timeout: 30000,
+    const token = await loginAsOwner(page);
+    const selectedText = 'Shape a business output with Teresa on the left and the document on the right.';
+    const replacement = '- [ ] Ship the business output and assign an owner.';
+    const draft = await createWorkCanvasDraft(page.request, token, {
+      title: 'Editor flow selection edit',
+      content: `# Editor flow selection edit\n\n${selectedText}\n\n- existing bullet\n`,
     });
 
+    await openWorkCanvasDraft(page, draft);
+
+    // Edit in the Markdown view, where the selection edit panel (deterministic,
+    // server-diffed replace_selection) is available.
     await page.getByRole('button', { name: 'Canvas menu' }).click();
     await page.getByRole('button', { name: 'Markdown view' }).click();
-    const preferredSelection =
-      'Shape a business output with Teresa on the left and the document on the right.';
-    const currentMarkdown = await page.locator('[data-testid="canvas-md-view"]').inputValue();
-    const selectedText = currentMarkdown.includes(preferredSelection)
-      ? preferredSelection
-      : currentMarkdown
-          .split('\n')
-          .map((line) => line.trim())
-          .find((line) => line.length >= 24) || currentMarkdown.slice(0, 64);
     await selectTextInMarkdown(page, selectedText);
 
-    await page.getByRole('button', { name: 'Rewrite' }).click();
-    await page
-      .getByLabel('Selection AI instruction')
-      .fill('Rewrite this selection as an action checklist with owner.');
-    await page.getByRole('button', { name: 'Podgląd AI edit' }).click();
+    // Selection surfaces the edit panel.
+    const editPanel = page.locator('[data-testid="canvas-selection-edit-panel"]').first();
+    await expect(editPanel).toBeVisible({ timeout: 15000 });
 
-    await expect(page.locator('[data-testid="canvas-operation-preview"]')).toContainText(
-      'Replace selected Canvas text',
-      { timeout: 30000 }
-    );
+    const replacementField = page.getByLabel('Selection edit replacement');
+    await replacementField.fill(replacement);
+    await page.getByRole('button', { name: 'Preview edit' }).click();
+
+    // Deterministic preview (no LLM): proposed change + diff samples render.
+    const preview = page.locator('[data-testid="canvas-operation-preview"]');
+    await expect(preview).toContainText('Replace selected Canvas text', { timeout: 30000 });
     await expect(page.locator('[data-testid="canvas-operation-diff-preview"]')).toContainText(
-      'Shape a business output'
+      'Ship the business output'
     );
 
+    // Revise reopens the draft (preview clears, replacement retained).
     await page.getByRole('button', { name: 'Revise edit' }).click();
-    await expect(page.locator('[data-testid="canvas-operation-preview"]')).toHaveCount(0);
-    await expect(page.getByLabel('Selection AI instruction')).toHaveValue(
-      'Rewrite this selection as an action checklist with owner.'
-    );
+    await expect(preview).toHaveCount(0);
+    await expect(replacementField).toHaveValue(replacement);
 
-    await page.getByRole('button', { name: 'Podgląd AI edit' }).click();
-    await expect(page.locator('[data-testid="canvas-operation-preview"]')).toBeVisible({
-      timeout: 30000,
-    });
+    // Re-preview and apply. Re-establish the selection first: reopening the draft can
+    // collapse the textarea selection that previewSelectionEdit reads from.
+    await selectTextInMarkdown(page, selectedText);
+    await page.getByRole('button', { name: 'Preview edit' }).click();
+    await expect(preview).toBeVisible({ timeout: 30000 });
     await page.getByRole('button', { name: 'Apply edit suggestion' }).click();
     await expect(page.locator('[data-testid="canvas-action-feedback"]')).toContainText(
       'Selection edit applied',

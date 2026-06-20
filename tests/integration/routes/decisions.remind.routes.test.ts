@@ -16,6 +16,10 @@ vi.mock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
   apiAuthRateLimiter: (_req: any, _res: any, next: any) => next(),
 }));
 
+vi.mock('../../../server/src/middleware/rbac.middleware.js', () => ({
+  requireOrgAccess: () => (_req: any, _res: any, next: any) => next(),
+}));
+
 vi.mock('../../../server/src/controllers/DecisionController.js', () => ({
   default: {
     getDecisions: noop,
@@ -26,6 +30,8 @@ vi.mock('../../../server/src/controllers/DecisionController.js', () => ({
     decide: noop,
     escalateDecision: noop,
     remindDecision,
+    getCreatedTasks: noop,
+    transitionWorkflow: noop,
   },
 }));
 

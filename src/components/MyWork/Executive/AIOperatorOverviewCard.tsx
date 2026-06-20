@@ -320,7 +320,25 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                   {t('executive.aiOperator.nextMilestone', 'Next milestone')}
                 </div>
                 <div className="text-sm text-slate-900 dark:text-white">
-                  {plan?.nextMilestone || t('executive.aiOperator.none', 'None')}
+                  {(() => {
+                    // `plan` is a DB-persisted JSON blob; legacy plans store
+                    // nextMilestone as { name, targetDate } while current plans
+                    // store a plain string. Never render the object raw.
+                    const milestone: any = plan?.nextMilestone;
+                    if (!milestone) return t('executive.aiOperator.none', 'None');
+                    if (typeof milestone === 'string') return milestone;
+                    if (typeof milestone === 'object') {
+                      const name = milestone.name || milestone.title || '';
+                      const date = milestone.targetDate
+                        ? new Date(milestone.targetDate).toLocaleDateString()
+                        : '';
+                      return (
+                        [name, date].filter(Boolean).join(' · ') ||
+                        t('executive.aiOperator.none', 'None')
+                      );
+                    }
+                    return String(milestone);
+                  })()}
                 </div>
               </div>
               <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-3">

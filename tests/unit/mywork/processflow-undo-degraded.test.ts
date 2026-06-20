@@ -121,13 +121,12 @@ afterEach(() => {
 describe('useProcessFlowDegraded', () => {
   it('checkHealth calls health endpoint and sets state', async () => {
     const healthData = {
-      isDegraded: true,
-      scenarios: [
-        { id: 'offline_mode', active: true, message: 'Server unreachable' },
-        { id: 'ai_unavailable', active: false, message: '' },
-      ],
+      degraded: true,
+      scenario: 'offline_mode',
+      posture: 'offline',
+      recovery: 'Server unreachable',
     };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => healthData });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: healthData }) });
 
     const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p1' }));
 
@@ -137,15 +136,15 @@ describe('useProcessFlowDegraded', () => {
 
     expect(result.current.isDegraded).toBe(true);
     expect(result.current.activeScenarios).toHaveLength(1);
-    expect(result.current.activeScenarios[0].id).toBe('offline_mode');
+    expect(result.current.activeScenarios[0].scenario).toBe('offline_mode');
   });
 
   it('handles empty scenarios gracefully', async () => {
     const healthData = {
-      isDegraded: false,
-      scenarios: [],
+      degraded: false,
+      scenario: null,
     };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => healthData });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: healthData }) });
 
     const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p2' }));
 

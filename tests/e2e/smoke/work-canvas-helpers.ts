@@ -369,6 +369,7 @@ export function collectPageSignals(page: Page) {
           !error.includes('net::ERR') &&
           !error.includes('Failed to load resource:') &&
           !error.includes('Failed to fetch tasks TypeError: Failed to fetch') &&
+          !error.includes('Failed to fetch notifications TypeError: Failed to fetch') &&
           !error.includes('[useDemo] Status fetch failed: TypeError: Failed to fetch')
       );
       const blockingWorkCanvasResponses = failedWorkCanvasResponses.filter(
@@ -386,35 +387,79 @@ export async function expectNoRawInternals(page: Page) {
   );
 }
 
-export async function ensureWorkCanvasVisible(page: Page, expectedTitle?: string) {
-  const titleInput = page.getByLabel('Canvas document title');
-  const saveButton = page.getByRole('button', { name: 'Save Canvas document' });
-  const openPanelButton = page
-    .locator('button[aria-label="Open work panel"], [data-testid="chat-work-panel-button"]')
-    .first();
+// Chat-shell Canvas selectors (architecture changed 2026-06-20: the standalone
+// `/ai/work-canvas` WorkCanvasShell was removed; the canvas now mounts as
+// WorkCanvasDocumentPanel inside the chat split layout).
+export const CANVAS_TITLE_INPUT = '[data-testid="canvas-active-title"]';
+export const CANVAS_RICH_EDITOR = '[data-testid="canvas-rich-editor"] .ProseMirror';
 
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const inputVisible = await titleInput.isVisible({ timeout: 2500 }).catch(() => false);
-    const saveVisible = await saveButton.isVisible({ timeout: 2500 }).catch(() => false);
-
-    if (inputVisible && saveVisible) {
-      if (expectedTitle && expectedTitle.trim()) {
-        await expect(titleInput).toHaveValue(new RegExp(escapeRegex(expectedTitle.trim())), {
-          timeout: 10000,
-        });
-      }
-      return;
+/**
+ * Suppress the FirstRunOnboarding modal + demo tours that overlay and intercept
+ * clicks for fresh register-demo users. MUST be called BEFORE any page.goto so the
+ * route intercept + init script are registered ahead of the first navigation.
+ */
+export async function suppressOnboarding(page: Page) {
+  // Primary defense: force GET /api/preferences → onboarding_completed:true so the
+  // FirstRunOnboarding gate never opens.
+  await page.route('**/api/preferences', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    try {
+      const resp = await route.fetch();
+      const json = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
+      await route.fulfill({ response: resp, json: { ...json, onboarding_completed: true } });
+    } catch {
+      await route.fulfill({ json: { onboarding_completed: true } });
     }
-
-    const canOpenPanel = await openPanelButton.isVisible({ timeout: 1000 }).catch(() => false);
-    if (canOpenPanel) {
-      await openPanelButton.click({ timeout: 3000 }).catch(() => {});
+  });
+  // Secondary defense: seed tour-completion localStorage keys.
+  await page.addInitScript(() => {
+    try {
+      const ls = window.localStorage;
+      ls.setItem('demo_tour_completed', 'true');
+      ls.setItem('demo_tour_skipped', 'true');
+      ls.setItem('tour_completed', 'true');
+      ls.setItem('hasSeenWelcome', 'true');
+      ls.setItem(
+        'consultify_completed_tours',
+        JSON.stringify(['first-value', 'first_value_tour', 'work-canvas', 'chat'])
+      );
+    } catch {
+      /* ignore */
     }
-    await page.waitForTimeout(1200);
+  });
+}
+
+/** Final fallback: if the first-run modal still appears, click "Skip for now". */
+export async function dismissOverlayIfPresent(page: Page) {
+  for (let i = 0; i < 6; i += 1) {
+    const skip = page
+      .getByRole('button', { name: /Skip for now|Skip tour|Pomiń|Get started/i })
+      .first();
+    if (await skip.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await skip.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(400);
+    } else {
+      break;
+    }
   }
+}
 
-  await expect(titleInput).toBeVisible({ timeout: 10000 });
-  await expect(saveButton).toBeVisible({ timeout: 10000 });
+/**
+ * Waits for the chat-shell Work Canvas panel to be mounted and hydrated. The old
+ * standalone shell exposed a 'Save Canvas document' button as the readiness signal;
+ * the chat-shell panel renders the rich editor by default, so readiness is now the
+ * active-title input + the ProseMirror rich editor surface.
+ */
+export async function ensureWorkCanvasVisible(page: Page, expectedTitle?: string) {
+  const titleInput = page.locator(CANVAS_TITLE_INPUT).first();
+  const richEditor = page.locator(CANVAS_RICH_EDITOR).first();
+
+  // NOTE: do NOT click the "Open work panel" button here. The workCanvas=1 deep-link
+  // opens the panel itself; clicking the button toggles it back closed. Just wait.
+  await dismissOverlayIfPresent(page);
+
+  await expect(titleInput).toBeVisible({ timeout: 30000 });
+  await expect(richEditor).toBeVisible({ timeout: 30000 });
   if (expectedTitle && expectedTitle.trim()) {
     await expect(titleInput).toHaveValue(new RegExp(escapeRegex(expectedTitle.trim())), {
       timeout: 10000,
@@ -423,9 +468,11 @@ export async function ensureWorkCanvasVisible(page: Page, expectedTitle?: string
 }
 
 export async function openWorkCanvasDraft(page: Page, draft: WorkCanvasDraftRef) {
-  await page.goto(`/ai/work-canvas?draftId=${draft.id}&conversationId=${draft.conversationId}`, {
-    waitUntil: 'domcontentloaded',
-    timeout: 60000,
-  });
+  // Open the chat-shell Work Canvas deterministically: the UnifiedChatPanel deep-link
+  // effect requires workCanvas=1 (or workPanel=1); ?kind=/?draftId= alone won't open it.
+  await page.goto(
+    `/chat?workCanvas=1&draftId=${draft.id}&conversationId=${draft.conversationId}`,
+    { waitUntil: 'domcontentloaded', timeout: 60000 }
+  );
   await ensureWorkCanvasVisible(page, draft.title);
 }

@@ -46,7 +46,7 @@ async function resolveAuthToken(
   runId: string
 ): Promise<{
   token: string;
-  source: 'test-support' | 'demo-login' | 'synthetic';
+  source: 'test-support' | 'demo-login' | 'register-demo' | 'synthetic';
   errors: string[];
 }> {
   const errors: string[] = [];
@@ -86,6 +86,33 @@ async function resolveAuthToken(
   } catch (error) {
     errors.push(
       `auth/demo-login request failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  // Fallback for environments where anonymous demo-login is deprecated: register a
+  // fresh demo account (ADMIN role, owns the drafts it creates) and use its token.
+  try {
+    const registerDemo = await request.post(`${API_BASE_URL}/api/auth/register-demo`, {
+      data: {
+        email: `e2e+${runId}@local.test`,
+        password: `E2E-${runId}-Pass1!`,
+        firstName: 'E2E',
+      },
+    });
+    if (registerDemo.ok()) {
+      const payload = (await registerDemo.json()) as Record<string, unknown>;
+      const token = typeof payload.token === 'string' ? payload.token.trim() : '';
+      if (token) {
+        return { token, source: 'register-demo', errors };
+      }
+    } else {
+      errors.push(
+        `auth/register-demo ${registerDemo.status()}: ${await registerDemo.text().catch(() => '<no-body>')}`
+      );
+    }
+  } catch (error) {
+    errors.push(
+      `auth/register-demo request failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 

@@ -1159,6 +1159,27 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [fetchData, t]
   );
 
+  const handleDeleteInitiative = useCallback(
+    async (initiative: PortfolioInitiative) => {
+      const name = String(initiative.name || initiative.title || '').trim();
+      const shouldProceed = window.confirm(
+        t('initiatives.confirmDelete', {
+          name: name || t('initiatives.thisInitiative', 'tę inicjatywę'),
+          defaultValue: 'Trwale usunąć „{{name}}"? Tej operacji nie można cofnąć.',
+        })
+      );
+      if (!shouldProceed) return;
+      try {
+        await Api.delete(`/initiatives/${initiative.id}`);
+        toast.success(t('initiatives.toast.deleted', 'Initiative deleted'));
+        await fetchData(true);
+      } catch {
+        toast.error(t('initiatives.toast.deleteError', 'Could not delete initiative'));
+      }
+    },
+    [fetchData, t]
+  );
+
   // Canon §15.3 Formula 2: clear multi-select (restores Formula 1 command row).
   const handleClearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -1515,6 +1536,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 onSelectionChange={setSelectedIds}
                 canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
                 onArchive={handleArchiveInitiative}
+                onDelete={handleDeleteInitiative}
               />
             </TableWithPreviewLayout>
           </div>

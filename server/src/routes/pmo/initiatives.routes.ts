@@ -2347,6 +2347,19 @@ router.patch('/:id', (req, res, next) => {
   });
 });
 
+/**
+ * DELETE /api/initiatives/:id
+ * Hard-delete an initiative. Org-scoped + owner/admin authorization and
+ * cascade cleanup are enforced in the controller. Lets DRAFT initiatives
+ * (e.g. created via notebook convert) be discarded.
+ */
+router.delete(
+  '/:id',
+  requireOrgRole('user'),
+  requireInitiativeWriteAccess(),
+  InitiativeController.deleteInitiative
+);
+
 // ==========================================
 // FLOW-INITIATIVE-001: STATUS TRANSITIONS
 // ==========================================

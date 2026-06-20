@@ -550,6 +550,10 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
           <EmptyState
             icon={<Webhook />}
             title={t('settings.webhooks.empty', 'No webhooks configured')}
+            description={t(
+              'settings.webhooks.emptyDescription',
+              'Add a webhook to receive real-time event notifications at your own endpoints.'
+            )}
           />
         ) : (
           webhooks.map((webhook) => {

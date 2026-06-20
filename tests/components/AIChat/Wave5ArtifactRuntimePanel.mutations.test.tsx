@@ -2,6 +2,56 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import enTranslation from '../../../public/locales/en/translation.json';
+
+// The global react-i18next mock in tests/setup.ts returns the raw key for `t(key)`
+// when no defaultValue is supplied. This panel renders all headings through i18n
+// (e.g. t('aios.wave5ArtifactRuntimePanel.mutationProposals')) with no fallback,
+// so we override the mock locally to resolve dotted keys against the real EN
+// resources. Assertions can then stay on the rendered English text.
+vi.mock('react-i18next', () => {
+  const resolveKey = (key: string): unknown =>
+    key.split('.').reduce<any>((acc, part) => (acc == null ? undefined : acc[part]), enTranslation);
+
+  const t = (key: string, options?: any): any => {
+    if (typeof options === 'string') return options;
+    const resolved = resolveKey(key);
+    if (options?.returnObjects) {
+      return resolved ?? {};
+    }
+    let value = typeof resolved === 'string' ? resolved : options?.defaultValue ?? key;
+    if (options && typeof options === 'object') {
+      Object.keys(options).forEach((optKey) => {
+        if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
+          value = String(value).replace(
+            new RegExp(`\\{\\{?${optKey}\\}?\\}`, 'g'),
+            String(options[optKey])
+          );
+        }
+      });
+    }
+    return value;
+  };
+
+  return {
+    useTranslation: () => ({
+      t,
+      i18n: {
+        language: 'en',
+        changeLanguage: vi.fn(),
+        getResourceBundle: vi.fn(() => enTranslation),
+        hasResourceBundle: vi.fn(() => true),
+        addResourceBundle: vi.fn(),
+      },
+      ready: true,
+    }),
+    Trans: ({ children, i18nKey }: any) => children || i18nKey,
+    I18nextProvider: ({ children }: any) => children,
+    initReactI18next: { type: '3rdParty', init: vi.fn() },
+    Translation: ({ children }: any) => children({ t, i18n: {} }),
+  };
+});
+
 const h = vi.hoisted(() => ({
   apiMock: {
     approveWave5ArtifactMutation: vi.fn(),

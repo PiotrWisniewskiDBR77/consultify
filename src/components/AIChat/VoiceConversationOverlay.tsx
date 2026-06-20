@@ -78,7 +78,7 @@ export const VoiceConversationOverlay: React.FC = () => {
   if (voiceStatus === 'idle') return null;
 
   const statusLabel: Record<TeresaVoiceStatus, string> = {
-    idle: t('aiChat.voice.startVoice', 'Talk to Teresa'),
+    idle: t('aiChat.voice.startVoice', 'Start by voice'),
     connecting: t('aiChat.voice.voiceConnecting', 'Connecting…'),
     live: t('aiChat.voice.voiceLive', 'Listening…'),
     error: voiceError || t('aiChat.voice.voiceError', 'Voice unavailable. Try again.'),

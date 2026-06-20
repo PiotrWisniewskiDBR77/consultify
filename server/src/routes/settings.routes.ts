@@ -219,6 +219,9 @@ router.post(
  */
 const ensureUserPreferencesTable = async () => {
   // Keep schema compatible with DatabaseInitializer (`user_id`, `key`, `value`, `updated_at`).
+  // This DDL is purely opportunistic — the table already exists in every real deployment.
+  // Use fallback:true so a transient DDL failure (lock/timeout/brief read-only/connection blip)
+  // can NEVER reject and bubble up as a bare 500 on the read endpoints that call this first.
   await dbRun(
     `
       CREATE TABLE IF NOT EXISTS user_preferences (
@@ -231,10 +234,10 @@ const ensureUserPreferencesTable = async () => {
       )
     `,
     [],
-    { fallback: false }
+    { fallback: true }
   );
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id)`, [], {
-    fallback: false,
+    fallback: true,
   });
 };
 
@@ -5056,7 +5059,8 @@ const ensureUserWebhooksTable = async () => {
       )
     `,
     [],
-    { fallback: false }
+    // Opportunistic DDL — never let a transient CREATE failure reject and 500 the read.
+    { fallback: true }
   );
 
   const cols = await getTableColumns('user_webhooks');
@@ -5091,23 +5095,34 @@ router.get(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    await ensureUserWebhooksTable();
+    try {
+      await ensureUserWebhooksTable();
 
-    const webhooks = await dbAll(
-      `SELECT id, name, url, events, is_active as isActive, 
+      const webhooks = await dbAll(
+        `SELECT id, name, url, events, is_active as isActive,
                     last_triggered_at as lastTriggeredAt, last_status as lastStatus,
                     failure_count as failureCount, created_at as createdAt
              FROM user_webhooks WHERE user_id = ? ORDER BY created_at DESC`,
-      [userId]
-    );
+        [userId]
+      );
 
-    // Parse events JSON
-    const parsed = (webhooks as any[]).map((w) => ({
-      ...w,
-      events: JSON.parse(w.events || '[]'),
-    }));
+      // Parse events JSON defensively — a malformed row must not 500 the whole list.
+      const parsed = (webhooks as any[]).map((w) => {
+        let events: unknown = [];
+        try {
+          events = JSON.parse(w.events || '[]');
+        } catch {
+          events = [];
+        }
+        return { ...w, events };
+      });
 
-    return res.json({ webhooks: parsed });
+      return res.json({ webhooks: parsed });
+    } catch (err: any) {
+      // Degrade to an empty list rather than a bare 500 / DegradedState on a transient error.
+      logger.error('[settings] Error fetching webhooks:', err);
+      return res.json({ webhooks: [] });
+    }
   })
 );
 
@@ -5270,14 +5285,6 @@ router.get(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    await ensureUserPreferencesTable();
-
-    const row = await dbGet<{ preferences_data: string }>(
-      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
-      [userId, preferencesKey('appearance')],
-      { fallback: false }
-    );
-
     const defaultPreferences = {
       theme: 'system',
       accentColor: '#6366f1',
@@ -5289,14 +5296,30 @@ router.get(
       reducedMotion: false,
     };
 
-    if (!row) {
-      return res.json({ preferences: defaultPreferences });
-    }
-
     try {
-      const preferences = JSON.parse(row.preferences_data);
-      return res.json({ preferences: { ...defaultPreferences, ...preferences } });
-    } catch {
+      await ensureUserPreferencesTable();
+
+      const row = await dbGet<{ preferences_data: string }>(
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('appearance')],
+        { fallback: false }
+      );
+
+      if (!row) {
+        return res.json({ preferences: defaultPreferences });
+      }
+
+      try {
+        const preferences = JSON.parse(row.preferences_data);
+        return res.json({ preferences: { ...defaultPreferences, ...preferences } });
+      } catch {
+        return res.json({ preferences: defaultPreferences });
+      }
+    } catch (err: any) {
+      // A transient DB error must not turn a settings read into a DegradedState 500.
+      // Serve defaults so the panel still renders; the client-side save path will
+      // surface a real error if persistence is actually broken.
+      logger.error('[settings] Error fetching appearance preferences:', err);
       return res.json({ preferences: defaultPreferences });
     }
   })

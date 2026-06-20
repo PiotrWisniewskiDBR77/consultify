@@ -63,6 +63,16 @@ vi.mock('@/utils/artifactLinks', () => ({
   withNormalizedArtifactLinks: (value: any) => value,
 }));
 
+vi.mock('@/providers/V8Provider', () => ({
+  useV8: () => ({
+    isV8Enabled: false,
+    isV8ChatEnabled: false,
+    isV8AICoreEnabled: false,
+    isLoading: false,
+    flags: {},
+  }),
+}));
+
 vi.mock('../../../src/components/MyWork/canvas/useIdeaMapSync', () => ({
   formatIdeaMapSyncLabel: () => 'Saved just now',
   resolveIdeaMapHydration: (_ideaId: string, map: any) => ({ map }),

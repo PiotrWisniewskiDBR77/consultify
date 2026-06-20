@@ -22,6 +22,10 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     }
     next();
   },
+  requireRole:
+    (..._roles: string[]) =>
+    (_req: any, _res: any, next: any) =>
+      next(),
 }));
 
 vi.mock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({

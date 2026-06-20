@@ -5442,23 +5442,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               data-testid="chat-full-welcome"
               className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center"
             >
-              <img
-                src="/assets/logos/logo-light.svg"
-                alt="Consultify"
-                className="mb-6 h-8 w-auto object-contain opacity-80 dark:hidden"
-              />
-              <img
-                src="/assets/logos/logo-dark.svg"
-                alt="Consultify"
-                className="mb-6 h-8 w-auto object-contain opacity-80 hidden dark:block"
-              />
-              <div className="mb-3 inline-flex items-center rounded-full border border-primary-200/70 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:border-primary-800/60 dark:bg-primary-900/20 dark:text-primary-300">
-                Teresa
-              </div>
               <h3
                 className={`${isCompact ? 'text-2xl' : 'text-[32px]'} leading-tight font-semibold text-navy-900 dark:text-white`}
               >
-                {t('aiChat.teresaWelcome', 'Talk to Teresa')}
+                {t('aiChat.teresaWelcome', "Let's start your transformation")}
                 {currentUser?.firstName && (
                   <span className="text-primary-600 dark:text-primary-400">
                     , {currentUser.firstName}
@@ -5470,7 +5457,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               >
                 {t(
                   'aiChat.teresaWelcomeSubtitle',
-                  'Work through decisions, notes, and next steps with your internal AI partner'
+                  "Describe a challenge, decision, or process you want to change — and we'll shape the transformation together, the way other leaders do."
                 )}
               </p>
 
@@ -5479,23 +5466,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   type="button"
                   onClick={() => void teresaVoice.handleVoiceToggle()}
                   data-testid="welcome-voice-cta"
-                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-crimson-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-crimson-600/20 transition-all hover:bg-crimson-700 hover:shadow-lg hover:shadow-crimson-600/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/40 active:scale-95"
+                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-crimson-600 px-3.5 py-1.5 text-xs font-medium text-white shadow-sm shadow-crimson-600/20 transition-all hover:bg-crimson-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/40 active:scale-95"
                 >
                   {teresaVoice.voiceStatus === 'connecting' ? (
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={13} className="animate-spin" />
                   ) : (
-                    <span className="relative flex h-4 w-4 items-center justify-center">
+                    <span className="relative flex h-3.5 w-3.5 items-center justify-center">
                       {teresaVoice.voiceStatus === 'live' && (
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/50" />
                       )}
-                      <Mic size={16} />
+                      <Mic size={13} />
                     </span>
                   )}
                   {teresaVoice.voiceStatus === 'live'
                     ? t('aiChat.voice.stopVoice', 'End voice')
                     : teresaVoice.voiceStatus === 'connecting'
                       ? t('aiChat.voice.voiceConnecting', 'Connecting…')
-                      : t('aiChat.voice.startVoice', 'Talk to Teresa')}
+                      : t('aiChat.voice.startVoice', 'Start by voice')}
                 </button>
               )}
 
@@ -5680,11 +5667,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 )}
               </p>
 
-              <div className="mt-12 flex flex-col items-center gap-1 pointer-events-none select-none">
-                <p className="text-[15px] font-medium text-slate-900/25 dark:text-white/25">
+              <div className="mt-12 flex flex-col items-center gap-1.5 pointer-events-none select-none">
+                <p className="text-3xl font-semibold tracking-tight text-slate-900/70 dark:text-white/70">
                   Consultify®
                 </p>
-                <p className="text-center text-[10px] uppercase tracking-[0.25em] text-slate-900/15 dark:text-white/15">
+                <p className="text-center text-[11px] uppercase tracking-[0.25em] text-slate-900/30 dark:text-white/30">
                   DBR77 Industrial Intelligence
                 </p>
               </div>

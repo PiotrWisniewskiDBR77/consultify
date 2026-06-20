@@ -102,6 +102,31 @@ export class TestFactory {
     return { id, organizationId: overrides.organizationId, name, status };
   }
 
+  async createDecision(overrides: {
+    id?: string;
+    organizationId: string;
+    projectId?: string;
+    title?: string;
+    status?: string;
+  }) {
+    const id = overrides.id || uuidv4();
+    const title = overrides.title || `Test Decision ${id}`;
+    const status = overrides.status || 'PENDING';
+
+    await DbPromise.run(
+      'INSERT INTO decisions (id, organization_id, project_id, title, status) VALUES (?, ?, ?, ?, ?)',
+      [id, overrides.organizationId, overrides.projectId || null, title, status]
+    );
+
+    return {
+      id,
+      organizationId: overrides.organizationId,
+      projectId: overrides.projectId || null,
+      title,
+      status,
+    };
+  }
+
   /**
    * Helper to setup a full context: Org + User + Token + Project
    */
