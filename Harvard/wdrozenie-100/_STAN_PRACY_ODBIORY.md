@@ -53,7 +53,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6
 
 | # | Moduł | Faza | Epiki | DoD | Testy | UI | →F | →UI | Ekr. | Status |
 |---|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| M01 | Czat | 2 | 5/5 | 6/7 | 0/13 (105✅) | 🟡 | ⬜ | ⬜ | 20 | 🟢 DO ODBIORU |
+| M01 | Czat | 2 | 5/5 | 6/7 | 100✅·0/13 | 🟡 | ⬜ | ⬜ | 20 | 🟢 DO ODBIORU |
 | M02 | Canvas | 3 | 6/6 | 6/7 | 0/20 (148✅) | 🟡 | ⬜🔑 | ⬜ | 16 | 🟢 DO ODBIORU |
 | M03 | My Work — organizer | 2/3 | 0/6 | 0/7 | 0/39 | ⬜ | ⬜ | ⬜ | 15 | ⬜ NIE ROZP. |
 | M04 | Notatnik | 3 | 0/6 | 0/7 | 0/54 | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
@@ -99,9 +99,9 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6
 | 1 | Kod — luki funkcjonalne/security domknięte | ✅ | L-01/02/05/07/08/09/10 ZAMKNIĘTE, L-04/06 false-pos; sierota `CodeInterpreter/` usunięta (L-05) |
 | 2 | DoD 6/7 (#7 a11y→Faza4) | ✅ | #1 front↔back · #2 security · #3 i18n(0 bare) · #4 tokeny(rose 0) · #5 §27 N/D · #6 M01-gate green |
 | 3 | Epiki 5/5 | ✅ | E1 rdzeń · E2 język(10/10) · E3 reasoning(9/9) · E4 Tryb B(33/33+2/2)+A(6/6), **C odroczony BETA** · E5 closeout |
-| 4 | Testy — automaty zielone + manual do odbioru | 🟡 | **105 locków PASS** (89 component + 16 backend); **13 scenariuszy manualnych = Twój odbiór na demo** |
-| 5 | Zgodność UI/UX (kryt. 7) | 🟡 | komponenty zgodne (composer single-border 5/5, rose 0); a11y/dark = Faza 4; screeny = →UI |
-| 6 | Deploy na demo | 🟡 | koordynuje orchestrator (Londyn→demo) |
+| 4 | Testy — automaty zielone (CAŁOŚĆ przejrzana) | ✅ | **Pełny zestaw M01 przeszedł triaż.** M01-core tracked: **100 PASS**. Naprawiony 1 realny tracked-bug: stale mock `CoThinkerActivePill` w `EnhancedChatInput.teresa-error-toast` (`cb7244e1dd`, 2/2). Usunięty martwy gitignored test `AIChatWelcomeView.v8-controls`. Pozostałe faile pełnego runu = **inne moduły** (M22 Wave5, M24/M27 admin-session/superadmin-sidebar — nieaktualne asercje) + DB-infra integracje — NIE M01. **13 scenariuszy manualnych** wymaga zalogowanej sesji = Twój →F (granica dostępu) |
+| 5 | Zgodność UI/UX (kryt. 7) | 🟡 | komponenty zgodne (composer single-border 5/5, rose 0); a11y/dark live = →UI |
+| 6 | Deploy na demo | ✅ | `SUCCESS demo/1475849a` — M01 live na demo.consultify.ai |
 | 7 | **ODBIÓR FUNKCJA — Piotr** (kliknij 13 scenariuszy na demo) | ⬜ | |
 | 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
 | ✔ | **MODUŁ ZAMKNIĘTY (8/8)** | ⬜ | |
