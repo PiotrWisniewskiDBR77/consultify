@@ -92,8 +92,6 @@ vi.mock('../../../server/src/services/tablePlatform/ProjectionService.js', () =>
   default: {},
 }));
 
-vi.mock('../../../server/src/services/v8/processFlowService.js', () => ({}));
-
 vi.mock('../../../server/src/validators/ideaWorkspaceGraph.validators.js', () => ({
   ensureLatestSchema: vi.fn(async () => ({})),
   normalizeGraphForStorage: vi.fn((v: any) => v),

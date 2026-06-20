@@ -32,12 +32,13 @@ export const BPMNEndNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         viewBox="0 0 36 36"
         className={`${selected ? 'filter drop-shadow-[0_0_4px_rgba(99,102,241,0.6)]' : ''}`}
       >
+        {/* stroke uses danger/rose token (SSOT: --c-danger). Was stock #f43f5e. */}
         <circle
           cx={18}
           cy={18}
           r={15}
           fill="transparent"
-          stroke="#f43f5e"
+          stroke="var(--c-danger)"
           strokeWidth={3}
           className={selected ? 'stroke-[4]' : ''}
         />

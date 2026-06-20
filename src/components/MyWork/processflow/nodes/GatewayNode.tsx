@@ -2,17 +2,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
+// warning / amber gateway accent — canonical design token (SSOT: --c-warning,
+// tailwind.config.js). Replaces stale stock-Tailwind hex (#f59e0b) frozen
+// before the HBS color remap. CSS var resolves in SVG stroke, light/dark aware.
+const GATEWAY_ACCENT = 'var(--c-warning)';
+
 const XorMarker = () => (
   <>
-    <line x1={16} y1={16} x2={34} y2={34} stroke="#f59e0b" strokeWidth={2.5} />
-    <line x1={34} y1={16} x2={16} y2={34} stroke="#f59e0b" strokeWidth={2.5} />
+    <line x1={16} y1={16} x2={34} y2={34} stroke={GATEWAY_ACCENT} strokeWidth={2.5} />
+    <line x1={34} y1={16} x2={16} y2={34} stroke={GATEWAY_ACCENT} strokeWidth={2.5} />
   </>
 );
 
 const AndMarker = () => (
   <>
-    <line x1={25} y1={14} x2={25} y2={36} stroke="#f59e0b" strokeWidth={2.5} />
-    <line x1={14} y1={25} x2={36} y2={25} stroke="#f59e0b" strokeWidth={2.5} />
+    <line x1={25} y1={14} x2={25} y2={36} stroke={GATEWAY_ACCENT} strokeWidth={2.5} />
+    <line x1={14} y1={25} x2={36} y2={25} stroke={GATEWAY_ACCENT} strokeWidth={2.5} />
   </>
 );
 
@@ -50,7 +55,7 @@ export const GatewayNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         <path
           d="M25 2 L48 25 L25 48 L2 25 Z"
           fill="transparent"
-          stroke="#f59e0b"
+          stroke={GATEWAY_ACCENT}
           strokeWidth={2}
           strokeLinejoin="round"
         />

@@ -32,12 +32,13 @@ export const BPMNStartNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         viewBox="0 0 36 36"
         className={`${selected ? 'filter drop-shadow-[0_0_4px_rgba(99,102,241,0.6)]' : ''}`}
       >
+        {/* stroke uses success/green token (SSOT: --c-success). Was stock #22c55e. */}
         <circle
           cx={18}
           cy={18}
           r={16}
           fill="transparent"
-          stroke="#22c55e"
+          stroke="var(--c-success)"
           strokeWidth={1.5}
           className={selected ? 'stroke-[2.5]' : ''}
         />

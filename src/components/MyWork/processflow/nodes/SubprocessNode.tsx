@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
+import { DEFAULT_LANE_COLOR } from '../FlowNodeComponent';
+
 export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(data?.label || ''));
   const inputRef = useRef<HTMLInputElement>(null);
-  const laneColor: string = data?.laneColor || '#e2e8f0';
+  const laneColor: string = data?.laneColor || DEFAULT_LANE_COLOR;
   const collapsed = data?.collapsed ?? true;
 
   useEffect(() => {

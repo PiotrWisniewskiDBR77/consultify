@@ -9,6 +9,11 @@ const H = 70;
 const docPath = `M0 0 L${W - FOLD} 0 L${W} ${FOLD} L${W} ${H} L0 ${H} Z`;
 const foldPath = `M${W - FOLD} 0 L${W - FOLD} ${FOLD} L${W} ${FOLD}`;
 
+// Document outline stroke = slate-600 (structural neutral — NOT remapped by the
+// HBS palette, so identical to the old literal #64748b). Resolved hex retained
+// for SVG attribute use; SSOT for the token is tailwind.config.js / slate scale.
+const DOC_STROKE = '#64748b'; // slate-600
+
 export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(data?.label || ''));
@@ -42,11 +47,11 @@ export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => 
         <path
           d={docPath}
           fill="white"
-          stroke="#64748b"
+          stroke={DOC_STROKE}
           strokeWidth={1.5}
           className="dark:fill-navy-800"
         />
-        <path d={foldPath} fill="none" stroke="#64748b" strokeWidth={1.5} />
+        <path d={foldPath} fill="none" stroke={DOC_STROKE} strokeWidth={1.5} />
       </svg>
 
       {selected && (

@@ -8,6 +8,13 @@ export { LANE_HEIGHT };
 export type { Lane };
 
 // ── Lane palette & presets ───────────────────────────────────────────────────
+// NOTE: These are NOT semantic-state colors and intentionally stay as raw hex.
+// They are a decorative pastel swimlane palette: (1) the user picks a swatch per
+// lane, (2) the chosen value is persisted per-lane and concatenated with a hex
+// alpha suffix (e.g. `${lane.color}15`), which a CSS var / token cannot support,
+// and (3) there is no semantic token for a multi-swatch decorative palette.
+// `LANE_COLORS` is itself the exported source-of-truth palette (consumed by
+// IdeaProcessFlowTool), so these are not "inline magic hex".
 
 export const LANE_COLORS = [
   '#e0e7ff',

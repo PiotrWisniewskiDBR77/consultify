@@ -44,7 +44,10 @@ export const MessageFlowEdge: React.FC<EdgeProps> = ({
   };
   const edgeLocked = Boolean(data?.locked);
 
-  const strokeColor = '#6366f1';
+  // info / indigo — canonical design token (SSOT: src/index.css --c-info,
+  // tailwind.config.js). Works in SVG stroke/fill, light/dark aware.
+  // Replaces stale stock-Tailwind hex (#6366f1) frozen before the HBS remap.
+  const strokeColor = 'var(--c-info)';
   const baseW = selected ? 2.5 : 1.5;
 
   return (

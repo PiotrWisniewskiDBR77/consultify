@@ -5,6 +5,17 @@ import { EdgeProps } from 'reactflow';
 
 export const CONDITION_TYPES = ['', 'yes', 'no', 'default', 'exception'] as const;
 
+// Semantic edge colors via canonical design tokens (SSOT: tailwind.config.js
+// + src/index.css --c-* vars; works in SVG stroke/fill, light/dark aware).
+// Replaces stale stock-Tailwind hex frozen before the HBS color remap.
+const EDGE_CONDITION_COLORS = {
+  yes: 'var(--c-success)', // success / green — was #22c55e
+  no: 'var(--c-danger)', // danger / rose — was #f43f5e
+  exception: 'var(--c-warning)', // warning / amber — was #f59e0b
+} as const;
+// Neutral fallback stroke (slate-400 — structural neutral, NOT remapped).
+const EDGE_NEUTRAL_STROKE = 'rgb(148 163 184)'; // slate-400 #94a3b8
+
 export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   id,
   sourceX,
@@ -43,13 +54,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
 
   const conditionType = data?.conditionType || '';
   const conditionColor =
-    conditionType === 'yes'
-      ? '#22c55e'
-      : conditionType === 'no'
-        ? '#f43f5e'
-        : conditionType === 'exception'
-          ? '#f59e0b'
-          : undefined;
+    EDGE_CONDITION_COLORS[conditionType as keyof typeof EDGE_CONDITION_COLORS] || undefined;
   const edgeStroke = conditionColor || data?.sourceLaneColor || style?.stroke;
 
   const baseW = selected ? 2.5 : 1.5;
@@ -64,7 +69,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
         <path
           d={edgePath}
           fill="none"
-          stroke={edgeStroke || '#94a3b8'}
+          stroke={edgeStroke || EDGE_NEUTRAL_STROKE}
           strokeWidth={baseW + 4}
           strokeOpacity={0.12}
           strokeLinecap="round"
@@ -81,14 +86,14 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
         d={edgePath}
         fill="none"
         strokeDasharray="8 4"
-        stroke={edgeStroke || '#94a3b8'}
+        stroke={edgeStroke || EDGE_NEUTRAL_STROKE}
         strokeWidth={baseW}
         strokeOpacity={selected ? 0.55 : 0.45}
         style={{ animation: 'flowEdgeDash 0.6s linear infinite' }}
       />
       {/* Directional particle on selected edge */}
       {selected && (
-        <circle r="3" fill={edgeStroke || '#94a3b8'} opacity={0.7}>
+        <circle r="3" fill={edgeStroke || EDGE_NEUTRAL_STROKE} opacity={0.7}>
           <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
         </circle>
       )}

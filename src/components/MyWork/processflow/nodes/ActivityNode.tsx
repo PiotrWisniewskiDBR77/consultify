@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
+import { DEFAULT_LANE_COLOR } from '../FlowNodeComponent';
+
 const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-300',
   in_progress: 'bg-blue-500',
@@ -13,7 +15,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(data?.label || ''));
   const inputRef = useRef<HTMLInputElement>(null);
-  const laneColor: string = data?.laneColor || '#e2e8f0';
+  const laneColor: string = data?.laneColor || DEFAULT_LANE_COLOR;
 
   useEffect(() => {
     if (editing) inputRef.current?.focus();

@@ -50,6 +50,13 @@ export type FlowShape =
 
 export const LANE_HEIGHT = 140;
 
+// Default lane tint when a node has no assigned lane color.
+// Resolved value of the `slate-200` design token (a structural neutral — NOT
+// remapped by the HBS palette, so identical to the old literal). Kept in 6-digit
+// hex form because lane colors are concatenated with an alpha suffix elsewhere
+// (e.g. `${laneColor}08`). SSOT for the token: tailwind.config.js / slate scale.
+export const DEFAULT_LANE_COLOR = '#e2e8f0'; // slate-200
+
 export const SHAPE_CONFIG: Record<
   FlowShape,
   { icon: React.ComponentType<{ size?: number }>; label: string; labelPl: string }
@@ -90,7 +97,7 @@ export const STATUS_COLORS: Record<string, string> = {
 
 export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
   const shape: FlowShape = data?.shape || 'action';
-  const laneColor: string = data?.laneColor || '#e2e8f0';
+  const laneColor: string = data?.laneColor || DEFAULT_LANE_COLOR;
   const isGhost = Boolean(data?._isGhost);
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
