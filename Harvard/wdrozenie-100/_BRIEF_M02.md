@@ -1,46 +1,41 @@
-# BRIEF AGENTA — M02 Canvas (dokończenie do 100%)
+# BRIEF AGENTA — M02 Canvas · DOKOŃCZENIE DO ODBIORU 8/8
 
-> Wklej to jako pierwszą wiadomość do świeżego czata. Agent łapie kontekst **tylko M02**.
+> Wklej jako pierwszą wiadomość do świeżego czata. Agent łapie kontekst **tylko M02**. Cel: doprowadzić M02 do **MODUŁ ZAMKNIĘTY (8/8)** w tabeli odbioru.
 
-## Twoja rola i cel
-Jesteś agentem-wykonawcą **jednego modułu: M02 Canvas** (split-view w czacie + deliverables-light: doc/sheet/deck; viewer publiczny `/public/artifacts/:token`). Doprowadzasz go do stanu **🟢 GOTOWY DO ODBIORU**: 6 bramek realizacji zrobione z dowodami (Epiki N/N, DoD 7/7, Testy, UI). Dwa odbiory końcowe (funkcja + UI/grafik) robi Piotr — ty przygotowujesz moduł i dowody, **nie zamykasz sam**. Nie dotykasz innych modułów.
+## Rola i cel
+Jesteś agentem-wykonawcą **modułu M02 Canvas** (split-view w czacie + deliverables-light: doc/sheet/deck; viewer `/public/artifacts/:token`). Domykasz wszystkie bramki z [`_STAN_PRACY_ODBIORY.md`](_STAN_PRACY_ODBIORY.md): **Kod · DoD 7/7 · Epiki 6/6 · Testy · Zgodność UI/UX · Deploy · →F · →UI**. Każdą rzecz **weryfikujesz dowodem**, nie deklarujesz. Nie dotykasz innych modułów.
 
-## Repo i źródła prawdy (przeczytaj NAJPIERW, w tej kolejności)
+## Źródła prawdy (przeczytaj NAJPIERW)
 - Repo: `/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify` · branch **Londyn**
-- **Teczka modułu:** `Harvard/wdrozenie-100/M02-canvas.md` — czytaj W CAŁOŚCI (rejestr luk L-XX, epiki, DoD, decyzje, inwentarz ekranów).
-- **Spec testów manualnych E2E:** `Harvard/Testy manualne/TESTY_M02_CANVAS.md` — **20 scenariuszy**.
+- **Tabela odbioru (Twój cel, aktualizuj wiersz M02):** `Harvard/wdrozenie-100/_STAN_PRACY_ODBIORY.md` — blok „### M02".
+- **Teczka:** `Harvard/wdrozenie-100/M02-canvas.md` (luki L-XX, epiki, DoD, ekrany).
+- **Spec testów manualnych (20 scenariuszy):** `Harvard/Testy manualne/TESTY_M02_CANVAS.md`.
 - **Instrukcja flagi Railway:** `Harvard/wdrozenie-100/M02_RAILWAY_DELIVERABLES_FLAG_INSTRUKCJA.md`.
-- **Werdykt weryfikacji kodu 2026-06-19:** `Harvard/wdrozenie-100/_WERYFIKACJA_DOKUMENTACJI_2026-06-19.md` (M02 = SOLID, najsilniejszy moduł, 0× P0/P1).
-- **Tracker odbiorów (wpisuj postęp M02):** `Harvard/wdrozenie-100/_STAN_PRACY_ODBIORY.md`.
+- **Krytyczny kontekst:** `~/.claude/.../memory/finding_chat_inputschema_sdk_v6.md` — function-calling czatu był ZEPSUTY (ai SDK v6), naprawiony `42bee38044`. **To jest DOKŁADNIE ścieżka Twojego canvasa** (`generate_deliverable` = tool, który otwiera canvas). Po fixie Tryb A działa — zweryfikuj triadę na żywo.
 
-## Stan wejściowy M02 (zweryfikowany 2026-06-19 — nie zgaduj, potwierdź w kodzie)
-- **Najsilniejszy moduł, 0× P0/P1.** Zweryfikowane w kodzie: L-08 (9/9 capabilities serwerowo w `work-canvas.routes.ts`), L-06 (`regenerateSlide` realny, nie stub — `presentationGeneratorService.ts:1660`), L-05 (generate→400 zamiast cichego decka — `deliverablesGenerations.routes.ts:167-173`), L-15 (test cross-org istnieje).
-- **Otwarte luki:**
-  - **L-01** — dwa silniki artefaktów (store ↔ panel), ODROCZONA Fala 3 BETA, czeka na decyzję D-01. Rozstrzygnij/zaproponuj konsolidację albo potwierdź odroczenie z uzasadnieniem.
-  - **L-03** — Tryb A (function-calling runtime auto-korekta): guard+lock zrobione, **wiring function-call = Fala 2** (do domknięcia). Sprawdź realny stan: `generate_deliverable` tool → SSE `deliverable` → montaż canvasa.
-  - **L-07** — picker `sourceRefs` wymaga backendu B-1 (FE-only = no-op). Domknij lub jawnie odrocz.
-- **⚠ DEBLOKER ŻYWY (krytyczny dla odbioru):** kod triady deck/doc/sheet jest gotowy, ale **`VITE_ENABLE_DELIVERABLES_LIGHT` (build-time FE) + `ENABLE_DELIVERABLES_LIGHT` (runtime BE) MUSZĄ być ustawione na Railway demo** — bez tego Canvas wygląda jakby „nigdy nie działał" (to jest root-cause „never worked" na staging/prod). Ustawienie env = Piotr (zgłoś jako bloker odbioru, nie ustawiaj sam).
-- **Kluczowe pliki:** `src/components/AIChat/WorkCanvasDocumentPanel.tsx`, `src/components/AIChat/CanvasArtifactSwitcher.tsx`, `server/src/routes/work-canvas.routes.ts`, `server/src/routes/deliverablesGenerations.routes.ts`, `server/src/services/.../presentationGeneratorService.ts`, store `useArtifactsStore`.
-- ⚠ **PLIKI WSPÓLNE Z M01** (jeśli M01 robi inny agent równolegle): `UnifiedChatPanel.tsx`, `WorkCanvasDocumentPanel.tsx`. Edytuj ostrożnie, commituj często jawnymi ścieżkami, `git log -1` przed założeniem stanu. Konflikty zgłoś orchestratorowi.
+## Stan wejściowy M02 (zweryfikowany 2026-06-19)
+**Bramki już zrobione:**
+- **Kod ✅** — 11 luk zamkniętych/FP (L-02/04/05/06/08/09/10/13/14/15 + L-11 i18n 66 kluczy). Odroczone świadomie: L-01 Tryb C (BETA, D-01), L-03 runtime auto-korekta (Fala 2 — ale guard 36/36 zamknięty + **function-call odblokowany fixem `42bee38044`**), L-07 picker (backend B-1), L-12 paleta (Visual Quality).
+- **DoD 6/7 ✅** — #1 front↔back, #2 security (9/9 capabilities + S7 cross-org 403, **bez IDOR**), #3 i18n (L-11), #5 §27 N/D, #6 E2E-gate. **#4 tokeny:** hex 0, ale ~168 util palety → program Visual Quality (P3, odroczone — potwierdź czy liczyć jako spełnione czy dług).
+- **Epiki 6/6 ✅** (E1 kręgosłup, E2 generacja, E3 security, E4 odporność, E5 kanon, E6 testy).
+- **Testy automaty ✅** — 148 PASS (105 FE + 43 backend: `work-canvas.routes` 40/40, `canvasMaterializeCrossOrg` 3/3, `deliverablesGenerations.generate-format` 3/3, `unbackedCanvasClaim` 36/36).
 
-## Procedura dokończenia (wykonaj po kolei, odhaczaj bramki)
-1. **Kod** — domknij L-03 (Tryb A function-call wiring) + L-07 (sourceRefs albo jawne odroczenie) + rozstrzygnij L-01 (D-01). Weryfikuj w kodzie, nie zgaduj.
-2. **DoD 7/7** — 1) front↔back · 2) bezpieczeństwo (capabilities 9/9 + cross-org test) · 3) i18n PL/EN przez `t()` · 4) tokeny (zero „rose"/hex) · 5) §27 (canvas — potwierdź zakres) · 6) E2E w PR-gate · 7) zgodność UI/UX (canon).
-3. **Epiki** — wszystkie epiki sekcji F teczki (6 epików), każdy zielony z dowodem.
-4. **Testy** — wykonaj **20 scenariuszy** z `TESTY_M02_CANVAS.md` na żywo (E2E: UI + payload Network + stan store/DB; dowód = screenshot + payload). Kluczowe: handoff czat→canvas, generacja triady, autosave-persist po reload, viewer publiczny, capability-gates. Uruchom/dołóż automaty w `tests/` (CI puszcza tylko `tests/unit|integration|components` — NIE `src/**/__tests__`). **Uwaga:** pełny E2E triady wymaga flagi Railway (wyżej) — jeśli niedostępna, testuj lokalnie z `.env.local` i zgłoś że żywy odbiór czeka na env demo.
-5. **Zgodność UI/UX** — komponenty M02 vs SSOT canon, napraw odstępstwa P0/P1; a11y/dark-mode.
-6. **Commit na Londyn** (jawne ścieżki). **Deploy na demo NIE rób sam** — koordynuje orchestrator. Zgłoś gotowość + przypomnij o fladze Railway.
+**Co MUSISZ domknąć do 8/8:**
+1. **Testy — pełny zestaw zielony** (potwierdź 0 tracked-failów M02). Komenda startowa: `npx vitest run tests/unit/unbackedCanvasClaim.test.ts tests/unit/canvas tests/unit/AIChat tests/components/AIChat/WorkCanvasDocumentPanel.test.tsx tests/components/AIChat/WorkCanvasDocumentPanel.handoffMount.test.tsx tests/integration/routes/work-canvas.routes.test.ts tests/integration/routes/deliverablesGenerations.generate-format.test.ts`.
+2. **→F — 20 scenariuszy NA ŻYWO** (canvas triada teraz odblokowana fixem `42bee38044`): handoff czat→canvas, generacja deck/doc/sheet, autosave-persist po reload, patch-mode diff, wersje+restore, public share/revoke, materializacja (org-guard), eksport.
+3. **DoD #7 — a11y/dark NA ŻYWO** + decyzja czy paleta (L-12) liczona jako spełnione (z notą „dług Visual Quality") czy blokuje.
+4. **→UI** — screeny 16 ekranów (inwentarz w teczce) dla audytora.
+
+## Weryfikacja LIVE (canvas triada wymaga flagi)
+1. `preview_start`: **`frontend-dev`** (:3000) + **`backend-dev`** (:3001, **staging DB — bezpieczne**).
+2. ⚠ **Triada deck/doc/sheet wymaga `VITE_ENABLE_DELIVERABLES_LIGHT` (build-time FE) + `ENABLE_DELIVERABLES_LIGHT` (runtime BE).** Sprawdź `.env.local` — wg teczki VITE-flaga jest TYLKO tam (więc lokalnie triada może działać). Jeśli canvas „nie generuje", potwierdź obie flagi (FE: `src/services/deliverablesGeneration.ts:46`; BE: `deliverablesGenerations.routes.ts:40`). NIE ustawiasz flag na Railway — to Piotr.
+3. Sterujesz **zalogowaną przeglądarką Piotra** (Claude in Chrome): `list_connected_browsers` → `navigate http://localhost:3000/chat`. W czacie poproś Teresę o dokument/arkusz/deck → canvas montuje się po prawej. Dowód = screenshot + payload Network (`/api/deliverables/generations`) + logi backendu.
+4. ⚠ Provider AI bywa bez balansu — odróżnij błąd środowiska (balans) od realnego buga (logi backendu).
 
 ## Twarde zasady
-- Nie dotykaj innych modułów ani wspólnej warstwy bez odnotowania.
-- **NIGDY `git add -A` / `git add .`** — tylko jawne ścieżki.
-- **prod = centerbeam:** zero zmian na prod bez osobnej zgody Piotra. Pracujesz Londyn → demo.
-- **Sekrety/klucze/env (w tym flagi Railway):** nie ustawiasz; robi Piotr. Zgłaszasz jako blokery.
-- **Każda zmiana UI:** zweryfikuj w preview/na demo, dowód = screenshot. Nigdy „done" na samym `tsc`.
-- Weryfikuj zanim ogłosisz zrobione — żadnych deklaracji bez dowodu.
+- Tylko M02. NIGDY `git add -A`/`.` — jawne ścieżki. prod=centerbeam: zero zmian bez osobnej zgody (Londyn→demo).
+- Sekrety/env/flagi Railway: nie ustawiasz — zgłaszasz Piotrowi (flaga deliverables to KLUCZOWY bloker odbioru na demo/prod).
+- Każda zmiana UI: zweryfikuj live, dowód=screenshot. Weryfikuj zanim ogłosisz.
 
-## Co zwracasz (raport odbioru do orchestratora)
-- Stan 6 bramek: **Epiki x/6 · DoD x/7 · Testy x/20 (+automaty) · UI ✅/🟡** z dowodem per pozycja.
-- Co zrobione, co zostało, ryzyka/blokery wymagające Piotra (przede wszystkim flaga Railway demo + ew. backend B-1).
-- Końcowy status: **🟢 GOTOWY DO ODBIORU** (etapy 1–6 ✅) albo precyzyjna lista czego brakuje.
-- Zaktualizuj wiersz M02 w `_STAN_PRACY_ODBIORY.md`.
+## Co zwracasz
+Zaktualizowany wiersz M02 w `_STAN_PRACY_ODBIORY.md` + raport: 8 bramek z dowodem, blokery dla Piotra (flagi Railway demo/prod), decyzja paleta L-12. Status: **8/8 GOTOWY DO ZAMKNIĘCIA** albo lista co zostało.

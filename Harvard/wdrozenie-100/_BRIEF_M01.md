@@ -1,44 +1,44 @@
-# BRIEF AGENTA — M01 Czat (dokończenie do 100%)
+# BRIEF AGENTA — M01 Czat · DOKOŃCZENIE DO ODBIORU 8/8
 
-> Wklej to jako pierwszą wiadomość do świeżego czata. Agent łapie kontekst **tylko M01**.
+> Wklej jako pierwszą wiadomość do świeżego czata. Agent łapie kontekst **tylko M01**. Cel: doprowadzić M01 do **MODUŁ ZAMKNIĘTY (8/8)** w tabeli odbioru — wszystkie bramki realizacji + przygotować odbiory.
 
-## Twoja rola i cel
-Jesteś agentem-wykonawcą **jednego modułu: M01 Czat** (kompozer AI / Teresa, route `/chat`). Doprowadzasz go do stanu **🟢 GOTOWY DO ODBIORU**: 6 bramek realizacji zrobione z dowodami (Epiki N/N, DoD 7/7, Testy, UI). Dwa odbiory końcowe (funkcja + UI/grafik) robi Piotr — ty przygotowujesz moduł i dowody, **nie zamykasz sam**. Nie dotykasz innych modułów.
+## Rola i cel
+Jesteś agentem-wykonawcą **modułu M01 Czat** (Teresa, `/chat`). Domykasz wszystkie bramki z tabeli odbioru [`_STAN_PRACY_ODBIORY.md`](_STAN_PRACY_ODBIORY.md): **Kod · DoD 7/7 · Epiki 5/5 · Testy · Zgodność UI/UX · Deploy · →F (odbiór funkcji) · →UI (odbiór grafika)**. Każdą rzecz **weryfikujesz dowodem** (test PASS / screenshot / payload), nie deklarujesz. Nie dotykasz innych modułów.
 
-## Repo i źródła prawdy (przeczytaj NAJPIERW, w tej kolejności)
+## Źródła prawdy (przeczytaj NAJPIERW, w tej kolejności)
 - Repo: `/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify` · branch **Londyn**
-- **Teczka modułu** (luki L-XX, epiki, DoD, decyzje, inwentarz ekranów): `Harvard/wdrozenie-100/M01-czat.md` — czytaj W CAŁOŚCI.
-- **Spec testów manualnych E2E:** `Harvard/Testy manualne/TESTY_M01_CZAT.md` — **13 scenariuszy** (AddFilesMenu, ToolsMenu/AI Modes+TTS, CoThinker persony, cross-cutting, regresja).
-- **Werdykt weryfikacji kodu 2026-06-19:** `Harvard/wdrozenie-100/_WERYFIKACJA_DOKUMENTACJI_2026-06-19.md` (M01 = SOLID, deklaracje zgodne z kodem).
-- **Tracker odbiorów (wpisuj tam postęp M01):** `Harvard/wdrozenie-100/_STAN_PRACY_ODBIORY.md`.
+- **Tabela odbioru (Twój cel, aktualizuj wiersz M01):** `Harvard/wdrozenie-100/_STAN_PRACY_ODBIORY.md` — blok „### M01" ma 8 etapów.
+- **Teczka modułu:** `Harvard/wdrozenie-100/M01-czat.md` (rejestr luk L-XX, epiki, DoD, ekrany).
+- **Spec testów manualnych E2E (13 scenariuszy):** `Harvard/Testy manualne/TESTY_M01_CZAT.md`.
+- **Krytyczny fix kontekst:** `~/.claude/.../memory/finding_chat_inputschema_sdk_v6.md` — czat był ZEPSUTY (ai SDK v6 `inputSchema`), naprawiony `42bee38044`, live-verified. NIE cofaj tego.
 
-## Stan wejściowy M01 (zweryfikowany 2026-06-19 — nie zgaduj, potwierdź w kodzie)
-- **Funkcjonalnie ~domknięty.** Zamknięte i zweryfikowane w kodzie: L-01 (ai-memory 404), L-02 (viewer metadata leak), L-05 (martwy CodeInterpreter), L-07 (show-reasoning wymusza `deepseek-reasoner`, `AIPipeline.ts:374-378`), L-08 (PL→EN: `detectMessageLanguage.ts` + `UnifiedChatPanel.tsx:2031` effectiveChatLanguage), L-09 (chat→canvas handoff, Tryb B), L-10 (i18n 305× → przez `t()`). L-04/L-06 = false-positive.
-- **GŁÓWNA OTWARTA LUKA: L-03 (testy).** Pokrycie scenariuszy S3/S4/S6 niepełne (2/4) + smoke nie wchodzi w PR-gate. To Twój priorytet w bramce Testy.
-- **Zależność:** kręgosłup FAZA 0 — Tryb B zrobiony; Tryb A (function-calling) / Tryb C (konsolidacja artefaktów) mogą być częściowo otwarte (L-09). Sprawdź realny stan w kodzie; jeśli pełne domknięcie Tryb A/C jest poza M01 — odnotuj jako zależność, nie blokuj.
-- **Kluczowe pliki:** `src/components/AIChat/UnifiedChatPanel.tsx`, `src/hooks/useAIStream.ts`, `src/utils/detectMessageLanguage.ts`, `server/src/services/ai/AIPipeline.ts`, `server/src/routes/ai.routes.ts`, `src/components/AIChat/WorkCanvasDocumentPanel.tsx`.
-- ⚠ **PLIKI WSPÓLNE Z M02** (jeśli M02 robi inny agent równolegle): `UnifiedChatPanel.tsx`, `WorkCanvasDocumentPanel.tsx`. Edytuj je ostrożnie, commituj często jawnymi ścieżkami, `git log -1` przed założeniem stanu. Konflikty na tych plikach zgłoś orchestratorowi.
+## Stan wejściowy M01 (zweryfikowany 2026-06-19 — potwierdź, nie zgaduj)
+**Bramki już zrobione (z dowodem):**
+- **Kod ✅** — L-01/02/05/07/08/09/10 zamknięte, L-04/06 false-pos; sierota `CodeInterpreter/` usunięta. **+ KRYTYCZNY FIX `42bee38044`** (czat padał 400 „type:None" → `inputSchema` w `llmService.ts`).
+- **DoD 6/7 ✅** — #1 front↔back, #2 security (locki 4/4+3/3), #3 i18n (0 bare-missing), #4 tokeny (rose 0), #5 §27 N/D, #6 E2E-gate (M01 zielony). **Zostaje #7** (a11y/dark live).
+- **Epiki 5/5 ✅** — język 10/10, reasoning 9/9, kręgosłup Tryb B 33/33+2/2 (Tryb C odroczony BETA).
+- **Testy automaty ✅** — M01-core 100 PASS (component+backend). Naprawiony stale mock `EnhancedChatInput.teresa-error-toast` (`cb7244e1dd`).
+- **Deploy ✅** — M01 live na demo (`demo/1475849a`).
+- **→F częściowo NA ŻYWO ✅** — zweryfikowane: AddFilesMenu, ToolsMenu/AI-Modes, Co-Thinker(6 person), **język PL→PL**, error-state, SSE+RAG+persystencja.
 
-## Procedura dokończenia (wykonaj po kolei, odhaczaj bramki)
-1. **Kod** — domknij realnie otwarte luki funkcjonalne/security z rejestru L-XX teczki. Weryfikuj w kodzie. (Dla M01 to głównie sprawdzenie że domknięte luki faktycznie trzymają + ewentualny Tryb A/C jeśli w zakresie.)
-2. **DoD 7/7** — przejdź każde kryterium i udowodnij:
-   1) front↔back (zero fasad/mocków/martwych przycisków) · 2) bezpieczeństwo (zero żywych P0/P1 + test regresji) · 3) i18n (pełne PL/EN przez `t()`) · 4) tokeny (zero „rose"/hex) · 5) §27 (dla M01 N/D — sidebar historii ≠ tabela encji; potwierdź) · 6) E2E w PR-gate · 7) zgodność komponentów ze standardem UI/UX (canon).
-3. **Epiki** — przejdź wszystkie epiki sekcji F teczki (5 epików), każdy zielony z dowodem.
-4. **Testy (bramka kluczowa M01 = L-03)** — wykonaj **13 scenariuszy** z `TESTY_M01_CZAT.md` na żywo (E2E: UI + payload Network + stan DB/store; sam wygląd przycisku to NIE dowód; dowód = screenshot + payload). Uruchom istniejące automaty; **dołóż brakujące pokrycie S3/S4/S6 i wepnij smoke w PR-gate.** ⚠ CI puszcza tylko `tests/unit|integration|components` — testy kładź w `tests/`, NIE w `src/**/__tests__` (inaczej nigdy nie wejdą w gate).
-5. **Zgodność UI/UX** — każdy komponent M01 vs SSOT canon (`docs/ui-standards/`), napraw odstępstwa P0/P1. Korupcja „rose" w M01 nie występuje — potwierdź; a11y/dark-mode sprawdź.
-6. **Commit na Londyn** (jawne ścieżki). **Deploy na demo NIE rób sam** — koordynuje orchestrator (żeby nie kolidować z drugim agentem). Zgłoś gotowość do deployu.
+**Co MUSISZ jeszcze domknąć do 8/8:**
+1. **Testy — pełny zestaw zielony.** Uruchom CAŁY zestaw M01 i potwierdź 0 tracked-failów M01. (Znane nie-M01 faile: M22 `Wave5ArtifactRuntimePanel` + integracje DB-infra — NIE Twoje.) Komenda: `npx vitest run tests/components/AIChat tests/unit/AIChat tests/unit/detectMessageLanguage.test.ts tests/unit/backend/shareMetadataWhitelist.test.ts tests/unit/backend/aiMemoryGating.test.ts tests/unit/backend/ai/aiPipeline-thinking.test.js`. CI puszcza tylko `tests/unit|integration|components` (luka-testy w `tests/`, NIE `src/__tests__`).
+2. **DoD #7 — a11y/dark NA ŻYWO** (niżej „Weryfikacja live").
+3. **→F — pozostałe scenariusze z 13** (te niezweryfikowane: branch/export/share/revoke, slash-commands, głos jeśli skonfigurowany) NA ŻYWO.
+4. **Drobny i18n-leak:** nagłówek `JAK TERESA MA ODPOWIADAĆ` (PL) w ToolsMenu wśród EN — znajdź klucz/hardkod i przez `t()` (locales dozwolone). Zweryfikuj render.
+5. **→UI** — przygotuj zestaw screenów ekranów M01 (inwentarz 20 ekranów w teczce) dla audytora.
+
+## Weryfikacja LIVE (tak to robisz — sprawdzone)
+Czat wymaga zalogowanej, działającej apki. Środowisko:
+1. `preview_start` serwery z `.claude/launch.json`: **`frontend-dev`** (:3000) + **`backend-dev`** (:3001, **staging DB — bezpieczne, NIE prod**).
+2. Sterujesz **zalogowaną przeglądarką Piotra** przez „Claude in Chrome" MCP: `list_connected_browsers` → `navigate http://localhost:3000/chat` (nowa karta dziedziczy sesję). NIE używaj preview-przeglądarki (osobna, niezalogowana).
+3. Dowód = screenshot + payload Network + logi backendu (`preview_logs`).
+4. ⚠ Provider AI bywa bez balansu (deepseek/openrouter) — jeśli „AI returned no output", sprawdź logi backendu czy to balans (środowisko) czy realny bug; przełącz model (selektor „Model" prawy-góra) jeśli trzeba.
 
 ## Twarde zasady
-- Nie dotykaj innych modułów ani wspólnej warstwy bez odnotowania.
-- **NIGDY `git add -A` / `git add .`** — tylko jawne ścieżki plików.
-- **prod = centerbeam:** zero zmian na prod bez osobnej zgody Piotra. Pracujesz Londyn → demo.
-- **Sekrety/klucze/env:** nie wpisujesz; ustawia Piotr w Railway.
-- **Każda zmiana UI:** zweryfikuj w preview/na demo, dowód = screenshot. Nigdy „done" na samym `tsc`/`eslint`.
-- Weryfikuj zanim ogłosisz zrobione — żadnych deklaracji bez dowodu w kodzie/runtime.
+- Tylko M01. NIGDY `git add -A`/`.` — jawne ścieżki. prod=centerbeam: zero zmian bez osobnej zgody Piotra (pracujesz Londyn→demo).
+- Sekrety/env/flagi Railway: nie ustawiasz — zgłaszasz Piotrowi.
+- Każda zmiana UI: zweryfikuj live, dowód=screenshot. Nigdy „done" na samym `tsc`. Weryfikuj zanim ogłosisz.
 
-## Co zwracasz (raport odbioru do orchestratora)
-Po skończeniu (lub przy blokerze) zwróć:
-- Stan 6 bramek: **Epiki x/5 · DoD x/7 · Testy x/13 (+automaty) · UI ✅/🟡** z dowodem per pozycja (commit hash / screenshot / wynik testu).
-- Co zrobione, co zostało, ryzyka/blokery wymagające Piotra (env/konto/prod).
-- Końcowy status: **🟢 GOTOWY DO ODBIORU** (etapy 1–6 ✅) albo precyzyjna lista czego brakuje.
-- Zaktualizuj wiersz M01 w `_STAN_PRACY_ODBIORY.md`.
+## Co zwracasz
+Zaktualizowany wiersz M01 w `_STAN_PRACY_ODBIORY.md` + raport: stan 8 bramek z dowodem (commit/screenshot/test), co domknięte, blokery dla Piotra (deploy demo/prod, env). Status końcowy: **8/8 GOTOWY DO ZAMKNIĘCIA** (po Twoim →F/→UI) albo precyzyjna lista co zostało.
