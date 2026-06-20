@@ -198,6 +198,81 @@ describe('NotebookContent manual gate regressions', () => {
     });
   });
 
+  // L-09: autosave is debounced (~350ms coalescing window). Rapid successive
+  // editor updates must collapse into ONE persisted PUT, not one per keystroke.
+  it('coalesces rapid editor updates into a single debounced save', async () => {
+    vi.useFakeTimers();
+    try {
+      apiMock.getNotebookPages.mockResolvedValue([
+        {
+          id: 'note-1',
+          title: 'Debounce note',
+          projectId: null,
+          visibility: 'private',
+          tags: [],
+          contentJson: { type: 'doc', content: [] },
+          contentText: '',
+          maturity: 'seed',
+          icon: null,
+          summary: null,
+          status: 'active',
+          pinned: false,
+          convertedTo: null,
+          attachments: [],
+          createdAt: '2026-03-28T10:00:00.000Z',
+          updatedAt: '2026-03-28T10:00:00.000Z',
+        },
+      ]);
+
+      let keystroke = 0;
+      editorMock.getJSON.mockImplementation(() => ({
+        type: 'doc',
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: `typing ${keystroke}` }] },
+        ],
+      }));
+
+      renderWithRouter(<NotebookContent searchQuery="" />);
+
+      await vi.waitFor(() => {
+        expect(apiMock.getNotebookPages).toHaveBeenCalled();
+        expect(editorMock.on).toHaveBeenCalledWith('update', expect.any(Function));
+      });
+
+      const updateHandler = editorMock.on.mock.calls.find(
+        (call: unknown[]) => call[0] === 'update'
+      )?.[1] as (() => void) | undefined;
+      expect(updateHandler).toBeDefined();
+
+      // Drain any mount-time save so the assertion isolates the debounce window.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+      apiMock.updateNotebookPage.mockClear();
+
+      // Three rapid "keystrokes" within a single debounce window, then let the
+      // window elapse. The burst must collapse into ONE persisted PUT carrying
+      // only the latest content — never one PUT per keystroke.
+      await act(async () => {
+        keystroke = 1;
+        updateHandler?.();
+        keystroke = 2;
+        updateHandler?.();
+        keystroke = 3;
+        updateHandler?.();
+        await vi.advanceTimersByTimeAsync(400);
+      });
+
+      expect(apiMock.updateNotebookPage).toHaveBeenCalledTimes(1);
+      expect(apiMock.updateNotebookPage).toHaveBeenCalledWith(
+        'note-1',
+        expect.objectContaining({ contentText: 'typing 3' })
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // C3 (KROK 6): "Expand into document" creates a work-canvas draft copy of the
   // note (D-C-2 provenance) via POST /api/work-canvas/drafts.
   it('renders the expand-into-document button and POSTs a draft with provenance', async () => {

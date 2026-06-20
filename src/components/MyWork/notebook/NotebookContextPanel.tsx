@@ -617,11 +617,11 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {usedIn.slice(0, 8).map((x) => {
+                    {usedIn.slice(0, 8).map((x, idx) => {
                       const chip = backlinkChips[`${x.sourceType}:${x.sourceId}`];
                       return (
                         <div
-                          key={x.id || `${x.sourceType}:${x.sourceId}`}
+                          key={`${x.sourceType}:${x.sourceId}:${x.id || ''}:${idx}`}
                           className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
                         >
                           <div className="flex items-start justify-between gap-2">

@@ -538,6 +538,37 @@ describe('Api notebook V8 fallback guard', () => {
     });
   });
 
+  describe('fallback + lock status predicates', () => {
+    it('treats the full non-supported status list (incl. 403) as legacy-fallback eligible', () => {
+      for (const status of [400, 403, 404, 405, 500, 501, 503]) {
+        expect(Api.shouldFallbackToLegacyMyWorkNotebook({ status })).toBe(true);
+      }
+    });
+
+    it('does NOT fall back to legacy for transient/auth-retryable statuses', () => {
+      for (const status of [401, 408, 409, 422, 429, 502, 504]) {
+        expect(Api.shouldFallbackToLegacyMyWorkNotebook({ status })).toBe(false);
+      }
+    });
+
+    it('locks legacy mode for V8-disabled statuses [404,405,501]', () => {
+      for (const status of [404, 405, 501]) {
+        expect(Api.shouldLockLegacyMyWorkNotebookMode({ status })).toBe(true);
+      }
+    });
+
+    it('does NOT lock legacy mode for soft-fallback statuses [400,403,500,503]', () => {
+      for (const status of [400, 403, 500, 503]) {
+        expect(Api.shouldLockLegacyMyWorkNotebookMode({ status })).toBe(false);
+      }
+    });
+
+    it('locks legacy mode when the error carries a V8_DISABLED code regardless of status', () => {
+      expect(Api.shouldLockLegacyMyWorkNotebookMode({ status: 403, data: { code: 'V8_DISABLED' } })).toBe(true);
+      expect(Api.shouldLockLegacyMyWorkNotebookMode({ status: 200, code: 'V8_DISABLED' })).toBe(true);
+    });
+  });
+
   it('streams notebook action extraction through the shared Api client seam', async () => {
     const chunks = [
       'data: {"type":"stage","label":"Analyzing..."}\n',
