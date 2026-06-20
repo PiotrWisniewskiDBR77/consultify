@@ -102,12 +102,14 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6
 | 4 | Testy — automaty zielone (CAŁOŚĆ przejrzana) | ✅ | **Pełny zestaw M01 przeszedł triaż.** M01-core tracked: **100 PASS**. Naprawiony 1 realny tracked-bug: stale mock `CoThinkerActivePill` w `EnhancedChatInput.teresa-error-toast` (`cb7244e1dd`, 2/2). Usunięty martwy gitignored test `AIChatWelcomeView.v8-controls`. Pozostałe faile pełnego runu = **inne moduły** (M22 Wave5, M24/M27 admin-session/superadmin-sidebar — nieaktualne asercje) + DB-infra integracje — NIE M01. **13 scenariuszy manualnych** wymaga zalogowanej sesji = Twój →F (granica dostępu) |
 | 5 | Zgodność UI/UX (kryt. 7) | 🟡 | komponenty zgodne (composer single-border 5/5, rose 0); a11y/dark live = →UI |
 | 6 | Deploy na demo | ✅ | `SUCCESS demo/1475849a` — M01 live na demo.consultify.ai |
-| 7 | **ODBIÓR FUNKCJA — Piotr** (kliknij 13 scenariuszy na demo) | ⬜ | |
-| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
+| 7 | **ODBIÓR FUNKCJA** — częściowo zweryf. NA ŻYWO (Claude, localhost+staging) | 🟡 | ✅ AddFilesMenu · ✅ ToolsMenu/AI-Modes · ✅ Co-Thinker(6 person) · ✅ **język PL→PL** · ✅ error-state · ✅ SSE+RAG+persyst.; pozostałe scenariusze = Piotr |
+| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | dark-mode czysty (live); screeny audytora pending |
 | ✔ | **MODUŁ ZAMKNIĘTY (8/8)** | ⬜ | |
 
 DoD: 1✅front↔back 2✅security 3✅i18n 4✅tokeny 5✅§27(N/D) 6✅E2E(M01-gate) 7🟡UI/UX(a11y→Faza4) · 📁 [M01-czat.md](M01-czat.md)
-⚠ **Bloker wspólnego PR-gate:** 4 faile `Wave5ArtifactRuntimePanel` (M22, nieaktualne asercje i18n) — osobny task, nie M01.
+🔴 **KRYTYCZNY FIX (2026-06-19, `42bee38044`):** czat padał na 400 „Invalid schema generate_deliverable type:None" — ai SDK v6 `tool()` wymaga `inputSchema` nie `parameters` (`llmService.ts`). ZNALEZIONY przez uruchomienie (testy mockowały SDK). Live-verified: polskie pytanie→polska odpowiedź+9 RAG. **= prawdopodobny P0 Elkomtechu „brak odpowiedzi" → MUSI na demo+prod.** [[finding_chat_inputschema_sdk_v6]]
+⚠ Drobny i18n-leak: nagłówek „JAK TERESA MA ODPOWIADAĆ" (PL) w ToolsMenu wśród EN.
+⚠ Bloker wspólnego PR-gate: 4 faile `Wave5ArtifactRuntimePanel` (M22) — osobny task, nie M01.
 
 ### M02 — Canvas · Faza 3 · 6 epików · 16 ekranów
 **Status:** 🟢 GOTOWY DO ODBIORU (2026-06-19) — realizacja domknięta; ⚠ odbiór funkcji BLOKOWANY flagą Railway
