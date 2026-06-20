@@ -74,7 +74,10 @@ vi.mock('../../../src/components/AIChat/AddFilesMenu', () => ({
   },
 }));
 vi.mock('../../../src/components/AIChat/CloudFilePicker', () => ({ CloudFilePicker: () => null }));
-vi.mock('../../../src/components/AIChat/CoThinkerMenu', () => ({ CoThinkerMenu: () => null }));
+vi.mock('../../../src/components/AIChat/CoThinkerMenu', () => ({
+  CoThinkerMenu: () => null,
+  CoThinkerActivePill: () => null,
+}));
 vi.mock('../../../src/components/AIChat/MoveToProjectModal', () => ({ MoveToProjectModal: () => null }));
 vi.mock('../../../src/components/AIChat/ToolsMenu', () => ({ ToolsMenu: () => null }));
 vi.mock('../../../src/components/AIChat/InputCharCounter', () => ({ InputCharCounter: () => null }));
