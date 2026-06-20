@@ -53,7 +53,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6
 
 | # | Moduł | Faza | Epiki | DoD | Testy | UI | →F | →UI | Ekr. | Status |
 |---|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
-| M01 | Czat | 2 | 0/5 | 2/7 | 0/13 🟡 | ⬜ | ⬜ | ⬜ | 20 | 🟡 W TOKU |
+| M01 | Czat | 2 | 5/5 | 6/7 | 0/13 (105✅) | 🟡 | ⬜ | ⬜ | 20 | 🟢 DO ODBIORU |
 | M02 | Canvas | 3 | 0/6 | 0/7 | 0/20 | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
 | M03 | My Work — organizer | 2/3 | 0/6 | 0/7 | 0/39 | ⬜ | ⬜ | ⬜ | 15 | ⬜ NIE ROZP. |
 | M04 | Notatnik | 3 | 0/6 | 0/7 | 0/54 | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
@@ -83,7 +83,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6
 
 **Status modułu (słownik PM):** ⬜ NIE ROZPOCZĘTY · 🟡 W TOKU · 🟢 GOTOWY DO ODBIORU (6 bramek realizacji ✅, czeka na →F/→UI) · ✅ ZAMKNIĘTY (wszystkie 6 ✅).
 
-**Postęp programu:** 0 / 27 zamkniętych · 1 w toku (M01) · bramki realizacji zaliczone: Epiki 0/27 · DoD 0/27 · Testy 0/1923 scenariuszy (M01–M27, bez M11) · UI 0/27.
+**Postęp programu:** 0 / 27 zamkniętych · **1 🟢 GOTOWY DO ODBIORU (M01)** · bramki realizacji: Epiki M01 5/5 · DoD M01 6/7 · Testy automaty M01 105✅ (manual 0/1923) · UI 0/27.
 
 ---
 
@@ -92,21 +92,22 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6
 > Każdy moduł: 8 etapów + linia DoD. Odhaczamy `⬜→✅`, wpisujemy datę/kto przy odbiorach 7–8.
 
 ### M01 — Czat · Faza 2 · 5 epików · 20 ekranów
-**Status:** 🟡 W TOKU (start 2026-06-19) — funkcjonalnie ~domknięty; zostaje L-03 testy + odbiory
+**Status:** 🟢 GOTOWY DO ODBIORU (2026-06-19) — realizacja domknięta z dowodami; czeka na Twoje 2 odbiory
 
-| # | Etap | ✓ | Odbiór (data / kto) |
+| # | Etap | ✓ | Odbiór / dowód |
 |---|---|:--:|---|
-| 1 | Kod — luki funkcjonalne/security domknięte | ✅ | L-01/02/05/07/08/09/10 ZAMKNIĘTE, L-04/06 false-pos (zweryf. 2026-06-19) |
-| 2 | DoD 7/7 | 🟡 | do potwierdzenia per kryterium |
-| 3 | Epiki 0/5 | 🟡 | do potwierdzenia |
-| 4 | Testy unit+E2E zielone | 🟡 | **L-03 otwarta: pokrycie S3/S4/S6 + smoke w PR-gate (2/4)** ← następny krok kodowy |
-| 5 | Zgodność UI/UX (kryt. 7) | ⬜ | korupcja „rose" nie występuje; §27 N/D; a11y/dark do sprawdzenia |
-| 6 | Deploy na demo | ⬜ | (Londyn już na demo — potwierdzić na M01) |
-| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
+| 1 | Kod — luki funkcjonalne/security domknięte | ✅ | L-01/02/05/07/08/09/10 ZAMKNIĘTE, L-04/06 false-pos; sierota `CodeInterpreter/` usunięta (L-05) |
+| 2 | DoD 6/7 (#7 a11y→Faza4) | ✅ | #1 front↔back · #2 security · #3 i18n(0 bare) · #4 tokeny(rose 0) · #5 §27 N/D · #6 M01-gate green |
+| 3 | Epiki 5/5 | ✅ | E1 rdzeń · E2 język(10/10) · E3 reasoning(9/9) · E4 Tryb B(33/33+2/2)+A(6/6), **C odroczony BETA** · E5 closeout |
+| 4 | Testy — automaty zielone + manual do odbioru | 🟡 | **105 locków PASS** (89 component + 16 backend); **13 scenariuszy manualnych = Twój odbiór na demo** |
+| 5 | Zgodność UI/UX (kryt. 7) | 🟡 | komponenty zgodne (composer single-border 5/5, rose 0); a11y/dark = Faza 4; screeny = →UI |
+| 6 | Deploy na demo | 🟡 | koordynuje orchestrator (Londyn→demo) |
+| 7 | **ODBIÓR FUNKCJA — Piotr** (kliknij 13 scenariuszy na demo) | ⬜ | |
 | 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
 | ✔ | **MODUŁ ZAMKNIĘTY (8/8)** | ⬜ | |
 
-DoD: 1⬜front↔back 2⬜security 3✅i18n(L-10) 4✅tokeny 5⬜§27(N/D) 6🟡E2E(L-03) 7⬜UI/UX · 📁 [M01-czat.md](M01-czat.md)
+DoD: 1✅front↔back 2✅security 3✅i18n 4✅tokeny 5✅§27(N/D) 6✅E2E(M01-gate) 7🟡UI/UX(a11y→Faza4) · 📁 [M01-czat.md](M01-czat.md)
+⚠ **Bloker wspólnego PR-gate:** 4 faile `Wave5ArtifactRuntimePanel` (M22, nieaktualne asercje i18n) — osobny task, nie M01.
 
 ### M02 — Canvas · Faza 3 · 6 epików · 16 ekranów
 **Status:** ⬜ NIE ROZPOCZĘTY
