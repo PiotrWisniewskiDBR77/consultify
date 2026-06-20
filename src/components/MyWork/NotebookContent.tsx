@@ -334,8 +334,8 @@ const buildOutlineDraft = (
 const EDITOR_STYLES = `
 /* Typography — premium feel */
 .ProseMirror {
-  line-height: 1.8;
-  font-size: 0.9375rem;
+  line-height: 1.75;
+  font-size: 1rem;
   color: #1e293b;
   caret-color: #A51C30;
 }
@@ -2374,7 +2374,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   }
                 }}
               >
-                <div className="mx-auto max-w-5xl px-6 py-6">
+                <div className="mx-auto max-w-3xl px-6 py-8">
                   {/* Page icon + title — Notion-like */}
                   <div className="mb-4">
                     <div className="flex items-start gap-3 mb-1">
@@ -2398,7 +2398,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             scheduleSave({ title: e.target.value });
                           }}
                           placeholder={isPolish ? 'Bez tytułu' : 'Untitled'}
-                          className="w-full bg-transparent text-2xl font-bold text-slate-900 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          className="w-full bg-transparent text-3xl font-bold tracking-tight text-slate-900 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                         />
                         {/* Tags inline */}
                         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
