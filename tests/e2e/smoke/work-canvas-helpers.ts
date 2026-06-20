@@ -161,40 +161,53 @@ async function loginViaBootstrap(page: Page, role: 'ADMIN' | 'USER', label: stri
     issues.push(`auth/demo-login failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 
-  try {
-    const demoEmail = `e2e+${runId}@local.test`;
-    const registerDemoResponse = await page.request.post(`${API_BASE_URL}/api/auth/register-demo`, {
-      data: {
-        email: demoEmail,
-        password: 'Playwright#123',
-        firstName: role === 'ADMIN' ? 'Owner' : 'Member',
-      },
-    });
-    if (registerDemoResponse.ok()) {
-      const login = await registerDemoResponse.json();
-      const token = String(login?.token || login?.accessToken || '').trim();
-      if (!token) throw new Error('register-demo payload is missing token');
-      const user = (login?.user || {}) as LoginUserShape;
-      const authUser = {
-        id: String(user.id || `demo-register-${label}`),
-        email: String(user.email || demoEmail),
-        role: String(user.role || role),
-        organizationId: String(user.organizationId || 'e2e-org-id'),
-        organizationName: String(user.organizationName || user.companyName || 'E2E Organization'),
-        firstName: String(user.firstName || (role === 'ADMIN' ? 'Owner' : 'Member')),
-        lastName: String(user.lastName || ''),
-        companyName: String(user.companyName || user.organizationName || 'E2E Organization'),
-        isAuthenticated: true,
-        accessLevel: 'full',
-      };
-      await seedSessionStorage(page, token, authUser);
-      return token;
+  // register-demo can transiently fail when the single-process dev backend stalls under a
+  // heavy preceding test (canvas hydration blocks the event loop for a few seconds). Retry
+  // with exponential backoff and a fresh email each attempt so a multi-second stall does not
+  // fail the whole spec.
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const demoEmail = `e2e+${runId}-${attempt}@local.test`;
+    try {
+      const registerDemoResponse = await page.request.post(
+        `${API_BASE_URL}/api/auth/register-demo`,
+        {
+          timeout: 25000,
+          data: {
+            email: demoEmail,
+            password: 'Playwright#123',
+            firstName: role === 'ADMIN' ? 'Owner' : 'Member',
+          },
+        }
+      );
+      if (registerDemoResponse.ok()) {
+        const login = await registerDemoResponse.json();
+        const token = String(login?.token || login?.accessToken || '').trim();
+        if (!token) throw new Error('register-demo payload is missing token');
+        const user = (login?.user || {}) as LoginUserShape;
+        const authUser = {
+          id: String(user.id || `demo-register-${label}`),
+          email: String(user.email || demoEmail),
+          role: String(user.role || role),
+          organizationId: String(user.organizationId || 'e2e-org-id'),
+          organizationName: String(user.organizationName || user.companyName || 'E2E Organization'),
+          firstName: String(user.firstName || (role === 'ADMIN' ? 'Owner' : 'Member')),
+          lastName: String(user.lastName || ''),
+          companyName: String(user.companyName || user.organizationName || 'E2E Organization'),
+          isAuthenticated: true,
+          accessLevel: 'full',
+        };
+        await seedSessionStorage(page, token, authUser);
+        return token;
+      }
+      issues.push(
+        `auth/register-demo ${registerDemoResponse.status()}: ${await registerDemoResponse.text().catch(() => '<no-body>')}`
+      );
+    } catch (error) {
+      issues.push(
+        `auth/register-demo failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
-    issues.push(
-      `auth/register-demo ${registerDemoResponse.status()}: ${await registerDemoResponse.text().catch(() => '<no-body>')}`
-    );
-  } catch (error) {
-    issues.push(`auth/register-demo failed: ${error instanceof Error ? error.message : String(error)}`);
+    if (attempt < 5) await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
   }
 
   if (isStrictCanvasGate()) {
