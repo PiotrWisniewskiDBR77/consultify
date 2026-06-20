@@ -2764,22 +2764,30 @@ router.post(
       })
       .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
-    await organizationContextService.recordMyWorkIdea({
-      organizationId: orgId,
-      userId,
-      payload: {
-        ideaId: id,
-        title,
-        body,
-        tags,
-        sourceType,
-        sourceConversationId,
-        sourceMessageId,
-        sourcePack,
-        actionContract,
-        evidenceRefs,
-      },
-    });
+    // Org-context capture rebuilds organization_context_snapshots, which on
+    // data-heavy orgs runs a ~20s claims aggregation. The snapshot does NOT need
+    // to be fresh before we ack the create — defer it (fire-and-forget, like the
+    // audit-log call above) so idea creation returns immediately.
+    void organizationContextService
+      .recordMyWorkIdea({
+        organizationId: orgId,
+        userId,
+        payload: {
+          ideaId: id,
+          title,
+          body,
+          tags,
+          sourceType,
+          sourceConversationId,
+          sourceMessageId,
+          sourcePack,
+          actionContract,
+          evidenceRefs,
+        },
+      })
+      .catch((err: any) =>
+        logger.warn('[MyIdeas] org-context capture failed (create):', err?.message)
+      );
 
     res.status(201).json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
   })
@@ -2985,17 +2993,23 @@ router.put(
       })
       .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
-    await organizationContextService.recordMyWorkIdea({
-      organizationId: orgId,
-      userId,
-      payload: {
-        ideaId: id,
-        title: (row as any)?.title,
-        body: (row as any)?.body,
-        tags: parseTagsArray((row as any)?.tags),
-        stage: (row as any)?.stage,
-      },
-    });
+    // Fire-and-forget org-context capture (see create handler) — avoids blocking
+    // the update ack on the ~20s snapshot rebuild.
+    void organizationContextService
+      .recordMyWorkIdea({
+        organizationId: orgId,
+        userId,
+        payload: {
+          ideaId: id,
+          title: (row as any)?.title,
+          body: (row as any)?.body,
+          tags: parseTagsArray((row as any)?.tags),
+          stage: (row as any)?.stage,
+        },
+      })
+      .catch((err: any) =>
+        logger.warn('[MyIdeas] org-context capture failed (update):', err?.message)
+      );
 
     res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
   })
