@@ -30,8 +30,20 @@ import * as notebookSearchService from '../../services/v8/notebookSearchService.
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
+// Living Notebook — strumienie agentów (rozłączne route-moduły) montowane na tym samym routerze.
+import { registerNotebookCoverRoutes } from './notebookCover.routes.js';
+import { registerNotebookTodayRoutes } from './notebookToday.routes.js';
+import { registerNotebookTopicsRoutes } from './notebookTopics.routes.js';
+import { registerNotebookVersionsRoutes } from './notebookVersions.routes.js';
 
 const router = Router();
+
+// Wpięcie strumieni Living Notebook (Topics A1, Daily A2, Cover A4, Versions A5) — ścieżki rozłączne
+// (/topics, /today, /pages/:id/cover, /pages/:id/versions), pod /api/v8/notebook/*.
+registerNotebookTopicsRoutes(router);
+registerNotebookTodayRoutes(router);
+registerNotebookCoverRoutes(router);
+registerNotebookVersionsRoutes(router);
 
 /** Documented status codes for P07-B notebook clients (contract checklist). */
 export const P07_NOTEBOOK_HTTP_STATUSES = [
