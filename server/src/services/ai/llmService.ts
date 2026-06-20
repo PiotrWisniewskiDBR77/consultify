@@ -832,7 +832,7 @@ export class LLMService {
       aiLogger.debug('LLMService', `Registering tool: ${def.name}`);
       toolDefinitions[def.name] = tool({
         description: def.description,
-        parameters: jsonSchema(def.parameters as any),
+        inputSchema: jsonSchema(def.parameters as any),
         execute: async (args: unknown) => mcpServer.execute(def.name, args, context),
       } as any) as any;
     }
@@ -915,7 +915,7 @@ export class LLMService {
     for (const def of toolDefs) {
       toolDefinitions[def.name] = tool({
         description: def.description,
-        parameters: jsonSchema(def.parameters as any),
+        inputSchema: jsonSchema(def.parameters as any),
         execute: async (args: unknown) => mcpServer.execute(def.name, args, context),
       } as any);
     }
@@ -1058,7 +1058,7 @@ export class LLMService {
       for (const def of params.tools) {
         streamToolDefinitions[def.name] = tool({
           description: def.description,
-          parameters: jsonSchema(def.parameters as any),
+          inputSchema: jsonSchema(def.parameters as any),
           execute: async (args: unknown) => mcpServer.execute(def.name, args, params.context as any),
         } as any);
       }
