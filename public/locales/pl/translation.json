@@ -3965,6 +3965,7 @@
       "updateFailed": "Nie udało się zaktualizować",
       "archived": "Inicjatywa zarchiwizowana",
       "archiveFailed": "Nie udało się zarchiwizować inicjatywy",
+      "deleted": "Inicjatywa usunięta",
       "chatOpened": "Czat otwarty",
       "chatOpenError": "Nie udało się otworzyć czatu",
       "statusChanged": "Status zmieniony na {{status}}",
@@ -4090,6 +4091,8 @@
     "archive": {
       "hint": "Zakończ lub anuluj najpierw"
     },
+    "confirmDelete": "Trwale usunąć „{{name}}\"? Tej operacji nie można cofnąć.",
+    "thisInitiative": "tę inicjatywę",
     "card": {
       "nextStep": "Następny krok"
     }
@@ -7604,7 +7607,8 @@
     "webhooks": {
       "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć.",
       "name": "Nazwa",
-      "empty": "Brak prezentacji.",
+      "empty": "Nie skonfigurowano webhooków",
+      "emptyDescription": "Dodaj webhook, aby otrzymywać powiadomienia o zdarzeniach w czasie rzeczywistym na własnych punktach końcowych.",
       "failed": "Błąd",
       "retry": "Spróbuj ponownie"
     },
@@ -9904,6 +9908,23 @@
       "aiModes": "Tryby AI",
       "knowledgeSources": "Źródła wiedzy",
       "responseStyle": "Styl odpowiedzi",
+      "steeringHeading": "Jak Teresa ma odpowiadać",
+      "steeringSubtitle": "Ustaw, jak Teresa ma odpowiadać — styl i własne instrukcje obowiązują w każdej rozmowie.",
+      "customSet": "instrukcje",
+      "voiceStyle": "Styl głosu",
+      "voiceFormal": "Formalny",
+      "voiceNormal": "Normalny",
+      "voiceCheerful": "Pogodny",
+      "voiceCalm": "Spokojny",
+      "addLink": "Dodaj link",
+      "addLinkModalDesc": "Pobierzemy i dołączymy treść strony do tej rozmowy.",
+      "urlLabel": "URL",
+      "urlPlaceholder": "https://…",
+      "urlPrivacyHint": "Tylko publiczne linki http(s). Polityka Twojej organizacji może blokować dostęp do internetu.",
+      "urlUnsupportedProtocol": "Obsługiwane są tylko linki http(s)",
+      "urlInvalid": "Nieprawidłowy link",
+      "manageIntegrations": "Zarządzaj źródłami w chmurze",
+      "deleteDoc": "Usuń z bazy wiedzy",
       "personalizeTitle": "Personalizuj odpowiedzi AI",
       "personalizeInstructions": "Spersonalizowane instrukcje",
       "personalizeInstructionsPlaceholder": "Jak AI ma odpowiadać?",
@@ -9934,7 +9955,8 @@
         },
         "showReasoning": {
           "label": "Pokaż rozumowanie",
-          "desc": "Widoczny tok myślenia AI"
+          "desc": "Widoczny tok myślenia AI",
+          "tooltip": "Pokazuje tok myślenia modelu (wolniejsze, droższe)"
         },
         "multiAgent": {
           "label": "Analiza wieloagentowa",
@@ -10017,9 +10039,19 @@
         "openingProvider": "Otwieranie {{provider}}…",
         "redirectIntegrations": "Przekierowanie do ustawień integracji",
         "recentReattached": "Ponownie dołączono „{{name}}\"",
-        "docDeleted": "Usunięto: {{name}}"
+        "docDeleted": "Usunięto: {{name}}",
+        "docDeleteFailed": "Nie udało się usunąć dokumentu.",
+        "urlAdded": "Link dodany do załączników"
       },
       "recentReupload": "wgraj ponownie, by dołączyć"
+    },
+    "conversation": {
+      "addToProject": "Dodaj do projektu",
+      "addToProjectRequiresConversation": "Najpierw wyślij pierwszą wiadomość, aby dodać rozmowę do projektu."
+    },
+    "workMode": {
+      "title": "Jak Teresa ma teraz pracować",
+      "default": "Tryb pracy"
     },
     "cloudPicker": {
       "demoMode": "Tryb demonstracyjny",

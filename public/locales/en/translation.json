@@ -4758,6 +4758,7 @@
       "updateFailed": "Nie udało się zaktualizować",
       "archived": "Initiative archived",
       "archiveFailed": "Could not archive initiative",
+      "deleted": "Initiative deleted",
       "chatOpened": "Chat opened",
       "chatOpenError": "Failed to open chat",
       "statusChanged": "Status zmieniony na {{status}}",
@@ -4773,7 +4774,7 @@
       "aiGenerationError": "Generowanie AI nie powiodło się",
       "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
       "archiveError": "Nie udało się zarchiwizować",
-      "deleteError": "Nie udało się usunąć",
+      "deleteError": "Could not delete initiative",
       "statusNotAllowed": "Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.",
       "gateBlockedHub": "Nie można przejść dalej — brakuje elementów blokujących:\\n• {{items}}",
       "downgradeBlocked": "Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.",
@@ -4881,8 +4882,10 @@
       "nextGate": "Next gate"
     },
     "archive": {
-      "hint": "Zakończ lub anuluj najpierw"
+      "hint": "Finish or cancel it first"
     },
+    "confirmDelete": "Permanently delete \"{{name}}\"? This cannot be undone.",
+    "thisInitiative": "this initiative",
     "card": {
       "nextStep": "Next step"
     }
@@ -8340,7 +8343,8 @@
     "webhooks": {
       "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone.",
       "name": "Name",
-      "empty": "No presentations yet.",
+      "empty": "No webhooks configured",
+      "emptyDescription": "Add a webhook to receive real-time event notifications at your own endpoints.",
       "failed": "Failed",
       "retry": "Retry"
     },
@@ -9281,6 +9285,23 @@
       "aiModes": "AI modes",
       "knowledgeSources": "Knowledge sources",
       "responseStyle": "Response style",
+      "steeringHeading": "How Teresa should answer",
+      "steeringSubtitle": "Set how Teresa should respond — the style and your own instructions apply in every conversation.",
+      "customSet": "instructions",
+      "voiceStyle": "Voice style",
+      "voiceFormal": "Formal",
+      "voiceNormal": "Normal",
+      "voiceCheerful": "Cheerful",
+      "voiceCalm": "Calm",
+      "addLink": "Add link",
+      "addLinkModalDesc": "We will fetch and attach the page content to this chat.",
+      "urlLabel": "URL",
+      "urlPlaceholder": "https://…",
+      "urlPrivacyHint": "Only public http(s) links. Your organization policy may block internet access.",
+      "urlUnsupportedProtocol": "Only http(s) links are supported",
+      "urlInvalid": "Invalid link",
+      "manageIntegrations": "Manage cloud sources",
+      "deleteDoc": "Remove from knowledge base",
       "personalizeTitle": "Personalize AI responses",
       "personalizeInstructions": "Custom instructions",
       "personalizeInstructionsPlaceholder": "How should AI respond?",
@@ -9311,7 +9332,8 @@
         },
         "showReasoning": {
           "label": "Show reasoning",
-          "desc": "Expose the AI's chain of thought"
+          "desc": "Expose the AI's chain of thought",
+          "tooltip": "Shows the model's chain of thought (slower, more expensive)"
         },
         "multiAgent": {
           "label": "Multi-agent analysis",
@@ -9394,9 +9416,19 @@
         "openingProvider": "Opening {{provider}}…",
         "redirectIntegrations": "Redirecting to integration settings",
         "recentReattached": "Re-attached \"{{name}}\"",
-        "docDeleted": "Deleted: {{name}}"
+        "docDeleted": "Deleted: {{name}}",
+        "docDeleteFailed": "Could not delete the document.",
+        "urlAdded": "Link added to attachments"
       },
       "recentReupload": "re-upload to attach"
+    },
+    "conversation": {
+      "addToProject": "Add to project",
+      "addToProjectRequiresConversation": "Send your first message before adding the conversation to a project."
+    },
+    "workMode": {
+      "title": "How Teresa should work now",
+      "default": "Work mode"
     },
     "cloudPicker": {
       "demoMode": "Demo mode",
