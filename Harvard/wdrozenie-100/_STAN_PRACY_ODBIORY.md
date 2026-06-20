@@ -54,7 +54,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6
 | # | Moduł | Faza | Epiki | DoD | Testy | UI | →F | →UI | Ekr. | Status |
 |---|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
 | M01 | Czat | 2 | 5/5 | 6/7 | 0/13 (105✅) | 🟡 | ⬜ | ⬜ | 20 | 🟢 DO ODBIORU |
-| M02 | Canvas | 3 | 0/6 | 0/7 | 0/20 | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
+| M02 | Canvas | 3 | 6/6 | 6/7 | 0/20 (148✅) | 🟡 | ⬜🔑 | ⬜ | 16 | 🟢 DO ODBIORU |
 | M03 | My Work — organizer | 2/3 | 0/6 | 0/7 | 0/39 | ⬜ | ⬜ | ⬜ | 15 | ⬜ NIE ROZP. |
 | M04 | Notatnik | 3 | 0/6 | 0/7 | 0/54 | ⬜ | ⬜ | ⬜ | 16 | ⬜ NIE ROZP. |
 | M05 | Ideas — Zarządzanie | 1 | 0/7 | 0/7 | 0/62 | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
@@ -83,7 +83,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy 6
 
 **Status modułu (słownik PM):** ⬜ NIE ROZPOCZĘTY · 🟡 W TOKU · 🟢 GOTOWY DO ODBIORU (6 bramek realizacji ✅, czeka na →F/→UI) · ✅ ZAMKNIĘTY (wszystkie 6 ✅).
 
-**Postęp programu:** 0 / 27 zamkniętych · **1 🟢 GOTOWY DO ODBIORU (M01)** · bramki realizacji: Epiki M01 5/5 · DoD M01 6/7 · Testy automaty M01 105✅ (manual 0/1923) · UI 0/27.
+**Postęp programu:** 0 / 27 zamkniętych · **2 🟢 GOTOWE DO ODBIORU (M01, M02)** · bramki realizacji: Epiki M01 5/5, M02 6/6 · DoD M01 6/7, M02 6/7 · Testy automaty M01 105✅ + M02 148✅ (manual 0/1954) · UI 0/27. **Blokery odbioru po stronie Piotra:** M02 →F wymaga flag Railway demo (`VITE_ENABLE_DELIVERABLES_LIGHT`+`ENABLE_DELIVERABLES_LIGHT`).
 
 ---
 
@@ -110,21 +110,21 @@ DoD: 1✅front↔back 2✅security 3✅i18n 4✅tokeny 5✅§27(N/D) 6✅E2E(M01
 ⚠ **Bloker wspólnego PR-gate:** 4 faile `Wave5ArtifactRuntimePanel` (M22, nieaktualne asercje i18n) — osobny task, nie M01.
 
 ### M02 — Canvas · Faza 3 · 6 epików · 16 ekranów
-**Status:** ⬜ NIE ROZPOCZĘTY
+**Status:** 🟢 GOTOWY DO ODBIORU (2026-06-19) — realizacja domknięta; ⚠ odbiór funkcji BLOKOWANY flagą Railway
 
-| # | Etap | ✓ | Odbiór |
+| # | Etap | ✓ | Odbiór / dowód |
 |---|---|:--:|---|
-| 1 | Kod — luki domknięte | ⬜ | |
-| 2 | DoD 7/7 | ⬜ | |
-| 3 | Epiki 0/6 | ⬜ | |
-| 4 | Testy | ⬜ | |
-| 5 | Zgodność UI/UX | ⬜ | |
-| 6 | Deploy demo (⚠ wymaga flagi `VITE_ENABLE_DELIVERABLES_LIGHT`) | ⬜ | |
-| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
+| 1 | Kod — luki domknięte | ✅ | 11 luk zamkniętych/FP (L-02/04/05/06/08/09/10/13/14/15 + L-11 i18n); odroczone świadomie: L-01 Tryb C→BETA, L-03 runtime→Fala 2 (guard 36/36 zamknięty), L-07 picker→backend B-1, L-12 paleta→Visual Quality |
+| 2 | DoD 6/7 (#4 paleta→Visual Quality) | ✅ | #1 front↔back · #2 security (9/9 cap + S7 cross-org 403, **bez IDOR**) · #3 i18n (L-11, 66 kluczy) · #5 §27 N/D · #6 M02-gate green; #4 hex 0 (paleta odroczona) |
+| 3 | Epiki 6/6 | ✅ | E1 kręgosłup(Tryb B 33/33) · E2 generacja · E3 security · E4 odporność · E5 kanon(i18n) · E6 testy(40/40+3/3) — C/picker/paleta odroczone |
+| 4 | Testy — automaty zielone + manual do odbioru | 🟡 | **148 locków PASS** (105 FE + 43 backend); **20 scenariuszy manualnych = Twój odbiór na demo** (po fladze) |
+| 5 | Zgodność UI/UX (kryt. 7) | 🟡 | i18n ✅; ~168 util palety → program Visual Quality (P3, odroczone); screeny = →UI |
+| 6 | Deploy demo | 🟡 | ⚠ **WYMAGA `VITE_ENABLE_DELIVERABLES_LIGHT` + `ENABLE_DELIVERABLES_LIGHT` na Railway demo** — bez tego triada „wygląda jakby nigdy nie działała" |
+| 7 | **ODBIÓR FUNKCJA — Piotr** (20 scenariuszy, po fladze) | ⬜ | 🚫 zablokowany do czasu ustawienia flag Railway |
 | 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
 | ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | |
 
-DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M02-canvas.md](M02-canvas.md)
+DoD: 1✅front↔back 2✅security 3✅i18n 4🟡tokeny(paleta→VQ) 5✅§27(N/D) 6✅E2E(M02-gate) 7🟡UI/UX · 📁 [M02-canvas.md](M02-canvas.md) · 🔑 [flaga Railway](M02_RAILWAY_DELIVERABLES_FLAG_INSTRUKCJA.md)
 
 ### M03 — My Work organizer · Faza 2/3 · 6 epików · 15 ekranów
 **Status:** ⬜ NIE ROZPOCZĘTY
