@@ -57,6 +57,10 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('@/services/api', () => ({
   Api: apiMock,
+  // M04 cover-image surface reads these named exports; provide inert stubs so
+  // the cover effect short-circuits (empty API_URL) instead of firing fetch.
+  API_URL: '',
+  getHeaders: () => ({}),
 }));
 
 vi.mock('@/services/funnelAnalytics', () => ({

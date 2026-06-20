@@ -118,8 +118,8 @@ describe('SlashMenu', () => {
     expect(screen.getByText('Table')).toBeTruthy();
     expect(screen.getByText('AI: Ask')).toBeTruthy();
     expect(screen.getByText('Create Task')).toBeTruthy();
-    // 19 commands total → 19 buttons.
-    expect(screen.getAllByRole('button')).toHaveLength(19);
+    // 23 commands total (added: Image, Quote, Date, 2 Columns) → 23 buttons.
+    expect(screen.getAllByRole('button')).toHaveLength(23);
   });
 
   it('filters commands by label/keyword when a query is typed', () => {

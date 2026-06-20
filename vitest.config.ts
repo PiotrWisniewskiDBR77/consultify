@@ -42,6 +42,13 @@ export default defineConfig({
         find: '@aws-sdk/client-s3',
         replacement: path.resolve(__dirname, './tests/__mocks__/aws-sdk-client-s3.js'),
       },
+      // highlight.js has no `exports` map; the inlined tiptap lowlight extension's
+      // bare `highlight.js/lib/core` import is unresolvable under Vite's transform
+      // without pointing at the concrete .js file (M04 notebook code highlight).
+      {
+        find: 'highlight.js/lib/core',
+        replacement: path.resolve(__dirname, 'node_modules/highlight.js/lib/core.js'),
+      },
 
       // 1. KEEP Legacy JS files as JS (exclude from TS mapping)
       // Database module - redirect to TypeScript version
@@ -190,6 +197,15 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    // Inline ONLY the tiptap lowlight extension so Vite transforms its bare
+    // `highlight.js/lib/core` import (resolved via the alias above). highlight.js
+    // and lowlight stay externalized so Node's CJS resolver handles them
+    // natively — inlining highlight.js is prohibitively slow (M04 code highlight).
+    server: {
+      deps: {
+        inline: [/@tiptap\/extension-code-block-lowlight/],
+      },
+    },
     env: {
       DB_TYPE: 'sqlite',
       NODE_ENV: 'test',

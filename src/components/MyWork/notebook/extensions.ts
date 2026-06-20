@@ -1,4 +1,20 @@
 import { mergeAttributes, Node } from '@tiptap/core';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import Image from '@tiptap/extension-image';
+import { createLowlight } from 'lowlight';
+import bash from 'highlight.js/lib/languages/bash';
+import css from 'highlight.js/lib/languages/css';
+import go from 'highlight.js/lib/languages/go';
+import java from 'highlight.js/lib/languages/java';
+import javascript from 'highlight.js/lib/languages/javascript';
+import json from 'highlight.js/lib/languages/json';
+import markdown from 'highlight.js/lib/languages/markdown';
+import python from 'highlight.js/lib/languages/python';
+import rust from 'highlight.js/lib/languages/rust';
+import sql from 'highlight.js/lib/languages/sql';
+import typescript from 'highlight.js/lib/languages/typescript';
+import xml from 'highlight.js/lib/languages/xml';
+import yaml from 'highlight.js/lib/languages/yaml';
 
 /* ------------------------------------------------------------------ */
 /*  Callout  (info | warning | success | critical)                     */
@@ -215,4 +231,93 @@ export const EmbeddedRefNode = Node.create({
       label,
     ];
   },
+});
+
+/* ------------------------------------------------------------------ */
+/*  Inline images (paste / drag-drop / upload, resizable)              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Image node with an optional persisted `width` attribute so a user-set
+ * size survives reload. `allowBase64` lets us inline uploaded images as
+ * data: URLs (attachment endpoint serves auth-gated blobs, not public URLs).
+ */
+export const NotebookImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: null,
+        parseHTML: (el) => el.getAttribute('width') || (el as HTMLElement).style.width || null,
+        renderHTML: (attrs) => {
+          if (!attrs.width) return {};
+          const w = String(attrs.width);
+          return { width: w, style: `width: ${w.endsWith('%') || w.endsWith('px') ? w : `${w}px`}` };
+        },
+      },
+    };
+  },
+}).configure({
+  inline: false,
+  allowBase64: true,
+  HTMLAttributes: { class: 'nb-image' },
+});
+
+/* ------------------------------------------------------------------ */
+/*  Code block with syntax highlighting + language selection           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Shared lowlight instance with a curated grammar set. We register only the
+ * languages we surface in the picker (rather than lowlight's full `common`
+ * bundle of ~37 grammars) to keep editor init — and the test harness — light.
+ */
+export const notebookLowlight = createLowlight();
+
+// Register the curated grammar set (statically imported above so Node/Vite
+// resolve them natively and cheaply — `common` pulls ~37 grammars and is heavy).
+notebookLowlight.register({
+  javascript,
+  typescript,
+  python,
+  json,
+  bash,
+  sql,
+  css,
+  xml,
+  markdown,
+  java,
+  go,
+  rust,
+  yaml,
+});
+
+/** Languages offered in the code-block language picker (label + lowlight id). */
+export const NOTEBOOK_CODE_LANGUAGES: { id: string; label: string }[] = [
+  { id: 'plaintext', label: 'Plain text' },
+  { id: 'javascript', label: 'JavaScript' },
+  { id: 'typescript', label: 'TypeScript' },
+  { id: 'jsx', label: 'JSX / TSX' },
+  { id: 'python', label: 'Python' },
+  { id: 'json', label: 'JSON' },
+  { id: 'bash', label: 'Bash' },
+  { id: 'sql', label: 'SQL' },
+  { id: 'css', label: 'CSS' },
+  { id: 'xml', label: 'HTML / XML' },
+  { id: 'markdown', label: 'Markdown' },
+  { id: 'java', label: 'Java' },
+  { id: 'go', label: 'Go' },
+  { id: 'rust', label: 'Rust' },
+  { id: 'yaml', label: 'YAML' },
+];
+
+/**
+ * CodeBlockLowlight replaces StarterKit's plain codeBlock (same node name
+ * `codeBlock`, so `toggleCodeBlock()` keeps working) and adds highlighting.
+ * The language picker is rendered as a DOM overlay in NotebookContent.
+ */
+export const NotebookCodeBlock = CodeBlockLowlight.configure({
+  lowlight: notebookLowlight,
+  defaultLanguage: 'plaintext',
+  HTMLAttributes: { class: 'nb-code-block' },
 });

@@ -305,9 +305,41 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
         {loading ? (
-          <div className="text-center text-slate-600 dark:text-slate-500 py-16">
-            {pl ? 'Ładowanie…' : 'Loading…'}
-          </div>
+          <ResizableTable
+            columns={columns}
+            showSelectColumn={false}
+            filters={tableFilters}
+            onFilterChange={setTableFilters}
+            onColumnWidthChange={(id, w) => setColumnWidths((prev) => ({ ...prev, [id]: w }))}
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <tr
+                key={`sk-${i}`}
+                className="border-b border-slate-200 dark:border-white/[0.06]"
+                aria-hidden="true"
+              >
+                <td style={{ width: columnWidths.title }} className="px-3 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-5 w-5 shrink-0 rounded-md bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                    <span className="h-3.5 w-40 rounded bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                  </div>
+                </td>
+                <td style={{ width: columnWidths.scope }} className="px-3 py-3">
+                  <span className="block h-4 w-16 rounded-full bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                </td>
+                <td style={{ width: columnWidths.context }} className="px-3 py-3">
+                  <span className="block h-4 w-20 rounded-full bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                </td>
+                <td style={{ width: columnWidths.notes }} className="px-3 py-3 text-right">
+                  <span className="ml-auto block h-3.5 w-8 rounded bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                </td>
+                <td style={{ width: columnWidths.date }} className="px-3 py-3 text-right">
+                  <span className="ml-auto block h-3.5 w-16 rounded bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                </td>
+                <td style={{ width: columnWidths.actions }} className="px-3 py-3" />
+              </tr>
+            ))}
+          </ResizableTable>
         ) : error ? (
           <div className="text-center py-16">
             <p className="text-slate-500 dark:text-slate-400 mb-3">

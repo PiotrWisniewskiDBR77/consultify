@@ -35,7 +35,7 @@ import {
   toPublicNotebookCaptureMetadata,
 } from '../../services/notebookSourceFileService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { getTableColumns } from '../../utils/dbSchema.js';
+import { getTableColumns, hasColumn } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { requireTables, requireUser } from './_helpers.js';
@@ -435,13 +435,20 @@ router.get(
       where.push('(np.pinned = 0 OR np.pinned IS NULL)');
     }
 
+    // FTS hardening: only use the tsvector path when `search_vector` actually exists.
+    // On staging the column may be missing (FTS migration not applied) — querying it
+    // would 500 with `column np.search_vector does not exist`. We degrade to LIKE
+    // instead and report it, never throw. (Agent 3 — search/RAG repair.)
+    let searchDegraded = false;
     if (q) {
       const isPg = process.env.DB_TYPE === 'postgres';
-      if (isPg) {
+      const ftsAvailable = isPg ? await hasColumn('notebook_pages', 'search_vector') : false;
+      if (isPg && ftsAvailable) {
         const ftsQuery = q.replace(/'/g, "''").trim();
         where.push(`np.search_vector @@ plainto_tsquery('simple', ?)`);
         params.push(ftsQuery);
       } else {
+        if (isPg && !ftsAvailable) searchDegraded = true; // FTS column not provisioned
         where.push(
           `(lower(np.title) LIKE ? OR lower(coalesce(np.content_text,'')) LIKE ? OR lower(coalesce(np.tags_json,'')) LIKE ?)`
         );
@@ -457,17 +464,60 @@ router.get(
     };
     const orderBy = orderClauses[sortParam] || orderClauses.updated;
 
-    const rows =
-      (await queryHelpers.queryAll<any>(
+    const runListQuery = (whereClauses: string[], whereParams: any[]) =>
+      queryHelpers.queryAll<any>(
         `
         SELECT
           ${buildLegacyNotebookSelect(nbCols, 'np')}
         FROM notebook_pages np
-        WHERE ${where.join(' AND ')}
+        WHERE ${whereClauses.join(' AND ')}
         ORDER BY ${orderBy}
       `,
-        params
-      )) || [];
+        whereParams
+      );
+
+    let rows: any[] = [];
+    try {
+      rows = (await runListQuery(where, params)) || [];
+    } catch (err: any) {
+      // Last-resort FTS guard: if the search_vector column is missing despite the
+      // hasColumn check (cache drift / generated-column edge), retry without the FTS
+      // predicate rather than 500. Re-throw anything that is NOT a missing-column error.
+      const msg = String(err?.message || err || '');
+      const isMissingFts = /search_vector/i.test(msg) && /does not exist|undefined column|42703/i.test(msg);
+      if (q && isMissingFts) {
+        searchDegraded = true;
+        const like = `%${q}%`;
+        const fallbackWhere = ['np.organization_id = ?'];
+        const fallbackParams: any[] = [orgId];
+        if (projectId) {
+          fallbackWhere.push('np.project_id = ?');
+          fallbackParams.push(projectId);
+        }
+        if (notebookId && nbCols.has('notebook_id')) {
+          fallbackWhere.push('np.notebook_id = ?');
+          fallbackParams.push(notebookId);
+        }
+        if (statusFilter && ['inbox', 'active', 'converted', 'archived'].includes(statusFilter)) {
+          fallbackWhere.push("lower(coalesce(np.status, 'active')) = ?");
+          fallbackParams.push(statusFilter);
+        }
+        if (pinnedFilter === '1') fallbackWhere.push('np.pinned = 1');
+        else if (pinnedFilter === '0') fallbackWhere.push('(np.pinned = 0 OR np.pinned IS NULL)');
+        fallbackWhere.push(
+          `(lower(np.title) LIKE ? OR lower(coalesce(np.content_text,'')) LIKE ? OR lower(coalesce(np.tags_json,'')) LIKE ?)`
+        );
+        fallbackParams.push(like, like, like);
+        logger.warn('[NotebookSearch] search_vector missing — degraded to LIKE search');
+        rows = (await runListQuery(fallbackWhere, fallbackParams)) || [];
+      } else {
+        throw err;
+      }
+    }
+
+    // Surface FTS degradation without changing the array response shape (clients
+    // expect a bare array). Consumers may read this to show a "basic search" hint.
+    if (searchDegraded) res.setHeader('X-Notebook-Search-Degraded', 'fts-unavailable');
 
     const accessibleRows: any[] = [];
     for (const row of rows) {
@@ -1514,6 +1564,10 @@ router.post(
     const isPl = language.startsWith('pl');
 
     let topics: string[] = [];
+    // L-06 parity with /classify: declare HOW topics were produced so no consumer
+    // misrepresents the heuristic fallback as AI. 'ai' on the LLM path, 'heuristic'
+    // when the model is unavailable and we fall back to keyword scaffolding.
+    let method: 'ai' | 'heuristic' = 'ai';
 
     try {
       const { llmService } = await import('../../services/ai/llmService.js');
@@ -1575,6 +1629,7 @@ No markdown, no numbering, just a JSON array.`;
       }
     } catch (err: any) {
       logger.error('[NotebookSuggestTopics] Error:', err);
+      method = 'heuristic';
       const fallback: string[] = [];
       if (title) {
         const words = title.split(/\s+/).filter((w) => w.length > 2);
@@ -1601,7 +1656,7 @@ No markdown, no numbering, just a JSON array.`;
             : ['Analyze context', 'Add metrics', 'Benchmark'];
     }
 
-    res.json({ topics });
+    res.json({ topics, method });
   })
 );
 
@@ -1619,12 +1674,21 @@ router.post(
 
     if (!(await requireTables(res, ['notebook_pages']))) return;
 
-    const page = await queryHelpers.queryOne<any>(
-      `SELECT id, title, content_text, maturity
-       FROM notebook_pages
-       WHERE id = ? AND owner_user_id = ? AND organization_id = ? LIMIT 1`,
-      [pageId, userId, orgId]
-    );
+    // `maturity` may be absent on environments where the column was never provisioned.
+    // Select it conditionally so the classify endpoint never 500s on schema drift.
+    const hasMaturity = await hasColumn('notebook_pages', 'maturity');
+    let page: any = null;
+    try {
+      page = await queryHelpers.queryOne<any>(
+        `SELECT id, title, content_text${hasMaturity ? ', maturity' : ''}
+         FROM notebook_pages
+         WHERE id = ? AND owner_user_id = ? AND organization_id = ? LIMIT 1`,
+        [pageId, userId, orgId]
+      );
+    } catch (err: any) {
+      logger.error('[NotebookClassify] query failed:', err);
+      return res.status(404).json({ error: 'Page not found' });
+    }
     if (!page) return res.status(404).json({ error: 'Page not found' });
 
     const text = String(page.content_text || page.title || '').toLowerCase();

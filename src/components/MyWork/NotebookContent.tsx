@@ -46,6 +46,7 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Api } from '@/services/api';
+import * as apiModule from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import type {
@@ -69,8 +70,12 @@ import {
   DetailsNode,
   DetailsSummaryNode,
   EmbeddedRefNode,
+  NOTEBOOK_CODE_LANGUAGES,
+  NotebookCodeBlock,
+  NotebookImage,
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
+import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
 import { NotebookProgressChip } from './notebook/NotebookProgressChip';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
@@ -337,9 +342,9 @@ const EDITOR_STYLES = `
   line-height: 1.75;
   font-size: 1rem;
   color: #1e293b;
-  caret-color: #A51C30;
+  caret-color: #1E3A5F;
 }
-.dark .ProseMirror { color: #e2e8f0; caret-color: #E45868; }
+.dark .ProseMirror { color: #e2e8f0; caret-color: #8EAACF; }
 .ProseMirror h1 { font-size: 1.625rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
 .ProseMirror h2 { font-size: 1.325rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
 .ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.3rem; }
@@ -380,7 +385,7 @@ const EDITOR_STYLES = `
   padding: 0.25rem 0;
 }
 .ProseMirror ul[data-type="taskList"] li label input[type="checkbox"] {
-  accent-color: #A51C30;
+  accent-color: #1E3A5F;
   margin-top: 0.35rem;
   width: 16px;
   height: 16px;
@@ -475,14 +480,14 @@ const EDITOR_STYLES = `
   border: 1px solid rgba(255,255,255,0.06);
 }
 .ProseMirror code:not(pre code) {
-  background: rgba(99,102,241,0.1);
-  color: #A51C30;
+  background: rgba(30,58,95,0.08);
+  color: #1E3A5F;
   padding: 0.15em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
-.dark .ProseMirror code:not(pre code) { background: rgba(129,140,248,0.15); color: #a5b4fc; }
+.dark .ProseMirror code:not(pre code) { background: rgba(142,170,207,0.15); color: #AECAEF; }
 
 /* Horizontal rule — gradient */
 .ProseMirror hr {
@@ -495,30 +500,30 @@ const EDITOR_STYLES = `
 
 /* Blockquote */
 .ProseMirror blockquote {
-  border-left: 3px solid #A51C30;
+  border-left: 3px solid #1E3A5F;
   padding-left: 1rem;
   margin: 0.75rem 0;
   color: #64748b;
   font-style: italic;
 }
-.dark .ProseMirror blockquote { border-left-color: #E45868; color: #94a3b8; }
+.dark .ProseMirror blockquote { border-left-color: #6E8AAF; color: #94a3b8; }
 
 /* Link */
 .ProseMirror .nb-link,
 .ProseMirror a {
-  color: #A51C30;
+  color: #1E3A5F;
   text-decoration: underline;
-  text-decoration-color: rgba(99,102,241,0.3);
+  text-decoration-color: rgba(30,58,95,0.3);
   text-underline-offset: 2px;
   transition: text-decoration-color 0.15s;
   cursor: pointer;
 }
 .ProseMirror .nb-link:hover,
-.ProseMirror a:hover { text-decoration-color: #A51C30; }
+.ProseMirror a:hover { text-decoration-color: #1E3A5F; }
 .dark .ProseMirror .nb-link,
-.dark .ProseMirror a { color: #a5b4fc; text-decoration-color: rgba(165,180,252,0.3); }
+.dark .ProseMirror a { color: #AECAEF; text-decoration-color: rgba(174,202,239,0.3); }
 .dark .ProseMirror .nb-link:hover,
-.dark .ProseMirror a:hover { text-decoration-color: #a5b4fc; }
+.dark .ProseMirror a:hover { text-decoration-color: #AECAEF; }
 
 /* Highlight */
 .ProseMirror mark {
@@ -530,8 +535,8 @@ const EDITOR_STYLES = `
 
 /* Lists */
 .ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; }
-.ProseMirror li::marker { color: #A51C30; }
-.dark .ProseMirror li::marker { color: #E45868; }
+.ProseMirror li::marker { color: #1E3A5F; }
+.dark .ProseMirror li::marker { color: #8EAACF; }
 
 /* Focus ring on editor */
 .ProseMirror:focus { outline: none; }
@@ -591,6 +596,79 @@ const EDITOR_STYLES = `
 .dark .nb-welcome-card:hover {
   box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
+
+/* Inline images */
+.ProseMirror img.nb-image,
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 0.75rem 0;
+  border: 1px solid #e2e8f0;
+  display: block;
+}
+.dark .ProseMirror img.nb-image,
+.dark .ProseMirror img { border-color: rgba(255,255,255,0.08); }
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #1E3A5F;
+  outline-offset: 2px;
+}
+.dark .ProseMirror img.ProseMirror-selectednode { outline-color: #6E8AAF; }
+
+/* Code-block language hint */
+.ProseMirror pre.nb-code-block { position: relative; }
+.ProseMirror pre.nb-code-block::after {
+  content: 'alt+click → język';
+  position: absolute;
+  top: 0.4rem;
+  right: 0.75rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(226,232,240,0.45);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.ProseMirror pre.nb-code-block:hover::after { opacity: 1; }
+
+/* Syntax highlighting (lowlight / highlight.js token classes) — dark code surface */
+.ProseMirror pre .hljs-comment,
+.ProseMirror pre .hljs-quote { color: #64748b; font-style: italic; }
+.ProseMirror pre .hljs-keyword,
+.ProseMirror pre .hljs-selector-tag,
+.ProseMirror pre .hljs-built_in { color: #93c5fd; }
+.ProseMirror pre .hljs-string,
+.ProseMirror pre .hljs-attr,
+.ProseMirror pre .hljs-regexp { color: #86efac; }
+.ProseMirror pre .hljs-number,
+.ProseMirror pre .hljs-literal { color: #fcd34d; }
+.ProseMirror pre .hljs-title,
+.ProseMirror pre .hljs-function .hljs-title,
+.ProseMirror pre .hljs-section { color: #c4b5fd; }
+.ProseMirror pre .hljs-type,
+.ProseMirror pre .hljs-class .hljs-title { color: #67e8f9; }
+.ProseMirror pre .hljs-variable,
+.ProseMirror pre .hljs-template-variable { color: #fda4af; }
+.ProseMirror pre .hljs-tag,
+.ProseMirror pre .hljs-name { color: #93c5fd; }
+.ProseMirror pre .hljs-meta { color: #94a3b8; }
+.ProseMirror pre .hljs-emphasis { font-style: italic; }
+.ProseMirror pre .hljs-strong { font-weight: 700; }
+
+/* Cover image (note header) */
+.nb-cover {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  border-radius: 1rem;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 0.5rem;
+}
+.nb-cover-actions { opacity: 0; transition: opacity 0.15s; }
+.nb-cover:hover .nb-cover-actions { opacity: 1; }
 `;
 
 export const NotebookContent: React.FC<NotebookContentProps> = ({
@@ -626,6 +704,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     setNotebookRailTab,
   } = useAppStore();
   const [pages, setPages] = useState<NotebookPage[]>([]);
+  const [pagesLoading, setPagesLoading] = useState(true);
+  const [pagesError, setPagesError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
@@ -683,6 +763,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [slashState, setSlashState] = useState<SlashMenuState>(INITIAL_SLASH_STATE);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
+  // Inline-image upload bridge — set after the upload helper is defined so the
+  // editor's paste/drop handlers (declared earlier inside useEditor) can call it.
+  const uploadInlineImageRef = useRef<((file: File) => void) | null>(null);
+  // Hidden file input backing the slash "/image" command.
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  // Cover image (note header) — stored server-side via notebookCover.routes.
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  // Code-block language picker overlay anchor.
+  const [codeLangMenu, setCodeLangMenu] = useState<{
+    top: number;
+    left: number;
+    current: string;
+  } | null>(null);
+
   // Active block highlight (7s persistence)
   const activeBlockTimer = useRef<number | null>(null);
   const lastActiveBlockEl = useRef<Element | null>(null);
@@ -716,7 +811,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const notebookEditorExtensions = useMemo(
     () =>
       [
-        StarterKit,
+        // Disable StarterKit's plain codeBlock — NotebookCodeBlock (same node
+        // name) replaces it with lowlight syntax highlighting + language picker.
+        StarterKit.configure({ codeBlock: false }),
+        NotebookCodeBlock,
+        NotebookImage,
         TaskList,
         TaskItem.configure({ nested: true }),
         Placeholder.configure({
@@ -751,6 +850,26 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       },
       handleClick: (_view, _pos, event) => {
         const target = event.target as HTMLElement | null;
+        // Code block: alt/cmd-click the block opens the language picker.
+        const pre = target?.closest?.('pre') as HTMLElement | null;
+        if (pre && (event.altKey || event.metaKey)) {
+          const containerRect = editorContainerRef.current?.getBoundingClientRect();
+          const rect = pre.getBoundingClientRect();
+          const codeEl = pre.querySelector('code');
+          const current =
+            codeEl
+              ?.getAttribute('class')
+              ?.split(/\s+/)
+              .find((c) => c.startsWith('language-'))
+              ?.replace('language-', '') || 'plaintext';
+          setCodeLangMenu({
+            top: rect.top - (containerRect?.top ?? 0) + 8,
+            left: rect.left - (containerRect?.left ?? 0) + 8,
+            current,
+          });
+          return true;
+        }
+        setCodeLangMenu((prev) => (prev ? null : prev));
         const chip = target?.closest?.('[data-embedded-ref]') as HTMLElement | null;
         if (!chip) return false;
         setSelectedEmbedPreview({
@@ -761,6 +880,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           snippet: chip.getAttribute('data-snippet') || undefined,
           updatedAt: chip.getAttribute('data-updated-at') || undefined,
         });
+        return true;
+      },
+      handlePaste: (_view, event) => {
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItem = items.find((it) => it.type.startsWith('image/'));
+        if (!imageItem) return false;
+        const file = imageItem.getAsFile();
+        if (!file || !uploadInlineImageRef.current) return false;
+        event.preventDefault();
+        uploadInlineImageRef.current(file);
+        return true;
+      },
+      handleDrop: (_view, event) => {
+        const dt = (event as DragEvent).dataTransfer;
+        const file = Array.from(dt?.files || []).find((f) => f.type.startsWith('image/'));
+        if (!file || !uploadInlineImageRef.current) return false;
+        event.preventDefault();
+        uploadInlineImageRef.current(file);
         return true;
       },
     },
@@ -848,9 +985,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         setPages(arr);
         setHasMore(arr.length >= 50);
         setActiveId((prev) => prev || arr?.[0]?.id || null);
+        setPagesError(false);
       } catch (e) {
         console.error('Failed to load notebook pages', e);
+        setPagesError(true);
         toast.error(t('myWork.errors.fetchFailed', 'Failed to load'));
+      } finally {
+        setPagesLoading(false);
       }
     },
     [projectId, notebookId, searchQuery, t]
@@ -990,6 +1131,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             contentJson: persistedDraft.contentJson,
             contentText: persistedDraft.contentText,
             maturity: newMaturity,
+            ...(persistedDraft.icon !== undefined && { icon: persistedDraft.icon }),
             ...(persistedDraft.verificationStatus !== undefined && {
               verificationStatus: persistedDraft.verificationStatus,
             }),
@@ -1452,6 +1594,147 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     [activePage?.id, isPolish]
   );
 
+  // Inline image: optimistically insert a local data: URL, then upload the file
+  // as an attachment so it persists. We keep the data: URL in the content (the
+  // attachment endpoint serves auth-gated blobs, not public srcs) — this means
+  // the image survives reload because it lives inside contentJson.
+  const uploadInlineImage = useCallback(
+    (file: File) => {
+      if (!editor) return;
+      if (!file.type.startsWith('image/')) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(isPolish ? 'Obraz jest zbyt duży (max 5 MB)' : 'Image is too large (max 5 MB)');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result || '');
+        if (!dataUrl.startsWith('data:image/')) return;
+        editor
+          .chain()
+          .focus()
+          .setImage({ src: dataUrl, alt: file.name } as any)
+          .createParagraphNear()
+          .run();
+      };
+      reader.onerror = () => {
+        toast.error(isPolish ? 'Nie udało się wczytać obrazu' : 'Failed to load image');
+      };
+      reader.readAsDataURL(file);
+
+      // Best-effort: also archive the original as a page attachment for provenance.
+      // Failure here does not affect the inline image already in the document.
+      if (activePage?.id) {
+        void Api.uploadNotebookAttachments(activePage.id, [file])
+          .then((updated) => {
+            if (updated?.id) {
+              setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
+            }
+          })
+          .catch((error) => {
+            console.error('Failed to archive inline image as attachment', error);
+          });
+      }
+    },
+    [editor, activePage?.id, isPolish]
+  );
+
+  useEffect(() => {
+    uploadInlineImageRef.current = uploadInlineImage;
+  }, [uploadInlineImage]);
+
+  // Slash "/image" command → open the hidden file picker.
+  useEffect(() => {
+    const openPicker = () => imageInputRef.current?.click();
+    window.addEventListener('notebook-insert-image', openPicker);
+    return () => window.removeEventListener('notebook-insert-image', openPicker);
+  }, []);
+
+  // Load the cover for the active page (round-trips via notebookCover.routes —
+  // the main notebook list SELECT does not carry cover_url).
+  useEffect(() => {
+    setCoverUrl(null);
+    const id = activePage?.id;
+    if (!id) return;
+    // Guard: skip when the API surface is unavailable (e.g. mocked in unit tests)
+    // so we never fire a real fetch under fake timers.
+    const { API_URL, getHeaders } = apiModule;
+    if (typeof getHeaders !== 'function' || !API_URL) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`,
+          { headers: getHeaders() }
+        );
+        if (!res.ok || cancelled) return;
+        const json = await res.json();
+        if (!cancelled) setCoverUrl(json?.data?.coverUrl ?? null);
+      } catch {
+        /* cover is non-critical chrome — fail silently */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activePage?.id]);
+
+  const persistCover = useCallback(
+    async (nextCover: string | null) => {
+      const id = activePage?.id;
+      if (!id) return;
+      const previous = coverUrl;
+      setCoverUrl(nextCover); // optimistic
+      const { API_URL, getHeaders } = apiModule;
+      if (typeof getHeaders !== 'function' || !API_URL) return;
+      try {
+        const res = await fetch(
+          `${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`,
+          {
+            method: 'PUT',
+            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ coverUrl: nextCover }),
+          }
+        );
+        if (!res.ok) throw new Error(String(res.status));
+      } catch {
+        setCoverUrl(previous); // rollback
+        toast.error(isPolish ? 'Nie udało się zapisać okładki' : 'Failed to save cover');
+      }
+    },
+    [activePage?.id, coverUrl, isPolish]
+  );
+
+  const handlePickCover = useCallback(() => coverInputRef.current?.click(), []);
+
+  const handleCoverFile = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith('image/')) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(isPolish ? 'Okładka jest zbyt duża (max 5 MB)' : 'Cover is too large (max 5 MB)');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result || '');
+        if (dataUrl.startsWith('data:image/')) void persistCover(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    },
+    [persistCover, isPolish]
+  );
+
+  const handleChangeIcon = useCallback(
+    (icon: string | null) => {
+      if (!activePage) return;
+      setPages((prev) =>
+        prev.map((page) => (page.id === activePage.id ? { ...page, icon } : page))
+      );
+      scheduleSave({ icon });
+    },
+    [activePage, scheduleSave] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   const handleDeleteNotebookAttachment = useCallback(
     async (attachmentId: string) => {
       if (!activePage?.id) return;
@@ -1813,6 +2096,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   return (
     <div className="flex h-[calc(100vh-220px)] min-h-[520px] gap-1.5 p-3 overflow-hidden bg-white dark:bg-navy-950">
       <style>{EDITOR_STYLES}</style>
+
+      {/* SLOT: TodayEntry — Agent 2 wires the daily "Dziś"/Today cockpit entry
+          here (e.g. an in-sidebar tab or a banner above the page list). Has
+          access to `pages`, `setActiveId`, `notebookId`, `fetchPages`. */}
 
       {/* Sidebar */}
       <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/30 flex flex-col">
@@ -2201,12 +2488,45 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       {/* Editor + Ideas panel */}
       <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
         <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20">
-          {!activePage ? (
+          {!activePage && pagesLoading ? (
+            /* Editor skeleton — avoids a blank "white" pane during first load. */
+            <div className="flex-1 overflow-hidden">
+              <div className="mx-auto max-w-3xl px-6 py-8" aria-hidden="true">
+                <div className="mb-4 h-40 w-full rounded-2xl bg-slate-200/60 dark:bg-white/[0.05] animate-pulse" />
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                  <div className="h-7 w-2/3 rounded-lg bg-slate-200/70 dark:bg-white/[0.06] animate-pulse" />
+                </div>
+                <div className="space-y-3">
+                  <div className="h-4 w-full rounded bg-slate-200/60 dark:bg-white/[0.05] animate-pulse" />
+                  <div className="h-4 w-11/12 rounded bg-slate-200/60 dark:bg-white/[0.05] animate-pulse" />
+                  <div className="h-4 w-4/5 rounded bg-slate-200/60 dark:bg-white/[0.05] animate-pulse" />
+                  <div className="h-4 w-2/3 rounded bg-slate-200/60 dark:bg-white/[0.05] animate-pulse" />
+                </div>
+              </div>
+            </div>
+          ) : !activePage && pagesError ? (
+            <div className="flex h-full items-center justify-center p-8">
+              <div className="text-center">
+                <AlertTriangle size={36} className="mx-auto mb-3 text-slate-400 dark:text-slate-500" />
+                <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
+                  {isPolish ? 'Nie udało się wczytać notatek.' : 'Failed to load notes.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void fetchPages()}
+                  className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+                >
+                  {isPolish ? 'Spróbuj ponownie' : 'Retry'}
+                </button>
+              </div>
+            </div>
+          ) : !activePage ? (
             <div className="flex h-full items-center justify-center p-8">
               <div className="max-w-lg w-full">
                 {/* Welcome hero */}
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-crimson-500 via-primary-500 to-primary-600 shadow-lg shadow-indigo-500/20 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-700 via-navy-800 to-navy-900 shadow-lg shadow-navy-900/20 mb-4">
                     <Pen size={28} className="text-white" />
                   </div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
@@ -2292,6 +2612,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Toolbar */}
                   {editor && <NotebookToolbar editor={editor} />}
+                  {/* SLOT: ExportMenu/History — Agent 5 wires NotebookExportMenu +
+                      NotebookVersionHistory here (per-note actions, right of toolbar).
+                      Has access to `activePage`, `editor`. */}
                   {/* C3 (KROK 6): expand the note into a Canvas document draft */}
                   <button
                     onClick={() => void handleExpandToDocument()}
@@ -2375,21 +2698,43 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 }}
               >
                 <div className="mx-auto max-w-3xl px-6 py-8">
+                  {/* Hidden file input for the cover image. */}
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleCoverFile(file);
+                      e.target.value = '';
+                    }}
+                  />
+
+                  {/* Cover image (note header) */}
+                  <CoverImageBar
+                    coverUrl={coverUrl}
+                    onPick={handlePickCover}
+                    onRemove={() => void persistCover(null)}
+                    isPolish={isPolish}
+                  />
+
                   {/* Page icon + title — Notion-like */}
                   <div className="mb-4">
                     <div className="flex items-start gap-3 mb-1">
-                      <span
-                        className="text-3xl mt-1 cursor-default select-none"
-                        title={isPolish ? 'Ikona strony' : 'Page icon'}
-                      >
-                        {(activePage.icon && /\p{Emoji}/u.test(activePage.icon)
-                          ? activePage.icon
-                          : null) ||
-                          (
-                            MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] ||
-                            MATURITY_CONFIG.seed
-                          ).icon}
-                      </span>
+                      <div className="mt-0.5">
+                        <IconPickerButton
+                          value={activePage.icon ?? null}
+                          fallback={
+                            (
+                              MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] ||
+                              MATURITY_CONFIG.seed
+                            ).icon
+                          }
+                          onChange={handleChangeIcon}
+                          isPolish={isPolish}
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <input
                           value={title}
@@ -2599,6 +2944,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     />
                   </div>
 
+                  {/* SLOT: TopicChips — Agent 1 wires NotebookTopicChips here
+                      (topic affordances under the note header). Has `activePage`. */}
+
                   {headingOutline.length > 0 && (
                     <div className="mb-4 rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
                       <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -2726,6 +3074,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     </div>
                   )}
 
+                  {/* Hidden file input backing the slash "/image" command. */}
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadInlineImage(file);
+                      e.target.value = '';
+                    }}
+                  />
+
                   {/* Rich editor */}
                   <EditorContent editor={editor} />
 
@@ -2798,10 +3159,47 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     onAICommand={(cmd) => setAiCommand(cmd)}
                   />
                 )}
+
+                {/* Code-block language picker */}
+                {editor && codeLangMenu && (
+                  <div
+                    className="absolute z-50 max-h-64 w-44 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-navy-700 dark:bg-navy-900"
+                    style={{ top: codeLangMenu.top, left: codeLangMenu.left }}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {NOTEBOOK_CODE_LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.id}
+                        type="button"
+                        onClick={() => {
+                          editor.chain().focus().setCodeBlock({ language: lang.id }).run();
+                          setCodeLangMenu(null);
+                        }}
+                        className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
+                          codeLangMenu.current === lang.id
+                            ? 'bg-primary-500/10 text-primary-700 dark:text-primary-300'
+                            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]'
+                        }`}
+                      >
+                        {lang.label}
+                        {codeLangMenu.current === lang.id ? (
+                          <CheckCircle2 size={13} className="text-primary-500" />
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
+
+        {/* SLOT: RAGPanel — Agent 3 wires the "ask your notes" RAG panel here
+            (as a right-rail tab or a docked panel). Has `activePage`, `pages`,
+            `notebookId`. */}
+        {/* SLOT: GraphView — Agent 5 wires NotebookGraphView here (topic/backlink
+            graph, e.g. a right-rail tab or an overlay). Consumes `/topics` (A1)
+            + the existing link-graph; has `activePage`, `pages`. */}
 
         {/* L-03: Consolidated right rail — Tab A (Praca/Work) + Tab B (Kontekst/Context) */}
         <NotebookRightRail

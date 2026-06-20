@@ -1,13 +1,16 @@
 import type { Editor } from '@tiptap/react';
 import {
   AlertTriangle,
+  CalendarDays,
   CheckSquare,
   ChevronRight,
   Code,
+  Columns2,
   Columns3,
   Heading1,
   Heading2,
   Heading3,
+  Image as ImageIcon,
   Info,
   Lightbulb,
   List,
@@ -15,6 +18,7 @@ import {
   ListOrdered,
   MessageCircle,
   Minus,
+  Quote,
   Scale,
   ShieldQuestion,
   Sparkles,
@@ -100,6 +104,62 @@ const COMMANDS: SlashCommand[] = [
     icon: <ListChecks size={ICON_SIZE} />,
     keywords: ['todo', 'task', 'check', 'checkbox', 'checklista'],
     action: (e) => e.chain().focus().toggleTaskList().run(),
+  },
+  {
+    id: 'image',
+    label: 'Image',
+    labelPl: 'Obraz',
+    description: 'Upload or embed an image',
+    descriptionPl: 'Wgraj lub osadź obraz',
+    icon: <ImageIcon size={ICON_SIZE} />,
+    keywords: ['image', 'img', 'photo', 'picture', 'obraz', 'zdjecie', 'grafika'],
+    action: () => {
+      window.dispatchEvent(new CustomEvent('notebook-insert-image'));
+    },
+  },
+  {
+    id: 'quote',
+    label: 'Quote',
+    labelPl: 'Cytat',
+    description: 'Blockquote / pull quote',
+    descriptionPl: 'Cytat blokowy',
+    icon: <Quote size={ICON_SIZE} />,
+    keywords: ['quote', 'blockquote', 'cytat', 'cite'],
+    action: (e) => e.chain().focus().toggleBlockquote().run(),
+  },
+  {
+    id: 'date',
+    label: 'Date',
+    labelPl: 'Data',
+    description: "Insert today's date",
+    descriptionPl: 'Wstaw dzisiejszą datę',
+    icon: <CalendarDays size={ICON_SIZE} />,
+    keywords: ['date', 'today', 'data', 'dzisiaj', 'now'],
+    action: (e) => {
+      const locale =
+        typeof document !== 'undefined' && document.documentElement.lang === 'pl' ? 'pl-PL' : 'en-US';
+      const formatted = new Date().toLocaleDateString(locale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      e.chain().focus().insertContent(formatted).run();
+    },
+  },
+  {
+    id: 'columns',
+    label: '2 Columns',
+    labelPl: '2 kolumny',
+    description: 'Two-column layout',
+    descriptionPl: 'Układ dwukolumnowy',
+    icon: <Columns2 size={ICON_SIZE} />,
+    keywords: ['columns', 'column', 'kolumny', 'kolumna', '2', 'split', 'grid'],
+    action: (e) =>
+      e
+        .chain()
+        .focus()
+        .insertTable({ rows: 1, cols: 2, withHeaderRow: false })
+        .run(),
   },
   {
     id: 'callout',
