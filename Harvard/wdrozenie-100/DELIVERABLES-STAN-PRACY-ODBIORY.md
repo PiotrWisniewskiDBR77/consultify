@@ -84,7 +84,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 
 | # | Sub-moduł | Fala | Epiki | DoD | Testy (FT) | Manual | UI | →F | →UI | Status |
 |--|--|:--:|:--:|:--:|:--|:--:|:--:|:--:|:--:|--|
-| **E1** | Launcher „Nowy" + 3 kafle typu | W1 | 0/2 | 0/7 | 1,2,3,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
+| **E1** | Launcher „Nowy" + 3 kafle typu | W1 | 2/2 | 🟡 | FT-1✅(7/7)·3,8⬜ | 0/6 | 🟡 | ⬜ | ⬜ | 🟡 W TOKU (kod+wpięcie+flaga+i18n PL/EN ✅, tsc clean, commit `a3387f55ed`; FT-3 e2e + FT-8 hub-test + żywy smoke + →F/→UI zostają. FT-2 przeniesione do E3 — E1 routuje do istniejących kreatorów, brak własnego API) |
 | **E2** | Galeria template'ów (wybór + Teresa-stub) | W1 | 0/2 | 0/7 | 1,2,3,7 | 0/5 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **E3** | Kontrakt „paczka kontekstu" + spięcie 3 ścieżek | W1 | 0/3 | 0/7 | 1,2,3,8 | 0/8 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **E4** | Routing wyboru → generator/edytor | W1 | 0/2 | 0/7 | 1,3 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
