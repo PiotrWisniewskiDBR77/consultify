@@ -11,6 +11,7 @@
 
 import {
   AlertTriangle,
+  Archive,
   ArrowRight,
   Ban,
   Calculator,
@@ -51,7 +52,6 @@ import {
   RotateCcw,
   Scale,
   Search,
-  Archive,
   Shield,
   ShieldCheck,
   Sparkles,
@@ -96,16 +96,16 @@ import {
   saveInitiativeWriteTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
-import {
-  gateAiSoftBlocks,
-  type GateAiCheckResponse,
-  type GateAiReadiness,
-  type GateAiTimeline,
-} from '@/types/gateAi';
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import {
+  type GateAiCheckResponse,
+  type GateAiReadiness,
+  gateAiSoftBlocks,
+  type GateAiTimeline,
+} from '@/types/gateAi';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import {
@@ -161,6 +161,7 @@ import {
 } from '../shared/NModeSections';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { upsertFinancialBlock } from './financialNarrativeBlocks';
+import { GateOverrideModal } from './gate-ai';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
 import {
   extractInitiativeKpiRows,
@@ -184,7 +185,6 @@ import {
   MODULE_CONFIG,
   SECTION_REGISTRY,
 } from './sections';
-import { GateOverrideModal } from './gate-ai';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import { ResourcesSection } from './sections/ResourcesSection';
 import type {
@@ -1039,9 +1039,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         .slice(0, 12);
 
       if (proposal.add.length === 0 && proposal.remove.length === 0) {
-        setRaidAiNoSuggestionsMessage(
-          t('initiatives.aiFoundNoChangeSuggestionsThe3')
-        );
+        setRaidAiNoSuggestionsMessage(t('initiatives.aiFoundNoChangeSuggestionsThe3'));
       }
 
       setRaidAiProposal(proposal);
@@ -1053,9 +1051,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       setShowRaidAIModal(true);
     } catch (e: any) {
-      toast.error(
-        e?.message || (t('initiatives.failedToAnalyzeRaid2'))
-      );
+      toast.error(e?.message || t('initiatives.failedToAnalyzeRaid2'));
     } finally {
       setIsRaidAIProposing(false);
     }
@@ -1148,10 +1144,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(t('initiatives.appliedAiSuggestions2'));
       closeRaidAIModal();
     } catch (e: any) {
-      toast.error(
-        e?.message ||
-          (t('initiatives.failedToApplySuggestions2'))
-      );
+      toast.error(e?.message || t('initiatives.failedToApplySuggestions2'));
     } finally {
       setIsRaidAIProposing(false);
     }
@@ -1277,9 +1270,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           sectionCompletions: prevMap,
           section_completions: prevMap,
         }));
-        toast.error(
-          t('initiatives.failedToSaveSectionStatus2')
-        );
+        toast.error(t('initiatives.failedToSaveSectionStatus2'));
       }
     },
     [sectionCompletions, initiativeId, isPolish]
@@ -3183,9 +3174,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleCreateTask = async () => {
     if (!canEditCards) {
-      toast.error(
-        t('initiatives.youDoNotHaveEditPermissions2')
-      );
+      toast.error(t('initiatives.youDoNotHaveEditPermissions2'));
       return;
     }
     if (!newTaskTitle.trim()) return;
@@ -3235,9 +3224,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleCreateDecision = async () => {
     if (!canEditCards) {
-      toast.error(
-        t('initiatives.youDoNotHaveEditPermissions2')
-      );
+      toast.error(t('initiatives.youDoNotHaveEditPermissions2'));
       return;
     }
     if (!newDecisionTitle.trim()) return;
@@ -3291,9 +3278,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleCreateRaid = async () => {
     if (!canEditCards) {
-      toast.error(
-        t('initiatives.youDoNotHaveEditPermissions2')
-      );
+      toast.error(t('initiatives.youDoNotHaveEditPermissions2'));
       return;
     }
     if (!newRaidTitle.trim()) return;
@@ -3357,9 +3342,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         ]);
         toast.success(t('initiatives.resourceAdded2'));
       } catch (e: any) {
-        toast.error(
-          e?.message || (t('initiatives.failedToAddResource2'))
-        );
+        toast.error(e?.message || t('initiatives.failedToAddResource2'));
       }
     },
     [initiativeId, isPolish]
@@ -3400,9 +3383,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setApiBudgetItems((prev) => [...prev, { ...data, id: newItem.id || `bi-${Date.now()}` }]);
         toast.success(t('initiatives.budgetItemAdded2'));
       } catch (e: any) {
-        toast.error(
-          e?.message || (t('initiatives.failedToAddBudgetItem2'))
-        );
+        toast.error(e?.message || t('initiatives.failedToAddBudgetItem2'));
       }
     },
     [initiativeId, isPolish]
@@ -3443,9 +3424,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setApiToolItems((prev) => [...prev, { ...data, id: newItem.id || `tool-${Date.now()}` }]);
         toast.success(t('initiatives.toolAdded2'));
       } catch (e: any) {
-        toast.error(
-          e?.message || (t('initiatives.failedToAddTool2'))
-        );
+        toast.error(e?.message || t('initiatives.failedToAddTool2'));
       }
     },
     [initiativeId, isPolish]
@@ -3488,7 +3467,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         ]);
         toast.success(t('initiatives.intangibleAssetAdded2'));
       } catch (e: any) {
-        toast.error(e?.message || (t('initiatives.failedToAddAsset2')));
+        toast.error(e?.message || t('initiatives.failedToAddAsset2'));
       }
     },
     [initiativeId, isPolish]
@@ -3966,11 +3945,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // 1) Fill the Description & Context fields (generate if empty, improve if present)
       const [problem, solution, cost, market] = await Promise.all([
         refineOrGenerate(t('initiatives.problem2'), symptomDraft, 'paragraph'),
-        refineOrGenerate(
-          t('initiatives.proposedSolution2'),
-          rootCauseDraft,
-          'paragraph'
-        ),
+        refineOrGenerate(t('initiatives.proposedSolution2'), rootCauseDraft, 'paragraph'),
         // Cost of inaction tends to have multiple arguments → allow bullets
         (async () => {
           const current = costOfInactionDraft;
@@ -4016,11 +3991,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           });
           return String(aiRes?.text || '').trim();
         })(),
-        refineOrGenerate(
-          t('initiatives.marketContext2'),
-          marketContextDraft,
-          'paragraph'
-        ),
+        refineOrGenerate(t('initiatives.marketContext2'), marketContextDraft, 'paragraph'),
       ]);
 
       if (problem) setSymptomDraft(problem);
@@ -4087,9 +4058,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       toast.success(t('initiatives.scopeGeneratedByAi2'));
     } catch (e: any) {
-      toast.error(
-        e?.message || (t('initiatives.generateScopeFailed2'))
-      );
+      toast.error(e?.message || t('initiatives.generateScopeFailed2'));
     } finally {
       setIsGeneratingAI(null);
     }
@@ -4234,19 +4203,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   : `AI generated ${newItems.length} RAID items`
               );
             } else {
-              toast.error(
-                t('initiatives.aiGeneratedNoRaidItems2')
-              );
+              toast.error(t('initiatives.aiGeneratedNoRaidItems2'));
             }
           } else {
-            toast.error(
-              t('initiatives.failedToParseAiResponse2')
-            );
+            toast.error(t('initiatives.failedToParseAiResponse2'));
           }
         } else if (section === 'comments') {
           const aiComment: Comment = {
             id: `ai-${Date.now()}`,
-            content: result.content || (t('initiatives.aiAnalysis2')),
+            content: result.content || t('initiatives.aiAnalysis2'),
             authorId: 'ai-assistant',
             authorName: 'AI Assistant',
             createdAt: new Date().toISOString(),
@@ -4288,9 +4253,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleGenerateFinancial = useCallback(
     async (section: 'financial-analysis' | 'financial-impact'): Promise<void> => {
       if (!canUseAi) {
-        toast.error(
-          t('initiatives.aiIsUnavailableBecauseYouHave2')
-        );
+        toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
         return;
       }
       setIsGeneratingAI(section);
@@ -4345,8 +4308,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           if (sizing) parts.push(sizing);
           if (revenue) parts.push(`${t('initiatives.revenueImpact2')}: ${revenue}`);
           if (cost) parts.push(`${t('initiatives.costSavings2')}: ${cost}`);
-          if (benefits)
-            parts.push(`${t('initiatives.benefitsRealization2')}: ${benefits}`);
+          if (benefits) parts.push(`${t('initiatives.benefitsRealization2')}: ${benefits}`);
           text = parts.join('\n\n').trim() || JSON.stringify(result.parsedContent, null, 2);
         } else {
           text = String(result?.content || '').trim();
@@ -4362,9 +4324,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // labeled block (M13 #1) — re-generating one section replaces only its own
         // block and never clobbers the other's content.
         setMarketContextDraft((prev) => upsertFinancialBlock(prev, section, text, isPolish));
-        toast.success(
-          t('initiatives.aiGeneratedAFinancialDraftReview2')
-        );
+        toast.success(t('initiatives.aiGeneratedAFinancialDraftReview2'));
       } catch (e: any) {
         toast.error(
           e?.message || t('initiatives.toast.aiGenerationError', 'Generowanie AI nie powiodło się')
@@ -4373,14 +4333,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setIsGeneratingAI(null);
       }
     },
-    [
-      canUseAi,
-      isPolish,
-      initiativeId,
-      initiative,
-      summary,
-      t,
-    ]
+    [canUseAi, isPolish, initiativeId, initiative, summary, t]
   );
 
   const handleRequestApproval = async (role: 'owner' | 'sponsor', gateType: string) => {
@@ -4435,9 +4388,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleOpenTaskArtifact = useCallback(
     (taskId: string) => {
       if (isShowcaseArtifactId(taskId)) {
-        toast(
-          t('initiatives.thisDemoTaskIsPresentedInside2')
-        );
+        toast(t('initiatives.thisDemoTaskIsPresentedInside2'));
         return;
       }
       if (onOpenTask) {
@@ -4461,9 +4412,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleOpenDecisionArtifact = useCallback(
     (decisionId: string) => {
       if (isShowcaseArtifactId(decisionId)) {
-        toast(
-          t('initiatives.thisDemoDecisionIsPresentedInside2')
-        );
+        toast(t('initiatives.thisDemoDecisionIsPresentedInside2'));
         return;
       }
       if (onOpenDecision) {
@@ -4485,12 +4434,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
 
   const handleArchive = async () => {
-    if (
-      !confirm(
-        t('initiatives.areYouSureYouWantTo3')
-      )
-    )
-      return;
+    if (!confirm(t('initiatives.areYouSureYouWantTo3'))) return;
     setIsMutating(true);
     try {
       await Api.post(`/initiatives/${initiativeId}/archive`, {});
@@ -4512,12 +4456,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.error(t('initiatives.onlyDraftsCanBeDeleted2'));
       return;
     }
-    if (
-      !confirm(
-        t('initiatives.areYouSureYouWantTo4')
-      )
-    )
-      return;
+    if (!confirm(t('initiatives.areYouSureYouWantTo4'))) return;
     setIsMutating(true);
     try {
       await Api.delete(`/initiatives/${initiativeId}`);
@@ -5475,11 +5414,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => (
           <div
             className="relative"
-            title={
-              !canEditPriority
-                ? t('initiatives.youCannotEditPriorityAtThis2')
-                : undefined
-            }
+            title={!canEditPriority ? t('initiatives.youCannotEditPriorityAtThis2') : undefined}
           >
             <div
               className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentPriorityMeta.bg} border ${priorityAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentPriorityMeta.text} ${
@@ -5524,11 +5459,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             value={ownerId}
             onChange={(e) => setOwnerId(e.target.value)}
             disabled={!canEditOwner}
-            title={
-              !canEditOwner
-                ? t('initiatives.youCannotEditOwnerAtThis2')
-                : undefined
-            }
+            title={!canEditOwner ? t('initiatives.youCannotEditOwnerAtThis2') : undefined}
             className="w-full h-8 px-2.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
           >
             <option value="">{t('initiatives.select2')}</option>
@@ -5554,11 +5485,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
             disabled={!canEditTargetDate}
-            title={
-              !canEditTargetDate
-                ? t('initiatives.youCannotEditTargetDateAt2')
-                : undefined
-            }
+            title={!canEditTargetDate ? t('initiatives.youCannotEditTargetDateAt2') : undefined}
             className="w-full h-8 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors disabled:opacity-60"
           />
         ),
@@ -5932,10 +5859,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       setShowCommentsAIModal(true);
     } catch (e: any) {
-      toast.error(
-        e?.message ||
-          (t('initiatives.failedToAnalyzeComments2'))
-      );
+      toast.error(e?.message || t('initiatives.failedToAnalyzeComments2'));
     } finally {
       setIsCommentsAIProposing(false);
     }
@@ -6202,9 +6126,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   value={symptomDraft}
                   onChange={setSymptomDraft}
                   isPolish={isPolish}
-                  placeholder={
-                    t('initiatives.whatProblemAreWeSolvingWhat2')
-                  }
+                  placeholder={t('initiatives.whatProblemAreWeSolvingWhat2')}
                 />
               </div>
 
@@ -6236,9 +6158,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   value={rootCauseDraft}
                   onChange={setRootCauseDraft}
                   isPolish={isPolish}
-                  placeholder={
-                    t('initiatives.whatSolutionDoWeProposeWhat2')
-                  }
+                  placeholder={t('initiatives.whatSolutionDoWeProposeWhat2')}
                 />
               </div>
 
@@ -6270,9 +6190,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   value={costOfInactionDraft}
                   onChange={setCostOfInactionDraft}
                   isPolish={isPolish}
-                  placeholder={
-                    t('initiatives.whatHappensIfWeDoNothing2')
-                  }
+                  placeholder={t('initiatives.whatHappensIfWeDoNothing2')}
                 />
               </div>
 
@@ -6304,9 +6222,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   value={marketContextDraft}
                   onChange={setMarketContextDraft}
                   isPolish={isPolish}
-                  placeholder={
-                    t('initiatives.marketContextCompetitionTrends2')
-                  }
+                  placeholder={t('initiatives.marketContextCompetitionTrends2')}
                 />
               </div>
             </div>
@@ -6992,9 +6908,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       />
                       <AIFieldEnhancer
                         fieldKey={`initiative.scope.killCriteria.${i}`}
-                        sectionLabel={
-                          t('initiatives.killCriteriaListItem2')
-                        }
+                        sectionLabel={t('initiatives.killCriteriaListItem2')}
                         currentValue={item}
                         onApply={(v) => updateKill(i, v)}
                         artifactContext={{
@@ -7242,14 +7156,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     const rv = sectionReview[section.id];
                     if (!rv) return null;
                     const pass = rv.verdict === 'PASS';
-                    const label = pass
-                      ? t('initiatives.qualityOk2')
-                      : t('initiatives.needsWork2');
+                    const label = pass ? t('initiatives.qualityOk2') : t('initiatives.needsWork2');
                     const tip = [
                       `${t('initiatives.qualityScore2')}: ${rv.score}/100 (PASS ≥ ${REVIEW_PASS_THRESHOLD})`,
-                      rv.degraded
-                        ? t('initiatives.heuristicScoreNoLlmVerifyManually2')
-                        : '',
+                      rv.degraded ? t('initiatives.heuristicScoreNoLlmVerifyManually2') : '',
                       ...rv.gaps.map((g) => `• ${g}`),
                     ]
                       .filter(Boolean)
@@ -7278,15 +7188,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         section.id as 'financial-analysis' | 'financial-impact'
                       )
                     }
-                    title={
-                      t('initiatives.generateAnAiDraftSizingRoi2')
-                    }
+                    title={t('initiatives.generateAnAiDraftSizingRoi2')}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-500/40 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Sparkles size={13} />
-                    {busy
-                      ? t('initiatives.generating2')
-                      : t('initiatives.generateWithAi2')}
+                    {busy ? t('initiatives.generating2') : t('initiatives.generateWithAi2')}
                   </button>
                 )}
               </div>
@@ -7552,8 +7458,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                            {t('initiatives.toRemove2')} (
-                            {commentsAiProposal.remove.length})
+                            {t('initiatives.toRemove2')} ({commentsAiProposal.remove.length})
                           </span>
                           {commentsAiProposal.remove.length > 0 && (
                             <button
@@ -7577,12 +7482,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             icon={Trash2}
                             dashed={false}
                             className="p-5"
-                            message={
-                              t('initiatives.noRemovalSuggestionsFromAi2')
-                            }
-                            hint={
-                              t('initiatives.ifTheThreadLooksGoodAi2')
-                            }
+                            message={t('initiatives.noRemovalSuggestionsFromAi2')}
+                            hint={t('initiatives.ifTheThreadLooksGoodAi2')}
                           />
                         ) : (
                           <div className="space-y-1.5">
@@ -7653,12 +7554,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             icon={Plus}
                             dashed={false}
                             className="p-5"
-                            message={
-                              t('initiatives.noAdditionsProposed2')
-                            }
-                            hint={
-                              t('initiatives.ifTheThreadIsCompleteAi2')
-                            }
+                            message={t('initiatives.noAdditionsProposed2')}
+                            hint={t('initiatives.ifTheThreadIsCompleteAi2')}
                           />
                         ) : (
                           <div className="space-y-1.5">
@@ -7868,9 +7765,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       }
                       className="md:col-span-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                     >
-                      <option value="realization">
-                        {t('initiatives.realizationOnly2')}
-                      </option>
+                      <option value="realization">{t('initiatives.realizationOnly2')}</option>
                       <option value="post-implementation">
                         {t('initiatives.postImplementationOnly2')}
                       </option>
@@ -7966,7 +7861,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </div>
               )}
               <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
-                <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full text-sm">
+                <table
+                  /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-sm"
+                >
                   {/* §27 — sticky header (KPI list has no sort/expand → kept custom;
                       FilterableTable would drop the inline edit-form + AI-add). */}
                   <thead className="sticky top-0 z-10 bg-white dark:bg-navy-900">
@@ -7976,9 +7873,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <th className="text-left py-2 pr-2">{t('initiatives.unit2')}</th>
                       <th className="text-left py-2 pr-2">{t('initiatives.baseline2')}</th>
                       <th className="text-left py-2 pr-2">{t('initiatives.current2')}</th>
-                      <th className="text-left py-2 pr-2">
-                        {t('initiatives.realizationTarget2')}
-                      </th>
+                      <th className="text-left py-2 pr-2">{t('initiatives.realizationTarget2')}</th>
                       <th className="text-left py-2 pr-2">
                         {t('initiatives.postImplementationTarget2')}
                       </th>
@@ -8073,9 +7968,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
-                                    const ok = window.confirm(
-                                      t('initiatives.deleteThisKpi2')
-                                    );
+                                    const ok = window.confirm(t('initiatives.deleteThisKpi2'));
                                     if (ok) removeKpi(kpi.id);
                                   }}
                                   className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
@@ -8394,9 +8287,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         setChangeLogDraft('');
                       }
                     }}
-                    placeholder={
-                      t('initiatives.describeAChangePressEnter2')
-                    }
+                    placeholder={t('initiatives.describeAChangePressEnter2')}
                     className="flex-1 rounded-lg border border-slate-300/50 dark:border-navy-600/60 bg-transparent px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400"
                   />
                   <button
@@ -8534,9 +8425,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           })
                         }
                         rows={2}
-                        placeholder={
-                          t('initiatives.keyResultsOnePerLine2')
-                        }
+                        placeholder={t('initiatives.keyResultsOnePerLine2')}
                         className="w-full bg-transparent text-xs text-slate-600 dark:text-slate-300 focus:outline-none resize-none border-t border-slate-100 dark:border-navy-700/40 pt-2"
                       />
                     </div>
@@ -8563,9 +8452,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onChange={(e) => setHypothesisDraft(e.target.value)}
                 onBlur={saveHypothesis}
                 rows={5}
-                placeholder={
-                  t('initiatives.weBelieveThatBecauseWeWill2')
-                }
+                placeholder={t('initiatives.weBelieveThatBecauseWeWill2')}
                 className="w-full rounded-lg border border-slate-200/60 dark:border-navy-700/50 bg-transparent px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400 resize-y"
               />
             </div>
@@ -8631,9 +8518,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onChange={(e) => setLessonsDraft(e.target.value)}
                 onBlur={saveLessons}
                 rows={6}
-                placeholder={
-                  t('initiatives.whatWorkedWhatDidnTWhat2')
-                }
+                placeholder={t('initiatives.whatWorkedWhatDidnTWhat2')}
                 className="w-full rounded-lg border border-slate-200/60 dark:border-navy-700/50 bg-transparent px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400 resize-y"
               />
             </div>
@@ -9248,7 +9133,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         );
       }
     } catch (e: any) {
-      toast.error(e?.message || (t('initiatives.failedToFork2')));
+      toast.error(e?.message || t('initiatives.failedToFork2'));
     } finally {
       setIsForking(false);
     }
@@ -9370,9 +9255,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const runActiveSectionAi = useCallback(async () => {
     if (!canUseAi) {
-      toast.error(
-        t('initiatives.aiIsUnavailableBecauseYouHave2')
-      );
+      toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
       return;
     }
     switch (activeNSection) {
@@ -9636,12 +9519,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     icon={Trash2}
                     dashed={false}
                     className="p-5"
-                    message={
-                      t('initiatives.noRemovalSuggestionsFromAi2')
-                    }
-                    hint={
-                      t('initiatives.ifTheRaidLogIsAlready2')
-                    }
+                    message={t('initiatives.noRemovalSuggestionsFromAi2')}
+                    hint={t('initiatives.ifTheRaidLogIsAlready2')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -9707,9 +9586,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     dashed={false}
                     className="p-5"
                     message={t('initiatives.noAdditionsProposed2')}
-                    hint={
-                      t('initiatives.aiMayReturnOnlyRemovalsOr2')
-                    }
+                    hint={t('initiatives.aiMayReturnOnlyRemovalsOr2')}
                   />
                 ) : (
                   <div className="space-y-1.5">
@@ -9768,14 +9645,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               >
                 <ul className="list-disc pl-4 space-y-1">
                   <li>
-                    {(t('initiatives.removeSelectedRaidItems2')) +
+                    {t('initiatives.removeSelectedRaidItems2') +
                       raidAiProposal.remove.reduce(
                         (sum, r) => sum + (raidAiSelectedRemoveIds[r.raidId] ? 1 : 0),
                         0
                       )}
                   </li>
                   <li>
-                    {(t('initiatives.addSelectedRaidItems2')) +
+                    {t('initiatives.addSelectedRaidItems2') +
                       raidAiProposal.add.reduce(
                         (sum, _x, idx) => sum + (raidAiSelectedAddIdx[idx] ? 1 : 0),
                         0
@@ -9798,9 +9675,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 disabled={isRaidAIProposing || !canEditCards}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                 title={
-                  !canEditCards
-                    ? t('initiatives.noEditPermissionAtThisInitiative2')
-                    : undefined
+                  !canEditCards ? t('initiatives.noEditPermissionAtThisInitiative2') : undefined
                 }
               >
                 {isRaidAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
@@ -9839,11 +9714,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
 
                 {statusDriftUi ? (
-                  <Callout
-                    variant="warning"
-                    compact
-                    title={t('initiatives.statusDrift2')}
-                  >
+                  <Callout variant="warning" compact title={t('initiatives.statusDrift2')}>
                     {t('initiatives.thisViewUsesNormalizedStatusAligned2')}
                   </Callout>
                 ) : null}
@@ -9864,7 +9735,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     // Grouped section list for the Sections dropdown (mirrors left nav).
                     const sectionGroups: { group: string; sections: NModeSection[] }[] = [];
                     for (const s of nModeSectionsWithContent) {
-                      const g = s.group || (t('initiatives.other2'));
+                      const g = s.group || t('initiatives.other2');
                       let bucket = sectionGroups.find((x) => x.group === g);
                       if (!bucket) {
                         bucket = { group: g, sections: [] };
@@ -9949,9 +9820,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
                                     >
                                       <RotateCcw size={13} className="shrink-0" />
-                                      <span>
-                                        {t('initiatives.restoreDefaults2')}
-                                      </span>
+                                      <span>{t('initiatives.restoreDefaults2')}</span>
                                     </button>
                                   </div>
                                 )}
@@ -10124,9 +9993,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         />
 
                         {/* Kebab — destructive actions (Block / Cancel / Archive / Delete) */}
-                        {(destructiveStatusActions.length > 0 ||
-                          canArchiveDoc ||
-                          canDeleteDoc) && (
+                        {(destructiveStatusActions.length > 0 || canArchiveDoc || canDeleteDoc) && (
                           <div className="relative">
                             <ToolbarIconButton
                               icon={<MoreVertical size={14} />}
@@ -10203,9 +10070,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <ToolbarAISolidButton
                           onClick={() => {
                             if (!canUseAi) {
-                              toast.error(
-                                t('initiatives.aiIsUnavailableBecauseYouHave2')
-                              );
+                              toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
                               return;
                             }
                             setAiPanelOpen((v) => !v);
@@ -10463,7 +10328,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {sectionLabel(section)}
                     </h2>
                     <div style={{ fontSize: '13px', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-                      {body.trim() || (t('initiatives.noContent4'))}
+                      {body.trim() || t('initiatives.noContent4')}
                     </div>
                   </div>
                 );

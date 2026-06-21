@@ -39,12 +39,10 @@ export const GateReadinessPill: React.FC<GateReadinessPillProps> = ({
           bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20
           disabled:cursor-default enabled:hover:bg-slate-500/15 transition-colors"
       >
-        {loading ? (
-          <Loader2 size={12} className="animate-spin" />
-        ) : (
-          <Sparkles size={12} />
-        )}
-        <span>{loading ? t('initiatives.gateAi.pill.loading') : t('initiatives.gateAi.pill.label')}</span>
+        {loading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+        <span>
+          {loading ? t('initiatives.gateAi.pill.loading') : t('initiatives.gateAi.pill.label')}
+        </span>
       </button>
     );
   }

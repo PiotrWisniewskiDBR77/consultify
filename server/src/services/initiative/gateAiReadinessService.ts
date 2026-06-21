@@ -26,16 +26,13 @@
  * derived from the resolved section contents so an edit to any required section
  * naturally invalidates the entry.
  */
-import * as queryHelpers from '../../utils/queryHelpers.js';
-import Logger from '../../utils/Logger.js';
-import initiativeGenerationService from '../initiativeGenerationService.js';
-import {
-  GATE_REQUIRED_SECTIONS,
-  isAiGate,
-} from '../../constants/initiativeGateAi.js';
-import { getGateAiThreshold } from './initiativeGateAiConfig.js';
+import { GATE_REQUIRED_SECTIONS, isAiGate } from '../../constants/initiativeGateAi.js';
 import type { GateTypeValue } from '../../constants/initiativeStatuses.js';
-import type { GateAiReadiness, GateAiGap } from '../../types/gateAi.js';
+import type { GateAiGap, GateAiReadiness } from '../../types/gateAi.js';
+import Logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
+import initiativeGenerationService from '../initiativeGenerationService.js';
+import { getGateAiThreshold } from './initiativeGateAiConfig.js';
 
 const LOG_PREFIX = '[initiative:gateAiReadiness]';
 const CACHE_TTL_MS = 60_000;
@@ -87,9 +84,7 @@ function jsonLines(v: unknown): string {
   }
   if (Array.isArray(parsed)) {
     return parsed
-      .map((item) =>
-        item && typeof item === 'object' ? JSON.stringify(item) : str(item)
-      )
+      .map((item) => (item && typeof item === 'object' ? JSON.stringify(item) : str(item)))
       .filter(Boolean)
       .join('\n');
   }
@@ -98,7 +93,10 @@ function jsonLines(v: unknown): string {
 }
 
 function joinParts(parts: Array<string | undefined>): string {
-  return parts.map((p) => str(p)).filter(Boolean).join('\n\n');
+  return parts
+    .map((p) => str(p))
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 const SECTION_CONTENT_RESOLVERS: Record<string, (row: InitiativeRow) => string> = {

@@ -23,17 +23,17 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { useGateAi } from '@/hooks/useGateAi';
 import Api from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { getStatusMeta } from '@/services/initiativeLifecycle';
 
+import { GateReadinessPanel, GateReadinessPill } from '../gate-ai';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import { InitiativeGatesWorkflowTable } from './InitiativeGatesWorkflowTable';
 import { InitiativeStatusPipeline } from './InitiativeStatusPipeline';
 import type { InitiativeSectionProps } from './types';
-import { GateReadinessPill, GateReadinessPanel } from '../gate-ai';
-import { useGateAi } from '@/hooks/useGateAi';
 import { GATE_CONFIG, GATE_DEFINITIONS, getNextGateForStatus, getRoleLabel } from './types';
 
 type AIGatesProposal = {
@@ -1619,7 +1619,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               aiProposal.tasks.update.length === 0 &&
               aiProposal.raid.update.length === 0 ? (
                 <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-                  <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full">
+                  <table
+                    /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full"
+                  >
                     <thead className="bg-slate-50/80 dark:bg-navy-800/60">
                       <tr>
                         <th className="text-left px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">

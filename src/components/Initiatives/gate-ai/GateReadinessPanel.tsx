@@ -161,7 +161,7 @@ export const GateReadinessPanel: React.FC<GateReadinessPanelProps> = ({ readines
               <li
                 key={idx}
                 className={`flex items-start gap-2 rounded-xl border px-3 py-2 text-[11px] ${timelineFlagCls(
-                  flag.severity,
+                  flag.severity
                 )}`}
               >
                 <AlertTriangle size={13} className="shrink-0 mt-0.5" />

@@ -7,7 +7,7 @@
  * via `onReschedule` (the parent persists; this component holds no data). No
  * external deps. Dark + light.
  */
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -98,9 +98,7 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
 
   const shift = (dir: number) => {
     setCursor((c) =>
-      view === 'week'
-        ? addDays(c, dir * 7)
-        : new Date(c.getFullYear(), c.getMonth() + dir, 1)
+      view === 'week' ? addDays(c, dir * 7) : new Date(c.getFullYear(), c.getMonth() + dir, 1)
     );
   };
 

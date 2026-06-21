@@ -9,6 +9,7 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { isAiGate } from '../constants/initiativeGateAi.js';
 import {
   GATE_PERMISSIONS,
   GateType,
@@ -16,17 +17,14 @@ import {
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
-import { isAiGate } from '../constants/initiativeGateAi.js';
 import activityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
-import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
 import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
-import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
-import { notifyStatusChange } from '../services/initiative/initiativeNotificationService.js';
 import { recordGateAiEvent } from '../services/initiative/gateAiTelemetryService.js';
 import { getTimelineFlags } from '../services/initiative/gateTimelineService.js';
+import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
+import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
-import { gateAiSoftBlocks } from '../types/gateAi.js';
 import {
   evaluateInitiativeGateAccess,
   evaluateInitiativeWriteAccess,
@@ -41,6 +39,7 @@ import {
   coerceInitiativeStatusForWrite,
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
+import { notifyStatusChange } from '../services/initiative/initiativeNotificationService.js';
 import notificationService from '../services/notificationService.js';
 import {
   calculateRiskScore,
@@ -53,6 +52,7 @@ import {
   getInitiativeTaskDependenciesRead,
   getPortfolioRead,
 } from '../services/v8/planningPortfolioReadService.js';
+import { gateAiSoftBlocks } from '../types/gateAi.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -1300,7 +1300,12 @@ export class InitiativeController {
               getTimelineFlags(id, gate, orgId),
             ]);
             const timelineBlock = !!timeline?.flags?.some((f: any) => f.severity === 'block');
-            const softBlocks = gateAiSoftBlocks({ enabled: true, gate, aiReadiness, timeline } as any);
+            const softBlocks = gateAiSoftBlocks({
+              enabled: true,
+              gate,
+              aiReadiness,
+              timeline,
+            } as any);
             if (softBlocks && !overrideReason) {
               await recordGateAiEvent({
                 organizationId: orgId,
@@ -3483,8 +3488,7 @@ export class InitiativeController {
       const currentStatus = String(existing.status || 'DRAFT').toUpperCase();
       if (!DELETABLE_STATUSES.has(currentStatus)) {
         res.status(409).json({
-          error:
-            'Only DRAFT or CANCELLED initiatives can be deleted. Cancel the initiative first.',
+          error: 'Only DRAFT or CANCELLED initiatives can be deleted. Cancel the initiative first.',
           code: 'INITIATIVE_DELETE_INVALID_STATE',
           status: currentStatus,
         });

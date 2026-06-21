@@ -33,13 +33,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { buildScheduleItems } from '@/services/initiativeSchedule';
 
+import { InitiativeCalendar } from '../calendar';
 import { useInitiativeContext } from './InitiativeContext';
 import type { TimelinePlannerHandle } from './TimelinePlanner';
 import { TimelinePlanner } from './TimelinePlanner';
 import type { InitiativeSectionProps, TimelineMilestone, TimelinePhase } from './types';
-import { InitiativeCalendar } from '../calendar';
-import { buildScheduleItems } from '@/services/initiativeSchedule';
 import { getTimelineMode, TIMELINE_MODE_META } from './types';
 
 // ==========================================
@@ -2076,7 +2076,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 {t('initiatives.timelineSection.baselineVsActual')}
               </span>
             </div>
-            <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-xs">
+            <table
+              /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-xs"
+            >
               <thead>
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40 bg-slate-50/40 dark:bg-navy-800/30">
                   <th className="text-left px-5 py-2 text-slate-500 font-medium"> </th>

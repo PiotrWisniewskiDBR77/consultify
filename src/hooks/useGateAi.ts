@@ -10,8 +10,8 @@
 import { useCallback, useState } from 'react';
 
 import { checkGateAi } from '@/services/api/gateAi';
-import { gateAiSoftBlocks } from '@/types/gateAi';
 import type { GateAiCheckResponse } from '@/types/gateAi';
+import { gateAiSoftBlocks } from '@/types/gateAi';
 
 export interface UseGateAiResult {
   /** Run the gate readiness check; stores the result. Returns the response. */

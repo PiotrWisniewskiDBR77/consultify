@@ -11,8 +11,8 @@
  * and unit-testable. Every emitter swallows errors: a notification must NEVER
  * break the action that triggered it.
  */
-import { send } from '../notificationService.js';
 import Logger from '../../utils/Logger.js';
+import { send } from '../notificationService.js';
 
 const LOG = '[initiative:notify]';
 
@@ -30,7 +30,10 @@ interface EmitBase {
   actorId?: string | null;
 }
 
-async function emit(recipientUserIds: Array<string | null | undefined>, base: EmitBase): Promise<void> {
+async function emit(
+  recipientUserIds: Array<string | null | undefined>,
+  base: EmitBase
+): Promise<void> {
   const ids = Array.from(new Set((recipientUserIds || []).filter(Boolean).map((v) => String(v))));
   for (const userId of ids) {
     try {

@@ -61,6 +61,8 @@ export interface GateAiCheckResponse {
 export function gateAiSoftBlocks(resp: GateAiCheckResponse): boolean {
   if (!resp.enabled) return false;
   const belowThreshold = resp.aiReadiness ? resp.aiReadiness.verdict === 'below' : false;
-  const timelineBlock = resp.timeline ? resp.timeline.flags.some((f) => f.severity === 'block') : false;
+  const timelineBlock = resp.timeline
+    ? resp.timeline.flags.some((f) => f.severity === 'block')
+    : false;
   return belowThreshold || timelineBlock;
 }

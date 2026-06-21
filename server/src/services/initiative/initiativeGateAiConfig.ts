@@ -10,10 +10,10 @@
  *   - This guarantees VTS/Apator/Elkomtech see zero behavior change until the
  *     flag is deliberately switched on for a demo/internal org.
  */
-import { all as dbAll, run as dbRun, tableExists } from '../../utils/DbPromise.js';
-import { flagOn } from '../../utils/pgFlags.js';
 import { DEFAULT_GATE_AI_THRESHOLD } from '../../constants/initiativeGateAi.js';
+import { all as dbAll, run as dbRun, tableExists } from '../../utils/DbPromise.js';
 import Logger from '../../utils/Logger.js';
+import { flagOn } from '../../utils/pgFlags.js';
 
 const LOG_PREFIX = '[initiative:gateAi]';
 const FLAG_KEY = 'gate_ai';
@@ -118,5 +118,7 @@ export async function setInitiativeGateAiFlag(
   );
 
   clearGateAiConfigCache(orgId);
-  Logger.info(`${LOG_PREFIX} flag ${FLAG_KEY} set enabled=${enabled} threshold=${threshold} for ${orgId}`);
+  Logger.info(
+    `${LOG_PREFIX} flag ${FLAG_KEY} set enabled=${enabled} threshold=${threshold} for ${orgId}`
+  );
 }

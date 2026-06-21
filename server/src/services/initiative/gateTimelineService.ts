@@ -26,16 +26,16 @@
  *
  * FAIL-OPEN: any query error returns null (never throw into the request path).
  */
+import { gateHasTimelineCheck } from '../../constants/initiativeGateAi.js';
 import {
   GateType,
-  InitiativeStatus,
   type GateTypeValue,
+  InitiativeStatus,
   type InitiativeStatusType,
 } from '../../constants/initiativeStatuses.js';
-import { gateHasTimelineCheck } from '../../constants/initiativeGateAi.js';
 import type { GateAiTimeline, TimelineFlag } from '../../types/gateAi.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 
 /**
  * Predecessor statuses that mean a finish-to-start dependency is NOT yet ready.
