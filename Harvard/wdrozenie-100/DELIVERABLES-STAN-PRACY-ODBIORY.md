@@ -102,8 +102,8 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 |--|--|:--:|:--:|:--:|:--|:--:|:--:|:--:|:--:|--|
 | **E1** | Launcher „Nowy" + 3 kafle typu | W1 | 2/2 | 🟡 | FT-1✅·3,8⬜ | 0/6 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (launcher+wpięcie+flaga+i18n; krok 1 z 2-krokowego flow; commit `a3387f55ed`; FT-3 e2e + żywy smoke + →F/→UI zostają. FT-2→E3) |
 | **E2** | Galeria template'ów (wybór + Teresa-stub) | W1 | 2/2 | 🟡 | FT-1✅(10/10)·3,7⬜ | 0/5 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (launcher 2-krokowy typ→template, Blank+kuratorowane v1 per typ, i18n PL/EN, tsc clean, commit `c4c8bac2d3`; Teresa-proponuje=T4; realna biblioteka=seria T; FT-3 e2e + żywy smoke zostają) |
-| **E3** | Kontrakt „paczka kontekstu" + spięcie 3 ścieżek | W1 | 0/3 | 0/7 | 1,2,3,8 | 0/8 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
-| **E4** | Routing wyboru → generator/edytor | W1 | 0/2 | 0/7 | 1,3 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
+| **E3** | Kontrakt „paczka kontekstu" + spięcie 3 ścieżek | W1 | 3/3 | 🟡 | FT-2✅(6/6)·3⬜ | 0/8 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (Nowy→Teresa: seed pendingPrompt dopasowany do detektorów Tryb B per typ, ZERO BE, nieinwazyjne; commit `097553ee6c`; templateId w contextData→seria T; FT-2 6/6 seed↔detektor PL+EN; źródła/czat już idą przez ten silnik; FT-3 e2e + manual zostają) |
+| **E4** | Routing wyboru → generator/edytor | W1 | 2/2 | 🟡 | reuse✅ | 0/4 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (realizowane przez REUSE Tryb B — kickoff E3 → istniejący mount edytora per format: deck→builder, doc→canvas, sheet→grid + loading/error/empty Tryb B; brak nowego kodu = jeden silnik; weryfikacja w checkpoincie manualnym W1) |
 | **R1** | Doc → TipTap edytor (zamiast viewera) | W2 | 0/3 | 0/7 | 1,2,3,7 | 0/8 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **R2** | Doc → inline-AI „zaznacz→popraw" + kasacja Mode1/2/3 | W2 | 0/2 | 0/7 | 1,2,3,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **R3** | Doc → render tabel/wykresów/KPI (recharts) | W2 | 0/2 | 0/7 | 1,3,7 | 0/5 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
@@ -125,7 +125,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 | **X5** | doc/sheet → model decka (jedna encja) | W5 | 0/3 | 0/7 | 1,2,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **X6** | Outputs niezawodny rejestr (transakcyjny) + lineage | W5 | 0/2 | 0/7 | 1,2,8 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 
-**Postęp programu:** 0 / 24 ZAMKNIĘTYCH · Fale: W1 (E, 4) · W2 (R, 5) · W3 (T, 4) · W4 (B, 5) · W5 (X, 6) · Manual 0/132 · Skok jakości = seria B (mózg premium).
+**Postęp programu:** 0 / 24 ZAMKNIĘTYCH · **W1 (E1-E4) GOTOWA code-side 🟢** (wspólne wejście: launcher 2-krokowy → Teresa pre-armowana per typ; FT-1+FT-2 **22/22**; tsc 0; commity `a3387f55ed`/`c4c8bac2d3`/`097553ee6c`; czeka checkpoint manualny W1 na stagingu + →F/→UI) · W2 (R, 5) · W3 (T, 4) · W4 (B, 5) · W5 (X, 6) · Manual 0/132 · Skok jakości = seria B (mózg premium).
 **Słownik statusu:** ⬜ NIE ROZPOCZĘTY · 🟡 W TOKU · 🟢 GOTOWY DO ODBIORU (6 bramek realizacji ✅) · ✅ ZAMKNIĘTY (8/8 ✅).
 
 ---
