@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-import { getHeaders } from '@/services/api';
+import { useCallback } from 'react';
 
 export interface DegradedScenario {
   scenario: string;
@@ -19,63 +17,27 @@ interface UseProcessFlowDegradedOpts {
   pollIntervalMs?: number;
 }
 
-export function useProcessFlowDegraded({
-  processId,
-  pollIntervalMs = 30000,
-}: UseProcessFlowDegradedOpts) {
-  const [state, setState] = useState<DegradedState>({ isDegraded: false, scenarios: [] });
-  const [isChecking, setIsChecking] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
+/**
+ * Process-flow degraded-mode probe — NEUTRALIZED after the V8 mirror was cut
+ * (DP-7, 2026-06-17). The canonical persistence path is now blob-sync
+ * (my_idea_maps), so there is no V8 server mirror to be "degraded" from.
+ *
+ * Previously this polled `GET /api/v8/process-flow/:id/health` every 30s. That
+ * route is gone, so every poll 404'd — and the v8 org-gate ran ~18 DB queries
+ * (~11s) before returning 404, once per open process flow, forever. Now a no-op
+ * that always reports healthy. Kept as a hook (stable contract) so the consumer
+ * and its degradation banner need no changes. (M07 live-debug 2026-06-20)
+ */
+export function useProcessFlowDegraded(_opts: UseProcessFlowDegradedOpts) {
   const checkHealth = useCallback(async () => {
-    if (!processId) return;
-    setIsChecking(true);
-    try {
-      const res = await fetch(`/api/v8/process-flow/${processId}/health`, { headers: getHeaders() });
-      if (res.ok) {
-        const json = await res.json();
-        const health = json.data;
-        setState({
-          isDegraded: Boolean(health?.degraded),
-          scenarios: health?.scenario
-            ? [
-                {
-                  scenario: health.scenario,
-                  active: Boolean(health.degraded),
-                  posture: health.posture ?? '',
-                  recovery: health.recovery ?? '',
-                },
-              ]
-            : [],
-        });
-      }
-    } catch {
-      setState({
-        isDegraded: true,
-        scenarios: [
-          {
-            scenario: 'network_error',
-            active: true,
-            posture: 'offline',
-            recovery: 'Check network connection and retry',
-          },
-        ],
-      });
-    } finally {
-      setIsChecking(false);
-    }
-  }, [processId]);
+    /* no-op: V8 mirror cut; blob-sync is canonical */
+  }, []);
 
-  useEffect(() => {
-    if (!processId) return;
-    checkHealth();
-    intervalRef.current = setInterval(checkHealth, pollIntervalMs);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [processId, pollIntervalMs, checkHealth]);
-
-  const activeScenarios = (state.scenarios ?? []).filter((s) => s.active);
-
-  return { ...state, isChecking, checkHealth, activeScenarios };
+  return {
+    isDegraded: false,
+    scenarios: [] as DegradedScenario[],
+    isChecking: false,
+    checkHealth,
+    activeScenarios: [] as DegradedScenario[],
+  };
 }
