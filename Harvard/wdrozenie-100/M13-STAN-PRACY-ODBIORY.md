@@ -16,6 +16,11 @@ Zbudowane code-side + **wdrożone na demo.consultify.ai** (najnowszy `gitSha` = 
 - **ZOSTAJE:** K4 (AI-fill sekcji), K2 (CardContainer, duży refaktor), ogony (drag-reschedule kalendarz/gantt, R4 assignment/due/blocker call-sites), **Manual (Playwright)** + **→F/→UI (kliki Piotra na demo)**.
 - **→F gotowe do kliku na demo:** (1) bramka G — otwórz inicjatywę w org Piotra → sekcja Gates / zmiana statusu → soft-block; (2) Teresa C2 — „stwórz inicjatywę X"; (3) Kalendarz/Gantt — sekcja Timeline → toggle; (4) Linked items — dodaj link → reload → przeżył.
 
+### MANUAL (Playwright) — UCZCIWY STAN (2026-06-21)
+**Harness ZBUDOWANY i DZIAŁA:** `tests/e2e/m13/m13-acceptance.spec.ts` (S1 hub · S2 dokument · S3 Timeline Calendar/Gantt), run `E2E_USE_WEB_SERVER=true NODE_OPTIONS=--max-old-space-size=8192 npx playwright test tests/e2e/m13/` → **build OK + 3/3 green + 3 screenshoty** (`tests/e2e/screenshots/m13/`). Pierwszy OOM na build frontu rozwiązany przez NODE_OPTIONS 8GB.
+**ALE dowód SŁABY:** MOCK_DB nie robi round-tripu create→list dla inicjatyw (seed `POST /api/initiatives` zwraca ok, ale hub pokazuje „No initiatives yet", ALL=0). Screenshoty dowodzą „moduł ładuje się bez crasha", **NIE** funkcji (kalendarz/gantt/bramka z danymi).
+**ŻEBY Manual realnie rósł:** seed musi się ujawnić → albo naprawić MOCK_DB dla inicjatyw, albo run przeciw zaseedowanej realnej DB (trolley). To następny krok — dopiero wtedy bramka Manual = X/N z sensownym .png. **Nie liczę tego jako Manual zaliczony.**
+
 Ten plik = jedyne miejsce prawdy o postępie **M13 Depth**. Odhaczamy tu każdy etap. Szczegół (epiki, luki, kryteria) = [`M13-DEPTH-PLAN.md`](M13-DEPTH-PLAN.md) + [`../../docs/product/INITIATIVE_GATE_AI_SPEC.md`](../../docs/product/INITIATIVE_GATE_AI_SPEC.md). Wiersz zbiorczy M13 w [`_STAN_PRACY_ODBIORY.md`](_STAN_PRACY_ODBIORY.md) linkuje tu.
 
 **Testy:** `npx vitest run tests/unit/initiatives tests/integration/initiatives` + `tests/e2e/m13/` (Playwright). Baseline 2026-06-20: unit/integration **89 pass / 3 fail** (3 = legacy `initiatives.test.js` create/prioritize→404, wymaga żywej DB, NIE dotyczy M13 Depth) · e2e m13 **0 specs** (do napisania per sub-moduł) · nowy `InitiativeController.deleteInitiative` **7/7**.
