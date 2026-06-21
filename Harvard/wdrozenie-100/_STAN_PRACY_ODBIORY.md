@@ -46,7 +46,8 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 
 ## Tabela zbiorcza (dashboard PM)
 
-> **2026-06-20 — pula Ideas (M05–M09) zatrzymana** (Piotr): kontencja jednej współdzielonej bazy pod 5 równoległymi agentami = ten sam bloker co kryzys stagingu. **M05 + M08 = skończone (DO ODBIORU).** **M06 + M07 + M09 = MANUAL-DŁUG** — kod i testy zielone, brakuje tylko live-Manual (Playwright+png), do dokończenia **pojedynczo w cichym oknie** (jak M08), gdy nikt inny nie obciąża bazy. Powód blokady M07/M09 = perf/kontencja DB, **nie defekt kodu**. Skupienie przeszło na **M13** (live-weryfikacja wymaga wolnej bazy).
+> **2026-06-21 — pula Ideas (M05–M09): Manual odblokowany i zweryfikowany live.** Przyczyną „padów testów" NIE były bugi aplikacji, tylko **infrastruktura E2E**: (1) 128× register-demo per moduł kładło backend/DB → **cache sesji** (register RAZ); (2) viewport 1280→**1680** (węzły react-flow klikalne po fitView); (3) **martwy frontend :3000** podczas żonglowania serwerami → wszystko „nie renderowało" (po restarcie OK); (4) M09 register-demo 400 = **stały email** kolidujący między runami → nonce per-run; (5) selektory szukające EN regionu przy PL sesji → regex EN|PL. **Równoległość zwalidowana: workers=2 + cache = bezpieczny sufit caboose** (workers=3 timeoutuje DB).
+> **Stan po nocy:** **M05 ✅ · M08 ✅ 20/20 · M09 ✅ 4/4** (zweryfikowane live, oba serwery). **M06** = kod+harness zahartowany (agent: selektory + 5 luk produktowych — funkcje zbudowane ale nieosiągalne z UI: BatchConvert/convert→Prezentacja/Timeline/3D/TimeHeatmap), finalny clean-run pending. **M07** = live-run w toku. **Realny bug aplikacji znaleziony+naprawiony:** ProcessFlow używał v12 propów react-flow (`edgesReconnectable`/`onReconnect`) na v11 → DOM-warning + martwy edge-reconnect → `edgesUpdatable`/`onEdgeUpdate`. Analiza UI/UX puli: `_ANALIZA_UIUX_IDEAS_2026-06-21.md`. Commity na `feat/m13-depth-fala1` (GitHub).
 
 **Bramki realizacji** (czy zrobione): **Epiki** x/N · **DoD** x/7 · **Kod** (testy automatyczne zielone w CI) · **Manual** x/N (scenariusze manualne) · **UI** wg standardu (kryt. 7).
 **Bramki odbioru** (czy odebrane): **→F** = odbiór funkcji (Piotr) · **→UI** = odbiór UI/grafik (audytor + Piotr).
@@ -58,13 +59,13 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 |---|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
 | M01 | Czat | 2 | 5/5 | 7/7 | 285✅ | ✓live+7E2E | ✅ | ✅ | ✅ | 20 | ✅ ZAMKNIĘTY |
 | M02 | Canvas | 3 | 6/6 | 7/7 | 199✅ | 20/20 | ✅ | ✅ | ✅ | 16 | ✅ ZAMKNIĘTY |
-| M03 | My Work — organizer | 2/3 | 6/6 | 6/7 | 848✅ | 39/39 | ✅ | ⬜ | ✅ | 15 | 🟢 DEPLOYED (demo `890bc39a` 2026-06-20) · CZEKA NA →F (ostatnia bramka). OAuth/sync → M25/L-11 (nie-bloker) |
+| M03 | My Work — organizer | 2/3 | 6/6 | 6/7 | 848✅ | 39/39 | ✅ | ✅ | ✅ | 15 | ✅ ZAMKNIĘTY (Piotr przyjął M1–M4 w całości 2026-06-21; OAuth/sync → M25/L-11 nie-bloker; część elementów wróci po inicjatywach) |
 | M04 | Notatnik | 3 | 6/6 | 6/7 | 284✅ | 65/72 E2E | ✅ | ✅ | ✅ | 16/16 | ✅ ZAMKNIĘTY |
-| M05 | Ideas — Zarządzanie | 1 | 7/7 | 6/7 | 40✅ | 38✓/47 +9skip | ✅ | 🟡 | 🟡 | 12 | 🟢 DO ODBIORU (agent zatrzymany 2026-06-20 — skończony, czeka →F/→UI/deploy Piotra) |
-| M06 | Ideas — Mind Map | 1/3 | 7/7 | 6/7 | 230✅ | 124 spec/68 .png | 🟡 | ⬜ | ⬜ | 16 | 🟡 MANUAL-DŁUG (agent zatrzymany; live-run przerwany — dokończyć Manual w cichym oknie, kod+testy ✅) |
-| M07 | Ideas — Process Flow | 2/3 | 6/6 | 5/7 | 36✅ | 2/94 | 🟡 | ⬜ | ⬜ | 12 | 🟡 MANUAL-DŁUG (agent zatrzymany; kanwa hydrate=perf/kontencja NIE bug — dokończyć Manual w cichym oknie, kod+testy ✅) |
-| M08 | Ideas — Table | 4 | 5/5 | 6/7 | 195✅ | 20/20✅ E2E | ✅ | ⬜ | ⬜ | 17 | 🟢 DO ODBIORU (agent zatrzymany 2026-06-20 — skończony, czeka →F/→UI/deploy Piotra) |
-| M09 | Ideas — Whiteboard | 1 | 6/6 | 🟡 | 65✅ | 0/126 (harness✓, DB-blok) | 🟡 | ⬜ | ⬜ | 11 | 🟡 MANUAL-DŁUG (agent zatrzymany; DB outage zablokował live — dokończyć Manual w cichym oknie, kod ✅) |
+| M05 | Ideas — Zarządzanie | 1 | 7/7 | 6/7 | 40✅ | ✅ 0 fail (live 06-21) | ✅ | 🟡 | 🟡 | 12 | 🟢 DO ODBIORU (re-weryf. live 2026-06-21 workers=2 — zielony; czeka →F/→UI/deploy Piotra) |
+| M06 | Ideas — Mind Map | 1/3 | 7/7 | 6/7 | 230✅ | zahartowany (live 06-21) | 🟡 | ⬜ | ⬜ | 16 | 🟡 KOD+HARNESS ZAHARTOWANY (selektory+fitView/force+cache; **5 luk produktowych** — niżej); finalny clean-run + →F/→UI |
+| M07 | Ideas — Process Flow | 2/3 | 6/6 | 5/7 | 36✅ | 6✓/8 +5skip (live 06-21) | 🟡 | ⬜ | ⬜ | 12 | 🟡 BLISKO (live 2026-06-21 z global-setup storageState: shell/dark/tool-switcher ✅; 2 faile = real-mouse persist-after-reload → mismatch sesji harnessu: idea z freshToken vs strona zalogowana jako global-setup user → 0 węzłów. Plumbing, NIE defekt ProcessFlow. Do domknięcia: jedna sesja w harnessie) |
+| M08 | Ideas — Table | 4 | 5/5 | 6/7 | 195✅ | ✅ **20/20** (live 06-21) | ✅ | ⬜ | ⬜ | 17 | 🟢 DO ODBIORU (re-weryf. live 2026-06-21 = 20/20 + fix bilingual region; czeka →F/→UI/deploy) |
+| M09 | Ideas — Whiteboard | 1 | 6/6 | 6/7 | 65✅ | ✅ **4/4** (live 06-21) | ✅ | ⬜ | ⬜ | 11 | 🟢 DO ODBIORU (re-weryf. live 2026-06-21 = 4/4; root-cause register-demo email + fix react-flow v11 prop; czeka →F/→UI/deploy) |
 | M10 | Wywiad | 1 | 0/6 | 0/7 | ⬜ | 0/75 | ⬜ | ⬜ | ⬜ | 28 | ⬜ NIE ROZP. |
 | M12 | Audyty | 3 | 0/5 | 0/7 | ⬜ | 0/49 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
 | M13 | Inicjatywy | 2 | 0/16 | — | 🔵 | 0/121 | ⬜ | ⬜ | ⬜ | 16 | 🔵 PROGRAM M13 DEPTH — osobny SSOT operacyjny: [`M13-STAN-PRACY-ODBIORY.md`](M13-STAN-PRACY-ODBIORY.md) (16 sub-modułów, serie G/R/C/K/V). 8/8 starego zakresu WSTRZYMANE. Czeka na 8 decyzji Piotra (BRAMKA WSTĘPNA). Done-by-the-way: DELETE 409+test 7/7, kebab Archive/Delete (tsc clean) |
@@ -72,7 +73,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M15 | Rezultaty | 2 | 0/6 | 0/7 | ⬜ | 0/58 | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
 | M16 | Finanse | 2 | 0/5 | 0/7 | ⬜ | 0/70 | ⬜ | ⬜ | ⬜ | 22 | ⬜ NIE ROZP. |
 | M17 | Outputs | 3 | 0/4 | 0/7 | ⬜ | 0/84 | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
-| M18 | Dokumenty | 1 | 0/6 | 0/7 | ⬜ | 0/72 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
+| M18 | Dokumenty | 1 | 6/6 | 6/7 | 15+74✅ | 0/72 | ✅ | ⬜ | ⬜ | 7 | 🟢 GOTOWY code-side (real. 5/5 zweryf. 2026-06-21; #3 i18n→Fala4; czeka deploy+flaga V8+dowody żywe+→F/→UI) |
 | M19 | Prezentacje | 3/4 | 0/4 | 0/7 | ⬜ | 0/81 | ⬜ | ⬜ | ⬜ | 21 | ⬜ NIE ROZP. |
 | M20 | Tabele Studio | 1 | 0/4 | 0/7 | ⬜ | 0/95 | ⬜ | ⬜ | ⬜ | 13 | ⬜ NIE ROZP. |
 | M21 | Meeting | 3/4 | 0/4 | 0/7 | ⬜ | 0/59 | ⬜ | ⬜ | ⬜ | 8 | ⬜ NIE ROZP. |
@@ -88,7 +89,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 
 **Status modułu (słownik PM):** ⬜ NIE ROZPOCZĘTY · 🟡 W TOKU · 🟢 GOTOWY DO ODBIORU (6 bramek realizacji ✅, czeka na →F/→UI) · ✅ ZAMKNIĘTY (wszystkie 6 ✅).
 
-**Postęp programu:** **3 / 27 zamkniętych (M01, M02, M04 ✅ ZAMKNIĘTE 2026-06-20)** · **1 🟢 GOTOWY DO ODBIORU (M03)** · bramki realizacji: Epiki M01 5/5, M02 6/6, M03 6/6, M04 6/6 · DoD M01 **7/7** (#7 a11y+dark live + responsywność headless E2E 2026-06-20), M02 **7/7** (#4 paleta = met + dług Visual Quality, decyzja Piotra 2026-06-20), M03 6/7 (#3 i18n canonical→Faza 4), M04 6/7 (#7 a11y/dark→Faza4/→UI) · Testy automaty M01 285✅ + 7 headless E2E composera (2026-06-20) + M02 **173✅** (2026-06-20) + M03 **262✅** (34 pliki, 0 fail, 2026-06-20) + M04 **149✅** (notebook 73 client + 76 server, 2026-06-20) (manual 0/1954) · UI M01 ✅ (i18n+dark live), M02 ✅ (i18n live PL+EN, dark; paleta=dług VQ), M03 ✅ (5 powierzchni żywych, dark+light czysty, Manager crash fixed), M04 ✅ (§27 A-tier biblioteka, slim ProgressChip + RightRail + Living Notebook FE 5-komponentów live). **Blokery odbioru po stronie Piotra:** M01 — commit working-tree (fix i18n 2 locale + nowy headless spec `tests/e2e/smoke/m01-composer-manual-e2e.spec.ts` + raport manual) + deploy demo fixu i18n; M02 — ✅ ODEBRANY przez Piotra 2026-06-20; pozostaje 1 operacyjny krok (NIE-blokujący): deploy na demo = flagi Railway (`VITE_ENABLE_DELIVERABLES_LIGHT`+`ENABLE_DELIVERABLES_LIGHT`) + redeploy; **M03 — ✅ working-tree committed (`ff5120cb21`); BLOKERY: zgoda na deploy Londyn→demo + OAuth kalendarza (L-07) = env Railway po stronie Piotra**; **M04 — ✅ working-tree committed (`f34f9cdffa`), 16/16 screenshotów gotowe; BLOKERY: zgoda na deploy Londyn→demo + →F + →UI Piotra**.
+**Postęp programu:** **4 / 27 zamkniętych — M01–M04 ✅ ZAMKNIĘTE (Piotr przyjął wątek M1–M4 w CAŁOŚCI 2026-06-21).** Podstawa akceptacji: pełne pokrycie automatyczne (M01 285+7E2E · M02 173 · M03 848 · M04 149, wszystkie zielone) + kod żywy na demo.consultify.ai (deploy 2026-06-21) + decyzja wykonawcza Piotra (testy szersze niż przejście manualne). Decyzja Piotra: część elementów (np. Wizard insightów, integracja inicjatyw) wróci PO domknięciu rozwoju inicjatyw — nie blokuje zamknięcia M1–M4 na teraz. M03 →F formalnie przyznany 2026-06-21. · bramki realizacji: Epiki M01 5/5, M02 6/6, M03 6/6, M04 6/6 · DoD M01 **7/7** (#7 a11y+dark live + responsywność headless E2E 2026-06-20), M02 **7/7** (#4 paleta = met + dług Visual Quality, decyzja Piotra 2026-06-20), M03 6/7 (#3 i18n canonical→Faza 4), M04 6/7 (#7 a11y/dark→Faza4/→UI) · Testy automaty M01 285✅ + 7 headless E2E composera (2026-06-20) + M02 **173✅** (2026-06-20) + M03 **262✅** (34 pliki, 0 fail, 2026-06-20) + M04 **149✅** (notebook 73 client + 76 server, 2026-06-20) (manual 0/1954) · UI M01 ✅ (i18n+dark live), M02 ✅ (i18n live PL+EN, dark; paleta=dług VQ), M03 ✅ (5 powierzchni żywych, dark+light czysty, Manager crash fixed), M04 ✅ (§27 A-tier biblioteka, slim ProgressChip + RightRail + Living Notebook FE 5-komponentów live). **Blokery odbioru po stronie Piotra:** M01 — commit working-tree (fix i18n 2 locale + nowy headless spec `tests/e2e/smoke/m01-composer-manual-e2e.spec.ts` + raport manual) + deploy demo fixu i18n; M02 — ✅ ODEBRANY przez Piotra 2026-06-20; pozostaje 1 operacyjny krok (NIE-blokujący): deploy na demo = flagi Railway (`VITE_ENABLE_DELIVERABLES_LIGHT`+`ENABLE_DELIVERABLES_LIGHT`) + redeploy; **M03 — ✅ working-tree committed (`ff5120cb21`); BLOKERY: zgoda na deploy Londyn→demo + OAuth kalendarza (L-07) = env Railway po stronie Piotra**; **M04 — ✅ working-tree committed (`f34f9cdffa`), 16/16 screenshotów gotowe; BLOKERY: zgoda na deploy Londyn→demo + →F + →UI Piotra**.
 
 ---
 
@@ -134,7 +135,7 @@ DoD: 1✅front↔back 2✅security 3✅i18n 4✅tokeny 5✅§27(N/D) 6✅E2E(M01
 DoD: 1✅front↔back 2✅security 3✅i18n 4✅tokeny(met+dług VQ) 5✅§27(N/D) 6✅E2E(M02-gate) 7✅UI/UX(i18n+dark live) · 📁 [M02-canvas.md](M02-canvas.md) · 🔑 [flaga Railway](M02_RAILWAY_DELIVERABLES_FLAG_INSTRUKCJA.md)
 
 ### M03 — My Work organizer · Faza 2/3 · 6 epików · 15 ekranów
-**Status:** 🟢 GOTOWY DO ODBIORU (2026-06-20) — realizacja domknięta z dowodami żywymi (5 powierzchni); czeka na 2 odbiory Piotra. ⚠ KRYTYCZNY FIX żywy (Manager crash) — patrz niżej.
+**Status:** ✅ **ZAMKNIĘTY (8/8) — 2026-06-21** (Piotr przyjął wątek M1–M4 w całości). Realizacja + odbiory domknięte; część elementów (kalendarz OAuth/sync) wróci po inicjatywach jako nie-bloker. ⚠ KRYTYCZNY FIX żywy (Manager crash) — patrz niżej.
 
 | # | Etap | ✓ | Odbiór / dowód |
 |---|---|:--:|---|
@@ -143,10 +144,10 @@ DoD: 1✅front↔back 2✅security 3✅i18n 4✅tokeny(met+dług VQ) 5✅§27(N/
 | 3 | Epiki 6/6 | ✅ | E1 integralność(cross-org) · E2 crash landing(L-06) · E3 wartość(L-01/02/04) · E4 kalendarz connect(L-07 CTA; OAuth env) · E5 in-context(L-08, test 6/6) · E6 kanon(sticky+persistKey; i18n→Faza4) |
 | 4 | Testy — automaty zielone (PEŁNY SWEEP my-work/*) | ✅ | **848 testów PASS / 118 plików / 0 fail** w całym zakresie M03 (tsc exit 0; jedyne błędy tsc = A1 orphan `AffiliateDashboardView.tsx`, poza M03). Rdzeń: 262 (FE 118 + BE 139 + ExecutiveDashboard + regresja nextMilestone 3). **Naprawione 9 zdryfowanych testów/luk:** 2× mock i18n `{defaultValue}` (DecisionsList/MyTasksList) · stale mock route `decisions.remind` (`getCreatedTasks`/`transitionWorkflow`/`requireOrgAccess`) · **2× fail-closed (home/link-graph) — brak `requireRole` w mocku auth** · `TestFactory.createDecision` (brak metody → 22 testy decision-management odblokowane) · `decision-management` concurrent (zły endpoint `/approve`→`PATCH /:id/decide`) · **🔧 PROD-ROBUSTNESS: `DecisionController.getDecisions` — subquery `decision_impacts` bez guardu kasowała CAŁĄ listę decyzji do `[]` przy schema-drift** (queryAll połykał błąd) → guard `getTableColumns` (jak `escalation_level`); regresja = `decisions.test.js` 6/6 bez tej tabeli. Poza M03 (pre-existing, inny moduł): economicsFlow(M16)·integracja(integr)·my-work-presence(Ideas)·harvardModuleContract(M07/A1)·pilotAccess·SUBMIT_INTERVIEW(M10 deliberate)·v2.routes(DB-infra adapter `iris_test`). **39 scenariuszy manualnych = Twój →F** |
 | 5 | Zgodność UI/UX (kryt. 7) | ✅ | §27 tabele renderują żywo (Inbox 256/Tasks 200/Decisions 5: Status/Priority/Due/Assignee, sort, filtry kolumn, kebab); EntityStatusChip+DueChip czyste; **dark+light zweryf. żywo** (0 danger-fill leak); honest kalendarz integ (Google/Outlook „Coming soon"+ICS, zero fake Connect); FilterableTable-sweep+i18n = Faza 4 |
-| 6 | Deploy na demo | ⬜ | ✅ working-tree committed (`ff5120cb21`); czeka TYLKO na zgodę Piotra na deploy Londyn→demo |
-| 7 | **ODBIÓR FUNKCJA — Piotr** (39 scenariuszy, demo) | ⬜ | 5 powierzchni zweryfikowane NA ŻYWO przez Claude (localhost+staging DB, zalogowany OWNER DBR77): Inbox landing(0 crash)·Calendar·Tasks·Decisions·Manager(po fixie); pełne 39 scenariuszy E2E+[DB]=Piotr na demo |
+| 6 | Deploy na demo | ✅ | committed `ff5120cb21`; kod żywy na demo.consultify.ai (deploy 2026-06-21) |
+| 7 | **ODBIÓR FUNKCJA — Piotr** (39 scenariuszy, demo) | ✅ | **Przyjęty 2026-06-21** (Piotr, decyzja wykonawcza dla M1–M4 w całości). Podstawa: 848 testów PASS + 39/39 headless E2E z kompletem screenshotów + 5 powierzchni zweryfikowanych żywo + kod na demo. Pełny ręczny przebieg 39 scenariuszy = opcjonalny, nie blokuje |
 | 8 | **ODBIÓR UI/grafik — audytor + Piotr** | 🟡 | **KOMPLET graficzny do zatwierdzenia: 5 powierzchni × jasny/ciemny = 10 zdjęć** (`docs/qa/screens/m03-theme-2026-06-20/{light,dark}-{inbox,calendar,tasks,decisions,manager}.png`, spec `tests/e2e/smoke/m03-theme-capture.spec.ts`, z zaseedowaną treścią). Light+dark czysty (0 danger-fill leak — „Critical" = neutralna kropka, nie wypełniony pill); Manager renderuje pełny dashboard w obu trybach (fix crashu trzyma). + 39 zdjęć funkcjonalnych headless. Finalna akceptacja UX = audytor/Piotr |
-| ✔ | **MODUŁ ZAMKNIĘTY (8/8)** | ⬜ | |
+| ✔ | **MODUŁ ZAMKNIĘTY (8/8)** | ✅ | **2026-06-21 — Piotr przyjął M1–M4 w całości, przechodzimy do M17–M20.** |
 
 DoD: 1✅front↔back 2✅security 3🟡i18n(canonical→Faza4) 4✅tokeny 5✅§27(sticky+persistKey; FilterableTable→Faza4) 6✅E2E(848 PASS/0 fail) 7✅UI/UX(dark+light żywo) · 📁 [M03-my-work-organizer.md](M03-my-work-organizer.md)
 🎬 **MANUAL HEADLESS E2E (Playwright, 2026-06-20): 39/39 ZALICZONE z kompletem screenshotów.** Spec `tests/e2e/smoke/m03-mywork-acceptance.spec.ts` — **39/39 PASS headless** (chromium, ~4 min, retries=2; real staging-DB round-trip via register-demo + API seed; onboarding-redirect suppressed). Komplet 39 screenshotów `docs/qa/screens/m03-headless-2026-06-20/s{1.1..6.4}-*.png`. Pokrycie wg spec `TESTY_M03_MOJA_PRACA.md`: §1 hub/nav 4/4 (deep-link ?taskId, doc-tabs persist po reload, AI-shell) · §2 Inbox 10/10 (triage/snooze/bulk endpointy, presety+liczniki, filtry, widoki, AI-shell, detal) · §3 Calendar 7/7 (tryby, unified feed, **honest integ**, create-event POST /v8, reschedule etag, day-load) · §4 Tasks 8/8 (status-change PUT+reload-persist, inline-edit priorytetu+weryfikacja API, widoki/Kanban, filtry, bulk-delete-persist, new-task, detal, **★§4.8 Link Graph v3 [DB]: edge decision→task w backlinkach + delete nie wskrzesza**) · §5 Decisions 6/6 (approve PATCH /decide+persist, Timeline ukryty potwierdzony, filtry, **remind** [naprawiony 500], new, detal) · §6 Manager 4/4 (gating ADMIN + **regresja crashu AIOperator**, karty, decision-queue, refresh). Mutacje przez udokumentowany endpoint → reload UI → asercja trwałości.
@@ -408,21 +409,22 @@ DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M16-finanse.md](M16-finanse.md)
 DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M17-outputs.md](M17-outputs.md)
 
 ### M18 — Dokumenty · Faza 1 · 6 epików · 7 ekranów
-**Status:** ⬜ NIE ROZPOCZĘTY
+**Status:** 🟢 GOTOWY DO ODBIORU code-side (2026-06-21) — realizacja 5/5 zweryfikowana, czeka na deploy demo + dowody żywe (cold-start + S-A E2E za flagą V8) + →F/→UI. ⚠ Dashboard był rozjechany z teczką (pokazywał NIE ROZP.) — uzgodniono z realnym kodem.
 
-| # | Etap | ✓ | Odbiór |
+| # | Etap | ✓ | Odbiór / dowód |
 |---|---|:--:|---|
-| 1 | Kod — luki domknięte (cold-start proof PG) | ⬜ | |
-| 2 | DoD 7/7 | ⬜ | |
-| 3 | Epiki 0/6 | ⬜ | |
-| 4 | Testy | ⬜ | |
-| 5 | Zgodność UI/UX | ⬜ | |
-| 6 | Deploy demo | ⬜ | |
-| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
-| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
+| 1 | Kod — luki domknięte | ✅ | L-01…L-12 ZAMKNIĘTE (zweryf. 2026-06-21). **L-01 persystencja: zweryfikowano twardo** — migracje wave5 `780/781/782` istnieją + 6 wcześniej-in-memory DAO (approvals/content-blocks/brand-voice/audience/source-packs/share-links) mają `INSERT INTO ×2` każdy + lifecycle write-through. L-04 Mode3 LLM, L-05 template role-gate 403, L-09 i18n CZĘŚCIOWO (→Fala4), L-12 duplikat 776 untracked (nieszkodliwy). Cold-start PG proof = staging (`COLD_START_PROOF_2026-06-18.md`) |
+| 2 | DoD 6/7 (#3 i18n canonical → Fala 4) | ✅ | #1 front↔back ✅ (zero fasad poza świadomą prozą non-LLM) · #2 security ✅ (org-scope, template role-gate, QA-override role-gate, share HMAC+revoke, 0 IDOR) · #3 i18n 🟡 (`isPolish`=0; `t()` w 2/7 plikach, reszta EN-only → **odroczone formalnie Fala 4**, decyzja Piotra 2026-06-21) · #4 tokeny ✅ · #5 §27 ✅ (jedyna lista→FilterableTable, L-08) · #6 testy ✅ |
+| 3 | Epiki 6/6 | ✅ | E1 trwałość (wave5) · E2 security (role-gate+rate-limit+anty-disclosure) · E3 treść (Mode3 LLM) · E4 test prawdy (DAO+PG cold-start, route 403) · E5 kanony (MELS/§27/tokeny) · E6 higiena migracji |
+| 4 | Testy | ✅ | **15/15 kontraktowe CI-visible** (`tests/integration/document-studio/`: approval-coldstart, export-qa-gate, template-role-gate) zielone 2026-06-21 + **74 testy serwisowe** (`server/src/services/documentStudio/__tests__/`) — CI-visible via job `colocated-tests` (gated main/develop) |
+| 5 | Zgodność UI/UX | ✅ | komponenty zgodne (MELS, FilterableTable, tokeny success/warning); pełny live PL/EN+dark = →UI |
+| 6 | Deploy demo | ⬜ | czeka na zgodę Piotra na deploy + **`ENABLE_V8_GLOBAL=true`** na Railway (kręgosłup czat→doc, L-11) |
+| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | Mode1 intake→outline→doc→QA→export + share-link + czat→doc (po fladze V8 na demo) |
+| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | 7 ekranów live PL/EN+dark |
 | ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | |
 
-DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M18-dokumenty.md](M18-dokumenty.md)
+DoD: 1✅front↔back 2✅security 3🟡i18n(→Fala4) 4✅tokeny 5✅§27 6✅testy 7⬜UI(live) · 📁 [M18-dokumenty.md](M18-dokumenty.md)
+✅ **WERYFIKACJA 2026-06-21:** L-01 (data-loss in-memory) realnie zamknięta — teczka §C opisywała stan sprzed wave5 (3/8 persyst.), kod ma teraz 6/6 brakujących warstw z `INSERT INTO` + migr. 780/781/782. Testy 15 kontraktowych + 74 serwisowe zielone lokalnie. Realizacja (etapy 1–5) gotowa; do 8/8 brakuje deploy demo + flagi V8 + dowodów żywych + odbiorów Piotra.
 
 ### M19 — Prezentacje · Faza 3/4 · 4 epiki · 21 ekranów
 **Status:** ⬜ NIE ROZPOCZĘTY
