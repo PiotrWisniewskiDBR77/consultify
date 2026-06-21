@@ -394,6 +394,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           });
           // Governed V8 Planning read succeeded — clear any degraded state.
           setV8PlanningDegraded(false);
+          // Base-data fix: a V8-enabled org with ZERO governed initiatives still
+          // returns an empty (non-throwing) portfolio — so an initiative created
+          // via the legacy endpoint would never appear. When the governed list is
+          // empty, cross-check the legacy endpoint and use it if it has rows.
+          // (No-op for V8 orgs that already have governed initiatives.)
+          if (!(response.initiatives || []).length) {
+            try {
+              const legacy = await Api.getInitiatives(currentProjectId || undefined);
+              const legacyList = Array.isArray(legacy)
+                ? legacy
+                : (legacy as any)?.initiatives || [];
+              if (legacyList.length) response = { initiatives: legacyList };
+            } catch {
+              /* keep the empty governed result */
+            }
+          }
         } catch {
           // L-05: governed V8 Planning is unavailable (env-off / org not
           // V8-enabled / 404). Surface a degraded banner instead of silently
