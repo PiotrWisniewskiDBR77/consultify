@@ -767,10 +767,11 @@ class NotebookService {
       params.push(options.projectId);
     }
 
+    let ftsQueryParam: string | null = null;
     if (isPg) {
-      const ftsQuery = query.replace(/'/g, "''").trim();
+      ftsQueryParam = query.trim();
       conditions.push(`np.search_vector @@ plainto_tsquery('simple', ?)`);
-      params.push(ftsQuery);
+      params.push(ftsQueryParam);
     } else {
       const like = `%${query.toLowerCase()}%`;
       conditions.push(`(lower(np.title) LIKE ? OR lower(coalesce(np.content_text,'')) LIKE ?)`);
@@ -779,9 +780,15 @@ class NotebookService {
 
     params.push(options.limit);
 
+    // The FTS rank MUST be parameterised, not string-interpolated: a query
+    // containing '?' (e.g. "…notatek?") was rewritten by the placeholder driver
+    // into a bogus `$1`, shifting every other param → 42P18 "could not determine
+    // data type of parameter $1" (and it was a SQL-injection vector). The rank
+    // expression sits in SELECT, so its bind goes FIRST in the param list.
     const rankExpr = isPg
-      ? `ts_rank(np.search_vector, plainto_tsquery('simple', '${query.replace(/'/g, "''")}'))`
+      ? `ts_rank(np.search_vector, plainto_tsquery('simple', ?))`
       : '1.0';
+    const finalParams = isPg ? [ftsQueryParam, ...params] : params;
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -790,7 +797,7 @@ class NotebookService {
        WHERE ${conditions.join(' AND ')}
        ORDER BY ${isPg ? 'score DESC,' : ''} np.updated_at DESC
        LIMIT ?`,
-        params
+        finalParams
       )) || [];
 
     return rows.map((r: any) => ({
