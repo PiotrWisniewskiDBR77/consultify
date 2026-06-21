@@ -59,7 +59,12 @@ export function collectSignals(page: Page) {
           !e.includes('Failed to load resource:') &&
           !/Failed to fetch (tasks|notifications)/.test(e) &&
           !e.includes('[useDemo]') &&
-          !e.includes('/api/feedback/pulse')
+          !e.includes('/api/feedback/pulse') &&
+          // Benign: cross-origin stylesheet cssRules access is blocked by the browser
+          // (SecurityError) when a 3rd-party CSS is loaded; not an app fault.
+          !e.includes('cssRules') &&
+          !e.includes('inlining remote css') &&
+          !e.includes('Cannot access rules')
       );
       const criticalServer = serverErrors.filter((e) => !e.includes('/api/feedback/pulse'));
       expect.soft(critical, 'no critical console errors').toEqual([]);
@@ -91,12 +96,15 @@ let cachedOwnerToken: string | null = null;
 async function ensureOwnerToken(page: Page): Promise<string> {
   if (cachedOwnerToken) return cachedOwnerToken;
   let lastErr = '';
+  // Unique email per RUN — a fixed `m09-owner-${attempt}` collides with users registered by
+  // any earlier run (register-demo → 400 EMAIL_IN_USE), so every re-run failed. Stamp it.
+  const runNonce = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
       const resp = await page.request.post(`${API_BASE_URL}/api/auth/register-demo`, {
         timeout: 50000,
         data: {
-          email: `e2e+m09-owner-${attempt}@local.test`,
+          email: `e2e+m09-owner-${runNonce}-${attempt}@local.test`,
           password: 'Playwright#123',
           firstName: 'Owner',
         },

@@ -2325,8 +2325,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onConnect={onConnect}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
-              edgesReconnectable={!locked}
-              onReconnect={(oldEdge: Edge, newConnection: Connection) => {
+              // react-flow v11 prop names (v12 renamed these to edgesReconnectable/onReconnect).
+              // Using the v12 names on v11 left edgesReconnectable unrecognized → leaked to the
+              // DOM (React "does not recognize prop" warning) AND onReconnect never fired
+              // (edge-reconnect was silently dead). Correct v11 API = edgesUpdatable/onEdgeUpdate.
+              edgesUpdatable={!locked}
+              onEdgeUpdate={(oldEdge: Edge, newConnection: Connection) => {
                 if (locked) return;
                 pushUndo();
                 setEdges((prev) => {
