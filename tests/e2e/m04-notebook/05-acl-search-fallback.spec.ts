@@ -26,10 +26,12 @@ import { APIRequestContext, expect, test } from '@playwright/test';
 import {
   createPageApi,
   deletePageApi,
+  freshToken,
   getDefaultNotebookId,
   getPageApi,
   loadAuth,
   makeApi,
+  makeApiWithToken,
   openNotebook,
   req,
   setupAuth,
@@ -165,8 +167,40 @@ test.describe('M04 §9 ACL + §10 Search/RAG + §11 Fallback V8→legacy', () =>
     if (leakedId) trash.push(leakedId);
   });
 
-  test('§9.4b cross-user leak (inny user NIE widzi private/personal)', () => {
-    test.skip(true, 'wymaga 2 fizycznych kont — poza headless');
+  test('§9.4b cross-user leak (inny user NIE widzi private/personal)', async ({ page }) => {
+    // user1 = OWNER (api) tworzy PRYWATNĄ stronę z sekretną treścią
+    const marker = uniq('Leak');
+    const created = await createPageApi(
+      api,
+      notebookId,
+      `E2E Leak ${marker}`,
+      `sekretna tresc ${marker} tylko dla user1`
+    );
+    trash.push(created.id);
+
+    // user2 = świeże konto demo (inna organizacja)
+    const token2 = await freshToken(page);
+    test.skip(!token2, 'register-demo niedostępny na tym env — nie można utworzyć 2. konta');
+    const api2 = await makeApiWithToken(token2!);
+    try {
+      // 1) bezpośredni odczyt prywatnej strony user1 musi być zabroniony (403/404)
+      const direct = await req(api2, 'get', `/api/my-work/notebook/pages/${created.id}`);
+      expect(
+        [403, 404],
+        `LEAK: user2 dostał ${direct.status()} (nie 403/404) dla prywatnej strony user1`
+      ).toContain(direct.status());
+
+      // 2) prywatna strona user1 NIE może pojawić się na liście user2
+      const listRes = await req(api2, 'get', '/api/my-work/notebook/pages');
+      if (listRes.ok()) {
+        const body = await listRes.json();
+        const list = Array.isArray(body) ? body : body.data || body.pages || [];
+        const ids = list.map((p: any) => p.id);
+        expect(ids, 'LEAK: prywatna strona user1 wyciekła na listę user2').not.toContain(created.id);
+      }
+    } finally {
+      await api2.dispose();
+    }
   });
 
   // ════════════════════════════════════════════════════════
@@ -274,8 +308,50 @@ test.describe('M04 §9 ACL + §10 Search/RAG + §11 Fallback V8→legacy', () =>
     expect(body).not.toBeNull();
   });
 
-  test('§10.3b izolacja RAG (org A nie dostaje chunków org B / private innego usera)', () => {
-    test.skip(true, 'wymaga 2 kont — poza headless');
+  test('§10.3b izolacja RAG (org A nie dostaje chunków org B / private innego usera)', async ({
+    page,
+  }) => {
+    // user1 (OWNER) tworzy PRYWATNĄ notatkę z unikalną, rozpoznawalną frazą
+    const secret = uniq('ragsecret');
+    const created = await createPageApi(
+      api,
+      notebookId,
+      `E2E RAGiso ${secret}`,
+      `Tajna fraza ${secret} widoczna wyłącznie dla user1 w RAG.`
+    );
+    trash.push(created.id);
+    await new Promise((r) => setTimeout(r, 1500)); // pozwól FTS/enrich się ustabilizować
+
+    // user2 = świeże konto demo (inna organizacja)
+    const token2 = await freshToken(page);
+    test.skip(!token2, 'register-demo niedostępny na tym env — nie można utworzyć 2. konta');
+    const api2 = await makeApiWithToken(token2!);
+    try {
+      // RAG user2 z frazą user1 — NIE może zwrócić treści ani id strony user1
+      const ragRes = await req(api2, 'post', '/api/notebook/rag-context', {
+        data: { query: secret },
+      });
+      if (ragRes.ok()) {
+        const blob = JSON.stringify(await ragRes.json());
+        expect(blob, 'IZOLACJA RAG ZŁAMANA: treść user1 w RAG user2').not.toContain(secret);
+        expect(blob, 'IZOLACJA RAG ZŁAMANA: id strony user1 w RAG user2').not.toContain(created.id);
+      }
+      // search user2 też nie może zwrócić prywatnej strony user1
+      const searchRes = await req(
+        api2,
+        'get',
+        `/api/notebook/search?q=${encodeURIComponent(secret)}`
+      );
+      if (searchRes.ok()) {
+        const body = await searchRes.json();
+        const ids = (body.results || []).map((r: any) => r.pageId);
+        expect(ids, 'IZOLACJA: search user2 zwrócił prywatną stronę user1').not.toContain(
+          created.id
+        );
+      }
+    } finally {
+      await api2.dispose();
+    }
   });
 
   // ════════════════════════════════════════════════════════

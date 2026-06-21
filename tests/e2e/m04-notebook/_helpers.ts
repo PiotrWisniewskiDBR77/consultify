@@ -78,6 +78,38 @@ export async function makeApi(): Promise<APIRequestContext> {
   });
 }
 
+/** Klient REST z DOWOLNYM tokenem — do scenariuszy cross-account (2 konta). */
+export async function makeApiWithToken(token: string): Promise<APIRequestContext> {
+  return pwRequest.newContext({
+    baseURL: API_URL,
+    extraHTTPHeaders: { Authorization: `Bearer ${token}` },
+  });
+}
+
+/**
+ * Zarejestruj ŚWIEŻE konto demo (inna organizacja) i zwróć jego token — do testów
+ * izolacji cross-user/cross-org. Zwraca null gdy register-demo niedostępny na env
+ * (wtedy caller robi uczciwy skip). Wzorzec z m07-process-flow.spec.ts.
+ */
+export async function freshToken(page: Page): Promise<string | null> {
+  const runId = `m04-${Math.random().toString(36).slice(2, 10)}`;
+  const reg = await page.request
+    .post(`${API_URL}/api/auth/register-demo`, {
+      data: {
+        email: `e2e+${runId}@local.test`,
+        password: `E2E-Pass1-${runId}`,
+        firstName: 'E2E',
+      },
+    })
+    .catch(() => null);
+  if (reg && reg.ok()) {
+    const payload = (await reg.json().catch(() => ({}))) as any;
+    const tok = String(payload?.token || payload?.accessToken || payload?.data?.token || '');
+    return tok || null;
+  }
+  return null;
+}
+
 /**
  * Resilient request — backend dev (tsx watch) potrafi restartować przy zmianach plików.
  * Ponawiamy na ECONNREFUSED/reset (jak w istniejącym wzorcu smoke).
