@@ -97,6 +97,7 @@ import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataCollectionRoutes from './routes/data-collection.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import deliverablesGenerationsRoutes from './routes/deliverablesGenerations.routes.js';
+import deliverableTemplatesRoutes from './routes/deliverableTemplates.routes.js';
 import demoRoutes from './routes/demo.routes.js';
 import discoveryRoutes from './routes/discovery.routes.js';
 import documentStudioRoutes, {
@@ -879,6 +880,8 @@ export class ApiGateway {
       app.use('/api/presentations-v4', presentationEnterpriseRoutes);
       // Deliverables light runtime — flag-gated inside the router (404 when ENABLE_DELIVERABLES_LIGHT is off)
       app.use('/api/deliverables/generations', deliverablesGenerationsRoutes);
+      // Unified template catalogue (T1) — zawsze dostępne po auth
+      app.use('/api/deliverables', deliverableTemplatesRoutes);
       // Sprint S18 — restore persisted layout-capacity overrides BEFORE
       // mounting Studio routes so the first GET /admin/layout-capacity
       // already sees the restored state. A missing file is silent; a

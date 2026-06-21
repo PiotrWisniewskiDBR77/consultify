@@ -15,6 +15,7 @@ import {
   ClipboardList,
   FileText,
   LayoutDashboard,
+  Loader2,
   Presentation,
   ShieldAlert,
   Sparkles,
@@ -23,6 +24,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDeliverableTemplates } from './useDeliverableTemplates';
 
 export type DeliverableType = 'report' | 'presentation' | 'table';
 
@@ -152,6 +155,9 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [selectedType, setSelectedType] = useState<DeliverableType | null>(null);
 
+  const { templates: apiTemplates, loading: tplLoading, error: tplError } =
+    useDeliverableTemplates(selectedType);
+
   // Reset kroku przy każdym otwarciu.
   useEffect(() => {
     if (open) setSelectedType(null);
@@ -261,29 +267,70 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                 {t('rap.outputs.launcher.templateSubtitle', 'Start blank or from a template')}
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {TEMPLATES[selectedType].map((tpl) => {
-                  const label = t(tpl.labelKey, tpl.labelFallback);
-                  return (
-                    <button
-                      key={tpl.id}
-                      type="button"
-                      onClick={() => handlePickTemplate(tpl.id)}
-                      aria-label={label}
-                      className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
-                    >
-                      <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
-                        {tpl.icon}
+
+              {/* Loading */}
+              {tplLoading && (
+                <div className="flex items-center justify-center py-8 text-slate-400">
+                  <Loader2 size={20} className="animate-spin mr-2" />
+                  <span className="text-sm">{t('common.loading', 'Loading...')}</span>
+                </div>
+              )}
+
+              {/* Error — pokazuj Blank jako fallback */}
+              {!tplLoading && tplError && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs">
+                  {tplError}
+                </div>
+              )}
+
+              {/* Template grid — zawsze Blank na pierwszej pozycji */}
+              {!tplLoading && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Blank — zawsze pierwszy */}
+                  <button
+                    type="button"
+                    onClick={() => handlePickTemplate('blank')}
+                    aria-label={t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
+                    className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                  >
+                    <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                      <Sparkles size={18} />
+                    </div>
+                    <div className="min-w-0 pt-0.5">
+                      <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
+                        {t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
                       </div>
-                      <div className="min-w-0 pt-0.5">
-                        <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
-                          {label}
+                    </div>
+                  </button>
+
+                  {/* Szablony z API (bez blank — eliminujemy duplikaty) */}
+                  {apiTemplates
+                    .filter((tpl) => !tpl.isBlank)
+                    .map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => handlePickTemplate(tpl.id)}
+                        aria-label={tpl.name}
+                        className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                      >
+                        <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                          <FileText size={18} />
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                        <div className="min-w-0 pt-0.5">
+                          <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
+                            {tpl.name}
+                          </div>
+                          {tpl.description && (
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                              {tpl.description}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              )}
             </>
           )}
         </div>
