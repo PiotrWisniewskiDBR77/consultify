@@ -134,12 +134,12 @@ The rule that decides shared-vs-systematic:
 | Phase | Area | Scope | Risk | Acceptance |
 |---|---|---|---|---|
 | **P1** | 1 | One convert contract `ideaConvertTargets.ts`; FE types collapse; no dead paths; soon=disabled | low | no 400 to user; 1 type union; contract test FE-live ⊆ BE |
-| **P2** ✅bg | 2 | Unify canvas background token (mindmap+PF → `canvasBackground.ts`) | low | one bg token — **DONE** `f24817a066`; ConfirmDialog adoption = P2b (open) |
+| **P2** ✅bg ✅2b | 2 | Unify canvas background token (mindmap+PF → `canvasBackground.ts`) | low | bg **DONE** `f24817a066`; P2b `useConfirmDialog` wired to Whiteboard clearDrawings **DONE** `9b81ec65b2` |
 | **P3** | 2 | Wire dead `useCanvasKeyboard` into the 3 canvas tools (shared keyboard grammar) | med | Tab/Enter/F2/Del/Esc identical across canvases; tool-local listeners removed |
 | **P4** ✅ | 2 | One toolbar primitive (`canvas/CanvasToolbarPrimitives`); retire whiteboard's own | med | **DONE** `a35b429687` |
 | **P5** | 1 | Persistence: Process Flow + Whiteboard consume `externalRuntime`; kill `globalIdeaVersions` | high | 1 fetch/switch; 1 draft owner; 409 tested |
 | **P6** | 1 | Realtime: Process Flow graph-sync via `/ws/collab`; one presence avatar component | high | PF 2-user edit propagates |
-| **P7** | 2 | Token sweep (mindmap hex → `var(--c)`); red-budget audit; dark parity | med | 0 hex in tool roots; motion lint clean |
+| **P7** ⚠️ | 2 | Token sweep (mindmap hex → `var(--c)`); red-budget audit; dark parity | med | scoped sweep DONE `9b81ec65b2`+`c420da6983`+`0eea7b7fc6`; LabeledEdge CSS-var resolver added; remaining: SWOT node colors (dark parity), IdeaFunnelAnalytics idea/exploring/converted hex (no clean token) |
 | **P8** | 1+2 | One context menu; retire tool-local AI/export dups behind shell | med | one context menu; shell is the single AI/export entry |
 
 Phases are ordered low→high risk so the contract proves out on safe slices first. P5/P6 (persistence +
@@ -152,4 +152,6 @@ realtime) are the deep architectural merges and gate on the earlier phases landi
 - **2026-06-20 — P1 DONE** (`50c606b0de` → `ideaConvertTargets.ts`): convert SSOT, 4 types → 1 union, soon=disabled, contract test 5/5.
 - **2026-06-20 — P2 bg DONE** (`f24817a066` → MindMap+ProcessFlow+Whiteboard wired to `getCanvasBg()`): canvas background token unified, `useIsDark` hook added to MindMap+PF. ConfirmDialog adoption deferred to P2b (no tools import it yet).
 - **2026-06-20 — P4 DONE** (`a35b429687` → `canvas/CanvasToolbarPrimitives.tsx`): toolbar primitive moved to shared canvas location; Whiteboard shim re-exports for backwards compat.
+- **2026-06-20 — P2b + P7 scoped DONE** (`9b81ec65b2`): `useConfirmDialog` wired to Whiteboard clearDrawings (first consumer, no undo path). Scoped token sweep: MapHealthScore (BranchHealthDot + ring), NodeEnhancements (MaturityRing), AIDependencyDetector (TYPE_CONFIG → var(--c-*) + colorBg via color-mix). P7 tool roots + dark parity remains.
+- **2026-06-20 — P7 tool-roots slice** (`c420da6983`, `0eea7b7fc6`): dep-edge colors use var(--c-*) map (IdeaRecommendationMap onAddDependency/onAddAll); AISentimentOverlay dead `color` field removed; IdeaFunnelAnalytics validated/ready_to_convert → tokens; LabeledEdge: CSS-var resolution via getComputedStyle for SVG presentation attributes. Remaining P7: SWOT node palette in `useMindMapNodes` (needs dark variants, separate pass).
 - **P3 status**: `useCanvasKeyboard` still has 0 consumers; wiring requires removing overlapping keys from each tool's bespoke handler to avoid double-fire — deferred for dedicated keyboard refactor session.
