@@ -56,24 +56,24 @@ Bramki realizacji: Epiki x/N · DoD x/7 · Testy (vitest+playwright PASS) · Man
 
 | # | Sub-moduł | Seria | Epiki | DoD | Testy | Manual | UI | →F | →UI | Ekr. | Status |
 |--|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|--|
-| G1 | Flaga + GATE_REQUIRED_SECTIONS + próg | G (AI bramki) | 3/3 | 6/7 | ✅ | 0/4 | N/A | ⬜ | ⬜ | 0 | 🟢 GOTOWY code-side (flaga+kanon+próg; 12/12 testy; tsc clean; Manual+deploy pending) |
-| G2 | `gateAiReadinessService` — rollup merytoryczny | G | 3/3 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 0 | 🟢 GOTOWY code-side (reuse reviewer §B4, fail-open, cache; 6/6 testy) |
-| G3 | `gateTimelineService` — na linii czasu | G | 3/3 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 0 | 🟢 GOTOWY code-side (deps+date-conflict; resource=skip udok.; 9/9 testy) |
-| G4 | Endpoint + soft-block/override + telemetria | G | 3/3 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 0 | 🟢 GOTOWY code-side (POST gate-ai-check + 422/override w PATCH /status + events; 9/9 + 5/5 testy) |
-| G5 | UI bramki (pigułka + panel + modal override) | G | 3/3 | ✅ | ✅ | 0/10 | 🟡 | ⬜ | ⬜ | 3 | 🟢 GOTOWY code-side (modal wpięty w handleStatusAction soft-block→override; pill+panel w GateReadinessSection; tsc clean; →F/→UI po deploy+flaga ON demo) |
-| R1 | M13a Taski — stabilizacja | R (artefakty) | 2/2 | ✅ | ✅ | 0/8 | N/A | ⬜ | ⬜ | 1 | 🟢 GOTOWY code-side (audyt Tasks ✅ + helper `initiativeSchedule` 8/8; default Q2=initiative-scoped) |
-| R2 | M13b Decyzje — stabilizacja | R | 2/2 | ✅ | ✅ | 0/8 | 🟡 | ⬜ | ⬜ | 1 | 🟢 GOTOWY code-side (banner decyzji GO_NO_GO bramki w `DecisionsSection`; tsc clean) |
-| R3 | M13c Kalendarz — build | R | 4/4 | ✅ | ✅ | 0/12 | 🟡 | ⬜ | ⬜ | 2 | 🟢 GOTOWY code-side — `InitiativeCalendar` **WPIĘTY** w `TimelineSection` (toggle, zasilony `buildScheduleItems`); read-only v1, drag-persist=follow-up; tsc clean; live-verify (preview/Playwright) zostaje |
-| R4 | M13d Notyfikacje — build | R | 3/4 | ✅ | ✅ | 0/10 | N/A | ⬜ | ⬜ | 2 | 🟢 GOTOWY code-side — emitery 7/7 + **status-change WPIĘTY** w `updateInitiativeStatus` (notify watchers/owners po sukcesie, fail-safe, bez dublu z gate_blocked); assignment/due/blocker call-sites = follow-up |
-| C1 | Generator portfolio-aware (+ model select?) | C (tworzenie) | 0/3 | 0/7 | ⬜ | 0/8 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. (czeka Q5) |
-| C2 | Tworzenie przez Teresę — e2e | C | 0/2 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. |
+| G1 | Flaga + GATE_REQUIRED_SECTIONS + próg | G (AI bramki) | 3/3 | 6/7 | ✅ | 0/4 | N/A | ⬜ | ⬜ | 0 | 🟢 DEPLOYED demo (flaga+kanon+próg; 12/12 testy; tsc clean; Manual+deploy pending) |
+| G2 | `gateAiReadinessService` — rollup merytoryczny | G | 3/3 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 0 | 🟢 DEPLOYED demo (reuse reviewer §B4, fail-open, cache; 6/6 testy) |
+| G3 | `gateTimelineService` — na linii czasu | G | 3/3 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 0 | 🟢 DEPLOYED demo (deps+date-conflict; resource=skip udok.; 9/9 testy) |
+| G4 | Endpoint + soft-block/override + telemetria | G | 3/3 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 0 | 🟢 DEPLOYED demo (POST gate-ai-check + 422/override w PATCH /status + events; 9/9 + 5/5 testy) |
+| G5 | UI bramki (pigułka + panel + modal override) | G | 3/3 | ✅ | ✅ | 0/10 | 🟡 | ⬜ | ⬜ | 3 | 🟢 DEPLOYED demo (modal wpięty w handleStatusAction soft-block→override; pill+panel w GateReadinessSection; tsc clean; →F/→UI po deploy+flaga ON demo) |
+| R1 | M13a Taski — stabilizacja | R (artefakty) | 2/2 | ✅ | ✅ | 0/8 | N/A | ⬜ | ⬜ | 1 | 🟢 DEPLOYED demo (audyt Tasks ✅ + helper `initiativeSchedule` 8/8; default Q2=initiative-scoped) |
+| R2 | M13b Decyzje — stabilizacja | R | 2/2 | ✅ | ✅ | 0/8 | 🟡 | ⬜ | ⬜ | 1 | 🟢 DEPLOYED demo (banner decyzji GO_NO_GO bramki w `DecisionsSection`; tsc clean) |
+| R3 | M13c Kalendarz — build | R | 4/4 | ✅ | ✅ | 0/12 | 🟡 | ⬜ | ⬜ | 2 | 🟢 DEPLOYED demo — `InitiativeCalendar` **WPIĘTY** w `TimelineSection` (toggle, zasilony `buildScheduleItems`); read-only v1, drag-persist=follow-up; tsc clean; live-verify (preview/Playwright) zostaje |
+| R4 | M13d Notyfikacje — build | R | 3/4 | ✅ | ✅ | 0/10 | N/A | ⬜ | ⬜ | 2 | 🟢 DEPLOYED demo — emitery 7/7 + **status-change WPIĘTY** w `updateInitiativeStatus` (notify watchers/owners po sukcesie, fail-safe, bez dublu z gate_blocked); assignment/due/blocker call-sites = follow-up |
+| C1 | Generator portfolio-aware (dedup) | C (tworzenie) | 0/3 | 0/7 | 🟡 | 0/8 | ⬜ | ⬜ | ⬜ | 1 | 🟡 W TOKU (Q5 default: bez UI wyboru modelu; tylko dedup vs istniejące inicjatywy) |
+| C2 | Tworzenie przez Teresę — e2e | C | 0/2 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. (następny po C1) |
 | K1 | Karty §B3 — egzekwowanie jakości | K (artefakt) | 0/2 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 0 | ⬜ NIE ROZP. (czeka Q7) |
 | K2 | Karty — `CardContainer` (układ graficzny) | K | 0/2 | 0/7 | ⬜ | 0/8 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. (czeka Q6) |
 | K3 | Karty — korelacja artefaktów (trwała) | K | 0/3 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. |
 | K4 | AI-fill — domknięcie 7 sekcji | K | 0/2 | 0/7 | ⬜ | 0/7 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. |
 | V1 | Gant zadaniowy + drag-reschedule | V (widoki) | 0/3 | 0/7 | ⬜ | 0/10 | ⬜ | ⬜ | ⬜ | 2 | ⬜ NIE ROZP. (czeka Q4) |
 
-**Postęp programu:** 0 / 16 ZAMKNIĘTYCH (8/8) · **Seria G (AI bramki) 5/5 GOTOWE code-side** 🟢 (realizacja ✅; Manual+deploy+→F/→UI zostają) · **Seria R (artefakty) 4/4 zbudowane code-side** 🟢 (R1 helper+audyt · R2 banner decyzji · R3 komponent kalendarza · R4 emitery; wpięcia R3→dokument + R4→call-sites + Manual zostają) · Seria C (tworzenie) 0/2 · Seria K (artefakt) 0/4 · Seria V (widoki) 0/1 · Manual (Playwright/computer-use): 0/121 · Ekrany: 0/16.
+**Postęp programu:** 0 / 16 ZAMKNIĘTYCH (8/8) · **Seria G (AI bramki) 5/5 DEPLOYED demo** 🟢 (kod✅ testy✅ deploy✅ migracje✅ endpoint✅ flaga ON org Piotra✅ — zostaje →F klik Piotra + →UI screeny) · **Seria R (artefakty) 4/4 DEPLOYED demo** 🟢 (Kalendarz+banner decyzji+notyfikacje+DELETE live; →UI screeny; ogony: calendar drag-persist, R4 assignment/due/blocker) · **Seria C (tworzenie) W TOKU** 🟡 (C1 Generator portfolio-aware + C2 Teresa e2e) · Seria K (artefakt) 0/4 · Seria V (widoki) 0/1 · Manual (Playwright/computer-use): 0/121 · Ekrany: 0/16.
 **Seria G — dowód code-side:** 107 testów zielonych (G1 12 · G2 6 · G3 9 · G4 telemetry 5 · G4 endpoint+soft-block 10 · +istniejące) · tsc czysty na wszystkich plikach gate-ai · całość za flagą `initiativeGateAiEnabled` OFF (fail-open). 2 migracje (flags + events) czekają na deploy staging; demo-org ON dopiero świadomie.
 **Done-by-the-way (już w kodzie, poza tym planem):** DELETE status-guard 409 + test 7/7 · kebab Archive/Delete w dokumencie (tsc clean).
 
@@ -86,7 +86,7 @@ Bramki realizacji: Epiki x/N · DoD x/7 · Testy (vitest+playwright PASS) · Man
 ## SERIA G — AI na bramce (Fala 1) → spec: `INITIATIVE_GATE_AI_SPEC.md`
 
 ### G1 — Flaga + GATE_REQUIRED_SECTIONS + próg · 3 epiki · 0 ekranów
-Status: 🟢 GOTOWY code-side (realizacja ✅ — Manual+deploy+→F zostają) · **za flagą OFF = zero ryzyka żywych**
+Status: 🟢 DEPLOYED demo (realizacja ✅ — Manual+deploy+→F zostają) · **za flagą OFF = zero ryzyka żywych**
 
 | # | Etap | ✓ | Odbiór / dowód |
 |--|--|:--:|--|
