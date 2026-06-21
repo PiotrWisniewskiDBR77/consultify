@@ -533,8 +533,9 @@ const TOPBAR_PILL_BASE =
   'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
+// Canon §15.2/§19.1: kontrolki Menu 2 = h-9 rounded-full (jeden family z pillami topbara).
 const CTA_BASE =
-  'inline-flex items-center justify-center h-9 rounded-lg border px-4 text-sm font-semibold transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex items-center justify-center h-9 rounded-full border px-4 text-sm font-semibold transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo' | 'neutral', string> = {
   neutral:
     'border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
@@ -655,7 +656,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
   const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [ideaLocked, setIdeaLocked] = useState(true);
-  const [ideaGraphSummary, setIdeaGraphSummary] = useState<string | null>(null);
+  // Graph summary is consumed only when (re)building the AI system prompt below.
+  // Kept in a ref — NOT state — because the graph-summary callback fires on every
+  // canvas mutation, and a state update here re-renders MyWorkHub, which remounted
+  // the active idea-canvas tool and wiped optimistic edits (e.g. a freshly added
+  // node). See M07 live-debug 2026-06-20.
+  const ideaGraphSummaryRef = useRef<string | null>(null);
+  const handleIdeaGraphSummaryChange = useCallback((summary: string | null) => {
+    ideaGraphSummaryRef.current = summary;
+  }, []);
   const [ideaTableContext, setIdeaTableContext] = useState<Record<string, unknown> | null>(null);
   const [ideaWorkspaceStateById, setIdeaWorkspaceStateById] = useState<
     Record<string, IdeaWorkspaceHubState>
@@ -1104,8 +1113,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           `Selection: ${activeIdeaWorkspaceState.selection.count} ${activeIdeaWorkspaceState.selection.type}(s) selected`
         );
       }
-      if (ideaGraphSummary) {
-        wsCtx.push(`Graph state: ${ideaGraphSummary}`);
+      if (ideaGraphSummaryRef.current) {
+        wsCtx.push(`Graph state: ${ideaGraphSummaryRef.current}`);
       }
       prompt += `\n\nWorkspace context:\n${wsCtx.join('\n')}`;
     }
@@ -1115,7 +1124,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, [
     activeTab,
     activeIdeaWorkspaceState,
-    ideaGraphSummary,
     contextSummary,
     activeIdeaToolLabel,
     setChatSystemPrompt,
@@ -3155,7 +3163,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onActivePanelChange={handleIdeaPanelChange}
               onSelectionChange={handleIdeaSelectionChange}
               onLockedChange={handleIdeaLockedChange}
-              onGraphSummaryChange={setIdeaGraphSummary}
+              onGraphSummaryChange={handleIdeaGraphSummaryChange}
               onTableContextChange={setIdeaTableContext}
             />
           </React.Suspense>
