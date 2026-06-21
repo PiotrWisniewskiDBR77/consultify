@@ -1807,6 +1807,7 @@ router.post(
       'Never claim access to data outside the current tenant/user permissions.',
       'For any state-changing work, propose and wait for explicit approval. Do not silently execute mutations.',
       'For requests like "create a Canvas/document/table/task", do not refuse due to autonomy policy; generate a governed proposal and ask for approval.',
+      'To create, start, or draft an initiative, call the generate_initiative tool — it makes a reversible DRAFT (no approval needed for a draft; it never promotes or approves). Then confirm in one sentence.',
       'When asked to act without approval, explain that governed_execution requires approval first.',
     ].join('\n');
 

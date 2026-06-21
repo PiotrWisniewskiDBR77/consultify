@@ -124,13 +124,41 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
         .describe(
           'A clear restatement of what the user wants in the artifact (topic, scope, key points). Use the user language.'
         ),
-      title: z.string().optional().describe('Optional title; if omitted one is derived from intent.'),
+      title: z
+        .string()
+        .optional()
+        .describe('Optional title; if omitted one is derived from intent.'),
     }),
     returns: z.object({
       ok: z.boolean(),
       kind: z.string().optional(),
       title: z.string().optional(),
       generationId: z.string().optional(),
+      message: z.string(),
+    }),
+  },
+  // ── M13 Depth · C2 — Teresa creates a DRAFT initiative (READ/auto, reversible) ──
+  // Mirrors generate_deliverable: a draft never promotes/approves, so no approval
+  // gate (MUTATION would require consent and not execute). Reuses the canonical
+  // Postgres-correct create path (NOT the legacy SQLite create_initiative).
+  generate_initiative: {
+    name: 'generate_initiative',
+    description:
+      'Create a new DRAFT initiative from the user request. ' +
+      'Use this whenever the user wants to create/start/draft an initiative (e.g. "create an initiative for X", "stwórz inicjatywę ..."). ' +
+      'It only creates a reversible DRAFT — it never promotes or approves. After it returns ok:true, confirm in one sentence. Do NOT claim you created an initiative unless this tool returned ok:true.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      title: z.string().describe('Short title of the initiative. Use the user language.'),
+      problem: z
+        .string()
+        .optional()
+        .describe('The problem/context the initiative addresses, if stated.'),
+    }),
+    returns: z.object({
+      ok: z.boolean(),
+      id: z.string().optional(),
+      title: z.string().optional(),
       message: z.string(),
     }),
   },
