@@ -1475,9 +1475,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     setActiveTool,
   ]);
 
+  // Run the (re)load only when the idea or language actually changes — NOT every
+  // time `hydrate`'s identity changes. `hydrate` depends on parent-supplied props
+  // (onSaved, creationPayload, seedIntent…) that get a fresh identity on every
+  // MyWorkHub re-render; binding the effect to `hydrate` made it re-run after each
+  // graph mutation (mutation → sync → parent re-render → new hydrate), which calls
+  // setLoading(true) and REMOUNTS the whole workspace + canvas — wiping node
+  // selection, the lastActive anchor and the undo stack on every single edit.
+  // That remount cascade was the core "can't actually use it" bug. See M06 live
+  // 2026-06-20. We keep a ref to the latest hydrate and only trigger on ideaId /
+  // language so a normal edit never reloads.
+  const hydrateRef = useRef(hydrate);
+  hydrateRef.current = hydrate;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    hydrateRef.current();
+  }, [ideaId, i18n.language]);
 
   // ── URL deep link support ───────────────────────────────────────────────────
   useEffect(() => {

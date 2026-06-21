@@ -111,6 +111,13 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   } = opts;
 
   const editingNodeIdRef = useRef<string | null>(null);
+  // The id of the most recently created/anchored node. A freshly created node is
+  // marked selected, but a downstream re-render (graph capture / sync round-trip)
+  // can drop the `selected` flag within a second — which left Enter (sibling),
+  // chained Tabs and Delete with nothing to act on right after adding a node.
+  // We fall back to this anchor so the keyboard grammar keeps working even when
+  // the selection flag is transiently lost. See M06 live §2.2 (2026-06-20).
+  const lastActiveNodeIdRef = useRef<string | null>(null);
 
   const ensureCreatedNodePersists = useCallback(
     (newNode: Node, newEdge: Edge) => {
@@ -201,6 +208,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       const selected =
         getNodeById(anchorNodeId) ||
         getSelectedNode() ||
+        getNodeById(lastActiveNodeIdRef.current) ||
         nodes.find((node) => node.id === 'branch-options') ||
         nodes.find((node) => node.id.startsWith('branch-'));
       if (!selected) {
@@ -260,6 +268,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       // which then swallowed the very next Tab/Enter (keyboard grammar dead until
       // the user clicked elsewhere). See M06 live §2.2 (2026-06-20).
       editingNodeIdRef.current = initialLabel ? null : newId;
+      lastActiveNodeIdRef.current = newId;
 
       const existingChildIds = findChildrenIds(selected.id);
       if (existingChildIds.length > 0) {
@@ -320,7 +329,8 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         );
         return;
       }
-      const selected = getNodeById(anchorNodeId) || getSelectedNode();
+      const selected =
+        getNodeById(anchorNodeId) || getSelectedNode() || getNodeById(lastActiveNodeIdRef.current);
       if (!selected) {
         toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
         return;
@@ -370,6 +380,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       } as any;
 
       editingNodeIdRef.current = newId;
+      lastActiveNodeIdRef.current = newId;
 
       const siblingIds = findChildrenIds(parentId);
       if (siblingIds.length > 0) {
