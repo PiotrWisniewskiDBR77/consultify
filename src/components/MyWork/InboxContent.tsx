@@ -50,7 +50,6 @@ import {
   type LucideIcon,
   MessageSquare,
   Minus,
-  MoreVertical,
   Pin,
   Scale,
   Sparkles,
@@ -1444,7 +1443,6 @@ const AIHintStrip: React.FC<{
   } | null;
   onClear: () => void;
 }> = ({ item, isPolish, loading, onRun, onApplyAction, result, onClear }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const hints = useMemo(() => {
     const isCritical = item.urgency === 'critical' || item.urgency === 'high';
@@ -1513,57 +1511,47 @@ const AIHintStrip: React.FC<{
               {actionLabel(result.recommendedAction)}
             </button>
           ) : null}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
-          >
-            <MoreVertical size={13} />
-          </button>
-          {menuOpen ? (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 bottom-full mb-1 z-50 min-w-[170px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onRun();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
-                >
-                  <Sparkles size={12} className="text-primary-500" />
-                  {isPolish ? 'Regeneruj' : 'Regenerate'}
-                </button>
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    if (result) {
-                      navigator.clipboard
-                        .writeText(
-                          [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join('\n')
-                        )
-                        .then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied'));
-                    }
-                  }}
-                  disabled={!result}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-                >
-                  <Copy size={12} />
-                  {isPolish ? 'Kopiuj' : 'Copy'}
-                </button>
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onClear();
-                  }}
-                  disabled={!result}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-                >
-                  <X size={12} />
-                  {isPolish ? 'Wyczyść' : 'Clear'}
-                </button>
-              </div>
-            </>
-          ) : null}
+          {/* canon §17 — portalowane menu SSOT (nie clipowane przez stopkę preview) */}
+          <RowActionsMenu
+            iconVariant="vertical"
+            size="sm"
+            sections={[
+              {
+                id: 'ai-actions',
+                kind: 'manage',
+                actions: [
+                  {
+                    id: 'regenerate',
+                    label: isPolish ? 'Regeneruj' : 'Regenerate',
+                    icon: Sparkles,
+                    onClick: () => onRun(),
+                  },
+                  {
+                    id: 'copy',
+                    label: isPolish ? 'Kopiuj' : 'Copy',
+                    icon: Copy,
+                    disabled: !result,
+                    onClick: () => {
+                      if (result) {
+                        navigator.clipboard
+                          .writeText(
+                            [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join('\n')
+                          )
+                          .then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied'));
+                      }
+                    },
+                  },
+                  {
+                    id: 'clear',
+                    label: isPolish ? 'Wyczyść' : 'Clear',
+                    icon: X,
+                    disabled: !result,
+                    onClick: () => onClear(),
+                  },
+                ],
+              },
+            ]}
+          />
         </div>
       </div>
 

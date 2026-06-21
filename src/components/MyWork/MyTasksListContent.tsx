@@ -65,7 +65,7 @@ import {
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { ErrorState } from '@/components/ui/primitives';
 import { deriveDueRisk, DueChip } from '@/components/ui/primitives/chips/DueChip';
-import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
+import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -1961,13 +1961,21 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             const desc = String(task.description || '').trim();
             const detailsText = detailsOverride ?? desc;
 
+            // canon §4.1 — status na neutralnej powłoce, kolor tylko jako sygnał (statusChipTone);
+            // §4.0 — priorytet niesie ton tylko gdy warto (critical→danger, high→warning).
+            const priRaw = String(task.priority || '').toLowerCase();
+            const priTone: MetaPill['tone'] =
+              priRaw === 'critical' || priRaw === 'urgent'
+                ? 'danger'
+                : priRaw === 'high'
+                  ? 'warning'
+                  : 'neutral';
             const pills: MetaPill[] = [
               {
                 label: statusCfg.label,
-                className: `${statusCfg.bg} ${statusCfg.color}`,
-                dot: statusCfg.dot,
+                tone: statusChipTone(task.status),
               },
-              { label: priCfg.label, dot: priCfg.dot },
+              { label: priCfg.label, tone: priTone },
               ...(task.projectName
                 ? [
                     {
