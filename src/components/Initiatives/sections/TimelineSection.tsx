@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  GanttChartSquare,
   Info,
   Lock,
   Plus,
@@ -36,6 +37,7 @@ import { Api } from '@/services/api';
 import { buildScheduleItems } from '@/services/initiativeSchedule';
 
 import { InitiativeCalendar } from '../calendar';
+import { InitiativeGantt } from '../gantt';
 import { useInitiativeContext } from './InitiativeContext';
 import type { TimelinePlannerHandle } from './TimelinePlanner';
 import { TimelinePlanner } from './TimelinePlanner';
@@ -532,7 +534,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       }),
     [tasks, timelineMilestones, timelinePhases]
   );
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [scheduleView, setScheduleView] = useState<'none' | 'calendar' | 'gantt'>('none');
 
   // AI proposal state (Analyze with AI)
   const [aiBusy, setAiBusy] = useState(false);
@@ -1311,22 +1313,43 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* M13 Depth · Seria R (M13c) — Calendar view (tasks + milestones + phases by date) */}
+      {/* M13 Depth · Seria R (M13c) + V (V1) — Calendar / Gantt views over one
+          schedule source (buildScheduleItems): tasks + milestones + phases. */}
       <div>
-        <button
-          type="button"
-          onClick={() => setShowCalendar((v) => !v)}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-          aria-expanded={showCalendar}
-        >
-          <CalendarDays size={14} />
-          {showCalendar
-            ? t('initiatives.calendarView.hide', 'Hide calendar')
-            : t('initiatives.calendarView.show', 'Show calendar')}
-        </button>
-        {showCalendar && (
+        <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-navy-700 p-0.5">
+          {(
+            [
+              ['calendar', CalendarDays, t('initiatives.calendarView.calendar', 'Calendar')],
+              ['gantt', GanttChartSquare, t('initiatives.calendarView.gantt', 'Gantt')],
+            ] as const
+          ).map(([key, Icon, label]) => {
+            const active = scheduleView === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setScheduleView((v) => (v === key ? 'none' : key))}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? 'bg-primary-500 text-white'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                }`}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {scheduleView === 'calendar' && (
           <div className="mt-2">
             <InitiativeCalendar items={scheduleItems} />
+          </div>
+        )}
+        {scheduleView === 'gantt' && (
+          <div className="mt-2">
+            <InitiativeGantt items={scheduleItems} />
           </div>
         )}
       </div>

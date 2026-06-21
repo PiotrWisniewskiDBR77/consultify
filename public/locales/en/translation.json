@@ -4945,7 +4945,9 @@
       "loading": "Loading…",
       "empty": "No dated tasks or milestones.",
       "show": "Show calendar",
-      "hide": "Hide calendar"
+      "hide": "Hide calendar",
+      "calendar": "Calendar",
+      "gantt": "Gantt"
     },
     "confirmDelete": "Permanently delete \"{{name}}\"? This cannot be undone.",
     "thisInitiative": "this initiative",
