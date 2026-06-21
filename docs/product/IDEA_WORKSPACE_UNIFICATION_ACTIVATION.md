@@ -40,13 +40,13 @@ by one shared shell, but below the shell almost everything is re-implemented per
 | Persistence | shared runtime (`workspaceGraphRuntime`) | own `useIdeaMapSync` | **separate `table-platform` store** | own `useIdeaMapSync` | 3 impls / 1 record |
 | Realtime graph | full (`graph_patch`) | **presence only, no edit-sync** | own `useTableRealtime` | full (`useWhiteboardCollab`) | 3 behaviors |
 | Presence | `CollaborationOverlay` | `CollaborationOverlay` | `table/CollaborationPresence` | inline avatars (`toolSession*`) | 4 systems |
-| Toolbar | `mindmap/CanvasLeftToolbar`+7 popovers | `processflow/ProcessFlowToolbar` | `table/TableToolbar` | `whiteboard/WhiteboardToolbar`+own primitives | 4 stacks, 0 shared primitive |
-| Keyboard | local listener `:3420` | local `:1719` | `table/useTableKeyboard` | local `:2742` | `useCanvasKeyboard` exists but **0 consumers (dead)** |
+| Toolbar | `mindmap/CanvasLeftToolbar`+7 popovers | `processflow/ProcessFlowToolbar` | `table/TableToolbar` | `whiteboard/WhiteboardToolbar`+own primitives | **P4✅** `canvas/CanvasToolbarPrimitives.tsx` shared primitive; WB shim re-exports |
+| Keyboard | local listener `:3420` | local `:1719` | `table/useTableKeyboard` | local `:2742` | `useCanvasKeyboard` exists but **0 consumers (dead)** — P3 pending |
 | Context menu | 3 menus (`Node/Pane/Edge`) | `ProcessFlowContextMenu` | none | `IdeaCanvasContextMenu` (sole user) | 3 strategies |
 | Convert targets | 12 declared | 12 | 4 | — | **4 type defs, FE 8-in-menu vs BE 6 → dead paths** |
 | Comments | `NodeCommentThread` | absent | absent | absent | mindmap only |
 | Tokens | 78+217 hex, 0 `var(--c)` | 0 hex root, nodes use `var(--c)` | Tailwind, 248 `dark:` | 15+23 hex, 29 `dark:` | only PF nodes adopted tokens |
-| Canvas bg | inline `rgba(…0.06)` g24 | inline `rgba(…0.15)` g20 | n/a | `canvasBackground.ts` | shared util exists, 2 tools ignore it |
+| Canvas bg | inline `rgba(…0.06)` g24 | inline `rgba(…0.15)` g20 | n/a | `canvasBackground.ts` | **P2✅** all 3 canvas tools call `getCanvasBg()` |
 
 ---
 
@@ -134,9 +134,9 @@ The rule that decides shared-vs-systematic:
 | Phase | Area | Scope | Risk | Acceptance |
 |---|---|---|---|---|
 | **P1** | 1 | One convert contract `ideaConvertTargets.ts`; FE types collapse; no dead paths; soon=disabled | low | no 400 to user; 1 type union; contract test FE-live ⊆ BE |
-| **P2** | 2 | Unify canvas background token (mindmap+PF → `canvasBackground.ts`); adopt `ConfirmDialog` in 4 tools | low | one bg token; one confirm dialog |
+| **P2** ✅bg | 2 | Unify canvas background token (mindmap+PF → `canvasBackground.ts`) | low | one bg token — **DONE** `f24817a066`; ConfirmDialog adoption = P2b (open) |
 | **P3** | 2 | Wire dead `useCanvasKeyboard` into the 3 canvas tools (shared keyboard grammar) | med | Tab/Enter/F2/Del/Esc identical across canvases; tool-local listeners removed |
-| **P4** | 2 | One toolbar primitive (`canvas/ToolbarButton`); retire whiteboard's own | med | one button primitive; visual parity |
+| **P4** ✅ | 2 | One toolbar primitive (`canvas/CanvasToolbarPrimitives`); retire whiteboard's own | med | **DONE** `a35b429687` |
 | **P5** | 1 | Persistence: Process Flow + Whiteboard consume `externalRuntime`; kill `globalIdeaVersions` | high | 1 fetch/switch; 1 draft owner; 409 tested |
 | **P6** | 1 | Realtime: Process Flow graph-sync via `/ws/collab`; one presence avatar component | high | PF 2-user edit propagates |
 | **P7** | 2 | Token sweep (mindmap hex → `var(--c)`); red-budget audit; dark parity | med | 0 hex in tool roots; motion lint clean |
@@ -149,4 +149,7 @@ realtime) are the deep architectural merges and gate on the earlier phases landi
 
 ## Part 4 — Delivery log
 
-- **2026-06-20 — P1 STARTED** (this turn): convert-target single contract.
+- **2026-06-20 — P1 DONE** (`50c606b0de` → `ideaConvertTargets.ts`): convert SSOT, 4 types → 1 union, soon=disabled, contract test 5/5.
+- **2026-06-20 — P2 bg DONE** (`f24817a066` → MindMap+ProcessFlow+Whiteboard wired to `getCanvasBg()`): canvas background token unified, `useIsDark` hook added to MindMap+PF. ConfirmDialog adoption deferred to P2b (no tools import it yet).
+- **2026-06-20 — P4 DONE** (`a35b429687` → `canvas/CanvasToolbarPrimitives.tsx`): toolbar primitive moved to shared canvas location; Whiteboard shim re-exports for backwards compat.
+- **P3 status**: `useCanvasKeyboard` still has 0 consumers; wiring requires removing overlapping keys from each tool's bespoke handler to avoid double-fire — deferred for dedicated keyboard refactor session.
