@@ -23,6 +23,7 @@ import { Select } from '@/components/shared/forms';
 import { WizardModal } from '@/components/shared/WizardModal';
 import type { WizardStep } from '@/components/shared/WizardModal/types';
 import { Api } from '@/services/api';
+import { type CardValidationIssue, validateCard } from '@/services/api/cardValidators';
 import { checkSimilarInitiatives, type SimilarInitiative } from '@/services/api/initiativeSimilar';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
 
@@ -242,6 +243,20 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
     }, 500);
     return () => clearTimeout(h);
   }, [title, thesis]);
+
+  // M13 Depth · K1 — debounced §B3 quality hints on the thesis/hypothesis field.
+  const [cardIssues, setCardIssues] = useState<CardValidationIssue[]>([]);
+  useEffect(() => {
+    const q = thesis.trim();
+    if (q.length < 8) {
+      setCardIssues([]);
+      return;
+    }
+    const h = setTimeout(() => {
+      void validateCard(q, ['lang_pl', 'no_filler', 'hypothesis_format']).then(setCardIssues);
+    }, 600);
+    return () => clearTimeout(h);
+  }, [thesis]);
 
   // Case
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -491,6 +506,19 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           )}
           className={`${inputCls} resize-none`}
         />
+        {cardIssues.length > 0 && (
+          <ul className="mt-1.5 space-y-0.5">
+            {cardIssues.map((iss) => (
+              <li
+                key={iss.rule}
+                className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-300"
+              >
+                <span className="mt-[3px] h-1 w-1 shrink-0 rounded-full bg-amber-500" />
+                <span>{iss.message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           {tr(
             'Falsyfikowalna teza — co zrobimy, jaki efekt i dlaczego.',
