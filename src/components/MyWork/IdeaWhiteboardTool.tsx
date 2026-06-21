@@ -38,6 +38,7 @@ import {
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
+import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {
@@ -380,6 +381,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           externalOnContextMenu?.(event);
         }}
         {...getIdeasToolInteractionProps('whiteboard', { locked })}
+        deleteKeyCode={null}
         fitView
         className="bg-slate-100/80 dark:bg-[#0b1020]"
         defaultEdgeOptions={{ type: 'labeled' }}
@@ -2657,6 +2659,23 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
+  // P3: shared grammar (Delete/Ctrl+Z/S/D/0/A/Shift+Z)
+  useCanvasKeyboard({
+    toolType: 'whiteboard',
+    enabled: open,
+    locked: locked || false,
+    callbacks: {
+      onSave: handleSave,
+      onUndo: undoWhiteboard,
+      onRedo: redoWhiteboard,
+      onSelectAll: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))),
+      onDeleteSelected: deleteSelected,
+      onDuplicate: duplicateSelected,
+      onFitView: () => fitView({ padding: 0.2, duration: 300 }),
+    },
+  });
+
+  // WB-specific shortcuts + Ctrl+S typing-safe fallback
   useEffect(() => {
     if (!open) return;
     const isEditing = () => {
@@ -2668,6 +2687,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       );
     };
     const handler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       if (e.key === '?' && !e.metaKey && !e.ctrlKey && !isEditing()) {
         e.preventDefault();
         setShortcutsHelpOpen((prev) => !prev);
@@ -2700,27 +2720,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           return;
         }
       }
+      // Typing-safe fallback: fires even when an input is focused
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
         return;
       }
       if (isEditing()) return;
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        redoWhiteboard();
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        undoWhiteboard();
-        return;
-      }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && !locked) {
-        e.preventDefault();
-        deleteSelected();
-        return;
-      }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'g') {
         e.preventDefault();
         ungroupSelected();
@@ -2729,11 +2735,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g') {
         e.preventDefault();
         groupSelected();
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
-        e.preventDefault();
-        setNodes((nds) => nds.map((n) => ({ ...n, selected: true })));
         return;
       }
       if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
@@ -2746,17 +2747,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [
     contextMenuPos,
-    deleteSelected,
     groupSelected,
     handleSave,
-    locked,
     open,
     proposalBatch,
-    redoWhiteboard,
     setBoardMode,
     shortcutsHelpOpen,
     slashMenuOpen,
-    undoWhiteboard,
     ungroupSelected,
     whiteboardMode,
   ]);

@@ -38,6 +38,7 @@ import ReactFlow, {
   applyNodeChanges,
   Background,
   type Connection,
+  ConnectionMode,
   type Edge,
   type EdgeChange,
   type EdgeProps,
@@ -46,6 +47,7 @@ import ReactFlow, {
   type NodeChange,
   type NodeProps,
   ReactFlowProvider,
+  useUpdateNodeInternals,
 } from 'reactflow';
 
 import { Api } from '@/services/api';
@@ -129,6 +131,7 @@ import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
+import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
@@ -206,6 +209,33 @@ const baseNodeTypes: RFNodeTypes = {
 const edgeTypes: RFEdgeTypes = {
   flowEdge: FlowEdgeComponent,
   messageFlow: MessageFlowEdge,
+};
+
+/**
+ * After the graph hydrates (nodes + edges set together on load), ReactFlow can
+ * fail to render edges because the freshly-added nodes' handle bounds aren't yet
+ * registered in its internal store — so persisted edges were invisible after a
+ * reload even though they were in state. Force a handle-bounds recompute for each
+ * node whenever the node-id set changes; this re-evaluates and draws the edges.
+ * Must live inside <ReactFlowProvider>. (M07 live-debug 2026-06-20)
+ */
+const EdgeRehydrateFix: React.FC<{ nodeIdsKey: string; nodeIds: string[] }> = ({
+  nodeIdsKey,
+  nodeIds,
+}) => {
+  const updateNodeInternals = useUpdateNodeInternals();
+  const idsRef = useRef(nodeIds);
+  idsRef.current = nodeIds;
+  useEffect(() => {
+    if (!idsRef.current.length) return;
+    const raf = requestAnimationFrame(() => {
+      idsRef.current.forEach((id) => updateNodeInternals(id));
+    });
+    return () => cancelAnimationFrame(raf);
+    // Keyed on the node-id set so it fires on hydrate / structural changes, not every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeIdsKey]);
+  return null;
 };
 
 // ── Validation ───────────────────────────────────────────────────────────────
@@ -802,6 +832,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     };
   }, [nodes, ghostNodes, edgesWithHandlers, focusMode, focusObjectId]);
 
+  if (typeof window !== 'undefined') {
+    (window as any).__rf = {
+      nodes: nodes.length,
+      edges: edges.length,
+      ewh: edgesWithHandlers.length,
+      few: filteredEdgesWithHandlers.length,
+      focusMode,
+      focusObjectId,
+      edge0: edges[0] ? { id: edges[0].id, s: edges[0].source, t: edges[0].target } : null,
+    };
+  }
+
   // ── Node/Edge change handlers ──────────────────────────────────────────
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -893,6 +935,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       primeServerVersion(Number(map?.version || 1));
       const rawNodes = Array.isArray(map.nodes) ? (map.nodes as any[]) : [];
       const rawEdges = Array.isArray(map.edges) ? (map.edges as any[]) : [];
+      (window as any).__hy = {
+        usedDraft: hydration.usedDraft,
+        rawNodes: rawNodes.length,
+        rawEdges: rawEdges.length,
+        filteredEdges: rawEdges.filter((e: any) => e?.id && e?.source && e?.target).length,
+        edgeSample: rawEdges[0] || null,
+      };
       const rawExt =
         map?.extensions && typeof map.extensions === 'object'
           ? (map.extensions as Record<string, unknown>)
@@ -1627,44 +1676,75 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
+  // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
+  useCanvasKeyboard({
+    toolType: 'process_flow',
+    enabled: open,
+    locked: locked || false,
+    callbacks: {
+      onSave: handleSave,
+      onUndo: undo,
+      onRedo: redo,
+      onDuplicate: duplicateSelected,
+      onAutoLayout: handleAutoLayout,
+      onFitView: () => reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 }),
+      onEditSelected: () => setShowPropertiesPanel(true),
+      onDeleteSelected: deleteSelected,
+      onDeselect: () => {
+        setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+        setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+        onSelectionChange?.(EMPTY_SELECTION);
+      },
+      onAddSibling: () => {
+        const shape: FlowShape =
+          flowMode === 'automation'
+            ? 'auto_trigger'
+            : flowMode === 'vsm'
+              ? 'vsm_process'
+              : 'action';
+        addNode(shape);
+      },
+    },
+  });
+
+  // PF-specific shortcuts + typing-safe fallbacks for Ctrl+S/Z/D
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       const isInput =
         (e.target as HTMLElement)?.tagName === 'INPUT' ||
         (e.target as HTMLElement)?.tagName === 'TEXTAREA' ||
         (e.target as HTMLElement)?.isContentEditable;
 
+      // Typing-safe fallbacks: fire even when focus is in an input
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
         return;
       }
-
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') {
         e.preventDefault();
         redo();
         return;
       }
-
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         e.preventDefault();
         undo();
         return;
       }
-
       if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
         e.preventDefault();
         duplicateSelected();
         return;
       }
 
+      // PF-specific
       if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
         e.preventDefault();
         setShowExportDialog(true);
         return;
       }
-
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'v') {
         e.preventDefault();
         runBackendValidation();
@@ -1672,53 +1752,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         return;
       }
 
-      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
-        e.preventDefault();
-        handleAutoLayout();
-        return;
-      }
-
-      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
-        e.preventDefault();
-        reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
-        return;
-      }
-
       if (isInput) return;
 
-      // A6: Shift+1 = zoom to fit (shared cross-tool shortcut). e.code is
-      // layout-independent (Shift+1 yields "!" on most layouts).
+      // A6: Shift+1 = zoom to fit (layout-independent via e.code)
       if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
         e.preventDefault();
         reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
         return;
       }
 
-      if (e.key === 'F2') {
-        e.preventDefault();
-        setShowPropertiesPanel(true);
-        return;
-      }
-
-      if (e.key === 'Escape') {
-        setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
-        setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
-        onSelectionChange?.(EMPTY_SELECTION);
-        return;
-      }
-
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        const defaultShape: FlowShape =
-          flowMode === 'automation'
-            ? 'auto_trigger'
-            : flowMode === 'vsm'
-              ? 'vsm_process'
-              : 'action';
-        addNode(defaultShape);
-        return;
-      }
-
+      // Shift+Enter: add alt-shape node (PF-specific; plain Enter is handled by useCanvasKeyboard)
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         const altShape: FlowShape =
@@ -1737,9 +1780,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     addNode,
     duplicateSelected,
     flowMode,
-    handleAutoLayout,
     handleSave,
-    onSelectionChange,
     open,
     redo,
     runBackendValidation,
@@ -2273,6 +2314,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           )}
 
           <ReactFlowProvider>
+            <EdgeRehydrateFix
+              nodeIdsKey={nodes.map((n) => n.id).join(',')}
+              nodeIds={nodes.map((n) => n.id)}
+            />
             <ReactFlow
               nodes={[
                 ...filteredNodes,
@@ -2309,6 +2354,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 });
               }}
               {...getIdeasToolInteractionProps('processflow', { locked, connectMode: !locked })}
+              connectionMode={ConnectionMode.Strict}
+              deleteKeyCode={null}
               onInit={(instance: ReactFlowInstance) => {
                 reactFlowInstanceRef.current = instance;
               }}
