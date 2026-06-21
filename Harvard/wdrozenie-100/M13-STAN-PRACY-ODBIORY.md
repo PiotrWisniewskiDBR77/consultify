@@ -62,7 +62,7 @@ Bramki realizacji: Epiki x/N · DoD x/7 · Testy (vitest+playwright PASS) · Man
 | G5 | UI bramki (pigułka + panel + modal override) | G | 3/3 | ✅ | ✅ | 0/10 | 🟡 | ⬜ | ⬜ | 3 | 🟢 GOTOWY code-side (modal wpięty w handleStatusAction soft-block→override; pill+panel w GateReadinessSection; tsc clean; →F/→UI po deploy+flaga ON demo) |
 | R1 | M13a Taski — stabilizacja | R (artefakty) | 2/2 | ✅ | ✅ | 0/8 | N/A | ⬜ | ⬜ | 1 | 🟢 GOTOWY code-side (audyt Tasks ✅ + helper `initiativeSchedule` 8/8; default Q2=initiative-scoped) |
 | R2 | M13b Decyzje — stabilizacja | R | 2/2 | ✅ | ✅ | 0/8 | 🟡 | ⬜ | ⬜ | 1 | 🟢 GOTOWY code-side (banner decyzji GO_NO_GO bramki w `DecisionsSection`; tsc clean) |
-| R3 | M13c Kalendarz — build | R | 3/4 | ✅ | 🟡 | 0/12 | 🟡 | ⬜ | ⬜ | 2 | 🟢 GOTOWY code-side — `InitiativeCalendar` (miesiąc/tydzień, drag-reschedule HTML5, filtr status, undated bucket, i18n PL/EN, dark/light); tsc clean, JSON OK; wpięcie w dokument (sekcja/zakładka) zostaje |
+| R3 | M13c Kalendarz — build | R | 4/4 | ✅ | ✅ | 0/12 | 🟡 | ⬜ | ⬜ | 2 | 🟢 GOTOWY code-side — `InitiativeCalendar` **WPIĘTY** w `TimelineSection` (toggle, zasilony `buildScheduleItems`); read-only v1, drag-persist=follow-up; tsc clean; live-verify (preview/Playwright) zostaje |
 | R4 | M13d Notyfikacje — build | R | 3/4 | ✅ | ✅ | 0/10 | N/A | ⬜ | ⬜ | 2 | 🟢 GOTOWY code-side — emitery 7/7 + **status-change WPIĘTY** w `updateInitiativeStatus` (notify watchers/owners po sukcesie, fail-safe, bez dublu z gate_blocked); assignment/due/blocker call-sites = follow-up |
 | C1 | Generator portfolio-aware (+ model select?) | C (tworzenie) | 0/3 | 0/7 | ⬜ | 0/8 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. (czeka Q5) |
 | C2 | Tworzenie przez Teresę — e2e | C | 0/2 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. |
