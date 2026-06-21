@@ -3470,25 +3470,46 @@ function buildMapConflictPayload(
   };
 }
 
-function isSuspiciousEmptyTableReset(params: {
+function isSuspiciousEmptyReset(params: {
   preferredTool?: string | null;
+  existingPreferredTool?: string | null;
   normalizedNodes: any[];
   mergedExtensions: Record<string, unknown> | null | undefined;
   existingNodes: any[];
   existingExtensions: Record<string, unknown> | null | undefined;
 }): boolean {
   const preferredTool = String(params.preferredTool || '').toLowerCase();
-  if (!preferredTool.includes('table')) return false;
+  const existingPreferredTool = String(params.existingPreferredTool || '').toLowerCase();
+  const nextHasNodes = Array.isArray(params.normalizedNodes) && params.normalizedNodes.length > 0;
+  const existingHasNodes = Array.isArray(params.existingNodes) && params.existingNodes.length > 0;
 
-  const nextHasContent =
-    (Array.isArray(params.normalizedNodes) && params.normalizedNodes.length > 0) ||
-    Object.keys(params.mergedExtensions || {}).length > 0;
-  if (nextHasContent) return false;
+  // CROSS-TOOL guard: the Ideas tools (mindmap / whiteboard / process_flow / table) share ONE
+  // my_idea_maps document. When a user opens, say, the whiteboard, the OTHER tool runtimes can
+  // still be mounted and autosave their (empty) graph — silently blanking the board the user
+  // actually has content on. So: a save from a DIFFERENT tool than the one that owns the
+  // populated board, carrying NO nodes, must not overwrite it. A SAME-tool empty save is a
+  // legitimate "delete all" and is allowed through.
+  if (
+    !nextHasNodes &&
+    existingHasNodes &&
+    preferredTool &&
+    existingPreferredTool &&
+    preferredTool !== existingPreferredTool
+  ) {
+    return true;
+  }
 
-  const existingHasContent =
-    (Array.isArray(params.existingNodes) && params.existingNodes.length > 0) ||
-    Object.keys(params.existingExtensions || {}).length > 0;
-  return existingHasContent;
+  // TABLE guard (original): never let the table tool blank a populated board, even within the
+  // same tool (table content also lives in extensions, so check both nodes + extensions).
+  if (preferredTool.includes('table')) {
+    const nextHasContent = nextHasNodes || Object.keys(params.mergedExtensions || {}).length > 0;
+    if (nextHasContent) return false;
+    const existingHasContent =
+      existingHasNodes || Object.keys(params.existingExtensions || {}).length > 0;
+    return existingHasContent;
+  }
+
+  return false;
 }
 
 /**
@@ -3874,8 +3895,9 @@ router.put(
     const existingExtensions = parseIdeaMapObject(existing?.extensions_json);
     if (
       existing &&
-      isSuspiciousEmptyTableReset({
+      isSuspiciousEmptyReset({
         preferredTool,
+        existingPreferredTool: existing?.preferred_tool ? String(existing.preferred_tool) : null,
         normalizedNodes,
         mergedExtensions,
         existingNodes,
@@ -4122,8 +4144,9 @@ router.post(
     const existingExtensions = parseIdeaMapObject(existing?.extensionsJson);
     if (
       existing &&
-      isSuspiciousEmptyTableReset({
+      isSuspiciousEmptyReset({
         preferredTool,
+        existingPreferredTool: existing?.preferredTool ? String(existing.preferredTool) : null,
         normalizedNodes: validation.normalized.nodes,
         mergedExtensions,
         existingNodes,

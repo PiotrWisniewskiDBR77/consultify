@@ -290,40 +290,8 @@ export function useIdeaMapSync({
           const serverVersion = Number(err?.data?.currentVersion || serverVersionRef.current || 1);
           serverVersionRef.current = serverVersion;
           globalIdeaVersions.set(ideaId, serverVersion); // L-03
-
-          // Auto-retry ONCE at the corrected version. The overwhelmingly common 409 is the
-          // app racing ITSELF: a brand-new idea auto-seeds its first node and bumps the
-          // shared my_idea_maps version while the tool still holds the stale baseVersion the
-          // first save was built on. Without a retry the change is only kept as a pending
-          // draft, which resolveIdeaMapHydration then DISCARDS on the next mount
-          // (draftBaseVersion < serverVersion) — so the node the user just added silently
-          // vanishes. Retrying at the now-correct version persists it. Single inline retry
-          // (no recursion); if it also conflicts we fall through to the conflict state.
-          try {
-            const retryResp = await Api.syncMyIdeaMap(ideaId, {
-              ...payload,
-              baseVersion: serverVersion,
-              reason: opts?.reason || 'draft',
-              ...(opts?.keepalive ? { keepalive: true } : {}),
-            });
-            const retryVersion = Number(retryResp?.version || serverVersion || 1);
-            serverVersionRef.current = retryVersion;
-            globalIdeaVersions.set(ideaId, retryVersion); // L-03
-            queuedPayloadRef.current = null;
-            setLastSavedAt(Date.now());
-            setSyncState('saved');
-            persistDraft(payload, false);
-            return retryResp;
-          } catch (retryErr: any) {
-            if (retryErr?.status === 409) {
-              const v2 = Number(retryErr?.data?.currentVersion || serverVersion || 1);
-              serverVersionRef.current = v2;
-              globalIdeaVersions.set(ideaId, v2); // L-03
-            }
-            // Retry failed — surface the conflict (server reconcile path).
-            setSyncState('conflict');
-            onConflict?.(serverVersionRef.current, retryErr?.data?.map || err?.data?.map || null);
-          }
+          setSyncState('conflict');
+          onConflict?.(serverVersion, err?.data?.map || null);
         } else if (typeof navigator !== 'undefined' && navigator.onLine === false) {
           setSyncState('offline');
         } else {

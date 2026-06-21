@@ -279,6 +279,58 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
     });
   });
 
+  // ── M09: cross-tool empty-overwrite guard ──────────────────────────────────
+  // The Ideas tools share ONE my_idea_maps doc. A background tool runtime (e.g. the mindmap
+  // mounted while the user works on the whiteboard) must not blank a populated board with an
+  // empty save. A SAME-tool empty save is a legitimate "delete all" and must still go through.
+  describe('M09 — cross-tool empty-overwrite guard', () => {
+    const EXISTING_WHITEBOARD_MAP_V2 = {
+      id: 'map-1',
+      version: 2,
+      nodesJson: JSON.stringify([
+        { id: 'wb1', type: 'stickyNote', position: { x: 1, y: 1 }, data: { label: 'work' } },
+      ]),
+      edgesJson: '[]',
+      preferredTool: 'whiteboard',
+      extensionsJson: '{}',
+      schemaVersion: 1,
+    };
+
+    it('empty save from a DIFFERENT tool over a populated board → 409 EMPTY_RESET_BLOCKED (data preserved)', async () => {
+      mockQueryOne
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' })
+        .mockResolvedValueOnce(EXISTING_WHITEBOARD_MAP_V2);
+
+      const res = await request(buildApp())
+        .post(`/api/my-work/my-ideas/${IDEA_ID}/map/sync`)
+        .send({
+          nodes: [],
+          edges: [],
+          baseVersion: 2,
+          preferredTool: 'mindmap',
+          extensions: { surfaceState: { activeTool: 'mindmap' } },
+        });
+
+      expect(res.status).toBe(409);
+      expect(res.body.code).toBe('IDEA_MAP_EMPTY_RESET_BLOCKED');
+      // The populated whiteboard node is returned intact (never overwritten).
+      expect(res.body.map?.nodes?.length).toBe(1);
+    });
+
+    it('empty save from the SAME tool (delete-all) is allowed → 200', async () => {
+      mockQueryOne
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' })
+        .mockResolvedValueOnce(EXISTING_WHITEBOARD_MAP_V2);
+
+      const res = await request(buildApp())
+        .post(`/api/my-work/my-ideas/${IDEA_ID}/map/sync`)
+        .send({ nodes: [], edges: [], baseVersion: 2, preferredTool: 'whiteboard' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.ok).toBe(true);
+    });
+  });
+
   // ── S6: Snapshot 201 ──────────────────────────────────────────────────────
 
   describe('S6 — snapshot creation returns 201', () => {
