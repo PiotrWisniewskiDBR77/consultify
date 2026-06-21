@@ -1467,7 +1467,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 dark:text-slate-400">
+                  <span className="text-[10px] font-mono uppercase tracking-wide text-slate-700 dark:text-slate-400">
                     {entry.type}
                   </span>
                 </div>
@@ -4940,7 +4940,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             <div className="py-10 text-center">
                               <Lightbulb
                                 size={28}
-                                className="mx-auto mb-3 text-slate-700 dark:text-slate-300 dark:text-slate-400"
+                                className="mx-auto mb-3 text-slate-700 dark:text-slate-400"
                               />
                               <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-3">
                                 {isPolish

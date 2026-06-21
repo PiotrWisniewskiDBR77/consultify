@@ -350,7 +350,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
               className={`text-xs ${
                 score >= stage.minScore
                   ? getColorClasses(stage).text
-                  : 'text-slate-500 dark:text-slate-400 dark:text-slate-400'
+                  : 'text-slate-500 dark:text-slate-400'
               }`}
               style={{
                 width: index === 0 ? 'auto' : index === STAGES.length - 1 ? 'auto' : undefined,

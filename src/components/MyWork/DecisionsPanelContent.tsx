@@ -559,7 +559,7 @@ const DecisionTableRow: React.FC<{
             {decision.title}
           </span>
           {showRowDescription && decision.description ? (
-            <span className="mt-0.5 block max-w-[760px] truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+            <span className="mt-0.5 block truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400">
               {decision.description}
             </span>
           ) : null}
@@ -835,7 +835,7 @@ const AwaitingDecisionTableRow: React.FC<{
             {decision.title}
           </span>
           {showRowDescription && decision.description ? (
-            <span className="mt-0.5 block max-w-[760px] truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+            <span className="mt-0.5 block truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400">
               {decision.description}
             </span>
           ) : null}

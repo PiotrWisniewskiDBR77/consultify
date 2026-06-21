@@ -247,7 +247,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                   <div className="text-center py-4 border border-dashed border-slate-200 dark:border-navy-700 rounded-lg">
                     <Upload
                       size={20}
-                      className="mx-auto mb-1 text-slate-700 dark:text-slate-300 dark:text-slate-400"
+                      className="mx-auto mb-1 text-slate-700 dark:text-slate-400"
                     />
                     <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Brak załączonych dowodów' : 'No evidence attached'}

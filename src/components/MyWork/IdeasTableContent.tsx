@@ -174,9 +174,11 @@ const STAGE_META: Record<
     label: 'Promoted',
     labelPl: 'Promowany',
     icon: Rocket,
+    // Canon §4.0: "Promoted" = pozytywny stan końcowy (idea → inicjatywa), NIE alarm.
+    // Marka/accent (crimson) zgodnie z STAGE_DOT_VAR.promoted; nigdy danger.
     badge:
-      'border border-danger-300/80 bg-danger-50 text-danger-900 dark:border-danger-300/[0.25] dark:bg-danger-300/[0.12] dark:text-danger-100',
-    iconClass: 'text-danger-600 dark:text-danger-300',
+      'border border-primary-300/80 bg-primary-50 text-primary-900 dark:border-primary-300/[0.25] dark:bg-primary-300/[0.12] dark:text-primary-100',
+    iconClass: 'text-primary-600 dark:text-primary-300',
   },
 };
 
@@ -717,7 +719,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 </button>
               </th>
               <th
-                className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                 style={{ width: columnWidths.title }}
               >
                 <button
@@ -737,7 +739,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               </th>
               {isColumnVisible('stage') ? (
                 <th
-                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                   style={{ width: columnWidths.stage }}
                 >
                   <div className="flex items-center justify-start gap-1">
@@ -776,7 +778,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('tags') ? (
                 <th
-                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                   style={{ width: columnWidths.tags }}
                 >
                   <div className="flex items-center justify-start gap-1">
@@ -815,7 +817,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('tool') ? (
                 <th
-                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                   style={{ width: columnWidths.tool }}
                 >
                   <div className="flex items-center justify-start gap-1">
@@ -854,7 +856,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('date') ? (
                 <th
-                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                   style={{ width: columnWidths.date }}
                 >
                   <button
@@ -874,7 +876,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 </th>
               ) : null}
               <th
-                className="relative px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                 style={{ width: columnWidths.actions }}
               >
                 <div className="flex items-center justify-end normal-case tracking-normal">
@@ -1184,12 +1186,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           />
                         </button>
                       ) : null}
-                      <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
+                      <div className="truncate pr-4 text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
                         {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
                       </div>
                     </div>
                     {showRowDescription && idea.body ? (
-                      <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+                      <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
                         {idea.body}
                       </div>
                     ) : null}

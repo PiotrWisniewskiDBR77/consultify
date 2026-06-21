@@ -2501,7 +2501,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             )}
           </div>
           {showRowDescription && (item.description || item.reason) ? (
-            <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+            <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
               {item.description || item.reason}
             </div>
           ) : null}
@@ -2597,7 +2597,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Received (relative + aging) */}
         {!hiddenSet.has('received') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.received }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.received }}>
             <span className={`text-xs font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}>
               {receivedText}
             </span>
@@ -2786,7 +2786,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const hasFilter = isFilterable && col.filterOptions?.length;
           const isResizable = Boolean(col.resizable);
           // Canon §3.3: chip/text columns left-aligned (status/urgency/type/section/source).
-          const leftAligned = ['status', 'urgency', 'type', 'section', 'source'].includes(colId);
+          const leftAligned = ['status', 'urgency', 'type', 'section', 'source', 'received'].includes(
+            colId
+          );
           // Canon §5/§27.O: every column except SLA is sortable (sla has no stable order).
           const isSortable = colId !== 'sla';
           return (

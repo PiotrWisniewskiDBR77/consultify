@@ -459,7 +459,7 @@ const NotificationTableRow: React.FC<{
             <span className="truncate max-w-[80px]">{notification.projectName}</span>
           </div>
         ) : (
-          <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-400">-</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">-</span>
         )}
       </td>
 

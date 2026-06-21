@@ -1128,7 +1128,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 flex items-center gap-1.5">
                     <MessageSquare size={11} />
                     {isPolish ? 'Notatki' : 'Notes'}
-                    <span className="text-[9px] font-normal text-slate-700 dark:text-slate-300 dark:text-slate-400 ml-1">
+                    <span className="text-[9px] font-normal text-slate-700 dark:text-slate-400 ml-1">
                       ({isPolish ? 'opcjonalne' : 'optional'})
                     </span>
                     <span className="ml-auto">
@@ -1247,12 +1247,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <div className="mt-4 text-center py-4">
                         <Search
                           size={20}
-                          className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-400 mb-2"
+                          className="mx-auto text-slate-700 dark:text-slate-400 mb-2"
                         />
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                           {isPolish ? 'Nie znaleziono zadań' : 'No tasks found'}
                         </p>
-                        <p className="text-[11px] text-slate-700 dark:text-slate-300 dark:text-slate-400 mt-0.5">
+                        <p className="text-[11px] text-slate-700 dark:text-slate-400 mt-0.5">
                           {isPolish ? 'Spróbuj innej frazy' : 'Try a different search term'}
                         </p>
                       </div>
@@ -1274,7 +1274,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Połączone zadania' : 'Connected Tasks'}
                           </span>
-                          <span className="text-[10px] text-slate-700 dark:text-slate-300 dark:text-slate-400">
+                          <span className="text-[10px] text-slate-700 dark:text-slate-400">
                             {isPolish ? 'szybkie dodawanie' : 'quick add'}
                           </span>
                         </div>

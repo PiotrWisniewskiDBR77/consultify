@@ -123,7 +123,10 @@ Wszystkie listy/indeksy encji: My Work (Ideas/Tasks/Decisions/Inbox/Notification
 **MUST:**
 - Comfortable (default): `px-4 py-3`. Compact (kolejki admin): `px-4 py-2`.
 - Wysokość wiersza **stała** — nie zmienia się na hover/focus (żadnego „falowania").
-- 2 linie (tytuł + opis/uzasadnienie) = **domyślne**; opis można ukryć w ustawieniach, ale odstęp się nie zwija. Opis: lżejsza waga, ~11px, niższa opacity.
+- 2 linie (tytuł + opis/uzasadnienie) = **domyślne**; opis można ukryć w ustawieniach, ale odstęp się nie zwija.
+- **Typografia wiersza (MUST — jawne tokeny, zero opacity‑slash):**
+  - **Tytuł:** `text-sm font-semibold text-slate-900 dark:text-slate-100`. Zakaz `font-medium` jako „wagi tytułu" i zakaz niestandardowych rozmiarów (`text-[13.5px]`) / kerningu (`tracking-[…]`) na tytule wiersza.
+  - **Opis/podtytuł:** `text-[11px] leading-4 text-slate-500 dark:text-slate-400`. „Wyciszenie" = jawny token koloru, **NIGDY** `text-slate-950/65`/`text-slate-100/55` ani inny opacity‑slash (RC‑9). Opacity zależy od tła → daje różny rezultat na różnych powierzchniach i łamie WCAG.
 
 ### 3.5 Selection / stany wiersza
 **MUST:**
@@ -150,6 +153,7 @@ Wszystkie listy/indeksy encji: My Work (Ideas/Tasks/Decisions/Inbox/Notification
 
 **MUST:**
 - Czerwień (`danger`) **wyłącznie** dla realnego alarmu. **Nigdy** dla progresu, neutralnych dat, „w toku".
+- **Pozytywny stan końcowy ≠ `danger`.** Etap/status oznaczający sukces lub awans (np. idea→inicjatywa „Promoted", „Approved", „Shipped") **MUST NOT** używać `danger` — to czyta się jak błąd. Użyj `success` (pozytyw) lub `accent` (jeśli to stan markowy/wyróżniony, spójny z kropką sygnału tego etapu). Częsty błąd: „Promoted" pomalowany na czerwono bo ikona rakiety „wygląda alarmowo".
 - **Progres NIE jest czerwony** — neutralny/`info`, `success` @100%, `warning` tylko gdy moduł jawnie liczy „at‑risk".
 - Crimson (`accent`) = marka/CTA/selekcja; **nie** jako kolor danych (czyta się jak alarm).
 - Domyślny stan komórki = neutralny; kolor dokładamy tylko, gdy niesie znaczenie.
@@ -633,7 +637,7 @@ To pierwsza linia tabeli i jej kontrolki. SSOT: `TableSettingsPopover` (portalow
 
 **MUST — podtytuł pod tytułem (row description):**
 - W tym samym popoverze toggle „**Show row description**".
-- Włączony → pod tytułem renderuje się druga linia (opis/uzasadnienie/subtytuł), lżejsza waga ~11px, niższa opacity.
+- Włączony → pod tytułem renderuje się druga linia (opis/uzasadnienie/subtytuł): `text-[11px] leading-4 text-slate-500 dark:text-slate-400` (jawny token wyciszenia, **nie** opacity‑slash — RC‑9 / §3.4).
 - Wyłączony → druga linia ukryta, **wysokość wiersza i rytm się nie zwijają skokowo** (stała geometria).
 - Stan persystowany per `persistKey`.
 
@@ -712,7 +716,7 @@ Cel: każda tabela w aplikacji wygląda tak samo. Lock przez klasy Tailwind + to
 
 ---
 
-## 20) Zabezpieczenia inżynierskie — anty‑wzorce RC‑1…RC‑8 (MUST NOT)
+## 20) Zabezpieczenia inżynierskie — anty‑wzorce RC‑1…RC‑10 (MUST NOT)
 Źródło: `docs/audit/2026-06-03/TABLE_GRAPHICS_ROOTCAUSE.md`. To są dokładnie błędy, przez które wracaliśmy do tabel „po raz setny". Każdy ma twardy zakaz + regułę.
 - **RC‑1 — podwójny scroll:** **MUST NOT** zagnieżdżać dwóch `overflow-auto`/`overflow-x-auto` wokół tej samej tabeli (de‑sync sticky header w poziomie). Jeden kontener scrolla.
 - **RC‑2 — zwężenie przez preview:** gdy preview otwarty, wewnętrzny scroll tabeli **MUST** przeliczać szerokość (flex‑min‑0), nie zostawiać phantom‑scrolla.
@@ -721,7 +725,9 @@ Cel: każda tabela w aplikacji wygląda tak samo. Lock przez klasy Tailwind + to
 - **RC‑5 — surowy `<table>`:** nowy ekran **MUST NOT** renderować ręcznego `<table>`; używa SSOT (§2). Lint/PR‑review pilnuje.
 - **RC‑6 — sticky w hidden:** dotyczy 5 ręcznych tabel Interview — j.w., do migracji.
 - **RC‑7 — hardcoded `colSpan`:** wiersze empty/error **MUST** liczyć `colSpan` z liczby widocznych kolumn (po hide), nigdy stała `={7}`.
-- **RC‑8 — ad‑hoc `max-w-[…]`:** **MUST NOT** wstrzykiwać `max-w-[760px]` itp. na komórkę tytułu; szerokość wyłącznie z modelu kolumn (`width/minWidth/maxWidth`).
+- **RC‑8 — ad‑hoc `max-w-[…]`:** **MUST NOT** wstrzykiwać `max-w-[760px]` itp. na komórkę tytułu/opisu; szerokość wyłącznie z modelu kolumn (`width/minWidth/maxWidth`). `truncate` + szerokość kolumny wystarczają.
+- **RC‑9 — opacity‑slash na tekście:** **MUST NOT** wyciszać tekstu przez slash‑opacity (`text-slate-950/65`, `text-slate-100/55`, `text-white/60` itp.). Wyciszenie = **jawny token koloru** (`text-slate-500 dark:text-slate-400`). Slash‑opacity miesza kolor z tłem (różny wynik na różnych powierzchniach, łamie WCAG, nieprzewidywalny w dark). Dotyczy opisów wierszy, podtytułów, metadanych. (§3.4) — root‑cause: stare brzmienie „opis: niższa opacity".
+- **RC‑10 — sprzeczne/zdublowane klasy Tailwind:** **MUST NOT** zostawiać sprzecznych klas tego samego wariantu (`dark:text-slate-300 dark:text-slate-400` — wygrywa ostatnia, pierwsza to martwy kod) ani duplikatów (`dark:text-slate-400 dark:text-slate-400`). Jeden wariant = jedna klasa. To copy‑paste dług, który ukrywa realny kolor.
 
 ## 21) Dostępność i klawiatura (MUST)
 - **Klawiatura:** ↑/↓ (oraz J/K) nawigują wiersze; Enter/dbl‑click = full view; Esc = zamknij preview; Space = toggle zaznaczenia; Tab = logiczna kolejność.
@@ -886,8 +892,11 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Nadmiar chipów = `+N` jako pill. §3.3
 - [ ] Brak `max-w-[…]`/`colSpan` hardcode na komórkach (RC‑7/RC‑8). §20
 
-### G. Wiersz (gęstość, hover, selekcja)
+### G. Wiersz (gęstość, hover, selekcja, typografia)
 - [ ] Gęstość `px-4 py-3` (comfortable) / `px-4 py-2` (compact); wysokość stała na hover. §3.4
+- [ ] 🔴 **Tytuł wiersza** `text-sm font-semibold text-slate-900 dark:text-slate-100` — bez `font-medium`, bez `text-[13.5px]`/`tracking-[…]`. §3.4 → `jak:` inspect computed `fontWeight=600`, `fontSize=14px`.
+- [ ] 🔴 **Opis/podtytuł** `text-[11px] leading-4 text-slate-500 dark:text-slate-400` — **zero opacity‑slash** (`text-slate-950/65` itp.). §3.4 / RC‑9 → `jak:` grep `text-slate-9..\/` i `text-slate-1..\/` w pliku = 0 trafień.
+- [ ] Brak ad‑hoc `max-w-[…]` na komórce tytułu/opisu (RC‑8); brak sprzecznych/zdublowanych klas Tailwind (RC‑10). §20
 - [ ] Brak zebry; separatory `divide-y` hairline. §3.1
 - [ ] 🔴 Tło wiersza NIGDY barwione statusem; status tylko w pill. §3.5
 - [ ] Hover subtelny; selected = `bg-primary-500/8` + 4px lewy akcent + ring; hover nie nadpisuje selekcji. §3.5
@@ -954,7 +963,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Resize zero‑sum z sąsiadem; szerokość tabeli stała; szerokości persystowane. §5
 
 ### P. Zabezpieczenia inżynierskie (RC)
-- [ ] RC‑1 brak podwójnego scrolla · RC‑3 header/body z jednego źródła szerokości · RC‑4 brak `overflow-hidden` rodzica · RC‑5 brak surowego `<table>` · RC‑7 `colSpan` liczony · RC‑8 brak `max-w-[…]` ad‑hoc. §20
+- [ ] RC‑1 brak podwójnego scrolla · RC‑3 header/body z jednego źródła szerokości · RC‑4 brak `overflow-hidden` rodzica · RC‑5 brak surowego `<table>` · RC‑7 `colSpan` liczony · RC‑8 brak `max-w-[…]` ad‑hoc · RC‑9 brak opacity‑slash na tekście · RC‑10 brak sprzecznych/zdublowanych klas Tailwind. §20
 
 ### R. i18n
 - [ ] PL/EN przez `useTranslation`, bez hardcode; truncacja+tooltip dla długich łańcuchów. §22

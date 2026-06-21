@@ -675,7 +675,7 @@ const TaskTableRow: React.FC<{
           </div>
           {showRowDescription && (task.description || task.projectName) ? (
             <span
-              className="mt-0.5 max-w-[760px] truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400"
+              className="mt-0.5 truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400"
               title={task.description || task.projectName}
             >
               {task.description || task.projectName}
@@ -825,12 +825,12 @@ const TaskTableRow: React.FC<{
                 {assigneeInitial}
               </div>
             ) : (
-              <User size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-400" />
+              <User size={14} className="text-slate-500 dark:text-slate-400" />
             )}
             <span
               className={`text-xs truncate max-w-[120px] ${
                 assigneeName === 'Unassigned'
-                  ? 'text-slate-700 dark:text-slate-300 dark:text-slate-400 italic'
+                  ? 'text-slate-500 dark:text-slate-400 italic'
                   : 'text-slate-600 dark:text-slate-400'
               }`}
             >
