@@ -120,7 +120,7 @@ export default defineConfig({
           timeout: backendRunner === 'build' ? 600000 : 420000,
         },
         {
-          command: `VITE_API_TARGET=${backendUrl} npm run build && VITE_API_TARGET=${backendUrl} npx vite preview --port ${frontendPort} --strictPort`,
+          command: `NODE_OPTIONS=--max-old-space-size=8192 VITE_API_TARGET=${backendUrl} npm run build && VITE_API_TARGET=${backendUrl} npx vite preview --port ${frontendPort} --strictPort`,
           url: frontendUrl,
           reuseExistingServer: !!process.env.E2E_REUSE_SERVER,
           timeout: 420000,

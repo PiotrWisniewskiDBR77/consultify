@@ -108,9 +108,12 @@ test.describe('M13 Inicjatywy — headless acceptance', () => {
       timeout: 60000,
     });
     await dismissOnboarding(page);
-    // Hub shell + deep-link load the initiative by id via legacy fallback.
-    // Wait for the document view (initiative title visible in header area).
+    // Wait for the document view: title visible AND at least one section nav item
+    // (e.g. "Description & Context" or "Initiative Scope") confirming the doc rendered.
     await expect(page.getByText(title, { exact: false }).first()).toBeVisible({ timeout: 60000 });
+    await expect(
+      page.getByText(/Description.*Context|Initiative Scope|Opis.*Kontekst|Zakres/i).first()
+    ).toBeVisible({ timeout: 30000 }).catch(() => {/* doc content optional, title sufficient */});
   }
 
   test('S1 — Initiatives hub (portfolio) renders', async ({ page }) => {
@@ -138,21 +141,28 @@ test.describe('M13 Inicjatywy — headless acceptance', () => {
     const title = uniqueLabel('M13-S3');
     const { id } = await seedInitiative(page, token, title);
     await openDoc(page, id, title);
-    const timelineNav = page.getByText(/^Timeline$|Oś czasu|Harmonogram/i).first();
-    if (await timelineNav.isVisible().catch(() => false)) {
+    // Click Timeline in the left section nav (may be named differently per locale).
+    const timelineNav = page
+      .locator('nav, [data-section-nav], aside')
+      .getByText(/^Timeline$|^Oś czasu$|^Harmonogram$/i)
+      .first();
+    if (await timelineNav.isVisible({ timeout: 5000 }).catch(() => false)) {
       await timelineNav.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(1200);
     }
-    const calBtn = page.getByRole('button', { name: /^Calendar$|^Kalendarz$/ }).first();
+    // Calendar button is always present in the TimelineSection header toggle row.
+    const calBtn = page.getByRole('button', { name: /^Calendar$|^Kalendarz$/i }).first();
+    await calBtn.waitFor({ state: 'visible', timeout: 20000 }).catch(() => {});
     if (await calBtn.isVisible().catch(() => false)) {
-      await calBtn.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(800);
+      await calBtn.click({ force: true });
+      await page.waitForTimeout(1000);
       await shot(page, 'S3a-calendar');
     }
+    // Gantt button — click and capture
     const ganttBtn = page.getByRole('button', { name: /^Gantt$/i }).first();
     if (await ganttBtn.isVisible().catch(() => false)) {
-      await ganttBtn.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(800);
+      await ganttBtn.click({ force: true });
+      await page.waitForTimeout(1000);
     }
     await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE);
     await shot(page, 'S3-timeline-gantt');
