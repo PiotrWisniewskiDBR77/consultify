@@ -99,48 +99,60 @@ test.describe('M13 Inicjatywy — headless acceptance', () => {
     await suppressOnboarding(page, userId);
   });
 
-  test('S1 — Initiatives hub (portfolio) loads', async ({ page }) => {
-    await seedInitiative(page, token, uniqueLabel('M13-S1'));
-    await gotoHub(page);
-    await dismissOnboarding(page);
-    await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE, { timeout: 30000 });
-    await expect(page.getByText(/Portfolio|Inicjatywy|Initiatives/i).first()).toBeVisible({
-      timeout: 30000,
-    });
-    await shot(page, 'S1-hub');
-  });
-
-  test('S2 — initiative document opens (no error boundary)', async ({ page }) => {
-    const { id } = await seedInitiative(page, token, uniqueLabel('M13-S2'));
-    await page.goto(`/portfolio?initiativeId=${id}`, {
+  // Document opens at /implementation?...&initiativeId=X (real app route).
+  async function openDoc(page: Page, id: string, title: string) {
+    await page.goto(`/implementation?tab=list&view=table&initiativeId=${id}`, {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
     await dismissOnboarding(page);
-    await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE, { timeout: 30000 });
-    await page.waitForTimeout(1500);
+    // Wait for REAL content: the document shows the title + a section nav. trolley
+    // is slow, so allow a generous window for boot + getById hydration.
+    await expect(page.getByText(title, { exact: false }).first()).toBeVisible({ timeout: 60000 });
+  }
+
+  test('S1 — Initiatives hub (portfolio) renders', async ({ page }) => {
+    await seedInitiative(page, token, uniqueLabel('M13-S1'));
+    await gotoHub(page);
+    await dismissOnboarding(page);
+    // Hub shell rendered (real UI): the "New initiative" CTA + Portfolio tab.
+    await expect(page.getByText(/New initiative|Nowa inicjatywa/i).first()).toBeVisible({
+      timeout: 45000,
+    });
+    await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE);
+    await shot(page, 'S1-hub');
+  });
+
+  test('S2 — initiative document opens with content', async ({ page }) => {
+    const title = uniqueLabel('M13-S2');
+    const { id } = await seedInitiative(page, token, title);
+    await openDoc(page, id, title);
+    await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE);
+    await page.waitForTimeout(1000);
     await shot(page, 'S2-document');
   });
 
   test('S3 — Timeline section: Calendar / Gantt toggle (R3 + V1)', async ({ page }) => {
-    const { id } = await seedInitiative(page, token, uniqueLabel('M13-S3'));
-    await page.goto(`/portfolio?initiativeId=${id}`, {
-      waitUntil: 'domcontentloaded',
-      timeout: 60000,
-    });
-    await dismissOnboarding(page);
-    // Open the Timeline section if a nav entry exists, then reveal Calendar/Gantt.
+    const title = uniqueLabel('M13-S3');
+    const { id } = await seedInitiative(page, token, title);
+    await openDoc(page, id, title);
     const timelineNav = page.getByText(/^Timeline$|Oś czasu|Harmonogram/i).first();
     if (await timelineNav.isVisible().catch(() => false)) {
       await timelineNav.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
+    }
+    const calBtn = page.getByRole('button', { name: /^Calendar$|^Kalendarz$/ }).first();
+    if (await calBtn.isVisible().catch(() => false)) {
+      await calBtn.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(800);
+      await shot(page, 'S3a-calendar');
     }
     const ganttBtn = page.getByRole('button', { name: /^Gantt$/i }).first();
     if (await ganttBtn.isVisible().catch(() => false)) {
       await ganttBtn.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(600);
+      await page.waitForTimeout(800);
     }
-    await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE, { timeout: 30000 });
-    await shot(page, 'S3-timeline-calendar-gantt');
+    await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE);
+    await shot(page, 'S3-timeline-gantt');
   });
 });
