@@ -34,6 +34,7 @@ import {
   resolveStoredNotebookSourceFile,
   toPublicNotebookCaptureMetadata,
 } from '../../services/notebookSourceFileService.js';
+import { enrichPage } from '../../services/notebookAIEnrichService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns, hasColumn } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
@@ -1269,6 +1270,10 @@ router.put(
 
     const row = await queryHelpers.queryOne<any>(selectNotebookFull, [id]);
     res.json(formatNotebookRow(row));
+    // Fire-and-forget AI enrichment (auto-tags + topic links)
+    if (req.body?.contentText || req.body?.contentJson) {
+      void enrichPage(id).catch(() => {});
+    }
   })
 );
 

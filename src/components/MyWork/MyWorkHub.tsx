@@ -2194,28 +2194,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return {
           label: isPolish ? 'Dodaj wydarzenie' : 'Add event',
           onClick: () => setCalendarCreateReqId((v) => v + 1),
-          tone: 'neutral' as const,
+          tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'tasks':
         return {
           label: isPolish ? 'Nowe zadanie' : 'New Task',
           onClick: handleCreateTask,
-          tone: 'neutral' as const,
+          tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'ideas':
         return {
           label: isPolish ? 'Nowy pomysł' : 'New Idea',
           onClick: handleCreateIdea,
-          tone: 'neutral' as const,
+          tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'decisions':
         return {
           label: isPolish ? 'Nowa decyzja' : 'New Decision',
           onClick: handleCreateDecision,
-          tone: 'neutral' as const,
+          tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'notebook':
@@ -2224,13 +2224,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           ? {
               label: isPolish ? 'Nowa notatka' : 'New note',
               onClick: () => setNotebookCreateReqId((v) => v + 1),
-              tone: 'neutral' as const,
+              tone: 'violet' as const,
               variant: 'primary' as const,
             }
           : {
               label: isPolish ? 'Nowy notatnik' : 'New notebook',
               onClick: () => setNotebookCreateNotebookReqId((v) => v + 1),
-              tone: 'neutral' as const,
+              tone: 'violet' as const,
               variant: 'primary' as const,
             };
       default:

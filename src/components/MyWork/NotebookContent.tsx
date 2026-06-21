@@ -22,9 +22,11 @@ import {
   Clock,
   FileText,
   Filter,
+  History,
   Inbox,
   Layers,
   Lightbulb,
+  Network,
   Paperclip,
   Pen,
   Pin,
@@ -32,6 +34,7 @@ import {
   Plus,
   RefreshCw,
   Sparkles,
+  Sun,
   Tag,
   Trash2,
   Type,
@@ -90,6 +93,13 @@ import {
   type SlashMenuState,
 } from './notebook/SlashMenu';
 import { buildAskAIMessage } from './shared/askAiHelper';
+import { NotebookExportMenu } from './notebook/NotebookExportMenu';
+import { NotebookGraphView } from './notebook/NotebookGraphView';
+import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
+import { NotebookTodayView } from './notebook/NotebookTodayView';
+import { NotebookTopicChips } from './notebook/NotebookTopicChips';
+import { NotebookTopicView } from './notebook/NotebookTopicView';
+import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
 
 interface NotebookContentProps {
   projectId?: string | null;
@@ -770,6 +780,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   // Cover image (note header) — stored server-side via notebookCover.routes.
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  // Living Notebook feature state
+  const [openTopicId, setOpenTopicId] = useState<string | null>(null);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showGraphView, setShowGraphView] = useState(false);
+  const [todayRefreshKey, setTodayRefreshKey] = useState(0);
   const coverInputRef = useRef<HTMLInputElement>(null);
   // Code-block language picker overlay anchor.
   const [codeLangMenu, setCodeLangMenu] = useState<{
@@ -1021,7 +1036,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   }, [fetchPages, refreshTrigger]);
 
   // Sidebar filters & inbox state
-  const [sidebarTab, setSidebarTab] = useState<'inbox' | 'active' | 'all'>(
+  const [sidebarTab, setSidebarTab] = useState<'inbox' | 'active' | 'all' | 'today'>(
     pageStatusFilter ?? 'all'
   );
 
@@ -2097,10 +2112,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     <div className="flex h-[calc(100vh-220px)] min-h-[520px] gap-1.5 p-3 overflow-hidden bg-white dark:bg-navy-950">
       <style>{EDITOR_STYLES}</style>
 
-      {/* SLOT: TodayEntry — Agent 2 wires the daily "Dziś"/Today cockpit entry
-          here (e.g. an in-sidebar tab or a banner above the page list). Has
-          access to `pages`, `setActiveId`, `notebookId`, `fetchPages`. */}
-
       {/* Sidebar */}
       <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/30 flex flex-col">
         {/* Sidebar header */}
@@ -2172,7 +2183,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           )}
         </div>
 
-        {/* Inbox/Active/All tab bar */}
+        {/* Inbox/Active/All/Today tab bar */}
         <div className="flex items-center border-b border-slate-200/60 dark:border-white/[0.06] px-2">
           {[
             { key: 'inbox' as const, label: 'Inbox', count: inboxCount, icon: <Inbox size={12} /> },
@@ -2216,6 +2227,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               )}
             </button>
           ))}
+          <button
+            onClick={() => setSidebarTab('today')}
+            className={`flex items-center justify-center gap-1 px-2 py-2 text-[10px] font-semibold transition-all border-b-2 ${
+              sidebarTab === 'today'
+                ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+            title={isPolish ? 'Widok dnia' : "Today's view"}
+          >
+            <Sun size={12} />
+          </button>
           <button
             onClick={() => setShowFilters((v) => !v)}
             className={`p-1.5 rounded-md ml-1 transition-colors ${showFilters ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
@@ -2263,9 +2285,27 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           </div>
         )}
 
-        {/* Page list */}
+        {/* Page list / Today cockpit */}
         <div className="flex-1 overflow-y-auto nb-scroll p-2 space-y-1">
-          {filteredPages.length === 0 ? (
+          {sidebarTab === 'today' ? (
+            <NotebookTodayView
+              isPolish={isPolish}
+              onOpenNote={(id) => {
+                void flushPendingSave().then(() => setActiveId(id));
+                setSidebarTab('all');
+              }}
+              captureSlot={
+                <NotebookQuickCapture
+                  notebookId={notebookId}
+                  onCreated={() => {
+                    setTodayRefreshKey((k) => k + 1);
+                    void fetchPages();
+                  }}
+                />
+              }
+              refreshKey={todayRefreshKey}
+            />
+          ) : filteredPages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-700 flex items-center justify-center mb-3">
                 <FileText size={20} className="text-slate-600" />
@@ -2612,9 +2652,23 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Toolbar */}
                   {editor && <NotebookToolbar editor={editor} />}
-                  {/* SLOT: ExportMenu/History — Agent 5 wires NotebookExportMenu +
-                      NotebookVersionHistory here (per-note actions, right of toolbar).
-                      Has access to `activePage`, `editor`. */}
+                  <NotebookExportMenu
+                    page={{
+                      id: activePage.id,
+                      title: title,
+                      contentJson: activePage.contentJson,
+                      contentText: activePage.contentText,
+                    }}
+                    isPolish={isPolish}
+                    className="shrink-0"
+                  />
+                  <button
+                    onClick={() => setShowVersionHistory((v) => !v)}
+                    title={isPolish ? 'Historia wersji' : 'Version history'}
+                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                  >
+                    <History size={14} />
+                  </button>
                   {/* C3 (KROK 6): expand the note into a Canvas document draft */}
                   <button
                     onClick={() => void handleExpandToDocument()}
@@ -2638,6 +2692,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </button>
                   {/* L-03: Rail toggle button */}
                   <button
+                    onClick={() => setShowGraphView((v) => !v)}
+                    title={isPolish ? 'Graf powiązań' : 'Connection graph'}
+                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                  >
+                    <Network size={14} />
+                  </button>
+                  <button
                     type="button"
                     onClick={() => setNotebookRailOpen(!notebookRailOpen)}
                     title={
@@ -2659,6 +2720,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </button>
                 </div>
               </div>
+
+              {/* Version History panel (toggleable) */}
+              {showVersionHistory && activePage && (
+                <div className="border-b border-slate-200/60 dark:border-navy-800/60 bg-slate-50/80 dark:bg-navy-950/60 max-h-64 overflow-y-auto nb-scroll">
+                  <NotebookVersionHistory
+                    pageId={activePage.id}
+                    currentText={activePage.contentText || ''}
+                    isPolish={isPolish}
+                    onRestored={() => {
+                      setShowVersionHistory(false);
+                      void fetchPages();
+                    }}
+                  />
+                </div>
+              )}
 
               {/* AI Command Prompt — hidden; accessible via Tools panel Command button */}
               {editor && activePage && (
@@ -2944,8 +3020,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     />
                   </div>
 
-                  {/* SLOT: TopicChips — Agent 1 wires NotebookTopicChips here
-                      (topic affordances under the note header). Has `activePage`. */}
+                  {activePage && (
+                    <div className="mb-3">
+                      <NotebookTopicChips
+                        noteId={activePage.id}
+                        canEdit={true}
+                        onOpenTopic={(topicId) => setOpenTopicId(topicId)}
+                      />
+                    </div>
+                  )}
 
                   {headingOutline.length > 0 && (
                     <div className="mb-4 rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
@@ -3194,12 +3277,28 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           )}
         </div>
 
-        {/* SLOT: RAGPanel — Agent 3 wires the "ask your notes" RAG panel here
-            (as a right-rail tab or a docked panel). Has `activePage`, `pages`,
-            `notebookId`. */}
-        {/* SLOT: GraphView — Agent 5 wires NotebookGraphView here (topic/backlink
-            graph, e.g. a right-rail tab or an overlay). Consumes `/topics` (A1)
-            + the existing link-graph; has `activePage`, `pages`. */}
+        {/* Graph view — toggleable panel (topic+backlink connections) */}
+        {showGraphView && activePage && (
+          <div className="w-72 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-navy-950 flex flex-col">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200/60 dark:border-navy-800/60">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                <Network size={13} />
+                {isPolish ? 'Graf powiązań' : 'Connection graph'}
+              </div>
+              <button
+                onClick={() => setShowGraphView(false)}
+                className="p-0.5 rounded text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              >
+                <X size={13} />
+              </button>
+            </div>
+            <NotebookGraphView
+              pageId={activePage.id}
+              pageTitle={title}
+              isPolish={isPolish}
+            />
+          </div>
+        )}
 
         {/* L-03: Consolidated right rail — Tab A (Praca/Work) + Tab B (Kontekst/Context) */}
         <NotebookRightRail
@@ -3376,6 +3475,28 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 {isPolish ? 'Utwórz artefakt' : 'Create deliverable'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Topic aggregate modal */}
+      {openTopicId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setOpenTopicId(null)}
+        >
+          <div
+            className="relative w-full max-w-lg mx-4 rounded-2xl bg-white dark:bg-navy-900 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <NotebookTopicView
+              topicId={openTopicId}
+              onClose={() => setOpenTopicId(null)}
+              onOpenNote={(id) => {
+                setOpenTopicId(null);
+                void flushPendingSave().then(() => setActiveId(id));
+              }}
+            />
           </div>
         </div>
       )}

@@ -27,7 +27,7 @@ export const MENU_3_LEFT_CLASS = 'inline-flex items-center gap-1';
 export const MENU_3_RIGHT_CLASS = 'flex shrink-0 items-center justify-end gap-2';
 
 export const MENU_3_CHIP_BASE =
-  'inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
 export const MENU_3_CHIP_INACTIVE = cn(
   MENU_3_CHIP_BASE,
