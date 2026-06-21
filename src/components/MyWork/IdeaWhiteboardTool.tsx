@@ -58,6 +58,7 @@ import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import { useConfirmDialog } from './shared/ConfirmDialog';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
@@ -606,6 +607,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
+  const { dialog: confirmDialog, confirm: showConfirm } = useConfirmDialog();
   const currentUserId = String(currentUser?.id || 'current-user');
   const currentUserName = useMemo(() => {
     const fullName = [currentUser?.firstName, currentUser?.lastName]
@@ -2842,7 +2844,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         whiteboardModeCopy={whiteboardModeCopy}
         onAddElement={(kind, extraData) => addElement(kind as WbNodeKind, extraData)}
         onSetBoardMode={setBoardMode}
-        onClearDrawings={() => {
+        onClearDrawings={async () => {
+          const ok = await showConfirm({
+            title: isPl ? 'Wyczyścić rysunki?' : 'Clear drawings?',
+            description: isPl
+              ? 'Wszystkie ścieżki rysowania zostaną usunięte. Tej operacji nie można cofnąć.'
+              : 'All pen paths will be removed. This action cannot be undone.',
+            confirmLabel: isPl ? 'Wyczyść' : 'Clear',
+            cancelLabel: isPl ? 'Anuluj' : 'Cancel',
+            variant: 'danger',
+          });
+          if (!ok) return;
           setDrawingPaths([]);
           toast.success(t('myWork.whiteboard.drawingsCleared'));
         }}
@@ -3088,6 +3100,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           />
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 };

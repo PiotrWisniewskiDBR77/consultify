@@ -91,7 +91,7 @@ export const BranchHealthDot: React.FC<{ score: number; size?: number }> = ({
   score,
   size = 8,
 }) => {
-  const color = score >= 70 ? '#22c55e' : score >= 30 ? '#eab308' : '#f43f5e';
+  const color = score >= 70 ? 'var(--c-success)' : score >= 30 ? 'var(--c-warning)' : 'var(--c-danger)';
   return (
     <div
       title={`Health: ${score}%`}
@@ -227,7 +227,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
       : overallScore >= 40
         ? 'text-amber-500'
         : 'text-danger-500';
-  const ringColor = overallScore >= 70 ? '#34d399' : overallScore >= 40 ? '#fbbf24' : '#f43f5e';
+  const ringColor = overallScore >= 70 ? 'var(--c-success)' : overallScore >= 40 ? 'var(--c-warning)' : 'var(--c-danger)';
 
   return (
     <div className="absolute top-14 right-3 z-[89]">

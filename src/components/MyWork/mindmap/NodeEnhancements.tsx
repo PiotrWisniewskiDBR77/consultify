@@ -57,7 +57,7 @@ export const MaturityRing: React.FC<MaturityRingProps> = ({
   const offset = circumference - (score / 100) * circumference;
 
   const color =
-    score >= 75 ? '#34d399' : score >= 50 ? '#fbbf24' : score >= 25 ? '#fb923c' : '#94a3b8';
+    score >= 75 ? 'var(--c-success)' : score >= 50 ? 'var(--c-warning)' : score >= 25 ? '#fb923c' : '#94a3b8';
 
   return (
     <svg width={size} height={size} className="transform -rotate-90">

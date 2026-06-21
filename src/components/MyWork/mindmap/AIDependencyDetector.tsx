@@ -36,12 +36,12 @@ interface AIDependencyDetectorProps {
 
 const TYPE_CONFIG: Record<
   string,
-  { color: string; label: string; labelPl: string; dash?: string }
+  { color: string; colorBg: string; label: string; labelPl: string; dash?: string }
 > = {
-  depends_on: { color: '#f43f5e', label: 'Depends on', labelPl: 'Zależy od' },
-  enables: { color: '#22c55e', label: 'Enables', labelPl: 'Umożliwia' },
-  conflicts_with: { color: '#f59e0b', label: 'Conflicts with', labelPl: 'Konflikt z', dash: '5 5' },
-  related_to: { color: '#6366f1', label: 'Related to', labelPl: 'Powiązane z', dash: '3 6' },
+  depends_on: { color: 'var(--c-danger)', colorBg: 'color-mix(in srgb, var(--c-danger) 8%, transparent)', label: 'Depends on', labelPl: 'Zależy od' },
+  enables: { color: 'var(--c-success)', colorBg: 'color-mix(in srgb, var(--c-success) 8%, transparent)', label: 'Enables', labelPl: 'Umożliwia' },
+  conflicts_with: { color: 'var(--c-warning)', colorBg: 'color-mix(in srgb, var(--c-warning) 8%, transparent)', label: 'Conflicts with', labelPl: 'Konflikt z', dash: '5 5' },
+  related_to: { color: 'var(--c-info)', colorBg: 'color-mix(in srgb, var(--c-info) 8%, transparent)', label: 'Related to', labelPl: 'Powiązane z', dash: '3 6' },
 };
 
 export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
@@ -214,7 +214,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                     <div className="flex items-center gap-2 mb-1.5">
                       <span
                         className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                        style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}
+                        style={{ backgroundColor: cfg.colorBg, color: cfg.color }}
                       >
                         {isPl ? cfg.labelPl : cfg.label}
                       </span>
