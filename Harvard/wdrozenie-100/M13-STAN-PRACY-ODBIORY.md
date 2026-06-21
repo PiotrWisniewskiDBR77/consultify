@@ -65,7 +65,7 @@ Bramki realizacji: Epiki x/N · DoD x/7 · Testy (vitest+playwright PASS) · Man
 | R2 | M13b Decyzje — stabilizacja | R | 2/2 | ✅ | ✅ | 0/8 | 🟡 | ⬜ | ⬜ | 1 | 🟢 DEPLOYED demo (banner decyzji GO_NO_GO bramki w `DecisionsSection`; tsc clean) |
 | R3 | M13c Kalendarz — build | R | 4/4 | ✅ | ✅ | 0/12 | 🟡 | ⬜ | ⬜ | 2 | 🟢 DEPLOYED demo — `InitiativeCalendar` **WPIĘTY** w `TimelineSection` (toggle, zasilony `buildScheduleItems`); read-only v1, drag-persist=follow-up; tsc clean; live-verify (preview/Playwright) zostaje |
 | R4 | M13d Notyfikacje — build | R | 3/4 | ✅ | ✅ | 0/10 | N/A | ⬜ | ⬜ | 2 | 🟢 DEPLOYED demo — emitery 7/7 + **status-change WPIĘTY** w `updateInitiativeStatus` (notify watchers/owners po sukcesie, fail-safe, bez dublu z gate_blocked); assignment/due/blocker call-sites = follow-up |
-| C1 | Generator portfolio-aware (dedup) | C (tworzenie) | 2/3 | ✅ | ✅ | 0/8 | ⬜ | ⬜ | ⬜ | 1 | 🟢 GOTOWY backend — `initiativeSimilarityService` (Jaccard, org-scope, fail-safe) + `POST /similar-check` 7/7; E3 model-select N/A (Q5); **ostrzeżenie w UI create flow = follow-up** |
+| C1 | Generator portfolio-aware (dedup) | C (tworzenie) | 3/3 | ✅ | ✅ | 0/8 | 🟡 | ⬜ | ⬜ | 1 | 🟢 GOTOWY code-side — `initiativeSimilarityService` (Jaccard, fail-safe) + `POST /similar-check` 7/7 + **ostrzeżenie o duplikacie w Charter Wizard** (debounce na tytule, amber); E3 model-select N/A (Q5); tsc/lint clean; live-verify+deploy zostają |
 | C2 | Tworzenie przez Teresę — e2e | C | 0/2 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. (następny po C1) |
 | K1 | Karty §B3 — egzekwowanie jakości | K (artefakt) | 0/2 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 0 | ⬜ NIE ROZP. (czeka Q7) |
 | K2 | Karty — `CardContainer` (układ graficzny) | K | 0/2 | 0/7 | ⬜ | 0/8 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. (czeka Q6) |

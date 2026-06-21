@@ -23,6 +23,7 @@ import { Select } from '@/components/shared/forms';
 import { WizardModal } from '@/components/shared/WizardModal';
 import type { WizardStep } from '@/components/shared/WizardModal/types';
 import { Api } from '@/services/api';
+import { checkSimilarInitiatives, type SimilarInitiative } from '@/services/api/initiativeSimilar';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -226,6 +227,21 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
   const [title, setTitle] = useState('');
   const [thesis, setThesis] = useState('');
   const [lever, setLever] = useState<Lever>('cost');
+
+  // M13 Depth · C1 — portfolio-aware dedup: debounced check against existing
+  // org initiatives as the user names the new one (advisory, never blocks).
+  const [similarInitiatives, setSimilarInitiatives] = useState<SimilarInitiative[]>([]);
+  useEffect(() => {
+    const q = title.trim();
+    if (q.length < 4) {
+      setSimilarInitiatives([]);
+      return;
+    }
+    const h = setTimeout(() => {
+      void checkSimilarInitiatives(q, thesis).then(setSimilarInitiatives);
+    }, 500);
+    return () => clearTimeout(h);
+  }, [title, thesis]);
 
   // Case
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -437,6 +453,31 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           )}
           className={inputCls}
         />
+        {similarInitiatives.length > 0 && (
+          <div className="mt-2 rounded-lg border border-amber-300/60 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 px-3 py-2">
+            <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 mb-1">
+              {tr(
+                'Podobne inicjatywy już istnieją — sprawdź, czy nie duplikujesz:',
+                'Similar initiatives already exist — check you are not duplicating:'
+              )}
+            </div>
+            <ul className="space-y-0.5">
+              {similarInitiatives.map((s) => (
+                <li
+                  key={s.id}
+                  className="text-xs text-slate-700 dark:text-slate-200 flex items-center gap-2"
+                >
+                  <span className="truncate">{s.name}</span>
+                  {s.status && (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
+                      {s.status}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       <div>
         <label className={labelCls}>{tr('Teza / hipoteza', 'Thesis / hypothesis')}</label>
