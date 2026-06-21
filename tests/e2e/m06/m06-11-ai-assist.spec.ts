@@ -46,7 +46,7 @@ test.describe('M06 §11 — AI-assist [REAL-AI]', () => {
     const expandP = page
       .waitForResponse((r) => /\/map\/expand/.test(r.url()), { timeout: 20000 })
       .catch(() => null);
-    await expandBtn.click();
+    await expandBtn.click({ force: true });
     const resp = await expandP;
     await shot(page, '11.1-ai-expand-result');
     if (!resp) {
@@ -73,7 +73,7 @@ test.describe('M06 §11 — AI-assist [REAL-AI]', () => {
     const reqP = page
       .waitForResponse((r) => /\/map\/ai-suggestions/.test(r.url()), { timeout: 20000 })
       .catch(() => null);
-    await suggestBtn.click();
+    await suggestBtn.click({ force: true });
     const resp = await reqP;
     await shot(page, '11.2-ai-suggestions-result');
     if (!resp) {
@@ -100,7 +100,7 @@ test.describe('M06 §11 — AI-assist [REAL-AI]', () => {
     const reqP = page
       .waitForResponse((r) => /\/map\/gap-analysis/.test(r.url()), { timeout: 20000 })
       .catch(() => null);
-    await gapBtn.click();
+    await gapBtn.click({ force: true });
     const resp = await reqP;
     await shot(page, '11.3-gap-analysis-result');
     if (!resp) {
@@ -124,7 +124,7 @@ test.describe('M06 §11 — AI-assist [REAL-AI]', () => {
       );
       return;
     }
-    await branchSummaryBtn.click();
+    await branchSummaryBtn.click({ force: true });
     await page.waitForTimeout(1000);
     await shot(page, '11.4-branch-summary-result');
     const resultText = page.getByText(/.{20,}/i).first(); // any substantial text response

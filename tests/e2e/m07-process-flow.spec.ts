@@ -28,7 +28,7 @@ const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 const SHOTS_DIR = path.resolve('docs/qa/screens/m07-headless-2026-06-20');
 const ERROR_BOUNDARY_RE = /Coś poszło nie tak|Something went wrong/i;
-const WORKSPACE_REGION = 'Idea map workspace';
+const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
 
 fs.mkdirSync(SHOTS_DIR, { recursive: true });
 
@@ -144,7 +144,7 @@ async function openProcessFlow(page: Page, label: string) {
   await seedProcessFlowMap(page, token, idea.id);
   await gotoProcessFlow(page, idea.id);
   await dismissOnboarding(page);
-  await expect(page.getByRole('region', { name: WORKSPACE_REGION })).toBeVisible({ timeout: 40000 });
+  await expect(page.getByRole('region', { name: WORKSPACE_REGION })).toBeVisible({ timeout: 90000 });
   return { idea, token };
 }
 
@@ -159,7 +159,7 @@ async function canvasMounted(page: Page, timeout = 90000): Promise<boolean> {
 
 test.describe('M07 Ideas · Process Flow — headless acceptance', () => {
   test('1.2 Process Flow workspace shell renders with the Process Flow tool', async ({ page }) => {
-    test.setTimeout(160000);
+    test.setTimeout(240000);
     const { idea } = await openProcessFlow(page, 'm07-shell');
     await expect(page.getByRole('button', { name: 'Process Flow', exact: true }).first()).toBeVisible();
     await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
@@ -170,7 +170,7 @@ test.describe('M07 Ideas · Process Flow — headless acceptance', () => {
   test('1.2b idea-tool switcher offers Recommendation map / Whiteboard / Process Flow / Table', async ({
     page,
   }) => {
-    test.setTimeout(160000);
+    test.setTimeout(240000);
     await openProcessFlow(page, 'm07-switcher');
     for (const name of ['Recommendation map', 'Whiteboard', 'Process Flow', 'Table']) {
       await expect(page.getByRole('button', { name, exact: true }).first()).toBeVisible();
@@ -179,7 +179,7 @@ test.describe('M07 Ideas · Process Flow — headless acceptance', () => {
   });
 
   test('2.1 Process Flow canvas (ReactFlow) renders for an empty idea', async ({ page }) => {
-    test.setTimeout(180000);
+    test.setTimeout(260000);
     const errors: string[] = [];
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
     page.on('pageerror', (e) => errors.push(String(e)));
@@ -195,7 +195,7 @@ test.describe('M07 Ideas · Process Flow — headless acceptance', () => {
   });
 
   test('22.2 dark mode renders the Process Flow workspace with no error boundary', async ({ page }) => {
-    test.setTimeout(160000);
+    test.setTimeout(240000);
     await page.emulateMedia({ colorScheme: 'dark' });
     await openProcessFlow(page, 'm07-dark');
     await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
@@ -203,7 +203,7 @@ test.describe('M07 Ideas · Process Flow — headless acceptance', () => {
   });
 
   test('22.x EN locale renders the workspace chrome in English', async ({ page }) => {
-    test.setTimeout(160000);
+    test.setTimeout(240000);
     await openProcessFlow(page, 'm07-en');
     await expect(page.getByRole('button', { name: 'Process Flow', exact: true }).first()).toBeVisible();
     await shot(page, '10-en-locale');

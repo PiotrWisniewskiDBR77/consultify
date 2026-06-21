@@ -87,7 +87,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      // Large viewport so react-flow canvas tools (mind-map / process-flow / whiteboard)
+      // keep their nodes inside the visible area after fitView — headless can then click
+      // them for real (small 1280×720 pushes nodes off-viewport → "outside of viewport").
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1680, height: 1050 } },
     },
     // Visual regression tests
     {

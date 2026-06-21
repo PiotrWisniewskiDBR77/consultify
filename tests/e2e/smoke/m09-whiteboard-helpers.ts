@@ -336,6 +336,42 @@ export async function nodeCount(page: Page): Promise<number> {
 }
 
 /**
+ * Fit all nodes into the viewport so react-flow will let us click them.
+ *
+ * After several adds the nodes drift off-screen and react-flow refuses to click them
+ * ("Element is outside of the viewport") even with force:true (same headless failure mode
+ * proven on M06). UNLIKE the Mind Map, the whiteboard's CanvasZoomControls Maximize2 button
+ * is wired to FULLSCREEN, not Fit-view (IdeaWhiteboardTool.tsx:441 passes onFullscreenToggle),
+ * so there is NO "Fit view" toolbar button to click here. The whiteboard instead binds fit to
+ * the keyboard: Cmd/Ctrl+0 (and Shift+1) — IdeaWhiteboardTool.tsx:196-205. We click the pane
+ * first to ensure the canvas has focus, then press the shortcut.
+ */
+export async function fitView(page: Page): Promise<void> {
+  // Focus the canvas (the keydown listener is window-level, but clicking the pane also
+  // dismisses any open menu/editor that would swallow the shortcut). force+catch: the pane
+  // itself can be off-actionability mid-animation.
+  await page.locator('.react-flow__pane').first().click({ force: true }).catch(() => {});
+  const mod = process.platform === 'darwin' ? 'Meta' : 'Control';
+  await page.keyboard.press(`${mod}+0`).catch(() => {});
+  await page.waitForTimeout(450); // fit animation (duration 300 + settle)
+}
+
+/**
+ * Select the nth canvas node robustly: fitView (Cmd/Ctrl+0) brings the graph on-screen,
+ * then force-click past react-flow's transform/animation actionability wait. Headless can
+ * still resolve a node outside a small viewport — swallow that (downstream selection-state
+ * guards honest-skip). Returns false only if the node does not exist at all.
+ */
+export async function selectNodeByIndex(page: Page, idx = 0): Promise<boolean> {
+  const node = page.locator('.react-flow__node').nth(idx);
+  if ((await page.locator('.react-flow__node').count()) <= idx) return false;
+  await fitView(page);
+  await node.click({ force: true }).catch(() => {});
+  await page.waitForTimeout(250);
+  return true;
+}
+
+/**
  * Save the board and wait for a 2xx /map(/sync) response. The shared my_idea_maps doc
  * bumps version per write, so a save racing the mindmap auto-seed can 409; after a 409 the
  * client re-hydrates to the current version, so a retry succeeds. Returns true on a 2xx.
