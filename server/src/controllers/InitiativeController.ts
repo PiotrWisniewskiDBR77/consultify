@@ -40,6 +40,7 @@ import {
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
 import { notifyStatusChange } from '../services/initiative/initiativeNotificationService.js';
+import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
 import notificationService from '../services/notificationService.js';
 import {
   calculateRiskScore,
@@ -5606,6 +5607,28 @@ export class InitiativeController {
       }
 
       res.json({ success: true, roles: inserted });
+    }
+  );
+
+  /**
+   * POST /initiatives/similar-check  (M13 Depth · Seria C · C1)
+   * Portfolio-aware duplicate detection: given a candidate {name, summary},
+   * return existing org initiatives that look similar (advisory, never blocks).
+   */
+  static checkSimilarInitiatives = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { name, summary, excludeId } = (req.body as any) || {};
+      const similar = await findSimilarInitiatives(
+        orgId,
+        { name: name ? String(name) : '', summary: summary ? String(summary) : '' },
+        { excludeId: excludeId ? String(excludeId) : undefined }
+      );
+      res.json({ similar });
     }
   );
 

@@ -2773,6 +2773,7 @@ router.get('/:id/task-dependencies', InitiativeController.getInitiativeTaskDepen
 
 router.get('/:id/gate-roles', InitiativeController.getGateRoles);
 router.put('/:id/gate-roles', InitiativeController.updateGateRoles);
+router.post('/similar-check', InitiativeController.checkSimilarInitiatives);
 router.post('/:id/gate-ai-check', InitiativeController.getGateAiCheck);
 router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);
 router.get('/:id/status-history', InitiativeController.getStatusHistory);
