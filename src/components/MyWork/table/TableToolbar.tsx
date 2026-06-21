@@ -614,18 +614,21 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       </div>
 
       {/* AI schema assistant (slide-over) */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => {
-          setAiProposal(null);
-          setAiSchemaSheetOpen(true);
-        }}
-        icon={<Sparkles />}
-        title={isPl ? 'Asystent schematu AI' : 'AI schema assistant'}
-      >
-        AI
-      </Button>
+      {/* data-testid on a plain wrapper div — motion.button does not forward data-* */}
+      <div data-testid="ai-schema-btn">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setAiProposal(null);
+            setAiSchemaSheetOpen(true);
+          }}
+          icon={<Sparkles />}
+          title={isPl ? 'Asystent schematu AI' : 'AI schema assistant'}
+        >
+          AI
+        </Button>
+      </div>
 
       {/* Batch AI Fill */}
       {!locked && (

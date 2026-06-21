@@ -71,8 +71,8 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   const hasLeadingActions = Boolean(onSearch || onShowHelp || onDiscuss);
 
   return (
-    <div className="absolute top-3 right-3 z-[50]">
-      <div className="flex items-center gap-0.5 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-2 py-1.5">
+    <div className="absolute top-3 right-3 z-[50] pointer-events-none">
+      <div className="flex items-center gap-0.5 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-2 py-1.5 pointer-events-auto">
         {/* Workspace actions (search, help) */}
         {onSearch && (
           <button

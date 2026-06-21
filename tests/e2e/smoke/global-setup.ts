@@ -47,17 +47,22 @@ async function waitForApiReadiness(apiBaseUrl: string, timeoutMs: number) {
   throw new Error(`api readiness timeout after ${timeoutMs}ms: ${lastError || '<no response>'}`);
 }
 
-async function tryRegisterDemoFallback(
+async function tryRegisterFallback(
   req: APIRequestContext,
   runId: string
 ): Promise<TestSupportState | null> {
-  const email = `e2e+${runId.replace(/[^a-zA-Z0-9_.-]/g, '-')}-fallback@local.test`;
+  const slug = runId.replace(/[^a-zA-Z0-9_.-]/g, '-');
+  const email = `e2e+${slug}-fallback@local.test`;
   const password = `E2E-${Date.now()}-Pass1`;
-  const res = await req.post('/api/auth/register-demo', {
+  // Use the regular /register endpoint so the created user is NOT a demo user.
+  // /register-demo sets isDemo=true which triggers DEMO_READ_ONLY mode and breaks tests.
+  const res = await req.post('/api/auth/register', {
     data: {
       email,
       password,
       firstName: 'E2E',
+      lastName: 'Test',
+      companyName: `E2E-${slug}`,
     },
   });
   if (!res.ok()) return null;
@@ -131,7 +136,7 @@ export default async function globalSetup(_config: FullConfig) {
   }
 
   if (!data) {
-    const fallbackState = await tryRegisterDemoFallback(req, runId).catch(() => null);
+    const fallbackState = await tryRegisterFallback(req, runId).catch(() => null);
     if (fallbackState) {
       data = fallbackState;
     } else {
@@ -173,11 +178,14 @@ export default async function globalSetup(_config: FullConfig) {
     companyName: 'E2E Organization',
     isAuthenticated: true,
     accessLevel: 'full',
+    isDemo: false,
   };
 
   const persistedAppState = JSON.stringify({
     state: {
       sessionMode: 'FULL',
+      isDemoMode: false,
+      isDemoSession: false,
       currentUser: seededUser,
       currentOrganization: {
         id: data.organizationId,
@@ -196,8 +204,8 @@ export default async function globalSetup(_config: FullConfig) {
           { name: 'token', value: data.token },
           { name: 'refreshToken', value: 'e2e-refresh' },
           { name: 'user', value: JSON.stringify(seededUser) },
-          { name: 'consultinity-storage', value: persistedAppState },
-          { name: 'consultinity_demo_session', value: demoSession },
+          { name: 'consultify-storage', value: persistedAppState },
+          { name: 'consultify_demo_session', value: demoSession },
         ],
       },
     ],
