@@ -46,6 +46,8 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 
 ## Tabela zbiorcza (dashboard PM)
 
+> **2026-06-20 — pula Ideas (M05–M09) zatrzymana** (Piotr): kontencja jednej współdzielonej bazy pod 5 równoległymi agentami = ten sam bloker co kryzys stagingu. **M05 + M08 = skończone (DO ODBIORU).** **M06 + M07 + M09 = MANUAL-DŁUG** — kod i testy zielone, brakuje tylko live-Manual (Playwright+png), do dokończenia **pojedynczo w cichym oknie** (jak M08), gdy nikt inny nie obciąża bazy. Powód blokady M07/M09 = perf/kontencja DB, **nie defekt kodu**. Skupienie przeszło na **M13** (live-weryfikacja wymaga wolnej bazy).
+
 **Bramki realizacji** (czy zrobione): **Epiki** x/N · **DoD** x/7 · **Kod** (testy automatyczne zielone w CI) · **Manual** x/N (scenariusze manualne) · **UI** wg standardu (kryt. 7).
 **Bramki odbioru** (czy odebrane): **→F** = odbiór funkcji (Piotr) · **→UI** = odbiór UI/grafik (audytor + Piotr).
 Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy WSZYSTKIE bramki ✅ (Epiki N/N, DoD 7/7, **Kod ✅, Manual N/N**, UI ✅, →F ✅, →UI ✅).
@@ -58,11 +60,11 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M02 | Canvas | 3 | 6/6 | 7/7 | 199✅ | 20/20 | ✅ | ✅ | ✅ | 16 | ✅ ZAMKNIĘTY |
 | M03 | My Work — organizer | 2/3 | 6/6 | 6/7 | 848✅ | 39/39 | ✅ | ⬜ | ✅ | 15 | 🟢 DEPLOYED (demo `890bc39a` 2026-06-20) · CZEKA NA →F (ostatnia bramka). OAuth/sync → M25/L-11 (nie-bloker) |
 | M04 | Notatnik | 3 | 6/6 | 6/7 | 284✅ | 65/72 E2E | ✅ | ✅ | ✅ | 16/16 | ✅ ZAMKNIĘTY |
-| M05 | Ideas — Zarządzanie | 1 | 7/7 | 6/7 | 40✅ | 38✓/47 +9skip | ✅ | 🟡 | 🟡 | 12 | 🟢 DO ODBIORU |
-| M06 | Ideas — Mind Map | 1/3 | 7/7 | 6/7 | 230✅ | 124 spec/68 .png | 🟡 | ⬜ | ⬜ | 16 | 🟡 W TOKU |
-| M07 | Ideas — Process Flow | 2/3 | 6/6 | 5/7 | 36✅ | 2/94 | 🟡 | ⬜ | ⬜ | 12 | 🟡 W TOKU |
-| M08 | Ideas — Table | 4 | 5/5 | 6/7 | 195✅ | 20/20✅ E2E | ✅ | ⬜ | ⬜ | 17 | 🟢 DO ODBIORU |
-| M09 | Ideas — Whiteboard | 1 | 6/6 | 🟡 | 65✅ | 0/126 (harness✓, DB-blok) | 🟡 | ⬜ | ⬜ | 11 | 🟡 W TOKU |
+| M05 | Ideas — Zarządzanie | 1 | 7/7 | 6/7 | 40✅ | 38✓/47 +9skip | ✅ | 🟡 | 🟡 | 12 | 🟢 DO ODBIORU (agent zatrzymany 2026-06-20 — skończony, czeka →F/→UI/deploy Piotra) |
+| M06 | Ideas — Mind Map | 1/3 | 7/7 | 6/7 | 230✅ | 124 spec/68 .png | 🟡 | ⬜ | ⬜ | 16 | 🟡 MANUAL-DŁUG (agent zatrzymany; live-run przerwany — dokończyć Manual w cichym oknie, kod+testy ✅) |
+| M07 | Ideas — Process Flow | 2/3 | 6/6 | 5/7 | 36✅ | 2/94 | 🟡 | ⬜ | ⬜ | 12 | 🟡 MANUAL-DŁUG (agent zatrzymany; kanwa hydrate=perf/kontencja NIE bug — dokończyć Manual w cichym oknie, kod+testy ✅) |
+| M08 | Ideas — Table | 4 | 5/5 | 6/7 | 195✅ | 20/20✅ E2E | ✅ | ⬜ | ⬜ | 17 | 🟢 DO ODBIORU (agent zatrzymany 2026-06-20 — skończony, czeka →F/→UI/deploy Piotra) |
+| M09 | Ideas — Whiteboard | 1 | 6/6 | 🟡 | 65✅ | 0/126 (harness✓, DB-blok) | 🟡 | ⬜ | ⬜ | 11 | 🟡 MANUAL-DŁUG (agent zatrzymany; DB outage zablokował live — dokończyć Manual w cichym oknie, kod ✅) |
 | M10 | Wywiad | 1 | 0/6 | 0/7 | ⬜ | 0/75 | ⬜ | ⬜ | ⬜ | 28 | ⬜ NIE ROZP. |
 | M12 | Audyty | 3 | 0/5 | 0/7 | ⬜ | 0/49 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
 | M13 | Inicjatywy | 2 | 0/6 | 0/7 | 🟡 | 0/68 | ⬜ | ⬜ | ⬜ | 30 | 🟡 W TOKU (DELETE status-guard 409 + test 7/7 `InitiativeController.deleteInitiative`; audyt wnętrza w toku) |
