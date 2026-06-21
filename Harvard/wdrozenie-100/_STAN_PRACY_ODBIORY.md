@@ -59,7 +59,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M03 | My Work — organizer | 2/3 | 6/6 | 6/7 | 848✅ | 39/39 | ✅ | ⬜ | ✅ | 15 | 🟢 CZEKA NA DEPLOY+→F |
 | M04 | Notatnik | 3 | 6/6 | 6/7 | 189✅ | 54/54 E2E | ✅ | 🟡 | 🟡 | 16/16 | 🟢 DO ODBIORU |
 | M05 | Ideas — Zarządzanie | 1 | 7/7 | 6/7 | 40✅ | 38✓/47 +9skip | ✅ | 🟡 | 🟡 | 12 | 🟢 DO ODBIORU |
-| M06 | Ideas — Mind Map | 1/3 | 7/7 | 6/7 | 230✅ | 17/121 | 🟡 | ⬜ | ⬜ | 16 | 🟡 W TOKU |
+| M06 | Ideas — Mind Map | 1/3 | 7/7 | 6/7 | 230✅ | 124 spec/68 .png | 🟡 | ⬜ | ⬜ | 16 | 🟡 W TOKU |
 | M07 | Ideas — Process Flow | 2/3 | 6/6 | 5/7 | 36✅ | 2/94 | 🟡 | ⬜ | ⬜ | 12 | 🟡 W TOKU |
 | M08 | Ideas — Table | 4 | 5/5 | 6/7 | 195✅ | 0/105 | 🟡 | ⬜ | ⬜ | 17 | 🟡 W TOKU |
 | M09 | Ideas — Whiteboard | 1 | 6/6 | 🟡 | 65✅ | 0/126 (harness✓, DB-blok) | 🟡 | ⬜ | ⬜ | 11 | 🟡 W TOKU |
@@ -202,7 +202,7 @@ DoD: 1✅front↔back 2✅security 3✅i18n(ternar;t()→Faza4) 4✅tokeny 5✅�
 | 2 | DoD 6/7 | 🟡 | #1 front↔back ✅ · #2 sec ✅ (WS org-scope 6/6) · #3 i18n ⬜ (**881 isPolish/isPl** → Faza 4, decyzja Piotra) · #4 tokeny ✅ (rose-korupcja=0; 299 hex=color-system/Visual Standard) · #5 §27 N.D. ✅ · #6 E2E ✅ · #7 UI ✅ (live) |
 | 3 | Epiki 7/7 | ✅ | EPIK1 WS (L-01 test 6/6) · EPIK2 snapshots (L-02 staging) · EPIK3 rose=0 · EPIK4 afordancje (L-04, orphan rm) · EPIK5 flush (L-05) · EPIK6 szlif (dup-key fix; D-01 drawer+align/snap = odroczone enhancement) · EPIK7 testy (L-07) |
 | 4 | Testy | ✅ | **230 PASS** — 166 unit (`tests/unit/mindmap`+`mywork`) + 42 integ (WS org-scope 6/6 + map-sync contract 11/11) + 22 component |
-| 5 | Zgodność UI/UX + Manual | 🟡 | Manual **17/121** — harness `tests/e2e/m06/_m06.ts` (register-demo, bez sekretów) + specy §1/§2/§4/§10 → **19 .png** `tests/e2e/screenshots/m06/`. Pełne 121 = follow-up CI (bloker: staging DB outage + perf ~40s/test + flakiness; fan-out sub-agentów padł na kontencji) |
+| 5 | Zgodność UI/UX + Manual | 🟡 | Manual **124/124 spec NAPISANE (26 plików, §1–§27)** — harness `tests/e2e/m06/_m06.ts` (register-demo, bez sekretów) + pełny zestaw §1–§27 (edges, drag/drop, zoom, layouts, keyboard, AI-assist, AI-overlays, snapshots, comments, persistence, collab WS, export, import, conversion, view-modes, large-maps, activity-feed, Teresa, cross-module, cross-cutting, regression). Honest-skip z wiring-reference dla [MANUAL]/[REAL-AI]/[DB]/headless-focus. **68 .png** `tests/e2e/screenshots/m06/`. Pełny live-run w tle (staging ~40s/test); wyniki po zakończeniu. |
 | 6 | Deploy demo | ⬜ | Piotr: „przygotuj, ja kliknę" (Londyn→demo) |
 | 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
 | 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | 19 .png = dowód częściowy |
