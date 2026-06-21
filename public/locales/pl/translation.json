@@ -4149,7 +4149,9 @@
       "allStatuses": "Wszystkie statusy",
       "undated": "Bez daty",
       "loading": "Ładowanie…",
-      "empty": "Brak zadań i kamieni z datą."
+      "empty": "Brak zadań i kamieni z datą.",
+      "show": "Pokaż kalendarz",
+      "hide": "Ukryj kalendarz"
     },
     "confirmDelete": "Trwale usunąć „{{name}}\"? Tej operacji nie można cofnąć.",
     "thisInitiative": "tę inicjatywę",

@@ -4942,7 +4942,9 @@
       "allStatuses": "All statuses",
       "undated": "Undated",
       "loading": "Loading…",
-      "empty": "No dated tasks or milestones."
+      "empty": "No dated tasks or milestones.",
+      "show": "Show calendar",
+      "hide": "Hide calendar"
     },
     "confirmDelete": "Permanently delete \"{{name}}\"? This cannot be undone.",
     "thisInitiative": "this initiative",

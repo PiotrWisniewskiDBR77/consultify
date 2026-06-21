@@ -18,6 +18,7 @@
 import { motion } from 'framer-motion';
 import {
   AlertTriangle,
+  CalendarDays,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -37,6 +38,8 @@ import { useInitiativeContext } from './InitiativeContext';
 import type { TimelinePlannerHandle } from './TimelinePlanner';
 import { TimelinePlanner } from './TimelinePlanner';
 import type { InitiativeSectionProps, TimelineMilestone, TimelinePhase } from './types';
+import { InitiativeCalendar } from '../calendar';
+import { buildScheduleItems } from '@/services/initiativeSchedule';
 import { getTimelineMode, TIMELINE_MODE_META } from './types';
 
 // ==========================================
@@ -517,6 +520,19 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     timelineAiRequest,
     clearTimelineAiRequest,
   } = useInitiativeContext();
+
+  // M13 Depth · Seria R (M13c) — unified schedule for the calendar view.
+  // Single source (buildScheduleItems) shared with the future task Gantt (V1).
+  const scheduleItems = useMemo(
+    () =>
+      buildScheduleItems({
+        tasks: tasks || [],
+        milestones: timelineMilestones || [],
+        timeline: timelinePhases || [],
+      }),
+    [tasks, timelineMilestones, timelinePhases]
+  );
+  const [showCalendar, setShowCalendar] = useState(false);
 
   // AI proposal state (Analyze with AI)
   const [aiBusy, setAiBusy] = useState(false);
@@ -1295,6 +1311,26 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* M13 Depth · Seria R (M13c) — Calendar view (tasks + milestones + phases by date) */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowCalendar((v) => !v)}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          aria-expanded={showCalendar}
+        >
+          <CalendarDays size={14} />
+          {showCalendar
+            ? t('initiatives.calendarView.hide', 'Hide calendar')
+            : t('initiatives.calendarView.show', 'Show calendar')}
+        </button>
+        {showCalendar && (
+          <div className="mt-2">
+            <InitiativeCalendar items={scheduleItems} />
+          </div>
+        )}
+      </div>
+
       {/* AI Proposal Modal — Timeline */}
       {showAIModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
