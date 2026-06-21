@@ -13167,7 +13167,19 @@
         "presentation": "Prezentacja",
         "presentationHint": "Slajdy w jakości Gamma — układ i grafika",
         "table": "Tabela",
-        "tableHint": "Otypowany arkusz z formatami — styl Airtable/Excel"
+        "tableHint": "Otypowany arkusz z formatami — styl Airtable/Excel",
+        "chooseTemplate": "Wybierz szablon",
+        "templateSubtitle": "Zacznij od zera lub z szablonu",
+        "back": "Wstecz",
+        "tpl": {
+          "blank": "Pusty",
+          "auditReport": "Raport audytowy",
+          "execMemo": "Memo zarządcze",
+          "boardDeck": "Deck zarządczy",
+          "diagnostic": "Read-out diagnostyczny",
+          "riskRegister": "Rejestr ryzyk",
+          "kpiDashboard": "KPI Dashboard"
+        }
       },
       "kind": {
         "presentation": "Prezentacja",

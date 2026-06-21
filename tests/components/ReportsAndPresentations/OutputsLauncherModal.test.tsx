@@ -1,8 +1,8 @@
 /**
  * @vitest-environment jsdom
  *
- * FT-1 (unit) dla E1 — OutputsLauncherModal (wspólne wejście „Nowy" + 3 kafle typu).
- * Tracker: Harvard/wdrozenie-100/DELIVERABLES-STAN-PRACY-ODBIORY.md (sub-moduł E1).
+ * FT-1 (unit) dla E1+E2 — OutputsLauncherModal (wspólne wejście 2-krokowe:
+ * typ → template). Tracker: Harvard/wdrozenie-100/DELIVERABLES-STAN-PRACY-ODBIORY.md.
  */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -22,47 +22,69 @@ afterEach(() => {
 
 function setup(overrides: Partial<React.ComponentProps<typeof OutputsLauncherModal>> = {}) {
   const onClose = vi.fn();
-  const onSelectType = vi.fn();
-  render(
-    <OutputsLauncherModal open onClose={onClose} onSelectType={onSelectType} {...overrides} />
-  );
-  return { onClose, onSelectType };
+  const onSelect = vi.fn();
+  render(<OutputsLauncherModal open onClose={onClose} onSelect={onSelect} {...overrides} />);
+  return { onClose, onSelect };
 }
 
-describe('OutputsLauncherModal (E1 · FT-1)', () => {
+describe('OutputsLauncherModal (E1+E2 · FT-1)', () => {
   it('nie renderuje nic gdy open=false', () => {
     const { container } = render(
-      <OutputsLauncherModal open={false} onClose={vi.fn()} onSelectType={vi.fn()} />
+      <OutputsLauncherModal open={false} onClose={vi.fn()} onSelect={vi.fn()} />
     );
     expect(container.firstChild).toBeNull();
   });
 
-  it('renderuje dialog z 3 kaflami typu (Raport/Prezentacja/Tabela)', () => {
+  it('krok 1: dialog z 3 kaflami typu', () => {
     setup();
     expect(screen.getByRole('dialog')).toBeTruthy();
-    // 3 kafle + przycisk zamknięcia = 4 przyciski; kafle po aria-label
     expect(screen.getByRole('button', { name: 'Report' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Presentation' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Table' })).toBeTruthy();
   });
 
-  it('klik kafla woła onSelectType z poprawnym typem i zamyka', () => {
-    const { onSelectType, onClose } = setup();
+  it('krok 1→2: wybór typu pokazuje galerię template (Blank + kuratorowane)', () => {
+    setup();
     fireEvent.click(screen.getByRole('button', { name: 'Presentation' }));
-    expect(onSelectType).toHaveBeenCalledWith('presentation');
+    expect(screen.getByRole('button', { name: 'Blank' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Board deck' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Diagnostic read-out' })).toBeTruthy();
+    // tytuł kroku 2
+    expect(screen.getByText('Choose a template')).toBeTruthy();
+  });
+
+  it('wybór template emituje onSelect({type, templateId}) i zamyka', () => {
+    const { onSelect, onClose } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Presentation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Board deck' }));
+    expect(onSelect).toHaveBeenCalledWith({ type: 'presentation', templateId: 'board-deck' });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('każdy z 3 typów emituje właściwą wartość', () => {
-    const onSelectType = vi.fn();
-    setup({ onSelectType });
+  it('Blank emituje templateId "blank"', () => {
+    const { onSelect } = setup();
     fireEvent.click(screen.getByRole('button', { name: 'Report' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
-    expect(onSelectType).toHaveBeenNthCalledWith(1, 'report');
-    expect(onSelectType).toHaveBeenNthCalledWith(2, 'table');
+    fireEvent.click(screen.getByRole('button', { name: 'Blank' }));
+    expect(onSelect).toHaveBeenCalledWith({ type: 'report', templateId: 'blank' });
   });
 
-  it('a11y: dialog ma aria-modal i aria-labelledby; Escape zamyka', () => {
+  it('każdy typ ma własną galerię (tabela → Rejestr ryzyk)', () => {
+    const { onSelect } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Risk register' }));
+    expect(onSelect).toHaveBeenCalledWith({ type: 'table', templateId: 'risk-register' });
+  });
+
+  it('przycisk Wstecz wraca z kroku 2 do kroku 1', () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Presentation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    // znów widać kafle typu
+    expect(screen.getByRole('button', { name: 'Report' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Table' })).toBeTruthy();
+  });
+
+  it('a11y: dialog ma aria-modal i aria-labelledby; Escape na kroku 1 zamyka', () => {
     const { onClose } = setup();
     const dialog = screen.getByRole('dialog');
     expect(dialog.getAttribute('aria-modal')).toBe('true');
@@ -71,16 +93,19 @@ describe('OutputsLauncherModal (E1 · FT-1)', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('klik w tło (overlay) zamyka, klik w panel nie', () => {
+  it('Escape na kroku 2 cofa do kroku 1 (nie zamyka)', () => {
     const { onClose } = setup();
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(dialog); // overlay = target === currentTarget
-    expect(onClose).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Presentation' }));
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Report' })).toBeTruthy();
   });
 
-  it('przycisk zamknięcia woła onClose', () => {
+  it('klik w tło (overlay) zamyka; przycisk Zamknij zamyka', () => {
     const { onClose } = setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('dialog'));
     expect(onClose).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onClose).toHaveBeenCalledTimes(2);
   });
 });

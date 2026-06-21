@@ -1,21 +1,38 @@
 /**
- * OutputsLauncherModal — wspólne wejście „Nowy" dla generatorów deliverable (M17–M20, E1).
+ * OutputsLauncherModal — wspólne wejście „Nowy" dla generatorów deliverable (M17–M20).
  *
- * Jedno wejście, trzy wyjścia: Raport · Prezentacja · Tabela. Świadomy wybór typu
- * (wyjście jest różne), flow PO wyborze identyczny — wzorzec SSOT
- * docs/product/DELIVERABLES_GENERATORS_SPEC.md §1. Wybór typu emituje `onSelectType`;
- * spięcie z silnikiem generacji / „paczką kontekstu" = sub-moduł E3.
+ * Przepływ 2-krokowy (SSOT docs/product/DELIVERABLES_GENERATORS_SPEC.md §1):
+ *   E1 · krok 1 — wybór TYPU (Raport · Prezentacja · Tabela). Wyjście różne, wejście wspólne.
+ *   E2 · krok 2 — wybór TEMPLATE (Blank + kuratorowane v1). Galeria per typ.
+ * Wybór emituje `onSelect({ type, templateId })`; spięcie z silnikiem generacji
+ * + „paczką kontekstu" = sub-moduł E3. Realna biblioteka DBR77 + user-created = seria T.
  *
  * Styl/kanon wzorowany na MyWork/notebook/NewPageModal (overlay + backdrop-dismiss + Escape).
  */
 
-import { FileText, Presentation, Table2, X } from 'lucide-react';
-import React, { useCallback, useEffect, useRef } from 'react';
+import {
+  ArrowLeft,
+  ClipboardList,
+  FileText,
+  LayoutDashboard,
+  Presentation,
+  ShieldAlert,
+  Sparkles,
+  Table2,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type DeliverableType = 'report' | 'presentation' | 'table';
 
-interface LauncherTile {
+export interface LauncherSelection {
+  type: DeliverableType;
+  /** templateId === 'blank' ⇒ start od zera (bez szkieletu). */
+  templateId: string;
+}
+
+interface TypeTile {
   type: DeliverableType;
   icon: React.ReactNode;
   gradient: string;
@@ -25,7 +42,14 @@ interface LauncherTile {
   hintFallback: string;
 }
 
-const TILES: LauncherTile[] = [
+interface TemplateCard {
+  id: string;
+  icon: React.ReactNode;
+  labelKey: string;
+  labelFallback: string;
+}
+
+const TYPE_TILES: TypeTile[] = [
   {
     type: 'report',
     icon: <FileText size={22} />,
@@ -55,36 +79,103 @@ const TILES: LauncherTile[] = [
   },
 ];
 
+const BLANK_CARD: TemplateCard = {
+  id: 'blank',
+  icon: <Sparkles size={18} />,
+  labelKey: 'rap.outputs.launcher.tpl.blank',
+  labelFallback: 'Blank',
+};
+
+// v1 — kuratorowane szablony placeholder (realna biblioteka DBR77 = seria T).
+// id-y zgodne ze scenariuszami MQ-* z DELIVERABLES_QUALITY_RUBRIC.md.
+const TEMPLATES: Record<DeliverableType, TemplateCard[]> = {
+  report: [
+    BLANK_CARD,
+    {
+      id: 'audit-report',
+      icon: <ClipboardList size={18} />,
+      labelKey: 'rap.outputs.launcher.tpl.auditReport',
+      labelFallback: 'Audit report',
+    },
+    {
+      id: 'exec-memo',
+      icon: <FileText size={18} />,
+      labelKey: 'rap.outputs.launcher.tpl.execMemo',
+      labelFallback: 'Executive memo',
+    },
+  ],
+  presentation: [
+    BLANK_CARD,
+    {
+      id: 'board-deck',
+      icon: <Presentation size={18} />,
+      labelKey: 'rap.outputs.launcher.tpl.boardDeck',
+      labelFallback: 'Board deck',
+    },
+    {
+      id: 'diagnostic',
+      icon: <LayoutDashboard size={18} />,
+      labelKey: 'rap.outputs.launcher.tpl.diagnostic',
+      labelFallback: 'Diagnostic read-out',
+    },
+  ],
+  table: [
+    BLANK_CARD,
+    {
+      id: 'risk-register',
+      icon: <ShieldAlert size={18} />,
+      labelKey: 'rap.outputs.launcher.tpl.riskRegister',
+      labelFallback: 'Risk register',
+    },
+    {
+      id: 'kpi-dashboard',
+      icon: <LayoutDashboard size={18} />,
+      labelKey: 'rap.outputs.launcher.tpl.kpiDashboard',
+      labelFallback: 'KPI dashboard',
+    },
+  ],
+};
+
 export interface OutputsLauncherModalProps {
   open: boolean;
   onClose: () => void;
-  /** Wywoływane po wyborze typu deliverable. */
-  onSelectType: (type: DeliverableType) => void;
+  /** Wywoływane po wyborze typu + template. */
+  onSelect: (selection: LauncherSelection) => void;
 }
 
 export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   open,
   onClose,
-  onSelectType,
+  onSelect,
 }) => {
   const { t } = useTranslation();
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [selectedType, setSelectedType] = useState<DeliverableType | null>(null);
+
+  // Reset kroku przy każdym otwarciu.
+  useEffect(() => {
+    if (open) setSelectedType(null);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (selectedType) setSelectedType(null);
+        else onClose();
+      }
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [open, onClose]);
+  }, [open, onClose, selectedType]);
 
-  const handleSelect = useCallback(
-    (type: DeliverableType) => {
-      onSelectType(type);
+  const handlePickTemplate = useCallback(
+    (templateId: string) => {
+      if (!selectedType) return;
+      onSelect({ type: selectedType, templateId });
       onClose();
     },
-    [onSelectType, onClose]
+    [selectedType, onSelect, onClose]
   );
 
   if (!open) return null;
@@ -102,12 +193,25 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
     >
       <div className="w-full max-w-xl mx-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-800">
-          <h2
-            id="outputs-launcher-title"
-            className="text-base font-semibold text-slate-900 dark:text-white"
-          >
-            {t('rap.outputs.launcher.title', 'New output')}
-          </h2>
+          <div className="flex items-center gap-2 min-w-0">
+            {selectedType && (
+              <button
+                onClick={() => setSelectedType(null)}
+                className="p-1 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                aria-label={t('rap.outputs.launcher.back', 'Back')}
+              >
+                <ArrowLeft size={18} />
+              </button>
+            )}
+            <h2
+              id="outputs-launcher-title"
+              className="text-base font-semibold text-slate-900 dark:text-white truncate"
+            >
+              {selectedType
+                ? t('rap.outputs.launcher.chooseTemplate', 'Choose a template')
+                : t('rap.outputs.launcher.title', 'New output')}
+            </h2>
+          </div>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
@@ -118,38 +222,70 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
         </div>
 
         <div className="p-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            {t('rap.outputs.launcher.subtitle', 'Pick what you want to create')}
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {TILES.map((tile) => {
-              const label = t(tile.labelKey, tile.labelFallback);
-              return (
-                <button
-                  key={tile.type}
-                  type="button"
-                  onClick={() => handleSelect(tile.type)}
-                  aria-label={label}
-                  className="group flex flex-col items-start gap-3 w-full p-4 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
-                >
-                  <div
-                    className={`shrink-0 p-2.5 rounded-lg bg-gradient-to-br ${tile.gradient} text-white`}
-                  >
-                    {tile.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-medium text-sm text-slate-900 dark:text-white">
-                      {label}
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {t(tile.hintKey, tile.hintFallback)}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {!selectedType ? (
+            <>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                {t('rap.outputs.launcher.subtitle', 'Pick what you want to create')}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {TYPE_TILES.map((tile) => {
+                  const label = t(tile.labelKey, tile.labelFallback);
+                  return (
+                    <button
+                      key={tile.type}
+                      type="button"
+                      onClick={() => setSelectedType(tile.type)}
+                      aria-label={label}
+                      className="group flex flex-col items-start gap-3 w-full p-4 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                    >
+                      <div
+                        className={`shrink-0 p-2.5 rounded-lg bg-gradient-to-br ${tile.gradient} text-white`}
+                      >
+                        {tile.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm text-slate-900 dark:text-white">
+                          {label}
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          {t(tile.hintKey, tile.hintFallback)}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                {t('rap.outputs.launcher.templateSubtitle', 'Start blank or from a template')}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {TEMPLATES[selectedType].map((tpl) => {
+                  const label = t(tpl.labelKey, tpl.labelFallback);
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => handlePickTemplate(tpl.id)}
+                      aria-label={label}
+                      className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
+                    >
+                      <div className="shrink-0 p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                        {tpl.icon}
+                      </div>
+                      <div className="min-w-0 pt-0.5">
+                        <div className="font-medium text-[13px] text-slate-900 dark:text-white leading-tight">
+                          {label}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -12575,7 +12575,19 @@
         "presentation": "Presentation",
         "presentationHint": "Gamma-grade slides with layout and visuals",
         "table": "Table",
-        "tableHint": "Typed, formatted sheet — Airtable/Excel style"
+        "tableHint": "Typed, formatted sheet — Airtable/Excel style",
+        "chooseTemplate": "Choose a template",
+        "templateSubtitle": "Start blank or from a template",
+        "back": "Back",
+        "tpl": {
+          "blank": "Blank",
+          "auditReport": "Audit report",
+          "execMemo": "Executive memo",
+          "boardDeck": "Board deck",
+          "diagnostic": "Diagnostic read-out",
+          "riskRegister": "Risk register",
+          "kpiDashboard": "KPI dashboard"
+        }
       },
       "kind": {
         "presentation": "Presentation",

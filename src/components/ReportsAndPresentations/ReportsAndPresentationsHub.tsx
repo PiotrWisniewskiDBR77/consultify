@@ -40,7 +40,7 @@ import {
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
-import { type DeliverableType, OutputsLauncherModal } from './OutputsLauncherModal';
+import { type LauncherSelection, OutputsLauncherModal } from './OutputsLauncherModal';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
@@ -202,16 +202,18 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // E1: wspólne wejście routuje per typ do istniejącego kreatora.
   // Spięcie z silnikiem generacji + „paczką kontekstu" = sub-moduł E3.
   const handleLauncherSelect = useCallback(
-    (type: DeliverableType) => {
+    ({ type, templateId }: LauncherSelection) => {
+      // E2: template przekazywany w query; konsumpcja szkieletu = silnik (E3) + seria T.
+      const q = templateId && templateId !== 'blank' ? `?template=${templateId}` : '';
       switch (type) {
         case 'report':
-          navigate('/reports/builder');
+          navigate(`/reports/builder${q}`);
           break;
         case 'presentation':
-          navigate('/presentations/wizard');
+          navigate(`/presentations/wizard${q}`);
           break;
         case 'table':
-          navigate('/tabele');
+          navigate(`/tabele${q}`);
           break;
       }
     },
@@ -1122,7 +1124,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       <OutputsLauncherModal
         open={launcherOpen}
         onClose={() => setLauncherOpen(false)}
-        onSelectType={handleLauncherSelect}
+        onSelect={handleLauncherSelect}
       />
     </div>
   );
