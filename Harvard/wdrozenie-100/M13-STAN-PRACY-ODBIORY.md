@@ -67,7 +67,7 @@ Bramki realizacji: Epiki x/N · DoD x/7 · Testy (vitest+playwright PASS) · Man
 | R4 | M13d Notyfikacje — build | R | 3/4 | ✅ | ✅ | 0/10 | N/A | ⬜ | ⬜ | 2 | 🟢 DEPLOYED demo — emitery 7/7 + **status-change WPIĘTY** w `updateInitiativeStatus` (notify watchers/owners po sukcesie, fail-safe, bez dublu z gate_blocked); assignment/due/blocker call-sites = follow-up |
 | C1 | Generator portfolio-aware (dedup) | C (tworzenie) | 3/3 | ✅ | ✅ | 0/8 | 🟡 | ⬜ | ⬜ | 1 | 🟢 GOTOWY code-side — `initiativeSimilarityService` (Jaccard, fail-safe) + `POST /similar-check` 7/7 + **ostrzeżenie o duplikacie w Charter Wizard** (debounce na tytule, amber); E3 model-select N/A (Q5); tsc/lint clean; live-verify+deploy zostają |
 | C2 | Tworzenie przez Teresę — e2e | C | 2/2 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 1 | 🟢 GOTOWY code-side — tool `generate_initiative` (READ/auto, DRAFT, Postgres-correct) + handler 5/5 + registracja + persona prompt; registry 2/2 (additive, czat nietknięty); e2e „Teresa stwórz inicjatywę" na demo po deployu |
-| K1 | Karty §B3 — egzekwowanie jakości | K (artefakt) | 0/2 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 0 | ⬜ NIE ROZP. (czeka Q7) |
+| K1 | Karty §B3 — egzekwowanie jakości | K (artefakt) | 2/2 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 0 | 🟢 GOTOWY backend — `initiativeCardValidators` (lang_pl/no_filler/problem_len/hypothesis_format, **advisory** wg Q7) + `POST /validate-card` 7/7; FE lint w dokumencie = follow-up |
 | K2 | Karty — `CardContainer` (układ graficzny) | K | 0/2 | 0/7 | ⬜ | 0/8 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. (czeka Q6) |
 | K3 | Karty — korelacja artefaktów (trwała) | K | 0/3 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. |
 | K4 | AI-fill — domknięcie 7 sekcji | K | 0/2 | 0/7 | ⬜ | 0/7 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. |

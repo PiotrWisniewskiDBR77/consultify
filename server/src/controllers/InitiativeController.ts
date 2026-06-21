@@ -40,6 +40,7 @@ import {
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
 import { notifyStatusChange } from '../services/initiative/initiativeNotificationService.js';
+import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
 import notificationService from '../services/notificationService.js';
 import {
@@ -5607,6 +5608,26 @@ export class InitiativeController {
       }
 
       res.json({ success: true, roles: inserted });
+    }
+  );
+
+  /**
+   * POST /initiatives/validate-card  (M13 Depth · Seria K · K1)
+   * Deterministic §B3 card-quality validators (advisory, never blocks).
+   */
+  static validateCard = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { text, rules } = (req.body as any) || {};
+      const issues = validateCardContent(
+        String(text || ''),
+        Array.isArray(rules) ? rules : undefined
+      );
+      res.json({ issues });
     }
   );
 
