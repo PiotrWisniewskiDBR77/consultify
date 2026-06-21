@@ -837,11 +837,18 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   const didPersistRef = useRef(false);
   const stickyColorCounter = useRef(0);
+  // Guard against re-entrant hydration. The hydrate effect re-runs whenever `hydrate`'s
+  // identity or `refreshToken` changes; on a saturated connection pool a second hydrate
+  // could fire before the GET /map of the first resolves, piling up pending requests and
+  // wedging the board on the skeleton forever. One fetch in flight at a time.
+  const hydrateInFlightRef = useRef(false);
 
   // ── Hydrate ──────────────────────────────────────────────────────────────
 
   const hydrate = useCallback(async () => {
     if (!open) return;
+    if (hydrateInFlightRef.current) return;
+    hydrateInFlightRef.current = true;
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
@@ -1006,6 +1013,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       setExtensions({});
     } finally {
       setLoading(false);
+      hydrateInFlightRef.current = false;
     }
   }, [i18n.language, ideaId, isPl, open, setEdges, setNodes, toolSessionId]);
 

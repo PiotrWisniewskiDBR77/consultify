@@ -167,8 +167,16 @@ export function useWorkspaceGraphRuntime({
     [preferredTool]
   );
 
+  // Guard against re-entrant refreshes. The load effect re-runs whenever `refresh`'s identity
+  // changes; if the GET /map response is slow (or the connection pool is saturated) a new
+  // refresh could fire before the previous one resolves, piling up hundreds of pending
+  // requests and wedging the board on "Loading" forever. One fetch in flight at a time.
+  const refreshInFlightRef = useRef(false);
+
   const refresh = useCallback(async () => {
     if (!open || !ideaId) return;
+    if (refreshInFlightRef.current) return;
+    refreshInFlightRef.current = true;
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language });
@@ -194,6 +202,7 @@ export function useWorkspaceGraphRuntime({
       if (storedViewport) setViewport(storedViewport);
     } finally {
       setLoading(false);
+      refreshInFlightRef.current = false;
     }
   }, [ideaId, language, open, primeServerVersion]);
 
