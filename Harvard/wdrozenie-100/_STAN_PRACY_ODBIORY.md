@@ -72,7 +72,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M14 | Wdrożenie | 2/4 | 0/6 | 0/7 | ⬜ | 0/63 | ⬜ | ⬜ | ⬜ | 18 | ⬜ NIE ROZP. |
 | M15 | Rezultaty | 2 | 0/6 | 0/7 | ⬜ | 0/58 | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
 | M16 | Finanse | 2 | 0/5 | 0/7 | ⬜ | 0/70 | ⬜ | ⬜ | ⬜ | 22 | ⬜ NIE ROZP. |
-| M17 | Outputs | 3 | 0/4 | 0/7 | ⬜ | 0/84 | ⬜ | ⬜ | ⬜ | 11 | ⬜ NIE ROZP. |
+| M17 | Outputs | 3 | 0/4 | 0/7 | ⬜ | 0/84 | ⬜ | ⬜ | ⬜ | 11 | 🔵 PROGRAM DELIVERABLE (M17–M20) — osobny SSOT: [`DELIVERABLES-STAN-PRACY-ODBIORY.md`](DELIVERABLES-STAN-PRACY-ODBIORY.md) (serie E/R/T/B/X · 24 sub-moduły · 8 faz testowych) |
 | M18 | Dokumenty | 1 | 6/6 | 6/7 | 15+74✅ | 0/72 | ✅ | ⬜ | ⬜ | 7 | 🟢 GOTOWY code-side (real. 5/5 zweryf. 2026-06-21; #3 i18n→Fala4; czeka deploy+flaga V8+dowody żywe+→F/→UI) |
 | M19 | Prezentacje | 3/4 | 0/4 | 0/7 | ⬜ | 0/81 | ⬜ | ⬜ | ⬜ | 21 | ⬜ NIE ROZP. |
 | M20 | Tabele Studio | 1 | 0/4 | 0/7 | ⬜ | 0/95 | ⬜ | ⬜ | ⬜ | 13 | ⬜ NIE ROZP. |
