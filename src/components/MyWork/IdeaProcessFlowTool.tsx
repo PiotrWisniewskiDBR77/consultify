@@ -1877,6 +1877,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       role="region"
       aria-label={isPl ? 'Edytor przepływu procesu' : 'Process flow editor'}
     >
+      {/* z-[60] wrapper: keep the FLOW MODE / shape toolbar above the workspace
+          breadcrumb card (IdeaMapWorkspace, z-57) which otherwise overlaps and
+          blocks the Start / End / Action buttons. (M07 live-debug 2026-06-20) */}
+      <div className="relative z-[60]">
       <ProcessFlowToolbar
         isPl={!!isPl}
         locked={locked}
@@ -1917,6 +1921,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
         onConvert={onQuickAction ? handleConvert : undefined}
       />
+      </div>
 
       {loadError && !loading && nodes.length === 0 && (
         <div className="px-4 pt-3">
