@@ -5638,14 +5638,13 @@ function MindMapInner({
             pushUndo();
             const edgeId = `dep-edge-${uid()}`;
             const depType = dep.type || 'related_to';
-            const color =
-              depType === 'depends_on'
-                ? '#f43f5e'
-                : depType === 'enables'
-                  ? '#22c55e'
-                  : depType === 'conflicts_with'
-                    ? '#f59e0b'
-                    : '#6366f1';
+            const DEP_EDGE_COLOR: Record<string, string> = {
+              depends_on: 'var(--c-danger)',
+              enables: 'var(--c-success)',
+              conflicts_with: 'var(--c-warning)',
+              related_to: 'var(--c-info)',
+            };
+            const color = DEP_EDGE_COLOR[depType] ?? 'var(--c-info)';
             const newEdge: Edge = {
               id: edgeId,
               source: dep.sourceNodeId,
@@ -5674,14 +5673,7 @@ function MindMapInner({
             for (const dep of deps) {
               const edgeId = `dep-edge-${uid()}`;
               const depType = dep.type || 'related_to';
-              const color =
-                depType === 'depends_on'
-                  ? '#f43f5e'
-                  : depType === 'enables'
-                    ? '#22c55e'
-                    : depType === 'conflicts_with'
-                      ? '#f59e0b'
-                      : '#6366f1';
+              const color = DEP_EDGE_COLOR[depType] ?? 'var(--c-info)';
               const newEdge: Edge = {
                 id: edgeId,
                 source: dep.sourceNodeId,
