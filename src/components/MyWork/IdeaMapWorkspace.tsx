@@ -2283,7 +2283,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const handleNodeDataChange = useCallback(
     async (nodeId: string, patch: Partial<ExtendedNodeData>) => {
       setNodeDetailData((prev) => ({ ...prev, ...patch }));
-      try {
+      // Save the node patch by writing the full map back through the SHARED
+      // document — but on the AUTHORITATIVE version we read here, NOT
+      // graphRuntime's internal counter. graphRuntime tracks its own
+      // server version, which drifts out of date in tools (e.g. the
+      // whiteboard) that own their node state and persist through a separate
+      // sync owner. Routing the drawer's save through graphRuntime therefore
+      // 409'd against the tool's newer version and the edit was silently lost.
+      // Read fresh → patch → sync with that exact baseVersion, retrying once on
+      // a 409 (the tool may have autosaved between our read and write).
+      const applyOnce = async () => {
         const mapRes = await Api.getMyIdeaMap(realId, { language: i18n.language });
         const map = mapRes?.map || {};
         const nodes: any[] = Array.isArray(map.nodes) ? [...map.nodes] : [];
@@ -2291,26 +2300,38 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const updatedNodes = nodes.map((n: any) =>
           String(n?.id) === nodeId ? { ...n, data: { ...(n.data || {}), ...patch } } : n
         );
-        graphRuntime.captureToolGraph(
-          {
-            nodes: updatedNodes as any[],
-            edges: edges as any[],
-            extensions:
-              map?.extensions &&
-              typeof map.extensions === 'object' &&
-              !Array.isArray(map.extensions)
-                ? map.extensions
-                : {},
-          },
-          { reason: 'semantic', immediate: true }
-        );
-        await graphRuntime.flushGraph({ reason: 'manual' });
+        const extensions =
+          map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
+            ? (map.extensions as Record<string, unknown>)
+            : {};
+        return Api.syncMyIdeaMap(realId, {
+          nodes: updatedNodes,
+          edges,
+          baseVersion: Number(map?.version || 1),
+          preferredTool: (map?.preferredTool as any) || activeTool,
+          extensions,
+          reason: 'semantic',
+        });
+      };
+      try {
+        try {
+          await applyOnce();
+        } catch (err: any) {
+          if (err?.status === 409) {
+            await applyOnce();
+          } else {
+            throw err;
+          }
+        }
+        // Pull the freshly persisted map back into graphRuntime + the active
+        // tool view so the edit is reflected without a manual reload.
+        void graphRuntime.refresh();
         setMapRefreshToken((v) => v + 1);
       } catch {
         /* best-effort save */
       }
     },
-    [graphRuntime, i18n.language, realId]
+    [activeTool, graphRuntime, i18n.language, realId]
   );
 
   // ── Drill-down (sub-idea navigation) ────────────────────────────────────────
