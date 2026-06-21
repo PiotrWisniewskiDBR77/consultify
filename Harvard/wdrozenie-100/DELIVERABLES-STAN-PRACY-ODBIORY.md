@@ -104,11 +104,11 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 | **E2** | Galeria template'ów (wybór + Teresa-stub) | W1 | 2/2 | 🟡 | FT-1✅(10/10)·3,7⬜ | 0/5 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (launcher 2-krokowy typ→template, Blank+kuratorowane v1 per typ, i18n PL/EN, tsc clean, commit `c4c8bac2d3`; Teresa-proponuje=T4; realna biblioteka=seria T; FT-3 e2e + żywy smoke zostają) |
 | **E3** | Kontrakt „paczka kontekstu" + spięcie 3 ścieżek | W1 | 3/3 | 🟡 | FT-2✅(6/6)·3⬜ | 0/8 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (Nowy→Teresa: seed pendingPrompt dopasowany do detektorów Tryb B per typ, ZERO BE, nieinwazyjne; commit `097553ee6c`; templateId w contextData→seria T; FT-2 6/6 seed↔detektor PL+EN; źródła/czat już idą przez ten silnik; FT-3 e2e + manual zostają) |
 | **E4** | Routing wyboru → generator/edytor | W1 | 2/2 | 🟡 | reuse✅ | 0/4 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (realizowane przez REUSE Tryb B — kickoff E3 → istniejący mount edytora per format: deck→builder, doc→canvas, sheet→grid + loading/error/empty Tryb B; brak nowego kodu = jeden silnik; weryfikacja w checkpoincie manualnym W1) |
-| **R1** | Doc → TipTap edytor (zamiast viewera) | W2 | 0/3 | 0/7 | 1,2,3,7 | 0/8 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
-| **R2** | Doc → inline-AI „zaznacz→popraw" + kasacja Mode1/2/3 | W2 | 0/2 | 0/7 | 1,2,3,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
-| **R3** | Doc → render tabel/wykresów/KPI (recharts) | W2 | 0/2 | 0/7 | 1,3,7 | 0/5 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
-| **R4** | Deck → Gamma-flow (mniej przycisków, AI-driven) | W2 | 0/2 | 0/7 | 1,3,7 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
-| **R5** | Tabela → CF w GridView + jeden silnik formuł (AST) | W2 | 0/3 | 0/7 | 1,2,3,8 | 0/8 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
+| **R1** | Doc → TipTap edytor (zamiast viewera) | W2 | 0/3 | 0/7 | FT-1✅(20/20)·2,3,7⬜ | 0/8 | ⬜ | ⬜ | ⬜ | 🟢 GOTOWY code-side (DocumentTipTapEditor: schemaToProseMirror↔proseMirrorToSchema ZERO utraty tożsamości, remount-on-edit guard, NodeViews dla 5 typów atom, wpiąć w DocumentStudioDocumentPanel; commit `c2cc2aa091`; FT-1 20/20; FT-2 autosave-persyst + FT-3 e2e + manual zostają) |
+| **R2** | Doc → inline-AI „zaznacz→popraw" + kasacja Mode1/2/3 | W2 | 2/2 | 0/7 | FT-1✅(7/7)·2,3,8⬜ | 0/6 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (DocumentInlineAIMenu floating-menu: 5 akcji zaznacz→popraw; useDocumentInlineAI→proposals/local; approve→schema; EditorPanel usunięty 519 lin; Mode1/2/3 etykiety skasowane; wpiąć w TipTapEditor przez artifactId; commit 80e5ef94ea; FT-1 7/7; FT-2 integ + FT-3 e2e + manual zostają) |
+| **R3** | Doc → render tabel/wykresów/KPI (recharts) | W2 | 2/2 | 0/7 | FT-1✅(28/28)·3,7⬜ | 0/5 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (blocks/: DocChartBlock recharts bar/line/pie/area+donut; DocTableBlock zebra+risk; DocKpiStrip dual-shape; paleta Harvard clamp≤7; narrowChartContent/narrowTableContent/narrowKpiContent; commit `95c1bb80df`; FT-1 28/28; R1 konsumuje NodeViews) |
+| **R4** | Deck → Gamma-flow (mniej przycisków, AI-driven) | W2 | 2/2 | 0/7 | FT-1✅(16/16)·3,7⬜ | 0/6 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (CardFloatingToolbar usunięty; layout-picker usunięty; regenerateSlide(instruction) na dowolnym intecie; inline rewrite input na hover; Undo/Redo/Theme/Share/Teresa/Present/Confidentiality zachowane; commit `a740d65bf9`; FT-1 16/16) |
+| **R5** | Tabela → CF w GridView + jeden silnik formuł (AST) | W2 | 3/3 | 0/7 | FT-1✅(191/191)·2,3,8⬜ | 0/8 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (formulaEngineCore.ts port AST FE+BE identyczne; PlatformGridView CF; tp_views.config JSONB persyst bez migracji; commit `5e01bcbae8`; FT-1 191/191 + parity 8/8 FE↔BE) |
 | **T1** | Model template (szkielet+format) per typ + persyst | W3 | 0/2 | 0/7 | 1,2,8 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **T2** | Biblioteka DBR77 (kuratorowane per typ) | W3 | 0/2 | 0/7 | 1,2,6 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **T3** | User-created templates (CRUD) | W3 | 0/2 | 0/7 | 1,2,3,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
@@ -125,7 +125,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 | **X5** | doc/sheet → model decka (jedna encja) | W5 | 0/3 | 0/7 | 1,2,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **X6** | Outputs niezawodny rejestr (transakcyjny) + lineage | W5 | 0/2 | 0/7 | 1,2,8 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 
-**Postęp programu:** 0 / 24 ZAMKNIĘTYCH · **W1 (E1-E4) GOTOWA code-side 🟢** (wspólne wejście: launcher 2-krokowy → Teresa pre-armowana per typ; FT-1+FT-2 **22/22**; tsc 0; commity `a3387f55ed`/`c4c8bac2d3`/`097553ee6c`; czeka checkpoint manualny W1 na stagingu + →F/→UI) · W2 (R, 5) · W3 (T, 4) · W4 (B, 5) · W5 (X, 6) · Manual 0/132 · Skok jakości = seria B (mózg premium).
+**Postęp programu:** 0 / 24 ZAMKNIĘTYCH · **W1 (E1-E4) GOTOWA code-side 🟢** (FT-1+FT-2 22/22; czeka checkpoint manualny W1 + →F/→UI) · **W2 (R1-R5) 5/5 GOTOWE code-side 🟢** (R1 c2cc2aa091 · R2 80e5ef94ea · R3 95c1bb80df · R4 a740d65bf9 · R5 5e01bcbae8; FT-1: 20+7+28+16+191=262/262; czekają FT-2/3/7 checkpointy + →F/→UI) · W3 (T, 4) · W4 (B, 5) · W5 (X, 6) · Manual 0/132 · Skok jakości = seria B (mózg premium).
 **Słownik statusu:** ⬜ NIE ROZPOCZĘTY · 🟡 W TOKU · 🟢 GOTOWY DO ODBIORU (6 bramek realizacji ✅) · ✅ ZAMKNIĘTY (8/8 ✅).
 
 ---
