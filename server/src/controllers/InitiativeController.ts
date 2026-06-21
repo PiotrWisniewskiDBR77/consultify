@@ -16,10 +16,17 @@ import {
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
+import { isAiGate } from '../constants/initiativeGateAi.js';
 import activityService from '../services/ActivityService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
+import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
+import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
+import { notifyStatusChange } from '../services/initiative/initiativeNotificationService.js';
+import { recordGateAiEvent } from '../services/initiative/gateAiTelemetryService.js';
+import { getTimelineFlags } from '../services/initiative/gateTimelineService.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
+import { gateAiSoftBlocks } from '../types/gateAi.js';
 import {
   evaluateInitiativeGateAccess,
   evaluateInitiativeWriteAccess,
@@ -1278,6 +1285,62 @@ export class InitiativeController {
         }
       }
 
+      // M13 Depth · Fala 1 — AI gate soft-block (advisory, per-org flag, fail-open).
+      // Forward-progress gates only; flag OFF or any error → zero behavior change.
+      // Below-threshold readiness OR a blocking timeline flag requires an explicit
+      // `overrideReason` to proceed; every decision is recorded to telemetry.
+      if (gate && isAiGate(gate)) {
+        try {
+          if (await isInitiativeGateAiEnabled(orgId)) {
+            const overrideReason = (req.body as any)?.overrideReason
+              ? String((req.body as any).overrideReason).trim()
+              : '';
+            const [aiReadiness, timeline] = await Promise.all([
+              getGateReadiness(id, gate, orgId),
+              getTimelineFlags(id, gate, orgId),
+            ]);
+            const timelineBlock = !!timeline?.flags?.some((f: any) => f.severity === 'block');
+            const softBlocks = gateAiSoftBlocks({ enabled: true, gate, aiReadiness, timeline } as any);
+            if (softBlocks && !overrideReason) {
+              await recordGateAiEvent({
+                organizationId: orgId,
+                initiativeId: id,
+                gate,
+                score: aiReadiness?.score ?? null,
+                timelineBlock,
+                blocked: true,
+                overridden: false,
+                userId: actorId,
+              });
+              res.status(422).json({
+                error:
+                  'Gate readiness is below threshold. Provide an overrideReason to proceed anyway.',
+                code: 'INITIATIVE_GATE_AI_SOFT_BLOCK',
+                gate,
+                from: currentStatus,
+                to: nextStatus,
+                aiReadiness,
+                timeline,
+              });
+              return;
+            }
+            await recordGateAiEvent({
+              organizationId: orgId,
+              initiativeId: id,
+              gate,
+              score: aiReadiness?.score ?? null,
+              timelineBlock,
+              blocked: false,
+              overridden: softBlocks,
+              overrideReason: softBlocks ? overrideReason : null,
+              userId: actorId,
+            });
+          }
+        } catch (e: any) {
+          logger.warn('[initiatives] gate-ai soft-block skipped (fail-open):', e?.message);
+        }
+      }
+
       // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist
       const blockingItems = await getBlockingReadinessItems(orgId, id);
       if (blockingItems.length > 0) {
@@ -1868,6 +1931,23 @@ export class InitiativeController {
       lifecycleParams.push(id, orgId);
       const sql = `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, lifecycleParams);
+
+      // M13 Depth · Seria R (M13d) — notify watchers/owners of a SUCCESSFUL
+      // status change (existing notifications only cover gate-blocked failures).
+      // Fail-safe: a notification must never break the transition.
+      try {
+        const statusRecipients = await getInitiativeNotificationRecipients(orgId, id);
+        await notifyStatusChange(
+          orgId,
+          id,
+          currentStatus,
+          nextStatus,
+          statusRecipients.filter((uid: any) => uid && uid !== actorId),
+          { actorId }
+        );
+      } catch (e: any) {
+        logger.warn('[initiatives] R4 status-change notify skipped:', e?.message);
+      }
 
       // Benefits tracking window defaults (best-effort; older schemas may not have these columns).
       if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
@@ -3359,12 +3439,13 @@ export class InitiativeController {
       // is an indistinguishable 404 (no existence leak).
       const existing = await queryHelpers.queryOne<{
         id: string;
+        status: string | null;
         owner_business_id: string | null;
         owner_execution_id: string | null;
         sponsor_id: string | null;
         created_by: string | null;
       }>(
-        `SELECT id, owner_business_id, owner_execution_id, sponsor_id, created_by
+        `SELECT id, status, owner_business_id, owner_execution_id, sponsor_id, created_by
            FROM initiatives WHERE id = ? AND organization_id = ?`,
         [initiativeId, orgId]
       );
@@ -3390,6 +3471,22 @@ export class InitiativeController {
         res.status(403).json({
           error: 'Only the initiative owner or an organization admin can delete it',
           code: 'INITIATIVE_DELETE_FORBIDDEN',
+        });
+        return;
+      }
+
+      // Hard-delete is only allowed for not-yet-active initiatives. An active
+      // initiative (PLANNING…TRACKING) is linked into M14/15/16 (deployment,
+      // results, finance) and must be CANCELLED first so those rows unwind
+      // through the lifecycle rather than being orphaned by a raw delete.
+      const DELETABLE_STATUSES = new Set(['DRAFT', 'CANCELLED']);
+      const currentStatus = String(existing.status || 'DRAFT').toUpperCase();
+      if (!DELETABLE_STATUSES.has(currentStatus)) {
+        res.status(409).json({
+          error:
+            'Only DRAFT or CANCELLED initiatives can be deleted. Cancel the initiative first.',
+          code: 'INITIATIVE_DELETE_INVALID_STATE',
+          status: currentStatus,
         });
         return;
       }
@@ -5505,6 +5602,64 @@ export class InitiativeController {
       }
 
       res.json({ success: true, roles: inserted });
+    }
+  );
+
+  /**
+   * POST /initiatives/:id/gate-ai-check  (M13 Depth · Fala 1)
+   * Lazy AI readiness for a specific gate (substantive rollup + timeline).
+   * `enabled:false` when the per-org flag is OFF, the gate is non-AI, or AI
+   * failed open — the caller must NOT soft-block in that case.
+   */
+  static getGateAiCheck = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const { id } = req.params;
+      const gateRaw = String((req.body as any)?.gate || '')
+        .trim()
+        .toUpperCase();
+      const targetStatusRaw = String((req.body as any)?.targetStatus || '')
+        .trim()
+        .toUpperCase();
+
+      // Org-scoped existence (cross-org id → indistinguishable 404).
+      const existing = await queryHelpers.queryOne(
+        `SELECT id, status FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!existing) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      // Prefer an explicit `gate`; otherwise derive it from `targetStatus` using
+      // the current status (so the FE can pass the transition it's attempting).
+      let gate: string | null = (Object.values(GateType) as string[]).includes(gateRaw)
+        ? gateRaw
+        : null;
+      if (!gate && targetStatusRaw) {
+        const current = normalizeInitiativeDbStatusForRead((existing as any).status);
+        gate = getGateForTransition(current as any, targetStatusRaw as any) || null;
+      }
+      if (!gate) {
+        res.status(400).json({ error: 'Unknown gate', code: 'GATE_AI_UNKNOWN_GATE' });
+        return;
+      }
+
+      const enabled = (await isInitiativeGateAiEnabled(orgId)) && isAiGate(gate as any);
+      if (!enabled) {
+        res.json({ enabled: false, gate, aiReadiness: null, timeline: null });
+        return;
+      }
+      const [aiReadiness, timeline] = await Promise.all([
+        getGateReadiness(id, gate as any, orgId),
+        getTimelineFlags(id, gate as any, orgId),
+      ]);
+      res.json({ enabled: true, gate, aiReadiness, timeline });
     }
   );
 

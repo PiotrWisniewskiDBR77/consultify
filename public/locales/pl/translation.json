@@ -2146,6 +2146,48 @@
     }
   },
   "initiatives": {
+    "gateAi": {
+      "pill": {
+        "ariaReady": "Gotowość AI: gotowe, wynik {{score}} na 100",
+        "ariaBelow": "Gotowość AI: poniżej progu, wynik {{score}} na 100",
+        "ariaLoading": "Ocena gotowości AI w toku",
+        "loading": "Ocena…",
+        "label": "Gotowość AI",
+        "scoreSuffix": "/100"
+      },
+      "panel": {
+        "title": "Gotowość do bramki — analiza AI",
+        "readyTitle": "Inicjatywa gotowa do przejścia",
+        "readyDescription": "Wszystkie wymagane sekcje spełniają próg i nie wykryto blokad na linii czasu.",
+        "scoreLabel": "Wynik gotowości",
+        "thresholdLabel": "Próg",
+        "gapsTitle": "Braki merytoryczne",
+        "gapSectionScore": "wynik {{score}}/100",
+        "fixesTitle": "Sugerowane naprawy",
+        "timelineTitle": "Sygnały na linii czasu",
+        "timelineBlock": "Blokada",
+        "timelineWarn": "Ostrzeżenie",
+        "timelineKind": {
+          "dependency": "Zależność",
+          "date_conflict": "Konflikt dat",
+          "resource_conflict": "Konflikt zasobów"
+        },
+        "noTimeline": "Brak analizy linii czasu dla tej bramki.",
+        "emptyTitle": "Brak danych gotowości",
+        "emptyDescription": "Ocena AI nie jest dostępna dla tej bramki."
+      },
+      "override": {
+        "title": "Przejście poniżej progu gotowości",
+        "description": "Inicjatywa nie spełnia progu gotowości AI. Możesz przejść mimo to — podaj uzasadnienie, które zostanie zapisane.",
+        "summaryScore": "Wynik {{score}}/100 (próg {{threshold}})",
+        "gapsTitle": "Główne braki",
+        "timelineTitle": "Blokady na linii czasu",
+        "reasonLabel": "Uzasadnienie (wymagane)",
+        "reasonPlaceholder": "Opisz, dlaczego przechodzisz mimo braków…",
+        "confirm": "Przejdź mimo to",
+        "cancel": "Anuluj"
+      }
+    },
     "roi": {
       "title": "Realizacja wartości i ROI",
       "subtitle": "Analizy ekonomiczne powiązane z inicjatywami",
@@ -4096,6 +4138,18 @@
     },
     "archive": {
       "hint": "Zakończ lub anuluj najpierw"
+    },
+    "archiveAction": "Archiwizuj",
+    "calendarView": {
+      "month": "Miesiąc",
+      "week": "Tydzień",
+      "today": "Dziś",
+      "prev": "Poprzedni",
+      "next": "Następny",
+      "allStatuses": "Wszystkie statusy",
+      "undated": "Bez daty",
+      "loading": "Ładowanie…",
+      "empty": "Brak zadań i kamieni z datą."
     },
     "confirmDelete": "Trwale usunąć „{{name}}\"? Tej operacji nie można cofnąć.",
     "thisInitiative": "tę inicjatywę",

@@ -2939,6 +2939,48 @@
     }
   },
   "initiatives": {
+    "gateAi": {
+      "pill": {
+        "ariaReady": "AI readiness: ready, score {{score}} out of 100",
+        "ariaBelow": "AI readiness: below threshold, score {{score}} out of 100",
+        "ariaLoading": "AI readiness assessment in progress",
+        "loading": "Assessing…",
+        "label": "AI readiness",
+        "scoreSuffix": "/100"
+      },
+      "panel": {
+        "title": "Gate readiness — AI analysis",
+        "readyTitle": "Initiative ready to advance",
+        "readyDescription": "All required sections meet the threshold and no timeline blockers were detected.",
+        "scoreLabel": "Readiness score",
+        "thresholdLabel": "Threshold",
+        "gapsTitle": "Content gaps",
+        "gapSectionScore": "score {{score}}/100",
+        "fixesTitle": "Suggested fixes",
+        "timelineTitle": "Timeline signals",
+        "timelineBlock": "Block",
+        "timelineWarn": "Warning",
+        "timelineKind": {
+          "dependency": "Dependency",
+          "date_conflict": "Date conflict",
+          "resource_conflict": "Resource conflict"
+        },
+        "noTimeline": "No timeline analysis for this gate.",
+        "emptyTitle": "No readiness data",
+        "emptyDescription": "AI assessment is not available for this gate."
+      },
+      "override": {
+        "title": "Advance below readiness threshold",
+        "description": "This initiative does not meet the AI readiness threshold. You can proceed anyway — provide a reason that will be logged.",
+        "summaryScore": "Score {{score}}/100 (threshold {{threshold}})",
+        "gapsTitle": "Top gaps",
+        "timelineTitle": "Timeline blockers",
+        "reasonLabel": "Reason (required)",
+        "reasonPlaceholder": "Explain why you are proceeding despite the gaps…",
+        "confirm": "Proceed anyway",
+        "cancel": "Cancel"
+      }
+    },
     "roi": {
       "title": "Value Realization & ROI",
       "subtitle": "Economic analyses linked to your initiatives",
@@ -4889,6 +4931,18 @@
     },
     "archive": {
       "hint": "Finish or cancel it first"
+    },
+    "archiveAction": "Archive",
+    "calendarView": {
+      "month": "Month",
+      "week": "Week",
+      "today": "Today",
+      "prev": "Previous",
+      "next": "Next",
+      "allStatuses": "All statuses",
+      "undated": "Undated",
+      "loading": "Loading…",
+      "empty": "No dated tasks or milestones."
     },
     "confirmDelete": "Permanently delete \"{{name}}\"? This cannot be undone.",
     "thisInitiative": "this initiative",

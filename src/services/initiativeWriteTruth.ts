@@ -133,8 +133,15 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   };
 }
 
-export async function updateInitiativeStatusWriteTruth(initiativeId: string, targetStatus: string) {
-  await Api.patch(`/initiatives/${initiativeId}/status`, { status: targetStatus });
+export async function updateInitiativeStatusWriteTruth(
+  initiativeId: string,
+  targetStatus: string,
+  overrideReason?: string
+) {
+  await Api.patch(`/initiatives/${initiativeId}/status`, {
+    status: targetStatus,
+    ...(overrideReason ? { overrideReason } : {}),
+  });
   return refreshInitiativeWriteTruth(initiativeId);
 }
 

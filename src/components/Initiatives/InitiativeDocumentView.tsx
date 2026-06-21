@@ -51,6 +51,7 @@ import {
   RotateCcw,
   Scale,
   Search,
+  Archive,
   Shield,
   ShieldCheck,
   Sparkles,
@@ -95,6 +96,12 @@ import {
   saveInitiativeWriteTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
+import {
+  gateAiSoftBlocks,
+  type GateAiCheckResponse,
+  type GateAiReadiness,
+  type GateAiTimeline,
+} from '@/types/gateAi';
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -177,6 +184,7 @@ import {
   MODULE_CONFIG,
   SECTION_REGISTRY,
 } from './sections';
+import { GateOverrideModal } from './gate-ai';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import { ResourcesSection } from './sections/ResourcesSection';
 import type {
@@ -591,6 +599,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // Present mode (Phase A3) — fullscreen card-by-card walk of the canonical sections.
   const [presentOpen, setPresentOpen] = useState(false);
+  // M13 Depth · Fala 1 — AI gate soft-block override modal state.
+  const [gateAiOverride, setGateAiOverride] = useState<{
+    targetStatus: string;
+    readiness: GateAiReadiness | null;
+    timeline: GateAiTimeline | null;
+  } | null>(null);
   // Fork (Phase A4) — in-flight guard for the toolbar Fork action.
   const [isForking, setIsForking] = useState(false);
   // Smart Export dialog (Phase E) — section picker + target chooser.
@@ -1221,6 +1235,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const canEditTargetDate = !!topBarCaps?.canEditTargetDate;
   const canEditCards = !!gateReadiness?.capabilities?.cards?.canEditCards;
   const canUseAi = !!gateReadiness?.capabilities?.ctaBar?.canUseAi;
+  // Document-interior lifecycle affordances (Archive / Delete). Visible only to
+  // users with write access; server re-enforces (archive: lifecycle, delete:
+  // DRAFT/CANCELLED only → 409 otherwise). Wires handleArchive/handleDelete,
+  // which were defined but previously unreachable from the document toolbar.
+  const canArchiveDoc = canEditCards && status !== 'ARCHIVED' && status !== 'DRAFT';
+  const canDeleteDoc = canEditCards && (status === 'DRAFT' || status === 'CANCELLED');
 
   // ── Mark Complete (Canon Blok C) ────────────────────────────────────────
   // section_completions is an AI signal only — it never locks fields. Persisted
@@ -2772,17 +2792,66 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return;
       }
 
-      const truth = await updateInitiativeStatusWriteTruth(initiativeId, action.targetStatus);
-      setInitiative((prev: any) => ({
-        ...prev,
-        ...(truth.initiative || {}),
-        status: action.targetStatus,
-      }));
-      setGateReadiness(truth.gateReadiness);
-      setStatusHistory(truth.statusHistory as any);
-      setHistory(truth.history as any);
-      onStatusChange?.(action.targetStatus);
-      toast.success(t('initiatives.statusUpdated2'));
+      // M13 Depth · Fala 1 — AI gate soft-block (modal-before-commit). The
+      // server PATCH /status is the authoritative backstop (returns 422); this
+      // FE pre-check just surfaces the override modal first. Fail-open: any
+      // error here → proceed and let the server decide.
+      try {
+        const raw: any = await Api.post(`/initiatives/${initiativeId}/gate-ai-check`, {
+          targetStatus: action.targetStatus,
+        });
+        const resp = (raw?.data ?? raw) as GateAiCheckResponse;
+        if (resp && gateAiSoftBlocks(resp)) {
+          setGateAiOverride({
+            targetStatus: String(action.targetStatus),
+            readiness: resp.aiReadiness,
+            timeline: resp.timeline,
+          });
+          return; // finally resets isMutating; modal drives the override path
+        }
+      } catch {
+        /* fail-open — server 422 remains the backstop */
+      }
+
+      await commitStatusTransition(action.targetStatus);
+    } catch (e: any) {
+      toast.error(
+        e?.message ||
+          t('initiatives.toast.statusUpdateError', 'Nie udało się zaktualizować statusu')
+      );
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  // Commit a status transition (shared by the normal path and the gate-AI
+  // override-confirm path). Pass overrideReason to bypass an AI soft-block.
+  const commitStatusTransition = async (targetStatus: string, overrideReason?: string) => {
+    const truth = await updateInitiativeStatusWriteTruth(
+      initiativeId,
+      targetStatus,
+      overrideReason
+    );
+    setInitiative((prev: any) => ({
+      ...prev,
+      ...(truth.initiative || {}),
+      status: targetStatus,
+    }));
+    setGateReadiness(truth.gateReadiness);
+    setStatusHistory(truth.statusHistory as any);
+    setHistory(truth.history as any);
+    onStatusChange?.(targetStatus as any);
+    toast.success(t('initiatives.statusUpdated2'));
+  };
+
+  // Modal confirm — proceed past the AI soft-block with a mandatory reason.
+  const handleGateAiOverrideConfirm = async (reason: string) => {
+    const pending = gateAiOverride;
+    if (!pending) return;
+    setGateAiOverride(null);
+    setIsMutating(true);
+    try {
+      await commitStatusTransition(pending.targetStatus, reason);
     } catch (e: any) {
       toast.error(
         e?.message ||
@@ -4436,7 +4505,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   };
 
   const handleDelete = async () => {
-    if (status !== 'DRAFT') {
+    // Mirror the server guard (InitiativeController.deleteInitiative): only
+    // not-yet-active initiatives can be hard-deleted; everything else must be
+    // cancelled first so linked M14/15/16 rows unwind through the lifecycle.
+    if (status !== 'DRAFT' && status !== 'CANCELLED') {
       toast.error(t('initiatives.onlyDraftsCanBeDeleted2'));
       return;
     }
@@ -10051,8 +10123,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           onClick={() => setPresentOpen(true)}
                         />
 
-                        {/* Kebab — destructive actions (Block / Cancel / Archive) */}
-                        {destructiveStatusActions.length > 0 && (
+                        {/* Kebab — destructive actions (Block / Cancel / Archive / Delete) */}
+                        {(destructiveStatusActions.length > 0 ||
+                          canArchiveDoc ||
+                          canDeleteDoc) && (
                           <div className="relative">
                             <ToolbarIconButton
                               icon={<MoreVertical size={14} />}
@@ -10090,6 +10164,34 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       </button>
                                     );
                                   })}
+                                  {canArchiveDoc && (
+                                    <button
+                                      type="button"
+                                      disabled={isMutating}
+                                      onClick={() => {
+                                        setShowToolbarKebab(false);
+                                        void handleArchive();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                                    >
+                                      <Archive size={13} className="shrink-0" />
+                                      <span>{t('initiatives.archiveAction')}</span>
+                                    </button>
+                                  )}
+                                  {canDeleteDoc && (
+                                    <button
+                                      type="button"
+                                      disabled={isMutating}
+                                      onClick={() => {
+                                        setShowToolbarKebab(false);
+                                        void handleDelete();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-50"
+                                    >
+                                      <Trash2 size={13} className="shrink-0" />
+                                      <span>{t('initiatives.delete2')}</span>
+                                    </button>
+                                  )}
                                 </div>
                               </>
                             )}
@@ -10182,6 +10284,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           onExit={() => setPresentOpen(false)}
         />
       )}
+
+      {/* M13 Depth · Fala 1 — AI gate soft-block override modal */}
+      <GateOverrideModal
+        open={!!gateAiOverride}
+        readiness={gateAiOverride?.readiness ?? null}
+        timeline={gateAiOverride?.timeline ?? null}
+        onConfirm={(reason) => void handleGateAiOverrideConfirm(reason)}
+        onCancel={() => setGateAiOverride(null)}
+      />
 
       {/* ── Smart Export dialog (Phase E) — section picker + targets ───────────── */}
       {showExportDialog && (

@@ -32,6 +32,8 @@ import { useInitiativeContext } from './InitiativeContext';
 import { InitiativeGatesWorkflowTable } from './InitiativeGatesWorkflowTable';
 import { InitiativeStatusPipeline } from './InitiativeStatusPipeline';
 import type { InitiativeSectionProps } from './types';
+import { GateReadinessPill, GateReadinessPanel } from '../gate-ai';
+import { useGateAi } from '@/hooks/useGateAi';
 import { GATE_CONFIG, GATE_DEFINITIONS, getNextGateForStatus, getRoleLabel } from './types';
 
 type AIGatesProposal = {
@@ -218,6 +220,15 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   // capability (ctaBar present) so legacy payloads without it are not regressed.
   const ctaBarCaps = gateReadiness?.capabilities?.ctaBar;
   const aiBlockedForStatus = ctaBarCaps ? ctaBarCaps.canUseAi === false : false;
+
+  // M13 Depth · Fala 1 — AI gate readiness for the NEXT gate (proactive pill).
+  // Lazy + behind per-org flag: when disabled the endpoint returns enabled:false
+  // and the pill renders nothing. Fetches only while the section is expanded.
+  const { check: checkGateAi, data: gateAiData, loading: gateAiLoading } = useGateAi(initiativeId);
+  const [showGateAiPanel, setShowGateAiPanel] = useState(false);
+  useEffect(() => {
+    if (expanded && initiativeId && nextGate) void checkGateAi(String(nextGate));
+  }, [expanded, initiativeId, nextGate, checkGateAi]);
 
   const [isAIProposing, setIsAIProposing] = useState(false);
   const [aiProposal, setAiProposal] = useState<AIGatesProposal | null>(null);
@@ -1666,6 +1677,23 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           Properties Strip + workflow table below (existing endpoints). */}
       <div className="mb-6">
         <InitiativeStatusPipeline />
+        {gateAiData?.enabled && (
+          <div className="mt-3">
+            <GateReadinessPill
+              readiness={gateAiData.aiReadiness}
+              loading={gateAiLoading}
+              onClick={() => setShowGateAiPanel((v) => !v)}
+            />
+            {showGateAiPanel && (
+              <div className="mt-2">
+                <GateReadinessPanel
+                  readiness={gateAiData.aiReadiness}
+                  timeline={gateAiData.timeline}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Full lifecycle gate workflow table (13 stages) */}

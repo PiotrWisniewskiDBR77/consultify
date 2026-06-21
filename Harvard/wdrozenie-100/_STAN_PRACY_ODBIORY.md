@@ -67,7 +67,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M09 | Ideas — Whiteboard | 1 | 6/6 | 🟡 | 65✅ | 0/126 (harness✓, DB-blok) | 🟡 | ⬜ | ⬜ | 11 | 🟡 MANUAL-DŁUG (agent zatrzymany; DB outage zablokował live — dokończyć Manual w cichym oknie, kod ✅) |
 | M10 | Wywiad | 1 | 0/6 | 0/7 | ⬜ | 0/75 | ⬜ | ⬜ | ⬜ | 28 | ⬜ NIE ROZP. |
 | M12 | Audyty | 3 | 0/5 | 0/7 | ⬜ | 0/49 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
-| M13 | Inicjatywy | 2 | 0/6 | 0/7 | 🟡 | 0/68 | ⬜ | ⬜ | ⬜ | 30 | 🟡 W TOKU (DELETE status-guard 409 + test 7/7 `InitiativeController.deleteInitiative`; audyt wnętrza w toku) |
+| M13 | Inicjatywy | 2 | 0/16 | — | 🔵 | 0/121 | ⬜ | ⬜ | ⬜ | 16 | 🔵 PROGRAM M13 DEPTH — osobny SSOT operacyjny: [`M13-STAN-PRACY-ODBIORY.md`](M13-STAN-PRACY-ODBIORY.md) (16 sub-modułów, serie G/R/C/K/V). 8/8 starego zakresu WSTRZYMANE. Czeka na 8 decyzji Piotra (BRAMKA WSTĘPNA). Done-by-the-way: DELETE 409+test 7/7, kebab Archive/Delete (tsc clean) |
 | M14 | Wdrożenie | 2/4 | 0/6 | 0/7 | ⬜ | 0/63 | ⬜ | ⬜ | ⬜ | 18 | ⬜ NIE ROZP. |
 | M15 | Rezultaty | 2 | 0/6 | 0/7 | ⬜ | 0/58 | ⬜ | ⬜ | ⬜ | 17 | ⬜ NIE ROZP. |
 | M16 | Finanse | 2 | 0/5 | 0/7 | ⬜ | 0/70 | ⬜ | ⬜ | ⬜ | 22 | ⬜ NIE ROZP. |
