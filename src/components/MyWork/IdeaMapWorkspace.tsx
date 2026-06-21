@@ -440,15 +440,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   );
 
   const conflictRefreshRef = useRef<(() => Promise<void>) | null>(null);
+  // A brand-new board auto-seeds its first node (mindmap root / whiteboard sticky) into
+  // the shared my_idea_maps doc; that first write can race the tool's own save and 409.
+  // It auto-recovers — but firing an alarming "conflict" toast on an empty board the user
+  // just opened reads like something broke. Suppress the toast during the initial settle
+  // window; only surface genuine conflicts (real concurrent editing after the board loaded).
+  const workspaceMountedAtRef = useRef(Date.now());
+  const CONFLICT_TOAST_SETTLE_MS = 7000;
 
   const handleGraphConflict = useCallback(
     (_serverVersion: number, _serverMap?: any) => {
-      toast(
-        isPolish
-          ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-          : 'Change conflict detected. Refreshing map from server.',
-        { icon: '⚠️' }
-      );
+      const settled = Date.now() - workspaceMountedAtRef.current > CONFLICT_TOAST_SETTLE_MS;
+      if (settled) {
+        toast(
+          isPolish
+            ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+            : 'Change conflict detected. Refreshing map from server.',
+          { icon: '⚠️' }
+        );
+      }
+      // Always reconcile from the server, toast or not.
       conflictRefreshRef.current?.();
     },
     [isPolish]
@@ -2586,8 +2597,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           : 'Give this idea the next concrete move.';
     }
   }, [activePanel, activeTool, isPolish, selection.type]);
+  // top-14 (56px) keeps the breadcrumb/header card BELOW the tool's top toolbar (~44px) so it
+  // never covers the left toolbar buttons (Create / Draw / Undo / Voting). Previously top-4
+  // overlapped the toolbar, making Create hard to reach on the whiteboard/mindmap canvas.
   const workspaceHeaderOffsetClass =
-    drillDownStack.length > 0 || focusMode !== 'full' ? 'top-14' : 'top-4';
+    drillDownStack.length > 0 || focusMode !== 'full' ? 'top-20' : 'top-14';
 
   if (loading) {
     return (
