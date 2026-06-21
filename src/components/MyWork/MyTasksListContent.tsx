@@ -656,8 +656,8 @@ const TaskTableRow: React.FC<{
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className={`text-sm font-medium ${
-                isCompleted ? 'line-through text-slate-500' : 'text-slate-900 dark:text-white'
+              className={`text-sm font-semibold ${
+                isCompleted ? 'line-through text-slate-400' : 'text-slate-900 dark:text-slate-100'
               } truncate`}
               title={task.title}
             >
@@ -675,7 +675,7 @@ const TaskTableRow: React.FC<{
           </div>
           {showRowDescription && (task.description || task.projectName) ? (
             <span
-              className="mt-0.5 max-w-[760px] truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
+              className="mt-0.5 max-w-[760px] truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400"
               title={task.description || task.projectName}
             >
               {task.description || task.projectName}

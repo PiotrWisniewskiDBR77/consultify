@@ -2460,7 +2460,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         <td className="px-3 py-3" style={{ width: columnWidths.title }}>
           <div className="flex items-center gap-2">
             <span
-              className="text-sm font-medium text-slate-900 dark:text-white truncate block"
+              className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate block"
               title={item.title}
             >
               {item.title}
@@ -2501,7 +2501,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             )}
           </div>
           {showRowDescription && (item.description || item.reason) ? (
-            <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+            <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
               {item.description || item.reason}
             </div>
           ) : null}
@@ -3031,7 +3031,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
             {/* Row 2: Brief */}
             {showRowDescription && cardBriefText ? (
-              <p className="-mt-0.5 line-clamp-2 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+              <p className="-mt-0.5 line-clamp-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
                 {cardBriefText}
               </p>
             ) : null}

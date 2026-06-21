@@ -555,11 +555,11 @@ const DecisionTableRow: React.FC<{
       {/* Decision Title */}
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-900 dark:text-white">
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             {decision.title}
           </span>
           {showRowDescription && decision.description ? (
-            <span className="mt-0.5 block max-w-[760px] truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+            <span className="mt-0.5 block max-w-[760px] truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400">
               {decision.description}
             </span>
           ) : null}
@@ -831,11 +831,11 @@ const AwaitingDecisionTableRow: React.FC<{
 
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-900 dark:text-white">
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             {decision.title}
           </span>
           {showRowDescription && decision.description ? (
-            <span className="mt-0.5 block max-w-[760px] truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+            <span className="mt-0.5 block max-w-[760px] truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400">
               {decision.description}
             </span>
           ) : null}
