@@ -25,6 +25,8 @@ export interface UseProcessFlowNodesOpts {
   onNodeDetail?: ((nodeId: string, data: any) => void) | undefined;
   /** Fire-and-forget hook for persisting node deletions to the V8 tables. */
   onNodesDeleted?: ((nodeIds: string[]) => void) | undefined;
+  /** Injected confirm for bulk deletes (≥2 nodes). Returns true = proceed. */
+  confirmBulkDelete?: (count: number) => Promise<boolean>;
 }
 
 export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
@@ -40,10 +42,17 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     pushUndo,
     onNodeDetail,
     onNodesDeleted,
+    confirmBulkDelete,
   } = opts;
 
-  const deleteSelected = useCallback(() => {
+  const deleteSelected = useCallback(async () => {
     if (locked) return;
+    const selectedCount = nodes.filter((n: Node) => n.selected).length;
+    if (selectedCount === 0) return;
+    if (selectedCount >= 2 && confirmBulkDelete) {
+      const ok = await confirmBulkDelete(selectedCount);
+      if (!ok) return;
+    }
     pushUndo();
     let removedNodeIds: Set<string>;
     setNodes((prev: Node[]) => {
@@ -56,7 +65,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
         (e: Edge) => !e.selected && !removedNodeIds!.has(e.source) && !removedNodeIds!.has(e.target)
       )
     );
-  }, [locked, onNodesDeleted, pushUndo, setEdges, setNodes]);
+  }, [locked, nodes, confirmBulkDelete, onNodesDeleted, pushUndo, setEdges, setNodes]);
 
   const duplicateSelected = useCallback(() => {
     if (locked) return;

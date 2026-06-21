@@ -128,6 +128,7 @@ import { useV8 } from '@/providers/V8Provider';
 import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
+import { useConfirmDialog } from './shared/ConfirmDialog';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
@@ -464,6 +465,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const isPl = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
   const isDarkFlow = useIsDark();
+  const { dialog: bulkDeleteDialog, confirm: confirmBulkDelete } = useConfirmDialog();
 
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1385,6 +1387,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     pushUndo,
     onNodeDetail,
     onNodesDeleted: (ids: string[]) => ids.forEach((id) => void pfCrud.deleteNode(id)),
+    confirmBulkDelete: (count: number) =>
+      confirmBulkDelete({
+        title: isPl ? 'Usunąć węzły?' : 'Delete nodes?',
+        description: isPl
+          ? `Zostaną usunięte ${count} węzły i ich połączenia. Możesz cofnąć przez Ctrl+Z.`
+          : `${count} nodes and their connections will be deleted. You can undo with Ctrl+Z.`,
+        confirmLabel: isPl ? 'Usuń' : 'Delete',
+        cancelLabel: isPl ? 'Anuluj' : 'Cancel',
+        variant: 'danger',
+      }),
   });
 
   // ── Quick action listener (extracted to useProcessFlowQuickActions) ─────
@@ -2696,6 +2708,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           </div>
         </div>
       )}
+      {bulkDeleteDialog}
     </div>
   );
 };
