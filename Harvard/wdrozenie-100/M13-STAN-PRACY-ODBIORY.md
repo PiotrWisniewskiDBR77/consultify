@@ -1,7 +1,7 @@
 # M13 DEPTH — STAN PRACY · odbiory sub-modułów do 100% (SSOT operacyjny)
 
 **Start:** 2026-06-20 · **Branch:** Londyn · **Deploy odbioru:** Railway staging (caboose/trolley) → demo → prod (centerbeam, za osobną zgodą Piotra)
-> 🚀 **DEPLOYED na demo.consultify.ai 2026-06-21** (commit `b374e6d0`, build SUCCESS, root+/api/health=200). Serie G (AI bramki) + R (artefakty) LIVE. **Flaga `initiativeGateAiEnabled` OFF** → gate-AI uśpione; Kalendarz (R3) + banner decyzji (R2) + DELETE-guard + kebab widoczne od razu. Do →F/→UI: włączyć flagę na org demo + klik Piotra.
+> 🚀 **DEPLOYED na demo.consultify.ai 2026-06-21** (commit `b374e6d0`, build SUCCESS, root+/api/health=200). Serie G (AI bramki) + R (artefakty) LIVE. Migracje (`initiative_feature_flags`, `initiative_gate_ai_events`) zaaplikowane na demo (zweryfikowane). `POST /gate-ai-check` routowany (401 guard, nie 404). **Flaga `gate_ai` ON tylko na org Piotra demo** (`a3e05d4a…`, próg 75; dokładnie 1 org ON — zero szerokiego włączenia). Kalendarz (R3) + banner decyzji (R2) + DELETE-guard + kebab widoczne od razu. **→F = klik Piotra na demo** (transition na inicjatywie w jego org → pigułka/soft-block/override); →UI = screeny.
 **Zasada twarda:** idziemy sub-moduł po sub-module po kolei (G1→G5 → R1→R4 → C1→C2 → K1→K4 → V1). Nie przechodzę do kolejnego, póki poprzedni nie jest **ZAMKNIĘTY (8/8)**. Zero odstępstw.
 
 Ten plik = jedyne miejsce prawdy o postępie **M13 Depth**. Odhaczamy tu każdy etap. Szczegół (epiki, luki, kryteria) = [`M13-DEPTH-PLAN.md`](M13-DEPTH-PLAN.md) + [`../../docs/product/INITIATIVE_GATE_AI_SPEC.md`](../../docs/product/INITIATIVE_GATE_AI_SPEC.md). Wiersz zbiorczy M13 w [`_STAN_PRACY_ODBIORY.md`](_STAN_PRACY_ODBIORY.md) linkuje tu.
