@@ -119,52 +119,22 @@ afterEach(() => {
 });
 
 describe('useProcessFlowDegraded', () => {
-  it('checkHealth calls health endpoint and sets state', async () => {
-    const healthData = {
-      degraded: true,
-      scenario: 'offline_mode',
-      posture: 'offline',
-      recovery: 'Server unreachable',
-    };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: healthData }) });
-
+  // The V8 process-flow mirror was cut (DP-7), so useProcessFlowDegraded was
+  // neutralized to a no-op: it must NOT poll the (gone) /health endpoint and must
+  // always report healthy. (M07 2026-06-20 — see useProcessFlowDegraded.ts)
+  it('never reports degraded (V8 mirror cut)', () => {
     const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p1' }));
-
-    await act(async () => {
-      await result.current.checkHealth();
-    });
-
-    expect(result.current.isDegraded).toBe(true);
-    expect(result.current.activeScenarios).toHaveLength(1);
-    expect(result.current.activeScenarios[0].scenario).toBe('offline_mode');
-  });
-
-  it('handles empty scenarios gracefully', async () => {
-    const healthData = {
-      degraded: false,
-      scenario: null,
-    };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: healthData }) });
-
-    const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p2' }));
-
-    await act(async () => {
-      await result.current.checkHealth();
-    });
-
     expect(result.current.isDegraded).toBe(false);
     expect(result.current.activeScenarios).toHaveLength(0);
   });
 
-  it('handles fetch failure gracefully', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
-    const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p3' }));
-
+  it('checkHealth is a no-op and performs no network request', async () => {
+    const { result } = renderHook(() => useProcessFlowDegraded({ processId: 'p2' }));
     await act(async () => {
       await result.current.checkHealth();
     });
-
-    expect(result.current.isDegraded).toBe(true);
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(result.current.isDegraded).toBe(false);
+    expect(result.current.activeScenarios).toHaveLength(0);
   });
 });

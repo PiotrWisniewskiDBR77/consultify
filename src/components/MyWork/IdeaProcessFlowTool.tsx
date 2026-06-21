@@ -38,7 +38,6 @@ import ReactFlow, {
   applyNodeChanges,
   Background,
   type Connection,
-  ConnectionMode,
   type Edge,
   type EdgeChange,
   type EdgeProps,
@@ -228,10 +227,13 @@ const EdgeRehydrateFix: React.FC<{ nodeIdsKey: string; nodeIds: string[] }> = ({
   idsRef.current = nodeIds;
   useEffect(() => {
     if (!idsRef.current.length) return;
-    const raf = requestAnimationFrame(() => {
-      idsRef.current.forEach((id) => updateNodeInternals(id));
-    });
-    return () => cancelAnimationFrame(raf);
+    // Re-measure after the nodes are actually laid out in the DOM. A single rAF
+    // fires too early (dimensions not yet recorded → edges stay hidden), so retry
+    // across a few frames/timeouts until ReactFlow has measured them.
+    const timers = [60, 250, 600, 1200].map((ms) =>
+      window.setTimeout(() => idsRef.current.forEach((id) => updateNodeInternals(id)), ms)
+    );
+    return () => timers.forEach((t) => window.clearTimeout(t));
     // Keyed on the node-id set so it fires on hydrate / structural changes, not every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodeIdsKey]);
@@ -497,7 +499,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const isDarkFlow = useIsDark();
   const { dialog: bulkDeleteDialog, confirm: confirmBulkDelete } = useConfirmDialog();
 
-  const [loading, setLoading] = useState(false);
+  // Start loading=true so the autosave effect (gated on !loading) cannot fire with
+  // the initial empty state before hydrate runs. With the old default (false), a
+  // slow hydrate (>2.5s autosave debounce) let an EMPTY payload flush first, which
+  // overwrote the idea's saved nodes/edges and 409'd the real save. (M07 2026-06-20)
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -832,18 +838,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     };
   }, [nodes, ghostNodes, edgesWithHandlers, focusMode, focusObjectId]);
 
-  if (typeof window !== 'undefined') {
-    (window as any).__rf = {
-      nodes: nodes.length,
-      edges: edges.length,
-      ewh: edgesWithHandlers.length,
-      few: filteredEdgesWithHandlers.length,
-      focusMode,
-      focusObjectId,
-      edge0: edges[0] ? { id: edges[0].id, s: edges[0].source, t: edges[0].target } : null,
-    };
-  }
-
   // ── Node/Edge change handlers ──────────────────────────────────────────
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -935,13 +929,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       primeServerVersion(Number(map?.version || 1));
       const rawNodes = Array.isArray(map.nodes) ? (map.nodes as any[]) : [];
       const rawEdges = Array.isArray(map.edges) ? (map.edges as any[]) : [];
-      (window as any).__hy = {
-        usedDraft: hydration.usedDraft,
-        rawNodes: rawNodes.length,
-        rawEdges: rawEdges.length,
-        filteredEdges: rawEdges.filter((e: any) => e?.id && e?.source && e?.target).length,
-        edgeSample: rawEdges[0] || null,
-      };
       const rawExt =
         map?.extensions && typeof map.extensions === 'object'
           ? (map.extensions as Record<string, unknown>)
@@ -977,6 +964,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             id: nid,
             type: normalizedNode?.type || 'flowNode',
             position: normalizedNode?.position || { x: 100, y: 100 },
+            // Preserve persisted dimensions. ReactFlow only draws an edge once BOTH
+            // endpoint nodes have width/height in its store; on hydrate it does not
+            // re-measure reliably, so dropping these left reloaded edges invisible.
+            ...(Number.isFinite(normalizedNode?.width) ? { width: normalizedNode.width } : {}),
+            ...(Number.isFinite(normalizedNode?.height) ? { height: normalizedNode.height } : {}),
             data: {
               ...(normalizedNode?.data || { label: '', shape: 'action' }),
               locked,
@@ -2354,8 +2346,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 });
               }}
               {...getIdeasToolInteractionProps('processflow', { locked, connectMode: !locked })}
-              connectionMode={ConnectionMode.Strict}
-              deleteKeyCode={null}
               onInit={(instance: ReactFlowInstance) => {
                 reactFlowInstanceRef.current = instance;
               }}
