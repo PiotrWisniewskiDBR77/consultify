@@ -65,6 +65,11 @@ export async function injectSession(page: Page, session: DemoSession): Promise<v
       window.localStorage.setItem('token', token);
       window.localStorage.setItem('refreshToken', 'm06-e2e-refresh');
       window.localStorage.setItem('user', JSON.stringify(user));
+      // Suppress the "Meet Teresa" first-run onboarding modal — its only dismiss
+      // controls navigate away from the map (handleSkip → DEFAULT_ENTRY_ROUTE),
+      // so it must be pre-completed, not clicked through. Key per useFirstRunOnboarding.ts.
+      const uid = (user as { id?: string })?.id;
+      if (uid) window.localStorage.setItem(`consultify_onboarding_done:${uid}`, 'true');
       window.localStorage.setItem(
         'consultinity_demo_session',
         JSON.stringify({
@@ -82,16 +87,22 @@ export async function injectSession(page: Page, session: DemoSession): Promise<v
   );
 }
 
-/** Dismiss the onboarding tour / welcome overlay if it appears. */
+/** Dismiss the onboarding tour / welcome overlay if it appears.
+ *  Covers two distinct overlays: the legacy "Welcome to Consultinity" tour AND
+ *  the "Meet Teresa" 3-step welcome modal whose dismiss control reads
+ *  "Skip for now" (NOT "Skip tour") — the latter blocks the whole canvas. */
 export async function dismissTour(page: Page): Promise<void> {
-  const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń|Pomín/i }).first();
+  const skipTour = page
+    .getByRole('button', { name: /Skip tour|Skip for now|Pomiń|Pomín|Pomiń teraz/i })
+    .first();
   const consultantCard = page.getByRole('button', { name: /Consultant|Konsultant/i }).first();
-  const welcomeTitle = page.getByText(/Welcome to Consultinity|Witamy w Consultinity/i);
-  for (let i = 0; i < 8; i += 1) {
+  const welcomeTitle = page.getByText(
+    /Welcome to Consultinity|Witamy w Consultinity|Welcome to Consultify|Meet Teresa|Poznaj Teresę/i
+  );
+  for (let i = 0; i < 10; i += 1) {
     if (await skipTour.isVisible().catch(() => false)) {
       await skipTour.click({ timeout: 1000, force: true }).catch(() => {});
-    }
-    if (await welcomeTitle.isVisible().catch(() => false)) {
+    } else if (await welcomeTitle.isVisible().catch(() => false)) {
       await consultantCard.click({ timeout: 1000, force: true }).catch(() => {});
     }
     await page.keyboard.press('Escape').catch(() => {});
@@ -99,7 +110,7 @@ export async function dismissTour(page: Page): Promise<void> {
       (await skipTour.isVisible().catch(() => false)) ||
       (await welcomeTitle.isVisible().catch(() => false));
     if (!stillVisible) return;
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(250);
   }
 }
 

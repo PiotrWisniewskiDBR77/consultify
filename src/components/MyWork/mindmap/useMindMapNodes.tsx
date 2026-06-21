@@ -253,7 +253,13 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         data: { userCreated: true, edgeRole: 'structural' },
       } as any;
 
-      editingNodeIdRef.current = newId;
+      // Only mark the node as "being edited" when it actually opens the inline
+      // editor (empty label → _startEditing set). The first child of a starter
+      // branch is created with a placeholder label ("New idea") and does NOT enter
+      // edit mode; setting editingNodeIdRef for it spuriously made isEditing=true,
+      // which then swallowed the very next Tab/Enter (keyboard grammar dead until
+      // the user clicked elsewhere). See M06 live §2.2 (2026-06-20).
+      editingNodeIdRef.current = initialLabel ? null : newId;
 
       const existingChildIds = findChildrenIds(selected.id);
       if (existingChildIds.length > 0) {
