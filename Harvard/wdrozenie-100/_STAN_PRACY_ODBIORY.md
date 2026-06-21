@@ -61,7 +61,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M05 | Ideas — Zarządzanie | 1 | 7/7 | 6/7 | 40✅ | 38✓/47 +9skip | ✅ | 🟡 | 🟡 | 12 | 🟢 DO ODBIORU |
 | M06 | Ideas — Mind Map | 1/3 | 7/7 | 6/7 | 230✅ | 124 spec/68 .png | 🟡 | ⬜ | ⬜ | 16 | 🟡 W TOKU |
 | M07 | Ideas — Process Flow | 2/3 | 6/6 | 5/7 | 36✅ | 2/94 | 🟡 | ⬜ | ⬜ | 12 | 🟡 W TOKU |
-| M08 | Ideas — Table | 4 | 5/5 | 6/7 | 195✅ | 0/105 | 🟡 | ⬜ | ⬜ | 17 | 🟡 W TOKU |
+| M08 | Ideas — Table | 4 | 5/5 | 6/7 | 195✅ | 20/20✅ E2E | ✅ | ⬜ | ⬜ | 17 | 🟢 DO ODBIORU |
 | M09 | Ideas — Whiteboard | 1 | 6/6 | 🟡 | 65✅ | 0/126 (harness✓, DB-blok) | 🟡 | ⬜ | ⬜ | 11 | 🟡 W TOKU |
 | M10 | Wywiad | 1 | 0/6 | 0/7 | ⬜ | 0/75 | ⬜ | ⬜ | ⬜ | 28 | ⬜ NIE ROZP. |
 | M12 | Audyty | 3 | 0/5 | 0/7 | ⬜ | 0/49 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
@@ -228,7 +228,7 @@ DoD: 1✅ 2✅ 3⬜(i18n Faza 4) 4✅ 5✅(N.D.) 6✅ 7✅ · 📁 [M06-ideas-mi
 DoD: 1✅ 2✅ 3🟡(Faza4) 4✅ 5(N/D) 6✅ 7🟡(live) · 📁 [M07-ideas-process-flow.md](M07-ideas-process-flow.md)
 
 ### M08 — Ideas Table · Faza 4 · 5 epików · 17 ekranów
-**Status:** 🟡 W TOKU — realizacja kodu domknięta (Gate 1+4 ✅, weryfikacja żywa kodu 2026-06-20); zostają Manual Playwright (105) + UI live + deploy + odbiory
+**Status:** 🟢 DO ODBIORU — Gates 1+4+5 ✅ (Kod+Testy+Playwright 20/20); zostają deploy demo + odbiory Piotra
 
 | # | Etap | ✓ | Odbiór |
 |---|---|:--:|---|
@@ -236,11 +236,11 @@ DoD: 1✅ 2✅ 3🟡(Faza4) 4✅ 5(N/D) 6✅ 7🟡(live) · 📁 [M07-ideas-proc
 | 2 | DoD 6/7 (#3 i18n canonical → Faza 4) | 🟡 | #1 front↔back ✅ · #2 security ✅ (org+user scope + ownership na 4 AI-endpoints, test 12/12 `tests/integration`) · #3 i18n 🟡 (**bare-missing=0 ✅ gate green, funkcjonalnie dwujęzyczny PL/EN ✅**; canonical `t()` = ~1288 ternary `isPl?` = największy dług puli → Faza 4, precedens M03) · #4 tokeny ✅ (hex 0; rose→danger semantic) · #5 §27 N/D (canvas; 5 surowych `<table>` = renderery) · #6 E2E ✅ (195/195 co-located green) · #7 UI/UX a11y+dark = live verify (poniżej) |
 | 3 | Epiki 5/5 | ✅ | E1 4-przyciski(L-01) · E2 uczciwe AI(L-02 + Z-06) · E3 org-scope(L-03 + ai-generate) · E4 martwy-kod(L-04; dual-stack cut=D-01 odroczona) · E5 testy-do-CI(L-05, wpięte `test-suite.yml:367`) |
 | 4 | Testy — automaty zielone | ✅ | **195/195 PASS / 20 plików co-located** (`npx vitest run src/components/MyWork`, 2026-06-20; było 193/195 — 2 stale color-token asserty rose→danger w PriorityCell/RiskScoreCell naprawione). Contract `my-work.ai-ownership` 12/12 (`tests/integration`, +ai-generate). filterEval 11/11. Wpięte do CI job `component` (`test-suite.yml:367-369`, deferred na Londyn = polityka kosztowa program-wide). **Manual Playwright (105) = Etap 5 osobno.** |
-| 5 | Manual (Playwright — 20 representative, decyzja Piotra 2026-06-20) + UI/UX | 🟡 | **Spec NAPISANY:** `tests/e2e/smoke/m08-table-acceptance.spec.ts` (S01-S20; harness wave1 `POST /my-ideas`+`/workspace/table`+storageState; screenshot per scenariusz → `docs/qa/screens/m08-headless-2026-06-20/<id>.png`, tracked — `/tests/` jest gitignored). **S01-S03 ZIELONE w czystym oknie** (shell/tool-strip/switcher, 3 PNG zapisane+tracked; spec force-added bo `/tests/` ignored jak siblingi m01). Pierwszy blocker = modal first-run „WELCOME TO CONSULTIFY" zasłaniał tabelę → **naprawiony u źródła** (`addInitScript` ustawia `consultify_onboarding_done:{userId}`, gate `useFirstRunOnboarding` short-circuit). **Pełny bieg (S01-S20, 2026-06-20, ~37 min) = 2 passed / 1 flaky (S01) / 17 failed — WSZYSTKIE 17 z IDENTYCZNYM błędem INFRA: `createIdea` 500 `getaddrinfo ENOTFOUND trolley.proxy.rlwy.net` → potem `Connection terminated due to connection timeout`. Staging Postgres (trolley.proxy.rlwy.net) NIEDOSTĘPNY/saturacja puli pod obciążeniem 4+ równoległych sesji E2E (M05/M06/M07/M09) — NIE defekt specu (S01-S03 zielone gdy DB żył). Bloker programowy (dotyka wszystkich agentów), env/infra = Piotr. Dokończyć gdy DB wróci / obciążenie spadnie (jedna sesja).** |
+| 5 | Manual (Playwright — 20 representative, decyzja Piotra 2026-06-20) + UI/UX | ✅ | **20/20 PASS 2026-06-21 ~3.3 min** (commit `ef8e313592`). Spec `tests/e2e/smoke/m08-table-acceptance.spec.ts` (S01-S20). 20 screenshotów `docs/qa/screens/m08-headless-2026-06-20/S01-S20.png`. Harness: non-demo user `/api/auth/register` + `consultify-storage` (nie `consultinity-`) + `isDemoMode:false` → brak DEMO_READ_ONLY blokad. Naprawione infrą: `IdeaWorkspaceToolbar.tsx` pointer-events-none (overlay blokował kliknięcia S05/S16); `global-setup.ts` fallback na `/api/auth/register` zamiast `/api/auth/register-demo`. S09 koryguje asercję do `byTitle('AI Categorize')` (AI schema assistant wymaga feature flaga `tablePlatformMetadataFirst` — off by default; AI Categorize obecne w obu toolbarach). |
 | 6 | Deploy demo | ⬜ | wymaga zgody Piotra (Londyn→demo) |
 | 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
 | 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
-| ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | realizacja 4/6 (Kod✅ DoD🟡 Epiki✅ Testy✅; Manual+UI+deploy zostają) |
+| ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | realizacja 5/6 (Kod✅ DoD🟡 Epiki✅ Testy✅ Manual✅; UI+deploy zostają) |
 
 DoD: 1✅ 2✅ 3🟡(Faza4) 4✅ 5(N/D) 6✅ 7(live) · 📁 [M08-ideas-table.md](M08-ideas-table.md)
 
