@@ -31,14 +31,14 @@ const FUNNEL_STAGES = [
     key: 'validated',
     labelPl: 'Zwalidowany',
     labelEn: 'Validated',
-    color: '#22c55e',
+    color: 'var(--c-success)',
     bg: 'bg-emerald-100 dark:bg-emerald-900/30',
   },
   {
     key: 'ready_to_convert',
     labelPl: 'Gotowy',
     labelEn: 'Ready',
-    color: '#f59e0b',
+    color: 'var(--c-warning)',
     bg: 'bg-amber-100 dark:bg-amber-900/30',
   },
   {
