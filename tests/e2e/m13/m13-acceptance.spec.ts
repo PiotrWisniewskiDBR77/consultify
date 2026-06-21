@@ -99,15 +99,17 @@ test.describe('M13 Inicjatywy — headless acceptance', () => {
     await suppressOnboarding(page, userId);
   });
 
-  // Document opens at /implementation?...&initiativeId=X (real app route).
+  // Document opens via portfolio hub deep-link: /portfolio?open=<id>&mode=doc
+  // The hub renders InitiativeDocumentView inline when activeDocumentId is set.
+  // Deep-link effect falls back to legacy API when list is empty (fresh org).
   async function openDoc(page: Page, id: string, title: string) {
-    await page.goto(`/implementation?tab=list&view=table&initiativeId=${id}`, {
+    await page.goto(`/portfolio?open=${encodeURIComponent(id)}&mode=doc`, {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
     await dismissOnboarding(page);
-    // Wait for REAL content: the document shows the title + a section nav. trolley
-    // is slow, so allow a generous window for boot + getById hydration.
+    // Hub shell + deep-link load the initiative by id via legacy fallback.
+    // Wait for the document view (initiative title visible in header area).
     await expect(page.getByText(title, { exact: false }).first()).toBeVisible({ timeout: 60000 });
   }
 

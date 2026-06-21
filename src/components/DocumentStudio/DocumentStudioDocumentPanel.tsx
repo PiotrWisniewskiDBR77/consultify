@@ -61,7 +61,6 @@ import {
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
 } from './api';
-import { DocumentStudioEditorPanel } from './DocumentStudioEditorPanel';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
 import { DocumentTipTapEditor } from './editor';
 import type {
@@ -1363,11 +1362,9 @@ function TeresaDrawerPanel({
           all changes still require review and approval before execution.
         </p>
       </div>
-      <DocumentStudioEditorPanel
-        artifactId={artifactId}
-        schema={schema}
-        onSchemaUpdated={onSchemaUpdated}
-      />
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+      </p>
     </div>
   );
 }
@@ -1740,11 +1737,9 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     if (activeToolId === 'editor') {
       return (
         <div className="h-full overflow-y-auto p-3">
-          <DocumentStudioEditorPanel
-            artifactId={artifactId}
-            schema={schema}
-            onSchemaUpdated={onSchemaUpdated}
-          />
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+          </p>
         </div>
       );
     }
@@ -1919,7 +1914,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             </Button>
           </div>
         </div>
-        <DocumentTipTapEditor schema={schema} onSchemaUpdated={onSchemaUpdated} editable />
+        <DocumentTipTapEditor schema={schema} onSchemaUpdated={onSchemaUpdated} editable artifactId={artifactId} />
       </div>
     </div>
   );

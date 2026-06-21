@@ -9239,14 +9239,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const SECTION_AI_NOOP = useMemo(
     () =>
       new Set<string>([
-        // financial-analysis / financial-impact are now wired to real AI-fill
-        // (handleGenerateFinancial → market_context persist) — NOT in this no-op set.
+        // financial-analysis / financial-impact → handleGenerateFinancial (real).
+        // hypothesis / okr / lessons-learned → K4 real handlers above (removed from no-op).
         'raci',
-        'okr',
-        'hypothesis',
         'change-log',
         'workstream-owners',
-        'lessons-learned',
         'suggested-changes',
       ]),
     []
@@ -9301,6 +9298,59 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       case 'financial-impact':
         await handleGenerateFinancial(activeNSection);
         return;
+      // K4 — AI-fill for sections previously no-op
+      case 'hypothesis': {
+        const res = await handleGenerateAI('hypothesis');
+        if (res?.parsedContent || res?.content) {
+          const text = String(res.parsedContent || res.content).trim();
+          setHypothesisDraft(text);
+          void persistInitiativeField(
+            { hypothesisStatement: text },
+            { hypothesisStatement: text, hypothesis_statement: text }
+          );
+        }
+        return;
+      }
+      case 'lessons-learned': {
+        const res = await handleGenerateAI('lessons-learned');
+        if (res?.parsedContent || res?.content) {
+          const text = String(res.parsedContent || res.content).trim();
+          setLessonsDraft(text);
+          void persistInitiativeField(
+            { lessonsLearned: text },
+            { lessonsLearned: text, lessons_learned: text }
+          );
+        }
+        return;
+      }
+      case 'okr': {
+        const res = await handleGenerateAI('okr');
+        if (res?.parsedContent || res?.content) {
+          const raw = res.parsedContent ?? res.content;
+          let objectives: Array<{ objective: string; keyResults: string[]; confidence: string }> =
+            [];
+          try {
+            const parsed = typeof raw === 'object' ? raw : JSON.parse(String(raw));
+            const arr = Array.isArray(parsed)
+              ? parsed
+              : (parsed as any).objectives ?? (parsed as any).okrs ?? [];
+            objectives = arr.map((o: any) => ({
+              objective: typeof o === 'string' ? o : (o.objective ?? o.title ?? ''),
+              keyResults: Array.isArray(o?.keyResults) ? o.keyResults : [],
+              confidence: (o?.confidence ?? 'MEDIUM').toUpperCase(),
+            }));
+          } catch {
+            objectives = [{ objective: String(raw).trim(), keyResults: [], confidence: 'MEDIUM' }];
+          }
+          if (objectives.length) {
+            const now = Date.now();
+            const newItems = objectives.map((o, i) => ({ id: `okr-ai-${now}-${i}`, ...o }));
+            const next = [...newItems, ...okrItems];
+            void persistInitiativeField({ okrs: next }, { okrs: next });
+          }
+        }
+        return;
+      }
       default:
         await handleGenerateAI(activeNSection);
     }
@@ -9309,6 +9359,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     isPolish,
     activeNSection,
     handleGenerateFinancial,
+    handleGenerateAI,
+    okrItems,
+    persistInitiativeField,
+    setHypothesisDraft,
+    setLessonsDraft,
     requestTasksAi,
     requestDecisionsAi,
     requestCommentsAi,

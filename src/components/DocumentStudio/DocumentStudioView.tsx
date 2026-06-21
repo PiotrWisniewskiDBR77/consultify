@@ -208,7 +208,7 @@ export const DocumentStudioView: React.FC = () => {
         kind: 'toggle',
         active: activeTab === 'generate',
         onClick: () => setActiveTab('generate'),
-        tooltip: 'Mode 1 / Mode 3 — intake → outline → document.',
+        tooltip: 'Generuj dokument',
       },
       {
         id: 'templates',
@@ -217,7 +217,7 @@ export const DocumentStudioView: React.FC = () => {
         kind: 'toggle',
         active: activeTab === 'templates',
         onClick: () => setActiveTab('templates'),
-        tooltip: 'Mode 2 — Document Template Architect.',
+        tooltip: 'Szablon dokumentu',
       },
     ],
     [activeTab]

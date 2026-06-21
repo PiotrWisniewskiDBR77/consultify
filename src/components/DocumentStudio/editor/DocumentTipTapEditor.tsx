@@ -21,6 +21,7 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { DocumentInlineAIMenu } from '../inline-ai';
 import { getDocumentEditorExtensions } from './documentEditorExtensions';
 import { proseMirrorToSchema, type PMDoc } from './tipTapToSchema';
 import { schemaToProseMirror } from './schemaToTipTap';
@@ -34,6 +35,8 @@ export interface DocumentTipTapEditorProps {
   editable?: boolean;
   placeholder?: string;
   className?: string;
+  /** When provided, enables the inline-AI floating menu (R2). */
+  artifactId?: string;
 }
 
 export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
@@ -42,6 +45,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   editable = true,
   placeholder,
   className,
+  artifactId,
 }) => {
   const extensions = useMemo(() => getDocumentEditorExtensions(placeholder), [placeholder]);
 
@@ -133,6 +137,13 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
         editor={editor}
         className="document-studio-editor prose prose-slate max-w-none dark:prose-invert"
       />
+      {artifactId && (
+        <DocumentInlineAIMenu
+          editor={editor ?? null}
+          artifactId={artifactId}
+          onSchemaUpdated={onSchemaUpdated}
+        />
+      )}
     </div>
   );
 };
