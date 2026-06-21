@@ -509,6 +509,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     targetDate,
     decisions,
     tasks,
+    setTasks,
     users,
     timelineMilestones,
     setTimelineMilestones,
@@ -535,6 +536,20 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     [tasks, timelineMilestones, timelinePhases]
   );
   const [scheduleView, setScheduleView] = useState<'none' | 'calendar' | 'gantt'>('none');
+
+  // W5 — Gantt drag-reschedule: optimistically update tasks in context state.
+  const handleGanttReschedule = useCallback(
+    (_itemId: string, sourceKind: string, sourceId: string, start: string, end: string) => {
+      if (sourceKind === 'task' && setTasks) {
+        setTasks((prev: any[]) =>
+          prev.map((t: any) =>
+            String(t.id) === sourceId ? { ...t, startedAt: start, dueDate: end } : t
+          )
+        );
+      }
+    },
+    [setTasks]
+  );
 
   // AI proposal state (Analyze with AI)
   const [aiBusy, setAiBusy] = useState(false);
@@ -1349,7 +1364,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
         )}
         {scheduleView === 'gantt' && (
           <div className="mt-2">
-            <InitiativeGantt items={scheduleItems} />
+            <InitiativeGantt items={scheduleItems} onReschedule={handleGanttReschedule} />
           </div>
         )}
       </div>
