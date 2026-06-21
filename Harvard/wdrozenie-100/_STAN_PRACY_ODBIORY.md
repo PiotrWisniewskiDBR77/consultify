@@ -155,6 +155,27 @@ DoD: 1✅front↔back 2✅security 3🟡i18n(canonical→Faza4) 4✅tokeny 5✅�
 🔴 **KRYTYCZNY FIX (2026-06-20, committed `ff5120cb21`):** Manager (Executive Dashboard) **padał na error-boundary „Coś poszło nie tak"** dla ownera. Przyczyna: `AIOperatorOverviewCard.tsx:323` renderował `plan.nextMilestone` surowo, a stary plan zapisany w DB (`ai_operator_plans.plan_json`) ma legacy-kształt `{name,targetDate}` (obiekt) zamiast stringa → `Objects are not valid as a React child`. Fix: defensywna koercja na warstwie prezentacji (obiekt→`name · data`, string→string, brak→„None") + test regresji 3/3 (`AIOperatorOverviewCard.nextMilestone.test.tsx`). **ZNALEZIONE przez uruchomienie żywe** (testy nie pokrywały tej powierzchni). Zweryf. żywo: Manager renderuje pełny dashboard, „NEXT MILESTONE: Process Automation · 20/03/2026", console 0 błędów. ✅ committed `ff5120cb21`; czeka tylko deploy demo (zgoda Piotra).
 🎨 **ODBIÓR UI ✅ (2026-06-21, Piotr zatwierdził):** 3 ostatnie odstępstwa naprawione: (1) `InboxContent.tsx` `<th>` `text-xs font-medium` → `text-[11px] font-semibold dark:text-slate-400` (§3.2 kanon); (2) `UserProfileMenu.tsx` topbar chip — usunięty podwiersz `rola · org` (§7 topbar-standard); (3) `ModuleMenu3.tsx` aktywny chip — DECYZJA F rozstrzygnięta: crimson delicatnie (`bg-primary-500/10 border-primary-500/50 text-primary-800`) dla `MENU_2_TAB_ACTIVE`, `MENU_3_CHIP_ACTIVE`; `MENU_3_BADGE_ACTIVE` = `bg-primary-500/20`. Zweryf. live preview (inspect computed: `rgba(168,45,73,0.10)`). **10 screenshotów light+dark** = `docs/qa/screens/m03-theme-2026-06-20/*.png`. Zero odstępstw od kanonów. ⬜ czeka: Deploy demo + →F (Piotr na demo.consultify.ai).
 
+#### 📋 BACKLOG M03 — otwarte pozycje (stan 2026-06-21)
+
+> Po domknięciu bramek realizacji (6/6), deploya na demo i audytów UI/preview/kebab, **żadna pozycja poniżej nie blokuje odbioru →F** — to świadome długi i kroki po stronie Piotra. Tabela = jedno miejsce prawdy o tym, co zostaje „na potem", z konkretną lokalizacją i decyzją.
+
+| ID | Pozycja | Typ | Prio | Lokalizacja | Status / decyzja | Następny krok / bloker |
+|----|---------|-----|:--:|-------------|------------------|------------------------|
+| **B-01** | **→F — odbiór 39 scenariuszy** | bramka odbioru | **P1** | `demo.consultify.ai` (M03) | ⬜ czeka na Piotra | Klik-test 5 powierzchni (Inbox/Calendar/Tasks/Decisions/Manager) na demo → ostatni krok do **8/8** |
+| **B-02** | **PV-4 — Inbox → `TableWithPreviewLayout`** | refactor (dług arch.) | P2 | `InboxContent.tsx:3241-3332` | ⏸️ świadomy dług (decyzja Piotra 2026-06-21) | Spec gotowy (footer-in-body + `sticky bottom-0`, 1 instancja stanu). Footguny: id `_key`vs`id`, 2 handlery wiersza. **Nie ruszać bez weryfikowalnego live Inboxu** (harness był zaklejony na Ideas). Osobny ticket |
+| **B-03** | **L-11 — synchronizacja zewnętrzna** (kalendarze + taski + chmury-do-czata) | feature / env | P2 | M25 `integrationOAuthEngine.ts` · [M25-ustawienia.md](M25-ustawienia.md) | ⬜ otwarta, po stronie Piotra | Sekrety provider-app w Google Cloud Console + Azure (`GOOGLE_/MICROSOFT_CLIENT_ID/SECRET/CALLBACK_URL`) + redirect-URI demo. **Nie-bloker** — kalendarz działa bez (eventy wewn. + ICS) |
+| **B-04** | **DoD #3 — i18n canonical `t()` sweep** | dług i18n | P2 | `src/components/MyWork/*` | 🟡 Faza 4 (precedens M03/M08) | Konwersja residualnych `isPl?` ternary → `t()`. Bare-missing=0 ✅, funkcjonalnie PL/EN ✅ (EN zweryf. live) — porządkowanie, nie funkcja |
+| **B-05** | **§27 / DP-9 — `FilterableTable` 24-tab sweep** | dług arch. | P2 | my-work/* + cross-moduł | 🟡 Faza 4 | sticky-thead + persistKey już done; pełna konsolidacja `ResizableTable`→prymitywy = osobna faza (§2.2 kanonu) |
+
+**Opis priorytetów:**
+- **P1 (B-01)** — jedyna pozycja na ścieżce krytycznej do zamknięcia M03 (8/8). Wszystko inne jest poza nią.
+- **P2 długi (B-02, B-04, B-05)** — świadome, udokumentowane, z lokalizacją i spec'iem; realizacja w dedykowanych Fazach/ticketach, nie w bieżącym odbiorze. Każdy ma uzasadnienie „dlaczego nie teraz": PV-4 = niewidoczny zysk + footguny + brak weryfikacji live; i18n/§27 = porządkowanie zaplanowane na Fazę 4.
+- **P2 zewnętrzne (B-03)** — czeka na sekrety/decyzje poza moim zakresem (reguła: sekrety zgłaszam, nie ustawiam); konwerguje w M25 jako hub synchronizacji.
+
+**Zasada:** pozycja schodzi z backlogu tylko z dowodem (commit + weryfikacja live) lub świadomą decyzją właściciela. Nic nie znika po cichu. *(Z tej sesji już zeszły: 8/9 findingów preview+kebab — `915550f82b`+`e41b25d82a`; meta-pille §4.1 i AI-widget→SSOT = ✅.)*
+
+---
+
 ### M04 — Notatnik · Faza 3 · 6 epików · 16 ekranów
 **Status:** ✅ **ZAMKNIĘTY (8/8) — 2026-06-20** (Piotr zaakceptował →F + →UI; deploy demo zweryfikowany żywo). *Opcjonalnie później: i18n `t()` sweep (L-11) → Faza 4.*
 
