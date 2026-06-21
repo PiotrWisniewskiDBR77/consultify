@@ -17,6 +17,7 @@ import type {
 } from '@/types/tablePlatform';
 
 import { EMPTY_SELECTION } from '../ideaSelectionTypes';
+import type { FormatRule } from './ConditionalFormatting';
 import { evaluateFilterRule } from './filterEval';
 import { columnToField, fieldToColumn, recordToNode } from './tablePlatformMappers';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
@@ -152,6 +153,11 @@ export interface UseTablePlatformIntegrationReturn {
   activeViewConfig: ViewConfig;
   /** Strip a degraded missing-field column from the view (updates visible_field_ids + config) */
   removeMissingFieldFromView: (fieldId: string) => Promise<void>;
+
+  /** R5: conditional-formatting rules for the active view (from `config.conditional_formatting`) */
+  formatRules: FormatRule[];
+  /** R5: persist conditional-formatting rules into the active view's `config` JSONB */
+  updateConditionalFormatting: (rules: FormatRule[]) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -234,6 +240,12 @@ export function useTablePlatformIntegration(
   const activeViewConfig = useMemo(
     () => (activePlatformView?.config ?? {}) as ViewConfig,
     [activePlatformView]
+  );
+
+  // R5: conditional-formatting rules live inside the active view's config JSONB.
+  const formatRules = useMemo<FormatRule[]>(
+    () => (activeViewConfig.conditional_formatting as FormatRule[] | undefined) ?? [],
+    [activeViewConfig]
   );
 
   const [localColumns, setLocalColumns] = useState<ColumnDef[]>([]);
@@ -444,6 +456,25 @@ export function useTablePlatformIntegration(
     [isActive, views.activeViewId, bridge]
   );
 
+  // R5: persist conditional-formatting rules into the active view's config JSONB.
+  // Reuses MetadataService.updateView (config is free-form JSONB → no migration).
+  const updateConditionalFormatting = useCallback(
+    async (rules: FormatRule[]) => {
+      if (!isActive || !views.activeViewId) return;
+      const v = bridge.views.find((x) => x.id === views.activeViewId);
+      if (!v) return;
+      try {
+        const cfg: Record<string, unknown> = { ...((v.config ?? {}) as Record<string, unknown>) };
+        cfg.conditional_formatting = rules;
+        await TablePlatformApi.updateView(views.activeViewId, { config: cfg });
+        await bridge.refresh();
+      } catch (e) {
+        console.error('Failed to update conditional formatting', e);
+      }
+    },
+    [isActive, views.activeViewId, bridge]
+  );
+
   // Inactive: return defaults
   if (!isActive) {
     return {
@@ -494,6 +525,8 @@ export function useTablePlatformIntegration(
       createPlatformView: async () => null,
       activeViewConfig: {},
       removeMissingFieldFromView: NOOP_ASYNC,
+      formatRules: [],
+      updateConditionalFormatting: NOOP_ASYNC,
     };
   }
 
@@ -548,5 +581,7 @@ export function useTablePlatformIntegration(
     createPlatformView: bridge.createView,
     activeViewConfig,
     removeMissingFieldFromView,
+    formatRules,
+    updateConditionalFormatting,
   };
 }

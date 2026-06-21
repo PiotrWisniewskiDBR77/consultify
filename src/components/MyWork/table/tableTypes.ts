@@ -3,6 +3,8 @@
  * Used by IdeaTableTool, CellRenderer, AddColumnDialog, FilterPanel, etc.
  */
 
+import { evaluateFormulaString as evaluateFormulaStringCore } from './formulaEngineCore';
+
 export type ColumnType =
   | 'text'
   | 'number'
@@ -316,13 +318,12 @@ export const SELECT_COLORS = [
 ];
 
 export function evaluateFormula(formula: string, row: Record<string, any>): string | number {
+  // R5: delegate to the single shared AST engine (port of the server engine)
+  // instead of `new Function`. `{field}` braces are tokenized natively by the
+  // core, and bare identifiers resolve against the row by name.
   try {
-    const expr = formula.replace(/\{(\w+)\}/g, (_, key) => {
-      const val = row[key];
-      return typeof val === 'number' ? String(val) : (Number(val) || 0).toString();
-    });
-
-    const result = new Function(`return (${expr})`)();
+    const result = evaluateFormulaStringCore(formula, row as Record<string, unknown>);
+    if (result == null) return '—';
     return typeof result === 'number' ? Math.round(result * 100) / 100 : String(result);
   } catch {
     return '—';

@@ -17,6 +17,7 @@ import type {
   ViewConfig,
 } from '@/types/tablePlatform';
 
+import type { FormatRule } from './ConditionalFormatting';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
 import type { UseTablePlatformIntegrationReturn } from './useTablePlatformIntegration';
 import type { ViewLayout } from './useTableViews';
@@ -218,6 +219,10 @@ export interface TableDataContextValue {
   activeViewConfig: ViewConfig;
   removeMissingFieldFromView: (fieldId: string) => Promise<void>;
 
+  // Conditional formatting (R5)
+  formatRules: FormatRule[];
+  updateConditionalFormatting: (rules: FormatRule[]) => Promise<void>;
+
   // UI state
   ui: UIState;
   uiDispatch: React.Dispatch<UIAction>;
@@ -305,6 +310,8 @@ export function TableDataProvider({
       createPlatformView: integration.createPlatformView,
       activeViewConfig: integration.activeViewConfig,
       removeMissingFieldFromView: integration.removeMissingFieldFromView,
+      formatRules: integration.formatRules,
+      updateConditionalFormatting: integration.updateConditionalFormatting,
       ui,
       uiDispatch,
       locked,

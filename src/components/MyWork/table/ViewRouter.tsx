@@ -28,6 +28,7 @@ import type { FieldType, LinkedRecordFieldOptions, TablePlatformView } from '@/t
 
 import { CalendarView } from './CalendarView';
 import { CellEditor } from './CellEditor';
+import { getConditionalStyle, type FormatRule } from './ConditionalFormatting';
 import { ChatToSchemaPanel } from './ChatToSchemaPanel';
 import { EmptyStateView } from './EmptyStateView';
 import { FieldManager } from './FieldManager';
@@ -96,6 +97,8 @@ interface PlatformGridViewProps {
   viewConfig?: { missing_fields?: string[]; missing_field_names?: Record<string, string> };
   onRemoveMissingField?: (fieldId: string) => void;
   isPl: boolean;
+  /** R5: conditional-formatting rules applied per-cell. */
+  formatRules: FormatRule[];
 }
 
 const PlatformGridView: React.FC<PlatformGridViewProps> = ({
@@ -113,6 +116,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   viewConfig,
   onRemoveMissingField,
   isPl,
+  formatRules,
 }) => {
   const renderCell = (row: TableNode, col: ColumnDef) => {
     if (isMissingField(col.key, viewConfig)) {
@@ -213,9 +217,14 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       </td>
       {visibleColumns.map((col) => {
         const missing = isMissingField(col.key, viewConfig);
+        // R5: conditional formatting — only on real (non-missing) cells.
+        const cfStyle = missing
+          ? undefined
+          : getConditionalStyle(formatRules, col.key, row.data?.[col.key]);
         return (
           <td
             key={col.key}
+            style={cfStyle}
             className={
               missing
                 ? 'border-b border-r border-amber-100 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10 align-top min-w-[120px] max-w-[280px] px-3 py-2 text-xs text-amber-500 dark:text-amber-400 italic'
@@ -337,6 +346,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     activeViewConfig,
     removeMissingFieldFromView,
     savedViews,
+    formatRules,
   } = useTableData();
 
   const activeViewName = useMemo(() => {
@@ -620,6 +630,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           viewConfig={activeViewConfig}
           onRemoveMissingField={handleRemoveMissingField}
           isPl={isPl}
+          formatRules={formatRules}
         />
       </ViewErrorBoundary>
     ) : (

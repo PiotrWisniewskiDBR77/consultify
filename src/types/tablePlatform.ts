@@ -228,6 +228,37 @@ export interface TablePlatformView {
   updatedAt: string;
 }
 
+/**
+ * Conditional-formatting rule persisted in a view's `config` JSONB.
+ *
+ * R5 / W2: structurally identical to `FormatRule` from
+ * `components/MyWork/table/ConditionalFormatting.tsx`. Defined here (rather than
+ * imported from the component) so `src/types` stays free of UI-layer imports;
+ * the integration hook casts between the two.
+ */
+export interface ConditionalFormatRule {
+  id: string;
+  fieldId: string;
+  operator:
+    | 'equals'
+    | 'not_equals'
+    | 'contains'
+    | 'not_contains'
+    | 'is_empty'
+    | 'is_not_empty'
+    | 'greater_than'
+    | 'less_than'
+    | 'between';
+  value?: unknown;
+  value2?: unknown;
+  style: {
+    backgroundColor?: string;
+    color?: string;
+    fontWeight?: 'bold' | 'normal';
+    fontStyle?: 'italic' | 'normal';
+  };
+}
+
 /** View display and filter configuration */
 export interface ViewConfig {
   filters?: FilterGroup;
@@ -238,6 +269,8 @@ export interface ViewConfig {
   missing_fields?: string[];
   /** Display names captured when a field was deleted (field id → name) */
   missing_field_names?: Record<string, string>;
+  /** R5: per-view conditional-formatting rules (cell colouring); persisted in `tp_views.config`. */
+  conditional_formatting?: ConditionalFormatRule[];
 }
 
 /** Filter expression group (AND/OR logic) */

@@ -10,7 +10,18 @@
  *   =COUNT(children)              — count children
  *   =SCORE(impact*0.4 + effort*0.3) — weighted formula
  *   Standard: +, -, *, /, field references
+ *
+ * R5 / W2: the cross-row aggregates (`children.`/`related.`) and the
+ * legacy `IF(field="x", ...)` / `CONCAT(...)` shorthands remain a thin layer
+ * ABOVE the shared AST core (`formulaEngineCore`). Aggregates are resolved to
+ * numeric literals first, then the remaining single-row expression is parsed
+ * and evaluated by the one shared engine — no more `new Function`.
  */
+import {
+  evaluateFormula as evaluateAst,
+  parseFormula,
+  FormulaError,
+} from './formulaEngineCore';
 import type { TableEdge, TableNode } from './tableTypes';
 
 interface FormulaContext {
@@ -55,10 +66,20 @@ function resolveFieldValue(node: TableNode, field: string): number | string {
   return isNaN(num) ? String(val) : num;
 }
 
+/**
+ * Evaluate a single-row expression through the shared AST core.
+ * `node.data` is the record; bare identifiers resolve by name.
+ */
+function evalWithCore(expr: string, ctx: FormulaContext): unknown {
+  const ast = parseFormula(expr);
+  const record = (ctx.node.data ?? {}) as Record<string, unknown>;
+  return evaluateAst(ast, record, new Map());
+}
+
 export function evaluateFormulaV2(formula: string, ctx: FormulaContext): string | number {
   const expr = formula.startsWith('=') ? formula.slice(1).trim() : formula.trim();
 
-  // IF(condition, trueVal, falseVal)
+  // IF(condition, trueVal, falseVal) — legacy shorthand `field="literal"`.
   const ifMatch = expr.match(/^IF\((.+?)="(.+?)",\s*(.+?),\s*(.+?)\)$/i);
   if (ifMatch) {
     const [, field, expected, trueVal, falseVal] = ifMatch;
@@ -79,7 +100,8 @@ export function evaluateFormulaV2(formula: string, ctx: FormulaContext): string 
     return parts.join('');
   }
 
-  // Aggregate: SUM/AVG/MIN/MAX/COUNT(children.field) or (related.field)
+  // Aggregate: SUM/AVG/MIN/MAX/COUNT(children.field) or (related.field).
+  // Cross-row roll-up resolved here (the core is single-row only).
   const aggMatch = expr.match(/^(SUM|AVG|MIN|MAX|COUNT)\((children|related)(?:\.(\w+))?\)$/i);
   if (aggMatch) {
     const fn = aggMatch[1].toUpperCase() as AggFn;
@@ -89,7 +111,7 @@ export function evaluateFormulaV2(formula: string, ctx: FormulaContext): string 
     return Math.round(aggregateField(targetNodes, field, fn) * 100) / 100;
   }
 
-  // SCORE(expression) — evaluate arithmetic with field references
+  // SCORE(expression) — evaluate arithmetic with field references via core.
   const scoreMatch = expr.match(/^SCORE\((.+)\)$/i);
   if (scoreMatch) {
     return evaluateArithmetic(scoreMatch[1], ctx);
@@ -106,28 +128,13 @@ export function evaluateFormulaV2(formula: string, ctx: FormulaContext): string 
 }
 
 function evaluateArithmetic(expr: string, ctx: FormulaContext): number {
-  let resolved = expr;
-  const fieldPattern = /\b([a-zA-Z_]\w*)\b/g;
-  let match: RegExpExecArray | null;
-  const replacements: [string, string][] = [];
-
-  while ((match = fieldPattern.exec(expr)) !== null) {
-    const field = match[1];
-    if (['true', 'false', 'null', 'undefined', 'NaN', 'Infinity'].includes(field)) continue;
-    const val = Number(resolveFieldValue(ctx.node, field));
-    replacements.push([field, String(isNaN(val) ? 0 : val)]);
-  }
-
-  for (const [from, to] of replacements) {
-    resolved = resolved.replace(new RegExp(`\\b${from}\\b`, 'g'), to);
-  }
-
   try {
-    // Safe eval: only allow numbers, operators, parentheses, dots
-    if (!/^[\d\s+\-*/().]+$/.test(resolved)) return 0;
-    const result = Function(`"use strict"; return (${resolved})`)();
-    return typeof result === 'number' && isFinite(result) ? Math.round(result * 100) / 100 : 0;
-  } catch {
+    const result = evalWithCore(expr, ctx);
+    return typeof result === 'number' && isFinite(result)
+      ? Math.round(result * 100) / 100
+      : 0;
+  } catch (e) {
+    if (e instanceof FormulaError) return 0;
     return 0;
   }
 }
