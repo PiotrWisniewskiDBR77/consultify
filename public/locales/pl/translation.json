@@ -13159,6 +13159,16 @@
       "retry": "Spróbuj ponownie"
     },
     "outputs": {
+      "launcher": {
+        "title": "Nowy output",
+        "subtitle": "Wybierz, co chcesz utworzyć",
+        "report": "Raport",
+        "reportHint": "Dokument doradczy — Teresa pomoże go napisać",
+        "presentation": "Prezentacja",
+        "presentationHint": "Slajdy w jakości Gamma — układ i grafika",
+        "table": "Tabela",
+        "tableHint": "Otypowany arkusz z formatami — styl Airtable/Excel"
+      },
       "kind": {
         "presentation": "Prezentacja",
         "sheet": "Tabela",

@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 
@@ -39,6 +40,7 @@ import {
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
+import { type DeliverableType, OutputsLauncherModal } from './OutputsLauncherModal';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
@@ -195,6 +197,27 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     [t]
   );
 
+  const [launcherOpen, setLauncherOpen] = useState(false);
+
+  // E1: wspólne wejście routuje per typ do istniejącego kreatora.
+  // Spięcie z silnikiem generacji + „paczką kontekstu" = sub-moduł E3.
+  const handleLauncherSelect = useCallback(
+    (type: DeliverableType) => {
+      switch (type) {
+        case 'report':
+          navigate('/reports/builder');
+          break;
+        case 'presentation':
+          navigate('/presentations/wizard');
+          break;
+        case 'table':
+          navigate('/tabele');
+          break;
+      }
+    },
+    [navigate]
+  );
+
   const handleNewItem = useCallback(() => {
     switch (activeTab) {
       case 'outputs_documents':
@@ -209,7 +232,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       case 'outputs_all':
       case 'outputs_mine':
       case 'outputs_review':
-        navigate('/presentations?tab=templates');
+        // Wspólny launcher za flagą; OFF ⇒ stare zachowanie (fail-safe).
+        if (isDeliverablesLightEnabled()) {
+          setLauncherOpen(true);
+        } else {
+          navigate('/presentations?tab=templates');
+        }
         break;
       default:
         break;
@@ -1091,6 +1119,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>
       </ModuleHub>
+      <OutputsLauncherModal
+        open={launcherOpen}
+        onClose={() => setLauncherOpen(false)}
+        onSelectType={handleLauncherSelect}
+      />
     </div>
   );
 };

@@ -12567,6 +12567,16 @@
       "retry": "Retry"
     },
     "outputs": {
+      "launcher": {
+        "title": "New output",
+        "subtitle": "Pick what you want to create",
+        "report": "Report",
+        "reportHint": "Advisory document — Teresa helps you write it",
+        "presentation": "Presentation",
+        "presentationHint": "Gamma-grade slides with layout and visuals",
+        "table": "Table",
+        "tableHint": "Typed, formatted sheet — Airtable/Excel style"
+      },
       "kind": {
         "presentation": "Presentation",
         "sheet": "Sheet",
