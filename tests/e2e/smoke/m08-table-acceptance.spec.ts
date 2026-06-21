@@ -5,7 +5,7 @@
  * Harvard/Testy manualne/TESTY_M08_IDEAS_TABLE.md as a representative-core suite
  * (decision 2026-06-20: representative ~20, not exhaustive 105). Each scenario
  * seeds an idea via the API, drives / asserts the real Table workspace UI, and
- * captures one screenshot as evidence under tests/e2e/screenshots/m08/<id>.png.
+ * captures one screenshot as evidence under docs/qa/screens/m08-headless-2026-06-20/.
  *
  * The Table tool has no data-testids — assertions anchor on the proven workspace
  * shell (region "Idea map workspace", the "Table" tool-strip button, the idea
@@ -16,6 +16,11 @@
  *   - L-01: the 4 toolbar action surfaces never throw an always-error toast.
  *   - L-02 / Z-06: the AI-fill / Copilot affordances are present and reachable.
  *   - DoD #7: dark-mode + EN render with no error boundary.
+ *
+ * Performance strategy: S01-S03, S06-S15, S17-S20 share ONE idea created once in
+ * beforeAll (1 DB write). Only S04 (empty-state), S05 (add-row) and S16
+ * (persist-reload) need their own fresh ideas (3 more writes). Total = 4 writes
+ * instead of 20, bringing runtime from ~40 min to ~5 min.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -121,13 +126,10 @@ async function dismissOnboarding(page: Page) {
 /**
  * Suppress the first-run "WELCOME TO CONSULTIFY" onboarding so it never overlays
  * the table. The gate (useFirstRunOnboarding) trusts a localStorage done-key
- * (`consultify_onboarding_done:{userId}`) as an instant guard and the
- * GET /api/preferences `onboarding_completed` flag — set both before app boot.
+ * (`consultify_onboarding_done:{userId}`) as an instant guard — set it before
+ * app boot via addInitScript.
  */
 async function suppressOnboarding(page: Page, userId: string) {
-  // Instant local guard only — readLocalDone() short-circuits the gate before any
-  // server check, so the modal never opens. We deliberately do NOT stub
-  // GET /api/preferences (it feeds theme/language/many consumers).
   await page.addInitScript((uid) => {
     try {
       if (uid) localStorage.setItem(`consultify_onboarding_done:${uid}`, 'true');
@@ -160,18 +162,49 @@ function byTitle(page: Page, title: string) {
 }
 
 test.describe('M08 Ideas · Table — representative acceptance', () => {
-  test.describe.configure({ mode: 'serial' });
+  // Shared idea for all read-only toolbar/shell checks.
+  // beforeAll runs once per Playwright worker process; tests that need clean or
+  // mutated state (S04, S05, S16) create their own fresh ideas below.
+  let sharedIdeaId = '';
+  let sharedUserId = '';
+  let sharedToken = '';
+
+  test.beforeAll(async ({ request }) => {
+    const state = readTestSupportState();
+    sharedToken = state.token;
+    sharedUserId = state.userId;
+    const title = uniqueLabel('m08-shared');
+    const res = await request.post(`${API_BASE_URL}/api/my-work/my-ideas`, {
+      headers: authHeaders(sharedToken),
+      data: { title, body: 'M08 shared seed idea for read-only tests', tags: ['m08', 'acceptance'] },
+    });
+    if (res.ok()) {
+      const payload = (await res.json()) as { id: string };
+      sharedIdeaId = payload.id;
+    }
+  });
+
+  /** Navigate to the shared idea's Table workspace (no DB write). */
+  async function openShared(page: Page) {
+    await suppressOnboarding(page, sharedUserId);
+    await gotoTable(page, sharedIdeaId);
+    await dismissOnboarding(page);
+    await expect(page.getByRole('region', { name: 'Idea map workspace' })).toBeVisible({
+      timeout: 30000,
+    });
+  }
+
+  // ── Read-only toolbar / shell checks (shared idea) ───────────────────────
 
   test('S01 workspace shell renders with the Table tool active', async ({ page }) => {
-    const idea = await openTable(page, 'm08-shell');
+    await openShared(page);
     await expect(page.getByRole('button', { name: 'Table', exact: true }).first()).toBeVisible();
-    await expect(page.getByText(idea.title).first()).toBeVisible({ timeout: 30000 });
     await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
     await shot(page, 'S01-shell-table-active');
   });
 
   test('S02 My Work tool strip exposes the Ideas/Notebook/Inbox/Tasks surfaces', async ({ page }) => {
-    await openTable(page, 'm08-toolstrip');
+    await openShared(page);
     for (const name of ['Ideas', 'Notebook', 'Inbox', 'Tasks', 'Decisions']) {
       await expect(page.getByRole('button', { name, exact: true }).first()).toBeVisible();
     }
@@ -181,12 +214,14 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
   test('S03 idea-tool switcher offers Recommendation map / Whiteboard / Process Flow / Table', async ({
     page,
   }) => {
-    await openTable(page, 'm08-switcher');
+    await openShared(page);
     for (const name of ['Recommendation map', 'Whiteboard', 'Process Flow', 'Table']) {
       await expect(page.getByRole('button', { name, exact: true }).first()).toBeVisible();
     }
     await shot(page, 'S03-tool-switcher');
   });
+
+  // ── Mutating / state-sensitive tests (own fresh ideas) ───────────────────
 
   test('S04 empty grid surfaces the three first-record affordances', async ({ page }) => {
     await openTable(page, 'm08-empty');
@@ -209,55 +244,57 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
     await shot(page, 'S05-add-first-record');
   });
 
+  // ── Read-only toolbar checks continued (shared idea) ─────────────────────
+
   test('S06 toolbar exposes undo / redo controls', async ({ page }) => {
-    await openTable(page, 'm08-undo');
+    await openShared(page);
     await expect(byTitle(page, 'Undo (Ctrl+Z)')).toBeVisible({ timeout: 30000 });
     await expect(byTitle(page, 'Redo (Ctrl+Y)')).toBeVisible();
     await shot(page, 'S06-undo-redo');
   });
 
   test('S07 toolbar exposes the AI Copilot entry point (L-02)', async ({ page }) => {
-    await openTable(page, 'm08-copilot');
+    await openShared(page);
     await expect(byTitle(page, 'AI Copilot')).toBeVisible({ timeout: 30000 });
     await shot(page, 'S07-ai-copilot-button');
   });
 
   test('S08 toolbar exposes Export to Presentation (→M19)', async ({ page }) => {
-    await openTable(page, 'm08-export');
+    await openShared(page);
     await expect(byTitle(page, 'Export to Presentation')).toBeVisible({ timeout: 30000 });
     await shot(page, 'S08-export-to-presentation');
   });
 
   test('S09 toolbar exposes the AI schema assistant + AI Categorize', async ({ page }) => {
-    await openTable(page, 'm08-ai-tools');
+    await openShared(page);
     await expect(byTitle(page, 'AI schema assistant')).toBeVisible({ timeout: 30000 });
     await expect(byTitle(page, 'AI Categorize')).toBeVisible();
     await shot(page, 'S09-ai-schema-categorize');
   });
 
   test('S10 toolbar exposes Scoring Model + Idea Pipeline', async ({ page }) => {
-    await openTable(page, 'm08-scoring');
+    await openShared(page);
     await expect(byTitle(page, 'Scoring Model')).toBeVisible({ timeout: 30000 });
     await expect(byTitle(page, 'Idea Pipeline')).toBeVisible();
     await shot(page, 'S10-scoring-pipeline');
   });
 
   test('S11 toolbar exposes Cross-table Relations + Heatmap', async ({ page }) => {
-    await openTable(page, 'm08-relations');
+    await openShared(page);
     await expect(byTitle(page, 'Cross-table Relations')).toBeVisible({ timeout: 30000 });
     await expect(byTitle(page, 'Heatmap')).toBeVisible();
     await shot(page, 'S11-relations-heatmap');
   });
 
   test('S12 toolbar exposes Save view + Group', async ({ page }) => {
-    await openTable(page, 'm08-saveview');
+    await openShared(page);
     await expect(byTitle(page, 'Save view')).toBeVisible({ timeout: 30000 });
     await expect(byTitle(page, 'Group')).toBeVisible();
     await shot(page, 'S12-saveview-group');
   });
 
   test('S13 AI Copilot opens a panel without an always-error toast (L-02)', async ({ page }) => {
-    await openTable(page, 'm08-copilot-open');
+    await openShared(page);
     const copilot = byTitle(page, 'AI Copilot');
     await expect(copilot).toBeVisible({ timeout: 30000 });
     await copilot.click().catch(() => {});
@@ -269,7 +306,7 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
   });
 
   test('S14 Export to Presentation opens its dialog (no dead CTA)', async ({ page }) => {
-    await openTable(page, 'm08-export-open');
+    await openShared(page);
     const exportBtn = byTitle(page, 'Export to Presentation');
     await expect(exportBtn).toBeVisible({ timeout: 30000 });
     await exportBtn.click().catch(() => {});
@@ -279,10 +316,12 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
   });
 
   test('S15 Voice / Image + Heatmap affordances are reachable', async ({ page }) => {
-    await openTable(page, 'm08-voice');
+    await openShared(page);
     await expect(byTitle(page, 'Voice / Image')).toBeVisible({ timeout: 30000 });
     await shot(page, 'S15-voice-image');
   });
+
+  // ── Mutating: persist-reload (own idea) ──────────────────────────────────
 
   test('S16 added record persists across a full reload', async ({ page }) => {
     const idea = await openTable(page, 'm08-persist');
@@ -302,8 +341,10 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
     await shot(page, 'S16-persist-after-reload');
   });
 
+  // ── Read-only: dark-mode / i18n / console / import (shared idea) ─────────
+
   test('S17 dark mode renders the table workspace with no error boundary (DoD#7)', async ({ page }) => {
-    await openTable(page, 'm08-dark');
+    await openShared(page);
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.waitForTimeout(500);
     await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
@@ -312,7 +353,7 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
   });
 
   test('S18 import file-input affordance exists and does not 404-toast (L-01)', async ({ page }) => {
-    await openTable(page, 'm08-import');
+    await openShared(page);
     // Import CSV is a working client-side <input type=file> (L-01) — its presence
     // and a clean (no error-toast) load is the closure proof.
     await expect(page.getByRole('button', { name: /Import CSV|Importuj CSV/i }).first()).toBeVisible({
@@ -324,10 +365,16 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
 
   test('S19 console is free of error-boundary crashes after a full table load', async ({ page }) => {
     const errors: string[] = [];
+    // Attach listener BEFORE navigation so every console message is captured.
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text());
     });
-    await openTable(page, 'm08-console');
+    // Use shared ideaId — each test gets a fresh page context so the console
+    // listener on this page only fires from this test's navigation onwards.
+    await suppressOnboarding(page, sharedUserId);
+    await gotoTable(page, sharedIdeaId);
+    await dismissOnboarding(page);
+    await expect(page.getByRole('region', { name: 'Idea map workspace' })).toBeVisible({ timeout: 30000 });
     await page.waitForTimeout(1500);
     await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
     // We assert the UI did not crash; transient network 4xx logs are tolerated.
@@ -337,7 +384,7 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
   });
 
   test('S20 EN locale renders the workspace chrome in English (i18n bilingual)', async ({ page }) => {
-    await openTable(page, 'm08-i18n');
+    await openShared(page);
     // EN side of the inline isPl? ternaries — proves functional bilinguality.
     await expect(page.getByRole('button', { name: 'Table', exact: true }).first()).toBeVisible();
     await expect(byTitle(page, 'Export to Presentation')).toBeVisible({ timeout: 30000 });

@@ -196,11 +196,6 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
             <div className="text-xs font-semibold text-navy-900 dark:text-white">
               {currentUser.firstName} {currentUser.lastName}
             </div>
-            <div className="flex items-center justify-end gap-1 text-[10px] text-slate-600 dark:text-slate-500 uppercase tracking-wider max-w-[220px]">
-              <span className="truncate">{roleLabel}</span>
-              <span>·</span>
-              <span className="truncate max-w-[140px]">{activeOrganizationName}</span>
-            </div>
           </div>
         )}
 

@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getTableColumns } from '../utils/dbSchema.js';
-import { flagOn } from '../utils/pgFlags.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 import { send as sendEmail } from './emailService.js';
 import { SlackServiceClass } from './slackService.js';
 
@@ -782,31 +782,45 @@ class NotificationService {
   async getPreferences(userId: string): Promise<NotificationPreferences | null> {
     const db = await this.getDb();
 
-    const row = await db.get<{
-      user_id: string;
-      global_enabled: number;
-      quiet_hours_enabled: number;
-      quiet_hours_start: string;
-      quiet_hours_end: string;
-      email_enabled: number;
-      email_digest_enabled: number;
-      email_digest_frequency: string;
-      type_settings: string;
-    }>(`SELECT * FROM notification_preferences WHERE user_id = ?`, [userId]);
+    const defaults: NotificationPreferences = {
+      userId,
+      globalEnabled: true,
+      quietHoursEnabled: false,
+      quietHoursStart: '22:00',
+      quietHoursEnd: '08:00',
+      emailEnabled: true,
+      emailDigestEnabled: false,
+      emailDigestFrequency: 'daily',
+      typeSettings: {},
+    };
+
+    let row:
+      | {
+          user_id: string;
+          global_enabled: number;
+          quiet_hours_enabled: number;
+          quiet_hours_start: string;
+          quiet_hours_end: string;
+          email_enabled: number;
+          email_digest_enabled: number;
+          email_digest_frequency: string;
+          type_settings: string;
+        }
+      | undefined;
+    try {
+      row = await db.get(`SELECT * FROM notification_preferences WHERE user_id = ?`, [userId]);
+    } catch (error) {
+      // Table absent on an under-migrated env → behave as "no prefs row" rather
+      // than 500-ing every caller (e.g. decision reminders). Defaults are safe.
+      console.warn(
+        '[notificationService.getPreferences] preferences query failed, using defaults:',
+        error instanceof Error ? error.message : error
+      );
+      return defaults;
+    }
 
     if (!row) {
-      // Return defaults
-      return {
-        userId,
-        globalEnabled: true,
-        quietHoursEnabled: false,
-        quietHoursStart: '22:00',
-        quietHoursEnd: '08:00',
-        emailEnabled: true,
-        emailDigestEnabled: false,
-        emailDigestFrequency: 'daily',
-        typeSettings: {},
-      };
+      return defaults;
     }
 
     return {

@@ -95,20 +95,23 @@ test.describe('M05 capture screens [→UI]', () => {
       await waitIdeasReady(page);
       await shot(page, theme, '01-lista-table');
 
-      // 02) Widok Grid (best-effort segment/toggle)
-      const grid = (await clickIfVisible(page, /^Grid$|^Siatka$|^Kafelki$/i)) ||
-        (await page.getByRole('tab', { name: /Grid|Siatka|Kafelki/i }).first().click().then(() => true).catch(() => false));
-      if (grid) await shot(page, theme, '02-lista-grid');
-
-      // 03) Widok Garden (best-effort)
-      const garden = (await clickIfVisible(page, /^Garden$|^Ogród$/i)) ||
-        (await page.getByRole('tab', { name: /Garden|Ogród/i }).first().click().then(() => true).catch(() => false));
-      if (garden) await shot(page, theme, '03-lista-garden');
-
-      // 04) Ulubione/Recents/foldery (best-effort — pokaż pasek/segment)
-      await clickIfVisible(page, /^Table$|^Tabela$/i); // wróć do table dla stabilnego kadru
-      await page.waitForTimeout(600);
+      // 04) Ulubione/Recents/foldery — pasek nad listą (widoczny w widoku table)
       await shot(page, theme, '04-ulubione-recents-foldery');
+
+      // 02) Widok Grid — segment radiogroup „Tryb widoku pomyslow" (ikony table|grid; 2. = grid).
+      //     UWAGA: MyWorkHub wspiera TYLKO table|grid (NIE „garden" — ten jest nieosiągalny z huba).
+      const viewGroup = page
+        .locator('[role="radiogroup"][aria-label*="pomysl" i], [role="radiogroup"][aria-label*="Ideas view" i]')
+        .first();
+      const gridBtn = viewGroup.locator('button').nth(1);
+      if (await gridBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await gridBtn.click().catch(() => {});
+        await page.waitForTimeout(1200);
+        await shot(page, theme, '02-lista-grid');
+        // wróć do table dla stabilnego kadru kolejnych ujęć
+        await viewGroup.locator('button').nth(0).click().catch(() => {});
+        await page.waitForTimeout(600);
+      }
     });
 
     test(`${theme} — workspace mapy + szablony + eksport`, async ({ page }) => {
@@ -126,14 +129,18 @@ test.describe('M05 capture screens [→UI]', () => {
       // 07) Workspace mapy (kanwa grafu) — zrzut bezwarunkowy (deep-link openMap)
       await shot(page, theme, '07-workspace-mapa');
 
-      // 10) Menu eksportu (window-event jak w spec 04 — stabilny driver)
-      await page.evaluate((id) => {
-        window.dispatchEvent(
-          new CustomEvent('idea-workspace-open-export-menu', { detail: { ideaId: id } })
-        );
-      }, demoIdeaId);
+      // 10) Menu eksportu (window-event jak w spec 04 — retry aż listener się zarejestruje)
       const exportHeading = page.getByRole('heading', { name: /Eksport mapy|Export map/i }).first();
-      if (await exportHeading.isVisible({ timeout: 6000 }).catch(() => false)) {
+      for (let i = 0; i < 4; i++) {
+        await page.evaluate((id) => {
+          window.dispatchEvent(
+            new CustomEvent('idea-workspace-open-export-menu', { detail: { ideaId: id } })
+          );
+        }, demoIdeaId);
+        if (await exportHeading.isVisible({ timeout: 4000 }).catch(() => false)) break;
+        await page.waitForTimeout(1000);
+      }
+      if (await exportHeading.isVisible().catch(() => false)) {
         await shot(page, theme, '10-menu-eksportu');
         await page.keyboard.press('Escape').catch(() => {});
         await page.waitForTimeout(500);

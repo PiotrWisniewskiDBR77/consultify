@@ -69,6 +69,7 @@ import {
   req,
   setupAuth,
   shot,
+  syncMap,
   uniq,
   unwrap,
 } from './_helpers';
@@ -173,6 +174,9 @@ test.describe('M05 §8 Eksport (IdeaExportMenu) + §9 Konwersja idea → output'
   }) => {
     const idea = await createIdeaApi(api, uniq('M05-E2E-CV-Csv'), { tags: ['test'] });
     trashIdeas.push(idea.id);
+    // export-csv wymaga ISTNIEJĄCEJ mapy idei (inaczej 404 „Idea map not found") —
+    // zasiej węzły przez sync zanim odpytasz CSV.
+    await syncMap(api, idea.id, 1, [{ id: 'c1', label: 'wiersz CSV' }], []);
 
     const res = await req(api, 'get', `${MW}/my-ideas/${idea.id}/export-csv`);
     // Kontrakt: 200 + Content-Type text/csv. Gdy endpoint nie jest na tym środowisku

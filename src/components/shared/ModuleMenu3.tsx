@@ -11,10 +11,9 @@ export const MENU_2_TAB_INACTIVE = cn(
   'dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.06]'
 );
 
-/* VISUAL_STANDARD.md §5.5 — active nav state is NEUTRAL (no crimson tint). */
 export const MENU_2_TAB_ACTIVE = cn(
   MENU_2_TAB_BASE,
-  'border-slate-400 bg-slate-200 text-slate-900',
+  'border-primary-500/50 bg-primary-500/10 text-primary-800',
   'dark:border-white/25 dark:bg-white/10 dark:text-slate-100'
 );
 
@@ -30,9 +29,6 @@ export const MENU_3_RIGHT_CLASS = 'flex shrink-0 items-center justify-end gap-2'
 export const MENU_3_CHIP_BASE =
   'inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
-/* VISUAL_STANDARD.md §5.5 filter chips — inactive: transparent + muted text +
- * subtle border; active: NEUTRAL raised surface + clear text + stronger border
- * (never crimson). */
 export const MENU_3_CHIP_INACTIVE = cn(
   MENU_3_CHIP_BASE,
   'border-slate-200 bg-transparent text-c-text-muted hover:bg-slate-100 hover:text-slate-900',
@@ -41,7 +37,7 @@ export const MENU_3_CHIP_INACTIVE = cn(
 
 export const MENU_3_CHIP_ACTIVE = cn(
   MENU_3_CHIP_BASE,
-  'border-slate-400 bg-slate-200 text-slate-900',
+  'border-primary-500/50 bg-primary-500/10 text-primary-800',
   'dark:border-white/30 dark:bg-white/10 dark:text-white'
 );
 
@@ -55,7 +51,7 @@ export const MENU_3_BADGE_INACTIVE = cn(
 
 export const MENU_3_BADGE_ACTIVE = cn(
   MENU_3_BADGE_BASE,
-  'bg-slate-300 text-slate-800 dark:bg-white/15 dark:text-white'
+  'bg-primary-500/20 text-primary-800 dark:bg-white/15 dark:text-white'
 );
 
 export const MENU_3_ACTION_BASE =

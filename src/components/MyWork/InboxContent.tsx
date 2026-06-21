@@ -63,6 +63,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
 import {
   type TableSettingsColumn,
   TableSettingsPopover,
@@ -83,7 +84,11 @@ import {
   type RowActionSection,
   RowActionsMenu,
 } from '@/components/shared/RowActionsMenu';
-import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
+import {
+  FOCUSED_ROW_CLASS,
+  PREVIEW_SELECTED_ROW_CLASS,
+  SELECTED_ROW_CLASS,
+} from '@/components/shared/selectionTokens';
 import { ErrorState } from '@/components/ui/primitives';
 import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
@@ -103,7 +108,6 @@ import {
 } from '@/services/api/v8/my-work';
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
-import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS, FOCUSED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
 type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 type InboxItemType =
@@ -2754,7 +2758,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         </th>
 
         <th
-          className="relative px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+          className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
           style={{ width: columnWidths.title }}
         >
           <button
@@ -2788,7 +2792,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           return (
             <th
               key={colId}
-              className={`px-3 py-2 ${leftAligned ? 'text-left' : 'text-center'} text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header`}
+              className={`px-3 py-2 ${leftAligned ? 'text-left' : 'text-center'} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header`}
               style={{ width: columnWidths[colId] }}
             >
               <div
@@ -2837,7 +2841,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         })}
 
         <th
-          className="relative px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+          className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
           style={{ width: columnWidths.actions }}
         >
           <div className="flex items-center justify-end normal-case tracking-normal">
@@ -3203,7 +3207,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const renderFlatView = () => {
     let globalIndex = 0;
     return (
-      <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
+      <table
+        /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full table-fixed"
+        style={{ minWidth: tableMinWidth }}
+      >
         {renderTableHeader()}
         <tbody>
           {displayItems.map((group) => {
