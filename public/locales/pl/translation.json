@@ -1608,6 +1608,12 @@
         "hint_converge": "Oznacz najlepsze wyniki",
         "hint_handoff": "Eksportuj i udostępnij wyniki"
       },
+      "shapes": {
+        "rectangle": "Prostokąt",
+        "circle": "Koło",
+        "diamond": "Romb",
+        "hexagon": "Sześciokąt"
+      },
       "toolbarExtra": {
         "ariaLabel": "Pasek narzędzi tablicy",
         "title": "Tablica",
