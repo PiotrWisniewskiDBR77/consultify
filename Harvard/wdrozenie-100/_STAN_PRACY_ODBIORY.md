@@ -56,7 +56,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 |---|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|---|
 | M01 | Czat | 2 | 5/5 | 7/7 | 285✅ | ✓live+7E2E | ✅ | ✅ | ✅ | 20 | ✅ ZAMKNIĘTY |
 | M02 | Canvas | 3 | 6/6 | 7/7 | 199✅ | 20/20 | ✅ | ✅ | ✅ | 16 | ✅ ZAMKNIĘTY |
-| M03 | My Work — organizer | 2/3 | 6/6 | 6/7 | 848✅ | 39/39 | ✅ | ⬜ | ✅ | 15 | 🟢 DEPLOYED (demo `890bc39a` 2026-06-20) · CZEKA NA →F + OAuth(L-07) |
+| M03 | My Work — organizer | 2/3 | 6/6 | 6/7 | 848✅ | 39/39 | ✅ | ⬜ | ✅ | 15 | 🟢 DEPLOYED (demo `890bc39a` 2026-06-20) · CZEKA NA →F (ostatnia bramka). OAuth/sync → M25/L-11 (nie-bloker) |
 | M04 | Notatnik | 3 | 6/6 | 6/7 | 284✅ | 54/54 E2E | ✅ | 🟡 | 🟡 | 16/16 | 🟢 DO ODBIORU |
 | M05 | Ideas — Zarządzanie | 1 | 7/7 | 6/7 | 40✅ | 38✓/47 +9skip | ✅ | 🟡 | 🟡 | 12 | 🟢 DO ODBIORU |
 | M06 | Ideas — Mind Map | 1/3 | 7/7 | 6/7 | 230✅ | 124 spec/68 .png | 🟡 | ⬜ | ⬜ | 16 | 🟡 W TOKU |
