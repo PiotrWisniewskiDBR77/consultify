@@ -36,6 +36,7 @@ import ReactFlow, {
   Position,
   ReactFlowProvider,
   useEdgesState,
+  useNodesInitialized,
   useNodesState,
   useReactFlow,
 } from 'reactflow';
@@ -52,6 +53,7 @@ import {
 } from '@/utils/artifactLinks';
 
 import TeresaMark from '../shared/TeresaMark';
+import { useConfirmDialog } from './shared/ConfirmDialog';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { getCanvasBg } from './canvas/canvasBackground';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
@@ -1629,9 +1631,13 @@ function MindMapInner({
   const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isDarkMindmap = useIsDark();
+  const { dialog: subtreeDeleteDialog, confirm: confirmSubtreeDelete } = useConfirmDialog();
   const debugEnabled = false;
   const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } =
     useReactFlow();
+  // True once ReactFlow has measured every node — the only reliable signal that
+  // fitView can compute real bounds (firing it earlier silently no-ops).
+  const nodesInitialized = useNodesInitialized();
   const { autoLayout, partialLayoutSubtree } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
   const { exportAsPdf } = useMapExportPdf();
@@ -1947,6 +1953,64 @@ function MindMapInner({
     React.Dispatch<React.SetStateAction<Edge[]>>,
     (changes: unknown) => void,
   ];
+
+  // Initial viewport: restore this idea's saved viewport, otherwise fit the whole
+  // graph into view. Without this the canvas mounts at {x:0,y:0,zoom:1}, so a
+  // freshly opened map renders clipped in the top-left corner (the center node
+  // sits at flow-origin, branches fall behind the toolbar / off-screen). It also
+  // makes reload restore the prior viewport — `mm-viewport-${ideaId}` was being
+  // saved on unload but never read back. Runs once per idea, after nodes arrive.
+  const didInitialFitRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!nodesInitialized || nodes.length === 0) return;
+    if (didInitialFitRef.current === ideaId) return;
+    didInitialFitRef.current = ideaId;
+    let saved: { x: number; y: number; zoom: number } | null = null;
+    try {
+      const raw = localStorage.getItem(`mm-viewport-${ideaId}`);
+      if (raw) {
+        const vp = JSON.parse(raw);
+        if (
+          vp &&
+          Number.isFinite(vp.x) &&
+          Number.isFinite(vp.y) &&
+          Number.isFinite(vp.zoom) &&
+          vp.zoom > 0
+        ) {
+          saved = vp;
+        }
+      }
+    } catch {
+      /* ignore malformed saved viewport */
+    }
+    try {
+      if (saved) {
+        setViewport(saved, { duration: 0 });
+      } else {
+        fitView({ padding: 0.3, duration: 0 });
+      }
+    } catch {
+      /* fitView throws if the canvas is mid-teardown — safe to ignore */
+    }
+    // Give the surface keyboard focus on first load so the documented grammar
+    // ("Select a branch and press Tab to add the first node") works immediately —
+    // ReactFlow nodes are not focusable, so without this the canvas opens with
+    // focus on <body> and the first Tab/Enter/arrow press does nothing until the
+    // user happens to focus the surface. Don't steal focus from an open text field.
+    if (!locked) {
+      const ae = document.activeElement as HTMLElement | null;
+      const typingElsewhere =
+        ae &&
+        (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+      if (!typingElsewhere) {
+        try {
+          containerRef.current?.focus({ preventScroll: true });
+        } catch {
+          /* not focusable yet — ignore */
+        }
+      }
+    }
+  }, [nodesInitialized, nodes.length, ideaId, fitView, setViewport, locked]);
 
   // ── Graph CRUD collaboration ──────────────────────────────────────────────
   const collabSendRef = useRef<((msg: any) => void) | null>(null);
@@ -2515,6 +2579,16 @@ function MindMapInner({
     remoteLockedNodeIds,
     autoLayout,
     partialLayoutSubtree,
+    confirmSubtreeDelete: (childCount: number) =>
+      confirmSubtreeDelete({
+        title: isPolish ? 'Usunąć węzły?' : 'Delete nodes?',
+        description: isPolish
+          ? `Usunięcie obejmie ${childCount} podwęzł${childCount === 1 ? '' : 'ów'}. Tej operacji nie można cofnąć po synchronizacji.`
+          : `This will also delete ${childCount} child node${childCount === 1 ? '' : 's'}. This cannot be undone after sync.`,
+        confirmLabel: isPolish ? 'Usuń' : 'Delete',
+        cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+        variant: 'danger',
+      }),
   });
 
   // ── AI Sidekick context detection ──────────────────────────────────────
@@ -3073,10 +3147,21 @@ function MindMapInner({
       if (e.defaultPrevented) return;
       const target = e.target as HTMLElement;
       const container = containerRef.current;
+      const active = document.activeElement;
+      // ReactFlow nodes are not focusable, so clicking a node leaves focus on
+      // <body> (activeElement === body, target === body). The map's keyboard
+      // grammar (Tab=child, Enter=sibling, Delete, …) must still work in that
+      // state — otherwise "select a branch and press Tab" silently does nothing.
+      // We therefore treat "no real focus target" (body/null) as in-map. Typing
+      // in any OTHER surface keeps activeElement on that input (not body), so it
+      // stays excluded and we never hijack keystrokes from another module.
+      const noRealFocus =
+        !active || active === document.body || active === document.documentElement;
       const isWithinMap =
         !!container &&
         (container.contains(target) ||
-          (!!document.activeElement && container.contains(document.activeElement)));
+          (!!active && container.contains(active)) ||
+          (noRealFocus && (target === document.body || container.contains(target))));
       if (!isWithinMap) return;
 
       const keyLabel = formatDebugKey(e);
@@ -3420,11 +3505,20 @@ function MindMapInner({
       }
     };
     const container = containerRef.current;
+    // Listen in CAPTURE phase at the window level. ReactFlow nodes are not
+    // click-focusable, so after a click focus sits on <body>; a plain bubble-phase
+    // listener then sees Tab with defaultPrevented already true (something upstream
+    // consumes it) and bails — which is why the map's keyboard grammar
+    // (Tab/Enter/Delete/arrows) silently did nothing after a click. Capture runs
+    // first, before anything can preventDefault, so the grammar works regardless of
+    // exactly which element holds focus. The handler still guards text inputs
+    // (isInput/isEditing) and out-of-map focus (isWithinMap), so we never hijack
+    // typing in another surface.
     container?.addEventListener('keydown', handler, true);
-    window.addEventListener('keydown', handler);
+    window.addEventListener('keydown', handler, true);
     return () => {
       container?.removeEventListener('keydown', handler, true);
-      window.removeEventListener('keydown', handler);
+      window.removeEventListener('keydown', handler, true);
     };
   }, [
     addChildNode,
@@ -5100,6 +5194,12 @@ function MindMapInner({
               onNodeDragStop={onNodeDragStop}
               nodeTypes={reactFlowNodeTypes}
               edgeTypes={reactFlowEdgeTypes}
+              // ReactFlow's built-in keyboard-a11y makes nodes focusable and binds
+              // Tab/arrow keys to node focus-traversal — which silently swallows the
+              // mind-map grammar (Tab=add child, Enter=sibling, arrows=navigate)
+              // before our own keydown handler can see it. Disable it so the map's
+              // grammar actually works. (We provide arrow/Tab navigation ourselves.)
+              disableKeyboardA11y
               {...getIdeasToolInteractionProps('mindmap', {
                 locked,
                 connectMode: interactionMode === 'connect',
@@ -6319,6 +6419,7 @@ function MindMapInner({
         edgeCount={edges.length}
         onToggleSimplifiedMode={setSimplifiedMode}
       />
+      {subtreeDeleteDialog}
     </div>
   );
 }
