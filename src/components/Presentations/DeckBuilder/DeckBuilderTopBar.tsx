@@ -6,16 +6,15 @@ import {
   History,
   MessageSquare,
   Monitor,
+  MoreHorizontal,
   Palette,
-  Pause,
-  Play,
   Redo2,
   Share2,
   Shield,
   ShieldCheck,
   Undo2,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,8 +31,6 @@ interface DeckBuilderTopBarProps {
   onTheme?: () => void;
   onShare?: () => void;
   onVersionHistory?: () => void;
-  onToggleAnimations?: () => void;
-  animationsEnabled?: boolean;
   onQualityGates?: () => void;
   onAnalytics?: () => void;
   onAuditLog?: () => void;
@@ -104,8 +101,6 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   onTheme,
   onShare,
   onVersionHistory,
-  onToggleAnimations,
-  animationsEnabled = true,
   onQualityGates,
   onAnalytics,
   onAuditLog,
@@ -117,8 +112,65 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const goToPresentations = () => navigate('/presentations');
+
+  // R4 — close the "⋯" overflow menu on outside click.
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [moreOpen]);
+
+  // R4 — secondary/governance actions consolidated into the overflow menu.
+  const overflowItems = [
+    onVersionHistory && {
+      key: 'history',
+      icon: <Clock size={14} />,
+      label: t('presentations.builder.versionHistory.title', 'Version History'),
+      onClick: onVersionHistory,
+    },
+    onQualityGates && {
+      key: 'qa',
+      icon: <Shield size={14} />,
+      label: t('presentations.builder.topBar.qualityGates', 'Quality Gates'),
+      onClick: onQualityGates,
+    },
+    onGovernance && {
+      key: 'governance',
+      icon: <ShieldCheck size={14} />,
+      label: t('presentations.builder.topBar.governance', 'Governance'),
+      onClick: onGovernance,
+      dot: governanceVerdict
+        ? GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'
+        : undefined,
+    },
+    onAnalytics && {
+      key: 'analytics',
+      icon: <BarChart3 size={14} />,
+      label: t('presentations.builder.topBar.analytics', 'Share Analytics'),
+      onClick: onAnalytics,
+    },
+    onAuditLog && {
+      key: 'audit',
+      icon: <History size={14} />,
+      label: t('presentations.builder.topBar.auditLog', 'Audit log'),
+      onClick: onAuditLog,
+    },
+  ].filter(Boolean) as Array<{
+    key: string;
+    icon: React.ReactNode;
+    label: string;
+    onClick: () => void;
+    dot?: string;
+  }>;
 
   return (
     <div className="h-12 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex items-center px-4 gap-3 flex-shrink-0">
@@ -160,7 +212,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         )}
       </div>
 
-      {/* Undo / Redo + Animation toggle */}
+      {/* Undo / Redo */}
       <div className="flex items-center gap-1 border-r border-slate-200 dark:border-navy-700 pr-3 mr-1">
         <button
           onClick={onUndo}
@@ -178,24 +230,6 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         >
           <Redo2 size={16} />
         </button>
-        {onToggleAnimations && (
-          <button
-            onClick={onToggleAnimations}
-            className={`p-1.5 rounded-lg transition-colors ${
-              animationsEnabled
-                ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
-            }`}
-            title={t(
-              animationsEnabled
-                ? 'presentations.builder.animations.enabled'
-                : 'presentations.builder.animations.disabled',
-              animationsEnabled ? 'Animations On' : 'Animations Off'
-            )}
-          >
-            {animationsEnabled ? <Play size={14} /> : <Pause size={14} />}
-          </button>
-        )}
       </div>
 
       {/* Action buttons */}
@@ -214,67 +248,50 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         <span className="hidden md:inline">{t('presentations.builder.topBar.theme', 'Theme')}</span>
       </button>
 
-      {onVersionHistory && (
-        <button
-          onClick={onVersionHistory}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.versionHistory.title', 'Version History')}
-        >
-          <Clock size={14} />
-          <span className="hidden lg:inline">History</span>
-        </button>
-      )}
-
-      {onQualityGates && (
-        <button
-          onClick={onQualityGates}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.topBar.qualityGates', 'Quality Gates')}
-        >
-          <Shield size={14} />
-          <span className="hidden lg:inline">QA</span>
-        </button>
-      )}
-
-      {onGovernance && (
-        <button
-          onClick={onGovernance}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.topBar.governance', 'Governance')}
-          aria-label={t('presentations.builder.topBar.governance', 'Governance')}
-        >
-          <ShieldCheck size={14} />
-          <span className="hidden lg:inline">Governance</span>
-          {governanceVerdict && (
-            <span
-              aria-hidden="true"
-              className={`ml-0.5 w-1.5 h-1.5 rounded-full ${GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'}`}
-            />
+      {/* R4 — overflow menu: QA / Governance / Analytics / Audit / History */}
+      {overflowItems.length > 0 && (
+        <div className="relative" ref={moreRef}>
+          <button
+            onClick={() => setMoreOpen((v) => !v)}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+            title={t('presentations.builder.topBar.more', 'More')}
+            aria-label={t('presentations.builder.topBar.more', 'More')}
+            aria-haspopup="menu"
+            aria-expanded={moreOpen}
+          >
+            <MoreHorizontal size={16} />
+            {governanceVerdict && (
+              <span
+                aria-hidden="true"
+                className={`w-1.5 h-1.5 rounded-full ${GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'}`}
+              />
+            )}
+          </button>
+          {moreOpen && (
+            <div
+              role="menu"
+              className="absolute top-full right-0 mt-1 min-w-[12rem] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl p-1 z-50"
+            >
+              {overflowItems.map((item) => (
+                <button
+                  key={item.key}
+                  role="menuitem"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    item.onClick();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
+                >
+                  {item.icon}
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.dot && (
+                    <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
+                  )}
+                </button>
+              ))}
+            </div>
           )}
-        </button>
-      )}
-
-      {onAnalytics && (
-        <button
-          onClick={onAnalytics}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.topBar.analytics', 'Share Analytics')}
-        >
-          <BarChart3 size={14} />
-          <span className="hidden lg:inline">Analytics</span>
-        </button>
-      )}
-
-      {onAuditLog && (
-        <button
-          onClick={onAuditLog}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-          title={t('presentations.builder.topBar.auditLog', 'Audit log')}
-          aria-label={t('presentations.builder.topBar.auditLog', 'Audit log')}
-        >
-          <History size={14} />
-          <span className="hidden lg:inline">Audit</span>
-        </button>
+        </div>
       )}
 
       <button

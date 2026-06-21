@@ -1657,11 +1657,44 @@ export async function generateDeck(
   }
 }
 
+/**
+ * R4 — Default set of intents whose copy is produced by the Narrative Engine.
+ * Without an author instruction, only these slides are AI-rewritten (legacy
+ * behaviour). With a free-text instruction the user can rewrite ANY slide, so
+ * the gate is widened — see {@link shouldRunNarrativeRewrite}.
+ */
+export const NARRATIVE_REWRITE_INTENTS: SlideIntent[] = [
+  'executive_summary',
+  'key_messages',
+  'next_steps',
+  'recommendation_portfolio',
+];
+
+/**
+ * R4 — Pure decision: should the per-slide narrative rewrite run for this
+ * intent? A free-text instruction unlocks every slide; absent an instruction
+ * we keep the historical narrative-only gate. Exported for unit testing.
+ */
+export function shouldRunNarrativeRewrite(
+  intent: SlideIntent,
+  instruction?: string
+): boolean {
+  const hasInstruction = typeof instruction === 'string' && instruction.trim().length > 0;
+  if (hasInstruction) return true;
+  return NARRATIVE_REWRITE_INTENTS.includes(intent);
+}
+
 export async function regenerateSlide(
   deckId: string,
   slideIndex: number,
-  organizationId: string
-): Promise<{ slide: UnifiedSlide }> {
+  organizationId: string,
+  opts?: { instruction?: string }
+): Promise<{ slide: UnifiedSlide; card?: unknown }> {
+  const instruction =
+    typeof opts?.instruction === 'string' && opts.instruction.trim().length > 0
+      ? opts.instruction.trim()
+      : undefined;
+
   const deck = (await dbGet(
     `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
     [deckId, organizationId]
@@ -1674,15 +1707,9 @@ export async function regenerateSlide(
 
   const slide = unifiedJson.slides[slideIndex];
 
-  // Try narrative enrichment for text-heavy slides using the saved context pack.
-  const narrativeIntents: SlideIntent[] = [
-    'executive_summary',
-    'key_messages',
-    'next_steps',
-    'recommendation_portfolio',
-  ];
-
-  if (narrativeIntents.includes(slide.intent)) {
+  // R4 — narrative path runs for the legacy text-heavy intents OR for ANY slide
+  // when the author supplied a free-text rewrite instruction.
+  if (shouldRunNarrativeRewrite(slide.intent, instruction)) {
     const contextPack = await getContextPackSnapshot(deckId);
     if (contextPack) {
       try {
@@ -1703,6 +1730,7 @@ export async function regenerateSlide(
           section_type: slide.intent,
           section_title: slide.key_message || slide.intent,
           aiPurpose: 'presentation_slide_copy',
+          ...(instruction ? { user_instruction: instruction } : {}),
         });
 
         if (narrativeOutput.post_check.passed && narrativeOutput.content) {
@@ -1711,10 +1739,13 @@ export async function regenerateSlide(
             facts_used: narrativeOutput.facts_used.length,
             observations_used: narrativeOutput.observations_used.length,
             regenerated_at: new Date().toISOString(),
+            ...(instruction ? { instruction } : {}),
           };
           unifiedJson.slides[slideIndex] = slide;
         }
       } catch (err) {
+        // Fallback: AI unavailable / failed → keep the existing slide untouched
+        // and let the caller persist the (surgically unchanged) deck. No throw.
         logger.warn(`[PresentationGen] Narrative Engine skipped for regenerateSlide: ${err}`);
       }
     }
@@ -1734,5 +1765,9 @@ export async function regenerateSlide(
     [JSON.stringify(unifiedJson), JSON.stringify(updatedDeckDocument), deckId, organizationId]
   );
 
-  return { slide: unifiedJson.slides[slideIndex] };
+  // R4 — return the rebuilt FE-shaped card so the client can `updateCard()` in
+  // place (preserves undo) instead of reloading the whole deck.
+  const rebuiltCard = (updatedDeckDocument as any)?.cards?.[slideIndex];
+
+  return { slide: unifiedJson.slides[slideIndex], card: rebuiltCard };
 }
