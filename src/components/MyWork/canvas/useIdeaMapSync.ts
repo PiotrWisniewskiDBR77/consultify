@@ -55,7 +55,13 @@ interface FlushSyncOpts {
   keepalive?: boolean;
 }
 
-const DEFAULT_IDLE_MS = 60_000;
+// Autosave debounce: flush to the server this long after the user stops editing.
+// Was 60_000 (60s) — far too long: any idea-canvas edit (add node, move, label,
+// lane…) was lost on reload/navigation within a minute because the server sync
+// never fired (the beforeunload keepalive is an unreliable backup). 2.5s gives
+// snappy autosave while still batching bursts (the timer resets on each edit, so
+// it only fires once editing pauses). Shared by M06/M07/M08/M09 idea tools.
+const DEFAULT_IDLE_MS = 2_500;
 const DEFAULT_DRAFT_MS = 800;
 
 function getDraftStorageKey(ideaId: string) {
@@ -211,8 +217,19 @@ export function useIdeaMapSync({
   onConflict,
 }: UseIdeaMapSyncOpts) {
   const [saving, setSaving] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [lastSavedAt, setLastSavedAtState] = useState<number | null>(null);
   const [syncState, setSyncState] = useState<IdeaMapSyncState>('idle');
+
+  // lastSavedAt is also mirrored to a ref so persistDraft/flushNow/queueSync can
+  // read it WITHOUT depending on the state value. Depending on the state caused
+  // those callbacks to be recreated on every save, which re-fired the autosave
+  // effect → an endless re-save loop (a save storm once the idle debounce was
+  // shortened from 60s). Always set both via setLastSavedAt(). (M07 fix 2026-06-20)
+  const lastSavedAtRef = useRef<number | null>(null);
+  const setLastSavedAt = useCallback((value: number | null) => {
+    lastSavedAtRef.current = value;
+    setLastSavedAtState(value);
+  }, []);
 
   const serverVersionRef = useRef(globalIdeaVersions.get(ideaId) ?? 1);
   const queuedPayloadRef = useRef<IdeaMapSyncPayload | null>(null);
@@ -228,11 +245,11 @@ export function useIdeaMapSync({
         baseVersion: serverVersionRef.current,
         pending,
         updatedAt: Date.now(),
-        lastSavedAt: pending ? lastSavedAt : Date.now(),
+        lastSavedAt: pending ? lastSavedAtRef.current : Date.now(),
       };
       writeIdeaMapDraft(ideaId, nextRecord);
     },
-    [ideaId, lastSavedAt, tool]
+    [ideaId, tool]
   );
 
   const flushNow = useCallback(
