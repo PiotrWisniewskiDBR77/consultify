@@ -4,6 +4,18 @@
 > 🚀 **DEPLOYED na demo.consultify.ai 2026-06-21** (commit `b374e6d0`, build SUCCESS, root+/api/health=200). Serie G (AI bramki) + R (artefakty) LIVE. Migracje (`initiative_feature_flags`, `initiative_gate_ai_events`) zaaplikowane na demo (zweryfikowane). `POST /gate-ai-check` routowany (401 guard, nie 404). **Flaga `gate_ai` ON tylko na org Piotra demo** (`a3e05d4a…`, próg 75; dokładnie 1 org ON — zero szerokiego włączenia). Kalendarz (R3) + banner decyzji (R2) + DELETE-guard + kebab widoczne od razu. **→F = klik Piotra na demo** (transition na inicjatywie w jego org → pigułka/soft-block/override); →UI = screeny.
 **Zasada twarda:** idziemy sub-moduł po sub-module po kolei (G1→G5 → R1→R4 → C1→C2 → K1→K4 → V1). Nie przechodzę do kolejnego, póki poprzedni nie jest **ZAMKNIĘTY (8/8)**. Zero odstępstw.
 
+## RAPORT SESJI 2026-06-21 (CTO)
+Zbudowane code-side + **wdrożone na demo.consultify.ai** (najnowszy `gitSha` = **7e5c41bf**, health 200):
+- **Seria G (5/5)** — AI na bramce: flaga per-org · rollup merytoryczny (reviewer §B4) · timeline (zależności/daty) · `POST /gate-ai-check` + soft-block 422/override + telemetria · UI (modal + pigułka/panel). Flaga `gate_ai` **ON na org Piotra** (`a3e05d4a`, próg 75).
+- **Seria R (4/4)** — M13a Taski (+helper `buildScheduleItems`) · M13b banner decyzji GO_NO_GO · M13c Kalendarz (wpięty) · M13d notyfikacje (status-change wpięty).
+- **Seria C (2/2)** — C1 dedup `/similar-check` + ostrzeżenie w Charter Wizard · C2 Teresa `generate_initiative` tool (DRAFT, additive).
+- **Seria K (2/4)** — K1 §B3 validators `/validate-card` + FE-lint w wizardzie · K3 korelacja trwała (`/linked-items`, `LinkedItemsSection` przepięty — data-loss e2e fixed). **K2 CardContainer odłożony (Q6)** · **K4 AI-fill 7 sekcji TODO**.
+- **Seria V (1/1)** — V1 task-Gantt + toggle Kalendarz/Gantt (wspólny `ScheduleItem`).
+- **Done-by-the-way:** DELETE status-guard 409 + test.
+- **Liczby:** ~85 nowych testów zielonych · tsc/eslint clean (poza pre-existing warnings) · 5 deployów na demo · branch `Londyn` zsync · 8 stale-worktrees posprzątane.
+- **ZOSTAJE:** K4 (AI-fill sekcji), K2 (CardContainer, duży refaktor), ogony (drag-reschedule kalendarz/gantt, R4 assignment/due/blocker call-sites), **Manual (Playwright)** + **→F/→UI (kliki Piotra na demo)**.
+- **→F gotowe do kliku na demo:** (1) bramka G — otwórz inicjatywę w org Piotra → sekcja Gates / zmiana statusu → soft-block; (2) Teresa C2 — „stwórz inicjatywę X"; (3) Kalendarz/Gantt — sekcja Timeline → toggle; (4) Linked items — dodaj link → reload → przeżył.
+
 Ten plik = jedyne miejsce prawdy o postępie **M13 Depth**. Odhaczamy tu każdy etap. Szczegół (epiki, luki, kryteria) = [`M13-DEPTH-PLAN.md`](M13-DEPTH-PLAN.md) + [`../../docs/product/INITIATIVE_GATE_AI_SPEC.md`](../../docs/product/INITIATIVE_GATE_AI_SPEC.md). Wiersz zbiorczy M13 w [`_STAN_PRACY_ODBIORY.md`](_STAN_PRACY_ODBIORY.md) linkuje tu.
 
 **Testy:** `npx vitest run tests/unit/initiatives tests/integration/initiatives` + `tests/e2e/m13/` (Playwright). Baseline 2026-06-20: unit/integration **89 pass / 3 fail** (3 = legacy `initiatives.test.js` create/prioritize→404, wymaga żywej DB, NIE dotyczy M13 Depth) · e2e m13 **0 specs** (do napisania per sub-moduł) · nowy `InitiativeController.deleteInitiative` **7/7**.
