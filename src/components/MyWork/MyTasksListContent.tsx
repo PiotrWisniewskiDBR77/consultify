@@ -2107,20 +2107,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     flex: true,
                     shortcut: 'D',
                   },
-                  {
-                    label: isPolish ? 'Otwórz' : 'Open',
-                    icon: Eye,
-                    onClick: () => onTaskClick(task.id, task),
-                    colorScheme: 'primary',
-                    flex: true,
-                    shortcut: 'O',
-                  },
                 ],
               },
             ];
 
             return (
-              <div className="space-y-0">
+              // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
+              <div className="space-y-2.5">
                 <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
                   <PreviewAIHintStrip
                     hints={hints}
@@ -2147,14 +2140,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                   />
                 </div>
 
-                <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
                 <PreviewRelations
                   items={relationItems}
                   emptyLabel={isPolish ? 'Brak powiązań' : 'No relations'}
                 />
-
-                <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
                 <PreviewActionBar rows={actionRows} />
               </div>

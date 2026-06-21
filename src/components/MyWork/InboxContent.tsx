@@ -1348,7 +1348,8 @@ const PreviewPane: React.FC<{
         </button>
       }
       footer={
-        <div className="space-y-0">
+        // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
+        <div className="space-y-2.5">
           {/* ── AI hint chips ── */}
           <AIHintStrip
             item={item}
@@ -1363,12 +1364,8 @@ const PreviewPane: React.FC<{
             }}
           />
 
-          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
           {/* ── Linked documents ── */}
           <PreviewRelations items={relationItems} />
-
-          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
           {/* ── Action buttons ── */}
           <PreviewActionBar rows={actionRows} />
@@ -3023,6 +3020,20 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                       const sections: RowActionSection[] = [
                         { id: 'context', kind: 'context', actions: contextActions },
                         { id: 'fixed', kind: 'manage', actions: buildBottomManifest(item) },
+                        // canon §9 — strefa danger identyczna jak w wariancie tabelarycznym (parytet kebaba).
+                        {
+                          id: 'danger',
+                          kind: 'danger',
+                          actions: [
+                            {
+                              id: 'reject',
+                              label: isPolish ? 'Odrzuć' : 'Reject',
+                              icon: X,
+                              variant: 'danger',
+                              onClick: () => triage(item, 'reject'),
+                            },
+                          ],
+                        },
                       ];
                       return <RowActionsMenu sections={sections} iconVariant="vertical" />;
                     })()}

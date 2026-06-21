@@ -620,54 +620,51 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
       });
     }
 
+    // canon §7.3b — tylko dozwolone colorScheme; create-targety idą do „Co dalej" (§7.3a),
+    // Usuń żyje w kebabie wiersza (strefa danger) — NIE duplikujemy go tu (§7.3 pkt 4).
     const actionRows: ActionRow[] = [
       {
-        columns: 3,
+        columns: 2,
         buttons: [
           {
             label: isPolish ? 'Konwertuj' : 'Convert',
             icon: Sparkles,
             onClick: () => onStartConvert(idea),
-            colorScheme: 'purple',
+            colorScheme: 'primary',
           },
           {
             label: isPolish ? 'Otwórz Flow' : 'Open Flow',
             icon: Workflow,
             onClick: () => onOpenIdeaInProcessFlow(idea),
-            colorScheme: 'emerald',
-          },
-          {
-            label: isPolish ? 'Usuń' : 'Delete',
-            icon: Trash2,
-            onClick: () => onDeleteIdea(idea),
-            colorScheme: 'red',
+            colorScheme: 'neutral',
           },
         ],
       },
     ];
 
     return (
-      <div className="space-y-0">
+      // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
+      <div className="space-y-2.5">
         <PreviewAIHintStrip hints={aiHints} />
-
-        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
         <PreviewRelations
           items={relationItems}
           emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
         />
 
-        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
         <PreviewActionBar rows={actionRows} />
 
-        <div className="mt-2">
+        {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown */}
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Co dalej' : "What's next"}
+          </div>
           <ConvertToOutputMenu
             sourceType="idea"
             sourceId={idea.id}
             sourceTitle={idea.title || ''}
             onConvertComplete={() => onRefresh()}
-            variant="dropdown"
+            variant="inline"
           />
         </div>
       </div>
@@ -1014,6 +1011,37 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     },
                   ],
                 },
+                // Create output — przed strefami manage (canon §17: …Convert · Create output · Manage · Danger).
+                {
+                  id: 'output',
+                  kind: 'output',
+                  actions: [
+                    {
+                      id: 'output_presentation',
+                      label: isPolish ? 'Prezentacja' : 'Presentation',
+                      icon: Presentation,
+                      disabled: true,
+                      rightLabel: isPolish ? 'wkrótce' : 'soon',
+                      onClick: () => undefined,
+                    },
+                    {
+                      id: 'output_report',
+                      label: isPolish ? 'Raport' : 'Report',
+                      icon: FileText,
+                      disabled: true,
+                      rightLabel: isPolish ? 'wkrótce' : 'soon',
+                      onClick: () => undefined,
+                    },
+                    {
+                      id: 'output_table',
+                      label: isPolish ? 'Tabela' : 'Table',
+                      icon: Table2,
+                      disabled: true,
+                      rightLabel: isPolish ? 'wkrótce' : 'soon',
+                      onClick: () => undefined,
+                    },
+                  ],
+                },
                 ...(folders && onMoveToFolder
                   ? [
                       {
@@ -1067,36 +1095,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       disabled: true,
                       description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
                       onClick: () => {},
-                    },
-                  ],
-                },
-                {
-                  id: 'output',
-                  kind: 'output',
-                  actions: [
-                    {
-                      id: 'output_presentation',
-                      label: isPolish ? 'Prezentacja' : 'Presentation',
-                      icon: Presentation,
-                      disabled: true,
-                      rightLabel: isPolish ? 'wkrótce' : 'soon',
-                      onClick: () => undefined,
-                    },
-                    {
-                      id: 'output_report',
-                      label: isPolish ? 'Raport' : 'Report',
-                      icon: FileText,
-                      disabled: true,
-                      rightLabel: isPolish ? 'wkrótce' : 'soon',
-                      onClick: () => undefined,
-                    },
-                    {
-                      id: 'output_table',
-                      label: isPolish ? 'Tabela' : 'Table',
-                      icon: Table2,
-                      disabled: true,
-                      rightLabel: isPolish ? 'wkrótce' : 'soon',
-                      onClick: () => undefined,
                     },
                   ],
                 },

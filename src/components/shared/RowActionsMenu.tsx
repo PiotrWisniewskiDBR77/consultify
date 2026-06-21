@@ -178,7 +178,8 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   if (visibleSections.length === 0) return null;
 
   const iconSize = size === 'sm' ? 14 : 16;
-  const buttonPadding = size === 'sm' ? 'p-1' : 'p-1.5';
+  // canon §19.1 — kebab hit = h-8 w-8 (32px), ikona wycentrowana.
+  const buttonHit = 'h-8 w-8 inline-flex items-center justify-center';
   const MenuIcon = iconVariant === 'vertical' ? MoreVertical : MoreHorizontal;
 
   const variantStyles: Record<string, string> = {
@@ -193,7 +194,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className={`${buttonPadding} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors`}
+        className={`${buttonHit} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors`}
         title="Actions"
         aria-label="Row actions"
         aria-expanded={isOpen}
