@@ -40,6 +40,7 @@ import {
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
+import { deliverableKickoffSeed, deliverableTypeLabel } from './deliverableKickoff';
 import { type LauncherSelection, OutputsLauncherModal } from './OutputsLauncherModal';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
@@ -203,21 +204,23 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // Spięcie z silnikiem generacji + „paczką kontekstu" = sub-moduł E3.
   const handleLauncherSelect = useCallback(
     ({ type, templateId }: LauncherSelection) => {
-      // E2: template przekazywany w query; konsumpcja szkieletu = silnik (E3) + seria T.
-      const q = templateId && templateId !== 'blank' ? `?template=${templateId}` : '';
-      switch (type) {
-        case 'report':
-          navigate(`/reports/builder${q}`);
-          break;
-        case 'presentation':
-          navigate(`/presentations/wizard${q}`);
-          break;
-        case 'table':
-          navigate(`/tabele${q}`);
-          break;
-      }
+      // E3: „Nowy → uruchamia Teresę". Otwieramy czat z pre-wypełnionym openerem
+      // (pendingPrompt) dopasowanym do detektora intencji danego typu — Teresa od razu
+      // wie, jaki deliverable wygenerować; użytkownik dopisuje temat i wysyła (Tryb B).
+      // Konsumpcja templateId (szkielet) = seria T (rozszerzenie plan*Generation).
+      const lang: 'pl' | 'en' = i18n.language === 'pl' ? 'pl' : 'en';
+      void openChatWithContext({
+        entityType: 'deliverable_launch',
+        entityId: `${type}-${templateId}`,
+        entityName: deliverableTypeLabel(type, lang),
+        contextData: {
+          teresaPrompt: deliverableKickoffSeed(type, lang),
+          deliverableType: type,
+          templateId,
+        },
+      });
     },
-    [navigate]
+    [i18n, openChatWithContext]
   );
 
   const handleNewItem = useCallback(() => {
