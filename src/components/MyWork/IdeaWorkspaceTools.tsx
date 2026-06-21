@@ -37,6 +37,7 @@ import {
   IDEA_STAGES_V5,
   normalizeStageToV5,
 } from './ideaEntryTypes';
+import { IDEA_CONVERT_TARGETS, type IdeaConvertTarget } from './ideaConvertTargets';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindmapInspector } from './mindmap/MindmapInspector';
@@ -47,15 +48,8 @@ import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 const FIELD_CLASS =
   'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-primary-400 dark:focus:border-primary-400 transition-colors';
 
-type ConvertTarget =
-  | 'initiative'
-  | 'task_set'
-  | 'decision'
-  | 'team_chat'
-  | 'report'
-  | 'presentation'
-  | 'action_plan'
-  | 'raid_log';
+// Convert-target union is owned by the SSOT registry (ideaConvertTargets.ts).
+type ConvertTarget = IdeaConvertTarget;
 
 interface IdeaWorkspaceToolsProps {
   open: boolean;
@@ -256,97 +250,33 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   const currentPriorityLabel =
     priorityOptions.find((o) => o.value === normalizedPriority)?.label ?? 'Medium';
 
-  const convertActions: {
-    id: ConvertTarget;
-    icon: React.ComponentType<any>;
-    labelPl: string;
-    labelEn: string;
-    descPl: string;
-    descEn: string;
-    gradient: string;
-    textColor: string;
-  }[] = [
-    {
-      id: 'initiative',
-      icon: Rocket,
-      labelPl: 'Inicjatywa',
-      labelEn: 'Initiative',
-      descPl: 'Utwórz w PMO',
-      descEn: 'Create in PMO',
-      gradient: 'from-amber-500/15 to-amber-500/10',
-      textColor: 'text-amber-600 dark:text-amber-400',
-    },
-    {
-      id: 'task_set',
-      icon: CheckSquare,
-      labelPl: 'Taski',
-      labelEn: 'Tasks',
-      descPl: 'Z next steps',
-      descEn: 'From next steps',
-      gradient: 'from-emerald-500/15 to-green-500/10',
-      textColor: 'text-emerald-600 dark:text-emerald-400',
-    },
-    {
-      id: 'decision',
-      icon: Star,
-      labelPl: 'Decyzja',
-      labelEn: 'Decision',
-      descPl: 'Artefakt decyzyjny',
-      descEn: 'Decision artifact',
-      gradient: 'from-blue-500/15 to-blue-500/10',
-      textColor: 'text-blue-600 dark:text-blue-400',
-    },
-    {
-      id: 'team_chat',
-      icon: MessageSquarePlus,
-      labelPl: 'Team Chat',
-      labelEn: 'Team Chat',
-      descPl: 'Wątek do omówienia',
-      descEn: 'Discussion thread',
-      gradient: 'from-primary-500/15 to-primary-500/10',
-      textColor: 'text-primary-600 dark:text-primary-400',
-    },
-    {
-      id: 'report',
-      icon: FileText,
-      labelPl: 'Raport',
-      labelEn: 'Report',
-      descPl: 'Generuj raport z mapy',
-      descEn: 'Generate report from map',
-      gradient: 'from-slate-500/15 to-gray-500/10',
-      textColor: 'text-slate-600 dark:text-slate-400',
-    },
-    {
-      id: 'presentation',
-      icon: Presentation,
-      labelPl: 'Prezentacja',
-      labelEn: 'Presentation',
-      descPl: 'Generuj slajdy z gałęzi',
-      descEn: 'Generate slides from branches',
-      gradient: 'from-indigo-500/15 to-blue-500/10',
-      textColor: 'text-indigo-600 dark:text-indigo-400',
-    },
-    {
-      id: 'action_plan',
-      icon: ListChecks,
-      labelPl: 'Plan działania',
-      labelEn: 'Action Plan',
-      descPl: 'Plan z timeline',
-      descEn: 'Plan with timeline',
-      gradient: 'from-blue-500/15 to-blue-500/10',
-      textColor: 'text-blue-600 dark:text-blue-400',
-    },
-    {
-      id: 'raid_log',
-      icon: Shield,
-      labelPl: 'RAID Log',
-      labelEn: 'RAID Log',
-      descPl: 'Risks, Actions, Issues, Dependencies',
-      descEn: 'Risks, Actions, Issues, Dependencies',
-      gradient: 'from-danger-500/15 to-amber-500/10',
-      textColor: 'text-danger-600 dark:text-danger-400',
-    },
-  ];
+  // Visual map (icon + gradient) keyed by target id; labels/desc/status come from the SSOT registry.
+  const CONVERT_VISUALS: Record<
+    ConvertTarget,
+    { icon: React.ComponentType<any>; gradient: string; textColor: string }
+  > = {
+    initiative: { icon: Rocket, gradient: 'from-amber-500/15 to-amber-500/10', textColor: 'text-amber-600 dark:text-amber-400' },
+    task_set: { icon: CheckSquare, gradient: 'from-emerald-500/15 to-green-500/10', textColor: 'text-emerald-600 dark:text-emerald-400' },
+    decision: { icon: Star, gradient: 'from-blue-500/15 to-blue-500/10', textColor: 'text-blue-600 dark:text-blue-400' },
+    team_chat: { icon: MessageSquarePlus, gradient: 'from-primary-500/15 to-primary-500/10', textColor: 'text-primary-600 dark:text-primary-400' },
+    report: { icon: FileText, gradient: 'from-slate-500/15 to-gray-500/10', textColor: 'text-slate-600 dark:text-slate-400' },
+    presentation: { icon: Presentation, gradient: 'from-indigo-500/15 to-blue-500/10', textColor: 'text-indigo-600 dark:text-indigo-400' },
+    action_plan: { icon: ListChecks, gradient: 'from-blue-500/15 to-blue-500/10', textColor: 'text-blue-600 dark:text-blue-400' },
+    raid_log: { icon: Shield, gradient: 'from-danger-500/15 to-amber-500/10', textColor: 'text-danger-600 dark:text-danger-400' },
+    financial_model: { icon: Activity, gradient: 'from-emerald-500/15 to-emerald-500/10', textColor: 'text-emerald-600 dark:text-emerald-400' },
+    budget: { icon: ListChecks, gradient: 'from-slate-500/15 to-gray-500/10', textColor: 'text-slate-600 dark:text-slate-400' },
+    valuation: { icon: Activity, gradient: 'from-indigo-500/15 to-indigo-500/10', textColor: 'text-indigo-600 dark:text-indigo-400' },
+    analysis: { icon: Lightbulb, gradient: 'from-amber-500/15 to-amber-500/10', textColor: 'text-amber-600 dark:text-amber-400' },
+  };
+  const convertActions = IDEA_CONVERT_TARGETS.map((t) => ({
+    id: t.id,
+    status: t.status,
+    labelPl: t.labelPl,
+    labelEn: t.labelEn,
+    descPl: t.descPl,
+    descEn: t.descEn,
+    ...CONVERT_VISUALS[t.id],
+  }));
 
   if (!open) return null;
 
@@ -539,31 +469,43 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         )}
         <div className="grid grid-cols-1 gap-1.5">
           {convertActions.map(
-            ({ id, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => (
-              <button
-                key={id}
-                onClick={() => onConvert(id)}
-                disabled={isDraft}
-                className="group relative flex items-center gap-2.5 px-3 py-2 rounded-xl overflow-hidden transition-all duration-200 disabled:opacity-40"
-              >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-100 group-hover:opacity-80 transition-opacity`}
-                />
-                <div
-                  className={`relative w-6 h-6 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
+            ({ id, status, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => {
+              const isSoon = status === 'soon';
+              // `soon` targets have no server handler — keep them visible but inert so we never
+              // fire a request that returns a raw 400 (CANON §4). `live` targets convert for real.
+              return (
+                <button
+                  key={id}
+                  onClick={() => !isSoon && onConvert(id)}
+                  disabled={isDraft || isSoon}
+                  aria-disabled={isDraft || isSoon}
+                  title={isSoon ? (isPl ? 'Wkrótce' : 'Coming soon') : undefined}
+                  className="group relative flex items-center gap-2.5 px-3 py-2 rounded-xl overflow-hidden transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <Icon size={12} />
-                </div>
-                <div className="relative flex-1 min-w-0 text-left">
-                  <div className={`text-[11px] font-semibold ${textColor}`}>
-                    {isPl ? labelPl : labelEn}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-100 group-hover:opacity-80 transition-opacity`}
+                  />
+                  <div
+                    className={`relative w-6 h-6 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
+                  >
+                    <Icon size={12} />
                   </div>
-                  <div className="text-[9px] text-slate-600 dark:text-slate-500">
-                    {isPl ? descPl : descEn}
+                  <div className="relative flex-1 min-w-0 text-left">
+                    <div className={`text-[11px] font-semibold ${textColor} flex items-center gap-1.5`}>
+                      {isPl ? labelPl : labelEn}
+                      {isSoon && (
+                        <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-navy-700 rounded px-1 py-px">
+                          {isPl ? 'Wkrótce' : 'Soon'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[9px] text-slate-600 dark:text-slate-500">
+                      {isPl ? descPl : descEn}
+                    </div>
                   </div>
-                </div>
-              </button>
-            )
+                </button>
+              );
+            }
           )}
         </div>
       </Section>

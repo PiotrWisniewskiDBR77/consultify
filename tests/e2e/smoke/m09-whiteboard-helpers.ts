@@ -14,7 +14,7 @@
  */
 import { expect, type Page } from '@playwright/test';
 
-import { API_BASE_URL, loginAsOwner, loginAsMember } from './work-canvas-helpers';
+import { API_BASE_URL, loginAsMember } from './work-canvas-helpers';
 
 export const SHOT_DIR = 'tests/e2e/screenshots/m09';
 
@@ -68,15 +68,96 @@ export function collectSignals(page: Page) {
   };
 }
 
-/** Decode the user id from a JWT access token (no verification — test helper only). */
-function userIdFromToken(token: string): string {
+/** Decode the JWT payload (no verification — test helper only). */
+function decodeJwt(token: string): Record<string, unknown> {
   try {
-    const part = token.split('.')[1];
-    const json = JSON.parse(Buffer.from(part, 'base64').toString('utf8')) as Record<string, unknown>;
-    return String(json.id || json.userId || json.sub || '');
+    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString('utf8')) as Record<string, unknown>;
   } catch {
-    return '';
+    return {};
   }
+}
+
+function userIdFromToken(token: string): string {
+  const j = decodeJwt(token);
+  return String(j.id || j.userId || j.sub || '');
+}
+
+// Cache ONE owner token across all tests in this worker. The staging DB makes register-demo
+// slow/contended (~18s idle, > the per-attempt helper timeout under load), so paying it once
+// and reusing the token keeps each test fast and reliable.
+let cachedOwnerToken: string | null = null;
+
+/** Acquire (once) a demo OWNER token via register-demo with patient retries; cache it. */
+async function ensureOwnerToken(page: Page): Promise<string> {
+  if (cachedOwnerToken) return cachedOwnerToken;
+  let lastErr = '';
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const resp = await page.request.post(`${API_BASE_URL}/api/auth/register-demo`, {
+        timeout: 50000,
+        data: {
+          email: `e2e+m09-owner-${attempt}@local.test`,
+          password: 'Playwright#123',
+          firstName: 'Owner',
+        },
+      });
+      if (resp.ok()) {
+        const json = await resp.json();
+        const token = String(json?.token || json?.accessToken || '').trim();
+        if (token) {
+          cachedOwnerToken = token;
+          return token;
+        }
+        lastErr = 'register-demo ok but no token';
+      } else {
+        lastErr = `register-demo ${resp.status()}`;
+      }
+    } catch (e) {
+      lastErr = e instanceof Error ? e.message : String(e);
+    }
+    await page.waitForTimeout(1500 * (attempt + 1));
+  }
+  throw new Error(`ensureOwnerToken failed after retries: ${lastErr}`);
+}
+
+/** Seed a page's localStorage with an auth token + derived user (replicates app session shape). */
+async function seedPageAuth(page: Page, token: string) {
+  const j = decodeJwt(token);
+  const user = {
+    id: String(j.id || j.userId || j.sub || 'demo-owner'),
+    email: String(j.email || 'e2e+m09-owner@local.test'),
+    role: String(j.role || 'ADMIN'),
+    organizationId: String(j.organizationId || j.orgId || 'demo-org'),
+    organizationName: 'E2E Organization',
+    firstName: 'Owner',
+    lastName: '',
+    companyName: 'E2E Organization',
+    isAuthenticated: true,
+    accessLevel: 'full',
+  };
+  await page.addInitScript(
+    ({ authToken, u }) => {
+      try {
+        localStorage.setItem('token', String(authToken));
+        localStorage.setItem('refreshToken', 'm09-smoke-refresh');
+        localStorage.setItem('user', JSON.stringify(u));
+        localStorage.setItem(
+          'consultinity-storage',
+          JSON.stringify({
+            state: {
+              sessionMode: 'FULL',
+              currentUser: u,
+              currentOrganization: { id: u.organizationId, name: u.organizationName },
+            },
+            version: 0,
+          })
+        );
+      } catch {
+        /* ignore */
+      }
+    },
+    { authToken: token, u: user }
+  );
 }
 
 /**
@@ -158,7 +239,8 @@ export type WbSession = { token: string; ideaId: string };
 /** Full owner setup: auth → idea → open whiteboard → canvas ready. */
 export async function openWhiteboardAsOwner(page: Page, title?: string): Promise<WbSession> {
   await seedTourSuppression(page);
-  const token = await loginAsOwner(page);
+  const token = await ensureOwnerToken(page); // cached across tests → pay register-demo once
+  await seedPageAuth(page, token);
   await suppressFirstRunOnboarding(page, token);
   const ideaId = await createIdea(page, token, title);
   await page.goto(`/my-work/ideas/${ideaId}/workspace/whiteboard`, {
@@ -194,6 +276,9 @@ export async function waitForWhiteboardReady(page: Page) {
   // networkidle is best-effort: the app polls (notifications/presence) so it rarely fully
   // idles — keep the budget small so we don't burn the whole test timeout here.
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  // The whiteboard hydration is slow on staging (map fetch + facilitation session + presence,
+  // each at ~2s latency) — the "Loading" overlay can sit for tens of seconds. Wait for a REAL
+  // interactivity signal (the toolbar Create button OR the empty-state CTA), not just the pane.
   await page
     .waitForFunction(
       () => {
@@ -201,15 +286,23 @@ export async function waitForWhiteboardReady(page: Page) {
         const loading = txts.some(
           (e) => e.children.length === 0 && /^Loading…?$/i.test((e.textContent || '').trim())
         );
+        // The ReactFlow pane only mounts once the whiteboard's own loading prop is false
+        // (otherwise the canvas area is an animate-pulse skeleton). Require the pane OR the
+        // empty-state CTA — both mean the canvas is interactive, not skeleton.
         const hasPane = !!document.querySelector('.react-flow__pane');
         const hasEmptyCta = Array.from(document.querySelectorAll('button')).some((b) =>
           /add blank sticky/i.test(b.textContent || '')
         );
-        return !loading && (hasPane || hasEmptyCta);
+        // No large skeleton block lingering in the canvas region.
+        const bigSkeleton = Array.from(document.querySelectorAll('.animate-pulse')).some(
+          (e) => (e as HTMLElement).offsetHeight > 80
+        );
+        return !loading && !bigSkeleton && (hasPane || hasEmptyCta);
       },
-      { timeout: 15000 }
+      { timeout: 60000 }
     )
     .catch(() => {});
+  await page.waitForTimeout(600);
 
   // CRITICAL: a brand-new idea auto-seeds a mindmap "root" node into the SHARED my_idea_maps
   // doc shortly after load (version bumps 1→2). If we edit + save before that settles, the

@@ -53,10 +53,16 @@ import type {
 import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
+import type { IdeaConvertTarget as SsotConvertTarget } from './ideaConvertTargets';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
 import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS, FOCUSED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
-type IdeaConvertTarget = 'initiative' | 'task_set' | 'decision' | 'team_chat';
+// Narrowed subset of the SSOT convert union (ideaConvertTargets.ts) — the row kebab
+// offers only these four live targets.
+type IdeaConvertTarget = Extract<
+  SsotConvertTarget,
+  'initiative' | 'task_set' | 'decision' | 'team_chat'
+>;
 type IdeasTableOptionalColumn = 'stage' | 'tags' | 'tool' | 'date';
 type IdeasResizableColumn = 'title' | IdeasTableOptionalColumn;
 

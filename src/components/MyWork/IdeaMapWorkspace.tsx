@@ -63,6 +63,11 @@ import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDra
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
+import {
+  IDEA_CONVERT_TARGETS,
+  type IdeaConvertTarget,
+  isLiveConvertTarget,
+} from './ideaConvertTargets';
 import type { CanvasToolType, MindMapInteractionMode } from './ideaSelectionTypes';
 import {
   type AIProposal,
@@ -186,19 +191,7 @@ type IdeaMapWorkspaceProps = {
   onTableContextChange?: (ctx: Record<string, unknown> | null) => void;
 };
 
-type IdeaConvertTarget =
-  | 'initiative'
-  | 'task_set'
-  | 'decision'
-  | 'team_chat'
-  | 'report'
-  | 'presentation'
-  | 'action_plan'
-  | 'raid_log'
-  | 'financial_model'
-  | 'budget'
-  | 'valuation'
-  | 'analysis';
+// IdeaConvertTarget union is owned by the SSOT registry (ideaConvertTargets.ts).
 
 function safeTitleFromSeed(seedText: string, isPolish: boolean): string {
   const firstLine = String(seedText || '')
@@ -1893,30 +1886,23 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   );
 
   // ── Convert ─────────────────────────────────────────────────────────────────
-  const SUPPORTED_CONVERT_TARGETS: IdeaConvertTarget[] = [
-    'initiative',
-    'task_set',
-    'decision',
-    'team_chat',
-    'report',
-    'presentation',
-    'action_plan',
-    'raid_log',
-    'financial_model',
-    'budget',
-    'valuation',
-    'analysis',
-  ];
-
+  // Targets known to the SSOT registry (ideaConvertTargets.ts). Only `live` ones
+  // have a server handler — `soon` ones must never be sent (CANON §4, no raw 400).
   const handleConvert = useCallback(
     async (target: IdeaConvertTarget, explicitNodeIds?: string[]) => {
       if (isDraft) return;
-      if (!SUPPORTED_CONVERT_TARGETS.includes(target)) {
+      if (!IDEA_CONVERT_TARGETS.some((t) => t.id === target)) {
         toast.error(
           isPolish
             ? 'Ten typ konwersji nie jest jeszcze wspierany'
             : 'This conversion target is not yet supported'
         );
+        return;
+      }
+      if (!isLiveConvertTarget(target)) {
+        toast(isPolish ? 'Ta konwersja będzie wkrótce' : 'This conversion is coming soon', {
+          icon: '🔜',
+        });
         return;
       }
       const nodeIds = explicitNodeIds?.length ? explicitNodeIds : selection.ids;

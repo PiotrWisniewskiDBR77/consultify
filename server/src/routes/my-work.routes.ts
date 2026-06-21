@@ -6034,8 +6034,23 @@ router.post(
 // ============================================================================
 
 /**
+ * Idea → output convert targets that have a real handler below.
+ * SSOT (FE mirror + roadmap): src/components/MyWork/ideaConvertTargets.ts (`status: 'live'`).
+ * Keep this in lock-step with the `live` entries there; a vitest contract test asserts
+ * FE-live ⊆ this allowlist. `soon` targets are never sent by the FE.
+ */
+const LIVE_CONVERT_TARGETS = [
+  'initiative',
+  'task_set',
+  'decision',
+  'team_chat',
+  'report',
+  'presentation',
+] as const;
+
+/**
  * POST /api/my-work/my-ideas/:id/convert
- * Body: { target: 'initiative'|'task_set'|'decision'|'team_chat', options?: {...} }
+ * Body: { target: 'initiative'|'task_set'|'decision'|'team_chat'|'report'|'presentation', options?: {...} }
  */
 router.post(
   '/my-ideas/:id/convert',
@@ -6053,11 +6068,7 @@ router.post(
       : [];
 
     if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
-    if (
-      !['initiative', 'task_set', 'decision', 'team_chat', 'report', 'presentation'].includes(
-        target
-      )
-    ) {
+    if (!(LIVE_CONVERT_TARGETS as readonly string[]).includes(target)) {
       return res.status(400).json({ error: 'Invalid target' });
     }
 
