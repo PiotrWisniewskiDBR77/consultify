@@ -4632,7 +4632,8 @@
     },
     "linkedItemsSection": {
       "itemLinked": "Item linked",
-      "linkRemoved": "Link removed"
+      "linkRemoved": "Link removed",
+      "linkError": "Could not save the link"
     },
     "tagsSection": {
       "tags": "Tags",

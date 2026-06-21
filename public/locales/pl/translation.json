@@ -3839,7 +3839,8 @@
     },
     "linkedItemsSection": {
       "itemLinked": "Element powiązany",
-      "linkRemoved": "Powiązanie usunięte"
+      "linkRemoved": "Powiązanie usunięte",
+      "linkError": "Nie udało się zapisać powiązania"
     },
     "tagsSection": {
       "tags": "Tagi",
