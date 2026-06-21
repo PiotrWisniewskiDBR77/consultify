@@ -328,7 +328,13 @@ describe('NotebookContent manual gate regressions', () => {
           expect.objectContaining({ method: 'POST' })
         );
       });
-      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      // Other mounted surfaces (e.g. NotebookTopicChips) may issue their own
+      // fetches first; locate the draft POST specifically rather than assuming
+      // it is call[0].
+      const draftCall = fetchMock.mock.calls.find(
+        (c) => c[0] === '/api/work-canvas/drafts'
+      );
+      const body = JSON.parse(draftCall![1].body);
       expect(body.kind).toBe('document');
       expect(body.contentMd).toContain('Body text');
       expect(body.provenance).toEqual(
