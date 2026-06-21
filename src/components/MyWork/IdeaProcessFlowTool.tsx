@@ -59,6 +59,7 @@ import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import TeresaMark from '../shared/TeresaMark';
+import { getCanvasBg } from './canvas/canvasBackground';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
@@ -80,6 +81,7 @@ import {
   CollaborationOverlay,
   type CollaborationSessionState,
 } from './mindmap/CollaborationOverlay';
+import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { AIProposalPanel } from './processflow/AIProposalPanel';
 import { ExportDialog } from './processflow/ExportDialog';
 import { FlowEdgeComponent } from './processflow/FlowEdgeComponent';
@@ -461,6 +463,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
+  const isDarkFlow = useIsDark();
 
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -2296,7 +2299,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               className="bg-transparent"
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
-              <Background gap={20} size={1} color="rgba(148,163,184,0.15)" />
+              {(() => { const bg = getCanvasBg('process_flow', isDarkFlow ? 'dark' : 'light'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}

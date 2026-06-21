@@ -30,6 +30,7 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
+import { getCanvasBg } from './canvas/canvasBackground';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
   formatIdeaMapSyncLabel,
@@ -389,7 +390,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           <Background
             gap={bgPattern === 'lines' ? 48 : 24}
             size={bgPattern === 'grid' ? 24 : 1}
-            color="rgba(148,163,184,0.18)"
+            color={getCanvasBg('whiteboard', isDarkCanvas ? 'dark' : 'light').color}
             variant={
               bgPattern === 'grid'
                 ? ('cross' as any)

@@ -53,6 +53,7 @@ import {
 
 import TeresaMark from '../shared/TeresaMark';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { getCanvasBg } from './canvas/canvasBackground';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
@@ -70,6 +71,7 @@ import {
   type MindMapInteractionMode,
 } from './ideaSelectionTypes';
 import { knowledgeNodeTypes } from './knowledge/KnowledgeCardNodes';
+import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { ActivityFeed, pushActivity } from './mindmap/ActivityFeed';
 import { AddEvidenceModal } from './mindmap/AddEvidenceModal';
 import { AIAutoClustering, type Cluster } from './mindmap/AIAutoClustering';
@@ -1626,6 +1628,7 @@ function MindMapInner({
   const { i18n } = useTranslation();
   const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
+  const isDarkMindmap = useIsDark();
   const debugEnabled = false;
   const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } =
     useReactFlow();
@@ -5199,8 +5202,8 @@ function MindMapInner({
                 }
               }}
             >
-              {/* V5-IDEA-42: Unified canvas background */}
-              <Background color="rgba(148,163,184,0.06)" gap={24} size={1} />
+              {/* P2: background via SSOT canvasBackground.ts */}
+              {(() => { const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}
