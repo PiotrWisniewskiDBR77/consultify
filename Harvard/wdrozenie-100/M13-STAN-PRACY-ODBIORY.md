@@ -69,7 +69,7 @@ Bramki realizacji: Epiki x/N · DoD x/7 · Testy (vitest+playwright PASS) · Man
 | C2 | Tworzenie przez Teresę — e2e | C | 2/2 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 1 | 🟢 GOTOWY code-side — tool `generate_initiative` (READ/auto, DRAFT, Postgres-correct) + handler 5/5 + registracja + persona prompt; registry 2/2 (additive, czat nietknięty); e2e „Teresa stwórz inicjatywę" na demo po deployu |
 | K1 | Karty §B3 — egzekwowanie jakości | K (artefakt) | 2/2 | ✅ | ✅ | 0/6 | N/A | ⬜ | ⬜ | 0 | 🟢 GOTOWY backend — `initiativeCardValidators` (lang_pl/no_filler/problem_len/hypothesis_format, **advisory** wg Q7) + `POST /validate-card` 7/7; FE lint w dokumencie = follow-up |
 | K2 | Karty — `CardContainer` (układ graficzny) | K | 0/2 | 0/7 | ⬜ | 0/8 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. (czeka Q6) |
-| K3 | Karty — korelacja artefaktów (trwała) | K | 0/3 | 0/7 | ⬜ | 0/6 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. |
+| K3 | Karty — korelacja artefaktów (trwała) | K | 2/3 | ✅ | ✅ | 0/6 | ⬜ | ⬜ | ⬜ | 1 | 🟢 GOTOWY backend — tabela `initiative_linked_items` + `initiativeLinkedItemsService` (org-scope, fail-safe) + GET/POST/DELETE `/:id/linked-items` 6/6; **rewire LinkedItemsSection (in-memory→API) = follow-up** |
 | K4 | AI-fill — domknięcie 7 sekcji | K | 0/2 | 0/7 | ⬜ | 0/7 | ⬜ | ⬜ | ⬜ | 1 | ⬜ NIE ROZP. |
 | V1 | Gant zadaniowy + drag-reschedule | V (widoki) | 0/3 | 0/7 | ⬜ | 0/10 | ⬜ | ⬜ | ⬜ | 2 | ⬜ NIE ROZP. (czeka Q4) |
 

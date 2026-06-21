@@ -2776,6 +2776,9 @@ router.put('/:id/gate-roles', InitiativeController.updateGateRoles);
 router.post('/similar-check', InitiativeController.checkSimilarInitiatives);
 router.post('/validate-card', InitiativeController.validateCard);
 router.post('/:id/gate-ai-check', InitiativeController.getGateAiCheck);
+router.get('/:id/linked-items', InitiativeController.getLinkedItems);
+router.post('/:id/linked-items', InitiativeController.addLinkedItem);
+router.delete('/:id/linked-items/:linkId', InitiativeController.removeLinkedItem);
 router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);
 router.get('/:id/status-history', InitiativeController.getStatusHistory);
 
