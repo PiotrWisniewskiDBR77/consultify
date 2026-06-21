@@ -61,6 +61,22 @@ Sub-moduł **ZAMKNIĘTY = 8/8**.
 
 **FT-6 (jakość) + FT-7 (manual jakościowy) — szczegół w osobnym dokumencie:** [`DELIVERABLES_QUALITY_RUBRIC.md`](DELIVERABLES_QUALITY_RUBRIC.md) — 3 rubryki (deck/doc/tabela) × 3 bramki (**kompletność · jakość merytoryczna · jakość graficzna**), scoring 0/1/2 + progi + **head-to-head vs Gamma/Claude/Airtable**, oraz **+33 scenariusze manualne MQ-*** (12 deck · 11 doc · 10 tabela) sprawdzające kompletność i jakość wygenerowanych dokumentów. Te MQ-* doliczają się do kolumny Manual sub-modułów B/R/X danego typu.
 
+### KADENCJA TESTÓW MANUALNYCH (FT-7) — KIEDY, nie na końcu *(decyzja Piotra 2026-06-21)*
+**Reguła twarda:** manual danego sub-modułu robimy **gdy tylko jego efekt jest obserwowalny** — NIE zbieramy ich na koniec programu. Dwa poziomy:
+- **A · Smoke per sub-moduł (lokalnie, od razu po code-complete):** szybki przebieg + screenshot zaraz po zbudowaniu sub-modułu z UI, jeśli front jest dostępny lokalnie. Łapie regresje wcześnie.
+- **B · Manual checkpoint per FALA (na stagingu):** po code-complete całej fali → deploy staging za flagą → **pełny przebieg scenariuszy danej fali z kartami odbioru**, PRZED deployem kolejnej fali. To jest formalny FT-7 fali.
+
+**Plan kiedy-co (mapowanie do fal):**
+| Fala | Kiedy manual | Co testujemy manualnie |
+|---|---|---|
+| **W1 (E1-E4)** | smoke po każdym E + **checkpoint po E4** | launcher 2-krokowy + 3 ścieżki wejścia (źródło/czat/Nowy) → ląduje w generacji |
+| **W2 (R1-R5)** | **per edytor** (nie czekać na całą falę) | doc TipTap (edycja/render bloków), deck Gamma-flow, tabela CF w gridzie |
+| **W3 (T1-T4)** | po T2 (biblioteka) i T4 (Teresa-proponuje) | galeria template, DBR77, user-created, sugestia |
+| **W4 (B1-B5)** | **NA BIEŻĄCO przy każdym generatorze** — to jest GŁÓWNY manual jakości | **MQ-* jakościowe + head-to-head** (deck po B1/B2, doc po B3, tabela po B4) — NIE na końcu |
+| **W5 (X1-X6)** | przy każdym X dotykającym exportu | wierność exportu (otwórz w PPT/Word/Excel), parytet wizualny |
+
+**Środowisko:** smoke lokalny wymaga frontu + auth (m09-gates) lub deploya staging. Gdy lokalny front niedostępny → manual sub-modułu **dołącza do najbliższego checkpointu fali na stagingu** (wciąż per-fala, nie na koniec programu). Każdy manual = **karta odbioru** (kompletność+merytoryka+grafika) wg [`DELIVERABLES_QUALITY_RUBRIC.md`](DELIVERABLES_QUALITY_RUBRIC.md) §6, zapisywana w `docs/qa/deliverables/`.
+
 ---
 
 ## BRAMKA WSTĘPNA (przed E1) — decyzje
