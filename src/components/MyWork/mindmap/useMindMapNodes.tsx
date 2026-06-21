@@ -91,6 +91,7 @@ export interface UseMindMapNodesOpts {
   remoteLockedNodeIds: Set<string>;
   autoLayout?: (nodes: Node[], edges: Edge[]) => Node[];
   partialLayoutSubtree?: (nodes: Node[], edges: Edge[], subtreeRootId: string) => Node[];
+  confirmSubtreeDelete?: (childCount: number) => Promise<boolean>;
 }
 
 export function useMindMapNodes(opts: UseMindMapNodesOpts) {
@@ -106,6 +107,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     remoteLockedNodeIds,
     autoLayout,
     partialLayoutSubtree,
+    confirmSubtreeDelete,
   } = opts;
 
   const editingNodeIdRef = useRef<string | null>(null);
@@ -415,7 +417,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   );
 
   const deleteSelected = useCallback(
-    (opts?: { confirmed?: boolean }) => {
+    async (opts?: { confirmed?: boolean }) => {
       if (locked) return;
 
       const selectedIds = nodes
@@ -430,41 +432,47 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       const subtreeExtra = removedIds.size - selectedIds.length;
       if (subtreeExtra > 0 && !opts?.confirmed) {
-        toast(
-          (t) => {
-            const msg = isPolish
-              ? `Usunięcie obejmie ${subtreeExtra} podwęzłów. Kontynuować?`
-              : `This will also delete ${subtreeExtra} child node${subtreeExtra === 1 ? '' : 's'}. Continue?`;
-            return createElement(
-              'span',
-              { className: 'flex items-center gap-2 text-sm' },
-              msg,
-              createElement(
-                'button',
-                {
-                  className:
-                    'ml-2 px-2 py-0.5 rounded bg-danger-600 text-white text-xs font-medium hover:bg-danger-700',
-                  onClick: () => {
-                    toast.dismiss(t.id);
-                    deleteSelected({ confirmed: true });
+        if (confirmSubtreeDelete) {
+          const ok = await confirmSubtreeDelete(subtreeExtra);
+          if (!ok) return;
+        } else {
+          // Fallback: inline toast confirm when dialog is unavailable
+          toast(
+            (t) => {
+              const msg = isPolish
+                ? `Usunięcie obejmie ${subtreeExtra} podwęzłów. Kontynuować?`
+                : `This will also delete ${subtreeExtra} child node${subtreeExtra === 1 ? '' : 's'}. Continue?`;
+              return createElement(
+                'span',
+                { className: 'flex items-center gap-2 text-sm' },
+                msg,
+                createElement(
+                  'button',
+                  {
+                    className:
+                      'ml-2 px-2 py-0.5 rounded bg-danger-600 text-white text-xs font-medium hover:bg-danger-700',
+                    onClick: () => {
+                      toast.dismiss(t.id);
+                      deleteSelected({ confirmed: true });
+                    },
                   },
-                },
-                isPolish ? 'Usuń' : 'Delete'
-              ),
-              createElement(
-                'button',
-                {
-                  className:
-                    'px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-medium hover:bg-slate-300',
-                  onClick: () => toast.dismiss(t.id),
-                },
-                isPolish ? 'Anuluj' : 'Cancel'
-              )
-            ) as any;
-          },
-          { duration: 10000, id: 'mm-delete-confirm' }
-        );
-        return;
+                  isPolish ? 'Usuń' : 'Delete'
+                ),
+                createElement(
+                  'button',
+                  {
+                    className:
+                      'px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-medium hover:bg-slate-300',
+                    onClick: () => toast.dismiss(t.id),
+                  },
+                  isPolish ? 'Anuluj' : 'Cancel'
+                )
+              ) as any;
+            },
+            { duration: 10000, id: 'mm-delete-confirm' }
+          );
+          return;
+        }
       }
 
       const firstSelectedId = selectedIds[0];

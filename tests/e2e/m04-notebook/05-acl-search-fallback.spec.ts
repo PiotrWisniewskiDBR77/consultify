@@ -135,7 +135,13 @@ test.describe('M04 §9 ACL + §10 Search/RAG + §11 Fallback V8→legacy', () =>
   });
 
   test('§9.3b AI org_context faktycznie czyta treść notatnika', () => {
-    test.skip(true, 'wymaga 2 kont + pipeline AI — poza headless');
+    // Przypadek POZYTYWNY: drugi user W TEJ SAMEJ org widzi notatkę org_context przez
+    // AI-read. register-demo tworzy usera w INNEJ org (osobny tenant), więc nie da się
+    // nim zweryfikować same-org read; wymagałby 2 prawdziwych userów jednej org +
+    // żywego LLM (niedeterministyczny w headless). Przypadek NEGATYWNY (izolacja
+    // cross-org — dane user1 NIE wyciekają do user2 innej org) jest realnie pokryty
+    // przez §10.3b (RAG/search). Świadomy skip — luka osobowa, nie kodu.
+    test.skip(true, 'same-org AI-read wymaga 2 userów jednej org + live LLM; izolacja pokryta §10.3b');
   });
 
   // ── §9.4 visibility strony (private vs project) ───────────
