@@ -113,6 +113,8 @@ export interface GeneratedTableSchema {
    * WorkbookBuilder.applyConditionalFormatting). Pusta tablica gdy brak.
    */
   conditionalFormatting?: GeneratedCfBlock[];
+  /** B4-ext: true gdy ≥1 komórka seedRows zawiera formułę (string "=..."). */
+  hasFormulas?: boolean;
   tierUsed: 'PREMIUM' | 'STANDARD';
   fallbackUsed: boolean;
 }
@@ -327,6 +329,7 @@ async function generateViaLlm(
   fields: GeneratedField[];
   seedRows: Record<string, unknown>[];
   conditionalFormatting: GeneratedCfBlock[];
+  hasFormulas: boolean;
 } | null> {
   // Import dynamiczny — unit-testy nie ciągną całego stacku AI.
   const { llmService } = await import('./ai/llmService.js');
@@ -358,7 +361,11 @@ async function generateViaLlm(
     'colorScale {type:"colorScale", colors:["#DC2626","#F59E0B","#16A34A"]} for scores/ratings/variance heatmaps; ' +
     'iconSet {type:"iconSet", iconSet:"3Arrows"|"3TrafficLights1"} for likelihood/status ratings; ' +
     'cellIs {type:"cellIs", operator:"greaterThan", formulae:["100000"], style:{bgColor:"#DC2626", bold:true}} for thresholds. ' +
-    'Only attach CF to number/currency/percent/rating columns. ' +
+    'Only attach CF to number/currency/percent/rating columns.\n' +
+    'FORMULAS (for calculated columns): when a column is derived from others ' +
+    '(total, sum, variance, utilization, bonus = pct × salary), put an Excel formula ' +
+    'STRING starting with "=" as the seed value, e.g. "=SUM(B2:I2)", "=H2*I2", "=G2/40". ' +
+    'Reference cells by column letter + row number (header is row 1, data starts row 2). ' +
     'Reply with ONLY a JSON object conforming to the schema.';
 
   const FieldSchema = z.object({
@@ -400,7 +407,10 @@ async function generateViaLlm(
 
   const seedRows = normalizeSeedRows(obj.seedRows, fields);
   const conditionalFormatting = normalizeCf(obj.conditionalFormatting, fields, seedRows.length);
-  return { fields, seedRows, conditionalFormatting };
+  const hasFormulas = seedRows.some((row) =>
+    Object.values(row).some((v) => typeof v === 'string' && (v as string).trim().startsWith('='))
+  );
+  return { fields, seedRows, conditionalFormatting, hasFormulas };
 }
 
 // ──────────────────────────────────────────────────────────────

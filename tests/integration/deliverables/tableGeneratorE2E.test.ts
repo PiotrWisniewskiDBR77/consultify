@@ -43,12 +43,14 @@ vi.mock('../../../server/src/config/FeatureFlags.js', () => ({
 }));
 
 /**
- * Scenariusz wymaga rozszerzenia B4 jeśli ma formuły / multi-sheet.
- * CF jest już wspierane przez B4-ext (emisja conditionalFormatting by-fieldKey),
- * WIĘC requireCfRule samo w sobie NIE czyni scenariusza need-extension.
+ * Scenariusz wymaga rozszerzenia B4 TYLKO jeśli ma multi-sheet.
+ * - CF: wspierane przez B4-ext (emisja conditionalFormatting by-fieldKey)
+ * - Formuły: B4 przepuszcza stringi "=..." w seedRows + prompt zachęca →
+ *   strukturalnie reachable
+ * - Multi-sheet: GeneratedTableSchema nie ma sheets[] → genuinely need-extension
  */
 function needsExtension(criteria: any): boolean {
-  return Boolean(criteria.requireFormulas || criteria.requireMultiSheet);
+  return Boolean(criteria.requireMultiSheet);
 }
 
 const CF_ELIGIBLE = new Set(['number', 'currency', 'percent', 'rating']);
@@ -125,6 +127,7 @@ describe('B4 table generator E2E — mapa reachable vs need-extension', () => {
           fields: schema.fields as any,
           seedRows: schema.seedRows,
           conditionalFormatting: schema.conditionalFormatting,
+          hasFormulas: schema.hasFormulas,
         },
         entry.criteria
       );
