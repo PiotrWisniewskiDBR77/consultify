@@ -1001,19 +1001,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       resetUndo();
 
-      if (!didPersistRef.current) {
-        didPersistRef.current = true;
-        const preferred = map?.preferredTool ? String(map.preferredTool) : null;
-        if (preferred !== 'process_flow') {
-          Api.syncMyIdeaMap(ideaId, {
-            nodes: rawNodes as any,
-            edges: rawEdges as any,
-            baseVersion: Number(map?.version || 1),
-            preferredTool: 'process_flow',
-            extensions: rawExt,
-          }).catch(() => undefined);
-        }
-      }
+      // NOTE (M07 fix 2026-06-21): the old eager preferredTool stamp here did a SECOND,
+      // independent `Api.syncMyIdeaMap` on hydrate — carrying the just-loaded (often empty)
+      // graph with its own baseVersion. It raced the user's first autosave on the same
+      // baseVersion → one 200, the other 409, and the user's freshly-added nodes were dropped
+      // (data loss after reload). Removed: the autosave already stamps
+      // `preferredTool: 'process_flow'` (buildPersistPayload) on the first edit, so the only
+      // cost is that an idea OPENED-but-not-edited won't persist process_flow as its default —
+      // and the /workspace/process_flow URL already forces the tool on open. One sync path = no race.
+      didPersistRef.current = true;
     } catch (err: any) {
       const nextError = err?.message || (isPl ? 'Nie udało się wczytać' : 'Failed to load');
       toast.error(nextError);
