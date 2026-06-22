@@ -33,6 +33,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
+  ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -127,6 +128,14 @@ export function loadFeatureFlags(): FeatureFlags {
     // draft progressively, so the first section paints in ~3-4s instead of
     // waiting ~19s for the one-shot. Opt-in; OFF ⇒ proven one-shot path.
     ENABLE_DELIVERABLES_DOC_STREAMING: process.env.ENABLE_DELIVERABLES_DOC_STREAMING === 'true',
+
+    // Deliverables W4 (series B — premium generative brain): when on, the
+    // deliverable GENERATION step (deck layout director / doc structure / table
+    // schema) routes to the PREMIUM model tier instead of STANDARD, and cost is
+    // tagged with purpose='deliverable_generation' for telemetry. Opt-in,
+    // default OFF (live clients stay on STANDARD until quality is proven).
+    // Fail-open: any resolution error falls back to STANDARD, never blocks.
+    ENABLE_DELIVERABLES_PREMIUM: process.env.ENABLE_DELIVERABLES_PREMIUM === 'true',
   };
 
   // Validate configuration
