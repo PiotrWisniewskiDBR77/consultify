@@ -289,7 +289,7 @@ async function generateViaLlm(
 
   const OutputSchema = z.object({
     fields: z.array(FieldSchema),
-    seedRows: z.array(z.record(z.unknown())),
+    seedRows: z.array(z.record(z.string(), z.unknown())),
   });
 
   const result = await (llmService as any).call({
