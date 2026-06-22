@@ -117,7 +117,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 | **B2** | Deck → warianty układu / remix | W4 | 0/2 | 0/7 | 1,3,**6**,7 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. (Q1) |
 | **B3** | Doc → AI generuje pełną strukturę bloków | W4 | 0/2 | 0/7 | 1,2,**6**,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. (Q1) |
 | **B4** | Tabela → AI typowany schemat + kolory + seed | W4 | 0/2 | 0/7 | 1,2,**6**,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. (Q1) |
-| **B5** | Premium tier wiring + telemetria kosztu | W4 | 0/2 | 0/7 | 1,2,8 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
+| **B5** | Premium tier wiring + telemetria kosztu | W4 | 2/2 | 0/7 | FT-1✅+FT-8✅(9/9) | 0/4 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (resolveDeliverableTier: PREMIUM gdy ENABLE_DELIVERABLES_PREMIUM ON, inaczej STANDARD=dzisiejsze zachowanie; fail-open→STANDARD; DELIVERABLE_GENERATION_PURPOSE tag; telemetria już płynie przez AIPipeline+cost-monitoring; resolver konsumowany przez B1-B4; commit `ffdf2797c2`; FT-1+FT-8 9/9) |
 | **X1** | Puppeteer HTML→PDF/PNG (deck+doc parytet) | W5 | 0/2 | 0/7 | 4,**5**,7 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. (Q2) |
 | **X2** | exceljs WorkbookBuilder + CF export (tabela) | W5 | 0/3 | 0/7 | 1,**4**,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **X3** | Wykresy ożywione (chartjs doc + recharts ekran) | W5 | 0/2 | 0/7 | 1,**4**,7 | 0/5 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
