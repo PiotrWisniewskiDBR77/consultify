@@ -77,6 +77,6 @@ M10 Wywiad, M12 Audyty, M14 Wdrożenie, M15 Rezultaty, M16 Finanse, M19/M20 Stud
 ### E. Otwarte (do weryfikacji LIVE — nie domknięte headless)
 - **M09 S9 persistence-across-reload** + walkthrough affordances — padają **headless** (canvas w skeletonie headless wg znanego `finding_m09_live_test_gates`; twardy check S9 idzie przez `persistStickyViaApi` = niezależny od zmian hooka). **NIE regresja** — wymaga weryfikacji w realnej przeglądarce.
 - **Light-mode M13** — capture przez localStorage nie przełączył motywu (app używa innego mechanizmu); zrzuty zostały dark. Wymaga realnej ścieżki przełącznika motywu w app.
-- **Modale Charter/AI-Wizard M13** — nie otworzyły się headless (do potwierdzenia live).
+- **Modale Charter/AI-Wizard M13 — POTWIERDZONE że NIE montują się headless** (twardy dowód: przycisk obecny+kliknięty, ale ZERO `[role=dialog]`/panel-wizarda; a11y snapshot pokazuje hub po kliknięciu). Prawdopodobnie portal/session-effect/MOCK_DB. Testy §3.1/§3.2 oznaczają to adnotacją `headless-limitation` (nie wywalają gate). **Wymaga weryfikacji w realnej przeglądarce** — to jedyny sposób potwierdzenia że wizardy działają (kod CTA jest wpięty: `setShowInitiativeWizard/Charter(true)` → modal z `isOpen`).
 
 > **Werdykt nocy:** M13 (głębokość) i pula Ideas (szlif) doprowadzone tak daleko, jak pozwala headless + brak Twoich decyzji/env/odbiorów. Wszystko zielone-kodowo na demo. Reszta = sekcja A (wymaga Ciebie).
