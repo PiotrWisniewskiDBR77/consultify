@@ -33,11 +33,12 @@ Legenda: ✅ pokryte · 🟡 częściowo · ⬜ luka.
 
 ### Seria G — bramki AI (✅ ~107 testów)
 - ✅ G1 flaga+próg (12) · G2 readiness-rollup (6) · G3 timeline-gate (9) · G4 endpoint+soft-block (10) + telemetry (5).
-- ⬜ **GAP:** brak E2E klikającego soft-block→override w UI (G5 pill/panel/modal) — dopisać do `m13-manual.spec.ts` scenariusz: status→wymaga-bramki → modal override → telemetria event.
+- ✅ **GAP ZAMKNIĘTY 2026-06-22** — `tests/integration/initiatives/gate-ai-soft-block.test.ts` (4/4): egzekwowanie soft-block/override w PATCH `/status` (realny `updateInitiativeStatus`): poniżej progu bez override → 422 `INITIATIVE_GATE_AI_SOFT_BLOCK` + telemetria `blocked:true`; z override → przejście + `overridden:true`; powyżej progu → przejście; flaga OFF → brak AI-check. **UI-klik (pill/panel/modal) NIE testowalny headless** (modal nie montuje się; MOCK_DB nie produkuje soft-blocka) → wariant integration zastępuje e2e; wizualny klik = manual/real-browser Piotra.
 
 ### Seria R — artefakty (🟡)
 - ✅ schedule-helper (8), status-change notify (wpięte).
-- ✅ **notifyBlocker** na →BLOCKED (wpięte 2026-06-22) — ⬜ **GAP:** brak unit-testu emitera blocker/assignment/dueBreach + integration-testu że PATCH /status→BLOCKED emituje `initiative_blocked`. **Dopisać:** `tests/integration/initiatives/notifications.test.ts` (status→BLOCKED ⇒ notifyBlocker CRITICAL; owner-change ⇒ owner_changed; bez dubla).
+- ✅ **notifyBlocker** na →BLOCKED (wpięte 2026-06-22) — ✅ **GAP ZAMKNIĘTY 2026-06-22** — `tests/integration/initiatives/notifications.test.ts` (3/3 + 1 skip): PATCH /status→BLOCKED ⇒ `initiative_blocked` CRITICAL z reason; przejście nie-blokujące ⇒ `initiative_status_change` INFO; aktor nie dostaje notyfikacji o własnej zmianie.
+- 🔴 **NOWY FINDING (P1, do decyzji Piotra) — DUBEL notyfikacji statusu:** wpięcie R4 (`InitiativeController.ts:1953`) NIE zastąpiło pre-existing bloku `~2069` ("Emit notifications") — ten strzela `initiative.status_changed` na KAŻDEJ udanej zmianie. Empirycznie jedno →BLOCKED wysyła temu samemu odbiorcy DWIE notyfikacje (`initiative_blocked` + `initiative.status_changed`). Typy dotted (legacy) SĄ kanoniczne (zarejestrowane w katalogu integracji `EnterpriseIntegrationsHub.tsx`); typy underscore (R4) NIE mają konsumentów FE/integracji. Fix = decyzja architektoniczna (który system kanoniczny / rejestrować R4 / cofnąć R4) — chip-task `task_1e4c00bb`; skipowany test `[post-fix]` w `notifications.test.ts` odblokować po naprawie. **Wdrożone na demo — nie ruszać behawioru bez zgody.**
 - ⬜ **notifyDueBreach** — wymaga cron-joba (skan overdue), NIE wpięte (infra, osobne zadanie). Test: po implementacji — job-unit z mock-zegarem.
 - 🟡 Calendar/Gantt drag — Gantt ma component-test (3); ✅ Calendar drag — `tests/components/Initiatives/InitiativeCalendar.drag-reschedule.test.tsx` (3 testy, HTML5 drag, PUT+onReschedule, read-only bez callbacku) — zrobione 06-22.
 
@@ -54,7 +55,7 @@ Legenda: ✅ pokryte · 🟡 częściowo · ⬜ luka.
 - ✅ Gantt drag (3 component).
 - ⬜ **GAP:** Calendar drag test (jw.), brak e2e drag-persist (headless pointer-drag flaky — zrobić jako component, nie e2e).
 
-**Priorytet dopisania testów:** P0 = R notifications integration (świeży kod, niepokryty) · P1 = Calendar drag component + G5 override e2e · P2 = §B3 hints, K2 (po Q6).
+**Priorytet dopisania testów:** ✅ P0 = R notifications integration (`notifications.test.ts` 3/3) — ZROBIONE 2026-06-22 · ✅ P1 = G5 override (`gate-ai-soft-block.test.ts` 4/4, forma integration zamiast e2e) + M13 e2e w PR-gate (`tier0-initiative-acceptance.spec.ts` 3/3 → DoD #6) — ZROBIONE 2026-06-22 · ✅ Calendar drag component — wcześniej · ⬜ P2 = §B3 hints, K2 (po Q6) · 🔴 NOWE: fix dubla notyfikacji (`task_1e4c00bb`, czeka decyzji).
 
 ---
 
@@ -110,4 +111,4 @@ Aktualnie M13: Kod ~15/16 zielone · Manual 20/121 · →F/→UI = 0 (czeka Piot
 - **Headless-undriveable:** modale wizardów (potwierdzone — portal/session-effect), M09-style hydration, cross-module deep state, voice/STT, pilot-role. → MUSZĄ być testowane w realnej przeglądarce.
 - **reactflow tsc-quirk:** `useUpdateNodeInternals`/`useNodesInitialized` raportowane przez tsc jako brak (resolution `bundler`), runtime sprawny — NIE blokuje testów, fix = clean reinstall.
 - **MOCK_DB:** część endpointów (activity, niektóre wizard/sessions) ma uproszczony mock — asercje `[DB]` wymagają realnej bazy (staging).
-- **CI nie łapie `tests/e2e/`** — dopóki M13 e2e nie trafi do tier0, DoD #6 jest formalnie niespełnione (rekomendacja: dopisać `m13-acceptance.spec.ts` do tier0, jak zrobiono dla interview).
+- ✅ **CI nie łapie `tests/e2e/`** — ZAMKNIĘTE 2026-06-22: `tests/e2e/smoke/tier0-initiative-acceptance.spec.ts` (smoke-native, bo `m13/` jest pod głównym configiem + flaky deep-link UI = niegatowalne pod MOCK_DB) wpięte do `test:e2e:tier0` w `package.json`; asertuje /portfolio mount + core API + endpointy M13-Depth (status, gate-ai-check) zamontowane; 3/3 green pod smoke-harness (17.5s). **DoD #6 dla M13 spełnione w PR-gate.**
