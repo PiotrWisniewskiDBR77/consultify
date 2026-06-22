@@ -107,21 +107,27 @@ function buildFallbackPlan(outline: OutlineSeed[]): StructurePlanSection[] {
 }
 
 /**
+ * Typy "trywialne" — to dokładnie to, co generuje prozowy fallback
+ * (heading + paragraph). Premium ma sens tylko gdy doda COKOLWIEK ponad to.
+ */
+const TRIVIAL_BLOCK_TYPES = new Set<string>(['heading', 'paragraph']);
+
+/**
  * Walidacja jakości (DELIVERABLES_GRAPHIC_PARAMETERS.md): premium plan MUSI
- * mieć >1 typ bloku w całym dokumencie (inaczej premium nie zadziałał lepiej
- * niż fallback) ORAZ żadna sekcja nie może mieć 0 bloków.
+ * zawierać ≥1 blok BOGATY (poza heading/paragraph) — inaczej premium nie zrobił
+ * nic lepiej niż prozowy fallback. ORAZ żadna sekcja nie może mieć 0 bloków.
+ *
+ * UWAGA: wcześniej gate wymagał `distinctTypes > 1`, co FAŁSZYWIE odrzucało
+ * legalne dokumenty jednotypowe (KPI-only one-pager, bullet-only streszczenie,
+ * pojedyncza tabela compliance). Pojedynczy kpi_strip/bullet_list/table JEST
+ * premium-grade vs [heading, paragraph]. (Wykryte przez docGeneratorE2E.)
  */
 function premiumPlanPassesQuality(sections: StructurePlanSection[]): boolean {
   if (sections.length === 0) return false;
   if (sections.some((s) => s.blocks.length === 0)) return false;
 
-  const distinctTypes = new Set<string>();
-  for (const section of sections) {
-    for (const block of section.blocks) {
-      distinctTypes.add(block.type);
-    }
-  }
-  return distinctTypes.size > 1;
+  // ≥1 blok poza zbiorem trywialnym = premium dodał wartość strukturalną.
+  return sections.some((s) => s.blocks.some((b) => !TRIVIAL_BLOCK_TYPES.has(b.type)));
 }
 
 /**
