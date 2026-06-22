@@ -55,7 +55,7 @@ Legenda: ✅ spełnia · 🟡 częściowo · ❌ luka · 🔍 wymaga weryfikacji
 
 | # | Priorytet | Problem | Plik/obszar | Akcja |
 |---|---|---|---|---|
-| 1 | **P1** | Utworzone/DRAFT inicjatywy niewidoczne na domyślnym Kanban (10→0/0/0/0/0) | `InitiativesHub.tsx` (kanban kolumny + domyślny widok) | Dodać kolumnę DRAFT/Szkice albo domyślnie Lista; mapować wszystkie 13 statusów na kolumny lub bucket „Inne" |
+| 1 | ~~P1~~ ✅ **NAPRAWIONE** | ~~Utworzone/DRAFT inicjatywy niewidoczne na Kanban~~ | `utils/initiativeHelpers.ts` ACTIVE_STATUSES | **ZROBIONE `973138a3a3`**: DRAFT+PENDING_REVIEW na początku ACTIVE_STATUSES → kolumna „DRAFT" z kartami widoczna (dowód: s1a-P1-draft-visible-kanban.png, 6 kart). 17/17 manual green |
 | 2 | **P2 🔍** | Modale Charter/AI Wizard nie potwierdzone (brak na zrzucie) | `InitiativesHub.tsx` wizard triggers | Weryfikacja live; jeśli realny bug otwierania — naprawić |
 | 3 | **P3 🔍** | Brak prawdziwego light-mode w dowodach (app domyślnie dark) | capture | Dograć light-mode (wymusić motyw przed seedem) + ocena czytelności |
 | 4 | **P3** | Czerwona pigułka „Model" — sprawdzić budżet czerwieni | górny pasek AI-mode | Potwierdzić czy token statusu; jeśli dekoracyjna czerwień → stonować |
