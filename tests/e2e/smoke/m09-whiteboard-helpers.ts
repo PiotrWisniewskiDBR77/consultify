@@ -434,13 +434,15 @@ export async function addSticky(page: Page): Promise<boolean> {
 /** Open the Create dropdown (caret "Create options") and click an item by label. */
 export async function addViaCreateMenu(page: Page, itemLabel: RegExp): Promise<boolean> {
   const before = await nodeCount(page);
+  // Open the split-button menu via the "Create options" caret.
   await page.getByRole('button', { name: 'Create options', exact: true }).first().click({ force: true }).catch(() => {});
   await page.waitForTimeout(400);
+  // The menu is a portal; the item may report not-"visible" mid-animation, so scroll + force-click
+  // unconditionally rather than gating on isVisible (which skipped the click headless → 0 shapes added).
   const item = page.getByRole('menuitem', { name: itemLabel }).first();
-  if (await item.isVisible({ timeout: 1500 }).catch(() => false)) {
-    await item.click({ force: true });
-    await page.waitForTimeout(600);
-  }
+  await item.scrollIntoViewIfNeeded().catch(() => {});
+  await item.click({ force: true }).catch(() => {});
+  await page.waitForTimeout(600);
   return (await nodeCount(page)) > before;
 }
 
