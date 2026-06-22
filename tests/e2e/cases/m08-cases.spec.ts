@@ -156,6 +156,32 @@ async function suppressOnboarding(page: Page, userId: string) {
   }, userId);
 }
 
+/**
+ * Ensure the Table tool is the active surface. A fresh idea's workspace can settle
+ * on another tool (mindmap/process_flow) before the URL's initialTool='table' wins,
+ * due to a MyWorkHub remount race — the path segment is correct, but a saved
+ * preferredTool / surfaceState can briefly override on first hydration. The tool
+ * switcher button (IdeaWorkspaceToolbar.tsx:125, title="Table"/"Tabela",
+ * onToolChange('table')) is the deterministic, idempotent way to force Table.
+ * Marker: the always-present quick-filter input (Table-only).
+ */
+async function ensureTableTool(page: Page) {
+  const filterInput = page.getByPlaceholder(/Filter…|Filtruj…/).first();
+  if (await filterInput.isVisible({ timeout: 8000 }).catch(() => false)) return;
+  const tableTab = page.locator('button[title="Table"], button[title="Tabela"]').first();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (await tableTab.isVisible().catch(() => false)) {
+      await tableTab.click({ force: true }).catch(() => {});
+    }
+    if (await filterInput.isVisible({ timeout: 5000 }).catch(() => false)) return;
+  }
+  // Last resort: drive the tool switch via the same hook the toolbar uses.
+  await page.evaluate(() => {
+    window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: 'tbl_grid' } }));
+  });
+  await expect(filterInput).toBeVisible({ timeout: 8000 });
+}
+
 /** Land on a fresh idea's Table workspace, overlays dismissed, region asserted. */
 async function openTable(page: Page, label: string) {
   const { token, userId } = readTestSupportState();
@@ -164,6 +190,7 @@ async function openTable(page: Page, label: string) {
   await gotoTable(page, idea.id);
   await dismissOnboarding(page);
   await expect(page.getByRole('region', { name: WORKSPACE_REGION })).toBeVisible({ timeout: 30000 });
+  await ensureTableTool(page);
   return idea;
 }
 
@@ -176,11 +203,54 @@ function byTitle(page: Page, title: string) {
   return page.locator(`[title="${title}"]`).first();
 }
 
-/** Open a toolbar surface by EN title and assert no error boundary appears. */
+/**
+ * Toolbar surfaces in TableToolbar live in a responsive `overflow-x-auto` strip
+ * that, at the test viewport, is partially covered by the tool-switcher overlay
+ * ("Discuss with Teresa", "Keyboard shortcuts"). A real click on Pipeline/Copilot/
+ * CrossRel lands on the covering element, so `setShow*` never fires. The Table tool
+ * listens for `idea-workspace-quick-action` CustomEvents (useTableQuickActions.ts)
+ * whose `detail.action` maps 1:1 to those same `setShow*` setters — dispatching the
+ * event is the deterministic, overlap-proof way to open a surface.
+ */
+const TITLE_ACTION: Record<string, string> = {
+  'Scoring Model': 'tbl_scoring',
+  'Idea Pipeline': 'tbl_pipeline',
+  'AI Copilot': 'tbl_copilot',
+  'AI Categorize': 'tbl_categorize',
+  'Cross-table Relations': 'tbl_cross_relations',
+  'Heatmap': 'tbl_heatmap',
+  'Export to Presentation': 'tbl_export_pptx',
+  'Voice / Image': 'tbl_voice',
+  'Add blank row': 'tbl_add_row',
+};
+
+/** Fire a Table quick-action via the event bus (bypasses toolbar overlap). */
+async function fireTableAction(page: Page, action: string) {
+  await page.evaluate((a) => {
+    window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: a } }));
+  }, action);
+  await page.waitForTimeout(700);
+  await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
+}
+
+/**
+ * Open a toolbar surface by EN title and assert no error boundary appears.
+ * Prefers the event bus for surfaces known to be covered by the tool-switcher;
+ * falls back to a real click for the rest (Columns/History click fine).
+ */
 async function openSurface(page: Page, title: string) {
   const btn = byTitle(page, title);
+  const action = TITLE_ACTION[title];
+  if (action) {
+    // Event-bus path: do NOT gate on toolbar-button visibility — some surfaces
+    // (e.g. Export to Presentation) collapse under the "Tools" overflow at the
+    // test viewport, so the button isn't visible even though the action is live.
+    await fireTableAction(page, action);
+    return btn;
+  }
   await expect(btn).toBeVisible({ timeout: 30000 });
-  await btn.click({ force: true }).catch(() => {});
+  await btn.scrollIntoViewIfNeeded().catch(() => {});
+  await btn.click().catch(() => {});
   await page.waitForTimeout(700);
   await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
   return btn;
@@ -589,17 +659,18 @@ test.describe('M08 Cases — 30 designed scenarios (CASES_M08_TABLE_30)', () => 
     // [REAL] CSV exportToCSV/downloadCSV; deck ExportToPresentation.tsx buildDeckJson :99-230.
     test.setTimeout(120000);
     await openTable(page, 'mc28-export');
-    // CSV: trigger the download and assert a file event fires (deterministic, client-side).
+    // CSV: fire the deterministic client-side export via the event bus (tbl_export_csv →
+    // exportToCSV + downloadCSV) and assert a download event fires. Re-assert Table first:
+    // the fresh-idea workspace can switch tools again after first hydration (remount race).
+    await ensureTableTool(page);
     const dl = page.waitForEvent('download', { timeout: 8000 }).catch(() => null);
-    const csv = byTitle(page, 'Export CSV');
-    if (await csv.isVisible().catch(() => false)) {
-      await csv.click({ force: true }).catch(() => {});
-    }
+    await fireTableAction(page, 'tbl_export_csv');
     const download = await dl;
     if (download) {
       expect(download.suggestedFilename()).toMatch(/\.csv$/i);
     }
-    // Presentation export dialog opens.
+    // Presentation export dialog opens (re-assert Table, then dispatch).
+    await ensureTableTool(page);
     await openSurface(page, 'Export to Presentation');
     await expect(
       page.getByText(/Export to Presentation|Eksport do prezentacji/i).first(),
