@@ -82,12 +82,17 @@ export async function seedTasks(page: Page, token: string, initiativeId: string)
   }
 }
 
-/** Force a theme BEFORE the app boots (init script), so light-mode is real, not a
- * post-mount class toggle the app overrides. Call before page.goto. */
+/** Force a theme BEFORE the app boots (init script), so light-mode is real.
+ *
+ * The app drives the `dark` class from a Zustand store (`useAppStore.theme`,
+ * default 'dark'), persisted under localStorage key `consultify-storage`
+ * (version 2). Setting a bare `theme` key did NOT flip it — ThemeSync reads the
+ * store, not that key. We pre-seed the persisted store so the app boots with the
+ * requested theme; the partial state merges over slice defaults on rehydrate. */
 export async function forceTheme(page: Page, theme: 'light' | 'dark') {
   await page.addInitScript((th) => {
     try {
-      localStorage.setItem('theme', th);
+      localStorage.setItem('consultify-storage', JSON.stringify({ state: { theme: th }, version: 2 }));
       const el = document.documentElement;
       if (th === 'dark') el.classList.add('dark');
       else el.classList.remove('dark');
