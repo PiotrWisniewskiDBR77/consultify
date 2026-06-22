@@ -213,7 +213,7 @@ async function watchAiRequests(page: Page): Promise<{ fired: () => boolean; allU
 }
 
 test.describe('M08 Cases — 30 designed scenarios (CASES_M08_TABLE_30)', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: 'parallel' });
 
   // ── Grupa A — Kolumny i typy pól (MC-08-01…05) ───────────────────────────
 
