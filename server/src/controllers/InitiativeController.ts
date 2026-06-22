@@ -39,10 +39,6 @@ import {
   coerceInitiativeStatusForWrite,
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
-import {
-  notifyBlocker,
-  notifyStatusChange,
-} from '../services/initiative/initiativeNotificationService.js';
 import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import {
   addLinkedItem,
@@ -1947,26 +1943,12 @@ export class InitiativeController {
       const sql = `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, lifecycleParams);
 
-      // M13 Depth · Seria R (M13d) — notify watchers/owners of a SUCCESSFUL
-      // status change (existing notifications only cover gate-blocked failures).
-      // Fail-safe: a notification must never break the transition.
-      try {
-        const statusRecipients = (await getInitiativeNotificationRecipients(orgId, id)).filter(
-          (uid: any) => uid && uid !== actorId
-        );
-        if (nextStatus === 'BLOCKED') {
-          // R4: a transition to BLOCKED gets the dedicated CRITICAL blocker
-          // notification (carries the reason) INSTEAD of the generic INFO
-          // status-change — one event, one notification (no dubel).
-          await notifyBlocker(orgId, id, reason || '', statusRecipients, { actorId });
-        } else {
-          await notifyStatusChange(orgId, id, currentStatus, nextStatus, statusRecipients, {
-            actorId,
-          });
-        }
-      } catch (e: any) {
-        logger.warn('[initiatives] R4 status-change notify skipped:', e?.message);
-      }
+      // M13 Depth · Seria R (M13d) — the status-change notification to
+      // watchers/owners is emitted by the canonical block below ("Emit
+      // notifications", type `initiative.status_changed`). A → BLOCKED
+      // transition is escalated there to CRITICAL severity carrying the reason.
+      // (Earlier a separate emitter here duplicated that notification — removed
+      // 2026-06-22 to fix the dubel; see finding_initiative_status_notification_dubel.)
 
       // Benefits tracking window defaults (best-effort; older schemas may not have these columns).
       if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
@@ -2074,7 +2056,17 @@ export class InitiativeController {
           (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') ||
           (currentStatus === 'DONE' && nextStatus === 'TRACKING');
 
-        // 1. General status change notification to all stakeholders
+        // 1. General status change notification to all stakeholders.
+        // M13/R4: this is the SINGLE canonical status-change notification.
+        // A → BLOCKED transition is escalated to CRITICAL and carries the
+        // blocker reason (replaces the removed dedicated R4 emitter).
+        const statusSeverity: 'INFO' | 'WARNING' | 'CRITICAL' =
+          nextStatus === 'BLOCKED' ? 'CRITICAL' : nextStatus === 'CANCELLED' ? 'WARNING' : 'INFO';
+        const statusTitle = isModuleChange
+          ? 'Initiative moved to new module'
+          : nextStatus === 'BLOCKED'
+            ? 'Initiative blocked'
+            : 'Initiative status changed';
         await Promise.allSettled(
           recipients
             .filter((uid) => uid && uid !== actorId)
@@ -2083,15 +2075,14 @@ export class InitiativeController {
                 userId,
                 organizationId: orgId,
                 type: isModuleChange ? 'initiative.module_changed' : 'initiative.status_changed',
-                title: isModuleChange
-                  ? 'Initiative moved to new module'
-                  : 'Initiative status changed',
+                title: statusTitle,
                 body: `${initiativeName}: ${currentStatus} → ${nextStatus}${reason ? ` (${reason})` : ''}`,
                 entityType: 'initiative',
                 entityId: id,
                 actionUrl: '/initiatives',
                 actorId,
                 actorName,
+                severity: statusSeverity,
                 priority:
                   nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
                 metadata: { from: currentStatus, to: nextStatus, reason, gate },

@@ -1,14 +1,17 @@
 /**
  * M13 Depth · Seria R (R4 / M13d) — status-change notification wiring.
  *
- * Verifies the FRESH R4 wiring in InitiativeController.updateInitiativeStatus
- * (added 2026-06-22, previously only tsc-clean, runtime never asserted):
- *   - a transition → BLOCKED fires the dedicated CRITICAL `notifyBlocker`
- *     (type `initiative_blocked`, carries the reason) — NOT the generic
- *     INFO status-change (no dubel WITHIN the R4 block);
- *   - any other transition fires `notifyStatusChange` (type
- *     `initiative_status_change`, INFO) — NOT the blocker;
- *   - the acting user is never notified about their own transition.
+ * Verifies the canonical status-change notification in
+ * InitiativeController.updateInitiativeStatus (Wariant A dedup, 2026-06-22 —
+ * see finding_initiative_status_notification_dubel):
+ *   - every transition emits a SINGLE `initiative.status_changed` (the dotted
+ *     type registered in the integration catalog) per recipient;
+ *   - a → BLOCKED transition is escalated to severity CRITICAL and carries the
+ *     blocker reason in the body;
+ *   - a non-blocked transition is INFO;
+ *   - the acting user is never notified about their own transition;
+ *   - the removed R4 underscore emitter (`initiative_blocked` /
+ *     `initiative_status_change`) no longer fires (no dubel).
  *
  * Strategy: exercise the REAL controller method (no controller mock) with the
  * REAL initiative notification emitters, mocking only the leaf dependencies
@@ -143,11 +146,11 @@ describe('M13/R4 — status-change notification wiring (real controller)', () =>
     mockGetTableColumns.mockImplementation(async () => []);
   });
 
-  it('→ BLOCKED fires a CRITICAL initiative_blocked notification carrying the reason', async () => {
+  it('→ BLOCKED fires a single CRITICAL initiative.status_changed carrying the reason', async () => {
     const reason = 'Vendor delay on critical dependency';
     await callStatusUpdate({ currentStatus: 'EXECUTING', status: 'BLOCKED', reason });
 
-    const blocked = sentOfType('initiative_blocked');
+    const blocked = sentOfType('initiative.status_changed');
     expect(blocked.length).toBeGreaterThanOrEqual(1);
     expect(blocked[0]).toEqual(
       expect.objectContaining({
@@ -160,15 +163,15 @@ describe('M13/R4 — status-change notification wiring (real controller)', () =>
     );
     expect(String(blocked[0].body)).toContain(reason);
 
-    // No dubel WITHIN the R4 block: the generic INFO status-change emitter must
-    // NOT also fire for a → BLOCKED transition.
+    // Dedup: the removed R4 underscore emitter must NOT fire anymore.
+    expect(sentOfType('initiative_blocked')).toHaveLength(0);
     expect(sentOfType('initiative_status_change')).toHaveLength(0);
   });
 
-  it('non-blocked transition fires INFO initiative_status_change, not the blocker', async () => {
+  it('non-blocked transition fires INFO initiative.status_changed', async () => {
     await callStatusUpdate({ currentStatus: 'BLOCKED', status: 'EXECUTING' });
 
-    const status = sentOfType('initiative_status_change');
+    const status = sentOfType('initiative.status_changed');
     expect(status.length).toBeGreaterThanOrEqual(1);
     expect(status[0]).toEqual(
       expect.objectContaining({
@@ -191,25 +194,17 @@ describe('M13/R4 — status-change notification wiring (real controller)', () =>
       recipients: [ACTOR_ID, OWNER_ID],
     });
 
-    const blocked = sentOfType('initiative_blocked');
+    const blocked = sentOfType('initiative.status_changed');
     expect(blocked.length).toBeGreaterThanOrEqual(1);
     expect(blocked.every((p: any) => p.userId !== ACTOR_ID)).toBe(true);
     expect(blocked.some((p: any) => p.userId === OWNER_ID)).toBe(true);
   });
 
-  // KNOWN ISSUE (2026-06-22) — cross-block duplication, NOT yet fixed.
-  // The R4 wiring at InitiativeController.ts:1953 fires the new
-  // `initiative_blocked` / `initiative_status_change` notifications, but the
-  // PRE-EXISTING block at ~2069 ALSO fires the legacy dotted
-  // `initiative.status_changed` to the same recipients on every successful
-  // status change. Empirically a single → BLOCKED transition delivers TWO
-  // notifications to the same owner (initiative_blocked + initiative.status_changed).
-  // The legacy dotted types are the canonical ones (registered in the
-  // integration catalog / FE); the R4 underscore types have no FE/integration
-  // consumers. Fixing requires a notification-architecture decision (which
-  // system is canonical / register R4 types / revert R4) — tracked separately,
-  // owner: Piotr decision. Un-skip once resolved.
-  it.skip('[post-fix] a → BLOCKED transition delivers exactly one status notification per recipient', async () => {
+  // Regression guard for the dubel fix (2026-06-22, Wariant A): the dedicated
+  // R4 underscore emitter was removed so a → BLOCKED transition now delivers
+  // EXACTLY ONE status/blocker notification per recipient (the canonical
+  // `initiative.status_changed`). See finding_initiative_status_notification_dubel.
+  it('a → BLOCKED transition delivers exactly one status notification per recipient', async () => {
     await callStatusUpdate({
       currentStatus: 'EXECUTING',
       status: 'BLOCKED',
