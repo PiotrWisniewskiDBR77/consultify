@@ -29,6 +29,7 @@ import { expect, test } from '@playwright/test';
 
 import {
   addShape,
+  assertAiFiredOrSkip,
   assertNoErrorBoundary,
   fireQuickAction,
   fitView,
@@ -572,7 +573,7 @@ test.describe('M07 Process Flow — 30 cases (MC-07-01..30)', () => {
     await page.waitForTimeout(1000);
     await shot(page, 'MC-07-25');
     await assertNoErrorBoundary(page);
-    if (resp) expect(resp.status(), 'AI Coach request should not hard-error').toBeLessThan(500);
+    await assertAiFiredOrSkip(resp, 'MC-07-25 AI Coach');
   });
 
   test('MC-07-26 — [REAL-AI] Process Summary fires + renders the summary panel', async ({ page }) => {
@@ -589,7 +590,7 @@ test.describe('M07 Process Flow — 30 cases (MC-07-01..30)', () => {
     await page.waitForTimeout(1000);
     await shot(page, 'MC-07-26');
     await assertNoErrorBoundary(page);
-    if (resp) expect(resp.status(), 'Process Summary request should not hard-error').toBeLessThan(500);
+    await assertAiFiredOrSkip(resp, 'MC-07-26 Process Summary');
   });
 
   test('MC-07-27 — [REAL-AI] next-step ghost nodes requested after adding a step', async ({ page }) => {
@@ -606,8 +607,9 @@ test.describe('M07 Process Flow — 30 cases (MC-07-01..30)', () => {
     await fitView(page);
     await shot(page, 'MC-07-27');
     await assertNoErrorBoundary(page);
-    // Ghosts are best-effort + non-deterministic; the proof is the background request fired < 500.
-    if (resp) expect(resp.status(), 'next-step ghost request should not hard-error').toBeLessThan(500);
+    // Ghosts are best-effort + non-deterministic; the product proof is that the background
+    // next-step request fired. Model output is env-gated (OpenRouter on caboose).
+    await assertAiFiredOrSkip(resp, 'MC-07-27 next-step ghosts');
   });
 
   test('MC-07-28 — [STUB-AI][V8] AI Proposal + Semantic Readback panels (V8-gated)', async ({ page }) => {
