@@ -537,8 +537,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
   );
   const [scheduleView, setScheduleView] = useState<'none' | 'calendar' | 'gantt'>('none');
 
-  // W5 — Gantt drag-reschedule: optimistically update tasks in context state.
-  const handleGanttReschedule = useCallback(
+  // W5 — drag-reschedule (Gantt + Calendar share one callback): optimistically
+  // update tasks in context state after a successful task move. Milestones /
+  // phases fire this too but are no-ops here (no setter; persisted elsewhere).
+  const handleScheduleReschedule = useCallback(
     (_itemId: string, sourceKind: string, sourceId: string, start: string, end: string) => {
       if (sourceKind === 'task' && setTasks) {
         setTasks((prev: any[]) =>
@@ -1359,12 +1361,12 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
         </div>
         {scheduleView === 'calendar' && (
           <div className="mt-2">
-            <InitiativeCalendar items={scheduleItems} />
+            <InitiativeCalendar items={scheduleItems} onReschedule={handleScheduleReschedule} />
           </div>
         )}
         {scheduleView === 'gantt' && (
           <div className="mt-2">
-            <InitiativeGantt items={scheduleItems} onReschedule={handleGanttReschedule} />
+            <InitiativeGantt items={scheduleItems} onReschedule={handleScheduleReschedule} />
           </div>
         )}
       </div>
