@@ -56,6 +56,47 @@ export async function seedInitiative(
   return { id: String(body?.id || body?.initiative?.id || '') };
 }
 
+/** Seed N tasks bound to an initiative so Timeline/Gantt/Tasks render real content. */
+export async function seedTasks(page: Page, token: string, initiativeId: string) {
+  const base = Date.parse('2026-07-01T09:00:00.000Z');
+  const day = 24 * 60 * 60 * 1000;
+  const tasks = [
+    { title: 'Analiza obecnego procesu', off: 0, dur: 3 },
+    { title: 'Projekt automatyzacji', off: 4, dur: 5 },
+    { title: 'Wdrożenie pilotażowe', off: 10, dur: 7 },
+  ];
+  for (const t of tasks) {
+    await page.request
+      .post(`${API_BASE_URL}/api/pmo/tasks`, {
+        headers: authHeaders(token),
+        data: {
+          title: t.title,
+          initiativeId,
+          status: 'todo',
+          startedAt: new Date(base + t.off * day).toISOString(),
+          dueDate: new Date(base + (t.off + t.dur) * day).toISOString(),
+        },
+        timeout: 30000,
+      })
+      .catch(() => null);
+  }
+}
+
+/** Force a theme BEFORE the app boots (init script), so light-mode is real, not a
+ * post-mount class toggle the app overrides. Call before page.goto. */
+export async function forceTheme(page: Page, theme: 'light' | 'dark') {
+  await page.addInitScript((th) => {
+    try {
+      localStorage.setItem('theme', th);
+      const el = document.documentElement;
+      if (th === 'dark') el.classList.add('dark');
+      else el.classList.remove('dark');
+    } catch {
+      /* ignore */
+    }
+  }, theme);
+}
+
 export async function suppressOnboarding(page: Page, userId: string) {
   await page.addInitScript((uid) => {
     try {

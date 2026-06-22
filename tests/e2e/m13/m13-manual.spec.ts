@@ -20,8 +20,10 @@ import {
   ERROR_BOUNDARY_RE,
   dismissOnboarding,
   gotoHub,
+  forceTheme,
   openDoc,
   seedInitiative,
+  seedTasks,
   sectionNavButtons,
   sectionNavLocator,
   setDark,
@@ -78,11 +80,30 @@ test.describe('M13 Inicjatywy — manual gate', () => {
     await shot(page, 's1b-created-reload');
   });
 
+  test('§1a-P1 freshly-created (DRAFT) initiative is VISIBLE on the default Kanban', async ({
+    page,
+  }) => {
+    // Regression for the P1 fix: DRAFT was excluded from ACTIVE_STATUSES, so a new
+    // initiative had no column and vanished from the default board. Now DRAFT leads
+    // the active pipeline → the card must be findable on the hub.
+    const title = uniqueLabel('M13-P1draft');
+    await seedInitiative(page, token, title);
+    await gotoHub(page);
+    await dismissOnboarding(page);
+    await page.waitForTimeout(2000);
+    // The created initiative's title is present somewhere on the board (a Kanban card),
+    // not just in a hidden count. Tolerate list/kanban: assert the title is visible.
+    await expect(page.getByText(title, { exact: false }).first()).toBeVisible({ timeout: 30000 });
+    await noErrorBoundary(page);
+    await shot(page, 's1a-P1-draft-visible-kanban');
+  });
+
   // ── §2 Dokument inicjatywy — nawigacja przez WSZYSTKIE sekcje ────────────
   test('§2.1 nawigacja przez wszystkie sekcje dokumentu (screenshot każdej)', async ({ page }) => {
     test.setTimeout(180000);
     const title = uniqueLabel('M13-doc');
     const { id } = await seedInitiative(page, token, title);
+    await seedTasks(page, token, id); // populate Timeline/Gantt/Tasks with real content
     await openDoc(page, id, title);
     await noErrorBoundary(page);
 
@@ -247,6 +268,27 @@ test.describe('M13 Inicjatywy — manual gate', () => {
     await noErrorBoundary(page);
     await shot(page, 's11-dark-document');
     await setDark(page, false);
+  });
+
+  test('§11 LIGHT mode — dokument czytelny (motyw wymuszony przed bootem)', async ({ page }) => {
+    const title = uniqueLabel('M13-light');
+    const { id } = await seedInitiative(page, token, title);
+    await seedTasks(page, token, id);
+    await forceTheme(page, 'light'); // real light: set before navigation so app boots light
+    await openDoc(page, id, title);
+    await page.waitForTimeout(600);
+    await noErrorBoundary(page);
+    await shot(page, 's11-light-document');
+  });
+
+  test('§11 LIGHT mode — hub', async ({ page }) => {
+    await seedInitiative(page, token, uniqueLabel('M13-lighthub'));
+    await forceTheme(page, 'light');
+    await gotoHub(page);
+    await dismissOnboarding(page);
+    await page.waitForTimeout(800);
+    await noErrorBoundary(page);
+    await shot(page, 's11-light-hub');
   });
 
   test('§11 hub dark mode', async ({ page }) => {

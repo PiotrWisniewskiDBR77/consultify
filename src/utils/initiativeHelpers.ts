@@ -176,8 +176,16 @@ export function getHealthInfo(initiative: {
 // ACTIVE / ALL STATUS SETS
 // ==========================================
 
-/** Statuses shown in "Active" (Initiatives module core flow) */
+/** Statuses shown in "Active" (Initiatives module core flow).
+ *
+ * DRAFT + PENDING_REVIEW lead the pipeline: without them a freshly-created
+ * initiative (status DRAFT) had NO Kanban column and was excluded from the
+ * active data fetch, so it vanished from the default board right after
+ * creation ("ALL 10 → every column 0"). They are the visible left-most
+ * "Szkice / W przeglądzie" columns now. (M13 P1 fix, 2026-06-21) */
 export const ACTIVE_STATUSES: InitiativeStatus[] = [
+  'DRAFT' as InitiativeStatus,
+  'PENDING_REVIEW' as InitiativeStatus,
   'REVIEW' as InitiativeStatus,
   'PROMOTED' as InitiativeStatus,
   'PLANNING' as InitiativeStatus,
