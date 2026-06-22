@@ -491,7 +491,8 @@ npm run test:e2e:tier0
 
 Zdjęcia „z prac wykonanych" pozyskujemy uruchamiając headless spec, który wykonuje wszystkie scenariusze **✅/🟡** i zapisuje PNG per scenariusz. Scenariusze **❌** i **⬜ blocked** idą poza headless (component/integration/real-browser).
 
-### 4.1 Nowy headless spec (zdjęcia ✅/🟡)
+### 4.1 Nowy headless spec (zdjęcia ✅/🟡)  ✅ ZBUDOWANY + ODPALONY 2026-06-22
+- **Status:** `tests/e2e/m13/m13-katalog.spec.ts` — **14/14 green (1.9 min), 46 zdjęć** w `docs/qa/screens/m13-full/` (zweryfikowane: Gantt z barami, Kalendarz miesiąc, Kanban z 12 draftami, 26 sekcji dokumentu, dark/light huba+dokumentu, endpointy bramek/dedup/validate-card/linked-items ZAMONTOWANE). Drobny gap: toggle „Lista" to ikona (bez tekstu) → `pv-01-list` niezłapany; pozostałe 3 widoki + reszta OK.
 - **Plik:** `tests/e2e/m13/m13-katalog.spec.ts` (lub podział per-seria: `m13-katalog-g.spec.ts` … `-v.spec.ts` dla równoległości workers=2).
 - **SHOTS_DIR:** `docs/qa/screens/m13-full/` (nowy; ustaw w specu lub dodaj wariant helpera).
 - **Reuse:** `_m13.ts` (`seedInitiative`, `seedTasks`, `openDoc`, `forceTheme`, `sectionNavLocator`, `shot`, `readTestSupportState`).
