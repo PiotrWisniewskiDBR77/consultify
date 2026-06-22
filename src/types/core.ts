@@ -852,6 +852,8 @@ export interface PortfolioStats {
 export interface PortfolioInitiative {
   id: string;
   name: string;
+  /** Some portfolio reads carry `title` instead of `name`; UI falls back to it. */
+  title?: string;
   summary?: string;
   description?: string;
   axis: string;

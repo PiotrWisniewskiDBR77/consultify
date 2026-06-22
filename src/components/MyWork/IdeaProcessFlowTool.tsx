@@ -1666,7 +1666,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
   useCanvasKeyboard({
-    toolType: 'process_flow',
+    toolType: 'processflow',
     enabled: open,
     locked: locked || false,
     callbacks: {

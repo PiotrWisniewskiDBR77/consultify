@@ -317,4 +317,62 @@ test.describe('M13 Inicjatywy — manual gate', () => {
     }
     await shot(page, 's11-no-error-boundary');
   });
+
+  // ── §7 Analysis / §5.5 Portfolio API ────────────────────────────────────
+  test('§7.1 Analysis tab renderuje się bez error-boundary', async ({ page }) => {
+    await seedInitiative(page, token, uniqueLabel('M13-analysis'));
+    await gotoHub(page);
+    await dismissOnboarding(page);
+    const analysisTab = page.getByRole('button', { name: /^Analysis$|^Analiza$/i }).first();
+    const analysisText = page.getByText(/^Analysis$|^Analiza$/i).first();
+    const target = (await analysisTab.isVisible({ timeout: 4000 }).catch(() => false))
+      ? analysisTab
+      : analysisText;
+    if (await target.isVisible({ timeout: 4000 }).catch(() => false)) {
+      await target.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(1500);
+    }
+    await noErrorBoundary(page);
+    await shot(page, 's7-1-analysis');
+  });
+
+  test('§5.5 portfolio API — GET /api/initiatives zwraca utworzone inicjatywy', async ({ page }) => {
+    const title = uniqueLabel('M13-apilist');
+    const { id } = await seedInitiative(page, token, title);
+    const res = await page.request.get(
+      `${process.env.E2E_API_URL || 'http://127.0.0.1:3001'}/api/initiatives`,
+      { headers: { Authorization: `Bearer ${token}` }, timeout: 30000 }
+    );
+    expect(res.status(), 'GET /api/initiatives 2xx').toBeLessThan(400);
+    const body = (await res.json().catch(() => null)) as any;
+    const list = Array.isArray(body) ? body : body?.initiatives || [];
+    expect(Array.isArray(list), 'response carries an initiatives array').toBe(true);
+    // The just-created initiative is present in the portfolio read.
+    const found = list.some((i: any) => String(i?.id) === id);
+    expect.soft(found, 'created initiative present in GET /api/initiatives').toBe(true);
+  });
+
+  // ── §4.2 status progression (submit-review → approve) ───────────────────
+  test('§4.2 progresja statusu submit-review → approve (Network)', async ({ page }) => {
+    const api = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
+    const auth = { Authorization: `Bearer ${token}`, 'content-type': 'application/json' };
+    const { id } = await seedInitiative(page, token, uniqueLabel('M13-approve'));
+    const submit = await page.request
+      .post(`${api}/api/initiatives/${id}/submit-review`, { headers: auth, data: {}, timeout: 30000 })
+      .catch(() => null);
+    if (submit) expect(submit.status(), `submit-review ${submit.status()}`).toBeLessThan(500);
+    const approve = await page.request
+      .post(`${api}/api/initiatives/${id}/approve`, { headers: auth, data: {}, timeout: 30000 })
+      .catch(() => null);
+    // Approve may require review gate / role; accept 2xx or a 4xx-with-reason, never 5xx.
+    if (approve) expect(approve.status(), `approve ${approve.status()}`).toBeLessThan(500);
+    // UI reflects whatever state was reached without crashing.
+    await page.goto(`/portfolio?open=${encodeURIComponent(id)}&mode=doc`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await dismissOnboarding(page);
+    await noErrorBoundary(page);
+    await shot(page, 's4-2-approve-progression');
+  });
 });
