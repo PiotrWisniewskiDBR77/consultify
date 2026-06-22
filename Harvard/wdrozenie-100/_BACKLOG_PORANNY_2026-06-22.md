@@ -14,7 +14,7 @@ Strukturalnie tylko Ty możesz „odebrać". Gotowe do odbioru na demo:
 - **M05 Ideas-Zarządzanie, M08 Table, M09 Whiteboard** — 🟢 kod+testy zielone, czekają na Twój →F/→UI.
 - **M06 Mind Map** — 🟢 57/5 (5 faili = test-infra/known), 4/5 luk produktowych wpięte; →F/→UI.
 - **M07 Process Flow** — 🟢 P0 data-loss naprawiony+zweryfikowany 3/3; →F/→UI.
-- **M13 Inicjatywy** — manual gate 14/14 + screeny + analiza graficzna; →F/→UI (po decyzjach niżej).
+- **M13 Inicjatywy** — manual gate 20/20 + 40+ screenów + analiza graficzna (P1 naprawiony); →F/→UI (po decyzjach niżej).
 
 ### A2. Decyzje produktowe M13 (blokują domknięcie serii)
 - **Q6** — czy robić **K2 CardContainer** (refaktor ~26 sekcji do wspólnego komponentu) w v1? To JEDYNY pozostały kod-task serii K. Bez decyzji nie ruszam (duży, zmienia wygląd wszystkich sekcji).
@@ -37,9 +37,9 @@ M10 Wywiad, M12 Audyty, M14 Wdrożenie, M15 Rezultaty, M16 Finanse, M19/M20 Stud
 
 ## B. Dług techniczny wykryty (mogę zrobić, ale ryzykowne nocą — czeka na zielone światło)
 
-### B1. Błędy tsc w plikach reactflow (M06/M07) — NIE NAPRAWIONE świadomie
-`IdeaProcessFlowTool.tsx` + `IdeaRecommendationMap.tsx`: tsc twierdzi że `useUpdateNodeInternals`/`useNodesInitialized` nie są eksportowane z reactflow — ale **runtime je ma** (probe: true), więc to rozjazd TYPÓW, nie runtime (vite buduje, e2e zielone). Plus realny drobiazg: `IdeaProcessFlowTool.tsx:1669` podaje `'process_flow'` gdzie typ to `'processflow'`. **Nie ruszałem** — M07 świeżo zweryfikowany zielony, a naprawa rozdzielczości typów reactflow może kaskadować na 4 narzędzia Ideas. Wymaga osobnego, spokojnego podejścia (dedup reactflow w node_modules / @reactflow/core wersja).
-- `InitiativesHub.tsx:1180` — `Property 'title' does not exist on type 'PortfolioInitiative'` — też do sprawdzenia (typ portfolio).
+### B1. Błędy tsc reactflow (M06/M07) — ZDIAGNOZOWANE, NIE NAPRAWIONE (świadomie)
+`IdeaProcessFlowTool.tsx` + `IdeaRecommendationMap.tsx`: tsc twierdzi że `useUpdateNodeInternals`/`useNodesInitialized` nie są eksportowane z `reactflow`. **Zweryfikowane: to NIE błąd kodu.** Barrel `reactflow/dist/esm/index.d.ts` robi `export * from '@reactflow/core'`, a `@reactflow/core` JAWNIE eksportuje oba hooki — typy SĄ dostępne. tsc po prostu nie rozwiązuje `reactflow` do właściwego `.d.ts` (prawdopodobnie iCloud-duplikat `node_modules/.ignored/reactflow 2` lub moduleResolution). Runtime działa, vite buduje, e2e zielone. **Fix = czysty reinstall** (`rm -rf node_modules/.ignored && npm ci`) lub tweak moduleResolution — NIE nocą, bo dotyka rozdzielczości dla 4 narzędzi Ideas. Pozostały total tsc = **15** błędów (głównie ten reactflow w kilku plikach).
+- ✅ **NAPRAWIONE 2026-06-22** (`7af683bc83`): `'process_flow'`→`'processflow'` (toolType ignorowany w hooku, czysty type-fix) + `PortfolioInitiative.title?` dodane. Oba błędy skasowane.
 
 ---
 
