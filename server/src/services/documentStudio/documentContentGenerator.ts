@@ -182,6 +182,11 @@ function shortenForExecutiveSummary(description: string): string {
   return `${trimmed.slice(0, 357)}...`;
 }
 
+// B3 ready — wire into buildDocumentSchema when premium doc generation activates:
+// planDocumentStructure() (documentStructureGenerator.ts) can replace the
+// deterministic buildSectionBlocks() below by choosing block TYPES per section
+// (table/kpi_strip/callout/…) via premium LLM, with this proza-only path as the
+// STANDARD fallback. Not wired into the live pipeline yet.
 export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
   const { artifactId, intake, outline, sourceRefs } = input;
   const now = new Date().toISOString();
