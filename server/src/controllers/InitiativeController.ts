@@ -39,7 +39,10 @@ import {
   coerceInitiativeStatusForWrite,
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
-import { notifyStatusChange } from '../services/initiative/initiativeNotificationService.js';
+import {
+  notifyBlocker,
+  notifyStatusChange,
+} from '../services/initiative/initiativeNotificationService.js';
 import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import {
   addLinkedItem,
@@ -1948,15 +1951,19 @@ export class InitiativeController {
       // status change (existing notifications only cover gate-blocked failures).
       // Fail-safe: a notification must never break the transition.
       try {
-        const statusRecipients = await getInitiativeNotificationRecipients(orgId, id);
-        await notifyStatusChange(
-          orgId,
-          id,
-          currentStatus,
-          nextStatus,
-          statusRecipients.filter((uid: any) => uid && uid !== actorId),
-          { actorId }
+        const statusRecipients = (await getInitiativeNotificationRecipients(orgId, id)).filter(
+          (uid: any) => uid && uid !== actorId
         );
+        if (nextStatus === 'BLOCKED') {
+          // R4: a transition to BLOCKED gets the dedicated CRITICAL blocker
+          // notification (carries the reason) INSTEAD of the generic INFO
+          // status-change — one event, one notification (no dubel).
+          await notifyBlocker(orgId, id, reason || '', statusRecipients, { actorId });
+        } else {
+          await notifyStatusChange(orgId, id, currentStatus, nextStatus, statusRecipients, {
+            actorId,
+          });
+        }
       } catch (e: any) {
         logger.warn('[initiatives] R4 status-change notify skipped:', e?.message);
       }

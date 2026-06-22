@@ -43,6 +43,15 @@ M10 Wywiad, M12 Audyty, M14 Wdrożenie, M15 Rezultaty, M16 Finanse, M19/M20 Stud
 
 ---
 
+## C0. Domknięcia poranne 2026-06-22 (po wybudzeniu, na polecenie Piotra)
+
+- ✅ **Light-mode** — naprawione+zweryfikowane (Zustand store, nie localStorage).
+- ✅ **R4 notifyBlocker** — wpięte na przejściu →BLOCKED (CRITICAL+reason, zamiast generycznego INFO; bez dubla z gate_blocked). tsc-clean, fail-safe. ⚠️ runtime-firing jeszcze nie zaasertowane → integration-test flagowany P0 w planie testów.
+- ℹ️ **R4 notifyAssignment NIE wpinam** — owner-change JEST już notyfikowany istniejącą ścieżką (`notificationService.send` w `updateInitiative:1099-1116`); wpięcie helpera = dubel. `notifyAssignment` helper pozostaje alternatywą nieużywaną.
+- ⬜ **R4 notifyDueBreach = cron-job (infra), NIE call-site** — wymaga nowego joba w `server/src/cron/Scheduler` (skan overdue inicjatyw/tasków). Osobne zadanie z mock-zegarem; nie wpinane nocą/rano bez właściwego testu.
+- ✅ **Plan testów M13** — `_PLAN_TESTOW_M13.md` (piramida, per-seria auto-coverage+gaps, 121 manual pogrupowane+priorytet, środowiska, bramki, ryzyka).
+- ⚠️ **B1 reactflow** — wstrzymane świadomie (patrz niżej; runtime sprawny, ryzyko vs zero-zysku).
+
 ## C. ZROBIONE w nocy (skrót — szczegóły w git/SSOT, branch feat/deliverables-w1 → demo)
 
 **M13 — głębokość:**
