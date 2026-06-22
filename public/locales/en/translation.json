@@ -12579,6 +12579,11 @@
         "chooseTemplate": "Choose a template",
         "templateSubtitle": "Start blank or from a template",
         "back": "Back",
+        "suggestPlaceholder": "Describe what you need…",
+        "suggestBtn": "Teresa suggests",
+        "suggestDefaultIntent": "choose the best template for me",
+        "suggestResult": "Teresa recommends",
+        "suggestAccept": "Use this template",
         "tpl": {
           "blank": "Blank",
           "auditReport": "Audit report",

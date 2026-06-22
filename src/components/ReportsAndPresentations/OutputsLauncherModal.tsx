@@ -20,12 +20,14 @@ import {
   ShieldAlert,
   Sparkles,
   Table2,
+  Wand2,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDeliverableTemplates } from './useDeliverableTemplates';
+import { useTemplateSuggestion } from './useTemplateSuggestion';
 
 export type DeliverableType = 'report' | 'presentation' | 'table';
 
@@ -158,9 +160,19 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   const { templates: apiTemplates, loading: tplLoading, error: tplError } =
     useDeliverableTemplates(selectedType);
 
+  const { loading: suggestLoading, suggestion, suggest, reset: resetSuggestion } =
+    useTemplateSuggestion();
+
+  const [intentInput, setIntentInput] = useState('');
+
   // Reset kroku przy każdym otwarciu.
   useEffect(() => {
-    if (open) setSelectedType(null);
+    if (open) {
+      setSelectedType(null);
+      setIntentInput('');
+      resetSuggestion();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -183,6 +195,17 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
     },
     [selectedType, onSelect, onClose]
   );
+
+  // Mapowanie launcher type → API type
+  const toApiType = (t: DeliverableType): 'doc' | 'deck' | 'table' =>
+    t === 'report' ? 'doc' : t === 'presentation' ? 'deck' : 'table';
+
+  const handleSuggest = useCallback(() => {
+    if (!selectedType) return;
+    const intentText = intentInput.trim() || t('rap.outputs.launcher.suggestDefaultIntent', 'choose the best template for me');
+    suggest(intentText, toApiType(selectedType));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedType, intentInput, suggest, t]);
 
   if (!open) return null;
 
@@ -264,9 +287,57 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
             </>
           ) : (
             <>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                 {t('rap.outputs.launcher.templateSubtitle', 'Start blank or from a template')}
               </p>
+
+              {/* Teresa zaproponuje — mini input + przycisk */}
+              <div className="mb-4 flex gap-2">
+                <input
+                  type="text"
+                  value={intentInput}
+                  onChange={(e) => setIntentInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSuggest(); }}
+                  placeholder={t('rap.outputs.launcher.suggestPlaceholder', 'Describe what you need…')}
+                  maxLength={1000}
+                  className="flex-1 min-w-0 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                />
+                <button
+                  type="button"
+                  onClick={handleSuggest}
+                  disabled={suggestLoading}
+                  aria-label={t('rap.outputs.launcher.suggestBtn', 'Teresa suggests')}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700 hover:bg-primary-100 dark:hover:bg-primary-800/40 disabled:opacity-50 transition-colors"
+                >
+                  {suggestLoading
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <Wand2 size={14} />}
+                  {t('rap.outputs.launcher.suggestBtn', 'Teresa suggests')}
+                </button>
+              </div>
+
+              {/* Wynik sugestii */}
+              {suggestion && !suggestLoading && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700">
+                  <p className="text-xs text-primary-700 dark:text-primary-300 font-medium mb-1">
+                    {t('rap.outputs.launcher.suggestResult', 'Teresa recommends')}
+                    {': '}
+                    <span className="font-semibold">{suggestion.templateId}</span>
+                    {' '}
+                    <span className="opacity-70">({suggestion.confidence})</span>
+                  </p>
+                  <p className="text-[11px] text-primary-600 dark:text-primary-400 mb-2">
+                    {suggestion.reasoning}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handlePickTemplate(suggestion.templateId)}
+                    className="text-xs px-2.5 py-1 rounded-md bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors"
+                  >
+                    {t('rap.outputs.launcher.suggestAccept', 'Use this template')}
+                  </button>
+                </div>
+              )}
 
               {/* Loading */}
               {tplLoading && (

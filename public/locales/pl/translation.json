@@ -13171,6 +13171,11 @@
         "chooseTemplate": "Wybierz szablon",
         "templateSubtitle": "Zacznij od zera lub z szablonu",
         "back": "Wstecz",
+        "suggestPlaceholder": "Opisz, czego potrzebujesz…",
+        "suggestBtn": "Teresa zaproponuje",
+        "suggestDefaultIntent": "dobierz dla mnie najlepszy szablon",
+        "suggestResult": "Teresa rekomenduje",
+        "suggestAccept": "Użyj tego szablonu",
         "tpl": {
           "blank": "Pusty",
           "auditReport": "Raport audytowy",

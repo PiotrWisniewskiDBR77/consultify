@@ -25,6 +25,7 @@ import {
   TemplateNotFoundError,
 } from '../services/deliverableTemplateService.js';
 import type { DeliverableTemplateType } from '../services/deliverableTemplateService.js';
+import { suggestTemplate } from '../services/deliverableTemplateSuggestService.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -151,6 +152,46 @@ router.put('/templates/:id', async (req, res) => {
     }
     logger.error('[deliverableTemplates] Failed to update template', { err, id: req.params.id });
     res.status(500).json({ error: 'Failed to update template' });
+  }
+});
+
+// ── POST suggest ────────────────────────────────────────────
+router.post('/templates/suggest', async (req, res) => {
+  const { intent, type, useLlm } = req.body as {
+    intent?: string;
+    type?: string;
+    useLlm?: boolean;
+  };
+
+  if (!intent || typeof intent !== 'string' || intent.trim().length === 0) {
+    res.status(400).json({ error: 'intent is required and must be a non-empty string.' });
+    return;
+  }
+  if (intent.length > 1000) {
+    res.status(400).json({ error: 'intent must not exceed 1000 characters.' });
+    return;
+  }
+  if (!type || !VALID_TYPES.has(type)) {
+    res.status(400).json({ error: 'Invalid or missing type. Must be doc|deck|table.' });
+    return;
+  }
+  if (useLlm !== undefined && typeof useLlm !== 'boolean') {
+    res.status(400).json({ error: 'useLlm must be a boolean.' });
+    return;
+  }
+
+  try {
+    const suggestion = await suggestTemplate(
+      intent.trim(),
+      type as DeliverableTemplateType,
+      getOrgId(req),
+      { useLlm: useLlm === true }
+    );
+    res.json({ suggestion });
+  } catch (err) {
+    // Fail-open: błąd sugestii nigdy nie jest 500
+    logger.warn('[deliverableTemplates] suggest threw unexpectedly, returning null', { err });
+    res.json({ suggestion: null });
   }
 });
 
