@@ -1,0 +1,82 @@
+# Backlog poranny — 2026-06-22 (handoff po nocnym przebiegu CTO)
+
+> Autor: Claude (CTO) · Sesja nocna 2026-06-21→22 · Branch `feat/deliverables-w1` → demo (prod NIE ruszany, zgodnie z decyzją)
+> Zakres nocy (decyzja Piotra): **głębokość** — domknij M13 + szlif puli Ideas. Bez nowych modułów. Deploy tylko demo.
+>
+> Ten dokument = JEDYNE miejsce rzeczy, których **nie mogłem zrobić sam** + co wymaga Ciebie. Pozycje „ZROBIONE w nocy" są w git/SSOT, tu tylko skrót.
+
+---
+
+## A. Wymaga CIEBIE (twarde blokery — nie do zrobienia autonomicznie)
+
+### A1. Odbiory →F / →UI (klik na demo + akceptacja UI)
+Strukturalnie tylko Ty możesz „odebrać". Gotowe do odbioru na demo:
+- **M05 Ideas-Zarządzanie, M08 Table, M09 Whiteboard** — 🟢 kod+testy zielone, czekają na Twój →F/→UI.
+- **M06 Mind Map** — 🟢 57/5 (5 faili = test-infra/known), 4/5 luk produktowych wpięte; →F/→UI.
+- **M07 Process Flow** — 🟢 P0 data-loss naprawiony+zweryfikowany 3/3; →F/→UI.
+- **M13 Inicjatywy** — manual gate 14/14 + screeny + analiza graficzna; →F/→UI (po decyzjach niżej).
+
+### A2. Decyzje produktowe M13 (blokują domknięcie serii)
+- **Q6** — czy robić **K2 CardContainer** (refaktor ~26 sekcji do wspólnego komponentu) w v1? To JEDYNY pozostały kod-task serii K. Bez decyzji nie ruszam (duży, zmienia wygląd wszystkich sekcji).
+- Pozostałe otwarte decyzje M13 z bramki wstępnej (lista w `M13-STAN-PRACY-ODBIORY.md`).
+
+### A3. Env / klucze na Railway (powiedziałeś, że ustawisz w nocy)
+Gdy ustawisz — **napisz mi które**, dorobię live-verify:
+- Klucz **Gemini/STT na demo** → M10 głos/STT live-verify (kod + fallback gotowe).
+- **VITE_ENABLE_DELIVERABLES_LIGHT** na Railway → M02 Canvas deliverables.
+- Konto **superadmin na demo** → M27 RBAC live.
+> Jeśli NIE ustawiłeś — te live-verify zostają w backlogu (kod jest gotowy, brakuje tylko sekretów).
+
+### A4. Zgoda na deploy prod
+Cała noc wylądowała **tylko na demo**. Deploy `feat/deliverables-w1`→`Londyn`→prod (centerbeam) czeka na Twoją osobną zgodę.
+
+### A5. Moduły NIE ROZPOCZĘTE (poza nocnym zakresem „głębokość")
+M10 Wywiad, M12 Audyty, M14 Wdrożenie, M15 Rezultaty, M16 Finanse, M19/M20 Studio, M21 Meeting, M22 AI OS, M23–M27. Każdy = osobny audyt+kod+testy+screeny. Decyzja rano: kolejność/priorytet.
+
+---
+
+## B. Dług techniczny wykryty (mogę zrobić, ale ryzykowne nocą — czeka na zielone światło)
+
+### B1. Błędy tsc w plikach reactflow (M06/M07) — NIE NAPRAWIONE świadomie
+`IdeaProcessFlowTool.tsx` + `IdeaRecommendationMap.tsx`: tsc twierdzi że `useUpdateNodeInternals`/`useNodesInitialized` nie są eksportowane z reactflow — ale **runtime je ma** (probe: true), więc to rozjazd TYPÓW, nie runtime (vite buduje, e2e zielone). Plus realny drobiazg: `IdeaProcessFlowTool.tsx:1669` podaje `'process_flow'` gdzie typ to `'processflow'`. **Nie ruszałem** — M07 świeżo zweryfikowany zielony, a naprawa rozdzielczości typów reactflow może kaskadować na 4 narzędzia Ideas. Wymaga osobnego, spokojnego podejścia (dedup reactflow w node_modules / @reactflow/core wersja).
+- `InitiativesHub.tsx:1180` — `Property 'title' does not exist on type 'PortfolioInitiative'` — też do sprawdzenia (typ portfolio).
+
+---
+
+## C. ZROBIONE w nocy (skrót — szczegóły w git/SSOT, branch feat/deliverables-w1 → demo)
+
+**M13 — głębokość:**
+- ✅ **P1 NAPRAWIONY** (`973138a3a3`) — DRAFT+PENDING_REVIEW na początku `ACTIVE_STATUSES`; kolumna „DRAFT" z 6 kartami widoczna na domyślnym Kanban (dowód: `s1a-P1-draft-visible-kanban.png`). Naprawia kolumny+fetch+licznik jednym punktem.
+- ✅ **Manual gate 17/17** — `tests/e2e/m13/m13-manual.spec.ts` + `_m13.ts` (§1/§2 26-sekcji/§3/§4/§5/§6/§11), **38+ screenów** w `docs/qa/screens/m13-2026-06-21/`. Seed wzbogacony o taski (Timeline/Gantt/Tasks z treścią), asercja P1.
+- ✅ **Analiza graficzna** — `_ANALIZA_UIUX_M13_2026-06-21.md` (5 zasad + per-powierzchnia).
+- ✅ **W5 Gantt drag** + **Calendar drag** (mirror) — pointer-events, PUT `/api/pmo/tasks/:id`, optimistic+rollback.
+- ✅ **K4 AI-fill** (hypothesis/OKR/lessons-learned) + **Serie C konsolidacja** (wspólny primitive Jaccard, oba endpointy nietknięte, 12+35 testów zielone).
+- ✅ **Regresja 7/7** — `useIdeaMapSync` deferred-payload (lock M07 data-loss) + Gantt drag + K4 dispatch.
+
+**Pula Ideas — szlif/weryfikacja:**
+- ✅ **M06** 57/5 (5 faili = test-infra/known) + 4/5 luk produktowych wpięte w Cmd+K (`d027ca5865`).
+- ✅ **M07** P0 data-loss naprawiony+zweryfikowany 3/3.
+- ✅ **M08 Table 20/20 GREEN** — kluczowe: M08 używa `useIdeaMapSync` bezpośrednio → **potwierdza ZERO regresji** od mojej zmiany hooka.
+- ✅ **mock-DB `LOWER(email)`** + **demo-readonly bootstrap** harness (odblokowało 127 testów M06).
+
+**5 agentów (równolegle, worktree):** Calendar drag ✅ · Serie C ✅ · M10 E2E→gate ✅ · regresja 7/7 ✅ · activity-mock ⏭️ (redundancja). Worktree posprzątane.
+
+---
+
+## D. Stan testów / dowodów na rano
+
+| Suite | Wynik | Uwaga |
+|---|---|---|
+| M13 manual (`m13-manual.spec.ts`) | **17/17** | + 38 screenów |
+| M13 regresja (3 pliki) | **7/7** | unit/component |
+| M06 (`tests/e2e/m06/`) | **57/5/66** | 5 faili = KNOWN-MOCK/GAP/DB/viewport-flake, NIE bugi |
+| M07 interactions | **3/3** | §3 persist + §4.2 + §6.1 |
+| M08 table acceptance | **20/20** | pełny green |
+| M09 foundation+walkthrough | **2 fail** | ↓ patrz E |
+
+### E. Otwarte (do weryfikacji LIVE — nie domknięte headless)
+- **M09 S9 persistence-across-reload** + walkthrough affordances — padają **headless** (canvas w skeletonie headless wg znanego `finding_m09_live_test_gates`; twardy check S9 idzie przez `persistStickyViaApi` = niezależny od zmian hooka). **NIE regresja** — wymaga weryfikacji w realnej przeglądarce.
+- **Light-mode M13** — capture przez localStorage nie przełączył motywu (app używa innego mechanizmu); zrzuty zostały dark. Wymaga realnej ścieżki przełącznika motywu w app.
+- **Modale Charter/AI-Wizard M13** — nie otworzyły się headless (do potwierdzenia live).
+
+> **Werdykt nocy:** M13 (głębokość) i pula Ideas (szlif) doprowadzone tak daleko, jak pozwala headless + brak Twoich decyzji/env/odbiorów. Wszystko zielone-kodowo na demo. Reszta = sekcja A (wymaga Ciebie).
