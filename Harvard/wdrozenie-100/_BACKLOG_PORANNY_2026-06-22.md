@@ -67,7 +67,7 @@ M10 Wywiad, M12 Audyty, M14 Wdrożenie, M15 Rezultaty, M16 Finanse, M19/M20 Stud
 
 | Suite | Wynik | Uwaga |
 |---|---|---|
-| M13 manual (`m13-manual.spec.ts`) | **17/17** | + 38 screenów |
+| M13 manual (`m13-manual.spec.ts`) | **20/20** | + 38 screenów |
 | M13 regresja (3 pliki) | **7/7** | unit/component |
 | M06 (`tests/e2e/m06/`) | **57/5/66** | 5 faili = KNOWN-MOCK/GAP/DB/viewport-flake, NIE bugi |
 | M07 interactions | **3/3** | §3 persist + §4.2 + §6.1 |

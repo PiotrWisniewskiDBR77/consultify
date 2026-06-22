@@ -65,7 +65,7 @@ Legenda: ✅ spełnia · 🟡 częściowo · ❌ luka · 🔍 wymaga weryfikacji
 
 ## 5. Uczciwy zakres i ograniczenia
 
-- **Seed minimalny.** Inicjatywa seedowana z title/summary/hypothesis/problem → większość sekcji (KPIs, Financial, Resources, Team…) renderuje **empty-state**, nie gęstą treść. Ocena layoutu/empty-state jest wiarygodna; ocena gęstej treści — NIE. Follow-up: wzbogacić seed przez API.
+- **Seed wzbogacony (update 2026-06-22).** Po dodaniu `seedTasks` (3 taski z datami) **Timeline renderuje pełną tabelę** — Initiative Start + 3 taski (Analiza/Projekt/Wdrożenie) + Initiative Finish, kolumny START/END/STATUS, toggle Kalendarz/Gantt (s2-section-02-timeline). Tasks/Gantt/Kalendarz mają teraz realną treść = ocena gęstej treści dla osi czasu WIARYGODNA. Pozostałe sekcje bez własnego seeda (KPIs/Financial/Resources/Team) nadal empty-state — wymagałyby seeda per-sekcja (osobny follow-up, niższy priorytet).
 - **Light-mode nie uchwycony.** App domyślnie startuje w dark; `setDark(false)` w teście nie dał czystego light (s11-dark-document ≈ sekcje). Light-mode wymaga osobnego przejścia.
 - **Wizardy nie potwierdzone** (patrz 3.3).
 - **Headless ≠ live.** Zgodnie z zasadą „verify-before-claiming": to analiza zrzutów headless; bramka **→UI** (odbiór graficzny przez Piotra) pozostaje otwarta. Ten dokument = wsad do →UI, nie jego zamknięcie.
