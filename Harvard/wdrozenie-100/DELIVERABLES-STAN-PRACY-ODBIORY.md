@@ -130,6 +130,33 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 
 ---
 
+## QUALITY TEST HARNESS + B4 extensions (2026-06-22) — przygotowanie FT-6
+
+> Po domknięciu 24/24 code-side zbudowano kompletny system testów jakości dla 3 modułów dokumentowych — to **maszyneria odbioru FT-6** (head-to-head jakość) gotowa do uruchomienia gdy Piotr odblokuje Q1/Q3.
+
+**90 scenariuszy testowych** (30 deck M19 + 30 doc M18 + 30 table M20), tiery Sml/Med/Lrg/Xtr:
+- SSOT czytelny: `docs/qa/deliverables/scenarios/M19_DECKS.md` · `M18_REPORTS.md` · `M20_TABLES.md` (każdy scenariusz = intent + kryteria merytoryczne + graficzne, autochecker-able)
+- Executable TS catalog: `tests/integration/deliverables/catalog/{decks,reports,tables}.ts` ({meta, criteria, mockPass} per wpis)
+
+**Scoring engine** (`tests/integration/deliverables/scoring/`): `deckScoring` (paleta/no-triple-run/≥8-distinct/imageBriefs) · `docScoring` (typy bloków/KPI 3-5/chart clamp≤7/distinct types) · `tableScoring` (typed fields/select-colors/CF rules/formuły) → `ScoreReport{passed, failures[], selfHealHints[]}`.
+
+**Runnery (wszystkie zielone, mock-mode):**
+- `fullCatalog.test.ts` — 90 mock-pass 100% + 3 sanity-degradacji (scoring WYKRYWA regresję)
+- `scenarioRunner.test.ts` — 9 pilotów przez prawdziwe generatory (mock-LLM)
+- `deckGeneratorE2E.test.ts` — 30 decków przez **prawdziwy** `planDeckLayout`; post-processing B1 nie degraduje
+- `tableGeneratorE2E.test.ts` — mapa reachable/need-extension
+
+**Auto-heal Workflow** `scripts/deliverables/self-heal-workflow.js` (Run→Score→Heal, MAX_ATTEMPTS=3, mock/live) + runbook `docs/qa/deliverables/SELF_HEALING_RUNBOOK.md`.
+
+**B4 ROZSZERZONE** (harness wykrył gap — B4 zwracał tylko {fields, seedRows}):
+- **CF by-fieldKey** (`1faf2beaf4`): LLM podaje {fieldKey, rule}, B4 resolwuje → A1-ref; dataBar/colorScale/iconSet/cellIs; tylko CF-eligible (number/currency/percent/rating)
+- **Formuły + hasFormulas** (`349a9dd881`): seedRows "=..." przepuszczane + prompt zachęca
+- **Efekt zmierzony e2e: table reachable 17→29**; need-extension=1 (TYLKO M20.S26 multi-sheet = osobna domena WorkbookGeneratorService, nie single-table B4)
+
+**Stan testów:** 26 plików, **212 testów deliverables zielonych**; mock-mode (live wymaga Q1/Q3 + budżet API + staging org-id). Commity: catalog `c3b90dbe71` · e2e `57ed51c942` · B4-CF `1faf2beaf4` · B4-formuły `349a9dd881`.
+
+---
+
 # Odbiory szczegółowe (sub-moduł po sub-module)
 
 > Każdy sub-moduł: cel · epiki · **konkretny zestaw testów per faza (podstawa odbioru)** · manual · ekrany.
