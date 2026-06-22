@@ -94,12 +94,45 @@ export interface GeneratedField {
   options?: GeneratedFieldOption[];
 }
 
+/**
+ * Reguła conditional formatting (B4-ext). Materializowalna do WorkbookBuilder
+ * (X2) — `ref` w notacji A1 obliczany z pozycji pola + liczby wierszy.
+ */
+export interface GeneratedCfBlock {
+  /** A1-range, np "C2:C9" (obliczany z fieldKey + rowCount). */
+  ref: string;
+  rules: Array<{ type: string; [k: string]: unknown }>;
+}
+
 export interface GeneratedTableSchema {
   fields: GeneratedField[];
   /** Przykładowe wiersze (3-5 dla premium); keyed by field.key. */
   seedRows: Record<string, unknown>[];
+  /**
+   * B4-ext: conditional formatting per kolumna (X2-shape, gotowe dla
+   * WorkbookBuilder.applyConditionalFormatting). Pusta tablica gdy brak.
+   */
+  conditionalFormatting?: GeneratedCfBlock[];
   tierUsed: 'PREMIUM' | 'STANDARD';
   fallbackUsed: boolean;
+}
+
+// ──────────────────────────────────────────────────────────────
+// CF — typy reguł, które LLM może zaproponować per pole (by fieldKey)
+// ──────────────────────────────────────────────────────────────
+const CF_RULE_TYPES = new Set(['dataBar', 'colorScale', 'iconSet', 'cellIs']);
+/** Pola na których CF ma sens (numeryczne / ratingowe / procentowe). */
+const CF_ELIGIBLE_TYPES = new Set(['number', 'currency', 'percent', 'rating']);
+
+/** Indeks kolumny (0-based) → litera Excel (A, B, ..., Z, AA, ...). */
+function columnLetter(index: number): string {
+  let n = index;
+  let letter = '';
+  do {
+    letter = String.fromCharCode(65 + (n % 26)) + letter;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return letter;
 }
 
 export interface GenerateTableSchemaOptions {
@@ -217,6 +250,45 @@ function normalizeSeedRows(
     });
 }
 
+/**
+ * Normalizuje CF z LLM ({fieldKey, rule}) → GeneratedCfBlock[] z A1-ref.
+ * - fieldKey musi wskazywać na istniejące pole CF-eligible (number/currency/
+ *   percent/rating) — inaczej pomijamy (CF na tekście nie ma sensu).
+ * - ref = <col>2:<col><rowCount+1> (od wiersza 2, bo 1 = header).
+ * - rule.type musi być znany; nieznane pomijamy.
+ */
+function normalizeCf(
+  rawCf: unknown,
+  fields: GeneratedField[],
+  rowCount: number
+): GeneratedCfBlock[] {
+  const arr = Array.isArray(rawCf) ? rawCf : [];
+  if (arr.length === 0 || rowCount === 0) return [];
+
+  const keyToIndex = new Map<string, number>();
+  fields.forEach((f, i) => keyToIndex.set(f.key, i));
+
+  const out: GeneratedCfBlock[] = [];
+  for (const entry of arr) {
+    const fieldKey = String((entry as any)?.fieldKey ?? '').trim();
+    const rule = (entry as any)?.rule;
+    if (!fieldKey || !rule || typeof rule !== 'object') continue;
+
+    const idx = keyToIndex.get(fieldKey);
+    if (idx === undefined) continue;
+    const field = fields[idx];
+    if (!CF_ELIGIBLE_TYPES.has(field.type)) continue;
+
+    const ruleType = String(rule.type ?? '').trim();
+    if (!CF_RULE_TYPES.has(ruleType)) continue;
+
+    const col = columnLetter(idx);
+    const ref = `${col}2:${col}${rowCount + 1}`;
+    out.push({ ref, rules: [{ ...rule, type: ruleType }] });
+  }
+  return out;
+}
+
 // ──────────────────────────────────────────────────────────────
 // Walidacja jakości premium (DELIVERABLES_GRAPHIC_PARAMETERS.md)
 //   - ≥1 pole typed (nie-text)
@@ -251,7 +323,11 @@ function passesPremiumQuality(schema: {
 async function generateViaLlm(
   intent: string,
   orgId: string
-): Promise<{ fields: GeneratedField[]; seedRows: Record<string, unknown>[] } | null> {
+): Promise<{
+  fields: GeneratedField[];
+  seedRows: Record<string, unknown>[];
+  conditionalFormatting: GeneratedCfBlock[];
+} | null> {
   // Import dynamiczny — unit-testy nie ciągną całego stacku AI.
   const { llmService } = await import('./ai/llmService.js');
   const modelRouter = (await import('./ai/modelRouter.js')).default;
@@ -275,7 +351,14 @@ async function generateViaLlm(
     '(green #16A34A for good/low, amber #D97706 for medium, red #DC2626 for bad/high). ' +
     'Provide 3-5 realistic seed rows keyed by field key. ' +
     'Example — risk table: Risk(singleLineText), Likelihood(singleSelect: Low #16A34A / Med #D97706 / High #DC2626), ' +
-    'Impact(singleSelect same colors), Owner(singleLineText), Status(singleSelect). ' +
+    'Impact(singleSelect same colors), Owner(singleLineText), Status(singleSelect).\n' +
+    'CONDITIONAL FORMATTING (optional but encouraged for numeric columns): in ' +
+    '`conditionalFormatting` propose visual rules BY fieldKey (not cell ranges). ' +
+    'Rule types: dataBar {type:"dataBar", color:"#16A34A"} for progress/utilization; ' +
+    'colorScale {type:"colorScale", colors:["#DC2626","#F59E0B","#16A34A"]} for scores/ratings/variance heatmaps; ' +
+    'iconSet {type:"iconSet", iconSet:"3Arrows"|"3TrafficLights1"} for likelihood/status ratings; ' +
+    'cellIs {type:"cellIs", operator:"greaterThan", formulae:["100000"], style:{bgColor:"#DC2626", bold:true}} for thresholds. ' +
+    'Only attach CF to number/currency/percent/rating columns. ' +
     'Reply with ONLY a JSON object conforming to the schema.';
 
   const FieldSchema = z.object({
@@ -287,9 +370,15 @@ async function generateViaLlm(
       .optional(),
   });
 
+  const CfEntrySchema = z.object({
+    fieldKey: z.string(),
+    rule: z.record(z.string(), z.unknown()),
+  });
+
   const OutputSchema = z.object({
     fields: z.array(FieldSchema),
     seedRows: z.array(z.record(z.string(), z.unknown())),
+    conditionalFormatting: z.array(CfEntrySchema).optional(),
   });
 
   const result = await (llmService as any).call({
@@ -298,7 +387,7 @@ async function generateViaLlm(
     systemPrompt,
     messages: [{ role: 'user', content: `Table intent: "${intent}"` }],
     schema: OutputSchema,
-    maxTokens: 1500,
+    maxTokens: 1800,
     temperature: 0.2,
     cache: false,
   });
@@ -310,7 +399,8 @@ async function generateViaLlm(
   if (fields.length === 0) return null;
 
   const seedRows = normalizeSeedRows(obj.seedRows, fields);
-  return { fields, seedRows };
+  const conditionalFormatting = normalizeCf(obj.conditionalFormatting, fields, seedRows.length);
+  return { fields, seedRows, conditionalFormatting };
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -374,6 +464,7 @@ export async function generateTableSchema(
     return {
       fields: llm.fields,
       seedRows: llm.seedRows,
+      conditionalFormatting: llm.conditionalFormatting,
       tierUsed: 'PREMIUM',
       fallbackUsed: false,
     };

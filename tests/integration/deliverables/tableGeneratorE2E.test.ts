@@ -42,9 +42,42 @@ vi.mock('../../../server/src/config/FeatureFlags.js', () => ({
   },
 }));
 
-/** Scenariusz wymaga rozszerzenia B4 jeśli ma CF / formuły / multi-sheet. */
+/**
+ * Scenariusz wymaga rozszerzenia B4 jeśli ma formuły / multi-sheet.
+ * CF jest już wspierane przez B4-ext (emisja conditionalFormatting by-fieldKey),
+ * WIĘC requireCfRule samo w sobie NIE czyni scenariusza need-extension.
+ */
 function needsExtension(criteria: any): boolean {
-  return Boolean(criteria.requireCfRule || criteria.requireFormulas || criteria.requireMultiSheet);
+  return Boolean(criteria.requireFormulas || criteria.requireMultiSheet);
+}
+
+const CF_ELIGIBLE = new Set(['number', 'currency', 'percent', 'rating']);
+
+const RULE_BY_TYPE: Record<string, any> = {
+  dataBar: { type: 'dataBar', color: '#16A34A' },
+  colorScale: { type: 'colorScale', colors: ['#DC2626', '#F59E0B', '#16A34A'] },
+  iconSet: { type: 'iconSet', iconSet: '3Arrows' },
+  cellIs: { type: 'cellIs', operator: 'greaterThan', formulae: ['100000'], style: { bgColor: '#DC2626', bold: true } },
+};
+
+/**
+ * Buduje CF-input dla mock-LLM (kształt by-fieldKey) z criteria.requireCfRule.
+ * Każdą wymaganą regułę przypisuje do CF-eligible pola (number/currency/percent/rating).
+ */
+function buildCfInput(criteria: any, fields: any[]): Array<{ fieldKey: string; rule: any }> {
+  if (!criteria.requireCfRule) return [];
+  const eligible = fields.filter((f) => CF_ELIGIBLE.has(f.type));
+  if (eligible.length === 0) return [];
+  const out: Array<{ fieldKey: string; rule: any }> = [];
+  let idx = 0;
+  for (const req of criteria.requireCfRule) {
+    for (let i = 0; i < req.min; i++) {
+      const field = eligible[idx % eligible.length];
+      idx++;
+      out.push({ fieldKey: field.key, rule: { ...RULE_BY_TYPE[req.type] } });
+    }
+  }
+  return out;
 }
 
 describe('B4 table generator E2E — mapa reachable vs need-extension', () => {
@@ -77,6 +110,7 @@ describe('B4 table generator E2E — mapa reachable vs need-extension', () => {
             options: f.options,
           })),
           seedRows: entry.mockPass.seedRows,
+          conditionalFormatting: buildCfInput(entry.criteria, entry.mockPass.fields),
         },
       });
 
@@ -87,7 +121,11 @@ describe('B4 table generator E2E — mapa reachable vs need-extension', () => {
 
       // Adapter: GeneratedTableSchema → GeneratedTable (scoring shape).
       const report = scoreTable(
-        { fields: schema.fields as any, seedRows: schema.seedRows },
+        {
+          fields: schema.fields as any,
+          seedRows: schema.seedRows,
+          conditionalFormatting: schema.conditionalFormatting,
+        },
         entry.criteria
       );
       if (!report.passed) {
