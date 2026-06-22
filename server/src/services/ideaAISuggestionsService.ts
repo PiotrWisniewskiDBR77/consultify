@@ -378,6 +378,11 @@ function generateFallbackSuggestions(
   return suggestions;
 }
 
+// B4 ready — wire into table generation when premium activates:
+// `tableSchemaGeneratorService.generateTableSchema(intent, { orgId })` returns a
+// TYPED schema (singleSelect+colors / number / currency / date) + seed-rows,
+// materializable to Table Platform. Gated behind ENABLE_DELIVERABLES_PREMIUM
+// (B5 resolver), fail-open to a simple fallback. Live logic below is unchanged.
 export async function generateTableAction(
   ideaId: string,
   naturalLanguage: string,
