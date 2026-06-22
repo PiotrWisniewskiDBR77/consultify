@@ -109,10 +109,10 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 | **R3** | Doc → render tabel/wykresów/KPI (recharts) | W2 | 2/2 | 0/7 | FT-1✅(28/28)·3,7⬜ | 0/5 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (blocks/: DocChartBlock recharts bar/line/pie/area+donut; DocTableBlock zebra+risk; DocKpiStrip dual-shape; paleta Harvard clamp≤7; narrowChartContent/narrowTableContent/narrowKpiContent; commit `95c1bb80df`; FT-1 28/28; R1 konsumuje NodeViews) |
 | **R4** | Deck → Gamma-flow (mniej przycisków, AI-driven) | W2 | 2/2 | 0/7 | FT-1✅(16/16)·3,7⬜ | 0/6 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (CardFloatingToolbar usunięty; layout-picker usunięty; regenerateSlide(instruction) na dowolnym intecie; inline rewrite input na hover; Undo/Redo/Theme/Share/Teresa/Present/Confidentiality zachowane; commit `a740d65bf9`; FT-1 16/16) |
 | **R5** | Tabela → CF w GridView + jeden silnik formuł (AST) | W2 | 3/3 | 0/7 | FT-1✅(191/191)·2,3,8⬜ | 0/8 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (formulaEngineCore.ts port AST FE+BE identyczne; PlatformGridView CF; tp_views.config JSONB persyst bez migracji; commit `5e01bcbae8`; FT-1 191/191 + parity 8/8 FE↔BE) |
-| **T1** | Model template (szkielet+format) per typ + persyst | W3 | 0/2 | 0/7 | 1,2,8 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
-| **T2** | Biblioteka DBR77 (kuratorowane per typ) | W3 | 0/2 | 0/7 | 1,2,6 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
-| **T3** | User-created templates (CRUD) | W3 | 0/2 | 0/7 | 1,2,3,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
-| **T4** | Teresa-proponuje template z intencji | W3 | 0/2 | 0/7 | 1,2,6 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
+| **T1** | Model template (szkielet+format) per typ + persyst | W3 | 2/2 | 0/7 | FT-1✅+FT-2✅(20/20)·8✅ | 0/4 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (unified API GET /api/deliverables/templates?type federuje 3 tabele; migracja 783 template_id provenance; launcher z API zamiast hardkodu; fail-open per tabela; commit `bc41936116`; FT-1+FT-2 20/20 + org-scope) |
+| **T2** | Biblioteka DBR77 (kuratorowane per typ) | W3 | 2/2 | 0/7 | FT-1✅+FT-2✅(20/20) | 0/6 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (migracja 784 seed: 2 doc + 2 deck + 2 table systemowe, idempotent ON CONFLICT; seedService+stałe; commit `f3b19a78d1`; FT-1 14/14 + FT-2 6/6) |
+| **T3** | User-created templates (CRUD) | W3 | 2/2 | 0/7 | FT-1✅+FT-2✅+FT-8✅(18/18) | 0/6 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (POST/PUT/DELETE/GET /:id org-scoped; migracja 785 org_id na tp_base_templates; system-guard 403; cross-org 403; commit `4a79090db8`; FT-1 7 + FT-2/8 11 = 18/18) |
+| **T4** | Teresa-proponuje template z intencji | W3 | 2/2 | 0/7 | FT-1✅+FT-2✅+FT-6✅(22/22) | 0/4 | 🟡 | ⬜ | ⬜ | 🟢 GOTOWY code-side (suggestService keyword-matcher PL+EN + LLM-fallback; POST /suggest fail-open; launcher "Teresa zaproponuje" mini-input→accept; i18n PL/EN; commit `6d227f4798`; FT-1+FT-2+FT-6 22/22) |
 | **B1** | Deck → AI Layout Director (layout+motyw+briefy) | W4 | 0/3 | 0/7 | 1,2,**6**,8 | 0/8 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. (Q1) |
 | **B2** | Deck → warianty układu / remix | W4 | 0/2 | 0/7 | 1,3,**6**,7 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. (Q1) |
 | **B3** | Doc → AI generuje pełną strukturę bloków | W4 | 0/2 | 0/7 | 1,2,**6**,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. (Q1) |
@@ -125,7 +125,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 | **X5** | doc/sheet → model decka (jedna encja) | W5 | 0/3 | 0/7 | 1,2,8 | 0/6 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 | **X6** | Outputs niezawodny rejestr (transakcyjny) + lineage | W5 | 0/2 | 0/7 | 1,2,8 | 0/4 | ⬜ | ⬜ | ⬜ | ⬜ NIE ROZP. |
 
-**Postęp programu:** 0 / 24 ZAMKNIĘTYCH · **W1 (E1-E4) GOTOWA code-side 🟢** (FT-1+FT-2 22/22; czeka checkpoint manualny W1 + →F/→UI) · **W2 (R1-R5) 5/5 GOTOWE code-side 🟢** (R1 c2cc2aa091 · R2 80e5ef94ea · R3 95c1bb80df · R4 a740d65bf9 · R5 5e01bcbae8; FT-1: 20+7+28+16+191=262/262; czekają FT-2/3/7 checkpointy + →F/→UI) · W3 (T, 4) · W4 (B, 5) · W5 (X, 6) · Manual 0/132 · Skok jakości = seria B (mózg premium).
+**Postęp programu:** 0 / 24 ZAMKNIĘTYCH · **W1 (E1-E4) GOTOWA code-side 🟢** (FT-1+FT-2 22/22) · **W2 (R1-R5) 5/5 GOTOWE code-side 🟢** (FT-1 262/262) · **W3 (T1-T4) 4/4 GOTOWE code-side 🟢** (T1 bc41936116 · T2 f3b19a78d1 · T3 4a79090db8 · T4 6d227f4798; unified template API + DBR77 seed + CRUD org-scoped + Teresa-suggests; FT 20+20+18+22=80/80; migracje 783/784/785) · W4 (B, 5) · W5 (X, 6) · Manual 0/132 · Skok jakości = seria B (mózg premium). **Razem code-side: W1+W2+W3 = 14/24 sub-modułów; FT ~364 zielonych.** Czekają: checkpointy manualne (deploy staging) + →F/→UI Piotra; W4 blokowane Q1/Q3 (próg jakości + golden-prompty).
 **Słownik statusu:** ⬜ NIE ROZPOCZĘTY · 🟡 W TOKU · 🟢 GOTOWY DO ODBIORU (6 bramek realizacji ✅) · ✅ ZAMKNIĘTY (8/8 ✅).
 
 ---
