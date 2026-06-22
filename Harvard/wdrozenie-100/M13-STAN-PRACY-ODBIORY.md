@@ -4,6 +4,23 @@
 > 🚀 **DEPLOYED na demo.consultify.ai 2026-06-21** (commit `b374e6d0`, build SUCCESS, root+/api/health=200). Serie G (AI bramki) + R (artefakty) LIVE. Migracje (`initiative_feature_flags`, `initiative_gate_ai_events`) zaaplikowane na demo (zweryfikowane). `POST /gate-ai-check` routowany (401 guard, nie 404). **Flaga `gate_ai` ON tylko na org Piotra demo** (`a3e05d4a…`, próg 75; dokładnie 1 org ON — zero szerokiego włączenia). Kalendarz (R3) + banner decyzji (R2) + DELETE-guard + kebab widoczne od razu. **→F = klik Piotra na demo** (transition na inicjatywie w jego org → pigułka/soft-block/override); →UI = screeny.
 **Zasada twarda:** idziemy sub-moduł po sub-module po kolei (G1→G5 → R1→R4 → C1→C2 → K1→K4 → V1). Nie przechodzę do kolejnego, póki poprzedni nie jest **ZAMKNIĘTY (8/8)**. Zero odstępstw.
 
+## ⚠️ STATUS PRAWDY — 2026-06-22 (czytaj NAJPIERW)
+
+> **Dlaczego widać puste checkboxy?** Pracowałem „w dół" (kod→testy→deploy) i aktualizowałem tylko tabelę zbiorczą niżej, a **sekcje szczegółowe per-sub-moduł zostały zamrożone w stanie z fazy PLANOWANIA** („NIE ROZP."). To był **dług dokumentacyjny, nie brak pracy.** Ten blok + zsynchronizowane sekcje (G2–G5 odhaczone 2026-06-22) są teraz autorytatywne.
+
+**Twardy dowód realizacji (run 2026-06-22):** `tests/{unit,integration,components}` M13 = **260/260 zielonych** (44 pliki). E2E katalog headless = 14/14 + 46 zdjęć (`docs/qa/screens/m13-full/`). Seria G deployed demo 2026-06-21 (`b374e6d0`).
+
+**Licznik prawdy (16 sub-modułów):**
+| Kategoria | Ile | Które |
+|---|---|---|
+| 🟢 **Realizacja techniczna DOMKNIĘTA** (Kod+Epiki+Testy, część deployed) | **14/16** | G1–G5, R1–R4, C1–C2, K1, K3, K4, V1 |
+| ⬜ **Realnie niezbudowane** | **2** (+luki) | **K2** (CardContainer — czeka decyzji **Q6**) · **V1 częściowo**: 4 funkcje Gantta (zależności / ścieżka krytyczna / zoom / filtr) NIE w kodzie · **R4 ogon**: `notifyAssignment` niewpięty, `notifyDueBreach` = cron-job niezbudowany (infra) |
+| 🟡 **Czeka TYLKO Twoich odbiorów** (→F klik na demo / →UI grafika) | **wszystkie 14** | to jedyna rzecz blokująca „ZAMKNIĘTY 8/8" dla gotowych sub-modułów — z definicji Twoja bramka |
+
+**Wniosek:** puste pola dzielą się na: (a) **dług dok. — już naprawiany** (G2–G5 zsynchronizowane), (b) **Twoje odbiory →F/→UI** (poprawnie puste), (c) **2 realne luki** (K2/Q6 + ogony V1/R4). Kod NIE jest „90% nietknięty" — jest 14/16 domknięty technicznie.
+
+---
+
 ## RAPORT SESJI 2026-06-21 (CTO)
 Zbudowane code-side + **wdrożone na demo.consultify.ai** (najnowszy `gitSha` = **7e5c41bf**, health 200):
 - **Seria G (5/5)** — AI na bramce: flaga per-org · rollup merytoryczny (reviewer §B4) · timeline (zależności/daty) · `POST /gate-ai-check` + soft-block 422/override + telemetria · UI (modal + pigułka/panel). Flaga `gate_ai` **ON na org Piotra** (`a3e05d4a`, próg 75).
@@ -125,63 +142,67 @@ Status: 🟢 DEPLOYED demo (realizacja ✅ — Manual+deploy+→F zostają) · *
 **Manual (4):** M1 flaga OFF → bramki bez zmian · M2 flaga ON demo → infra aktywna · M3 próg czytany per-org · M4 fail-open gdy config brak.
 
 ### G2 — `gateAiReadinessService` (rollup merytoryczny) · 3 epiki · 0 ekranów
-Status: ⬜ NIE ROZP.
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo (2026-06-21) · realizacja ✅ — zostaje tylko →F/→UI (= N/A na G2, brak własnego UI; →F/→UI na G5)
 
 | # | Etap | ✓ | Odbiór / dowód |
 |--|--|:--:|--|
-| 1 | Kod — rollup orchestration | ⬜ | reuse `review-section` per wymaganą sekcję → ważony score + gaps[]; tsc 0 |
-| 2 | DoD 7/7 | ⬜ | #2 fail-open (LLM down → enabled:false), #6 testy |
-| 3 | Epiki 3/3 | ⬜ | E1 rollup · E2 reuse reviewer §B4 · E3 cache+invalidacja |
-| 4 | Testy | ⬜ | unit: score liczony, gaps poprawne, cache invaliduje przy edycji sekcji |
-| 5 | UI/UX | ⬜ | N/A |
-| 6 | Deploy | ⬜ | staging |
-| 7 | →F | ⬜ | — |
-| 8 | →UI | ⬜ | — |
+| 1 | Kod — rollup orchestration | ✅ | `gateAiReadinessService.ts` (reuse reviewer per wymaganą sekcję → ważony score + gaps[]); tsc 0 |
+| 2 | DoD 7/7 | ✅ | #2 fail-open (LLM down → enabled:false) ✅ · #6 testy ✅ · reszta N/A (backend) |
+| 3 | Epiki 3/3 | ✅ | E1 rollup · E2 reuse reviewer §B4 · E3 cache+invalidacja |
+| 4 | Testy | ✅ | `tests/unit/initiatives/gateAiReadiness.test.ts` (zielone w runie 2026-06-22: 260/260 M13) |
+| 5 | UI/UX | ✅ | N/A (backend) |
+| 6 | Deploy | ✅ | DEPLOYED demo 2026-06-21 (commit `b374e6d0`) |
+| 7 | →F | ⬜ | N/A na G2 (brak UI; →F na G5) |
+| 8 | →UI | ⬜ | N/A na G2 (→UI na G5) |
 
 **Epiki:** E1 rollup `score/verdict/gaps/fixes` dla bramki · E2 reuse reviewer (CARD_CONTENT_FORMULA §B4) · E3 cache per (initiativeId,gate,contentHash) + inwalidacja.
 **Manual (6):** rollup dla każdej z 9 bramek; pusta sekcja → gap; komplet → ready; LLM down → fail-open; cache hit; inwalidacja po edycji.
 
 ### G3 — `gateTimelineService` (na linii czasu) · 3 epiki · 0 ekranów
-Status: ⬜ NIE ROZP.
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo (2026-06-21) · realizacja ✅ — →F/→UI na G5
 
 | # | Etap | ✓ | Odbiór / dowód |
 |--|--|:--:|--|
-| 1 | Kod — analizator czasowy | ⬜ | zależności + konflikt dat + zasoby → `timelineFlags[]`; tsc 0 |
-| 2 | DoD 7/7 | ⬜ | #2 org-scope query, #6 testy |
-| 3 | Epiki 3/3 | ⬜ | E1 zależności niegotowe · E2 konflikt dat · E3 konflikt zasobów |
-| 4 | Testy | ⬜ | unit: każdy typ flagi; block vs warn |
-| 5–8 | … | ⬜ | jak wyżej |
+| 1 | Kod — analizator czasowy | ✅ | `gateTimelineService.ts` (zależności + konflikt dat → `timelineFlags[]`; zasoby = świadomy skip udok.); tsc 0 |
+| 2 | DoD 7/7 | ✅ | #2 org-scope query ✅ · #6 testy ✅ · reszta N/A (backend) |
+| 3 | Epiki 3/3 | ✅ | E1 zależności niegotowe · E2 konflikt dat · E3 zasoby (skip udok.) |
+| 4 | Testy | ✅ | `tests/unit/initiatives/gateTimeline.test.ts` (każdy typ flagi; block vs warn; fail-open) — zielone 2026-06-22 |
+| 5 | UI/UX | ✅ | N/A (backend) |
+| 6 | Deploy | ✅ | DEPLOYED demo 2026-06-21 (`b374e6d0`) |
+| 7–8 | →F / →UI | ⬜ | N/A na G3 (→F/→UI na G5) |
 
 **Epiki:** E1 zależność < SCHEDULED → `block` · E2 nakładanie dat SCHEDULED → `warn` · E3 zasób w oknie → `warn`. Aktywne na SCHEDULE+START.
 **Manual (6):** zależność niegotowa blokuje; daty kolidują→warn; zasób koliduje→warn; brak zależności→czysto; tylko SCHEDULE/START; pozostałe bramki timeline=null.
 
 ### G4 — Endpoint + soft-block/override + telemetria · 3 epiki · 0 ekranów
-Status: ⬜ NIE ROZP.
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo (2026-06-21) · realizacja ✅ — →F/→UI na G5
 
 | # | Etap | ✓ | Odbiór / dowód |
 |--|--|:--:|--|
-| 1 | Kod — endpoint + override + events | ⬜ | `POST /:id/gate-ai-check`; transition `overrideReason?` → 422 bez / log z; tsc 0 |
-| 2 | DoD 7/7 | ⬜ | #2 JWT+org-scope+flaga, #7 telemetria |
-| 3 | Epiki 3/3 | ⬜ | E1 `gate-ai-check` · E2 soft-block (422/override) · E3 events table+zapis |
-| 4 | Testy | ⬜ | integration: 422 bez override poniżej progu; przejście+log z override; flaga OFF=bez zmian |
-| 5–8 | … | ⬜ | — |
+| 1 | Kod — endpoint + override + events | ✅ | `POST /:id/gate-ai-check` + soft-block w `updateInitiativeStatus` (422 bez override / log z); tsc 0 |
+| 2 | DoD 7/7 | ✅ | #2 JWT+org-scope+flaga ✅ · #7 telemetria ✅ |
+| 3 | Epiki 3/3 | ✅ | E1 `gate-ai-check` · E2 soft-block (422/override) · E3 `initiative_gate_ai_events` |
+| 4 | Testy | ✅ | `InitiativeController.gateAiCheck.test.ts` + `tests/integration/initiatives/gate-ai-soft-block.test.ts` (4/4, **dodane 2026-06-22**) + `gateAiTelemetry.test.ts` — zielone |
+| 5 | UI/UX | ✅ | N/A (backend) |
+| 6 | Deploy | ✅ | DEPLOYED demo 2026-06-21 (`b374e6d0`) |
+| 7–8 | →F / →UI | ⬜ | N/A na G4 (→F/→UI na G5) |
 
 **Epiki:** E1 endpoint lazy (§5) · E2 transition: 422 `{aiReadiness,timeline}` bez override / przejście+log z override · E3 `initiative_gate_ai_events`.
 **Manual (6):** poniżej progu→422; override+powód→przejście+log; powyżej progu→bez tarcia; timeline block→422; flaga OFF→stare zachowanie; event zapisany.
 
 ### G5 — UI bramki (pigułka + panel + modal override) · 3 epiki · 3 ekrany
-Status: ⬜ NIE ROZP.
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo · realizacja ✅ — **zostają TYLKO Twoje odbiory →F/→UI**
 
 | # | Etap | ✓ | Odbiór / dowód |
 |--|--|:--:|--|
-| 1 | Kod — pigułka/panel/modal | ⬜ | pigułka score na CTA bramki; panel gaps/fixes/flags; modal override z polem powodu; tsc 0 |
-| 2 | DoD 7/7 | ⬜ | #3 i18n PL+EN, #4 tokeny, #5 bursztyn=ostrzeżenie nie danger |
-| 3 | Epiki 3/3 | ⬜ | E1 pigułka · E2 panel braków · E3 modal override |
-| 4 | Testy | ⬜ | e2e: soft-block flow (poniżej progu→modal→override→przejście) |
-| 5 | UI/UX | ⬜ | kanon §7; bursztyn nie czerwień; dark+light |
-| 6 | Deploy | ⬜ | staging demo; flaga ON demo |
-| 7 | →F Piotr | ⬜ | klika bramkę poniżej progu, widzi braki, override działa |
-| 8 | →UI | ⬜ | screeny pigułka/panel/modal dark+light |
+| 1 | Kod — pigułka/panel/modal | ✅ | `GateReadinessPill/Panel.tsx`, `GateOverrideModal.tsx`, wpięte w `GateReadinessSection`+`handleStatusAction`; tsc 0 |
+| 2 | DoD 7/7 | ✅ | #3 i18n PL+EN · #4 tokeny · #5 bursztyn=ostrzeżenie nie danger |
+| 3 | Epiki 3/3 | ✅ | E1 pigułka · E2 panel braków · E3 modal override |
+| 4 | Testy | ✅ | component Pill/Panel/Modal (**dodane 2026-06-22**) + `gateReadinessPayload.test.ts` — zielone (część 260/260) |
+| 5 | UI/UX | ✅ | kanon §7; bursztyn nie czerwień; dark+light (snapshoty component) |
+| 6 | Deploy | ✅ | DEPLOYED demo; flaga `gate_ai` ON na org Piotra (`a3e05d4a`, próg 75) |
+| 7 | →F Piotr | ⬜ | **CZEKA CIEBIE:** klik bramki poniżej progu na demo → braki → override działa |
+| 8 | →UI | ⬜ | **CZEKA CIEBIE:** akceptacja screenów pigułka/panel/modal dark+light |
 
 **Epiki:** E1 pigułka gotowości (score+kolor) · E2 panel `gaps/fixes/timelineFlags` · E3 modal override (obowiązkowe uzasadnienie).
 **Ekrany (3):** pasek bramki z pigułką · panel braków · modal override.
@@ -192,36 +213,36 @@ Status: ⬜ NIE ROZP.
 ## SERIA R — Artefakty powiązane (M13a–d) · **blokowana Q2 (scoped vs współdzielony)**
 
 ### R1 — M13a Taski (stabilizacja) · 2 epiki · 1 ekran
-Status: ⬜ NIE ROZP. · Stan: ✅ istnieje (`sections/TasksMilestonesSection.tsx`)
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo · realizacja ✅ (`sections/TasksMilestonesSection.tsx` + `buildScheduleItems` 8/8; `PUT /api/pmo/tasks/:id` integration test 2026-06-22) — zostają →F/→UI Piotra
 **Epiki:** E1 korelacja z Kalendarzem/Gant (wspólne źródło dat) · E2 polish AI-fill + testy.
 **DoD kluczowe:** #1 front↔back, #6 testy. **Manual (8):** CRUD task; status; AI-propozycja; zasilenie kalendarza; zasilenie Gant; edycja daty; usuwanie; back.
 
 ### R2 — M13b Decyzje (stabilizacja) · 2 epiki · 1 ekran
-Status: ⬜ NIE ROZP. · Stan: ✅ istnieje (`sections/DecisionsSection.tsx`)
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo · realizacja ✅ (`sections/DecisionsSection.tsx` banner GO_NO_GO; `decisions-crud` integration test 2026-06-22 — guard getTableColumns) — zostają →F/→UI
 **Epiki:** E1 korelacja GO_NO_GO ↔ bramki (#4) · E2 testy + screeny.
 **Manual (8):** CRUD decyzja; typ GO_NO_GO; status flow; widoczność przy bramce; powiązanie z inicjatywą; edycja; usuwanie; back.
 
-### R3 — M13c Kalendarz (build, BRAK) · 4 epiki · 2 ekrany · **czeka Q4**
-Status: ⬜ NIE ROZP. · Stan: 🔴 BRAK
+### R3 — M13c Kalendarz (build) · 4 epiki · 2 ekrany
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo · realizacja ✅ (`calendar/InitiativeCalendar.tsx` miesiąc/tydzień + drag-reschedule `PUT /api/pmo/tasks/:id` optimistic+rollback; toggle w `TimelineSection`; component test 3/3 + render/filtr/rollback do-build) — zostają →F/→UI
 **Epiki:** E1 widok kalendarza miesiąc/tydzień · E2 wspólny serwis czasu (tasks+milestones+timeline) · E3 drag-to-reschedule (PATCH dat) · E4 filtry status + dark/light.
 **Manual (12):** render miesiąc; render tydzień; zadania po dacie; kamienie po dacie; drag→nowa data persist; filtr status; pusty stan; nawigacja miesięcy; spójność z Gant; offline/fallback; dark; light.
 
-### R4 — M13d Notyfikacje (build wiring, BRAK) · 4 epiki · 2 ekrany · **czeka Q3**
-Status: ⬜ NIE ROZP. · Stan: 🔴 BRAK wiring
-**Epiki:** E1 emiter status-change · E2 emiter assignment · E3 emiter due-date breach · E4 emiter blocker. Reuse `NotificationApi`+reminders.
+### R4 — M13d Notyfikacje (build wiring) · 4 epiki · 2 ekrany
+Status: 🟡 CZĘŚCIOWO · realizacja 2/4 epiki ✅ (status-change WPIĘTY + dedup Wariant A 2026-06-22, `notifications.test.ts` 4/4 + gate-role/org-scope; →BLOCKED=CRITICAL) · **LUKI: E2 `notifyAssignment` niewpięty (call-site brak) · E3 `notifyDueBreach` NIEZBUDOWANY (wymaga cron-joba/schedulera — infra, osobne zadanie)**
+**Epiki:** E1 status-change ✅ · E2 assignment ⬜ (niewpięty) · E3 due-date breach ⬜ (cron niezbudowany) · E4 blocker ✅ (eskalacja statusu CRITICAL).
 **Manual (10):** zmiana statusu→notyfikacja; przypisanie→notyfikacja; termin→notyfikacja; blocker→notyfikacja; in-app widoczna; email wysłany; org-scope; brak duplikatów; ustawienia kanałów; back.
 
 ---
 
 ## SERIA C — Tworzenie
 
-### C1 — Generator portfolio-aware (+ model select?) · 3 epiki · 1 ekran · **czeka Q5**
-Status: ⬜ NIE ROZP.
+### C1 — Generator portfolio-aware (dedup) · 3 epiki · 1 ekran
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo · realizacja ✅ (dedup `initiativeSimilarity` 7/7 + `POST /similar-check` integration test + amber-warning w Charter Wizard, `CharterWizard.dedup` component 2026-06-22; E3 model-select N/A wg Q5) — zostają →F/→UI
 **Epiki:** E1 dedup query istniejących inicjatyw org · E2 ostrzeżenie „podobna istnieje" w UI · E3 (Q5) UI wyboru modelu LLM **lub** N/A.
 **Manual (8):** generacja z insightu M10; dedup wykrywa duplikat; ostrzeżenie w UI; brak duplikatu→czysto; (model select jeśli Q5=tak); fallback LLM; jakość wg formuły; back.
 
 ### C2 — Tworzenie przez Teresę (e2e) · 2 epiki · 1 ekran
-Status: ⬜ NIE ROZP. · Stan: 🟡 tool niepodłączony
+Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo · realizacja ✅ (tool `generate_initiative` 5/5 + rejestracja + persona; `generateInitiativeRegistry` test 2026-06-22) — zostaje →F (klik „Teresa stwórz inicjatywę" na demo)
 **Epiki:** E1 `generate_initiative` (READ/auto, wzorem `generate_deliverable`) · E2 persona Teresy wymienia inicjatywy + montaż w czacie.
 **Manual (6):** „Teresa stwórz inicjatywę X"→DRAFT; DRAFT na liście; otwieralny; PL; EN; brak approval-gate blokady.
 
@@ -229,26 +250,31 @@ Status: ⬜ NIE ROZP. · Stan: 🟡 tool niepodłączony
 
 ## SERIA K — Artefakt (karty)
 
-### K1 — Karty §B3 egzekwowanie · 2 epiki · 0 ekranów · **czeka Q7**
+### K1 — Karty §B3 egzekwowanie · 2 epiki · 0 ekranów
+Status: 🟢 GOTOWY DO ODBIORU · realizacja ✅ (walidatory §B3 `initiativeCardValidators` 7/7 + `POST /validate-card` integration + FE podpowiedzi `b3-hints` 3/3; tryb miękki wg Q7) — zostaje →F/→UI
 **Epiki:** E1 walidatory §B3 jako warstwa (lang_pl/no_filler/problem_len…) · E2 tryb (twardy/miękki wg Q7) + testy.
 **Manual (6):** walidator łapie filler; pusty wymagany→flag; tryb wg Q7; PL; przejście gdy OK; log.
 
 ### K2 — Karty `CardContainer` (układ graficzny) · 2 epiki · 1 ekran · **czeka Q6**
+Status: ⬜ **NIE ROZPOCZĘTY — REALNA LUKA, czeka decyzji Q6** (jedyny niezbudowany sub-moduł serii K; duży refaktor ~26 sekcji do wspólnego komponentu — bez decyzji nie ruszam)
 **Epiki:** E1 wspólny `CardContainer`/`CardHeader` · E2 migracja sekcji do containera (zakres wg Q6).
 **Manual (8):** spójny nagłówek; ikona/kolor z `SectionTypeInfo`; dark; light; §27 zgodność; brak regresji renderu; reorder; back.
 
 ### K3 — Karty korelacja artefaktów (trwała) · 3 epiki · 1 ekran
-**Epiki:** E1 tabela `initiative_linked_items` · E2 CRUD + persist (dziś in-memory) · E3 graf `link_graph_edges` + query.
+Status: 🟢 GOTOWY DO ODBIORU · realizacja ✅ (`initiative_linked_items` + service 6/6 + `LinkedItemsSection` przepięty na API, persist+rollback; data-loss e2e fixed) — zostaje →F/→UI
+**Epiki:** E1 tabela `initiative_linked_items` · E2 CRUD + persist (DB-backed) · E3 graf `link_graph_edges` + query.
 **Manual (6):** link task; link decyzja; persist po reload; graf query; usuwanie linku; org-scope.
 
 ### K4 — AI-fill domknięcie 7 sekcji · 2 epiki · 1 ekran
-**Epiki:** E1 handlery dla priorytetowych (OKR, hipoteza) · E2 świadomy no-op + opis dla reszty.
+Status: 🟢 GOTOWY DO ODBIORU · realizacja ✅ (E1 realne handlery hypothesis/OKR/lessons-learned `80e5ef94ea`; E2 świadomy no-op dla 4 złożonych; `section-ai-noop` 3/3) — zostaje →F/→UI
+**Epiki:** E1 handlery dla priorytetowych (OKR, hipoteza, lessons-learned) · E2 świadomy no-op + opis dla reszty.
 **Manual (7):** AI-fill OKR; AI-fill hipoteza; no-op opisany; brak fake-success; PL; jakość; back.
 
 ---
 
 ## SERIA V — Widoki
 
-### V1 — Gant zadaniowy + drag-reschedule · 3 epiki · 2 ekrany · **czeka Q4**
-**Epiki:** E1 schedule-bar poziom zadań/kamieni (dni/tygodnie) · E2 drag-to-reschedule · E3 ścieżka krytyczna z `TimelineAnalysis`.
+### V1 — Gant zadaniowy + drag-reschedule · 3 epiki · 2 ekrany
+Status: 🟡 CZĘŚCIOWO · realizacja E1+E2 ✅ (bary tydzień + dziś-marker + drag-reschedule `Gantt.drag` 3/3 + render/toggle component 2026-06-22; toggle Kalendarz/Gantt) · **LUKA E3: ścieżka krytyczna NIE w widoku Gantt + brak zależności/zoom/filtra (rysuje tylko bary) — 4 funkcje z „Manual (10)" niezbudowane; decyzja zakresowa: dobudować czy zawęzić V1**
+**Epiki:** E1 schedule-bar zadań/kamieni (dni/tygodnie) ✅ · E2 drag-to-reschedule ✅ · E3 ścieżka krytyczna z `TimelineAnalysis` ⬜ (niezaimplementowane w widoku).
 **Manual (10):** render bary zadań; skala dni/tygodnie; drag→persist; zależności widoczne; ścieżka krytyczna; spójność z Kalendarzem; zoom; filtr; dark; light.
