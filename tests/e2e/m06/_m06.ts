@@ -25,9 +25,46 @@ export type DemoSession = {
   user: Record<string, unknown>;
 };
 
-/** Register a fresh demo user (unique per call) and return its auth token.
- *  Retries on transient 5xx (staging DB hiccups are known). */
+const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
+
+/**
+ * Mint a full WRITE-ACCESS (non-demo) session via test-support bootstrap.
+ *
+ * register-demo returns a DEMO session, and demo mode is read-only at the server
+ * (POST /map/sync → 403 DEMO_READ_ONLY). That made every persistence scenario
+ * (§2.1 sync=200, §15.6 reload-persists) fail even though the canvas worked
+ * client-side. Bootstrap creates a real org + ADMIN member and signs a non-demo
+ * token, so writes are allowed — mirroring the M07 interactions harness.
+ *
+ * Returns null when test-support is disabled (e.g. plain staging without the
+ * flag); callers fall back to register-demo (read-only is still enough for the
+ * many read-only scenarios).
+ */
+async function bootstrapSession(page: Page): Promise<DemoSession | null> {
+  const runId = `m06-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
+  try {
+    const resp = await page.request.post('/api/test-support/bootstrap', {
+      headers: { 'x-test-support-key': TEST_SUPPORT_KEY, 'content-type': 'application/json' },
+      data: { runId, role: 'ADMIN' },
+      timeout: 45000,
+    });
+    if (!resp.ok()) return null;
+    const json = (await resp.json()) as { token?: string; userId?: string };
+    const token = String(json.token || '');
+    if (!token) return null;
+    return { token, user: { id: json.userId, email: `e2e+${runId}@local.test` } };
+  } catch {
+    return null;
+  }
+}
+
+/** Authenticate a fresh user (unique per call) and return its auth token.
+ *  Prefers a write-access bootstrap session; falls back to read-only
+ *  register-demo. Retries on transient 5xx (staging DB hiccups are known). */
 export async function registerDemo(page: Page): Promise<DemoSession> {
+  const bootstrapped = await bootstrapSession(page);
+  if (bootstrapped) return bootstrapped;
+
   let lastErr = '';
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const nonce = `${Date.now()}-${attempt}-${Math.floor(Math.random() * 1e6)}`;

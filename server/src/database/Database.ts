@@ -435,11 +435,27 @@ function createMockDatabase(): MockDatabase {
         'article_id',
         'category_id',
         'language',
+        // Auth lookups use `WHERE LOWER(email) = LOWER(?)`; without `email` here the
+        // predicate was dropped and the SELECT returned ALL users → register-demo's
+        // "email already in use" check matched the first row for every fresh email,
+        // 400-ing every E2E run that registers a unique account (M06 harness, 2026-06-21).
+        'email',
+        'jti',
+        'token',
       ]);
 
-      const equalityMatches = Array.from(
-        wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*(\?|\$\d+)/gi)
-      ).filter((m) => allowed.has(String(m[1] || '').toLowerCase()));
+      // Match bare `col = ?` AND case-folded `LOWER(col) = LOWER(?)` / `LOWER(col) = ?`.
+      // The original regex only handled the bare form, so any LOWER()-wrapped predicate
+      // (all case-insensitive email lookups) silently matched nothing → no filtering.
+      const predicateRe =
+        /(lower\s*\(\s*)?\b([a-zA-Z0-9_]+)\b\s*\)?\s*=\s*(lower\s*\(\s*)?(\?|\$\d+)\s*\)?/gi;
+      const equalityMatches = Array.from(wherePart.matchAll(predicateRe))
+        .map((m) => ({
+          column: String(m[2] || '').toLowerCase(),
+          placeholder: String(m[4] || '?').trim(),
+          ci: !!(m[1] || m[3]),
+        }))
+        .filter((p) => allowed.has(p.column));
 
       let sequentialParamIndex = 0;
       const resolveExpected = (placeholder: string) => {
@@ -451,13 +467,14 @@ function createMockDatabase(): MockDatabase {
         return undefined;
       };
 
-      equalityMatches.forEach((match) => {
-        const column = String(match[1] || '').toLowerCase();
-        const placeholder = String(match[2] || '?').trim();
-        const expected = resolveExpected(placeholder);
+      equalityMatches.forEach((pred) => {
+        const expected = resolveExpected(pred.placeholder);
         rows = rows.filter((row) => {
-          const actual = row[column];
-          return actual != null && expected != null && String(actual) === String(expected);
+          const actual = row[pred.column];
+          if (actual == null || expected == null) return false;
+          return pred.ci
+            ? String(actual).toLowerCase() === String(expected).toLowerCase()
+            : String(actual) === String(expected);
         });
       });
 
