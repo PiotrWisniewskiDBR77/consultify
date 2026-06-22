@@ -9,7 +9,12 @@ import ExcelJS from 'exceljs';
 
 import logger from '../../utils/Logger.js';
 import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
-import type { CellStyle, WorkbookSchema } from './WorkbookSchema.js';
+import type {
+  CellStyle,
+  ConditionalFormattingBlock,
+  ConditionalFormattingRule,
+  WorkbookSchema,
+} from './WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Style mapping
@@ -85,6 +90,113 @@ const TYPE_FORMATS: Record<string, string> = {
   number: '#,##0.##',
   date: 'YYYY-MM-DD',
 };
+
+// ---------------------------------------------------------------------------
+// X2 — Conditional Formatting → ExcelJS rules
+// ---------------------------------------------------------------------------
+
+/**
+ * Mapuje CfRule (nasz schemat) na ExcelJS rule object. ExcelJS przyjmuje
+ * pojedyncze `rule` per Object — multi-rule per range trzeba zrobić jako
+ * osobne `addConditionalFormatting` calls (lub jedno z `rules: [...]`).
+ */
+function mapCfRule(rule: ConditionalFormattingRule, ruleIndex: number): any {
+  switch (rule.type) {
+    case 'dataBar':
+      return {
+        type: 'dataBar',
+        priority: ruleIndex + 1,
+        color: { argb: hexToArgb(rule.color) },
+        showValue: rule.showValue ?? true,
+        cfvo: [{ type: 'min' }, { type: 'max' }],
+      };
+
+    case 'colorScale':
+      if (rule.colors.length === 2) {
+        return {
+          type: 'colorScale',
+          priority: ruleIndex + 1,
+          cfvo: [{ type: 'min' }, { type: 'max' }],
+          color: [
+            { argb: hexToArgb(rule.colors[0]) },
+            { argb: hexToArgb(rule.colors[1]) },
+          ],
+        };
+      }
+      // 3-color
+      return {
+        type: 'colorScale',
+        priority: ruleIndex + 1,
+        cfvo: [
+          { type: 'min' },
+          { type: 'percentile', value: 50 },
+          { type: 'max' },
+        ],
+        color: [
+          { argb: hexToArgb(rule.colors[0]) },
+          { argb: hexToArgb(rule.colors[1]) },
+          { argb: hexToArgb(rule.colors[2]) },
+        ],
+      };
+
+    case 'iconSet':
+      return {
+        type: 'iconSet',
+        priority: ruleIndex + 1,
+        iconSet: rule.iconSet,
+        showValue: rule.showValue ?? true,
+        cfvo: [
+          { type: 'percent', value: 0 },
+          { type: 'percent', value: 33 },
+          { type: 'percent', value: 67 },
+        ],
+      };
+
+    case 'cellIs': {
+      const style: any = {};
+      if (rule.style.bold !== undefined) style.font = { bold: rule.style.bold };
+      if (rule.style.fontColor) {
+        style.font = { ...(style.font ?? {}), color: { argb: hexToArgb(rule.style.fontColor) } };
+      }
+      if (rule.style.bgColor) {
+        style.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          bgColor: { argb: hexToArgb(rule.style.bgColor) },
+        };
+      }
+      return {
+        type: 'cellIs',
+        priority: ruleIndex + 1,
+        operator: rule.operator,
+        formulae: rule.formulae,
+        style,
+      };
+    }
+
+    default:
+      // Discriminated union exhaustively handled above; defensive return.
+      return null;
+  }
+}
+
+function applyConditionalFormatting(
+  ws: ExcelJS.Worksheet,
+  blocks: ConditionalFormattingBlock[]
+): void {
+  for (const block of blocks) {
+    const rules = block.rules.map((r, i) => mapCfRule(r, i)).filter(Boolean);
+    if (rules.length === 0) continue;
+    try {
+      ws.addConditionalFormatting({
+        ref: block.ref,
+        rules,
+      });
+    } catch (e) {
+      logger.warn(`[WorkbookBuilder] CF apply failed for ref=${block.ref}`, e);
+    }
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Builder
@@ -208,6 +320,11 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
           logger.warn(`[WorkbookBuilder] Merge failed: ${merge.start}:${merge.end}`, e);
         }
       }
+    }
+
+    // X2 — Conditional Formatting (dataBar/colorScale/iconSet/cellIs)
+    if (sheetDef.conditionalFormatting && sheetDef.conditionalFormatting.length > 0) {
+      applyConditionalFormatting(ws, sheetDef.conditionalFormatting);
     }
   }
 
