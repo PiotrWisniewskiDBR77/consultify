@@ -236,6 +236,17 @@ export function useIdeaMapSync({
   const draftTimerRef = useRef<number | null>(null);
   const syncTimerRef = useRef<number | null>(null);
   const idleWriteRef = useRef<number | null>(null);
+  // Serialize POST /map/sync. When the first flush is slow (staging DB latency), the next
+  // autosave fires WHILE it is in flight — both read the same baseVersion, so the first wins
+  // (200, version++) and the second is stale → 409, dropping its payload (the user's latest
+  // nodes) → data loss after reload (M07 §3/§6, 2026-06-21). An in-flight guard defers the
+  // overlapping flush; it re-runs from the finally block once the current flush bumps the
+  // version, so the deferred (newest) payload saves cleanly instead of racing.
+  const inFlightRef = useRef(false);
+  const conflictRetryRef = useRef(0);
+  const flushNowRef = useRef<((p?: IdeaMapSyncPayload | null, o?: FlushSyncOpts) => Promise<any>) | null>(
+    null
+  );
 
   const persistDraft = useCallback(
     (payload: IdeaMapSyncPayload, pending: boolean) => {
@@ -257,10 +268,18 @@ export function useIdeaMapSync({
       if (!open || locked) return null;
       const payload = payloadOverride || queuedPayloadRef.current;
       if (!payload) return null;
+      // A sync is already in flight — defer this one. It re-runs from the finally block once the
+      // current flush resolves (and bumps serverVersionRef), so it saves with the correct
+      // baseVersion instead of racing into a 409 that would drop its payload.
+      if (inFlightRef.current) {
+        queuedPayloadRef.current = payload;
+        return null;
+      }
       if (syncTimerRef.current) {
         window.clearTimeout(syncTimerRef.current);
         syncTimerRef.current = null;
       }
+      inFlightRef.current = true;
       setSaving(true);
       setSyncState('saving');
       try {
@@ -273,7 +292,15 @@ export function useIdeaMapSync({
         const nextVersion = Number(response?.version || serverVersionRef.current || 1);
         serverVersionRef.current = nextVersion;
         globalIdeaVersions.set(ideaId, nextVersion); // L-03
-        queuedPayloadRef.current = null;
+        // Only clear the queue if no NEWER payload was enqueued while this fetch was in-flight.
+        // If call-2 stored P2 in queuedPayloadRef during the await, we must NOT wipe it here —
+        // the finally block needs to see P2 and flush it. Clearing unconditionally was the root
+        // cause of the M07 §3 data-loss bug (2026-06-21): P2 set by the deferred caller was
+        // silently overwritten by the in-flight caller's success path before finally ran.
+        if (queuedPayloadRef.current === payload) {
+          queuedPayloadRef.current = null;
+        }
+        conflictRetryRef.current = 0;
         setLastSavedAt(Date.now());
         setSyncState('saved');
         persistDraft(payload, false);
@@ -292,6 +319,14 @@ export function useIdeaMapSync({
           globalIdeaVersions.set(ideaId, serverVersion); // L-03
           setSyncState('conflict');
           onConflict?.(serverVersion, err?.data?.map || null);
+          // Self-heal: re-flush this payload once (bounded) with the now-corrected baseVersion,
+          // so a lost-race 409 no longer drops the user's nodes permanently.
+          if (conflictRetryRef.current < 2) {
+            conflictRetryRef.current += 1;
+            queuedPayloadRef.current = payload;
+          } else {
+            queuedPayloadRef.current = null;
+          }
         } else if (typeof navigator !== 'undefined' && navigator.onLine === false) {
           setSyncState('offline');
         } else {
@@ -301,10 +336,19 @@ export function useIdeaMapSync({
         throw err;
       } finally {
         setSaving(false);
+        inFlightRef.current = false;
+        // Flush a deferred / conflict-retry payload now that the version is corrected and the
+        // channel is free. Cleared first to avoid re-entrancy on the same payload.
+        const pending = queuedPayloadRef.current;
+        if (pending && flushNowRef.current) {
+          queuedPayloadRef.current = null;
+          void flushNowRef.current(pending, opts);
+        }
       }
     },
     [ideaId, locked, onConflict, open, persistDraft, tool]
   );
+  flushNowRef.current = flushNow;
 
   const queueSync = useCallback(
     (payload: IdeaMapSyncPayload, opts?: QueueSyncOpts) => {
