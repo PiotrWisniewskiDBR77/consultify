@@ -193,6 +193,7 @@ export function planSlideVisuals(params: {
   return visuals;
 }
 
+// B1 ready — wire into planDeckVisuals when premium deck generation activates
 export function planDeckVisuals(params: {
   slides: UnifiedSlide[];
   meta: UnifiedReportMeta;
