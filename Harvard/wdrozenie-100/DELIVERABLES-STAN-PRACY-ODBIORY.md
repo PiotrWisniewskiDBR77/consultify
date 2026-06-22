@@ -153,7 +153,24 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 - **Formuły + hasFormulas** (`349a9dd881`): seedRows "=..." przepuszczane + prompt zachęca
 - **Efekt zmierzony e2e: table reachable 17→29**; need-extension=1 (TYLKO M20.S26 multi-sheet = osobna domena WorkbookGeneratorService, nie single-table B4)
 
-**Stan testów:** 26 plików, **212 testów deliverables zielonych**; mock-mode (live wymaga Q1/Q3 + budżet API + staging org-id). Commity: catalog `c3b90dbe71` · e2e `57ed51c942` · B4-CF `1faf2beaf4` · B4-formuły `349a9dd881`.
+**Stan testów:** 27 plików, **215 testów deliverables zielonych**; mock-mode (live wymaga Q1/Q3 + budżet API + staging org-id). Commity: catalog `c3b90dbe71` · e2e `57ed51c942` · B4-CF `1faf2beaf4` · B4-formuły `349a9dd881` · B3-fix+docE2E `9ee0cdce85`.
+
+**B3 FIX (`9ee0cdce85`)** — docGeneratorE2E wykrył: quality-gate `distinctTypes>1` fałszywie odrzucał dokumenty jednotypowe (KPI-only/bullet-only/table-only → fallback do prozy). Naprawione: gate = ≥1 blok bogaty (poza heading/paragraph). E2E warstwy strukturalnej: 30/30 doc green.
+
+**Mapa zdolności generatorów (zmierzona e2e):**
+| Generator | Warstwa | Reachable | Need-extension |
+|---|---|---|---|
+| **B1** deck | layout/paleta/brief | **30/30** | — (post-proc nie degraduje) |
+| **B3** doc | STRUKTURA (typy bloków) | **30/30 strukturalnie** | treść 21/30 = osobny krok content-gen |
+| **B4** table | typed schema + CF + formuły | **29/30** | M20.S26 multi-sheet (WorkbookGeneratorService) |
+
+### DROGA DO ŻYWEGO WDROŻENIA (pozostałe kroki — wymaga decyzji Piotra)
+
+1. **Content-gen layer dla doc** (B3→żywy pipeline): `documentContentGenerator.buildDocumentSchema` dziś używa deterministycznej prozy (`buildSectionBlocks`). Komentarz `// B3 ready` — wpięcie B3 (wybór typów) + per-block generatory treści (kpi_strip→realne KPI items, chart→serie, table→wiersze). **Zmienia co dostają klienci → opt-in per klient.** Pokrywa 21 doc-scenariuszy content-level.
+2. **Multi-sheet (M20.S26)**: domena `WorkbookGeneratorService` (istnieje), nie single-table B4.
+3. **FT-6 jakość (Q1/Q3)**: uruchomienie 90 scenariuszy w LIVE mode (prawdziwy LLM) — mierzy faktyczną jakość treści vs Gamma/Kimi/Airtable. Wymaga: próg jakości (Q1), golden-prompty z realnymi tematami DBR77 (Q3), budżet API, staging org-id (NIE prod).
+4. **FT-5 pixel-diff (Q2)** dla X1 + **FT-7 stock provider (Q5)** dla X4.
+5. **Wpięcie B/X w żywe ścieżki** — osobny krok per moduł, flaga per-org, klienci OFF first.
 
 ---
 
