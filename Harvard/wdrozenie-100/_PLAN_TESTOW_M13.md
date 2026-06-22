@@ -49,7 +49,7 @@ Legenda: ✅ pokryte · 🟡 częściowo · ⬜ luka.
 ### Seria K — jakość kart (🟡)
 - ✅ K1 validators (7), K3 linked-items (6), K4 SECTION_AI_NOOP (3).
 - ⬜ **K2 CardContainer** — niezbudowane (czeka Q6) → testy po decyzji.
-- ⬜ **GAP:** brak component-testu §B3 hints w Charter Wizard (debounce, amber) — dopisać.
+- ✅ **GAP ZAMKNIĘTY 2026-06-22 (P2)** — `tests/components/Initiatives/InitiativeCharterWizard.b3-hints.test.tsx` (3/3): debounce 600ms na polu tezy → `validateCard(text, ['lang_pl','no_filler','hypothesis_format'])` → bursztynowe podpowiedzi renderują; <8 znaków → brak wywołania; szybkie edycje skoalescowane do jednej walidacji finalnej wartości. (CI łapie `tests/components`.)
 
 ### Seria V — widoki (🟡)
 - ✅ Gantt drag (3 component).
