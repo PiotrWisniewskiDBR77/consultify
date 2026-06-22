@@ -63,6 +63,15 @@ const COMMANDS: CommandItem[] = [
     category: 'nodes',
     action: 'mm_duplicate',
   },
+  {
+    // M06 product gap — BatchConvertModal exists + dispatcher handles mm_batch_convert,
+    // but nothing offered it. Lets the user convert many selected nodes at once.
+    id: 'batch_convert',
+    labelPl: 'Konwersja zbiorcza',
+    labelEn: 'Batch convert',
+    category: 'nodes',
+    action: 'mm_batch_convert',
+  },
 
   // AI
   {
@@ -180,6 +189,31 @@ const COMMANDS: CommandItem[] = [
     labelEn: 'Toggle minimap',
     category: 'view',
     action: 'mm_toggle_minimap',
+  },
+  // M06 product gaps — these views were built (TimelineView/MindMap3DView/TimeHeatmap)
+  // but no UI surface emitted their action strings, so they were unreachable. The
+  // dispatcher (useMindMapQuickActions) already handles each one; the palette just
+  // needs to offer them.
+  {
+    id: 'timeline_view',
+    labelPl: 'Widok osi czasu',
+    labelEn: 'Timeline view',
+    category: 'view',
+    action: 'mm_timeline',
+  },
+  {
+    id: 'view_3d',
+    labelPl: 'Widok 3D',
+    labelEn: '3D view',
+    category: 'view',
+    action: 'mm_3d_view',
+  },
+  {
+    id: 'time_heatmap',
+    labelPl: 'Mapa cieplna czasu',
+    labelEn: 'Time heatmap',
+    category: 'view',
+    action: 'mm_time_heatmap',
   },
 
   // Export
