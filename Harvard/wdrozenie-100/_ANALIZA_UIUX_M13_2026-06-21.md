@@ -57,7 +57,7 @@ Legenda: ✅ spełnia · 🟡 częściowo · ❌ luka · 🔍 wymaga weryfikacji
 |---|---|---|---|---|
 | 1 | ~~P1~~ ✅ **NAPRAWIONE** | ~~Utworzone/DRAFT inicjatywy niewidoczne na Kanban~~ | `utils/initiativeHelpers.ts` ACTIVE_STATUSES | **ZROBIONE `973138a3a3`**: DRAFT+PENDING_REVIEW na początku ACTIVE_STATUSES → kolumna „DRAFT" z kartami widoczna (dowód: s1a-P1-draft-visible-kanban.png, 6 kart). 17/17 manual green |
 | 2 | **P2 🔍** | Modale Charter/AI Wizard nie potwierdzone (brak na zrzucie) | `InitiativesHub.tsx` wizard triggers | Weryfikacja live; jeśli realny bug otwierania — naprawić |
-| 3 | **P3 🔍** | Brak prawdziwego light-mode w dowodach (app domyślnie dark) | capture | Dograć light-mode (wymusić motyw przed seedem) + ocena czytelności |
+| 3 | ~~P3~~ ✅ **ZROBIONE** | Light-mode dograny — motyw to Zustand store `consultify-storage` (nie localStorage); `forceTheme` pre-seeduje store | s11-light-hub.png — białe tło, czytelny; jedyna uwaga: czerwona pigułka „Model" bardziej widoczna w light (→ item P4 budżet czerwieni) |
 | 4 | **P3** | Czerwona pigułka „Model" — sprawdzić budżet czerwieni | górny pasek AI-mode | Potwierdzić czy token statusu; jeśli dekoracyjna czerwień → stonować |
 | 5 | **P3** | Gęsta treść sekcji niezweryfikowana (empty-state seed) | spec seed | Wzbogacić seed (taski/KPI/decyzje/finanse) → re-capture sekcji |
 
