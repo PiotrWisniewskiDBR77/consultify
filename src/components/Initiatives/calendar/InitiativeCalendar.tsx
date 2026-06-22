@@ -295,6 +295,7 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
           return (
             <div
               key={dIso}
+              data-day={dIso}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, dIso)}
               className={`min-h-[84px] border-b border-r border-slate-100 dark:border-navy-800 p-1 ${

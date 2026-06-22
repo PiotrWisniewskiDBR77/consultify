@@ -39,7 +39,7 @@ Legenda: ✅ pokryte · 🟡 częściowo · ⬜ luka.
 - ✅ schedule-helper (8), status-change notify (wpięte).
 - ✅ **notifyBlocker** na →BLOCKED (wpięte 2026-06-22) — ⬜ **GAP:** brak unit-testu emitera blocker/assignment/dueBreach + integration-testu że PATCH /status→BLOCKED emituje `initiative_blocked`. **Dopisać:** `tests/integration/initiatives/notifications.test.ts` (status→BLOCKED ⇒ notifyBlocker CRITICAL; owner-change ⇒ owner_changed; bez dubla).
 - ⬜ **notifyDueBreach** — wymaga cron-joba (skan overdue), NIE wpięte (infra, osobne zadanie). Test: po implementacji — job-unit z mock-zegarem.
-- 🟡 Calendar/Gantt drag — Gantt ma component-test (3); ⬜ **GAP:** Calendar drag bez testu → dopisać `tests/components/Initiatives/InitiativeCalendar.drag.test.tsx` (mirror Gantt).
+- 🟡 Calendar/Gantt drag — Gantt ma component-test (3); ✅ Calendar drag — `tests/components/Initiatives/InitiativeCalendar.drag-reschedule.test.tsx` (3 testy, HTML5 drag, PUT+onReschedule, read-only bez callbacku) — zrobione 06-22.
 
 ### Seria C — tworzenie (✅)
 - ✅ similarity (7) + generate_initiative tool (5) + 4 route-mocki (35). Konsolidacja Serie C (shared Jaccard) — testy zielone.
