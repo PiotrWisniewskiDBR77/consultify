@@ -228,8 +228,8 @@ Status: 🟢 GOTOWY DO ODBIORU · DEPLOYED demo · realizacja ✅ (`calendar/Ini
 **Manual (12):** render miesiąc; render tydzień; zadania po dacie; kamienie po dacie; drag→nowa data persist; filtr status; pusty stan; nawigacja miesięcy; spójność z Gant; offline/fallback; dark; light.
 
 ### R4 — M13d Notyfikacje (build wiring) · 4 epiki · 2 ekrany
-Status: 🟡 CZĘŚCIOWO · realizacja 2/4 epiki ✅ (status-change WPIĘTY + dedup Wariant A 2026-06-22, `notifications.test.ts` 4/4 + gate-role/org-scope; →BLOCKED=CRITICAL) · **LUKI: E2 `notifyAssignment` niewpięty (call-site brak) · E3 `notifyDueBreach` NIEZBUDOWANY (wymaga cron-joba/schedulera — infra, osobne zadanie)**
-**Epiki:** E1 status-change ✅ · E2 assignment ⬜ (niewpięty) · E3 due-date breach ⬜ (cron niezbudowany) · E4 blocker ✅ (eskalacja statusu CRITICAL).
+Status: 🟡 CZĘŚCIOWO · realizacja 2.5/4 epiki ✅ (status-change WPIĘTY + dedup Wariant A 2026-06-22, `notifications.test.ts` 4/4 + gate-role/org-scope; →BLOCKED=CRITICAL) · **LUKI (zweryfikowane 2026-06-22): E2 `notifyAssignment` niewpięty (grep: zero call-site) · E3 due-breach SERWIS ZBUDOWANY ale NIESPIĘTY z cronem** — `initiativeDueBreachService.ts` (`selectDueBreaches` pure + `scanAndNotifyDueBreaches(now,deps)` + idempotencja `lastNotifiedDueDate===dueDate` + testy) ISTNIEJE, ale grep: zero rejestracji w `cron/Scheduler.ts` → nigdy nie odpala automatycznie. Domknięcie wymaga: kolumna idempotencji (`due_breach_notified_for` na tasks/initiatives = migracja) + deps (fetchCandidates DB / notify=notifyDueBreach+recipients / markNotified) + flagowana rejestracja w Scheduler + integration-test deps. **Wg DoD = za flagą (zmiana behawioralna).**
+**Epiki:** E1 status-change ✅ · E2 assignment ⬜ (niewpięty) · E3 due-date breach 🟡 (serwis+logika+testy ✅, cron+deps+migracja ⬜) · E4 blocker ✅ (eskalacja statusu CRITICAL).
 **Manual (10):** zmiana statusu→notyfikacja; przypisanie→notyfikacja; termin→notyfikacja; blocker→notyfikacja; in-app widoczna; email wysłany; org-scope; brak duplikatów; ustawienia kanałów; back.
 
 ---
