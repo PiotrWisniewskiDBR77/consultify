@@ -9,16 +9,24 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
 
+import { SectionIcon } from './shared/sectionIcon';
+import type { SectionTypeInfo } from './types';
+
 interface CollapsibleSectionProps {
   id: string;
-  title: string;
-  icon: React.ReactNode;
-  iconBg: string;
+  /** Explicit title; when omitted, derived from `sectionType` (registry). */
+  title?: string;
+  /** Explicit icon; when omitted, derived from `sectionType.icon`. */
+  icon?: React.ReactNode;
+  /** Explicit icon background; when omitted, derived from `sectionType.iconBg`. */
+  iconBg?: string;
   expanded: boolean;
   onToggle: () => void;
   badge?: React.ReactNode;
   children: React.ReactNode;
   actions?: React.ReactNode;
+  /** M13/K2: registry-driven visual identity (icon/color/title fallback). */
+  sectionType?: SectionTypeInfo;
 }
 
 export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
@@ -31,7 +39,19 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   badge,
   children,
   actions,
-}) => (
+  sectionType,
+}) => {
+  // K2: a single, registry-driven header — explicit props win, else derive from
+  // SectionTypeInfo so the section's identity comes from one source.
+  const resolvedTitle =
+    title ?? (sectionType ? sectionType.namePl || sectionType.name : '');
+  const resolvedIcon =
+    icon ??
+    (sectionType ? <SectionIcon name={sectionType.icon} color={sectionType.iconColor} /> : null);
+  const resolvedIconBg =
+    iconBg ?? sectionType?.iconBg ?? 'bg-slate-500/10 dark:bg-slate-500/20';
+
+  return (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
@@ -42,8 +62,10 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
       onClick={onToggle}
     >
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-xl ${iconBg}`}>{icon}</div>
-        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{title}</span>
+        <div className={`p-2 rounded-xl ${resolvedIconBg}`}>{resolvedIcon}</div>
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {resolvedTitle}
+        </span>
       </div>
       <div className="flex items-center gap-2">
         {badge}
@@ -66,4 +88,5 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
       )}
     </AnimatePresence>
   </motion.div>
-);
+  );
+};

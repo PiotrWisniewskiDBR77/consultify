@@ -256,9 +256,9 @@ Status: 🟢 GOTOWY DO ODBIORU · realizacja ✅ (walidatory §B3 `initiativeCar
 **Epiki:** E1 walidatory §B3 jako warstwa (lang_pl/no_filler/problem_len…) · E2 tryb (twardy/miękki wg Q7) + testy.
 **Manual (6):** walidator łapie filler; pusty wymagany→flag; tryb wg Q7; PL; przejście gdy OK; log.
 
-### K2 — Karty `CardContainer` (układ graficzny) · 2 epiki · 1 ekran · **czeka Q6**
-Status: ⬜ **NIE ROZPOCZĘTY — REALNA LUKA, czeka decyzji Q6** (jedyny niezbudowany sub-moduł serii K; duży refaktor ~26 sekcji do wspólnego komponentu — bez decyzji nie ruszam)
-**Epiki:** E1 wspólny `CardContainer`/`CardHeader` · E2 migracja sekcji do containera (zakres wg Q6).
+### K2 — Karty `CardContainer` (układ graficzny) · 2 epiki · 1 ekran
+Status: 🟢 FUNDAMENT GOTOWY code-side 2026-06-22 (decyzja CEO Q6 „buduj w v1") · **E1 ✅** — `sections/shared/CardContainer.tsx` (`CardContainer`=registry-driven `CollapsibleSection` + standalone `CardHeader`) + `sectionIcon.tsx` (resolver `SectionTypeInfo.icon`→Lucide, fallback). `CollapsibleSection` uczyniony **registry-driven** (icon/kolor/tytuł z `sectionType` gdy nie podane jawnie), **backward-compatible** — 14 sekcji już używających shell-a nietknięte. Testy `CardContainer.test` 4/4; tsc clean. · **E2 🟡** — pełna adopcja registry-driven we WSZYSTKICH ~26 sekcjach (zamiana hardkodowanych ikon na registry) = przyrostowa z przeglądem wizualnym per-sekcja (zmienia wygląd) — opt-in, nie big-bang (ryzyko regresji renderu w 10k-liniowym DocumentView).
+**Epiki:** E1 wspólny `CardContainer`/`CardHeader` ✅ · E2 migracja sekcji (przyrostowo, opt-in).
 **Manual (8):** spójny nagłówek; ikona/kolor z `SectionTypeInfo`; dark; light; §27 zgodność; brak regresji renderu; reorder; back.
 
 ### K3 — Karty korelacja artefaktów (trwała) · 3 epiki · 1 ekran
