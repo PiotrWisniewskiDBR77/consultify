@@ -276,7 +276,8 @@ function buildProseFallback(plan: StructurePlanInput): ContentSection[] {
 const CONTENT_SYSTEM_PROMPT =
   'You are a document content writer (McKinsey / Kimi-Claude quality). For each ' +
   'block spec, produce its content matching the block TYPE:\n' +
-  '- kpi: {items:[{label, value, delta}]} (3-5 items)\n' +
+  '- kpi: {items:[{label, value, delta}]} (3-5 items; delta = a MEANINGFUL change vs a baseline ' +
+  'like "+4 vs wave 1" or "▲ 12%". OMIT delta entirely when there is no baseline — never output "0")\n' +
   '- chart: {kind: bar|line|pie|donut|scatter|area, title, xAxisLabel, yAxisLabel, series:[{label, values:number[]}]} (≤6 series)\n' +
   '- table: {rows:[{cells:{colKey:{value}}}]}\n' +
   '- callout: {text, tone: info|warning|danger|success}\n' +
@@ -326,10 +327,12 @@ async function fillSectionViaLlm(
       },
     ],
     schema: OutputSchema,
-    maxTokens: 1500,
+    // Bogata sekcja (kpi+chart+table 8 wierszy+callout) nie mieści się w 1500 →
+    // ucięcie → "No object generated: response did not match schema" (VTS sek. 5).
+    maxTokens: 4000,
     temperature: 0.3,
     cache: false,
-    // Bogata sekcja (kpi+chart+table+callout) bywa wolna; 60s czasem za mało.
+    // Bogata sekcja bywa wolna; 60s czasem za mało.
     timeoutMs: 120000,
   });
 

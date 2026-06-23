@@ -352,7 +352,11 @@ async function generateViaLlm(
     `Allowed field types ONLY: ${typeList}. ` +
     'For singleSelect/multiSelect, ALWAYS provide options[] with a label and a hex color ' +
     '(green #16A34A for good/low, amber #D97706 for medium, red #DC2626 for bad/high). ' +
-    'Provide 3-5 realistic seed rows keyed by field key. ' +
+    'Provide realistic seed rows keyed by field key — as many as the intent implies (up to ~8). ' +
+    'CRITICAL — COMPLETE ROWS: every seed row object MUST include EVERY field key with a plausible ' +
+    'value. This includes ANALYTICAL columns — scores/indices (e.g. a 0–100 readiness index), dates, ' +
+    'single-select categories, ratings — fill them with realistic ESTIMATES; do NOT skip a column ' +
+    'just because it needs judgment. A row that omits any field key is INVALID and unusable. ' +
     'Example — risk table: Risk(singleLineText), Likelihood(singleSelect: Low #16A34A / Med #D97706 / High #DC2626), ' +
     'Impact(singleSelect same colors), Owner(singleLineText), Status(singleSelect).\n' +
     'CONDITIONAL FORMATTING (optional but encouraged for numeric columns): in ' +
@@ -394,9 +398,12 @@ async function generateViaLlm(
     systemPrompt,
     messages: [{ role: 'user', content: `Table intent: "${intent}"` }],
     schema: OutputSchema,
-    maxTokens: 1800,
+    // 11 pól × ~8 wierszy JSON nie mieści się w 1800 → ucięcie → puste komórki
+    // w późnych kolumnach (zmierzone na tabeli VTS). 4500 daje pełne wiersze.
+    maxTokens: 4500,
     temperature: 0.2,
     cache: false,
+    timeoutMs: 120000,
   });
 
   const obj = (result as any)?.object;
