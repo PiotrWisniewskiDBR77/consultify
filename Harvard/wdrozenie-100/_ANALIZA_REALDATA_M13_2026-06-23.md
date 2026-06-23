@@ -1,0 +1,56 @@
+# M13 — SZEROKA ANALIZA NA REALNYCH DANYCH (demo, org Piotra) · 2026-06-23
+
+> Metoda: zasilona org demo Piotra (`a3e05d4a`, baza Railway **demo — NIE prod**) → 5 inicjatyw `[M13SEED]` + flagowa „Automatyzacja onboardingu HR" (4 taski, łańcuch zależności, 3 decyzje GO_NO_GO/budżet/zakres). Zdjęcia: demo SPA nie hydratuje headless-cold → **lokalny frontend (renderuje) + proxy `/api`→demo (realne dane) + Bearer-auth Piotra**. **24 zdjęcia** w `docs/qa/screens/m13-exec/real-*.png`. Ocena **dwukryterialna (jakość + grafika)** przez 3 agentów-audytorów.
+
+---
+
+## Werdykty zbiorcze (per artefakt)
+
+| Artefakt | Zdjęcia | PASS | Werdykt |
+|---|--:|--:|---|
+| **Inicjatywy** (hub kanban/grid/timeline/analysis/dark/light + dokument + sekcje gates/raid/kpis/financial) | 11 | 9 | 🟢 z 2 do live-verify |
+| **Taski** (sekcja §27 + dark/light) | 3 | 3 | 🟢 PASS |
+| **Decyzje** (sekcja + GO_NO_GO banner + dark/light) | 3 | 3 | 🟢 PASS (wzorcowe) |
+| **Kalendarz** (month/week/dark/light) | 4 | 4 | 🟢 PASS |
+| **Gantt** (deps/critical + zoom day/month) | 3 | bary+zoom ✅ / deps ❌→naprawione | 🟡 bug danych naprawiony |
+| **Notyfikacje** (centrum in-app) | 1 | render ✅ / treść ❌ | 🟡 artefakt headless |
+
+**Potwierdzone twardo (realne dane, zalogowany jako Piotr Wiśniewski):** hub z 5 seedami + 82 istniejącymi rozłożonymi po statusach; flagowa otwiera dokument 26-sekcji; Tasks §27 (4 taski, statusy todo/in_progress, daty czerwcowe); **Decisions z amber gate-banner GO_NO_GO + 4 decyzje**; Kalendarz z chipami tasków na właściwych dniach; dark/light spójne wszędzie. **Brak naruszeń „no danger-fill"** — cała czerwień (overdue, Overallocated 4500%, BLOCKED gate, markery Gantt=brand) UZASADNIONA.
+
+---
+
+## DEFEKTY znalezione (z root-cause + statusem)
+
+### 🔴 D1 — Gantt: linie zależności + ścieżka krytyczna NIEWIDOCZNE → NAPRAWIONE (bug Postgres)
+- **Objaw:** na 3 zdjęciach Gantt agent widzi bary + działający zoom (day szerszy / month węższy), ale **brak linii zależności (SVG) i wyróżnienia ścieżki krytycznej** — sztandarowych funkcji V1.
+- **Root-cause (zbadany, nie zgadywany):** `task.dependsOnId` z seedu nie zapisał się; dependencies tworzone przez `POST /tasks/:id/dependencies` (201 OK), ALE `GET /:id/task-dependencies` zwracał `sourceTaskId:"undefined"`, `taskId:"undefined"` — **node-pg zwija niecytowane aliasy SQL do lowercase** (`as fromTaskId`→`fromtaskid`), a `getInitiativeTaskDependenciesRead` czytał `row.fromTaskId` (camelCase) → `undefined` → `String(undefined)="undefined"`. FE dostawał śmieci → `ganttDependencies=[]` → zero linii. Klasyk [[finding_pg_bigint_jsonb_serialization]].
+- **Status:** ✅ **NAPRAWIONE** — `planningPortfolioReadService.getInitiativeTaskDependenciesRead` czyta case-robust (`row[k] ?? row[k.toLowerCase()]`); 3 testy (Postgres-lowercase + SQLite-camelCase + org-scope). **Wizualny dowód na demo wymaga re-deployu** (demo ma stary build) — po deployu Gantt pokaże linie+ścieżkę (dane zależności już zasiane). Sama funkcja V1 (SVG+computeCriticalPath) potwierdzona component-testami.
+
+### 🟡 D2 — Sekcje KPIs & Benefits / Financial Analysis: pusty panel treści (live-verify)
+- **Objaw:** sekcja zaznaczona w nawigatorze, prawy panel bez treści (brak KPI/ROI/NPV).
+- **Prawdopodobny root-cause:** empty-state świeżego seeda (flagowa nie ma danych finansowych/KPI) LUB węższy kadr zrzutu. Niska pewność FAIL.
+- **Status:** ⬜ do live-verify w realnej przeglądarce (czy empty-state vs brak renderu). NIE potwierdzony bug.
+
+### 🟡 D3 — Centrum notyfikacji: utknięte na „Loading…" (artefakt headless)
+- **Objaw:** My Work › Inbox pokazuje spinner „Loading…", liczniki 0, brak listy ani empty-state.
+- **Root-cause:** wzorzec M09 — headless/proxy zostawia widok w skeletonie (zrzut przed-fetch lub zawis). Liczniki=0 sugerują pusty backlog (oczekiwane — seed nie generuje notyfikacji do Piotra, bo on jest aktorem).
+- **Status:** ⬜ do live-verify (real browser). Obserwacja produktowa: przy pustym backlogu powinien renderować empty-state „zero backlog", nie wieczny loader.
+
+### ⬜ D4 — Brak zdjęcia `real-ini-hub-all` (zakładka All / 13 statusów)
+- **Root-cause:** przełącznik „All"/widoki to ikony bez tekstu → selektor nie trafił. Złapane: kanban, grid, timeline (3/4 widoki), `real-ini-list` też pominięty.
+- **Status:** ⬜ drobny gap harnessu (selektor ikon), nie bug produktu.
+
+### ℹ️ D5 — Duplikaty w danych istniejącej org (timeline 3× te same nazwy, 0%)
+- W portfolio Timeline widać po 3× „Cloud Migration Phase 2", „Cybersecurity…", „RPA…" z 0%. To dane ISTNIEJĄCEJ org Piotra (nie mój seed) — jakość danych, nie bug UI.
+
+---
+
+## Co to znaczy dla bramek (Manual / →F / →UI)
+
+- **Manual** — teraz mamy **24 realne zdjęcia z danych** + ocenę dwukryterialną. Pierwsza solidna partia dowodów (nie blank/MOCK_DB). 4 z 5 artefaktów PASS wizualnie+funkcjonalnie; Gantt-deps po re-deployu, notyfikacje/KPIs po live-verify.
+- **→F / →UI** — Twoja bramka: możesz wejść na **demo.consultify.ai (realna przeglądarka — hydratuje OK)** zalogować się i klikać odbiory na zasianych bogatych danych.
+
+## Następne kroki (rekomendacja)
+1. **Deploy fixa D1 na demo** → Gantt pokaże linie zależności + ścieżkę krytyczną na flagowej (dane już są).
+2. **Live-verify D2/D3** w realnej przeglądarce (KPIs/Financial empty vs render; notyfikacje loader vs empty-state).
+3. Reszta scenariuszy 5×30 tą samą metodą (rozbudowa kolumny Manual).

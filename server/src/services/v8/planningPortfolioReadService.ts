@@ -472,33 +472,40 @@ export async function getInitiativeTaskDependenciesRead(
   }
 
   return (rows || []).flatMap((row: any) => {
-    const typeKey = String(row.dependencyType || 'finish_to_start').trim();
+    // node-pg folds UNQUOTED column aliases to lowercase (Postgres), while
+    // SQLite preserves the camelCase. Read either case so the dependency ids
+    // resolve on both — otherwise `row.fromTaskId` is undefined on Postgres and
+    // the FE receives `sourceTaskId: "undefined"` (Gantt/deps render nothing).
+    const g = (k: string): any => (row[k] !== undefined ? row[k] : row[k.toLowerCase()]);
+    const fromTaskId = g('fromTaskId');
+    const toTaskId = g('toTaskId');
+    const typeKey = String(g('dependencyType') || 'finish_to_start').trim();
     const type = dbToShort[typeKey] || dbToShort[typeKey.toLowerCase()] || 'FS';
     const common = {
       dependencyType: type,
-      lagDays: Number(row.lagDays || 0) || 0,
-      notes: row.notes || undefined,
-      createdAt: row.createdAt || undefined,
+      lagDays: Number(g('lagDays') || 0) || 0,
+      notes: g('notes') || undefined,
+      createdAt: g('createdAt') || undefined,
     };
 
     return [
       {
-        id: String(row.id),
-        sourceTaskId: String(row.toTaskId),
-        taskId: String(row.fromTaskId),
-        taskTitle: String(row.fromTitle || ''),
-        taskStatus: row.fromStatus || undefined,
-        taskPriority: row.fromPriority || undefined,
+        id: String(g('id')),
+        sourceTaskId: String(toTaskId),
+        taskId: String(fromTaskId),
+        taskTitle: String(g('fromTitle') || ''),
+        taskStatus: g('fromStatus') || undefined,
+        taskPriority: g('fromPriority') || undefined,
         direction: 'predecessor',
         ...common,
       },
       {
-        id: String(row.id),
-        sourceTaskId: String(row.fromTaskId),
-        taskId: String(row.toTaskId),
-        taskTitle: String(row.toTitle || ''),
-        taskStatus: row.toStatus || undefined,
-        taskPriority: row.toPriority || undefined,
+        id: String(g('id')),
+        sourceTaskId: String(fromTaskId),
+        taskId: String(toTaskId),
+        taskTitle: String(g('toTitle') || ''),
+        taskStatus: g('toStatus') || undefined,
+        taskPriority: g('toPriority') || undefined,
         direction: 'successor',
         ...common,
       },
