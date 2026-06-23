@@ -632,6 +632,24 @@ export const Scheduler = {
     });
     this.jobs.push(job32);
 
+    // 33. Initiative due-date breach scan (M13/R4-E3) — daily 6AM.
+    // Behavioural change → behind a flag (default OFF, safe for live clients).
+    const job33 = cron.schedule('0 6 * * *', async () => {
+      if (process.env.INITIATIVE_DUE_BREACH_CRON_ENABLED !== 'true') return;
+      try {
+        const { runDueBreachScan } = await import('./InitiativeDueBreachCron.js');
+        const result = await runDueBreachScan();
+        if (result.notified > 0 || result.errors > 0) {
+          logger.info(
+            `[Scheduler] Initiative due-breach: scanned=${result.scanned} notified=${result.notified} skipped=${result.skipped} errors=${result.errors}`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Initiative due-breach scan failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job33);
+
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly)'
     );
