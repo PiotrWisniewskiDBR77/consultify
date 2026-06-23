@@ -81,8 +81,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
 
   const regionMap = useMemo(() => {
     if (!layout || card.blocks.length === 0) return null;
-    return assignBlocksToRegions(card.blocks, layout);
-  }, [layout, card.blocks]);
+    // STEP 1b — pass B1's composition so the AI's area assignment is honoured;
+    // absent → byte-identical to the prior preferred-block-type heuristic.
+    return assignBlocksToRegions(card.blocks, layout, card.composition);
+  }, [layout, card.blocks, card.composition]);
 
   const useGridLayout = layout && regionMap && layout.regions.length > 1;
 
