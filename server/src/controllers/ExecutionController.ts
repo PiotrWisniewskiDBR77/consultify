@@ -11,6 +11,11 @@
 import type { Response } from 'express';
 
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
+import {
+  calculateRiskScore,
+  categorizeScore,
+  DEFAULT_THRESHOLDS,
+} from '../services/raidScoringService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
@@ -819,12 +824,23 @@ export class ExecutionController {
         WHERE r.organization_id = ?
           AND UPPER(r.type) = 'RISK'
           AND UPPER(COALESCE(r.status, 'OPEN')) IN ('OPEN', 'IN_PROGRESS')
-          AND (UPPER(r.impact) IN ('CRITICAL', 'HIGH') OR UPPER(COALESCE(r.probability, '')) = 'HIGH')
           ${projectFilterR}
-        ORDER BY CASE UPPER(r.impact) WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 ELSE 3 END
-        LIMIT 30
+        LIMIT 200
       `;
-      const highRisks = await safeQueryAll(risksSql, paramsRisk);
+      const highRisksRaw = await safeQueryAll(risksSql, paramsRisk);
+      // F1 — single canonical risk classifier (raidScoringService). Replaces the
+      // ad-hoc `impact IN (CRITICAL,HIGH) OR probability=HIGH` SQL filter so the
+      // action queue's "high risk" matches the heatmap and signals: surface
+      // AMBER+RED (categorizeScore !== GREEN), ranked by the P×I score. One
+      // definition of "high risk" across the module (was 3 divergent ones).
+      const highRisks = (highRisksRaw as any[])
+        .map((r) => ({
+          ...r,
+          _score: calculateRiskScore(String(r.probability || ''), String(r.impact || '')),
+        }))
+        .filter((r) => categorizeScore(r._score, DEFAULT_THRESHOLDS) !== 'GREEN')
+        .sort((a, b) => b._score - a._score)
+        .slice(0, 30);
 
       // Overdue tasks (not DONE, past due)
       const tasksSql = `
