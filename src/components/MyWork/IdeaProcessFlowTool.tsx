@@ -1705,35 +1705,40 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         (e.target as HTMLElement)?.tagName === 'TEXTAREA' ||
         (e.target as HTMLElement)?.isContentEditable;
 
+      // Normalize single-character keys: when Shift is held the browser reports the UPPERCASE
+      // letter (e.key === 'V'/'Z'), so `e.key === 'v'` style checks silently never match —
+      // Ctrl+Shift+V (validation) and Ctrl+Shift+Z (redo) were dead shortcuts. Compare lowercased.
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
       // Typing-safe fallbacks: fire even when focus is in an input
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+      if ((e.metaKey || e.ctrlKey) && k === 's') {
         e.preventDefault();
         handleSave();
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && k === 'z') {
         e.preventDefault();
         redo();
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      if ((e.metaKey || e.ctrlKey) && k === 'z') {
         e.preventDefault();
         undo();
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+      if ((e.metaKey || e.ctrlKey) && k === 'd') {
         e.preventDefault();
         duplicateSelected();
         return;
       }
 
       // PF-specific
-      if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
+      if ((e.metaKey || e.ctrlKey) && k === 'e') {
         e.preventDefault();
         setShowExportDialog(true);
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'v') {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && k === 'v') {
         e.preventDefault();
         runBackendValidation();
         setShowValidationPanel(true);

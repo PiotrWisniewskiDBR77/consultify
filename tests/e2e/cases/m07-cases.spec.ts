@@ -541,18 +541,27 @@ test.describe('M07 Process Flow — 30 cases (MC-07-01..30)', () => {
     await openCanvas(page, 'mc0724');
     await addStartOrFirst(page);
     await addShape(page, 'Action');
+    // Ctrl/Cmd+Shift+V runs runBackendValidation() + setShowValidationPanel(true) UNCONDITIONALLY
+    // (IdeaProcessFlowTool.tsx:1736-1740), before the isInput guard, no V8 check. The panel header
+    // ("Walidacja"/"Validation", :2436-2440) and ValidationResultsPanel's own header
+    // (ValidationResultsPanel.tsx:62-64) render purely from showValidationPanel — only the backend
+    // FETCH result is V8-dependent, not the panel chrome. So the panel must surface here.
     await page.locator('.react-flow').first().click({ force: true }).catch(() => {});
-    await page.keyboard.press('Control+Shift+V'); // runBackendValidation + setShowValidationPanel(true)
+    // First try the real keyboard press…
+    await page.keyboard.press('Control+Shift+V').catch(() => {});
+    await page.waitForTimeout(400);
+    // …then deterministically dispatch the shortcut to the window handler as a fallback.
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'v', code: 'KeyV', ctrlKey: true, shiftKey: true, bubbles: true })
+      )
+    );
     await page.waitForTimeout(900);
     await shot(page, 'MC-07-24');
-    // V8-gated: panel header "Validation"/"Walidacja". Honest-skip when V8 off (no panel).
-    const panelVisible = await page
-      .getByText(/^Validation$|^Walidacja$/i)
-      .first()
-      .isVisible({ timeout: 6000 })
-      .catch(() => false);
-    test.skip(!panelVisible, 'backend validation panel requires V8 org (requireV8OrgContext); test org has V8 off — useProcessFlowValidation wiring verified statically (IdeaProcessFlowTool.tsx:1736/2436)');
-    expect(panelVisible).toBe(true);
+    // Panel header "Walidacja"/"Validation" must actually render (confirmed string :2440 / :63).
+    const header = page.getByText(/Walidacja|Validation/i).first();
+    await header.waitFor({ state: 'visible', timeout: 6000 });
+    await expect(header).toBeVisible();
   });
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -612,21 +621,27 @@ test.describe('M07 Process Flow — 30 cases (MC-07-01..30)', () => {
     await assertAiFiredOrSkip(resp, 'MC-07-27 next-step ghosts');
   });
 
-  test('MC-07-28 — [STUB-AI][V8] AI Proposal + Semantic Readback panels (V8-gated)', async ({ page }) => {
+  test('MC-07-28 — [NO-TRIGGER] AI Proposal + Semantic Readback panels (dead-mounted, no UI path)', async ({ page }) => {
     test.setTimeout(180000);
     await openCanvas(page, 'mc0728');
     await addStartOrFirst(page);
     await addShape(page, 'Action');
     await shot(page, 'MC-07-28');
-    // AIProposalPanel / ReadbackPanel mount only for V8 orgs (useProcessFlowAIProposal — STUB,
-    // no LLM). The test org has V8 off, so these panels won't surface. Honest-skip: wiring
-    // verified statically (IdeaProcessFlowTool.tsx:2463-2518).
+    // The AIProposalPanel / ReadbackPanel headers render only when showAIPanel / showReadbackPanel
+    // are true (IdeaProcessFlowTool.tsx:2468 / :2499), but those state setters are NEVER called with
+    // `true` anywhere in the source — they are dead-mounted state (declared :636-637) with no button,
+    // shortcut, or quick-action wired to surface them. Verified 2026-06-22: grep on
+    // setShowAIPanel/setShowReadbackPanel across src/ finds ONLY the panels' own close handlers
+    // (:2475 / :2506, both `(false)`); no `(true)` or toggle exists, and useProcessFlowQuickActions.ts
+    // has no pf_* action that opens them. The panel chrome renders from local state (not a backend
+    // fetch), so this is a missing-UI-trigger product gap, NOT a V8/AI gate — dispatching a window
+    // quick-action event would do nothing because no handler listens to open these panels.
     const v8Panel = await page
       .getByText(/AI Proposal|Propozycja AI|Readback|Semantic readback/i)
       .first()
       .isVisible({ timeout: 4000 })
       .catch(() => false);
-    test.skip(!v8Panel, 'AI Proposal + Readback are V8-gated STUB panels (useProcessFlowAIProposal); test org has V8 off — wiring verified statically (IdeaProcessFlowTool.tsx:2463-2518)');
+    test.skip(!v8Panel, 'AI Proposal/Readback panels have NO UI trigger wired: setShowAIPanel/setShowReadbackPanel are dead-mounted state (IdeaProcessFlowTool.tsx:636-637) never set to true — only (false) close handlers exist (:2475 / :2506) and no pf_* quick-action opens them. Missing-trigger product gap, not a V8/AI gate.');
     expect(v8Panel).toBe(true);
   });
 
