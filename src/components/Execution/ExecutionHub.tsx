@@ -625,6 +625,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [initiativeHealthMap, setInitiativeHealthMap] = useState<
     Map<string, { health: string; whyRed?: any }>
   >(new Map());
+  // M14/F1 — single source of truth for portfolio health. The authoritative
+  // score + breakdown come from GET /execution/:id/health (ExecutionController).
+  // The cockpit consumes THIS instead of recomputing client-side, so the number
+  // on screen always equals the API value. Client computation stays only as a
+  // degraded fallback when the endpoint fails (executiveHealthFailed).
+  const [executionHealth, setExecutionHealth] = useState<{
+    healthScore?: number;
+    breakdown?: { execution: number; decisions: number; capacity: number; risk: number };
+  } | null>(null);
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
   const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
@@ -1306,6 +1315,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const loadExecutionHealth = async () => {
       try {
         const data = await Api.get(`/execution/${currentProjectId}/health`);
+        // F1 SSOT: capture the authoritative portfolio score + breakdown.
+        setExecutionHealth(
+          typeof (data as any)?.healthScore === 'number'
+            ? { healthScore: (data as any).healthScore, breakdown: (data as any).breakdown }
+            : null
+        );
         const items = (data as any)?.initiativeHealth as Array<{
           id: string;
           health: string;
@@ -1322,6 +1337,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         }
       } catch {
         setInitiativeHealthMap(new Map());
+        setExecutionHealth(null);
         setExecutiveHealthFailed(true);
       }
     };
@@ -2360,15 +2376,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       budgetHealth = Math.max(0, Math.min(100, Math.round(100 - overrunPct)));
     }
 
+    // F1 SSOT: prefer the authoritative BE score/breakdown (GET /execution/health);
+    // the client computation above is the degraded fallback used only when that
+    // endpoint failed. This guarantees the cockpit number == the API value.
+    const ssot = !executiveHealthFailed && executionHealth ? executionHealth : null;
     return {
-      healthScore,
+      healthScore: ssot?.healthScore ?? healthScore,
+      healthScoreSource: ssot ? 'server' : 'client',
       avgProgress,
       overdueDecisions,
       totalDecisions,
       blockedCount,
       onTrackCount: Math.max(totalInitiatives - blockedCount, 0),
       budgetHealth,
-      breakdown: {
+      breakdown: ssot?.breakdown ?? {
         execution: avgProgress,
         decisions: decisionHealth,
         capacity: capacityHealth,
@@ -2378,7 +2399,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       stageGate: healthSnapshot?.stageGate || null,
       isHealthLoading: isLoadingHealth,
     };
-  }, [initiatives, decisions, tasks, stats, healthSnapshot, isLoadingHealth, capacityAlerts]);
+  }, [
+    initiatives,
+    decisions,
+    tasks,
+    stats,
+    healthSnapshot,
+    isLoadingHealth,
+    capacityAlerts,
+    executionHealth,
+    executiveHealthFailed,
+  ]);
 
   const handleExport = useCallback(() => {
     const headers = ['Name', 'Status', 'Owner', 'Progress', 'Planned Start', 'Planned End'];
