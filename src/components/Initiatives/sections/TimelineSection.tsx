@@ -541,8 +541,14 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
   const ganttDependencies = useMemo(() => {
     const idBySource = new Map(scheduleItems.map((it) => [String(it.sourceId), it.id]));
     return (((dependencies as any[]) || [])
+      // The task-dependencies endpoint returns BOTH directions per edge
+      // ({direction:'predecessor'} and {direction:'successor'}). Keep one
+      // ('successor': sourceTaskId=predecessor, taskId=successor) so each edge
+      // is drawn once, in the predecessor→successor direction. Entries from
+      // other sources (no `direction`) pass through untouched.
+      .filter((d: any) => !d?.direction || d.direction === 'successor')
       .map((d: any) => {
-        const fromSrc = d?.fromId ?? d?.sourceId ?? d?.dependsOnId;
+        const fromSrc = d?.fromId ?? d?.sourceId ?? d?.sourceTaskId ?? d?.dependsOnId;
         const toSrc = d?.toId ?? d?.targetId ?? d?.taskId;
         const fromId = fromSrc != null ? idBySource.get(String(fromSrc)) : undefined;
         const toId = toSrc != null ? idBySource.get(String(toSrc)) : undefined;
