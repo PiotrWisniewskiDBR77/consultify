@@ -62,8 +62,65 @@ export async function seedProcessFlow(page: Page, token: string, ideaId: string)
 }
 
 /** Create + seed + open a fresh process_flow canvas. Returns the idea. */
+/** Decode a JWT payload (best-effort, no verification) for seedPageAuth. */
+function decodeJwtPayload(token: string): Record<string, any> {
+  try {
+    const p = token.split('.')[1];
+    const padded = p + '='.repeat((-p.length % 4 + 4) % 4);
+    return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Seed the FE auth state directly in localStorage (token + user + store) per-page, instead of
+ * relying on the project storageState. The storageState is fragile: it is origin-scoped (breaks
+ * when the backend port changes) and a partial re-mint can leave the FE flashing the login page
+ * even with a valid token. Setting the full auth payload as an init-script makes M07 auth
+ * self-contained (mirrors the M09 register-demo seedPageAuth).
+ */
+export async function seedPageAuth(page: Page, token: string) {
+  const j = decodeJwtPayload(token);
+  const user = {
+    id: String(j.id || j.userId || j.sub || ''),
+    email: String(j.email || 'e2e+m07@local.test'),
+    role: String(j.role || 'ADMIN'),
+    organizationId: String(j.organizationId || j.orgId || ''),
+    organizationName: String(j.organizationName || 'E2E Tenant'),
+    firstName: 'E2E',
+    lastName: 'Admin',
+    isAuthenticated: true,
+    accessLevel: 'full',
+  };
+  await page.addInitScript(
+    ({ authToken, u }) => {
+      try {
+        localStorage.setItem('token', String(authToken));
+        localStorage.setItem('refreshToken', 'm07-e2e-refresh');
+        localStorage.setItem('user', JSON.stringify(u));
+        localStorage.setItem(
+          'consultinity-storage',
+          JSON.stringify({
+            state: {
+              sessionMode: 'FULL',
+              currentUser: u,
+              currentOrganization: { id: u.organizationId, name: u.organizationName },
+            },
+            version: 0,
+          })
+        );
+      } catch {
+        /* noop */
+      }
+    },
+    { authToken: token, u: user }
+  );
+}
+
 export async function openCanvas(page: Page, label: string) {
   const { token, userId } = readTestSupportState();
+  await seedPageAuth(page, token);
   await page.addInitScript((uid) => {
     try {
       if (uid) localStorage.setItem(`consultify_onboarding_done:${uid}`, 'true');

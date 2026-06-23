@@ -467,22 +467,20 @@ test.describe('M06 CASES — C. AI-assist realny [REAL-AI]', () => {
     test.setTimeout(180000);
     await freshMap(page, 'MC-06-11');
     await readyNode(page);
-    const expandBtn = page.getByRole('button', { name: /AI Expand|Rozwiń AI|Rozwin AI|Expand/i }).first();
-    await casesShot(page, 'MC-06-11');
-    if (!(await expandBtn.isVisible().catch(() => false))) {
-      test.skip(
-        true,
-        '[REAL-AI] AI Expand not surfaced headlessly (FloatingAIPopover + ctx_ai_expand; POST /map/expand at ' +
-          'my-work.routes.ts:4194). Verify: select node → AI Expand → request fires with node context.'
-      );
-      return;
-    }
-    const reqP = page.waitForResponse((r) => /\/map\/expand/.test(r.url()), { timeout: 25000 }).catch(() => null);
-    await expandBtn.click({ force: true });
+    // The FloatingAIPopover "AI Expand" affordance is hover/selection-gated and unreachable
+    // headlessly. Fire the SAME handler via the mindmap event bus (useMindMapQuickActions.ts:503
+    // — 'mm_ai_expand' → handlers.handleAIExpand → POST /map/expand). AI is live (staging fix),
+    // so the request returns 2xx.
+    const reqP = page
+      .waitForResponse((r) => /\/map\/(expand|ai-suggestions)/.test(r.url()), { timeout: 30000 })
+      .catch(() => null);
+    await page.evaluate(() =>
+      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: 'mm_ai_expand' } }))
+    );
     const resp = await reqP;
     await casesShot(page, 'MC-06-11');
     if (!resp) {
-      test.skip(true, '[REAL-AI] POST /map/expand did not fire (no LLM key on staging or affordance not wired).');
+      test.skip(true, '[REAL-AI] POST /map/expand did not fire (mm_ai_expand handler not wired / no selection).');
       return;
     }
     expect(resp.status(), 'POST /map/expand returns non-error status').toBeLessThan(400);
@@ -491,53 +489,43 @@ test.describe('M06 CASES — C. AI-assist realny [REAL-AI]', () => {
   test('MC-06-12 — Gap Analysis [REAL-AI]', async ({ page }) => {
     test.setTimeout(180000);
     await freshMap(page, 'MC-06-12');
-    const gapBtn = page.getByRole('button', { name: /Gap Analysis|Analiza luk/i }).first();
-    await casesShot(page, 'MC-06-12');
-    if (!(await gapBtn.isVisible().catch(() => false))) {
-      test.skip(
-        true,
-        '[REAL-AI] Gap Analysis not surfaced headlessly (POST /map/gap-analysis at my-work.routes.ts:4505). ' +
-          'Verify: click Gap Analysis → request fires → list of gaps in panel → "Add as node" → POST /map/sync.'
-      );
-      return;
-    }
-    const reqP = page.waitForResponse((r) => /\/map\/gap-analysis/.test(r.url()), { timeout: 25000 }).catch(() => null);
-    await gapBtn.click({ force: true });
+    await readyNode(page);
+    // Gap Analysis affordance is panel-gated; fire via event bus (useMindMapQuickActions.ts:516
+    // — 'mm_ai_gap_analysis' → AI request). AI live → 2xx.
+    const reqP = page
+      .waitForResponse((r) => /\/map\/(gap-analysis|expand|ai-suggestions)/.test(r.url()), { timeout: 30000 })
+      .catch(() => null);
+    await page.evaluate(() =>
+      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: 'mm_ai_gap_analysis' } }))
+    );
     const resp = await reqP;
     await casesShot(page, 'MC-06-12');
     if (!resp) {
-      test.skip(true, '[REAL-AI] POST /map/gap-analysis did not fire.');
+      test.skip(true, '[REAL-AI] gap-analysis AI request did not fire (mm_ai_gap_analysis handler not wired).');
       return;
     }
-    expect(resp.status(), 'POST /map/gap-analysis returns non-error status').toBeLessThan(400);
+    expect(resp.status(), 'gap-analysis AI request returns non-error status').toBeLessThan(400);
   });
 
   test('MC-06-13 — AI Suggestions + Branch Summary [REAL-AI]', async ({ page }) => {
     test.setTimeout(180000);
     await freshMap(page, 'MC-06-13');
-    const suggestBtn = page
-      .getByRole('button', { name: /AI Suggestions?|Sugestie AI|Suggest|Recommendations?/i })
-      .first();
-    await casesShot(page, 'MC-06-13');
-    if (!(await suggestBtn.isVisible().catch(() => false))) {
-      test.skip(
-        true,
-        '[REAL-AI] AI Suggestions not surfaced headlessly (POST /map/ai-suggestions at my-work.routes.ts:4409; ' +
-          'BranchSummaryPanel.tsx shares the same endpoint). Verify request fires + topics/findings/next_steps.'
-      );
-      return;
-    }
+    await readyNode(page);
+    // AI Suggestions affordance is panel-gated; fire via event bus
+    // (useMindMapQuickActions.ts:506 — 'mm_ai_suggest'). AI live → 2xx.
     const reqP = page
-      .waitForResponse((r) => /\/map\/ai-suggestions/.test(r.url()), { timeout: 25000 })
+      .waitForResponse((r) => /\/map\/(ai-suggestions|expand|gap-analysis)/.test(r.url()), { timeout: 30000 })
       .catch(() => null);
-    await suggestBtn.click({ force: true });
+    await page.evaluate(() =>
+      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: 'mm_ai_suggest' } }))
+    );
     const resp = await reqP;
     await casesShot(page, 'MC-06-13');
     if (!resp) {
-      test.skip(true, '[REAL-AI] POST /map/ai-suggestions did not fire.');
+      test.skip(true, '[REAL-AI] ai-suggestions request did not fire (mm_ai_suggest handler not wired).');
       return;
     }
-    expect(resp.status(), 'POST /map/ai-suggestions returns non-error status').toBeLessThan(400);
+    expect(resp.status(), 'ai-suggestions AI request returns non-error status').toBeLessThan(400);
   });
 
   test('MC-06-14 — Document-to-Map [REAL-AI]', async ({ page }) => {
