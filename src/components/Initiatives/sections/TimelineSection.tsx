@@ -34,7 +34,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { buildScheduleItems } from '@/services/initiativeSchedule';
+import { buildScheduleItems, computeCriticalPath } from '@/services/initiativeSchedule';
 
 import { InitiativeCalendar } from '../calendar';
 import { InitiativeGantt } from '../gantt';
@@ -535,6 +535,27 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       }),
     [tasks, timelineMilestones, timelinePhases]
   );
+
+  // V1 Gantt — dependency edges (mapped to ScheduleItem ids by sourceId) + the
+  // critical path (longest-duration chain), both fed to the Gantt connectors.
+  const ganttDependencies = useMemo(() => {
+    const idBySource = new Map(scheduleItems.map((it) => [String(it.sourceId), it.id]));
+    return (((dependencies as any[]) || [])
+      .map((d: any) => {
+        const fromSrc = d?.fromId ?? d?.sourceId ?? d?.dependsOnId;
+        const toSrc = d?.toId ?? d?.targetId ?? d?.taskId;
+        const fromId = fromSrc != null ? idBySource.get(String(fromSrc)) : undefined;
+        const toId = toSrc != null ? idBySource.get(String(toSrc)) : undefined;
+        return fromId && toId && fromId !== toId ? { fromId, toId } : null;
+      })
+      .filter(Boolean) as Array<{ fromId: string; toId: string }>);
+  }, [scheduleItems, dependencies]);
+
+  const criticalPathIds = useMemo(
+    () => computeCriticalPath(scheduleItems, ganttDependencies),
+    [scheduleItems, ganttDependencies]
+  );
+
   const [scheduleView, setScheduleView] = useState<'none' | 'calendar' | 'gantt'>('none');
 
   // W5 — drag-reschedule (Gantt + Calendar share one callback): optimistically
@@ -1366,7 +1387,12 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
         )}
         {scheduleView === 'gantt' && (
           <div className="mt-2">
-            <InitiativeGantt items={scheduleItems} onReschedule={handleScheduleReschedule} />
+            <InitiativeGantt
+              items={scheduleItems}
+              onReschedule={handleScheduleReschedule}
+              dependencies={ganttDependencies}
+              criticalPathIds={criticalPathIds}
+            />
           </div>
         )}
       </div>

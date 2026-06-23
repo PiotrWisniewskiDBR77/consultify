@@ -276,6 +276,6 @@ Status: 🟢 GOTOWY DO ODBIORU · realizacja ✅ (E1 realne handlery hypothesis/
 ## SERIA V — Widoki
 
 ### V1 — Gant zadaniowy + drag-reschedule · 3 epiki · 2 ekrany
-Status: 🟡 CZĘŚCIOWO · realizacja E1+E2 ✅ (bary tydzień + dziś-marker + drag-reschedule `Gantt.drag` 3/3 + render/toggle component 2026-06-22; toggle Kalendarz/Gantt) · **LUKA E3: ścieżka krytyczna NIE w widoku Gantt + brak zależności/zoom/filtra (rysuje tylko bary) — 4 funkcje z „Manual (10)" niezbudowane; decyzja zakresowa: dobudować czy zawęzić V1**
-**Epiki:** E1 schedule-bar zadań/kamieni (dni/tygodnie) ✅ · E2 drag-to-reschedule ✅ · E3 ścieżka krytyczna z `TimelineAnalysis` ⬜ (niezaimplementowane w widoku).
+Status: 🟢 GOTOWY DO ODBIORU code-side · realizacja ✅ — **4 brakujące funkcje DOBUDOWANE 2026-06-22** (decyzja CEO „buduj wszystkie 4"): zoom day/week/month + filtr statusu (self-contained w `InitiativeGantt`) + **linie zależności (SVG, prop-driven)** + **ścieżka krytyczna** (`computeCriticalPath` longest-path DAG w `initiativeSchedule.ts`, podświetlenie ring-rose). `TimelineSection` liczy krawędzie z `dependsOnId`/dependencies + critical-path i podaje do Gantta. Testy: `computeCriticalPath` 4/4 + `InitiativeGantt.features` 5/5 + istniejące drag/render 11/11; tsc clean. Zostaje →F/→UI.
+**Epiki:** E1 schedule-bar zadań/kamieni (dni/tygodnie/zoom) ✅ · E2 drag-to-reschedule ✅ · E3 ścieżka krytyczna + zależności ✅ (dobudowane).
 **Manual (10):** render bary zadań; skala dni/tygodnie; drag→persist; zależności widoczne; ścieżka krytyczna; spójność z Kalendarzem; zoom; filtr; dark; light.
