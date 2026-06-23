@@ -22,6 +22,7 @@ const mockResolveTier = vi.fn();
 vi.mock('../../../server/src/services/deliverableGenerationTier.js', () => ({
   resolveDeliverableTier: (...args: any[]) => mockResolveTier(...args),
   DELIVERABLE_GENERATION_PURPOSE: 'deliverable_generation',
+  deliverableModelConfig: (fb?: any) => fb ?? { id: 'premium' },
 }));
 
 // Mock llmService (structured call).

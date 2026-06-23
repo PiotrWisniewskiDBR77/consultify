@@ -23,6 +23,7 @@ const mockResolveTier = vi.fn();
 vi.mock('../../../server/src/services/deliverableGenerationTier.js', () => ({
   resolveDeliverableTier: (opts: any) => mockResolveTier(opts),
   DELIVERABLE_GENERATION_PURPOSE: 'deliverable_generation',
+  deliverableModelConfig: (fb?: any) => fb ?? { id: 'premium' },
 }));
 
 // ── Mock llmService + modelRouter (dynamic imports) ────────────
