@@ -86,7 +86,7 @@ describe('Scenario runner — M19 decks (pilot)', () => {
     });
 
     const result = await planDeckLayout(
-      [{ content: { title: 'X' } as any } as any],
+      [{ content: { title: 'Cyfryzacja w MŚP — jak zacząć' } as any } as any],
       { language: 'PL', client: 'MŚP klient', template: 'corporate' } as any,
       { orgId: 'org-1', preferPremium: true }
     );

@@ -96,6 +96,15 @@ export interface SlideLayoutPlan {
   imageBrief: string | null; // short image description (1-2 sentences) or null
   reasoning: string;
   source: 'llm' | 'deterministic';
+  /**
+   * Pass-through of the slide's INPUT title + key_message (B1 does NOT author
+   * these — they are the slide's own content). Carried on the plan so that
+   * downstream renderers/QA evaluate the REAL slide title rather than a proxy
+   * (reasoning/imageBrief). `null` when the source slide supplied none; omitted
+   * by plans built before this carry-through existed.
+   */
+  title?: string | null;
+  keyMessage?: string | null;
 }
 
 export interface DeckLayoutDirectorResult {
@@ -126,6 +135,21 @@ function heuristicIntent(index: number, total: number): SlideIntent {
   return 'key_messages';
 }
 
+/** Pull the slide's own title (from content) — INPUT, not authored by B1. */
+function slideTitle(slide: UnifiedSlide): string | null {
+  const content = (slide?.content ?? {}) as Record<string, unknown>;
+  for (const k of ['title', 'headline', 'section_title']) {
+    const v = content[k];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+function slideKeyMessage(slide: UnifiedSlide): string | null {
+  const km = slide?.key_message;
+  return typeof km === 'string' && km.trim() ? km.trim() : null;
+}
+
 function deterministicPlan(slides: UnifiedSlide[]): SlideLayoutPlan[] {
   const total = slides.length;
   return slides.map((slide, index) => {
@@ -141,6 +165,8 @@ function deterministicPlan(slides: UnifiedSlide[]): SlideLayoutPlan[] {
         ? 'Deterministic: slide-supplied intent'
         : `Deterministic heuristic (slide ${index + 1}/${total})`,
       source: 'deterministic' as const,
+      title: slideTitle(slide),
+      keyMessage: slideKeyMessage(slide),
     };
   });
 }
@@ -282,7 +308,7 @@ async function planViaLlm(
     if (typeof idx === 'number') byIndex.set(idx, p);
   }
 
-  const plans: SlideLayoutPlan[] = slides.map((_slide, index) => {
+  const plans: SlideLayoutPlan[] = slides.map((slide, index) => {
     const raw = byIndex.get(index);
     const fallback = det[index];
     if (!raw) return fallback; // LLM omitted this slide → deterministic
@@ -304,6 +330,10 @@ async function planViaLlm(
       // If a field was invalid we patched it deterministically, but the plan
       // still originates from the LLM call.
       source: usedFallbackField ? 'deterministic' : 'llm',
+      // Title/key_message are slide INPUTS — always carried from the source
+      // slide, regardless of which layout the LLM picked.
+      title: slideTitle(slide),
+      keyMessage: slideKeyMessage(slide),
     };
   });
 

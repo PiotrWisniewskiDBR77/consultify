@@ -37,6 +37,9 @@ export function deckPlan(
       : null,
     reasoning: `Reasoning for ${intent} at slide ${i + 1} — covers required substance and keywords`,
     source: allLlm ? 'llm' : 'deterministic',
+    // Real slide INPUT title/key_message (carried through by the generator).
+    title: `Slide ${i + 1}: ${intent}`,
+    keyMessage: `Key message for ${intent} at slide ${i + 1} — covers required substance and keywords`,
   }));
   return { plans, tierUsed: 'PREMIUM', fallbackUsed: false };
 }
@@ -51,19 +54,32 @@ export function withCoverKeywords(
 ): DeckLayoutDirectorResult {
   const plans = result.plans.map((p, i) =>
     i === 0
-      ? { ...p, reasoning: `${p.reasoning} ${keywords.join(' ')}`, imageBrief: `${p.imageBrief ?? ''} ${keywords.join(' ')}` }
+      ? {
+          ...p,
+          // Inject into the REAL title (scorer now reads title/keyMessage), and
+          // keep reasoning/imageBrief too for legacy-proxy back-compat.
+          title: `${p.title ?? ''} ${keywords.join(' ')}`.trim(),
+          reasoning: `${p.reasoning} ${keywords.join(' ')}`,
+          imageBrief: `${p.imageBrief ?? ''} ${keywords.join(' ')}`,
+        }
       : p
   );
   return { ...result, plans };
 }
 
-/** Wstrzykuje keyword do reasoning któregokolwiek slajdu (anyKeyMessageContains). */
+/** Wstrzykuje keyword do key_message któregokolwiek slajdu (anyKeyMessageContains). */
 export function withAnyKeyword(
   result: DeckLayoutDirectorResult,
   keywords: string[]
 ): DeckLayoutDirectorResult {
   const plans = result.plans.map((p, i) =>
-    i === 1 ? { ...p, reasoning: `${p.reasoning} ${keywords.join(' ')}` } : p
+    i === 1
+      ? {
+          ...p,
+          keyMessage: `${p.keyMessage ?? ''} ${keywords.join(' ')}`.trim(),
+          reasoning: `${p.reasoning} ${keywords.join(' ')}`,
+        }
+      : p
   );
   return { ...result, plans };
 }

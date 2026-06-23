@@ -124,11 +124,15 @@ export function scoreDeck(
   }
 
   if (criteria.coverTitleContainsAny || criteria.coverTitleContainsAll) {
-    // Cover title nie jest w SlideLayoutPlan — bierzemy z reasoning lub imageBrief.
-    // W realnej integracji content slajdu zawiera title; tu używamy reasoning jako proxy
-    // (test integracyjny dostarczy prawdziwy content).
+    // FIDELITY: B1 does NOT author the cover title — it is the slide's own INPUT
+    // content. SlideLayoutPlan now carries `title`/`keyMessage` straight through
+    // (presentationLayoutDirectorService, fix #1), so we evaluate the REAL title
+    // instead of a proxy. We fall back to reasoning+imageBrief ONLY when the plan
+    // pre-dates the carry-through (legacy mock builders) so the 90-mock regression
+    // guard still passes.
     const cover = plans[0];
-    const titleProxy = `${cover?.reasoning ?? ''} ${cover?.imageBrief ?? ''}`;
+    const realTitle = `${cover?.title ?? ''} ${cover?.keyMessage ?? ''}`.trim();
+    const titleProxy = realTitle || `${cover?.reasoning ?? ''} ${cover?.imageBrief ?? ''}`;
     if (criteria.coverTitleContainsAny) {
       b.expectContainsCi(
         titleProxy,
@@ -152,23 +156,26 @@ export function scoreDeck(
   }
 
   if (criteria.keyMessageMinChars && criteria.keyMessageMinChars > 0) {
-    // KeyMessage nie w SlideLayoutPlan — sprawdzamy reasoning (proxy).
-    // W integracji UnifiedSlide.key_message jest osobne — adapter w runnerze.
+    // FIDELITY: key_message is now carried on the plan (real INPUT). Prefer it;
+    // fall back to reasoning for legacy mock plans that lack keyMessage.
     const nonCover = plans.filter((p) => p.layoutIntent !== 'cover');
     b.expectAtLeast(
       nonCover,
-      (p) => (p.reasoning?.length ?? 0) >= criteria.keyMessageMinChars!,
+      (p) => ((p.keyMessage ?? p.reasoning)?.length ?? 0) >= criteria.keyMessageMinChars!,
       nonCover.length,
       'every non-cover has key_message',
       'substantive',
-      `LLM zwraca puste reasoning — sprawdź prompt schema z FieldSchema.reasoning`
+      `Slajdy bez treści key_message — sprawdź upstream content slajdu`
     );
   }
 
   if (criteria.anyKeyMessageContains) {
-    const allReasoning = plans.map((p) => p.reasoning ?? '').join(' ');
+    // FIDELITY: search the REAL key_messages (with reasoning as legacy fallback).
+    const allKeyMessages = plans
+      .map((p) => `${p.keyMessage ?? ''} ${p.reasoning ?? ''}`)
+      .join(' ');
     b.expectContainsCi(
-      allReasoning,
+      allKeyMessages,
       criteria.anyKeyMessageContains,
       'any',
       'any key_message contains keyword',

@@ -115,6 +115,19 @@ export interface GeneratedTableSchema {
   conditionalFormatting?: GeneratedCfBlock[];
   /** B4-ext: true gdy ≥1 komórka seedRows zawiera formułę (string "=..."). */
   hasFormulas?: boolean;
+  /**
+   * B4-ext: arkusze wieloarkuszowego workbooka. Obecne TYLKO gdy intencja
+   * implikuje workbook (np "Summary, OpEx, CapEx, HC; cross-sheet formulas").
+   * Każdy arkusz = własne fields + seedRows (+ CF/formuły). Niezdefiniowane =
+   * pojedynczy arkusz (top-level fields/seedRows).
+   */
+  sheets?: Array<{
+    name?: string;
+    fields: GeneratedField[];
+    seedRows: Record<string, unknown>[];
+    conditionalFormatting?: GeneratedCfBlock[];
+    hasFormulas?: boolean;
+  }>;
   tierUsed: 'PREMIUM' | 'STANDARD';
   fallbackUsed: boolean;
 }
@@ -235,18 +248,38 @@ function normalizeFields(rawFields: unknown): GeneratedField[] {
   return out;
 }
 
+/** Canonical form for fuzzy key-matching: strip non-alphanumerics, lowercase. */
+function canonicalKey(k: string): string {
+  return String(k ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+}
+
 function normalizeSeedRows(
   rawRows: unknown,
   fields: GeneratedField[]
 ): Record<string, unknown>[] {
   const arr = Array.isArray(rawRows) ? rawRows : [];
-  const validKeys = new Set(fields.map((f) => f.key));
+  // Map BOTH the exact field key and its canonical (alnum-only) form to the
+  // canonical field key. The LLM frequently emits seed-row keys in a different
+  // casing/separator than the field key it just declared (e.g. field key
+  // `projectname` ← header "Project Name", but row uses `projectName`). A strict
+  // equality filter SILENTLY DROPS those cells → empty columns in the
+  // materialized table. Fuzzy-match by canonical form to recover them.
+  const canonToFieldKey = new Map<string, string>();
+  for (const f of fields) {
+    canonToFieldKey.set(f.key, f.key); // exact
+    const canon = canonicalKey(f.key);
+    if (!canonToFieldKey.has(canon)) canonToFieldKey.set(canon, f.key);
+  }
   return arr
     .filter((r) => r && typeof r === 'object' && !Array.isArray(r))
     .map((r) => {
       const row: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(r as Record<string, unknown>)) {
-        if (validKeys.has(k)) row[k] = v;
+        const target = canonToFieldKey.get(k) ?? canonToFieldKey.get(canonicalKey(k));
+        // First writer wins on collisions (exact key already placed).
+        if (target && row[target] === undefined) row[target] = v;
       }
       return row;
     });
@@ -330,6 +363,7 @@ async function generateViaLlm(
   seedRows: Record<string, unknown>[];
   conditionalFormatting: GeneratedCfBlock[];
   hasFormulas: boolean;
+  sheets?: GeneratedTableSchema['sheets'];
 } | null> {
   // Import dynamiczny — unit-testy nie ciągną całego stacku AI.
   const { llmService } = await import('./ai/llmService.js');
@@ -349,27 +383,98 @@ async function generateViaLlm(
     'TYPED field schema. Pick the RIGHT type per column: singleSelect with colored options for ' +
     'status/category/priority, number for counts, currency for money, percent for ratios, date ' +
     'for deadlines, checkbox for yes/no, singleLineText for short names, longText for notes. ' +
+    'Use the `rating` type (a 1–5 star scale) for SCORED EVALUATION columns — performance-review ' +
+    'dimensions, scorecard criteria, vendor/quality assessments, satisfaction scores — i.e. any ' +
+    'column that grades something on a small bounded scale. Reserve plain `number` for raw counts/' +
+    'quantities (hours, units, totals). Use `percent` for any RATIO/DEVIATION column — variance, ' +
+    'utilization, growth, completion, margin, attainment vs target — even when the word "variance" ' +
+    'appears (a KPI variance is a percentage, not a raw number). Only use `currency` when money is ' +
+    'explicit (budget, cost, price, revenue, MRR, "PLN"/"$"/"€"); for a bare quantity column with no ' +
+    'money cue (monthly volumes, counts per period), default to `number`, not currency. ' +
     `Allowed field types ONLY: ${typeList}. ` +
+    // ── SCOPE FIDELITY: honor the intent literally, do not over-engineer ──
+    'SCOPE — match the intent precisely, do NOT pad the schema:\n' +
+    '• If the intent ENUMERATES specific columns — whether as a plain comma list ("nazwa, owner, ' +
+    'deadline, status") OR as a descriptive list with parentheticals ("severity (4 opcje), likelihood ' +
+    '(rating), impact (colorScale)") — produce those columns, plus a single name/identifier column if ' +
+    'none is named, plus (only for a register/log/tracker/rejestr) ONE owner column. One field per ' +
+    'named item, in order. Do NOT add any further scaffolding (no Description/Status/Deadline/Notes/' +
+    'Priority unless the intent names them).\n' +
+    '• If the intent states a column/metric count (e.g. "10 kolumn", "8 metryk", "KPIs (SLA, time, ' +
+    'error, satisfaction)"), emit EXACTLY that many data columns (plus one identifier column). Treat a ' +
+    'parenthetical list as the COMPLETE set, not examples — do NOT add Owner/Status/Variance/Volume/' +
+    'Notes/Channel beyond it. A mention of "summary cols" / "total" adds AT MOST one summary column ' +
+    '(a single Total/Suma), never a suite of extra analytics (no separate average, growth, attainment, ' +
+    'and status columns).\n' +
+    '• If the intent imposes a TYPE CONSTRAINT (e.g. "bez singleLineText", "każda kolumna typowana", ' +
+    '"no text columns"), obey it for EVERY column — including the identifier: use a typed field ' +
+    '(number id, date, or singleSelect code) instead of singleLineText. Zero exceptions.\n' +
+    '• When the intent is an open-ended DOMAIN table (a project portfolio, CRM, ops dashboard, risk ' +
+    'register), build a RICH but bounded schema — typically 10–12 columns covering the domain\'s key ' +
+    'attributes (e.g. a portfolio: name, owner, 1–2 status/phase selects, 2 dates, budget vs actual, ' +
+    'progress, variance). Cap at 12 columns.\n' +
+    '• If the intent is TERSE and centers on ONE behavior (e.g. "pipeline: highlight value >100k", a ' +
+    'single CF/formula demo), build a MINIMAL 4–6 column schema with only the columns that behavior ' +
+    'needs — do not flesh out a full domain model. If the intent names essentially ONE data column ' +
+    '(e.g. "a table with a kwota column"), keep it to that column plus a label (2–4 columns total).\n' +
+    '• If the intent is a DIMENSIONAL MATRIX ("N products × M regions × P months", a cohort/period ' +
+    'grid), the period/measure columns are the structure: emit ONE identifier (or two dim) columns + ' +
+    'the P period columns + at most ONE total — stay within ~7–9 columns. Period/measure cells are ' +
+    '`number` unless money is explicit.\n' +
+    // ── KEY CONTRACT: seed-row keys MUST equal field.key verbatim ──
+    'KEY CONTRACT — for every column emit a `key` that is lowercase snake_case (e.g. "project_name", ' +
+    '"start_date"). Every seed-row object MUST use those EXACT same keys verbatim — never camelCase, ' +
+    'never the header text. Mismatched keys make cells disappear.\n' +
     'For singleSelect/multiSelect, ALWAYS provide options[] with a label and a hex color ' +
     '(green #16A34A for good/low, amber #D97706 for medium, red #DC2626 for bad/high). ' +
-    'Provide realistic seed rows keyed by field key — as many as the intent implies (up to ~8). ' +
+    'For UNIVERSAL classification vocabularies, use the canonical ENGLISH labels regardless of the ' +
+    'intent language, so they read consistently: workflow STATUS = "To Do" / "In Progress" / "Done" ' +
+    '(unless the intent implies a richer lifecycle); SEVERITY / PRIORITY = "Critical" / "High" / ' +
+    '"Medium" / "Low" (use the subset the intent implies). Translate only domain-specific category ' +
+    'labels (e.g. department names) into the intent language.\n' +
+    // ── ROW COUNT scaled to intent ──
+    'SEED ROWS — provide realistic rows scaled to the intent: if the intent states a row count ' +
+    '(e.g. "12 projektów", "8 osób", "10 deals") emit exactly that many. Otherwise scale to the table ' +
+    'archetype: for a HIGH-VOLUME operational table (sales pipeline, recruitment/sales funnel, ticket ' +
+    'or support queue, event registrations, attendee/participant lists, CRM account/contact list) emit ' +
+    '~10 rows; for an EVERYDAY ' +
+    'small table (task/TODO list, budget, a short reference/summary/scorecard, a handful of items) emit ' +
+    '~6 rows. When genuinely unsure, emit 6. Never exceed ~12. ' +
     'CRITICAL — COMPLETE ROWS: every seed row object MUST include EVERY field key with a plausible ' +
     'value. This includes ANALYTICAL columns — scores/indices (e.g. a 0–100 readiness index), dates, ' +
     'single-select categories, ratings — fill them with realistic ESTIMATES; do NOT skip a column ' +
-    'just because it needs judgment. A row that omits any field key is INVALID and unusable. ' +
+    'just because it needs judgment. This applies to "optional-feeling" columns too — notes, comments, ' +
+    'resolved/closed dates, secondary fields: fill them with a realistic value (a short note, a plausible ' +
+    'date) rather than leaving them blank. A row that omits any field key is INVALID and unusable. ' +
     'Example — risk table: Risk(singleLineText), Likelihood(singleSelect: Low #16A34A / Med #D97706 / High #DC2626), ' +
     'Impact(singleSelect same colors), Owner(singleLineText), Status(singleSelect).\n' +
-    'CONDITIONAL FORMATTING (optional but encouraged for numeric columns): in ' +
-    '`conditionalFormatting` propose visual rules BY fieldKey (not cell ranges). ' +
-    'Rule types: dataBar {type:"dataBar", color:"#16A34A"} for progress/utilization; ' +
-    'colorScale {type:"colorScale", colors:["#DC2626","#F59E0B","#16A34A"]} for scores/ratings/variance heatmaps; ' +
-    'iconSet {type:"iconSet", iconSet:"3Arrows"|"3TrafficLights1"} for likelihood/status ratings; ' +
-    'cellIs {type:"cellIs", operator:"greaterThan", formulae:["100000"], style:{bgColor:"#DC2626", bold:true}} for thresholds. ' +
-    'Only attach CF to number/currency/percent/rating columns.\n' +
+    'CONDITIONAL FORMATTING (encouraged for numeric columns): in ' +
+    '`conditionalFormatting` propose visual rules BY fieldKey (not cell ranges). Match the CF rule ' +
+    'type to the column SEMANTICS and to any rule the intent names explicitly:\n' +
+    '• dataBar {type:"dataBar", color:"#16A34A"} — progress / utilization / completion percentages.\n' +
+    '• colorScale {type:"colorScale", colors:["#DC2626","#F59E0B","#16A34A"]} — VARIANCE, deviation, ' +
+    'scores, ratings, retention/cohort heatmaps, anything where low↔high should read as a red→green gradient. ' +
+    'ALWAYS use colorScale (not iconSet/dataBar) for a "variance" or "deviation" column.\n' +
+    '• iconSet {type:"iconSet", iconSet:"3Arrows"|"3TrafficLights1"} — trend / likelihood / health / ' +
+    'satisfaction ratings, and whenever the intent mentions "status icons", "traffic-light", or ' +
+    '"icons": attach a 3TrafficLights1 iconSet to a rating or numeric health column (CF cannot target a ' +
+    'singleSelect, so route the icon request to the nearest rating/score column).\n' +
+    '• cellIs {type:"cellIs", operator:"greaterThan", formulae:["100000"], style:{bgColor:"#DC2626", bold:true}} — threshold highlights.\n' +
+    'When the intent explicitly maps a column to a CF type (e.g. "variance jako colorScale", "progress jako dataBar"), ' +
+    'you MUST emit that exact pairing. Only attach CF to number/currency/percent/rating columns.\n' +
     'FORMULAS (for calculated columns): when a column is derived from others ' +
     '(total, sum, variance, utilization, bonus = pct × salary), put an Excel formula ' +
     'STRING starting with "=" as the seed value, e.g. "=SUM(B2:I2)", "=H2*I2", "=G2/40". ' +
     'Reference cells by column letter + row number (header is row 1, data starts row 2). ' +
+    'MULTI-SHEET WORKBOOK: when the intent describes MULTIPLE named tabs/sheets (e.g. "Summary, OpEx, ' +
+    'CapEx, HC", "annual budget workbook", "4 sheety", cross-sheet references) emit a `sheets` array — ' +
+    'ONE entry per named sheet, each with its own {name, fields, seedRows}. Keep each sheet focused ' +
+    '(3–6 columns, ~6 rows). The first/SUMMARY sheet must be a COMPACT roll-up: a label column plus ' +
+    '2–4 total/share columns (NOT a wide detail grid). Give it at least 6 rows: one per other sheet, a ' +
+    'grand-total row, and — if that is fewer than 6 — break the larger categories into their main ' +
+    'sub-lines (e.g. OpEx → Salaries / Software / Office) so every row is a REAL budget line, never a ' +
+    'blank placeholder. For cross-sheet formulas reference other sheets by name, e.g. "=OpEx!B10". When the ' +
+    'intent is a single table, OMIT `sheets` entirely. ' +
     'Reply with ONLY a JSON object conforming to the schema.';
 
   const FieldSchema = z.object({
@@ -386,10 +491,18 @@ async function generateViaLlm(
     rule: z.record(z.string(), z.unknown()),
   });
 
+  const SheetSchema = z.object({
+    name: z.string().optional(),
+    fields: z.array(FieldSchema),
+    seedRows: z.array(z.record(z.string(), z.unknown())),
+    conditionalFormatting: z.array(CfEntrySchema).optional(),
+  });
+
   const OutputSchema = z.object({
     fields: z.array(FieldSchema),
     seedRows: z.array(z.record(z.string(), z.unknown())),
     conditionalFormatting: z.array(CfEntrySchema).optional(),
+    sheets: z.array(SheetSchema).optional(),
   });
 
   const result = await (llmService as any).call({
@@ -399,8 +512,9 @@ async function generateViaLlm(
     messages: [{ role: 'user', content: `Table intent: "${intent}"` }],
     schema: OutputSchema,
     // 11 pól × ~8 wierszy JSON nie mieści się w 1800 → ucięcie → puste komórki
-    // w późnych kolumnach (zmierzone na tabeli VTS). 4500 daje pełne wiersze.
-    maxTokens: 4500,
+    // w późnych kolumnach (zmierzone na tabeli VTS). 4500 daje pełne wiersze;
+    // 6000 daje zapas na multi-sheet workbooki (4 arkusze × 6 wierszy).
+    maxTokens: 6000,
     temperature: 0.2,
     cache: false,
     timeoutMs: 120000,
@@ -412,12 +526,54 @@ async function generateViaLlm(
   const fields = normalizeFields(obj.fields);
   if (fields.length === 0) return null;
 
-  const seedRows = normalizeSeedRows(obj.seedRows, fields);
-  const conditionalFormatting = normalizeCf(obj.conditionalFormatting, fields, seedRows.length);
-  const hasFormulas = seedRows.some((row) =>
-    Object.values(row).some((v) => typeof v === 'string' && (v as string).trim().startsWith('='))
-  );
-  return { fields, seedRows, conditionalFormatting, hasFormulas };
+  let seedRows = normalizeSeedRows(obj.seedRows, fields);
+  let topFields = fields;
+  let conditionalFormatting = normalizeCf(obj.conditionalFormatting, fields, seedRows.length);
+  const rowsHaveFormula = (rows: Record<string, unknown>[]) =>
+    rows.some((row) =>
+      Object.values(row).some((v) => typeof v === 'string' && (v as string).trim().startsWith('='))
+    );
+
+  // Multi-sheet (optional): normalize each sheet with the same field/row/CF
+  // pipeline. Drop any sheet that yields zero valid fields (fail-soft).
+  let sheets: GeneratedTableSchema['sheets'];
+  if (Array.isArray(obj.sheets) && obj.sheets.length > 0) {
+    const normalized = obj.sheets
+      .map((s: any, i: number) => {
+        const sFields = normalizeFields(s?.fields);
+        if (sFields.length === 0) return null;
+        const sRows = normalizeSeedRows(s?.seedRows, sFields);
+        return {
+          name: String(s?.name ?? '').trim() || `Sheet ${i + 1}`,
+          fields: sFields,
+          seedRows: sRows,
+          conditionalFormatting: normalizeCf(s?.conditionalFormatting, sFields, sRows.length),
+          hasFormulas: rowsHaveFormula(sRows),
+        };
+      })
+      .filter(Boolean) as NonNullable<GeneratedTableSchema['sheets']>;
+    if (normalized.length > 0) sheets = normalized;
+  }
+
+  // Multi-sheet workbooks often park the real data in `sheets` and leave the
+  // top-level fields/seedRows thin (a placeholder). The top-level schema is what
+  // single-table consumers and the quality gate read, so PROMOTE a sheet to
+  // top-level when the current top-level is thinner. Prefer the Summary sheet
+  // (the natural "front page" of a workbook); else the first sheet.
+  if (sheets && sheets.length > 0) {
+    const isSummary = (n?: string) => /summary|podsumowanie|przegląd|overview/i.test(n ?? '');
+    const lead = sheets.find((s) => isSummary(s.name)) ?? sheets[0];
+    if (lead.fields.length > topFields.length) {
+      topFields = lead.fields;
+      seedRows = lead.seedRows;
+      conditionalFormatting = lead.conditionalFormatting ?? [];
+    }
+  }
+
+  const hasFormulas =
+    rowsHaveFormula(seedRows) || (sheets ?? []).some((s) => s.hasFormulas);
+
+  return { fields: topFields, seedRows, conditionalFormatting, hasFormulas, sheets };
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -482,6 +638,8 @@ export async function generateTableSchema(
       fields: llm.fields,
       seedRows: llm.seedRows,
       conditionalFormatting: llm.conditionalFormatting,
+      hasFormulas: llm.hasFormulas,
+      sheets: llm.sheets,
       tierUsed: 'PREMIUM',
       fallbackUsed: false,
     };

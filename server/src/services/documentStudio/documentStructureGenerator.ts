@@ -121,13 +121,67 @@ const TRIVIAL_BLOCK_TYPES = new Set<string>(['heading', 'paragraph']);
  * legalne dokumenty jednotypowe (KPI-only one-pager, bullet-only streszczenie,
  * pojedyncza tabela compliance). Pojedynczy kpi_strip/bullet_list/table JEST
  * premium-grade vs [heading, paragraph]. (Wykryte przez docGeneratorE2E.)
+ *
+ * UWAGA 2: gate akceptuje też plan PROZOWY, który jest BOGATSZY niż trywialny
+ * fallback (więcej bloków niż heading+paragraph per sekcja). Memo / brief, gdzie
+ * premium świadomie wybiera prozę (np. "5 paragrafów"), to LEGALNY premium plan —
+ * wcześniej taki plan spadał do 2-blokowego fallbacku (zmierzone: doc S01 memo
+ * → premium plan [heading,paragraph×5] odrzucony → fallback 2 bloki → fail
+ * minBlocks 5). Trywialny fallback = dokładnie 2 bloki/sekcję (heading+paragraph),
+ * więc plan z >2·N bloków NIESIE wartość strukturalną nawet bez rich-typu.
  */
 function premiumPlanPassesQuality(sections: StructurePlanSection[]): boolean {
   if (sections.length === 0) return false;
   if (sections.some((s) => s.blocks.length === 0)) return false;
 
-  // ≥1 blok poza zbiorem trywialnym = premium dodał wartość strukturalną.
-  return sections.some((s) => s.blocks.some((b) => !TRIVIAL_BLOCK_TYPES.has(b.type)));
+  // (a) ≥1 blok poza zbiorem trywialnym = premium dodał wartość TYPOWĄ.
+  const hasRichBlock = sections.some((s) =>
+    s.blocks.some((b) => !TRIVIAL_BLOCK_TYPES.has(b.type))
+  );
+  if (hasRichBlock) return true;
+
+  // (b) Prozowy, ale BOGATSZY niż fallback (heading+paragraph = 2/sekcję): premium
+  // rozwinął treść (memo z wieloma paragrafami) → też wartość strukturalna.
+  const totalBlocks = sections.reduce((a, s) => a + s.blocks.length, 0);
+  return totalBlocks > 2 * sections.length;
+}
+
+/**
+ * Block-count floor/ceiling per section, scaled to document size. Concise
+ * documents (few sections) must stay lean — otherwise a single section soaks up
+ * every block type (measured: 1-section memo → 12 blocks vs expected 5-7).
+ * Deterministic safety net behind the prompt guidance: trims over-rich sections
+ * in small docs to a sane ceiling while ALWAYS preserving the leading heading and
+ * at least one rich (non-trivial) block so the section still beats prose fallback.
+ *
+ * General by construction — keyed on SECTION COUNT only, never on scenario name.
+ */
+function calibrateBlockCounts(sections: StructurePlanSection[]): StructurePlanSection[] {
+  // Per-section ceiling: tiny docs (≤2 sections) → 6; otherwise leave as-is
+  // (larger docs legitimately carry rich sections; their block budget is spread).
+  if (sections.length === 0 || sections.length > 2) return sections;
+  const CEILING = 6;
+
+  return sections.map((s) => {
+    if (s.blocks.length <= CEILING) return s;
+    const heading = s.blocks.find((b) => b.type === 'heading');
+    const rest = s.blocks.filter((b) => b !== heading);
+    // Prefer keeping a balanced, lean mix: 1 rich block + prose/lists, capped.
+    const richKept = rest.filter((b) => !TRIVIAL_BLOCK_TYPES.has(b.type)).slice(0, 2);
+    const trivialKept = rest.filter((b) => TRIVIAL_BLOCK_TYPES.has(b.type));
+    const kept: StructurePlanBlock[] = [];
+    if (heading) kept.push(heading);
+    // Interleave: ensure ≥1 rich block survives, then fill with prose up to ceiling.
+    for (const b of richKept) {
+      if (kept.length >= CEILING) break;
+      kept.push(b);
+    }
+    for (const b of trivialKept) {
+      if (kept.length >= CEILING) break;
+      kept.push(b);
+    }
+    return { ...s, blocks: kept };
+  });
 }
 
 /**
@@ -150,13 +204,38 @@ async function planViaLlm(
     )
     .join('\n');
 
+  // CALIBRATE richness to document SIZE: a short memo / brief / one-pager (few
+  // sections) must stay CONCISE, otherwise a single section accumulates every
+  // block type (heading+kpi+table+chart+callout+list = 12 blocks) and a "5-paragraph
+  // memo" balloons (measured: doc S01 wanted 5-7 blocks, premium produced 12).
+  // Reserve rich multi-block stacks for substantial analytical sections in larger
+  // documents. The blocksPerSectionGuide below is a soft target the LLM should honour.
+  const sectionCount = outline.length;
+  const conciseDoc = sectionCount <= 2;
+  const blocksPerSectionGuide = conciseDoc
+    ? 'This is a SHORT document. Keep EACH section CONCISE but COMPLETE: a heading ' +
+      'followed by about 4-6 blocks total. Do NOT stack every block type into one ' +
+      'section, and do NOT collapse it to a single paragraph either. Honour the intent ' +
+      'cues — "memo", "brief", "one-pager", "krótki" mean lean structure; "N paragraphs" ' +
+      'means roughly N prose blocks. Favour several short prose/callout blocks over one ' +
+      'long paragraph, with at most one rich block (table/kpi_strip) where it truly helps.'
+    : 'Give each section a focused block sequence (typically 3-6 blocks): a heading, ' +
+      'supporting prose, and the ONE or TWO rich blocks that best fit its purpose. ' +
+      'Do not pad every section with every block type.';
+
   const systemPrompt =
     'You are a document structure architect (McKinsey / Kimi-Claude quality). ' +
     'For each section, choose a sequence of block types that best conveys the ' +
     'content — not just paragraphs. Use tables for comparisons, kpi_strip for ' +
     'metrics, callout for key warnings/insights, bullet_list for enumerations, ' +
-    'chart for trends. A good audit report section has heading + paragraph + ' +
+    'chart for trends. A good analytical section has heading + paragraph + ' +
     '(table OR kpi_strip) + callout where relevant. ' +
+    'Block count must MATCH each section’s scope — calibrate to the document size, ' +
+    'never maximise block variety for its own sake. ' +
+    `${blocksPerSectionGuide} ` +
+    'A section’s purpose may carry HARD CONSTRAINTS (e.g. "data-only, no prose", ' +
+    '"exactly N items", a required block type) — those OVERRIDE the generic guidance ' +
+    'above; obey them exactly. ' +
     `Allowed block types: ${ALLOWED_BLOCK_TYPES.join(', ')}. ` +
     'Reply with ONLY a JSON object conforming to the schema.';
 
@@ -254,13 +333,15 @@ export async function planDocumentStructure(
   }
 
   try {
-    const llmSections = await planViaLlm(intent, outline);
+    const llmSectionsRaw = await planViaLlm(intent, outline);
+    const llmSections = llmSectionsRaw ? calibrateBlockCounts(llmSectionsRaw) : llmSectionsRaw;
 
     if (llmSections && premiumPlanPassesQuality(llmSections)) {
       logger.info('[docStructure] premium plan', {
         purpose: DELIVERABLE_GENERATION_PURPOSE,
         orgId: opts.orgId,
         sections: llmSections.length,
+        blocks: llmSections.reduce((a, s) => a + s.blocks.length, 0),
       });
       return {
         sections: llmSections,

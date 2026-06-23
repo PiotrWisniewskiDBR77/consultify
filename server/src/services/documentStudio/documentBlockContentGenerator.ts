@@ -275,16 +275,51 @@ function buildProseFallback(plan: StructurePlanInput): ContentSection[] {
 // ──────────────────────────────────────────────────────────────
 const CONTENT_SYSTEM_PROMPT =
   'You are a document content writer (McKinsey / Kimi-Claude quality). For each ' +
-  'block spec, produce its content matching the block TYPE:\n' +
-  '- kpi: {items:[{label, value, delta}]} (3-5 items; delta = a MEANINGFUL change vs a baseline ' +
-  'like "+4 vs wave 1" or "▲ 12%". OMIT delta entirely when there is no baseline — never output "0")\n' +
+  'block spec, produce its content matching the block TYPE. The content of each ' +
+  'block is a JSON OBJECT, but you MUST return it as a STRING (a serialized JSON ' +
+  'object) in the `contentJson` field — escape inner quotes properly. Shapes per type:\n' +
+  '- kpi: {items:[{label, value, delta}]} — produce 3-5 items, BUT if the block hint ' +
+  'states an exact count (e.g. "exactly 3", "DOKŁADNIE 3", "5 KPI"), produce EXACTLY that ' +
+  'many items. delta = a MEANINGFUL change vs a baseline like "+4 vs wave 1" or "▲ 12%". ' +
+  'OMIT delta entirely when there is no baseline — never output "0")\n' +
   '- chart: {kind: bar|line|pie|donut|scatter|area, title, xAxisLabel, yAxisLabel, series:[{label, values:number[]}]} (≤6 series)\n' +
-  '- table: {rows:[{cells:{colKey:{value}}}]}\n' +
+  '- table: {rows:[{cells:{colKey:{value, style?}}}]} (≤6 rows; concise cell values). For ' +
+  'STATUS / SEVERITY / RISK / RATING tables, add per-cell conditional formatting: set ' +
+  'style.bgColor to a semantic hex on the cells carrying the status — green #16A34A (good/low), ' +
+  'amber #D97706 (medium), red #DC2626 (bad/high/critical). Example cell: {"value":"Wysokie","style":{"bgColor":"#DC2626"}}.\n' +
   '- callout: {text, tone: info|warning|danger|success}\n' +
   '- bulletList/numberedList: {items:[string]}\n' +
   '- quote: {text, author}\n' +
   '- text/heading: {text}\n' +
-  'Reply with ONLY a JSON object: {blocks:[{blockId, content}]}.';
+  'Example block: {"blockId":"b-0-1","contentJson":"{\\"text\\":\\"...\\"}"}.\n' +
+  'Reply with ONLY a JSON object: {blocks:[{blockId, contentJson}]}.';
+
+/** Tolerant JSON parse for a per-block contentJson string. Returns {} on failure. */
+function parseBlockContentJson(raw: unknown): Record<string, unknown> {
+  if (raw && typeof raw === 'object') return raw as Record<string, unknown>; // already-parsed (defensive)
+  if (typeof raw !== 'string') return {};
+  let s = raw.trim();
+  if (!s) return {};
+  // Strip accidental markdown fences.
+  s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  try {
+    const parsed = JSON.parse(s);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    // Best-effort: isolate the outermost {...} (model sometimes adds a trailing note).
+    const start = s.indexOf('{');
+    const end = s.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      try {
+        const parsed = JSON.parse(s.slice(start, end + 1));
+        return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+      } catch {
+        /* give up → normalizer defaults this block */
+      }
+    }
+    return {};
+  }
+}
 
 /**
  * Wypełnia treścią bloki JEDNEJ sekcji (jeden mały call LLM). Zwraca mapę
@@ -312,8 +347,17 @@ async function fillSectionViaLlm(
   }));
   const specList = blockSpecs.map((b) => `- ${b.blockId} (${b.type}): ${b.hint}`).join('\n');
 
+  // DLACZEGO contentJson:string a nie content:record — Anthropic `generateObject`
+  // buduje STRICT JSON-schema z Zoda. `z.record(z.string(), z.unknown())` =
+  // open-ended obiekt z zagnieżdżonymi tablicami (table rows, chart series) —
+  // model strukturalny REGULARNIE go nie spełnia: "No object generated: response
+  // did not match schema" na bogatych sekcjach (zmierzone: sekcja z kpi+table+
+  // chart+3×callout = 4 retry × ~50s = 208s i fall-through do placeholderów,
+  // a 5 takich porażek OTWIERA circuit-breaker i kaskadowo kładzie resztę sekcji).
+  // Schema z samych STRINGÓW (blockId + contentJson) jest trywialnie spełnialna →
+  // zero schema-fall-throughs; bogatą treść parsujemy sami z contentJson.
   const OutputSchema = z.object({
-    blocks: z.array(z.object({ blockId: z.string(), content: z.record(z.string(), z.unknown()) })),
+    blocks: z.array(z.object({ blockId: z.string(), contentJson: z.string() })),
   });
 
   const result = await llmService.call({
@@ -323,12 +367,15 @@ async function fillSectionViaLlm(
     messages: [
       {
         role: 'user',
-        content: `Intent: "${intent}"\nSection: "${section.title}"\nBlocks:\n${specList}`,
+        // Carry section.purpose too — quantitative cues ("exactly 3 KPIs", status
+        // table) live there and must reach the writer even if B3 trimmed them from
+        // the per-block hint.
+        content:
+          `Intent: "${intent}"\nSection: "${section.title}"` +
+          `${section.purpose ? `\nSection goal: ${section.purpose}` : ''}\nBlocks:\n${specList}`,
       },
     ],
     schema: OutputSchema,
-    // Bogata sekcja (kpi+chart+table 8 wierszy+callout) nie mieści się w 1500 →
-    // ucięcie → "No object generated: response did not match schema" (VTS sek. 5).
     maxTokens: 4000,
     temperature: 0.3,
     cache: false,
@@ -343,7 +390,11 @@ async function fillSectionViaLlm(
   const byId = new Map<string, unknown>();
   for (const b of rawBlocks) {
     const id = (b as { blockId?: unknown })?.blockId;
-    if (typeof id === 'string') byId.set(id, (b as { content?: unknown })?.content);
+    if (typeof id === 'string') {
+      const rawContent = (b as { contentJson?: unknown; content?: unknown })?.contentJson ??
+        (b as { content?: unknown })?.content; // back-compat if model still nests an object
+      byId.set(id, parseBlockContentJson(rawContent));
+    }
   }
   return byId;
 }
