@@ -806,6 +806,7 @@ class NotificationService {
           email_digest_frequency: string;
           type_settings: string;
         }
+      | null
       | undefined;
     try {
       row = await db.get(`SELECT * FROM notification_preferences WHERE user_id = ?`, [userId]);

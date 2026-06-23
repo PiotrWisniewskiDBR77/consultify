@@ -19,13 +19,19 @@ const ERROR_BOUNDARY_RE = /Coś poszło nie tak|Something went wrong/i;
 
 fs.mkdirSync(SHOTS_DIR, { recursive: true });
 
-const auth = JSON.parse(fs.readFileSync('/tmp/m13_e2e_auth.json', 'utf8')) as {
-  token: string;
-  org: string;
-  uid: string;
-};
-const initId = fs.readFileSync('/tmp/m13_e2e_init.txt', 'utf8').trim();
-const creds = fs.readFileSync('/tmp/m13_e2e_creds.txt', 'utf8');
+// LIVE-DEMO spec: depends on out-of-band auth/seed files in /tmp. When they are
+// absent (e.g. the default `tests/e2e/m13/` headless run), the reads below would
+// throw ENOENT at import and break collection — so guard them and skip the suite.
+const DEMO_PRESENT = fs.existsSync('/tmp/m13_e2e_auth.json');
+const auth = DEMO_PRESENT
+  ? (JSON.parse(fs.readFileSync('/tmp/m13_e2e_auth.json', 'utf8')) as {
+      token: string;
+      org: string;
+      uid: string;
+    })
+  : { token: '', org: '', uid: '' };
+const initId = DEMO_PRESENT ? fs.readFileSync('/tmp/m13_e2e_init.txt', 'utf8').trim() : '';
+const creds = DEMO_PRESENT ? fs.readFileSync('/tmp/m13_e2e_creds.txt', 'utf8') : '';
 const CRED_EMAIL = (creds.match(/EMAIL=(.+)/)?.[1] || '').trim();
 const CRED_PASS = (creds.match(/PASS=(.+)/)?.[1] || '').trim();
 const API = process.env.E2E_API_URL || 'https://demo.consultify.ai';
@@ -37,6 +43,7 @@ async function shot(page: Page, name: string) {
 test.use({ viewport: { width: 1440, height: 900 } });
 
 test.beforeEach(async ({ page }) => {
+  test.skip(!DEMO_PRESENT, 'live-demo spec — /tmp/m13_e2e_* seed files absent');
   // Auth is cookie-based (httpOnly access_token). Log in via the API on this
   // page's request context so the cookie is set for subsequent navigations.
   const res = await page.request.post(`${API}/api/auth/login`, {
