@@ -161,3 +161,29 @@
 6. **Pominięcia:** potwierdzasz listę „poza zakresem v1" (capacity/DAP/Monte Carlo/bow-tie/feature-flags)?
 
 Po akceptacji ruszam kodowo od **Fali 1 (konsolidacja)** — każdy krok z testem + weryfikacją, deploy na demo.
+
+---
+
+## 5. PLAN DOPRACOWANY (po decyzjach CEO 2026-06-23)
+
+**Decyzje CEO:** (2) **pełny EVM (PV/EV/AC)**; (3) predykcja = **heurystyka v1**; (4) what-if = **health + capacity**. Te wybory rozszerzają zakres: pełny EVM wymaga time-phased cost baseline, a what-if+capacity wymaga warstwy modelu zasobów (wcześniej „poza v1"). **Weryfikacja fundamentów (osadzenie w realiach):** istnieją już `workloadCapacityService`/`CapacityController`/`capacity.routes` + migracja `647_v4_workload_capacity` + pole `required_capacity_fte`; `executionBudgetService` (AC/actuals) + `cost_capex/opex` (BAC); **`293_initiative_milestones` istnieje** (nie surogat). → ambitne wybory są wykonalne, bo budują na istniejącej infrze.
+
+**Konsekwencja: program rośnie z 6 do 8 fal** (capacity przestaje być pominięciem, EVM pogłębiony). Wartość ląduje przyrostowo per fala.
+
+| Fala | Zakres (po decyzjach) | Buduje na / wzorzec | Status |
+|---|---|---|---|
+| **F0** | P0 defekty (bezpieczeństwo+poprawność) | — | ✅ `261569ddc1` |
+| **F1 — Konsolidacja** | 1 `executionSignalEngine` + 1 `portfolioHealthService` (SSOT, migawki) + 1 Action Queue (V8 lane) + 1 ścieżka RAID. Likwiduje 3 health-score/2 queue/4 sygnały/3 RAID. | Smartsheet Control Center / Jira Align roll-up | fundament |
+| **F2 — Baseline & PEŁNY EVM** | Schedule baseline + **time-phased cost baseline (PV)** z harmonogramu×BAC + **EV** (milestone-weighted via `initiative_milestones` lub % complete) + **AC** z `executionBudgetService` → **SPI/CPI/SV/CV/EAC/VAC** w health+kaflach+sygnałach. Gantt baseline-vs-actual + rebaseline (audyt). | MS Project+Power BI, Clarity, ANSI-748 EVM | **rozszerzony (decyzja 2)** |
+| **F3 — Metodologia do akcji** | WSJF/CoD w sorcie queue + blast-radius; risk appetite egzekwuje (`APPETITE_BREACH`+notyfikacja)+residual+SSOT scoringu; eskalacja prawdziwa (`escalated_to`+sponsor+Exception Report)+SLA per-impact+blocker-aging; tolerancje per inicjatywa | PRINCE2, ServiceNow GRC, SAFe WSJF, monday automations | — |
+| **F4 — Capacity & Resource model** | Rozbudowa `workloadCapacityService` → alokacje/dostępność per inicjatywa + capacity vs demand + resource heatmap + upgrade sygnału capacity. **Fundament pod what-if+capacity.** | Planview Resource Heat Map, Clarity supply/demand | **NOWA fala (decyzja 4)** |
+| **F5 — Stage-gating Rollout** | `rollout_stages` (pilot→limited→full→**hypercare**→closure)+entry/exit+baseline; **cross-register gate** (KPI gate-metric ∧ Risk blocker=0 ∧ sign-off→Go/Kill/Hold); cutover runbook+rollback triggers; Change Log „automatic"+RFC | ITIL/LaunchDarkly rings, Sopheon, PRINCE2, ServiceNow Change | — |
+| **F6 — Wartość + adopcja + komunikacja** | Realny handoff M14→M15 (Benefits Register: owner/KPI/baseline/target/cadence); email-worker+audyt dostarczenia (1 serwis); scheduler kadencji→auto-DRAFT; narracja AI grounded+`reportRegistry.ts`; **ADKAR roll-up** (reaktywacja z `_backup`)+**Champions**+sentiment→lane | Kaplan-Norton BRM, Power BI subs, Prosci Proxima, Kotter, Culture Amp | — |
+| **F7 — Predykcja (heurystyka) + What-if (health+capacity)** | Heurystyczna predykcja ryzyka/opóźnień na EVM(F2)+slip-trend+historii (reguły, nie ML); grounded AI triage; **what-if sandbox** wykorzystujący EVM(F2)+capacity(F4): przesuń inicjatywę→efekt na health I capacity; dry-run interwencji | Wrike Work Intelligence (wzorzec), Planview/ServiceNow scenario | **what-if rozszerzony (decyzja 4)** |
+| **F8 — Domknięcia** | PIR artefakt; 5×5 matryca+EMV+heatmap residual; server PDF (F3b); dependency cycle/cascade; assumption/issue wyłamanie | PMBOK, ITIL PIR | — |
+
+**Pozostałe pominięcia v1 (niezmienione):** DAP-telemetria (Pendo/WalkMe — wymaga in-app produktu klienta), Monte Carlo/QSRA (EMV wystarcza), bow-tie, feature-flag-runtime SDK, NL-rule builder, multi-instance federation.
+
+**Jeden otwarty punkt do rozstrzygnięcia (pełny EVM):** PV (planned value) wymaga **time-phasingu budżetu** wzdłuż harmonogramu + wyboru metody EV. Rekomendacja: BAC (`cost_capex+cost_opex`) rozłożony liniowo lub wg wag kamieni milowych (`initiative_milestones`); EV = Σ(ukończone kamienie × ich waga budżetowa) lub % complete × BAC; **baseline zamrażany przy wejściu w realizację / na bramce planowania** (PRINCE2 baseline). To jedyna nowa decyzja metodyczna — reszta buduje na istniejącej infrze.
+
+**Sekwencja wartości:** F1 (spójność — „manager widzi te same liczby") → F2 (wiarygodny pomiar EVM) → F3 (działanie wg metodologii) → F4 (zasoby) → F5 (kontrolowane wdrożenie) → F6 (wartość+adopcja domyka łańcuch) → F7 (premium: predykcja+what-if) → F8 (polish). Każda fala = osobny PR z testami + deploy demo + odbiór.
