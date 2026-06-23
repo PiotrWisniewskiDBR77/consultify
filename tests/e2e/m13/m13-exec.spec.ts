@@ -76,11 +76,40 @@ async function openTimeline(page: Page) {
   }
 }
 
-async function openSection(page: Page, re: RegExp) {
-  const nav = page.locator('nav, [data-section-nav], aside').getByText(re).first();
+async function openSection(page: Page, label: string) {
+  // Exact text match so "Tasks" doesn't accidentally hit "Timeline" etc.
+  const nav = page
+    .locator('nav, [data-section-nav], aside')
+    .getByText(label, { exact: true })
+    .first();
   if (await nav.isVisible({ timeout: 5000 }).catch(() => false)) {
     await nav.click({ force: true }).catch(() => {});
     await page.waitForTimeout(900);
+  }
+}
+
+/** Seed tasks dated in the CURRENT display month (June 2026) so the Calendar
+ *  month grid actually shows chips (seedTasks uses July → off-screen). */
+async function seedTasksJune(page: Page, token: string, initiativeId: string) {
+  const tasks = [
+    { title: 'Analiza obecnego procesu', s: '2026-06-10', d: '2026-06-13' },
+    { title: 'Projekt automatyzacji', s: '2026-06-15', d: '2026-06-20' },
+    { title: 'Wdrożenie pilotażowe', s: '2026-06-23', d: '2026-06-27' },
+  ];
+  for (const t of tasks) {
+    await page.request
+      .post(`${API_BASE_URL}/api/pmo/tasks`, {
+        headers: authHeaders(token),
+        data: {
+          title: t.title,
+          initiativeId,
+          status: 'todo',
+          startedAt: new Date(`${t.s}T09:00:00.000Z`).toISOString(),
+          dueDate: new Date(`${t.d}T09:00:00.000Z`).toISOString(),
+        },
+        timeout: 30000,
+      })
+      .catch(() => null);
   }
 }
 
@@ -153,18 +182,18 @@ test.describe('M13 — faza testowania (zdjęcia 5×30 headless)', () => {
     const { id } = await seedInitiative(page, token, title);
     await seedTasks(page, token, id);
     await openDoc(page, id, title);
-    await openSection(page, /^Tasks$|^Zadania$|Tasks.*Milestones|Zadania.*Kamienie/i);
+    await openSection(page, 'Tasks');
     await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE);
     await execShot(page, 'tasks', 'tsk-01-tasks-section');
 
     await forceTheme(page, 'dark');
     await openDoc(page, id, title);
-    await openSection(page, /^Tasks$|^Zadania$|Tasks.*Milestones|Zadania.*Kamienie/i);
+    await openSection(page, 'Tasks');
     await page.waitForTimeout(600);
     await execShot(page, 'tasks', 'tsk-29-dark');
     await forceTheme(page, 'light');
     await openDoc(page, id, title);
-    await openSection(page, /^Tasks$|^Zadania$|Tasks.*Milestones|Zadania.*Kamienie/i);
+    await openSection(page, 'Tasks');
     await page.waitForTimeout(600);
     await execShot(page, 'tasks', 'tsk-29-light');
   });
@@ -176,18 +205,18 @@ test.describe('M13 — faza testowania (zdjęcia 5×30 headless)', () => {
     await seedDecision(page, token, id, 'GO/No-Go pilotaż', 'GO_NO_GO');
     await seedDecision(page, token, id, 'Wybór dostawcy', 'GENERAL');
     await openDoc(page, id, title);
-    await openSection(page, /^Decisions$|^Decyzje$/i);
+    await openSection(page, 'Decisions');
     await expect(page.locator('body')).not.toContainText(ERROR_BOUNDARY_RE);
     await execShot(page, 'decisions', 'dec-01-decisions-section');
 
     await forceTheme(page, 'dark');
     await openDoc(page, id, title);
-    await openSection(page, /^Decisions$|^Decyzje$/i);
+    await openSection(page, 'Decisions');
     await page.waitForTimeout(600);
     await execShot(page, 'decisions', 'dec-24-dark');
     await forceTheme(page, 'light');
     await openDoc(page, id, title);
-    await openSection(page, /^Decisions$|^Decyzje$/i);
+    await openSection(page, 'Decisions');
     await page.waitForTimeout(600);
     await execShot(page, 'decisions', 'dec-24-light');
   });
@@ -196,7 +225,7 @@ test.describe('M13 — faza testowania (zdjęcia 5×30 headless)', () => {
   test('CAL Timeline → Kalendarz month/week + dark/light', async ({ page }) => {
     const title = uniqueLabel('EXEC-CAL');
     const { id } = await seedInitiative(page, token, title);
-    await seedTasks(page, token, id);
+    await seedTasksJune(page, token, id);
     await openDoc(page, id, title);
     await openTimeline(page);
     const calBtn = page.getByRole('button', { name: /^Calendar$|^Kalendarz$/i }).first();
@@ -237,7 +266,7 @@ test.describe('M13 — faza testowania (zdjęcia 5×30 headless)', () => {
   test('CAL/V Gantt (parytet źródła z Kalendarzem)', async ({ page }) => {
     const title = uniqueLabel('EXEC-GANTT');
     const { id } = await seedInitiative(page, token, title);
-    await seedTasks(page, token, id);
+    await seedTasksJune(page, token, id);
     await openDoc(page, id, title);
     await openTimeline(page);
     const ganttBtn = page.getByRole('button', { name: /^Gantt$/i }).first();
