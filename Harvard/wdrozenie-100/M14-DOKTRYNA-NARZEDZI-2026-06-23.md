@@ -111,13 +111,17 @@ Pięć filarów (przekrojowych dla wszystkich narzędzi):
 
 ---
 
-## 4. REALNE DEFEKTY (P0/P1 — do osobnych zadań, część front-loadable)
-- 🔴 **P0 bezpieczeństwo:** `DELETE /status-reports/:id` bez `organization_id` (usuwanie cross-org); `/distribute` nie sprawdza `PUBLISHED` (można rozesłać DRAFT).
-- 🔴 **`budgetHealth` policzony odwrotnie** (FE+BE) — kafel finansowy wprowadza w błąd.
-- 🔴 **SCOPE+QUALITY hardkodowane GREEN** w status-report — zawyżają RAG ogólny.
-- 🔴 **Heatmap filtr `RESOLVED` = no-op** — liczy zamknięte ryzyka jako aktywne.
-- 🔴 **`scope_reduction` mutuje baseline** (`planned_end_date +21d`) — łamie baseline integrity.
-- 🟡 `auto_escalate_above`/`linked_items` martwe; `exportReportPDF` to Markdown; `recalculate` ignoruje progi per-inicjatywa; dystrybucja/„send" nie wysyłają.
+## 4. REALNE DEFEKTY (P0/P1)
+**✅ P0 ZROBIONE (2026-06-23, commit `261569ddc1`, tsc 0, test security 5/5):**
+- ✅ `DELETE /status-reports/:id` org-scoped + 404 (był cross-tenant delete).
+- ✅ `/distribute` guard PUBLISHED → 409 (był rozsył DRAFT).
+- ✅ `budgetHealth` FE→penalizacja overrun (był odwrotny); BE→null (był data-coverage).
+- ✅ SCOPE→`NA` honest, QUALITY z realnego `openIssues` (były sztywne GREEN).
+- ✅ Heatmap filtr → `NOT IN (CLOSED,REALIZED)` (był no-op `!= 'RESOLVED'`).
+- ✅ `scope_reduction` → `forecast_end_date` (był baseline mutation; P03 §2.4.5).
+- ✅ Domknięcie F0: usunięto 7 fałszywych stub-testów `tests/components/Implementation/`.
+
+**🟡 P1 pozostałe (w falach F2/F4):** `auto_escalate_above`/`linked_items` martwe (F2/RAID); `exportReportPDF` to Markdown (F4); `recalculate` ignoruje progi per-inicjatywa (F2); dystrybucja/„send" nie wysyłają e-maili (F4).
 
 ---
 
