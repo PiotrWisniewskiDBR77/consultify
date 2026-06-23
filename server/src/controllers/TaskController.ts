@@ -17,6 +17,7 @@ import {
   parseJiraConfig,
   updateIssueFromTask,
 } from '../services/integrations/jiraOrgClient.js';
+import { notifyAssignment } from '../services/initiative/initiativeNotificationService.js';
 import NotificationService from '../services/notificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
@@ -1878,6 +1879,29 @@ export class TaskController {
         });
       } catch (evtErr: any) {
         logger.warn('[TaskController] EventBus publish failed:', evtErr?.message);
+      }
+
+      // M13/R4-E2: dedicated initiative-assignment notification when a task's
+      // assignee actually CHANGES — links the new assignee to the initiative
+      // (distinct from the generic task_updated below). Fire-and-forget, fail-safe.
+      try {
+        const nextAssignee = (updates as any).assigneeId || (updates as any).assignee_id;
+        if (
+          nextAssignee &&
+          String(nextAssignee) !== String(currentTask.assignee_id || '') &&
+          String(nextAssignee) !== String(userId) &&
+          currentTask.initiative_id
+        ) {
+          void notifyAssignment(
+            orgId,
+            String(currentTask.initiative_id),
+            String(nextAssignee),
+            'task assignee',
+            { actorId: userId }
+          );
+        }
+      } catch (asgErr: any) {
+        logger.warn('[TaskController] R4 notifyAssignment skipped:', asgErr?.message);
       }
 
       // Notifications

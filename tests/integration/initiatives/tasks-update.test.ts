@@ -22,6 +22,7 @@ const {
   mockAll,
   mockRun,
   mockNotifSend,
+  mockNotifyAssignment,
   mockActivityLog,
   mockAuditLog,
   mockPublish,
@@ -35,6 +36,7 @@ const {
     mockAll,
     mockRun,
     mockNotifSend: vi.fn(async () => 'notif-id'),
+    mockNotifyAssignment: vi.fn(async () => undefined),
     mockActivityLog: vi.fn(async () => undefined),
     mockAuditLog: vi.fn(async () => undefined),
     mockPublish: vi.fn(() => undefined),
@@ -62,6 +64,10 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
 vi.mock('../../../server/src/services/notificationService.js', () => ({
   default: { send: mockNotifSend },
   send: mockNotifSend,
+}));
+
+vi.mock('../../../server/src/services/initiative/initiativeNotificationService.js', () => ({
+  notifyAssignment: (...a: any[]) => mockNotifyAssignment(...a),
 }));
 
 vi.mock('../../../server/src/services/ActivityService.js', () => ({
@@ -165,6 +171,7 @@ describe('PMO tasks — PUT /:id updateTask (real controller)', () => {
     mockAll.mockImplementation(async () => []);
     mockRun.mockImplementation(async () => ({ changes: 1, lastID: 0 }));
     mockNotifSend.mockImplementation(async () => 'notif-id');
+    mockNotifyAssignment.mockImplementation(async () => undefined);
   });
 
   it('401 when the request carries no organization', async () => {
@@ -210,5 +217,35 @@ describe('PMO tasks — PUT /:id updateTask (real controller)', () => {
     const res = await callUpdate({ body: { unknownField: 'x' } });
     expect(findUpdateCall()).toBeNull();
     expect(res.json).toEqual(expect.objectContaining({ id: TASK_ID }));
+  });
+
+  // M13/R4-E2: assignee change on an initiative task fires notifyAssignment.
+  it('fires notifyAssignment when the assignee changes on an initiative task', async () => {
+    await callUpdate({
+      body: { assigneeId: 'new-owner' },
+      currentTask: { ...baseTask, assignee_id: 'old-owner', initiative_id: 'ini-1' },
+    });
+    expect(mockNotifyAssignment).toHaveBeenCalledTimes(1);
+    expect(mockNotifyAssignment).toHaveBeenCalledWith(
+      ORG_ID,
+      'ini-1',
+      'new-owner',
+      'task assignee',
+      expect.objectContaining({ actorId: USER_ID })
+    );
+  });
+
+  it('does NOT fire notifyAssignment when the assignee is unchanged or no initiative', async () => {
+    // same assignee → no notification
+    await callUpdate({
+      body: { assigneeId: 'old-owner' },
+      currentTask: { ...baseTask, assignee_id: 'old-owner', initiative_id: 'ini-1' },
+    });
+    // changed assignee but task is not linked to an initiative → no notification
+    await callUpdate({
+      body: { assigneeId: 'new-owner' },
+      currentTask: { ...baseTask, assignee_id: 'old-owner', initiative_id: null },
+    });
+    expect(mockNotifyAssignment).not.toHaveBeenCalled();
   });
 });
