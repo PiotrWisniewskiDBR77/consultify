@@ -23,6 +23,7 @@
 import {
   resolveDeliverableTier,
   DELIVERABLE_GENERATION_PURPOSE,
+  deliverableModelConfig,
 } from '../deliverableGenerationTier.js';
 import logger from '../../utils/Logger.js';
 
@@ -221,6 +222,104 @@ function normalizeTextContent(raw: unknown, hint: string): Record<string, unknow
   return { text };
 }
 
+// ──────────────────────────────────────────────────────────────
+// Citations (PREMIUM, sourced/diagnostic docs)
+// ──────────────────────────────────────────────────────────────
+
+/** Placeholder cytowania — fallback gdy LLM padnie / tier STANDARD. */
+function placeholderCitations(n: number): Array<{ id: string; ref: string }> {
+  return Array.from({ length: n }, (_, i) => ({ id: `c${i + 1}`, ref: `Source ${i + 1} (2026)` }));
+}
+
+/**
+ * Czy intent IMPLIKUJE dokument źródłowy/diagnostyczny (raport oparty o dane,
+ * ankietę, badanie, audyt)? Wtedy generujemy cytowania nawet bez explicit
+ * citationCount. Heurystyka leksykalna PL/EN — celowo konserwatywna.
+ */
+const SOURCED_INTENT_RE =
+  /\b(raport|report|diagnoz|diagnost|audyt|audit|ankiet|survey|badani|research|study|gotowo|readiness|analiz|analysis|metodyk|methodolog|źród|source|evidence|wnioski|findings)\w*/i;
+
+function intentImpliesSources(intent: string): boolean {
+  return typeof intent === 'string' && SOURCED_INTENT_RE.test(intent);
+}
+
+const CITATION_SYSTEM_PROMPT =
+  'You produce a SHORT structured source list ("works cited") for a business / ' +
+  'consulting report. The references must be ILLUSTRATIVE and GROUNDED in the ' +
+  "report's own subject — name the surveys, datasets, frameworks, internal reports " +
+  'or methodologies the report itself would plausibly draw on (e.g. "Ankieta ' +
+  'diagnostyczna VTS Group, fala 2, 2026 (n=131)", "Raport gotowości AI — metodyka ' +
+  '5-wymiarowa, DBR77 2026"). DO NOT invent precise external academic citations, DOI, ' +
+  'page numbers, or real third-party authors/publishers — keep them internal/illustrative ' +
+  'and tied to the intent. Match the language of the intent. Each ref is ONE concise line. ' +
+  'Reply with ONLY a JSON object: {citations:[{ref}]} (no ids — caller assigns them).';
+
+/**
+ * Generuje SENSOWNE cytowania (strukturalna lista odrębna od prozy) jednym tanim
+ * callem LLM. FAIL-OPEN: każdy błąd / pusty wynik → placeholdery o długości `want`.
+ * NIGDY nie rzuca, NIGDY nie blokuje treści.
+ */
+async function generateCitations(
+  intent: string,
+  want: number
+): Promise<Array<{ id: string; ref: string }>> {
+  if (want <= 0) return [];
+  try {
+    const { llmService } = await import('../ai/llmService.js');
+    const { z } = await import('zod');
+
+    // Schema z czystych STRINGÓW (ten sam wzorzec co content-fill) — strukturalny
+    // model (Qwen/OpenRouter, Anthropic) spełnia ją trywialnie, zero schema-fall-through.
+    const OutputSchema = z.object({
+      citations: z.array(z.object({ ref: z.string() })),
+    });
+
+    const result = await llmService.call({
+      type: 'structured',
+      modelConfig: deliverableModelConfig(),
+      systemPrompt: CITATION_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: `Report intent: "${intent}"\nProduce EXACTLY ${want} reference line(s).`,
+        },
+      ],
+      schema: OutputSchema,
+      maxTokens: 700,
+      temperature: 0.3,
+      cache: false,
+      timeoutMs: 30000,
+    });
+
+    const obj = (result as { object?: { citations?: unknown[] } })?.object;
+    const rawCitations: unknown[] = Array.isArray(obj?.citations) ? obj!.citations! : [];
+    const refs = rawCitations
+      .map((c) => String((c as { ref?: unknown })?.ref ?? '').trim())
+      .filter((r) => r.length > 0);
+
+    if (refs.length === 0) {
+      logger.warn(`${LOG_PREFIX} citation LLM returned none, placeholder fallback`, {
+        purpose: DELIVERABLE_GENERATION_PURPOSE,
+      });
+      return placeholderCitations(want);
+    }
+
+    // Przytnij do want; dopełnij placeholderami gdy model zwrócił za mało
+    // (kontrakt: ≥want strukturalnych cytowań odrębnych od prozy).
+    const out = refs.slice(0, want).map((ref, i) => ({ id: `c${i + 1}`, ref }));
+    for (let i = out.length; i < want; i++) {
+      out.push({ id: `c${i + 1}`, ref: `Source ${i + 1} (2026)` });
+    }
+    return out;
+  } catch (err) {
+    logger.warn(`${LOG_PREFIX} citation generation failed, placeholder fallback`, {
+      purpose: DELIVERABLE_GENERATION_PURPOSE,
+      err: (err as Error)?.message,
+    });
+    return placeholderCitations(want);
+  }
+}
+
 /** Dyspozytor normalizera per typ. */
 function normalizeBlockContent(
   type: ContentBlockType,
@@ -362,7 +461,7 @@ async function fillSectionViaLlm(
 
   const result = await llmService.call({
     type: 'structured',
-    modelConfig: { id: 'premium' },
+    modelConfig: deliverableModelConfig(),
     systemPrompt: CONTENT_SYSTEM_PROMPT,
     messages: [
       {
@@ -467,25 +566,34 @@ export async function generateDocumentContent(
     tier = 'STANDARD';
   }
 
-  const citations =
+  // Ile cytowań chcemy: explicit citationCount, ALBO (gdy nie podano) heurystyka —
+  // intent diagnostyczny/źródłowy → domyślnie 3 (raport oparty o dane/badanie).
+  const DEFAULT_SOURCED_CITATIONS = 3;
+  const wantCitations =
     opts?.citationCount && opts.citationCount > 0
-      ? Array.from({ length: opts.citationCount }, (_, i) => ({
-          id: `c${i + 1}`,
-          ref: `Source ${i + 1} (2026)`,
-        }))
-      : undefined;
+      ? opts.citationCount
+      : intentImpliesSources(intent)
+        ? DEFAULT_SOURCED_CITATIONS
+        : 0;
 
+  // STANDARD lub brak źródeł → zachowanie jak dotąd (placeholdery lub brak).
   if (tier !== 'PREMIUM') {
     return {
       sections: buildProseFallback(safePlan),
-      citations,
+      citations: wantCitations > 0 ? placeholderCitations(wantCitations) : undefined,
       tierUsed: 'STANDARD',
       fallbackUsed: true,
     };
   }
 
   try {
+    // KOLEJNOŚĆ: content-fill NAJPIERW (ma pierwszeństwo dostępu do LLM), DOPIERO
+    // POTEM cytowania (osobny, tani call). generateCitations jest fail-open —
+    // nigdy nie rzuca, placeholder fallback wbudowany.
     const contentById = await fillViaLlm(intent, safePlan);
+    const citations =
+      wantCitations > 0 ? await generateCitations(intent, wantCitations) : undefined;
+
     if (!contentById) {
       logger.warn(`${LOG_PREFIX} LLM returned no content, prose fallback`, {
         purpose: DELIVERABLE_GENERATION_PURPOSE,
@@ -525,7 +633,8 @@ export async function generateDocumentContent(
     });
     return {
       sections: buildProseFallback(safePlan),
-      citations,
+      // Ścieżka błędu → placeholdery (kontrakt: wantCitations strukturalnych pozycji).
+      citations: wantCitations > 0 ? placeholderCitations(wantCitations) : undefined,
       tierUsed: 'PREMIUM',
       fallbackUsed: true,
     };
