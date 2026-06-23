@@ -127,18 +127,34 @@ export async function initialize(): Promise<void> {
   }
 }
 
-// Delay initialization to allow database to initialize first
-setTimeout(() => {
-  initialize()
-    .then(() => {
-      // GAP-AI-004: Register health check probes for each LLM provider
-      registerProviderHealthChecks();
-    })
-    .catch((error) => {
-      const err = error as Error;
-      logger.warn('[CircuitBreaker] Auto-init failed:', err.message);
-    });
-}, 3000); // Wait 3 seconds for database initialization
+// Opt-in isolation seam for non-server harness scripts (e.g. deliverables live
+// pilots run under plain `node --import tsx`). When SKIP_DB_INIT=1 is set, we do
+// NOT schedule the auto-init that opens a DB pool + restores breaker state from
+// the database. This prevents the harness from (a) connecting to whatever
+// DATABASE_URL resolves to and (b) stalling on a schema-check SLOW QUERY that
+// eats the LLM abort budget. No-op for normal app boot: the flag is unset, so
+// the original behavior (3s delayed initialize) is preserved exactly.
+const SKIP_DB_INIT =
+  process.env.SKIP_DB_INIT === '1' ||
+  process.env.SKIP_DB_INIT === 'true' ||
+  process.env.SKIP_DB_INIT === 'yes';
+
+if (!SKIP_DB_INIT) {
+  // Delay initialization to allow database to initialize first
+  setTimeout(() => {
+    initialize()
+      .then(() => {
+        // GAP-AI-004: Register health check probes for each LLM provider
+        registerProviderHealthChecks();
+      })
+      .catch((error) => {
+        const err = error as Error;
+        logger.warn('[CircuitBreaker] Auto-init failed:', err.message);
+      });
+  }, 3000); // Wait 3 seconds for database initialization
+} else {
+  logger.warn('[CircuitBreaker] SKIP_DB_INIT set — skipping DB-backed auto-init (harness mode)');
+}
 
 /**
  * GAP-AI-004: Register lightweight health check functions for LLM providers.

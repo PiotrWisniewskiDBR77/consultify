@@ -188,6 +188,9 @@ async function planViaLlm(
     maxTokens: 1500,
     temperature: 0.2,
     cache: false,
+    // Duży raport (8+ sekcji) = jeden większy structured-call; 60s bywa za mało
+    // → timeout → fallback do prozy (zmierzone na doc S16). 120s daje zapas.
+    timeoutMs: 120000,
   });
 
   const obj = (result as any)?.object;

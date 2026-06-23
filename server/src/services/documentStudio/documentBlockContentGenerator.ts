@@ -273,6 +273,83 @@ function buildProseFallback(plan: StructurePlanInput): ContentSection[] {
 // ──────────────────────────────────────────────────────────────
 // LLM content fill (premium)
 // ──────────────────────────────────────────────────────────────
+const CONTENT_SYSTEM_PROMPT =
+  'You are a document content writer (McKinsey / Kimi-Claude quality). For each ' +
+  'block spec, produce its content matching the block TYPE:\n' +
+  '- kpi: {items:[{label, value, delta}]} (3-5 items)\n' +
+  '- chart: {kind: bar|line|pie|donut|scatter|area, title, xAxisLabel, yAxisLabel, series:[{label, values:number[]}]} (≤6 series)\n' +
+  '- table: {rows:[{cells:{colKey:{value}}}]}\n' +
+  '- callout: {text, tone: info|warning|danger|success}\n' +
+  '- bulletList/numberedList: {items:[string]}\n' +
+  '- quote: {text, author}\n' +
+  '- text/heading: {text}\n' +
+  'Reply with ONLY a JSON object: {blocks:[{blockId, content}]}.';
+
+/**
+ * Wypełnia treścią bloki JEDNEJ sekcji (jeden mały call LLM). Zwraca mapę
+ * blockId→content lub `null` gdy LLM nie dał użytecznego wyniku.
+ *
+ * DLACZEGO per-sekcja: wcześniej był JEDEN call dla WSZYSTKICH bloków dokumentu.
+ * Przy bogatym, wielosekcyjnym dokumencie (kpi+chart+table+callout×N) ten call
+ * przekraczał 60s abort (zmierzone: 247s → timeout → fallback do prozy). Podział
+ * per sekcja = każdy call mały i szybki, w budżecie; porażka jednej sekcji
+ * degraduje tylko ją, nie cały dokument.
+ */
+async function fillSectionViaLlm(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  llmService: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  z: any,
+  intent: string,
+  section: StructurePlanInput['sections'][number],
+  sectionIndex: number
+): Promise<Map<string, unknown> | null> {
+  const blockSpecs = section.blocks.map((b, bi) => ({
+    blockId: `b-${sectionIndex}-${bi}`,
+    type: mapType(b.type),
+    hint: b.hint,
+  }));
+  const specList = blockSpecs.map((b) => `- ${b.blockId} (${b.type}): ${b.hint}`).join('\n');
+
+  const OutputSchema = z.object({
+    blocks: z.array(z.object({ blockId: z.string(), content: z.record(z.string(), z.unknown()) })),
+  });
+
+  const result = await llmService.call({
+    type: 'structured',
+    modelConfig: { id: 'premium' },
+    systemPrompt: CONTENT_SYSTEM_PROMPT,
+    messages: [
+      {
+        role: 'user',
+        content: `Intent: "${intent}"\nSection: "${section.title}"\nBlocks:\n${specList}`,
+      },
+    ],
+    schema: OutputSchema,
+    maxTokens: 1500,
+    temperature: 0.3,
+    cache: false,
+    // Bogata sekcja (kpi+chart+table+callout) bywa wolna; 60s czasem za mało.
+    timeoutMs: 120000,
+  });
+
+  const obj = (result as { object?: { blocks?: unknown[] } })?.object;
+  const rawBlocks: unknown[] = Array.isArray(obj?.blocks) ? obj!.blocks! : [];
+  if (rawBlocks.length === 0) return null;
+
+  const byId = new Map<string, unknown>();
+  for (const b of rawBlocks) {
+    const id = (b as { blockId?: unknown })?.blockId;
+    if (typeof id === 'string') byId.set(id, (b as { content?: unknown })?.content);
+  }
+  return byId;
+}
+
+/**
+ * Wypełnia plan treścią — JEDEN call LLM per sekcja, RÓWNOLEGLE (Promise.allSettled).
+ * Łączy wyniki; gdy CHOĆ JEDNA sekcja się powiodła → zwraca mapę (reszta bloków
+ * dostanie default w normalizerze). Gdy WSZYSTKIE padły → `null` (caller → proza).
+ */
 async function fillViaLlm(
   intent: string,
   plan: StructurePlanInput
@@ -280,55 +357,37 @@ async function fillViaLlm(
   const { llmService } = await import('../ai/llmService.js');
   const { z } = await import('zod');
 
-  // Spłaszcz plan do listy bloków z blockId — LLM wypełnia content per blockId.
-  const blockSpecs: Array<{ blockId: string; type: ContentBlockType; hint: string }> = [];
-  plan.sections.forEach((s, si) => {
-    s.blocks.forEach((b, bi) => {
-      blockSpecs.push({ blockId: `b-${si}-${bi}`, type: mapType(b.type), hint: b.hint });
+  // Batchuj po CONCURRENCY sekcji naraz (nie wszystkie równolegle). Powód: przy
+  // dużym raporcie (8+ sekcji) jednoczesne wszystkie calle mogą spiętrzyć ≥5
+  // wolnych/abort → otwarcie circuit-breakera anthropic → reszta pada → cały
+  // dokument do prozy (zmierzone na doc S16). Batch 3 trzyma równoległość małą,
+  // a sukcesy między batchami resetują licznik błędów breakera.
+  const CONCURRENCY = 3;
+  const merged = new Map<string, unknown>();
+  let anyOk = false;
+
+  for (let start = 0; start < plan.sections.length; start += CONCURRENCY) {
+    const batch = plan.sections.slice(start, start + CONCURRENCY);
+    const settled = await Promise.allSettled(
+      batch.map((s, bi) => fillSectionViaLlm(llmService, z, intent, s, start + bi))
+    );
+    settled.forEach((res, bi) => {
+      const si = start + bi;
+      if (res.status === 'fulfilled' && res.value && res.value.size > 0) {
+        anyOk = true;
+        for (const [k, v] of res.value) merged.set(k, v);
+      } else {
+        const reason =
+          res.status === 'rejected' ? (res.reason as Error)?.message : 'empty result';
+        logger.warn(`${LOG_PREFIX} section ${si} content failed, will default its blocks`, {
+          purpose: DELIVERABLE_GENERATION_PURPOSE,
+          reason,
+        });
+      }
     });
-  });
-
-  const specList = blockSpecs
-    .map((b) => `- ${b.blockId} (${b.type}): ${b.hint}`)
-    .join('\n');
-
-  const systemPrompt =
-    'You are a document content writer (McKinsey / Kimi-Claude quality). For each ' +
-    'block spec, produce its content matching the block TYPE:\n' +
-    '- kpi: {items:[{label, value, delta}]} (3-5 items)\n' +
-    '- chart: {kind: bar|line|pie|donut|scatter|area, title, xAxisLabel, yAxisLabel, series:[{label, values:number[]}]} (≤6 series)\n' +
-    '- table: {rows:[{cells:{colKey:{value}}}]}\n' +
-    '- callout: {text, tone: info|warning|danger|success}\n' +
-    '- bulletList/numberedList: {items:[string]}\n' +
-    '- quote: {text, author}\n' +
-    '- text/heading: {text}\n' +
-    'Reply with ONLY a JSON object: {blocks:[{blockId, content}]}.';
-
-  const OutputSchema = z.object({
-    blocks: z.array(z.object({ blockId: z.string(), content: z.record(z.string(), z.unknown()) })),
-  });
-
-  const result = await (llmService as any).call({
-    type: 'structured',
-    modelConfig: { id: 'premium' },
-    systemPrompt,
-    messages: [{ role: 'user', content: `Intent: "${intent}"\nBlocks:\n${specList}` }],
-    schema: OutputSchema,
-    maxTokens: 3000,
-    temperature: 0.3,
-    cache: false,
-  });
-
-  const obj = (result as any)?.object;
-  const rawBlocks: unknown[] = Array.isArray(obj?.blocks) ? obj.blocks : [];
-  if (rawBlocks.length === 0) return null;
-
-  const byId = new Map<string, unknown>();
-  for (const b of rawBlocks) {
-    const id = (b as any)?.blockId;
-    if (typeof id === 'string') byId.set(id, (b as any)?.content);
   }
-  return byId;
+
+  return anyOk ? merged : null;
 }
 
 // ──────────────────────────────────────────────────────────────

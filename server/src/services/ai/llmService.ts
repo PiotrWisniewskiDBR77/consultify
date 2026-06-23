@@ -302,6 +302,11 @@ function getProviderSync(modelConfig: ModelConfig) {
       }
       return createAnthropic({
         apiKey: envAnthropic || effectiveApiKey,
+        // @ai-sdk/anthropic v3 default base URL omits the `/v1` segment, so
+        // env-key calls hit https://api.anthropic.com/messages → 404 → the SDK
+        // surfaces it as "Invalid JSON response". Pin the correct base (honoring
+        // a DB/endpoint override) the same way deepseek/zai/qwen do below.
+        baseURL: normalizedBaseUrl || 'https://api.anthropic.com/v1',
       });
     }
     case 'deepseek':
@@ -1276,6 +1281,12 @@ export class LLMService {
       ...messages.filter((m) => m.role !== 'system'),
     ];
 
+    // Honor an explicit per-call timeout (large deliverables — e.g. an 8-section
+    // report structure or rich per-section content — legitimately exceed 60s).
+    // Default unchanged at 60s when the caller does not override.
+    const structuredTimeoutMs =
+      typeof params.timeoutMs === 'number' && params.timeoutMs > 0 ? params.timeoutMs : 60000;
+
     const result = await withGuards(
       providerId,
       async () =>
@@ -1283,10 +1294,10 @@ export class LLMService {
           model,
           schema: zodSchema,
           messages: formattedMessages as any,
-          abortSignal: AbortSignal.timeout(60000),
+          abortSignal: AbortSignal.timeout(structuredTimeoutMs),
         }),
       {
-        timeout: 60000,
+        timeout: structuredTimeoutMs,
         onRetry: (attempt: number) => {
           aiLogger.info(
             'LLMService',
