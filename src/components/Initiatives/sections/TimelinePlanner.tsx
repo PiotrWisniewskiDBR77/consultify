@@ -399,6 +399,9 @@ export interface UseTimelineRowsOptions {
   tasks: TaskItem[];
   milestones: TimelineMilestone[];
   isPolish: boolean;
+  /** task_dependencies (org-persisted) → derives task rows' dependsOnId so the
+   *  Gantt draws dependency connectors without manual per-row editing. */
+  dependencies?: Array<{ sourceTaskId?: string; taskId?: string; direction?: string }>;
 }
 
 export function useTimelineRows({
@@ -407,11 +410,25 @@ export function useTimelineRows({
   tasks,
   milestones,
   isPolish,
+  dependencies = [],
 }: UseTimelineRowsOptions) {
   const { t } = useTranslation();
   const [extraRows, setExtraRows] = useState<TimelineRow[]>([]);
   const [rowOverrides, setRowOverrides] = useState<Record<string, Partial<TimelineRow>>>({});
   const [manualOrder, setManualOrder] = useState<string[]>([]);
+
+  // task_dependencies → predecessor per successor task. The endpoint returns both
+  // directions; the 'successor' rows carry {sourceTaskId: predecessor, taskId: successor}.
+  const predBySuccessor = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const d of dependencies || []) {
+      if (d?.direction && d.direction !== 'successor') continue;
+      const succ = d?.taskId != null ? String(d.taskId) : '';
+      const pred = d?.sourceTaskId != null ? String(d.sourceTaskId) : '';
+      if (succ && pred && succ !== pred && !m.has(succ)) m.set(succ, pred);
+    }
+    return m;
+  }, [dependencies]);
 
   const rawRows = useMemo<TimelineRow[]>(() => {
     const result: TimelineRow[] = [];
@@ -429,6 +446,7 @@ export function useTimelineRows({
 
     // Tasks from context
     tasks.forEach((t, idx) => {
+      const predId = predBySuccessor.get(String(t.id));
       result.push({
         id: `task-${t.id}`,
         type: 'task',
@@ -440,6 +458,8 @@ export function useTimelineRows({
         assigneeName: t.assigneeName,
         linkedTaskId: t.id,
         estimatedHours: t.estimatedHours ?? null,
+        // Derived from task_dependencies; a manual rowOverride (below) still wins.
+        dependsOnId: predId ? `task-${predId}` : null,
         schedulingMode: 'fixed_date',
         order: 100 + idx,
       });
@@ -509,7 +529,17 @@ export function useTimelineRows({
     ordered.push(...middle);
     if (finishRow) ordered.push(finishRow);
     return ordered;
-  }, [plannedStart, plannedEnd, tasks, milestones, extraRows, t, manualOrder, rowOverrides]);
+  }, [
+    plannedStart,
+    plannedEnd,
+    tasks,
+    milestones,
+    extraRows,
+    t,
+    manualOrder,
+    rowOverrides,
+    predBySuccessor,
+  ]);
 
   // Apply cascade recalculation
   const rows = useMemo(() => recalculateDates(rawRows), [rawRows]);
@@ -4046,6 +4076,8 @@ export interface TimelinePlannerProps {
   editable: boolean;
   onUpdateStart: (date: string | null) => void;
   onUpdateEnd: (date: string | null) => void;
+  /** task_dependencies → Gantt dependency connectors (derives row.dependsOnId). */
+  dependencies?: Array<{ sourceTaskId?: string; taskId?: string; direction?: string }>;
   /** Ref to expose openAddPanel to parent */
   handleRef?: React.MutableRefObject<TimelinePlannerHandle | null>;
 }
@@ -4061,6 +4093,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
   editable,
   onUpdateStart,
   onUpdateEnd,
+  dependencies = [],
   handleRef,
 }) => {
   const { t } = useTranslation();
@@ -4094,6 +4127,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
     tasks,
     milestones,
     isPolish,
+    dependencies,
   });
 
   // Expose openAddPanel to parent via ref

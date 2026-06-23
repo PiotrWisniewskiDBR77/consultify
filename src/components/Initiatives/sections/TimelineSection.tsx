@@ -1929,6 +1929,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             editable={true}
             onUpdateStart={(d) => setStartDate(d)}
             onUpdateEnd={(d) => setEndDate(d)}
+            dependencies={dependencies as any}
             handleRef={plannerRef}
           />
         </>
@@ -1984,6 +1985,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             editable={true}
             onUpdateStart={(d) => setStartDate(d)}
             onUpdateEnd={(d) => setEndDate(d)}
+            dependencies={dependencies as any}
             handleRef={plannerRef}
           />
         </>

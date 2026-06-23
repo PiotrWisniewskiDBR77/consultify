@@ -263,50 +263,47 @@ test.describe('M13 — szeroka analiza real-data (local FE → demo BE)', () => 
     await shot(page, 'decisions', 'real-dec-light');
   });
 
-  // ───── GANTT: asercja DOM linii zależności + ścieżki krytycznej ─────
-  // FIXME (M13/V1 architektura): linie zależności NIE renderują end-to-end mimo
-  // poprawnych danych. Root: DWA Gantty + DWA źródła zależności —
-  //   (a) TimelinePlanner.TimelineGanttView (domyślny widok) rysuje z ręcznego
-  //       `row.dependsOnId` (schedulingMode 'after_previous'), NIE czyta task_dependencies;
-  //   (b) InitiativeGantt (scheduleView='gantt', moje funkcje V1) czyta kontekst
-  //       `dependencies` (task_dependencies) — naprawione tu (sourceTaskId + dedup),
-  //       ale to nie jest domyślny widok.
-  // Backend D1 (task-dependencies zwraca realne ID) NAPRAWIONY+zdeployowany. Pełny
-  // wizual wymaga decyzji: skonsolidować Gantty / wpiąć task_dependencies do
-  // TimelinePlanner.rows.dependsOnId. Patrz _ANALIZA_REALDATA_M13_2026-06-23.md §D1b.
-  test.fixme(
-    true,
-    'Gantt deps-lines: architektoniczny rozjazd dwóch Ganttów — wymaga konsolidacji (D1b)'
-  );
+  // ───── GANTT: asercja DOM linii zależności + ścieżki krytycznej (D1b ROZWIĄZANE) ─────
+  // Po D1 (backend: task-dependencies zwraca realne ID) + D1b opcja A
+  // (TimelinePlanner.rows.dependsOnId wyprowadzony z task_dependencies) + fix
+  // ganttDependencies (sourceTaskId+dedup) — OBA Gantty rysują linie z realnych
+  // danych: TimelinePlanner (`<path stroke-dasharray="4 2">`) ORAZ InitiativeGantt
+  // (`stroke #94a3b8|#f43f5e` + ścieżka krytyczna `.ring-rose-400`).
   test('Gantt — linie zależności + ścieżka krytyczna RENDERUJĄ (DOM, real-data)', async ({
     page,
   }) => {
     await openDoc(page);
     await openSection(page, 'Timeline');
-    const gantt = page.getByRole('button', { name: /^Gantt$/i }).first();
-    await gantt.waitFor({ state: 'visible', timeout: 15000 });
-    await gantt.click({ force: true });
-    await page.waitForTimeout(2500); // proxy latency: dependencies fetch + render
+    // Click every "Gantt" toggle (TimelinePlanner Table↔Gantt + scheduleView Calendar↔Gantt).
+    const gbtns = page.getByRole('button', { name: /^Gantt$/i });
+    const n = await gbtns.count();
+    for (let i = 0; i < n; i += 1) {
+      await gbtns
+        .nth(i)
+        .click({ force: true })
+        .catch(() => {});
+      await page.waitForTimeout(1200); // proxy latency: dependencies fetch + render
+    }
     const counts = await page.evaluate(() => {
       const paths = Array.from(document.querySelectorAll('svg path')) as SVGPathElement[];
-      const depPaths = paths.filter((p) => {
+      const plannerDep = paths.filter(
+        (p) => (p.getAttribute('stroke-dasharray') || '') === '4 2'
+      ).length;
+      const igDep = paths.filter((p) => {
         const s = (p.getAttribute('stroke') || '').toLowerCase();
         return s === '#94a3b8' || s === '#f43f5e';
-      });
-      const critPaths = depPaths.filter(
-        (p) => (p.getAttribute('stroke') || '').toLowerCase() === '#f43f5e'
-      );
+      }).length;
       const critRings = document.querySelectorAll('.ring-rose-400').length;
-      return { depLines: depPaths.length, critLines: critPaths.length, critRings };
+      return { plannerDep, igDep, critRings };
     });
     // eslint-disable-next-line no-console
     console.log('[GANTT-DOM]', JSON.stringify(counts));
     await shot(page, 'calendar', 'real-gantt-deps-critical');
-    expect(counts.depLines, 'linie zależności (SVG path) renderują').toBeGreaterThan(0);
     expect(
-      counts.critRings + counts.critLines,
-      'ścieżka krytyczna wyróżniona (ring/stroke rose)'
+      counts.plannerDep + counts.igDep,
+      'linie zależności renderują (TimelinePlanner lub InitiativeGantt)'
     ).toBeGreaterThan(0);
+    expect(counts.critRings, 'ścieżka krytyczna wyróżniona (ring-rose)').toBeGreaterThan(0);
   });
 
   // ───── NOTYFIKACJE: centrum in-app ─────

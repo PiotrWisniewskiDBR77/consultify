@@ -26,7 +26,12 @@
 - **Root-cause (zbadany, nie zgadywany):** `task.dependsOnId` z seedu nie zapisał się; dependencies tworzone przez `POST /tasks/:id/dependencies` (201 OK), ALE `GET /:id/task-dependencies` zwracał `sourceTaskId:"undefined"`, `taskId:"undefined"` — **node-pg zwija niecytowane aliasy SQL do lowercase** (`as fromTaskId`→`fromtaskid`), a `getInitiativeTaskDependenciesRead` czytał `row.fromTaskId` (camelCase) → `undefined` → `String(undefined)="undefined"`. FE dostawał śmieci → `ganttDependencies=[]` → zero linii. Klasyk [[finding_pg_bigint_jsonb_serialization]].
 - **Status:** ✅ **NAPRAWIONE** — `planningPortfolioReadService.getInitiativeTaskDependenciesRead` czyta case-robust (`row[k] ?? row[k.toLowerCase()]`); 3 testy (Postgres-lowercase + SQLite-camelCase + org-scope). **Wizualny dowód na demo wymaga re-deployu** (demo ma stary build) — po deployu Gantt pokaże linie+ścieżkę (dane zależności już zasiane). Sama funkcja V1 (SVG+computeCriticalPath) potwierdzona component-testami.
 
-### 🟠 D1b — Gantt linie zależności: architektoniczny rozjazd FE (po deployu D1 nadal niewidoczne) → DECYZJA
+### ✅ D1b — Gantt linie zależności: architektoniczny rozjazd FE → ROZWIĄZANE (opcja A)
+- **Naprawione 2026-06-23 (CTO, opcja A):** `TimelinePlanner` (główny widok) dostał prop `dependencies` i wyprowadza `row.dependsOnId` z `task_dependencies` (mapa successor→predecessor; ręczne `rowOverrides` nadal wygrywają). Plus naprawiony `ganttDependencies` w InitiativeGantt (`sourceTaskId`+dedup).
+- **Dowód end-to-end (DOM, realne dane demo):** `{plannerDep:3, igDep:3, critRings:3}` — OBA Gantty rysują 3 linie zależności (Analiza→Projekt→Wdrożenie/Szkolenie) + ścieżka krytyczna 3 węzły. Test `m13-demo-proxy` „linie zależności…" ZIELONY. Regresja: 24/24 (Gantt+TimelineSection+computeCriticalPath). tsc clean.
+- Zrzut: `real-gantt-deps-FIXED.png`. (Linie cienkie/subtelne przy pełnej skali strony — to konektory `stroke-dasharray`/`#94a3b8`, nie bary.)
+
+### (historyczne) 🟠 D1b — diagnoza rozjazdu (przed naprawą)
 - **Co odkryte po deployu D1:** endpoint `task-dependencies` zwraca już realne ID (D1 ✅, zweryfikowane live na demo: 6 wpisów z `sourceTaskId/taskId` 4 tasków flagowej). MIMO TO linie nie renderują (DOM: 0 `<path stroke=#94a3b8|#f43f5e>`, 0 `ring-rose-400`).
 - **Root-cause (zdiagnozowany do dna):** **DWA Gantty + DWA źródła zależności w FE:**
   - `TimelinePlanner.TimelineGanttView` (`TimelinePlanner.tsx:3920`) = **główny widok** — rysuje linie z **ręcznego `row.dependsOnId`** (schedulingMode `after_previous`, edytor Table). **NIE czyta** kontekstu `dependencies`/task_dependencies.
