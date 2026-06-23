@@ -97,8 +97,9 @@ for (const s of content.sections as any[]) {
 // 3) TABLE
 console.log('Generuję TABLE…');
 const table: any = await generateTableSchema(TABLE_INTENT, { orgId: 'vts-golden', preferPremium: true });
-out.table = { tierUsed: table.tierUsed, fallbackUsed: table.fallbackUsed, fields: table.fields, seedRows: table.seedRows };
+out.table = { tierUsed: table.tierUsed, fallbackUsed: table.fallbackUsed, fields: table.fields, seedRows: table.seedRows, conditionalFormatting: table.conditionalFormatting || [], hasFormulas: !!table.hasFormulas };
 md += `## 3) TABELA WYNIKÓW (table) — ${table.fields.length} pól · ${(table.seedRows || []).length} wierszy seed · tier ${table.tierUsed}\n\n`;
+md += `**Conditional formatting (${(table.conditionalFormatting || []).length} reguł):** ${(table.conditionalFormatting || []).map((cf: any) => `${cf.ref}→[${cf.rules.map((r: any) => r.type).join(',')}]`).join(' · ') || '(brak)'}\n\n`;
 md += `| ${table.fields.map((f: any) => f.header).join(' | ')} |\n| ${table.fields.map(() => '---').join(' | ')} |\n`;
 for (const row of (table.seedRows || []).slice(0, 8)) {
   md += `| ${table.fields.map((f: any) => { const v = (row as any)[f.key]; return typeof v === 'object' ? JSON.stringify(v) : (v ?? ''); }).join(' | ')} |\n`;

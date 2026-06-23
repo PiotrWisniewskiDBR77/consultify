@@ -11,6 +11,7 @@ import logger from '../../utils/Logger.js';
 import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
 import type {
   CellStyle,
+  ColumnDef,
   ConditionalFormattingBlock,
   ConditionalFormattingRule,
   WorkbookSchema,
@@ -89,6 +90,7 @@ const TYPE_FORMATS: Record<string, string> = {
   percent: '0.00%',
   number: '#,##0.##',
   date: 'YYYY-MM-DD',
+  rating: '0',
 };
 
 // ---------------------------------------------------------------------------
@@ -255,7 +257,12 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
         if (cellDef.formula) {
           cell.value = { formula: cellDef.formula } as ExcelJS.CellFormulaValue;
         } else if (cellDef.value !== undefined && cellDef.value !== null) {
-          if (col.type === 'number' || col.type === 'currency' || col.type === 'percent') {
+          if (
+            col.type === 'number' ||
+            col.type === 'currency' ||
+            col.type === 'percent' ||
+            col.type === 'rating'
+          ) {
             const num =
               typeof cellDef.value === 'number' ? cellDef.value : parseFloat(String(cellDef.value));
             cell.value = isNaN(num) ? cellDef.value : num;
@@ -330,6 +337,218 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
 
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);
+}
+
+// ---------------------------------------------------------------------------
+// B4 — Premium TableSchema → WorkbookSchema mapper (full-fidelity bridge)
+//
+// The premium table generator (tableSchemaGeneratorService) emits a
+// `GeneratedTableSchema`: typed `fields[]` (singleSelect with hex `options[]`,
+// number/currency/percent/date/rating), `seedRows[]` keyed by field.key,
+// `conditionalFormatting[]` (already A1-resolved by-fieldKey), `hasFormulas`,
+// and optionally `sheets[]` (multi-sheet workbook).
+//
+// This mapper turns that into a `WorkbookSchema` with NO loss of fidelity:
+//   • field.type            → column.type (Airtable types collapsed to the
+//                             6 Excel-native value kinds; see TABLE_TYPE_MAP)
+//   • field.options[].color → per-CELL solid fill (Airtable-style colored
+//                             single/multi-select chips), matched by label
+//   • seed value "=…"        → cell.formula (Excel formula, not a literal)
+//   • conditionalFormatting → sheet.conditionalFormatting (dataBar/colorScale/
+//                             iconSet/cellIs survive verbatim into the .xlsx)
+//   • sheets[]              → one WorkbookSchema sheet per table sheet
+//
+// Without this bridge each premium table would be flattened to plain text
+// (the legacy SheetJS facade) — colors, types, and CF stripped.
+// ---------------------------------------------------------------------------
+
+/** A subset of the GeneratedTableSchema contract the mapper consumes. */
+export interface TableFieldOption {
+  label: string;
+  color?: string;
+}
+export interface TableField {
+  key: string;
+  header: string;
+  type: string;
+  options?: TableFieldOption[];
+}
+export interface TableCfBlock {
+  ref: string;
+  rules: Array<{ type: string; [k: string]: unknown }>;
+}
+export interface TableSchemaLike {
+  fields: TableField[];
+  seedRows: Record<string, unknown>[];
+  conditionalFormatting?: TableCfBlock[];
+  hasFormulas?: boolean;
+  sheets?: Array<{
+    name?: string;
+    fields: TableField[];
+    seedRows: Record<string, unknown>[];
+    conditionalFormatting?: TableCfBlock[];
+    hasFormulas?: boolean;
+  }>;
+}
+
+/**
+ * Table Platform field type → WorkbookSchema column type. Excel has no first
+ * class select/url/email/phone, so those collapse to the nearest native value
+ * kind. The colored-chip semantics of a select are preserved separately, as a
+ * per-cell fill (see resolveSelectFill), so collapsing the *type* to text is
+ * lossless for the value, and the color is carried by the fill.
+ */
+const TABLE_TYPE_MAP: Record<string, NonNullable<ColumnDef['type']>> = {
+  singleLineText: 'text',
+  longText: 'text',
+  url: 'text',
+  email: 'text',
+  phone: 'text',
+  singleSelect: 'text',
+  multiSelect: 'text',
+  number: 'number',
+  currency: 'currency',
+  percent: 'percent',
+  date: 'date',
+  checkbox: 'boolean',
+  rating: 'rating',
+};
+
+function mapTableColumnType(
+  fieldType: string
+): NonNullable<ColumnDef['type']> {
+  return TABLE_TYPE_MAP[fieldType] ?? 'text';
+}
+
+/** Normalize a label for tolerant select-option matching. */
+function normalizeLabel(v: unknown): string {
+  return String(v ?? '').trim().toLowerCase();
+}
+
+/**
+ * Build a label→hex lookup for select-type fields so each seed cell whose value
+ * matches an option gets that option's color as its cell fill.
+ */
+function buildSelectColorIndex(
+  fields: TableField[]
+): Map<string, Map<string, string>> {
+  const idx = new Map<string, Map<string, string>>();
+  for (const f of fields) {
+    if ((f.type === 'singleSelect' || f.type === 'multiSelect') && f.options?.length) {
+      const m = new Map<string, string>();
+      for (const opt of f.options) {
+        if (opt.color) m.set(normalizeLabel(opt.label), opt.color);
+      }
+      if (m.size > 0) idx.set(f.key, m);
+    }
+  }
+  return idx;
+}
+
+/**
+ * Map a single GeneratedTableSchema sheet (fields + rows + CF) to a
+ * WorkbookSchema `Sheet`. Exposed for unit tests; not domain-specific.
+ */
+function mapTableSheet(
+  name: string,
+  fields: TableField[],
+  seedRows: Record<string, unknown>[],
+  conditionalFormatting?: TableCfBlock[]
+): WorkbookSchema['sheets'][number] {
+  const selectColors = buildSelectColorIndex(fields);
+
+  const columns = fields.map((f) => ({
+    key: f.key,
+    header: f.header,
+    type: mapTableColumnType(f.type),
+  }));
+
+  const rows = seedRows.map((rawRow) => {
+    const cells: Record<string, { value?: any; formula?: string; style?: CellStyle }> = {};
+    for (const f of fields) {
+      const raw = rawRow[f.key];
+      if (raw === undefined || raw === null) continue;
+
+      const cell: { value?: any; formula?: string; style?: CellStyle } = {};
+
+      // Excel formula passthrough (calculated columns).
+      if (typeof raw === 'string' && raw.trim().startsWith('=')) {
+        cell.formula = raw.trim();
+      } else {
+        cell.value = raw as any;
+      }
+
+      // Airtable-style colored chip: select value → solid cell fill.
+      const colorMap = selectColors.get(f.key);
+      if (colorMap && cell.value !== undefined) {
+        const hex = colorMap.get(normalizeLabel(cell.value));
+        if (hex) {
+          // White text reads on the saturated default palette; keep it simple
+          // and contrast-safe.
+          cell.style = { bgColor: hex, fontColor: 'FFFFFF', bold: true, alignment: 'center' };
+        }
+      }
+
+      cells[f.key] = cell;
+    }
+    return { cells };
+  });
+
+  // CF blocks pass through verbatim — they are already A1-resolved and shaped
+  // exactly like ConditionalFormattingRule (dataBar/colorScale/iconSet/cellIs).
+  const cf = (conditionalFormatting ?? []).map((b) => ({
+    ref: b.ref,
+    rules: b.rules as any,
+  }));
+
+  return {
+    name: name.slice(0, 31),
+    columns,
+    rows,
+    freezeRow: 1,
+    alternateRowColor: 'F2F7FB',
+    headerStyle: {
+      bold: true,
+      fontColor: 'FFFFFF',
+      bgColor: '4472C4',
+      alignment: 'center',
+      border: 'thin',
+    },
+    ...(cf.length > 0 ? { conditionalFormatting: cf } : {}),
+  };
+}
+
+/**
+ * Convert a premium GeneratedTableSchema (B4) into a full-fidelity
+ * WorkbookSchema ready for `buildWorkbookBuffer`. Honors multi-sheet output.
+ */
+export function tableSchemaToWorkbook(
+  table: TableSchemaLike,
+  meta: { title: string; author?: string } = { title: 'Table' }
+): WorkbookSchema {
+  let sheets: WorkbookSchema['sheets'];
+
+  if (table.sheets && table.sheets.length > 0) {
+    const seenNames = new Set<string>();
+    sheets = table.sheets.map((s, i) => {
+      let name = (s.name?.trim() || `Sheet ${i + 1}`).slice(0, 31);
+      // ExcelJS rejects duplicate sheet names — disambiguate defensively.
+      let n = 2;
+      while (seenNames.has(name.toLowerCase())) {
+        name = `${name.slice(0, 28)} ${n++}`;
+      }
+      seenNames.add(name.toLowerCase());
+      return mapTableSheet(name, s.fields, s.seedRows, s.conditionalFormatting);
+    });
+  } else {
+    sheets = [mapTableSheet('Sheet1', table.fields, table.seedRows, table.conditionalFormatting)];
+  }
+
+  return {
+    title: meta.title,
+    author: meta.author ?? 'Consultify',
+    sheets,
+  };
 }
 
 // ---------------------------------------------------------------------------

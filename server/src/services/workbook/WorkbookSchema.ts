@@ -42,7 +42,9 @@ export const ColumnDefSchema = z.object({
   key: z.string(),
   header: z.string(),
   width: z.number().optional(),
-  type: z.enum(['text', 'number', 'currency', 'percent', 'date', 'boolean']).optional(),
+  type: z
+    .enum(['text', 'number', 'currency', 'percent', 'date', 'boolean', 'rating'])
+    .optional(),
   numberFormat: z.string().optional(),
   style: CellStyleSchema.optional(),
 });
