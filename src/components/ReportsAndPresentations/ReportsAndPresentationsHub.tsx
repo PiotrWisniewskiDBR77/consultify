@@ -1118,6 +1118,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onClearFilters={handleClearFilters}
         onNewItem={activeTab === 'outputs_sheets' ? undefined : handleNewItem}
         newItemLabel={ctaLabels[activeTab]}
+        newItemTestId="outputs-new-btn"
         availableViewModes={['table', 'grid']}
         rightControls={rightControls}
         commandRowContent={commandRowContent}

@@ -107,6 +107,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                 <>
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-1">
                     <button
+                      data-testid="deck-regenerate-slide"
                       onClick={(e) => {
                         e.stopPropagation();
                         runRewrite(index);

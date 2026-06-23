@@ -214,6 +214,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
       ref={overlayRef}
       role="dialog"
       aria-modal="true"
+      data-testid="launcher-modal"
       aria-labelledby="outputs-launcher-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => {
@@ -226,6 +227,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
             {selectedType && (
               <button
                 onClick={() => setSelectedType(null)}
+                data-testid="launcher-back"
                 className="p-1 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
                 aria-label={t('rap.outputs.launcher.back', 'Back')}
               >
@@ -243,6 +245,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            data-testid="launcher-close"
             className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
             aria-label={t('common.close', 'Close')}
           >
@@ -263,6 +266,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                     <button
                       key={tile.type}
                       type="button"
+                      data-testid={`launcher-type-${tile.type}`}
                       onClick={() => setSelectedType(tile.type)}
                       aria-label={label}
                       className="group flex flex-col items-start gap-3 w-full p-4 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
@@ -295,6 +299,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
               <div className="mb-4 flex gap-2">
                 <input
                   type="text"
+                  data-testid="launcher-suggest-input"
                   value={intentInput}
                   onChange={(e) => setIntentInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSuggest(); }}
@@ -304,6 +309,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                 />
                 <button
                   type="button"
+                  data-testid="launcher-suggest-btn"
                   onClick={handleSuggest}
                   disabled={suggestLoading}
                   aria-label={t('rap.outputs.launcher.suggestBtn', 'Teresa suggests')}
@@ -360,6 +366,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                   {/* Blank — zawsze pierwszy */}
                   <button
                     type="button"
+                    data-testid="launcher-template-blank"
                     onClick={() => handlePickTemplate('blank')}
                     aria-label={t(BLANK_CARD.labelKey, BLANK_CARD.labelFallback)}
                     className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"
@@ -381,6 +388,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                       <button
                         key={tpl.id}
                         type="button"
+                        data-testid={`launcher-template-${tpl.id}`}
                         onClick={() => handlePickTemplate(tpl.id)}
                         aria-label={tpl.name}
                         className="group flex items-start gap-2.5 w-full p-3.5 rounded-xl text-left border border-slate-200 dark:border-navy-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md bg-white dark:bg-navy-950 transition-all duration-150 hover:-translate-y-0.5"

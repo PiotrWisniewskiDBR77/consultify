@@ -83,11 +83,11 @@ Sub-moduł **ZAMKNIĘTY = 8/8**.
 ✅ **D1** premium tier AI dla generacji (2026-06-21; optymalizacja kosztu później)
 ✅ **D2** budujemy sami — zero third-party generation API w produkcji
 ✅ **Model produktu + stack 4-warstwowy** zaakceptowane (SPEC §1–2)
-🟡 **Q1** próg jakości FT-6 per typ — jak mierzymy „poziom Gammy" liczbowo? (rubric: pokrycie sekcji, dobór layoutu, czytelność, brand-zgodność) — propozycja moja, do potwierdzenia
+✅ **Q1** próg jakości FT-6 — **≥85% spełnionych kryteriów dla WSZYSTKICH 3 formatów** (deck/doc/table). Decyzja Piotra 2026-06-22 (ostra poprzeczka premium). Pomiar FT-6 live (2026-06-22): deck 79% / table 70–91% / doc do poprawy — wszystkie muszą dobić do 85%.
 🟡 **Q2** próg parytetu FT-5 (pixel-diff %) — proponuję <2% na golden-set; do potwierdzenia
-⬜ **Q3** zestaw golden-promptów per typ (3–5 realnych tematów DBR77) — Piotr wskazuje tematy testowe
+✅ **Q3** golden-temat = **diagnoza AI / ankieta VTS Group** (realny kontekst DBR77). Decyzja Piotra 2026-06-22. Z tego tematu wyprowadzam 3–5 scenariuszy (board-deck zarządczy / raport diagnostyczny / tabela wyników) do head-to-head vs Gamma/Airtable.
 ⬜ **Q4** demo-org do pilota flagi (telemetria kosztu premium)
-⬜ **Q5** stock images provider (Unsplash vs Pexels) — klucz API + licencja
+✅ **Q5** stock images provider = **Unsplash** (decyzja Piotra 2026-06-22). Klucz API do konfiguracji (X4 stockImageProvider już wspiera Unsplash).
 
 > Seria E (W1) może ruszyć od razu (FT-1/2/3/7/8 nie zależą od Q1–Q3). FT-6/FT-5 (jakość/parytet) blokowane Q1–Q3 — dotyczą serii B/X.
 
@@ -173,6 +173,29 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 3. **FT-6 jakość (Q1/Q3)**: uruchomienie 90 scenariuszy w LIVE mode (prawdziwy LLM) — mierzy faktyczną jakość treści vs Gamma/Kimi/Airtable. Wymaga: próg jakości (Q1), golden-prompty z realnymi tematami DBR77 (Q3), budżet API, staging org-id (NIE prod).
 4. **FT-5 pixel-diff (Q2)** dla X1 + **FT-7 stock provider (Q5)** dla X4.
 5. **Wpięcie B/X w żywe ścieżki** — osobny krok per moduł, flaga per-org, klienci OFF first.
+
+---
+
+## FT-6 LIVE — pierwszy pomiar na ŻYWYM mózgu premium (2026-06-22)
+
+> Pierwszy raz w historii programu generatory odpalone na PRAWDZIWYM LLM (anthropic/claude-sonnet-4-6, klucz z Railway staging), nie na mocku. Runner plain-node `scripts/deliverables/live-pilot-ft6.mts` (PROD-safe: DOTENV_IGNORE_LOCAL+SKIP_DB_INIT+DATABASE_URL→staging). Scoring = ten sam engine co mock. 9 scenariuszy (3×3 Sml/Med/Lrg). Wyniki: `docs/qa/deliverables/runs/2026-06-22-live-pilot-sonnet46.json`.
+
+**Decyzje Piotra (zablokowane 2026-06-22):** Q1 = **≥85%** wszystkie 3 formaty · Q3 = golden **VTS** (`docs/qa/deliverables/scenarios/VTS_GOLDEN.md`) · Q5 = **Unsplash**.
+
+| Format | Podłoga (det.) | PREMIUM live (Sml/Med/Lrg) | Próg 85% |
+|---|---|---|---|
+| **M19 Deck (B1)** | 58% | 78 / 75–92 / 93% (avg **82–88%**, fb=false) | ✅ ~na progu (wariancja) |
+| **M20 Table (B4)** | 10% | 78 / 90 / 92% (avg **87%**, fb=false) | ✅ ponad |
+| **M18 Doc (B3+content)** | 32% | 75 / **100 PASS** / **100 PASS** (avg **92%**) | ✅ ponad |
+| **AVG** | — | **87%** | ✅ |
+
+**Naprawione realne bugi (kod, branch feat/deliverables-w1, uncommitted):**
+1. **anthropic /v1** — `llmService.getProviderSync` tworzył `createAnthropic({apiKey})` bez baseURL → SDK bił w `api.anthropic.com/messages` (404) → „Invalid JSON". Latentny (Anthropic nigdy nie używany live). Fix: `baseURL: …/v1`.
+2. **doc content-gen mega-call** — `documentBlockContentGenerator.fillViaLlm` robił JEDEN structured-call dla WSZYSTKICH bloków → 247s ≫ 60s abort → fallback do prozy (= „doc laggard 32%"). Fix: **per-sekcja, batch 3 równolegle** + `timeoutMs:120000` (callStructured honoruje override). Efekt: doc 32%→**92%**, S16 mega-raport 100%.
+
+**Infra:** structured `generateObject` pada pod vitest (undici parsuje 200-OK jako „Invalid JSON") → live FT-6 TYLKO plain-node. circuit-breaker: pojedynczy slow-call >timeout otwiera breaker i zatruwa resztę → runner resetuje per scenariusz + content-gen batchuje.
+
+**Gate jakości (etap 5 FT-6) dla B1/B3/B4 = ✅ wstępnie spełniony na pilocie 3×3.** Pozostaje: pełny head-to-head na golden VTS, deploy staging za flagą + manual/screeny (FT-7), →F/→UI Piotra. Deck wariancja okołoprogowa = pass stabilizacyjny (drobny).
 
 ---
 

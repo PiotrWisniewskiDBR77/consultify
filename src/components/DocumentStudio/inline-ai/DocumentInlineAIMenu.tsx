@@ -140,6 +140,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
   return (
     <div
       ref={menuRef}
+      data-testid="doc-inline-ai-menu"
       className="fixed z-50 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-navy-700 dark:bg-navy-900 p-2"
       style={{
         top: `${position.top}px`,
@@ -209,6 +210,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
               {INLINE_ACTIONS.map((action) => (
                 <button
                   key={action.id}
+                  data-testid={`doc-inline-ai-${action.id}`}
                   onClick={() => handleAction(action.id)}
                   className="w-full rounded px-2 py-1 text-left text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
                 >

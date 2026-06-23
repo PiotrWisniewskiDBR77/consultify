@@ -474,7 +474,10 @@ const DataGrid: React.FC<DataGridProps> = ({
   const stickyPrimaryLeft = CHECK_COL_PX;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40">
+    <div
+      data-testid="table-grid"
+      className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40"
+    >
       <div
         ref={scrollRef}
         className="min-h-[320px] flex-1 overflow-y-auto overflow-x-auto"
@@ -506,6 +509,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                   return (
                     <th
                       key={col.key}
+                      data-testid={`table-col-header-${col.key}`}
                       style={{
                         width: w,
                         minWidth: w,
@@ -543,6 +547,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                 return (
                   <th
                     key={col.key}
+                    data-testid={`table-col-header-${col.key}`}
                     style={{
                       width: w,
                       minWidth: w,
@@ -606,6 +611,7 @@ const DataGrid: React.FC<DataGridProps> = ({
               return (
                 <tr
                   key={row.id}
+                  data-testid={`table-row-${row.id}`}
                   className={`${selected ? 'bg-slate-100/70 dark:bg-white/[0.05]' : ''} hover:bg-slate-50 dark:hover:bg-navy-800/30`}
                   onClick={() => onOpenDetail(row.id)}
                 >

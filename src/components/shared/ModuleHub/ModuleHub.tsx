@@ -43,6 +43,8 @@ interface ModuleHubProps {
   // Actions - Assessment style (single button)
   onNewItem?: () => void;
   newItemLabel?: string;
+  // Optional stable test id for the primary "New item" CTA button.
+  newItemTestId?: string;
   // Optional: custom Primary CTA node (keeps canonical slot in topbar)
   primaryCta?: React.ReactNode;
 
@@ -118,6 +120,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   onClearFilters,
   onNewItem,
   newItemLabel,
+  newItemTestId,
   primaryCta,
   categoryButtons,
   statusFilters,
@@ -162,6 +165,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         onClearFilters={onClearFilters}
         onNewItem={onNewItem}
         newItemLabel={newItemLabel}
+        newItemTestId={newItemTestId}
         primaryCta={primaryCta}
         categoryButtons={categoryButtons}
         statusFilters={statusFilters}

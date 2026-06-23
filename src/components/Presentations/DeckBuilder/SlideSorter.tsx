@@ -88,6 +88,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
           return (
             <div
               key={card.card_id}
+              data-testid={`deck-slide-${index}`}
               draggable
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}

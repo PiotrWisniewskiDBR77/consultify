@@ -242,6 +242,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
 
       <button
         onClick={onTheme}
+        data-testid="deck-theme-btn"
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
       >
         <Palette size={14} />
@@ -296,6 +297,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
 
       <button
         onClick={onShare}
+        data-testid="deck-share-btn"
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
       >
         <Share2 size={14} />
@@ -318,6 +320,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
 
       <button
         onClick={onPresent}
+        data-testid="deck-present-btn"
         className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800"
       >
         <Monitor size={14} />

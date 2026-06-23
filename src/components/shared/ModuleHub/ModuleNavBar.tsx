@@ -78,6 +78,8 @@ interface ModuleNavBarProps {
   // For Assessment: single "New Assessment" button
   onNewItem?: () => void;
   newItemLabel?: string;
+  // Optional stable test id for the primary "New item" CTA button.
+  newItemTestId?: string;
   // Optional: custom Primary CTA node (keeps canonical slot in topbar)
   primaryCta?: React.ReactNode;
   // For Discovery Tools: 4 category buttons
@@ -172,6 +174,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   commandRowRightContent,
   onNewItem,
   newItemLabel = 'New Item',
+  newItemTestId,
   primaryCta,
   categoryButtons,
   statusFilters,
@@ -494,6 +497,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             <button
               type="button"
               onClick={onNewItem}
+              data-testid={newItemTestId}
               className="
                 inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium
                 bg-navy-900 text-white hover:bg-navy-800

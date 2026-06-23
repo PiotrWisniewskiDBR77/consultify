@@ -1219,6 +1219,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
           <button
             onClick={handleAddRow}
+            data-testid="table-add-row"
             className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
           >
