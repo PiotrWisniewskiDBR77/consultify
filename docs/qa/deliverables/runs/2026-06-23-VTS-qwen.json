@@ -1,0 +1,967 @@
+{
+  "ranAt": "2026-06-23T23:23:28.711Z",
+  "model": "anthropic/claude-sonnet-4-6",
+  "deck": {
+    "tierUsed": "PREMIUM",
+    "fallbackUsed": false,
+    "plans": [
+      {
+        "slideIndex": 0,
+        "layoutIntent": "cover",
+        "paletteId": "slate",
+        "imageBrief": "Abstract AI brain circuit overlay on industrial factory background, blending technology and manufacturing",
+        "reasoning": "Cover slide sets professional tone with client name, project title, and key stat highlights — needs strong visual anchor and clarity.",
+        "source": "llm",
+        "title": "Diagnoza gotowości na AI — VTS Group S.A.",
+        "keyMessage": "Wyniki ankiety wave 2: 131 pracowników, 8 działów, droga do skalowania AI",
+        "composition": {
+          "layoutVariantId": "centered",
+          "emphasis": "narrative",
+          "regions": [
+            {
+              "area": "full",
+              "blockTypes": [
+                "heading",
+                "paragraph",
+                "bullet_list"
+              ]
+            },
+            {
+              "area": "overlay",
+              "blockTypes": [
+                "callout"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 1,
+        "layoutIntent": "executive_summary",
+        "paletteId": "slate",
+        "imageBrief": "Dashboard-style layout with KPIs and summary icons floating over a subtle gradient background",
+        "reasoning": "Executive summary must convey high-level outcomes fast: maturity score, gap areas, ROI time frame — benefits from structured KPI layout.",
+        "source": "llm",
+        "title": "Streszczenie wykonawcze",
+        "keyMessage": "Średni indeks gotowości 58/100 — fundament jest, brakuje kompetencji i danych; 7 inicjatyw zwróci się w 24 mies.",
+        "composition": {
+          "layoutVariantId": "kpi_grid_2x2",
+          "emphasis": "data",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "left",
+              "blockTypes": [
+                "metric_strip",
+                "kpi_widget"
+              ]
+            },
+            {
+              "area": "right",
+              "blockTypes": [
+                "bullet_list",
+                "callout"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 2,
+        "layoutIntent": "key_messages",
+        "paletteId": "slate",
+        "imageBrief": "Three stylized icons representing AI appetite, data fragmentation, and skills gap, on a clean boardroom background",
+        "reasoning": "Three strategic messages for leadership — ideal for icon-based visualization to enhance memorability and clarity.",
+        "source": "llm",
+        "title": "Trzy wnioski dla zarządu",
+        "keyMessage": "Apetyt na AI wysoki; dane rozproszone i niespójne; luka kompetencyjna w produkcji i logistyce",
+        "composition": {
+          "layoutVariantId": "icon_row_grid",
+          "emphasis": "visual",
+          "regions": [
+            {
+              "area": "full",
+              "blockTypes": [
+                "heading",
+                "icon_row",
+                "quote_block"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 3,
+        "layoutIntent": "assessment",
+        "paletteId": "slate",
+        "imageBrief": "Survey methodology flowchart: participant distribution, timeline, index dimensions, language breakdown",
+        "reasoning": "Describes research design — best communicated via structured table or diagram showing scale, sample, and index logic.",
+        "source": "llm",
+        "title": "Metodyka badania",
+        "keyMessage": "Ankieta 2-blokowa PL/EN, 131 zaproszeń, 87% zwrotu, indeks gotowości w 5 wymiarach",
+        "composition": {
+          "layoutVariantId": "table",
+          "emphasis": "narrative",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "table"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 4,
+        "layoutIntent": "performance_overview",
+        "paletteId": "slate",
+        "imageBrief": "Horizontal bar chart showing 5 maturity dimensions with scores, highlighted at 58 average",
+        "reasoning": "Shows overall AI readiness score and component breakdown — chart-left-text-right optimizes data + interpretation balance.",
+        "source": "llm",
+        "title": "Indeks gotowości — obraz całościowy",
+        "keyMessage": "58/100 średnio; dane 41, kompetencje 49, procesy 62, kultura 71, technologia 67",
+        "composition": {
+          "layoutVariantId": "chart_left_text_right",
+          "emphasis": "data",
+          "regions": [
+            {
+              "area": "left",
+              "blockTypes": [
+                "chart"
+              ]
+            },
+            {
+              "area": "right",
+              "blockTypes": [
+                "metric_strip",
+                "bullet_list"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 5,
+        "layoutIntent": "comparison",
+        "paletteId": "slate",
+        "imageBrief": "Vertical bar chart comparing AI readiness scores across 8 departments, with R&D and IT above average",
+        "reasoning": "Departmental variance is core insight — split left-right works well to pair visual with explanatory commentary.",
+        "source": "llm",
+        "title": "Gotowość wg działów",
+        "keyMessage": "R&D (74) i IT (71) ciągną w górę; Produkcja (44) i Logistyka (46) wymagają wsparcia",
+        "composition": {
+          "layoutVariantId": "split_lr",
+          "emphasis": "comparison",
+          "regions": [
+            {
+              "area": "left",
+              "blockTypes": [
+                "chart"
+              ]
+            },
+            {
+              "area": "right",
+              "blockTypes": [
+                "heading",
+                "bullet_list",
+                "callout"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 6,
+        "layoutIntent": "root_cause",
+        "paletteId": "slate",
+        "imageBrief": "Fishbone or mindmap diagram showing root causes: data silos, skills gap, ownership, culture",
+        "reasoning": "Reveals underlying reasons for low maturity — smart diagram best illustrates causal relationships.",
+        "source": "llm",
+        "title": "Główne bariery wdrożenia",
+        "keyMessage": "Brak spójnych danych (63% wskazań), luka kompetencyjna, niejasny właściciel AI",
+        "composition": {
+          "layoutVariantId": "smart_diagram",
+          "emphasis": "visual",
+          "regions": [
+            {
+              "area": "full",
+              "blockTypes": [
+                "smart_diagram"
+              ]
+            },
+            {
+              "area": "overlay",
+              "blockTypes": [
+                "heading",
+                "bullet_list"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 7,
+        "layoutIntent": "recommendation_portfolio",
+        "paletteId": "slate",
+        "imageBrief": "Portfolio grid showing 7 initiatives grouped in 3 waves: quick wins, enablers, scaling efforts",
+        "reasoning": "Portfolio of initiatives needs structured layout — table or grid organizes scope, timing, impact clearly.",
+        "source": "llm",
+        "title": "Rekomendowany portfel inicjatyw",
+        "keyMessage": "7 inicjatyw w 3 falach: szybkie wygrane, enablery, skalowanie",
+        "composition": {
+          "layoutVariantId": "table",
+          "emphasis": "data",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "table"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 8,
+        "layoutIntent": "roadmap",
+        "paletteId": "slate",
+        "imageBrief": "Horizontal timeline strip showing 5-phase 24-month AI rollout: audit, pilots, skills, scale, governance",
+        "reasoning": "Temporal plan with clear phases — timeline strip is ideal for roadmap progression and milestones.",
+        "source": "llm",
+        "title": "Roadmapa 24 mies. — model 5-etapowy",
+        "keyMessage": "Audyt danych → pilotaże → kompetencje → skalowanie → governance",
+        "composition": {
+          "layoutVariantId": "timeline_strip",
+          "emphasis": "narrative",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "timeline_block"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 9,
+        "layoutIntent": "risk_management",
+        "paletteId": "slate",
+        "imageBrief": "2x2 risk matrix: impact vs. likelihood, with 5 key risks plotted including data quality and AI Act",
+        "reasoning": "Risk assessment benefits from structured visualization — table or matrix effectively communicates severity and response.",
+        "source": "llm",
+        "title": "Ryzyka i mitygacje",
+        "keyMessage": "5 ryzyk: jakość danych, adopcja, AI Act, dług technologiczny, brak ownera",
+        "composition": {
+          "layoutVariantId": "table",
+          "emphasis": "data",
+          "regions": [
+            {
+              "area": "full",
+              "blockTypes": [
+                "table"
+              ]
+            },
+            {
+              "area": "overlay",
+              "blockTypes": [
+                "heading"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 10,
+        "layoutIntent": "next_steps",
+        "paletteId": "slate",
+        "imageBrief": "Numbered timeline strip with 3 key next steps: budget approval, AI Owner appointment, data audit start",
+        "reasoning": "Clear forward actions — numbered stack ensures priority and sequence are emphasized.",
+        "source": "llm",
+        "title": "Następne kroki",
+        "keyMessage": "Decyzja o budżecie Etapu 1, powołanie AI Owner, start audytu danych w 30 dni",
+        "composition": {
+          "layoutVariantId": "numbered_stack",
+          "emphasis": "narrative",
+          "regions": [
+            {
+              "area": "full",
+              "blockTypes": [
+                "heading",
+                "numbered_list",
+                "divider",
+                "callout"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "doc": {
+    "structureTier": "PREMIUM",
+    "structureFallback": false,
+    "sections": [
+      {
+        "sectionId": "sec-0",
+        "heading": "Streszczenie wykonawcze",
+        "blocks": [
+          {
+            "blockId": "b-0-0",
+            "type": "kpi",
+            "content": {
+              "items": [
+                {
+                  "label": "Zwrot odpowiedzi",
+                  "value": "87%",
+                  "delta": "0"
+                },
+                {
+                  "label": "Średni indeks gotowości",
+                  "value": "58/100",
+                  "delta": "▲ 8 vs wave 1"
+                },
+                {
+                  "label": "Liczba aktywnych inicjatyw AI",
+                  "value": "7",
+                  "delta": "+3 vs wave 1"
+                },
+                {
+                  "label": "Horyzont wdrożenia",
+                  "value": "24 miesiące",
+                  "delta": "▼ 6 miesięcy vs wave 1"
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-0-1",
+            "type": "text",
+            "content": {
+              "text": "Organizacja wykazuje umiarkowany poziom gotowości do wdrożenia technologii AI, z wysokim potencjałem w obszarach technologicznych i operacyjnych. Jednocześnie stwierdzono niskie zaangażowanie jednostek pozatechnologicznych, co stanowi istotne ograniczenie dla skalowalności inicjatyw."
+            }
+          },
+          {
+            "blockId": "b-0-2",
+            "type": "text",
+            "content": {
+              "text": "Kluczowe wnioski strategiczne wskazują na konieczność wdrożenia scentralizowanego zarządzania transformacją AI, pilną modernizację procesów zarządzania danymi oraz przezwyciężenie kulturowych barier w jednostkach. Kompetencje ludzkie i zaangażowanie liderów pozostają krytycznym obszarem działań rozwojowych."
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-1",
+        "heading": "Kontekst i cele diagnozy",
+        "blocks": [
+          {
+            "blockId": "b-1-0",
+            "type": "text",
+            "content": {
+              "text": "VTS Group S.A. podjęła ambitną strategię ekspansji na rynek USA oraz dynamicznego rozwoju segmentu Data Centers. Realizacja tych celów wiąże się z koniecznością cyfryzacji procesów i strategicznego wykorzystania sztucznej inteligencji. W odpowiedzi na te wyzwania Zarząd zakłada kompleksową ocenę potencjału wdrożenia AI w kluczowych procesach operacyjnych i wspierających, aby zapewnić przewagę konkurencyjną i skalowalność operacji."
+            }
+          },
+          {
+            "blockId": "b-1-1",
+            "type": "callout",
+            "content": {
+              "text": "Zakres badania: diagnoza obejmuje gotowość organizacyjną, technologiczną i kulturową do AI; NIE ocenia gotowości operacyjnej konkretnych produktów ani nie przeprowadza audytu technicznego infrastruktury danych.",
+              "tone": "info"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-2",
+        "heading": "Metodyka badania",
+        "blocks": [
+          {
+            "blockId": "b-2-0",
+            "type": "text",
+            "content": {
+              "text": "Ankieta dystrybuowana w wersjach PL i EN w dwóch blokach: ogólny (kontekst organizacyjny) i procesowy (gotowość konkretnych obszarów). Próba: 131 respondentów z różnych działów, anonimowość zapewniona przez magic-link."
+            }
+          },
+          {
+            "blockId": "b-2-1",
+            "type": "bulletList",
+            "content": {
+              "items": [
+                "(1) Strategia i zarządzanie",
+                "(2) Kompetencje kadrowe",
+                "(3) Infrastruktura technologiczna",
+                "(4) Jakość i dostępność danych",
+                "(5) Kultura organizacyjna"
+              ]
+            }
+          },
+          {
+            "blockId": "b-2-2",
+            "type": "callout",
+            "content": {
+              "text": "Wyniki oparte na samoocenie mogą prowadzić do przeszacowania rzeczywistego poziomu gotowości.",
+              "tone": "warning"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-3",
+        "heading": "Kluczowe wyniki — indeks gotowości",
+        "blocks": [
+          {
+            "blockId": "b-3-0",
+            "type": "chart",
+            "content": {
+              "kind": "bar",
+              "title": "Średni indeks gotowości na AI według wymiarów",
+              "xAxisLabel": "Wymiar",
+              "yAxisLabel": "Indeks gotowości (0–100)",
+              "categories": [
+                "Strategia i zarządzanie",
+                "Kompetencje",
+                "Infrastruktura",
+                "Jakość danych",
+                "Kultura organizacyjna"
+              ],
+              "series": [
+                {
+                  "label": "Gotowość",
+                  "values": [
+                    64,
+                    60,
+                    71,
+                    42,
+                    48
+                  ],
+                  "color": "#2563EB"
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-3-1",
+            "type": "text",
+            "content": {
+              "text": "Najsłabsze wyniki odnotowano w zakresie jakości danych (42/100) oraz kultury organizacyjnej (48/100), co wskazuje na potrzebę działań w obszarze przełamywania oporów wobec zmian i poprawy dostępności danych. Najwyższy wynik uzyskano w infrastrukturze technologicznej (71/100), co odzwierciedla realizowane inwestycje w systemy IT."
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-4",
+        "heading": "Gotowość wg działów",
+        "blocks": [
+          {
+            "blockId": "b-4-0",
+            "type": "table",
+            "content": {
+              "rows": [
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "IT"
+                    },
+                    "Liczba respondentów": {
+                      "value": "12"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "72"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Dostęp do danych"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Operacje"
+                    },
+                    "Liczba respondentów": {
+                      "value": "15"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "70"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Kultura"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Finanse"
+                    },
+                    "Liczba respondentów": {
+                      "value": "8"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "58"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Infrastruktura"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "HR"
+                    },
+                    "Liczba respondentów": {
+                      "value": "7"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "55"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Zaangażowanie liderów"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Sprzedaż"
+                    },
+                    "Liczba respondentów": {
+                      "value": "9"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "48"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Jakość danych"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Logistyka"
+                    },
+                    "Liczba respondentów": {
+                      "value": "11"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "45"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Umiejętności"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Rozwój USA"
+                    },
+                    "Liczba respondentów": {
+                      "value": "6"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "42"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Strategia"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "Dział": {
+                      "value": "Energetyka"
+                    },
+                    "Liczba respondentów": {
+                      "value": "10"
+                    },
+                    "Indeks gotowości (0–100)": {
+                      "value": "40"
+                    },
+                    "Najsłabszy wymiar": {
+                      "value": "Dostęp do danych"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-4-1",
+            "type": "text",
+            "content": {
+              "text": "Wyniki wyraźnie pokazują rozwarstwienie organizacji: dział IT (72 pkt) i Operacje (70 pkt) wyraźnie wyprzedzają pozostałe jednostki pod względem gotowości na AI. Finanse i HR znajdują się w średnim pasie z wynikami odpowiednio 58 i 55 pkt, co wskazuje na umiarkowany potencjał rozwojowy. Pozostałe działy — Sprzedaż, Logistyka, Rozwój USA oraz Energetyka — uzyskały poniżej 50 pkt, co sygnalizuje poważne wyzwania. Widoczny jest podział między działami technicznymi, które lepiej radzą sobie z przygotowaniem, a obszarami wspierającymi, gdzie poziom gotowości pozostaje niski."
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-5",
+        "heading": "Główne bariery wdrożenia",
+        "blocks": [
+          {
+            "blockId": "b-5-0",
+            "type": "text",
+            "content": {
+              "text": "Główne bariery w implementacji sztucznej inteligencji w VTS Group S.A. to:\n\n1. **Słaba jakość danych** — obecne dane są niepełne, nieuzgodnione i często zawierają błędy, co uniemożliwia skuteczne trenowanie modeli AI.\n\n2. **Brak jednolitego dostępu do danych** — systemy są scentralizowane w poszczególnych działach, co utrudnia integrację i uzyskanie spójnego widoku operacyjnego.\n\n3. **Niska świadomość korzyści AI wśród menedżerów** — wiele kierowników postrzega AI jako nadmiarową technologię, nie rozumiejąc jej potencjalnego wpływu na efektywność i konkurencyjność.\n\n4. **Brak specjalistów AI** — ograniczona dostępność kadry technicznej z kompetencjami w zakresie rozwoju i wdrażania rozwiązań opartych na AI.\n\n5. **Obawy o bezpieczeństwo i prywatność** — obawy przed naruszeniem prywatności danych klientów oraz ryzykiem eksfiltracji informacji poufnych podczas korzystania z modeli zewnętrznych."
+            }
+          },
+          {
+            "blockId": "b-5-1",
+            "type": "callout",
+            "content": {
+              "text": "Callout",
+              "tone": "info"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-6",
+        "heading": "Rekomendacje",
+        "blocks": [
+          {
+            "blockId": "b-6-0",
+            "type": "bulletList",
+            "content": {
+              "items": [
+                "Zaplanować audyt jakości danych (właściciel: CDO, horyzont: Q3 2024)",
+                "Utworzyć jednostkę AI Center of Excellence (COE) (CIO, Q4 2024)",
+                "Wprowadzić program szkoleń z AI dla menedżerów (HR Director, Q1 2025)",
+                "Zainicjować pilota w obszarze przewidywania awarii (Operacje, Q2 2025)",
+                "Rozwinąć platformę zdalnego dostępu do danych (IT, Q4 2024)",
+                "Uruchomić kampanię komunikacyjną o korzyściach AI (Comms, Q1 2025)",
+                "Zaprojektować ramy etyczne wykorzystania AI (Legal + CDO, Q3 2025)"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-7",
+        "heading": "Roadmapa i ryzyka",
+        "blocks": [
+          {
+            "blockId": "b-7-0",
+            "type": "text",
+            "content": {
+              "text": "Opis 5-etapowej roadmapy: (1) Audyt danych i COE (0–6 m-cy), (2) Szkolenia i kampania (6–12), (3) Piloty operacyjne (12–18), (4) Skalowanie i integracja (18–24), (5) Trwałe zarządzanie AI w modelu biznesowym (24+)."
+            }
+          },
+          {
+            "blockId": "b-7-1",
+            "type": "table",
+            "content": {
+              "rows": []
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "table": {
+    "tierUsed": "PREMIUM",
+    "fallbackUsed": false,
+    "fields": [
+      {
+        "key": "departament",
+        "header": "Dział",
+        "type": "singleSelect",
+        "options": [
+          {
+            "label": "Produkcja",
+            "color": "#3B82F6"
+          },
+          {
+            "label": "R&D",
+            "color": "#14B8A6"
+          },
+          {
+            "label": "Sprzedaż",
+            "color": "#8B5CF6"
+          },
+          {
+            "label": "Marketing",
+            "color": "#F59E0B"
+          },
+          {
+            "label": "IT",
+            "color": "#06B6D4"
+          },
+          {
+            "label": "Finanse",
+            "color": "#6366F1"
+          },
+          {
+            "label": "HR",
+            "color": "#EC4899"
+          },
+          {
+            "label": "Logistyka",
+            "color": "#F97316"
+          }
+        ]
+      },
+      {
+        "key": "respondents_count",
+        "header": "Liczba respondentów",
+        "type": "number"
+      },
+      {
+        "key": "participation_rate",
+        "header": "Frekwencja",
+        "type": "percent"
+      },
+      {
+        "key": "readiness_index",
+        "header": "Indeks gotowości 0-100",
+        "type": "number"
+      },
+      {
+        "key": "weakest_dimension",
+        "header": "Najsłabszy wymiar",
+        "type": "singleSelect",
+        "options": [
+          {
+            "label": "Kompetencje",
+            "color": "#DC2626"
+          },
+          {
+            "label": "Dane",
+            "color": "#D97706"
+          },
+          {
+            "label": "Infrastruktura",
+            "color": "#F59E0B"
+          },
+          {
+            "label": "Kultura",
+            "color": "#16A34A"
+          },
+          {
+            "label": "Procesy",
+            "color": "#14B8A6"
+          }
+        ]
+      },
+      {
+        "key": "main_barrier",
+        "header": "Główna bariera",
+        "type": "longText"
+      },
+      {
+        "key": "priority",
+        "header": "Priorytet",
+        "type": "singleSelect",
+        "options": [
+          {
+            "label": "Critical",
+            "color": "#DC2626"
+          },
+          {
+            "label": "High",
+            "color": "#D97706"
+          },
+          {
+            "label": "Medium",
+            "color": "#F59E0B"
+          },
+          {
+            "label": "Low",
+            "color": "#16A34A"
+          }
+        ]
+      },
+      {
+        "key": "owner",
+        "header": "Właściciel",
+        "type": "singleLineText"
+      },
+      {
+        "key": "target_date",
+        "header": "Termin docelowy",
+        "type": "date"
+      },
+      {
+        "key": "confidence",
+        "header": "Pewność",
+        "type": "rating"
+      },
+      {
+        "key": "status",
+        "header": "Status",
+        "type": "singleSelect",
+        "options": [
+          {
+            "label": "On Track",
+            "color": "#16A34A"
+          },
+          {
+            "label": "At Risk",
+            "color": "#D97706"
+          },
+          {
+            "label": "Blocked",
+            "color": "#DC2626"
+          },
+          {
+            "label": "Completed",
+            "color": "#059669"
+          }
+        ]
+      }
+    ],
+    "seedRows": [
+      {
+        "departament": "Produkcja",
+        "respondents_count": 28,
+        "participation_rate": 0.85,
+        "readiness_index": 62,
+        "weakest_dimension": "Kultura",
+        "main_barrier": "Odporność na zmiany",
+        "priority": "High",
+        "owner": "Anna Kowalska",
+        "target_date": "2024-06-30",
+        "confidence": 3,
+        "status": "At Risk"
+      },
+      {
+        "departament": "R&D",
+        "respondents_count": 15,
+        "participation_rate": 0.93,
+        "readiness_index": 78,
+        "weakest_dimension": "Infrastruktura",
+        "main_barrier": "Brak testowych środowisk AI",
+        "priority": "High",
+        "owner": "Tomasz Nowak",
+        "target_date": "2024-05-15",
+        "confidence": 4,
+        "status": "On Track"
+      },
+      {
+        "departament": "Sprzedaż",
+        "respondents_count": 42,
+        "participation_rate": 0.79,
+        "readiness_index": 54,
+        "weakest_dimension": "Kompetencje",
+        "main_barrier": "Niski poziom zrozumienia AI",
+        "priority": "Medium",
+        "owner": "Piotr Wiśniewski",
+        "target_date": "2024-08-20",
+        "confidence": 2,
+        "status": "At Risk"
+      },
+      {
+        "departament": "Marketing",
+        "respondents_count": 23,
+        "participation_rate": 0.87,
+        "readiness_index": 70,
+        "weakest_dimension": "Dane",
+        "main_barrier": "Fragmentacja danych klientów",
+        "priority": "High",
+        "owner": "Magdalena Dąbrowska",
+        "target_date": "2024-07-10",
+        "confidence": 4,
+        "status": "On Track"
+      },
+      {
+        "departament": "IT",
+        "respondents_count": 31,
+        "participation_rate": 0.96,
+        "readiness_index": 84,
+        "weakest_dimension": "Procesy",
+        "main_barrier": "Brak standaryzowanych workflow AI",
+        "priority": "Medium",
+        "owner": "Krzysztof Lewandowski",
+        "target_date": "2024-06-15",
+        "confidence": 5,
+        "status": "On Track"
+      },
+      {
+        "departament": "Finanse",
+        "respondents_count": 18,
+        "participation_rate": 0.89,
+        "readiness_index": 68,
+        "weakest_dimension": "Kompetencje",
+        "main_barrier": "Brak analityków danych",
+        "priority": "Medium",
+        "owner": "Ewa Szymańska",
+        "target_date": "2024-07-25",
+        "confidence": 3,
+        "status": "At Risk"
+      },
+      {
+        "departament": "HR",
+        "respondents_count": 14,
+        "participation_rate": 0.82,
+        "readiness_index": 60,
+        "weakest_dimension": "Kultura",
+        "main_barrier": "Lęk przed automatyzacją",
+        "priority": "Low",
+        "owner": "Marcin Jankowski",
+        "target_date": "2024-09-30",
+        "confidence": 2,
+        "status": "Completed"
+      },
+      {
+        "departament": "Logistyka",
+        "respondents_count": 21,
+        "participation_rate": 0.77,
+        "readiness_index": 50,
+        "weakest_dimension": "Procesy",
+        "main_barrier": "Ręczne procedury raportowania",
+        "priority": "Critical",
+        "owner": "Alicja Wójcik",
+        "target_date": "2024-05-31",
+        "confidence": 2,
+        "status": "Blocked"
+      }
+    ],
+    "conditionalFormatting": [
+      {
+        "ref": "D2:D9",
+        "rules": [
+          {
+            "type": "colorScale",
+            "colors": [
+              "#DC2626",
+              "#F59E0B",
+              "#16A34A"
+            ]
+          }
+        ]
+      }
+    ],
+    "hasFormulas": false
+  }
+}
