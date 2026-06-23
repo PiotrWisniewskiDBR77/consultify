@@ -58,7 +58,7 @@ import {
   ensureContentBlockRegistryHydrated,
   instantiateDocumentContentBlock,
 } from './documentContentBlockService.js';
-import { buildDocumentSchema } from './documentContentGenerator.js';
+import { buildDocumentSchema, buildDocumentSchemaPremium } from './documentContentGenerator.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
 import {
@@ -448,12 +448,18 @@ export async function materializeDocumentArtifact(
   const sourceRefs = incomingSourceRefs;
 
   const provisionalArtifactId = `documentstudio-pending-${Date.now()}`;
-  let provisionalSchema = buildDocumentSchema({
-    artifactId: provisionalArtifactId,
-    intake: params.intake,
-    outline,
-    sourceRefs,
-  });
+  // Premium tier (B3 structure + content-gen) when flag ON; fail-open + byte-identical
+  // to the deterministic builder when OFF (default, all clients). preferPremium tied to
+  // useLlm so a purely deterministic request stays deterministic even with the flag on.
+  let provisionalSchema = await buildDocumentSchemaPremium(
+    {
+      artifactId: provisionalArtifactId,
+      intake: params.intake,
+      outline,
+      sourceRefs,
+    },
+    { orgId: params.organizationId, userId: params.userId, preferPremium: params.useLlm }
+  );
   if (template) {
     provisionalSchema.formattingSchema = template.formattingSchema;
     provisionalSchema.confidentiality = template.confidentiality;

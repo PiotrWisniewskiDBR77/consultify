@@ -40,7 +40,7 @@ import {
   type PresentationTemplateRuntime,
 } from './presentationTemplateRuntimeService.js';
 import { qaGatedImageGeneration } from './presentationVisionQAService.js';
-import { planDeckVisuals } from './presentationVisualDirectorService.js';
+import { planDeckVisuals, planDeckVisualsTiered } from './presentationVisualDirectorService.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
 import type {
   SlideIntent,
@@ -1352,8 +1352,9 @@ export async function generateDeck(
       const maxImages =
         visualPriority === 'cost' ? 1 : density === 'high' ? 6 : density === 'medium' ? 3 : 1;
 
-      // 1) Plan visuals (deterministic v1)
-      const plannedSlides = planDeckVisuals({
+      // 1) Plan visuals — premium B1 Layout Director when flag ON (fail-open +
+      // byte-identical to deterministic v1 when OFF, default for all clients).
+      const tieredVisuals = await planDeckVisualsTiered({
         slides,
         meta,
         deckTitle: setup.title,
@@ -1365,7 +1366,10 @@ export async function generateDeck(
           priority: visualPriority,
           imageDensity: density,
         },
+        orgId: organizationId,
+        preferPremium: true,
       });
+      const plannedSlides = tieredVisuals.slides;
       // Apply planned visuals back into the slides array (in-place by index)
       for (let i = 0; i < slides.length; i++) slides[i] = plannedSlides[i];
 

@@ -948,6 +948,41 @@ async function exportDocxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
 }
 
 async function exportXlsxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
+  // W4/B4 (premium) — flag-gated, FAIL-OPEN. Gdy ENABLE_DELIVERABLES_PREMIUM
+  // jest ON i draft niesie typowany schemat B4 w provenance (zapisany przez
+  // startSheet), eksportujemy go realnym builderem exceljs (style/CF/kolory
+  // singleSelect) zamiast fasady SheetJS. Każdy błąd / brak schematu / flaga OFF
+  // ⇒ ścieżka legacy poniżej (zachowanie byte-identyczne jak dziś).
+  try {
+    const provenance = (draft.provenance || {}) as Record<string, any>;
+    const tableSchemaB4 = provenance?.deliverablesGeneration?.tableSchemaB4;
+    if (tableSchemaB4 && typeof tableSchemaB4 === 'object') {
+      const { resolveDeliverableTier } = await import(
+        '../services/deliverableGenerationTier.js'
+      );
+      if (resolveDeliverableTier({ preferPremium: true }) === 'PREMIUM') {
+        const { tableSchemaToWorkbook, buildWorkbookBuffer } = await import(
+          '../services/workbook/WorkbookBuilder.js'
+        );
+        const wbSchema = tableSchemaToWorkbook(tableSchemaB4 as any, {
+          title: draft.title,
+          author: 'Business Work Canvas',
+        });
+        const buffer = await buildWorkbookBuffer(wbSchema);
+        logger.info('[work-canvas] xlsx export via premium B4 workbook', {
+          draftId: draft.id,
+          sheets: wbSchema.sheets?.length ?? 0,
+        });
+        return buffer;
+      }
+    }
+  } catch (premiumErr) {
+    logger.warn('[work-canvas] premium xlsx export failed, falling back to legacy', {
+      draftId: draft.id,
+      error: premiumErr instanceof Error ? premiumErr.message : String(premiumErr),
+    });
+  }
+
   // XLSX renders a two-cell footer (`['Source Canvas', <id>]`), so the raw draft
   // id is passed as sourceLabel here (not the prefixed `Source Canvas: <id>`
   // label used by PDF/DOCX/PPTX), keeping the spreadsheet byte-for-byte.

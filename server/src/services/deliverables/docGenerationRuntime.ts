@@ -597,6 +597,41 @@ function sheetSkeletonMarkdown(title: string): string {
   ].join('\n');
 }
 
+/**
+ * W4/B4 (premium): renderuje TYPOWANY schemat B4 (fields + seedRows) do tej
+ * samej tabeli GFM, którą produkuje ścieżka legacy (kontrakt treści draftu bez
+ * zmian). Materializuje JEDEN arkusz — przy multi-sheet bierze arkusz #0, by
+ * widok draftu pozostał pojedynczą tabelą jak dziś (pełna wierność wieloarkusza
+ * trafia do eksportu xlsx). Czysta funkcja, brak I/O — bezpieczna do testów.
+ */
+function premiumSchemaToGfmMarkdown(
+  schema: {
+    fields: Array<{ key: string; header: string }>;
+    seedRows: Array<Record<string, unknown>>;
+    sheets?: Array<{
+      fields: Array<{ key: string; header: string }>;
+      seedRows: Array<Record<string, unknown>>;
+    }>;
+  },
+  title: string
+): string | null {
+  const sheet = schema.sheets?.[0] ?? { fields: schema.fields, seedRows: schema.seedRows };
+  const fields = Array.isArray(sheet.fields) ? sheet.fields : [];
+  if (fields.length === 0) return null;
+  const esc = (v: unknown): string =>
+    String(v ?? '')
+      .replace(/\|/g, '\\|')
+      .replace(/\n/g, ' ')
+      .trim();
+  const headerLine = `| ${fields.map((f) => esc(f.header || f.key)).join(' | ')} |`;
+  const separator = `| ${fields.map(() => '---').join(' | ')} |`;
+  const rows = (Array.isArray(sheet.seedRows) ? sheet.seedRows : []).map(
+    (row) => `| ${fields.map((f) => esc(row[f.key])).join(' | ')} |`
+  );
+  if (rows.length === 0) return null;
+  return [`# ${title}`, '', headerLine, separator, ...rows].join('\n');
+}
+
 /** Walidacja: wynik MUSI zawierać tabelę GFM (nagłówek + separator + ≥1 wiersz). */
 function extractGfmTable(markdown: string): { ok: boolean; rowCount: number } {
   const lines = markdown.split('\n').map((l) => l.trim());
@@ -732,20 +767,60 @@ export async function startSheet(params: {
         : stored.intent;
       const userPrompt = sheetFacts ? `${userPromptBase}\n\n${sheetFacts}` : userPromptBase;
 
-      const { generateChatResponse } = await import('../aiService.js');
-      const response = await generateChatResponse({
-        systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-        model: 'standard',
-        maxTokens: 2400,
-      });
+      // W4/B4 (premium) — flag-gated, FAIL-OPEN. Gdy ENABLE_DELIVERABLES_PREMIUM
+      // jest ON, próbujemy wygenerować TYPOWANY schemat B4 (singleSelect+hex /
+      // number / currency / date + seedRows + CF) zamiast surowego markdownu.
+      // generateTableSchema sam jest bramkowany tym samym resolverem tieru (B5):
+      // gdy flaga OFF zwraca STANDARD fallback ⇒ poniższy warunek jest false ⇒
+      // ścieżka legacy LLM-markdown bez zmian (zachowanie byte-identyczne dziś).
+      // Każdy błąd / brak premium ⇒ markdown=null ⇒ stara ścieżka.
+      let markdown: string | null = null;
+      let tableSchemaB4: unknown = null;
+      try {
+        const { generateTableSchema } = await import('../tableSchemaGeneratorService.js');
+        const b4 = await generateTableSchema(stored.intent, {
+          orgId: params.organizationId,
+          userId: params.userId,
+          preferPremium: true,
+        });
+        if (b4 && b4.tierUsed === 'PREMIUM' && !b4.fallbackUsed) {
+          const rendered = premiumSchemaToGfmMarkdown(b4, draft.title);
+          if (rendered) {
+            markdown = rendered;
+            tableSchemaB4 = b4;
+            logger.info(
+              `${LOG_PREFIX} sheet premium B4 schema materialized: generation=${draft.id} fields=${b4.fields.length} rows=${b4.seedRows.length}`
+            );
+          }
+        }
+      } catch (premiumErr) {
+        logger.warn(
+          `${LOG_PREFIX} sheet premium B4 failed, falling back to standard: generation=${draft.id} — ${premiumErr instanceof Error ? premiumErr.message : String(premiumErr)}`
+        );
+        markdown = null;
+        tableSchemaB4 = null;
+      }
 
-      setDocRuntime(draft.id, { state: 'validating', warnings: [] });
+      // Ścieżka legacy (= dzisiejsza, gdy premium OFF lub B4 nie dało wyniku).
+      if (markdown === null) {
+        const { generateChatResponse } = await import('../aiService.js');
+        const response = await generateChatResponse({
+          systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+          model: 'standard',
+          maxTokens: 2400,
+        });
 
-      const markdown = String(response.content || '')
-        .replace(/^```(?:markdown)?\s*/i, '')
-        .replace(/\s*```\s*$/, '')
-        .trim();
+        setDocRuntime(draft.id, { state: 'validating', warnings: [] });
+
+        markdown = String(response.content || '')
+          .replace(/^```(?:markdown)?\s*/i, '')
+          .replace(/\s*```\s*$/, '')
+          .trim();
+      } else {
+        setDocRuntime(draft.id, { state: 'validating', warnings: [] });
+      }
+
       const table = extractGfmTable(markdown);
       if (!table.ok) {
         throw new Error(
@@ -760,10 +835,23 @@ export async function startSheet(params: {
         ? stored.sourceRefs
         : provenance.deliverablesGeneration?.autoGrounding?.refs;
       const content = appendSourcesSection(baseContent, sheetRefs, pl ? 'pl' : 'en');
+      // Premium: zachowaj schemat B4 w provenance, by eksport xlsx mógł użyć
+      // tableSchemaToWorkbook (realne style/CF exceljs). Legacy ⇒ provenance
+      // nietknięte (patch bez pola provenance ⇒ updateDraft zachowuje istniejące).
+      const sheetPatch: { content: string; provenance?: Record<string, unknown> } = { content };
+      if (tableSchemaB4) {
+        sheetPatch.provenance = {
+          ...(provenance as Record<string, unknown>),
+          deliverablesGeneration: {
+            ...((provenance as Record<string, any>).deliverablesGeneration || {}),
+            tableSchemaB4,
+          },
+        };
+      }
       await updateDraft({
         organizationId: params.organizationId,
         draftId: draft.id,
-        patch: { content },
+        patch: sheetPatch,
       });
       setDocRuntime(draft.id, {
         state: 'draft',
