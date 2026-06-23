@@ -6,7 +6,7 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
-import { generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
+import { asSchema, generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
 import { createHash } from 'crypto';
 import { z } from 'zod';
 
@@ -381,7 +381,13 @@ function getModel(modelConfig: ModelConfig) {
   const providerName = String(modelConfig.provider || '').toLowerCase();
 
   if (CHAT_COMPLETIONS_ONLY_PROVIDERS.has(providerName) && typeof provider.chat === 'function') {
-    return provider.chat(modelId);
+    // @ai-sdk/openai chat models default to structuredOutputs:true, which forces OpenAI STRICT
+    // json_schema (every nested object must list `required` for ALL properties + additionalProperties
+    // false). Zod→json_schema conversion does not satisfy strict for nested arrays/objects, so the
+    // upstream (OpenAI/Azure via OpenRouter) rejects it with code 400 "Invalid schema for
+    // response_format" → surfaced as a generic "Provider returned error". Disable strict structured
+    // outputs so generateObject uses the compatible json_object path (still Zod-validated by us).
+    return provider.chat(modelId, { structuredOutputs: false });
   }
   return provider(modelId);
 }
@@ -1286,6 +1292,63 @@ export class LLMService {
     // Default unchanged at 60s when the caller does not override.
     const structuredTimeoutMs =
       typeof params.timeoutMs === 'number' && params.timeoutMs > 0 ? params.timeoutMs : 60000;
+
+    // OpenRouter (and other OpenAI-compatible aggregators) route to upstream providers
+    // (Azure/OpenAI/Google) whose STRICT json_schema mode — which @ai-sdk/openai v3 +
+    // ai v6's generateObject force and won't disable via mode/structuredOutputs — rejects
+    // any schema with an OPTIONAL field (OpenAI strict requires EVERY property in `required`),
+    // returning code 400 "Invalid schema for response_format" → surfaced as "Provider returned
+    // error". For these providers, skip generateObject's json_schema entirely: ask for raw JSON
+    // via generateText, then parse + Zod-validate ourselves (same guarantee, no strict schema).
+    const JSON_MODE_PROVIDERS = new Set(['openrouter', 'ollama']);
+
+    if (JSON_MODE_PROVIDERS.has(providerId.toLowerCase())) {
+      let schemaHint = '';
+      try {
+        const js = (asSchema(zodSchema as any) as any)?.jsonSchema;
+        if (js) schemaHint = `\n\nThe JSON MUST conform exactly to this JSON Schema (produce every required field):\n${JSON.stringify(js)}`;
+      } catch {
+        /* schema introspection best-effort */
+      }
+      const jsonMessages: LLMMessage[] = [
+        {
+          role: 'system',
+          content: `${systemPrompt || ''}\n\nYou MUST respond with a SINGLE valid JSON object only — no prose, no markdown fences.${schemaHint}`,
+        },
+        ...messages.filter((m) => m.role !== 'system'),
+      ];
+      const textResult = await withGuards(
+        providerId,
+        async () =>
+          generateText({
+            model,
+            messages: jsonMessages as any,
+            abortSignal: AbortSignal.timeout(structuredTimeoutMs),
+          }),
+        {
+          timeout: structuredTimeoutMs,
+          onRetry: (attempt: number) =>
+            aiLogger.info('LLMService', `Retrying structured(text) call to ${providerId} (attempt ${attempt})`),
+        }
+      );
+      const raw = String((textResult as any)?.text || '').trim();
+      // Strip accidental ```json fences and isolate the outermost JSON object.
+      const unfenced = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+      const start = unfenced.indexOf('{');
+      const end = unfenced.lastIndexOf('}');
+      const candidate = start >= 0 && end > start ? unfenced.slice(start, end + 1) : unfenced;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(candidate);
+      } catch {
+        throw new Error(`Structured(text) parse failed for ${providerId}: non-JSON response`);
+      }
+      const validated = (zodSchema as z.ZodSchema<unknown>).parse(parsed);
+      return {
+        object: validated as Record<string, unknown>,
+        usage: normalizeTokenUsage((textResult as any)?.usage),
+      };
+    }
 
     const result = await withGuards(
       providerId,
