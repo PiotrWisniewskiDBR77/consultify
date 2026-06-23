@@ -379,10 +379,12 @@ export class ExecutionController {
 
       const healthScore = Math.round((avgProgress + decisionHealth + taskHealth + riskHealth) / 4);
 
-      // Budget health (simplified - percentage of initiatives with budget data)
-      const budgetValues = initiatives.filter((i: any) => i.cost_capex || i.cost_opex).length;
-      const budgetHealth =
-        initiatives.length > 0 ? Math.round((budgetValues / initiatives.length) * 100) : null;
+      // Budget health: NULL when there is no actual-spend signal here. The old
+      // value returned budget-DATA COVERAGE (% of initiatives with a budget set)
+      // mislabelled as "health" — a number that looked like a score but measured
+      // completeness. Honest null > misleading number; real budget health
+      // (CPI/overrun) is computed where actual spend exists (executionBudgetService, F2).
+      const budgetHealth = null;
 
       // V4-EXEC-01: Per-initiative health + whyRed chain
       const initiativeHealth: InitiativeHealthItem[] = [];

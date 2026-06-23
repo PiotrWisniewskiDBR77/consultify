@@ -2350,7 +2350,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (budgetPairs.length > 0) {
       const totalBudget = budgetPairs.reduce((sum, pair) => sum + pair.budget, 0);
       const totalActual = budgetPairs.reduce((sum, pair) => sum + pair.actual, 0);
-      budgetHealth = Math.max(0, Math.round(100 - (totalActual / totalBudget) * 100));
+      // Budget health penalises OVERRUN, not consumption. The old formula
+      // (100 − consumed%) inverted the meaning: 100% spent at 100% delivered
+      // showed 0% "health", and underspend (often a delay signal) scored high.
+      // Within budget ⇒ 100; over budget ⇒ drops by the overrun %. (Full EVM
+      // CPI lands in F2 — this stops the tile from lying.)
+      const overrunPct =
+        totalBudget > 0 ? Math.max(0, ((totalActual - totalBudget) / totalBudget) * 100) : 0;
+      budgetHealth = Math.max(0, Math.min(100, Math.round(100 - overrunPct)));
     }
 
     return {

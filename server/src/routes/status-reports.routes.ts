@@ -96,6 +96,13 @@ router.post(
     }
     const report = await statusReportService.getReport(paramStr(reportId), orgId);
     if (!report) return res.status(404).json({ error: 'Report not found' });
+    // Distribution governance: only a PUBLISHED report leaves the org. Blocks
+    // sending a DRAFT/APPROVED (unfinished) report to external recipients.
+    if (report.status !== 'PUBLISHED') {
+      return res
+        .status(409)
+        .json({ error: 'Report must be PUBLISHED before distribution', status: report.status });
+    }
     for (const r of recipients) {
       const email = typeof r === 'string' ? r : r?.email;
       if (email) {
@@ -194,8 +201,16 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await dbRun('DELETE FROM status_reports WHERE id = ?', [req.params.id]);
-    res.json({ success: true });
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    // Org-scope the delete: a bare `WHERE id = ?` let any authenticated user
+    // delete another org's report (cross-tenant). 404 when nothing matched.
+    const result = await dbRun('DELETE FROM status_reports WHERE id = ? AND organization_id = ?', [
+      req.params.id,
+      orgId,
+    ]);
+    if (!result.changes) return res.status(404).json({ error: 'Report not found' });
+    return res.json({ success: true });
   })
 );
 

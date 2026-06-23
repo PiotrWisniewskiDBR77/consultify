@@ -314,10 +314,14 @@ async function executeProblemActionInternal(
         return { message: 'Initiative escalation created.', changedEntities };
       }
       case 'scope_reduction': {
+        // Baseline integrity (P03 §2.4.5): an intervention adjusts the FORECAST,
+        // never the approved baseline. Previously this wrote planned_end_date
+        // (+21d), silently rebaselining the initiative. Write forecast_end_date
+        // so variance vs baseline stays visible in the control tower.
         await dbRun(
           `UPDATE initiatives
            SET status = 'IN_PROGRESS',
-               planned_end_date = ?,
+               forecast_end_date = ?,
                updated_at = NOW()
            WHERE id = ? AND organization_id = ?`,
           [isoDay(21), row.sourceEntityId, organizationId]

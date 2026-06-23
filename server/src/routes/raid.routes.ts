@@ -228,7 +228,7 @@ router.get(
       : DEFAULT_THRESHOLDS;
 
     let query = `SELECT id, title, probability, impact, initiative_id as initiativeId
-                 FROM raid_items WHERE organization_id = ? AND status != 'RESOLVED'`;
+                 FROM raid_items WHERE organization_id = ? AND status NOT IN ('CLOSED', 'REALIZED')`;
     const params: any[] = [orgId];
     if (initiativeId) {
       query += ' AND initiative_id = ?';
@@ -371,7 +371,7 @@ router.post(
       : DEFAULT_THRESHOLDS;
 
     const rows = ((await dbAll(
-      `SELECT id, probability, impact FROM raid_items WHERE organization_id = ? AND status != 'RESOLVED'`,
+      `SELECT id, probability, impact FROM raid_items WHERE organization_id = ? AND status NOT IN ('CLOSED', 'REALIZED')`,
       [orgId]
     )) || []) as any[];
 

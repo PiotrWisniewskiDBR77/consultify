@@ -13,6 +13,10 @@ export const RAG_STATUS = {
   GREEN: 'GREEN',
   AMBER: 'AMBER',
   RED: 'RED',
+  // Honest reporting: a section with no authoritative data source is NA
+  // ("not independently tracked"), never a fake GREEN. NA is ignored by the
+  // overall roll-up (it is neither RED nor AMBER), so it cannot inflate status.
+  NA: 'NA',
 } as const;
 
 export const SECTION_NAMES = {
@@ -415,20 +419,29 @@ export class StatusReportService {
       issues: data.isOverBudget ? ['Budget overrun detected'] : [],
     };
 
-    // Scope section
+    // Scope section — no authoritative scope-change source feeds this report
+    // yet (change control lives in Rollout Change Log). Report NA honestly
+    // instead of a fabricated GREEN. Wire to change-control when available.
     sections[SECTION_NAMES.SCOPE] = {
-      status: 'GREEN',
-      content: 'Scope aligned with charter',
+      status: RAG_STATUS.NA,
+      content: 'Scope not independently tracked this period (no change-control feed)',
       highlights: [],
       issues: [],
     };
 
-    // Quality section
+    // Quality section — derived from realized issues (open RAID issues are the
+    // available quality/delivery-problem signal), not a hardcoded GREEN.
+    const qualityStatus =
+      data.openIssues >= 3 ? 'RED' : data.openIssues >= 1 ? 'AMBER' : 'GREEN';
     sections[SECTION_NAMES.QUALITY] = {
-      status: 'GREEN',
-      content: 'Quality standards being met',
-      highlights: [],
-      issues: [],
+      status: qualityStatus,
+      content:
+        data.openIssues > 0
+          ? `${data.openIssues} open issue(s) affecting quality/delivery`
+          : 'No open issues tracked this period',
+      highlights: data.openIssues === 0 ? ['No open issues'] : [],
+      issues:
+        data.openIssues >= 3 ? [`${data.openIssues} open issues require attention`] : [],
     };
 
     // Risks section
