@@ -4428,6 +4428,13 @@
       "summarizePrompt": "Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki."
     },
     "reports": {
+      "preset": {
+        "weekly": "Tygodniowy",
+        "monthly": "Miesięczny",
+        "biweekly": "Dwutygodniowy",
+        "onDemand": "Na żądanie",
+        "sponsor": "Sponsorski"
+      },
       "title": "Raporty realizacji",
       "subtitle": "Generuj prosty pakiet tygodniowy i raporty pogłębione bez dokładania narzutu procesowego.",
       "open": "Otwórz Raporty",

@@ -3518,11 +3518,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (activeTab === 'reports') {
       const reportPresets = [
         { id: 'all' as const, label: t('common.all', 'ALL'), count: 11 },
-        { id: 'weekly' as const, label: 'Weekly', count: 4 },
-        { id: 'monthly' as const, label: 'Monthly', count: 4 },
-        { id: 'bi-weekly' as const, label: 'Bi-weekly', count: 2 },
-        { id: 'on-demand' as const, label: 'On demand', count: 2 },
-        { id: 'sponsor' as const, label: 'Sponsor', count: 5 },
+        { id: 'weekly' as const, label: t('execution.reports.preset.weekly', 'Weekly'), count: 4 },
+        {
+          id: 'monthly' as const,
+          label: t('execution.reports.preset.monthly', 'Monthly'),
+          count: 4,
+        },
+        {
+          id: 'bi-weekly' as const,
+          label: t('execution.reports.preset.biweekly', 'Bi-weekly'),
+          count: 2,
+        },
+        {
+          id: 'on-demand' as const,
+          label: t('execution.reports.preset.onDemand', 'On demand'),
+          count: 2,
+        },
+        {
+          id: 'sponsor' as const,
+          label: t('execution.reports.preset.sponsor', 'Sponsor'),
+          count: 5,
+        },
       ];
       return (
         <div className={MENU_3_LEFT_CLASS}>

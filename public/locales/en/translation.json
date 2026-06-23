@@ -5221,6 +5221,13 @@
       "summarizePrompt": "Summarize this initiative in 5 bullets and propose 3 next steps."
     },
     "reports": {
+      "preset": {
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "biweekly": "Bi-weekly",
+        "onDemand": "On demand",
+        "sponsor": "Sponsor"
+      },
       "title": "Execution reports",
       "subtitle": "Generate a simple weekly pack and deep-dive reports without adding process overhead.",
       "open": "Open Reports",
