@@ -25,6 +25,7 @@ import type { SlideIntent, UnifiedReportMeta, UnifiedSlide } from './report/pptx
 import {
   DELIVERABLE_GENERATION_PURPOSE,
   resolveDeliverableTier,
+  deliverableModelConfig,
 } from './deliverableGenerationTier.js';
 import logger from '../utils/Logger.js';
 
@@ -86,6 +87,102 @@ function isValidPalette(value: unknown): boolean {
 }
 
 // ──────────────────────────────────────────────────────────────
+// Composition vocabulary (STEP 1a — planner-only prompt context)
+//
+// This is the TOPOLOGY the LLM reasons over so B1 stops picking a layout
+// intent blind and instead COMPOSES the slide: which content primitives land
+// in which screen region, under which named layout archetype.
+//
+// IMPORTANT: this is PROMPT CONTEXT, not a renderer contract. Step 1a does NOT
+// wire any of this into LayoutEngine / CardRenderer / PPTX. It exists so the
+// model can reason about FIT (capacity, hierarchy, content shape). The renderer
+// honours `composition` only in Step 1b. Keep the area/block vocab aligned with
+// the eventual region model (`CardBlock.position.area`) + the 14 primitives so
+// 1b can interpret what 1a emits.
+// ──────────────────────────────────────────────────────────────
+
+/** Region areas a slide can be partitioned into (mirrors CardBlock.position.area). */
+export const COMPOSITION_AREAS = ['full', 'left', 'right', 'top', 'bottom', 'overlay'] as const;
+export type CompositionArea = (typeof COMPOSITION_AREAS)[number];
+
+/** Content block primitives the deck can render (the 14+ from the region model). */
+export const COMPOSITION_BLOCK_TYPES = [
+  'heading',
+  'paragraph',
+  'bullet_list',
+  'numbered_list',
+  'table',
+  'chart',
+  'image',
+  'kpi_widget',
+  'metric_strip',
+  'smart_layout',
+  'smart_diagram',
+  'callout',
+  'quote_block',
+  'timeline_block',
+  'divider',
+  'icon_row',
+] as const;
+export type CompositionBlockType = (typeof COMPOSITION_BLOCK_TYPES)[number];
+
+/**
+ * 2–3 sensible layout-variant archetypes per intent family. These are NAMED
+ * starting points the model can pick from (or reason near) — not an exhaustive
+ * registry. The id is what flows into `composition.layoutVariantId`.
+ */
+export const COMPOSITION_LAYOUT_VARIANTS: Readonly<Record<string, readonly string[]>> = {
+  cover: ['centered', 'left_image', 'bottom_strip'],
+  section_intro: ['centered', 'left_image'],
+  executive_summary: ['stacked', 'two_column', 'kpi_grid_2x2'],
+  key_messages: ['stacked', 'two_column', 'icon_row_grid'],
+  single_insight: ['big_number', 'chart_left_text_right', 'stacked'],
+  performance_overview: ['kpi_grid_2x2', 'chart_left_text_right', 'big_number'],
+  comparison: ['split_lr', 'table', 'two_column'],
+  assessment: ['table', 'kpi_grid_2x2', 'split_lr'],
+  root_cause: ['smart_diagram', 'two_column', 'stacked'],
+  recommendation_single: ['big_number', 'stacked', 'chart_left_text_right'],
+  recommendation_portfolio: ['kpi_grid_2x2', 'two_column', 'table'],
+  initiative_portfolio: ['kpi_grid_2x2', 'table', 'two_column'],
+  prioritization_matrix: ['smart_diagram', 'table', 'split_lr'],
+  roadmap: ['timeline_strip', 'stacked', 'two_column'],
+  risk_management: ['table', 'two_column', 'kpi_grid_2x2'],
+  next_steps: ['numbered_stack', 'two_column', 'timeline_strip'],
+  appendix: ['stacked', 'table'],
+} as const;
+
+const COMPOSITION_AREA_SET = new Set<string>(COMPOSITION_AREAS);
+const COMPOSITION_BLOCK_SET = new Set<string>(COMPOSITION_BLOCK_TYPES);
+
+/** Hard cap on regions per slide (keeps the planner — and the renderer — sane). */
+const MAX_REGIONS_PER_SLIDE = 5;
+/** Hard cap on block types named inside one region. */
+const MAX_BLOCK_TYPES_PER_REGION = 6;
+
+/**
+ * Compact, token-frugal description of the composition vocabulary, injected
+ * into the planner systemPrompt so the model reasons about FIT.
+ */
+function buildCompositionVocab(): string {
+  const variantLines = LAYOUT_INTENT_CATALOG.map((intent) => {
+    const variants = COMPOSITION_LAYOUT_VARIANTS[intent] ?? ['stacked'];
+    return `  ${intent}: ${variants.join(' | ')}`;
+  }).join('\n');
+
+  return [
+    'COMPOSITION VOCABULARY (reason about FIT, do not pick blind):',
+    `- Region areas: ${COMPOSITION_AREAS.join(', ')}.`,
+    `- Content block primitives: ${COMPOSITION_BLOCK_TYPES.join(', ')}.`,
+    '- Layout-variant archetypes per intent (pick ONE layoutVariantId, or the',
+    '  closest fit when content suggests another):',
+    variantLines,
+  ].join('\n');
+}
+
+/** Prompt-ready constant (built once). */
+export const COMPOSITION_VOCAB = buildCompositionVocab();
+
+// ──────────────────────────────────────────────────────────────
 // Public contract
 // ──────────────────────────────────────────────────────────────
 
@@ -105,6 +202,29 @@ export interface SlideLayoutPlan {
    */
   title?: string | null;
   keyMessage?: string | null;
+  /**
+   * STEP 1a — OPTIONAL composition plan. Additive + back-compatible:
+   *   - absent / `null`  → today's behaviour (renderer keeps its heuristic).
+   *   - present          → the LLM's per-slide region plan, NORMALIZED
+   *     (invalid areas/blockTypes dropped, regions capped). Carried for the
+   *     Step 1b renderer to honour; Step 1a touches no renderer.
+   *
+   * `layoutVariantId` is a named archetype from COMPOSITION_LAYOUT_VARIANTS.
+   * `regions` map content primitives → screen areas. `emphasis` is a one-word
+   * hint (e.g. "data", "narrative", "visual") for what the slide leads with.
+   */
+  composition?: SlideComposition | null;
+}
+
+export interface SlideCompositionRegion {
+  area: CompositionArea;
+  blockTypes: string[];
+}
+
+export interface SlideComposition {
+  layoutVariantId?: string;
+  regions?: SlideCompositionRegion[];
+  emphasis?: string;
 }
 
 export interface DeckLayoutDirectorResult {
@@ -137,7 +257,7 @@ function heuristicIntent(index: number, total: number): SlideIntent {
 
 /** Pull the slide's own title (from content) — INPUT, not authored by B1. */
 function slideTitle(slide: UnifiedSlide): string | null {
-  const content = (slide?.content ?? {}) as Record<string, unknown>;
+  const content = (slide?.content ?? {}) as unknown as Record<string, unknown>;
   for (const k of ['title', 'headline', 'section_title']) {
     const v = content[k];
     if (typeof v === 'string' && v.trim()) return v.trim();
@@ -167,6 +287,8 @@ function deterministicPlan(slides: UnifiedSlide[]): SlideLayoutPlan[] {
       source: 'deterministic' as const,
       title: slideTitle(slide),
       keyMessage: slideKeyMessage(slide),
+      // STEP 1a — deterministic path never composes (renderer heuristic stays).
+      composition: null,
     };
   });
 }
@@ -239,7 +361,7 @@ function enforceSinglePalette(plans: SlideLayoutPlan[]): SlideLayoutPlan[] {
 // ──────────────────────────────────────────────────────────────
 
 function summarizeSlideForLlm(slide: UnifiedSlide, index: number): string {
-  const content = (slide?.content ?? {}) as Record<string, unknown>;
+  const content = (slide?.content ?? {}) as unknown as Record<string, unknown>;
   const km = slide?.key_message ? ` key_message="${String(slide.key_message).slice(0, 160)}"` : '';
   const currentIntent = isValidLayoutIntent(slide?.intent) ? slide.intent : '(none)';
   // Pull a couple of human-readable hints from the content blob.
@@ -249,6 +371,66 @@ function summarizeSlideForLlm(slide: UnifiedSlide, index: number): string {
     .filter(Boolean)
     .join(' ');
   return `Slide ${index}: currentIntent=${currentIntent}${km} ${hints}`.trim();
+}
+
+/**
+ * Normalize a raw LLM `composition` into our contract. Fail-open by design:
+ *   - invalid / non-object / empty  → null (renderer keeps its heuristic).
+ *   - unknown areas / blockTypes    → dropped.
+ *   - regions capped (count + per-region blockTypes).
+ *   - layoutVariantId / emphasis    → kept only when a non-empty string.
+ * NEVER throws. A composition that normalizes to "nothing useful" → null, so
+ * back-compat holds: absent composition === today's behaviour.
+ */
+function normalizeComposition(raw: unknown): SlideComposition | null {
+  try {
+    if (!raw || typeof raw !== 'object') return null;
+    const r = raw as Record<string, unknown>;
+
+    const out: SlideComposition = {};
+
+    if (typeof r.layoutVariantId === 'string' && r.layoutVariantId.trim()) {
+      out.layoutVariantId = r.layoutVariantId.trim().slice(0, 60);
+    }
+
+    if (typeof r.emphasis === 'string' && r.emphasis.trim()) {
+      // one-word hint — take the first token, keep it short.
+      out.emphasis = r.emphasis.trim().split(/\s+/)[0].slice(0, 24);
+    }
+
+    if (Array.isArray(r.regions)) {
+      const regions: SlideCompositionRegion[] = [];
+      for (const reg of r.regions) {
+        if (regions.length >= MAX_REGIONS_PER_SLIDE) break;
+        if (!reg || typeof reg !== 'object') continue;
+        const area = (reg as Record<string, unknown>).area;
+        if (typeof area !== 'string' || !COMPOSITION_AREA_SET.has(area)) continue;
+
+        const rawTypes = (reg as Record<string, unknown>).blockTypes;
+        const blockTypes: string[] = [];
+        if (Array.isArray(rawTypes)) {
+          for (const bt of rawTypes) {
+            if (blockTypes.length >= MAX_BLOCK_TYPES_PER_REGION) break;
+            if (typeof bt === 'string' && COMPOSITION_BLOCK_SET.has(bt) && !blockTypes.includes(bt)) {
+              blockTypes.push(bt);
+            }
+          }
+        }
+        // A region with no valid block types carries no useful info — drop it.
+        if (blockTypes.length === 0) continue;
+        regions.push({ area: area as CompositionArea, blockTypes });
+      }
+      if (regions.length > 0) out.regions = regions;
+    }
+
+    // Nothing survived normalization → treat as absent.
+    if (out.layoutVariantId === undefined && out.emphasis === undefined && out.regions === undefined) {
+      return null;
+    }
+    return out;
+  } catch {
+    return null;
+  }
 }
 
 async function planViaLlm(
@@ -267,7 +449,19 @@ async function planViaLlm(
     'consistency), and a one-line image brief. Favor variety: avoid >2 consecutive identical ' +
     'layouts.\n' +
     `Layout intent catalog (choose ONLY from these): ${LAYOUT_INTENT_CATALOG.join(', ')}.\n` +
-    `Palette catalog (choose ONLY from these, same paletteId for every slide): ${PALETTE_CATALOG.join(', ')}.`;
+    `Palette catalog (choose ONLY from these, same paletteId for every slide): ${PALETTE_CATALOG.join(', ')}.\n\n` +
+    // ── STEP 1a: ALSO COMPOSE each slide (reason about content shape → regions) ──
+    `${COMPOSITION_VOCAB}\n\n` +
+    'For EACH slide ALSO return a `composition` object that PLANS the slide layout:\n' +
+    '  - layoutVariantId: ONE archetype id from the list above for that intent (or the closest fit ' +
+    'when the content shape suggests another).\n' +
+    '  - regions: an array of { area, blockTypes[] } mapping content primitives to screen areas. ' +
+    'Reason about FIT: e.g. "4 metrics + 1 chart" → kpi_grid_2x2 with metric_strip/kpi_widget in one ' +
+    'area and chart in another; a single quote → big_number/centered with quote_block full. Use ONLY ' +
+    'the listed areas and block primitives. Keep it minimal (1–4 regions); do not overfill.\n' +
+    '  - emphasis: ONE word for what the slide leads with (e.g. data, narrative, visual, comparison).\n' +
+    'The composition must reflect the ACTUAL content of that slide — vary it slide-to-slide. If a slide ' +
+    "is genuinely trivial, a single full-area region is fine.";
 
   const userPrompt =
     `Deck language: ${meta?.language ?? 'en'}. Template: ${meta?.template ?? 'corporate'}. ` +
@@ -275,18 +469,36 @@ async function planViaLlm(
     `Slides (${slides.length}):\n${slideDigest}\n\n` +
     'Return one plan object per slide, in order, with slideIndex matching the slide number above.';
 
+  // composition is OPTIONAL + permissive (areas/blockTypes are NORMALIZED
+  // post-parse, not enum-gated here, so a stray value never rejects the slide).
+  const CompositionSchema = z
+    .object({
+      layoutVariantId: z.string().optional(),
+      regions: z
+        .array(
+          z.object({
+            area: z.string(),
+            blockTypes: z.array(z.string()),
+          })
+        )
+        .optional(),
+      emphasis: z.string().optional(),
+    })
+    .nullish();
+
   const PlanItemSchema = z.object({
     slideIndex: z.number(),
     layoutIntent: z.enum(LAYOUT_INTENT_CATALOG as unknown as [string, ...string[]]),
     paletteId: z.enum(PALETTE_CATALOG as unknown as [string, ...string[]]),
     imageBrief: z.string().nullable(),
     reasoning: z.string(),
+    composition: CompositionSchema,
   });
   const OutputSchema = z.object({ plans: z.array(PlanItemSchema) });
 
   const result = await (llmService as any).call({
     type: 'structured',
-    modelConfig: { id: 'premium' }, // resolveModelConfig maps 'premium' → PREMIUM tier
+    modelConfig: deliverableModelConfig(), // env DELIVERABLE_LLM_* → cheaper model; else PREMIUM tier
     systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
     schema: OutputSchema,
@@ -334,6 +546,8 @@ async function planViaLlm(
       // slide, regardless of which layout the LLM picked.
       title: slideTitle(slide),
       keyMessage: slideKeyMessage(slide),
+      // STEP 1a — normalized composition (null when absent/invalid → back-compat).
+      composition: normalizeComposition(raw.composition),
     };
   });
 
