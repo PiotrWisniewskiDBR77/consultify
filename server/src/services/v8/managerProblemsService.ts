@@ -329,6 +329,30 @@ function buildActionQueue(
   );
 }
 
+// F3 — decision SLA per priority (was a flat 7d/14d for everything). A critical
+// decision must not wait as long as a low-priority one (PRINCE2 tolerances).
+const DECISION_SLA_DAYS: Record<string, number> = { CRITICAL: 2, HIGH: 3, MEDIUM: 7, LOW: 14 };
+export function decisionSlaDays(priority?: string): number {
+  return DECISION_SLA_DAYS[String(priority || 'MEDIUM').toUpperCase()] ?? 7;
+}
+export function overdueDecisionSeverity(
+  priority: string | undefined,
+  daysOver: number
+): 'critical' | 'warning' {
+  const p = String(priority || '').toUpperCase();
+  if (p === 'CRITICAL' || p === 'HIGH') return 'critical';
+  return daysOver > decisionSlaDays(priority) ? 'critical' : 'warning';
+}
+export function pendingDecisionSeverity(
+  priority: string | undefined,
+  daysWaiting: number
+): 'critical' | 'warning' | 'info' {
+  const sla = decisionSlaDays(priority);
+  if (daysWaiting > sla * 2) return 'critical';
+  if (daysWaiting > sla) return 'warning';
+  return 'info';
+}
+
 function buildDecisions(decisions: any[]): ManagerProblemRow[] {
   const problems: ManagerProblemRow[] = [];
 
@@ -339,7 +363,7 @@ function buildDecisions(decisions: any[]): ManagerProblemRow[] {
     if (d.deadline && daysDiff(d.deadline)! > 0) {
       problems.push({
         id: `dec-overdue-${d.id}`,
-        severity: daysDiff(d.deadline)! > 7 ? 'critical' : 'warning',
+        severity: overdueDecisionSeverity(d.priority, daysDiff(d.deadline)!),
         problemType: 'overdue_decision',
         title: `Overdue: ${d.title}`,
         rootCause: `Deadline ${new Date(d.deadline).toLocaleDateString()} passed ${daysDiff(d.deadline)} days ago.`,
@@ -365,7 +389,8 @@ function buildDecisions(decisions: any[]): ManagerProblemRow[] {
       const daysWaiting = daysDiff(d.created_at) ?? 0;
       problems.push({
         id: `dec-pending-${d.id}`,
-        severity: s === 'DEFERRED' ? 'warning' : daysWaiting > 14 ? 'warning' : 'info',
+        severity:
+          s === 'DEFERRED' ? 'warning' : pendingDecisionSeverity(d.priority, daysWaiting),
         problemType: s === 'DEFERRED' ? 'deferred_decision' : 'pending_decision',
         title: `${s === 'DEFERRED' ? 'Deferred' : 'Pending'}: ${d.title}`,
         rootCause: `${s === 'DEFERRED' ? 'Decision was deferred.' : `Waiting for ${daysWaiting} days.`}${d.owner_name ? ` Owner: ${d.owner_name}.` : ''}`,
