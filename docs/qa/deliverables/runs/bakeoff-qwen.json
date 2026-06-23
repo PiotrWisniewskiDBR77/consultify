@@ -1,0 +1,32 @@
+{
+  "provider": "openrouter",
+  "model": "qwen/qwen-2.5-72b-instruct",
+  "ranAt": "2026-06-23T19:42:17.324Z",
+  "avgScorePct": 89,
+  "rows": [
+    {
+      "module": "deck",
+      "id": "M19.S06",
+      "scorePct": 67,
+      "fallbackUsed": false,
+      "tierUsed": "PREMIUM",
+      "sec": "16.2s"
+    },
+    {
+      "module": "doc",
+      "id": "M18.S06",
+      "scorePct": 100,
+      "structureFallback": false,
+      "types": 7,
+      "sec": "51.8s"
+    },
+    {
+      "module": "table",
+      "id": "M20.S06",
+      "scorePct": 100,
+      "fallbackUsed": false,
+      "tierUsed": "PREMIUM",
+      "sec": "36.9s"
+    }
+  ]
+}

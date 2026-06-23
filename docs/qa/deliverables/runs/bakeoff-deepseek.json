@@ -1,0 +1,32 @@
+{
+  "provider": "deepseek",
+  "model": "deepseek-chat",
+  "ranAt": "2026-06-23T19:41:02.581Z",
+  "avgScorePct": 42,
+  "rows": [
+    {
+      "module": "deck",
+      "id": "M19.S06",
+      "scorePct": 75,
+      "fallbackUsed": true,
+      "tierUsed": "PREMIUM",
+      "sec": "10.2s"
+    },
+    {
+      "module": "doc",
+      "id": "M18.S06",
+      "scorePct": 50,
+      "structureFallback": true,
+      "types": 2,
+      "sec": "10.3s"
+    },
+    {
+      "module": "table",
+      "id": "M20.S06",
+      "scorePct": 0,
+      "fallbackUsed": true,
+      "tierUsed": "STANDARD",
+      "sec": "9.6s"
+    }
+  ]
+}

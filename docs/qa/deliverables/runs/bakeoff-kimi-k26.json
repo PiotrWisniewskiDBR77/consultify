@@ -1,0 +1,32 @@
+{
+  "provider": "openrouter",
+  "model": "moonshotai/kimi-k2.6",
+  "ranAt": "2026-06-23T20:20:28.374Z",
+  "avgScorePct": 82,
+  "rows": [
+    {
+      "module": "deck",
+      "id": "M19.S06",
+      "scorePct": 75,
+      "fallbackUsed": true,
+      "tierUsed": "PREMIUM",
+      "sec": "121.2s"
+    },
+    {
+      "module": "doc",
+      "id": "M18.S06",
+      "scorePct": 83,
+      "structureFallback": false,
+      "types": 5,
+      "sec": "356.1s"
+    },
+    {
+      "module": "table",
+      "id": "M20.S06",
+      "scorePct": 89,
+      "fallbackUsed": false,
+      "tierUsed": "PREMIUM",
+      "sec": "31.9s"
+    }
+  ]
+}
