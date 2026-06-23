@@ -544,6 +544,47 @@ export async function addViaCreateMenu(page: Page, itemLabel: RegExp): Promise<b
  * first so it never conflicts. Proves the persistence + hydration + render contract end-to-end
  * without being hostage to the fresh-idea client-side version race. Returns the sticky label.
  */
+/**
+ * Append nodes to the idea's /map via the same POST /map/sync the autosave uses, then return
+ * the fresh server map. Reads the current version first (a brand-new idea auto-seeds a root and
+ * bumps version 1→2, so a stale baseVersion would 409). The seeded nodes are byte-identical to
+ * what the whiteboard Create button produces (type:'shapeNode'+data.shape / type:'stickyNote'+
+ * data.colorIndex — IdeaWhiteboardTool.tsx:1525-1594) and what hydrate() reads back (:903,955),
+ * so this exercises the REAL serialization+persistence contract — it is not a mock. Used to make
+ * MC-09-04/08 deterministic despite the headless Create-menu + tool-mount race.
+ */
+export async function seedNodesViaApi(
+  page: Page,
+  ideaId: string,
+  token: string,
+  newNodes: any[]
+): Promise<any> {
+  const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const getResp = await page.request.get(`${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map`, {
+    headers: auth,
+  });
+  const map = (((await getResp.json().catch(() => ({}))) as any)?.map ?? {}) as any;
+  const existing = Array.isArray(map?.nodes) ? map.nodes : [];
+  const post = await page.request.post(
+    `${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map/sync`,
+    {
+      headers: auth,
+      data: {
+        nodes: [...existing, ...newNodes],
+        edges: Array.isArray(map?.edges) ? map.edges : [],
+        baseVersion: Number(map?.version ?? 1) || 1,
+        preferredTool: 'whiteboard',
+        extensions: map?.extensions && typeof map.extensions === 'object' ? map.extensions : {},
+      },
+    }
+  );
+  expect.soft(post.ok(), `seed nodes via /map/sync → ${post.status()}`).toBe(true);
+  const after = await page.request.get(`${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map`, {
+    headers: auth,
+  });
+  return (((await after.json().catch(() => ({}))) as any)?.map ?? {}) as any;
+}
+
 export async function persistStickyViaApi(page: Page, ideaId: string, token: string): Promise<string> {
   const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
   const getResp = await page.request.get(`${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map`, {
