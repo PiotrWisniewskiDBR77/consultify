@@ -83,3 +83,32 @@ export function isDeliverablePremiumActive(
 ): boolean {
   return resolveDeliverableTier(options) === 'PREMIUM';
 }
+
+/**
+ * "Full model choice" for the deliverable GENERATION step (deck/doc/table) — so
+ * production can route premium generation to a cheaper/faster model (e.g. a
+ * Chinese model like DeepSeek / GLM / Qwen) instead of the default Opus-class
+ * Anthropic tier, controlling cost without code changes.
+ *
+ *   DELIVERABLE_LLM_PROVIDER  e.g. "deepseek" | "z_ai" | "openrouter" | "anthropic"
+ *   DELIVERABLE_LLM_MODEL     e.g. "deepseek-chat" | "glm-4.6" | "qwen/qwen-2.5-72b-instruct"
+ *
+ * When BOTH are set → that concrete model is used (the provider's API key is
+ * read from env by `llmService.getProviderSync`). When UNSET → returns the
+ * supplied `fallback` (or `{ id: 'premium' }`), i.e. TODAY'S behaviour byte-for-byte.
+ * Never throws — a malformed override falls back to the default.
+ */
+export function deliverableModelConfig(
+  fallback?: Record<string, unknown>
+): Record<string, unknown> {
+  try {
+    const provider = process.env.DELIVERABLE_LLM_PROVIDER?.trim();
+    const model = process.env.DELIVERABLE_LLM_MODEL?.trim();
+    if (provider && model) {
+      return { id: model, model_id: model, provider, tier: 'PREMIUM' };
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return fallback ?? { id: 'premium' };
+}

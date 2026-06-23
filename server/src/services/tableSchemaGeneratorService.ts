@@ -30,6 +30,7 @@ import logger from '../utils/Logger.js';
 import {
   resolveDeliverableTier,
   DELIVERABLE_GENERATION_PURPOSE,
+  deliverableModelConfig,
 } from './deliverableGenerationTier.js';
 
 // ──────────────────────────────────────────────────────────────
@@ -507,7 +508,8 @@ async function generateViaLlm(
 
   const result = await (llmService as any).call({
     type: 'structured',
-    modelConfig: modelCfg,
+    // env DELIVERABLE_LLM_* overrides the router's pick (cheaper model in prod); else modelCfg.
+    modelConfig: deliverableModelConfig(modelCfg as unknown as Record<string, unknown>),
     systemPrompt,
     messages: [{ role: 'user', content: `Table intent: "${intent}"` }],
     schema: OutputSchema,

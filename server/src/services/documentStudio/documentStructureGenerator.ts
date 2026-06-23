@@ -19,6 +19,7 @@
 import {
   resolveDeliverableTier,
   DELIVERABLE_GENERATION_PURPOSE,
+  deliverableModelConfig,
 } from '../deliverableGenerationTier.js';
 import logger from '../../utils/Logger.js';
 
@@ -260,7 +261,7 @@ async function planViaLlm(
 
   const result = await (llmService as any).call({
     type: 'structured',
-    modelConfig: { id: 'premium' },
+    modelConfig: deliverableModelConfig(),
     systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
     schema: LlmOutputSchema,
