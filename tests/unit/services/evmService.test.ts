@@ -1,0 +1,69 @@
+/**
+ * M14/F2 — EVM core + initiative derivation.
+ */
+import { describe, expect, it } from 'vitest';
+
+import { computeEvm, deriveInitiativeEvm } from '../../../server/src/services/evmService.js';
+
+describe('computeEvm — ANSI-748 indices', () => {
+  it('computes SPI/CPI/variances/EAC for a behind-and-over project', () => {
+    const r = computeEvm({ bac: 1000, pv: 500, ev: 400, ac: 450 });
+    expect(r.spi).toBe(0.8); // 400/500
+    expect(r.cpi).toBe(0.89); // 400/450 ≈ 0.888 → 0.89
+    expect(r.sv).toBe(-100); // 400-500
+    expect(r.cv).toBe(-50); // 400-450
+    expect(r.eac).toBeCloseTo(1125, 0); // 1000/0.888
+    expect(r.vac).toBeLessThan(0); // over budget at completion
+    expect(r.rag).toBe('RED'); // SPI 0.8 < 0.85
+  });
+
+  it('healthy project is GREEN', () => {
+    const r = computeEvm({ bac: 1000, pv: 500, ev: 490, ac: 480 });
+    expect(r.spi).toBe(0.98);
+    expect(r.rag).toBe('GREEN');
+  });
+
+  it('null indices when PV or AC is zero', () => {
+    expect(computeEvm({ bac: 100, pv: 0, ev: 0, ac: 0 }).spi).toBeNull();
+    expect(computeEvm({ bac: 100, pv: 50, ev: 20, ac: 0 }).cpi).toBeNull();
+  });
+});
+
+describe('deriveInitiativeEvm — schedule + budget → EVM', () => {
+  const start = '2026-01-01';
+  const end = '2026-12-31';
+  const mid = new Date('2026-07-01').getTime();
+
+  it('milestone-weighted EV when milestones exist', () => {
+    const r = deriveInitiativeEvm(
+      {
+        bac: 1000,
+        plannedStart: start,
+        plannedEnd: end,
+        actualCost: 400,
+        milestones: [
+          { weight: 0.25, done: true },
+          { weight: 0.25, done: true },
+          { weight: 0.25, done: false },
+          { weight: 0.25, done: false },
+        ],
+      },
+      mid
+    );
+    expect(r).not.toBeNull();
+    expect(r!.ev).toBe(500); // 50% of milestone weight done
+    expect(r!.pv).toBeCloseTo(497, -1); // ~half the schedule elapsed at mid-year
+  });
+
+  it('falls back to % complete when no milestones', () => {
+    const r = deriveInitiativeEvm(
+      { bac: 1000, plannedStart: start, plannedEnd: end, actualCost: 300, progressPct: 30 },
+      mid
+    );
+    expect(r!.ev).toBe(300); // 30% × 1000
+  });
+
+  it('returns null without a cost baseline (BAC ≤ 0)', () => {
+    expect(deriveInitiativeEvm({ bac: 0, progressPct: 50 }, mid)).toBeNull();
+  });
+});
