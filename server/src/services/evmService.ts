@@ -145,3 +145,35 @@ export function deriveInitiativeEvm(
   const ac = Number(src.actualCost) || 0;
   return computeEvm({ bac, pv, ev, ac });
 }
+
+/**
+ * Portfolio EVM roll-up: aggregate PV/EV/AC/BAC across initiatives (each derived
+ * via deriveInitiativeEvm), then run EVM on the totals. Initiatives without a
+ * cost baseline are skipped. Returns null when no initiative has a baseline, plus
+ * `coverage` = share of initiatives that contributed (data-honesty signal).
+ */
+export function derivePortfolioEvm(
+  sources: InitiativeEvmSource[],
+  asOf: number
+): (EvmResult & { coverage: number; contributing: number }) | null {
+  let bac = 0;
+  let pv = 0;
+  let ev = 0;
+  let ac = 0;
+  let contributing = 0;
+  for (const s of sources) {
+    const r = deriveInitiativeEvm(s, asOf);
+    if (!r) continue;
+    bac += r.bac;
+    pv += r.pv;
+    ev += r.ev;
+    ac += r.ac;
+    contributing += 1;
+  }
+  if (contributing === 0) return null;
+  return {
+    ...computeEvm({ bac, pv, ev, ac }),
+    contributing,
+    coverage: sources.length > 0 ? Math.round((contributing / sources.length) * 100) / 100 : 0,
+  };
+}

@@ -11,6 +11,7 @@
 import type { Response } from 'express';
 
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
+import { derivePortfolioEvm } from '../services/evmService.js';
 import {
   calculateRiskScore,
   categorizeScore,
@@ -105,6 +106,9 @@ interface PortfolioHealthMetrics {
     risk: number;
   };
   initiativeHealth?: InitiativeHealthItem[];
+  // F2 — additive EVM roll-up (SPI/CPI/EAC…). Does not drive healthScore yet
+  // (that swap needs cost actuals + live verification); exposed for the cockpit.
+  evm?: ReturnType<typeof derivePortfolioEvm>;
 }
 
 export class ExecutionController {
@@ -357,7 +361,7 @@ export class ExecutionController {
 
       // Get initiatives in execution phase
       const initiativesSql = `
-        SELECT id, name, status, progress, cost_capex, cost_opex
+        SELECT id, name, status, progress, cost_capex, cost_opex, planned_start_date, planned_end_date
         FROM initiatives
         WHERE project_id = ? AND organization_id = ?
           AND status IN ('EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED')
@@ -534,6 +538,20 @@ export class ExecutionController {
         });
       }
 
+      // F2 — additive portfolio EVM roll-up (SPI from schedule, EV from progress;
+      // CPI lands when cost actuals are wired). Honest coverage shows how many
+      // initiatives had a cost baseline. Does not alter healthScore yet.
+      const portfolioEvm = derivePortfolioEvm(
+        (initiatives as any[]).map((i) => ({
+          bac: (Number(i.cost_capex) || 0) + (Number(i.cost_opex) || 0),
+          plannedStart: i.planned_start_date,
+          plannedEnd: i.planned_end_date,
+          progressPct: Number(i.progress) || 0,
+          actualCost: null,
+        })),
+        Date.now()
+      );
+
       const metrics: PortfolioHealthMetrics = {
         healthScore,
         onTrackCount,
@@ -550,6 +568,7 @@ export class ExecutionController {
           risk: riskHealth,
         },
         initiativeHealth,
+        evm: portfolioEvm,
       };
 
       res.json(metrics);

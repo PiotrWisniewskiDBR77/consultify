@@ -67,3 +67,26 @@ describe('deriveInitiativeEvm — schedule + budget → EVM', () => {
     expect(deriveInitiativeEvm({ bac: 0, progressPct: 50 }, mid)).toBeNull();
   });
 });
+
+import { derivePortfolioEvm } from '../../../server/src/services/evmService.js';
+
+describe('derivePortfolioEvm — roll-up + coverage', () => {
+  const asOf = new Date('2026-07-01').getTime();
+  it('aggregates baselined initiatives and reports coverage', () => {
+    const r = derivePortfolioEvm(
+      [
+        { bac: 1000, plannedStart: '2026-01-01', plannedEnd: '2026-12-31', progressPct: 30 },
+        { bac: 500, plannedStart: '2026-01-01', plannedEnd: '2026-12-31', progressPct: 60 },
+        { bac: 0, progressPct: 50 }, // no baseline → skipped
+      ],
+      asOf
+    );
+    expect(r).not.toBeNull();
+    expect(r!.contributing).toBe(2);
+    expect(r!.coverage).toBeCloseTo(0.67, 1);
+    expect(r!.ev).toBe(600); // 300 + 300
+  });
+  it('null when no initiative has a cost baseline', () => {
+    expect(derivePortfolioEvm([{ bac: 0, progressPct: 10 }], asOf)).toBeNull();
+  });
+});
