@@ -199,6 +199,28 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Sub-moduł **ZAMKNIĘTY** dopiero g
 
 ---
 
+## ODBIORY MODUŁOWE M17–M20 — pakiet do testów ręcznych Piotra (GOTOWY 2026-06-23)
+
+> Komplet **epiki + DoD + testy manualne** dla każdego modułu (M17–M20), żeby Piotr mógł usiąść i ręcznie domykać do 100%. Każdy moduł = teczka (epiki+DoD+status, wzorzec 8-warstwowy) + plik testów manualnych (scenariusze wykonawcze z krokami, oczekiwanym, dowodem 3-warstwowym UI+Network+DB/plik). Warstwa generatorów (premium B1/B3/B4 + E/R/T/X) DOŁOŻONA do istniejących teczek/testów (które wcześniej pokrywały tylko moduł bazowy).
+
+| Moduł | Teczka (epiki + DoD + status) | Testy manualne (scenariusze) | Jakość premium (FT-6 live Sonnet) |
+|---|---|---|---|
+| **M17 Outputs** | [`M17-outputs.md`](M17-outputs.md) — 7 epików G1-G7 (E1-E4/T1-T4/X5/X6) | [`TESTY_M17_OUTPUTS.md`](../Testy%20manualne/TESTY_M17_OUTPUTS.md) — ~35 scen. (§G1-G5: launcher/galeria/routing/biblioteka/registry) | N/D (hub, nie generator) |
+| **M18 Dokumenty** | [`M18-dokumenty.md`](M18-dokumenty.md) — 7 epików + bugi GL-01/GL-02 | [`TESTY_M18_DOKUMENTY.md`](../Testy%20manualne/TESTY_M18_DOKUMENTY.md) — 8 scen. (MD-1..MD-8) | **~100%** (S01/S06/S16/S19); bug placeholder-cascade naprawiony |
+| **M19 Prezentacje** | [`M19-prezentacje.md`](M19-prezentacje.md) — 5 epików + bramka FT-6 deck | [`TESTY_M19_PREZENTACJE.md`](../Testy%20manualne/TESTY_M19_PREZENTACJE.md) — 7 scen. (MD-01..MD-07) | **~100%** (S01/S06/S16); 11 distinct layoutów VTS |
+| **M20 Tabele** | [`M20-tabele-studio.md`](M20-tabele-studio.md) — 5 epików + bramka FT-6 table | [`TESTY_M20_TABELE_STUDIO.md`](../Testy%20manualne/TESTY_M20_TABELE_STUDIO.md) — 14 scen. (PT-01..PT-14) | **~100%** (30/30 swept); bug data-loss kolumn naprawiony |
+
+**JAK TESTOWAĆ PREMIUM RĘCZNIE (ważne — przeczytaj przed sesją):**
+- Premium (B1/B3/B4) jest **za flagą `ENABLE_DELIVERABLES_PREMIUM`** i **NIE jest wpięte w żywe UI** (live Document Studio generuje wciąż „deterministic first draft"). Dwie warstwy testów manualnych:
+  - **Warstwa A — DZIŚ (bez deploya):** jakość premium przez harness/probe na żywym LLM (`scripts/deliverables/_diag-{deck,doc2,table}.mts`, klucz ze stagingu) + ocena wg rubryki [`DELIVERABLES_QUALITY_RUBRIC.md`](DELIVERABLES_QUALITY_RUBRIC.md). Testy oznaczone `[NOW]`/`[SCORING-AUTO]`.
+  - **Warstwa B — po wpięciu/flag ON w UI:** klikanie generacji w przeglądarce + zdjęcia + head-to-head vs Gamma/Kimi/Airtable na golden VTS. Testy oznaczone `[FLAG]`/`[BLOCKED-UI]`.
+- Wpięcie premium w żywe UI = świadoma decyzja go-live (Twoja). Do tego czasu manual warstwy B czeka.
+- Próg jakości (Q1) = **≥85% wszystkie formaty** (osiągnięty ~100% code-side). Golden topic (Q3) = **VTS** ([`scenarios/VTS_GOLDEN.md`](../../docs/qa/deliverables/scenarios/VTS_GOLDEN.md), próbka wygenerowana: [`runs/2026-06-22-VTS-generated.md`](../../docs/qa/deliverables/runs/2026-06-22-VTS-generated.md)). Provider stocków (Q5) = **Unsplash**.
+
+**DoD globalny (7/7)** — patrz wyżej w tym dokumencie; każda teczka mapuje go na swój moduł z liczbami FT i statusem met/pending. **Status formalny: 0/24 sub-modułów ZAMKNIĘTYCH (8/8)** — wszystkie „code-complete + jakość premium ~100%", a niedomknięte bramki = deploy + manual (FT-7) + →F/→UI Piotra (to właśnie ten ręczny przelot).
+
+---
+
 # Odbiory szczegółowe (sub-moduł po sub-module)
 
 > Każdy sub-moduł: cel · epiki · **konkretny zestaw testów per faza (podstawa odbioru)** · manual · ekrany.

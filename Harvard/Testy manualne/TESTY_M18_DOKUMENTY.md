@@ -971,3 +971,151 @@ Dla każdego punktu/podpunktu powyżej:
 **Blokery twardego DoD:**
 - S4 cold-start na staging (`staging` = caboose Railway) musi być zweryfikowany ręcznie po restarcie.
 - S6 HTTP 403 musi być potwierdzony przez Network (nie mock).
+
+---
+
+## Testy manualne — Generatory Deliverable (premium DOC quality) — 2026-06-23
+
+> **Sekcja NOWA, dołożona obok istniejącej paczki (§0-§20 wyżej testują EXISTING Document Studio).** Ta paczka testuje warstwę **„Generatory Deliverable" premium DOC** (fala W4): AI-struktura bloków (B3) + content-gen treści — czy raport jest *bogaty* (KPI/callout/tabela/wykres/listy) i *wypełniony realną treścią* (bez kaskady placeholderów), w jakości Kimi/Claude.
+> **SSOT:** rubryka [`Harvard/wdrozenie-100/DELIVERABLES_QUALITY_RUBRIC.md`](../wdrozenie-100/DELIVERABLES_QUALITY_RUBRIC.md) §3 (RAPORT/doc) + §6 (karta odbioru) · parametry grafiki [`DELIVERABLES_GRAPHIC_PARAMETERS.md`](../wdrozenie-100/DELIVERABLES_GRAPHIC_PARAMETERS.md) · scenariusze [`docs/qa/deliverables/scenarios/M18_REPORTS.md`](../../docs/qa/deliverables/scenarios/M18_REPORTS.md) (30 doc) + [`VTS_GOLDEN.md`](../../docs/qa/deliverables/scenarios/VTS_GOLDEN.md) (head-to-head) · plany B-series/R-series/X-series.
+> **Teczka:** [`Harvard/wdrozenie-100/M18-dokumenty.md`](../wdrozenie-100/M18-dokumenty.md) → sekcja „Generatory Deliverable — premium DOC" (EPIK-G1..G7, GL-01/GL-02).
+> **Legenda dodatkowa:** `[FLAG]` = wymaga flagi premium ON · `[NOW]` = wykonalne dziś przez harness · `[BLOCKED-UI]` = wymaga wpięcia premium w UI + deploy (dziś niewykonalne z UI) · `[H2H]` = head-to-head vs referencja.
+
+### MD-0. Preconditions — jak włączyć premium DOC
+
+**Ścieżka A — harness (Scoring-auto, wykonalne DZIŚ) `[NOW]`:**
+1. Zdobądź ważny klucz LLM ze stagingu Railway (lokalnie brak = mierzysz podłogę deterministyczną).
+2. Z katalogu projektu uruchom runner FT-6 (plain-node, NIE vitest — SDK structured pada pod vitest):
+   ```bash
+   cd /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify
+   ANTHROPIC_API_KEY=<klucz-staging> ENABLE_DELIVERABLES_PREMIUM=true \
+     node --import tsx scripts/deliverables/live-pilot-ft6.mts
+   ```
+   - Runner ustawia `DOTENV_IGNORE_LOCAL=1` → **NIE dotyka `.env.local` (= PROD centerbeam)**, nie inicjalizuje DB. Bezpieczne.
+   - Wynik: JSON do `docs/qa/deliverables/runs/<data>-live-pilot-<model>.json` z `byModule[doc].avgScorePct`, `rows[].scorePct/passed/failures/sample.blockTypes/totalBlocks`.
+3. **Asercja wstępna (inaczej `test.skip` z powodem):** w wynikowym JSON `rows[doc].tierUsed === 'PREMIUM'` i `fallbackUsed === false`. Jeśli `STANDARD`/`fallbackUsed:true` → mierzysz PODŁOGĘ, nie mózg — popraw klucz/flagę przed oceną jakości.
+
+**Ścieżka B — żywy UI `[BLOCKED-UI]`:** dziś **niewykonalna**. Flaga `ENABLE_DELIVERABLES_PREMIUM` default OFF (`deliverableGenerationTier.ts`), premium niewpięte w chat→canvas→studio; intake Document Studio mówi „deterministic first draft". Te kroki opisane, by były gotowe po: (a) flaga ON na Railway, (b) wpięcie w UI, (c) deploy + live-verify w przeglądarce.
+
+**Dane złote (golden):** używaj scenariuszy z `M18_REPORTS.md` (S01 memo / S06 diagnoza HR / S16 raport diagnostyczny 8 sekcji / S19 redesign procesu) oraz VTS doc (diagnoza gotowości AI VTS, 8 sekcji) z `VTS_GOLDEN.md`.
+
+### MD-1 [NOW][FLAG] — Bogactwo bloków: pełny raport (KPI + callouty + tabela + wykres + listy)
+
+- **Cel:** premium B3 buduje raport z ≥5 distinct typów bloków (nie ściana prozy) — EPIK-G1, rubryka K3/K5/K6.
+- **Wejście:** golden **S16** („Pełny raport diagnostyczny Apator", 8 sekcji) LUB VTS doc (8 sekcji).
+- **Kroki:**
+  1. Uruchom runner FT-6 (MD-0 ścieżka A) z premium ON.
+  2. Otwórz wynikowy JSON → `rows[]` gdzie `module==='doc'` i `id` zawiera `S16`.
+  3. Odczytaj `sample.blockTypes`, `sample.sections`, `sample.totalBlocks`.
+- **Oczekiwane (rubryka §3 + M18_REPORTS S16, bramka ≥85%):**
+  - `sections` ∈ [7, 9].
+  - `sample.blockTypes` zawiera ≥5 distinct typów, w tym ≥1 `kpi`, ≥1 `table`, ≥1 `callout`, ≥1 `bulletList` (wykres `chart` opcjonalny dla raportu diagnostycznego, ale w S16 golden referencyjny ma `chart`).
+  - `sample.totalBlocks` znacząco > liczba sekcji (bogactwo, nie 1 blok/sekcja).
+  - `scorePct ≥ 85%`, `passed:true` (lub fail tylko na miękkim kryterium liczbowym).
+  - **Referencja z sesji 2026-06-22 (Sonnet 4.6):** S16 = 8 sekcji, **68 bloków**, 9 typów (heading/text/kpi/callout/bulletList/table/chart/numberedList/image), **100% PASS**.
+- **Dowód:** wycinek JSON (`rows[doc S16].sample`) + ścieżka pliku run.
+
+### MD-2 [NOW][FLAG][KRYTYCZNE] — BRAK kaskady placeholderów (regresja buga GL-01)
+
+- **Cel:** wykryć bug GL-01 (per-section content schema `z.record` niespełnialny → circuit-breaker OPEN → reszta dokumentu kaskaduje do PLACEHOLDER, **podczas gdy structural scorer dalej pokazuje 100%**). To jest „zielony scorer maskuje martwy mózg" — patrz teczka H'/GL-01.
+- **Jak go rozpoznać (TELL):** struktura zielona (typy bloków OK, scorePct strukturalny wysoki) **ALE** treść bloków to zaślepki: `"This section is awaiting content"`, `[TODO]`, puste `content.text`, powtarzający się ten sam stub w wielu blokach, tabele z samymi `—`.
+- **Kroki:**
+  1. Uruchom runner na golden ≥6 sekcji (S16 lub VTS doc) z premium ON.
+  2. Otwórz **pełny artefakt** (nie tylko `sample` ze scoringu) — JSON artefaktu zawiera treść bloków (np. `docs/qa/deliverables/runs/2026-06-22-VTS-generated.json` jako wzorzec poprawny).
+  3. Przejrzyj treść KAŻDEJ sekcji od pierwszej do ostatniej (kaskada zaczyna się po sekcji, na której pękł circuit-breaker — zwykle środek/koniec).
+  4. Sprawdź `rows[doc].error` — czy pusty (nie timeout/circuit-breaker).
+- **Oczekiwane (po naprawie GL-01):**
+  - **0 bloków z treścią-zaślepką** w CAŁYM dokumencie (od sekcji 1 do ostatniej).
+  - Treść późnych sekcji równie bogata jak wczesnych (brak „urwania" w połowie).
+  - `rows[doc].error` pusty; `sample.totalBlocks` niezerowy.
+  - Generowanie per-sekcja zakończone w rozsądnym czasie (po naprawie 247s→27s na sekcję; patrz caveat wydajności MD-6).
+- **Przy FAIL (kaskada wróciła):** zanotuj numer sekcji, od której zaczyna się placeholder; sprawdź log circuit-breakera; to regresja GL-01 — schema content-gen wróciła do `z.record`/strict. Plik/mechanizm: `documentBlockContentGenerator.ts` (JSON-string schema + tolerant parser).
+- **Dowód:** wycinek treści sekcji pierwszej + ostatniej (porównanie bogactwa) + `rows[doc].error` pusty.
+
+### MD-3 [NOW][FLAG] — Kalibracja liczby bloków (regresja buga GL-02; memo vs raport)
+
+- **Cel:** B3 dobiera liczbę bloków do typu/rozmiaru — memo proste, raport bogaty (EPIK-G1 Story G1.2, bug GL-02).
+- **Kroki:** uruchom runner; porównaj `sample.totalBlocks` dla S01 (memo) vs S16 (raport).
+- **Oczekiwane (M18_REPORTS):**
+  - S01 memo: `blocks` ∈ [5, 7] (proste), 1 sekcja, **bez** `chart`/nadmiaru `kpi`.
+  - S16 raport: dziesiątki bloków, 7-9 sekcji.
+  - **Rezydualny znany sygnał (miękki, nie blokujący):** w sesji 2026-06-22 S01 dał **11 bloków** (lekka over-production na Sml) — odnotuj jako miękki fail kalibracji, NIE jako placeholder/regresję mózgu.
+- **Dowód:** `rows[doc S01].sample.totalBlocks` + `rows[doc S16].sample.totalBlocks`.
+
+### MD-4 [NOW][FLAG] — Grounding (cytowania) + i18n PL/EN
+
+- **Cel:** EPIK-G3 — cytowania wskazują dostarczone źródło (nie zmyślone), `citations[]` osobno od prozy; treść w żądanym języku.
+- **Kroki:**
+  1. Golden z `minCitations` / źródłem (np. VTS doc — źródło = ankieta wave 2); 2 runy `language:'PL'` i `'EN'`.
+  2. Sprawdź `rows[doc].artifact.citations` i treść nagłówków.
+- **Oczekiwane (VTS_GOLDEN doc, kryteria 10/ rubryka K7/M2):**
+  - `citations[]`/`source_refs[]` obecne i **osobno** od akapitów (nie wplecione), wskazują realne źródło.
+  - PL run: nagłówki/treść po polsku; EN run: po angielsku (`anyTextContains` per język).
+- **Dowód:** wycinek `artifact.citations` + 2 JSON-y (PL/EN).
+
+### MD-5 [BLOCKED-UI][FLAG] — Render bloków w UI (recharts/tabela/KPI/callout, dark+light)
+
+- **Cel:** EPIK-G4 — premium-wygenerowane bloki renderują się wizualnie w `DocumentTipTapEditor`, spójne dark/light (rubryka G1-G5; R-series R1-S03..S06, R3).
+- **Status:** `[BLOCKED-UI]` — wymaga premium wpiętego w UI. Wykonaj po EPIK-G7.
+- **Kroki (po wpięciu):**
+  1. Wygeneruj raport premium (S16/VTS doc) i otwórz w `/document-studio/:artifactId`.
+  2. DevTools → sprawdź render: `.doc-table-block table` (ramki, nagłówek), `.recharts-responsive-container`/`.recharts-surface` (wykres SVG, osie, serie), `.doc-kpi-strip__card` (label/value/delta), callout (tło/ikona).
+  3. Przełącz dark mode (init-script lub Settings) — powtórz.
+- **Oczekiwane:** każdy typ bloku renderuje się bez crashu i overflow; w dark — kontrast ≥4.5:1, osie/linie/ramki czytelne, brak crimson-leak. 0 błędów w konsoli.
+- **Dowód:** screenshot UI (light + dark) → `docs/qa/screens/deliverables-R-<data>/`; Network: brak 5xx.
+
+### MD-6 [NOW][FLAG] — Wydajność / latencja (caveat)
+
+- **Cel:** premium kończy generację dużych dokumentów (z akceptacją, że trwa minuty) — bez timeoutu/crasha.
+- **Oczekiwane (caveat z teczki G'):** S16 ~226s, S19 ~267s — **kończy się**, ale minuty latencji. `rows[doc].error` pusty (NIE timeout). To znana cecha, nie bug; w UI wymaga widocznego, niewiszącego spinnera (sprawdzić po wpięciu).
+- **Dowód:** czas runu per scenariusz + `error` pusty.
+
+### MD-7 [BLOCKED-UI][FLAG] — Parytet eksportu DOCX/PDF (wykresy/tabele/kolory NIE degradują do tekstu)
+
+- **Cel:** EPIK-G5 / rubryka G8 — wyeksportowany DOCX/PDF NIESIE wykresy (rasteryzowane X3), tabele z ramkami, kolory — nie sam tekst.
+- **Status:** `[BLOCKED-UI]` do wpięcia + live-verify; część fidelity wykonalna jako Export-fidelity-vitest (X-series, parsowanie bajtów pliku — patrz X1/X3).
+- **Kroki (po wpięciu):**
+  1. Premium raport z wykresem + tabelą → Export PDF (po przejściu QA-gate, §7.3 wyżej) + Export DOCX.
+  2. Otwórz PDF/DOCX (Word przez computer-use dla MQ-R10).
+- **Oczekiwane:** wykres osadzony jako obraz (X3 `documentChartRasterizer` → PNG, nie pominięty); tabela z ramkami/nagłówkiem; listy jako prawdziwe listy Word (nie ręczne „• "); parytet z ekranem (G8, brak degradacji do tekstu).
+- **Dowód:** plik .pdf/.docx + screenshot otwartego pliku; (fidelity-auto) parsowanie X-series.
+
+### MD-8 [H2H][BLOCKED-UI] — Head-to-head vs Kimi/Claude na VTS golden (MQ-R11)
+
+- **Cel:** EPIK-G6 / rubryka §3 MQ-R11 — nasz doc na złotym temacie VTS ≥ referencja (Kimi-Claude) na KAŻDYM wymiarze graficznym 3C i merytorycznym 3B.
+- **Wejście:** VTS golden doc (`VTS_GOLDEN.md` sekcja 2) — „pełny raport diagnostyczny gotowości na AI dla VTS Group" (8 sekcji, KPI-strip + callouty + tabela działów + wykres trendu). Ten sam intent wrzucony do Kimi-Claude.
+- **Kroki:**
+  1. Wygeneruj nasz doc (premium) — porównaj z `docs/qa/deliverables/runs/2026-06-22-VTS-generated.md` (referencyjny McKinsey-grade sample).
+  2. Wygeneruj/zdobądź wersję Kimi-Claude tego samego intentu.
+  3. Wyrenderuj oba do PDF/PNG (nasz: `documentPdfRenderer.ts`; ich: ich export).
+  4. Wypełnij KARTĘ ODBIORU (rubryka §6) — 3 oceny: Kompletność (maks 16, próg ≥90%), Merytoryka (maks 10, próg ≥80%, M1 grounding≠0 + M2 język≠0), Grafika (maks 16, próg ≥80%, żaden wymiar=0), + head-to-head per wymiar.
+- **Oczekiwane (VTS_GOLDEN doc ACCEPTANCE, bramka ≥85%):**
+  - `sections` ∈ [7,9]; ≥5 distinct block types; ≥1 `kpi` (3-5 itemów), ≥2 `callout`, ≥1 `table` (gotowość wg działów: wiersz dla ≥6 z 8 działów), ≥1 `bulletList`, ≥1 `chart`; każda sekcja ma `heading`; sek. 1 wymienia średni indeks gotowości jako liczbę; `citations[]` osobno.
+  - **Porównanie vs Kimi-Claude (nota „vs konkurent"):** (a) bogactwo bloków — czy konkurent daje ścianę prozy a my KPI-strip/tabelę/wykres/callout; (b) struktura 7-9 logicznych sekcji; (c) trafność warningu o jakości danych (callout); (d) typografia A4 (H1→body, measure 50-75ch) vs surowy markdown; (e) rekomendacje z właścicielem + horyzontem (actionability).
+  - **WERDYKT:** ODEBRANY ⟺ Kompletność PASS ∧ Merytoryka PASS ∧ Grafika PASS ∧ nasz ≥ ref na każdym wymiarze. Przegrana na choćby jednym wymiarze graficznym = DO POPRAWY.
+- **Dowód:** 2× PNG/PDF (nasz vs Kimi-Claude) + wypełniona Karta odbioru (3 oceny + tabela head-to-head per wymiar) zapisana w `docs/qa/deliverables/runs/<data>/h2h-doc/`.
+
+### MD-9. Mapowanie EPIK → scenariusz → wykonalność
+
+| Scenariusz | EPIK (teczka F') | Pokrywa | Wykonalność |
+|---|---|---|---|
+| MD-1 | EPIK-G1 | bogactwo bloków (≥5 typów) | `[NOW]` harness |
+| MD-2 | EPIK-G2 / GL-01 | **brak placeholder-cascade** (regresja zamaskowanego buga) | `[NOW]` harness (czytaj treść artefaktu) |
+| MD-3 | EPIK-G1 / GL-02 | kalibracja liczby bloków | `[NOW]` harness |
+| MD-4 | EPIK-G3 | grounding + i18n PL/EN | `[NOW]` harness |
+| MD-5 | EPIK-G4 | render bloków (recharts/tabela/KPI), dark/light | `[BLOCKED-UI]` po wpięciu |
+| MD-6 | (caveat) | latencja dużych dokumentów | `[NOW]` harness |
+| MD-7 | EPIK-G5 | parytet eksportu DOCX/PDF (X1/X3) | `[BLOCKED-UI]` + fidelity-vitest |
+| MD-8 | EPIK-G6 | head-to-head vs Kimi/Claude (MQ-R11) | `[H2H]` (render NOW, ocena ekspercka; UI-h2h po wpięciu) |
+
+### MD-10. DoD premium DOC (uzupełnienie do DoD §powyżej)
+
+Premium DOC zalicza bramkę jakości gdy:
+1. **FT-6 ≥85%** na ≥3 golden (S01/S06/S16) — `tierUsed:PREMIUM`, `fallbackUsed:false` (MD-1). **Stan 2026-06-23: SPEŁNIONE — doc avg 92%, S06/S16 100% PASS.**
+2. **0 placeholder-cascade** na golden ≥6 sekcji (MD-2) — regresja GL-01 nie wróciła. **Stan: GL-01 naprawione.**
+3. Kalibracja bloków OK (MD-3) — **GL-02 naprawione, rezydualny miękki sygnał na Sml.**
+4. Grounding + PL/EN (MD-4).
+5. **[BLOCKED-UI]** render bloków + parytet eksportu live-verified (MD-5, MD-7) — **pending wpięcie premium w UI (EPIK-G7) + deploy.**
+6. **[H2H]** ≥1 karta odbioru head-to-head vs Kimi/Claude na VTS golden = ODEBRANY (MD-8) — pending render + ocena.
+
+**Bloker twardy:** premium niewpięte w żywy UI (intake = „deterministic first draft"). Kroki `[BLOCKED-UI]`/`[H2H]` nieodhaczalne dopóki: flaga `ENABLE_DELIVERABLES_PREMIUM` ON na Railway + wpięcie chat→canvas→studio + deploy + live-verify. Nie raportować „jakość UI potwierdzona" bez żywego LLM przez UI.

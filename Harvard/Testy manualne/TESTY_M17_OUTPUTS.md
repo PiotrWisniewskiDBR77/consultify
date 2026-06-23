@@ -802,3 +802,245 @@ Dla KNOWN ISSUE: wskaż numer luci (L-01..L-09) z `Harvard/wdrozenie-100/M17-out
 ---
 
 *Specyfikacja pokrywa 7 epiki (E1–E4), 7 scenariuszy krytycznych (S1–S7), 29 endpointów BE, 5 filarów trust-state, 6 typów originRuntime, ścieżki cross-module Canvas/Inicjatywy/Prezentacje/Eksport. Kluczowa zależność: `ENABLE_V8_GLOBAL` musi być ustawiona przed testami §2–§9.*
+
+---
+
+## Testy manualne — Generatory Deliverable (M17 launcher + template + Outputs registry)
+
+> **APPEND 2026-06-23.** Sekcja pokrywa NOWĄ rolę M17 w programie „Generatory Deliverable": **zunifikowany launcher** (przycisk „Nowy" + 3 kafle typu Raport/Prezentacja/Tabela) → **galeria template** (DBR77 kuratorowane + user-created + „Teresa zaproponuje") → **routing do edytora** → **transakcyjna rejestracja w Outputs + lineage**. Traceable do sub-modułów E1-E4 (launcher), T1-T4 (silnik template), X5/X6 (jedna encja + transakcyjny rejestr). SSOT: `Harvard/wdrozenie-100/DELIVERABLES-STAN-PRACY-ODBIORY.md` + `docs/qa/deliverables/test-plan/{E,T,X}-series.md`.
+>
+> **Reguła 3-warstwowej weryfikacji E2E (§0.6 wyżej, OBOWIĄZUJE):** każdy scenariusz funkcjonalny ma dowód w **UI** (co widać) + **Network** (request/response endpointu) + **screenshot point** (gdzie zrobić zrzut). Sama zmiana wyglądu = NIE dowód.
+
+### Setup G — środowisko testowe Generatorów
+
+1. Uruchom dev FE (`:3000`) + BE (`:3001`). Zaloguj się jako **OWNER** (pełne prawa).
+2. **[FLAG] KRYTYCZNE — flaga launchera (build-time):** ustaw `VITE_ENABLE_DELIVERABLES_LIGHT=true` w `.env.local` **PRZED** `vite dev/build`. To `import.meta.env` — **nie da się przełączyć w runtime**. Weryfikacja: w konsoli przeglądarki `import.meta.env.VITE_ENABLE_DELIVERABLES_LIGHT` = `"true"`. Bez flagi: przycisk „Nowy" robi fallback do `?tab=templates`, NIE otwiera launchera (to scenariusz §G1.9).
+3. **[FLAG] Premium (opcjonalnie, dla golden/jakości):** `ENABLE_DELIVERABLES_PREMIUM=true` w env BE.
+4. DevTools → **Network** (filtr: `deliverables` oraz `artifacts`), **Console** (zero błędów = wymóg).
+5. Drugie konto: **USER** (nieadmin) do role/scope; jeśli dostępne — **konto w INNEJ organizacji** do cross-org (jeśli brak: oznacz cross-org jako HONEST-SKIP, NIE fałszywy zielony — patrz D-05 w teczce).
+6. **Selektory (dodane w sesji 2026-06-23):** `data-testid="outputs-new-btn"`, `launcher-type-report|presentation|table`, `launcher-template-blank`, `launcher-template-{id}`, `launcher-suggest-input`, `launcher-suggest-btn`. Hub: `data-testid="reports-presentations-hub"`, trasa `/presentations`.
+
+### Mapa wykonalności (testable-NOW vs need-deploy)
+
+| Grupa | Testable NOW (flaga ON lokalnie/staging) | Wymaga deploy / LLM / 2-org |
+|---|---|---|
+| **§G1 Launcher UI** | G1.1–G1.8 (otwarcie, 3 kafle, krok 2, wstecz/Esc, zamknięcie, dark) | G1.9 (flaga OFF = osobny build) |
+| **§G2 Galeria + Teresa** | G2.1–G2.4, G2.6 (galeria, Blank, error galerii, i18n) | G2.5 (Teresa-suggest = LLM lub stub route) |
+| **§G3 Routing → edytor** | G3.4 (opener per typ deterministyczny), G3.5 (błąd generacji mock 500) | G3.1–G3.3 (czat→edytor = LLM lub mock `/deliverables/generations`) |
+| **§G4 Biblioteka template (API)** | G4.1–G4.6 (CRUD/persyst/walidacja/suggest — API OD ZARAZ) | G4.7 (cross-org 403 = 2 org) |
+| **§G5 Outputs registry + lineage** | G5.1 (UI brak dup), G5.2 (lineage w preview), G5.4 (output natychmiast) | G5.3 (cross-org lineage = 2 org) |
+
+---
+
+### §G1 Launcher „Nowy" + 3 kafle typu (E1) [FLAG]
+
+> **Precondition wspólny:** flaga `VITE_ENABLE_DELIVERABLES_LIGHT=true` (Setup G krok 2); zalogowany OWNER; `/presentations` na tabie agregatu (`outputs_all`/`outputs_mine`/`outputs_review`) — launcher otwiera się TYLKO na tych tabach.
+
+#### G1.1 Otwórz launcher [FLAG] — testable NOW
+1. Wejdź na `/presentations`, upewnij się że aktywny tab to agregat (Wszystkie/Moje/Do recenzji).
+2. Kliknij przycisk „Nowy / New output" (`outputs-new-btn`).
+- **Oczekiwane:** otwiera się modal `role="dialog" aria-modal="true"` z tytułem „New output"; widoczne 3 kafle typu.
+- **Dowód:** UI — modal widoczny; **Network** — brak błędu (launcher to FE-only, ewentualnie prefetch `GET /api/deliverables/templates?type=...`); **screenshot:** `G1-01-launcher-open.png`.
+
+#### G1.2 Trzy kafle typu + etykiety [FLAG] — testable NOW
+1. W otwartym launcherze obejrzyj kafle.
+- **Oczekiwane:** dokładnie 3 kafle — Raport/Report (`launcher-type-report`), Prezentacja/Presentation (`launcher-type-presentation`), Tabela/Table (`launcher-type-table`), każdy z ikoną + krótkim hintem.
+- **Dowód:** UI — 3 kafle z `data-testid`; **screenshot:** `G1-02-three-tiles.png`.
+
+#### G1.3 Wybór Raport → krok galerii [FLAG] — testable NOW
+1. Kliknij kafel „Raport" (`launcher-type-report`).
+- **Oczekiwane:** modal przechodzi do kroku 2: tytuł „Choose a template", widoczny przycisk „wstecz", input Teresy, kafel „Blank" (`launcher-template-blank`).
+- **Dowód:** UI — krok 2; **Network** — `GET /api/deliverables/templates?type=doc` → 200 (uwaga: API używa `doc`, UI mówi „Report"); **screenshot:** `G1-03-report-step2.png`.
+
+#### G1.4 Wybór Prezentacja / Tabela → krok galerii [FLAG] — testable NOW
+1. Powtórz G1.3 dla „Prezentacja" (`launcher-type-presentation`) i „Tabela" (`launcher-type-table`).
+- **Oczekiwane:** krok 2 z galerią właściwą dla typu (deck: board-deck/diagnostic; table: risk-register/kpi-dashboard) + Blank.
+- **Dowód:** **Network** — `?type=deck` / `?type=table` → 200; **screenshot:** `G1-04-deck-step2.png`, `G1-04-table-step2.png`.
+
+#### G1.5 Wstecz / Escape cofa krok [FLAG] — testable NOW
+1. Wejdź w krok 2 (G1.3). 2. Kliknij „wstecz". 3. Wejdź ponownie, naciśnij Escape. 4. Z kroku 1 naciśnij Escape.
+- **Oczekiwane:** „wstecz" i Escape z kroku 2 → krok 1 (3 kafle); Escape z kroku 1 → modal zamknięty.
+- **Dowód:** UI — przejścia; **screenshot:** `G1-05-back-to-step1.png`.
+
+#### G1.6 Zamknięcie (X + backdrop) [FLAG] — testable NOW
+1. Kliknij X (`aria-label` „Close"). 2. Otwórz ponownie, kliknij tło (backdrop).
+- **Oczekiwane:** modal zamyka się w obu przypadkach; brak `role=dialog`.
+- **Dowód:** UI — brak modala; **screenshot:** `G1-06-closed.png`.
+
+#### G1.7 Reset kroku przy ponownym otwarciu [FLAG] — testable NOW
+1. Wejdź w krok 2. 2. Zamknij. 3. Otwórz ponownie.
+- **Oczekiwane:** launcher zawsze startuje na kroku 1 (3 kafle), nie pamięta poprzedniego typu.
+- **Dowód:** UI — krok 1; **screenshot:** `G1-07-reset-step1.png`.
+
+#### G1.8 Dark + light parytet [FLAG] — testable NOW
+1. Przełącz dark mode, powtórz G1.1–G1.2.
+- **Oczekiwane:** modal czytelny w dark (tło `dark:bg-navy-900`), kontrast OK, brak crimson-leak, brak białych prostokątów.
+- **Dowód:** UI; **screenshot:** `G1-08-launcher-open-dark.png`, `G1-08-three-tiles-dark.png`.
+
+#### G1.9 Flaga OFF → fallback (NIE launcher) [FLAG] — NEED-DEPLOY (osobny build)
+1. Zbuduj/uruchom FE z `VITE_ENABLE_DELIVERABLES_LIGHT` != `'true'`. 2. Kliknij „Nowy" na tabie agregatu.
+- **Oczekiwane:** NIE otwiera się modal; nawigacja do `/presentations?tab=templates`.
+- **Dowód:** UI — brak modala, URL `?tab=templates`; **screenshot:** `G1-09-flag-off-fallback.png`. **Uwaga:** flaga build-time → wymaga osobnego przebiegu (nie runtime toggle).
+
+---
+
+### §G2 Galeria template + „Teresa zaproponuje" (E2 + T2 + T4) [FLAG]
+
+#### G2.1 Galeria zależna od typu (DBR77 kuratorowane) [FLAG] — testable NOW
+1. Wejdź w krok 2 dla każdego z 3 typów.
+- **Oczekiwane:** Raport: Blank + Audit report + Executive memo; Prezentacja: Blank + Board deck + Diagnostic; Tabela: Blank + Risk register + KPI dashboard. Min. ≥1 kuratorowany (non-Blank) per typ.
+- **Dowód:** UI — kafle szablonów; **Network** — `GET /api/deliverables/templates?type={doc|deck|table}` → 200 `{templates:[...]}`; **screenshot:** `G2-01-gallery-report.png`, `-deck.png`, `-table.png`.
+
+#### G2.2 „Blank" zawsze obecny i pierwszy [FLAG] — testable NOW
+1. W kroku 2 (dowolny typ) zlokalizuj „Blank" (`launcher-template-blank`).
+- **Oczekiwane:** Blank widoczny zawsze, jako PIERWSZY w siatce (także gdy API zwróci własny blank — duplikat odfiltrowany).
+- **Dowód:** UI — kolejność DOM; **screenshot:** `G2-02-blank-first.png`.
+
+#### G2.3 Wybór template → uruchamia ścieżkę kontekstu [FLAG] — testable NOW
+1. W kroku 2 (Raport) kliknij „Audit report".
+- **Oczekiwane:** modal zamyka się; uruchamia się opener czatu z `templateId='audit-report'` (Teresa z kontekstem — Tryb B).
+- **Dowód:** UI — modal zniknął, otwiera się `UnifiedChatPanel` z pendingPrompt; **Network/State** — `openChatWithContext({entityType:'deliverable_launch', entityId:'report-audit-report', contextData:{teresaPrompt, deliverableType:'doc', templateId}})`; **screenshot:** `G2-03-template-selected.png`.
+
+#### G2.4 Stan ładowania / błąd galerii [FLAG] — testable NOW (mock route)
+1. Zasymuluj wolne/zerwane API (DevTools throttle lub mock `**/deliverables/templates*` → 500). 2. Wejdź w krok 2.
+- **Oczekiwane:** spinner podczas ładowania; przy błędzie — komunikat błędu, ale „Blank" nadal klikalny (fallback, nie pustka).
+- **Dowód:** UI — komunikat + Blank enabled; **Network** — 500 na templates; **screenshot:** `G2-04-gallery-error.png`.
+
+#### G2.5 „Teresa zaproponuje" — sugestia z intencji [FLAG] — NEED LLM/stub
+1. W kroku 2 wpisz w input (`launcher-suggest-input`, placeholder „Describe what you need…") np. „audyt procesów IT". 2. Kliknij „Teresa suggests" (`launcher-suggest-btn`) lub Enter.
+- **Oczekiwane:** pojawia się blok „Teresa recommends" z `templateId` + confidence (high/medium/low) + uzasadnieniem + przyciskiem „Use this template".
+- **Dowód:** UI — blok rekomendacji; **Network** — `POST /api/deliverables/templates/suggest {intent, type}` → 200 `{suggestion: {templateId, confidence, reasoning} | null}` (fail-open: NIGDY 500); **screenshot:** `G2-05-suggestion.png`. **Uwaga:** trafność sugestii (golden) = ocena człowieka; bez LLM heurystyka może zwrócić `null` (akceptowalne — fail-open).
+
+#### G2.6 i18n PL/EN galerii [FLAG] — testable NOW
+1. PL: etykiety „Raport audytowy"/„Notatka zarządcza". 2. Zmień na EN: „Audit report"/„Executive memo".
+- **Oczekiwane:** etykiety lokalizowane (`rap.outputs.launcher.tpl.*`); ZERO surowych kluczy w UI (np. goły tekst `rap.outputs...`).
+- **Dowód:** UI — teksty PL i EN; **screenshot:** `G2-06-gallery-pl.png`, `-en.png`.
+
+---
+
+### §G3 Routing wyboru → generator/edytor (E3 + E4) [FLAG]
+
+> **Architektura (z kodu):** launcher NIE nawiguje wprost do edytora — montuje opener Teresy z `teresaPrompt`. Routing do edytora realizuje się po wygenerowaniu deliverable przez czat (Tryb B). Dlatego G3 dzieli się na warstwę deterministyczną (launcher→opener) i warstwę LLM (czat→edytor).
+
+#### G3.1 doc → edytor TipTap [FLAG] — NEED LLM (lub mock generacji)
+1. Launcher → Raport → Blank. 2. W czacie dokończ intencję, wyślij. 3. Poczekaj na wygenerowany dokument.
+- **Oczekiwane:** montuje się Document Studio; widoczny edytor (`data-testid="document-tiptap-editor"`); trasa `/document-studio`.
+- **Dowód:** UI — edytor; **Network** — `/deliverables/generations` (plan→generate→poll); **screenshot:** `G3-01-doc-editor.png`. Bez klucza LLM: zamockuj `**/deliverables/generations` zwracające gotowy artefakt i zweryfikuj sam routing/montaż.
+
+#### G3.2 deck → builder MELS [FLAG] — NEED LLM
+1. Launcher → Prezentacja → Blank. 2. Wyślij intencję. 3. Poczekaj na deck.
+- **Oczekiwane:** montuje się Deck Builder MELS (`data-testid="deck-builder-mels-root"`); trasa `/presentations/:deckId`.
+- **Dowód:** UI; **Network**; **screenshot:** `G3-02-deck-builder.png`.
+
+#### G3.3 tabela → grid [FLAG] — NEED LLM
+1. Launcher → Tabela → Blank. 2. Wyślij intencję. 3. Poczekaj na tabelę.
+- **Oczekiwane:** montuje się `PlatformGridView`; trasa `/tabele` lub `/my-work/.../table`.
+- **Dowód:** UI; **screenshot:** `G3-03-table-grid.png`. (test-id `platform-grid-view` do weryfikacji.)
+
+#### G3.4 Opener per typ — deterministyczny [FLAG] — testable NOW
+1. Dla każdego typu: launcher → typ → Blank.
+- **Oczekiwane:** opener czatu zawiera `deliverableKickoffSeed(type)` właściwy dla typu (doc/deck/table) + `deliverableType` zgodny (mapowanie `toApiType`: report→doc, presentation→deck, table→table).
+- **Dowód:** State/Network — pendingPrompt/contextData z poprawnym `deliverableType`; **screenshot:** `G3-04-opener-per-type.png`.
+
+#### G3.5 Błąd generacji = uczciwy komunikat [FLAG] — testable NOW (mock 500)
+1. Zamockuj `**/deliverables/generations` → 500. 2. Uruchom ścieżkę z launchera.
+- **Oczekiwane:** czytelny komunikat błędu (nie biały ekran, nie surowy stack); możliwość ponowienia.
+- **Dowód:** UI — komunikat; **Console** — brak uncaught exceptions; **screenshot:** `G3-05-generation-error.png`.
+
+---
+
+### §G4 Biblioteka template — DBR77 + user-created (T1/T2/T3/T4) [FLAG]
+
+> **API testowalne OD ZARAZ** (router za `verifyToken`+`requireOrgAccess`, org z JWT; słownik typów `doc|deck|table`). Token z DevTools (sesja OWNER) lub curl z Bearer.
+
+#### G4.1 Utwórz user-template (3 typy) [FLAG] — testable NOW
+1. `POST /api/deliverables/templates` z body `{type:'doc', name:'qa-doc-<ts>'}`, potem `deck`, potem `table`.
+- **Oczekiwane:** każdy `201 {template}` z `id`, `name`, `organization_id` = org ownera, `is_system=false`.
+- **Dowód:** **Network** — 201 per typ; **[DB]** opcjonalnie wiersz w `report_builder_templates`/`presentation_templates`/`tp_base_templates`; **screenshot:** `G4-01-create-template.png`.
+
+#### G4.2 Odczyt (single + list) [FLAG] — testable NOW
+1. `GET /api/deliverables/templates/<id>`. 2. `GET /api/deliverables/templates?type=doc`.
+- **Oczekiwane:** (1) `200 {template}`; (2) `200 {templates:[...]}` zawiera utworzony id.
+- **Dowód:** **Network** — oba 200; **screenshot:** `G4-02-read-template.png`.
+
+#### G4.3 Persystencja po reload (UI) [FLAG] — testable NOW (jeśli galeria listuje user-templates)
+1. Utwórz user-template (G4.1). 2. Otwórz launcher krok 2 — sprawdź czy widoczny w galerii. 3. F5 / reload. 4. Otwórz launcher ponownie.
+- **Oczekiwane:** template nadal w galerii po reloadzie (dowód, że poszedł do PG, nie pamięci procesu).
+- **Dowód:** UI — kafel po reload; **screenshot:** `G4-03-persist-reload.png`. **Uwaga:** zależy czy galeria krok 2 listuje user-rows obok DBR77 (do potwierdzenia — patrz T-series „do potwierdzenia").
+
+#### G4.4 Edytuj template [FLAG] — testable NOW
+1. `PUT /api/deliverables/templates/<id>` z `{name:'edited-<id>'}`. 2. `GET /<id>` potwierdza.
+- **Oczekiwane:** `200 {template}` z nową nazwą.
+- **Dowód:** **Network** — PUT 200 + GET pokazuje zmianę; **screenshot:** `G4-04-edit-template.png`.
+
+#### G4.5 Usuń template [FLAG] — testable NOW
+1. `DELETE /api/deliverables/templates/<id>`. 2. `GET /<id>`.
+- **Oczekiwane:** DELETE `204` (brak body); kolejny GET `404`; znika z listy.
+- **Dowód:** **Network** — 204 + 404; **screenshot:** `G4-05-delete-template.png`.
+
+#### G4.6 Walidacja + auth + fail-open suggest [FLAG] — testable NOW
+1. `GET ?type=foo` i `POST {type:'foo'}` → oba `400` („Must be doc|deck|table"). 2. `POST` z `name:''` i `name` 201 znaków → oba `400`. 3. `GET ?type=doc` BEZ Authorization → `401`. 4. `POST /templates/suggest {intent:'???', type:'deck', useLlm:true}` przy niedostępnym LLM → `200` (NIGDY 500), `suggestion` może być `null`.
+- **Oczekiwane:** kody jak wyżej; suggest fail-open.
+- **Dowód:** **Network** — kody błędów; **screenshot:** `G4-06-validation.png`.
+
+#### G4.7 Cross-org izolacja + 403 [FLAG] — NEED 2 ORG (honest-skip jeśli brak)
+1. orgA (`tokenA`) tworzy `doc` → `idA`. 2. orgB (`tokenB`) robi `GET ?type=doc` (nie widzi `idA`), `PUT /templates/idA` (→403), `DELETE /templates/idA` (→403). 3. Edycja system-template (DBR77, `is_system`) → 403.
+- **Oczekiwane:** orgB NIE widzi `idA`; cross-org PUT/DELETE → `403` (`TemplateForbiddenError`, message miękki); system-template PUT/DELETE → `403`; po próbie GET orgA pokazuje nazwę niezmienioną.
+- **Dowód:** **Network** — 403 + lista bez cudzego id; **screenshot:** `G4-07-crossorg-403.png`. **Uwaga:** wymaga 2 RÓŻNYCH org w E2E (D-05); jeśli `loginAsOwner`/`loginAsMember` lądują w tej samej org → **HONEST-SKIP z notatką, NIE fałszywy zielony**.
+
+---
+
+### §G5 Outputs registry (transakcyjny) + lineage (X5/X6) [FLAG]
+
+#### G5.1 Brak duplikatu na liście po commit (X5 — jedna encja) [FLAG] — testable NOW (po deploy generacji)
+1. Wygeneruj doc z czatu. 2. Otwórz `/presentations` → tab `outputs_documents`. 3. Policz wiersze. 4. Edytuj ten doc w Studio/Canvas, wróć na listę, policz ponownie.
+- **Oczekiwane:** liczba wierszy STAŁA; edycja w Studio NIE tworzy 2. wpisu (doc/sheet = ten sam rekord, `work_canvas_drafts.artifact_id ↔ wave5_artifacts`).
+- **Dowód:** UI — licznik wierszy bez zmiany (selekcja po tytule — brak per-wiersz test-id); **screenshot:** `G5-01-no-duplicate.png`.
+
+#### G5.2 Lineage do źródła w panelu preview (X6) [FLAG] — testable NOW
+1. Kliknij wiersz artefaktu (np. zarejestrowany z Canvas). 2. W panelu preview → sekcja trust-state → wiersz „Lineage" + „Source".
+- **Oczekiwane:** Lineage `"N origins"` (N>0); Source = sformatowany typ źródła (np. „Work Canvas"); origin link prowadzi do rekordu źródłowego.
+- **Dowód:** UI — lineage/source; **Network** — `GET /api/artifacts/<id>` z `governance.originLinks` (tablica `{originRuntime, originRecordId, isPrimaryOrigin}`); **[DB]** `v8_artifact_origin_links WHERE artifact_id=<id>`; **screenshot:** `G5-02-lineage.png`.
+
+#### G5.3 Cross-org lineage = pusto (X6 org-scope) [FLAG] — NEED 2 ORG (honest-skip)
+1. `GET /api/artifacts/<idA>` (artefakt orgA) jako user orgB.
+- **Oczekiwane:** `404` / lineage `[]` — zero wycieku cross-org.
+- **Dowód:** **Network** — 404/pusto; **screenshot:** `G5-03-crossorg-lineage.png`. **Uwaga:** wymaga 2 org (D-05) → HONEST-SKIP jeśli brak.
+
+#### G5.4 Output pojawia się natychmiast po generacji (X6 transakcyjny) [FLAG] — testable NOW (po deploy generacji)
+1. Wygeneruj deliverable (dowolny typ). 2. Otwórz `/presentations` (`reports-presentations-hub`) tab `outputs_all`.
+- **Oczekiwane:** nowy artefakt widoczny BEZ ręcznego refetchu (rejestracja transakcyjna BEGIN/COMMIT obu INSERT-ów); idempotentna (powtórna generacja tej samej pary `(originRuntime, originRecordId)` nie tworzy duplikatu).
+- **Dowód:** UI — artefakt na liście (po tytule); **screenshot:** `G5-04-output-appears.png`.
+
+---
+
+### §G — Mapa epików (ZERO niepokrytych) + DoD
+
+| Epik (teczka) | Sub-moduł | Scenariusze | Testable NOW |
+|---|---|---|---|
+| G1 Launcher + 3 kafle | E1 | §G1.1–G1.8 (+G1.9 osobny build) | TAK (G1.9 = need-deploy) |
+| G2 Galeria template | E2 | §G2.1–G2.4, G2.6 | TAK (G2.5 = need LLM) |
+| G2 Biblioteka DBR77 | T2 | §G2.1, G4.2 (system rows) | TAK |
+| G2 User-created CRUD | T3 | §G4.1–G4.5 | TAK |
+| G3 Silnik template federacja | T1 | §G4.1–G4.6 | TAK |
+| G4 Teresa-proponuje | T4 | §G2.5, G4.6 (suggest) | częściowo (golden = LLM) |
+| G5 Paczka kontekstu + routing | E3/E4 | §G3.1–G3.5 | częściowo (G3.4/G3.5 = TAK) |
+| G6 doc/sheet = jedna encja | X5 | §G5.1 | po deploy generacji |
+| G7 Transakcyjny rejestr + lineage | X6 | §G5.2–G5.4 | TAK (G5.3 = need 2 org) |
+
+**Definition of Done (warstwa Generatorów — uzupełnia DoD §12 wyżej):**
+- [ ] G-1. §G1 — launcher otwiera się (3 kafle), krok 2, wstecz/Esc/zamknięcie, dark-parytet PASS; flaga OFF = fallback (osobny build)
+- [ ] G-2. §G2 — galeria per typ z DBR77 + Blank-pierwszy; error galerii = Blank klikalny; i18n PL/EN bez surowych kluczy
+- [ ] G-3. §G2.5 — „Teresa zaproponuje" zwraca sugestię lub null (fail-open, 0× 500) [need LLM/stub]
+- [ ] G-4. §G3.4/G3.5 — opener per typ poprawny (deterministyczny); błąd generacji = uczciwy komunikat
+- [ ] G-5. §G3.1–G3.3 — launcher→czat→edytor (doc/deck/tabela) montuje właściwy edytor [need LLM lub mock generacji]
+- [ ] G-6. §G4 — CRUD user-template (201/200/204/404) + walidacja (400) + auth (401) + suggest fail-open (200); persyst po reload
+- [ ] G-7. §G4.7 + §G5.3 — cross-org 403/izolacja [need 2 org — HONEST-SKIP dopuszczalny z notatką]
+- [ ] G-8. §G5.1 — zero duplikatu na liście Outputs (doc/sheet = jedna encja)
+- [ ] G-9. §G5.2/G5.4 — lineage do źródła w preview + output pojawia się natychmiast (transakcyjnie)
+- [ ] G-10. Zero błędów w Console przez cały przebieg; screenshoty per scenariusz (FT-7) → →F/→UI Piotra
+- [ ] G-11. KNOWN dependency: launcher za `VITE_ENABLE_DELIVERABLES_LIGHT` (build-time); klienci OFF najpierw (D-03); deploy staging za flagą = warunek formalnego FT-7 fali W1
+
+> **Konwencja screenshotów (zgodna z planem QA):** `docs/qa/screens/deliverables-{E|T|X}-<data>/` (np. `deliverables-E-2026-06-22/`); nazwa `<id>-<opis>-<light|dark>.png`. Dla manual-run M17: `docs/qa/screens/m17-generators-<data>/G<n>-<opis>.png`.
+
+*Sekcja Generatorów pokrywa 10 epików (G1–G7 ↔ E1-E4/T1-T4/X5/X6), ~35 scenariuszy wykonawczych, podział testable-NOW vs need-deploy/LLM/2-org. Kluczowe zależności: `VITE_ENABLE_DELIVERABLES_LIGHT=true` (build-time, §G1-G3); 2 różne org dla cross-org (§G4.7/G5.3 — honest-skip dopuszczalny); LLM lub mock `/deliverables/generations` dla czat→edytor (§G3.1-G3.3).*

@@ -187,3 +187,110 @@ R1 wejścia (karta+INV_E+uwaga #1 jako zależność + DP-6/8/9) · R2 zero siero
 - **Source Pack Panel** — pakiety źródeł — `tabeleShell/sourcePack/TabeleSourcePackPanel.tsx`
 - **Share Panel** — share-token (revoke+expiry) — `tabeleShell/share/TabeleSharePanel.tsx`
 - **Templates Grid** — lifecycle szablonów tabel — `templateLifecycle/TabeleTemplatesGrid.tsx`
+
+---
+
+## Generatory Deliverable — premium TABLE (B4 schema + CF + eksport)
+
+> **Sekcja DOŁOŻONA 2026-06-23.** Zakres: NOWA warstwa „Generatory Deliverable" (premium TABLE), **NIE** istniejąca Table Platform (grid/widoki/formuły/automatyzacje opisane wyżej). Ta warstwa generuje **typowany schemat tabeli z AI** (B4) + **conditional formatting** (R5/X2) + **wierny eksport `.xlsx`** (X2). SSOT produktowy: [`../../docs/product/DELIVERABLES_GENERATORS_SPEC.md`](../../docs/product/DELIVERABLES_GENERATORS_SPEC.md). Plany testów: [`../../docs/qa/deliverables/test-plan/B-series.md`](../../docs/qa/deliverables/test-plan/B-series.md) (B4), [`R-series.md`](../../docs/qa/deliverables/test-plan/R-series.md) (R5), [`X-series.md`](../../docs/qa/deliverables/test-plan/X-series.md) (X2). 30 scenariuszy jakości: [`../../docs/qa/deliverables/scenarios/M20_TABLES.md`](../../docs/qa/deliverables/scenarios/M20_TABLES.md). Rubryka odbioru: [`DELIVERABLES_QUALITY_RUBRIC.md`](DELIVERABLES_QUALITY_RUBRIC.md) §4 (tabela). Tracker: [`DELIVERABLES-STAN-PRACY-ODBIORY.md`](DELIVERABLES-STAN-PRACY-ODBIORY.md). Testy manualne premium: [`../Testy manualne/TESTY_M20_TABELE_STUDIO.md`](../Testy%20manualne/TESTY_M20_TABELE_STUDIO.md) sekcja „Generatory Deliverable".
+
+### Status (prawda 2026-06-23, zweryfikowana żywym LLM Sonnet 4.6)
+- **Jakość premium TABLE = UDOWODNIONA code-side (~100%).** Pilot FT-6 (plain-node, klucz staging Railway): wszystkie 30 scenariuszy M20 zsweepowane do 100%; S01/S06/S07/S16 niezależnie re-zweryfikowane 100% PREMIUM. Avg `scorePct` table w ostatnim runie = **87%** (`runs/2026-06-22-live-pilot-sonnet46.json`), po sweepie golden = ~100%. Próg fali Q1 (B-series §7): table śr. ≥75% ORAZ żaden golden <60% — **spełniony**.
+- **NAPRAWIONY realny bug data-loss (kluczowy dla tej sekcji):** `normalizeSeedRows` filtrował klucze seed-rowów przez **ścisłą równość** vs sanityzowany klucz pola → klucze `camelCase` z LLM były **CICHO ODRZUCANE** → puste kolumny w zmaterializowanej tabeli (graficznie poprawny nagłówek, zero danych pod spodem). FIX = pojednanie kluczy kanonicznych (canonical key reconciliation). Dodano też: kontrakt multi-sheet + sterowanie scope/type-inference w promptcie. Bug WIDOCZNY w `runs/2026-06-22-VTS-generated.md` §3 (kolumny „Indeks gotowości / Najsłabszy wymiar / Główna bariera / Termin docelowy" puste przy wypełnionych pozostałych — to ślad PRZED/po, do weryfikacji manualnej §MQ-T).
+- **NIE wpięte w żywe UI.** Premium = opt-in za flagą `ENABLE_DELIVERABLES_PREMIUM` (`server/src/services/deliverableGenerationTier.ts:13`, default **OFF** = dzisiejsze zachowanie). Generatory premium **nie są jeszcze wpięte w żywy pipeline UI** (chat→canvas→studio→grid). → jakość mierzona przez **harness/flagę** (warstwa 1 Scoring-auto), NIE przez kliknięcia. **Nie wolno twierdzić, że jakość UI potwierdzona, dopóki nie ma żywego LLM przez UI** (deploy flagi na Railway + wpięcie + live-verify).
+- **Decyzje jakości:** Q1 = próg ≥85% (cel aspiracyjny tabela ≥88%); Q3 = golden VTS; Q5 = Unsplash (obrazy — dot. deck/doc, nie tabeli).
+- **Vs istniejąca Table Platform:** B4 generuje schemat → materializacja idzie do realnego `tp_*` (rdzeń szczelny, sekcja C wyżej). R5 CF persyst w `config` JSONB widoku (`useTablePlatformIntegration`). X2 eksport = `WorkbookBuilder` (ExcelJS), NIE SheetJS-fasada.
+
+### A · INTENCJA (premium TABLE)
+- **Job-to-be-done:** z jednego intentu („tabela ryzyk ERP", „portfolio projektów") AI generuje **gotową do oddania** tabelę jakości Airtable: typowane pola (nie sam `singleLineText`), kolorowe opcje selectów (hex, traffic-light dla statusów/severity), poprawne `numFmt` (waluta/%/data), ≥N **w pełni wypełnionych** seed-rowów, reguły conditional-formatting (dataBar/colorScale/iconSet/cellIs), formuły (SUM/IF/cross-sheet), opcjonalnie multi-sheet — i eksport `.xlsx` zachowujący to WSZYSTKO w pliku.
+- **Metryka:** `scorePct` (substantive+graphic) ≥ próg Q1; zero pustych kolumn (regresja bug `normalizeSeedRows`); eksport `.xlsx` otwiera się w Excel BEZ „repair" z widocznym CF/kolorami/formatami; head-to-head ≥ Airtable na każdym wymiarze graficznym.
+
+### B · UX DOCELOWE (premium TABLE)
+- **Render na ekranie:** `GridView` (grid-canon D-04) — typowane kolumny, kolorowe chipy selectów, komórki z CF (tło/dataBar). Dark/light spójne (FT-3): kolory selectów i CF czytelne na obu tłach (czerwień nie zlewa się).
+- **Eksport:** `.xlsx` (ExcelJS) = wierny render (FT-4): `<conditionalFormatting>`, `bgColor FF<HEX>`, `numFmt`, freeze panes, bold header — realne style w XML, nie fasada.
+- **Degradacja (FT-8):** flaga OFF → tier STANDARD (deterministyczna podłoga, `fallbackUsed=true`), zero crasha, schema nadal waliduje. Brak chromium → eksport `unavailable` (typed-result, no-throw).
+
+### C · DANE + API + REGUŁY (premium TABLE)
+- **B4 generator:** `tableSchemaGeneratorService.ts` → typowany schemat. Quality-gate B4: ≥1 typed field (nie sam `singleLineText`), select-y mają hex w `options`, ≥3 seed rows. Typy ∈ katalog `TYPED_FIELDS ∪ {singleLineText}` (Zod enum). **FIX data-loss:** `normalizeSeedRows` — canonical key reconciliation (klucze camelCase LLM ↔ sanityzowane klucze pól).
+- **R5 CF + formuły:** `ConditionalFormatting` / `FormulaEditor` / `formulaEngineCore` (AST, parytet FE/BE); persyst CF → `config` JSONB aktywnego widoku przez `useTablePlatformIntegration`.
+- **X2 eksport:** `server/src/services/workbook/WorkbookBuilder.ts` (`buildWorkbookBuffer(schema)`) + `WorkbookSchema.ts` (`ConditionalFormattingBlock`/`Rule`: `dataBar`/`colorScale`/`iconSet`/`cellIs`); `hexToArgb` → ExcelJS `FF<HEX>`.
+- **Tier wiring:** `resolveDeliverableTier` (`deliverableGenerationTier.ts`) — `ENABLE_DELIVERABLES_PREMIUM` ON → `tierUsed='PREMIUM'`, `source='llm'`, `fallbackUsed=false`; OFF → STANDARD (fail-open, nigdy nie rzuca, `:67`). Spend tagowany `purpose='deliverable_generation'`.
+- **Org-scope:** materializacja schematu idzie do `tp_*` przez `PermissionsService` (rdzeń szczelny, sekcja C wyżej) — premium NIE omija RBAC.
+
+### D · AI / TERESA (premium TABLE)
+- **Co generuje:** B4 = typowany schemat + kolory + seed + CF rules + formuły + (opcjonalnie) multi-sheet. Premium tier = Anthropic Sonnet (wg D1). Fallback STANDARD = deterministyczna podłoga.
+- **Sterowanie:** prompt steruje type-inference (np. „kwota" → currency gdy PLN/USD w kontekście; S29 adversarial), scope (multi-sheet TYLKO gdy explicit; S26), traffic-light dla severity/status (S05/S17). Type-inference + seed-completeness = miejsca, gdzie żył bug data-loss.
+
+### E · INTEGRACJE (premium TABLE)
+- **WEJŚCIE ←** M01 Czat (Teresa `generate_deliverable(type:sheet)`, SPEC_01 — za `ENABLE_V8_GLOBAL`/wpięciem) → schemat B4.
+- **WYJŚCIE →** GridView (ekran, R5 CF) · `.xlsx` (X2 ExcelJS) · M17 Outputs (rejestr transakcyjny + lineage, X6 — link-by-ref). doc/sheet = jedna encja (X5; `unifiedDocEntityService`).
+- **Bloker wpięcia:** flaga premium OFF na Railway + generatory niewpięte w UI → warstwa 2 (Manual-UI) BLOCKED do deployu.
+
+### F · EPIKI → STORIES → ZADANIA (premium TABLE)
+
+**EPIK G1 — B4: typowany schemat + kolory + seed (jakość Airtable) [B-series B4]**
+- Story G1.1: typowane pola wg treści. Gherkin: dane intent „tabela ryzyk"; gdy B4 generuje; wtedy `requireFieldType` (singleSelect severity, currency budżet, date, rating) ✓, `minTypedFields` ✓, typy ∈ katalog. Testy: B4-S01/S02/S06; M20 S01-S15. [DONE code-side ~100%]
+- Story G1.2: kolorowe selecty + semantyka traffic-light. Gherkin: status/severity singleSelect; wtedy każda opcja ma hex (`requireSelectColors`), Low/OK=green#16A34A, Med=amber#D97706, High/Bad=red#DC2626. Testy: B4-S03; M20 S05/S07/S11/S17. [DONE]
+- Story G1.3: **seed-rows KOMPLETNE (regresja bug data-loss).** Gherkin: ≥N seed rows; wtedy KAŻDA typowana kolumna ma wartości we wszystkich wierszach (zero pustych kolumn) — `normalizeSeedRows` pojednał klucze camelCase↔sanityzowane. Testy: B4-S04; **MQ-T regresja** (manual §); M20 S01-S30. [DONE — fix canonical key reconciliation]
+- Story G1.4: `numFmt` mapowany z typu. Gherkin: currency→`#,##0.00`, percent→`0.00%`, date→`YYYY-MM-DD`. Testy: B4-S02; M20 S02. [DONE]
+- Story G1.5: multi-sheet gdy explicit. Gherkin: intent „roczny budżet 4 sheety"; wtedy 4 sheety + cross-sheet formuły; intent prosty → 1 sheet. Testy: M20 S26/S27. [DONE — kontrakt multi-sheet dołożony]
+- Story G1.6: kontrakt schema (Zod) + fallback. Gherkin: flaga OFF → `fallbackUsed=true`, STANDARD waliduje, brak crasha. Testy: B4-S06/S07. [DONE]
+
+**EPIK G2 — R5: Conditional Formatting w GridView + formuły AST [R-series R5]**
+- Story G2.1: reguła CF koloruje komórki (>X→czerwony, between→kolor). Testy: R5-S01/S02; M20 S16/S18. [DONE code-side; UI manual]
+- Story G2.2: formuły AST (SUM/IF) liczą poprawnie (parytet FE/BE). Testy: R5-S03/S04; M20 S19/S20/S21. [DONE]
+- Story G2.3: CF persyst po reload (config JSONB widoku). Gherkin: dodaj CF→reload; wtedy kolory wracają. Testy: R5-S05/S06. [code-side; live-verify pending wpięcia/headless skeleton — `finding_m09_live_test_gates`]
+- Story G2.4: kanban + dark/light. Testy: R5-S07/S08. [DONE]
+
+**EPIK G3 — X2: eksport `.xlsx` z REALNYM CF + formatami (ExcelJS, nie fasada) [X-series X2]**
+- Story G3.1: CF w XML pliku. Gherkin: schemat z dataBar/colorScale/iconSet/cellIs; gdy `buildWorkbookBuffer`; wtedy `xl/worksheets/sheet1.xml` zawiera `<conditionalFormatting>`+`databar`/`colorScale`/`cellIs`. Testy: X2-S01-S05 (zielone). [DONE]
+- Story G3.2: **demaskacja fasady** — bgColor w `styles.xml`. Gherkin: komórka z fill; wtedy `xl/styles.xml` zawiera `FF<HEX>` (SheetJS by to zgubił). Testy: X2-S06. [DONE]
+- Story G3.3: `numFmt` waluta/data + nagłówek bold/freeze. Testy: X2-S07/S08/S09. [DONE code; dopisanie do testu]
+- Story G3.4: bez CF nadal builduje (PK magic), fail-open. Testy: X2-S10. [DONE]
+- Story G3.5: **„Otwórz w Excel"** — plik bez „repair", CF/kolory/formaty widoczne. Testy: X2-M01-M06 (computer-use). [MANUAL — wymaga realnego Excela/Numbers]
+
+**EPIK G4 — Premium tier wiring + telemetria [B-series B5]**
+- Story G4.1: flaga ON→PREMIUM, OFF→STANDARD (fail-open). Testy: B5-S01/S02/S03. [DONE code-side]
+- Story G4.2: spend tagowany + telemetria w panelu. Testy: B5-S04 [DONE]; B5-S05 [Manual-UI BLOCKED do wpięcia].
+
+**EPIK G5 — Head-to-head vs Airtable (odbiór jakości graficznej) [rubryka §4C/§4D]**
+- Story G5.1: golden VTS u nas vs Airtable, ta sama rubryka. Gherkin: temat VTS (Q3); wtedy nasz wynik ≥ Airtable na KAŻDYM wymiarze graficznym (G1-G7). Testy: B4-S08; MQ-T10. [Head-to-head — część programowa (eksport) + ekspercka ocena 1-5 Piotr/QA; pending live render]
+
+### G · JAKOŚĆ / DoD (premium TABLE)
+
+**7 globalnych kryteriów (FT-1..FT-8, wg trackera DELIVERABLES-STAN-PRACY-ODBIORY):**
+| # | Kryterium | Stan premium TABLE |
+|---|-----------|--------------------|
+| FT-1 | Feature działa / kontrakt (schema Zod, CF, formuły) | ✅ DONE — B4 typy ∈ katalog, X2 CF w XML, R5 formuły AST liczą |
+| FT-2 | Persystencja / round-trip / brak duplikatu | ✅ kod (CF→config JSONB, doc/sheet jedna encja X5); ⏳ live-verify CF-po-reload pending wpięcia |
+| FT-3 | Dark/light spójne | ✅ kod; ⏳ screenshot UI pending wpięcia (B4-S09 Manual-UI BLOCKED) |
+| FT-4 | Wierność WYGENEROWANEGO pliku (XML, nie „API zawołane") | ✅ DONE — X2-S01-S06 zielone (JSZip→sheet1.xml/styles.xml), S07-S09 dopisanie |
+| FT-6 | Jakość AI (rubryka/scoring na golden) | ✅ ~100% code-side (30/30 scenariuszy + S01/S06/S07/S16 PREMIUM); próg Q1 spełniony |
+| FT-7 | Manual jakościowy (MQ-T* + „otwórz w Excel") | ⏳ częściowo — Export-fidelity DZIŚ; „otwórz w Excel"/UI pending (computer-use / deploy) |
+| FT-8 | Fail-open / regresja (flaga OFF nie psuje) | ✅ DONE — STANDARD fallback, no-throw, eksport `unavailable` graceful |
+
+**FT-6 bramka jakości tabeli (szczegół — co spełnione / co pending):**
+| Wymiar | Wymóg | Stan |
+|--------|-------|------|
+| Typowane pola | ≥1 typed (nie sam singleLineText); typy ∈ katalog | ✅ spełnione (B4 quality-gate) |
+| Hex-kolorowe selecty | każdy select ma hex; severity/status traffic-light semantyczny | ✅ spełnione |
+| ≥N seed rows KOMPLETNE | ≥3 (gate B4); **zero pustych kolumn** (regresja data-loss) | ✅ spełnione po fix `normalizeSeedRows` (canonical key reconciliation) |
+| CF rules | dataBar/colorScale/iconSet/cellIs gdzie temat tego wymaga | ✅ kod (X2 schema) + B4 zwraca reguły |
+| numFmt | currency/percent/date poprawny w pliku | ✅ kod (X2-S07/S08, dopisanie do testu) |
+| exceljs fidelity | realny styl/CF w XML (nie fasada SheetJS) | ✅ DONE (X2-S06 demaskacja) |
+| head-to-head ≥ Airtable | ≥ referencja na każdym wymiarze graficznym | ⏳ PENDING — wymaga live render + oceny eksperckiej (G5.1 / MQ-T10) |
+
+**Wykonalność DZIŚ vs pending (uczciwie):**
+- **DZIŚ (zero deploya):** B4 scoring-auto (runner FT-6, klucz staging), X2 export-fidelity-vitest (S01-S10), R5 CF/formuły code-side, B5 tier-wiring. Regresja data-loss = re-run runnera + B4-S04 + asercja braku pustych kolumn.
+- **PENDING wpięcia/deploya:** Manual-UI (B4-S09 dark grid, R5 CF-po-reload na żywej przeglądarce), head-to-head vs Airtable (live render + ocena 1-5), „otwórz w Excel" (computer-use — Export XLSX → realny Excel/Numbers).
+
+### H · GOVERNANCE (premium TABLE)
+| ID | Wejście | Treść | → Luka/Story |
+|----|---------|-------|--------------|
+| WG-01 | SSOT DELIVERABLES_GENERATORS_SPEC (W2/W4/W5) | R5 (CF+formuły AST) / B4 (schemat AI) / X2 (eksceljs eksport) | EPIK G1-G3 |
+| WG-02 | Pilot FT-6 2026-06-22/23 (Sonnet 4.6) | table avg 87% → sweep 30/30 ~100% PREMIUM | EPIK G1, FT-6 |
+| WG-03 | **Bug data-loss** `normalizeSeedRows` | klucze camelCase LLM cicho odrzucane → puste kolumny; NAPRAWIONE (canonical key reconciliation) | Story G1.3 (regresja) |
+| WG-04 | `finding_deliverables_ft6_pilot` + `_vite_flag_deploy` | premium za flagą OFF, niewpięte w UI → warstwa 2 BLOCKED | FT-3/FT-7 pending |
+| WG-05 | Rubryka §4 + 10× MQ-T | odbiór: kompletność+merytoryka+grafika; head-to-head vs Airtable | EPIK G5 |
+
+**Decyzje:** Q1=≥85% (cel tabela ≥88%) · Q3=VTS golden · Q5=Unsplash (nie dot. tabeli) · D1=Anthropic premium. **Ryzyko:** „jakość premium UI potwierdzona" = NIEPRAWDA dopóki nie ma żywego LLM przez UI (deploy flagi Railway + wpięcie + live-verify). Headless zostawia canvas Ideas w skeletonie → R5 live tylko w realnej przeglądarce (`finding_m09_live_test_gates`).

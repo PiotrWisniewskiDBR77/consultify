@@ -792,3 +792,215 @@ Test paczka M19 jest ZALICZONA gdy:
 - Nie-admin omija quality gate (regresja L-02).
 - Public viewer ujawnia `organization_id`/`confidentiality` (regresja fix `1b67579d7a`).
 - Collaborate STUB wywołuje żądanie sieciowe (handler musi być brak).
+
+---
+
+## Testy manualne — Generatory Deliverable (premium DECK quality)
+
+> **APPEND 2026-06-23.** Sekcja NOWA i ROZŁĄCZNA z §1–§11 powyżej. Powyżej = istniejący DeckBuilder (pipeline V8, edycja, wersje, share, eksport, quality-gates). Tutaj = **premium warstwa generatora prezentacji** (program „Generatory Deliverable", fale W2/W4/W5): R4 Gamma-flow, **B1 AI Layout Director**, B2 warianty/remix, X1 parytet eksportu. Cel: dowieść, że deck z mózgu premium jest **klasy Gamma**.
+>
+> **Bazuje na:** `Harvard/wdrozenie-100/M19-prezentacje.md` → sekcja „Generatory Deliverable — premium DECK" · `docs/product/DELIVERABLES_GENERATORS_SPEC.md` (R4/B1/B2/X1) · `docs/qa/deliverables/test-plan/{R,B,X}-series.md` · `docs/qa/deliverables/scenarios/M19_DECKS.md` (30 deck quality) · run dowodowy `docs/qa/deliverables/runs/2026-06-22-VTS-generated.md`.
+> **Rubryka jakości (operacyjna):** kanon graficzny z `M19_DECKS.md` (ONE palette/deck, ≥8 distinct layouts gdy ≥8 slajdów, no >2 consecutive identical, image-brief presence) + ocena ekspercka 4-osiowa (layout-fit / hierarchia / motyw / „gotowe do klienta", mediana ≥4/5) z `test-plan/B-series.md` §B1-S08.
+>
+> **Decyzje jakości (zablokowane):** Q1 = ≥85% deck quality · Q3 = golden VTS · Q5 = Unsplash.
+
+### Stan wykonalności (PRZECZYTAJ NAJPIERW — uczciwie)
+
+| Co | Jak testować DZIŚ | Status flagi/wpięcia |
+|---|---|---|
+| **Jakość B1 (layouty/paleta/brief/scoring)** | **Warstwa 1 — Scoring-auto** przez runner FT-6 (plain-node, klucz ze stagingu) + inspekcja artefaktu JSON / VTS golden. **Testowalne TERAZ.** | premium ON tylko w runnerze (`ENABLE_DELIVERABLES_PREMIUM=true`) |
+| **R4/B2 przez UI, dark mode, present mode, persyst/undo** | **Warstwa 2 — Manual-UI** przez żywy deck builder. **BLOCKED** — premium niewpięty w pipeline UI; flaga OFF na Railway. | wymaga: flaga ON na Railway + wpięcie + deploy |
+| **X1 parytet eksportu (deterministyczny)** | **Export-fidelity-vitest** (parsowanie pliku PNG/PDF). Testowalne TERAZ bez deploya. | n/d (mock playwright) |
+| **X1 parytet manualny + head-to-head Gamma** | **Manual** (otwarcie PDF/PNG, ocena ekspercka). Head-to-head = render artefaktu + porównanie. | część testowalna teraz (z artefaktu), reszta po wpięciu |
+
+> **Reguła uczciwości:** NIE wolno raportować „jakość premium przez UI potwierdzona", dopóki premium nie jest wpięte i nie ma żywego LLM przez UI. Dziś dowód jakości = warstwa 1 (runner + scoring + golden), NIE żywy deck builder.
+
+### Setup warstwy 1 (Scoring-auto) — premium runner FT-6
+
+1. Uzyskaj **ważny klucz Anthropic ze stagingu Railway** (lokalnie zwykle brak → mierzysz podłogę, nie mózg — patrz `finding_deliverables_ft6_pilot_blocker`).
+2. Z katalogu głównego repo uruchom runner z flagą premium ON:
+   ```bash
+   ANTHROPIC_API_KEY=<klucz-staging> ENABLE_DELIVERABLES_PREMIUM=true \
+     node --import tsx scripts/deliverables/live-pilot-ft6.mts
+   ```
+   - Runner ustawia `DOTENV_IGNORE_LOCAL=1` → NIE dotyka `.env.local` (PROD centerbeam), NIE inicjalizuje DB. PROD-safe.
+3. Wynik trafia do `docs/qa/deliverables/runs/<data>-live-pilot-<model>.json`:
+   - `byModule[deck].avgScorePct`, `rows[deck].scorePct/passed/failures`,
+   - `rows[deck].sample.{distinctLayouts, layouts, palettes, withBrief, sampleBrief}`,
+   - `rows[deck].{tierUsed, source, fallbackUsed}`.
+4. Dla dowodu „board deck 10–12 slajdów" użyj golden **S16** (`M19_DECKS.md`, Lrg, ~12 slajdów) lub VTS golden (`runs/2026-06-22-VTS-generated.md` = 11 slajdów).
+
+### Setup warstwy 2 (Manual-UI) — po wpięciu premium (BLOCKED dziś)
+
+Wymaga kolejno: (a) `ENABLE_DELIVERABLES_PREMIUM=true` na Railway staging, (b) wpięcia generatorów premium w pipeline UI (chat→canvas→studio / deck builder), (c) deployu i live-verify w przeglądarce. Dopóki to nie wykonane — scenariusze [FLAG]/[MANUAL-UI] poniżej oznaczone **BLOCKED**: opisane, gotowe do egzekucji, NIE do odhaczenia.
+
+---
+
+### Zasada weryfikacji 3-warstwowej (obowiązkowa)
+
+Każda asercja jakości premium MUSI być potwierdzona w trzech warstwach (analogia do §0 powyżej):
+1. **UI / artefakt** — widoczny deck (golden render / żywy builder po wpięciu) bez błędów.
+2. **Network / dane** — dla warstwy 1: wpis w runie JSON (`source='llm'`, `tierUsed='PREMIUM'`); dla warstwy 2: `POST` generacji premium → 200 z artefaktem premium.
+3. **Dowód mierzalny** — liczby z `scoreDeck` (distinctLayouts, palettes count, withBrief, noTripleRun) LUB ocena ekspercka 4-osiowa zapisana.
+
+---
+
+### MD-01 [SCORING-AUTO] Wygeneruj board deck (10–12 slajdów) → kanon graficzny ✅ testowalne TERAZ
+
+**Mapuje:** B1-S01/S02/S03 · M19_DECKS S16 · EPIK G-1 (Story G-1.1..1.4).
+**Preconditions:** premium runner skonfigurowany (Setup warstwy 1); `ENABLE_DELIVERABLES_PREMIUM=true`; ważny klucz LLM.
+
+**Kroki:**
+1. Uruchom runner FT-6 z golden S16 (intent: „Pełna diagnoza Apator Powogaz: exec summary, 3 obszary problemowe, 5 rekomendacji, roadmapa, ryzyko, next steps ~12 slajdów", `lang=PL`). Alternatywnie użyj gotowego VTS golden (`runs/2026-06-22-VTS-generated.md`).
+2. Otwórz run JSON → `rows[deck].sample`.
+
+**Expected (każde MUSI być ✓):**
+- **count:** `slides.length` w `[10,14]` (board deck).
+- **≥8 distinct layouts:** `distinctLayouts ≥ 8` (gdy ≥8 slajdów — kanon). *VTS golden = 11 slajdów / 11 distinct = ✓.*
+- **single palette:** dokładnie **1** distinct `paletteId`, ∈ catalog13 (harvard/ocean/slate/forest/ember/midnight/arctic/sand/indigo/graphite/olive/burgundy/teal). *VTS = `midnight` = ✓.*
+- **image brief per slide:** każdy slajd ma nonempty `imageBrief` (≥10 znaków) + `reasoning`. *VTS = brief+reasoning na 11/11 = ✓.*
+- **no triple-run:** `noTripleRun = 0 violations` (brak >2 identycznych layoutów pod rząd).
+- **premium aktywny:** `tierUsed='PREMIUM'`, `source='llm'`, `fallbackUsed=false`.
+- **scorePct:** ≥85% (Q1 cel) — VTS/FT-6 Sonnet 4.6 ≈100%.
+
+**Evidence:**
+- **UI/artefakt:** lista slajdów z layoutami (golden md lub render).
+- **Network/dane:** run JSON `rows[deck].{tierUsed:'PREMIUM', source:'llm', fallbackUsed:false}`.
+- **Mierzalny:** `sample.{distinctLayouts, palettes, withBrief}` + `failures` puste dla reguł kanonu.
+- **Screenshot:** zapisz render decka do `docs/qa/screens/deliverables-B-<data>/MD-01-board-deck.png` (po renderze do PNG/PDF — sekcja MD-05).
+
+---
+
+### MD-02 [SCORING-AUTO] Narracyjny flow + dopasowanie layoutu do tematu ✅ testowalne TERAZ
+
+**Mapuje:** B1-S04/S05 · M19_DECKS S06/S08/S09 · EPIK G-1 (Story G-1.5).
+**Preconditions:** jak MD-01.
+
+**Kroki:**
+1. Z runu board-deck (MD-01) odczytaj sekwencję `slides[].intent`.
+
+**Expected:**
+- **Narracyjny flow:** `slides[0].intent === 'cover'`, `slides[last].intent === 'next_steps'`; między nimi sensowna progresja (np. `cover → executive_summary → key_messages → assessment → performance_overview → comparison → root_cause → recommendation_portfolio → roadmap → risk_management → next_steps` — dokładnie taka jest w VTS golden).
+- **Dopasowanie layoutu do tematu (≥1 z poniższych trafień):**
+  - temat z KPI/metrykami → obecny `performance_overview`,
+  - temat „harmonogram/plan/roadmapa" → obecny `roadmap`,
+  - temat „ryzyko/audyt ryzyk" → obecny `risk_management`,
+  - temat „rekomendacje/portfel działań" → obecny `recommendation_single` lub `recommendation_portfolio`.
+- **Layout intents tylko z 17-katalogu** (Zod enum — brak śmieci).
+
+**Evidence:** run JSON `sample.layouts` (pełna lista intentów); porównaj z sekwencją VTS golden. Screenshot listy intentów.
+
+---
+
+### MD-03 [MANUAL-UI / FLAG] R4 Gamma-flow w żywym builderze ⚠ BLOCKED (po wpięciu)
+
+**Mapuje:** R4-S01..S07 · test-plan R-series R4 · EPIK G-2.
+**Preconditions:** premium wpięty w UI + `ENABLE_DELIVERABLES_PREMIUM=true` na Railway + deploy (Setup warstwy 2). **Dziś BLOCKED.**
+
+**Kroki + Expected:**
+1. Otwórz `/presentations/builder/:deckId` (deck z generatora premium). → `deck-builder-mels-root` widoczny; SlideSorter + CardCanvas renderują slajdy (R4-S01).
+2. Wybierz slajd, wpisz w pole „Przerób ten slajd…", wywołaj regenerację (`presentations.builder.regenerateSlide`). → status „Regenerating…", treść slajdu się zmienia (R4-S02).
+3. Zmień motyw (ThemeSwitcher / CommandPalette → „Theme"). → kolory/typografia zmieniają się na WSZYSTKICH slajdach, paleta nadal jedna (R4-S03).
+4. Present Mode (przycisk „Present"). → fullscreen, nawigacja strzałkami, ESC wychodzi (R4-S04).
+5. Branding org (logo/kolory). → logo/kolory marki widoczne zgodnie z motywem (R4-S05).
+6. Undo (Cmd+Z) po zmianie bloku. → ostatnia zmiana cofnięta (R4-S06).
+
+**Evidence (po wpięciu):** screenshoty `docs/qa/screens/deliverables-R-<data>/R4-S0x-*.png`; Network: `POST` regeneracji premium → 200 z `source='llm'`. **Dziś:** odnotuj `[BLOCKED — premium niewpięty w UI]`, NIE failuj.
+
+---
+
+### MD-04 [SCORING-AUTO + MANUAL-UI] B2 warianty / remix slajdu
+
+**Mapuje:** B2-S01..S05 · test-plan B-series B2 · EPIK G-3.
+
+**Część A — warstwa 1 (Scoring-auto) ⚠ wymaga rozszerzenia runnera:**
+- **Preconditions:** runner rozszerzony o N-krotne wołanie layout-directora na 1 slajdzie z różnym seedem (B2-S01 — dziś runner woła `planDeckLayout` raz; remix = osobna ścieżka).
+- **Kroki:** zawołaj generator remix 3× na tym samym slajdzie.
+- **Expected:** 3 warianty; **≥2 distinct `layoutIntent`**; każdy waliduje schema; `key_message`/headline semantycznie ten sam (keyword-overlap ≥ próg); wszystkie trzymają **paletę deck** (single palette — brak driftu).
+- **Evidence:** nowy run `runs/<data>-remix.json` (3 plany) + diff.
+
+**Część B — warstwa 2 (Manual-UI) ⚠ BLOCKED (po wpięciu):**
+- Wybierz wariant 2, reload → po reloadzie ten sam wariant (persyst — B2-S04).
+- Remix → Undo → slajd = stan sprzed remixu (B2-S05).
+- **Evidence:** screenshot przed/po reload. **Dziś:** `[BLOCKED]`.
+
+---
+
+### MD-05 [MANUAL / EXPORT-FIDELITY] X1 parytet eksportu PDF/PNG
+
+**Mapuje:** X1-S01..S07, X1-M01..M06 · test-plan X-series X1 · EPIK G-4.
+
+**Część A — deterministyczna (Export-fidelity-vitest) ✅ testowalne TERAZ:**
+```bash
+npx vitest run tests/unit/deliverables/playwrightHtmlToPng.test.ts
+```
+- **Expected:** `status==='ok'`, buffer PNG magic `0x89 50 4E 47`, viewport default 1920×1080 honorowany; brak chromium → `status==='unavailable'` (fail-open, nie crash).
+- **Evidence:** wynik vitest (parsowany Buffer).
+
+**Część B — manualna (po wpięciu lub z renderu artefaktu):**
+- Deck → Export PDF → otwórz PDF. → wizualnie identyczny z ekranem; kolory/logo zachowane; tabele z ramkami; wykres jako rastr (X1-M01/M04/M05/M06).
+- Slajd → Export PNG. → ostry (deviceScaleFactor), pełny slajd 1920×1080 (X1-M03).
+- **Evidence:** PDF/PNG + screenshot porównawczy side-by-side do `docs/qa/screens/deliverables-X-<data>/MD-05-*.png`. **Bez wpięcia:** render z artefaktu premium (skill `pptx` → `export_pdf` lub `playwrightPdfRenderer`).
+
+---
+
+### MD-06 [SCORING-AUTO] Fallback gdy AI OFF = podłoga deterministyczna ✅ testowalne TERAZ
+
+**Mapuje:** B1-S06 · test-plan B-series · EPIK G-1 (Story G-1.6) · FT-8.
+**Preconditions:** runner; flaga premium OFF.
+
+**Kroki:**
+1. Uruchom runner **bez** premium: `ENABLE_DELIVERABLES_PREMIUM=false node --import tsx scripts/deliverables/live-pilot-ft6.mts`.
+
+**Expected:**
+- `fallbackUsed=true`, `tierUsed='STANDARD'`, `source≠'llm'`.
+- **Brak crasha**; deck nadal waliduje schema (layouty/palety ∈ catalog).
+- Jakość = podłoga deterministyczna (NIE Gamma-class — i to jest poprawne zachowanie OFF).
+
+**Evidence:** run JSON STANDARD z `fallbackUsed=true`. To test regresji fail-open (`deliverableGenerationTier.ts:13`).
+
+---
+
+### MD-07 [HEAD-TO-HEAD / MANUAL] Premium deck vs Gamma na temacie VTS golden ⚠ ocena ekspercka
+
+**Mapuje:** B1-S08 · test-plan B-series §B1-S08 · EPIK G-5 (Story G-5.1).
+**Preconditions:** wygenerowany deck premium (MD-01 / VTS golden) wyrenderowany do PNG/PDF; konto Gamma; ten sam intent w Gamma.
+
+**Kroki:**
+1. Wyrenderuj nasz deck z artefaktu `plans[]` do PNG/PDF (skill `pptx` → `export_pdf`, lub renderer prezentacji / zrzut z UI po wpięciu). Zapisz do `docs/qa/deliverables/runs/<data>/h2h-deck/nasz-VTS.png`.
+2. Wygeneruj ten sam temat („Diagnoza gotowości na AI — VTS Group", board, ~11 slajdów) w Gamma. Zapisz `gamma-VTS.png` obok.
+3. Oceń oba w **4 osiach 1–5** (rubryka B-series): **layout-fit** (dobór layoutu do treści) · **hierarchia** (czytelność, tytuł→treść) · **motyw** (spójność palety, board-grade) · **„gotowe do klienta"** (czy można wysłać bez poprawek).
+
+**Expected (PASS):** **mediana ocen naszego ≥ 4/5** ORAZ **brak osi < 3**.
+
+**Evidence:** tabela ocen (per oś, nasz vs Gamma, mediana, podpis oceniającego) + 2× PNG w `runs/<data>/h2h-deck/`. **Ocena jest z definicji ekspercka** (człowiek/Piotr) — nie automatyzujemy.
+
+---
+
+### Mapa MD → źródła (ZERO niepokrytych)
+
+| MD | Mapuje (test-plan / scenariusz) | EPIK (teczka) | Warstwa | Status dziś |
+|---|---|---|---|---|
+| MD-01 board deck + kanon | B1-S01/S02/S03 · M19_DECKS S16 | G-1.1..1.4 | Scoring-auto | ✅ testowalne TERAZ |
+| MD-02 flow + layout-fit | B1-S04/S05 · S06/S08/S09 | G-1.5 | Scoring-auto | ✅ testowalne TERAZ |
+| MD-03 R4 Gamma-flow UI | R4-S01..S07 | G-2 | Manual-UI | ⚠ BLOCKED (po wpięciu) |
+| MD-04 B2 remix/warianty | B2-S01..S05 | G-3 | Scoring-auto (A) + Manual-UI (B) | ⚠ A: po rozszerzeniu runnera; B: BLOCKED |
+| MD-05 X1 parytet eksportu | X1-S01..S07, M01..M06 | G-4 | Export-fidelity + Manual | ✅ A: TERAZ; B: po wpięciu/renderze |
+| MD-06 fallback AI OFF | B1-S06 (FT-8) | G-1.6 | Scoring-auto | ✅ testowalne TERAZ |
+| MD-07 head-to-head Gamma | B1-S08 | G-5.1 | Head-to-head (ekspercki) | ⚠ ocena ręczna |
+
+### DoD premium DECK — paczka ZALICZONA gdy
+
+| # | Kryterium | Dowód |
+|---|-----------|-------|
+| 1 | MD-01 board deck: ≥8 distinct layouts + single palette + brief per slide + noTripleRun=0 | run JSON `sample` + golden VTS 11/11 |
+| 2 | MD-01 premium aktywny: `tierUsed='PREMIUM'`, `source='llm'`, `fallbackUsed=false` | run JSON |
+| 3 | MD-01 scorePct ≥85% (Q1) | run JSON `scorePct` (FT-6 Sonnet 4.6 ≈100%) |
+| 4 | MD-02 narracyjny flow (cover→…→next_steps) + layout-fit do tematu | run JSON `sample.layouts` |
+| 5 | MD-06 fallback OFF = STANDARD, brak crasha, schema waliduje | run JSON STANDARD `fallbackUsed=true` |
+| 6 | MD-05 część A: PNG/PDF magic + viewport (parytet deterministyczny) | wynik vitest |
+| 7 | MD-07 head-to-head: mediana ≥4/5, brak osi <3 | tabela ocen + 2× PNG |
+
+**Paczka NIEZALICZONA jeśli:** premium deck łamie kanon (≥2 identyczne layouty pod rząd / >1 paleta / slajd bez briefu); `fallbackUsed=true` mimo premium ON (mierzy podłogę, nie mózg); fallback OFF crashuje zamiast dać STANDARD; head-to-head mediana <4 lub jakakolwiek oś <3.
+
+**Pozycje [MANUAL-UI]/[FLAG] (MD-03, MD-04 część B) pozostają BLOCKED do wpięcia premium w UI + flaga Railway + deploy** — opisane i gotowe, NIE liczone do odhaczenia przed wpięciem (reguła „Verify before claiming").
