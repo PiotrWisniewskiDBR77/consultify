@@ -43,6 +43,52 @@ interface InitiativeHealthItem {
   whyRed?: WhyRedChain;
 }
 
+/**
+ * M14/F3 — Cost-of-Delay ranking for the action queue (WSJF numerator).
+ * CoD ≈ severity weight × urgency (days late) × blast radius (linked to an
+ * initiative ⇒ affects more). No per-item job-size signal yet, so this is the
+ * CoD numerator; the WSJF ÷ effort divisor lands when effort is captured.
+ * Exported for unit testing the ranking.
+ */
+export function actionQueueCodScore(item: {
+  type?: string;
+  priority?: string;
+  score?: number;
+  severity?: string;
+  dueDate?: string | null;
+  periodStart?: string | null;
+  initiativeId?: string | null;
+}): number {
+  const dayMs = 86_400_000;
+  const daysLate = (ts?: string | null): number =>
+    ts ? Math.max(0, (Date.now() - new Date(ts).getTime()) / dayMs) : 0;
+  const weight = (): number => {
+    switch (item.type) {
+      case 'decision_overdue':
+        return String(item.priority || '').toUpperCase() === 'CRITICAL' ? 10 : 6;
+      case 'risk_high':
+        return typeof item.score === 'number'
+          ? item.score >= 10
+            ? 9
+            : item.score >= 8
+              ? 7
+              : 5
+          : 6;
+      case 'kpi_deviation_no_plan':
+        return String(item.severity || '').toUpperCase() === 'RED' ? 6 : 4;
+      case 'task_overdue':
+        return 4;
+      case 'comm_overdue':
+        return 3;
+      default:
+        return 2;
+    }
+  };
+  const urgency = 1 + daysLate(item.dueDate ?? item.periodStart);
+  const blast = item.initiativeId ? 1.25 : 1;
+  return weight() * urgency * blast;
+}
+
 interface PortfolioHealthMetrics {
   healthScore: number;
   onTrackCount: number;
@@ -919,6 +965,7 @@ export class ExecutionController {
           title: r.title,
           impact: r.impact,
           probability: r.probability,
+          score: r._score,
           initiativeId: r.initiative_id,
           initiativeName: r.initiative_name,
         })),
@@ -953,30 +1000,7 @@ export class ExecutionController {
           initiativeName: k.initiative_name,
           ownerName: k.owner_name,
         })),
-      ].sort((a: any, b: any) => {
-        const severityRank = (item: any) => {
-          if (item.type === 'kpi_deviation_no_plan') {
-            return String(item.severity || '').toUpperCase() === 'RED' ? 0 : 1;
-          }
-          if (item.type === 'risk_high') {
-            return String(item.impact || '').toUpperCase() === 'CRITICAL' ? 0 : 1;
-          }
-          return 2;
-        };
-        const rankDiff = severityRank(a) - severityRank(b);
-        if (rankDiff !== 0) return rankDiff;
-        const aTs = a.dueDate
-          ? new Date(a.dueDate).getTime()
-          : a.periodStart
-            ? new Date(a.periodStart).getTime()
-            : Number.POSITIVE_INFINITY;
-        const bTs = b.dueDate
-          ? new Date(b.dueDate).getTime()
-          : b.periodStart
-            ? new Date(b.periodStart).getTime()
-            : Number.POSITIVE_INFINITY;
-        return aTs - bTs;
-      });
+      ].sort((a: any, b: any) => actionQueueCodScore(b) - actionQueueCodScore(a));
 
       res.json({
         items,
