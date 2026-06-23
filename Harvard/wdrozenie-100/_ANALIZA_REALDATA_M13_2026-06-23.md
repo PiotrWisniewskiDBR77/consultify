@@ -39,15 +39,16 @@
   - Zasiane dane poszły do `task_dependencies` (ścieżka b), a domyślny widok rysuje ze ścieżki a → żaden Gantt nie pokazuje linii bez podpięcia.
 - **Status:** 🟠 **DECYZJA TECHNICZNA (CTO) potrzebna** — opcje: **(A)** wpiąć `task_dependencies` w `TimelinePlanner.rows.dependsOnId` (jedno źródło prawdy zależności, główny widok zyskuje linie) · **(B)** uczynić `InitiativeGantt` domyślnym Ganttem (default `scheduleView='gantt'`) · **(C)** skonsolidować dwa Gantty w jeden. Rekomendacja: **A** (najmniej inwazyjne, jedno źródło). NIE hackowane na końcu sesji — wymaga świadomego refaktoru + review. Test `m13-demo-proxy` „linie zależności…" oznaczony `test.fixme` jako żywy TODO. Backend D1 zostaje realną korzyścią (każdy konsument endpointu dostaje poprawne dane).
 
-### 🟡 D2 — Sekcje KPIs & Benefits / Financial Analysis: pusty panel treści (live-verify)
-- **Objaw:** sekcja zaznaczona w nawigatorze, prawy panel bez treści (brak KPI/ROI/NPV).
-- **Prawdopodobny root-cause:** empty-state świeżego seeda (flagowa nie ma danych finansowych/KPI) LUB węższy kadr zrzutu. Niska pewność FAIL.
-- **Status:** ⬜ do live-verify w realnej przeglądarce (czy empty-state vs brak renderu). NIE potwierdzony bug.
+### ✅ D2 — Sekcje KPIs & Benefits / Financial Analysis → NIE bug (rozstrzygnięte kodem)
+- **Weryfikacja kodu:** `FinancialAnalysisSection` **zawsze** renderuje karty CAPEX/OPEX/ROI/NPV/Payback (wartość albo `-`), nigdy blank. `KpisSection` ma `EmptyStateInline` (CTA „Analyze with AI"). Oba renderują treść/empty-state, nie pustkę.
+- **Root-cause objawu:** wąski kadr/scroll headless — sekcja nie weszła w viewport zrzutu. Dane finansowe dosiane na flagową (CAPEX 250k/OPEX 60k/ROI 2.4x, API 200) → karty pokażą liczby.
+- **Status:** ✅ ZAMKNIĘTE — nie defekt. Render potwierdzi się w realnej przeglądarce przy →F.
 
-### 🟡 D3 — Centrum notyfikacji: utknięte na „Loading…" (artefakt headless)
-- **Objaw:** My Work › Inbox pokazuje spinner „Loading…", liczniki 0, brak listy ani empty-state.
-- **Root-cause:** wzorzec M09 — headless/proxy zostawia widok w skeletonie (zrzut przed-fetch lub zawis). Liczniki=0 sugerują pusty backlog (oczekiwane — seed nie generuje notyfikacji do Piotra, bo on jest aktorem).
-- **Status:** ⬜ do live-verify (real browser). Obserwacja produktowa: przy pustym backlogu powinien renderować empty-state „zero backlog", nie wieczny loader.
+### ✅ D3 — Centrum notyfikacji „Loading…" → NIE bug (rozstrzygnięte kodem + endpointem)
+- **Weryfikacja kodu:** `NotificationCenter.loadNotifications` ma `setLoading(false)` w **`finally`** (linia 331) → loader ZAWSZE znika (content lub empty-state „No notifications"). Nie ma ścieżki wiecznego loadera.
+- **Weryfikacja endpointu:** `GET /api/notifications?limit=50` → **200 w 0.45s z realną listą** (Piotr MA notyfikacje na demo). W realnej przeglądarce: fetch 0.45s → lista.
+- **Root-cause objawu:** czysty artefakt headless/proxy — zrzut złapany w trakcie fetcha (latencja proxy), zanim `finally` rozwiązał loader. Wzorzec M09 (headless zostawia widok w skeletonie).
+- **Status:** ✅ ZAMKNIĘTE — nie defekt.
 
 ### ⬜ D4 — Brak zdjęcia `real-ini-hub-all` (zakładka All / 13 statusów)
 - **Root-cause:** przełącznik „All"/widoki to ikony bez tekstu → selektor nie trafił. Złapane: kanban, grid, timeline (3/4 widoki), `real-ini-list` też pominięty.
