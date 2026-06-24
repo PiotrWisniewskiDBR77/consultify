@@ -418,7 +418,9 @@ function ArtifactPreviewPane({
                   ? t('kimi.generateDoc', 'Generate Document')
                   : lane === 'excele'
                     ? t('kimi.generateSheet', 'Generate Spreadsheet')
-                    : t('kimi.generateDeck', 'Generate Presentation')}
+                    : lane === 'tabele'
+                      ? t('kimi.generateTable', 'Generate Table')
+                      : t('kimi.generateDeck', 'Generate Presentation')}
               </button>
             </div>
           )}
