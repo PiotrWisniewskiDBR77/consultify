@@ -12,7 +12,10 @@ Test ≠ zielony może znaczyć trzy rzeczy — TYLKO pierwsza to „błąd do n
 
 ## A. REALNE BŁĘDY (czerwone — zostają do naprawy)
 
-### 🔴 BUG-1 [P1, PRODUKT] M07 reload-race — utrata węzłów po reloadzie (MC-07-01)
+### ✅ BUG-1 [NAPRAWIONE 2026-06-24, commit `72a063f54d`] M07 reload-race — utrata węzłów po reloadzie (MC-07-01)
+**Fix (2 źródła):** (1) `IdeaProcessFlowTool.hydrate` retry'uje GET /map 3× z backoffem zanim zrobi `setNodes([])` — pojedynczy timeout pod load nie blankuje już kanwy (dane SĄ na serwerze). (2) `useIdeaMapSync` beforeunload/visibilitychange piszą draft do localStorage SYNCHRONICZNIE przed keepalive — edycje <800ms przed F5 odzyskiwane na następnym mount. Testy: +2 regresji (`tests/components/MyWork/ideaMapSync.reload-race`) + naprawiony pre-existing error-state test; 19/19 zielonych; FE build OK. Poniżej oryginalna diagnoza:
+
+
 - **Objaw:** `MC-07-01` po dodaniu kształtów + reload → `REAL_NODE` count = **0** (oczekiwane ≥5). MC-07-30 (ten sam wzorzec persist+reload) bywa zielony, MC-07-01 solo bywa zielony → **flaky race**, nie deterministyczny.
 - **Root cause (znany, [[finding_ideas_m5_m9_closure_2026-06-21]]):** autosave-race Process Flow — 2× równoległy `POST /map/sync` → drugi dostaje **409** (wersja) → po reloadzie hydrate czyta stan sprzed zapisu → węzły giną. To **REALNY bug prod** (potwierdzony na prod-build w czerwcu).
 - **Pliki:** `IdeaProcessFlowTool.tsx` (autosave + hydrate-on-reload), `useIdeaMapSync`/`useProcessFlowCRUD`, endpoint `PUT/POST /map/sync` (409 handling + wersjonowanie).
