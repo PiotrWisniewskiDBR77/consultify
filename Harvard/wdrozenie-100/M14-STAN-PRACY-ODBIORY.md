@@ -27,13 +27,13 @@
 | 1.3 | RAID scoring → 1 ścieżka (zweryfikowane już-kanoniczne) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | ⬜ | 🟢 ZWERYFIKOWANE |
 | 2.1 | Fundament EVM (rdzeń ANSI-748 + derywacja milestone-weighted) | F2 | ✅ | ✅ | ✅ 8/8 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`90ff87ed98`) |
 | 2.2 | Portfolio EVM roll-up wpięty additive w `/execution/health` | F2 | ✅ | ✅ | ✅ | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`f386b9f83c`) |
-| 2.3 | Cost-actuals → CPI (wpięcie budget actuals) | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 2.3 | Cost-actuals → CPI (wpięcie budget actuals) | F2 | ✅ | ✅ | ✅ 2/2 | 0/1 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`2d2bfb1f2f`) — getActualCostByInitiative→CPI realny |
 | 2.4 | Swap healthScore: avgProgress → EVM (po live-verify) | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 2.5 | Gantt baseline-vs-actual + rebaseline | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 3.1 | Risk appetite egzekwuje (`auto_escalate_above` + APPETITE_BREACH) | F3 | ✅ | ✅ | ✅ 4/4 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`c52c514650`) |
 | 3.2 | WSJF/Cost-of-Delay w sorcie Action Queue | F3 | ✅ | ✅ | ✅ 4/4 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`0b5964599a`) |
 | 3.3 | SLA decyzji per-priority | F3 | ✅ | ✅ | ✅ 3/3 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`06486bd3af`) |
-| 3.4 | Eskalacja prawdziwa (`escalated_to`+notyfikacja sponsora+Exception Report) | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 3.4 | Eskalacja prawdziwa (`escalated_to`+notyfikacja sponsora) | F3 | ✅ | ✅ | ✅ 2/2 | 0/1 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`bfda88d252`) — sponsor+CRITICAL notify; Exception Report→F5 |
 | 3.5 | Tolerancje per inicjatywa | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 4.1 | Model alokacji/dostępności per inicjatywa | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 4.2 | Capacity vs demand + resource heatmap | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
@@ -52,9 +52,9 @@
 | 7.1 | Heurystyczna predykcja ryzyka/opóźnień (na EVM+slip-trend) | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 7.2 | Grounded AI triage (cytuje sygnał) + auto-priorytetyzacja | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 7.3 | What-if sandbox (health + capacity) + dry-run interwencji | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
-| 8.1 | Dependency model + graf + detekcja cykli/kaskady | F8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 8.1 | Dependency model + graf + detekcja cykli/kaskady | F8 | ✅ | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`27450c2a8a`) — raidDependencyService (czyste); wpięcie do RAID-routes pozostaje |
 | 8.2 | Assumption validation + Issue linked_items + SLA | F8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
-| 8.3 | 5×5 matryca + EMV + heatmap inherent/residual | F8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 8.3 | 5×5 matryca + EMV + heatmap inherent/residual | F8 | 🟡 | ✅ | ✅ 4/4 | N/A | N/A | ⬜ | ⬜ | 🟡 scoring done (`bb3fa0a0ea`: EMV+5×5+residual additive); heatmap inherent/residual wpięcie pozostaje |
 | 8.4 | Server PDF raportów (audit trail) | F8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 8.5 | PIR jako artefakt (lessons learned) | F8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 
