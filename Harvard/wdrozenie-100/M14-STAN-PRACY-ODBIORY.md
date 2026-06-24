@@ -34,12 +34,12 @@
 | 3.2 | WSJF/Cost-of-Delay w sorcie Action Queue | F3 | ✅ | ✅ | ✅ 4/4 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`0b5964599a`) |
 | 3.3 | SLA decyzji per-priority | F3 | ✅ | ✅ | ✅ 3/3 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`06486bd3af`) |
 | 3.4 | Eskalacja prawdziwa (`escalated_to`+notyfikacja sponsora) | F3 | ✅ | ✅ | ✅ 2/2 | 0/1 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`bfda88d252`) — sponsor+CRITICAL notify; Exception Report→F5 |
-| 3.5 | Tolerancje per inicjatywa | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 3.5 | Tolerancje per inicjatywa | F3 | 🟡 | ✅ | ✅ 5/5 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`7db34f5d11`: initiativeToleranceService czysty); wpięcie w sygnały=follow-up |
 | 4.1 | Model alokacji/dostępności per inicjatywa | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 4.2 | Capacity vs demand + resource heatmap | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 4.3 | Upgrade sygnału capacity (z modelowania) | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 5.1 | `rollout_stages` (pilot→limited→full→hypercare→closure) + entry/exit | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
-| 5.2 | Cross-register gate (KPI∧Risk∧Closure → Go/Kill/Hold) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 5.2 | Cross-register gate (KPI∧Risk∧Closure → Go/Kill/Hold) | F5 | 🟡 | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`3478509abb`: rolloutGateService czysty); wpięcie po rollout_stages(5.1) |
 | 5.3 | Baseline/rebaseline planu | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 5.4 | Cutover runbook + rollback triggers | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 5.5 | Change Log „automatic" + lekki RFC/CAB | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
@@ -49,7 +49,7 @@
 | 6.4 | Narracja raportów przez AI (grounded) + `reportRegistry.ts` SSOT | F6 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 6.5 | ADKAR roll-up (reaktywacja engine z `_backup`, A/D/K/A/R, <3=barrier) | F6 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 6.6 | Champions/change-agent network + spięcie sentiment→Manager lane | F6 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
-| 7.1 | Heurystyczna predykcja ryzyka/opóźnień (na EVM+slip-trend) | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 7.1 | Heurystyczna predykcja ryzyka/opóźnień (na EVM+slip-trend) | F7 | 🟡 | ✅ | ✅ 5/5 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`b2b192362d`: executionPredictionService czysty); wpięcie w sygnały/UI=follow-up |
 | 7.2 | Grounded AI triage (cytuje sygnał) + auto-priorytetyzacja | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 7.3 | What-if sandbox (health + capacity) + dry-run interwencji | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
 | 8.1 | Dependency model + graf + detekcja cykli/kaskady | F8 | ✅ | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`27450c2a8a`) — raidDependencyService (czyste); wpięcie do RAID-routes pozostaje |
