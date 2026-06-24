@@ -33,6 +33,8 @@ export interface FinancialDrivers {
   rdPctRevenue: number; // 0.24
   gaPctRevenue: number; // 0.20
   daPctRevenue: number; // 0.02
+  /** Dźwignia operacyjna: efektywne OpEx% = base × lev^rok (≈0.82-0.90; <1 = marża rośnie). Default 1. */
+  opexLeverageYoY?: number;
   // — Unit economics —
   cac: number; // EUR
   arpuAnnual: number; // EUR/klient/rok (do LTV)
@@ -80,9 +82,11 @@ function buildPnL(d: FinancialDrivers, arr: ArrBridgePeriod[]): PnLPeriod[] {
     const revenue = saasRev + servicesRev;
     const cogs = revenue * (1 - d.grossMargin);
     const grossProfit = revenue - cogs;
-    const opexSM = revenue * d.smPctRevenue;
-    const opexRD = revenue * d.rdPctRevenue;
-    const opexGA = revenue * d.gaPctRevenue;
+    // dźwignia operacyjna: OpEx% maleje r/r (krzywa J do rentowności)
+    const lev = Math.pow(d.opexLeverageYoY ?? 1, i);
+    const opexSM = revenue * d.smPctRevenue * lev;
+    const opexRD = revenue * d.rdPctRevenue * lev;
+    const opexGA = revenue * d.gaPctRevenue * lev;
     const ebitda = grossProfit - opexSM - opexRD - opexGA;
     const da = revenue * d.daPctRevenue;
     const ebit = ebitda - da;
@@ -262,7 +266,8 @@ export function runCfoReview(model: FinancialModel, d: FinancialDrivers): Valida
   // revenue ramp bez CAC
   if (!d.cac || d.cac <= 0) antiPatterns.push({ pattern: 'revenue_ramp_without_cac', severity: 'reject', detail: 'Brak CAC przy rampie przychodu SaaS' });
 
-  const hardFail = checks.some((c) => !c.passed && ['bs_balances', 'cf_ties_cash', 'no_negative_cash', 'arr_bridge_reconciles'].includes(c.id));
+  // hard gate = integralność modelu + kanoniczny próg fundowalności (LTV:CAC≥3, Rule of 40)
+  const hardFail = checks.some((c) => !c.passed && ['bs_balances', 'cf_ties_cash', 'no_negative_cash', 'arr_bridge_reconciles', 'ltv_cac_min', 'rule_of_40'].includes(c.id));
   const rejected = antiPatterns.some((a) => a.severity === 'reject');
   return { checks, antiPatterns, passed: !hardFail && !rejected };
 }

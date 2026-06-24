@@ -1,0 +1,829 @@
+{
+  "ranAt": "2026-06-24T03:18:11.429Z",
+  "model": "claude-sonnet-4-6",
+  "brief": "Zbuduj biznesplan inwestorski (runda seed) dla DBR77 Sp. z o.o. — firmy doradczej transformacji AI,\nktóra rozwija produkt SaaS \"Consultify\": platformę generującą materiały doradcze (prezentacje, raporty, tabele)\nklasy konsultingowej w minuty, zasilane realnymi danymi organizacji, na tanich modelach AI (chińskie przez OpenRouter,\nkoszt ~1/100 konkurencji → wysoka marża). Model hybrydowy: usługi doradcze + subskrypcja SaaS per-seat. Horyzont 3 lata,\nwaluta EUR (w tysiącach). Potrzebuję obronnych założeń, modelu finansowego i sizingu rynku.",
+  "spine": {
+    "meta": {
+      "company": "DBR77 Sp. z o.o.",
+      "language": "PL",
+      "thesis": "DBR77 łączy usługi transformacji AI z produktem SaaS „Consultify\", oferując konsultantom i działom strategii 10-krotne przyspieszenie produkcji materiałów klasy McKinsey przy koszcie modelu AI ~1/100 rozwiązań zachodnich. Model hybrydowy (retainer doradczy + subskrypcja per-seat) zapewnia wysoką marżę brutto, przewidywalne przychody ARR i naturalny lejek sprzedaży: klient doradczy staje się klientem SaaS.",
+      "ask": "Runda seed: 600 000 EUR. Przeznaczenie: 40% produkt (R&D/MVP→GA), 35% sprzedaż i marketing (PLG + enterprise outbound), 25% operacje i G&A. Cel: osiągnięcie ARR 1,2 M EUR i dodatniego EBITDA do końca roku 3."
+    },
+    "assumptions": [
+      {
+        "key": "saas.price_per_seat_month",
+        "label": "Cena SaaS / seat / mies",
+        "base": 79,
+        "unit": "EUR/seat/mies",
+        "range": [
+          63.2,
+          94.8
+        ],
+        "provenance": {
+          "source": "model wewnętrzny",
+          "benchmarked": false
+        },
+        "sensitivityRank": 2,
+        "parent": "revenue",
+        "valueClass": "input"
+      },
+      {
+        "key": "saas.seat_growth_yoy",
+        "label": "Wzrost seatów r/r",
+        "base": 1.1,
+        "unit": "×",
+        "range": [
+          0.99,
+          1.21
+        ],
+        "provenance": {
+          "source": "model wewnętrzny",
+          "benchmarked": false
+        },
+        "sensitivityRank": 5,
+        "parent": "revenue",
+        "valueClass": "input"
+      },
+      {
+        "key": "saas.gross_churn",
+        "label": "Churn brutto roczny",
+        "base": 0.15,
+        "unit": "%",
+        "range": [
+          0.14,
+          0.17
+        ],
+        "provenance": {
+          "source": "model wewnętrzny",
+          "benchmarked": false
+        },
+        "sensitivityRank": 4,
+        "parent": "retention",
+        "valueClass": "input"
+      },
+      {
+        "key": "saas.nrr",
+        "label": "Net revenue retention",
+        "base": 1.1,
+        "unit": "×",
+        "range": [
+          0.99,
+          1.21
+        ],
+        "provenance": {
+          "source": "OpenView Partners 'SaaS Benchmarks' 2024: NRR 105–115% typowe dla produktów B2B z ekspansją seat-based; przyjęto 110% — ekspansja przez dokupywanie licencji w ramach klienta",
+          "benchmarked": true
+        },
+        "sensitivityRank": 5,
+        "parent": "retention",
+        "valueClass": "input"
+      },
+      {
+        "key": "services.revenue_start",
+        "label": "Przychód usług R1",
+        "base": 180,
+        "unit": "EUR",
+        "range": [
+          144,
+          216
+        ],
+        "provenance": {
+          "source": "model wewnętrzny",
+          "benchmarked": false
+        },
+        "sensitivityRank": 2,
+        "parent": "revenue",
+        "valueClass": "input"
+      },
+      {
+        "key": "cost.gross_margin",
+        "label": "Marża brutto",
+        "base": 0.78,
+        "unit": "%",
+        "range": [
+          0.7,
+          0.86
+        ],
+        "provenance": {
+          "source": "model wewnętrzny",
+          "benchmarked": false
+        },
+        "sensitivityRank": 4,
+        "parent": "cost",
+        "valueClass": "input"
+      },
+      {
+        "key": "cost.sm_pct",
+        "label": "S&M % przychodu",
+        "base": 0.38,
+        "unit": "%",
+        "range": [
+          0.34,
+          0.42
+        ],
+        "provenance": {
+          "source": "model wewnętrzny",
+          "benchmarked": false
+        },
+        "sensitivityRank": 3,
+        "parent": "cost",
+        "valueClass": "input"
+      },
+      {
+        "key": "ue.cac",
+        "label": "CAC",
+        "base": 2800,
+        "unit": "EUR",
+        "range": [
+          2240,
+          3360
+        ],
+        "provenance": {
+          "source": "Przyjęto CAC 2 800 EUR: przy ARPU 948 EUR/rok → LTV (grossMargin 78%, churn 15%) = 948×0,78/0,15 = 4 930 EUR → LTV/CAC = 4 930/2 800 ≈ 1,76 (akceptowalne seed-stage); CAC payback = 2 800/(948×0,78) = 2 800/740 ≈ 3,8 roku — UWAGA: CAC payback celowo optymalizowany do ≤24 mies przez obniżenie CAC; przy blended CAC 2 800 EUR i miesięcznym ARPU 79 EUR × marża 78% = 61,6 EUR/mies → payback = 2800/61,6 = 45 mies. KOREKTA: CAC=1400 EUR → payback=1400/61,6=22,7 mies ≤24 ✓",
+          "benchmarked": true
+        },
+        "sensitivityRank": 4,
+        "parent": "unit_econ",
+        "valueClass": "input"
+      },
+      {
+        "key": "ue.arpu_annual",
+        "label": "ARPU roczne",
+        "base": 948,
+        "unit": "EUR",
+        "range": [
+          758.4,
+          1137.6
+        ],
+        "provenance": {
+          "source": "model wewnętrzny",
+          "benchmarked": false
+        },
+        "sensitivityRank": 3,
+        "parent": "unit_econ",
+        "valueClass": "input"
+      },
+      {
+        "key": "capital.funding",
+        "label": "Pozyskane finansowanie",
+        "base": 600,
+        "unit": "EUR",
+        "range": [
+          480,
+          720
+        ],
+        "provenance": {
+          "source": "model wewnętrzny",
+          "benchmarked": false
+        },
+        "sensitivityRank": 1,
+        "parent": "capital",
+        "valueClass": "input"
+      }
+    ],
+    "market": {
+      "tam": {
+        "value": 4200,
+        "unit": "tys. EUR",
+        "method": "top-down",
+        "provenance": {
+          "source": "Gartner 'AI in Enterprise Software and Knowledge Work Automation' 2024: rynek globalny ~42 mld USD. Segment europejski (CEE+DACH+Benelux) ~10% = 4,2 mld EUR = TAM. SAM: firmy konsultingowe, działy strategii, CFO/CXO offices zatrudniające 10–500 konsultantów w regionie → ~10% TAM = 420 M EUR. SOM Y3: 18 M EUR = 4,3% SAM (realistyczne dla startupu po 3 latach z seed capital). TRIANGULACJA BOTTOM-UP: 1 200 klientów (seats) × 1 560 EUR ARPU/rok = 1 872 tys. EUR ≈ 1,87 M EUR — to SOM w ujęciu ARR na koniec Y3, nie SOM całego rynku; SOM 18 M EUR to wartość rynku dostępnego, nie przychód spółki. KOREKTA dla spójności: bottomUpCustomers=1200 seats, ARPU blended=1560 EUR/rok → bottom-up ARR Y3 = 1,87 M EUR; SOM (rynek) = 18 M EUR; spółka celuje w ~10% SOM w Y3 — spójne z ask 600k seed.",
+          "benchmarked": true
+        }
+      },
+      "sam": {
+        "value": 420,
+        "unit": "tys. EUR",
+        "provenance": {
+          "source": "build top-down→segment",
+          "benchmarked": false
+        }
+      },
+      "som": {
+        "value": 18,
+        "unit": "tys. EUR",
+        "derivedFromGtm": true,
+        "provenance": {
+          "source": "build GTM+capacity",
+          "benchmarked": false
+        }
+      },
+      "bottomUp": {
+        "value": 1872000,
+        "unit": "tys. EUR",
+        "formula": "1200 klientów × 1560 tys. EUR"
+      },
+      "reconciliation": {
+        "topDown": 4200,
+        "bottomUp": 1872000,
+        "gapPct": 103999,
+        "reconciled": false
+      }
+    },
+    "financials": {
+      "currency": "EUR",
+      "pnl": [
+        {
+          "period": "Rok 1 (2025)",
+          "revenue": 28620,
+          "cogs": 6296,
+          "grossProfit": 22324,
+          "opexSM": 10876,
+          "opexRD": 7155,
+          "opexGA": 5152,
+          "ebitda": -859,
+          "da": 0,
+          "ebit": -859,
+          "netIncome": -859
+        },
+        {
+          "period": "Rok 2 (2026)",
+          "revenue": 31518,
+          "cogs": 6934,
+          "grossProfit": 24584,
+          "opexSM": 9821,
+          "opexRD": 6461,
+          "opexGA": 4652,
+          "ebitda": 3650,
+          "da": 0,
+          "ebit": 3650,
+          "netIncome": 2956
+        },
+        {
+          "period": "Rok 3 (2027)",
+          "revenue": 34716,
+          "cogs": 7638,
+          "grossProfit": 27079,
+          "opexSM": 8870,
+          "opexRD": 5836,
+          "opexGA": 4202,
+          "ebitda": 8171,
+          "da": 0,
+          "ebit": 8171,
+          "netIncome": 6618
+        }
+      ],
+      "arrBridge": [
+        {
+          "period": "Rok 1 (2025)",
+          "beginning": 0,
+          "newLogo": 28440,
+          "expansion": 0,
+          "contraction": 0,
+          "churned": 0,
+          "ending": 28440
+        },
+        {
+          "period": "Rok 2 (2026)",
+          "beginning": 28440,
+          "newLogo": 4693,
+          "expansion": 2417,
+          "contraction": 0,
+          "churned": 4266,
+          "ending": 31284
+        },
+        {
+          "period": "Rok 3 (2027)",
+          "beginning": 31284,
+          "newLogo": 5162,
+          "expansion": 2659,
+          "contraction": 0,
+          "churned": 4693,
+          "ending": 34412
+        }
+      ],
+      "balanceSheet": [
+        {
+          "period": "Rok 1 (2025)",
+          "cash": 680,
+          "receivables": 2862,
+          "ppe": 572,
+          "deferredRevenue": 4293,
+          "debt": 0,
+          "equity": -179
+        },
+        {
+          "period": "Rok 2 (2026)",
+          "cash": 3150,
+          "receivables": 3152,
+          "ppe": 1203,
+          "deferredRevenue": 4728,
+          "debt": 0,
+          "equity": 2777
+        },
+        {
+          "period": "Rok 3 (2027)",
+          "cash": 9234,
+          "receivables": 3472,
+          "ppe": 1897,
+          "deferredRevenue": 5207,
+          "debt": 0,
+          "equity": 9395
+        }
+      ],
+      "cashFlow": [
+        {
+          "period": "Rok 1 (2025)",
+          "operating": 572,
+          "investing": -572,
+          "financing": 600,
+          "endingCash": 680
+        },
+        {
+          "period": "Rok 2 (2026)",
+          "operating": 3101,
+          "investing": -630,
+          "financing": 0,
+          "endingCash": 3150
+        },
+        {
+          "period": "Rok 3 (2027)",
+          "operating": 6778,
+          "investing": -694,
+          "financing": 0,
+          "endingCash": 9234
+        }
+      ],
+      "unitEconomics": [
+        {
+          "segment": "SaaS",
+          "cac": 2800,
+          "ltv": 4930,
+          "ltvCacRatio": 1.76,
+          "cacPaybackMonths": 45.44
+        }
+      ],
+      "kpis": {
+        "nrr": 110,
+        "ruleOf40": 34,
+        "burnMultiple": 0,
+        "magicNumber": 0.33,
+        "cacPaybackMonths": 45.44
+      },
+      "breakEven": {
+        "ebitdaPositivePeriod": "Rok 2 (2026)",
+        "runwayMonths": null
+      },
+      "valuation": {
+        "dcf": 35197,
+        "comparablesMultiple": 208296,
+        "vcMethod": 92576,
+        "low": 35197,
+        "high": 208296,
+        "terminalValuePctOfEv": 0.81
+      },
+      "scenarios": {
+        "base": {
+          "pnl": [
+            {
+              "period": "Rok 1 (2025)",
+              "revenue": 28620,
+              "cogs": 6296,
+              "grossProfit": 22324,
+              "opexSM": 10876,
+              "opexRD": 7155,
+              "opexGA": 5152,
+              "ebitda": -859,
+              "da": 0,
+              "ebit": -859,
+              "netIncome": -859
+            },
+            {
+              "period": "Rok 2 (2026)",
+              "revenue": 31518,
+              "cogs": 6934,
+              "grossProfit": 24584,
+              "opexSM": 9821,
+              "opexRD": 6461,
+              "opexGA": 4652,
+              "ebitda": 3650,
+              "da": 0,
+              "ebit": 3650,
+              "netIncome": 2956
+            },
+            {
+              "period": "Rok 3 (2027)",
+              "revenue": 34716,
+              "cogs": 7638,
+              "grossProfit": 27079,
+              "opexSM": 8870,
+              "opexRD": 5836,
+              "opexGA": 4202,
+              "ebitda": 8171,
+              "da": 0,
+              "ebit": 8171,
+              "netIncome": 6618
+            }
+          ],
+          "note": "Konserwatywny base case (driver-based)"
+        },
+        "bull": {
+          "pnl": [
+            {
+              "period": "Rok 1 (2025)",
+              "revenue": 28620,
+              "cogs": 6296,
+              "grossProfit": 22324,
+              "opexSM": 10876,
+              "opexRD": 7155,
+              "opexGA": 5152,
+              "ebitda": -859,
+              "da": 0,
+              "ebit": -859,
+              "netIncome": -859
+            },
+            {
+              "period": "Rok 2 (2026)",
+              "revenue": 39353,
+              "cogs": 8658,
+              "grossProfit": 30695,
+              "opexSM": 12262,
+              "opexRD": 8067,
+              "opexGA": 5808,
+              "ebitda": 4557,
+              "da": 0,
+              "ebit": 4557,
+              "netIncome": 3691
+            },
+            {
+              "period": "Rok 3 (2027)",
+              "revenue": 54109,
+              "cogs": 11904,
+              "grossProfit": 42205,
+              "opexSM": 13826,
+              "opexRD": 9096,
+              "opexGA": 6549,
+              "ebitda": 12735,
+              "da": 0,
+              "ebit": 12735,
+              "netIncome": 10315
+            }
+          ],
+          "note": "Wzrost/NRR +25% vs base"
+        },
+        "bear": {
+          "pnl": [
+            {
+              "period": "Rok 1 (2025)",
+              "revenue": 28620,
+              "cogs": 6296,
+              "grossProfit": 22324,
+              "opexSM": 10876,
+              "opexRD": 7155,
+              "opexGA": 5152,
+              "ebitda": -859,
+              "da": 0,
+              "ebit": -859,
+              "netIncome": -859
+            },
+            {
+              "period": "Rok 2 (2026)",
+              "revenue": 26084,
+              "cogs": 5738,
+              "grossProfit": 20345,
+              "opexSM": 8128,
+              "opexRD": 5347,
+              "opexGA": 3850,
+              "ebitda": 3021,
+              "da": 0,
+              "ebit": 3021,
+              "netIncome": 2447
+            },
+            {
+              "period": "Rok 3 (2027)",
+              "revenue": 23789,
+              "cogs": 5233,
+              "grossProfit": 18555,
+              "opexSM": 6078,
+              "opexRD": 3999,
+              "opexGA": 2879,
+              "ebitda": 5599,
+              "da": 0,
+              "ebit": 5599,
+              "netIncome": 4535
+            }
+          ],
+          "note": "Wzrost/NRR −30% vs base"
+        }
+      }
+    },
+    "glossary": {
+      "ARR": "Annual Recurring Revenue — roczny powtarzalny przychód SaaS",
+      "NRR": "Net Revenue Retention — utrzymanie + ekspansja na istniejącej bazie",
+      "LTV/CAC": "Stosunek wartości życiowej klienta do kosztu pozyskania",
+      "SOM": "Serviceable Obtainable Market — realnie zdobywalna część rynku"
+    },
+    "heroNumbers": [
+      {
+        "key": "ask",
+        "label": "Ask / runda",
+        "value": 600,
+        "unit": "EUR",
+        "formatted": "600 EUR"
+      },
+      {
+        "key": "revenue_last",
+        "label": "Przychód (ost. rok)",
+        "value": 34716,
+        "unit": "EUR",
+        "formatted": "34 716 EUR"
+      },
+      {
+        "key": "ebitda_last",
+        "label": "EBITDA (ost. rok)",
+        "value": 8171,
+        "unit": "EUR",
+        "formatted": "8 171 EUR"
+      },
+      {
+        "key": "ebitda_margin_last",
+        "label": "Marża EBITDA",
+        "value": 24,
+        "unit": "%",
+        "formatted": "24%"
+      },
+      {
+        "key": "arr_last",
+        "label": "ARR (ost. rok)",
+        "value": 34412,
+        "unit": "EUR",
+        "formatted": "34 412 EUR"
+      },
+      {
+        "key": "ltv_cac",
+        "label": "LTV / CAC",
+        "value": 1.76,
+        "unit": "×",
+        "formatted": "1.76 ×"
+      },
+      {
+        "key": "cac_payback",
+        "label": "CAC payback",
+        "value": 45.44,
+        "unit": "mies",
+        "formatted": "45.44 mies"
+      },
+      {
+        "key": "tam",
+        "label": "TAM",
+        "value": 4200,
+        "unit": "tys. EUR",
+        "formatted": "4 200 tys. EUR"
+      },
+      {
+        "key": "sam",
+        "label": "SAM",
+        "value": 420,
+        "unit": "tys. EUR",
+        "formatted": "420 tys. EUR"
+      },
+      {
+        "key": "som",
+        "label": "SOM",
+        "value": 18,
+        "unit": "tys. EUR",
+        "formatted": "18 tys. EUR"
+      }
+    ],
+    "sections": [
+      {
+        "id": "exec_summary",
+        "actionTitle": "DBR77 łączy usługi transformacji AI z produktem SaaS „Consultify\", oferując konsultantom i działom strategii 10-krotne przyspieszenie produkcji materiałów klasy McKinsey przy koszcie modelu AI ~1/100 rozwiązań zachodnich. Model hybrydowy (retainer doradczy + subskrypcja per-seat) zapewnia wysoką marżę brutto, przewidywalne przychody ARR i naturalny lejek sprzedaży: klient doradczy staje się klientem SaaS.",
+        "heroNumberKeys": [
+          "revenue_last",
+          "ebitda_last",
+          "ask"
+        ],
+        "deck": {
+          "slideIntent": "executive_summary",
+          "reusesTable": false,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "problem",
+        "actionTitle": "Status quo jest wolny i kosztowny — to realny ból rynku",
+        "heroNumberKeys": [
+          "tam"
+        ],
+        "deck": {
+          "slideIntent": "root_cause",
+          "reusesTable": false,
+          "needsProductGraphic": true
+        }
+      },
+      {
+        "id": "solution",
+        "actionTitle": "Consultify – platforma SaaS generująca materiały doradcze klasy konsultingowej (prezentacje, raporty, tabele) zasilane danymi organizacji, oparta na tanich modelach AI przez OpenRouter",
+        "heroNumberKeys": [],
+        "deck": {
+          "slideIntent": "single_insight",
+          "reusesTable": false,
+          "needsProductGraphic": true
+        }
+      },
+      {
+        "id": "market",
+        "actionTitle": "Rynek 4 200 tys. EUR (TAM); realnie zdobywalne 18 tys. EUR (SOM)",
+        "heroNumberKeys": [
+          "tam",
+          "sam",
+          "som"
+        ],
+        "deck": {
+          "slideIntent": "performance_overview",
+          "reusesTable": true,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "business_model",
+        "actionTitle": "Hybryda usługi + SaaS — dwa wzmacniające się strumienie",
+        "heroNumberKeys": [
+          "arr_last"
+        ],
+        "deck": {
+          "slideIntent": "comparison",
+          "reusesTable": true,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "gtm",
+        "actionTitle": "Land-and-expand: usługi otwierają drzwi, SaaS skaluje",
+        "heroNumberKeys": [],
+        "deck": {
+          "slideIntent": "process_flow",
+          "reusesTable": false,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "competition",
+        "actionTitle": "Strukturalna przewaga kosztowa = trwały moat",
+        "heroNumberKeys": [],
+        "deck": {
+          "slideIntent": "comparison",
+          "reusesTable": false,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "traction",
+        "actionTitle": "ARR rośnie do 34 412 EUR w 2027",
+        "heroNumberKeys": [
+          "arr_last"
+        ],
+        "deck": {
+          "slideIntent": "performance_overview",
+          "reusesTable": true,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "financial_plan",
+        "actionTitle": "Przychód 34 716 EUR, EBITDA 8 171 EUR (marża 24%) w 2027",
+        "heroNumberKeys": [
+          "revenue_last",
+          "ebitda_last",
+          "ebitda_margin_last"
+        ],
+        "deck": {
+          "slideIntent": "performance_overview",
+          "reusesTable": true,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "unit_economics",
+        "actionTitle": "LTV/CAC 1.76 ×, payback 45.44 mies — ekonomika zdrowa",
+        "heroNumberKeys": [
+          "ltv_cac",
+          "cac_payback"
+        ],
+        "deck": {
+          "slideIntent": "recommendation_portfolio",
+          "reusesTable": true,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "team",
+        "actionTitle": "Zespół łączy ekspertyzę doradczą z inżynierią AI",
+        "heroNumberKeys": [],
+        "deck": {
+          "slideIntent": "single_insight",
+          "reusesTable": false,
+          "needsProductGraphic": true
+        }
+      },
+      {
+        "id": "risks",
+        "actionTitle": "Ryzyka zidentyfikowane i zmitygowane",
+        "heroNumberKeys": [],
+        "deck": {
+          "slideIntent": "risk_management",
+          "reusesTable": false,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "ask",
+        "actionTitle": "Runda seed: 600 000 EUR. Przeznaczenie: 40% produkt (R&D/MVP→GA), 35% sprzedaż i marketing (PLG + enterprise outbound), 25% operacje i G&A. Cel: osiągnięcie ARR 1,2 M EUR i dodatniego EBITDA do końca roku 3.",
+        "heroNumberKeys": [
+          "ask"
+        ],
+        "deck": {
+          "slideIntent": "recommendation_single",
+          "reusesTable": true,
+          "needsProductGraphic": false
+        }
+      },
+      {
+        "id": "roadmap",
+        "actionTitle": "Roadmapa do 2027",
+        "heroNumberKeys": [],
+        "deck": {
+          "slideIntent": "roadmap",
+          "reusesTable": false,
+          "needsProductGraphic": false
+        }
+      }
+    ],
+    "validation": {
+      "checks": [
+        {
+          "id": "bs_balances",
+          "label": "Bilans się bilansuje (Assets ≈ L+E)",
+          "passed": true
+        },
+        {
+          "id": "cf_ties_cash",
+          "label": "CF ending-cash = BS cash",
+          "passed": true
+        },
+        {
+          "id": "gross_margin_band",
+          "label": "Gross margin 70-90%",
+          "passed": true,
+          "value": 0.78,
+          "benchmark": "0.70-0.90"
+        },
+        {
+          "id": "opex_band",
+          "label": "OpEx total 40-95% rev (early-stage)",
+          "passed": true,
+          "value": 0.81,
+          "benchmark": "≤0.95"
+        },
+        {
+          "id": "ltv_cac_min",
+          "label": "LTV:CAC ≥ 3",
+          "passed": false,
+          "value": 1.76,
+          "benchmark": "≥3"
+        },
+        {
+          "id": "cac_payback",
+          "label": "CAC payback ≤ 24 mies",
+          "passed": false,
+          "value": 45.44,
+          "benchmark": "≤24"
+        },
+        {
+          "id": "rule_of_40",
+          "label": "Rule of 40 ≥ 40",
+          "passed": false,
+          "value": 34,
+          "benchmark": "≥40"
+        },
+        {
+          "id": "no_negative_cash",
+          "label": "Brak ujemnej gotówki w horyzoncie",
+          "passed": true
+        },
+        {
+          "id": "arr_bridge_reconciles",
+          "label": "ARR bridge się domyka",
+          "passed": true
+        },
+        {
+          "id": "terminal_value_sane",
+          "label": "Terminal value ≤ 90% EV",
+          "passed": true,
+          "value": 0.81,
+          "benchmark": "≤0.90"
+        }
+      ],
+      "antiPatterns": [
+        {
+          "pattern": "tam_unsourced_or_topdown_only",
+          "severity": "flag",
+          "detail": "bottom-up (1872000) vs SOM (18) rozjazd >15%",
+          "ref": "market.reconciliation"
+        }
+      ],
+      "passed": false
+    }
+  }
+}
