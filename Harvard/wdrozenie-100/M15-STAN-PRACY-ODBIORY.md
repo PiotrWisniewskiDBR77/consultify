@@ -27,19 +27,19 @@
 | 1.2 | Profil korzyści nad KPI (typ/kategoria/dis-benefit/wiele-KPI/właściciel biznesowy) | W1 | P4.2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 1.3 | Higiena martwego kodu (4 pliki: benefits.routes 2, results-enterprise.routes 2, ResultsSummaryView, OperationalAnalysisView) + ocena folderu Benefits/ | W1 | P14.1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | ⬜ | ⬜ — grep-referencji najpierw |
 | 1.4 | `resultsFeatureFlags.ts` (analog executionFeatureFlags) + live-verify istniejących ścieżek + Playwright `m15-results-cockpit.spec.ts` (baseline KPI/ROI/deviation) | W1 | G5 | 🟡 | ✅ | ✅ | 🟡 | ⬜ | ⬜ | ⬜ | 🟡 `resultsFeatureFlags` DONE + `m15-results-cockpit.spec.ts` 4/4 (ResultsHub ładuje, inbox, flag-off); rozszerzenie o KPI/ROI/deviation paths = follow-up |
-| 2.1 | Value Driver Tree — model danych (węzły cel/driver/KPI/inicjatywa + krawędzie z wagą) | W2 | P1.1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | ⬜ | ⬜ rdzeń światowy |
-| 2.2 | Driver Tree — sizing bottom-up (KPI delta × `kpi_financial_mappings` → roll-up do celu) | W2 | P1.3 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | ⬜ | ⬜ |
+| 2.1 | Value Driver Tree — model danych (węzły cel/driver/KPI/inicjatywa + krawędzie z wagą) | W2 | P1.1 | ✅ | ✅ | ✅ 14/14 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis `valueDriverTreeService` (rollUpTree+buildTreeFromMappings, `b8e2e601f1`); viz=2.3 |
+| 2.2 | Driver Tree — sizing bottom-up (KPI delta × `kpi_financial_mappings` → roll-up do celu) | W2 | P1.3 | ✅ | ✅ | ✅ 14/14 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis (buildTreeFromMappings roll-up, `b8e2e601f1`) |
 | 2.3 | Driver Tree — interaktywna wizualizacja (rozwijanie, roll-up, baseline/target/current per węzeł) | W2 | P1.2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.4 | Stage-gated value L0–L5 + confidence % per etap (model + przejścia) | W2 | P2.1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ rdzeń światowy |
-| 2.5 | Banked vs forecast + wartość ryzyko-ważona (value × confidence) | W2 | P2.2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 2.4 | Stage-gated value L0–L5 + confidence % per etap (model + przejścia) | W2 | P2.1 | ✅ | ✅ | ✅ 25/25 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis `valueStageGateService` (`717ed74d47`) |
+| 2.5 | Banked vs forecast + wartość ryzyko-ważona (value × confidence) | W2 | P2.2 | ✅ | ✅ | ✅ 25/25 | ✅ live | N/A | ✅ | ⬜ | 🟢 serwis + ZWERYFIKOWANE LIVE w scorecard (banked 186k) |
 | 2.6 | Value bridge / historia zmian wartości (dlaczego sized→realized się różni) | W2 | P2.4 | ⬜ | ⬜ | ⬜ | N/A | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.7 | Lejek wartości portfela (ideas→validated→in-flight→realized: count+wartość per etap) | W2 | P3.1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ rdzeń światowy |
-| 2.8 | Leakage + value-at-risk + drill-down do inicjatyw | W2 | P3.2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.1 | Silnik rekomendacji DOŁÓŻ / INTERWENIUJ / ZABIJ per inicjatywa (realizacja+confidence+adopcja) | W3 | P7.1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ wsparcie decyzji |
+| 2.7 | Lejek wartości portfela (ideas→validated→in-flight→realized: count+wartość per etap) | W2 | P3.1 | ✅ | ✅ | ✅ 18/18 | ✅ live | ✅ | ✅ | ⬜ | 🟢 serwis `valueFunnelService` + LIVE w scorecard (Pomysły 280k/77) |
+| 2.8 | Leakage + value-at-risk + drill-down do inicjatyw | W2 | P3.2 | ✅ | ✅ | ✅ 18/18 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis (funnelConversion+valueAtRisk, `46976a8de7`); drill-down=follow-up |
+| 3.1 | Silnik rekomendacji DOŁÓŻ / INTERWENIUJ / ZABIJ per inicjatywa (realizacja+confidence+adopcja) | W3 | P7.1 | ✅ | ✅ | ✅ 16/16 | ✅ live | ✅ | ✅ | ⬜ | 🟢 serwis `valueDecisionService` + LIVE w scorecard (6 rekomendacji) |
 | 3.2 | Pętla zwrotna do M14: zagrożona korzyść → sygnał w Manager-lane + eskalacja sponsora | W3 | P7.2 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | ⬜ | ⬜ domyka pętlę M15→M14 |
 | 3.3 | Re-alokacja: rekomendacja przesunięcia zasobów do high-realizing (spięcie capacity M14 4.1/4.2) | W3 | P7.3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 4.1 | Transformation Scorecard — exec dashboard: zabankowane/w-realizacji/zagrożone (PLN+% celu) | W4 | P9.1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ FINAŁ — obietnica appki |
-| 4.2 | Waterfall wartości portfela + trend + top-korzyści + top-ryzyka | W4 | P9.2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 4.1 | Transformation Scorecard — exec dashboard: zabankowane/w-realizacji/zagrożone (PLN+% celu) | W4 | P9.1 | ✅ | ✅ | ✅ 18/18 | ✅ live | ✅ | ✅ | ⬜ | 🟢 UI-BINDING LIVE+ZWERYFIKOWANE — panel w ResultsHub/Initiatives (flaga transformationScorecard; banked 186k/cel 280k 66%, lejek, decyzje); keystone `resultsValueIntelligenceService`+GET /api/results-value (`eb80aa0327`) |
+| 4.2 | Waterfall wartości portfela + trend + top-korzyści + top-ryzyka | W4 | P9.2 | ✅ | ✅ | ✅ 18/18 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis (valueWaterfall+topBenefits/topRisks, `f937216117`); render waterfall=follow-up |
 | 4.3 | Run-rate vs in-year (kiedy wartość ląduje) | W4 | P5.1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 4.4 | Board-pack / auto-narracja wartości (eksport raport+deck przez generatory M17–M20) | W4 | P9.3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 5.1 | Domknięcie Goals/Scorecards (tworzenie celu end-to-end) | W5 | P6.1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (G2 — najpierw zweryfikuj atrapę) |
