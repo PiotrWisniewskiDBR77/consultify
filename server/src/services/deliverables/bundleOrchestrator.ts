@@ -175,6 +175,55 @@ export function spineToDocOutline(spine: BusinessPlanSpine) {
   }));
 }
 
+/**
+ * Plan raportu DETERMINISTYCZNIE z SPINE (F4) — omija flaky planDocumentStructure (pada
+ * schema-fail na 14 sekcjach) i czyni raport w pełni honorującym SPINE. Każda sekcja →
+ * bloki wg typu; hinty niosą hero-numbers + dane (single source of truth, §D2/E1).
+ * Zwraca kształt DocumentStructurePlan dla generateDocumentContent.
+ */
+export function spineToDocPlan(spine: BusinessPlanSpine) {
+  const hero = (k: string) => { const h = spine.heroNumbers.find((x) => x.key === k); return h ? `${h.label} ${h.formatted}` : ''; };
+  const heroes = (keys: string[]) => keys.map(hero).filter(Boolean).join('; ');
+  const pnlRows = spine.financials.pnl.map((p) => ({ rok: p.period, przychod: p.revenue, ebitda: p.ebitda, marza: p.revenue > 0 ? Math.round(p.ebitda / p.revenue * 100) + '%' : '0%' }));
+  const market = spine.market;
+
+  // recepta bloków per typ sekcji (block types z ALLOWED_BLOCK_TYPES)
+  const recipe: Record<string, Array<{ type: string; hint: string }>> = {
+    exec_summary: [
+      { type: 'kpi_strip', hint: `4 metryki: ${heroes(['revenue_last', 'ebitda_last', 'arr_last', 'ask'])}` },
+      { type: 'paragraph', hint: `Teza answer-first: ${spine.meta.thesis}. Co i dla kogo.` },
+      { type: 'paragraph', hint: `Dlaczego teraz i czego oczekuje inwestor. Ask: ${spine.meta.ask}.` },
+    ],
+    problem: [{ type: 'paragraph', hint: 'Status quo: jak dziś rozwiązywany jest problem i dlaczego jest drogi/wolny.' }, { type: 'callout', hint: `Skala bólu rynkowego. TAM ${hero('tam')}.` }],
+    solution: [{ type: 'paragraph', hint: `Produkt: ${spine.sections.find((s) => s.id === 'solution')?.actionTitle}. Jak działa.` }, { type: 'bullet_list', hint: '5 kluczowych możliwości produktu.' }, { type: 'callout', hint: 'Główna przewaga (np. kosztowa/technologiczna).' }],
+    market: [{ type: 'kpi_strip', hint: `TAM/SAM/SOM: ${heroes(['tam', 'sam', 'som'])}` }, { type: 'paragraph', hint: `Sizing: TAM top-down (${market.tam.provenance.source}); SOM z buildu GTM; bottom-up ${market.bottomUp.formula}.` }],
+    business_model: [{ type: 'bullet_list', hint: `Założenia modelu: ${spine.assumptions.slice(0, 5).map((a) => `${a.label} ${a.base}${a.unit}`).join('; ')}` }, { type: 'paragraph', hint: 'Jak zarabiamy: hybryda usługi + SaaS.' }],
+    gtm: [{ type: 'paragraph', hint: 'Go-to-market: kanały, cykl sprzedaży, land-and-expand.' }, { type: 'numbered_list', hint: 'Etapy ruchu sprzedażowego.' }],
+    competition: [{ type: 'paragraph', hint: 'Krajobraz konkurencji i dlaczego wygrywamy (moat).' }, { type: 'callout', hint: 'Trwała przewaga.' }],
+    traction: [{ type: 'kpi_strip', hint: `Trakcja: ${heroes(['arr_last'])}` }, { type: 'paragraph', hint: 'Dowody działania, kamienie milowe.' }, { type: 'chart', hint: `Wzrost ARR/przychodu 3 lata: ${JSON.stringify(pnlRows.map((r) => ({ rok: r.rok, przychod: r.przychod })))}` }],
+    financial_plan: [
+      { type: 'table', hint: `Model 3-letni: ${JSON.stringify(pnlRows)}` },
+      { type: 'chart', hint: `Przychód i EBITDA 3 lata: ${JSON.stringify(spine.financials.pnl.map((p) => ({ rok: p.period, przychod: p.revenue, ebitda: p.ebitda })))}` },
+      { type: 'paragraph', hint: `Interpretacja: trajektoria do rentowności, break-even ${spine.financials.breakEven.ebitdaPositivePeriod ?? 'n/d'}.` },
+    ],
+    unit_economics: [{ type: 'kpi_strip', hint: `Unit-econ: ${heroes(['ltv_cac', 'cac_payback'])}` }, { type: 'paragraph', hint: `LTV/CAC, payback, NRR ${spine.financials.kpis.nrr}%, Rule of 40 ${spine.financials.kpis.ruleOf40}.` }],
+    team: [{ type: 'paragraph', hint: 'Zespół: dlaczego wygrywa, unikalne dopasowanie do problemu.' }],
+    risks: [{ type: 'risk_table', hint: 'Rejestr 4-5 ryzyk: ryzyko, prawdopodobieństwo, wpływ, mitygacja, właściciel.' }, { type: 'callout', hint: 'Ryzyko krytyczne z planem mitygacji.' }],
+    ask: [{ type: 'kpi_strip', hint: `Ask: ${hero('ask')}` }, { type: 'paragraph', hint: `Use of funds: alokacja, kamienie milowe, runway. ${spine.meta.ask}` }],
+    roadmap: [{ type: 'paragraph', hint: 'Roadmapa: fazy do końca horyzontu.' }, { type: 'numbered_list', hint: 'Kamienie milowe etapami.' }],
+  };
+
+  return {
+    sections: spine.sections.map((s) => ({
+      title: s.actionTitle,
+      purpose: `${s.id}: ${s.actionTitle}`,
+      blocks: recipe[s.id] ?? [{ type: 'paragraph', hint: s.actionTitle }],
+    })),
+    tierUsed: 'PREMIUM' as const,
+    fallbackUsed: false,
+  };
+}
+
 /** Intent tabeli finansowej z SPINE — realne wiersze P&L (single source of truth, §D2). */
 export function spineToTableIntent(spine: BusinessPlanSpine): string {
   const rows = spine.financials.pnl.map((p) => ({

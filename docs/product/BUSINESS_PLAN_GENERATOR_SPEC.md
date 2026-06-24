@@ -74,10 +74,13 @@ brief ─► [1] AssumptionsModel ──► [2] FinancialEngine ──► [3] Bu
 ## 3. Definicja Done (consultant-grade gate)
 Generator zdaje, gdy: wszystkie A-E `[x]`, CFO-review zielony na przykładzie DBR77, hero-numbers identyczne w 3 artefaktach (auto-test), title-read-through narratywny, defensibility-appendix z source+range+sensitivity, scenariusze base/bull/bear, eksport .docx/.xlsx/.pptx z zachowaniem spójności.
 
-## 4. Plan realizacji (etapy)
-- **F1 — SPINE + AssumptionsModel:** typ `BusinessPlanSpine` (rejestr założeń z source/range/sensitivity, driver-tree, TAM/SAM/SOM) + generator założeń z briefu (LLM + walidatory anty-wzorców A9). **← start tutaj.**
-- **F2 — FinancialEngine:** drivers→3-statement+ARR bridge+unit-econ+KPI+scenariusze+valuation; CFO-review (C) jako kod (deterministyczne checki).
-- **F3 — BundleOrchestrator:** spina SPINE→B4/B3/B1, wymusza D1-D7 (hero-number identity, parytet, glosariusz), coherence gate.
-- **F4 — Generatory honor SPINE:** B4/B3/B1 przyjmują SPINE zamiast surowego intentu; deck table-reuse vs product-graphic (E4) + auto-render grafik.
-- **F5 — Eksport wiązki:** .docx/.xlsx/.pptx z jednego SPINE + defensibility appendix; DBR77 jako golden.
-- **Flaga:** całość za `ENABLE_DELIVERABLES_PREMIUM` (OFF=byte-identyczne); PROD nietknięty; staging→odbiór→prod osobno.
+## 4. Plan realizacji (etapy) — STATUS 2026-06-23 (build nocny)
+- **F1 — SPINE + AssumptionsModel ✅** — `businessPlanSpine.ts` (typ SoT) + `assumptionsModel.ts` (LLM brief→założenia z driver-tree/TAM-SAM-SOM/source-range-sensitivity + walidatory anty-wzorców A9). Commit `a11c52d79b`, `95fc3a7bd1`.
+- **F2 — FinancialEngine ✅** — `financialEngine.ts`: 3-statement bilansujący tożsamościowo, ARR bridge, unit-econ, KPI, scenariusze base/bull/bear, wycena DCF+comps+VC, dźwignia operacyjna (krzywa J), CFO-review deterministyczny z twardym gate fundowalności (LTV:CAC≥3, Rule40). **11/11 testów.** Commit `cd2b701af2`.
+- **F3 — BundleOrchestrator ✅** — `bundleOrchestrator.ts`: `buildSpine` (hero-number identity, kanon 14 sekcji, coherence gate), `generateBusinessPlan` z **pętlą naprawczą** (CFO-review fail→re-prompt z preskryptywnym feedbackiem). **8/8 testów** (kluczowy: hero-number identyczny w tabeli/raporcie/decku). Commit `95fc3a7bd1`, `c84093d638`.
+- **F4 — Generatory honor SPINE ✅(częściowo)** — `spineToDeck/Doc/Table` mapują SPINE→wejścia B1/B3/B4; `spineToDocPlan` buduje plan raportu DETERMINISTYCZNIE z SPINE (omija flaky `planDocumentStructure`). Dowód E2E: `scripts/deliverables/_dbr77-from-brief.mts` (brief→spójna wiązka). 🟡 zostaje: deck auto-render grafik z briefów + PPTX honor composition.
+- **F5 — Eksport wiązki 🟡** — XLSX z SPINE zrobiony (`tableSchemaToWorkbook`→`buildWorkbookBuffer`→realny .xlsx z CF). DOCX/PPTX: content/deck gotowe, render do pliku idzie przez istniejącą warstwę live-route (materializeDocumentArtifact / PptxExportService) — wpięcie SPINE→ta warstwa = następny slice (nie przepinane na ryzyko w nocy).
+- **Flaga:** całość za `ENABLE_DELIVERABLES_PREMIUM` (OFF=byte-identyczne); niewpięte w route; PROD nietknięty; staging→odbiór→prod osobno.
+
+## 5. Dowód działania (DBR77 z briefu)
+`scripts/deliverables/_dbr77-from-brief.mts` → `docs/qa/deliverables/runs/2026-06-23-DBR77-from-brief.{md,json}` + `.xlsx`. Łańcuch: brief (free text) → LLM autoruje obronne założenia → CFO-review + pętla naprawcza → SPINE (passing) → karmi B4/B3/B1 z identycznymi hero-numbers. Testy: 194/194 deliverables zielone, tsc czysty.
