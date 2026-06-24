@@ -18,6 +18,7 @@ Test ≠ zielony może znaczyć trzy rzeczy — TYLKO pierwsza to „błąd do n
 - **Pliki:** `IdeaProcessFlowTool.tsx` (autosave + hydrate-on-reload), `useIdeaMapSync`/`useProcessFlowCRUD`, endpoint `PUT/POST /map/sync` (409 handling + wersjonowanie).
 - **Repro (manualne):** otwórz process_flow → dodaj 5 kształtów szybko → reload (F5) → węzły znikają (czasem).
 - **Kierunek naprawy:** serializacja zapisów (kolejka/debounce single-flight zamiast 2× równoległy POST) + retry-on-409 z re-read wersji PRZED zapisem; hydrate-on-reload czeka na flush pending-save. (Helper E2E ma już `addShape` anti-drop recheck — to maskuje w teście, ale produkt dalej ma race.)
+- **Charakterystyka (zweryfikowana 2026-06-24):** MC-07-01 solo ×5 = **5/5 PASS** (zero `received 0`). Bug jest **LOAD-ZALEŻNY** — okno wyścigu 409 otwiera się tylko pod obciążeniem (pełny suite + kontencja + latencja caboose), nie solo. Stąd flaky w pełnych przebiegach, zielony solo. To NIE znaczy „nie ma buga" — to potwierdza że race istnieje i jest czasowy. Repro deterministyczne wymaga wymuszenia podwójnego równoległego zapisu (test regresji powinien to robić jawnie, nie polegać na load).
 - **Status testu:** zostaje czerwony / flaky — NIE honest-skipować.
 
 ### 🟠 BUG-2 [P2, BILLING/INFRA — nie kod] AI Expand 500 (MC-09-17, + M06 REAL-AI sporadycznie)
