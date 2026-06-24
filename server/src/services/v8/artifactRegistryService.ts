@@ -2171,6 +2171,32 @@ export async function listMyWorkArtifacts(params: {
   return { mine, review, recent };
 }
 
+/**
+ * Derive a clean, human title from a free-text goal. A raw brief dumped as the
+ * artifact title ("Rejestr 8 inicjatyw… Dodaj przykładowe dane") or a generic
+ * "Executive presentation draft" both read badly — and ugly things don't get
+ * read. Take the first clause, strip the leading format label and trailing
+ * instruction tail, cap length, capitalize.
+ */
+export function deriveArtifactTitle(goalRaw: string, fallback: string): string {
+  let t = String(goalRaw || '').trim();
+  if (!t) return fallback;
+  t = t.split(/[\n.!?]/)[0]; // first sentence/clause
+  t = t.replace(
+    /^(tabela|raport|prezentacja|deck|report|table|presentation|dokument|document)\s*[:\-–—]\s*/i,
+    ''
+  );
+  // strip trailing instruction phrases ("…, dodaj przykładowe dane", "…include sample data")
+  t = t.replace(
+    /[,;]?\s*(dodaj|add|uwzgl[ęe]dnij|include|wygeneruj|generate|przygotuj|prepare|zbuduj|build)\b.*$/i,
+    ''
+  );
+  t = t.trim().replace(/\s+/g, ' ');
+  if (t.length > 70) t = `${t.slice(0, 67).trimEnd()}…`;
+  if (t) t = t.charAt(0).toUpperCase() + t.slice(1);
+  return t || fallback;
+}
+
 function inferArtifactPlan(
   request: ArtifactPlanningRequest
 ): ArtifactPlanningResult['artifactPlan'] {
@@ -2205,7 +2231,7 @@ function inferArtifactPlan(
     return {
       artifactFamily: 'sheet',
       outputType: 'sheet',
-      titleHint: request.goal.trim() || 'Structured sheet draft',
+      titleHint: deriveArtifactTitle(request.goal, 'Tabela operacyjna'),
       governancePath: 'execution_spine',
       visibilityScope: 'organization',
     };
@@ -2215,7 +2241,7 @@ function inferArtifactPlan(
     return {
       artifactFamily: 'presentation',
       outputType: 'presentation',
-      titleHint: 'Executive presentation draft',
+      titleHint: deriveArtifactTitle(request.goal, 'Prezentacja'),
       governancePath: 'execution_spine',
       visibilityScope: 'private',
     };
@@ -2224,7 +2250,7 @@ function inferArtifactPlan(
   return {
     artifactFamily: explicitFamily || 'document',
     outputType: request.requestedOutputType || 'report',
-    titleHint: goal.includes('brief') ? 'Working brief draft' : 'Output draft',
+    titleHint: deriveArtifactTitle(request.goal, goal.includes('brief') ? 'Working brief' : 'Raport'),
     governancePath: 'execution_spine',
     visibilityScope: 'private',
   };
