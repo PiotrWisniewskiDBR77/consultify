@@ -24,6 +24,7 @@ import {
   validateFinancialData,
 } from '../services/economicsFinancials.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { exportValuationPptx } from '../services/valuationExportService.js';
 import * as valuationSvc from '../services/valuationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -1589,7 +1590,6 @@ router.post(
     );
 
     const now = new Date().toISOString();
-    const initiativeId = uuidv4();
     const costCapex =
       (financials?.initial_investment || 0) +
       (financials?.implementation_cost || 0) +
@@ -1597,24 +1597,45 @@ router.post(
     const costOpex = financials?.annual_operating_cost || 0;
     const expectedRoi = financials?.roi_percent ?? null;
 
-    await dbRun(
-      `INSERT INTO initiatives (
+    // Uspójnienie F1.3 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+    let initiativeId: string;
+    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      const __r = await funnelCreateInitiative(
+        orgId,
+        {
+          title: analysis.name,
+          projectId: analysis.project_id || null,
+          summary: analysis.description || null,
+          costCapex,
+          costOpex,
+          expectedRoi,
+          sourceType: 'financial_analysis',
+          sourceId: id,
+        },
+        { validate: false, actor: { id: req.user?.id } }
+      );
+      initiativeId = __r.id;
+    } else {
+      initiativeId = uuidv4();
+      await dbRun(
+        `INSERT INTO initiatives (
         id, organization_id, project_id, title, summary, status, cost_capex, cost_opex, expected_roi, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        initiativeId,
-        orgId,
-        analysis.project_id || null,
-        analysis.name,
-        analysis.description || null,
-        normalizeStatusForDb('DRAFT'),
-        costCapex,
-        costOpex,
-        expectedRoi,
-        now,
-        now,
-      ]
-    );
+        [
+          initiativeId,
+          orgId,
+          analysis.project_id || null,
+          analysis.name,
+          analysis.description || null,
+          normalizeStatusForDb('DRAFT'),
+          costCapex,
+          costOpex,
+          expectedRoi,
+          now,
+          now,
+        ]
+      );
+    }
 
     await dbRun(
       `UPDATE digitization_analyses SET initiative_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
@@ -2028,29 +2049,46 @@ router.post(
     const created: string[] = [];
 
     for (const ins of insights || []) {
-      const initiativeId = uuidv4();
       const name = String(ins.title || `Initiative from analysis ${analysisId.slice(0, 8)}`);
       const summary = String(ins.description || '');
 
-      await dbRun(
-        `INSERT INTO initiatives (
+      // Uspójnienie F1.3 — przez kanoniczny lejek (status→DRAFT zamiast legacy 'step3').
+      let initiativeId: string;
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          orgId,
+          {
+            title: name,
+            projectId: analysis.project_id || null,
+            summary: summary || null,
+            sourceType: 'financial_analysis',
+            sourceId: analysisId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        initiativeId = __r.id;
+      } else {
+        initiativeId = uuidv4();
+        await dbRun(
+          `INSERT INTO initiatives (
           id, organization_id, project_id, name, summary, status,
           source_type, source_id,
           created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          initiativeId,
-          orgId,
-          analysis.project_id || null,
-          name,
-          summary || null,
-          'step3',
-          'financial_analysis',
-          analysisId,
-          now,
-          now,
-        ]
-      );
+          [
+            initiativeId,
+            orgId,
+            analysis.project_id || null,
+            name,
+            summary || null,
+            'step3',
+            'financial_analysis',
+            analysisId,
+            now,
+            now,
+          ]
+        );
+      }
 
       created.push(initiativeId);
     }

@@ -13,6 +13,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { listBudgets } from '../../services/budgetingService.js';
+import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import {
@@ -1948,29 +1949,46 @@ router.post(
     const created: string[] = [];
 
     for (const insight of insights || []) {
-      const initiativeId = uuidv4();
       const name = String(insight.title || `Initiative from analysis ${analysisId.slice(0, 8)}`);
       const summary = String(insight.description || '');
 
-      await dbRun(
-        `INSERT INTO initiatives (
+      // Uspójnienie F1.4 — przez kanoniczny lejek (status→DRAFT zamiast legacy 'step3').
+      let initiativeId: string;
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          organizationId,
+          {
+            title: name,
+            projectId: analysis.project_id || null,
+            summary: summary || null,
+            sourceType: 'financial_analysis',
+            sourceId: analysisId,
+          },
+          { validate: false, actor: { id: req.user?.id } }
+        );
+        initiativeId = __r.id;
+      } else {
+        initiativeId = uuidv4();
+        await dbRun(
+          `INSERT INTO initiatives (
           id, organization_id, project_id, name, summary, status,
           source_type, source_id,
           created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          initiativeId,
-          organizationId,
-          analysis.project_id || null,
-          name,
-          summary || null,
-          'step3',
-          'financial_analysis',
-          analysisId,
-          now,
-          now,
-        ]
-      );
+          [
+            initiativeId,
+            organizationId,
+            analysis.project_id || null,
+            name,
+            summary || null,
+            'step3',
+            'financial_analysis',
+            analysisId,
+            now,
+            now,
+          ]
+        );
+      }
 
       created.push(initiativeId);
     }
