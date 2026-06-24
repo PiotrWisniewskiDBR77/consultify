@@ -650,6 +650,42 @@ export const Scheduler = {
     });
     this.jobs.push(job33);
 
+    // 34. M14/F6 execution report cadence scan (detect due reports) — daily 6:15AM.
+    // Behavioural → behind a flag (default OFF, safe for live clients).
+    const job34 = cron.schedule('15 6 * * *', async () => {
+      if (process.env.EXECUTION_REPORT_CADENCE_CRON_ENABLED !== 'true') return;
+      try {
+        const { runReportCadenceScan } = await import('./ExecutionReportCron.js');
+        const r = await runReportCadenceScan();
+        if (r.due > 0 || r.errors > 0) {
+          logger.info(
+            `[Scheduler] Execution report cadence: orgs=${r.orgs} due=${r.due} errors=${r.errors}`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Execution report cadence scan failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job34);
+
+    // 35. M14/F6 execution report distribution (send queued) — every 30min.
+    // Behavioural → behind a flag (default OFF, safe for live clients).
+    const job35 = cron.schedule('*/30 * * * *', async () => {
+      if (process.env.EXECUTION_REPORT_DISTRIBUTION_CRON_ENABLED !== 'true') return;
+      try {
+        const { runReportDistributionScan } = await import('./ExecutionReportCron.js');
+        const r = await runReportDistributionScan();
+        if (r.sent > 0 || r.failed > 0 || r.errors > 0) {
+          logger.info(
+            `[Scheduler] Execution report distribution: orgs=${r.orgs} sent=${r.sent} failed=${r.failed} errors=${r.errors}`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Execution report distribution scan failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job35);
+
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly)'
     );
