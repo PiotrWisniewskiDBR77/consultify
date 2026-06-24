@@ -54,7 +54,7 @@
 | 5.1 | **Budget-vs-Actual Variance Bridge** (waterfall plan→actual, F/U, YTD, drill-down) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (2734a0a093: budget-vs-actual variance bridge, 21/21); UI-binding=next |
 | 5.2 | **Multi-Scenario Compute** (ożywić martwe base/bull/bear — realny compute per-scenariusz) | F5 | FIX | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 1) |
 | 5.3 | **Driver-Tree Planner** (drzewo driverów+formuły→propagacja do 3-statement) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (096b132354: driver-tree planner, 14/14); UI-binding=next |
-| 5.4 | **What-if / Sensitivity real-time + Tornado** (suwaki driverów, przelicz, tornado/data-table) | F5 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 5.4 | **What-if / Sensitivity real-time + Tornado** (suwaki driverów, przelicz, tornado/data-table) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (salvaged: whatIfSensitivityService — tornado/data-table/break-even, 17/17); UI-binding=next |
 | 6.1 | **Schedules: Working-Capital + Debt + Depreciation + Tax** (DSO/DPO/DIO, odsetki z salda, amort z PPE, tax=stawka×EBT) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (e4f7e69d05: financeSchedulesService — WC/debt/depr/tax, 10/10); UI-binding=next |
 | 6.2 | **Rolling Forecast Engine** (re-forecast actual+plan, roll-forward, snapshoty) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (6270d33ded: rollingForecastService — re-forecast, 12/12); UI-binding=next |
 | 6.3 | **Headcount / Workforce Planner** (per-rola salary/ramp/loaded→OPEX+cash) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (cee03307ac: headcountPlannerService — workforce/OPEX, 14/14); UI-binding=next |
@@ -64,7 +64,7 @@
 | 7.2 | **Przepięcie analiz na `ratioAnalysisService`** (34 wsk.+DuPont+ROE/ROA/ROIC+statusy) | F7 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P1 audyt) |
 | 7.3 | **Benchmarki branżowe** (`financial_ratio_benchmarks` p25/median/p75 podpięte) | F7 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 7.4 | **Pola inwestycyjne w CreateAnalysisModal** (nakłady/horyzont/stopa/korzyści) | F7 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 8.1 | **AI Anomaly Detector @import** (tie-out break/skok/błędna klasyfikacja) — najtańszy moat | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 8.1 | **AI Anomaly Detector @import** (tie-out break/skok/błędna klasyfikacja) — najtańszy moat | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (9963ec9dee: financeAnomalyDetectorService — reguły anomalii, 12/12); UI-binding=next |
 | 8.2 | **AI Variance Narration** (komentarz CFO z bridge'a) | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 8.3 | **AI Driver-Suggester** (z historii→drzewo driverów+wartości bazowe) | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 8.4 | **NL→Model** (prompt→drzewo driverów+3-statement) | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -72,7 +72,7 @@
 | 9.1 | Parytet V8-write valuations/budgets (przed retire legacy) | F9 | KONSO | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ (P0 audyt 9) |
 | 9.2 | Deprecation 3 legacy lane'ów + konsolidacja 3 tabel „analiz" + dedup migracji `financial_models` | F9 | KONSO | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ |
 | 9.3 | Testy warstw ryzyka (gating/fallback/silniki/E2E flows) — ZERO→pokrycie | F9 | TESTY | ⬜ | ⬜ | ⬜ | N/A | N/A | N/A | N/A | ⬜ (P0 audyt 10) |
-| 9.4 | Statements: cross-statement tie-out + smart-path human-in-loop + naprawa CF | F9 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 7) |
+| 9.4 | Statements: cross-statement tie-out + smart-path human-in-loop + naprawa CF | F9 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (478656757f: crossStatementTieOutService — tie-out P&L↔BS↔CF, 8/8); UI-binding=next |
 | 9.5 | Statements: FX + multi-year + OCR + próg `ready` + uczenie aliasów | F9 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P1 audyt) |
 
 **Razem: 48 zadań / 9 fal (F0-F9).** Wszystkie ⬜ (przed startem). Mapa warstw: F1=W0-fundament · F2=W4-złota-nić · F3=W3-wartość · F4=W2-decyzje · F5/F6=W1-planowanie · F7=analizy/inwestycje · F8=W5-AI · F9=konsolidacja+ingestia.
