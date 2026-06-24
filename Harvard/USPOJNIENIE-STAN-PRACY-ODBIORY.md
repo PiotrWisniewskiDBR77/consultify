@@ -21,8 +21,8 @@
 
 | # | Zadanie / funkcjonalność | Fala | Kod | DoD | Testy | Manual | UI | →F | →UI | Status |
 |--|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|--|
-| 1.1 | `createInitiativeService` — wspólny serwis tworzenia (rdzeń lejka) | F1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.2 | Kanoniczny `CreateInitiativeInput` + Zod (jeden kontrakt pól) | F1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
+| 1.1 | `createInitiativeService` — wspólny serwis tworzenia (rdzeń lejka) | F1 | ✅ | ✅ | ✅ 9/9 | ✅ live | N/A | ✅ | N/A | 🟢 ZWERYFIKOWANE LIVE (`6056af9761`) — wpięty w InitiativeController za flagą `INITIATIVE_FUNNEL_ENABLED`; create→DRAFT+name+title, lineage→400 (staging-trolley) |
+| 1.2 | Kanoniczny `CreateInitiativeInput` + Zod (jeden kontrakt pól) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 GOTOWE — `CreateInitiativeInput` + reużyty `CreateInitiativeSchema` (lineage refine + status default DRAFT) jako jedyna brama walidacji |
 | 1.3 | Przekierowanie `economics.routes` → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 1.4 | Przekierowanie `v8/finance.routes` → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 1.5 | Przekierowanie `my-work.routes` (2 ścieżki) → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
@@ -31,9 +31,9 @@
 | 1.8 | Przekierowanie ToolController + ToolInitiativeService → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 1.9 | Przekierowanie pozostałych serwisów (onboarding/notebook/valuation/artifact/cqrs/ai-tools/InitiativeDefinition) → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 1.10 | `aiActionExecutor`: org_id obowiązkowy + lejek | F1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.11 | Normalizacja statusu startowego → `DRAFT` (usnąć step3/PENDING_REVIEW z tworzenia) | F1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
+| 1.11 | Normalizacja statusu startowego → `DRAFT` (usnąć step3/PENDING_REVIEW z tworzenia) | F1 | 🟡 | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟡 lejek wymusza DRAFT (zweryfikowane live); usnięcie step3/PENDING_REVIEW w pozostałych ścieżkach po ich redirectach (1.3–1.10) + backfill/CHECK=1.12 |
 | 1.12 | Backfill statusów (staging) + CHECK constraint na `status` | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.13 | Ujednolicenie `name`↔`title` (kolumna kanoniczna + backfill + read-compat) | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
+| 1.13 | Ujednolicenie `name`↔`title` (kolumna kanoniczna + backfill + read-compat) | F1 | 🟡 | ✅ | ✅ | ✅ live | N/A | ⬜ | N/A | 🟡 strona-zapisu: lejek pisze name+title (post-insert sync, zweryfikowane live name=title); backfill istniejących wierszy = migracja (z 1.12) |
 | 1.14 | Usunięcie martwych: orphan `routes/initiatives.routes.ts` + `* 2.ts` | F1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
 | 2.1 | `stageHandoffService` — jeden serwis granic stage'ów + event (rdzeń) | F2 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
 | 2.2 | Analiza→Inicjatywa: ujednolicony „candidate" + generatory przez lejek z lineage | F2 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
@@ -62,7 +62,7 @@
 | 5.3 | SoT per domena udokumentowany + deduplikacja kolumn (stage×4→1, ROI×3→1, axis/drd_axis, daty) | F5 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
 | 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 
-**Postęp:** 0/40 zamknięte · 0/40 🟢 gotowe · 40/40 ⬜ planowane.
+**Postęp:** 0/40 zamknięte (8/8) · **2/40 🟢 gotowe** (1.1, 1.2) · 2/40 🟡 częściowe (1.11, 1.13) · 36/40 ⬜ planowane. *(F1 rdzeń lejka żywy + zweryfikowany; następne: redirecty 1.3–1.10.)*
 
 ---
 
