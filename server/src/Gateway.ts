@@ -237,6 +237,12 @@ import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
 import resultsKpiReportsRoutes from './routes/results-kpi-reports.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
+// M14 wiring — service route surfaces (mounted below)
+import rolloutExtensionsRoutes from './routes/rolloutExtensions.routes.js';
+import executionAnalyticsRoutes from './routes/executionAnalytics.routes.js';
+import benefitsRegisterRoutes from './routes/benefitsRegister.routes.js';
+import raidGovernanceRoutes from './routes/raidGovernance.routes.js';
+import reportPdfRoutes from './routes/reportPdf.routes.js';
 import scenariosRoutes from './routes/scenarios.routes.js';
 import scheduledReportsRoutes from './routes/scheduled-reports.routes.js';
 import securityRoutes from './routes/security.routes.js';
@@ -822,6 +828,12 @@ export class ApiGateway {
       app.use('/api/roadmap', gatewayVerifyToken, trialEntryGuard, roadmapRoutes);
       app.use('/api/execution', executionRoutes);
       app.use('/api/rollout', rolloutRoutes);
+      // M14 wiring — new service surfaces
+      app.use('/api/rollout-ext', rolloutExtensionsRoutes);
+      app.use('/api/execution-analytics', executionAnalyticsRoutes);
+      app.use('/api/benefits-register', benefitsRegisterRoutes);
+      app.use('/api/raid-governance', raidGovernanceRoutes);
+      app.use('/api/report-pdf', reportPdfRoutes);
       mountStub('/api/stabilization', stabilizationRoutes, 'stabilizationRoutes');
       app.use('/api/decisions', decisionsRoutes);
       app.use('/api/stage-gates', stageGatesRoutes);

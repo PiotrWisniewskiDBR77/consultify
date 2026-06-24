@@ -20,7 +20,7 @@ let currentUser: { id: string; organizationId: string | null; role: string } | n
   role: 'CONSULTANT',
 };
 
-vi.mock('../../../src/middleware/auth.middleware.js', () => ({
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
     if (currentUser) req.user = currentUser;
     next();
@@ -29,7 +29,7 @@ vi.mock('../../../src/middleware/auth.middleware.js', () => ({
 }));
 
 // validateBody passthrough (we are not testing validation here).
-vi.mock('../../../src/middleware/validation.middleware.js', () => ({
+vi.mock('../../../server/src/middleware/validation.middleware.js', () => ({
   validateBody: () => (_req: any, _res: any, next: () => void) => next(),
 }));
 
@@ -58,11 +58,11 @@ const { raidMocks, pirMocks, championMocks } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../../src/services/raidGovernanceService.js', () => raidMocks);
-vi.mock('../../../src/services/pirService.js', () => pirMocks);
-vi.mock('../../../src/services/changeChampionsService.js', () => championMocks);
+vi.mock('../../../server/src/services/raidGovernanceService.js', () => raidMocks);
+vi.mock('../../../server/src/services/pirService.js', () => pirMocks);
+vi.mock('../../../server/src/services/changeChampionsService.js', () => championMocks);
 
-import raidGovernanceRoutes from '../../../src/routes/raidGovernance.routes.js';
+import raidGovernanceRoutes from '../../../server/src/routes/raidGovernance.routes.js';
 
 function createApp(): Express {
   const app = express();

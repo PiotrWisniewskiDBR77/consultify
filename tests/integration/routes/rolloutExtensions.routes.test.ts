@@ -32,26 +32,26 @@ const svc = vi.hoisted(() => ({
   evaluateStageGate: vi.fn(),
 }));
 
-vi.mock('../../../src/services/rolloutStagesService.js', () => ({
+vi.mock('../../../server/src/services/rolloutStagesService.js', () => ({
   listStages: (...a: any[]) => svc.listStages(...a),
   createStage: (...a: any[]) => svc.createStage(...a),
   updateStage: (...a: any[]) => svc.updateStage(...a),
   advanceStage: (...a: any[]) => svc.advanceStage(...a),
 }));
 
-vi.mock('../../../src/services/rolloutBaselineService.js', () => ({
+vi.mock('../../../server/src/services/rolloutBaselineService.js', () => ({
   listBaselines: (...a: any[]) => svc.listBaselines(...a),
   captureBaseline: (...a: any[]) => svc.captureBaseline(...a),
   getLatestBaseline: (...a: any[]) => svc.getLatestBaseline(...a),
 }));
 
-vi.mock('../../../src/services/cutoverRunbookService.js', () => ({
+vi.mock('../../../server/src/services/cutoverRunbookService.js', () => ({
   getRunbook: (...a: any[]) => svc.getRunbook(...a),
   createRunbook: (...a: any[]) => svc.createRunbook(...a),
   addStep: (...a: any[]) => svc.addStep(...a),
 }));
 
-vi.mock('../../../src/services/rolloutGateService.js', () => ({
+vi.mock('../../../server/src/services/rolloutGateService.js', () => ({
   evaluateStageGate: (...a: any[]) => svc.evaluateStageGate(...a),
 }));
 
@@ -59,7 +59,7 @@ vi.mock('../../../src/services/rolloutGateService.js', () => ({
 
 let mockUser: { id: string; organizationId: string; role: string } | null = null;
 
-vi.mock('../../../src/middleware/auth.middleware.js', () => ({
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, res: any, next: () => void) => {
     if (!mockUser) {
       res.status(401).json({ error: 'No token provided' });
@@ -73,21 +73,21 @@ vi.mock('../../../src/middleware/auth.middleware.js', () => ({
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
 }));
 
-vi.mock('../../../src/middleware/rbac.middleware.js', () => ({
+vi.mock('../../../server/src/middleware/rbac.middleware.js', () => ({
   requireOrgRole:
     (..._roles: string[]) =>
     (_req: any, _res: any, next: () => void) =>
       next(),
 }));
 
-vi.mock('../../../src/middleware/permissionMiddleware.js', () => ({
+vi.mock('../../../server/src/middleware/permissionMiddleware.js', () => ({
   requirePermission:
     (_key: string) =>
     (_req: any, _res: any, next: () => void) =>
       next(),
 }));
 
-vi.mock('../../../src/utils/Logger.js', () => ({
+vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
@@ -95,7 +95,7 @@ vi.mock('../../../src/utils/Logger.js', () => ({
 
 async function makeApp(): Promise<Express> {
   const { default: router } = await import(
-    '../../../src/routes/rolloutExtensions.routes.js'
+    '../../../server/src/routes/rolloutExtensions.routes.js'
   );
   const app = express();
   app.use(express.json());

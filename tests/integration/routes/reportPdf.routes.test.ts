@@ -17,7 +17,7 @@ const mockFindDueReports = vi.fn();
 
 let mockUser: { id: string; organizationId: string } | null = null;
 
-vi.mock('../../../src/middleware/auth.middleware.js', () => {
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => {
   const inject = (req: any, res: any, next: () => void) => {
     if (!mockUser) {
       res.status(401).json({ error: 'No token provided' });
@@ -35,24 +35,24 @@ vi.mock('../../../src/middleware/auth.middleware.js', () => {
   };
 });
 
-vi.mock('../../../src/services/statusReportService.js', () => ({
+vi.mock('../../../server/src/services/statusReportService.js', () => ({
   default: {
     getReport: (...args: unknown[]) => mockGetReport(...args),
   },
 }));
 
-vi.mock('../../../src/services/reportPdfService.js', () => ({
+vi.mock('../../../server/src/services/reportPdfService.js', () => ({
   default: { renderReportPdf: (...args: unknown[]) => mockRenderReportPdf(...args) },
   renderReportPdf: (...args: unknown[]) => mockRenderReportPdf(...args),
 }));
 
-vi.mock('../../../src/services/reportCadenceService.js', () => ({
+vi.mock('../../../server/src/services/reportCadenceService.js', () => ({
   default: { findDueReports: (...args: unknown[]) => mockFindDueReports(...args) },
   findDueReports: (...args: unknown[]) => mockFindDueReports(...args),
 }));
 
 async function makeApp(): Promise<Express> {
-  const { default: router } = await import('../../../src/routes/reportPdf.routes.js');
+  const { default: router } = await import('../../../server/src/routes/reportPdf.routes.js');
   const app = express();
   app.use(express.json());
   app.use('/api/reports', router);
