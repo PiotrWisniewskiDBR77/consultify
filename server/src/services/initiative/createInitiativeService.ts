@@ -18,6 +18,10 @@ import auditEventsService from '../AuditEventsService.js';
 import { CreateInitiativeSchema } from '../../validators/initiative.validators.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import {
+  validateCardStructure,
+  type InitiativeCardData,
+} from './initiativeCardValidators.js';
 
 export interface CreateInitiativeInput {
   title?: string;
@@ -65,6 +69,12 @@ export interface CreateInitiativeOptions {
   validate?: boolean;
   /** Emit `initiative.created` audit event (default true). */
   emitAudit?: boolean;
+  /**
+   * F3.2 — when true, surface §B3 structural quality failures as `qualityWarnings`
+   * on the result. ADVISORY only: never blocks or throws regardless of value.
+   * Structural validation is logged either way (default false).
+   */
+  enforceQuality?: boolean;
   actor?: { id?: string | null; ip?: string | null; userAgent?: string | null };
 }
 
@@ -75,6 +85,8 @@ export interface CreateInitiativeResult {
   status: string;
   sourceType: string;
   sourceId: string | null;
+  /** F3.2/F3.9 — advisory quality warnings, present only when enforceQuality:true and issues found. */
+  qualityWarnings?: string[];
 }
 
 /**
@@ -262,7 +274,78 @@ export async function createInitiative(
     }
   }
 
-  return { id, name: title, title, status, sourceType, sourceId: sourceId || null };
+  // ── F3.2 / F3.9 — advisory quality pass (NEVER blocks creation) ────────────
+  // The initiative is already persisted + audited above; everything below only
+  // surfaces/logs quality signals. Any failure here is swallowed so a bad
+  // validator can never take down the canonical funnel.
+  const qualityWarnings: string[] = [];
+  try {
+    // F3.2 — map input onto the loosely-typed §B3 card and run structural validators.
+    const card: InitiativeCardData = {
+      kpis: data.kpis,
+      kpi: data.kpi,
+      key_risks: data.keyRisks,
+      raid: data.raid,
+      raid_log: data.raidLog,
+      scope_in: data.scopeIn,
+      scope_out: data.scopeOut,
+      deliverables: data.deliverables,
+      success_criteria: data.successCriteria,
+      kill_criteria: data.killCriteria,
+      milestones: data.milestones,
+      cost_capex: data.costCapex,
+      cost_opex: data.costOpex,
+      expected_roi: data.expectedRoi,
+      owner_business_id: data.ownerBusinessId,
+    };
+
+    const results = validateCardStructure(card);
+    const failed = results.filter((r) => !r.pass);
+    if (failed.length > 0) {
+      const failedIds = failed.map((r) => r.id);
+      logger.info(
+        `[createInitiativeService] §B3 quality (advisory) — initiative ${id}: ${failed.length}/${results.length} failed [${failedIds.join(', ')}]`
+      );
+      for (const r of failed) qualityWarnings.push(`${r.id}: ${r.reason}`);
+    } else {
+      logger.info(
+        `[createInitiativeService] §B3 quality (advisory) — initiative ${id}: all passed`
+      );
+    }
+
+    // F3.9 — anti-crash material_quality shape check (InsightViewer guard).
+    // Tolerant: absent field = OK. Partial object (missing score/posture/coverage) = warn.
+    const mq = data.materialQuality ?? data.material_quality;
+    if (mq != null && typeof mq === 'object' && !Array.isArray(mq)) {
+      const o = mq as Record<string, unknown>;
+      const missing = ['score', 'posture', 'coverage'].filter((k) => o[k] == null);
+      if (missing.length > 0 && missing.length < 3) {
+        const msg = `material_quality: niekompletny obiekt (brak: ${missing.join(', ')}) — może spowodować awarię InsightViewer.`;
+        qualityWarnings.push(msg);
+        logger.warn(`[createInitiativeService] ${msg} (initiative ${id})`);
+      }
+    }
+  } catch (error) {
+    logger.warn(
+      `[createInitiativeService] advisory quality pass failed (ignored): ${
+        (error as Error)?.message || error
+      }`
+    );
+  }
+
+  const result: CreateInitiativeResult = {
+    id,
+    name: title,
+    title,
+    status,
+    sourceType,
+    sourceId: sourceId || null,
+  };
+  // Only attach warnings when explicitly asked to enforce — never blocks either way.
+  if (options.enforceQuality && qualityWarnings.length > 0) {
+    result.qualityWarnings = qualityWarnings;
+  }
+  return result;
 }
 
 export default { createInitiative };
