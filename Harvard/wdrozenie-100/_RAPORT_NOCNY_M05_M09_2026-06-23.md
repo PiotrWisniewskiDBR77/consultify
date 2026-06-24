@@ -145,3 +145,15 @@ Jedyny fail MC-09-17 (Context menu → AI Expand, REAL-AI) = AI-flakiness (deeps
 **Otwarte z handoffu (bez zmian):** #3 i18n (Faza 4), tool-mount race (MyWorkHub:1386), M07-28 (DP-5 cut), deploy fixu AI `06326decfe` na prod.
 
 **Stan vs handoff:** M06/M08/M09 = poziom handoffu (✅). M05 hub kontekst = ✅. M07 = narzędzie OK, suite wymaga recalibracji pod AI. Honest-skip ≠ green utrzymane — żaden fail nie zamaskowany.
+
+---
+
+## 7. DECYZJE CTO (podjęte 2026-06-24 ~02:30, Piotr śpi)
+
+1. **STOP zmianom kodu na noc.** Zacommitowane są tylko pewne, zweryfikowane fixy test-infra (m08 auth, m07 addShape). Recalibracja m07 i zmiana AI-routera = częściowe fixy o niepełnej wartości; o 2 w nocy na branchu z aktywnym `pull --rebase` i produkcyjnym wpływem AI ryzyko > zysk. Robione świadomie na świeżo.
+2. **Ghost-nodes ZOSTAJĄ ON w produkcie** (dobra funkcja UX). Determinizm E2E = po stronie testów: wykluczyć `data-id^="ghost-"` z asercji count w `m07-cases.spec.ts` (semantycznie poprawne — test liczy kształty usera, nie sugestie AI). + uruchamiać m07 w batchach ~15 (handoff §3) by uniknąć degradacji długiego runu. → osobny task.
+3. **deepseek w AI-routerze:** rekomendacja = usunąć z rotacji (brak środków = czysta strata: tylko 500-tki przed failover). NIE wykonuję autonomicznie w nocy — to produkcyjny routing AI, wymaga weryfikacji czemu jest trafiany mimo bycia ostatnim w `preferredOrder` (`aiRoutingBootstrapService.ts:133`). Decyzja Piotra/świadomy fix.
+4. **Build-breakage workqueue** = sesja serwerowa (chip-task). Stub mój pozostaje niezacommitowany.
+5. **Droga A (demo):** poll 3h aktywny; jeśli demo wróci, dorobię potwierdzenie sprzedażowego demo. Backend :3007 zostawiony żywy na poranne re-runy.
+
+**Następne kroki (świadome, nie-nocne):** recalibracja m07 (ghost-exclusion + batche) → realny target ~27-30; light-mode plansze; cross-module FE; pełny TESTY matrix; Droga A gdy demo wróci.
