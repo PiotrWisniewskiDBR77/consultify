@@ -28,6 +28,34 @@ export interface WaccBreakdown {
   equityWeight: number;
 }
 
+/**
+ * M16/F1.1 — WACC from CAPM (single source of truth for the discount rate).
+ * Cost of equity ke = rf + β·ERP; after-tax cost of debt kd = costOfDebt·(1−tax);
+ * WACC = wE·ke + wD·kd. Weights are normalized so they need not sum to 100.
+ * All inputs/outputs in percent. Replaces the flat hard-coded WACC (audit P0).
+ */
+export function computeWaccFromBreakdown(b: WaccBreakdown): number {
+  const rf = Number(b?.riskFreeRate) || 0;
+  const erp = Number(b?.equityRiskPremium) || 0;
+  const beta = Number(b?.beta) || 0;
+  const kd = Number(b?.costOfDebt) || 0;
+  const tax = Math.min(100, Math.max(0, Number(b?.taxRate) || 0)) / 100;
+  let wE = Number(b?.equityWeight) || 0;
+  let wD = Number(b?.debtWeight) || 0;
+  const total = wE + wD;
+  if (total > 0) {
+    wE /= total;
+    wD /= total;
+  } else {
+    wE = 1;
+    wD = 0;
+  }
+  const ke = rf + beta * erp;
+  const kdAfterTax = kd * (1 - tax);
+  const wacc = wE * ke + wD * kdAfterTax;
+  return Math.round(wacc * 100) / 100;
+}
+
 export interface ValuationAssumptions {
   horizonYears: number;
   waccPercent: number;
@@ -185,19 +213,21 @@ export function defaultAssumptions(
   horizonYears: number = 5,
   orgWacc?: number
 ): ValuationAssumptions {
-  const wacc = orgWacc ?? 12;
+  const breakdown: WaccBreakdown = {
+    riskFreeRate: 4,
+    equityRiskPremium: 5,
+    beta: 1.2,
+    costOfDebt: 8,
+    taxRate: 19,
+    debtWeight: 30,
+    equityWeight: 70,
+  };
+  // M16/F1.1 — derive WACC from CAPM breakdown (not a flat default); orgWacc overrides.
+  const wacc = orgWacc ?? computeWaccFromBreakdown(breakdown);
   return {
     horizonYears,
     waccPercent: wacc,
-    waccBreakdown: {
-      riskFreeRate: 4,
-      equityRiskPremium: 5,
-      beta: 1.2,
-      costOfDebt: 8,
-      taxRate: 19,
-      debtWeight: 30,
-      equityWeight: 70,
-    },
+    waccBreakdown: breakdown,
     terminalMethod: 'gordon',
     terminalGrowthPercent: 3,
     exitMultiple: 8,
@@ -320,10 +350,22 @@ export async function updateAssumptions(
     current.assumptions,
     defaultAssumptions(current.horizon_years)
   );
+  const mergedBreakdown: WaccBreakdown = {
+    ...prev.waccBreakdown,
+    ...(patch.waccBreakdown || {}),
+  };
   const next: ValuationAssumptions = {
     ...prev,
     ...patch,
-    waccBreakdown: { ...prev.waccBreakdown, ...(patch.waccBreakdown || {}) },
+    waccBreakdown: mergedBreakdown,
+    // M16/F1.1 — recompute WACC from CAPM when the breakdown changes, unless the
+    // caller explicitly overrides waccPercent in the same patch.
+    waccPercent:
+      patch.waccPercent != null
+        ? patch.waccPercent
+        : patch.waccBreakdown
+          ? computeWaccFromBreakdown(mergedBreakdown)
+          : prev.waccPercent,
     manualForecast: patch.manualForecast
       ? { years: patch.manualForecast.years || [] }
       : prev.manualForecast,
@@ -788,7 +830,11 @@ function computeSensitivityWaccVsG(
     }
     table.push({ g, values: row });
   }
-  return { waccGrid, gGrid, table };
+  // M16/F1.3 — flat matrix [{wacc,g,ev}] the cockpit heatmap binds to (contract fix).
+  const matrix = table.flatMap((r) =>
+    waccGrid.map((w, i) => ({ wacc: w, g: r.g, ev: r.values[i] }))
+  );
+  return { waccGrid, gGrid, table, matrix };
 }
 
 function computeSensitivityWaccVsExitMultiple(
@@ -822,7 +868,12 @@ function computeSensitivityWaccVsExitMultiple(
     }
     table.push({ multiple: m, values: row });
   }
-  return { waccGrid, multipleGrid, table };
+  // M16/F1.3 — flat matrix the cockpit heatmap binds to; second axis (exit multiple)
+  // exposed both as `multiple` and as `g` so the shared heatmap renderer works.
+  const matrix = table.flatMap((r) =>
+    waccGrid.map((w, i) => ({ wacc: w, g: r.multiple, multiple: r.multiple, ev: r.values[i] }))
+  );
+  return { waccGrid, multipleGrid, table, matrix };
 }
 
 function computeTornado(
