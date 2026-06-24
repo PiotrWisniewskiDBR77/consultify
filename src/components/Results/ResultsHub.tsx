@@ -47,6 +47,7 @@ import { KpiSignalSheetView } from './KpiSignalSheetView';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 import { ResultsInitiativesView } from './ResultsInitiativesView';
 import M14HandoffInbox from './M14HandoffInbox';
+import TransformationScorecard from './TransformationScorecard';
 import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
@@ -1475,11 +1476,19 @@ export const ResultsHub: React.FC = () => {
             }}
           />
         ) : activeTab === 'results_initiatives' ? (
+          isResultsFlagEnabled('transformationScorecard') ||
           isResultsFlagEnabled('m14Handoff') ? (
             <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto">
-              <div className="shrink-0 px-1 pt-1">
-                <M14HandoffInbox />
-              </div>
+              {isResultsFlagEnabled('transformationScorecard') && (
+                <div className="shrink-0 px-1 pt-1">
+                  <TransformationScorecard projectId="all" />
+                </div>
+              )}
+              {isResultsFlagEnabled('m14Handoff') && (
+                <div className="shrink-0 px-1">
+                  <M14HandoffInbox />
+                </div>
+              )}
               <div className="min-h-0 flex-1">
                 <ResultsInitiativesView
                   initiatives={filteredInitiatives}
