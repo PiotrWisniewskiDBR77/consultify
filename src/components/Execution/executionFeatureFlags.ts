@@ -30,6 +30,11 @@ const FLAGS = {
     localStorage: 'ff.exec_rollout_stages',
     env: 'VITE_EXEC_ROLLOUT_STAGES_ENABLED',
   },
+  benefits: {
+    query: 'ff_benefits',
+    localStorage: 'ff.exec_benefits',
+    env: 'VITE_EXEC_BENEFITS_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;

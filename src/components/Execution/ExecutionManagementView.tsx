@@ -13,6 +13,8 @@ import {
 import { Callout } from '@/components/shared/NModeBlocks';
 
 import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
+import BenefitsRegisterPanel from './BenefitsRegisterPanel';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
 
 interface ManagerLaneCount {
   total: number;
@@ -307,6 +309,8 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                 )}
               </Callout>
             )}
+
+            {isExecutionFlagEnabled('benefits') && <BenefitsRegisterPanel />}
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredTiles.map((tile) => {

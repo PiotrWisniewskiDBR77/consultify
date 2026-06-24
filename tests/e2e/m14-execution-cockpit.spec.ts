@@ -112,6 +112,28 @@ test.describe('M14 ExecutionHub cockpit', () => {
     await expect(page.getByTestId('rollout-waves').locator('> div')).toHaveCount(5);
   });
 
+  test('Rollout governance panels render (baseline + cutover, flag on)', async ({ page }) => {
+    await page.goto('/implementation?tab=rollout&ff_rolloutStages=1', {
+      waitUntil: 'domcontentloaded',
+    });
+    const planTab = page.getByRole('button', { name: /master rollout plan/i });
+    await expect(planTab).toBeVisible({ timeout: 30000 });
+    await planTab.click();
+    await expect(page.getByTestId('baseline-panel')).toBeVisible({ timeout: 30000 });
+    await expect(page.getByTestId('cutover-panel')).toBeVisible();
+    await expect(page.getByTestId('baseline-panel')).toContainText(/Baseline/i);
+  });
+
+  test('Benefits register panel renders in Management (flag on)', async ({ page }) => {
+    await page.goto('/implementation?tab=people_change&ff_benefits=1', {
+      waitUntil: 'domcontentloaded',
+    });
+    await page.getByText('Management', { exact: true }).first().click();
+    await page.waitForTimeout(2000);
+    await expect(page.getByTestId('benefits-panel')).toBeVisible({ timeout: 30000 });
+    await expect(page.getByTestId('benefits-panel')).toContainText(/Rejestr korzyści|M14/i);
+  });
+
   test('Timeline (Gantt) renders with the baseline flag on — no crash', async ({ page }) => {
     await page.goto('/implementation?tab=list&view=timeline&ff_ganttBaseline=1', {
       waitUntil: 'domcontentloaded',
