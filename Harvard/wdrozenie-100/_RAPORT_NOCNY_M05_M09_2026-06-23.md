@@ -78,37 +78,20 @@
 
 ## 4. M07 / M08 / M09 — CASES (current FE+BE, :3007)
 
-### M07 Process Flow: `15 passed / 2 skipped / 14 failed` ⚠️ DO DIAGNOZY
-Systematyczny błąd: `addShape(X): node never landed after 4 attempts` (toolbar-click nie daje widocznego węzła). m06 (mind-map, klawiatura) = 26 pass na tym samym stacku → auth+canvas OK; problem specyficzny dla toolbar-add Process Flow. Hipotezy: (a) węzeł ląduje poza viewportem (DOM jest, „visible" nie), (b) tool-mount/hydration timing na świeżym FE, (c) caboose latency. PF FE od 2026-06-20 ma tylko fixy (shortcut/autosave-race/rf-v11) — nie oczywista regresja kodu. Diagnoza: pojedynczy MC-07-01 z trace + probe live po zakończeniu suitów.
+> Tło: w pierwszym pełnym przebiegu na świeżym stacku M07 dało 15/2/14, M08 **0/30**. Diag w izolacji (czysty run) obalił hipotezę „zepsuty FE" — oba narzędzia montują się czysto (region=TRUE, errorBoundary=FALSE, **0 console-errorów**). Root cause był w torze testów, nie w produkcie. Poniżej finalne werdykty.
 
-### M08 Table: ROOT CAUSE = auth-tor (NAPRAWIONE test-infra) ✅
-**Diagnoza (empiryczna, diag08):**
-- Sam globalny storageState **NIE uwierzytelnia** SPA: po nawigacji `localStorage={token:FALSE, user:FALSE, consultify-storage:TRUE}`, ekran = **login** ("Welcome back"). Klucze token/user ze storageState nie przeżywają do auth-bootstrapu.
-- `+seedPageAuth` (addInitScript token/user per-nawigacja) → region=TRUE, login=FALSE ✅
-- m08 `openTable` jako jedyny spec polegał na storageState-only (bez seedPageAuth) → **30/30 ląduje na loginie**. m06/m07/m09 wołają seedPageAuth → działają.
+### M08 Table: `29 passed / 1 skipped / 0 failed` ✅ (z 0/30 — NAPRAWIONE)
+**Root cause = auth (empirycznie, diag08):** sam globalny project-storageState **NIE uwierzytelnia** SPA — po nawigacji `localStorage={token:FALSE, user:FALSE, consultify-storage:TRUE}`, ekran = **login** ("Welcome back"); token/user ze storageState nie przeżywają do auth-bootstrapu. `+seedPageAuth` (addInitScript token/user per-nawigacja) → region=TRUE. m08 `openTable` jako **jedyny** spec polegał na storageState-only → 30/30 na loginie. m06/m07/m09 wołają seedPageAuth → działają.
+**Fix (test-infra):** dodano `seedPageAuth(page, token)` do `openTable`. Weryfikacja: 3/3 → pełny re-run **29/1/0** ✅.
+**Finding dla Piotra:** globalny storageState nie uwierzytelnia tego SPA — każdy nowy spec MUSI wołać seedPageAuth, nie polegać na storageState.
 
-**Fix (faithful, test-infra):** dodano `seedPageAuth(page, token)` do `openTable` (`m08-cases.spec.ts`). Weryfikacja: 3/3 → **pełny re-run: 29 passed / 1 skipped / 0 failed** ✅ (= poziom handoffu 29/30).
+### M07 Process Flow: `20–24 / ~1 skip / 7–10 fail` ⚠️ FLAKY — narzędzie OK, suite do recalibracji
+**Dwa odkryte problemy:**
+1. **addShape „never landed" (NAPRAWIONE):** po pierwszym węźle canvas auto-fituje do **scale(3)**; każdy kolejny węzeł ląduje +200 flow-x w prawo → 3-ci poza viewportem. Węzły zostają w DOM, ale react-flow `overflow:hidden` je **clipuje** → Playwright `state:'visible'`=FALSE → fałszywe „never landed". Fix: `addShape` (`_m07-helpers.ts`) liczy teraz **wzrost liczby węzłów** (viewport-niezależny) zamiast `state:visible`, + settle-delay. To dało 14→7-10 fail.
+2. **AI ghost-nodes (recalibracja — NIE zrobione):** klik kształtu → `addNode` async generuje 1-3 AI „ghost-nodes" (sugestie kroków, `IdeaProcessFlowTool.tsx:1111`, `_isGhost:true`, id `ghost-*`). Liczą się w `.react-flow__node` → asercje `toHaveCount(N)` **niedeterministyczne** (różne case'y padają co przebieg: MC-07-18 1→3, MC-07-21 2→3, MC-07-05/20 4→3). **Root:** baseline „27-30" był na backendzie z ZEPSUTYM AI (brak ghostów → liczby trzymały); świeży backend z fixem AI (`06326decfe`) włączył ghosty → spec wymaga recalibracji (wykluczyć `data-id^="ghost-"` z liczenia / zakresy).
 
-**Finding test-infra dla Piotra:** globalny project-storageState nie uwierzytelnia tego SPA (token/user nie przeżywają; tylko per-page addInitScript seedPageAuth działa). Konwencja: każdy nowy spec MUSI wołać seedPageAuth, nie polegać na storageState.
-
-(Wcześniejsza analiza „zepsuty FE" obalona — diag dowiódł że oba narzędzia montują się czysto, 0 console-errorów.)
-Wszystkie 30 padły na `WORKSPACE_REGION never visible` (region tabeli się nie montuje). **Diag w izolacji (czysty run) DOWODZI, że FE działa:**
-- process_flow: region=TRUE, reactFlow=TRUE, errorBoundary=FALSE, **0 console-errorów** ✅
-- table: region=TRUE, errorBoundary=FALSE, **0 console-errorów** ✅ ("Table | Saved 1s ago")
-
-Czyli świeży FE montuje oba narzędzia czysto. Suite-faile = **kumulacyjny load/degradacja w długim sekwencyjnym runie** (m06 6min→m07 15min retry→m08) i/lub **różnica toru auth**: m08 używa **inline test-support bootstrap per-test**, a w logu backendu leci `column "permission_scope" of organization_members does not exist` (schema-drift caboose) — może uniemożliwiać inline-bootstrapowi nadanie membership → brak dostępu → region nie renderuje. m06/m07 używają globalSetup-tokena (bootstrap RAZ) → działają. Weryfikacja: re-run izolowany m08.
-
-### M07 Process Flow: ROOT CAUSE = addShape visibility-check przy auto-zoom scale-3 (NAPRAWIONE test-infra) ✅
-**Diagnoza (empiryczna, diag07b/c):** klik kształtu DODAJE węzeł (count 1→2→3→7; #4 skok = AI ghost-nodes), ale po pierwszym węźle canvas auto-fituje do **scale(3)**; każdy kolejny węzeł ląduje +200 flow-x w prawo → **3-ci węzeł poza viewportem**. Węzły zostają w DOM (brak wirtualizacji), ale react-flow `overflow:hidden` **clipuje** je → Playwright `state:'visible'` = FALSE → `addShape` timeoutuje („never landed"). To NIE bug produktu (węzeł dodany + persystowany), to kruchy check w helperze.
-**Fix (faithful, test-infra):** `addShape` (`_m07-helpers.ts`) sprawdza teraz **wzrost liczby `.react-flow__node`** (viewport-niezależny dowód dodania) zamiast `state:'visible'` na off-screen węźle. Weryfikacja na MC-07-01..05 w toku; potem pełny re-run.
-**Finding produktowy (drobny) dla Piotra:** przy mocnym auto-zoom (scale-3) nowo dodawane węzły Process Flow lądują poza ekranem (UX: użytkownik musi fitView/zoom-out by je zobaczyć). Rozważyć auto-pan do nowego węzła lub niższy maxZoom.
-
-**Wynik FLAKY (niedeterministyczny): m07 = 20-24/31 passed** (różne case'y padają co przebieg — AI ghost-nodes losują count; full-run 13min: 20 pass/10 fail, targeted re-run: 24 pass). Helper-fixy (count-increase + settle-delay) odzyskały część. Exact-count asercje są fundamentalnie niestabilne z ghost-nodes ON:
-- **AI ghost-nodes** (klik kształtu → addNode generuje sugestie AI, `IdeaProcessFlowTool.tsx:1111`) influją count → asercje dokładnej liczby padają: MC-07-18 (1→3), MC-07-21 (2→3), MC-07-05/20 (4→3 off-by-one).
-- MC-07-10: węzeł `hidden` (off-screen clip — asercja w samym case, nie helper).
-- MC-07-01 (2 vs ≥5), MC-07-03 (0 vs ≥3): kształty nie persystują się w oczekiwanej liczbie (ghost-nodes mylą licznik / kit-switch).
-- **Root systemowy:** baseline 27-30 był na backendzie z ZEPSUTYM AI (brak ghostów → dokładne liczby trzymały). Świeży backend z fixem AI (`06326decfe`) włączył ghost-nodes → spec m07 wymaga recalibracji (asercje exact-count → zakresy/min, albo test-flag wyłączający ghost-nodes). **Narzędzie Process Flow działa** (montuje+dodaje+persystuje — dowód diag07b/c).
-- **Finding dla Piotra:** zdecydować, czy AI ghost-nodes mają być domyślnie ON w Process Flow (wpływ na determinizm + UX), oraz recalibracja 7 case'ów m07.
+**Werdykt:** narzędzie Process Flow **działa** (diag07b/c: montuje+dodaje+persystuje). Flakiness = test-infra, nie produkt. Recalibracja → osobny chip-task.
+**Finding produktowy (drobny):** auto-zoom scale-3 wypycha nowe węzły poza ekran (user musi fitView) — rozważyć auto-pan / niższy maxZoom.
 
 ### M09 Whiteboard: `28 passed / 1 skipped / 1 failed` ✅ (= poziom handoffu 27-29)
 Jedyny fail MC-09-17 (Context menu → AI Expand, REAL-AI) = AI-flakiness (deepseek insufficient balance, ta sama przyczyna co m06 AI). Narzędzie whiteboard działa. m09 używa API-seedingu + własnego seedPageAuth (auth OK, nie miał problemu m08).
