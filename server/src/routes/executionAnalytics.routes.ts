@@ -44,7 +44,12 @@ import {
   type ResourceAllocation,
   type ResourceCapacity,
 } from '../services/capacityModelService.js';
+import {
+  buildExecutionIntelligence,
+  type IntelligenceInitiative,
+} from '../services/executionIntelligenceService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 
@@ -146,6 +151,91 @@ router.post(
     const overloads = overloadAlerts(utilization);
 
     return res.json({ utilization, demand, heatmap, overloads });
+  })
+);
+
+// ================================================================
+// M14 — Execution Intelligence (server-side fusion → cockpit UI-binding)
+// ================================================================
+
+/**
+ * GET /:projectId/intelligence
+ *
+ * Org-scoped, DB-backed: gathers the project's initiatives + open BLOCKED task
+ * counts + open RISK counts, then fuses EVM (SPI/CPI) + heuristic prediction +
+ * grounded triage via the pure executionIntelligenceService. Returns the
+ * forward-looking read the ExecutionHub cockpit binds to (predictions / triage /
+ * summary). Read-only — no write-gate.
+ */
+router.get(
+  '/:projectId/intelligence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrg(req, res);
+    if (!orgId) return;
+    const { projectId } = req.params;
+
+    // Initiatives (all columns the service consumes).
+    const initiativesSql = `
+      SELECT id, name, status, progress, cost_capex, cost_opex,
+             planned_start_date, planned_end_date, actual_cost
+      FROM initiatives
+      WHERE project_id = ? AND organization_id = ?
+    `;
+    const initiatives =
+      ((await queryHelpers.queryAll(initiativesSql, [projectId, orgId])) as
+        | IntelligenceInitiative[]
+        | undefined) || [];
+
+    // Open BLOCKED task counts per initiative.
+    const blockedSql = `
+      SELECT initiative_id, COUNT(*) AS cnt
+      FROM tasks
+      WHERE project_id = ? AND organization_id = ?
+        AND UPPER(COALESCE(status, '')) = 'BLOCKED'
+        AND initiative_id IS NOT NULL
+      GROUP BY initiative_id
+    `;
+    const blockedRows =
+      ((await queryHelpers.queryAll(blockedSql, [projectId, orgId])) as
+        | Array<{ initiative_id: string; cnt: number | string }>
+        | undefined) || [];
+
+    // Open high-severity RISK counts per initiative (RAID risks, still open).
+    const riskSql = `
+      SELECT initiative_id, COUNT(*) AS cnt
+      FROM raid_items
+      WHERE organization_id = ?
+        AND initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)
+        AND UPPER(type) = 'RISK'
+        AND UPPER(COALESCE(status, 'OPEN')) IN ('OPEN', 'IN_PROGRESS')
+        AND initiative_id IS NOT NULL
+      GROUP BY initiative_id
+    `;
+    const riskRows =
+      ((await queryHelpers.queryAll(riskSql, [orgId, projectId, orgId])) as
+        | Array<{ initiative_id: string; cnt: number | string }>
+        | undefined) || [];
+
+    const toCountMap = (
+      rows: Array<{ initiative_id: string; cnt: number | string }>
+    ): Record<string, number> => {
+      const out: Record<string, number> = {};
+      for (const r of rows) {
+        if (r.initiative_id != null) out[String(r.initiative_id)] = Number(r.cnt) || 0;
+      }
+      return out;
+    };
+
+    const result = buildExecutionIntelligence(
+      {
+        initiatives,
+        blockedTaskCountByInitiative: toCountMap(blockedRows),
+        openHighRiskCountByInitiative: toCountMap(riskRows),
+      },
+      Date.now()
+    );
+
+    return res.json(result);
   })
 );
 
