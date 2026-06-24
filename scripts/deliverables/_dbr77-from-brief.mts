@@ -40,11 +40,11 @@ const llmCfg = await import('../../server/src/services/ai/llmConfigService.js');
 const router = await import('../../server/src/services/ai/modelRouter.js');
 (router.default as any).select = async () => ({ ...CFG });
 
-const { generateBusinessPlan, spineToDeckSlides, spineToDocOutline, spineToTableIntent } =
+const { generateBusinessPlan, spineToDeckSlides, spineToDocPlan, spineToTableIntent } =
   await import('../../server/src/services/deliverables/bundleOrchestrator.js');
 const { planDeckLayout } = await import('../../server/src/services/presentationLayoutDirectorService.js');
-const { planDocumentStructure } = await import('../../server/src/services/documentStudio/documentStructureGenerator.js');
 const { generateDocumentContent } = await import('../../server/src/services/documentStudio/documentBlockContentGenerator.js');
+const { tableSchemaToWorkbook, buildWorkbookBuffer } = await import('../../server/src/services/workbook/WorkbookBuilder.js');
 const { generateTableSchema } = await import('../../server/src/services/tableSchemaGeneratorService.js');
 
 const BRIEF = `Zbuduj biznesplan inwestorski (runda seed) dla DBR77 Sp. z o.o. — firmy doradczej transformacji AI,
@@ -73,17 +73,30 @@ const meta = { language: spine.meta.language, template: 'board', client: spine.m
 
 console.log('2/4 TABELA z SPINE…');
 const table: any = await generateTableSchema(spineToTableIntent(spine), { orgId: 'dbr77-brief', preferPremium: true });
+out.table = table;
 md += `## 1) TABELA FINANSOWA (B4 z SPINE) — ${table?.fields?.length ?? 0} pól · ${(table?.seedRows || []).length} wierszy · CF ${(table?.conditionalFormatting || []).length} · tier ${table?.tierUsed}\n\n`;
+// F5 — EKSPORT XLSX (realny plik .xlsx ze stylami + CF z exceljs)
+let xlsxPath = '';
+try {
+  if (table?.fields?.length) {
+    const wb = tableSchemaToWorkbook(table, { title: `${spine.meta.company} — model finansowy`, author: 'Consultify' });
+    const buf = await buildWorkbookBuffer(wb);
+    xlsxPath = 'docs/qa/deliverables/runs/2026-06-23-DBR77-model.xlsx';
+    writeFileSync(resolve(process.cwd(), xlsxPath), buf);
+    md += `**Eksport:** [${xlsxPath}](${xlsxPath.split('/').pop()}) — ${buf.length} B, realny .xlsx (numFmt + CF).\n\n`;
+  }
+} catch (e: any) { md += `**Eksport XLSX:** błąd — ${e?.message}\n\n`; }
 
-console.log('3/4 RAPORT z SPINE…');
-const docOutline = spineToDocOutline(spine);
-const plan = await planDocumentStructure(spine.meta.thesis, docOutline as any, { orgId: 'dbr77-brief', preferPremium: true });
-const content = await generateDocumentContent(spine.meta.thesis, plan, { orgId: 'dbr77-brief', preferPremium: true, citationCount: 3 });
+console.log('3/4 RAPORT z SPINE (plan deterministyczny)…');
+const plan = spineToDocPlan(spine);
+const content = await generateDocumentContent(spine.meta.thesis, plan as any, { orgId: 'dbr77-brief', preferPremium: true, citationCount: 3 });
+out.doc = content;
 md += `## 2) RAPORT WORD (B3 z SPINE) — ${content.sections.length} sekcji · typy ${[...new Set((content.sections as any[]).flatMap((s) => s.blocks.map((b: any) => b.type)))].join(', ')}\n\n`;
 
 console.log('4/4 DECK z SPINE…');
 const deckSlides = spineToDeckSlides(spine).map((s: any) => ({ intent: s.intent, key_message: s.key_message, content: s.content }));
 const deck = await planDeckLayout(deckSlides as any, meta as any, { orgId: 'dbr77-brief', preferPremium: true });
+out.deck = deck;
 md += `## 3) DECK INWESTORSKI (B1 z SPINE) — ${deck.plans.length} slajdów · ${new Set(deck.plans.map((p: any) => p.layoutIntent)).size} layoutów · briefy ${deck.plans.filter((p: any) => p.imageBrief).length}\n\n`;
 md += spine.sections.map((s: any, i: number) => `**${i + 1}. ${s.id}** — ${s.actionTitle}`).join('\n') + '\n';
 
