@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { planSlides } from '../../../server/src/services/slidePlanningEngineService';
+import { generateDefaultOutline } from '../../../server/src/services/presentationGeneratorService';
 
 const setup = {
   title: 'Diagnoza gotowości na AI',
@@ -45,5 +46,23 @@ describe('Deck outline depth (A) — blank-brief narrative deck', () => {
     // planSlides ma index-fallback (sources[i % len]) — slajdy dostają źródło,
     // więc ścieżka z-źródłami pozostaje bez zmian po moim guardzie.
     expect(res.evidenceGaps).toHaveLength(0);
+  });
+});
+
+describe('generateDefaultOutline (A) — łuk narracyjny', () => {
+  it('syntetyczne źródło custom (blank-brief) → pełny łuk konsultanta (≥8 slajdów)', () => {
+    const out = generateDefaultOutline({ ...setup, sourceArtifacts: [{ type: 'custom', label: 'X' }] } as never);
+    const intents = out.map((o) => o.intent);
+    expect(out.length).toBeGreaterThanOrEqual(8);
+    expect(intents).toEqual(expect.arrayContaining(['root_cause', 'recommendation_portfolio', 'roadmap', 'risk_management']));
+    expect(intents[0]).toBe('cover');
+    expect(intents[intents.length - 1]).toBe('next_steps');
+  });
+
+  it('rich source (kpi_roi) → bez łuku, slajd źródłowy obecny', () => {
+    const out = generateDefaultOutline({ ...setup, sourceArtifacts: [{ type: 'kpi_roi', id: 's1', label: 'KPI' }] } as never);
+    const intents = out.map((o) => o.intent);
+    expect(intents).toContain('performance_overview'); // z kpi_roi
+    expect(intents).not.toContain('root_cause'); // łuk się nie odpala
   });
 });

@@ -194,7 +194,7 @@ function generateOutlineFromTemplate(
   return outline.map(applyIntentDensityDefaults);
 }
 
-function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
+export function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
   const items: OutlineItem[] = [
     { intent: 'cover', title: setup.title, enabled: true },
     {
@@ -216,7 +216,17 @@ function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
   // (not "Key message for X" placeholders). When sources ARE present, the
   // source-driven slides below carry the analytical narrative instead.
   const pl = setup.language === 'pl';
-  if (!Array.isArray(setup.sourceArtifacts) || setup.sourceArtifacts.length === 0) {
+  // "Rich" sources drive the analytical slides below. A deck whose only source is
+  // the synthetic `custom` placeholder (injected by the V8 materialize path when
+  // no real artifact exists) is effectively a blank-brief narrative deck — so the
+  // arc must fire on "no rich source", not merely "no source at all".
+  const RICH_SOURCE_TYPES = new Set([
+    'initiative_portfolio', 'execution_status', 'kpi_roi', 'raid', 'assessment', 'tool_session',
+  ]);
+  const hasRichSource =
+    Array.isArray(setup.sourceArtifacts) &&
+    setup.sourceArtifacts.some((s) => RICH_SOURCE_TYPES.has(String((s as any).type)));
+  if (!hasRichSource) {
     const arc: OutlineItem[] = [
       { intent: 'root_cause', title: pl ? 'Problem i kontekst' : 'Problem & Context',
         keyMessage: pl ? 'Jaki problem rozwiązujemy i dlaczego teraz' : 'The problem we solve and why now', enabled: true },
