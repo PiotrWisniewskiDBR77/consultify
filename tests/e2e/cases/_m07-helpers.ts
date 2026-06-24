@@ -181,15 +181,30 @@ export async function addShape(page: Page, title: string) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const before = await page.locator('.react-flow__node').count();
     await btn.click({ force: true }).catch(() => {});
+    // Proof the shape landed = the react-flow node COUNT grew. We must NOT use
+    // `state:'visible'` on the new node: after a few shapes the canvas auto-fits to
+    // ~scale-3 and each new node lands +200px to the right, off the viewport. Those
+    // nodes stay in the DOM (no virtualization here) but are clipped by react-flow's
+    // overflow:hidden → Playwright reports them "not visible" → false "never landed".
+    // Count-increase is viewport-independent and still proves the node was added
+    // (and persisted via pfCrud.createNode). Cases call fitView() before interacting.
     const landed = await page
-      .locator('.react-flow__node')
-      .nth(before)
-      .waitFor({ state: 'visible', timeout: 5000 })
+      .waitForFunction(
+        (n) => document.querySelectorAll('.react-flow__node').length > n,
+        before,
+        { timeout: 5000 }
+      )
       .then(() => true)
       .catch(() => false);
-    if (landed) return;
+    if (landed) {
+      // Settle: addNode commits the real node synchronously, then async AI ghost
+      // nodes arrive ~2-3s later. Let React/react-flow flush so the NEXT addShape
+      // reads a stable count and its click isn't dropped in a rapid-add batch.
+      await page.waitForTimeout(450);
+      return;
+    }
   }
-  throw new Error(`addShape(${title}): node never landed after 4 attempts`);
+  throw new Error(`addShape(${title}): node count never grew after 4 attempts`);
 }
 
 /** Fit all nodes into the viewport (CanvasZoomControls "Fit view" —

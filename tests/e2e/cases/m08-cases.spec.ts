@@ -39,6 +39,7 @@ import path from 'node:path';
 import { expect, Page, test } from '@playwright/test';
 
 import { readTestSupportState } from '../_helpers/testSupportState';
+import { seedPageAuth } from './_m07-helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
@@ -185,6 +186,10 @@ async function ensureTableTool(page: Page) {
 /** Land on a fresh idea's Table workspace, overlays dismissed, region asserted. */
 async function openTable(page: Page, label: string) {
   const { token, userId } = readTestSupportState();
+  // Global storageState alone does NOT authenticate the SPA (token/user keys do not
+  // survive to the auth bootstrap → login screen). seedPageAuth re-injects them per
+  // navigation via addInitScript — the robust pattern m06/m07 already use. (nocny run 2026-06-23)
+  await seedPageAuth(page, token);
   await suppressOnboarding(page, userId);
   const idea = await createIdea(page, token, uniqueLabel(label));
   await gotoTable(page, idea.id);
