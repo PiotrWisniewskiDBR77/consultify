@@ -39,7 +39,6 @@ import type {
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
 
-import { UnifiedChatPanel } from '../UnifiedChatPanel';
 import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
 
 export type KimiLane = 'wordy' | 'excele' | 'prezentacje' | 'tabele';
