@@ -143,4 +143,32 @@ router.post(
   })
 );
 
+// ================================================================
+// POST /benefits/:id/promote — M15/W1 (G1 bridge): promote a handoff
+// benefit into a tracked KPI (initiative_kpis). Makes M14→M15 visible.
+// ================================================================
+router.post(
+  '/benefits/:id/promote',
+  requireBenefitsWrite,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrg(req, res);
+    if (!orgId) return;
+
+    const benefitId = req.params.id;
+    if (!benefitId || !benefitId.trim()) {
+      return res.status(400).json({ error: 'benefit id is required' });
+    }
+
+    try {
+      const result = await BenefitsRegisterService.promoteBenefitToKpi(orgId, benefitId.trim());
+      return res.status(result.alreadyPromoted ? 200 : 201).json(result);
+    } catch (err: any) {
+      if (err?.message === 'benefit_not_found') {
+        return res.status(404).json({ error: 'benefit_not_found' });
+      }
+      throw err;
+    }
+  })
+);
+
 export default router;

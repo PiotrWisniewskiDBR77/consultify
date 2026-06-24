@@ -218,10 +218,93 @@ export async function handoffFromClosure(
   });
 }
 
+/** Map a benefit review cadence to a KPI measurement frequency. */
+function cadenceToFrequency(cadence: string | null | undefined): string {
+  const c = String(cadence || '').toLowerCase();
+  if (c.includes('day') || c.includes('dzien') || c.includes('dzień')) return 'DAILY';
+  if (c.includes('week') || c.includes('tyg')) return 'WEEKLY';
+  if (c.includes('quart') || c.includes('kwart')) return 'QUARTERLY';
+  return 'MONTHLY';
+}
+
+export interface PromoteResult {
+  kpiId: string;
+  benefit: BenefitRecord;
+  alreadyPromoted: boolean;
+}
+
+/**
+ * M15/W1 (G1 bridge) — promote a benefits_register row (the M14 handoff inbox)
+ * into a tracked KPI (initiative_kpis, the M15 canonical engine). This is what
+ * makes the M14→M15 handoff *visible and tracked* instead of stranded. Org-scoped,
+ * idempotent (a benefit already promoted returns its existing KPI).
+ */
+export async function promoteBenefitToKpi(
+  organizationId: string,
+  benefitId: string
+): Promise<PromoteResult> {
+  if (!organizationId) throw new Error('promoteBenefitToKpi: organizationId is required');
+  if (!benefitId) throw new Error('promoteBenefitToKpi: benefitId is required');
+
+  const benefit = await dbGet<BenefitRecord & { promoted_kpi_id?: string | null }>(
+    `SELECT * FROM benefits_register WHERE id = ? AND organization_id = ?`,
+    [benefitId, organizationId]
+  );
+  if (!benefit) throw new Error('benefit_not_found');
+
+  if (benefit.promoted_kpi_id) {
+    return { kpiId: benefit.promoted_kpi_id, benefit, alreadyPromoted: true };
+  }
+
+  const kpiId = uuidv4();
+  const kpiName = (benefit.kpi_name || benefit.name || 'Benefit KPI').trim();
+  await dbRun(
+    `INSERT INTO initiative_kpis (
+       id, initiative_id, organization_id, name, description, unit,
+       baseline_value, target_value, measurement_frequency,
+       alert_threshold, alert_direction, owner_user_id, direction, threshold_mode,
+       amber_threshold_pct, red_threshold_pct, current_value, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+    [
+      kpiId,
+      benefit.initiative_id,
+      organizationId,
+      kpiName,
+      `Przekazane z wdrożenia (M14) — ${benefit.name}`,
+      null,
+      benefit.baseline_value,
+      benefit.target_value,
+      cadenceToFrequency(benefit.cadence),
+      null,
+      'BELOW',
+      benefit.owner_id,
+      'HIGHER_IS_BETTER',
+      'PERCENT_FROM_TARGET',
+      0.1,
+      0.2,
+      benefit.current_value,
+    ]
+  );
+
+  await dbRun(
+    `UPDATE benefits_register SET promoted_kpi_id = ?, status = 'promoted', updated_at = ? WHERE id = ? AND organization_id = ?`,
+    [kpiId, nowIso(), benefitId, organizationId]
+  );
+
+  logger.info?.('[benefitsRegister] promoted benefit to tracked KPI', {
+    organizationId,
+    benefitId,
+    kpiId,
+  });
+
+  return { kpiId, benefit: { ...benefit, status: 'promoted' }, alreadyPromoted: false };
+}
+
 export const BenefitsRegisterService = {
   listBenefits,
   createBenefit,
   handoffFromClosure,
+  promoteBenefitToKpi,
 };
 
 export default BenefitsRegisterService;

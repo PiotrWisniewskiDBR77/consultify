@@ -46,6 +46,8 @@ import type { SignalSheetRecord } from './kpiSignalSheetTypes';
 import { KpiSignalSheetView } from './KpiSignalSheetView';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 import { ResultsInitiativesView } from './ResultsInitiativesView';
+import M14HandoffInbox from './M14HandoffInbox';
+import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
 import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
@@ -1473,13 +1475,30 @@ export const ResultsHub: React.FC = () => {
             }}
           />
         ) : activeTab === 'results_initiatives' ? (
-          <ResultsInitiativesView
-            initiatives={filteredInitiatives}
-            onOpenInitiativeKpis={openInitiativeKpiLane}
-            onOpenInitiativeReports={openInitiativeReportsLane}
-            onOpenInitiativeDocument={openInitiativeDocument}
-            onChangeInitiativeStatus={handleInitiativeStatusChange}
-          />
+          isResultsFlagEnabled('m14Handoff') ? (
+            <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto">
+              <div className="shrink-0 px-1 pt-1">
+                <M14HandoffInbox />
+              </div>
+              <div className="min-h-0 flex-1">
+                <ResultsInitiativesView
+                  initiatives={filteredInitiatives}
+                  onOpenInitiativeKpis={openInitiativeKpiLane}
+                  onOpenInitiativeReports={openInitiativeReportsLane}
+                  onOpenInitiativeDocument={openInitiativeDocument}
+                  onChangeInitiativeStatus={handleInitiativeStatusChange}
+                />
+              </div>
+            </div>
+          ) : (
+            <ResultsInitiativesView
+              initiatives={filteredInitiatives}
+              onOpenInitiativeKpis={openInitiativeKpiLane}
+              onOpenInitiativeReports={openInitiativeReportsLane}
+              onOpenInitiativeDocument={openInitiativeDocument}
+              onChangeInitiativeStatus={handleInitiativeStatusChange}
+            />
+          )
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
         ) : activeTab === 'results_reports' ? (
