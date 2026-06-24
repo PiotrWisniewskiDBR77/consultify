@@ -8,7 +8,8 @@
 - Żywy moduł = `ExecutionHub` (zakładki Portfolio/Rollout/Raporty/Manager) + Execution Control. Martwy duplikat `Implementation/` usunięty (F0).
 - **F0** P0 ✅ · **F1** rdzeń ✅ · **F2** fundament+wpięcie additive 🟢 · **F3** ✅ · **F4–F8 BACKEND ZBUDOWANY+WPIĘTY** 🟢 (serwisy + route'y + cron).
 - **Backend M14 = KOMPLETNY**: 18 serwisów (15 nowych tej nocy w 3 batchach agentów A/B/C + 3 wcześniej), 5 powierzchni route'ów zamontowanych w Gateway, 2 cron-handlery (flag-gated OFF). tsc 0 (FE+backend, cały backend czysty), **252/252 testów M14 zielonych** (31 plików: `tests/unit/execution/` + 5 zestawów route'ów), zero regresji. Wszystko na demo. Prod (centerbeam) NIETKNIĘTY.
-- **POZOSTAJE (wymaga live-verify w przeglądarce — świadomie NIE robione autonomicznie w nocy):** 4 zadania FE-coupled — **2.4** (swap healthScore avgProgress→EVM: zmienia liczbę w kokpicie), **2.5** (Gantt baseline-vs-actual UI), **7.3** (what-if sandbox UI), **4.3** (upgrade sygnału capacity — dotyka współdzielonego riskDetection/managerProblems). Plus **UI-binding**: FE konsumujący nowe endpointy (route'y żyją, kokpit jeszcze ich nie woła) + głębokie flow-integracje (benefits-handoff w przycisku Closure, readiness/champions w Manager-lane).
+- **Cała logika 4 zadań FE-coupled ZBUDOWANA + OTESTOWANA** (drugi przelot): **2.4** EVM→healthScore DEPLOYED za flagą `EXECUTION_EVM_HEALTH_ENABLED` (server-side, 13/13); **2.5** czysty helper `ganttBaseline` (20/20); **7.3** silnik `whatIfSimulator` (16/16); **4.3** `capacitySignalService` (10/10). Keystone UI-binding: `executionIntelligenceService` + `GET /:projectId/intelligence` (5/5) + komponent `ExecutionIntelligencePanel` (5/5, fail-soft) + `executionFeatureFlags` (3 flagi default OFF).
+- **JEDYNE CO ZOSTAJE = →UI/→F (z definicji bramki Piotra):** pixel-render w kokpicie za flagami (panel Intelligence, baseline-bary w Gantcie, sandbox) + flip flagi 2.4. **Backend-dev stoi na PRODZIE (centerbeam) a kokpit jest tam v8-gated** → osadzenia w gęstym, prod-servującym layoucie NIE robię na ślepo (reguła verify-before-claiming). Render+pixel = wspólna sesja w środowisku v8 (lokalny FE → demo BE, token z localStorage). Logika gotowa → osadzenie to minuty + akceptacja grafiki.
 
 ## WIRING — noc 2026-06-23 (autonomicznie)
 **5 powierzchni route'ów zamontowanych w `Gateway.ts`** (48/48 testów integracyjnych, tsc 0):
@@ -39,8 +40,8 @@
 | 2.1 | Fundament EVM (rdzeń ANSI-748 + derywacja milestone-weighted) | F2 | ✅ | ✅ | ✅ 8/8 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`90ff87ed98`) |
 | 2.2 | Portfolio EVM roll-up wpięty additive w `/execution/health` | F2 | ✅ | ✅ | ✅ | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`f386b9f83c`) |
 | 2.3 | Cost-actuals → CPI (wpięcie budget actuals) | F2 | ✅ | ✅ | ✅ 2/2 | 0/1 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`2d2bfb1f2f`) — getActualCostByInitiative→CPI realny |
-| 2.4 | Swap healthScore: avgProgress → EVM (po live-verify) | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
-| 2.5 | Gantt baseline-vs-actual + rebaseline | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 2.4 | Swap healthScore: avgProgress → EVM (po live-verify) | F2 | ✅ | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED demo (`853ef54cc5`) — flag `EXECUTION_EVM_HEALTH_ENABLED` (default OFF); SPI×100 napędza healthScore; →F = flip flagi + v8 pixel |
+| 2.5 | Gantt baseline-vs-actual + rebaseline | F2 | 🟡 | ✅ | ✅ 20/20 | N/A | ⬜ | ⬜ | ⬜ | 🟡 czysty helper `ganttBaseline` done+test (`f4f441adb0`); FE-render za flagą `ganttBaseline` = v8 pixel-verify |
 | 3.1 | Risk appetite egzekwuje (`auto_escalate_above` + APPETITE_BREACH) | F3 | ✅ | ✅ | ✅ 4/4 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`c52c514650`) |
 | 3.2 | WSJF/Cost-of-Delay w sorcie Action Queue | F3 | ✅ | ✅ | ✅ 4/4 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`0b5964599a`) |
 | 3.3 | SLA decyzji per-priority | F3 | ✅ | ✅ | ✅ 3/3 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`06486bd3af`) |
@@ -48,7 +49,7 @@
 | 3.5 | Tolerancje per inicjatywa | F3 | 🟡 | ✅ | ✅ 5/5 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`7db34f5d11`: initiativeToleranceService czysty); wpięcie w sygnały=follow-up |
 | 4.1 | Model alokacji/dostępności per inicjatywa | F4 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`1fa83759b7`: capacityModelService); route LIVE (POST /api/execution-analytics/capacity/analyze), UI-binding=follow-up |
 | 4.2 | Capacity vs demand + resource heatmap | F4 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`1fa83759b7`: capacityModelService); route LIVE (POST /api/execution-analytics/capacity/analyze), UI-binding=follow-up |
-| 4.3 | Upgrade sygnału capacity (z modelowania) | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 4.3 | Upgrade sygnału capacity (z modelowania) | F4 | 🟡 | ✅ | ✅ 10/10 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`e77e5f6f67`: capacitySignalService — sygnały overload/underutil z modelu); wpięcie w lane = follow-up |
 | 5.1 | `rollout_stages` (pilot→limited→full→hypercare→closure) + entry/exit | F5 | 🟡 | ✅ | ✅ 14/14 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`b1c997d8af`: rollout_stages+service); route LIVE (/api/rollout-ext/stages), UI-binding=follow-up |
 | 5.2 | Cross-register gate (KPI∧Risk∧Closure → Go/Kill/Hold) | F5 | 🟡 | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`3478509abb`: rolloutGateService czysty); wpięcie po rollout_stages(5.1) |
 | 5.3 | Baseline/rebaseline planu | F5 | 🟡 | ✅ | ✅ 10/10 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`9f9ed12e60`: rolloutBaselineService); route LIVE (/api/rollout-ext/baselines), UI-binding=follow-up |
@@ -62,7 +63,7 @@
 | 6.6 | Champions/change-agent network + spięcie sentiment→Manager lane | F6 | 🟡 | ✅ | ✅ 8/8 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`41f756a8ea`: changeChampionsService); route LIVE (/api/raid-governance/champions), UI-binding=follow-up |
 | 7.1 | Heurystyczna predykcja ryzyka/opóźnień (na EVM+slip-trend) | F7 | 🟡 | ✅ | ✅ 5/5 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`b2b192362d`: executionPredictionService czysty); wpięcie w sygnały/UI=follow-up |
 | 7.2 | Grounded AI triage (cytuje sygnał) + auto-priorytetyzacja | F7 | 🟡 | ✅ | ✅ 11/11 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`f5cc66692a`: executionTriageService); route LIVE (POST /api/execution-analytics/triage), UI-binding=follow-up |
-| 7.3 | What-if sandbox (health + capacity) + dry-run interwencji | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
+| 7.3 | What-if sandbox (health + capacity) + dry-run interwencji | F7 | 🟡 | ✅ | ✅ 16/16 | N/A | ⬜ | ⬜ | ⬜ | 🟡 czysty silnik `whatIfSimulator` done+test (`5e7f0b0306`: 5 typów interwencji, compareScenarios); FE-sandbox za flagą `whatIfSandbox` = v8 pixel-verify |
 | 8.1 | Dependency model + graf + detekcja cykli/kaskady | F8 | ✅ | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`27450c2a8a`) — raidDependencyService (czyste); ALSO route LIVE (POST /api/execution-analytics/dependencies/analyze); UI-binding follow-up |
 | 8.2 | Assumption validation + Issue linked_items + SLA | F8 | 🟡 | ✅ | ✅ 10/10 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`0b3cbab70d`: raidGovernanceService); route LIVE (/api/raid-governance/raid/*), UI-binding=follow-up |
 | 8.3 | 5×5 matryca + EMV + heatmap inherent/residual | F8 | 🟡 | ✅ | ✅ 4/4 | N/A | N/A | ⬜ | ⬜ | 🟡 scoring done (`bb3fa0a0ea`: EMV+5×5+residual additive); heatmap inherent/residual wpięcie pozostaje |
