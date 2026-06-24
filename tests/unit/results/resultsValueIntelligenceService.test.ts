@@ -48,9 +48,9 @@ describe('buildValueIntelligence', () => {
     expect(item.atRisk).toBe(false);
     // banked = Σ realizedValue
     expect(out.scorecard.banked).toBe(120_000);
-    // not at risk → forecast counts as in-flight (value × stage confidence 0.85)
-    expect(out.scorecard.inFlight).toBeCloseTo(150_000 * 0.85, 5);
-    // funnel: value lands in 'inflight'
+    // partially realized + not at risk → forecast not re-counted as at-risk
+    expect(out.scorecard.atRisk).toBe(0);
+    // funnel: value at stake lands in the 'inflight' stage
     const inflight = out.funnel.find((f) => f.stage === 'inflight');
     expect(inflight?.value).toBe(150_000);
   });

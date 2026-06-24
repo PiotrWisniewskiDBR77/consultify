@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import * as audit from './auditService.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import {
   computeModel,
@@ -1610,23 +1611,41 @@ export async function convertAdvisoryRecommendationToInitiative(
   const rec = (advisory?.recommendations || []).find((r: any) => r.id === recommendationId);
   if (!rec) throw new Error('Recommendation not found');
 
-  const initiativeId = uuidv4();
-  const now = new Date().toISOString();
-  await dbRun(
-    `INSERT INTO initiatives (id, organization_id, project_id, name, summary, hypothesis, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      initiativeId,
+  // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+  let initiativeId: string;
+  if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    const __r = await funnelCreateInitiative(
       orgId,
-      val.project_id || null,
-      String(rec.title || 'Valuation improvement initiative'),
-      String(rec.mechanism || rec.hypothesis || ''),
-      String(rec.hypothesis || ''),
-      'draft',
-      now,
-      now,
-    ]
-  );
+      {
+        title: String(rec.title || 'Valuation improvement initiative'),
+        projectId: val.project_id || null,
+        summary: String(rec.mechanism || rec.hypothesis || ''),
+        hypothesis: String(rec.hypothesis || ''),
+        sourceType: 'valuation',
+        sourceId: valuationId,
+      },
+      { validate: false, actor: { id: userId } }
+    );
+    initiativeId = __r.id;
+  } else {
+    initiativeId = uuidv4();
+    const now = new Date().toISOString();
+    await dbRun(
+      `INSERT INTO initiatives (id, organization_id, project_id, name, summary, hypothesis, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        initiativeId,
+        orgId,
+        val.project_id || null,
+        String(rec.title || 'Valuation improvement initiative'),
+        String(rec.mechanism || rec.hypothesis || ''),
+        String(rec.hypothesis || ''),
+        'draft',
+        now,
+        now,
+      ]
+    );
+  }
 
   try {
     await audit.log({

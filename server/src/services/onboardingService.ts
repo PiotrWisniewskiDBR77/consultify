@@ -10,6 +10,7 @@ import type { IDatabase } from '../database/IDatabase.js';
 import * as sqliteAsync from '../database/sqliteAsync.js';
 import logger from '../utils/Logger.js';
 import aiService from './aiService.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
 // ==========================================
 // TYPES
@@ -451,20 +452,42 @@ class OnboardingService {
     for (const initiative of initiatives) {
       if (acceptedSet && !acceptedSet.has(initiative.id)) continue;
       const id = initiative.id || `init-${uuidv4()}`;
-      await this.runAsync(
-        `INSERT INTO initiatives
-         (id, organization_id, title, summary, hypothesis, created_by, created_from, created_from_plan_id)
-         VALUES (?, ?, ?, ?, ?, ?, 'AI_ONBOARDING', ?)`,
-        [
-          id,
+      // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
           organizationId,
-          initiative.title || 'Initiative',
-          initiative.summary || '',
-          initiative.hypothesis || '',
-          userId,
-          planId,
-        ]
-      );
+          {
+            title: initiative.title || 'Initiative',
+            summary: initiative.summary || '',
+            hypothesis: initiative.hypothesis || '',
+            sourceType: 'ai_onboarding',
+            sourceId: planId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        // Funnel nie zna created_by/created_from/created_from_plan_id — dośpiewujemy.
+        await this.runAsync(
+          `UPDATE initiatives
+           SET created_by = ?, created_from = 'AI_ONBOARDING', created_from_plan_id = ?
+           WHERE id = ? AND organization_id = ?`,
+          [userId, planId, __r.id, organizationId]
+        );
+      } else {
+        await this.runAsync(
+          `INSERT INTO initiatives
+           (id, organization_id, title, summary, hypothesis, created_by, created_from, created_from_plan_id)
+           VALUES (?, ?, ?, ?, ?, ?, 'AI_ONBOARDING', ?)`,
+          [
+            id,
+            organizationId,
+            initiative.title || 'Initiative',
+            initiative.summary || '',
+            initiative.hypothesis || '',
+            userId,
+            planId,
+          ]
+        );
+      }
       createdCount += 1;
     }
 

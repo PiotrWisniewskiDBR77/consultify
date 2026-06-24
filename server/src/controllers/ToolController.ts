@@ -6,6 +6,7 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../services/permissionService.js';
@@ -1813,27 +1814,54 @@ export class ToolController {
         promotion_type: outputType,
       };
 
+      let initiativeOutputId = outputId;
       if (outputType === 'initiative') {
-        await queryHelpers.queryRun(
-          `INSERT INTO initiatives (
-            id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
-            priority_order, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            outputId,
+        // Uspójnienie F1.8 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+        if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+          const __r = await funnelCreateInitiative(
             session.organization_id,
-            session.project_id || null,
-            title,
-            description || '',
-            'DRAFT',
-            'operations',
-            'tool',
-            toolId,
-            2,
-            now,
-            now,
-          ]
-        );
+            {
+              title,
+              projectId: session.project_id || null,
+              summary: description || '',
+              axis: 'operations',
+              sourceType: 'tool',
+              sourceId: toolId,
+            },
+            { validate: false, actor: { id: user.id } }
+          );
+          initiativeOutputId = __r.id;
+          // Extra column not set by the funnel — post-create UPDATE (best-effort).
+          try {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET priority_order = ? WHERE id = ? AND organization_id = ?`,
+              [2, initiativeOutputId, session.organization_id]
+            );
+          } catch {
+            // priority_order column may be absent on legacy schemas
+          }
+        } else {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiatives (
+              id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
+              priority_order, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              outputId,
+              session.organization_id,
+              session.project_id || null,
+              title,
+              description || '',
+              'DRAFT',
+              'operations',
+              'tool',
+              toolId,
+              2,
+              now,
+              now,
+            ]
+          );
+        }
       }
 
       if (outputType === 'report') {
@@ -1917,25 +1945,29 @@ export class ToolController {
         }
       }
 
+      // Thread the funnel-created id downstream for the initiative path (F1.8);
+      // other output types keep the locally-generated outputId.
+      const effectiveOutputId = outputType === 'initiative' ? initiativeOutputId : outputId;
+
       // Record promotion link for traceability
       try {
         await queryHelpers.queryRun(
           `INSERT INTO tool_initiative_links (id, tool_session_id, batch_id, initiative_id, created_at)
            VALUES (?, ?, ?, ?, ?)`,
-          [uuidv4(), toolId, promoteBatchId, outputId, now]
+          [uuidv4(), toolId, promoteBatchId, effectiveOutputId, now]
         );
       } catch {
         // Graceful fallback
       }
 
       await logAudit(user.organizationId, user.id, `tool_promoted_to_${outputType}`, toolId, {
-        outputId,
+        outputId: effectiveOutputId,
         outputType,
         title,
       });
 
       res.json({
-        id: outputId,
+        id: effectiveOutputId,
         outputType,
         title,
         sourceSessionId: toolId,

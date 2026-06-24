@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
 // Types
 type AssessmentType = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
@@ -644,47 +645,101 @@ Return a JSON array with exactly ${count} initiatives in this format:
       'updated_at',
     ]);
 
+    const funnelEnabled = process.env.INITIATIVE_FUNNEL_ENABLED === 'true';
+    const sourceType = reportId ? 'assessment_report' : 'assessment';
+    const sourceId = reportId ? String(reportId) : String(assessment.id);
+
     for (const initiative of initiatives) {
-      const id = uuidv4();
+      let id: string;
 
-      // Insert into initiatives table (schema-variant safe)
-      const cols: string[] = [];
-      const values: unknown[] = [];
-      const push = (col: string, value: unknown) => {
-        if (columns === null && !baseAllowedWhenUnknown.has(col)) return;
-        if (columns && !columns.has(col)) return;
-        cols.push(col);
-        values.push(value);
-      };
+      if (funnelEnabled) {
+        // Uspójnienie F1.7 — każdy rekord pętli przez kanoniczny lejek (DRAFT pominięty
+        // → normalizowany w lejku; name/title + lineage). id↔źródło zachowane per-rekord.
+        const __r = await funnelCreateInitiative(
+          String(assessment.organization_id),
+          {
+            title: initiative.title,
+            projectId: assessment.project_id || null,
+            description: initiative.description ?? null,
+            // status 'DRAFT' POMINIĘTY — lejek normalizuje
+            priority: initiative.priority ?? null,
+            category: initiative.category ?? null,
+            sourceType,
+            sourceId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        id = __r.id;
 
-      push('id', id);
-      push('organization_id', assessment.organization_id);
-      push('project_id', assessment.project_id || null);
-      push('name', initiative.title);
-      push('title', initiative.title);
-      push('description', initiative.description);
-      push('status', 'DRAFT');
-      push('priority', initiative.priority);
-      push('risk_level', initiative.risk);
-      push('category', initiative.category);
-      // Prefer linking to the report (source), but keep assessment linkage via assessment_initiative_links.
-      push('source_type', reportId ? 'assessment_report' : 'assessment');
-      push('source_id', reportId ? String(reportId) : assessment.id);
-      // If initiatives.report_id exists, set it.
-      if (columns?.has('report_id')) {
-        push('report_id', reportId ? String(reportId) : null);
+        // Extra-kolumny, których lejek nie zna (risk_level, report_id, created_by) →
+        // post-create UPDATE, tylko dla kolumn istniejących w tym schemacie.
+        const upCols: string[] = [];
+        const upVals: unknown[] = [];
+        const setIf = (col: string, value: unknown) => {
+          if (columns === null) return; // unknown schema: pomiń opcjonalne kolumny
+          if (columns && !columns.has(col)) return;
+          upCols.push(`${col} = ?`);
+          upVals.push(value);
+        };
+        setIf('risk_level', initiative.risk);
+        if (columns?.has('report_id')) setIf('report_id', reportId ? String(reportId) : null);
+        setIf('created_by', userId);
+        if (upCols.length > 0) {
+          try {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET ${upCols.join(', ')} WHERE id = ? AND organization_id = ?`,
+              [...upVals, id, String(assessment.organization_id)]
+            );
+          } catch (updErr) {
+            logger.warn(
+              `[AssessmentInitiativeService] post-create UPDATE failed: ${
+                (updErr as Error)?.message || updErr
+              }`
+            );
+          }
+        }
+      } else {
+        id = uuidv4();
+
+        // Insert into initiatives table (schema-variant safe)
+        const cols: string[] = [];
+        const values: unknown[] = [];
+        const push = (col: string, value: unknown) => {
+          if (columns === null && !baseAllowedWhenUnknown.has(col)) return;
+          if (columns && !columns.has(col)) return;
+          cols.push(col);
+          values.push(value);
+        };
+
+        push('id', id);
+        push('organization_id', assessment.organization_id);
+        push('project_id', assessment.project_id || null);
+        push('name', initiative.title);
+        push('title', initiative.title);
+        push('description', initiative.description);
+        push('status', 'DRAFT');
+        push('priority', initiative.priority);
+        push('risk_level', initiative.risk);
+        push('category', initiative.category);
+        // Prefer linking to the report (source), but keep assessment linkage via assessment_initiative_links.
+        push('source_type', sourceType);
+        push('source_id', sourceId);
+        // If initiatives.report_id exists, set it.
+        if (columns?.has('report_id')) {
+          push('report_id', reportId ? String(reportId) : null);
+        }
+        push('created_by', userId);
+        push('created_at', now);
+        push('updated_at', now);
+
+        const placeholders = cols.map(() => '?').join(', ');
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (${cols.join(', ')}) VALUES (${placeholders})`,
+          values
+        );
       }
-      push('created_by', userId);
-      push('created_at', now);
-      push('updated_at', now);
 
-      const placeholders = cols.map(() => '?').join(', ');
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (${cols.join(', ')}) VALUES (${placeholders})`,
-        values
-      );
-
-      // Create link
+      // Create link — id zwrócone z lejka/insertu (krytyczne: link nie sierota).
       await queryHelpers.queryRun(
         `INSERT INTO assessment_initiative_links (id, assessment_id, batch_id, initiative_id, created_at)
          VALUES (?, ?, ?, ?, ?)`,
