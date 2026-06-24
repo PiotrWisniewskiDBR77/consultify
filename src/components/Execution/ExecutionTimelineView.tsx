@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { FullInitiative, InitiativeStatus } from '../../types';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
 
 // ============================================
 // TYPES
@@ -432,6 +433,10 @@ interface TimelineBarProps {
   riskSeverity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   delaySignal?: DelaySignalItem;
   onDragEnd?: (weeksDelta: number) => void;
+  /** M14/2.5 — baseline (original plan) week indices; render a ghost bar when valid. */
+  baselineStartIdx?: number;
+  baselineEndIdx?: number;
+  showBaseline?: boolean;
 }
 
 const TimelineBar: React.FC<TimelineBarProps> = ({
@@ -447,11 +452,28 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   riskSeverity,
   delaySignal,
   onDragEnd,
+  baselineStartIdx,
+  baselineEndIdx,
+  showBaseline,
 }) => {
   const colors = STATUS_COLORS[initiative.status] || STATUS_COLORS[InitiativeStatus.EXECUTING];
   const span = Math.max(1, endIdx - startIdx + 1);
   const progress = initiative.progress || 0;
   const leftPercent = (startIdx / totalWeeks) * 100;
+  // M14/2.5 — baseline ghost bar: render only when enabled, indices valid, and the
+  // plan actually differs from the current bar (slip/pull-in worth showing).
+  const hasBaseline =
+    showBaseline &&
+    typeof baselineStartIdx === 'number' &&
+    baselineStartIdx >= 0 &&
+    typeof baselineEndIdx === 'number' &&
+    baselineEndIdx >= baselineStartIdx &&
+    (baselineStartIdx !== startIdx || baselineEndIdx !== endIdx);
+  const baselineLeftPercent = hasBaseline ? (baselineStartIdx! / totalWeeks) * 100 : 0;
+  const baselineWidthPercent = hasBaseline
+    ? ((baselineEndIdx! - baselineStartIdx! + 1) / totalWeeks) * 100
+    : 0;
+  const baselineSlipWeeks = hasBaseline ? endIdx - baselineEndIdx! : 0;
   const widthPercent = (span / totalWeeks) * 100;
   const [dragOffset, setDragOffset] = useState(0);
 
@@ -465,7 +487,26 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   }, [dragOffset, onDragEnd, totalWeeks]);
 
   return (
-    <motion.div
+    <>
+      {hasBaseline && (
+        <div
+          className="absolute top-12 h-1.5 rounded-full bg-slate-400/50 dark:bg-slate-500/40 z-0"
+          style={{
+            left: `${baselineLeftPercent}%`,
+            width: `${baselineWidthPercent}%`,
+            minWidth: '40px',
+          }}
+          title={`Plan bazowy (baseline)${
+            baselineSlipWeeks > 0
+              ? ` — ${baselineSlipWeeks} tyg. poślizgu`
+              : baselineSlipWeeks < 0
+                ? ` — ${-baselineSlipWeeks} tyg. przed planem`
+                : ''
+          }`}
+          data-testid="gantt-baseline"
+        />
+      )}
+      <motion.div
       onClick={onClick}
       drag={onDragEnd ? 'x' : false}
       dragMomentum={false}
@@ -544,7 +585,8 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
           {progress}%
         </span>
       </div>
-    </motion.div>
+      </motion.div>
+    </>
   );
 };
 
@@ -884,7 +926,10 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           initiative.actualEndDate || initiative.plannedEndDate || initiative.endDate;
         let endIdx = getWeekIndex(endDateStr);
         if (endIdx < 0 || endIdx < startIdx) endIdx = Math.min(startIdx + 2, weeks.length - 1);
-        return { ...initiative, startIdx, endIdx };
+        // M14/2.5 — baseline (original plan) week indices for the ghost bar overlay.
+        const baselineStartIdx = getWeekIndex(initiative.plannedStartDate);
+        const baselineEndIdx = getWeekIndex(initiative.plannedEndDate);
+        return { ...initiative, startIdx, endIdx, baselineStartIdx, baselineEndIdx };
       })
       .sort((a, b) => a.startIdx - b.startIdx);
   }, [filteredInitiatives, getWeekIndex, weeks.length]);
@@ -1431,6 +1476,9 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                         hasRiskSignal={initRisks.length > 0}
                         riskSeverity={initRisks.length > 0 ? initRisks[0].severity : undefined}
                         delaySignal={initDelay}
+                        baselineStartIdx={(initiative as { baselineStartIdx?: number }).baselineStartIdx}
+                        baselineEndIdx={(initiative as { baselineEndIdx?: number }).baselineEndIdx}
+                        showBaseline={isExecutionFlagEnabled('ganttBaseline')}
                         onDragEnd={
                           onUpdateInitiative || onTimelineUpdate
                             ? (weeksDelta) => handleBarDragEnd(initiative, weeksDelta)

@@ -75,4 +75,19 @@ test.describe('M14 ExecutionHub cockpit', () => {
     await expect(page.getByText('DevOps Transformation').first()).toBeVisible({ timeout: 30000 });
     await expect(page.getByTestId('intel-panel')).toHaveCount(0);
   });
+
+  test('Timeline (Gantt) renders with the baseline flag on — no crash', async ({ page }) => {
+    await page.goto('/implementation?tab=list&view=timeline&ff_ganttBaseline=1', {
+      waitUntil: 'domcontentloaded',
+    });
+    // Switch to the timeline view mode and confirm the Gantt grid renders (week headers).
+    const tl = page.getByRole('button', { name: /timeline/i });
+    if (await tl.count()) await tl.first().click();
+    await page.waitForTimeout(2000);
+    // No render crash: error boundary absent and initiative content still present.
+    await expect(page.getByText(/something went wrong/i)).toHaveCount(0);
+    await expect(page.getByText(/DevOps Transformation|SLIP \d+d|^W\d+/).first()).toBeVisible({
+      timeout: 30000,
+    });
+  });
 });
