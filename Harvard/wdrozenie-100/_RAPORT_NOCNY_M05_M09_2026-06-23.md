@@ -120,10 +120,13 @@ Jedyny fail MC-09-17 (Context menu → AI Expand, REAL-AI) = AI-flakiness (deeps
 
 **Finding dla Piotra:** tabela `presentations` brakuje na caboose (staging) → konwersja idea→prezentacja 501 na staging. Sprawdzić migrację `presentations` na caboose/prod. Wzorzec [[finding_staging_schema_drift_v8_404]].
 
-**Odroczone (wymaga osobnego przebiegu):**
+**Grafika dark+light — KOMPLETNE (DOROBIONE 2026-06-24):**
+- **Dark** (domyślny): 4 plansze CASES po 30 miniatur `_montage_m0{6,7,8,9}.png`.
+- **Light**: 4 narzędzia w trybie jasnym + montaż 2×2 `tests/e2e/screenshots/cases/_light/_montage_light.png` (zweryfikowane wizualnie — wszystkie 4 renderują się czysto w light; `dark-class=false`).
+
+**Odroczone (wymaga osobnego przebiegu — niższy priorytet):**
 - Ścieżki cross-module FE (Czat→Idea, Notebook→Idea, Ideas→Inicjatywy/Canvas/Outputs) — UI-driven, nie pokryte API-sweepem.
-- Pary dark+light per ekran — plansze są w trybie domyślnym (light); osobny przebieg dark do zrobienia.
-- Pełny matrix TESTY_M0X (~481 scenariuszy manualnych) — pokryte CASES (121) + M05 API; reszta manualna odroczona.
+- Pełny matrix TESTY_M0X (~481 scenariuszy manualnych) — pokryte CASES (121) + M05 API + konwersja; reszta manualna odroczona.
 
 ---
 
