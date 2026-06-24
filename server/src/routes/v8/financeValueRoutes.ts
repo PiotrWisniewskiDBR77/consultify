@@ -111,9 +111,21 @@ router.post(
     if (!organizationId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const cashFlows = Array.isArray(req.body?.cashFlows) ? req.body.cashFlows : [];
-    const discountRate = Number(req.body?.discountRate) || 0;
-    const result = appraise({ cashFlows, discountRate });
+    const cashFlows = Array.isArray(req.body?.cashFlows)
+      ? req.body.cashFlows
+      : Array.isArray(req.body?.cashflows)
+        ? req.body.cashflows
+        : [];
+    const discountRatePct = Number(req.body?.discountRatePct ?? req.body?.discountRate) || 0;
+    const hurdleRatePct = Number(req.body?.hurdleRatePct ?? discountRatePct) || 0;
+    // First negative flow is treated as the initial investment when not given explicitly.
+    let initialInvestment = Number(req.body?.initialInvestment) || 0;
+    let flows = cashFlows as number[];
+    if (initialInvestment === 0 && flows.length && Number(flows[0]) < 0) {
+      initialInvestment = -Number(flows[0]);
+      flows = flows.slice(1);
+    }
+    const result = appraise({ cashflows: flows, initialInvestment, discountRatePct, hurdleRatePct });
     return res.json({ data: result, meta: financeValueMeta() });
   })
 );
