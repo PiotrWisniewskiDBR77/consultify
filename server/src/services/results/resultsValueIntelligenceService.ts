@@ -74,6 +74,7 @@ export interface ValueIntelligence {
     confidence: number;
     realizationPct: number;
     atRisk: boolean;
+    hasRealized: boolean;
   }>;
 }
 
@@ -114,6 +115,7 @@ export function buildValueIntelligence(input: ValueIntelligenceInput): ValueInte
       confidence,
       realizationPct,
       atRisk,
+      hasRealized,
       funnelStage: mapInitiativeToFunnel(i.status ?? undefined),
     };
   });
