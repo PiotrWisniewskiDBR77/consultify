@@ -11,6 +11,7 @@
 import type { Response } from 'express';
 
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
+import { getActualCostByInitiative } from '../services/executionBudgetService.js';
 import { derivePortfolioEvm } from '../services/evmService.js';
 import {
   calculateRiskScore,
@@ -538,16 +539,20 @@ export class ExecutionController {
         });
       }
 
-      // F2 — additive portfolio EVM roll-up (SPI from schedule, EV from progress;
-      // CPI lands when cost actuals are wired). Honest coverage shows how many
-      // initiatives had a cost baseline. Does not alter healthScore yet.
+      // F2 — additive portfolio EVM roll-up. PV from schedule, EV from progress,
+      // AC from actual budget entries (CPI now real). Honest coverage shows how
+      // many initiatives had a cost baseline. Does not alter healthScore yet.
+      const actualByIni = await getActualCostByInitiative(
+        orgId,
+        (initiatives as any[]).map((i) => String(i.id))
+      ).catch(() => new Map<string, number>());
       const portfolioEvm = derivePortfolioEvm(
         (initiatives as any[]).map((i) => ({
           bac: (Number(i.cost_capex) || 0) + (Number(i.cost_opex) || 0),
           plannedStart: i.planned_start_date,
           plannedEnd: i.planned_end_date,
           progressPct: Number(i.progress) || 0,
-          actualCost: null,
+          actualCost: actualByIni.get(String(i.id)) ?? null,
         })),
         Date.now()
       );
