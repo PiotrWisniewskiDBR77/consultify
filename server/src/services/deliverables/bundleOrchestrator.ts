@@ -99,12 +99,35 @@ export function buildSpine(input: BusinessPlanInput): BusinessPlanSpine {
   };
 }
 
-/** Składa czytelny feedback z nieprzeszłych checków + anty-wzorców (do re-promptu). */
+/**
+ * Feedback PRESKRYPTYWNY do re-promptu — nie tylko "co źle", ale KTÓRY DRIVER i NA ILE
+ * zmienić (liczone z modelu). Zbieżność pętli naprawczej rośnie radykalnie, bo LLM
+ * dostaje konkretny lever zamiast ogólnika.
+ */
 function validationFeedback(spine: BusinessPlanSpine): string {
-  const failed = spine.validation.checks.filter((c) => !c.passed)
-    .map((c) => `- ${c.label}${c.value !== undefined ? ` (jest ${c.value}, oczekiwane ${c.benchmark ?? 'w normie'})` : ''}`);
-  const anti = spine.validation.antiPatterns.map((a) => `- [${a.severity}] ${a.pattern}: ${a.detail}`);
-  return [...failed, ...anti].join('\n');
+  const ue = spine.financials.unitEconomics[0];
+  const lines: string[] = [];
+  const failedById = new Map(spine.validation.checks.filter((c) => !c.passed).map((c) => [c.id, c]));
+
+  if (failedById.has('ltv_cac_min')) {
+    const targetCac = Math.round(ue.ltv / 3.2);
+    lines.push(`- LTV:CAC = ${ue.ltvCacRatio} (<3). LTV=${ue.ltv}. NAPRAW: ustaw cac ≤ ${targetCac} (obecnie ${ue.cac}) LUB podnieś arpuAnnual/saasPricePerSeatMonth LUB obniż grossChurnAnnual. CAC to najtwardszy lever.`);
+  }
+  if (failedById.has('cac_payback')) {
+    const monthlyGm = ue.cac / Math.max(1, ue.cacPaybackMonths); // = arpu×marża/12
+    const targetCac = Math.round(monthlyGm * 18);
+    lines.push(`- CAC payback = ${ue.cacPaybackMonths} mies (>24). NAPRAW: cac ≤ ${targetCac} (cel ~18 mies) lub wyższe arpuAnnual.`);
+  }
+  if (failedById.has('rule_of_40')) {
+    lines.push(`- Rule of 40 = ${spine.financials.kpis.ruleOf40} (<40). NAPRAW: podnieś wzrost (saasSeatGrowthYoY/nrr) LUB marżę EBITDA ost. roku (niższe opexLeverageYoY ~0.80, niższe smPctRevenue).`);
+  }
+  // pozostałe nieprzeszłe checki + anty-wzorce — ogólnie
+  for (const [id, c] of failedById) {
+    if (['ltv_cac_min', 'cac_payback', 'rule_of_40'].includes(id)) continue;
+    lines.push(`- ${c.label}${c.value !== undefined ? ` (jest ${c.value}, oczekiwane ${c.benchmark ?? 'w normie'})` : ''}`);
+  }
+  for (const a of spine.validation.antiPatterns) lines.push(`- [${a.severity}] ${a.pattern}: ${a.detail}`);
+  return lines.join('\n');
 }
 
 /**
