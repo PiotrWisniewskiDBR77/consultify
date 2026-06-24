@@ -173,48 +173,55 @@ router.get(
     const orgId = requireOrg(req, res);
     if (!orgId) return;
     const { projectId } = req.params;
+    // Org-wide when no concrete project is selected (cockpit often runs org-scoped,
+    // currentProjectId === null). Sentinel 'all'/'null' mirrors getInitiatives(undefined).
+    const orgWide = !projectId || projectId === 'all' || projectId === 'null';
+    const projFilter = orgWide ? '' : 'project_id = ? AND ';
 
-    // Initiatives (all columns the service consumes).
+    // SELECT * (not named columns) — the initiatives schema drifts across envs
+    // (e.g. progress/actual_cost may be absent); the service reads fields defensively.
     const initiativesSql = `
-      SELECT id, name, status, progress, cost_capex, cost_opex,
-             planned_start_date, planned_end_date, actual_cost
+      SELECT *
       FROM initiatives
-      WHERE project_id = ? AND organization_id = ?
+      WHERE ${projFilter}organization_id = ?
     `;
     const initiatives =
-      ((await queryHelpers.queryAll(initiativesSql, [projectId, orgId])) as
-        | IntelligenceInitiative[]
-        | undefined) || [];
+      ((await queryHelpers.queryAll(
+        initiativesSql,
+        orgWide ? [orgId] : [projectId, orgId]
+      )) as IntelligenceInitiative[] | undefined) || [];
 
     // Open BLOCKED task counts per initiative.
     const blockedSql = `
       SELECT initiative_id, COUNT(*) AS cnt
       FROM tasks
-      WHERE project_id = ? AND organization_id = ?
+      WHERE ${projFilter}organization_id = ?
         AND UPPER(COALESCE(status, '')) = 'BLOCKED'
         AND initiative_id IS NOT NULL
       GROUP BY initiative_id
     `;
     const blockedRows =
-      ((await queryHelpers.queryAll(blockedSql, [projectId, orgId])) as
-        | Array<{ initiative_id: string; cnt: number | string }>
-        | undefined) || [];
+      ((await queryHelpers.queryAll(
+        blockedSql,
+        orgWide ? [orgId] : [projectId, orgId]
+      )) as Array<{ initiative_id: string; cnt: number | string }> | undefined) || [];
 
     // Open high-severity RISK counts per initiative (RAID risks, still open).
     const riskSql = `
       SELECT initiative_id, COUNT(*) AS cnt
       FROM raid_items
       WHERE organization_id = ?
-        AND initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)
+        AND initiative_id IN (SELECT id FROM initiatives WHERE ${projFilter}organization_id = ?)
         AND UPPER(type) = 'RISK'
         AND UPPER(COALESCE(status, 'OPEN')) IN ('OPEN', 'IN_PROGRESS')
         AND initiative_id IS NOT NULL
       GROUP BY initiative_id
     `;
     const riskRows =
-      ((await queryHelpers.queryAll(riskSql, [orgId, projectId, orgId])) as
-        | Array<{ initiative_id: string; cnt: number | string }>
-        | undefined) || [];
+      ((await queryHelpers.queryAll(
+        riskSql,
+        orgWide ? [orgId, orgId] : [orgId, projectId, orgId]
+      )) as Array<{ initiative_id: string; cnt: number | string }> | undefined) || [];
 
     const toCountMap = (
       rows: Array<{ initiative_id: string; cnt: number | string }>

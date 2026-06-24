@@ -85,8 +85,15 @@ export const ExecutionIntelligencePanel: React.FC<Props> = ({ projectId, fetcher
   }
 
   const atRisk = data?.summary?.atRisk ?? 0;
+  const ORDER: Record<IntelligencePrediction['overall'], number> = {
+    CRITICAL: 0,
+    HIGH: 1,
+    MEDIUM: 2,
+    LOW: 3,
+  };
   const ranked = (data?.predictions ?? [])
-    .filter((p) => p.overall === 'HIGH' || p.overall === 'CRITICAL')
+    .filter((p) => p.overall !== 'LOW')
+    .sort((a, b) => ORDER[a.overall] - ORDER[b.overall])
     .slice(0, 8);
   const topActions = data?.triage?.topActions ?? [];
 

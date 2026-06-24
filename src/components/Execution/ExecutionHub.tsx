@@ -132,6 +132,8 @@ import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './Execut
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
 import { RolloutTab } from './RolloutTab';
+import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
@@ -5084,7 +5086,13 @@ Please return:
       const itemIds = summaryInitiatives.map((i) => i.id);
 
       return (
-        <div className="h-full overflow-hidden">
+        <div className="flex h-full flex-col overflow-hidden">
+          {isExecutionFlagEnabled('intelligence') && (
+            <div className="shrink-0 px-4 pt-3">
+              <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
+            </div>
+          )}
+          <div className="min-h-0 flex-1">
           <TableWithPreviewLayout<PreviewItem>
             selectedId={summaryPreviewInitiativeId}
             selectedItem={selectedItem}
@@ -5203,6 +5211,7 @@ Please return:
               </div>
             </div>
           </TableWithPreviewLayout>
+          </div>
         </div>
       );
     }
