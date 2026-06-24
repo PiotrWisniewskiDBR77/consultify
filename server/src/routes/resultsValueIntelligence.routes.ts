@@ -57,7 +57,9 @@ router.get(
     )) as VIRoiRealized[] | undefined) || [];
 
     const data = buildValueIntelligence({ initiatives, roiAssumptions, roiRealized });
-    res.json({ success: true, data });
+    // Return the bare payload (not {success,data}): the FE Api proxy maps
+    // `response.data` to the whole payload, so a wrapper would hide the fields.
+    res.json(data);
   })
 );
 
