@@ -21,22 +21,22 @@
 | # | Zadanie / funkcjonalność | Fala | Typ | Kod | DoD | Testy | Manual | UI | →F | →UI | Status |
 |--|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|--|
 | 0.1 | Decyzje D1-D5 + seed realistyczny (P&L+BS+CF+modele+analizy+budżet z actuals) | F0 | infra | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ | N/A | ⬜ czeka na Piotra |
-| 0.2 | `FINANCE_VISUAL_CANON.md` — kanon wizualny (15 prymitywów + semantyka kolorów + wzorzec panelu) | F0 | UI-std | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ | ⬜ |
-| 0.3 | Biblioteka komponentów wykresów finansowych (waterfall/bubble/tornado/football/S-curve/sankey/bullet) | F0 | UI-std | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 1.1 | **WACC/CAPM Engine** (org SSOT: ke=rf+β·ERP, kd·(1−t), wagi D/E) → zasila wycenę i każdy NPV | F1 | FIX | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 4) |
+| 0.2 | `FINANCE_VISUAL_CANON.md` — kanon wizualny | F0 | UI-std | OK | OK | N/A | N/A | OK | N/A | OK | DONE (085fe53c2d) |
+| 0.3 | Biblioteka wykresow finansowych (8 prymitywow SVG) | F0 | UI-std | OK | OK | OK 67/67 | N/A | OK | OK | wait | DONE (5cb5ddbfb9) — 8 prymitywow, 67 testow |
+| 1.1 | WACC/CAPM Engine (org SSOT) -> zasila kazdy NPV | F1 | FIX | OK | OK | OK 9/9 | wait | N/A | wait | wait | GREEN backend (3a8e5be920) — WACC 8.94 derived vs flat-12 |
 | 1.2 | **Football Field render** (silnik liczy valueBridge/scenarioComparison — FE dorobić) | F1 | FIX | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 6) |
-| 1.3 | **Sensitivity heatmap render** (fix kontraktu FE↔BE `table/waccGrid`→`matrix`) | F1 | FIX | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 6) |
+| 1.3 | Sensitivity heatmap (fix kontraktu + render) | F1 | FIX | half | OK | OK | wait | wait | wait | wait | half BACKEND matrix-emit DONE (3a8e5be920)+komponent gotowy; FE-render=next |
 | 1.4 | **Server-side finance engine = SSOT** (przenieść NPV/IRR z przeglądarki, audytowalność) | F1 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ |
-| 1.5 | Fix schematu: kategoria `investment` w `financial_analysis_ratios` CHECK (koniec remapu→growth) | F1 | FIX | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ (P0 audyt 8) |
-| 2.1 | **Living Business Case** (przenieś capex/opex/NPV/IRR z analizy→`roi_assumptions` inicjatywy; NPV on-read) | F2 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (szew A, najwyższy ROI) |
+| 1.5 | Fix schematu: kategoria `investment` w `financial_analysis_ratios` CHECK (koniec remapu→growth) | F1 | FIX | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (59306469e9: fix CHECK investment (migracja)); wiring route/UI=next |
+| 2.1 | **Living Business Case** (przenieś capex/opex/NPV/IRR z analizy→`roi_assumptions` inicjatywy; NPV on-read) | F2 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (48d47e50c5: livingBusinessCaseService — NPV on-read z realnym WACC, 12/12); wiring route/UI=next |
 | 2.2 | **Initiative-Finance Linkage Workflow** (akcja „Powiąż"→domknięcie „Unlinked 86") | F2 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (szew B) |
 | 2.3 | **Benefits-Register Bridge M14→M15** (ResultsHub czyta `benefits_register`) | F2 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (szew C/G1) |
-| 2.4 | **Value Attribution Rollup** (wepnij `kpiAttributionService` w „total value delivered", anti-double-count) | F2 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (szew E) |
-| 2.5 | **Realized-Value Reconciliation vs sprawozdania** (`roi_realized_values`↔`financial_statement_lines`) | F2 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (szew D) |
-| 2.6 | **Benefit Profile S-curve** (`benefit_profile_points` planned/actual cumulative; plan vs actual) | F2 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.7 | **Value-at-Risk on Slip** (spięcie z EVM/SPI: VaR=forecast×(1−scheduleHealth); heatmapa) | F2 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.8 | **Benefit Category Taxonomy** (hard/soft×cost-out/rev-up/WC×run-rate/one-time) | F2 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.9 | **Leading/Lagging KPI Lineage** (`kpi_kind` + link + ostrzeżenie cockpit) | F2 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 2.4 | **Value Attribution Rollup** (wepnij `kpiAttributionService` w „total value delivered", anti-double-count) | F2 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (ca6874d59c: valueAttributionRollupService — anti-double-count, 7/7); wiring route/UI=next |
+| 2.5 | **Realized-Value Reconciliation vs sprawozdania** (`roi_realized_values`↔`financial_statement_lines`) | F2 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (4d732b4682: realizedValueReconciliationService — realized vs sprawozdania, 11/11); wiring route/UI=next |
+| 2.6 | **Benefit Profile S-curve** (`benefit_profile_points` planned/actual cumulative; plan vs actual) | F2 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (3355dbd37d: benefitProfileService — S-curve plan/actual, 9/9); wiring route/UI=next |
+| 2.7 | **Value-at-Risk on Slip** (spięcie z EVM/SPI: VaR=forecast×(1−scheduleHealth); heatmapa) | F2 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (9e48fcbdff: valueAtRiskService — VaR ze schedule-health, 13/13); wiring route/UI=next |
+| 2.8 | **Benefit Category Taxonomy** (hard/soft×cost-out/rev-up/WC×run-rate/one-time) | F2 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (3355dbd37d: benefit category taxonomy (hard/soft/run-rate)); wiring route/UI=next |
+| 2.9 | **Leading/Lagging KPI Lineage** (`kpi_kind` + link + ostrzeżenie cockpit) | F2 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (59306469e9: kpiLineageService — leading/lagging early-warning, 6/6); wiring route/UI=next |
 | 3.1 | **Value Bridge Waterfall** (Baseline→Identified→Committed→In-flight→Realized→Banked, flagowy) | F3 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 3.2 | **Initiative Business-Case Generator** (one-pager NPV/payback/IRR PRZED fundingiem) | F3 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 3.3 | **Value Capture Pipeline + Stage-Gates G0-G5** (lejek z bramkami + sign-off + kryteria) | F3 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
