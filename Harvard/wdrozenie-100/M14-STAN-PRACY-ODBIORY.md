@@ -41,7 +41,7 @@
 | 2.2 | Portfolio EVM roll-up wpięty additive w `/execution/health` | F2 | ✅ | ✅ | ✅ | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`f386b9f83c`) |
 | 2.3 | Cost-actuals → CPI (wpięcie budget actuals) | F2 | ✅ | ✅ | ✅ 2/2 | 0/1 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`2d2bfb1f2f`) — getActualCostByInitiative→CPI realny |
 | 2.4 | Swap healthScore: avgProgress → EVM (po live-verify) | F2 | ✅ | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED demo (`853ef54cc5`) — flag `EXECUTION_EVM_HEALTH_ENABLED` (default OFF); SPI×100 napędza healthScore; →F = flip flagi + v8 pixel |
-| 2.5 | Gantt baseline-vs-actual + rebaseline | F2 | 🟡 | ✅ | ✅ 20/20 | N/A | ⬜ | ⬜ | ⬜ | 🟡 czysty helper `ganttBaseline` done+test (`f4f441adb0`); FE-render za flagą `ganttBaseline` = v8 pixel-verify |
+| 2.5 | Gantt baseline-vs-actual + rebaseline | F2 | ✅ | ✅ | ✅ 20/20 | 🟡 E2E | ⬜ | ⬜ | ⬜ | 🟡 WPIĘTE w ExecutionTimelineView (ghost-bar planu, flaga `ff_ganttBaseline`, `2adc293ba4`); Playwright timeline-smoke OK; pixel ghost-bara czeka na dane z planem w 12-tyg. oknie (demo-dane mają plany w przeszłości=off-window) |
 | 3.1 | Risk appetite egzekwuje (`auto_escalate_above` + APPETITE_BREACH) | F3 | ✅ | ✅ | ✅ 4/4 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`c52c514650`) |
 | 3.2 | WSJF/Cost-of-Delay w sorcie Action Queue | F3 | ✅ | ✅ | ✅ 4/4 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`0b5964599a`) |
 | 3.3 | SLA decyzji per-priority | F3 | ✅ | ✅ | ✅ 3/3 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`06486bd3af`) |
