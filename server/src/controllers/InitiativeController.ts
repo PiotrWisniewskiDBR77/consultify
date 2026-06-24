@@ -65,6 +65,7 @@ import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import type {
   CreateInitiativeRequest,
   UpdateInitiativeRequest,
@@ -1966,6 +1967,10 @@ export class InitiativeController {
       lifecycleParams.push(id, orgId);
       const sql = `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, lifecycleParams);
+
+      // Uspójnienie F2.2–2.5/2.7 — record the stage-boundary handoff (event + lineage)
+      // on every successful status transition. Fail-safe (never throws/blocks).
+      void recordStageHandoff(orgId, String(req.params.id), currentStatus, nextStatus, req.user?.id);
 
       // M13 Depth · Seria R (M13d) — the status-change notification to
       // watchers/owners is emitted by the canonical block below ("Emit

@@ -134,7 +134,7 @@ LIMIT ? OFFSET ? `,
     push('area', data.area || null);
     push('summary', data.summary || null);
     push('hypothesis', data.hypothesis || null);
-    push('status', data.status || 'step3');
+    push('status', data.status || 'DRAFT'); // Uspójnienie F1.11 — 'step3' (legacy, nieprawidłowy) → DRAFT
     push('current_stage', data.current_stage || null);
     push('business_value', data.business_value || null);
     push(
