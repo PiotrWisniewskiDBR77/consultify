@@ -133,6 +133,7 @@ import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
 import { RolloutTab } from './RolloutTab';
 import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
+import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
@@ -5090,6 +5091,15 @@ Please return:
           {isExecutionFlagEnabled('intelligence') && (
             <div className="shrink-0 px-4 pt-3">
               <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
+            </div>
+          )}
+          {isExecutionFlagEnabled('whatIfSandbox') && (
+            <div className="shrink-0 px-4 pt-3">
+              <ExecutionWhatIfSandbox
+                baseline={{
+                  healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
+                }}
+              />
             </div>
           )}
           <div className="min-h-0 flex-1">

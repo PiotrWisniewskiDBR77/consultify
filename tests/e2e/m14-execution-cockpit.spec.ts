@@ -76,6 +76,22 @@ test.describe('M14 ExecutionHub cockpit', () => {
     await expect(page.getByTestId('intel-panel')).toHaveCount(0);
   });
 
+  test('What-if sandbox simulates interventions live (flag on)', async ({ page }) => {
+    await page.goto('/implementation?tab=list&view=table&ff_whatIf=1', {
+      waitUntil: 'domcontentloaded',
+    });
+    const panel = page.getByTestId('whatif-panel');
+    await expect(panel).toBeVisible({ timeout: 30000 });
+    // Baseline delta is neutral before any intervention.
+    await expect(page.getByTestId('whatif-health-delta')).toContainText('±0');
+    // Pick an intervention → projection recomputes (health delta becomes non-zero).
+    await page.getByTestId('whatif-interventions').getByText('Zdejmij zakres').click();
+    await expect(page.getByTestId('whatif-health-delta')).not.toContainText('±0', {
+      timeout: 10000,
+    });
+    await expect(page.getByTestId('whatif-health-delta')).toContainText('+');
+  });
+
   test('Timeline (Gantt) renders with the baseline flag on — no crash', async ({ page }) => {
     await page.goto('/implementation?tab=list&view=timeline&ff_ganttBaseline=1', {
       waitUntil: 'domcontentloaded',
