@@ -23,6 +23,10 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { getLinkagesByInitiative } from '../services/v8/financeIntegrationService.js';
+import {
+  getInitiativeFunnel,
+  getInitiativeLineage,
+} from '../services/initiative/initiativeLineageService.js';
 import { proposeCandidates as runPropose } from '../services/initiative/proposeEngineService.js';
 import {
   checkPortfolioMece,
@@ -367,6 +371,63 @@ router.post(
 
     const result = checkPortfolioMece(existing, candidates);
     res.json(result);
+  })
+);
+
+// ==========================================
+// FEATURE 5 — CHAIN OBSERVABILITY (uspójnienie F5.1 + F5.2)
+// ==========================================
+
+/**
+ * GET /api/initiatives/funnel/stats
+ *
+ * F5.2 — org-wide funnel: counts per status, per source_type, and the
+ * created → in-execution → tracking conversion of the whole portfolio.
+ * Read-only, org-scoped. Registered BEFORE /:id/lineage so the literal
+ * "funnel" segment is never captured as an :id.
+ */
+router.get(
+  '/funnel/stats',
+  requireOrgRole('user'),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const funnel = await getInitiativeFunnel(orgId);
+    res.json(funnel);
+  })
+);
+
+/**
+ * GET /api/initiatives/:id/lineage
+ *
+ * F5.1 — the chain for one initiative: source (analysis/insight/idea) →
+ * initiative → execution → results (tracked benefits/KPIs). Read-only,
+ * org-scoped; 404 when the initiative does not resolve in the caller's org.
+ */
+router.get(
+  '/:id/lineage',
+  requireOrgRole('user'),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const initiativeId = String(req.params.id || '');
+    if (!initiativeId) {
+      res.status(400).json({ error: 'id is required' });
+      return;
+    }
+
+    const lineage = await getInitiativeLineage(orgId, initiativeId);
+    if (!lineage) {
+      res.status(404).json({ error: 'Initiative not found' });
+      return;
+    }
+    res.json(lineage);
   })
 );
 
