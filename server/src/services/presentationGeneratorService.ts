@@ -209,6 +209,31 @@ function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
     },
   ];
 
+  // Blank-brief (no source artifacts): a 4-slide stub (cover/exec/key/next) is
+  // too thin for a consulting-grade deck. Lay down the standard narrative arc
+  // — problem → approach → findings → recommendations → roadmap → risks — with
+  // sensible per-slide key messages so downstream content-gen has real anchors
+  // (not "Key message for X" placeholders). When sources ARE present, the
+  // source-driven slides below carry the analytical narrative instead.
+  const pl = setup.language === 'pl';
+  if (!Array.isArray(setup.sourceArtifacts) || setup.sourceArtifacts.length === 0) {
+    const arc: OutlineItem[] = [
+      { intent: 'root_cause', title: pl ? 'Problem i kontekst' : 'Problem & Context',
+        keyMessage: pl ? 'Jaki problem rozwiązujemy i dlaczego teraz' : 'The problem we solve and why now', enabled: true },
+      { intent: 'single_insight', title: pl ? 'Podejście i metodyka' : 'Approach & Methodology',
+        keyMessage: pl ? 'Jak podchodzimy do problemu' : 'How we approach the problem', enabled: true },
+      { intent: 'performance_overview', title: pl ? 'Wyniki i analiza' : 'Findings & Analysis',
+        keyMessage: pl ? 'Co pokazują dane i analiza' : 'What the data and analysis show', enabled: true },
+      { intent: 'recommendation_portfolio', title: pl ? 'Rekomendacje' : 'Recommendations',
+        keyMessage: pl ? 'Co rekomendujemy i dlaczego' : 'What we recommend and why', enabled: true },
+      { intent: 'roadmap', title: pl ? 'Roadmapa wdrożenia' : 'Implementation Roadmap',
+        keyMessage: pl ? 'Plan realizacji w czasie' : 'Phased execution plan', enabled: true },
+      { intent: 'risk_management', title: pl ? 'Ryzyka i mitygacje' : 'Risks & Mitigations',
+        keyMessage: pl ? 'Kluczowe ryzyka i plan ich ograniczenia' : 'Key risks and how we mitigate them', enabled: true },
+    ];
+    items.push(...arc);
+  }
+
   for (const source of setup.sourceArtifacts) {
     switch (source.type) {
       case 'initiative_portfolio':

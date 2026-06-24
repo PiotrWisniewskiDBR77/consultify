@@ -129,7 +129,16 @@ export function planSlides(params: {
     const sourceRefs = matchedSource ? [sourceId(matchedSource)] : [];
     const slideWarnings: string[] = [];
     let fallbackPolicy: SlideRecipe['fallbackPolicy'] = 'keep_with_warning';
-    if (!matchedSource && item.intent !== 'cover' && item.intent !== 'next_steps') {
+    // Only flag a "missing source" gap when the deck DOES reference sources but
+    // none matched this slide. A blank-brief deck (zero sources) is a narrative
+    // deck by design — degrading every analytical slide to a data-gap notice is
+    // noise, not signal.
+    if (
+      sources.length > 0 &&
+      !matchedSource &&
+      item.intent !== 'cover' &&
+      item.intent !== 'next_steps'
+    ) {
       slideWarnings.push('No concrete source artifact matched to this slide.');
       evidenceGaps.push(`${item.title}: missing concrete source artifact`);
       fallbackPolicy = 'degradation_notice';
