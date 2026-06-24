@@ -64,6 +64,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import type {
   CreateInitiativeRequest,
   UpdateInitiativeRequest,
@@ -568,6 +569,29 @@ export class InitiativeController {
       });
       if (!createAccess.allowed) {
         res.status(403).json({ error: createAccess.reason, code: createAccess.code });
+        return;
+      }
+
+      // Uspójnienie F1 — single creation funnel (flag-gated rollout). When enabled,
+      // creation flows through createInitiativeService (one contract, DRAFT default,
+      // name+title). Route already ran validateBody(CreateInitiativeSchema) → validate:false.
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        try {
+          const result = await funnelCreateInitiative(orgId, req.body as Record<string, unknown>, {
+            validate: false,
+            actor: {
+              id: req.user?.id,
+              ip: (req as { ip?: string }).ip,
+              userAgent: (req as { get?: (h: string) => string }).get?.('user-agent'),
+            },
+          });
+          res.json({ id: result.id, name: result.name, message: 'Initiative created' });
+        } catch (e) {
+          const err = e as { statusCode?: number; message?: string };
+          res
+            .status(err?.statusCode || 400)
+            .json({ error: err?.message || 'Failed to create initiative' });
+        }
         return;
       }
 
