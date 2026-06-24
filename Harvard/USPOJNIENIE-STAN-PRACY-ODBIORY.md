@@ -23,14 +23,14 @@
 |--|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|--|
 | 1.1 | `createInitiativeService` — wspólny serwis tworzenia (rdzeń lejka) | F1 | ✅ | ✅ | ✅ 9/9 | ✅ live | N/A | ✅ | N/A | 🟢 ZWERYFIKOWANE LIVE (`6056af9761`) — wpięty w InitiativeController za flagą `INITIATIVE_FUNNEL_ENABLED`; create→DRAFT+name+title, lineage→400 (staging-trolley) |
 | 1.2 | Kanoniczny `CreateInitiativeInput` + Zod (jeden kontrakt pól) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 GOTOWE — `CreateInitiativeInput` + reużyty `CreateInitiativeSchema` (lineage refine + status default DRAFT) jako jedyna brama walidacji |
-| 1.3 | Przekierowanie `economics.routes` → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.4 | Przekierowanie `v8/finance.routes` → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
+| 1.3 | Przekierowanie `economics.routes` → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 redirect done (`8b705703c2`) — 2 INSERTy (financial-analysis + digitization) na lejek, usnięty 'step3'; tsc 0, flag-gated; live-verify per-ścieżka=⬜ |
+| 1.4 | Przekierowanie `v8/finance.routes` → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 redirect done (`8b705703c2`) — insights→inicjatywy na lejek, usnięty 'step3'; tsc 0, flag-gated |
 | 1.5 | Przekierowanie `my-work.routes` (2 ścieżki) → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.6 | Przekierowanie report-builder + reportImport + reportInitiative → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
+| 1.6 | Przekierowanie report-builder + reportImport + reportInitiative → lejek | F1 | 🟡 | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟡 reportImportService→lejek (`8b705703c2`, PENDING_REVIEW zachowany, extra-kolumny post-create); report-builder + reportInitiativeService = pozostają |
 | 1.7 | Przekierowanie assessment-workflow-v2 + assessmentInitiativeService → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 1.8 | Przekierowanie ToolController + ToolInitiativeService → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 1.9 | Przekierowanie pozostałych serwisów (onboarding/notebook/valuation/artifact/cqrs/ai-tools/InitiativeDefinition) → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.10 | `aiActionExecutor`: org_id obowiązkowy + lejek | F1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
+| 1.10 | `aiActionExecutor`: org_id obowiązkowy + lejek | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 redirect done (`8b705703c2`) — org_id WYMUSZONY (lejek + naprawiony też w starej ścieżce); tsc 0 |
 | 1.11 | Normalizacja statusu startowego → `DRAFT` (usnąć step3/PENDING_REVIEW z tworzenia) | F1 | 🟡 | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟡 lejek wymusza DRAFT (zweryfikowane live); usnięcie step3/PENDING_REVIEW w pozostałych ścieżkach po ich redirectach (1.3–1.10) + backfill/CHECK=1.12 |
 | 1.12 | Backfill statusów (staging) + CHECK constraint na `status` | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 1.13 | Ujednolicenie `name`↔`title` (kolumna kanoniczna + backfill + read-compat) | F1 | 🟡 | ✅ | ✅ | ✅ live | N/A | ⬜ | N/A | 🟡 strona-zapisu: lejek pisze name+title (post-insert sync, zweryfikowane live name=title); backfill istniejących wierszy = migracja (z 1.12) |
@@ -62,7 +62,7 @@
 | 5.3 | SoT per domena udokumentowany + deduplikacja kolumn (stage×4→1, ROI×3→1, axis/drd_axis, daty) | F5 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
 | 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 
-**Postęp:** 0/40 zamknięte (8/8) · **2/40 🟢 gotowe** (1.1, 1.2) · 2/40 🟡 częściowe (1.11, 1.13) · 36/40 ⬜ planowane. *(F1 rdzeń lejka żywy + zweryfikowany; następne: redirecty 1.3–1.10.)*
+**Postęp:** **5/40 🟢 gotowe** (1.1, 1.2, 1.3, 1.4, 1.10) · 3/40 🟡 częściowe (1.6, 1.11, 1.13) · 32/40 ⬜ planowane. *(F1: lejek żywy+zweryfikowany; 4 ścieżki przekierowane — naprawione bugi step3/PENDING_REVIEW/org; następne redirecty: 1.5 my-work, 1.7 assessment, 1.8 tool, 1.9 reszta.)*
 
 ---
 
