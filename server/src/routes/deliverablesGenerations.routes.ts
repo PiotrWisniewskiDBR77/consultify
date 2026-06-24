@@ -24,6 +24,12 @@ import {
   status,
 } from '../services/deliverables/deliverablesGenerationService.js';
 import { getDeliverableMetrics } from '../services/deliverables/deliverablesMetricsService.js';
+import {
+  generateBusinessPlan,
+  spineToDeckSlides,
+  spineToDocOutline,
+  spineToTableIntent,
+} from '../services/deliverables/bundleOrchestrator.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import type {
   CreateGenerationRequest,
@@ -250,6 +256,54 @@ router.get('/:id', async (req: any, res: Response) => {
       organizationId: getOrgId(req),
     });
     res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// POST /business-plan — F0: jeden brief → spójny SPINE (źródło prawdy) + wejścia
+// dla B4/B3/B1 (hero-numbers identyczne). Za flagą ENABLE_DELIVERABLES_PREMIUM
+// (OFF → 404, klienci nietknięci). LLM → rate-limit jak inne endpointy AI.
+const BusinessPlanSchema = z.object({
+  brief: z.string().min(20).max(8000),
+  language: z.enum(['pl', 'en']).optional(),
+});
+
+router.post('/business-plan', aiRateLimiter, async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  if (!ensureGenerateCapability(req, res)) return;
+  const parsed = BusinessPlanSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      error: `Invalid brief: ${parsed.error.issues.slice(0, 3).map((i) => i.message).join('; ')}`,
+      code: 'invalid_setup',
+    });
+    return;
+  }
+  try {
+    const spine = await generateBusinessPlan(parsed.data.brief, {
+      orgId: getOrgId(req),
+      preferPremium: true,
+    });
+    if (!spine) {
+      res
+        .status(502)
+        .json({ success: false, error: 'Business plan generation failed', code: 'internal_error' });
+      return;
+    }
+    res.status(200).json({
+      success: true,
+      spine,
+      generatorInputs: {
+        tableIntent: spineToTableIntent(spine),
+        docOutline: spineToDocOutline(spine),
+        deckSlides: spineToDeckSlides(spine),
+      },
+    });
   } catch (err) {
     handleServiceError(res, err);
   }
