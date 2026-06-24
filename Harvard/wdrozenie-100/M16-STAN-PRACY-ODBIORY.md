@@ -38,11 +38,11 @@
 | 2.8 | **Benefit Category Taxonomy** (hard/soft×cost-out/rev-up/WC×run-rate/one-time) | F2 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (3355dbd37d: benefit category taxonomy (hard/soft/run-rate)); wiring route/UI=next |
 | 2.9 | **Leading/Lagging KPI Lineage** (`kpi_kind` + link + ostrzeżenie cockpit) | F2 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (59306469e9: kpiLineageService — leading/lagging early-warning, 6/6); wiring route/UI=next |
 | 3.1 | **Value Bridge Waterfall** (Baseline→Identified→Committed→In-flight→Realized→Banked, flagowy) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (cf39efae0e: valueBridgeService — waterfall, 11/11); UI-binding=next |
-| 3.2 | **Initiative Business-Case Generator** (one-pager NPV/payback/IRR PRZED fundingiem) | F3 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.2 | **Initiative Business-Case Generator** (one-pager NPV/payback/IRR PRZED fundingiem) | F3 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (d7b4e7fef9: businessCaseGeneratorService — one-pager, 14/14); UI-binding=next |
 | 3.3 | **Value Capture Pipeline + Stage-Gates G0-G5** (lejek z bramkami + sign-off + kryteria) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (acc8d22ecb: value-capture pipeline + gates G0-G5, 14/14); UI-binding=next |
 | 3.4 | **Frozen Baseline & Value Ledger** (zamrożony baseline + rejestr korekt z provenance) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (1f01415461: frozen baseline + value ledger, 11/11); UI-binding=next |
 | 3.5 | **Run-rate vs One-time Split + Phasing** (podział + krzywa dojścia do run-rate) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (a0c9f41ece: run-rate split + phasing S-curve, 15/15); UI-binding=next |
-| 3.6 | **Banking the Value (P&L wire)** (zatwierdzona korzyść→budżet następnego okresu) | F3 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (zależy 5.1 variance) |
+| 3.6 | **Banking the Value (P&L wire)** (zatwierdzona korzyść→budżet następnego okresu) | F3 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (49285a5e6f: bankingValueService — P&L wire, 12/12); UI-binding=next |
 | 3.7 | **Value Assurance Dashboard** (atestacja CFO: zwalidowane/provenance/alerty bez-dowodu) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (7603fcf45a: value assurance CFO atestacja, 18/18); UI-binding=next |
 | 4.1 | **Hurdle-Rate per klasa ryzyka** (WACC + premia rdzeń/transformacja/R&D) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (804c2b84a7: capitalDecisionService — hurdle-rate, 20/20); UI-binding=next |
 | 4.2 | **Portfolio Prioritization Board** (bąbelki NPV×ryzyko×nakład, ranking, fund/defer/kill) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (48332488a3: portfolioPrioritizationService — NPV×ryzyko board, 9/9); UI-binding=next |
@@ -65,15 +65,15 @@
 | 7.3 | **Benchmarki branżowe** (`financial_ratio_benchmarks` p25/median/p75 podpięte) | F7 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 7.4 | **Pola inwestycyjne w CreateAnalysisModal** (nakłady/horyzont/stopa/korzyści) | F7 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 8.1 | **AI Anomaly Detector @import** (tie-out break/skok/błędna klasyfikacja) — najtańszy moat | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (9963ec9dee: financeAnomalyDetectorService — reguły anomalii, 12/12); UI-binding=next |
-| 8.2 | **AI Variance Narration** (komentarz CFO z bridge'a) | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 8.3 | **AI Driver-Suggester** (z historii→drzewo driverów+wartości bazowe) | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 8.2 | **AI Variance Narration** (komentarz CFO z bridge'a) | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (7a9cf049be: varianceNarrationService — narracja, 18/18); UI-binding=next |
+| 8.3 | **AI Driver-Suggester** (z historii→drzewo driverów+wartości bazowe) | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (14db9b1fdf: driverSuggesterService — statystyczne drivery, 15/15); UI-binding=next |
 | 8.4 | **NL→Model** (prompt→drzewo driverów+3-statement) | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 8.5 | **Decision Copilot** (co-jeśli→runway/EBITDA/breakeven+trade-off) | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 8.5 | **Decision Copilot** (co-jeśli→runway/EBITDA/breakeven+trade-off) | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (8c1498b82d: decisionCopilotService — what-if trade-off, 10/10); UI-binding=next |
 | 9.1 | Parytet V8-write valuations/budgets (przed retire legacy) | F9 | KONSO | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ (P0 audyt 9) |
 | 9.2 | Deprecation 3 legacy lane'ów + konsolidacja 3 tabel „analiz" + dedup migracji `financial_models` | F9 | KONSO | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ |
 | 9.3 | Testy warstw ryzyka (gating/fallback/silniki/E2E flows) — ZERO→pokrycie | F9 | TESTY | ⬜ | ⬜ | ⬜ | N/A | N/A | N/A | N/A | ⬜ (P0 audyt 10) |
 | 9.4 | Statements: cross-statement tie-out + smart-path human-in-loop + naprawa CF | F9 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (478656757f: crossStatementTieOutService — tie-out P&L↔BS↔CF, 8/8); UI-binding=next |
-| 9.5 | Statements: FX + multi-year + OCR + próg `ready` + uczenie aliasów | F9 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P1 audyt) |
+| 9.5 | Statements: FX + multi-year + OCR + próg `ready` + uczenie aliasów | F9 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (e455b0410d: statementCompletenessService — FX/multi-year/ready, 14/14); UI-binding=next |
 
 **Razem: 48 zadań / 9 fal (F0-F9).** Wszystkie ⬜ (przed startem). Mapa warstw: F1=W0-fundament · F2=W4-złota-nić · F3=W3-wartość · F4=W2-decyzje · F5/F6=W1-planowanie · F7=analizy/inwestycje · F8=W5-AI · F9=konsolidacja+ingestia.
 
