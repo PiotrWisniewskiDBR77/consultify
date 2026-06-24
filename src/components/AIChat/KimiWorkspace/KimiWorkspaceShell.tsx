@@ -287,7 +287,12 @@ function ArtifactPreviewPane({
   const { t } = useTranslation();
   const config = LANE_CONFIG[lane];
   const Icon = config.icon;
-  const usesChatOnlyStart = lane === 'tabele';
+  // Tabele was chat-only (start via the Teresa side-panel) — but that path
+  // navigated back to the gallery instead of generating, leaving the table
+  // impossible to create from the workspace. All other lanes use the center
+  // "Generate" affordance wired to the SAME pipeline.startGeneration, which
+  // works. Give tabele the same working center input + Generate button.
+  const usesChatOnlyStart = false;
   const [activeSheet, setActiveSheet] = useState(0);
   const [goalInput, setGoalInput] = React.useState('');
   const [isStarting, setIsStarting] = React.useState(false);
