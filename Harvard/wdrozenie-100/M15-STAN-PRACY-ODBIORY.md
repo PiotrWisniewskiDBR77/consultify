@@ -23,10 +23,10 @@
 
 | # | Zadanie / funkcjonalność | Fala | Filar | Kod | DoD | Testy | Manual | UI | →F | →UI | Status |
 |--|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|--|
-| 1.1 | **G1**: Handoff M14→M15 widoczny (decyzja a/b/c → `benefits_register`↔`initiative_kpis`) | W1 | P4.3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ P0 — rozłączenie łańcucha |
+| 1.1 | **G1**: Handoff M14→M15 widoczny (most `benefits_register`→`initiative_kpis`) | W1 | P4.3 | ✅ | ✅ | ✅ 4/4 | ✅ E2E 4/4 | ✅ | ✅ | ⬜ | 🟢 GOTOWY+ZWERYFIKOWANE LIVE (`f494c8e593`) — wariant c (most `promoteBenefitToKpi`); M14HandoffInbox w Initiatives (flaga ff_m14Handoff), create→promote→śledzone✓, screenshot |
 | 1.2 | Profil korzyści nad KPI (typ/kategoria/dis-benefit/wiele-KPI/właściciel biznesowy) | W1 | P4.2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 1.3 | Higiena martwego kodu (4 pliki: benefits.routes 2, results-enterprise.routes 2, ResultsSummaryView, OperationalAnalysisView) + ocena folderu Benefits/ | W1 | P14.1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | ⬜ | ⬜ — grep-referencji najpierw |
-| 1.4 | `resultsFeatureFlags.ts` (analog executionFeatureFlags) + live-verify istniejących ścieżek + Playwright `m15-results-cockpit.spec.ts` (baseline KPI/ROI/deviation) | W1 | G5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 1.4 | `resultsFeatureFlags.ts` (analog executionFeatureFlags) + live-verify istniejących ścieżek + Playwright `m15-results-cockpit.spec.ts` (baseline KPI/ROI/deviation) | W1 | G5 | 🟡 | ✅ | ✅ | 🟡 | ⬜ | ⬜ | ⬜ | 🟡 `resultsFeatureFlags` DONE + `m15-results-cockpit.spec.ts` 4/4 (ResultsHub ładuje, inbox, flag-off); rozszerzenie o KPI/ROI/deviation paths = follow-up |
 | 2.1 | Value Driver Tree — model danych (węzły cel/driver/KPI/inicjatywa + krawędzie z wagą) | W2 | P1.1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | ⬜ | ⬜ rdzeń światowy |
 | 2.2 | Driver Tree — sizing bottom-up (KPI delta × `kpi_financial_mappings` → roll-up do celu) | W2 | P1.3 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | ⬜ | ⬜ |
 | 2.3 | Driver Tree — interaktywna wizualizacja (rozwijanie, roll-up, baseline/target/current per węzeł) | W2 | P1.2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
