@@ -25,6 +25,11 @@ const FLAGS = {
     localStorage: 'ff.exec_whatif',
     env: 'VITE_EXEC_WHATIF_ENABLED',
   },
+  rolloutStages: {
+    query: 'ff_rolloutStages',
+    localStorage: 'ff.exec_rollout_stages',
+    env: 'VITE_EXEC_ROLLOUT_STAGES_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;

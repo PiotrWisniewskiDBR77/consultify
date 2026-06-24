@@ -92,6 +92,26 @@ test.describe('M14 ExecutionHub cockpit', () => {
     await expect(page.getByTestId('whatif-health-delta')).toContainText('+');
   });
 
+  test('Rollout stages panel renders the 5-wave progression (flag on)', async ({ page }) => {
+    await page.goto('/implementation?tab=rollout&ff_rolloutStages=1', {
+      waitUntil: 'domcontentloaded',
+    });
+    // Switch to the Master Rollout Plan sub-view where the stages panel lives.
+    const planTab = page.getByRole('button', { name: /master rollout plan/i });
+    await expect(planTab).toBeVisible({ timeout: 30000 });
+    await planTab.click();
+    const panel = page.getByTestId('rollout-stages-panel');
+    await expect(panel).toBeVisible({ timeout: 30000 });
+    // All 5 canonical waves present in the progression.
+    await expect(panel).toContainText('Pilot');
+    await expect(panel).toContainText('Limited');
+    await expect(panel).toContainText('Full');
+    await expect(panel).toContainText('Hypercare');
+    await expect(panel).toContainText('Closure');
+    // The wave grid rendered all 5 columns.
+    await expect(page.getByTestId('rollout-waves').locator('> div')).toHaveCount(5);
+  });
+
   test('Timeline (Gantt) renders with the baseline flag on — no crash', async ({ page }) => {
     await page.goto('/implementation?tab=list&view=timeline&ff_ganttBaseline=1', {
       waitUntil: 'domcontentloaded',
