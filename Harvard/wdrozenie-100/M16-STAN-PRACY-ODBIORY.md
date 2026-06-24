@@ -39,11 +39,11 @@
 | 2.9 | **Leading/Lagging KPI Lineage** (`kpi_kind` + link + ostrzeżenie cockpit) | F2 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (59306469e9: kpiLineageService — leading/lagging early-warning, 6/6); wiring route/UI=next |
 | 3.1 | **Value Bridge Waterfall** (Baseline→Identified→Committed→In-flight→Realized→Banked, flagowy) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (cf39efae0e: valueBridgeService — waterfall, 11/11); UI-binding=next |
 | 3.2 | **Initiative Business-Case Generator** (one-pager NPV/payback/IRR PRZED fundingiem) | F3 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.3 | **Value Capture Pipeline + Stage-Gates G0-G5** (lejek z bramkami + sign-off + kryteria) | F3 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.4 | **Frozen Baseline & Value Ledger** (zamrożony baseline + rejestr korekt z provenance) | F3 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.5 | **Run-rate vs One-time Split + Phasing** (podział + krzywa dojścia do run-rate) | F3 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.3 | **Value Capture Pipeline + Stage-Gates G0-G5** (lejek z bramkami + sign-off + kryteria) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (acc8d22ecb: value-capture pipeline + gates G0-G5, 14/14); UI-binding=next |
+| 3.4 | **Frozen Baseline & Value Ledger** (zamrożony baseline + rejestr korekt z provenance) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (1f01415461: frozen baseline + value ledger, 11/11); UI-binding=next |
+| 3.5 | **Run-rate vs One-time Split + Phasing** (podział + krzywa dojścia do run-rate) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (a0c9f41ece: run-rate split + phasing S-curve, 15/15); UI-binding=next |
 | 3.6 | **Banking the Value (P&L wire)** (zatwierdzona korzyść→budżet następnego okresu) | F3 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (zależy 5.1 variance) |
-| 3.7 | **Value Assurance Dashboard** (atestacja CFO: zwalidowane/provenance/alerty bez-dowodu) | F3 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.7 | **Value Assurance Dashboard** (atestacja CFO: zwalidowane/provenance/alerty bez-dowodu) | F3 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (7603fcf45a: value assurance CFO atestacja, 18/18); UI-binding=next |
 | 4.1 | **Hurdle-Rate per klasa ryzyka** (WACC + premia rdzeń/transformacja/R&D) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (804c2b84a7: capitalDecisionService — hurdle-rate, 20/20); UI-binding=next |
 | 4.2 | **Portfolio Prioritization Board** (bąbelki NPV×ryzyko×nakład, ranking, fund/defer/kill) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (48332488a3: portfolioPrioritizationService — NPV×ryzyko board, 9/9); UI-binding=next |
 | 4.3 | **Risk-Adjusted Value rNPV** (NPV×P(sukces) + leakage haircut) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (804c2b84a7: capitalDecisionService — rNPV haircut, 20/20); UI-binding=next |
@@ -51,9 +51,9 @@
 | 4.5 | **Monte Carlo na NPV** (rozkłady driverów→histogram, P(NPV>0), P10/50/90, VaR) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (8cf688afc8: monteCarloNpvService — seeded MC, 13/13); UI-binding=next |
 | 4.6 | **Real-Options Valuation** (defer/scale/abandon; rekomendacja pilot→bramka→skala) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (997c98e25a: realOptionsService — defer/abandon/staged, 13/13); UI-binding=next |
 | 4.7 | **Efficient Frontier portfela** (wartość vs ryzyko; obecny vs optymalny mix) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (afa8bcd884: efficientFrontierService — wartość vs ryzyko, 12/12); UI-binding=next |
-| 5.1 | **Budget-vs-Actual Variance Bridge** (waterfall plan→actual, F/U, YTD, drill-down) | F5 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 5) |
+| 5.1 | **Budget-vs-Actual Variance Bridge** (waterfall plan→actual, F/U, YTD, drill-down) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (2734a0a093: budget-vs-actual variance bridge, 21/21); UI-binding=next |
 | 5.2 | **Multi-Scenario Compute** (ożywić martwe base/bull/bear — realny compute per-scenariusz) | F5 | FIX | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 1) |
-| 5.3 | **Driver-Tree Planner** (drzewo driverów+formuły→propagacja do 3-statement) | F5 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (fundament FP&A) |
+| 5.3 | **Driver-Tree Planner** (drzewo driverów+formuły→propagacja do 3-statement) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (096b132354: driver-tree planner, 14/14); UI-binding=next |
 | 5.4 | **What-if / Sensitivity real-time + Tornado** (suwaki driverów, przelicz, tornado/data-table) | F5 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 6.1 | **Schedules: Working-Capital + Debt + Depreciation + Tax** (DSO/DPO/DIO, odsetki z salda, amort z PPE, tax=stawka×EBT) | F6 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P1 audyt Models) |
 | 6.2 | **Rolling Forecast Engine** (re-forecast actual+plan, roll-forward, snapshoty) | F6 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
