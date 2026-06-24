@@ -7,7 +7,7 @@
 ## STATUS PRAWDY (2026-06-23, po nocnym przelocie autonomicznym)
 - Żywy moduł = `ExecutionHub` (zakładki Portfolio/Rollout/Raporty/Manager) + Execution Control. Martwy duplikat `Implementation/` usunięty (F0).
 - **F0** P0 ✅ · **F1** rdzeń ✅ · **F2** fundament+wpięcie additive 🟢 · **F3** ✅ · **F4–F8 BACKEND ZBUDOWANY+WPIĘTY** 🟢 (serwisy + route'y + cron).
-- **Backend M14 = KOMPLETNY**: 18 serwisów (15 nowych tej nocy w 3 batchach agentów A/B/C + 3 wcześniej), 5 powierzchni route'ów zamontowanych w Gateway, 2 cron-handlery (flag-gated OFF). tsc 0 (FE+backend), **~330 testów M14 zielonych**, zero regresji. Wszystko na demo. Prod (centerbeam) NIETKNIĘTY.
+- **Backend M14 = KOMPLETNY**: 18 serwisów (15 nowych tej nocy w 3 batchach agentów A/B/C + 3 wcześniej), 5 powierzchni route'ów zamontowanych w Gateway, 2 cron-handlery (flag-gated OFF). tsc 0 (FE+backend, cały backend czysty), **252/252 testów M14 zielonych** (31 plików: `tests/unit/execution/` + 5 zestawów route'ów), zero regresji. Wszystko na demo. Prod (centerbeam) NIETKNIĘTY.
 - **POZOSTAJE (wymaga live-verify w przeglądarce — świadomie NIE robione autonomicznie w nocy):** 4 zadania FE-coupled — **2.4** (swap healthScore avgProgress→EVM: zmienia liczbę w kokpicie), **2.5** (Gantt baseline-vs-actual UI), **7.3** (what-if sandbox UI), **4.3** (upgrade sygnału capacity — dotyka współdzielonego riskDetection/managerProblems). Plus **UI-binding**: FE konsumujący nowe endpointy (route'y żyją, kokpit jeszcze ich nie woła) + głębokie flow-integracje (benefits-handoff w przycisku Closure, readiness/champions w Manager-lane).
 
 ## WIRING — noc 2026-06-23 (autonomicznie)
