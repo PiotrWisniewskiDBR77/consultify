@@ -12,7 +12,7 @@ import type { Response } from 'express';
 
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { getActualCostByInitiative } from '../services/executionBudgetService.js';
-import { derivePortfolioEvm } from '../services/evmService.js';
+import { derivePortfolioEvm, evmScheduleHealth } from '../services/evmService.js';
 import {
   calculateRiskScore,
   categorizeScore,
@@ -107,9 +107,11 @@ interface PortfolioHealthMetrics {
     risk: number;
   };
   initiativeHealth?: InitiativeHealthItem[];
-  // F2 — additive EVM roll-up (SPI/CPI/EAC…). Does not drive healthScore yet
-  // (that swap needs cost actuals + live verification); exposed for the cockpit.
+  // F2 — additive EVM roll-up (SPI/CPI/EAC…). Drives healthScore only when the
+  // M14/2.4 flag (EXECUTION_EVM_HEALTH_ENABLED) is on and SPI coverage exists.
   evm?: ReturnType<typeof derivePortfolioEvm>;
+  // M14/2.4 — true when the execution dimension + healthScore are SPI-driven.
+  evmHealthApplied?: boolean;
 }
 
 export class ExecutionController {
@@ -557,8 +559,21 @@ export class ExecutionController {
         Date.now()
       );
 
+      // M14/2.4 — EVM drives healthScore (flag-gated, default OFF for live safety).
+      // When on AND we have SPI coverage, the execution dimension becomes the PMBOK
+      // schedule-performance read (SPI×100) instead of naive avg-progress, and the
+      // composite healthScore is recomputed. Falls back to avg-progress when SPI is
+      // unknown (no baselines) so the number never goes blank.
+      const evmHealthOn = process.env.EXECUTION_EVM_HEALTH_ENABLED === 'true';
+      const schedHealth = evmScheduleHealth(portfolioEvm?.spi);
+      const evmHealthApplied = evmHealthOn && schedHealth != null;
+      const executionDim = evmHealthApplied ? (schedHealth as number) : avgProgress;
+      const effectiveHealthScore = evmHealthApplied
+        ? Math.round((executionDim + decisionHealth + taskHealth + riskHealth) / 4)
+        : healthScore;
+
       const metrics: PortfolioHealthMetrics = {
-        healthScore,
+        healthScore: effectiveHealthScore,
         onTrackCount,
         atRiskCount,
         blockedCount,
@@ -567,13 +582,14 @@ export class ExecutionController {
         totalDecisions,
         budgetHealth,
         breakdown: {
-          execution: avgProgress,
+          execution: executionDim,
           decisions: decisionHealth,
           capacity: taskHealth,
           risk: riskHealth,
         },
         initiativeHealth,
         evm: portfolioEvm,
+        evmHealthApplied,
       };
 
       res.json(metrics);

@@ -92,6 +92,19 @@ export function computeEvm({ bac, pv, ev, ac }: EvmInputs): EvmResult {
 
 const clamp01 = (n: number): number => Math.max(0, Math.min(1, n));
 
+/**
+ * M14/2.4 — EVM-driven schedule health (0–100) from SPI.
+ *
+ * SPI 1.0 (on schedule) → 100; SPI 0.8 (20% behind) → 80; capped 0–100. This is
+ * the PMBOK schedule-performance read that replaces naive avg-progress in the
+ * portfolio health score when the EXECUTION_EVM_HEALTH flag is on. Returns null
+ * when SPI is unknown (no baseline coverage) so callers can fall back to progress.
+ */
+export function evmScheduleHealth(spi: number | null | undefined): number | null {
+  if (spi == null || !Number.isFinite(spi)) return null;
+  return Math.max(0, Math.min(100, Math.round(spi * 100)));
+}
+
 export interface InitiativeEvmSource {
   bac: number; // cost_capex + cost_opex
   plannedStart?: string | null;

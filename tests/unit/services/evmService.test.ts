@@ -3,7 +3,31 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { computeEvm, deriveInitiativeEvm } from '../../../server/src/services/evmService.js';
+import {
+  computeEvm,
+  deriveInitiativeEvm,
+  evmScheduleHealth,
+} from '../../../server/src/services/evmService.js';
+
+describe('evmScheduleHealth — M14/2.4 SPI-driven health', () => {
+  it('maps SPI 1.0 → 100 (on schedule)', () => {
+    expect(evmScheduleHealth(1)).toBe(100);
+  });
+  it('maps SPI 0.8 → 80 (20% behind)', () => {
+    expect(evmScheduleHealth(0.8)).toBe(80);
+  });
+  it('caps over-performance at 100 (SPI 1.3)', () => {
+    expect(evmScheduleHealth(1.3)).toBe(100);
+  });
+  it('floors at 0 for zero SPI', () => {
+    expect(evmScheduleHealth(0)).toBe(0);
+  });
+  it('returns null when SPI is unknown (no baseline coverage)', () => {
+    expect(evmScheduleHealth(null)).toBeNull();
+    expect(evmScheduleHealth(undefined)).toBeNull();
+    expect(evmScheduleHealth(Number.NaN)).toBeNull();
+  });
+});
 
 describe('computeEvm — ANSI-748 indices', () => {
   it('computes SPI/CPI/variances/EAC for a behind-and-over project', () => {
