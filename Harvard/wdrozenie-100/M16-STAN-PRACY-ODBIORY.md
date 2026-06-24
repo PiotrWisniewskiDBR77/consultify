@@ -26,7 +26,7 @@
 | 1.1 | WACC/CAPM Engine (org SSOT) -> zasila kazdy NPV | F1 | FIX | OK | OK | OK 9/9 | wait | N/A | wait | wait | GREEN backend (3a8e5be920) — WACC 8.94 derived vs flat-12 |
 | 1.2 | **Football Field render** (silnik liczy valueBridge/scenarioComparison — FE dorobić) | F1 | FIX | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 6) |
 | 1.3 | Sensitivity heatmap (fix kontraktu + render) | F1 | FIX | half | OK | OK | wait | wait | wait | wait | half BACKEND matrix-emit DONE (3a8e5be920)+komponent gotowy; FE-render=next |
-| 1.4 | **Server-side finance engine = SSOT** (przenieść NPV/IRR z przeglądarki, audytowalność) | F1 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ |
+| 1.4 | **Server-side finance engine = SSOT** (przenieść NPV/IRR z przeglądarki, audytowalność) | F1 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (9a8761a46c: financeCalcEngine — kanoniczny SSOT, 17/17) |
 | 1.5 | Fix schematu: kategoria `investment` w `financial_analysis_ratios` CHECK (koniec remapu→growth) | F1 | FIX | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (59306469e9: fix CHECK investment (migracja)); wiring route/UI=next |
 | 2.1 | **Living Business Case** (przenieś capex/opex/NPV/IRR z analizy→`roi_assumptions` inicjatywy; NPV on-read) | F2 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (48d47e50c5: livingBusinessCaseService — NPV on-read z realnym WACC, 12/12); wiring route/UI=next |
 | 2.2 | **Initiative-Finance Linkage Workflow** (akcja „Powiąż"→domknięcie „Unlinked 86") | F2 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (szew B) |
@@ -52,7 +52,7 @@
 | 4.6 | **Real-Options Valuation** (defer/scale/abandon; rekomendacja pilot→bramka→skala) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (997c98e25a: realOptionsService — defer/abandon/staged, 13/13); UI-binding=next |
 | 4.7 | **Efficient Frontier portfela** (wartość vs ryzyko; obecny vs optymalny mix) | F4 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (afa8bcd884: efficientFrontierService — wartość vs ryzyko, 12/12); UI-binding=next |
 | 5.1 | **Budget-vs-Actual Variance Bridge** (waterfall plan→actual, F/U, YTD, drill-down) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (2734a0a093: budget-vs-actual variance bridge, 21/21); UI-binding=next |
-| 5.2 | **Multi-Scenario Compute** (ożywić martwe base/bull/bear — realny compute per-scenariusz) | F5 | FIX | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 1) |
+| 5.2 | **Multi-Scenario Compute** (ożywić martwe base/bull/bear — realny compute per-scenariusz) | F5 | FIX | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (5f939bf8f7: scenarioComputeService — multi-scenario, 11/11) |
 | 5.3 | **Driver-Tree Planner** (drzewo driverów+formuły→propagacja do 3-statement) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (096b132354: driver-tree planner, 14/14); UI-binding=next |
 | 5.4 | **What-if / Sensitivity real-time + Tornado** (suwaki driverów, przelicz, tornado/data-table) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (salvaged: whatIfSensitivityService — tornado/data-table/break-even, 17/17); UI-binding=next |
 | 6.1 | **Schedules: Working-Capital + Debt + Depreciation + Tax** (DSO/DPO/DIO, odsetki z salda, amort z PPE, tax=stawka×EBT) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (e4f7e69d05: financeSchedulesService — WC/debt/depr/tax, 10/10); UI-binding=next |
@@ -61,17 +61,17 @@
 | 6.4 | **Cash / Liquidity Forecast** (direct cash, runway, min-cash alerty) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (1084801b17: cashForecastService — direct cash+runway, 10/10); UI-binding=next |
 | 6.5 | **Model versioning UI + diff** (`financial_model_versions` czytelne, audyt założeń) | F6 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 7.1 | **InvestmentAppraisalPanel** (NPV/IRR/MIRR/payback/disc-payback/PI + go/no-go) | F7 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (9cc843619e: investmentAppraisalService — NPV/IRR/MIRR/payback/PI, 15/15); UI-binding=next |
-| 7.2 | **Przepięcie analiz na `ratioAnalysisService`** (34 wsk.+DuPont+ROE/ROA/ROIC+statusy) | F7 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P1 audyt) |
-| 7.3 | **Benchmarki branżowe** (`financial_ratio_benchmarks` p25/median/p75 podpięte) | F7 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 7.2 | **Przepięcie analiz na `ratioAnalysisService`** (34 wsk.+DuPont+ROE/ROA/ROIC+statusy) | F7 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (1beb63854b: extendedRatiosService — ROE/ROA/ROIC/DuPont, 25/25) |
+| 7.3 | **Benchmarki branżowe** (`financial_ratio_benchmarks` p25/median/p75 podpięte) | F7 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (1beb63854b: benchmarkStatus (percentyle) w extendedRatios, 25/25) |
 | 7.4 | **Pola inwestycyjne w CreateAnalysisModal** (nakłady/horyzont/stopa/korzyści) | F7 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 8.1 | **AI Anomaly Detector @import** (tie-out break/skok/błędna klasyfikacja) — najtańszy moat | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (9963ec9dee: financeAnomalyDetectorService — reguły anomalii, 12/12); UI-binding=next |
 | 8.2 | **AI Variance Narration** (komentarz CFO z bridge'a) | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (7a9cf049be: varianceNarrationService — narracja, 18/18); UI-binding=next |
 | 8.3 | **AI Driver-Suggester** (z historii→drzewo driverów+wartości bazowe) | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (14db9b1fdf: driverSuggesterService — statystyczne drivery, 15/15); UI-binding=next |
-| 8.4 | **NL→Model** (prompt→drzewo driverów+3-statement) | F8 | NOWA-AI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 8.4 | **NL→Model** (prompt→drzewo driverów+3-statement) | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (c3a03c68bd: nlToModelService — NL→model parser, 10/10) |
 | 8.5 | **Decision Copilot** (co-jeśli→runway/EBITDA/breakeven+trade-off) | F8 | NOWA-AI | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (8c1498b82d: decisionCopilotService — what-if trade-off, 10/10); UI-binding=next |
-| 9.1 | Parytet V8-write valuations/budgets (przed retire legacy) | F9 | KONSO | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ (P0 audyt 9) |
+| 9.1 | Parytet V8-write valuations/budgets (przed retire legacy) | F9 | KONSO | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (route: financeValueRoutes — V8 endpointy wartości zamontowane /api/v8/finance-value, 7/7) |
 | 9.2 | Deprecation 3 legacy lane'ów + konsolidacja 3 tabel „analiz" + dedup migracji `financial_models` | F9 | KONSO | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ |
-| 9.3 | Testy warstw ryzyka (gating/fallback/silniki/E2E flows) — ZERO→pokrycie | F9 | TESTY | ⬜ | ⬜ | ⬜ | N/A | N/A | N/A | N/A | ⬜ (P0 audyt 10) |
+| 9.3 | Testy warstw ryzyka (gating/fallback/silniki/E2E flows) — ZERO→pokrycie | F9 | TESTY | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (09e0271f9a: testy gatingu+fallbacku finance, 13/13) |
 | 9.4 | Statements: cross-statement tie-out + smart-path human-in-loop + naprawa CF | F9 | DOMKN | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (478656757f: crossStatementTieOutService — tie-out P&L↔BS↔CF, 8/8); UI-binding=next |
 | 9.5 | Statements: FX + multi-year + OCR + próg `ready` + uczenie aliasów | F9 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (e455b0410d: statementCompletenessService — FX/multi-year/ready, 14/14); UI-binding=next |
 
