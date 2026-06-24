@@ -128,7 +128,8 @@ export function buildMarketSizing(input: BusinessPlanInput): MarketSizing {
     sam: { value: m.samValue, unit: m.unit, provenance: prov(input, 'sam', 'build top-down→segment') },
     som: { value: m.somValue, unit: m.unit, derivedFromGtm: true, provenance: prov(input, 'som', 'build GTM+capacity') },
     bottomUp: { value: Math.round(bottomUp), unit: m.unit, formula: `${m.bottomUpCustomers} klientów × ${m.bottomUpArpu} ${m.unit}` },
-    reconciliation: { topDown: m.tamTopDown, bottomUp: Math.round(bottomUp), gapPct: Math.round(gapPct * 100) / 100, reconciled: gapPct <= 0.15 },
+    // triangulacja: bottom-up build vs SOM (oba = realnie zdobywalne); spójne z gapPct.
+    reconciliation: { topDown: Math.round(ref), bottomUp: Math.round(bottomUp), gapPct: Math.round(gapPct * 100) / 100, reconciled: gapPct <= 0.15 },
   };
 }
 
@@ -165,9 +166,9 @@ export function buildAssumptionRegistry(input: BusinessPlanInput): Assumption[] 
 export function validateAssumptions(input: BusinessPlanInput): AntiPatternFinding[] {
   const out: AntiPatternFinding[] = [];
   const m = input.market;
-  // TAM bez źródła (lub tylko top-down bez bottom-up)
+  // TAM całkiem bez źródła → TWARDY gate (§A6/F3.1): blokuje + pętla naprawcza wymusza źródło.
   if (!m.tamSource || !m.tamSource.trim()) {
-    out.push({ pattern: 'tam_unsourced_or_topdown_only', severity: 'flag', detail: 'TAM bez źródła', ref: 'market.tam' });
+    out.push({ pattern: 'tam_unsourced_or_topdown_only', severity: 'reject', detail: 'TAM bez źródła — niedopuszczalne dla inwestora', ref: 'market.tam' });
   }
   // "1% wielkiego rynku" — SOM ≈ płaski ułamek TAM zamiast z buildu (heurystyka: SOM/TAM bardzo małe i okrągłe)
   if (m.tamTopDown > 0) {

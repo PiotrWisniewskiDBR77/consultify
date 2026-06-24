@@ -86,10 +86,13 @@ describe('AssumptionsModel — market sizing + anty-wzorce', () => {
     expect(m.reconciliation.reconciled).toBe(true); // 600 vs SOM 600
   });
 
-  it('TAM bez źródła → flaga anty-wzorca', () => {
+  it('TAM bez źródła → TWARDY gate (reject) blokuje walidację SPINE (F3.1)', () => {
     const bad = input(); bad.market.tamSource = '';
     const found = validateAssumptions(bad);
-    expect(found.some((f) => f.pattern === 'tam_unsourced_or_topdown_only')).toBe(true);
+    const tam = found.find((f) => f.pattern === 'tam_unsourced_or_topdown_only');
+    expect(tam?.severity).toBe('reject');
+    // reject propaguje do bramki SPINE
+    expect(buildSpine(bad).validation.passed).toBe(false);
   });
 
   it('"1% rynku" (SOM ≈ 1% TAM) → flaga', () => {
