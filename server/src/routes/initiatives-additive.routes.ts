@@ -25,6 +25,10 @@ import { validateBody } from '../middleware/validation.middleware.js';
 import { getLinkagesByInitiative } from '../services/v8/financeIntegrationService.js';
 import { proposeCandidates as runPropose } from '../services/initiative/proposeEngineService.js';
 import {
+  checkPortfolioMece,
+  type MeceExistingInitiative,
+} from '../services/initiative/portfolioMeceService.js';
+import {
   createSuggestedChange,
   listSuggestedChanges,
   resolveSuggestedChange,
@@ -273,6 +277,96 @@ router.post(
     }
 
     res.json({ candidates });
+  })
+);
+
+// ==========================================
+// FEATURE 4 — PORTFOLIO MECE CHECK (uspójnienie F3.7)
+// ==========================================
+
+const ValidatePortfolioMeceSchema = z.object({
+  candidates: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(2000),
+        description: z.string().max(20000).optional().nullable(),
+        goalKey: z.string().max(255).optional().nullable(),
+      })
+    )
+    .min(1)
+    .max(50),
+});
+
+/**
+ * POST /api/initiatives/validate-portfolio-mece
+ *
+ * Validate a batch of candidate initiatives against the org's EXISTING portfolio
+ * for MECE (overlaps + goalKey coverage gaps). Loads the existing initiatives
+ * org-scoped, runs the pure {@link checkPortfolioMece}, returns the verdict.
+ * Advisory only — never mutates anything.
+ */
+router.post(
+  '/validate-portfolio-mece',
+  requireOrgRole('user'),
+  validateBody(ValidatePortfolioMeceSchema),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    let existing: MeceExistingInitiative[] = [];
+    try {
+      const rows = await queryHelpers.queryAll(
+        `SELECT id,
+                COALESCE(title, name, '') AS title,
+                COALESCE(summary, '')     AS summary,
+                COALESCE(goal_key, '')    AS goal_key
+           FROM initiatives
+          WHERE organization_id = ?
+            AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'ARCHIVED')
+          LIMIT 500`,
+        [orgId]
+      );
+      existing = (rows as any[]).map((r) => ({
+        id: String(r.id),
+        title: String(r.title || ''),
+        summary: String(r.summary || ''),
+        goalKey: String(r.goal_key || '') || undefined,
+      }));
+    } catch {
+      // Schema drift (e.g. no goal_key column) → fall back to title/summary only,
+      // so the check still runs (overlaps by similarity) instead of 500-ing.
+      try {
+        const rows = await queryHelpers.queryAll(
+          `SELECT id,
+                  COALESCE(title, name, '') AS title,
+                  COALESCE(summary, '')     AS summary
+             FROM initiatives
+            WHERE organization_id = ?
+              AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'ARCHIVED')
+            LIMIT 500`,
+          [orgId]
+        );
+        existing = (rows as any[]).map((r) => ({
+          id: String(r.id),
+          title: String(r.title || ''),
+          summary: String(r.summary || ''),
+        }));
+      } catch {
+        existing = [];
+      }
+    }
+
+    const candidates = (req.body.candidates as any[]).map((c) => ({
+      title: String(c.title || ''),
+      description: c.description ?? undefined,
+      goalKey: c.goalKey ?? undefined,
+    }));
+
+    const result = checkPortfolioMece(existing, candidates);
+    res.json(result);
   })
 );
 

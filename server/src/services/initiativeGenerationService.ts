@@ -506,11 +506,14 @@ export class InitiativeGenerationService {
       }
 
       // ADVISORY second pass (§B4/§B6): score the freshly generated content so the
-      // human reviewer sees a quality verdict BEFORE accepting. Opt-in (withReview)
-      // to keep the default generate path single-call/cheap. Failures are swallowed
-      // — the reviewer is informational and must never break generation.
+      // human reviewer sees a quality verdict BEFORE accepting. Reviewer §B4 is
+      // DEFAULT ON (uspójnienie F3.8) — quality verdict on every generation; pass
+      // { withReview: false } explicitly to opt out (single-call/cheap path).
+      // Failures are swallowed — the reviewer is informational and must never break
+      // generation.
+      const withReview = options?.withReview !== false;
       let review: SectionReviewResult | undefined;
-      if (options?.withReview) {
+      if (withReview) {
         try {
           review = await this.reviewSectionContent(sectionKey, content, {
             language: isPolish ? 'pl' : 'en',
