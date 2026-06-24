@@ -55,12 +55,12 @@
 | 5.2 | **Multi-Scenario Compute** (ożywić martwe base/bull/bear — realny compute per-scenariusz) | F5 | FIX | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 1) |
 | 5.3 | **Driver-Tree Planner** (drzewo driverów+formuły→propagacja do 3-statement) | F5 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (096b132354: driver-tree planner, 14/14); UI-binding=next |
 | 5.4 | **What-if / Sensitivity real-time + Tornado** (suwaki driverów, przelicz, tornado/data-table) | F5 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6.1 | **Schedules: Working-Capital + Debt + Depreciation + Tax** (DSO/DPO/DIO, odsetki z salda, amort z PPE, tax=stawka×EBT) | F6 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P1 audyt Models) |
-| 6.2 | **Rolling Forecast Engine** (re-forecast actual+plan, roll-forward, snapshoty) | F6 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6.3 | **Headcount / Workforce Planner** (per-rola salary/ramp/loaded→OPEX+cash) | F6 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6.4 | **Cash / Liquidity Forecast** (direct cash, runway, min-cash alerty) | F6 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 6.1 | **Schedules: Working-Capital + Debt + Depreciation + Tax** (DSO/DPO/DIO, odsetki z salda, amort z PPE, tax=stawka×EBT) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (e4f7e69d05: financeSchedulesService — WC/debt/depr/tax, 10/10); UI-binding=next |
+| 6.2 | **Rolling Forecast Engine** (re-forecast actual+plan, roll-forward, snapshoty) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (6270d33ded: rollingForecastService — re-forecast, 12/12); UI-binding=next |
+| 6.3 | **Headcount / Workforce Planner** (per-rola salary/ramp/loaded→OPEX+cash) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (cee03307ac: headcountPlannerService — workforce/OPEX, 14/14); UI-binding=next |
+| 6.4 | **Cash / Liquidity Forecast** (direct cash, runway, min-cash alerty) | F6 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (1084801b17: cashForecastService — direct cash+runway, 10/10); UI-binding=next |
 | 6.5 | **Model versioning UI + diff** (`financial_model_versions` czytelne, audyt założeń) | F6 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 7.1 | **InvestmentAppraisalPanel** (NPV/IRR/MIRR/payback/disc-payback/PI + go/no-go) | F7 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P0 audyt 3) |
+| 7.1 | **InvestmentAppraisalPanel** (NPV/IRR/MIRR/payback/disc-payback/PI + go/no-go) | F7 | NOWA | OK | OK | OK | wait | N/A | wait | wait | GREEN serwis+test (9cc843619e: investmentAppraisalService — NPV/IRR/MIRR/payback/PI, 15/15); UI-binding=next |
 | 7.2 | **Przepięcie analiz na `ratioAnalysisService`** (34 wsk.+DuPont+ROE/ROA/ROIC+statusy) | F7 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (P1 audyt) |
 | 7.3 | **Benchmarki branżowe** (`financial_ratio_benchmarks` p25/median/p75 podpięte) | F7 | DOMKN | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 7.4 | **Pola inwestycyjne w CreateAnalysisModal** (nakłady/horyzont/stopa/korzyści) | F7 | NOWA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
