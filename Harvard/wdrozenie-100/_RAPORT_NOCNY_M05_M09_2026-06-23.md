@@ -18,7 +18,7 @@
 |---|---|---|
 | **M05 Hub (kontekst)** | 11 scenariuszy API + IDOR security | ✅ wszystkie zielone (dowód Network) |
 | **M06 Mind Map** | 26 pass / 4 skip / 0 fail | ✅ = poziom handoffu |
-| **M07 Process Flow** | 20-24 pass / ~1 skip / 7-10 fail **FLAKY** | ⚠️ narzędzie OK (diag); suite flaky przez AI ghost-nodes → recalibracja test-infra |
+| **M07 Process Flow** | **29-30/31** ✅ (po recalibracji REAL_NODE — sąsiednia sesja 2026-06-24) | ✅ recalibracja domknięta; resztkowy MC-07-01 = znany reload/hydrate race (osobny bug) |
 | **M08 Table** | 29 pass / 1 skip / 0 fail | ✅ NAPRAWIONE (auth seedPageAuth; było 0/30) |
 | **M09 Whiteboard** | 28 pass / 1 skip / 1 fail | ✅ = poziom handoffu (1 fail = AI deepseek) |
 
@@ -107,8 +107,20 @@ Jedyny fail MC-09-17 (Context menu → AI Expand, REAL-AI) = AI-flakiness (deeps
 - AI w workspace (przez CASES): expand/gap/suggestions endpointy zdrowe (curl 200), wiring poprawny; flakiness = AI-router (deepseek), nie Ideas.
 - Grafika: 4 plansze (po 30 miniatur/moduł) zregenerowane z realnych przebiegów = wizualny dowód renderu narzędzi (light, bo dist domyślnie). Montaże: `tests/e2e/screenshots/cases/_montage_m0{6,7,8,9}.png`.
 
-**Odroczone (nie zrobione tej nocy — wymaga osobnego przebiegu):**
-- Konwersja idea→6 outputów (initiative/task/decision/report/presentation/tool/notebook) end-to-end z dowodem — częściowo w CASES (batch-convert), nie pełny matrix.
+**Konwersja idea→output (DOROBIONE 2026-06-24, API na :3007 — dowód Network):**
+`POST /api/my-work/my-ideas/:id/convert` · 6 żywych targetów (`LIVE_CONVERT_TARGETS`):
+| Target | Wynik |
+|---|---|
+| initiative | ✅ 200 |
+| task_set | ✅ 200 |
+| decision | ✅ 200 |
+| team_chat | ✅ 200 |
+| report | ✅ 200 (outputId) |
+| presentation | ⚠️ **501** — `getTableColumns('presentations')` pusty → guard „Presentations table not available". **Schema-drift caboose** (brak tabeli `presentations`; `reports` jest), NIE luka kodu — handler zaimplementowany, działa na zmigrowanym DB. Potwierdzone z mapą (nie content-dependent). |
+
+**Finding dla Piotra:** tabela `presentations` brakuje na caboose (staging) → konwersja idea→prezentacja 501 na staging. Sprawdzić migrację `presentations` na caboose/prod. Wzorzec [[finding_staging_schema_drift_v8_404]].
+
+**Odroczone (wymaga osobnego przebiegu):**
 - Ścieżki cross-module FE (Czat→Idea, Notebook→Idea, Ideas→Inicjatywy/Canvas/Outputs) — UI-driven, nie pokryte API-sweepem.
 - Pary dark+light per ekran — plansze są w trybie domyślnym (light); osobny przebieg dark do zrobienia.
 - Pełny matrix TESTY_M0X (~481 scenariuszy manualnych) — pokryte CASES (121) + M05 API; reszta manualna odroczona.
@@ -124,6 +136,8 @@ Jedyny fail MC-09-17 (Context menu → AI Expand, REAL-AI) = AI-flakiness (deeps
 4. **[TEST-INFRA] m07 CASES vs AI ghost-nodes** — exact-count asercje niedeterministyczne gdy AI ON (ghost-nodes). Recalibracja: wykluczyć ghosty (`data-id^="ghost-"`) z liczenia / zakresy / E2E-flag wyłączający ghosty. DECYZJA: czy ghost-nodes domyślnie ON (UX+determinizm).
 5. **[PRODUKT-UX drobne] Process Flow auto-zoom scale-3** → nowe węzły lądują poza ekranem (user musi fitView). Rozważyć auto-pan/niższy maxZoom.
 6. **[ENV] Demo down (502)** całą noc — Droga A (potwierdzenie sprzedażowego demo) NIEWYKONANA; poll 3h czuwa. Do powtórzenia gdy demo wróci.
+7. **[SCHEMA-DRIFT] tabela `presentations` brak na caboose** → konwersja idea→prezentacja zwraca 501 na staging (5/6 innych konwersji działa). Handler OK, brakuje migracji. Sprawdzić caboose/prod.
+8. **[BUILD] workqueue.routes.ts** — NAPRAWIONE w tej sesji (stub przywrócony, commit `115df88d32`, serwer wstaje z źródła). Pełna impl żyje w worktree `loving-easley` do świadomego wprowadzenia.
 
 **Otwarte z handoffu (bez zmian):** #3 i18n (Faza 4), tool-mount race (MyWorkHub:1386), M07-28 (DP-5 cut), deploy fixu AI `06326decfe` na prod.
 
