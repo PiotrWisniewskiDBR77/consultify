@@ -4,10 +4,21 @@
 >
 > Dokumenty siostrzane: `M14-PLAN.md` (master-plan), `M14-DOKTRYNA-NARZEDZI-2026-06-23.md` (cele+metodologia), `M14-RAPORT-BRAKOW-RYNEK-2026-06-23.md` (braki+rynek), `M14-AUDYT-AUTONOMICZNY-2026-06-23.md` (stan po przelocie).
 
-## STATUS PRAWDY (2026-06-23)
+## STATUS PRAWDY (2026-06-23, po nocnym przelocie autonomicznym)
 - Żywy moduł = `ExecutionHub` (zakładki Portfolio/Rollout/Raporty/Manager) + Execution Control. Martwy duplikat `Implementation/` usunięty (F0).
-- **F0** P0 ✅ · **F1** rdzeń ✅ (zdeployowane demo) · **F2** fundament+wpięcie additive 🟢 · **F3** 3/5 🟡 · **F4–F8** ⬜ planowane.
-- Backend w większości REALNY+DB-backed. tsc 0 (FE+backend), 66/66 testów M14, zero regresji. Prod (centerbeam) nietknięty.
+- **F0** P0 ✅ · **F1** rdzeń ✅ · **F2** fundament+wpięcie additive 🟢 · **F3** ✅ · **F4–F8 BACKEND ZBUDOWANY+WPIĘTY** 🟢 (serwisy + route'y + cron).
+- **Backend M14 = KOMPLETNY**: 18 serwisów (15 nowych tej nocy w 3 batchach agentów A/B/C + 3 wcześniej), 5 powierzchni route'ów zamontowanych w Gateway, 2 cron-handlery (flag-gated OFF). tsc 0 (FE+backend), **~330 testów M14 zielonych**, zero regresji. Wszystko na demo. Prod (centerbeam) NIETKNIĘTY.
+- **POZOSTAJE (wymaga live-verify w przeglądarce — świadomie NIE robione autonomicznie w nocy):** 4 zadania FE-coupled — **2.4** (swap healthScore avgProgress→EVM: zmienia liczbę w kokpicie), **2.5** (Gantt baseline-vs-actual UI), **7.3** (what-if sandbox UI), **4.3** (upgrade sygnału capacity — dotyka współdzielonego riskDetection/managerProblems). Plus **UI-binding**: FE konsumujący nowe endpointy (route'y żyją, kokpit jeszcze ich nie woła) + głębokie flow-integracje (benefits-handoff w przycisku Closure, readiness/champions w Manager-lane).
+
+## WIRING — noc 2026-06-23 (autonomicznie)
+**5 powierzchni route'ów zamontowanych w `Gateway.ts`** (48/48 testów integracyjnych, tsc 0):
+- `/api/rollout-ext` → stages (5.1) · baselines (5.3) · cutover (5.4) · gate/evaluate (5.2)
+- `/api/execution-analytics` → predict (7.1) · triage (7.2) · dependencies/analyze (8.1) · capacity/analyze (4.1/4.2)
+- `/api/benefits-register` → benefits + handoff M14→M15 (6.1)
+- `/api/raid-governance` → assumption/issue (8.2) · PIR (8.5) · champions (6.6)
+- `/api/report-pdf` → PDF download (8.4) · cadence/due (6.3)
+
+**2 cron-handlery (`ExecutionReportCron.ts`, oba flag-gated OFF, fail-safe per-org):** job34 cadence (6.3) · job35 distribution (6.2).
 
 ## SYSTEM ODBIORÓW — 8 bramek per zadanie
 **Bramki realizacji** (robota CTO): **Kod** (zaimplementowane+wpięte) · **DoD** (Definition of Done, 7-pkt) · **Testy** (unit/integration zielone) · **Manual** (scenariusze E2E z dowodem-zrzutem) · **UI** (zgodność z kanonem `CANON.md`/§27).
@@ -35,28 +46,28 @@
 | 3.3 | SLA decyzji per-priority | F3 | ✅ | ✅ | ✅ 3/3 | 0/2 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`06486bd3af`) |
 | 3.4 | Eskalacja prawdziwa (`escalated_to`+notyfikacja sponsora) | F3 | ✅ | ✅ | ✅ 2/2 | 0/1 | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`bfda88d252`) — sponsor+CRITICAL notify; Exception Report→F5 |
 | 3.5 | Tolerancje per inicjatywa | F3 | 🟡 | ✅ | ✅ 5/5 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`7db34f5d11`: initiativeToleranceService czysty); wpięcie w sygnały=follow-up |
-| 4.1 | Model alokacji/dostępności per inicjatywa | F4 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`1fa83759b7`: capacityModelService); wiring route/UI=follow-up |
-| 4.2 | Capacity vs demand + resource heatmap | F4 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`1fa83759b7`: capacityModelService); wiring route/UI=follow-up |
+| 4.1 | Model alokacji/dostępności per inicjatywa | F4 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`1fa83759b7`: capacityModelService); route LIVE (POST /api/execution-analytics/capacity/analyze), UI-binding=follow-up |
+| 4.2 | Capacity vs demand + resource heatmap | F4 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`1fa83759b7`: capacityModelService); route LIVE (POST /api/execution-analytics/capacity/analyze), UI-binding=follow-up |
 | 4.3 | Upgrade sygnału capacity (z modelowania) | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
-| 5.1 | `rollout_stages` (pilot→limited→full→hypercare→closure) + entry/exit | F5 | 🟡 | ✅ | ✅ 14/14 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`b1c997d8af`: rollout_stages+service); wiring route/UI=follow-up |
+| 5.1 | `rollout_stages` (pilot→limited→full→hypercare→closure) + entry/exit | F5 | 🟡 | ✅ | ✅ 14/14 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`b1c997d8af`: rollout_stages+service); route LIVE (/api/rollout-ext/stages), UI-binding=follow-up |
 | 5.2 | Cross-register gate (KPI∧Risk∧Closure → Go/Kill/Hold) | F5 | 🟡 | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`3478509abb`: rolloutGateService czysty); wpięcie po rollout_stages(5.1) |
-| 5.3 | Baseline/rebaseline planu | F5 | 🟡 | ✅ | ✅ 10/10 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`9f9ed12e60`: rolloutBaselineService); wiring route/UI=follow-up |
-| 5.4 | Cutover runbook + rollback triggers | F5 | 🟡 | ✅ | ✅ 11/11 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`4bc93a4388`: cutoverRunbookService); wiring route/UI=follow-up |
+| 5.3 | Baseline/rebaseline planu | F5 | 🟡 | ✅ | ✅ 10/10 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`9f9ed12e60`: rolloutBaselineService); route LIVE (/api/rollout-ext/baselines), UI-binding=follow-up |
+| 5.4 | Cutover runbook + rollback triggers | F5 | 🟡 | ✅ | ✅ 11/11 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`4bc93a4388`: cutoverRunbookService); route LIVE (/api/rollout-ext/cutover), UI-binding=follow-up |
 | 5.5 | Change Log „automatic" + lekki RFC/CAB | F5 | 🟡 | ✅ | ✅ 9/9 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`fd8ae53e6f`: changeControlService); wiring route/UI=follow-up |
-| 6.1 | Handoff M14→M15 (Benefits Register: owner/KPI/baseline/target/cadence) | F6 | 🟡 | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`a2b8ce3d0b`: benefitsRegisterService); wiring route/UI=follow-up |
-| 6.2 | Email-worker + audyt dostarczenia (1 serwis dla raportów+komunikacji) | F6 | 🟡 | ✅ | ✅ 4/4 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`2fa5fbd632`: executionDistributionService); wiring route/UI=follow-up |
-| 6.3 | Scheduler kadencji (node-cron → auto-DRAFT, human-in-loop) | F6 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`5ef6b1b1fc`: reportCadenceService); wiring route/UI=follow-up |
+| 6.1 | Handoff M14→M15 (Benefits Register: owner/KPI/baseline/target/cadence) | F6 | 🟡 | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`a2b8ce3d0b`: benefitsRegisterService); route LIVE (/api/benefits-register + /handoff/:initiativeId), UI-binding=follow-up |
+| 6.2 | Email-worker + audyt dostarczenia (1 serwis dla raportów+komunikacji) | F6 | 🟡 | ✅ | ✅ 4/4 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`2fa5fbd632`: executionDistributionService); route LIVE (cron job35 (distribution, flag OFF)), UI-binding=follow-up |
+| 6.3 | Scheduler kadencji (node-cron → auto-DRAFT, human-in-loop) | F6 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`5ef6b1b1fc`: reportCadenceService); route LIVE (/api/report-pdf/cadence/due + cron job34 (flag OFF)), UI-binding=follow-up |
 | 6.4 | Narracja raportów przez AI (grounded) + `reportRegistry.ts` SSOT | F6 | 🟡 | ✅ | ✅ 13/13 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`reportRegistry`: reportRegistry SSOT); wiring route/UI=follow-up |
 | 6.5 | ADKAR roll-up (reaktywacja engine z `_backup`, A/D/K/A/R, <3=barrier) | F6 | 🟡 | ✅ | ✅ 8/8 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`543c39a14b`: peopleChangeReadinessService); wiring route/UI=follow-up |
-| 6.6 | Champions/change-agent network + spięcie sentiment→Manager lane | F6 | 🟡 | ✅ | ✅ 8/8 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`41f756a8ea`: changeChampionsService); wiring route/UI=follow-up |
+| 6.6 | Champions/change-agent network + spięcie sentiment→Manager lane | F6 | 🟡 | ✅ | ✅ 8/8 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`41f756a8ea`: changeChampionsService); route LIVE (/api/raid-governance/champions), UI-binding=follow-up |
 | 7.1 | Heurystyczna predykcja ryzyka/opóźnień (na EVM+slip-trend) | F7 | 🟡 | ✅ | ✅ 5/5 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis done (`b2b192362d`: executionPredictionService czysty); wpięcie w sygnały/UI=follow-up |
-| 7.2 | Grounded AI triage (cytuje sygnał) + auto-priorytetyzacja | F7 | 🟡 | ✅ | ✅ 11/11 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`f5cc66692a`: executionTriageService); wiring route/UI=follow-up |
+| 7.2 | Grounded AI triage (cytuje sygnał) + auto-priorytetyzacja | F7 | 🟡 | ✅ | ✅ 11/11 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`f5cc66692a`: executionTriageService); route LIVE (POST /api/execution-analytics/triage), UI-binding=follow-up |
 | 7.3 | What-if sandbox (health + capacity) + dry-run interwencji | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ pozostaje |
-| 8.1 | Dependency model + graf + detekcja cykli/kaskady | F8 | ✅ | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`27450c2a8a`) — raidDependencyService (czyste); wpięcie do RAID-routes pozostaje |
-| 8.2 | Assumption validation + Issue linked_items + SLA | F8 | 🟡 | ✅ | ✅ 10/10 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`0b3cbab70d`: raidGovernanceService); wiring route/UI=follow-up |
+| 8.1 | Dependency model + graf + detekcja cykli/kaskady | F8 | ✅ | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟢 DEPLOYED (`27450c2a8a`) — raidDependencyService (czyste); ALSO route LIVE (POST /api/execution-analytics/dependencies/analyze); UI-binding follow-up |
+| 8.2 | Assumption validation + Issue linked_items + SLA | F8 | 🟡 | ✅ | ✅ 10/10 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`0b3cbab70d`: raidGovernanceService); route LIVE (/api/raid-governance/raid/*), UI-binding=follow-up |
 | 8.3 | 5×5 matryca + EMV + heatmap inherent/residual | F8 | 🟡 | ✅ | ✅ 4/4 | N/A | N/A | ⬜ | ⬜ | 🟡 scoring done (`bb3fa0a0ea`: EMV+5×5+residual additive); heatmap inherent/residual wpięcie pozostaje |
-| 8.4 | Server PDF raportów (audit trail) | F8 | 🟡 | ✅ | ✅ 4/4 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`8586d7bb76`: reportPdfService); wiring route/UI=follow-up |
-| 8.5 | PIR jako artefakt (lessons learned) | F8 | 🟡 | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟡 serwis+test done (`59dd032bc0`: pirService); wiring route/UI=follow-up |
+| 8.4 | Server PDF raportów (audit trail) | F8 | 🟡 | ✅ | ✅ 4/4 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`8586d7bb76`: reportPdfService); route LIVE (GET /api/report-pdf/:reportId/pdf), UI-binding=follow-up |
+| 8.5 | PIR jako artefakt (lessons learned) | F8 | 🟡 | ✅ | ✅ 6/6 | N/A | N/A | ⬜ | ⬜ | 🟢 serwis+route LIVE (`59dd032bc0`: pirService); route LIVE (/api/raid-governance/pir), UI-binding=follow-up |
 
 **Postęp programu:** 35 zadań · **8 GOTOWE code-side** (0.1–3.3, zdeployowane demo, czekają →F/→UI) · **0 ZAMKNIĘTYCH 8/8** (brak →F/→UI Piotra) · **27 pozostaje** (F2 reszta 3 · F3 reszta 2 · F4 3 · F5 5 · F6 6 · F7 3 · F8 5). Manual gate globalnie 0/~50 (E2E real-data jak M13 = osobny przebieg). Ekrany: 1 (`f1-cockpit-health-ssot`).
 
