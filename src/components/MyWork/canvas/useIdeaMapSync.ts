@@ -410,6 +410,12 @@ export function useIdeaMapSync({
     if (!open) return;
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && queuedPayloadRef.current) {
+        // M07 reload-race fix (2026-06-24): persist the draft SYNCHRONOUSLY first.
+        // The keepalive POST below is best-effort and can be dropped under load; a
+        // synchronous localStorage write always survives teardown, so the next mount
+        // recovers the latest nodes via resolveIdeaMapHydration even if the POST never
+        // lands. Without this, edits made <draftMs before backgrounding were lost.
+        persistDraft(queuedPayloadRef.current, true);
         // M06 L-05: page may be backgrounded/closed — keepalive so the flush lands.
         void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
       }
@@ -421,6 +427,13 @@ export function useIdeaMapSync({
     };
     const handleBeforeUnload = () => {
       if (queuedPayloadRef.current) {
+        // M07 reload-race fix (2026-06-24): synchronous draft write BEFORE the keepalive
+        // POST. On a hard reload (F5) the React unmount cleanup does NOT run, and the
+        // keepalive flush can be dropped under load — so without this the user's most
+        // recent nodes (added <draftMs before reload) were gone after the reload. The
+        // localStorage write is synchronous and completes before navigation; the next
+        // mount recovers them via resolveIdeaMapHydration.
+        persistDraft(queuedPayloadRef.current, true);
         // M06 L-05: document is unloading — a plain fetch would be cancelled; keepalive survives.
         void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
       }
@@ -443,7 +456,7 @@ export function useIdeaMapSync({
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [flushNow, open]);
+  }, [flushNow, open, persistDraft]);
 
   useEffect(() => {
     return () => {

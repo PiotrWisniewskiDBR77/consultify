@@ -923,7 +923,26 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     setLoading(true);
     setLoadError(null);
     try {
-      const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
+      // M07 reload-race fix (2026-06-24): retry the map GET on transient failure.
+      // The nodes ARE on the server (the autosave already landed — useIdeaMapSync is
+      // single-flight + 409-self-healing), so a reload that lands during caboose
+      // latency / cold-start must NOT blank the canvas to [] on the first timeout
+      // (that was the "0 nodes after reload" symptom). Fetch-with-backoff, then hydrate.
+      let res: any = null;
+      let lastErr: any = null;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
+          lastErr = null;
+          break;
+        } catch (e) {
+          lastErr = e;
+          if (attempt < 2) {
+            await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+          }
+        }
+      }
+      if (lastErr) throw lastErr;
       const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
       const map = hydration.map || {};
       primeServerVersion(Number(map?.version || 1));
