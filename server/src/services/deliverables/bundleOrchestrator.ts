@@ -186,6 +186,12 @@ export function spineToDocPlan(spine: BusinessPlanSpine) {
   const heroes = (keys: string[]) => keys.map(hero).filter(Boolean).join('; ');
   const pnlRows = spine.financials.pnl.map((p) => ({ rok: p.period, przychod: p.revenue, ebitda: p.ebitda, marza: p.revenue > 0 ? Math.round(p.ebitda / p.revenue * 100) + '%' : '0%' }));
   const market = spine.market;
+  // defensibility (§A10/B11/F3.4)
+  const lastScenarioEbitda = (s: 'base' | 'bull' | 'bear') => { const arr = spine.financials.scenarios[s]?.pnl; return arr?.[arr.length - 1]?.ebitda ?? 'n/d'; };
+  const defensibilityRows = spine.assumptions
+    .slice()
+    .sort((a, b) => b.sensitivityRank - a.sensitivityRank)
+    .map((a) => ({ zalozenie: a.label, wartosc: `${a.base}${a.unit}`, zrodlo: a.provenance.source, zakres: `${a.range[0]}–${a.range[1]}`, ranga: a.sensitivityRank }));
 
   // recepta bloków per typ sekcji (block types z ALLOWED_BLOCK_TYPES)
   const recipe: Record<string, Array<{ type: string; hint: string }>> = {
@@ -205,10 +211,17 @@ export function spineToDocPlan(spine: BusinessPlanSpine) {
       { type: 'table', hint: `Model 3-letni: ${JSON.stringify(pnlRows)}` },
       { type: 'chart', hint: `Przychód i EBITDA 3 lata: ${JSON.stringify(spine.financials.pnl.map((p) => ({ rok: p.period, przychod: p.revenue, ebitda: p.ebitda })))}` },
       { type: 'paragraph', hint: `Interpretacja: trajektoria do rentowności, break-even ${spine.financials.breakEven.ebitdaPositivePeriod ?? 'n/d'}.` },
+      // defensibility (§B11/F3.4): scenariusze base/bull/bear EBITDA ostatniego roku
+      { type: 'callout', hint: `Scenariusze (EBITDA ${spine.financials.pnl[spine.financials.pnl.length - 1]?.period}): base ${lastScenarioEbitda('base')}; bull ${lastScenarioEbitda('bull')}; bear ${lastScenarioEbitda('bear')}. Base = konserwatywny.` },
     ],
     unit_economics: [{ type: 'kpi_strip', hint: `Unit-econ: ${heroes(['ltv_cac', 'cac_payback'])}` }, { type: 'paragraph', hint: `LTV/CAC, payback, NRR ${spine.financials.kpis.nrr}%, Rule of 40 ${spine.financials.kpis.ruleOf40}.` }],
     team: [{ type: 'paragraph', hint: 'Zespół: dlaczego wygrywa, unikalne dopasowanie do problemu.' }],
-    risks: [{ type: 'risk_table', hint: 'Rejestr 4-5 ryzyk: ryzyko, prawdopodobieństwo, wpływ, mitygacja, właściciel.' }, { type: 'callout', hint: 'Ryzyko krytyczne z planem mitygacji.' }],
+    risks: [
+      { type: 'risk_table', hint: 'Rejestr 4-5 ryzyk: ryzyko, prawdopodobieństwo, wpływ, mitygacja, właściciel.' },
+      { type: 'callout', hint: 'Ryzyko krytyczne z planem mitygacji.' },
+      // defensibility appendix (§A10): założenia ze źródłem, zakresem i rangą sensitivity
+      { type: 'table', hint: `Appendix obronności założeń (założenie/wartość/źródło/zakres/ranga sensitivity), posortowane po wpływie: ${JSON.stringify(defensibilityRows)}` },
+    ],
     ask: [{ type: 'kpi_strip', hint: `Ask: ${hero('ask')}` }, { type: 'paragraph', hint: `Use of funds: alokacja, kamienie milowe, runway. ${spine.meta.ask}` }],
     roadmap: [{ type: 'paragraph', hint: 'Roadmapa: fazy do końca horyzontu.' }, { type: 'numbered_list', hint: 'Kamienie milowe etapami.' }],
   };

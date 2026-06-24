@@ -70,6 +70,18 @@ describe('BundleOrchestrator — buildSpine', () => {
     expect(s.validation.antiPatterns.some((a) => a.pattern === 'revenue_ramp_without_cac')).toBe(true);
   });
 
+  it('raport ma defensibility appendix: scenariusze base/bull/bear + tabela założeń (F3.4)', async () => {
+    const { spineToDocPlan } = await import('../../../server/src/services/deliverables/bundleOrchestrator');
+    const plan = spineToDocPlan(buildSpine(input()));
+    const fin = plan.sections.find((s) => s.title.includes('Przychód'));
+    expect(fin?.blocks.some((b) => b.hint.includes('Scenariusze') && b.hint.includes('base') && b.hint.includes('bear'))).toBe(true);
+    const risks = plan.sections.find((s) => s.blocks.some((b) => b.hint.includes('obronności założeń')));
+    expect(risks).toBeTruthy();
+    // appendix niesie źródło i zakres (obrona due-diligence)
+    const appendix = risks!.blocks.find((b) => b.hint.includes('obronności założeń'));
+    expect(appendix?.hint).toContain('źródło');
+  });
+
   it('deck: sekcje rynkowe/finansowe reużywają tabelę, produktowe wymagają grafiki (§E4)', () => {
     const slides = spineToDeckSlides(buildSpine(input()));
     const market = slides.find((sl) => sl.intent === 'performance_overview');
