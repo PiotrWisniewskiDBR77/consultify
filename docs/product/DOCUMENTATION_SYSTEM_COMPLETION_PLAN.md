@@ -97,3 +97,24 @@
 
 ## Stałe ograniczenia
 Flaga OFF=byte-identyczne (klienci nietknięci) · harnessy PROD-safe (staging only) · commity chirurgiczne na `deliverables/` (branch współdzielony) · PROD = osobna zgoda.
+
+---
+
+## STATUS realizacji — 2026-06-24 (build autonomiczny)
+Zakres rundy: **F0–F3 pełna jakość** (decyzja Piotra); F4 osobno po walidacji.
+
+| Zadanie | Status | Dowód |
+|---|---|---|
+| F0.1 Route `POST /deliverables/business-plan` (za flagą, fail-open) | ✅ | tsc; `deliverablesGenerations.routes.ts` |
+| F0.2 `generateBundle` runtime (brief→SPINE→B4/B3/B1, fail-soft) | ✅ | live 3/3 artefakty; `bundleGenerationRuntime.ts` |
+| F1.1 Bundle → realne **DOCX + XLSX** | ✅ | 4/4 testy (PK-zip >2KB); `bundleExportRuntime.ts` |
+| F3.1 Twardy gate `tam_unsourced` + spójna triangulacja | ✅ | testy; `assumptionsModel.ts` |
+| F3.4 Defensibility appendix (scenariusze + założenia ze źródłem) | ✅ | test; `spineToDocPlan` |
+| **199/199 testów deliverables, tsc czysty, flaga OFF, PROD nietknięty** | ✅ | commity c3ec6e18ae→bc3cd15da1 |
+
+**Pozostało (heavy / wymaga środowiska):**
+- F0.3 FE entry (przycisk/komenda) — buildowalne, ale **weryfikacja wymaga żywego stagingu** (nie buduję „na ślepo").
+- F1.2 **PPTX** render — wymaga pipeline'u składania decka z planów B1 (cięższe).
+- F2.2 PPTX honor composition · F2.4 auto-render grafik (nano-banana — **brak GEMINI key w stagingu**, fallback Unsplash).
+- F3.2 auto-TOC + cross-refs (feature renderera DOCX).
+- F2.1 head-to-head wizualny + F0.5 deploy + F5 odbiory — **⛔ wymagają decyzji/akcji Piotra** (deploy, demo-org, klucze, prod).
