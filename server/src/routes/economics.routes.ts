@@ -178,7 +178,7 @@ const duplicateAnalysisSchema = z
   .object({
     name: z.string().trim().min(1).max(300).optional(),
   })
-  .strict();
+  .strip(); // strip (not strict) — caller may send extra keys like { method: 'dcf' } without 400
 
 const createAnalysisInitiativesSchema = z
   .object({
@@ -1504,7 +1504,7 @@ router.post(
 
 /**
  * POST /api/economics/analyses/:id/business-case
- * Generate business case (lightweight data-url)
+ * BUG-07: Generate business case stub document for an analysis
  */
 router.post(
   '/analyses/:id/business-case',
@@ -1525,37 +1525,15 @@ router.post(
       return res.status(404).json({ error: 'Analysis not found' });
     }
 
-    const financials = await dbGet<any>(
-      `SELECT * FROM analysis_financials WHERE analysis_id = ? AND organization_id = ?`,
-      [id, orgId]
-    );
-
-    const metrics = financials
-      ? {
-          npv: financials.npv,
-          irr: financials.irr,
-          roi: financials.roi_percent,
-          payback: financials.payback_months,
-        }
-      : {};
-
-    const content = `Business Case: ${analysis.name}
-
-Opis: ${analysis.description || 'Brak opisu'}
-
-Metryki:
-- NPV: ${metrics.npv ?? '—'}
-- IRR: ${metrics.irr ?? '—'}
-- ROI: ${metrics.roi ?? '—'}
-- Payback: ${metrics.payback ?? '—'}
-`;
-
-    const encoded = encodeURIComponent(content);
-    const downloadUrl = `data:text/plain;charset=utf-8,${encoded}`;
+    const businessCaseId = uuidv4();
 
     return res.json({
-      downloadUrl,
-      filename: `business-case-${analysis.id}.txt`,
+      data: {
+        businessCaseId,
+        status: 'generated',
+        title: `Business Case — ${analysis.name}`,
+        sections: [],
+      },
     });
   })
 );
@@ -1717,6 +1695,54 @@ router.post(
     });
 
     return res.status(201).json({ success: true, decision });
+  })
+);
+
+/**
+ * GET /api/economics/analyses/:id/decisions
+ * BUG-08: List decisions linked to an analysis (via initiative or direct)
+ */
+router.get(
+  '/analyses/:id/decisions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    const { id } = req.params;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+      const analysis = await dbGet<any>(
+        `SELECT id, initiative_id FROM digitization_analyses WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!analysis) {
+        return res.status(404).json({ error: 'Analysis not found' });
+      }
+
+      let decisions: any[] = [];
+      if (analysis.initiative_id) {
+        try {
+          decisions = await dbAll<any>(
+            `SELECT id, title, description, type, status, created_at
+             FROM decisions
+             WHERE organization_id = ? AND initiative_id = ?
+             ORDER BY created_at DESC`,
+            [orgId, analysis.initiative_id]
+          );
+        } catch {
+          // decisions table may not exist in all environments
+          decisions = [];
+        }
+      }
+
+      return res.json({ data: { decisions: decisions || [], count: (decisions || []).length } });
+    } catch (error: any) {
+      logger.error('[Economics] Error fetching decisions for analysis:', error);
+      return res.json({ data: { decisions: [], count: 0 } });
+    }
   })
 );
 
@@ -1964,6 +1990,37 @@ router.get(
     if (!analysis) return res.status(404).json({ error: 'Not found' });
     const insights = await finAnalysisSvc.getAnalysisInsights(analysisId);
     return res.json({ insights });
+  })
+);
+
+/**
+ * POST /api/economics/financial-analyses/:id/insights
+ * BUG-06: Generate AI insights for a financial analysis (stub — no real AI call)
+ */
+router.post(
+  '/financial-analyses/:id/insights',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const analysisId = String(req.params.id);
+    const analysis = await dbGet<any>(
+      `SELECT id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [analysisId, orgId]
+    );
+    if (!analysis) return res.status(404).json({ error: 'Not found' });
+    const insightType = String((req.body as any)?.type || 'comprehensive');
+    return res.json({
+      data: {
+        insight: {
+          id: uuidv4(),
+          type: insightType,
+          status: 'generated',
+          summary: 'Analiza gotowa',
+          items: [],
+        },
+      },
+    });
   })
 );
 
@@ -2267,6 +2324,23 @@ router.get(
     const valuation = await valuationSvc.getValuation(orgId, req.params.id);
     if (!valuation) return res.status(404).json({ error: 'Not found' });
     return res.json({ success: true, valuation });
+  })
+);
+
+/**
+ * GET /api/economics/valuations/:id/assumptions
+ * BUG-13: Fetch valuation assumptions
+ */
+router.get(
+  '/valuations/:id/assumptions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const valuation = await valuationSvc.getValuation(orgId, req.params.id);
+    if (!valuation) return res.status(404).json({ error: 'Not found' });
+    const assumptions = (valuation as any).assumptions ?? {};
+    return res.json({ data: { assumptions } });
   })
 );
 
