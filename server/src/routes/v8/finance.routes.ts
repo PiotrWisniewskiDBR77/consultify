@@ -607,6 +607,47 @@ router.delete(
   })
 );
 
+/** GET /models/:modelId/versions — list all saved versions of a model (audit trail). */
+router.get(
+  '/models/:modelId/versions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const { FinanceEnterpriseService } = await import(
+      '../../services/financeEnterpriseService.js'
+    );
+    const svc = new FinanceEnterpriseService();
+    const versions = await svc.getModelVersions(organizationId, modelId);
+    return res.json({ data: { versions, count: versions.length }, meta: financeMeta() });
+  })
+);
+
+/** GET /models/:modelId/versions/diff?from=id1&to=id2 — assumption diff between two versions. */
+router.get(
+  '/models/:modelId/versions/diff',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const from = String(req.query.from || '');
+    const to = String(req.query.to || '');
+    if (!from || !to) {
+      return res.status(400).json({ error: 'from and to version IDs are required' });
+    }
+    if (!modelId) {
+      return res.status(400).json({ error: 'modelId is required' });
+    }
+    const { FinanceEnterpriseService } = await import(
+      '../../services/financeEnterpriseService.js'
+    );
+    const svc = new FinanceEnterpriseService();
+    const diff = await svc.compareVersions(organizationId, from, to);
+    if (!diff) {
+      return res.status(404).json({ error: 'One or both versions not found' });
+    }
+    return res.json({ data: { diff }, meta: financeMeta() });
+  })
+);
+
 router.get(
   '/valuations',
   asyncHandler(async (req: AuthRequest, res: Response) => {

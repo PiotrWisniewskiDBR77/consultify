@@ -22,7 +22,10 @@ import { z } from 'zod';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import { getLinkagesByInitiative } from '../services/v8/financeIntegrationService.js';
+import {
+  createEconomicsLinkage,
+  getLinkagesByInitiative,
+} from '../services/v8/financeIntegrationService.js';
 import {
   getInitiativeFunnel,
   getInitiativeLineage,
@@ -236,6 +239,53 @@ router.get(
     }));
 
     res.json({ links, items: links });
+  })
+);
+
+/**
+ * POST /api/initiatives/:initiativeId/economics-links
+ *
+ * Create a finance ↔ initiative linkage ("Powiąż" action in FinanceHub).
+ * Body: { financeModelRef, linkageType?, status? }
+ * financeModelRef = any finance entity ref string (model id, analysis id, etc.)
+ */
+const CreateLinkageSchema = z.object({
+  financeModelRef: z.string().min(1).max(500),
+  linkageType: z
+    .enum(['financial_model', 'budget', 'analysis', 'valuation', 'investment_case'])
+    .optional()
+    .default('financial_model'),
+  status: z.enum(['not_started', 'in_progress', 'complete']).optional().default('not_started'),
+});
+
+router.post(
+  '/:initiativeId/economics-links',
+  requireOrgRole('user'),
+  validateBody(CreateLinkageSchema),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const initiativeId = String(req.params.initiativeId || '');
+    if (!initiativeId) {
+      res.status(400).json({ error: 'initiativeId is required' });
+      return;
+    }
+    if (!(await initiativeExistsInOrg(initiativeId, orgId))) {
+      res.status(404).json({ error: 'Initiative not found' });
+      return;
+    }
+    const { financeModelRef, linkageType, status } = req.body as z.infer<typeof CreateLinkageSchema>;
+    const linkage = await createEconomicsLinkage({
+      organizationId: orgId,
+      initiativeId,
+      financeModelRef,
+      linkageType,
+      status,
+    });
+    res.status(201).json({ linkage });
   })
 );
 
