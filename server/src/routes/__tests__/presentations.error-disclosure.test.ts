@@ -1,4 +1,6 @@
 /**
+ * @vitest-environment node
+ *
  * M19 Presentations — ERROR-RESPONSE INFO-DISCLOSURE contract tests.
  *
  * Axis: raw error text must NOT leak into 5xx response bodies. A handler that

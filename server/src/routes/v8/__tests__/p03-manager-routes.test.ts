@@ -32,6 +32,7 @@ const mockGetExecutionControlTowerQueues = vi.fn();
 const mockGetExecutionControlTowerItemDetail = vi.fn();
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
+const mockDbGet = vi.fn();
 
 const mockGetManagerProblems = vi.fn();
 const mockExecuteManagerProblemAction = vi.fn();
@@ -72,7 +73,7 @@ vi.mock('../../../services/v8ExecutionControlTowerService.js', () => ({
 vi.mock('../../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
-  get: vi.fn().mockResolvedValue(null),
+  get: (...args: unknown[]) => mockDbGet(...args),
 }));
 vi.mock('../../../middleware/permission.middleware.js', () => ({
   requirePermission: () => (_req: unknown, _res: unknown, next: () => void) => next(),
@@ -174,6 +175,7 @@ describe('P03 — manager cockpit routes', () => {
     mockGetExecutionControlTowerItemDetail.mockResolvedValue(null);
     mockDbAll.mockResolvedValue([]);
     mockDbRun.mockResolvedValue({ changes: 1 });
+    mockDbGet.mockResolvedValue(null);
 
     mockGetManagerProblems.mockResolvedValue([
       { id: 'p1', severity: 'warning', title: 'Test', actions: [] },
@@ -273,6 +275,8 @@ describe('P03 — manager cockpit routes', () => {
   });
 
   it('POST .../execute returns 200', async () => {
+    // decision lookup must resolve so the route doesn't 404
+    mockDbGet.mockResolvedValueOnce({ id: 'dec-1' });
     const app = createApp();
     const res = await request(app).post(`${LANE_BASE}/execute`).send({ decisionId: 'dec-1' });
     expect(res.status).toBe(200);

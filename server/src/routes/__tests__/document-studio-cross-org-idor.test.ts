@@ -36,6 +36,16 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockDbAll = vi.fn();
+const mockDbRun = vi.fn();
+const mockDbGet = vi.fn();
+
+vi.mock('../../utils/DbPromise.js', () => ({
+  all: (...args: unknown[]) => mockDbAll(...args),
+  run: (...args: unknown[]) => mockDbRun(...args),
+  get: (...args: unknown[]) => mockDbGet(...args),
+}));
+
 import { __resetApprovalServiceForTests } from '../../services/documentStudio/documentApprovalService.js';
 import { __resetAssetRegistryForTests } from '../../services/documentStudio/documentAssetRegistryService.js';
 import { __resetAudienceProfileServiceForTests } from '../../services/documentStudio/documentAudienceProfileService.js';
@@ -93,6 +103,9 @@ function asAttacker(role = 'OWNER'): void {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockDbAll.mockResolvedValue([]);
+  mockDbRun.mockResolvedValue({ rowCount: 0, success: true });
+  mockDbGet.mockResolvedValue(null);
   __resetSourcePackRegistryForTests();
   __resetBrandVoiceServiceForTests();
   __resetAudienceProfileServiceForTests();
