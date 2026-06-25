@@ -63,7 +63,7 @@ router.get(
     )) as Array<{ id: string; name: string }>) || [];
 
     const kpis = ((await dbAll(
-      `SELECT id, name, category, current_value, target_value, baseline_value, progress_percentage
+      `SELECT id, name, category, current_value, target_value, baseline_value
        FROM initiative_kpis WHERE organization_id = ?`,
       [orgId]
     )) as Array<{
@@ -73,7 +73,6 @@ router.get(
       current_value: number | null;
       target_value: number | null;
       baseline_value: number | null;
-      progress_percentage: number | null;
     }>) || [];
 
     const mappings = ((await dbAll(
@@ -102,14 +101,13 @@ router.get(
       value: null,
     }));
 
-    // Build kpi→driver edges (kpi as child contributing to its driver parent)
-    const kpiToDriverEdges = kpis
-      .filter((k) => mappings.some((m) => String(m.kpi_id) === String(k.id)))
-      .map((k) => {
-        const cat = k.category?.toLowerCase().trim() || '__other__';
-        const driverId = categoryToDriverId.get(cat)!;
-        return { kpiId: String(k.id), driverId };
-      });
+    // ALL KPIs connect to their category's driver node.
+    // Initiative→KPI edges are for display only; value rollup uses KPI's own current_value.
+    const kpiToDriverEdges = kpis.map((k) => {
+      const cat = k.category?.toLowerCase().trim() || '__other__';
+      const driverId = categoryToDriverId.get(cat)!;
+      return { kpiId: String(k.id), driverId };
+    });
 
     const input: BuildTreeInput = {
       objectives: syntheticObjectives,
@@ -139,15 +137,20 @@ router.get(
     // driver→objective edges are added automatically when objectives.length > 0
     const { nodes: rawNodes, edges: rawEdges } = buildTreeFromMappings(input);
 
-    // BUG-18: roll up values bottom-up
-    const rolledNodes = rollUpTree(rawNodes, rawEdges);
+    // BUG-18: KPI current_value is the meaningful metric; initiatives have no monetary value.
+    // Roll up only through objective→driver→KPI edges so KPI current_value propagates upward.
+    // Initiative→KPI edges are kept in rawEdges for visualization but excluded from rollup.
+    const rollupEdges = rawEdges.filter((e) => {
+      const fromNode = rawNodes.find((n) => n.id === e.fromId);
+      return fromNode?.type !== 'initiative';
+    });
 
-    // BUG-18: attach confidence to KPI nodes (progress_percentage / 100)
+    const rolledNodes = rollUpTree(rawNodes, rollupEdges);
+
+    // BUG-18: confidence per KPI = current/target ratio (capped at 1)
     const progressByKpiId = new Map<string, number>();
     for (const k of kpis) {
-      if (k.progress_percentage != null) {
-        progressByKpiId.set(String(k.id), Number(k.progress_percentage) / 100);
-      } else if (k.current_value != null && k.target_value != null && k.target_value !== 0) {
+      if (k.current_value != null && k.target_value != null && k.target_value !== 0) {
         progressByKpiId.set(String(k.id), Math.min(Number(k.current_value) / Number(k.target_value), 1));
       }
     }
