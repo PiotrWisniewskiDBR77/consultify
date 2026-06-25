@@ -4,7 +4,17 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
+
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 const tMock = (key: string, fallbackOrOptions?: string | Record<string, unknown>, maybeOptions?: Record<string, unknown>) => {
   const fallback = typeof fallbackOrOptions === 'string' ? fallbackOrOptions : undefined;
@@ -48,14 +58,10 @@ import { V8PartnerApi } from '@/services/api/v8';
 import { ROUTES } from '@/routes/routeConfig';
 import { ProviderHomeView } from '@/views/partner/ProviderHomeView';
 
-function LocationProbe() {
-  const location = useLocation();
-  return <div data-testid="location-probe">{`${location.pathname}${location.search}`}</div>;
-}
-
 describe('ProviderHomeView CTA authority', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockReset();
     vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValue({
       status: {
         termsAccepted: false,
@@ -71,7 +77,6 @@ describe('ProviderHomeView CTA authority', () => {
     render(
       <MemoryRouter initialEntries={['/partner']}>
         <ProviderHomeView />
-        <LocationProbe />
       </MemoryRouter>
     );
 
@@ -81,24 +86,30 @@ describe('ProviderHomeView CTA authority', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Review terms' }));
 
-    expect(screen.getByTestId('location-probe')).toHaveTextContent(ROUTES.PARTNER.ONBOARDING);
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(ROUTES.PARTNER.ONBOARDING);
+    });
   });
 
   it('uses honest hero CTAs for onboarding and partner docs', async () => {
     render(
       <MemoryRouter initialEntries={['/partner']}>
         <ProviderHomeView />
-        <LocationProbe />
       </MemoryRouter>
     );
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Open onboarding' })[0]);
-    expect(screen.getByTestId('location-probe')).toHaveTextContent(ROUTES.PARTNER.ONBOARDING);
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(ROUTES.PARTNER.ONBOARDING);
+    });
 
+    mockNavigate.mockReset();
     fireEvent.click(screen.getByRole('button', { name: 'Open partner docs' }));
-    expect(screen.getByTestId('location-probe')).toHaveTextContent(
-      '/docs/consultify-partner-program/partner-program-overview'
-    );
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/docs/consultify-partner-program/partner-program-overview'
+      );
+    });
   });
 
   it('shows the shared partner lifecycle canon inside onboarding surfaces', async () => {

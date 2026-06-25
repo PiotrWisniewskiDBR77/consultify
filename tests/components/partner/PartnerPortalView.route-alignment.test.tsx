@@ -9,6 +9,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import i18n from '../../../src/i18n';
 
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 vi.mock('../../../src/services/api', () => ({
   Api: {
     get: vi.fn(),
@@ -36,6 +46,7 @@ function LocationProbe() {
 describe('PartnerPortalView route alignment', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockReset();
 
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === '/api/partners/connection') {
@@ -67,14 +78,16 @@ describe('PartnerPortalView route alignment', () => {
     render(
       <MemoryRouter initialEntries={['/partner/resources']}>
         <I18nextProvider i18n={i18n}>
-          <LocationProbe />
           <PartnerPortalViewNew />
         </I18nextProvider>
       </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('location')).toHaveTextContent('/partner?tab=documentation');
+      expect(mockNavigate).toHaveBeenCalledWith(
+        expect.objectContaining({ pathname: '/partner', search: expect.stringContaining('tab=documentation') }),
+        expect.objectContaining({ replace: true })
+      );
     });
   });
 });

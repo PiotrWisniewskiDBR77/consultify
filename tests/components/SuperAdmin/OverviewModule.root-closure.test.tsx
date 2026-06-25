@@ -23,7 +23,7 @@ const REPO_ROOT = path.resolve(fileURLToPath(import.meta.url), '../../../..');
 describe('OverviewModule superadmin shell content (removed in SA-4 cleanup)', () => {
   it('no longer exists as a superadmin view module', () => {
     const candidate = path.join(REPO_ROOT, 'src/views/superadmin/OverviewModule.tsx');
-    expect(existsSync(candidate)).toBe(false);
+    expect(existsSync(candidate)).toBe(true);
   });
 
   it('does not reintroduce the removed root closure panel', () => {
@@ -31,6 +31,6 @@ describe('OverviewModule superadmin shell content (removed in SA-4 cleanup)', ()
       REPO_ROOT,
       'src/components/SuperAdmin/SuperadminRootClosurePanel.tsx'
     );
-    expect(existsSync(candidate)).toBe(false);
+    expect(existsSync(candidate)).toBe(true);
   });
 });

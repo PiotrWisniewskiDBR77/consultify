@@ -7,6 +7,31 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/components/ReportsAndPresentations/useDeliverableTemplates', () => ({
+  useDeliverableTemplates: (type: any) => {
+    const TEMPLATES: Record<string, any[]> = {
+      deck: [
+        { id: 'board-deck', name: 'Board deck', description: null, isBlank: false, isSystem: true, type: 'deck' },
+        { id: 'diagnostic', name: 'Diagnostic read-out', description: null, isBlank: false, isSystem: true, type: 'deck' },
+      ],
+      table: [
+        { id: 'risk-register', name: 'Risk register', description: null, isBlank: false, isSystem: true, type: 'table' },
+        { id: 'kpi-dashboard', name: 'KPI dashboard', description: null, isBlank: false, isSystem: true, type: 'table' },
+      ],
+      doc: [
+        { id: 'audit-report', name: 'Audit report', description: null, isBlank: false, isSystem: true, type: 'doc' },
+        { id: 'exec-memo', name: 'Executive memo', description: null, isBlank: false, isSystem: true, type: 'doc' },
+      ],
+    };
+    const mapped = type === 'presentation' ? 'deck' : type === 'report' ? 'doc' : (type ?? '');
+    return { templates: TEMPLATES[mapped] ?? [], loading: false, error: null };
+  },
+}));
+
+vi.mock('@/components/ReportsAndPresentations/useTemplateSuggestion', () => ({
+  useTemplateSuggestion: () => ({ suggestion: null, loading: false, suggest: vi.fn(), reset: vi.fn() }),
+}));
+
 import { OutputsLauncherModal } from '@/components/ReportsAndPresentations/OutputsLauncherModal';
 
 vi.mock('react-i18next', () => ({

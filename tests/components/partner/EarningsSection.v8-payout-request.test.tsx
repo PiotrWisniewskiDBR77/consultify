@@ -127,7 +127,7 @@ describe('EarningsSection V8 payout request seam', () => {
 
     await waitFor(() => {
       expect(screen.getByText('ACME GmbH')).toBeInTheDocument();
-      expect(screen.getByText('approved')).toBeInTheDocument();
+      expect(screen.getByText('Approved')).toBeInTheDocument();
     });
 
     expect(V8PartnerApi.getCommissionTransactions).toHaveBeenCalled();
@@ -181,7 +181,7 @@ describe('EarningsSection V8 payout request seam', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Legacy Org')).toBeInTheDocument();
-      expect(screen.getByText('pending')).toBeInTheDocument();
+      expect(screen.getByText('Pending')).toBeInTheDocument();
     });
 
     expect(Api.get).toHaveBeenCalledWith('/api/partners/commission-transactions');

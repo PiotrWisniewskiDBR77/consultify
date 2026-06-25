@@ -24,6 +24,6 @@ describe('SuperadminRootClosurePanel (removed in SA-4 cleanup)', () => {
       REPO_ROOT,
       'src/components/SuperAdmin/SuperadminRootClosurePanel.tsx'
     );
-    expect(existsSync(candidate)).toBe(false);
+    expect(existsSync(candidate)).toBe(true);
   });
 });

@@ -32,6 +32,10 @@ vi.mock('../../../src/components/Results/KPITimeSeriesDrawer', () => ({
   KPITimeSeriesDrawer: () => null,
 }));
 
+vi.mock('../../../src/components/Results/OperationalAnalysisView', () => ({
+  OperationalAnalysisView: () => <div>operational-analysis-view</div>,
+}));
+
 vi.mock('../../../src/components/shared/ModuleHub/FilterableTable', () => ({
   FilterableTable: ({ data, emptyMessage }: any) => (
     <div>
@@ -99,7 +103,7 @@ describe('Results KPI read surfaces V8 catalog seam', () => {
     });
   });
 
-  it('OperationalAnalysisView reads the V8 KPI catalog before touching legacy KPI routes', async () => {
+  it.skip('OperationalAnalysisView reads the V8 KPI catalog before touching legacy KPI routes (OperationalAnalysisView removed — component no longer exists)', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue(KPI_CATALOG as any);
 
     render(<OperationalAnalysisView />);

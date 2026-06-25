@@ -7,10 +7,33 @@
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { I18nextProvider } from 'react-i18next';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import i18n from '../../../src/i18n';
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: any) => {
+      const translations: Record<string, string> = {
+        'audit.newAuditProgram': 'New audit program',
+        'audit.noAuditProgramsYet': 'No audit programs yet.',
+        'audit.delete': 'Delete',
+        'audit.surveysGenerated': 'Surveys generated',
+        'audit.generateSurveys': 'Generate surveys',
+        'audit.deleteThisAuditProgram': 'Delete this audit program?',
+        'audit.failedToDelete': 'Failed to delete',
+        'audit.iso27001': 'ISO 27001',
+        'audit.loading': 'Loading...',
+        'common.delete': 'Delete',
+        'common.loading': 'Loading...',
+      };
+      if (typeof fallback === 'string') return fallback;
+      return translations[key] || key;
+    },
+    i18n: { language: 'en', changeLanguage: vi.fn() },
+  }),
+  Trans: ({ children }: any) => children,
+  I18nextProvider: ({ children }: any) => children,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -131,9 +154,7 @@ const COMPLETION = { generated: false, total: 1, done: 0, percent: 0, byStatus: 
 
 function renderHub() {
   return render(
-    <I18nextProvider i18n={i18n}>
-      <AuditsHubUnderTest />
-    </I18nextProvider>
+    <AuditsHubUnderTest />
   );
 }
 
