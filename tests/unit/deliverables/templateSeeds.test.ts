@@ -17,8 +17,8 @@ import {
 describe('DBR77 template seed data', () => {
   // FT-1.1 — doc templates: ≥2 szablony z sekcjami
   describe('DBR77_DOC_TEMPLATES', () => {
-    it('contains at least 2 doc templates', () => {
-      expect(DBR77_DOC_TEMPLATES.length).toBeGreaterThanOrEqual(2);
+    it('contains at least 3 doc templates', () => {
+      expect(DBR77_DOC_TEMPLATES.length).toBeGreaterThanOrEqual(3);
     });
 
     it('each doc template has required fields (id, name, source_type, sections)', () => {
@@ -52,8 +52,8 @@ describe('DBR77 template seed data', () => {
 
   // FT-1.2 — deck templates: ≥2 szablony
   describe('DBR77_DECK_TEMPLATES', () => {
-    it('contains at least 2 deck templates', () => {
-      expect(DBR77_DECK_TEMPLATES.length).toBeGreaterThanOrEqual(2);
+    it('contains at least 3 deck templates', () => {
+      expect(DBR77_DECK_TEMPLATES.length).toBeGreaterThanOrEqual(3);
     });
 
     it('each deck template has required fields (id, name, deck_type, outline)', () => {
@@ -85,8 +85,8 @@ describe('DBR77 template seed data', () => {
 
   // FT-1.3 — table templates: ≥2 szablony z schema_snapshot zawierającym fields[]
   describe('DBR77_TABLE_TEMPLATES', () => {
-    it('contains at least 2 table templates', () => {
-      expect(DBR77_TABLE_TEMPLATES.length).toBeGreaterThanOrEqual(2);
+    it('contains at least 3 table templates', () => {
+      expect(DBR77_TABLE_TEMPLATES.length).toBeGreaterThanOrEqual(3);
     });
 
     it('each table template has required fields (name, category, schema_snapshot)', () => {

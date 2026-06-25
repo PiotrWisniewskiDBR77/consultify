@@ -96,6 +96,23 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
       { key: 'recommendation', type: 'recommendations', title: 'Rekomendacja', order: 3, required: true, defaultLength: 'short', purpose: 'Rekomendowana opcja z uzasadnieniem' },
     ],
   },
+  {
+    id: 'dbr77-doc-status-report',
+    name: 'Raport statusowy',
+    description:
+      'Okresowy raport postępu projektu dla sponsora. Sekcje: streszczenie statusu, zakres, postęp, ryzyka, następne kroki.',
+    source_type: 'DELIVERABLE',
+    report_type: 'status_report',
+    is_system: true,
+    is_public: true,
+    sections: [
+      { key: 'status_summary', type: 'summary', title: 'Streszczenie statusu', order: 0, required: true, defaultLength: 'short', purpose: 'Status RAG, kluczowe osiągnięcia i alerty' },
+      { key: 'scope', type: 'context', title: 'Zakres i cele', order: 1, required: true, defaultLength: 'short', purpose: 'Cele okresu i zakres prac' },
+      { key: 'progress', type: 'findings', title: 'Postęp i osiągnięcia', order: 2, required: true, defaultLength: 'long', purpose: 'Co zrobiono względem planu' },
+      { key: 'risks', type: 'list', title: 'Ryzyka i blokery', order: 3, required: true, defaultLength: 'medium', purpose: 'Otwarte ryzyka, blokery, plan mitygacji' },
+      { key: 'next_steps', type: 'recommendations', title: 'Następne kroki', order: 4, required: true, defaultLength: 'short', purpose: 'Priorytety i decyzje na kolejny okres' },
+    ],
+  },
 ];
 
 export const DBR77_DECK_TEMPLATES: DeckTemplateSeed[] = [
@@ -133,6 +150,24 @@ export const DBR77_DECK_TEMPLATES: DeckTemplateSeed[] = [
       { intent: 'recommendations', title: 'Rekomendacje' },
     ],
   },
+  {
+    id: 'dbr77-deck-investor-pitch',
+    name: 'Investor pitch',
+    description:
+      'Pitch inwestorski: problem→rozwiązanie→trakcja→ask. Układ: okładka, teza, problem/rynek, rozwiązanie, model+trakcja, plan, ask.',
+    deck_type: 'investor_pitch',
+    is_system: true,
+    is_active: true,
+    outline: [
+      { intent: 'cover', title: 'Pitch inwestorski' },
+      { intent: 'executive_summary', title: 'Teza i ask' },
+      { intent: 'context', title: 'Problem i rynek' },
+      { intent: 'key_messages', title: 'Rozwiązanie i przewaga' },
+      { intent: 'performance_overview', title: 'Trakcja i model' },
+      { intent: 'roadmap', title: 'Plan i kamienie milowe' },
+      { intent: 'next_steps', title: 'Ask i następne kroki' },
+    ],
+  },
 ];
 
 export const DBR77_TABLE_TEMPLATES: TableTemplateSeed[] = [
@@ -165,6 +200,22 @@ export const DBR77_TABLE_TEMPLATES: TableTemplateSeed[] = [
         { name: 'Wynik', type: 'number' },
         { name: 'Odchylenie', type: 'number' },
         { name: 'Trend', type: 'singleSelect', options: ['↑ Wzrost', '→ Stabilny', '↓ Spadek'] },
+      ],
+    },
+  },
+  {
+    name: 'Rejestr inicjatyw',
+    description:
+      'Tabela do śledzenia inicjatyw/zadań z priorytetem i postępem. Kolumny: inicjatywa, właściciel, priorytet, status, postęp.',
+    category: 'initiative',
+    is_featured: true,
+    schema_snapshot: {
+      fields: [
+        { name: 'Inicjatywa', type: 'text' },
+        { name: 'Właściciel', type: 'text' },
+        { name: 'Priorytet', type: 'singleSelect', options: ['Wysoki', 'Średni', 'Niski'] },
+        { name: 'Status', type: 'singleSelect', options: ['Backlog', 'W toku', 'Zrobione'] },
+        { name: 'Postęp (%)', type: 'number' },
       ],
     },
   },
