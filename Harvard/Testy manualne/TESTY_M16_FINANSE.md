@@ -1,8 +1,344 @@
-# TESTY — M16 Finanse (Economics / Financial Analysis v3)
+# TESTY — M16 Finanse (FinanceHub / EconomicsView) — v2 po W1
 
-> **Moduł:** M16 Finanse (`/finance`, alias `/economics`) — wg `Harvard/podzial/_MODULE_MAP_V2.md`
-> **Zakres tej paczki:** wszystkie 6 zakładek hubu (`statements / models / analysis / prediction / valuation / investment`), import Excel/PDF sprawozdań, silnik modeli monthly, analiza wskaźnikowa (ratio/vertical/horizontal), budżety i forecasty, wycena DCF/WACC, analiza inwestycyjna NPV/IRR, dual-runtime V8↔legacy z banerem, gating (beta CLOSED + isFeatureBlocked + V8 flag), integracje cross-module M13→M16 i M16→M17.
-> **Poza zakresem:** Billing (superadmin; `/superadmin/*`, `BillingCenterView`) — TYLKO weryfikacja braku elementów billingowych na `/finance`. M18 Dokumenty, M17 Outputs (testujemy wyłącznie trigger eksportu, nie sam Output). Ideas/Pomysły (M05–M09).
+> **Moduł:** M16 Finanse (`/finance`) — wg `Harvard/podzial/_MODULE_MAP_V2.md`
+> **Zakres tej paczki (v2):** 9 epik (F0–F9) — pełny stack wartości 5-warstwowej: dane → planowanie FP&A → decyzje kapitałowe → motor wartości → złota nić M16↔M13↔M14↔M15. Nowe fale W1: 5 paneli wartości, linkowanie inicjatyw, wersjonowanie modeli, investment appraisal, variance bridge, driver planner.
+> **Testy automatyczne:** 30 testów w `tests/components/finance/*M16.test.tsx` + `tests/integration/routes/initiativeEconomicsLinks.test.ts` + `tests/integration/routes/financeModelVersions.test.ts`
+> **Data aktualizacji:** 2026-06-24
+
+---
+
+## 0. Kontekst architektoniczny (przeczytaj przed testami)
+
+### Architektura modułu
+
+| Warstwa | Komponent | Ścieżka |
+|---|---|---|
+| Entry | `EconomicsView` → `FinanceHub` | `src/components/Economics/FinanceHub.tsx` (~2428 linii) |
+| Feature flags | `isFinanceFlagEnabled(flag)` | `src/components/Economics/financeFeatureFlags.ts` |
+| 5 paneli wartości | InvestmentAppraisal / ValueOffice / VarianceBridge / ValuationVisuals / DriverPlanner | `src/components/Economics/panels/` |
+| Linkowanie inicjatyw | `LinkInitiativeModal` | `src/components/Economics/modals/LinkInitiativeModal.tsx` |
+| Wersjonowanie modeli | `ModelVersionHistory` | `src/components/Economics/ModelVersionHistory.tsx` |
+| API v8 | `V8FinanceApi` | `src/services/api/v8/finance.ts` |
+| Backend router | `finance.routes.ts` (v8) + `financeValueRoutes.ts` | `server/src/routes/v8/` |
+| Integracja M14→M16 | `financeIntegrationService` | `server/src/services/v8/financeIntegrationService.ts` |
+| Bridge M14→M15 | `M14HandoffInbox` | `src/components/Results/M14HandoffInbox.tsx` |
+
+### Zakładki FinanceHub
+
+| Zakładka | Tab key | Główna zawartość |
+|---|---|---|
+| Sprawozdania (Statements) | `statements` | Tabele P&L / BS / CF importowane z dokumentów |
+| Modele (Models) | `models` | Modele finansowe 3-letniej prognozy |
+| Analizy (Analysis) | `analysis` | Business cases, investment cases |
+| Predykcja (Prediction) | `prediction` | Budget vs. Actual variance bridge |
+| Wycena (Enterprise Valuation) | `valuation` | DCF + comps + NAV → football field |
+| Inwestycje (Investment) | `investment` | Appraisal NPV / IRR / MIRR |
+
+### Feature flags — jak aktywować
+
+Flagi domyślnie OFF. Włącz przez URL query param:
+```
+/finance?valueOffice=1&investmentAppraisal=1&valuationVisuals=1&varianceBridge=1&driverPlanner=1&modelVersioning=1
+```
+Lub przez `localStorage`: `localStorage.setItem('ff_valueOffice', '1')`.
+
+### Kluczowe zasady weryfikacji E2E
+1. **Zawsze otwieraj DevTools → Network** — same zmiany UI to za mało; sprawdź response payload.
+2. **V8-first + fallback**: `shouldFallbackToLegacyFinance` przy 400/404 → stary endpoint. Sprawdź status response.
+3. **Seed danych**: `/api/v8/finance/seed` → generuje dane testowe; bez seedu panele mogą być puste.
+4. **Testy inwestycyjne**: InvestmentAppraisalPanel jest na zakładce `investment` za flagą `investmentAppraisal=1`.
+
+### Setup środowiska testowego
+1. Uruchom dev server (`npm run dev`).
+2. Zaloguj się jako admin organizacji z seedem danych (piotr/123456 → org DBR77).
+3. Przejdź na `/finance?valueOffice=1&investmentAppraisal=1&valuationVisuals=1&varianceBridge=1&driverPlanner=1&modelVersioning=1`.
+4. Otwórz DevTools → Network (filtr: `/api/v8/finance` + `/api/initiatives`).
+5. Miej pod ręką: ID inicjatywy z M13/M14 (z NetworkTab lub bazy), cashflow testowy (`-100, 40, 40, 40, 40`).
+
+---
+
+## F0. Infrastruktura i brama flagowa
+
+### F0.1 Domyślny stan — zero paneli wartości bez flag
+- Otwórz `/finance` (bez query params).
+- **Asercja:** żaden panel wartości NIE jest widoczny (brak InvestmentAppraisalPanel, ValueOfficePanel, etc.).
+- Zakładki Modele, Inwestycje, Predykcja, Wycena wyświetlają tylko standardową tabelę.
+
+### F0.2 Aktywacja flagi przez URL
+- Otwórz `/finance?investmentAppraisal=1`.
+- Przejdź na zakładkę Inwestycje.
+- **Asercja:** `InvestmentAppraisalPanel` widoczny poniżej standardowej tabeli.
+- Przeładuj stronę — panel dalej widoczny (localStorage persists).
+
+### F0.3 Aktywacja przez localStorage
+- Otwórz DevTools Console: `localStorage.setItem('ff_valueOffice', '1')`.
+- Przeładuj `/finance`.
+- **Asercja:** `ValueOfficePanel` pojawia się na zakładce Modele.
+- Usuń: `localStorage.removeItem('ff_valueOffice')` → po przeładowaniu panel znika.
+
+### F0.4 Niezależność flag
+- Aktywuj tylko `driverPlanner=1`.
+- **Asercja:** wyłącznie `DriverPlannerPanel` widoczny na zakładce Modele. Żaden inny panel nie wyskakuje.
+
+### F0.5 V8-first routing
+- Sprawdź w Network: pierwsze wywołanie do `/api/v8/finance/models` (v8 endpoint).
+- Symuluj 404 (DevTools → Block request patterns → `/api/v8/finance/models`).
+- **Asercja:** app fallback do `/api/finance/models` (legacy) bez crash i bez białej strony.
+
+---
+
+## F1. Wycena przedsiębiorstwa (Football Field)
+
+### F1.1 Renderowanie football field z danymi DCF
+- Otwórz zakładkę Wycena (Enterprise Valuation) z flagą `valuationVisuals=1`.
+- Wybierz rekord z DCF enterprise value.
+- **Asercja:** `ValuationVisualsPanel` widoczny; sekcja "Football Field" zawiera co najmniej jeden pas (DCF).
+- W Network sprawdź że `ValuationResults.dcf.enterpriseValue` jest liczbą, nie null.
+
+### F1.2 Komparacja (Comps)
+- Wybierz rekord z danymi porównawczymi (`comps.impliedEnterpriseValue.min/median/max`).
+- **Asercja:** pas "Porównawcza" pojawia się w football field obok pasa DCF.
+- `min <= median <= max` — brak wizualnego błędu (odwrócone pasy).
+
+### F1.3 Wycena majątkowa (NAV)
+- Wybierz rekord z `assetBased.netAssetValue`.
+- **Asercja:** pas "Majątkowa (NAV)" widoczny jako degenerowany (low=mid=high).
+
+### F1.4 Sensitivity heatmap (WACC × g)
+- Wybierz rekord z `sensitivity.matrix` (min. 4 komórki).
+- **Asercja:** sekcja "Heatmapa wrażliwości" widoczna; kolory odzwierciedlają wartości EV.
+- Sprawdź że osie mają etykiety WACC (kolumny) i g (wiersze).
+
+### F1.5 Tor pusty — graceful empty state
+- Otwórz zakładkę Wycena bez żadnego wybranego rekordu.
+- **Asercja:** panel pokazuje stan pusty (wskazówka "Wybierz rekord wyceny") zamiast crash.
+
+---
+
+## F2. Integracja M14 → M16 (Linkowanie inicjatyw)
+
+### F2.1 Badge "Unlinked" na rekordzie modelu
+- Przejdź na zakładkę Modele; znajdź model bez powiązanej inicjatywy.
+- **Asercja:** badge "Unlinked" widoczny w komórce Inicjatywa (kolor neutralny/szary).
+
+### F2.2 Kliknięcie "Unlinked" → modal LinkInitiativeModal
+- Kliknij badge "Unlinked".
+- **Asercja:** pojawia się modal z tytułem "Powiąż z inicjatywą" lub podobnym.
+- Modal zawiera: dropdown inicjatyw, pole "Finance Model Ref" (auto-uzupełnione), opcje linkage type.
+
+### F2.3 Linkowanie — success path
+- Wybierz inicjatywę z dropdownu, kliknij "Powiąż".
+- **Asercja w Network:** `POST /api/initiatives/{id}/economics-links` z body `{ financeModelRef, linkageType, status }` → response 201.
+- **Asercja w UI:** modal zamknięty; badge zmieniony na nazwę inicjatywy (lub "Linked").
+
+### F2.4 Linkowanie — 400 na brakującym `financeModelRef`
+- Wyczyść pole financeModelRef w modalu i kliknij "Powiąż".
+- **Asercja:** UI pokazuje błąd walidacji zamiast wysyłania requestu.
+
+### F2.5 GET listy powiązań
+- Po powiązaniu, sprawdź w Network `GET /api/initiatives/{id}/economics-links`.
+- **Asercja:** response `200` z polem `links` będącym tablicą zawierającą nowo dodane powiązanie.
+
+---
+
+## F3. Motor wartości — Value Office Panel
+
+### F3.1 Renderowanie z przykładowymi danymi
+- Aktywuj `valueOffice=1` i przejdź na zakładkę Modele.
+- **Asercja:** `ValueOfficePanel` wyświetlony z waterfallowym mostem wartości i bąbelkowym portfolio.
+- Jeśli brak inicjatyw w org — panel używa przykładowych danych (nigdy nie jest pusty).
+
+### F3.2 Value Bridge — kroki waterfalla
+- Sprawdź w Network `POST /api/v8/finance/value/value-bridge`.
+- **Asercja:** response zawiera `steps` (tablica) i `totalRealized` (liczba).
+- UI: sekcja "Most wartości" z etykietami Baseline / etapy / Total.
+
+### F3.3 Portfolio Bubble — kwadranty
+- Sprawdź w Network `POST /api/v8/finance/value/portfolio/prioritize`.
+- **Asercja:** response zawiera inicjatywy z polem `quadrant` (fund / evaluate / quick_win / defer).
+- UI: bąble mają różne kolory wg kwadrantu (zielony=fund, bursztyn=evaluate, niebieski=quick_win, szary=defer).
+
+### F3.4 Fail-soft na błędzie serwera
+- Zablokuj `/api/v8/finance/value/value-bridge` (DevTools).
+- **Asercja:** panel pokazuje cichą notatkę błędu (nie blokuje całego widoku); portfolio może nadal działać.
+
+---
+
+## F4. Tornado chart + advanced sensitivity
+
+### F4.1 Tornado — wrażliwość na parametry
+- Wybierz rekord wyceny z danymi `tornado: [{label, low, high}]`.
+- **Asercja:** sekcja "Tornado" wyświetlona; najszerszy pasek (największa delta) na górze.
+
+### F4.2 Brak danych tornado — graceful
+- Wybierz rekord bez pola `tornado` w danych.
+- **Asercja:** sekcja tornado nie wyświetlona (nie "null crash").
+
+---
+
+## F5. Variance Bridge + Driver Planner
+
+### F5.1 Variance Bridge — dane plan vs aktual
+- Aktywuj `varianceBridge=1`, przejdź na zakładkę Predykcja.
+- **Asercja:** `VarianceBridgePanel` widoczny z polami do wpisania linii variance.
+
+### F5.2 Waterfall po obliczeniu
+- Dodaj co najmniej 2 linie variance.
+- Kliknij "Oblicz most".
+- **Asercja w Network:** `POST /api/v8/finance/value/variance-bridge`.
+- **Asercja w UI:** waterfall z krokami (zielony=favorable, czerwony=unfavorable).
+
+### F5.3 Liczniki F/U
+- **Asercja:** widoczny licznik favorable (zielony "F: n") i unfavorable (czerwony "U: n").
+
+### F5.4 Driver Planner — drzewo domyślne SaaS
+- Aktywuj `driverPlanner=1`, przejdź na zakładkę Modele.
+- **Asercja:** `DriverPlannerPanel` pokazuje domyślne drzewo (Przychód = Klienci × ARPU) ze sliderami dla liści.
+
+### F5.5 What-If — zmiana suwaka aktualizuje wynik
+- Przesuń suwak "Klienci" (np. z 1200 na 1500).
+- **Asercja:** wartość "Przychód" w sekcji wynikowej aktualizuje się w czasie rzeczywistym (bez request do serwera).
+
+### F5.6 Wariancja pusta — graceful empty state
+- Usuń wszystkie linie variance i kliknij "Oblicz".
+- **Asercja:** panel pokazuje stan pusty ("Brak linii variance") zamiast crash.
+
+---
+
+## F6. Wersjonowanie modeli finansowych
+
+### F6.1 Historia wersji — renderowanie
+- Aktywuj `modelVersioning=1`; kliknij rekord modelu (otwiera `FinanceModelDocumentView`).
+- **Asercja:** na dole dokumentu sekcja "Version history" widoczna.
+
+### F6.2 Lista wersji z serwera
+- Sprawdź w Network `GET /api/v8/finance/models/{modelId}/versions`.
+- **Asercja:** response `200` z polem `data.versions` (tablica).
+
+### F6.3 Diff między wersjami
+- Jeśli lista ma ≥ 2 wersje: zaznacz dwie i kliknij "Compare".
+- **Asercja w Network:** `GET /api/v8/finance/models/{modelId}/versions/diff?from={id1}&to={id2}` → `200`.
+- **Asercja w UI:** tabela diff z kolumnami `Parametr / Poprzedni / Nowy`.
+
+### F6.4 Diff bez parametrów — 400
+- Wywołaj ręcznie: `GET /api/v8/finance/models/test/versions/diff` bez `from`/`to`.
+- **Asercja:** response `400` z komunikatem "from and to required".
+
+### F6.5 Flag OFF — brak sekcji wersji
+- Wyłącz flagę `modelVersioning`; otwórz dokument modelu.
+- **Asercja:** sekcja "Version history" niewidoczna.
+
+---
+
+## F7. Appraiser inwestycyjny (NPV / IRR / MIRR / PI)
+
+### F7.1 Formularz wejściowy — layout
+- Aktywuj `investmentAppraisal=1`, przejdź na zakładkę Inwestycje.
+- **Asercja:** `InvestmentAppraisalPanel` z polami: Nakład inicjalny, Stopa dyskontowa (default 10%), Cashflows, przycisk "Oblicz".
+
+### F7.2 Obliczenie — success path (Go)
+- Nakład -100 000, cashflows: [40000, 40000, 40000], stopa: 10%.
+- Kliknij "Oblicz".
+- **Asercja w Network:** `POST /api/v8/finance/value/appraise` z body `{ cashFlows, discountRate, hurdleRatePct }`.
+- **Asercja w UI:** wyniki (NPV, IRR, MIRR, Payback, Disc.Payback, PI) + badge "Realizować (go)".
+
+### F7.3 Verdict "No-go" — ujemne NPV
+- Nakład -1 000 000, cashflows: [10000, 10000], stopa: 15%.
+- **Asercja:** verdict badge "Odrzucić (no-go)" (czerwony).
+
+### F7.4 Verdict "Conditional" — NPV marginalne
+- Dobierz cashflows żeby NPV ≈ 0 (PI ≈ 1.0–1.05).
+- **Asercja:** verdict badge "Warunkowo (conditional)" (bursztynowy).
+
+### F7.5 Degradacja na błąd serwera
+- Zablokuj `POST /api/v8/finance/value/appraise`.
+- **Asercja:** error notice (data-testid="appraise-failed"); brak crash; można spróbować ponownie.
+
+### F7.6 Cashflows edycja dynamiczna
+- Dodaj wiersz cashflow (przycisk "+") i usuń (przycisk "×").
+- **Asercja:** każdy klik aktualizuje listę wierszy; brak wierszy nie blokuje UI.
+
+---
+
+## F8. Modal tworzenia analizy — Investment Case
+
+### F8.1 Otwieranie modalu — investment_case type
+- Zakładka Analizy → "Nowa analiza" → typ "Investment Case".
+- **Asercja:** sekcja "Parametry inwestycyjne" z polami: Nakład inicjalny, Horyzont (default 5), Stopa % (default 10), Roczne korzyści.
+
+### F8.2 Tytuł modalu zmienia się
+- **Asercja:** tytuł = "New Investment Case" dla investment_case; standardowy dla innych typów.
+
+### F8.3 Create — payload z polami inwestycyjnymi
+- Tytuł: "Test Case", type: investment_case, nakład: 500000, horyzont: 5, stopa: 8, korzyści: 120000.
+- **Asercja w Network:** `POST /api/v8/finance/analyses` body zawiera `{ initialInvestment: 500000, horizon: 5, discountRatePct: 8, annualBenefits: 120000 }`.
+
+### F8.4 Walidacja pól numerycznych
+- Wpisz tekst ("abc") w pole "Nakład inicjalny".
+- **Asercja:** nie wyśle NaN do serwera; błąd walidacji lub ignorowanie.
+
+---
+
+## F9. Złota nić M16 ↔ M13 ↔ M14 ↔ M15
+
+### F9.1 M14 → M16 linkowanie
+- Model finansowy → badge "Unlinked" → modal → wybierz inicjatywę z M14.
+- **Asercja:** `POST /api/initiatives/{id}/economics-links` → 201.
+
+### F9.2 M15 Benefits Register bridge
+- W M15 (`/results` z flagą `m14Handoff=1`): `M14HandoffInbox` widoczny.
+- **Asercja w Network:** `GET /api/benefits-register/benefits` → 200.
+
+### F9.3 Promote benefit
+- Kliknij "Promuj" przy beneficie w M14HandoffInbox.
+- **Asercja:** `POST /api/benefits-register/benefits/{id}/promote` → 200.
+
+### F9.4 Nawigacja cross-module (M13 → M16)
+- W M13: otwórz inicjatywę z `economics-links`; kliknij link do modelu finansowego.
+- **Asercja:** nawigacja do `/finance` z widocznym powiązanym modelem.
+
+### F9.5 Spójność danych seed
+- `POST /api/v8/finance/seed` dla org → weryfikuj wszystkie 6 zakładek FinanceHub mają ≥1 rekord.
+- **Asercja:** te same inicjatywy z M13/M14 pojawiają się w dropdownie modal linkowania.
+
+---
+
+## Podsumowanie epik ↔ testy automatyczne
+
+| Epika | Opis | Auto-testy | Scenariusze manualne |
+|---|---|---|---|
+| F0 | Brama flagowa | `financeFeatureFlags` (w financeValueRoutes) | F0.1–F0.5 |
+| F1 | Football Field + sensitivity | `ValuationVisualsPanelM16.test.tsx` (5 testów) | F1.1–F1.5 |
+| F2 | Linkowanie M14→M16 | `initiativeEconomicsLinks.test.ts` (3 testy) | F2.1–F2.5 |
+| F3 | Value Office / Value Bridge | `ValueOfficePanelM16.test.tsx` (4 testy) | F3.1–F3.4 |
+| F4 | Tornado chart | `ValuationVisualsPanelM16.test.tsx` (test 4–5) | F4.1–F4.2 |
+| F5 | Variance Bridge + Driver Planner | `VarianceBridgePanelM16.test.tsx` (5) + `DriverPlannerPanelM16.test.tsx` (5) | F5.1–F5.6 |
+| F6 | Model versioning | `financeModelVersions.test.ts` (2 testy) | F6.1–F6.5 |
+| F7 | Investment Appraisal | `InvestmentAppraisalPanelM16.test.tsx` (6 testów) | F7.1–F7.6 |
+| F8 | Create Analysis (investment case) | — (UI-only) | F8.1–F8.4 |
+| F9 | Złota nić M16↔M13↔M14↔M15 | — (cross-module, manual only) | F9.1–F9.5 |
+
+**Łącznie auto:** 30 testów (25 komponent + 5 integracyjnych)
+**Łącznie scenariusze manualne:** 43 scenariusze end-to-end
+
+---
+
+## Kryteria akceptacji (DoD M16 W1)
+
+| # | Kryterium | Weryfikacja |
+|---|---|---|
+| 1 | Wszystkie 6 zakładek FinanceHub renderują się bez białej strony | Manual F0.1 |
+| 2 | Feature flags działają izolowanie (aktywacja/dezaktywacja per flag) | Manual F0.1–F0.4 |
+| 3 | Football Field renderuje się dla rekordów z DCF/comps/NAV | Manual F1.1–F1.3; auto `ValuationVisualsPanelM16` |
+| 4 | Linkowanie inicjatyw M14→M16 — full cycle (POST 201 + UI update) | Manual F2.2–F2.3; auto `initiativeEconomicsLinks` |
+| 5 | Value Office Panel — value bridge + portfolio w jednym kokpicie | Manual F3.1–F3.3; auto `ValueOfficePanelM16` |
+| 6 | Variance Bridge — waterfall F/U z payload serwera | Manual F5.1–F5.3; auto `VarianceBridgePanelM16` |
+| 7 | Driver Planner — what-if client-side bez backend call | Manual F5.4–F5.5; auto `DriverPlannerPanelM16` |
+| 8 | Model Versioning — lista + diff przez dedykowane endpointy | Manual F6.1–F6.3; auto `financeModelVersions` |
+| 9 | Investment Appraisal — go/conditional/no-go verdict badge | Manual F7.2–F7.4; auto `InvestmentAppraisalPanelM16` |
+| 10 | Create Investment Case — payload zawiera pola finansowe | Manual F8.3 |
+| 11 | Wszystkie panele degradują fail-soft (brak crash na błąd API) | Manual F3.4, F5.6, F7.5; auto: testy "degrades" |
+| 12 | Złota nić M16↔M15 (benefits-register) działa end-to-end | Manual F9.1–F9.3 |
 > **Cel:** agent testujący ma wykonać każdy krok, dostarczyć dowód (screenshot UI + payload Network + DB gdzie wskazano), oznaczyć PASS/FAIL.
 > **Wzorzec formatu:** `TESTY_M01_CZAT.md`, `TESTY_M03_MOJA_PRACA.md`.
 > **Legenda:** **[MANUAL]** = ręczna weryfikacja (drag&drop / plik binarny / incognito); **[FLAG]** = zależne od flagi/capability; **[DB]** = dowód obejmuje wiersz/kolumnę w bazie; **[SEC]** = test bezpieczeństwa/uprawnień.
