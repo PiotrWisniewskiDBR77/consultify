@@ -535,8 +535,11 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) { res.status(401).json({ error: 'org required' }); return; }
 
+    // NB: schema column is owner_user_id (a UUID), not owner_name. Selecting a
+    // non-existent column throws and dbAll swallows it → empty profiles. Read the
+    // real columns; businessOwner stays null until a users JOIN is added.
     const kpiRows = ((await dbAll(
-      `SELECT id, name, unit, target_value, current_value, owner_name, measurement_frequency
+      `SELECT id, name, unit, target_value, current_value, measurement_frequency
        FROM initiative_kpis WHERE organization_id = ?`,
       [orgId]
     )) as RawKpiInput[]) || [];
