@@ -19,6 +19,7 @@ import { buildWorkbookBuffer, tableSchemaToWorkbook } from '../workbook/Workbook
 import type { BusinessPlanSpine } from './businessPlanSpine.js';
 import type { GeneratedBundle } from './bundleGenerationRuntime.js';
 import { resolveTheme } from './themeRegistry.js';
+import { deckPlansToPptxBuffer, type DeckPlanSlide } from './bundlePptxRuntime.js';
 
 const LOG = '[bundleExportRuntime]';
 
@@ -98,10 +99,18 @@ export function contentToDocumentSchema(
 export interface BundleFiles {
   docx: Buffer | null;
   xlsx: Buffer | null;
+  pptx: Buffer | null;
 }
 
-/** Wiązka → bufory plików (fail-soft per format). PPTX = follow-up.
- *  `themeId` (F3.1) steruje fontami DOCX + tintem nagłówka XLSX przez themeRegistry. */
+/** Wyłuskaj plany decka z bundle.deck (DeckLayoutDirectorResult). */
+function extractDeckPlans(deck: unknown): DeckPlanSlide[] {
+  const d = deck as { plans?: unknown } | null;
+  if (!d || !Array.isArray(d.plans)) return [];
+  return (d.plans as DeckPlanSlide[]).filter((p) => p && typeof p.slideIndex === 'number');
+}
+
+/** Wiązka → bufory plików (fail-soft per format): DOCX + XLSX + PPTX.
+ *  `themeId` (F3.1) steruje fontami DOCX + tintem nagłówka XLSX + motywem PPTX. */
 export async function exportBundleFiles(bundle: GeneratedBundle, themeId?: string): Promise<BundleFiles> {
   const theme = resolveTheme(themeId);
   let docx: Buffer | null = null;
@@ -128,5 +137,20 @@ export async function exportBundleFiles(bundle: GeneratedBundle, themeId?: strin
     logger.warn(`${LOG} xlsx render failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  return { docx, xlsx };
+  let pptx: Buffer | null = null;
+  try {
+    const plans = extractDeckPlans(bundle.deck);
+    if (plans.length > 0) {
+      pptx = await deckPlansToPptxBuffer(plans, {
+        themeId,
+        title: `${bundle.spine.meta.company} — Biznesplan inwestorski`,
+        company: bundle.spine.meta.company,
+        language: bundle.spine.meta.language === 'EN' ? 'en' : 'pl',
+      });
+    }
+  } catch (err) {
+    logger.warn(`${LOG} pptx render failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  return { docx, xlsx, pptx };
 }

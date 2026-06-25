@@ -82,4 +82,31 @@ describe('bundleExportRuntime — realne pliki', () => {
     expect(files.xlsx!.length).toBeGreaterThan(2000);
     expect(files.xlsx!.subarray(0, 2).toString('latin1')).toBe('PK');
   });
+
+  it('pptx=null gdy brak deck planów w wiązce', async () => {
+    const files = await exportBundleFiles(bundle);
+    expect(files.pptx).toBeNull();
+  });
+
+  it('renderuje REALNY .pptx (zip OOXML) gdy deck ma plany (F4.1)', async () => {
+    const deckBundle = {
+      ...bundle,
+      deck: {
+        tierUsed: 'STANDARD',
+        fallbackUsed: true,
+        plans: [
+          { slideIndex: 0, layoutIntent: 'cover', title: 'DBR77', keyMessage: 'AI do materiałów doradczych' },
+          { slideIndex: 1, layoutIntent: 'key_messages', title: 'Problem', keyMessage: 'Materiały zajmują tygodnie.' },
+          { slideIndex: 2, layoutIntent: 'recommendation_single', title: 'Rozwiązanie', keyMessage: 'Generujemy w minuty.' },
+          { slideIndex: 3, layoutIntent: 'next_steps', title: 'Następne kroki', keyMessage: 'Pilotaż w 30 dni.' },
+        ],
+      },
+    } as unknown as GeneratedBundle;
+
+    const files = await exportBundleFiles(deckBundle, 'modern');
+    expect(files.pptx).toBeInstanceOf(Buffer);
+    expect(files.pptx!.length).toBeGreaterThan(2000);
+    // .pptx = zip → magic bytes "PK"
+    expect(files.pptx!.subarray(0, 2).toString('latin1')).toBe('PK');
+  });
 });
