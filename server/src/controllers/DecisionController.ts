@@ -13,6 +13,7 @@ import {
   type DecisionPlaybook,
   validateRequiredFields,
 } from '../services/decisionPlaybookService.js';
+import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import {
   type DecisionWorkflowStatus,
   validateDecisionWorkflowTransition,
@@ -218,6 +219,11 @@ const refreshInitiativeDecisionBlock = async (input: {
 
   if ((stillBlocked?.count || 0) > 0) return;
 
+  // Only record handoff when the initiative was actually blocked (conditional SQL won't fire for others)
+  const wasBlocked =
+    initiative.status != null &&
+    String(initiative.status).toUpperCase() === 'BLOCKED';
+
   await queryHelpers.queryRun(
     `UPDATE initiatives SET
       status = CASE WHEN status = 'blocked' THEN 'executing' ELSE status END,
@@ -227,6 +233,13 @@ const refreshInitiativeDecisionBlock = async (input: {
      WHERE id = ? AND organization_id = ?`,
     [initiativeId, organizationId]
   );
+
+  // Best-effort handoff audit: BLOCKED → EXECUTING (decision auto-unblock).
+  if (wasBlocked) {
+    void recordStageHandoff(organizationId, initiativeId, 'BLOCKED', 'EXECUTING').catch((e) =>
+      logger.warn('[decision] recordStageHandoff failed (auto-unblock):', e)
+    );
+  }
 };
 
 const normalizePriority = (priority?: string | null): string =>
@@ -892,6 +905,17 @@ export class DecisionController {
               [id, `${tag} Blocked by decision: ${title}`, entry.impactedId, orgId]
             );
           } else if (entry.impactedType === 'initiative') {
+            // Fetch current status before overwriting so we can record an accurate handoff.
+            const preBlockRow = await queryHelpers
+              .queryOne<{ status?: string }>(
+                `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+                [entry.impactedId, orgId]
+              )
+              .catch(() => null);
+            const preBlockStatus = preBlockRow?.status
+              ? String(preBlockRow.status).toUpperCase()
+              : null;
+
             await queryHelpers.queryRun(
               `UPDATE initiatives SET
                 status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
@@ -904,6 +928,19 @@ export class DecisionController {
                WHERE id = ? AND organization_id = ?`,
               [`${tag} Blocked by decision: ${title}`, entry.impactedId, orgId]
             );
+
+            // Best-effort handoff audit: <prevStatus> → BLOCKED (decision auto-block).
+            if (preBlockStatus && preBlockStatus !== 'DONE' && preBlockStatus !== 'BLOCKED') {
+              void recordStageHandoff(
+                orgId,
+                entry.impactedId,
+                preBlockStatus,
+                'BLOCKED',
+                userId
+              ).catch((e) =>
+                logger.warn('[decision] recordStageHandoff failed (auto-block):', e)
+              );
+            }
           }
         }
       }
