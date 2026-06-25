@@ -34,7 +34,7 @@
 | 1.10 | `aiActionExecutor`: org_id obowiązkowy + lejek | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 redirect done — org_id WYMUSZONY; tsc 0 |
 | 1.11 | Normalizacja statusu startowego → `DRAFT` (usnąć step3/PENDING_REVIEW z tworzenia) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 lejek wymusza DRAFT na CREATE; migracja backfill napisana (1.12) |
 | 1.12 | Backfill statusów (staging) + CHECK constraint na `status` | F1 | ✅ | ✅ | N/A | ✅ | N/A | ⬜ | N/A | 🟢 migracja `20260624_initiative_status_normalize.sql` ZAAPLIKOWANA na staging (trolley) 2026-06-25 — zweryfikowana w `tp_migration_history` |
-| 1.13 | Ujednolicenie `name`↔`title` (kolumna kanoniczna + backfill + read-compat) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟡 lejek pisze name=title przy CREATE; migracja backfill napisana w 1.12-migration |
+| 1.13 | Ujednolicenie `name`↔`title` (kolumna kanoniczna + backfill + read-compat) | F1 | ✅ | ✅ | ✅ | ✅ live | N/A | ⬜ | N/A | 🟢 ZWERYFIKOWANE LIVE (`56cf1b552c`) — lejek pisze name=title na CREATE **i** updateInitiative mirroruje name←title na PATCH (był rozjazd przy zmianie nazwy); trolley: 0 NULL name, 0 legacy status; potwierdzone create→name===title, patch→name===title + test regresyjny F4-31 |
 | 1.14 | Usunięcie martwych: orphan `routes/initiatives.routes.ts` + `* 2.ts` | F1 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `7821311f68` — zweryfikowane: plik nie istnieje, brak `* 2.ts` plików |
 | 2.1 | `stageHandoffService` — jeden serwis granic stage'ów + event (rdzeń) | F2 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 EXISTS: `server/src/services/initiative/stageHandoffService.ts` — `evaluateHandoff`, `recordHandoff`, `handoffBoundary`, `moduleForStatus` |
 | 2.2 | Analiza→Inicjatywa: ujednolicony „candidate" + generatory przez lejek z lineage | F2 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 wszystkie generatory (assessment/tool/report/financial) przechodzą przez lejek z sourceType+sourceId |
@@ -63,12 +63,19 @@
 | 5.3 | SoT per domena udokumentowany + deduplikacja kolumn (stage×4→1, ROI×3→1, axis/drd_axis, daty) | F5 | ✅ | ✅ | N/A | N/A | N/A | ✅ | N/A | 🟢 `docs/initiatives/INITIATIVE_DATA_MODEL_SOT.md` — 230 linii, wszystkie kolumny, plan deprecacji |
 | 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ✅ | ✅ | N/A | ✅ | N/A | ⬜ | N/A | 🟢 migracja `20260624_initiative_column_dedup.sql` ZAAPLIKOWANA na staging (trolley) 2026-06-25 — zweryfikowana w `tp_migration_history` |
 
-**Postęp: 38/40 🟢 GOTOWE (2 to migracje czekające na run na staging).** F1 lejek+redirecty (23 ścieżki) ✅ · F2 handoffy+lineage ✅ · F3 walidatory+quality+MECE+prompty ✅ · F4 stan-FE+deep-link+Gantt-truth ✅ · F5 lineage-view+funnel-analityka+SoT+migracje ✅. tsc 0. Flaga `INITIATIVE_FUNNEL_ENABLED` default OFF.
+**Postęp: 40/40 🟢 GOTOWE (realizacja).** F1 lejek+redirecty (23 ścieżki) ✅ · F2 handoffy+lineage ✅ · F3 walidatory+quality+MECE+prompty ✅ · F4 stan-FE+deep-link+Gantt-truth ✅ · F5 lineage-view+funnel-analityka+SoT+migracje ✅. tsc 0. Flaga `INITIATIVE_FUNNEL_ENABLED` default OFF.
 
-**Pending (wymagają Piotra):**
-- `server/migrations/20260624_initiative_status_normalize.sql` → run na caboose → weryfikacja → prod
-- `server/migrations/20260624_initiative_column_dedup.sql` → run na caboose → weryfikacja → prod
-- →F/→UI dla 1.3–1.10, 2.3–2.5, 3.3–3.7, 4.2, 5.1–5.2
+**Weryfikacja LIVE 2026-06-25 (trolley staging, flaga ON):** pełny bieg E2E **150/150 PASS** + regresyjny **F4-31** (mirror name←title na PATCH); suite force-added do repo (`56cf1b552c` — była w .gitignore `/tests/`, nigdy nie zacommitowana). Dane trolley: 1947 inicjatyw, 0 NULL `name`, 0 legacy/lowercase status, 6/6 nowych kolumn, 4/4 migracje w `tp_migration_history`. Wszystkie 31 wierszy z rozjazdem name/title to śmieci z naszych testów (F1-14/F4-02/P1/P3), zero realnych.
+
+**Pending (wymagają Piotra / decyzji):**
+- **Migracje na PROD (4)** — wszystkie zaaplikowane+zweryfikowane na staging (trolley), bezpieczne (ADD COLUMN IF NOT EXISTS / UPDATE WHERE NULL), żadnej destrukcyjnej:
+  - `20260624_initiative_status_normalize.sql`
+  - `20260624_initiative_column_dedup.sql`
+  - `20260625_initiative_title_name_sync.sql`
+  - `20260625_initiative_missing_columns.sql`
+- **Włączenie flagi `INITIATIVE_FUNNEL_ENABLED=true`** — najpierw staging/demo (Railway env), po →F potwierdzeniu prod. Domyślnie OFF do czasu decyzji.
+- →F/→UI dla 1.3–1.10, 2.3–2.5, 3.3–3.7, 4.2, 5.1–5.2 (bramki akceptacji Piotra)
+- **Perf-follow-up (nie-blokujący):** `GET /api/initiatives` zwraca ~820 KB / ~7.6 s ciepły dla ~1000 wierszy (76 kolumn × cap 1000) — kandydat do odchudzenia SELECT-a do kolumn listy. Osobne zadanie, poza zakresem 40.
 
 ---
 
