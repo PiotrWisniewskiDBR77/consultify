@@ -13,6 +13,28 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+
+// F3.3 — CARD_CONTENT_FORMULA §A3: injected into every assessment initiative-generation
+// prompt so the AI targets the McKinsey-grade card standard from the first call
+// (SSOT: docs/standards/CARD_CONTENT_FORMULA.md §A3).
+const CARD_CONTENT_FORMULA_A3 = `
+CARD_CONTENT_FORMULA §A3 — Każda wygenerowana inicjatywa musi spełniać:
+- Tytuł: action-title ≤14 słów, konkretna zmiana (nie "Poprawa X" lecz "Zwiększenie X o Y% do Z")
+- Problem (problem_statement): 120–250 słów, przyczyny ŹRÓDŁOWE, ugruntowane w danych
+- Hipoteza: format "Jeśli [działanie] to [wynik mierzalny] bo [przesłanka]"
+- Streszczenie (summary): 40–90 słów, czym jest + jaki efekt
+- KPI: ≥2 (≥1 primary) — każdy z baseline→target + kierunek + jednostka; brak baseline → "do ustalenia" + powód
+- Scope-in: min 3 konkretnych elementów
+- Scope-out: min 3 pozycji MECE (co NIE jest objęte, odwołania do innych inicjatyw)
+- Rezultaty (deliverables): min 4 konkretnych, rzeczownikowych
+- Kryteria sukcesu (success_criteria): min 4, mierzalne/obserwowalne
+- Kryteria zatrzymania (kill_criteria): min 2, konkretny warunek stop
+- Kamienie milowe (milestones): min 3, fazowane 0–3/3–6/6–12 mies.
+- RAID: ≥2 RISK + ≥1 ASSUMPTION + ≥1 DEPENDENCY; każdy z probability+impact+mitigation_plan
+- Sizing/ROI: rząd wielkości + ROI + jawne założenia (kwota/%/dni + logika)
+- Właściciel (owner): przypisany owner_business_id lub rola
+- Język: WYŁĄCZNIE polski (poza akronimami §A5: KPI, RAID, RACI, ROI, MECE, itp.)
+`;
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
@@ -410,6 +432,9 @@ Categories to consider: ${categories.join(', ')}
       prompt += `\nInterview findings (evidence-bounded, from a governed stakeholder interview — base the initiatives on these):\n${findingsText}\n`;
     }
 
+    // F3.3 — inject CARD_CONTENT_FORMULA §A3 so the model produces formula-grade cards.
+    prompt += `\n${CARD_CONTENT_FORMULA_A3}\n`;
+
     prompt += `
 Return a JSON array with exactly ${count} initiatives in this format:
 [
@@ -438,7 +463,7 @@ Return a JSON array with exactly ${count} initiatives in this format:
       const response = await generateChatResponse({
         messages: [{ role: 'user', content: prompt }],
         systemPrompt: 'You are an expert consultant. Return only valid JSON arrays.',
-        model: 'gpt-4o-mini',
+        model: 'premium',
         maxTokens: 2000,
       });
 

@@ -2055,9 +2055,10 @@ router.post('/generate-section', requireInitiativeWriteAccess(), async (req: any
       sectionKey,
       { ...context, language: context.language || 'en' },
       String(orgId),
-      // ADVISORY only: when the client opts in, attach a §B4/§B6 quality verdict
-      // to the response. Never auto-rejects — the human still reviews and saves.
-      { withReview: withReview === true }
+      // F3.8 — reviewer §B4 DEFAULT ON (uspójnienie). Pass withReview:false to
+      // opt out; any other value (including absent) enables the advisory verdict.
+      // Never auto-rejects — the human still reviews and saves.
+      { withReview: withReview !== false }
     );
 
     return res.json(result);
