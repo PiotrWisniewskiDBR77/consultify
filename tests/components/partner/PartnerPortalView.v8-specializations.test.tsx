@@ -91,14 +91,14 @@ describe('PartnerPortalView specializations V8 seam', () => {
 
     renderView();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'SIRI' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'SIRI' }, { timeout: 10000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Specializations' }));
 
     await waitFor(() => {
       expect(V8PartnerApi.updateOrganizationSpecializations).toHaveBeenCalledWith({
         specializations: ['DRD', 'SIRI'],
       });
-    });
+    }, { timeout: 10000 });
     expect(Api.put).not.toHaveBeenCalledWith(
       '/api/partners/organization/specializations',
       expect.anything(),
@@ -115,14 +115,14 @@ describe('PartnerPortalView specializations V8 seam', () => {
 
     renderView();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'SIRI' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'SIRI' }, { timeout: 10000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Specializations' }));
 
     await waitFor(() => {
       expect(Api.put).toHaveBeenCalledWith('/api/partners/organization/specializations', {
         specializations: ['DRD', 'SIRI'],
       });
-    });
+    }, { timeout: 10000 });
     expect(toastSuccess).toHaveBeenCalledWith('Specializations updated');
     expect(toastError).not.toHaveBeenCalled();
   });

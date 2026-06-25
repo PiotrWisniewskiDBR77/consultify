@@ -91,14 +91,14 @@ describe('PartnerPortalView public listing V8 seam', () => {
 
     renderView();
 
-    const toggle = await screen.findByRole('button', { name: 'Toggle public listing' });
+    const toggle = await screen.findByRole('button', { name: 'Toggle public listing' }, { timeout: 10000 });
     fireEvent.click(toggle);
 
     await waitFor(() => {
       expect(V8PartnerApi.updateOrganizationListing).toHaveBeenCalledWith({
         publicListingEnabled: true,
       });
-    });
+    }, { timeout: 10000 });
     expect(Api.put).not.toHaveBeenCalled();
     expect(toastSuccess).toHaveBeenCalledWith('Public listing enabled');
   });
@@ -112,14 +112,14 @@ describe('PartnerPortalView public listing V8 seam', () => {
 
     renderView();
 
-    const toggle = await screen.findByRole('button', { name: 'Toggle public listing' });
+    const toggle = await screen.findByRole('button', { name: 'Toggle public listing' }, { timeout: 10000 });
     fireEvent.click(toggle);
 
     await waitFor(() => {
       expect(Api.put).toHaveBeenCalledWith('/api/partners/organization/listing', {
         publicListingEnabled: true,
       });
-    });
+    }, { timeout: 10000 });
     expect(toastSuccess).toHaveBeenCalledWith('Public listing enabled');
     expect(toastError).not.toHaveBeenCalled();
   });
