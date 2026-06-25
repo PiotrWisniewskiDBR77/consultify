@@ -62,8 +62,17 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F10.2 | Provenance na twierdzeniach | F10 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | 🟡 cytowania doc |
 | F10.3 | Warianty audytorium (board/working cut) | F10 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F10.4 | Pętla zwrotna materiał→artefakty | F10 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F11.1 | Silnik wykresów think-cell-grade (waterfall/bridge/2×2/mekko/RAG, data-bound) | F11 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F12.1 | Edytor WYSIWYG per format + inline AI-edit (warstwowy) | F12 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F13.1 | Office round-trip fidelity (otwiera się idealnie w MS/Google) | F13 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ |
+| F13.2 | Współpraca: komentarze/review/co-edit | F13 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F13.3 | Share-link security (wygaśnięcie/hasło/dostęp) | F13 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F14.1 | Telemetria jakości (edit/regen/share/download/TTFD) | F14 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ |
+| F14.2 | First-run seeding (template'y + szybki brand-setup) | F14 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| ⊕ | Gramatyka układu §5B (Gamma-killer) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| ⊕ | Biblioteka palet kolorów (kuratorowane motywy) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 
-**Postęp programu:** 0/35 tasków ZAMKNIĘTYCH (8/8). F0: 5 tasków 🟢 do odbioru (realizacja zielona, czeka →F/→UI + flaga). Reszta ⬜/🟡/⛔.
+**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8). F0: 5 tasków 🟢 do odbioru (realizacja zielona, czeka →F/→UI + flaga). Reszta ⬜/🟡/⛔. **Krok zerowy nowej rozmowy = head-to-head (ustal bar piękna) — patrz [`M17-MATERIALY-HANDOFF.md`](M17-MATERIALY-HANDOFF.md) §11.**
 
 ---
 
