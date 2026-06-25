@@ -7,7 +7,7 @@
 ## STATUS PRAWDY (2026-06-25)
 - **Kręgosłup = cykl życia inicjatywy** (`initiativeStatuses.ts`): analiza→inicjatywa→stage'e→wykonanie→rezultaty→finanse. Status = kontrakt międzymodułowy (`getStatusesForModule()`).
 - **Diagnoza (zweryfikowana greppem):** ~23 ścieżki `INSERT INTO initiatives` (29×), niespójny status startowy (`DRAFT`/`step3`/`PENDING_REVIEW`), ~60 kolumn z duplikatami, brak CHECK na statusie, 4/16 validatorów §B3, 2 Ganty z 2 źródłami zależności, martwy `InitiativeDetailModal`.
-- **Program:** 40 zadań / 5 fal. **STAN 2026-06-25: 38/40 GOTOWE (2 czekają na staging).**
+- **Program:** 40 zadań / 5 fal. **STAN 2026-06-25: 40/40 GOTOWE — migracje 1.12+5.4 zaaplikowane na staging (trolley). Czeka: prod (za zgodą Piotra) + →F/→UI per ścieżka.**
 - **CO ZROBIONE:** F1 lejek `createInitiativeService` (zweryfikowany live) + wszystkie 23 ścieżki INSERT przekierowane (1.1–1.10 + 1.14 martwy kod usunięty); migracja status-CHECK + name/title NAPISANA (nie aplikowana); F2 `stageHandoffService` + recordHandoff wpięty w każdą zmianę statusu; F3 wszystkie 10 validatorów §B3 + CARD_CONTENT_FORMULA §A3 w promptach + AIPipeline + MECE-endpoint + reviewer ON; F4 stan-FE+deep-link+Gantt-truth; F5 lineage+funnel endpointy + SoT-doc + dedup-migracja.
 - **Zasady:** flagi `default OFF` dla ryzyka; **prod (centerbeam) NIE bez osobnej zgody**; migracje: najpierw staging (caboose).
 
@@ -33,7 +33,7 @@
 | 1.9 | Przekierowanie pozostałych serwisów (onboarding/notebook/valuation/artifact/cqrs/ai-tools/InitiativeDefinition) → lejek | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 wdrożone `7821311f68` — cqrs/CreateInitiative + ai/tools/createInitiative + ArtifactConversionService + InitiativeDefinitionService; notebook/valuation/onboarding już wcześniej gotowe |
 | 1.10 | `aiActionExecutor`: org_id obowiązkowy + lejek | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 redirect done — org_id WYMUSZONY; tsc 0 |
 | 1.11 | Normalizacja statusu startowego → `DRAFT` (usnąć step3/PENDING_REVIEW z tworzenia) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 lejek wymusza DRAFT na CREATE; migracja backfill napisana (1.12) |
-| 1.12 | Backfill statusów (staging) + CHECK constraint na `status` | F1 | ✅ | ✅ | N/A | ⬜ | N/A | ⬜ | N/A | 🟡 migracja NAPISANA (`20260624_initiative_status_normalize.sql`), NIE aplikowana — czeka na run na caboose (staging) |
+| 1.12 | Backfill statusów (staging) + CHECK constraint na `status` | F1 | ✅ | ✅ | N/A | ✅ | N/A | ⬜ | N/A | 🟢 migracja `20260624_initiative_status_normalize.sql` ZAAPLIKOWANA na staging (trolley) 2026-06-25 — zweryfikowana w `tp_migration_history` |
 | 1.13 | Ujednolicenie `name`↔`title` (kolumna kanoniczna + backfill + read-compat) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟡 lejek pisze name=title przy CREATE; migracja backfill napisana w 1.12-migration |
 | 1.14 | Usunięcie martwych: orphan `routes/initiatives.routes.ts` + `* 2.ts` | F1 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `7821311f68` — zweryfikowane: plik nie istnieje, brak `* 2.ts` plików |
 | 2.1 | `stageHandoffService` — jeden serwis granic stage'ów + event (rdzeń) | F2 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 EXISTS: `server/src/services/initiative/stageHandoffService.ts` — `evaluateHandoff`, `recordHandoff`, `handoffBoundary`, `moduleForStatus` |
@@ -61,7 +61,7 @@
 | 5.1 | End-to-end lineage view (insight→inicjatywa→wykonanie→rezultat→finanse) | F5 | ✅ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | 🟢 `GET /api/initiatives/:id/lineage` EXISTS w `initiatives-additive.routes.ts` + `initiativeLineageService.ts` (`25d90a6018`) |
 | 5.2 | Funnel-analityka konwersji stage'ów (analiza→inicjatywa→wdrożenie→korzyść) | F5 | ✅ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | 🟢 `GET /api/initiatives/funnel/stats` EXISTS — byStatus, bySource, conversions, totalActive (`25d90a6018`) |
 | 5.3 | SoT per domena udokumentowany + deduplikacja kolumn (stage×4→1, ROI×3→1, axis/drd_axis, daty) | F5 | ✅ | ✅ | N/A | N/A | N/A | ✅ | N/A | 🟢 `docs/initiatives/INITIATIVE_DATA_MODEL_SOT.md` — 230 linii, wszystkie kolumny, plan deprecacji |
-| 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ✅ | ✅ | N/A | ⬜ | N/A | ⬜ | N/A | 🟡 migracja NAPISANA (`20260624_initiative_column_dedup.sql`), NIE aplikowana — czeka na caboose |
+| 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ✅ | ✅ | N/A | ✅ | N/A | ⬜ | N/A | 🟢 migracja `20260624_initiative_column_dedup.sql` ZAAPLIKOWANA na staging (trolley) 2026-06-25 — zweryfikowana w `tp_migration_history` |
 
 **Postęp: 38/40 🟢 GOTOWE (2 to migracje czekające na run na staging).** F1 lejek+redirecty (23 ścieżki) ✅ · F2 handoffy+lineage ✅ · F3 walidatory+quality+MECE+prompty ✅ · F4 stan-FE+deep-link+Gantt-truth ✅ · F5 lineage-view+funnel-analityka+SoT+migracje ✅. tsc 0. Flaga `INITIATIVE_FUNNEL_ENABLED` default OFF.
 
