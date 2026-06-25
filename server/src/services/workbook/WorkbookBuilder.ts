@@ -37,6 +37,14 @@ function hexToArgb(hex?: string): string | undefined {
   return undefined;
 }
 
+/** Normalize a #RRGGBB / RRGGBB theme color to a bare 6-char hex (no alpha).
+ *  headerStyle.bgColor expects 6-char hex (hexToArgb adds the FF later). */
+function normalizeHexForArgb(hex?: string): string | undefined {
+  if (!hex) return undefined;
+  const clean = hex.replace('#', '').toUpperCase();
+  return /^[0-9A-F]{6}$/.test(clean) ? clean : undefined;
+}
+
 function mapBorder(style?: string): Partial<ExcelJS.Borders> | undefined {
   if (!style || style === 'none') return undefined;
   const s = style as ExcelJS.BorderStyle;
@@ -453,7 +461,8 @@ function mapTableSheet(
   name: string,
   fields: TableField[],
   seedRows: Record<string, unknown>[],
-  conditionalFormatting?: TableCfBlock[]
+  conditionalFormatting?: TableCfBlock[],
+  headerColor?: string
 ): WorkbookSchema['sheets'][number] {
   const selectColors = buildSelectColorIndex(fields);
 
@@ -510,7 +519,7 @@ function mapTableSheet(
     headerStyle: {
       bold: true,
       fontColor: 'FFFFFF',
-      bgColor: '4472C4',
+      bgColor: normalizeHexForArgb(headerColor) ?? '4472C4',
       alignment: 'center',
       border: 'thin',
     },
@@ -524,7 +533,7 @@ function mapTableSheet(
  */
 export function tableSchemaToWorkbook(
   table: TableSchemaLike,
-  meta: { title: string; author?: string } = { title: 'Table' }
+  meta: { title: string; author?: string; headerColor?: string } = { title: 'Table' }
 ): WorkbookSchema {
   let sheets: WorkbookSchema['sheets'];
 
@@ -538,10 +547,10 @@ export function tableSchemaToWorkbook(
         name = `${name.slice(0, 28)} ${n++}`;
       }
       seenNames.add(name.toLowerCase());
-      return mapTableSheet(name, s.fields, s.seedRows, s.conditionalFormatting);
+      return mapTableSheet(name, s.fields, s.seedRows, s.conditionalFormatting, meta.headerColor);
     });
   } else {
-    sheets = [mapTableSheet('Sheet1', table.fields, table.seedRows, table.conditionalFormatting)];
+    sheets = [mapTableSheet('Sheet1', table.fields, table.seedRows, table.conditionalFormatting, meta.headerColor)];
   }
 
   return {

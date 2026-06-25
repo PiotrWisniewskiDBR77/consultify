@@ -18,6 +18,7 @@ import {
 import { buildWorkbookBuffer, tableSchemaToWorkbook } from '../workbook/WorkbookBuilder.js';
 import type { BusinessPlanSpine } from './businessPlanSpine.js';
 import type { GeneratedBundle } from './bundleGenerationRuntime.js';
+import { resolveTheme } from './themeRegistry.js';
 
 const LOG = '[bundleExportRuntime]';
 
@@ -39,9 +40,23 @@ interface GenContentLike {
   sections: Array<{ heading?: string; title?: string; blocks: Array<{ blockId?: string; type: string; content: unknown }> }>;
 }
 
-/** ContentSection[] (z SPINE-driven content-gen) → DocumentSchema gotowy do DOCX. */
-export function contentToDocumentSchema(content: GenContentLike, spine: BusinessPlanSpine): DocumentSchema {
+/** ContentSection[] (z SPINE-driven content-gen) → DocumentSchema gotowy do DOCX.
+ *  `themeId` (F3.1): fonty z themeRegistry → DOCX renderer (resolveDocxFonts) honoruje. */
+export function contentToDocumentSchema(
+  content: GenContentLike,
+  spine: BusinessPlanSpine,
+  themeId?: string
+): DocumentSchema {
   const now = new Date().toISOString();
+  const theme = resolveTheme(themeId);
+  const formattingSchema = {
+    ...DEFAULT_CONSULTING_FORMATTING_SCHEMA,
+    fonts: {
+      ...DEFAULT_CONSULTING_FORMATTING_SCHEMA.fonts,
+      body: theme.fontPair.body,
+      heading: theme.fontPair.heading,
+    },
+  };
   const sections = content.sections.map((s, i) => {
     const blocks: DocumentBlock[] = s.blocks
       .filter((b) => b.type !== 'heading') // tytuł sekcji niesie nagłówek
@@ -72,7 +87,7 @@ export function contentToDocumentSchema(content: GenContentLike, spine: Business
     density: 'detailed',
     languageStyle: 'consulting',
     confidentiality: 'client_confidential',
-    formattingSchema: { ...DEFAULT_CONSULTING_FORMATTING_SCHEMA },
+    formattingSchema,
     sections,
     sourceRefs: [],
     createdAt: now,
@@ -85,12 +100,14 @@ export interface BundleFiles {
   xlsx: Buffer | null;
 }
 
-/** Wiązka → bufory plików (fail-soft per format). PPTX = follow-up. */
-export async function exportBundleFiles(bundle: GeneratedBundle): Promise<BundleFiles> {
+/** Wiązka → bufory plików (fail-soft per format). PPTX = follow-up.
+ *  `themeId` (F3.1) steruje fontami DOCX + tintem nagłówka XLSX przez themeRegistry. */
+export async function exportBundleFiles(bundle: GeneratedBundle, themeId?: string): Promise<BundleFiles> {
+  const theme = resolveTheme(themeId);
   let docx: Buffer | null = null;
   try {
     if (bundle.doc && (bundle.doc as GenContentLike).sections?.length) {
-      const schema = contentToDocumentSchema(bundle.doc as GenContentLike, bundle.spine);
+      const schema = contentToDocumentSchema(bundle.doc as GenContentLike, bundle.spine, themeId);
       docx = await renderDocumentSchemaToDocxBuffer(schema);
     }
   } catch (err) {
@@ -101,7 +118,10 @@ export async function exportBundleFiles(bundle: GeneratedBundle): Promise<Bundle
   try {
     const table = bundle.table as { fields?: unknown[] } | null;
     if (table?.fields?.length) {
-      const wb = tableSchemaToWorkbook(table as never, { title: `${bundle.spine.meta.company} — model finansowy` });
+      const wb = tableSchemaToWorkbook(table as never, {
+        title: `${bundle.spine.meta.company} — model finansowy`,
+        headerColor: theme.palette.dominant,
+      });
       xlsx = await buildWorkbookBuffer(wb);
     }
   } catch (err) {
