@@ -11,10 +11,13 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 interface BenefitSignal {
-  id: string;
+  id?: string;
   name?: string;
+  title?: string;
   type: string;
   severity: 'warning' | 'critical';
+  valueAtStake?: number;
+  suggestedAction?: string;
   realizationPct?: number;
   confidence?: number;
 }
@@ -35,16 +38,13 @@ interface ReallocationMove {
 
 interface RunRateData {
   bridge: {
-    annualizedRunRate: number;
-    projectedFullYear: number;
-    remainingRunRateContribution: number;
+    runRate: number;
+    projectedInYear: number;
+    alreadyRealized: number;
   };
   timing: {
-    inYear: number;
-    runRateAnnualized: number;
-    totalItems: number;
-    aheadOfPlanCount: number;
-    behindPlanCount: number;
+    totalRunRate: number;
+    totalRealized: number;
   };
 }
 
@@ -133,15 +133,15 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             )}
           </h3>
           <div className="space-y-2">
-            {signals.signals.slice(0, 6).map((sig) => (
-              <div key={sig.id} className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-sm ${
+            {signals.signals.slice(0, 6).map((sig, i) => (
+              <div key={sig.id ?? sig.title ?? i} className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-sm ${
                 sig.severity === 'critical'
                   ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
                   : 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20'
               }`}>
                 <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${sig.severity === 'critical' ? 'bg-red-500' : 'bg-amber-500'}`} />
                 <div className="flex-1 min-w-0">
-                  <span className="font-medium truncate block">{sig.name ?? `Inicjatywa ${sig.id.slice(0, 8)}`}</span>
+                  <span className="font-medium truncate block">{sig.name ?? sig.title ?? sig.type}</span>
                 </div>
                 {sig.realizationPct != null && (
                   <div className="text-xs shrink-0 text-slate-500">
@@ -166,9 +166,9 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {[
-              { label: t('results.portfolio.annualizedRunRate', 'Run-rate annualizowany'), value: fmtPLN(runRate.bridge.annualizedRunRate) },
-              { label: t('results.portfolio.projectedFullYear', 'Prognoza do końca roku'), value: fmtPLN(runRate.bridge.projectedFullYear) },
-              { label: t('results.portfolio.runRateRemaining', 'Reszta run-rate'), value: fmtPLN(runRate.bridge.remainingRunRateContribution) },
+              { label: t('results.portfolio.annualizedRunRate', 'Run-rate annualizowany'), value: fmtPLN(runRate.bridge.runRate) },
+              { label: t('results.portfolio.projectedFullYear', 'Prognoza do końca roku'), value: fmtPLN(runRate.bridge.projectedInYear) },
+              { label: t('results.portfolio.alreadyRealized', 'Zrealizowane'), value: fmtPLN(runRate.bridge.alreadyRealized) },
             ].map((s) => (
               <div key={s.label} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
                 <div className="text-xs text-slate-500 dark:text-slate-400">{s.label}</div>
@@ -178,8 +178,8 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </div>
           {runRate.timing && (
             <div className="mt-2 text-xs text-slate-400 flex gap-4">
-              <span>{runRate.timing.aheadOfPlanCount} inicjatyw przed planem</span>
-              <span>{runRate.timing.behindPlanCount} za planem</span>
+              <span>Run-rate: {fmtPLN(runRate.timing.totalRunRate)}</span>
+              <span>Zrealizowane: {fmtPLN(runRate.timing.totalRealized)}</span>
             </div>
           )}
         </section>

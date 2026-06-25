@@ -18,7 +18,7 @@ interface ValueNarrative {
 }
 
 interface CounterfactualResult {
-  attributableDelta: number;
+  attributable: number;
   confidenceLabel: 'low' | 'medium' | 'high';
   totalTarget: number;
   totalRealized: number;
@@ -137,7 +137,7 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             <div className="rounded-xl border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20 p-4">
               <div className="text-xs text-slate-500 dark:text-slate-400">{t('results.ai.attributableDelta', 'Atrybucja do inicjatywy')}</div>
               <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
-                {fmtPLN(counterfactual.attributableDelta)}
+                {fmtPLN(counterfactual.attributable)}
               </div>
               <div className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${CONFIDENCE_BADGE[counterfactual.confidenceLabel] ?? ''}`}>
                 {t('results.ai.confidence', 'pewność')}: {t(`results.ai.confLevel.${counterfactual.confidenceLabel}`, counterfactual.confidenceLabel)}

@@ -12,19 +12,17 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 interface BscPerspective {
-  perspective: string;
-  totalKpis: number;
+  count: number;
   onTarget: number;
   below: number;
   noData: number;
-  health: number;
+  healthPct: number;
 }
 
 interface BdnStats {
   nodeCount: number;
   edgeCount: number;
-  benefitCount: number;
-  enablerCount: number;
+  byType?: { benefit?: number; enabler?: number; change?: number; objective?: number };
 }
 
 interface AdoptionFlag {
@@ -49,9 +47,9 @@ interface SustainmentSummary {
 
 interface StrategicData {
   bsc: {
-    perspectives: BscPerspective[];
-    totalKpis: number;
-    overallHealth: number;
+    perspectives: Record<string, BscPerspective>;
+    overallHealthPct: number;
+    balanced: boolean;
   };
   bdn: {
     stats: BdnStats;
@@ -119,7 +117,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
     );
   }
 
-  const bscPerspectives = strategic?.bsc?.perspectives ?? [];
+  const bscPerspectives = strategic?.bsc?.perspectives ?? null;
   const bdnStats = strategic?.bdn?.stats;
   const adoptionFlags = adoption?.flags ?? [];
   const sustainStatuses = sustainment?.statuses ?? [];
@@ -133,25 +131,25 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
           <Target size={14} />
           {t('results.strategic.bsc', 'Balanced Scorecard')}
-          {strategic?.bsc?.totalKpis != null && (
+          {bscPerspectives != null && (
             <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-              ({strategic.bsc.totalKpis} KPI)
+              ({Object.values(bscPerspectives).reduce((s, p) => s + p.count, 0)} KPI)
             </span>
           )}
         </h3>
 
-        {bscPerspectives.length === 0 ? (
+        {!bscPerspectives ? (
           <div className="text-sm text-slate-400 py-4 text-center">
             {t('results.strategic.bscNoData', 'Brak KPI — dodaj KPI i powiąż je z inicjatywami.')}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(['financial', 'customer', 'process', 'learning'] as const).map((persp) => {
-              const p = bscPerspectives.find((pp) => pp.perspective === persp) ?? {
-                perspective: persp, totalKpis: 0, onTarget: 0, below: 0, noData: 0, health: 0,
+              const p = bscPerspectives[persp] ?? {
+                count: 0, onTarget: 0, below: 0, noData: 0, healthPct: 0,
               };
-              const healthColor = p.health >= 0.7 ? 'text-emerald-600 dark:text-emerald-400'
-                : p.health >= 0.4 ? 'text-amber-600 dark:text-amber-400'
+              const healthColor = p.healthPct >= 0.7 ? 'text-emerald-600 dark:text-emerald-400'
+                : p.healthPct >= 0.4 ? 'text-amber-600 dark:text-amber-400'
                 : 'text-red-600 dark:text-red-400';
               return (
                 <div key={persp} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
@@ -159,13 +157,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                     {t(`results.strategic.perspective.${persp}`, PERSPECTIVE_LABELS[persp])}
                   </div>
                   <div className={`text-2xl font-bold ${healthColor}`}>
-                    {Math.round(p.health * 100)}%
+                    {Math.round(p.healthPct * 100)}%
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {p.onTarget} OK / {p.below} niżej / {p.noData} brak
                   </div>
                   <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
-                    <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(p.health * 100)}%` }} />
+                    <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(p.healthPct * 100)}%` }} />
                   </div>
                 </div>
               );
@@ -183,8 +181,8 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </h3>
           <div className="flex flex-wrap gap-3">
             {[
-              { label: t('results.strategic.bdnBenefits', 'Korzyści'), value: bdnStats.benefitCount },
-              { label: t('results.strategic.bdnEnablers', 'Enablerzy'), value: bdnStats.enablerCount },
+              { label: t('results.strategic.bdnBenefits', 'Korzyści'), value: bdnStats.byType?.benefit ?? 0 },
+              { label: t('results.strategic.bdnEnablers', 'Enablerzy'), value: bdnStats.byType?.enabler ?? 0 },
               { label: t('results.strategic.bdnLinks', 'Powiązania'), value: bdnStats.edgeCount },
             ].map((s) => (
               <div key={s.label} className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] px-4 py-2.5">
