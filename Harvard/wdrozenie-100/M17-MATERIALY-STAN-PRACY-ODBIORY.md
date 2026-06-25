@@ -40,7 +40,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F2.3 | Wejście 2: upload pliku → parse | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F2.4 | Wejście 3: „Przygotuj narzędzie" handoff | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F3.1 | Rejestr motywów (fonty+paleta)→4 renderery | F3 | ✅ | ✅ | ✅ f18ceba | n/d | 🟡 3/4 rend. | ⬜ | ⬜ | 🟢 (docx/xlsx/pptx wpięte; web-viewer→F4.4) |
-| F3.2 | Biblioteka template'ów per format | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | 🟡 galerie są |
+| F3.2 | Biblioteka template'ów per format | F3 | ✅ | ✅ | ✅ d4a059c | n/d | ✅ | ⬜ | ⬜ | 🟢 (3/format: doc+deck+table; mig 785) |
 | F3.3 | Pogłębione formatowanie (H1-3/listy/tabele) | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F4.1 | PPTX render z wiązki | F4 | ✅ | ✅ | ✅ 5e13ccd | n/d | n/d | ⬜ | ⬜ | 🟢 |
 | F4.2 | „Pobierz komplet" (3 pliki) | F4 | ✅ | ✅ | ✅ e0729c9 | n/d | n/d | ⬜ | ⬜ | 🟢 (zip docx+xlsx+pptx) |
