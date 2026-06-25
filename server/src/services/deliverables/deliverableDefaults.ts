@@ -59,20 +59,14 @@ export interface DeliverableDefaults {
   graphic: GraphicDefaults;
 }
 
-// ── Motyw domyślny: „Executive" (serif-nagłówek + sans-treść, look McKinsey) ──
-const EXECUTIVE_FONT_PAIR = { heading: 'Merriweather', body: 'Inter' };
-// Profesjonalna paleta: granat dominujący, neutralny wspierający, jeden akcent.
-const DEFAULT_PALETTE = {
-  dominant: '#0C447C', // navy (blue 800)
-  supporting: '#5F5E5A', // warm gray
-  accent: '#1D9E75', // teal
-  neutralText: '#2C2C2A',
-};
+// ── Motyw domyślny: czerpany z themeRegistry (SSOT, F3.1) — „Executive". ──
+// Fonty/paleta NIE są tu duplikowane: jedno źródło prawdy = themeRegistry.
+const DEFAULT_THEME = resolveTheme(DEFAULT_THEME_ID);
 
 const GRAPHIC_BASE: Omit<GraphicDefaults, 'images' | 'layout' | 'tableStyle'> = {
-  theme: 'executive',
-  fontPair: EXECUTIVE_FONT_PAIR,
-  palette: DEFAULT_PALETTE,
+  theme: DEFAULT_THEME.id,
+  fontPair: DEFAULT_THEME.fontPair,
+  palette: DEFAULT_THEME.palette,
 };
 
 const DEFAULTS: Record<DeliverableFormat, DeliverableDefaults> = {
@@ -154,16 +148,32 @@ function mergeGraphic(base: GraphicDefaults, over?: Partial<GraphicDefaults>): G
 /**
  * Zwraca założenia startowe dla formatu, z opcjonalnym nadpisaniem z briefu/motywu.
  * To jest punkt, w którym „brak precyzyjnych instrukcji" zamienia się w sensowny materiał.
+ *
+ * `themeId` (F3.1): wybiera motyw z `themeRegistry` (fonty+paleta+theme). Jawne
+ * `overrides.graphic` mają pierwszeństwo nad motywem (brand klienta > motyw > default).
  */
 export function resolveDeliverableDefaults(
   format: DeliverableFormat,
-  overrides?: { content?: Partial<ContentDefaults>; graphic?: Partial<GraphicDefaults> }
+  overrides?: { content?: Partial<ContentDefaults>; graphic?: Partial<GraphicDefaults>; themeId?: string }
 ): DeliverableDefaults {
   const base = DEFAULTS[format];
+
+  // Motyw (jeśli podany) wchodzi jako warstwa pod jawne overrides.graphic.
+  let graphicOverride = overrides?.graphic;
+  if (overrides?.themeId) {
+    const theme = resolveTheme(overrides.themeId);
+    graphicOverride = {
+      theme: theme.id,
+      fontPair: theme.fontPair,
+      palette: theme.palette,
+      ...(overrides?.graphic || {}),
+    } as Partial<GraphicDefaults>;
+  }
+
   return {
     format,
     content: mergeContent(base.content, overrides?.content),
-    graphic: mergeGraphic(base.graphic, overrides?.graphic),
+    graphic: mergeGraphic(base.graphic, graphicOverride),
   };
 }
 
