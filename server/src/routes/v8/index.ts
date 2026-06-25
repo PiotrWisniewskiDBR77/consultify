@@ -65,6 +65,9 @@ v8Router.use('/calendar', calendarRoutes);
 v8Router.use('/calendar/webhooks', calendarWebhookRoutes);
 v8Router.use('/execution', executionRoutes);
 v8Router.use('/execution-control', executionControlRoutes);
+// Aliasy specyficzne PRZED catch-all '/finance' (Express dopasowuje prefiks w kolejności).
+// BUG-02/05: FE woła /api/v8/finance/value/* — alias na financeValueRoutes (zgubiony w rebase 2026-06-25, przywrócony).
+v8Router.use('/finance/value', financeValueRoutes);
 v8Router.use('/finance', financeRoutes);
 v8Router.use('/finance-value', financeValueRoutes);
 v8Router.use('/retrieval', retrievalRoutes);
