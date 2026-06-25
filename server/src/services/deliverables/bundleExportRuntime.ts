@@ -154,3 +154,22 @@ export async function exportBundleFiles(bundle: GeneratedBundle, themeId?: strin
 
   return { docx, xlsx, pptx };
 }
+
+/** Bezpieczna nazwa-baza pliku z nazwy firmy (litera/cyfra/_/-, max 60). */
+export function safeBundleBaseName(company?: string): string {
+  return (company || 'material').replace(/[^\p{L}\p{N}_-]+/gu, '_').slice(0, 60) || 'material';
+}
+
+/**
+ * F4.2 — „Pobierz komplet": 3 bufory (docx/xlsx/pptx) → jedna TECZKA .zip.
+ * Pomija formaty których nie ma. Zwraca Buffer zip (lub null gdy 0 plików).
+ */
+export async function bundleFilesToZip(files: BundleFiles, baseName: string): Promise<Buffer | null> {
+  if (!files.docx && !files.xlsx && !files.pptx) return null;
+  const { default: JSZip } = await import('jszip');
+  const zip = new JSZip();
+  if (files.docx) zip.file(`${baseName}-raport.docx`, files.docx);
+  if (files.xlsx) zip.file(`${baseName}-model.xlsx`, files.xlsx);
+  if (files.pptx) zip.file(`${baseName}-prezentacja.pptx`, files.pptx);
+  return zip.generateAsync({ type: 'nodebuffer' });
+}

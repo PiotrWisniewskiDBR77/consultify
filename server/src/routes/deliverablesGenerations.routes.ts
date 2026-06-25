@@ -33,6 +33,8 @@ import {
 import {
   generateBundle,
 } from '../services/deliverables/bundleGenerationRuntime.js';
+import { exportBundleFiles, bundleFilesToZip, safeBundleBaseName } from '../services/deliverables/bundleExportRuntime.js';
+import { isThemeId } from '../services/deliverables/themeRegistry.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import type {
   CreateGenerationRequest,
@@ -349,6 +351,58 @@ router.post('/bundle', aiRateLimiter, async (req: any, res: Response) => {
       return;
     }
     res.status(200).json({ success: true, bundle });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// POST /bundle/export — F4.2: brief → SPINE → wiązka → TECZKA .zip (docx+xlsx+pptx).
+// „Pobierz komplet": jeden materiał, trzy spójne pliki Office w jednym pobraniu.
+// Za flagą ENABLE_DELIVERABLES_PREMIUM (OFF → 404). `themeId` z themeRegistry steruje
+// fontami/paletą na wszystkich 3 powierzchniach (spójność wizualna).
+const BundleExportSchema = z.object({
+  brief: z.string().min(20).max(8000),
+  language: z.enum(['pl', 'en']).optional(),
+  themeId: z.string().max(32).optional(),
+});
+
+router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  if (!ensureGenerateCapability(req, res)) return;
+  const parsed = BundleExportSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      error: `Invalid bundle export request: ${parsed.error.issues.slice(0, 3).map((i) => i.message).join('; ')}`,
+      code: 'invalid_setup',
+    });
+    return;
+  }
+  try {
+    const bundle = await generateBundle(parsed.data.brief, {
+      orgId: getOrgId(req),
+      preferPremium: true,
+    });
+    if (!bundle) {
+      res.status(502).json({ success: false, error: 'Bundle generation failed', code: 'internal_error' });
+      return;
+    }
+
+    const themeId = isThemeId(parsed.data.themeId) ? parsed.data.themeId : undefined;
+    const files = await exportBundleFiles(bundle, themeId);
+    const base = safeBundleBaseName(bundle.spine.meta.company);
+    const zipBuffer = await bundleFilesToZip(files, base);
+    if (!zipBuffer) {
+      res.status(502).json({ success: false, error: 'No exportable files produced', code: 'internal_error' });
+      return;
+    }
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${base}-komplet.zip"`);
+    res.status(200).send(zipBuffer);
   } catch (err) {
     handleServiceError(res, err);
   }

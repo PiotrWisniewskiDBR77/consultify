@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 import {
   contentToDocumentSchema,
   exportBundleFiles,
+  bundleFilesToZip,
+  safeBundleBaseName,
 } from '../../../server/src/services/deliverables/bundleExportRuntime';
 import type { BusinessPlanSpine } from '../../../server/src/services/deliverables/businessPlanSpine';
 import type { GeneratedBundle } from '../../../server/src/services/deliverables/bundleGenerationRuntime';
@@ -108,5 +110,44 @@ describe('bundleExportRuntime — realne pliki', () => {
     expect(files.pptx!.length).toBeGreaterThan(2000);
     // .pptx = zip → magic bytes "PK"
     expect(files.pptx!.subarray(0, 2).toString('latin1')).toBe('PK');
+  });
+});
+
+describe('bundleExportRuntime — teczka ZIP (F4.2)', () => {
+  it('safeBundleBaseName sanityzuje nazwę firmy', () => {
+    expect(safeBundleBaseName('DBR77 Sp. z o.o.')).toBe('DBR77_Sp_z_o_o_');
+    expect(safeBundleBaseName('')).toBe('material');
+    expect(safeBundleBaseName(undefined)).toBe('material');
+  });
+
+  it('bundleFilesToZip → REALNY .zip (PK) z 3 plików', async () => {
+    const files = {
+      docx: Buffer.from('PK\x03\x04 fake-docx-content padding padding padding'),
+      xlsx: Buffer.from('PK\x03\x04 fake-xlsx-content padding padding padding'),
+      pptx: Buffer.from('PK\x03\x04 fake-pptx-content padding padding padding'),
+    };
+    const zip = await bundleFilesToZip(files, 'Acme');
+    expect(zip).toBeInstanceOf(Buffer);
+    expect(zip!.subarray(0, 2).toString('latin1')).toBe('PK');
+    // unzip → 3 wpisy o oczekiwanych nazwach
+    const { default: JSZip } = await import('jszip');
+    const parsed = await JSZip.loadAsync(zip!);
+    const names = Object.keys(parsed.files).sort();
+    expect(names).toEqual(['Acme-model.xlsx', 'Acme-prezentacja.pptx', 'Acme-raport.docx']);
+  });
+
+  it('bundleFilesToZip → null gdy 0 plików', async () => {
+    const zip = await bundleFilesToZip({ docx: null, xlsx: null, pptx: null }, 'X');
+    expect(zip).toBeNull();
+  });
+
+  it('bundleFilesToZip pomija brakujące formaty', async () => {
+    const zip = await bundleFilesToZip(
+      { docx: Buffer.from('PK fake docx padding padding'), xlsx: null, pptx: null },
+      'Solo'
+    );
+    const { default: JSZip } = await import('jszip');
+    const parsed = await JSZip.loadAsync(zip!);
+    expect(Object.keys(parsed.files)).toEqual(['Solo-raport.docx']);
   });
 });
