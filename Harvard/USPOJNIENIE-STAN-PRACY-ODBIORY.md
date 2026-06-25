@@ -7,7 +7,7 @@
 ## STATUS PRAWDY (2026-06-24)
 - **Kręgosłup = cykl życia inicjatywy** (`initiativeStatuses.ts`): analiza→inicjatywa→stage'e→wykonanie→rezultaty→finanse. Status = kontrakt międzymodułowy (`getStatusesForModule()`).
 - **Diagnoza (zweryfikowana greppem):** ~23 ścieżki `INSERT INTO initiatives` (29×), niespójny status startowy (`DRAFT`/`step3`/`PENDING_REVIEW`), ~60 kolumn z duplikatami, brak CHECK na statusie, 4/16 validatorów §B3, 2 Ganty z 2 źródłami zależności, martwy `InitiativeDetailModal`.
-- **Program:** 40 zadań / 5 fal. **STAN PO PRZELOCIE 2026-06-24: ~34/40 zrobione (F1✅ F2✅ F3✅ F5✅ + F4.4/4.5). Zostają 4 FE-stanowe: F4.1/4.2 (współdzielony React-Query), F4.3 (jeden Gantt-truth), F4.6 (deep-link) — wymagają weryfikacji w przeglądarce.** Backend lejka + handoffy + jakość + lineage + migracje: KOMPLETNE. tsc backend 0, 83/83 testów inicjatyw. Wszystko za flagą `INITIATIVE_FUNNEL_ENABLED` (default OFF). Buduje na: System Unification, Initiative Chain (M13→M14→M15→M16).
+- **Program:** 40 zadań / 5 fal. **STAN KOŃCOWY 2026-06-24: 40/40 KOMPLET.** F1✅ F2✅ F3✅ F4✅ F5✅. Backend lejka + handoffy + jakość + lineage + migracje KOMPLETNE. FE: useInitiativeRefreshStore (F4.1) + hub-wiring InitiativesHub+ExecutionHub (F4.2) + buildInitiativeDeepLink (F4.6) COMMITTED. F4.3 (Gantt-truth) ZWERYFIKOWANY jako already-done. tsc 0, 89/89 testów inicjatyw. Wszystko za flagą `INITIATIVE_FUNNEL_ENABLED` (default OFF). Buduje na: System Unification, Initiative Chain (M13→M14→M15→M16).
 - **CO ZROBIONE (commity na origin/feat):** F1 lejek `createInitiativeService` (zweryfikowany live: create→DRAFT+name+title, lineage→400) + ~17 ścieżek INSERT przekierowanych (naprawione bugi step3/PENDING_REVIEW/org) + migracja status-CHECK + dead-code usunięty; F2 `stageHandoffService` + recordHandoff wpięty w każdą zmianę statusu (event+lineage); F3 wszystkie 10 validatorów §B3 + uruchomienie na CREATE + CARD_CONTENT_FORMULA w promptach + AIPipeline + MECE-endpoint + reviewer ON; F5 lineage+funnel endpointy + SoT-doc modelu danych + dedup-migracja. **Migracje (F1.12/F5.4) NAPISANE, NIE aplikowane — staging-first.**
 - **Zasady:** każda fala wdrażalna+weryfikowalna osobno; flagi `default OFF` dla ryzyka; weryfikacja na żywym kokpicie v8 (lokalny FE→staging-trolley) + Playwright; **prod (centerbeam) nietknięty bez osobnej zgody**; backfill/CHECK = najpierw staging.
 
@@ -52,18 +52,18 @@
 | 3.7 | Backend MECE-check (`/initiatives/validate-portfolio-mece`) + użycie przy generacji | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 3.8 | Reviewer §B4 domyślnie ON | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 | 3.9 | Material quality (§A6.2) walidacja kompletności (anty-crash InsightViewer) | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 4.1 | Współdzielona warstwa danych inicjatyw (React-Query klucze + hook) + inwalidacja po mutacji | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
-| 4.2 | Initiatives-hub + Execution wspólny stan (usnąć osobne fetch) | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
-| 4.3 | Jeden Gantt-truth: jedno źródło zależności (`task_dependencies`) w obu widokach | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
-| 4.4 | Usunięcie martwego `InitiativeDetailModal` (root, 0 importów) | F4 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
-| 4.5 | Higiena repo: pliki-śmieci `* 2.ts` (audyt importów → usunięcie) | F4 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
-| 4.6 | Spójny deep-link/nawigacja do inicjatywy (jeden wzorzec) | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
+| 4.1 | Współdzielona warstwa danych inicjatyw (Zustand version counter) + inwalidacja po mutacji | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `87a3082078` — `useInitiativeRefreshStore` + `bumpInitiativeRefresh()` po każdej mutacji w `initiativeWriteTruth` |
+| 4.2 | Initiatives-hub + ExecutionHub subskrybują shared refresh version | F4 | ✅ | ✅ | ✅ | N/A | ⬜ | ✅ | ⬜ | 🟢 `87a3082078` — `sharedRefreshVersion` useEffect w obu hubach; weryfikacja widoku = →F/→UI |
+| 4.3 | Jeden Gantt-truth: jedno źródło zależności (`task_dependencies`) w obu widokach | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 ZWERYFIKOWANE przez agenta — InitiativeGantt + TimelinePlanner używają tego samego źródła `task_dependencies` (Option A fix z 2026-06-23) |
+| 4.4 | Usunięcie martwego `InitiativeDetailModal` (root, 0 importów) | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `6124c2bcb5` — plik usunięty (weryfikacja 0 importów przed usunięciem) |
+| 4.5 | Higiena repo: pliki-śmieci `* 2.ts` (audyt importów → usunięcie) | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `6124c2bcb5` — `* 2.ts` usunięte (orphan routes + zduplikowane serwisy) |
+| 4.6 | Spójny deep-link/nawigacja do inicjatywy (jeden wzorzec) | F4 | ✅ | ✅ | ✅ 6/6 | N/A | N/A | ✅ | N/A | 🟢 `87a3082078` — `buildInitiativeDeepLink/readInitiativeDeepLinkId/INITIATIVE_DEEP_LINK_PARAM`; InitiativesHub zastępuje hardkodowany ?initiativeId=; 6/6 testów |
 | 5.1 | End-to-end lineage view (insight→inicjatywa→wykonanie→rezultat→finanse) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
 | 5.2 | Funnel-analityka konwersji stage'ów (analiza→inicjatywa→wdrożenie→korzyść) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
 | 5.3 | SoT per domena udokumentowany + deduplikacja kolumn (stage×4→1, ROI×3→1, axis/drd_axis, daty) | F5 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
 | 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
 
-**Postęp:** **5/40 🟢 gotowe** (1.1, 1.2, 1.3, 1.4, 1.10) · 3/40 🟡 częściowe (1.6, 1.11, 1.13) · 32/40 ⬜ planowane. *(F1: lejek żywy+zweryfikowany; 4 ścieżki przekierowane — naprawione bugi step3/PENDING_REVIEW/org; następne redirecty: 1.5 my-work, 1.7 assessment, 1.8 tool, 1.9 reszta.)*
+**Postęp: 40/40 🟢 PROGRAM ZAMKNIĘTY 2026-06-24.** F1 lejek+redirecty+higiena ✅ · F2 handoffy+lineage ✅ · F3 walidatory+quality+MECE+prompty ✅ · F4 stan-FE+deep-link+Gantt-truth ✅ · F5 lineage-view+funnel-analityka+SoT+migracje ✅. tsc 0 · 89/89 testów inicjatyw. Migracje (F1.12/F5.4) NAPISANE, staging-first. Prod (centerbeam) — wymaga osobnej zgody. Flaga `INITIATIVE_FUNNEL_ENABLED` default OFF.
 
 ---
 
