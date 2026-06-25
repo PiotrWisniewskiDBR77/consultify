@@ -71,16 +71,31 @@ router.get(
       }
     }
 
+    // Build kpiToFinancial from financial mappings
+    const kpiToFinancial = financialMappings.map((fm) => ({
+      kpiId: String(fm.kpi_id),
+      statementLineId: String(fm.kpi_id) + '_line',
+      multiplier: fm.annual_impact,
+    }));
+
+    const financialLines = Array.from(impactByKpi.entries()).map(([kpiId, impact]) => ({
+      id: kpiId + '_line',
+      label: `Financial Line (${kpiId.slice(0, 8)})`,
+      value: impact,
+    }));
+
     const input: BuildTreeInput = {
       objectives: [],
+      financialLines,
       initiatives: initiatives.map((i) => ({ id: String(i.id), name: i.name })),
       kpis: kpis.map((k) => ({
         id: String(k.id),
         name: k.name,
-        value: k.current_value != null ? Number(k.current_value) : undefined,
+        baseline: undefined,
         target: k.target_value != null ? Number(k.target_value) : undefined,
-        financialImpact: impactByKpi.get(String(k.id)),
+        current: k.current_value != null ? Number(k.current_value) : undefined,
       })),
+      kpiToFinancial,
       initiativeToKpi: mappings.map((m) => ({
         initiativeId: String(m.initiative_id),
         kpiId: String(m.kpi_id),
@@ -88,7 +103,13 @@ router.get(
     };
 
     const { nodes, edges } = buildTreeFromMappings(input);
-    const stats = treeStats(nodes);
+    const stats = {
+      totalNodes: nodes.length,
+      objectiveCount: nodes.filter((n) => n.type === 'objective').length,
+      driverCount: nodes.filter((n) => n.type === 'driver').length,
+      kpiCount: nodes.filter((n) => n.type === 'kpi').length,
+      initiativeCount: nodes.filter((n) => n.type === 'initiative').length,
+    };
     res.json({ nodes, edges, stats });
   })
 );

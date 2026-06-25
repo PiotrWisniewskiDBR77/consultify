@@ -331,7 +331,8 @@ router.get(
         cadence: 'quarterly',
         realizationPct: 0,
       };
-      return { id: String(i.id), name: i.name, ...sustainmentStatus(input) };
+      const nowMs = Date.now();
+      return { id: String(i.id), name: i.name, ...sustainmentStatus(input, nowMs) };
     });
 
     const calendar = buildGovernanceCalendar(
@@ -340,8 +341,8 @@ router.get(
         name: i.name,
         cadence: 'quarterly' as const,
         lastReviewIso: null,
-        ownerName: null,
-      }))
+      })),
+      Date.now()
     );
 
     const summary = {
@@ -377,18 +378,18 @@ router.get(
     const baseInvestment = totalExpectedAnnual * 0.3; // 30% investment assumption
     const baseCashflows = [-baseInvestment, totalExpectedAnnual * 0.4, totalExpectedAnnual * 0.6, totalExpectedAnnual];
 
-    const base: ScenarioInput = { cashflows: baseCashflows, discountRate: 0.1 };
+    const base: ScenarioInput = { cashflows: baseCashflows };
     const specs: ScenarioSpec[] = [
-      { label: 'Pesymistyczny', cashflowMultiplier: 0.7, discountRate: 0.12 },
-      { label: 'Bazowy', cashflowMultiplier: 1, discountRate: 0.1 },
-      { label: 'Optymistyczny', cashflowMultiplier: 1.3, discountRate: 0.08 },
+      { label: 'Pesymistyczny', multiplier: 0.7 },
+      { label: 'Bazowy', multiplier: 1 },
+      { label: 'Optymistyczny', multiplier: 1.3 },
     ];
 
     const results = runScenarios(base, specs);
     const baseIrr = calcIrr(baseCashflows);
     const payback = paybackPeriod(baseCashflows);
 
-    const sensitivityInput: SensitivityInput = { cashflows: baseCashflows, discountRate: 0.1 };
+    const sensitivityInput: SensitivityInput = { cashflows: baseCashflows, rate: 0.1 };
     const sensitivityResults = sensitivity(sensitivityInput, [-0.3, -0.15, 0, 0.15, 0.3]);
 
     res.json({ scenarios: results, irr: baseIrr, paybackPeriod: payback, sensitivity: sensitivityResults, initiativeCount: assumptions.length });
@@ -424,15 +425,22 @@ router.get(
     }));
 
     const input: AttributableDeltaInput = {
+      observedValue: totalRealized,
       prePoints,
-      postPoints: [{ t: 13, value: totalRealized }],
       atT: 13,
     };
 
     const result = attributableDelta(input);
     const label = confidenceLabel(prePoints);
 
-    res.json({ ...result, confidenceLabel: label, totalTarget, totalRealized });
+    res.json({
+      attributable: result.attributable,
+      attributablePct: result.attributablePct,
+      counterfactualProjected: result.counterfactual,
+      confidenceLabel: label,
+      totalTarget,
+      totalRealized,
+    });
   })
 );
 
@@ -460,10 +468,11 @@ router.get(
       }>) || [];
       financialMappings = rows.map((r) => ({
         kpiId: String(r.kpi_id),
-        statementType: r.statement_type as any,
-        lineItem: r.line_item,
-        annualImpact: r.annual_impact ?? 0,
-        impactDirection: (r.impact_direction || 'positive') as any,
+        statementLineId: String(r.kpi_id) + '_line',
+        statementType: (r.statement_type || 'P&L') as any,
+        multiplier: r.annual_impact ?? 1,
+        direction: (r.impact_direction || 'positive') as any,
+        kpiDelta: r.annual_impact ?? 0,
       }));
     } catch {
       // table may not exist
@@ -474,10 +483,16 @@ router.get(
       return;
     }
 
-    const aggregate = aggregateKpiFinancialImpact(financialMappings);
-    const byStatement = financialImpactByStatement(financialMappings);
-    const bridge = financialMappings.slice(0, 10); // top 10
-    res.json({ aggregate, byStatement, bridge, mappingCount: financialMappings.length });
+    const statementImpacts = aggregateKpiFinancialImpact(financialMappings);
+    const byStatement = financialImpactByStatement(statementImpacts);
+    const totalPositiveImpact = statementImpacts.reduce((s, si) => s + Math.max(si.totalImpact, 0), 0);
+    const totalNegativeImpact = statementImpacts.reduce((s, si) => s + Math.min(si.totalImpact, 0), 0);
+    const aggregate = {
+      totalPositiveImpact,
+      totalNegativeImpact,
+      netImpact: totalPositiveImpact + totalNegativeImpact,
+    };
+    res.json({ aggregate, byStatement, bridge: statementImpacts.slice(0, 10), mappingCount: financialMappings.length });
   })
 );
 
@@ -524,18 +539,14 @@ router.get(
       realizedByInit.set(String(r.initiative_id), (realizedByInit.get(String(r.initiative_id)) || 0) + v);
     }
 
-    const benefits: NarrativeBenefit[] = initiatives.slice(0, 10).map((i) => {
+    const initData = initiatives.slice(0, 10).map((i) => {
       const a = assumptionByInit.get(String(i.id));
       const targetValue = a?.expected_npv != null
         ? num(a.expected_npv)
         : num(a?.expected_revenue_delta) - num(a?.expected_cost_delta);
       const realizedValue = realizedByInit.get(String(i.id)) || 0;
-      return {
-        name: i.name,
-        targetValue,
-        realizedValue,
-        isOnTrack: targetValue > 0 ? realizedValue / targetValue >= 0.5 : true,
-      };
+      const isOnTrack = targetValue > 0 ? realizedValue / targetValue >= 0.5 : true;
+      return { name: i.name, targetValue, realizedValue, isOnTrack };
     });
 
     const atRiskCount = initiatives.filter((i) => {
@@ -545,14 +556,23 @@ router.get(
       return vs > 0 && rv / vs < 0.5;
     }).length;
 
+    const banked = initData.reduce((s, b) => s + b.realizedValue, 0);
+    const totalTarget = initData.reduce((s, b) => s + b.targetValue, 0);
+    const inFlight = Math.max(totalTarget - banked, 0);
+    const atRisk = initData.filter((b) => !b.isOnTrack).reduce((s, b) => s + b.targetValue, 0);
+
+    const topBenefits: NarrativeBenefit[] = initData
+      .filter((b) => b.isOnTrack)
+      .slice(0, 3)
+      .map((b) => ({ name: b.name, realizedValue: b.realizedValue }));
+
     const input: ValueNarrativeInput = {
-      bankedValue: benefits.reduce((s, b) => s + b.realizedValue, 0),
-      forecastValue: benefits.reduce((s, b) => s + (b.targetValue - b.realizedValue), 0),
-      totalTarget: benefits.reduce((s, b) => s + b.targetValue, 0),
-      atRiskCount,
-      decisions: [],
-      topBenefits: benefits.filter((b) => b.isOnTrack).slice(0, 3),
-      topRisks: benefits.filter((b) => !b.isOnTrack).slice(0, 3),
+      banked,
+      inFlight,
+      atRisk,
+      totalTarget,
+      pctOfTarget: totalTarget > 0 ? banked / totalTarget : 0,
+      topBenefits,
     };
 
     const narrative = buildNarrative(input);
