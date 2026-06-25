@@ -62,6 +62,7 @@ import { buildDocumentSchema, buildDocumentSchemaPremium } from './documentConte
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
 import {
+  __resetSchemaOverlayDaoForTests as daoResetSchemaOverlayForTests,
   loadAuditForArtifact as daoLoadAuditForArtifact,
   loadProposalsForArtifact as daoLoadProposalsForArtifact,
   loadSchemaOverlay as daoLoadSchemaOverlay,
@@ -2310,6 +2311,11 @@ export async function rollbackDocumentToVersion(
 export function __resetSchemaOverlayForTests(): void {
   schemaOverlayStore.clear();
   hydratedEditorState.clear();
+  // Also wipe the DAO-level persistence so cold-start hydration on the next
+  // test does not reload overlays written by earlier test cases. Fire-and-
+  // forget: the Promise resolves before the first `await` in the test body,
+  // which is early enough for the hydration guard to see an empty table.
+  void daoResetSchemaOverlayForTests().catch(() => undefined);
 }
 
 /**

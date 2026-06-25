@@ -35,6 +35,7 @@ import {
   summarizeDocumentSchemaDiff,
 } from './documentSchemaDiffService.js';
 import {
+  __resetSnapshotRegistryDaoForTests,
   loadSnapshotsForOrg as daoLoadSnapshotsForOrg,
   persistSnapshot as daoPersistSnapshot,
 } from './documentVersionSnapshotRegistryDao.js';
@@ -339,4 +340,7 @@ export function __resetDocumentVersionSnapshotsForTests(): void {
   versionIndex.clear();
   hydratedOrgs.clear();
   hydrationInflight.clear();
+  // Also clear the DAO-level persistence so hydration on the next test
+  // does not reload snapshots that belong to a different test case.
+  void __resetSnapshotRegistryDaoForTests().catch(() => undefined);
 }

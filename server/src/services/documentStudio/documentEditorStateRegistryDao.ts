@@ -325,3 +325,12 @@ export async function __resetEditorStateRegistryDaoForTests(): Promise<void> {
     // suite stays compatible with the pre-migration baseline.
   }
 }
+
+/** @internal Test-only reset — best-effort DELETE of the schema overlay table only. */
+export async function __resetSchemaOverlayDaoForTests(): Promise<void> {
+  try {
+    await dbRun(`DELETE FROM document_studio_schema_overlay`, []);
+  } catch {
+    /* best-effort: table may not exist in a unit-test sandbox */
+  }
+}

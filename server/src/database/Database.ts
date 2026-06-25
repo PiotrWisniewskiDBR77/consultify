@@ -293,7 +293,7 @@ function createMockDatabase(): MockDatabase {
       const col = cols[i] || `col_${i}`;
       const tok = valueTokens[i] || '?';
       const tokLower = tok.toLowerCase();
-      if (tok.includes('?') || /^\$\d+$/.test(tok.trim())) {
+      if (tok.includes('?') || /^\$\d+(::[a-zA-Z0-9_]+)*$/.test(tok.trim())) {
         row[col] = params?.[pIdx++];
       } else if (tokLower.includes('current_timestamp') || tokLower.includes('now()')) {
         row[col] = nowIso();
@@ -312,9 +312,18 @@ function createMockDatabase(): MockDatabase {
     if (row.created_at == null && cols.includes('created_at')) row.created_at = nowIso();
     if (row.updated_at == null && cols.includes('updated_at')) row.updated_at = nowIso();
 
-    // Upsert-ish behavior for tables using "id" primary key.
+    // Upsert behavior: prefer the ON CONFLICT column when specified,
+    // otherwise fall back to `id`. This lets tables with non-id PKs
+    // (e.g. share_link_id, pack_id, template_id) upsert correctly.
     const rows = store.tables.get(table)!;
-    if (row.id != null) {
+    const conflictMatch = normalizeSql(sql).match(/on\s+conflict\s*\(\s*([a-zA-Z0-9_]+)\s*\)/i);
+    const conflictCol = conflictMatch?.[1]?.toLowerCase() ?? 'id';
+    const conflictVal = row[conflictCol];
+    if (conflictVal != null) {
+      const idx = rows.findIndex((r) => String(r[conflictCol]) === String(conflictVal));
+      if (idx >= 0) rows[idx] = { ...rows[idx], ...row };
+      else rows.push(row);
+    } else if (row.id != null) {
       const idx = rows.findIndex((r) => String(r.id) === String(row.id));
       if (idx >= 0) rows[idx] = { ...rows[idx], ...row };
       else rows.push(row);
@@ -402,6 +411,11 @@ function createMockDatabase(): MockDatabase {
     const m = normalizeSql(sql).match(/delete\s+from\s+([a-zA-Z0-9_]+)/i);
     const table = m?.[1]?.toLowerCase();
     if (!table) return false;
+    // No WHERE clause → full table truncate (used by test-reset helpers).
+    if (!s.includes(' where ')) {
+      store.tables.set(table, []);
+      return true;
+    }
     const id = params?.[0];
     if (id == null) return true;
     const rows = store.tables.get(table) || [];
@@ -442,6 +456,13 @@ function createMockDatabase(): MockDatabase {
         'email',
         'jti',
         'token',
+        // Share-link hash-based lookup (`WHERE token_hash = $1`).
+        'token_hash',
+        // Document Studio cross-table lookups keyed by artifact or pack id.
+        'artifact_id',
+        'share_link_id',
+        'pack_id',
+        'version_id',
       ]);
 
       // Match bare `col = ?` AND case-folded `LOWER(col) = LOWER(?)` / `LOWER(col) = ?`.
