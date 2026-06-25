@@ -41,6 +41,8 @@ import {
 } from './presentationTemplateRuntimeService.js';
 import { qaGatedImageGeneration } from './presentationVisionQAService.js';
 import { planDeckVisuals, planDeckVisualsTiered } from './presentationVisualDirectorService.js';
+import { generateDeckVariants } from './presentationLayoutVariantsService.js';
+import { resolveDeliverableTier } from './deliverableGenerationTier.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
 import type {
   SlideIntent,
@@ -1517,6 +1519,35 @@ export async function generateDeck(
 
     const unifiedJson: UnifiedReportJSON = { meta, slides: auditedSlides };
     const warnings = [...extraWarnings];
+
+    // ──────────────────────────────────────────────────────────────
+    // B2 (W4): PREMIUM layout variants — 3 distinct palette+intent
+    // plans stored as bonus data on deckDocument.variants. Fail-open:
+    // any error silently skips variant generation and ships the deck.
+    // ──────────────────────────────────────────────────────────────
+    let deckVariants: unknown[] | undefined;
+    try {
+      const tier = resolveDeliverableTier({ orgId: organizationId, preferPremium: true });
+      if (tier === 'PREMIUM') {
+        const variantsResult = await generateDeckVariants(auditedSlides, meta, {
+          orgId: organizationId,
+          preferPremium: true,
+        });
+        if (variantsResult.variants.length > 0) {
+          deckVariants = variantsResult.variants as unknown[];
+          logger.info('[PresentationGen] B2 deck variants generated', {
+            count: deckVariants.length,
+            tierUsed: variantsResult.tierUsed,
+            fallbackUsed: variantsResult.fallbackUsed,
+          });
+        }
+      }
+    } catch (b2Err) {
+      logger.warn('[PresentationGen] B2 deck variants failed (non-fatal), skipping', {
+        err: (b2Err as Error)?.message,
+      });
+    }
+
     let deckDocument = deckDocumentFromUnifiedJson({
       deckId,
       organizationId,
@@ -1586,6 +1617,11 @@ export async function generateDeck(
       ...sourcePackPreflight.warnings,
       ...narrativePlan.warnings,
     ];
+
+    // B2: attach variants (additive — never replaces primary slides).
+    if (deckVariants && deckVariants.length > 0) {
+      deckDocument.variants = deckVariants;
+    }
 
     let outlinePayload: unknown = outline;
     try {

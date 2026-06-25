@@ -30,6 +30,9 @@ import {
   spineToDocOutline,
   spineToTableIntent,
 } from '../services/deliverables/bundleOrchestrator.js';
+import {
+  generateBundle,
+} from '../services/deliverables/bundleGenerationRuntime.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import type {
   CreateGenerationRequest,
@@ -304,6 +307,48 @@ router.post('/business-plan', aiRateLimiter, async (req: any, res: Response) => 
         deckSlides: spineToDeckSlides(spine),
       },
     });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// POST /bundle — B5 (W4): brief → SPINE → spójna wiązka (tabela+raport+deck).
+// Za flagą ENABLE_DELIVERABLES_PREMIUM (OFF → 404). Fail-open per artefakt
+// (każdy timeout nie kładzie całej wiązki — sprawdź `produced` w odpowiedzi).
+const BundleSchema = z.object({
+  brief: z.string().min(20).max(8000),
+  language: z.enum(['pl', 'en']).optional(),
+});
+
+router.post('/bundle', aiRateLimiter, async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  if (!ensureGenerateCapability(req, res)) return;
+  const parsed = BundleSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      error: `Invalid bundle request: ${parsed.error.issues.slice(0, 3).map((i) => i.message).join('; ')}`,
+      code: 'invalid_setup',
+    });
+    return;
+  }
+  try {
+    const bundle = await generateBundle(parsed.data.brief, {
+      orgId: getOrgId(req),
+      preferPremium: true,
+    });
+    if (!bundle) {
+      res.status(502).json({
+        success: false,
+        error: 'Bundle generation failed: spine could not be created',
+        code: 'internal_error',
+      });
+      return;
+    }
+    res.status(200).json({ success: true, bundle });
   } catch (err) {
     handleServiceError(res, err);
   }
