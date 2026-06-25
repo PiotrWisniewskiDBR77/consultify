@@ -21,7 +21,11 @@ import {
   DELIVERABLE_GENERATION_PURPOSE,
   deliverableModelConfig,
 } from '../deliverableGenerationTier.js';
+import { resolveDeliverableDefaults } from '../deliverables/deliverableDefaults.js';
 import logger from '../../utils/Logger.js';
+
+// ── Defaults (czytane RAZ) ───────────────────────────────────────────────────
+const REPORT_DEFAULTS = resolveDeliverableDefaults('report');
 
 /** Typy bloków dozwolone w DocumentSchema (mirror types.ts DocumentBlock). */
 export const ALLOWED_BLOCK_TYPES = [
@@ -224,6 +228,15 @@ async function planViaLlm(
       'supporting prose, and the ONE or TWO rich blocks that best fit its purpose. ' +
       'Do not pad every section with every block type.';
 
+  const d = REPORT_DEFAULTS.content;
+  const registerGuide = `Document register: ${d.register}.`;
+  const answerFirstGuide = d.answerFirst
+    ? 'Answer-first structure: lead each section with the key finding or recommendation, then support it.'
+    : '';
+  const actionTitlesGuide = d.actionTitles
+    ? 'Section headings must be action-titles (so-what statements). E.g. "Sales grew 40% driven by new channel" not "Sales performance".'
+    : '';
+
   const systemPrompt =
     'You are a document structure architect (McKinsey / Kimi-Claude quality). ' +
     'For each section, choose a sequence of block types that best conveys the ' +
@@ -231,10 +244,11 @@ async function planViaLlm(
     'metrics, callout for key warnings/insights, bullet_list for enumerations, ' +
     'chart for trends. A good analytical section has heading + paragraph + ' +
     '(table OR kpi_strip) + callout where relevant. ' +
-    'Block count must MATCH each section’s scope — calibrate to the document size, ' +
+    "Block count must MATCH each section's scope — calibrate to the document size, " +
     'never maximise block variety for its own sake. ' +
     `${blocksPerSectionGuide} ` +
-    'A section’s purpose may carry HARD CONSTRAINTS (e.g. "data-only, no prose", ' +
+    `${registerGuide} ${answerFirstGuide} ${actionTitlesGuide} ` +
+    "A section's purpose may carry HARD CONSTRAINTS (e.g. \"data-only, no prose\", " +
     '"exactly N items", a required block type) — those OVERRIDE the generic guidance ' +
     'above; obey them exactly. ' +
     `Allowed block types: ${ALLOWED_BLOCK_TYPES.join(', ')}. ` +

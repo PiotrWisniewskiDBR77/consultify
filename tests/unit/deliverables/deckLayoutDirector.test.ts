@@ -191,12 +191,26 @@ describe('presentationLayoutDirectorService (B1)', () => {
     expect(res.plans).toHaveLength(9);
     const intents = res.plans.map((p) => p.layoutIntent);
     const distinct = new Set(intents);
-    // cover + next_steps + key_messages + at least one swapped-in related layout
-    expect(distinct.size).toBeGreaterThanOrEqual(3);
+    // enforceMinDistinctLayouts raises variety to ≥ minDistinctLayouts (8 from defaults)
+    // 9 slides, 7× key_messages middle → swapped to diverse pool intents
+    expect(distinct.size).toBeGreaterThanOrEqual(8);
     // no >2 consecutive identical
     for (let i = 2; i < intents.length; i++) {
       expect(intents[i] === intents[i - 1] && intents[i - 1] === intents[i - 2]).toBe(false);
     }
+  });
+
+  // ── FT-1.6 — enforceMinDistinctLayouts: tiny deck stays capped at plan.length ──
+  it('FT-1.6: 3-slide deck cannot have more distinct layouts than slides', async () => {
+    flagState.premium = false;
+    const slides = [mkSlide('cover'), mkSlide('key_messages'), mkSlide('next_steps')];
+
+    const res = await planDeckLayout(slides, META, { orgId: 'org-1' });
+
+    expect(res.plans).toHaveLength(3);
+    const distinct = new Set(res.plans.map((p) => p.layoutIntent));
+    // target = min(minDistinct=8, 3) = 3 → all 3 are distinct
+    expect(distinct.size).toBe(3);
   });
 
   // ── FT-8.1 — LLM throws → fail-open, no throw, fallbackUsed ──

@@ -218,4 +218,53 @@ describe('documentStructureGenerator — planDocumentStructure', () => {
     expect(plan.fallbackUsed).toBe(true);
     expect(mockLlmCall).not.toHaveBeenCalled();
   });
+
+  // ── FT-D — defaults injection ──────────────────────────────────
+  it('FT-D/1: PREMIUM system prompt contains register="professional"', async () => {
+    mockResolveTier.mockReturnValue('PREMIUM');
+    mockLlmCall.mockResolvedValue({
+      object: {
+        sections: OUTLINE.map((s) => ({
+          title: s.title,
+          blocks: [
+            { type: 'heading', hint: s.title },
+            { type: 'kpi_strip', hint: 'key metrics' },
+          ],
+        })),
+      },
+    });
+
+    await planDocumentStructure('AI readiness report', OUTLINE, { orgId: 'org-1' });
+
+    const callArgs = mockLlmCall.mock.calls[0][0];
+    const systemPrompt: string =
+      callArgs?.messages?.find?.((m: any) => m.role === 'system')?.content ??
+      callArgs?.system ??
+      JSON.stringify(callArgs);
+    expect(systemPrompt).toMatch(/professional/i);
+  });
+
+  it('FT-D/2: PREMIUM system prompt contains answer-first guidance', async () => {
+    mockResolveTier.mockReturnValue('PREMIUM');
+    mockLlmCall.mockResolvedValue({
+      object: {
+        sections: OUTLINE.map((s) => ({
+          title: s.title,
+          blocks: [
+            { type: 'heading', hint: s.title },
+            { type: 'callout', hint: 'key warning' },
+          ],
+        })),
+      },
+    });
+
+    await planDocumentStructure('strategy report', OUTLINE, { orgId: 'org-1' });
+
+    const callArgs = mockLlmCall.mock.calls[0][0];
+    const systemPrompt: string =
+      callArgs?.messages?.find?.((m: any) => m.role === 'system')?.content ??
+      callArgs?.system ??
+      JSON.stringify(callArgs);
+    expect(systemPrompt).toMatch(/answer.first/i);
+  });
 });

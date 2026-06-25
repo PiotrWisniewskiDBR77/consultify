@@ -27,7 +27,39 @@ import {
   resolveDeliverableTier,
   deliverableModelConfig,
 } from './deliverableGenerationTier.js';
+import { resolveDeliverableDefaults } from './deliverables/deliverableDefaults.js';
 import logger from '../utils/Logger.js';
+
+// ── Defaults (czytane RAZ przy starcie; nie hardcode) ────────────────────────
+const DECK_DEFAULTS = resolveDeliverableDefaults('deck');
+
+/**
+ * Mapowanie motywu z deliverableDefaults → id palety PPTX (dwa osobne systemy).
+ * Jedyne miejsce tego mapowania w całej bazie.
+ */
+const THEME_TO_PALETTE_ID: Record<string, string> = {
+  executive: 'harvard',
+  modern: 'slate',
+  corporate: 'midnight',
+  classic: 'graphite',
+  clean: 'arctic',
+};
+
+/** Pula zróżnicowanych intentów do dywersyfikacji layoutów (enforceMinDistinctLayouts). */
+const DIVERSE_INTENT_POOL: readonly SlideIntent[] = [
+  'key_messages',
+  'single_insight',
+  'comparison',
+  'performance_overview',
+  'recommendation_single',
+  'root_cause',
+  'assessment',
+  'recommendation_portfolio',
+  'initiative_portfolio',
+  'prioritization_matrix',
+  'roadmap',
+  'risk_management',
+] as const;
 
 // ──────────────────────────────────────────────────────────────
 // Catalogs (mirrored as plain string literals — single source of
@@ -72,8 +104,8 @@ export const PALETTE_CATALOG: readonly string[] = [
   'teal',
 ] as const;
 
-/** DBR77 brand default. */
-const DEFAULT_PALETTE = 'harvard';
+/** Paleta domyślna — pochodzi z defaults (theme → palette-id), nie hardcode. */
+const DEFAULT_PALETTE = THEME_TO_PALETTE_ID[DECK_DEFAULTS.graphic.theme] ?? 'harvard';
 
 const LAYOUT_INTENT_SET = new Set<string>(LAYOUT_INTENT_CATALOG);
 const PALETTE_SET = new Set<string>(PALETTE_CATALOG);
@@ -356,6 +388,50 @@ function enforceSinglePalette(plans: SlideLayoutPlan[]): SlideLayoutPlan[] {
   return plans.map((p) => (p.paletteId === chosen ? p : { ...p, paletteId: chosen }));
 }
 
+/**
+ * Enforces `minDistinct` distinct layout intents across the deck. For decks
+ * shorter than `minDistinct`, the target is capped at the deck length.
+ *
+ * Strategy: scan middle slides (skip cover/last); replace any that use an
+ * intent already used by another slide with an unused intent from DIVERSE_INTENT_POOL.
+ * Stop once the target is reached. Never touches first/last slide.
+ */
+function enforceMinDistinctLayouts(
+  plans: SlideLayoutPlan[],
+  minDistinct: number
+): SlideLayoutPlan[] {
+  if (plans.length === 0) return plans;
+  const target = Math.min(minDistinct, plans.length);
+
+  const usedIntents = new Set(plans.map((p) => p.layoutIntent));
+  if (usedIntents.size >= target) return plans;
+
+  const available = DIVERSE_INTENT_POOL.filter((i) => !usedIntents.has(i));
+  if (available.length === 0) return plans;
+
+  const out = plans.map((p) => ({ ...p }));
+  let avIdx = 0;
+
+  for (let i = 1; i < out.length - 1; i++) {
+    const currentDistinct = new Set(out.map((p) => p.layoutIntent));
+    if (currentDistinct.size >= target) break;
+    if (avIdx >= available.length) break;
+
+    const current = out[i].layoutIntent;
+    const count = out.filter((p) => p.layoutIntent === current).length;
+    if (count > 1) {
+      const newIntent = available[avIdx++];
+      out[i] = {
+        ...out[i],
+        layoutIntent: newIntent,
+        reasoning: `${out[i].reasoning} | diversified → "${newIntent}"`,
+      };
+    }
+  }
+
+  return out;
+}
+
 // ──────────────────────────────────────────────────────────────
 // LLM planner (premium tier only)
 // ──────────────────────────────────────────────────────────────
@@ -570,10 +646,15 @@ export async function planDeckLayout(
     preferPremium: opts?.preferPremium,
   });
 
+  const minDistinct = DECK_DEFAULTS.graphic.layout?.minDistinctLayouts ?? 8;
+
+  const postProcess = (raw: SlideLayoutPlan[]) =>
+    enforceSinglePalette(enforceNoTripleRun(enforceMinDistinctLayouts(raw, minDistinct)));
+
   // STANDARD tier → deterministic, no LLM.
   if (tier !== 'PREMIUM') {
     return {
-      plans: enforceSinglePalette(enforceNoTripleRun(deterministicPlan(safeSlides))),
+      plans: postProcess(deterministicPlan(safeSlides)),
       tierUsed: 'STANDARD',
       fallbackUsed: true,
     };
@@ -589,11 +670,10 @@ export async function planDeckLayout(
 
     const llmPlans = await planViaLlm(safeSlides, meta);
     if (llmPlans && llmPlans.length > 0) {
-      const processed = enforceSinglePalette(enforceNoTripleRun(llmPlans));
+      const processed = postProcess(llmPlans);
       return {
         plans: processed,
         tierUsed: 'PREMIUM',
-        // Fallback only if no plan actually came from the LLM.
         fallbackUsed: !processed.some((p) => p.source === 'llm'),
       };
     }
@@ -606,7 +686,7 @@ export async function planDeckLayout(
   }
 
   return {
-    plans: enforceSinglePalette(enforceNoTripleRun(deterministicPlan(safeSlides))),
+    plans: postProcess(deterministicPlan(safeSlides)),
     tierUsed: 'PREMIUM',
     fallbackUsed: true,
   };

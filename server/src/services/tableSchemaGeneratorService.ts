@@ -32,6 +32,10 @@ import {
   DELIVERABLE_GENERATION_PURPOSE,
   deliverableModelConfig,
 } from './deliverableGenerationTier.js';
+import { resolveDeliverableDefaults } from './deliverables/deliverableDefaults.js';
+
+// ── Defaults (czytane RAZ) ───────────────────────────────────────────────────
+const TABLE_DEFAULTS = resolveDeliverableDefaults('table');
 
 // ──────────────────────────────────────────────────────────────
 // Katalog typów pól (autorytatywny — Table Platform)
@@ -433,14 +437,18 @@ async function generateViaLlm(
     '(unless the intent implies a richer lifecycle); SEVERITY / PRIORITY = "Critical" / "High" / ' +
     '"Medium" / "Low" (use the subset the intent implies). Translate only domain-specific category ' +
     'labels (e.g. department names) into the intent language.\n' +
-    // ── ROW COUNT scaled to intent ──
-    'SEED ROWS — provide realistic rows scaled to the intent: if the intent states a row count ' +
-    '(e.g. "12 projektów", "8 osób", "10 deals") emit exactly that many. Otherwise scale to the table ' +
-    'archetype: for a HIGH-VOLUME operational table (sales pipeline, recruitment/sales funnel, ticket ' +
-    'or support queue, event registrations, attendee/participant lists, CRM account/contact list) emit ' +
-    '~10 rows; for an EVERYDAY ' +
-    'small table (task/TODO list, budget, a short reference/summary/scorecard, a handful of items) emit ' +
-    '~6 rows. When genuinely unsure, emit 6. Never exceed ~12. ' +
+    // ── ROW COUNT scaled to intent (default from deliverableDefaults) ──
+    `SEED ROWS — provide realistic rows scaled to the intent: if the intent states a row count ` +
+    `(e.g. "12 projektów", "8 osób", "10 deals") emit exactly that many. Otherwise default to ` +
+    `${TABLE_DEFAULTS.content.seedRows ?? 8} rows — scale up to ~12 for HIGH-VOLUME tables ` +
+    `(sales pipeline, CRM, ticket queue, attendee/participant list), scale down to ~5 for terse ` +
+    `single-concept tables (a 2-column lookup, a tiny reference list). Never exceed ~12. ` +
+    (TABLE_DEFAULTS.content.totalsRow
+      ? 'TOTALS ROW — when the table has numeric/currency/percent columns and the archetype ' +
+        'implies aggregation (budget, P&L, scorecard, comparison with summary), add ONE totals row ' +
+        'at the end with sum/average formulas (e.g. "=SUM(C2:C9)"). Omit for log-style tables ' +
+        '(events, tickets, contacts) where a totals row makes no sense. '
+      : '') +
     'CRITICAL — COMPLETE ROWS: every seed row object MUST include EVERY field key with a plausible ' +
     'value. This includes ANALYTICAL columns — scores/indices (e.g. a 0–100 readiness index), dates, ' +
     'single-select categories, ratings — fill them with realistic ESTIMATES; do NOT skip a column ' +

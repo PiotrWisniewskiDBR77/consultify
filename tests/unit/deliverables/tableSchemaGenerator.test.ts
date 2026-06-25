@@ -212,4 +212,33 @@ describe('tableSchemaGeneratorService (B4)', () => {
     expect(result.fallbackUsed).toBe(true);
     expect(mockLlmCall).not.toHaveBeenCalled();
   });
+
+  // ── FT-D — defaults injection ──────────────────────────────────
+  it('FT-D/1: PREMIUM system prompt contains seedRows from deliverableDefaults (8)', async () => {
+    mockResolveTier.mockReturnValue('PREMIUM');
+    mockLlmCall.mockResolvedValue({ object: RISK_LLM_OBJECT });
+
+    await generateTableSchema('tabela projektow', { orgId: 'org-1' });
+
+    const callArgs = mockLlmCall.mock.calls[0][0];
+    const systemPrompt: string =
+      callArgs?.messages?.find?.((m: any) => m.role === 'system')?.content ??
+      callArgs?.system ??
+      JSON.stringify(callArgs);
+    expect(systemPrompt).toMatch(/\b8\b/);
+  });
+
+  it('FT-D/2: PREMIUM system prompt contains TOTALS ROW guidance', async () => {
+    mockResolveTier.mockReturnValue('PREMIUM');
+    mockLlmCall.mockResolvedValue({ object: RISK_LLM_OBJECT });
+
+    await generateTableSchema('budzet projektu', { orgId: 'org-1' });
+
+    const callArgs = mockLlmCall.mock.calls[0][0];
+    const systemPrompt: string =
+      callArgs?.messages?.find?.((m: any) => m.role === 'system')?.content ??
+      callArgs?.system ??
+      JSON.stringify(callArgs);
+    expect(systemPrompt).toMatch(/TOTALS ROW/i);
+  });
 });
