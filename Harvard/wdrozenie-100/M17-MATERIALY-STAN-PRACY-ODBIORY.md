@@ -33,7 +33,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F0.5 | Eksport DOCX+XLSX | F0 | ✅ | 🟡 | ✅ 4/4 | ⬜ | n/d | ⬜ | ⬜ | 🟢 |
 | F1.1 | Wpiąć defaulty w B1/B3/B4 | F1 | ✅ | ✅ | ✅ d7974eb | n/d | n/d | n/d | n/d | 🟢 |
 | F1.2 | Flaga premium ON (demo) | F1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⛔ Piotr |
-| F1.3 | Beauty gate (VisionQA) | F1 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F1.3 | Beauty gate (VisionQA) | F1 | ✅ | ✅ | ✅ 272defe | n/d | n/d | n/d | n/d | 🟢 |
 | F1.4 | Content gate (0 placeholderów/sprzeczności) | F1 | ⬜ | 🟡 | 🟡 | ⬜ | n/d | ⬜ | ⬜ | 🟡 |
 | F2.1 | „Nowy" → panel + wybór formatu | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F2.2 | Wejście 1: input → retrieval z org | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
