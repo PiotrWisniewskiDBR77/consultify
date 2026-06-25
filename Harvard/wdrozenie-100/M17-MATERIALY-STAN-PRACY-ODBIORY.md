@@ -31,7 +31,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F0.3 | Backbone wiązki (SPINE→B4/B3/B1) | F0 | ✅ | ✅ | ✅ 8/8 | ✅ live | n/d | 🟡 | ⬜ | 🟢 |
 | F0.4 | Fixy żywe (timeout/deck/table/tytuły) | F0 | ✅ | ✅ | ✅ live | ✅ deck10/table8 | 🟡 | 🟡 | ⬜ | 🟢 |
 | F0.5 | Eksport DOCX+XLSX | F0 | ✅ | 🟡 | ✅ 4/4 | ⬜ | n/d | ⬜ | ⬜ | 🟢 |
-| F1.1 | Wpiąć defaulty w B1/B3/B4 | F1 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ |
+| F1.1 | Wpiąć defaulty w B1/B3/B4 | F1 | ✅ | ✅ | ✅ d7974eb | n/d | n/d | n/d | n/d | 🟢 |
 | F1.2 | Flaga premium ON (demo) | F1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⛔ Piotr |
 | F1.3 | Beauty gate (VisionQA) | F1 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F1.4 | Content gate (0 placeholderów/sprzeczności) | F1 | ⬜ | 🟡 | 🟡 | ⬜ | n/d | ⬜ | ⬜ | 🟡 |
@@ -72,7 +72,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | ⊕ | Gramatyka układu §5B (Gamma-killer) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | ⊕ | Biblioteka palet kolorów (kuratorowane motywy) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 
-**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8). F0: 5 tasków 🟢 do odbioru (realizacja zielona, czeka →F/→UI + flaga). Reszta ⬜/🟡/⛔. **Krok zerowy nowej rozmowy = head-to-head (ustal bar piękna) — patrz [`M17-MATERIALY-HANDOFF.md`](M17-MATERIALY-HANDOFF.md) §11.**
+**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8). F0: 5 tasków 🟢 do odbioru. F1.1 🟢 (d7974eb65c). F1.2 ⛔ Piotr. F1.3/F1.4 ⬜. **Krok zerowy nowej rozmowy = head-to-head (ustal bar piękna) — patrz [`M17-MATERIALY-HANDOFF.md`](M17-MATERIALY-HANDOFF.md) §11.**
 
 ---
 
