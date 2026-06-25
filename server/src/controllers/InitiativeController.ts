@@ -978,6 +978,16 @@ export class InitiativeController {
         }
       }
 
+      // Mirror name ↔ title: the funnel writes name=title on CREATE, so keep the
+      // two columns in lockstep on UPDATE too. The UI only ever edits `title`, and
+      // without this a rename would write `title` while leaving the canonical
+      // read-compat `name` column stale (name<>title drift). Only when a separate
+      // `name` column exists and `title` is the column actually being written.
+      if (body.title !== undefined && titleCol === 'title' && existingCols.has('name')) {
+        updates.push('name = ?');
+        params.push(body.title ?? null);
+      }
+
       // Process JSON array fields
       for (const [bodyKey, dbCol] of Object.entries(JSON_FIELDS)) {
         if (body[bodyKey] !== undefined) {
