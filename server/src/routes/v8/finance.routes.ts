@@ -648,6 +648,151 @@ router.get(
   })
 );
 
+/** BUG-04: GET /models/:modelId/events — list change/event log for a model. */
+router.get(
+  '/models/:modelId/events',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    try {
+      const events = await listEvents(modelId);
+      return res.json({
+        data: { events, count: events.length },
+        meta: { version: 'v8' as const, contract: 'finance_runtime_read_v1' },
+      });
+    } catch {
+      return res.json({
+        data: { events: [], count: 0 },
+        meta: { version: 'v8' as const, contract: 'finance_runtime_read_v1' },
+      });
+    }
+  })
+);
+
+/** BUG-09: POST /models/:modelId/duplicate — create a copy of an existing model. */
+router.post(
+  '/models/:modelId/duplicate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const sourceModel = await getModel(modelId);
+    if (!sourceModel || String(sourceModel.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const newModelId = await createModel({
+      organizationId,
+      projectId: sourceModel.project_id || undefined,
+      initiativeId: sourceModel.initiative_id || undefined,
+      name: `${sourceModel.name} (kopia)`,
+      description: sourceModel.description || undefined,
+      currency: sourceModel.currency || 'PLN',
+      horizonMonths: sourceModel.horizon_months || 60,
+      startDate: sourceModel.start_date,
+      granularity: sourceModel.granularity || 'monthly',
+      scenario: sourceModel.scenario || 'base',
+      assumptions:
+        typeof sourceModel.assumptions_json === 'object' ? sourceModel.assumptions_json : undefined,
+      createdBy: userId,
+      sourceStatementId: sourceModel.source_statement_id || undefined,
+      sourceStatementPackId: sourceModel.source_statement_pack_id || undefined,
+    });
+
+    const newModel = await getModel(newModelId);
+    return res.status(201).json({
+      data: { model: newModel ?? { id: newModelId } },
+      meta: { version: 'v8' as const, contract: 'finance_runtime_write_v1' },
+    });
+  })
+);
+
+/** BUG-10: POST /models/:modelId/analyze — queue AI analysis of a model (stub). */
+router.post(
+  '/models/:modelId/analyze',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const analysisId = uuidv4();
+    return res.status(202).json({
+      data: {
+        analysisId,
+        status: 'queued',
+        message: 'Analiza w kolejce',
+        modelId,
+        type: String(req.body?.type || 'standard'),
+      },
+      meta: { version: 'v8' as const, contract: 'finance_runtime_write_v1' },
+    });
+  })
+);
+
+/** BUG-11: GET /models/:modelId/outputs/download — download model outputs as JSON file. */
+router.get(
+  '/models/:modelId/outputs/download',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const scenario =
+      typeof req.query.scenario === 'string' && req.query.scenario.trim()
+        ? String(req.query.scenario).trim()
+        : undefined;
+    const outputs = await getOutputs(modelId, scenario);
+    if (!outputs || outputs.length === 0) {
+      return res.status(404).json({ error: 'No outputs available for this model' });
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="model-${modelId}-outputs.json"`
+    );
+    return res.json({ modelId, outputs, exportedAt: new Date().toISOString() });
+  })
+);
+
+/** BUG-12: GET /models/:modelId/export — export full model definition as JSON file. */
+router.get(
+  '/models/:modelId/export',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const events = await listEvents(modelId);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="model-${modelId}.json"`);
+    return res.json({
+      model: { ...model, events },
+      exportedAt: new Date().toISOString(),
+      exportVersion: '1.0',
+    });
+  })
+);
+
 router.get(
   '/valuations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
