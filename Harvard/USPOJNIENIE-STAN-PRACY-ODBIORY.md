@@ -1,15 +1,15 @@
 # USPÓJNIENIE CAŁOŚCI — STAN PRACY + ODBIORY (program wdrożeniowy)
 
-> Wykonawczy program „spięcia całości" — wszystkie zadania, wszystkie fale (F1–F5), każde z 8 bramkami odbioru. Format analogiczny do `M13-STAN-PRACY-ODBIORY.md` / `M14-STAN-PRACY-ODBIORY.md`. SSOT pracy + akceptacji. Stan: 2026-06-24 (start programu).
+> Wykonawczy program „spięcia całości" — wszystkie zadania, wszystkie fale (F1–F5), każde z 8 bramkami odbioru. Format analogiczny do `M13-STAN-PRACY-ODBIORY.md` / `M14-STAN-PRACY-ODBIORY.md`. SSOT pracy + akceptacji. Stan: 2026-06-25 (zaktualizowane po przeglądzie kodu).
 >
 > Dokumenty siostrzane: `PLAN-USPOJNIENIA-CALOSCI-2026-06-24.md` (strategia + 5 osi), `AUDYT-INICJATYWY-2026-06-24.md` (diagnoza + dowody greppem).
 
-## STATUS PRAWDY (2026-06-24)
+## STATUS PRAWDY (2026-06-25)
 - **Kręgosłup = cykl życia inicjatywy** (`initiativeStatuses.ts`): analiza→inicjatywa→stage'e→wykonanie→rezultaty→finanse. Status = kontrakt międzymodułowy (`getStatusesForModule()`).
 - **Diagnoza (zweryfikowana greppem):** ~23 ścieżki `INSERT INTO initiatives` (29×), niespójny status startowy (`DRAFT`/`step3`/`PENDING_REVIEW`), ~60 kolumn z duplikatami, brak CHECK na statusie, 4/16 validatorów §B3, 2 Ganty z 2 źródłami zależności, martwy `InitiativeDetailModal`.
-- **Program:** 40 zadań / 5 fal. **STAN KOŃCOWY 2026-06-24: 40/40 KOMPLET.** F1✅ F2✅ F3✅ F4✅ F5✅. Backend lejka + handoffy + jakość + lineage + migracje KOMPLETNE. FE: useInitiativeRefreshStore (F4.1) + hub-wiring InitiativesHub+ExecutionHub (F4.2) + buildInitiativeDeepLink (F4.6) COMMITTED. F4.3 (Gantt-truth) ZWERYFIKOWANY jako already-done. tsc 0, 89/89 testów inicjatyw. Wszystko za flagą `INITIATIVE_FUNNEL_ENABLED` (default OFF). Buduje na: System Unification, Initiative Chain (M13→M14→M15→M16).
-- **CO ZROBIONE (commity na origin/feat):** F1 lejek `createInitiativeService` (zweryfikowany live: create→DRAFT+name+title, lineage→400) + ~17 ścieżek INSERT przekierowanych (naprawione bugi step3/PENDING_REVIEW/org) + migracja status-CHECK + dead-code usunięty; F2 `stageHandoffService` + recordHandoff wpięty w każdą zmianę statusu (event+lineage); F3 wszystkie 10 validatorów §B3 + uruchomienie na CREATE + CARD_CONTENT_FORMULA w promptach + AIPipeline + MECE-endpoint + reviewer ON; F5 lineage+funnel endpointy + SoT-doc modelu danych + dedup-migracja. **Migracje (F1.12/F5.4) NAPISANE, NIE aplikowane — staging-first.**
-- **Zasady:** każda fala wdrażalna+weryfikowalna osobno; flagi `default OFF` dla ryzyka; weryfikacja na żywym kokpicie v8 (lokalny FE→staging-trolley) + Playwright; **prod (centerbeam) nietknięty bez osobnej zgody**; backfill/CHECK = najpierw staging.
+- **Program:** 40 zadań / 5 fal. **STAN 2026-06-25: 38/40 GOTOWE (2 czekają na staging).**
+- **CO ZROBIONE:** F1 lejek `createInitiativeService` (zweryfikowany live) + wszystkie 23 ścieżki INSERT przekierowane (1.1–1.10 + 1.14 martwy kod usunięty); migracja status-CHECK + name/title NAPISANA (nie aplikowana); F2 `stageHandoffService` + recordHandoff wpięty w każdą zmianę statusu; F3 wszystkie 10 validatorów §B3 + CARD_CONTENT_FORMULA §A3 w promptach + AIPipeline + MECE-endpoint + reviewer ON; F4 stan-FE+deep-link+Gantt-truth; F5 lineage+funnel endpointy + SoT-doc + dedup-migracja.
+- **Zasady:** flagi `default OFF` dla ryzyka; **prod (centerbeam) NIE bez osobnej zgody**; migracje: najpierw staging (caboose).
 
 ## SYSTEM ODBIORÓW — 8 bramek per zadanie
 **Bramki realizacji** (robota CTO): **Kod** (zaimplementowane+wpięte) · **DoD** (Definition of Done, 7-pkt) · **Testy** (unit/integration zielone) · **Manual** (scenariusze E2E z dowodem-zrzutem) · **UI** (zgodność z kanonem `CANON.md`).
@@ -24,46 +24,51 @@
 |--|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|--|
 | 1.1 | `createInitiativeService` — wspólny serwis tworzenia (rdzeń lejka) | F1 | ✅ | ✅ | ✅ 9/9 | ✅ live | N/A | ✅ | N/A | 🟢 ZWERYFIKOWANE LIVE (`6056af9761`) — wpięty w InitiativeController za flagą `INITIATIVE_FUNNEL_ENABLED`; create→DRAFT+name+title, lineage→400 (staging-trolley) |
 | 1.2 | Kanoniczny `CreateInitiativeInput` + Zod (jeden kontrakt pól) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 GOTOWE — `CreateInitiativeInput` + reużyty `CreateInitiativeSchema` (lineage refine + status default DRAFT) jako jedyna brama walidacji |
-| 1.3 | Przekierowanie `economics.routes` → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 redirect done (`8b705703c2`) — 2 INSERTy (financial-analysis + digitization) na lejek, usnięty 'step3'; tsc 0, flag-gated; live-verify per-ścieżka=⬜ |
-| 1.4 | Przekierowanie `v8/finance.routes` → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 redirect done (`8b705703c2`) — insights→inicjatywy na lejek, usnięty 'step3'; tsc 0, flag-gated |
-| 1.5 | Przekierowanie `my-work.routes` (2 ścieżki) → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.6 | Przekierowanie report-builder + reportImport + reportInitiative → lejek | F1 | 🟡 | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟡 reportImportService→lejek (`8b705703c2`, PENDING_REVIEW zachowany, extra-kolumny post-create); report-builder + reportInitiativeService = pozostają |
-| 1.7 | Przekierowanie assessment-workflow-v2 + assessmentInitiativeService → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.8 | Przekierowanie ToolController + ToolInitiativeService → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.9 | Przekierowanie pozostałych serwisów (onboarding/notebook/valuation/artifact/cqrs/ai-tools/InitiativeDefinition) → lejek | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.10 | `aiActionExecutor`: org_id obowiązkowy + lejek | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 redirect done (`8b705703c2`) — org_id WYMUSZONY (lejek + naprawiony też w starej ścieżce); tsc 0 |
-| 1.11 | Normalizacja statusu startowego → `DRAFT` (usnąć step3/PENDING_REVIEW z tworzenia) | F1 | 🟡 | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟡 lejek wymusza DRAFT (zweryfikowane live); usnięcie step3/PENDING_REVIEW w pozostałych ścieżkach po ich redirectach (1.3–1.10) + backfill/CHECK=1.12 |
-| 1.12 | Backfill statusów (staging) + CHECK constraint na `status` | F1 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 1.13 | Ujednolicenie `name`↔`title` (kolumna kanoniczna + backfill + read-compat) | F1 | 🟡 | ✅ | ✅ | ✅ live | N/A | ⬜ | N/A | 🟡 strona-zapisu: lejek pisze name+title (post-insert sync, zweryfikowane live name=title); backfill istniejących wierszy = migracja (z 1.12) |
-| 1.14 | Usunięcie martwych: orphan `routes/initiatives.routes.ts` + `* 2.ts` | F1 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
-| 2.1 | `stageHandoffService` — jeden serwis granic stage'ów + event (rdzeń) | F2 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
-| 2.2 | Analiza→Inicjatywa: ujednolicony „candidate" + generatory przez lejek z lineage | F2 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 2.3 | Inicjatywa→Wykonanie: kontrakt „ready-for-execution" (formalizacja bramek SCHEDULED) | F2 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | ⬜ | ⬜ planowane |
-| 2.4 | Wykonanie→Rezultaty: benefits-handoff wzorzec + closure→TRACKING | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
-| 2.5 | Rezultaty→Finanse: link rollout/benefits↔model finansowy (M16) po initiative_id | F2 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 2.6 | `getStatusesForModule()` wszędzie — audyt + usunięcie hardkodów statusów per moduł | F2 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 2.7 | Lineage/event na każdym handoffie (link-graph/provenance) | F2 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.1 | Validatory §B3 brakujące (10: kpi_baseline_target, raid_mix, scope_out_mece, *_count, milestones_count) + testy | F3 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.2 | Walidatory uruchamiane na CREATE (w lejku F1) | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.3 | CARD_CONTENT_FORMULA §A3 w prompt: assessment | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.4 | CARD_CONTENT_FORMULA §A3 w prompt: tool | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.5 | CARD_CONTENT_FORMULA §A3 w prompt: propose + grounding źródła | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.6 | Ujednolicenie generatorów na `AIPipeline`+timeout+fallback (usnąć hardcoded gpt-4o-mini) | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.7 | Backend MECE-check (`/initiatives/validate-portfolio-mece`) + użycie przy generacji | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.8 | Reviewer §B4 domyślnie ON | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
-| 3.9 | Material quality (§A6.2) walidacja kompletności (anty-crash InsightViewer) | F3 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
+| 1.3 | Przekierowanie `economics.routes` → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 redirect done (`8b705703c2`) — 2 INSERTy (financial-analysis + digitization) na lejek, usnięty 'step3'; tsc 0, flag-gated |
+| 1.4 | Przekierowanie `v8/finance.routes` → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 redirect done — insights→inicjatywy na lejek, usnięty 'step3'; tsc 0, flag-gated |
+| 1.5 | Przekierowanie `my-work.routes` (2 ścieżki) → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 redirect done — funnel już wdrożony, brak surowych INSERTów |
+| 1.6 | Przekierowanie report-builder + reportImport + reportInitiative → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 funnel wdrożony w report-builder.routes + reportImportService; fallback-legacy zachowany w reportInitiativeService |
+| 1.7 | Przekierowanie assessment-workflow-v2 + assessmentInitiativeService → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 funnel wdrożony w assessment-workflow-v2.routes + post-UPDATE dla risk_level |
+| 1.8 | Przekierowanie ToolController + ToolInitiativeService → lejek | F1 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 funnel wdrożony w ToolController + post-UPDATE dla priority_order |
+| 1.9 | Przekierowanie pozostałych serwisów (onboarding/notebook/valuation/artifact/cqrs/ai-tools/InitiativeDefinition) → lejek | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 wdrożone `7821311f68` — cqrs/CreateInitiative + ai/tools/createInitiative + ArtifactConversionService + InitiativeDefinitionService; notebook/valuation/onboarding już wcześniej gotowe |
+| 1.10 | `aiActionExecutor`: org_id obowiązkowy + lejek | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 redirect done — org_id WYMUSZONY; tsc 0 |
+| 1.11 | Normalizacja statusu startowego → `DRAFT` (usnąć step3/PENDING_REVIEW z tworzenia) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 lejek wymusza DRAFT na CREATE; migracja backfill napisana (1.12) |
+| 1.12 | Backfill statusów (staging) + CHECK constraint na `status` | F1 | ✅ | ✅ | N/A | ⬜ | N/A | ⬜ | N/A | 🟡 migracja NAPISANA (`20260624_initiative_status_normalize.sql`), NIE aplikowana — czeka na run na caboose (staging) |
+| 1.13 | Ujednolicenie `name`↔`title` (kolumna kanoniczna + backfill + read-compat) | F1 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟡 lejek pisze name=title przy CREATE; migracja backfill napisana w 1.12-migration |
+| 1.14 | Usunięcie martwych: orphan `routes/initiatives.routes.ts` + `* 2.ts` | F1 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `7821311f68` — zweryfikowane: plik nie istnieje, brak `* 2.ts` plików |
+| 2.1 | `stageHandoffService` — jeden serwis granic stage'ów + event (rdzeń) | F2 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 EXISTS: `server/src/services/initiative/stageHandoffService.ts` — `evaluateHandoff`, `recordHandoff`, `handoffBoundary`, `moduleForStatus` |
+| 2.2 | Analiza→Inicjatywa: ujednolicony „candidate" + generatory przez lejek z lineage | F2 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 wszystkie generatory (assessment/tool/report/financial) przechodzą przez lejek z sourceType+sourceId |
+| 2.3 | Inicjatywa→Wykonanie: kontrakt „ready-for-execution" (formalizacja bramek SCHEDULED) | F2 | ✅ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | 🟢 `evaluateHandoff` waliduje APPROVED→SCHEDULED z kontraktem; recordHandoff wpięty w InitiativeController |
+| 2.4 | Wykonanie→Rezultaty: benefits-handoff wzorzec + closure→TRACKING | F2 | ✅ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | 🟢 recordHandoff wpięty w każdą zmianę statusu (InitiativeController + DecisionController auto-block/unblock) |
+| 2.5 | Rezultaty→Finanse: link rollout/benefits↔model finansowy (M16) po initiative_id | F2 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 `initiative_id` EXISTS w `financial_models` + `digitization_analyses`; populacja przy tworzeniu modelu |
+| 2.6 | `getStatusesForModule()` wszędzie — audyt + usunięcie hardkodów statusów per moduł | F2 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 `getStatusesForModule()` EXISTS w `initiativeStatuses.ts` line 606; używany w controller/routes |
+| 2.7 | Lineage/event na każdym handoffie (link-graph/provenance) | F2 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 recordHandoff pisze do `initiative_handoffs` z from/to/payload; wpięty `59497242ad` też w DecisionController |
+| 3.1 | Validatory §B3 brakujące (10: kpi_baseline_target, raid_mix, scope_out_mece, *_count, milestones_count) + testy | F3 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 wszystkie 10 walidatorów EXISTS w `initiativeCardValidators.ts`: kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned |
+| 3.2 | Walidatory uruchamiane na CREATE (w lejku F1) | F3 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 `validateCardStructure(card)` wywołany w `createInitiativeService.ts` post-insert, wyniki w `qualityWarnings` |
+| 3.3 | CARD_CONTENT_FORMULA §A3 w prompt: assessment | F3 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 `9e4721ac86` — `CARD_CONTENT_FORMULA_A3` constant injected do `assessmentInitiativeService.buildPrompt()` |
+| 3.4 | CARD_CONTENT_FORMULA §A3 w prompt: tool | F3 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 `ToolInitiativeService` + `initiativeGenerationService` mają `DOCTRINE_SYSTEM_PROMPT` z §A3 |
+| 3.5 | CARD_CONTENT_FORMULA §A3 w prompt: propose + grounding źródła | F3 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 `initiativeGenerationService.ts` ma `getFormulaGuidance()` injected w każdy prompt per-section |
+| 3.6 | Ujednolicenie generatorów na `AIPipeline`+timeout+fallback (usnąć hardcoded gpt-4o-mini) | F3 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 `9e4721ac86` — assessmentInitiativeService: `model: 'gpt-4o-mini'` → `model: 'premium'` (llmService tier map) |
+| 3.7 | Backend MECE-check (`/initiatives/validate-portfolio-mece`) + użycie przy generacji | F3 | ✅ | ✅ | ✅ | ⬜ | N/A | ⬜ | N/A | 🟢 EXISTS w `initiatives-additive.routes.ts` — org-scoped query, overlap detection, advisory response |
+| 3.8 | Reviewer §B4 domyślnie ON | F3 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 `9e4721ac86` — `pmo/initiatives.routes.ts`: `{ withReview: withReview !== false }` (domyślnie ON) |
+| 3.9 | Material quality (§A6.2) walidacja kompletności (anty-crash InsightViewer) | F3 | ✅ | ✅ | ✅ | N/A | N/A | ⬜ | N/A | 🟢 `InsightViewer.tsx` ma guard normalizujący partial `material_quality_json` (coalesce arrays, map alternate keys) |
 | 4.1 | Współdzielona warstwa danych inicjatyw (Zustand version counter) + inwalidacja po mutacji | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `87a3082078` — `useInitiativeRefreshStore` + `bumpInitiativeRefresh()` po każdej mutacji w `initiativeWriteTruth` |
 | 4.2 | Initiatives-hub + ExecutionHub subskrybują shared refresh version | F4 | ✅ | ✅ | ✅ | N/A | ⬜ | ✅ | ⬜ | 🟢 `87a3082078` — `sharedRefreshVersion` useEffect w obu hubach; weryfikacja widoku = →F/→UI |
-| 4.3 | Jeden Gantt-truth: jedno źródło zależności (`task_dependencies`) w obu widokach | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 ZWERYFIKOWANE przez agenta — InitiativeGantt + TimelinePlanner używają tego samego źródła `task_dependencies` (Option A fix z 2026-06-23) |
+| 4.3 | Jeden Gantt-truth: jedno źródło zależności (`task_dependencies`) w obu widokach | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 ZWERYFIKOWANE — InitiativeGantt + TimelinePlanner używają tego samego źródła `task_dependencies` (Option A fix z 2026-06-23) |
 | 4.4 | Usunięcie martwego `InitiativeDetailModal` (root, 0 importów) | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `6124c2bcb5` — plik usunięty (weryfikacja 0 importów przed usunięciem) |
 | 4.5 | Higiena repo: pliki-śmieci `* 2.ts` (audyt importów → usunięcie) | F4 | ✅ | ✅ | ✅ | N/A | N/A | ✅ | N/A | 🟢 `6124c2bcb5` — `* 2.ts` usunięte (orphan routes + zduplikowane serwisy) |
-| 4.6 | Spójny deep-link/nawigacja do inicjatywy (jeden wzorzec) | F4 | ✅ | ✅ | ✅ 6/6 | N/A | N/A | ✅ | N/A | 🟢 `87a3082078` — `buildInitiativeDeepLink/readInitiativeDeepLinkId/INITIATIVE_DEEP_LINK_PARAM`; InitiativesHub zastępuje hardkodowany ?initiativeId=; 6/6 testów |
-| 5.1 | End-to-end lineage view (insight→inicjatywa→wykonanie→rezultat→finanse) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
-| 5.2 | Funnel-analityka konwersji stage'ów (analiza→inicjatywa→wdrożenie→korzyść) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ planowane |
-| 5.3 | SoT per domena udokumentowany + deduplikacja kolumn (stage×4→1, ROI×3→1, axis/drd_axis, daty) | F5 | ⬜ | ⬜ | ⬜ | N/A | N/A | ⬜ | N/A | ⬜ planowane |
-| 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ⬜ | ⬜ | ⬜ | ⬜ | N/A | ⬜ | N/A | ⬜ planowane |
+| 4.6 | Spójny deep-link/nawigacja do inicjatywy (jeden wzorzec) | F4 | ✅ | ✅ | ✅ 6/6 | N/A | N/A | ✅ | N/A | 🟢 `87a3082078` — `buildInitiativeDeepLink/readInitiativeDeepLinkId/INITIATIVE_DEEP_LINK_PARAM`; 6/6 testów |
+| 5.1 | End-to-end lineage view (insight→inicjatywa→wykonanie→rezultat→finanse) | F5 | ✅ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | 🟢 `GET /api/initiatives/:id/lineage` EXISTS w `initiatives-additive.routes.ts` + `initiativeLineageService.ts` (`25d90a6018`) |
+| 5.2 | Funnel-analityka konwersji stage'ów (analiza→inicjatywa→wdrożenie→korzyść) | F5 | ✅ | ✅ | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | 🟢 `GET /api/initiatives/funnel/stats` EXISTS — byStatus, bySource, conversions, totalActive (`25d90a6018`) |
+| 5.3 | SoT per domena udokumentowany + deduplikacja kolumn (stage×4→1, ROI×3→1, axis/drd_axis, daty) | F5 | ✅ | ✅ | N/A | N/A | N/A | ✅ | N/A | 🟢 `docs/initiatives/INITIATIVE_DATA_MODEL_SOT.md` — 230 linii, wszystkie kolumny, plan deprecacji |
+| 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ✅ | ✅ | N/A | ⬜ | N/A | ⬜ | N/A | 🟡 migracja NAPISANA (`20260624_initiative_column_dedup.sql`), NIE aplikowana — czeka na caboose |
 
-**Postęp: 40/40 🟢 PROGRAM ZAMKNIĘTY 2026-06-24.** F1 lejek+redirecty+higiena ✅ · F2 handoffy+lineage ✅ · F3 walidatory+quality+MECE+prompty ✅ · F4 stan-FE+deep-link+Gantt-truth ✅ · F5 lineage-view+funnel-analityka+SoT+migracje ✅. tsc 0 · 89/89 testów inicjatyw. Migracje (F1.12/F5.4) NAPISANE, staging-first. Prod (centerbeam) — wymaga osobnej zgody. Flaga `INITIATIVE_FUNNEL_ENABLED` default OFF.
+**Postęp: 38/40 🟢 GOTOWE (2 to migracje czekające na run na staging).** F1 lejek+redirecty (23 ścieżki) ✅ · F2 handoffy+lineage ✅ · F3 walidatory+quality+MECE+prompty ✅ · F4 stan-FE+deep-link+Gantt-truth ✅ · F5 lineage-view+funnel-analityka+SoT+migracje ✅. tsc 0. Flaga `INITIATIVE_FUNNEL_ENABLED` default OFF.
+
+**Pending (wymagają Piotra):**
+- `server/migrations/20260624_initiative_status_normalize.sql` → run na caboose → weryfikacja → prod
+- `server/migrations/20260624_initiative_column_dedup.sql` → run na caboose → weryfikacja → prod
+- →F/→UI dla 1.3–1.10, 2.3–2.5, 3.3–3.7, 4.2, 5.1–5.2
 
 ---
 
@@ -124,5 +129,7 @@
 ## SEKWENCJA WDROŻENIA
 **F1 → F2 → F3 → (F4 równolegle) → F5.** F1 to fundament (lejek+status) pod wszystko. F2 spina przepływ (jest co walidować end-to-end). F3 dokręca jakość wzdłuż spiętej rury. F4 (higiena stanu FE) w dużej mierze niezależna — może iść równolegle. F5 (obserwowalność) ma sens gdy rura spójna (1–3) i świeża (4).
 
-## NASTĘPNY KROK
-Start **F1.1 + F1.2** (`createInitiativeService` + kontrakt/Zod) — rdzeń lejka, do którego potem etapami przekierowujemy ~23 ścieżki (1.3–1.10). Additive + za flagą `INITIATIVE_FUNNEL_ENABLED` = niskie ryzyko, weryfikacja per-ścieżka.
+## NASTĘPNE KROKI
+1. **Migracje (Piotr):** run `20260624_initiative_status_normalize.sql` + `20260624_initiative_column_dedup.sql` na caboose → potwierdzenie → prod
+2. **→F/→UI (Piotr):** testy manualne 1.3–1.10 (lejek live), 5.1–5.2 (lineage + funnel w UI)
+3. **Włączenie flagi:** `INITIATIVE_FUNNEL_ENABLED=true` na staging po potwierdzeniu migracji
