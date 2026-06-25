@@ -237,6 +237,8 @@ import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
 import resultsKpiReportsRoutes from './routes/results-kpi-reports.routes.js';
 import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.routes.js';
 import resultsStrategicRoutes from './routes/resultsStrategic.routes.js';
+import resultsDriverTreeRoutes from './routes/resultsDriverTree.routes.js';
+import resultsExtendedRoutes from './routes/resultsExtended.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -920,6 +922,8 @@ export class ApiGateway {
       app.use('/api/results-v4', resultsEnterpriseRoutes);
       app.use('/api/results-value', resultsValueIntelligenceRoutes);
       app.use('/api/results-strategic', resultsStrategicRoutes);
+      app.use('/api/results-driver-tree', resultsDriverTreeRoutes);
+      app.use('/api/results-extended', resultsExtendedRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);
       app.use('/api/assessments-v4', assessmentEnterpriseRoutes);

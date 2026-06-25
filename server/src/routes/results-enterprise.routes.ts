@@ -1,5 +1,9 @@
 /**
- * Results Enterprise Routes (V4-RSLT-02, 04, 05, 06)
+ * Results Enterprise Routes (V4-RSLT-02, 04, 05, 06) — LEGACY (V4 path)
+ *
+ * @deprecated Mounted at /api/results-v4 for legacy ResultsReportingEnterpriseViews.
+ * Do NOT add new routes here. New M15 analytics → /api/results-extended.
+ * V4-RSLT-02, 04, 05, 06 (Schedules, Wallboards, Connectors, Enterprise reports).
  */
 
 import { type Response, Router } from 'express';

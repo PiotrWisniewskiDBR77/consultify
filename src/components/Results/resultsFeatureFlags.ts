@@ -27,6 +27,21 @@ const FLAGS = {
     localStorage: 'ff.results_scorecard',
     env: 'VITE_RESULTS_SCORECARD_ENABLED',
   },
+  strategicLayer: {
+    query: 'ff_strategicLayer',
+    localStorage: 'ff.results_strategic_layer',
+    env: 'VITE_RESULTS_STRATEGIC_LAYER_ENABLED',
+  },
+  aiInsights: {
+    query: 'ff_aiInsights',
+    localStorage: 'ff.results_ai_insights',
+    env: 'VITE_RESULTS_AI_INSIGHTS_ENABLED',
+  },
+  portfolioInsights: {
+    query: 'ff_portfolioInsights',
+    localStorage: 'ff.results_portfolio_insights',
+    env: 'VITE_RESULTS_PORTFOLIO_INSIGHTS_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsFlag = keyof typeof FLAGS;

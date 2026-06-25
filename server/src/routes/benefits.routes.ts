@@ -1,5 +1,15 @@
 /**
- * Benefits Routes — Bundle 12
+ * Benefits Routes — Bundle 12 (LEGACY — /api/benefits path)
+ *
+ * @deprecated Use the canonical V8 routes:
+ *   GET /api/results          (KPI + time-series, results-kpi-reports.routes)
+ *   GET /api/results-value    (value intelligence + scorecard)
+ *   GET /api/results-strategic (BSC + BDN + narrative)
+ *   GET /api/results-extended  (signals, run-rate, scenarios, AI insights)
+ *
+ * This router stays mounted for backwards-compat with legacy FE paths.
+ * Do NOT add new routes here — add to the V8 canonical routes above.
+ *
  * T046: ROI Tracking, T047: KPI Time Series, T048: Attribution, T049: Financial Mapping
  */
 
