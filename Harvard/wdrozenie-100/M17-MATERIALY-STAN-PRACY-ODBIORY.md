@@ -34,7 +34,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F1.1 | Wpiąć defaulty w B1/B3/B4 | F1 | ✅ | ✅ | ✅ d7974eb | n/d | n/d | n/d | n/d | 🟢 |
 | F1.2 | Flaga premium ON (demo) | F1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⛔ Piotr |
 | F1.3 | Beauty gate (VisionQA) | F1 | ✅ | ✅ | ✅ 272defe | n/d | n/d | n/d | n/d | 🟢 |
-| F1.4 | Content gate (0 placeholderów/sprzeczności) | F1 | ⬜ | 🟡 | 🟡 | ⬜ | n/d | ⬜ | ⬜ | 🟡 |
+| F1.4 | Content gate (0 placeholderów/sprzeczności) | F1 | ✅ | ✅ | ✅ a541716 | n/d | n/d | n/d | n/d | 🟢 |
 | F2.1 | „Nowy" → panel + wybór formatu | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F2.2 | Wejście 1: input → retrieval z org | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F2.3 | Wejście 2: upload pliku → parse | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
@@ -72,7 +72,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | ⊕ | Gramatyka układu §5B (Gamma-killer) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | ⊕ | Biblioteka palet kolorów (kuratorowane motywy) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 
-**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8). F0: 5 tasków 🟢 do odbioru. F1.1 🟢 (d7974eb65c). F1.2 ⛔ Piotr. F1.3/F1.4 ⬜. **Krok zerowy nowej rozmowy = head-to-head (ustal bar piękna) — patrz [`M17-MATERIALY-HANDOFF.md`](M17-MATERIALY-HANDOFF.md) §11.**
+**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8). F0: 5 tasków 🟢. F1.1/F1.3/F1.4 🟢 (d7974eb/272defe/a541716). F1.2 ⛔ Piotr (Railway flag). Następny krok: F1.2 (Piotr flaga) → deploy demo → Krok Zerowy head-to-head. **Krok zerowy nowej rozmowy = head-to-head (ustal bar piękna) — patrz [`M17-MATERIALY-HANDOFF.md`](M17-MATERIALY-HANDOFF.md) §11.**
 
 ---
 
