@@ -4,13 +4,17 @@
  * GET /api/results-driver-tree/:projectId/driver-tree
  * Builds the Value Driver Tree from initiative_kpis + initiative_kpi_mappings.
  * Returns nodes (objective/driver/kpi/initiative) with rolled-up values and edges.
+ *
+ * BUG-17: synthetic objective + driver (BSC category) nodes when none in DB.
+ * BUG-18: rollUpTree() to populate rolledUpValue + confidence + stats.coveredValue.
+ * BUG-12: edges aliased with `from`/`to` for frontend compatibility.
  */
 import { Router, type Response } from 'express';
 
 import verifyToken from '../middleware/auth.middleware.js';
 import {
   buildTreeFromMappings,
-  treeStats,
+  rollUpTree,
   type BuildTreeInput,
 } from '../services/results/valueDriverTreeService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
@@ -19,6 +23,21 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 interface AuthedRequest {
   user?: { organizationId?: string };
   params: Record<string, string>;
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  financial: 'Finansowe',
+  customer: 'Klienci',
+  internal: 'Procesy wewnętrzne',
+  learning: 'Rozwój i uczenie się',
+  process: 'Procesy wewnętrzne',
+  growth: 'Wzrost',
+};
+
+function categoryLabel(cat: string | null | undefined): string {
+  if (!cat) return 'Pozostałe';
+  const key = cat.toLowerCase().trim();
+  return CATEGORY_LABELS[key] ?? cat;
 }
 
 const router = Router();
@@ -44,73 +63,136 @@ router.get(
     )) as Array<{ id: string; name: string }>) || [];
 
     const kpis = ((await dbAll(
-      `SELECT id, name, current_value, target_value FROM initiative_kpis WHERE organization_id = ?`,
+      `SELECT id, name, category, current_value, target_value, baseline_value, progress_percentage
+       FROM initiative_kpis WHERE organization_id = ?`,
       [orgId]
-    )) as Array<{ id: string; name: string; current_value: number | null; target_value: number | null }>) || [];
+    )) as Array<{
+      id: string;
+      name: string;
+      category: string | null;
+      current_value: number | null;
+      target_value: number | null;
+      baseline_value: number | null;
+      progress_percentage: number | null;
+    }>) || [];
 
     const mappings = ((await dbAll(
       `SELECT initiative_id, kpi_id FROM initiative_kpi_mappings WHERE organization_id = ?`,
       [orgId]
     )) as Array<{ initiative_id: string; kpi_id: string }>) || [];
 
-    // Try to get financial mappings for financial weighting
-    let financialMappings: Array<{ kpi_id: string; annual_impact: number | null }> = [];
-    try {
-      financialMappings = ((await dbAll(
-        `SELECT kpi_id, annual_impact FROM kpi_financial_mappings WHERE organization_id = ?`,
-        [orgId]
-      )) as Array<{ kpi_id: string; annual_impact: number | null }>) || [];
-    } catch {
-      // table may not exist; proceed without
+    // BUG-17: build synthetic driver nodes from KPI categories
+    // Group KPIs by category → one driver node per unique category
+    const categorySet = new Set<string>();
+    for (const k of kpis) {
+      categorySet.add(k.category?.toLowerCase().trim() || '__other__');
+    }
+    const categoryToDriverId = new Map<string, string>();
+    for (const cat of categorySet) {
+      categoryToDriverId.set(cat, `driver_cat_${cat}`);
     }
 
-    const impactByKpi = new Map<string, number>();
-    for (const fm of financialMappings) {
-      if (fm.kpi_id && fm.annual_impact != null) {
-        impactByKpi.set(String(fm.kpi_id), (impactByKpi.get(String(fm.kpi_id)) || 0) + Number(fm.annual_impact));
-      }
-    }
+    // One synthetic objective at the top
+    const syntheticObjectiveId = 'objective_root';
+    const syntheticObjectives = [{ id: syntheticObjectiveId, label: 'Wyniki biznesowe', value: null }];
 
-    // Build kpiToFinancial from financial mappings
-    const kpiToFinancial = financialMappings.map((fm) => ({
-      kpiId: String(fm.kpi_id),
-      statementLineId: String(fm.kpi_id) + '_line',
-      multiplier: fm.annual_impact,
+    const syntheticDrivers = Array.from(categoryToDriverId.entries()).map(([cat, driverId]) => ({
+      id: driverId,
+      label: cat === '__other__' ? 'Pozostałe' : categoryLabel(cat),
+      value: null,
     }));
 
-    const financialLines = Array.from(impactByKpi.entries()).map(([kpiId, impact]) => ({
-      id: kpiId + '_line',
-      label: `Financial Line (${kpiId.slice(0, 8)})`,
-      value: impact,
-    }));
+    // Build kpi→driver edges (kpi as child contributing to its driver parent)
+    const kpiToDriverEdges = kpis
+      .filter((k) => mappings.some((m) => String(m.kpi_id) === String(k.id)))
+      .map((k) => {
+        const cat = k.category?.toLowerCase().trim() || '__other__';
+        const driverId = categoryToDriverId.get(cat)!;
+        return { kpiId: String(k.id), driverId };
+      });
 
     const input: BuildTreeInput = {
-      objectives: [],
-      financialLines,
+      objectives: syntheticObjectives,
+      financialLines: syntheticDrivers,
       initiatives: initiatives.map((i) => ({ id: String(i.id), name: i.name })),
       kpis: kpis.map((k) => ({
         id: String(k.id),
         name: k.name,
-        baseline: undefined,
+        baseline: k.baseline_value != null ? Number(k.baseline_value) : undefined,
         target: k.target_value != null ? Number(k.target_value) : undefined,
         current: k.current_value != null ? Number(k.current_value) : undefined,
       })),
-      kpiToFinancial,
+      // kpiToFinancial drives KPI→driver edges (reuse the driver id as statementLineId)
+      kpiToFinancial: kpiToDriverEdges.map((e) => ({
+        kpiId: e.kpiId,
+        statementLineId: e.driverId,
+        multiplier: 1,
+      })),
       initiativeToKpi: mappings.map((m) => ({
         initiativeId: String(m.initiative_id),
         kpiId: String(m.kpi_id),
       })),
     };
 
-    const { nodes, edges } = buildTreeFromMappings(input);
+    // Override objective/financial nodes to use our synthetic objective at top
+    // buildTreeFromMappings maps financialLines→driver type, objectives→objective type
+    // driver→objective edges are added automatically when objectives.length > 0
+    const { nodes: rawNodes, edges: rawEdges } = buildTreeFromMappings(input);
+
+    // BUG-18: roll up values bottom-up
+    const rolledNodes = rollUpTree(rawNodes, rawEdges);
+
+    // BUG-18: attach confidence to KPI nodes (progress_percentage / 100)
+    const progressByKpiId = new Map<string, number>();
+    for (const k of kpis) {
+      if (k.progress_percentage != null) {
+        progressByKpiId.set(String(k.id), Number(k.progress_percentage) / 100);
+      } else if (k.current_value != null && k.target_value != null && k.target_value !== 0) {
+        progressByKpiId.set(String(k.id), Math.min(Number(k.current_value) / Number(k.target_value), 1));
+      }
+    }
+
+    const enrichedNodes = rolledNodes.map((n) => {
+      const base: Record<string, unknown> = {
+        id: n.id,
+        type: n.type,
+        label: n.label,
+        value: n.value ?? undefined,
+        rolledUpValue: n.rolledUpValue,
+      };
+      if (n.type === 'kpi') {
+        const conf = progressByKpiId.get(n.id);
+        if (conf != null) base['confidence'] = conf;
+        if (n.baseline != null) base['baseline'] = n.baseline;
+        if (n.target != null) base['target'] = n.target;
+        if (n.current != null) base['current'] = n.current;
+      }
+      return base;
+    });
+
+    // BUG-12: alias edges from/to for frontend
+    const enrichedEdges = rawEdges.map((e) => ({
+      from: e.fromId,
+      to: e.toId,
+      fromId: e.fromId,
+      toId: e.toId,
+      weight: e.weight,
+    }));
+
+    // BUG-18: coveredValue = sum of rolledUpValue of all kpi nodes
+    const kpiNodes = rolledNodes.filter((n) => n.type === 'kpi');
+    const coveredValue = kpiNodes.reduce((s, n) => s + (n.rolledUpValue ?? 0), 0);
+
     const stats = {
-      totalNodes: nodes.length,
-      objectiveCount: nodes.filter((n) => n.type === 'objective').length,
-      driverCount: nodes.filter((n) => n.type === 'driver').length,
-      kpiCount: nodes.filter((n) => n.type === 'kpi').length,
-      initiativeCount: nodes.filter((n) => n.type === 'initiative').length,
+      totalNodes: enrichedNodes.length,
+      objectiveCount: enrichedNodes.filter((n) => n['type'] === 'objective').length,
+      driverCount: enrichedNodes.filter((n) => n['type'] === 'driver').length,
+      kpiCount: enrichedNodes.filter((n) => n['type'] === 'kpi').length,
+      initiativeCount: enrichedNodes.filter((n) => n['type'] === 'initiative').length,
+      coveredValue,
     };
-    res.json({ nodes, edges, stats });
+
+    res.json({ nodes: enrichedNodes, edges: enrichedEdges, stats });
   })
 );
 
