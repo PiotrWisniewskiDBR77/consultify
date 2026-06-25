@@ -50,36 +50,36 @@ const THEMES: Record<ThemeId, DeliverableTheme> = {
     fontPair: { heading: 'Merriweather', body: 'Inter' },
     palette: { dominant: '#0C447C', supporting: '#5F5E5A', accent: '#1D9E75', neutralText: '#2C2C2A' },
   },
-  // Startup/tech: geometryczny sans, indygo + cyan.
+  // Tech/startup: czysty humanistyczny sans (Inter head+body), indygo + cyan.
   modern: {
     id: 'modern',
     label: 'Modern',
-    description: 'Tech/startup: geometryczny sans, indygo + cyan. Dla produktowych i GTM.',
-    fontPair: { heading: 'Poppins', body: 'Roboto' },
+    description: 'Tech/startup: czysty sans Inter (head+body), indygo + cyan. Dla produktowych i GTM.',
+    fontPair: { heading: 'Inter', body: 'Inter' },
     palette: { dominant: '#4338CA', supporting: '#64748B', accent: '#06B6D4', neutralText: '#1E293B' },
   },
-  // Korporacyjny/przemysłowy: stonowany, granat + burnt orange.
+  // Korporacyjny/Office-natywny: Calibri (head+body), granat + burnt orange.
   corporate: {
     id: 'corporate',
     label: 'Corporate',
-    description: 'Przemysł/B2B: stonowany granat + burnt orange. Dla raportów operacyjnych.',
-    fontPair: { heading: 'Georgia', body: 'Arial' },
+    description: 'Office-natywny/B2B: Calibri (head+body), granat + burnt orange. Dla raportów operacyjnych.',
+    fontPair: { heading: 'Calibri', body: 'Calibri' },
     palette: { dominant: '#1F3A5F', supporting: '#6B7280', accent: '#C2410C', neutralText: '#111827' },
   },
-  // Elegancki/instytucjonalny: display-serif, forest + amber.
+  // Tradycyjny raport: elegancki serif (EB Garamond head + Georgia body), forest + amber.
   classic: {
     id: 'classic',
     label: 'Classic',
-    description: 'Instytucjonalny/elegancki: display-serif, forest + amber. Dla prestiżowych.',
-    fontPair: { heading: 'Playfair Display', body: 'Lato' },
+    description: 'Tradycyjny raport: serif EB Garamond + Georgia, forest + amber. Dla prestiżowych.',
+    fontPair: { heading: 'EB Garamond', body: 'Georgia' },
     palette: { dominant: '#14532D', supporting: '#78716C', accent: '#B45309', neutralText: '#1C1917' },
   },
-  // Minimalistyczny: czysty sans, slate + blue, dużo światła.
+  // Lekki/przyjazny: Lato head + Source Sans 3 body, slate + blue, dużo światła.
   clean: {
     id: 'clean',
     label: 'Clean',
-    description: 'Minimalistyczny: czysty sans, slate + blue. Dla data-heavy i tabel.',
-    fontPair: { heading: 'Montserrat', body: 'Open Sans' },
+    description: 'Lekki/przyjazny: Lato + Source Sans 3, slate + blue. Dla data-heavy i tabel.',
+    fontPair: { heading: 'Lato', body: 'Source Sans 3' },
     palette: { dominant: '#334155', supporting: '#94A3B8', accent: '#2563EB', neutralText: '#0F172A' },
   },
 };
@@ -111,7 +111,7 @@ export function resolveTheme(
   };
 }
 
-/** Lista unikalnych krojów w całym rejestrze (do osadzania/QA fontów). */
+/** Lista unikalnych krojów używanych w 5 domyślnych parach motywów. */
 export function allThemeFonts(): string[] {
   const set = new Set<string>();
   for (const t of DELIVERABLE_THEMES) {
@@ -120,3 +120,47 @@ export function allThemeFonts(): string[] {
   }
   return [...set];
 }
+
+// ── §1 Kuratorowana biblioteka fontów (DELIVERABLE_FORMATTING_SPEC §1) ────────
+// 10 krojów czytelnych+profesjonalnych+dostępnych wszędzie (Office-natywne LUB
+// Google Fonts → działają w .docx, .pptx i web-viewerze). 5 sans + 5 serif.
+// To zbiór, z którego MUSZĄ pochodzić fonty każdego motywu (guard isLibraryFont).
+export const FORMATTING_FONT_LIBRARY = {
+  sans: ['Inter', 'Calibri', 'Lato', 'Arial', 'Source Sans 3'] as const,
+  serif: ['Georgia', 'Merriweather', 'EB Garamond', 'Source Serif', 'Times New Roman'] as const,
+} as const;
+
+const ALL_LIBRARY_FONTS: ReadonlySet<string> = new Set<string>([
+  ...FORMATTING_FONT_LIBRARY.sans,
+  ...FORMATTING_FONT_LIBRARY.serif,
+]);
+
+/** Czy font należy do kuratorowanej biblioteki §1? */
+export function isLibraryFont(font: string): boolean {
+  return ALL_LIBRARY_FONTS.has(font);
+}
+
+// ── §3 Skala typograficzna per format (DELIVERABLE_FORMATTING_SPEC §3) ────────
+// Rozmiary w PUNKTACH (pt). Druk ≠ ekran ≠ projekcja → osobna skala per powierzchnia.
+// Konsumowane przez renderery: PPT przez bundlePptxRuntime, Word ma własną
+// (documentDocxStyles SIZING_BY_CLASS, spójną z tymi wartościami).
+export interface TypeScalePpt {
+  coverTitle: number; // slajd tytułowy / divider
+  slideTitle: number; // tytuł slajdu treści
+  body: number; // treść/bullety (min 18 do projekcji)
+  caption: number; // źródło/stopka
+}
+export const PPT_TYPE_SCALE: TypeScalePpt = {
+  coverTitle: 40,
+  slideTitle: 30,
+  body: 20,
+  caption: 11,
+};
+
+// ── §4 Markery punktowań i wyliczników (DELIVERABLE_FORMATTING_SPEC §4) ───────
+// Max 3 poziomy zagnieżdżenia. Spójne na wszystkich powierzchniach.
+export const LIST_MARKERS = {
+  bullet: ['•', '–', '·'] as const, // L1 / L2 / L3
+  number: ['1.', 'a.', 'i.'] as const,
+  checklist: { unchecked: '☐', checked: '☑' } as const,
+} as const;

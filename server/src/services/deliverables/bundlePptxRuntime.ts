@@ -11,7 +11,7 @@
 
 import { createRequire } from 'node:module';
 import logger from '../../utils/Logger.js';
-import { resolveTheme } from './themeRegistry.js';
+import { resolveTheme, PPT_TYPE_SCALE } from './themeRegistry.js';
 
 const require = createRequire(import.meta.url);
 
@@ -71,13 +71,13 @@ export async function deckPlansToPptxBuffer(
     title.background = { color: dominant };
     title.addText(opts.title || (isPolish ? 'Prezentacja' : 'Presentation'), {
       x: 0.6, y: 2.1, w: 8.8, h: 1.3,
-      fontFace: headingFont, fontSize: 40, bold: true, color: 'FFFFFF',
+      fontFace: headingFont, fontSize: PPT_TYPE_SCALE.coverTitle, bold: true, color: 'FFFFFF',
       align: 'left', valign: 'middle',
     });
     if (opts.company) {
       title.addText(opts.company, {
         x: 0.6, y: 3.5, w: 8.8, h: 0.6,
-        fontFace: bodyFont, fontSize: 18, color: 'FFFFFF', align: 'left',
+        fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.body, color: 'FFFFFF', align: 'left',
       });
     }
 
@@ -105,7 +105,7 @@ export async function deckPlansToPptxBuffer(
       // Action-title.
       slide.addText(heading || (isPolish ? `Slajd ${n}` : `Slide ${n}`), {
         x: 0.6, y: 0.5, w: 8.8, h: 1.0,
-        fontFace: headingFont, fontSize: 26, bold: true, color: dominant,
+        fontFace: headingFont, fontSize: PPT_TYPE_SCALE.slideTitle, bold: true, color: dominant,
         align: 'left', valign: 'top',
       });
 
@@ -113,7 +113,7 @@ export async function deckPlansToPptxBuffer(
       if (message) {
         slide.addText(message, {
           x: 0.6, y: 1.7, w: 8.8, h: 3.0,
-          fontFace: bodyFont, fontSize: 18, color: neutral,
+          fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.body, color: neutral,
           align: 'left', valign: 'top',
         });
       }
@@ -121,11 +121,11 @@ export async function deckPlansToPptxBuffer(
       // Stopka: firma + numer.
       slide.addText(`${opts.company || ''}`.trim(), {
         x: 0.6, y: 5.25, w: 6, h: 0.3,
-        fontFace: bodyFont, fontSize: 9, color: '999999', align: 'left',
+        fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.caption, color: '999999', align: 'left',
       });
       slide.addText(String(n), {
         x: 9.0, y: 5.25, w: 0.6, h: 0.3,
-        fontFace: bodyFont, fontSize: 9, color: '999999', align: 'right',
+        fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.caption, color: '999999', align: 'right',
       });
     }
 
@@ -134,7 +134,7 @@ export async function deckPlansToPptxBuffer(
     closing.background = { color: dominant };
     closing.addText(isPolish ? 'Dziękujemy' : 'Thank you', {
       x: 0.6, y: 2.3, w: 8.8, h: 1.0,
-      fontFace: headingFont, fontSize: 32, bold: true, color: 'FFFFFF', align: 'left',
+      fontFace: headingFont, fontSize: PPT_TYPE_SCALE.coverTitle, bold: true, color: 'FFFFFF', align: 'left',
     });
 
     const buffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;

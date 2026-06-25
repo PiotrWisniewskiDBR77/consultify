@@ -14,6 +14,10 @@ import {
   resolveTheme,
   isThemeId,
   allThemeFonts,
+  FORMATTING_FONT_LIBRARY,
+  isLibraryFont,
+  PPT_TYPE_SCALE,
+  LIST_MARKERS,
 } from '../../../server/src/services/deliverables/themeRegistry.js';
 import { resolveDeliverableDefaults } from '../../../server/src/services/deliverables/deliverableDefaults.js';
 
@@ -35,11 +39,13 @@ describe('themeRegistry — shape', () => {
     }
   });
 
-  it('TR-1.3: 10 distinct fonts across the registry (DoD F3.1)', () => {
-    const fonts = allThemeFonts();
-    expect(fonts).toHaveLength(10);
-    // no duplicates
-    expect(new Set(fonts).size).toBe(10);
+  it('TR-1.3: every theme font comes from the curated §1 library (spec alignment)', () => {
+    for (const t of DELIVERABLE_THEMES) {
+      expect(isLibraryFont(t.fontPair.heading), `${t.id} heading "${t.fontPair.heading}" not in §1 library`).toBe(true);
+      expect(isLibraryFont(t.fontPair.body), `${t.id} body "${t.fontPair.body}" not in §1 library`).toBe(true);
+    }
+    // 5 default pairs draw on a subset of the library (Inter/Calibri reused).
+    expect(allThemeFonts().length).toBeGreaterThanOrEqual(5);
   });
 
   it('TR-1.4: every palette has 4 valid hex colors', () => {
@@ -65,7 +71,7 @@ describe('themeRegistry — resolveTheme', () => {
   it('TR-2.1: resolves a known id', () => {
     const modern = resolveTheme('modern');
     expect(modern.id).toBe('modern');
-    expect(modern.fontPair.heading).toBe('Poppins');
+    expect(modern.fontPair.heading).toBe('Inter');
   });
 
   it('TR-2.2: unknown id → falls back to DEFAULT_THEME_ID', () => {
@@ -107,7 +113,7 @@ describe('themeRegistry — deliverableDefaults integration', () => {
     const d = resolveDeliverableDefaults('deck', { themeId: 'modern' });
     const modern = resolveTheme('modern');
     expect(d.graphic.theme).toBe('modern');
-    expect(d.graphic.fontPair.heading).toBe('Poppins');
+    expect(d.graphic.fontPair.heading).toBe('Inter');
     expect(d.graphic.palette.dominant).toBe(modern.palette.dominant);
     // format-specific graphic (layout) preserved
     expect(d.graphic.layout?.minDistinctLayouts).toBe(8);
@@ -120,5 +126,53 @@ describe('themeRegistry — deliverableDefaults integration', () => {
     });
     expect(d.graphic.theme).toBe('modern'); // theme id from registry
     expect(d.graphic.palette.dominant).toBe('#000000'); // explicit override wins
+  });
+});
+
+// ── TR-4: F3.3 typography SSOT (DELIVERABLE_FORMATTING_SPEC §1/§3/§4) ──────
+
+describe('themeRegistry — F3.3 typography SSOT', () => {
+  it('TR-4.1: §1 font library = 5 sans + 5 serif (10 curated)', () => {
+    expect(FORMATTING_FONT_LIBRARY.sans).toHaveLength(5);
+    expect(FORMATTING_FONT_LIBRARY.serif).toHaveLength(5);
+    const all = [...FORMATTING_FONT_LIBRARY.sans, ...FORMATTING_FONT_LIBRARY.serif];
+    expect(new Set(all).size).toBe(10);
+  });
+
+  it('TR-4.2: the 5 canonical pairs match spec §2', () => {
+    // spec §2 mandates these exact heading/body pairs
+    const expected: Record<string, [string, string]> = {
+      modern: ['Inter', 'Inter'],
+      executive: ['Merriweather', 'Inter'],
+      corporate: ['Calibri', 'Calibri'],
+      classic: ['EB Garamond', 'Georgia'],
+      clean: ['Lato', 'Source Sans 3'],
+    };
+    for (const t of DELIVERABLE_THEMES) {
+      const [h, b] = expected[t.id];
+      expect(t.fontPair.heading, `${t.id} heading`).toBe(h);
+      expect(t.fontPair.body, `${t.id} body`).toBe(b);
+    }
+  });
+
+  it('TR-4.3: isLibraryFont guards membership', () => {
+    expect(isLibraryFont('Inter')).toBe(true);
+    expect(isLibraryFont('Times New Roman')).toBe(true);
+    expect(isLibraryFont('Poppins')).toBe(false); // not curated
+    expect(isLibraryFont('Comic Sans MS')).toBe(false);
+  });
+
+  it('TR-4.4: §3 PPT scale honors projection floor (body ≥ 18pt)', () => {
+    expect(PPT_TYPE_SCALE.coverTitle).toBeGreaterThanOrEqual(PPT_TYPE_SCALE.slideTitle);
+    expect(PPT_TYPE_SCALE.slideTitle).toBeGreaterThanOrEqual(PPT_TYPE_SCALE.body);
+    expect(PPT_TYPE_SCALE.body).toBeGreaterThanOrEqual(18); // spec: min 18 do projekcji
+    expect(PPT_TYPE_SCALE.caption).toBeLessThan(PPT_TYPE_SCALE.body);
+  });
+
+  it('TR-4.5: §4 list markers = 3 nesting levels per list type', () => {
+    expect(LIST_MARKERS.bullet).toEqual(['•', '–', '·']);
+    expect(LIST_MARKERS.number).toEqual(['1.', 'a.', 'i.']);
+    expect(LIST_MARKERS.checklist.unchecked).toBe('☐');
+    expect(LIST_MARKERS.checklist.checked).toBe('☑');
   });
 });

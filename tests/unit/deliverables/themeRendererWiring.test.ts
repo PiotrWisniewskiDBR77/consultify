@@ -31,10 +31,10 @@ describe('theme → DOCX wiring', () => {
     expect(schema.formattingSchema.fonts.body).toBe(exec.fontPair.body);
   });
 
-  it('TRW-1.2: themeId="modern" → Poppins/Roboto in formattingSchema', () => {
+  it('TRW-1.2: themeId="modern" → Inter/Inter in formattingSchema', () => {
     const schema = contentToDocumentSchema(CONTENT_STUB, SPINE_STUB, 'modern');
-    expect(schema.formattingSchema.fonts.heading).toBe('Poppins');
-    expect(schema.formattingSchema.fonts.body).toBe('Roboto');
+    expect(schema.formattingSchema.fonts.heading).toBe('Inter');
+    expect(schema.formattingSchema.fonts.body).toBe('Inter');
   });
 
   it('TRW-1.3: unknown themeId → falls back to executive fonts', () => {
