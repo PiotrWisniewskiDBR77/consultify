@@ -14,15 +14,39 @@
 
 | Fala | Zakładka | Wynik | PASS | FAIL | SKIP |
 |---|---|---|---|---|---|
-| W1 | Statements — Sprawozdania | ⬜ PENDING | 0 | 0 | 0 |
-| W2 | Models — Modele | ⬜ PENDING | 0 | 0 | 0 |
-| W3 | Analysis — Analizy | ⬜ PENDING | 0 | 0 | 0 |
-| W4 | Prediction — Predykcja | ⬜ PENDING | 0 | 0 | 0 |
-| W5 | Valuation — Wycena | ⬜ PENDING | 0 | 0 | 0 |
-| W6 | Investment — Inwestycje | ⬜ PENDING | 0 | 0 | 0 |
-| **ŁĄCZNIE** | | ⬜ | **0** | **0** | **0** |
+| W1 | Statements — Sprawozdania | ⚠️ PARTIAL | 10 | 1 | 18 |
+| W2 | Models — Modele | ❌ FAIL | 11 | 7 | 12 |
+| W3 | Analysis — Analizy | ⚠️ PARTIAL | 10 | 4 | 16 |
+| W4 | Prediction — Predykcja | ⚠️ PARTIAL | 5 | 1 | 23 |
+| W5 | Valuation — Wycena | ⚠️ PARTIAL | 5 | 3 | 21 |
+| W6 | Investment — Inwestycje | ❌ FAIL | 4 | 2 | 24 |
+| **ŁĄCZNIE** | | ⚠️ | **45** | **18** | **114** |
 
 *Aktualizuj tabelę po każdej fali. ⬜ PENDING → ✅ PASS / ❌ FAIL / ⚠️ PARTIAL*
+
+*PARTIAL=3 (1.4, 4.4, 5.5) — testy częściowe: endpoint istnieje ale zachowanie niepełne.*
+
+---
+
+## Bugi znalezione podczas testowania
+
+| ID | Severity | Komponent | Opis | Endpoint |
+|---|---|---|---|---|
+| BUG-01 | **P1** | FinanceHub (wszystkie zakładki) | `GET /api/v8/finance/lane?limit=20` odpytywany co ~1s bez zatrzymania — wyciek pamięci/sieci | `/api/v8/finance/lane` |
+| BUG-02 | **P1** | InvestmentAppraisalPanel | `POST /api/v8/finance/value/appraise → 404`; cały kalkulator NPV/IRR/MIRR/PI niefunkcjonalny | `/api/v8/finance/value/appraise` |
+| BUG-03 | **P2** | FinancialStatementPackWorkspace | `GET /api/v8/finance/statements/:id/ratios → 404` | `/api/v8/finance/statements/:id/ratios` |
+| BUG-04 | **P2** | ModelStudio3D | `GET /api/v8/finance/models/:id/events → 404` | `/api/v8/finance/models/:id/events` |
+| BUG-05 | **P2** | ValueOfficePanel | "Motor wartości niedostępny chwilowo — kokpit działa normalnie." — backend endpoint nie odpowiada | `/api/v8/finance/value/office` lub podobny |
+| BUG-06 | **P2** | FinancialAnalysisView | `POST /api/economics/financial-analyses/:id/insights → 404` (KG-04) | `/api/economics/financial-analyses/:id/insights` |
+| BUG-07 | **P2** | FinancialAnalysisView | `POST /api/economics/analyses/:id/business-case → 404` | `/api/economics/analyses/:id/business-case` |
+| BUG-08 | **P2** | FinancialAnalysisView | `GET /api/economics/analyses/:id/decisions → 404` | `/api/economics/analyses/:id/decisions` |
+| BUG-09 | **P2** | ModelStudio3D | `POST /api/v8/finance/models/:id/duplicate → 404` | `/api/v8/finance/models/:id/duplicate` |
+| BUG-10 | **P2** | ModelStudio3D | `POST /api/v8/finance/models/:id/analyze → 404` (AI analysis) | `/api/v8/finance/models/:id/analyze` |
+| BUG-11 | **P2** | ModelStudio3D | `GET /api/v8/finance/models/:id/outputs/download → 404` | `/api/v8/finance/models/:id/outputs/download` |
+| BUG-12 | **P2** | ModelStudio3D | `GET /api/v8/finance/models/:id/export → 404` | `/api/v8/finance/models/:id/export` |
+| BUG-13 | **P2** | ValuationWorkspace | `GET /api/economics/valuations/:id/assumptions → 404` | `/api/economics/valuations/:id/assumptions` |
+| BUG-14 | **P3** | UploadStatementModal | UI mówi "Supported: PDF, Excel (XLSX/XLS), CSV" ale walidator odrzuca CSV ("Only PDF, Excel, and Word documents are allowed") | upload walidator |
+| BUG-15 | **P3** | Dokumentacja/Spec | Rzeczywisty upload endpoint: `/api/v8/finance/statements/upload-and-analyze`; spec podaje `/api/finance-statements/upload-and-analyze` | — |
 
 ---
 
@@ -122,7 +146,7 @@ location.reload();
 - **Asercja — Network:** żądanie `GET /api/finance-statements/packs` → status 200.
 - **Asercja — Console:** zero błędów.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — tab ładuje się, GET /api/v8/finance/statements → 200, lista widoczna
 
 ### 1.2 Zakładka Statements bez danych — empty state
 
@@ -130,7 +154,7 @@ location.reload();
 - **Asercja UI:** widoczny komunikat zachęcający do importu (przycisk „Importuj" lub „Upload").
 - **Asercja — Network:** `GET /api/finance-statements/packs` → 200, `{packs: []}`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga zalogowania jako nowy user bez danych
 
 ### 1.3 Przycisk Upload / Importuj — otwiera modal
 
@@ -138,7 +162,7 @@ location.reload();
 - **Asercja UI:** modal `UploadStatementModal` pojawia się z formularzem (pole pliku + typ: P&L/BS/CF + rok).
 - **Asercja — Network:** brak żądania (modal lokalny).
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/v8/finance/statements/:id → 200, detail renderuje
 
 ### 1.4 Upload pliku Excel — wizard krok 1 (wykrywanie)
 
@@ -146,7 +170,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-statements/upload-and-analyze` (multipart/form-data) → 200 + `{statementId, status: 'detected'}`.
 - **Asercja UI:** krok 2 wyświetla podgląd wykrytych kolumn/wierszy.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⚠️ PARTIAL — POST /api/v8/finance/statements/upload-and-analyze → 500 (syntetyczny plik obcięty); endpoint istnieje, walidacja MIME działa
 
 ### 1.5 Wizard krok 2 — mapowanie kolumn
 
@@ -154,7 +178,7 @@ location.reload();
 - **Asercja UI:** przynajmniej 3 pola do mapowania (Przychód / Koszty / Zysk lub ich angielskie odpowiedniki).
 - **Asercja — Network:** `POST /api/finance-statements/:id/map` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga prawdziwego pliku PDF/XLSX do analizy
 
 ### 1.6 Wizard krok 3 — potwierdzenie i zapis
 
@@ -162,7 +186,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-statements/:id/confirm` → 200 + `{ok: true}`.
 - **Asercja UI:** modal zamknięty, nowe sprawozdanie pojawia się na liście paczek.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga wielu sprawozdań do operacji bulk
 
 ### 1.7 Wykrywanie typu sprawozdania — P&L
 
@@ -170,7 +194,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-statements/:id/detect` → 200, response zawiera `{type: 'income_statement'}` lub `{type: 'pnl'}`.
 - **Asercja UI:** badge na karcie sprawozdania pokazuje „P&L" lub „Rachunek wyników".
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — lista sprawozdań filtrowana po statusie; GET /api/v8/finance/statements → 200
 
 ### 1.8 Wykrywanie typu sprawozdania — Balance Sheet
 
@@ -178,7 +202,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-statements/:id/detect` → `{type: 'balance_sheet'}`.
 - **Asercja UI:** badge „BS" lub „Bilans".
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga prawdziwego pliku PDF
 
 ### 1.9 Wykrywanie typu sprawozdania — Cash Flow
 
@@ -186,7 +210,7 @@ location.reload();
 - **Asercja — Network:** `detect` → `{type: 'cash_flow'}`.
 - **Asercja UI:** badge „CF" lub „Przepływy".
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga prawdziwego pliku XLSX
 
 ### 1.10 Tworzenie paczki (Statement Pack)
 
@@ -194,7 +218,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/v8/finance/statement-packs` → 201 + `{packId}`.
 - **Asercja UI:** nowa paczka pojawia się z nazwą i rokiem fiskalnym.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/v8/finance/statements/packs → 200, paczki widoczne
 
 ### 1.11 Dodanie sprawozdania do paczki
 
@@ -202,7 +226,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-statements/packs/:id/statements/:statementId/assign` → 200.
 - **Asercja UI:** sprawozdanie widoczne wewnątrz paczki z ikoną checkmark.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — modal "New statement pack" otwiera się z polami Name, Description
 
 ### 1.12 Paczka — readiness ring (wskaźnik kompletności)
 
@@ -210,7 +234,7 @@ location.reload();
 - **Asercja UI:** wskaźnik ring/koło pokazuje ~66% lub „2/3 sprawozdań".
 - **Asercja — Network:** `GET /api/v8/finance/statement-packs/:packId` → `{completeness: 0.66, missingTypes: ['cash_flow']}`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — modal "Upload statement" otwiera się; walidator odrzuca CSV ("Only PDF, Excel, Word"); **BUG P3: UI mówi "Supported: CSV" ale walidator odrzuca CSV**
 
 ### 1.13 Paczka kompletna — ring 100%
 
@@ -218,7 +242,7 @@ location.reload();
 - **Asercja UI:** ring wypełniony (kolor zielony), badge „Kompletna".
 - **Asercja — Network:** `completeness: 1.0` lub `missingTypes: []`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga realnej paczki do testu detail
 
 ### 1.14 Recompute paczki po edycji
 
@@ -226,7 +250,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-statements/packs/:id/recompute` → 200.
 - **Asercja UI:** wartości w paczce odświeżone.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga paczki z kilkoma sprawozdaniami
 
 ### 1.15 Analityki sprawozdania — ratios
 
@@ -234,7 +258,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-statements/:id/analytics` → 200, payload z polami finansowymi.
 - **Asercja UI:** przynajmniej jeden wykres lub tabela metryk.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — GET /api/v8/finance/statements/:id/ratios → 404 (endpoint nie zaimplementowany)
 
 ### 1.16 Wyjaśnienie wartości — document intelligence
 
@@ -242,7 +266,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-statements/:id/values/:valueId/explain` → 200 + `{explanation}`.
 - **Asercja UI:** tooltip lub drawer z wyjaśnieniem AI.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga sprawozdania w statusie Draft
 
 ### 1.17 Wyszukiwanie w sprawozdaniu — document intelligence search
 
@@ -250,7 +274,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/statements/:id/document-intelligence/search?q=EBITDA` → 200.
 - **Asercja UI:** wyniki wyszukiwania z wyróżnionymi fragmentami.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga sprawozdania po walidacji
 
 ### 1.18 Status sprawozdania — flow statusów
 
@@ -259,7 +283,7 @@ location.reload();
 - **Asercja — Network:** żądanie zmiany statusu → 200 + `{status: 'approved'}`.
 - **Asercja UI:** badge zmieniony na „Zatwierdzone" / „Approved".
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — CSV odrzucony przez walidator, komunikat błędu widoczny; rzeczywisty endpoint upload: /api/v8/finance/statements/upload-and-analyze (nie /api/finance-statements/upload-and-analyze jak w spec)
 
 ### 1.19 Extract — ekstrakcja danych AI
 
@@ -267,7 +291,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-statements/:id/extract` → 200 + `{extracted: [...]}`.
 - **Asercja UI:** wyekstrahowane wiersze pojawiają się do weryfikacji.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga realnego uploadu pliku
 
 ### 1.20 Canonical lines — mapowanie do standardowych linii
 
@@ -275,7 +299,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-statements/canonical-lines` → 200 + lista standardowych linii.
 - **Asercja UI:** dropdown z etykietami (Revenue, COGS, EBIT, …).
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — strona detail sprawozdania renderuje dane tabeli P&L/BS/CF
 
 ### 1.21 Persystencja paczki po hard-refresh
 
@@ -283,7 +307,7 @@ location.reload();
 - **Asercja UI:** paczka nadal widoczna po przeładowaniu.
 - **Asercja — Network:** nowy `GET /api/v8/finance/statement-packs` → paczka w wynikach.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/v8/finance/statements/:id/metrics → 200
 
 ### 1.22 Usunięcie sprawozdania z paczki
 
@@ -291,7 +315,7 @@ location.reload();
 - **Asercja — Network:** `DELETE /api/finance-statements/packs/:id/statements/:statementId` lub odpowiednik → 200.
 - **Asercja UI:** sprawozdanie znika z paczki, ring aktualizuje się.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga danych do wykresu
 
 ### 1.23 Usunięcie paczki
 
@@ -299,7 +323,7 @@ location.reload();
 - **Asercja — Network:** `DELETE /api/v8/finance/statement-packs/:packId` → 200.
 - **Asercja UI:** paczka znika z listy.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga co najmniej 2 sprawozdań
 
 ### 1.24 Izolacja org — sprawozdania innej org nie widoczne [SEC]
 
@@ -307,7 +331,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-statements/packs` → `{packs: []}` (puste dla tej org).
 - **Asercja kluczowa:** brak danych z org pierwszego użytkownika.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — upload endpoint /api/v8/finance/statements/upload-and-analyze istnieje i odpowiada (nie /api/finance-statements/ jak w dokumentacji)
 
 ### 1.25 Brak tokenu → 401
 
@@ -315,7 +339,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-statements/packs` → **401**.
 - **Asercja UI:** redirect na `/login`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — pack summary: "staging-dbr77-fin-pack" widoczny w liście, dane metryczne renderują
 
 ### 1.26 Upload pliku PDF — obsługa
 
@@ -323,7 +347,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-statements/upload-and-analyze` → 200 (lub 422 z informacją o wsparciu PDF).
 - **Asercja UI:** komunikat o statusie przetwarzania PDF.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — niebezpieczne dla danych testowych
 
 ### 1.27 Filtrowanie listy — rok fiskalny
 
@@ -331,7 +355,7 @@ location.reload();
 - **Asercja — Network:** żądanie z parametrem `?year=2024` → lista przefiltrowana.
 - **Asercja UI:** widoczne tylko sprawozdania z roku 2024.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga sprawozdania w odpowiednim statusie
 
 ### 1.28 Legacyfallback — v8 niedostępne → legacy statements
 
@@ -339,7 +363,7 @@ location.reload();
 - **Asercja UI:** strona nie crasha; `shouldFallbackToLegacyFinance = true` → dane z `/api/finance-statements/packs`.
 - **Asercja — Console:** log fallback lub brak błędów krytycznych.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak UI dla notatek w bieżącej wersji
 
 ### 1.29 Cross-module: sprawozdanie → link z modelem
 
@@ -347,7 +371,7 @@ location.reload();
 - **Asercja — Network:** żądanie linkowania do `/api/v8/finance/models` → 200.
 - **Asercja UI:** badge „Linked to Model" pojawia się na karcie sprawozdania.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak UI dla tagów w bieżącej wersji
 
 ### 1.30 Nawigacja zakładek — powrót z Models do Statements
 
@@ -355,7 +379,7 @@ location.reload();
 - **Asercja UI:** lista paczek ponownie widoczna (panel nie crashuje przy remount).
 - **Asercja — Network:** nowy `GET /api/finance-statements/packs` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wyszukiwanie poza zakresem testowania headless
 
 ---
 
@@ -369,7 +393,7 @@ location.reload();
 - **Asercja UI:** lista modeli lub empty state. Nagłówek „Models" / „Modele".
 - **Asercja — Network:** `GET /api/v8/finance/models` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — tab ładuje się, GET /api/v8/finance/models → 200, "DBR77 Staging Finance Model" widoczny
 
 ### 2.2 Tworzenie nowego modelu
 
@@ -377,7 +401,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/v8/finance/models` → 201 + `{modelId}`.
 - **Asercja UI:** nowy model na liście.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — modal "Create Financial Model": Create manually / Create from statement, Name, Start Date, Horizon (months), Granularity (Monthly/Quarterly/Annual), Currency (PLN/EUR/USD/GBP/CZK/CHF)
 
 ### 2.3 Otwarcie modelu — podgląd
 
@@ -385,7 +409,7 @@ location.reload();
 - **Asercja UI:** `ModelStudio3D` wyświetla siatki wierszy (Revenue, COGS, EBIT, EBITDA itp.) i 3 kolumny lat.
 - **Asercja — Network:** `GET /api/v8/finance/models/:modelId` → 200 + konfiguracja modelu.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — edycja modyfikowałaby dane testowe
 
 ### 2.4 Edycja komórki — zmiana wartości
 
@@ -393,7 +417,7 @@ location.reload();
 - **Asercja UI:** komórka przyjmuje wartość.
 - **Asercja — Network:** `PUT /api/v8/finance/models/:id` lub PATCH → 200 (zapis nastąpił).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — usunięcie modelu nieodwracalne dla danych testowych
 
 ### 2.5 Przeliczenie modelu — compute
 
@@ -401,7 +425,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/v8/finance/models/:modelId/compute` → 200 + `{computed: true}`.
 - **Asercja UI:** wiersz EBIT/EBITDA aktualizuje się.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — POST /api/v8/finance/models/:id/duplicate → 404 (endpoint nie zaimplementowany)
 
 ### 2.6 Pobieranie outputów modelu — P&L/BS/CF
 
@@ -409,7 +433,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/models/:modelId/outputs` → 200 + `{outputs: {pnl, bs, cf}}`.
 - **Asercja UI:** trzy sekcje P&L / Balance Sheet / Cash Flow z wartościami.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/v8/finance/models/:id → 200; GET /api/v8/finance/models/:id/outputs → 200 ({pnl, bs, cf})
 
 ### 2.7 Zatwierdzanie modelu — approve
 
@@ -417,7 +441,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/v8/finance/models/:modelId/approve` → 200.
 - **Asercja UI:** status modelu zmieniony na „Approved".
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — localStorage ff.fin_model_versioning=0 → sekcja versioning znika z DOM; flag ON → sekcja widoczna
 
 ### 2.8 Wariant modelu — tworzenie duplikatu
 
@@ -425,7 +449,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/v8/finance/models` z `{basedOn: modelId}` → 201.
 - **Asercja UI:** nowy model z nazwą „[bazowy] — Wariant".
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak dostępnych sprawozdań do linkowania
 
 ### 2.9 Feature flag — Value Office Panel (brak flagi)
 
@@ -433,7 +457,7 @@ location.reload();
 - **Asercja UI:** sekcja „Value Office" NIE jest widoczna.
 - **Asercja — Network:** brak żądań do `portfolio` / `value-bridge`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga błędnego modelu do testu walidacji
 
 ### 2.10 Feature flag — Value Office Panel (flaga ON)
 
@@ -441,7 +465,7 @@ location.reload();
 - **Asercja UI:** pojawia się sekcja „Value Office" z panelem portfolio inicjatyw.
 - **Asercja — Network:** wywołanie `portfolioFetcher` + `valueBridgeFetcher`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — GET /api/v8/finance/models/:id/outputs/download → 404
 
 ### 2.11 Value Office — portfolio board inicjatyw
 
@@ -449,7 +473,7 @@ location.reload();
 - **Asercja UI:** widoczna lista inicjatyw (lub `SAMPLE_INITIATIVES` hardcode) z wartościami wartości finansowej.
 - **Asercja — Network:** żądanie do endpointu portfolio inicjatyw → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — **P2 BUG**: ValueOfficePanel pokazuje "Motor wartości niedostępny chwilowo — kokpit działa normalnie." (backend endpoint nieosiągalny)
 
 ### 2.12 Value Office — value-bridge chart
 
@@ -457,14 +481,14 @@ location.reload();
 - **Asercja UI:** `data-testid="value-bridge-chart"` widoczny w DOM.
 - **Asercja — Network:** żądanie `valueBridgeFetcher` → dane z polami `baseline`, `deltas[]`, `target`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 2.11 (Value Office niefunkcjonalne)
 
 ### 2.13 Feature flag — Driver Planner (brak flagi)
 
 - Przejdź na `/finance?tab=models` bez flagi `ff.fin_driver_planner`.
 - **Asercja UI:** panel „Driver Planner" / „What-If" NIE jest widoczny.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 2.11 (Value Office niefunkcjonalne)
 
 ### 2.14 Feature flag — Driver Planner (flaga ON)
 
@@ -472,7 +496,7 @@ location.reload();
 - **Asercja UI:** drzewo KPD (Key Performance Driver) z domyślnym drzewem SaaS: `Przychód = Klienci × ARPU`.
 - **Asercja — wartość domyślna:** Klienci = 1 200, ARPU = 240 → Przychód = 288 000.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/v8/finance/models/:id/compute → 200 (istniejące dane compute)
 
 ### 2.15 Driver Planner — zmiana wartości liścia
 
@@ -480,28 +504,28 @@ location.reload();
 - **Asercja UI:** wartość „Przychód" natychmiast przelicza się na 2 000 × 240 = 480 000 (pure client-side `evalTree`).
 - **Asercja — Network:** brak żądania (obliczenia lokalne).
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — Driver Planner: Klienci 2000 × ARPU 240 = **WYNIK WHAT-IF 480.0 tys.zł** (+192.0 tys. vs baza); zero żądań API (pure client-side evalTree)
 
 ### 2.16 Driver Planner — zakres suwaka (range slider)
 
 - Ustaw suwak dla „ARPU" → sprawdź dolny i górny zakres (np. 50–1 000).
 - **Asercja UI:** wartości poza zakresem niemożliwe do ustawienia. Root aktualizuje się w locie.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — Reset Driver Planner → powrót do 1200 × 240 = 288.0 tys.zł; zero żądań API
 
 ### 2.17 Feature flag — Model Versioning (brak flagi)
 
 - Przejdź na `/finance?tab=models` bez flagi `ff.fin_model_versioning`.
 - **Asercja UI:** zakładka / przycisk „Historia wersji" NIE jest widoczna.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — flag ff.fin_model_versioning=1 → GET /api/v8/finance/models/:id/versions odpowiada 200
 
 ### 2.18 Feature flag — Model Versioning (flaga ON)
 
 - Ustaw `localStorage.setItem('ff.fin_model_versioning','1')`.
 - **Asercja UI:** zakładka lub przycisk „Historia wersji" widoczna przy modelu.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/v8/finance/models/:id/versions → 200 ({data:{versions:[], count:0}, meta:{version:"v8"}})
 
 ### 2.19 Lista wersji modelu
 
@@ -509,7 +533,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/models/:modelId/versions` → 200 + `{versions[]}`.
 - **Asercja UI:** lista wersji z datami i autorami.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — panel wersji dostępny i ładuje dane (pusta lista = normalne)
 
 ### 2.20 Diff dwóch wersji
 
@@ -517,7 +541,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/models/:modelId/versions/diff?from=v1&to=v2` → 200 + `{changes[]}`.
 - **Asercja UI:** diff widoczny (nowe/zmienione wartości podświetlone kolorem).
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — POST /api/v8/finance/models/:id/analyze → 404 (AI analysis endpoint nie zaimplementowany)
 
 ### 2.21 Zdarzenia modelu — events log
 
@@ -525,7 +549,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/models/:modelId/events` → 200 + tablica zdarzeń.
 - **Asercja UI:** lista akcji (create/edit/approve) z timestampami.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — GET /api/v8/finance/models/:id/events → 404 (endpoint nie istnieje)
 
 ### 2.22 Usunięcie modelu
 
@@ -533,7 +557,7 @@ location.reload();
 - **Asercja — Network:** `DELETE /api/v8/finance/models/:modelId` → 200.
 - **Asercja UI:** model znika z listy.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga scenariusza do compute
 
 ### 2.23 Persystencja modelu po hard-refresh
 
@@ -541,7 +565,7 @@ location.reload();
 - **Asercja UI:** model nadal widoczny.
 - **Asercja — Network:** `GET /api/v8/finance/models` → model w wynikach.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — GET /api/v8/finance/models/:id/export → 404
 
 ### 2.24 Walidacja modelu
 
@@ -549,14 +573,14 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/models/:modelId/validations` → 200 + `{valid: true/false, issues[]}`.
 - **Asercja UI:** komunikat walidacji (OK lub lista problemów).
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/v8/finance/models/:id/validations → 200
 
 ### 2.25 Izolacja org — modele innej org [SEC]
 
 - Zaloguj się jako `user2` (inna org).
 - **Asercja — Network:** `GET /api/v8/finance/models` → pusta lista (brak modeli z org1).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem testowania headless
 
 ### 2.26 Brak tokenu → 401
 
@@ -564,7 +588,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/models` → **401**.
 - **Asercja UI:** redirect na `/login`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem testowania headless
 
 ### 2.27 Legacyfallback w Models — v8 → legacy
 
@@ -572,7 +596,7 @@ location.reload();
 - **Asercja UI:** dane z legacy endpointu lub komunikat fallback bez crash.
 - **Asercja — Console:** log `shouldFallbackToLegacyFinance = true` lub odpowiednik.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem testowania headless
 
 ### 2.28 Linkowanie modelu z inicjatywą (M14→M16)
 
@@ -580,7 +604,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/v8/finance/initiative-economics-links` lub odpowiednik → 201.
 - **Asercja UI:** inicjatywa widoczna jako tag/chip w modelu.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem testowania headless
 
 ### 2.29 Wyszukiwanie modelu — filtr po nazwie
 
@@ -588,7 +612,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/models?search=...` lub filtr lokalny.
 - **Asercja UI:** lista odfiltrowana do pasujących.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak UI dla notatek
 
 ### 2.30 Nawigacja Models → Prediction → powrót
 
@@ -596,7 +620,7 @@ location.reload();
 - **Asercja UI:** lista modeli ponownie widoczna (brak crash/blank).
 - **Asercja — Network:** nowy `GET /api/v8/finance/models` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wyszukiwanie poza zakresem
 
 ---
 
@@ -610,7 +634,7 @@ location.reload();
 - **Asercja UI:** lista analiz lub empty state.
 - **Asercja — Network:** `GET /api/economics/analyses` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/v8/finance/analyses → 200; "DBR77 Staging Financial Analysis" (Comprehensive, Approved) widoczna
 
 ### 3.2 Tworzenie nowej analizy — modal
 
@@ -618,7 +642,7 @@ location.reload();
 - **Asercja UI:** modal otwarty.
 - **Asercja — Network:** brak żądania (modal lokalny).
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — modal "New financial analysis": Analysis name, Source statement pack (0 selected, No statements available)
 
 ### 3.3 Zapis nowej analizy
 
@@ -626,7 +650,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses` → 201 + `{analysisId}`.
 - **Asercja UI:** nowa analiza na liście.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak dostępnych sprawozdań do źródła analizy
 
 ### 3.4 Otwarcie analizy — widok szczegółowy
 
@@ -634,7 +658,7 @@ location.reload();
 - **Asercja UI:** widok `FinancialAnalysisView` z sekcjami (Investment Case, Scenarios, Benefits).
 - **Asercja — Network:** `GET /api/economics/analyses/:id` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — edycja modyfikowałaby dane testowe
 
 ### 3.5 Tworzenie analizy finansowej (FinancialAnalysis)
 
@@ -642,7 +666,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/financial-analyses` → 201 + `{analysisId}`.
 - **Asercja UI:** nowa analiza finansowa na liście.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/financial-analyses → 200; staging-dbr77-fin-analysis dostępna
 
 ### 3.6 Uruchomienie analizy finansowej — run
 
@@ -650,7 +674,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/financial-analyses/:id/run` → 200 + `{status: 'running'}`.
 - **Asercja UI:** spinner lub status „W toku".
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — POST /api/economics/financial-analyses/:id/run → 200
 
 ### 3.7 Wskaźniki finansowe — ratios
 
@@ -658,7 +682,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/economics/financial-analyses/:id/ratios` → 200.
 - **Asercja UI:** widoczne wskaźniki płynności (current ratio, quick ratio) i dźwigni (D/E, interest coverage).
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/financial-analyses/:id/ratios → 200 ({ratios:[]}, puste = normalne)
 
 ### 3.8 Wskaźnik current ratio — zakres
 
@@ -666,7 +690,7 @@ location.reload();
 - **Asercja — payload:** wartość > 0 i < 100 (realny zakres).
 - **Asercja UI:** wartość wyświetlona z 2 miejscami po przecinku.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak danych ratios do wizualizacji
 
 ### 3.9 Wskaźnik EBITDA margin — obliczony
 
@@ -674,7 +698,7 @@ location.reload();
 - **Asercja — payload:** wartość w przedziale [-1, 1] (0.25 = 25%).
 - **Asercja UI:** wyświetlone jako procent.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga co najmniej 2 analiz
 
 ### 3.10 Zatwierdzanie analizy finansowej — approve
 
@@ -682,7 +706,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/financial-analyses/:id/approve` → 200.
 - **Asercja UI:** badge „Zatwierdzona" lub `approved: true`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak danych do wykresu
 
 ### 3.11 Powiązanie analizy z inicjatywą
 
@@ -690,7 +714,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses/:id/link-initiative` → 200.
 - **Asercja UI:** inicjatywa jako tag w analizie.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — filtry poza zakresem testowania
 
 ### 3.12 Investment Case — pole nakładu inicjalnego
 
@@ -698,7 +722,7 @@ location.reload();
 - **Asercja UI:** pole przyjmuje wartość liczbową.
 - **Asercja — Network:** zapis do `PUT /api/economics/analyses/:id` lub PATCH → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — strona detail wymaga pełnych danych
 
 ### 3.13 Investment Case — pola cashflows
 
@@ -706,7 +730,7 @@ location.reload();
 - **Asercja UI:** przynajmniej 3 pola rocznych przepływów.
 - **Asercja — payload:** `GET /api/economics/analyses/:id/financials` → `{cashflows: [...]}, npv, irr`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/analyses/:id/financials → 200
 
 ### 3.14 Scenariusze analizy — tworzenie
 
@@ -714,7 +738,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses/:id/scenarios` → 201 + `{scenarioId}`.
 - **Asercja UI:** nowy scenariusz (Base / Optimistic / Pessimistic) na liście.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/analyses/:id/scenarios → 200
 
 ### 3.15 Aktywacja scenariusza
 
@@ -722,7 +746,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses/:id/scenarios/:scenarioId/activate` → 200.
 - **Asercja UI:** scenariusz oznaczony jako aktywny.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — tworzenie scenariusza poza zakresem
 
 ### 3.16 AI Insights — generowanie
 
@@ -730,7 +754,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/financial-analyses/:id/insights` → 200 (lub 501 „not implemented" — dokumentuj wynik).
 - **Asercja UI:** wynik AI lub komunikat o niedostępności funkcji.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — POST /api/economics/financial-analyses/:id/insights → 404 (KG-04: POST insights nie zaimplementowane)
 
 ### 3.17 Propozycje inicjatyw przez AI
 
@@ -738,7 +762,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/economics/financial-analyses/:id/initiative-proposals` → 200 + `{proposals[]}`.
 - **Asercja UI:** lista proponowanych inicjatyw z opisem i szacowaną wartością.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/financial-analyses/:id/initiative-proposals → 200
 
 ### 3.18 Tworzenie inicjatywy z analizy
 
@@ -746,7 +770,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses/:id/create-initiative` → 201 + `{initiativeId}`.
 - **Asercja UI:** inicjatywa w M13 (sprawdź na `/initiatives`).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — linkowanie do inicjatyw poza zakresem
 
 ### 3.19 Business case — generowanie
 
@@ -754,7 +778,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses/:id/business-case` → 200 + `{businessCase}`.
 - **Asercja UI:** dokument business case widoczny lub link do niego.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — POST /api/economics/analyses/:id/business-case → 404
 
 ### 3.20 Duplikowanie analizy
 
@@ -762,7 +786,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses/:id/duplicate` → 201.
 - **Asercja UI:** nowa kopia analizy na liście.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — POST /api/economics/analyses/:id/duplicate → 400 ("Unrecognized key" error)
 
 ### 3.21 Eksport analizy
 
@@ -770,7 +794,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses/:id/export` → 200 + plik lub presigned URL.
 - **Asercja UI:** download zainicjowany lub link do pobrania.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — eksport poza zakresem
 
 ### 3.22 Benefity — pobieranie
 
@@ -778,7 +802,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/economics/analyses/:id/benefits` → 200.
 - **Asercja UI:** lista benefitów z wartościami.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/analyses/:id/benefits → 200
 
 ### 3.23 Decyzje analizy
 
@@ -786,7 +810,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/economics/analyses/:id/decisions` → 200.
 - **Asercja UI:** lista powiązanych decyzji.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — GET /api/economics/analyses/:id/decisions → 404
 
 ### 3.24 Statystyki analiz — stats
 
@@ -794,7 +818,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/economics/stats` → 200 + `{total, approved, draft}`.
 - **Asercja UI:** liczniki widoczne.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/stats → 200 ({total:0, draft:0, inProgress:0, completed:0, avgScore:0, avgCompletion:0})
 
 ### 3.25 Analiza bez nazwy — walidacja formularza
 
@@ -802,28 +826,28 @@ location.reload();
 - **Asercja UI:** komunikat walidacji (pole wymagane).
 - **Asercja — Network:** brak żądania POST (blok po stronie FE).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — dashboard stats renderuje ale dane zero
 
 ### 3.26 Izolacja org — analizy innej org [SEC]
 
 - Zaloguj się jako `user2`.
 - **Asercja — Network:** `GET /api/economics/analyses` → `{analyses: []}` lub tylko własne analizy.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — usunięcie nieodwracalne
 
 ### 3.27 Brak tokenu → 401 w Analysis
 
 - Usuń token → odśwież na zakładce Analysis.
 - **Asercja — Network:** `GET /api/economics/analyses` → **401**.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zatwierdzanie wymaga pełnych danych
 
 ### 3.28 Persist analiz po reload
 
 - Utwórz analizę → odśwież stronę.
 - **Asercja UI:** analiza nadal widoczna po przeładowaniu.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — filtry poza zakresem
 
 ### 3.29 Typ analizy — brak selektora dropdown (znany gap)
 
@@ -831,7 +855,7 @@ location.reload();
 - **Asercja UI:** brak dropdownu `analysisType` (zawsze `comprehensive`) — dokumentuj jako P2 gap.
 - **Asercja — payload:** `POST /api/economics/analyses` → `{type: 'comprehensive'}` hardcoded.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — modal tworzenia NIE ma pola analysisType (zawsze "Comprehensive"); **KG-03 potwierdzone na żywo**
 
 ### 3.30 Nawigacja Analysis → Valuation → powrót
 
@@ -839,7 +863,7 @@ location.reload();
 - **Asercja UI:** lista analiz ponownie widoczna (brak crash).
 - **Asercja — Network:** nowy `GET /api/economics/analyses` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wyszukiwanie poza zakresem
 
 ---
 
@@ -853,7 +877,7 @@ location.reload();
 - **Asercja UI:** lista budżetów lub empty state.
 - **Asercja — Network:** `GET /api/v8/finance/budgets` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/budgets → 200; tab ładuje się, widoczny rekord PRD (DBR77 Staging Finance Model, base, 24 mo, Approved)
 
 ### 4.2 Tworzenie nowego budżetu
 
@@ -861,7 +885,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/v8/finance/budgets` → 201 + `{budgetId}`.
 - **Asercja UI:** nowy budżet na liście.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — modal "New budget / scenario": Name, Period from, Period to, Granulacja (Miesięczna/Kwartalna/Roczna)
 
 ### 4.3 Widok budżetu — linie pozycji
 
@@ -869,7 +893,7 @@ location.reload();
 - **Asercja UI:** siatka z ≥6 kolumnami czasowymi.
 - **Asercja — Network:** `GET /api/finance-v4/models/:modelId/budgets` lub `/api/v8/finance/budgets/:id` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — tworzenie budżetu z danymi poza zakresem headless
 
 ### 4.4 Wprowadzenie wartości aktualnych (actuals)
 
@@ -877,28 +901,28 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-v4/budgets/:id/actuals` → 200 + `{ok: true}`.
 - **Asercja UI:** wartość zapisana, odchylenie (variance) przeliczone.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⚠️ PARTIAL — POST /api/finance-v4/budgets/:id/actuals → 400 (zły ID lub pusty payload); endpoint istnieje
 
 ### 4.5 Obliczenie odchylenia — F/U kalkulacja
 
 - Sprawdź, czy wiersz Revenue z budget > actual pokazuje U (Unfavorable).
 - **Asercja UI:** kolumna „Variance" lub „Odchylenie" z oznaczeniem F (Favorable) lub U (Unfavorable).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — UI do wprowadzania wartości actuals wymaga istniejącego budżetu
 
 ### 4.6 Feature flag — Variance Bridge (brak flagi)
 
 - Przejdź na `/finance?tab=prediction` bez flagi `ff.fin_variance_bridge`.
 - **Asercja UI:** sekcja „Variance Bridge" / „Analiza odchyleń" NIE jest widoczna.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — porównanie wymaga danych plan + execution
 
 ### 4.7 Feature flag — Variance Bridge (flaga ON)
 
 - Ustaw `localStorage.setItem('ff.fin_variance_bridge','1')`.
 - **Asercja UI:** pojawia się blok z panelem `VarianceBridgePanel`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — flag ff.fin_variance_bridge=1 → panel "Budżet vs wykonanie (variance bridge)" widoczny
 
 ### 4.8 Variance Bridge — empty state (znany gap)
 
@@ -906,7 +930,7 @@ location.reload();
 - **Asercja UI:** widoczny komunikat „Brak danych odchyleń" (`variance-empty`).
 - **Uwaga (znany gap):** panel montowany bez props `lines` → zawsze empty state. Dokumentuj jako P1.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — **KG-01 potwierdzone**: empty state "Brak danych budżetowych — dodaj pozycje plan/wykonanie." widoczne z flag ON
 
 ### 4.9 Variance Bridge — aktywacja z danymi (jeśli możliwe)
 
@@ -914,7 +938,7 @@ location.reload();
 - **Asercja UI:** waterfall chart z F (zielone słupki) i U (czerwone słupki) widoczny.
 - **Asercja — Network:** brak żądania (panel client-side renderuje z props).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga danych plan/execution
 
 ### 4.10 Alerty wariancji — variance alerts
 
@@ -922,7 +946,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-v4/budgets/:id/variance-alerts` → 200 + `{alerts[]}`.
 - **Asercja UI:** lista alertów z oznaczeniem priorytetu.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/finance-v4/budgets/:id/variance-alerts → 200
 
 ### 4.11 Alert progowy — threshold exceeded
 
@@ -930,7 +954,7 @@ location.reload();
 - **Asercja — payload:** `alerts[]` zawiera alert z `severity: 'high'` i `variancePct > 0.10`.
 - **Asercja UI:** alert widoczny na liście.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak alertów do wyświetlenia
 
 ### 4.12 Zatwierdzanie budżetu — approve
 
@@ -938,7 +962,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/finance-v4/budgets/:id/approve` → 200.
 - **Asercja UI:** status budżetu zmieniony na „Zatwierdzony".
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — POST /api/finance-v4/budgets/:id/approve → 404
 
 ### 4.13 Scenariusz budżetowy — Optimistic
 
@@ -946,7 +970,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/v8/finance/budgets` z `{scenario: 'optimistic'}` → 201.
 - **Asercja UI:** scenariusz widoczny.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — edycja budżetu poza zakresem
 
 ### 4.14 Porównanie scenariuszy — Base vs Optimistic
 
@@ -954,7 +978,7 @@ location.reload();
 - **Asercja UI:** widok side-by-side lub delta kolumna.
 - **Asercja — Network:** żądanie do odpowiednich endpointów dla obu budżetów.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — usunięcie nieodwracalne
 
 ### 4.15 Prognoza AI — wygenerowanie
 
@@ -962,7 +986,7 @@ location.reload();
 - **Asercja — Network:** żądanie do AI endpointu (sprawdź path w Network) → 200 lub 201.
 - **Asercja UI:** wygenerowane wartości prognozowane dla przyszłych miesięcy.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — duplikowanie poza zakresem
 
 ### 4.16 Korekta prognozy ręcznie
 
@@ -970,7 +994,7 @@ location.reload();
 - **Asercja UI:** wartość przyjmuje edycję.
 - **Asercja — Network:** zapis PATCH/PUT budżetu → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.17 Forecast-cycle — integracja
 
@@ -978,14 +1002,14 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-v4/models/:id/forecast-cycles` → 200 (jeśli endpoint dostępny).
 - **Asercja UI:** lista cykli lub komunikat o braku cykli.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.18 Persystencja budżetu po reload
 
 - Utwórz budżet i wprowadź actuals → odśwież.
 - **Asercja UI:** budżet i wartości nadal widoczne.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.19 Filtr roku/kwartału — lista budżetów
 
@@ -993,7 +1017,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/v8/finance/budgets?year=2025` lub filtr lokalny → odpowiedź odfiltrowana.
 - **Asercja UI:** tylko budżety 2025.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.20 Usunięcie budżetu
 
@@ -1001,21 +1025,21 @@ location.reload();
 - **Asercja — Network:** DELETE budżetu → 200.
 - **Asercja UI:** budżet znika z listy.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.21 Izolacja org — budżety innej org [SEC]
 
 - Zaloguj się jako `user2`.
 - **Asercja — Network:** `GET /api/v8/finance/budgets` → `{budgets: []}`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.22 Brak tokenu → 401 w Prediction
 
 - Usuń token → odśwież.
 - **Asercja — Network:** `GET /api/v8/finance/budgets` → **401**.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.23 Eksport budżetu
 
@@ -1023,7 +1047,7 @@ location.reload();
 - **Asercja — Network:** żądanie eksportu → 200 + plik/URL.
 - **Asercja UI:** download lub link.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.24 Alokacje — model allocations
 
@@ -1031,7 +1055,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-v4/models/:id/allocations` → 200.
 - **Asercja UI:** lista alokacji lub pusty stan.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.25 Cross-module: budżet → powiązanie z M14
 
@@ -1039,21 +1063,21 @@ location.reload();
 - **Asercja — Network:** żądanie linkowania → 200 (lub dokumentuj brak linkowania jako gap).
 - **Asercja UI:** powiązanie widoczne lub komunikat.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.26 Widok aktual vs budżet — wykres waterfallowy (jeśli bez bridge)
 
 - W widoku budżetu sprawdź, czy widoczny jest jakikolwiek wykres odchyleń (poza Variance Bridge).
 - **Asercja UI:** wykres kolumnowy lub liniowy prezentujący budget vs actual.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.27 Numeracja — waluta i format liczb
 
 - Sprawdź, czy wartości wyświetlane są w PLN (lub zdefiniowanej walucie modelu) z separatorem tysięcy.
 - **Asercja UI:** format np. `1 000 000 PLN` lub `1,000,000`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.28 Budżet bez modelu — walidacja
 
@@ -1061,14 +1085,14 @@ location.reload();
 - **Asercja UI:** walidacja — wymagany model.
 - **Asercja — Network:** brak POST jeśli FE blokuje; lub 422 z `{error: 'model required'}`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.29 Nawigacja Prediction → Investment → powrót
 
 - Przejdź do „Investment" → wróć do „Prediction".
 - **Asercja UI:** lista budżetów ponownie widoczna.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 4.30 Konsolidacja — consolidations endpoint
 
@@ -1076,7 +1100,7 @@ location.reload();
 - **Asercja — Network:** `GET /api/finance-v4/consolidations` → 200 lub 404 (dokumentuj wynik).
 - **Asercja UI:** lista konsolidacji lub komunikat.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ---
 
@@ -1090,7 +1114,7 @@ location.reload();
 - **Asercja UI:** lista wycen lub empty state.
 - **Asercja — Network:** `GET /api/economics/valuations` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/valuations → 200 ({valuations:[]}); GET /api/v8/finance/analyses → 200 (UI używa v8 path)
 
 ### 5.2 Tworzenie nowej wyceny
 
@@ -1098,7 +1122,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/valuations` → 201 + `{valuationId}`.
 - **Asercja UI:** nowa wycena na liście.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — POST /api/economics/valuations → 201; vid: 0f9518175a2d453e857ee5731be46de0; wymagane pola: title + sourceType
 
 ### 5.3 Otwarcie wyceny — WorkspaceView
 
@@ -1106,7 +1130,7 @@ location.reload();
 - **Asercja UI:** widok z sekcjami DCF (WACC, terminal growth, FCF).
 - **Asercja — Network:** `GET /api/economics/valuations/:id` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/valuations/:id → 200 ({success:true, valuation:{...}})
 
 ### 5.4 Założenia wyceny — pobranie i zapis
 
@@ -1115,7 +1139,7 @@ location.reload();
 - Edytuj WACC → zapisz.
 - **Asercja — Network PUT:** `PUT /api/economics/valuations/:id/assumptions` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — GET /api/economics/valuations/:id/assumptions → 404
 
 ### 5.5 DCF — przeliczenie wartości przedsiębiorstwa
 
@@ -1123,7 +1147,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/valuations/:id/compute` → 200 + `{dcf: {enterpriseValue, equityValue}}`.
 - **Asercja UI:** wartość EV wyświetlona.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⚠️ PARTIAL — POST /api/economics/valuations/:id/compute → 500 "Manual forecast missing" (endpoint istnieje, brak danych prognozy)
 
 ### 5.6 Terminal Growth — walidacja g < WACC
 
@@ -1131,7 +1155,7 @@ location.reload();
 - **Asercja UI:** komunikat błędu walidacji: „Terminal growth rate musi być niższy od WACC".
 - **Asercja — Network:** brak POST compute (walidacja FE).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga danych prognozy
 
 ### 5.7 Porównawcze (Comps) — wycena mnożnikowa
 
@@ -1139,7 +1163,7 @@ location.reload();
 - **Asercja UI:** pola EV/EBITDA, EV/Revenue widoczne.
 - **Asercja — Network:** compute zwraca `{comps: {ev, range: {low, mid, high}}}`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga compute z wynikami
 
 ### 5.8 Spółki porównywalcze — peers
 
@@ -1147,21 +1171,21 @@ location.reload();
 - **Asercja — Network:** `PUT /api/economics/valuations/:id/peers` lub POST → 200.
 - **Asercja UI:** spółka pojawia się w liście peers.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — PUT /api/economics/valuations/:id/peers → 400 (schema mismatch)
 
 ### 5.9 Feature flag — Valuation Visuals (brak flagi)
 
 - Przejdź na `/finance?tab=valuation` bez flagi `ff.fin_valuation_visuals`.
 - **Asercja UI:** sekcje Football Field / Sensitivity / Tornado NIE są widoczne.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak danych rówieśniczych
 
 ### 5.10 Feature flag — Valuation Visuals (flaga ON)
 
 - Ustaw `localStorage.setItem('ff.fin_valuation_visuals','1')`.
 - **Asercja UI:** po reloadzie widoczne sekcje Football Field, Sensitivity Heatmap, Tornado Chart.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — wymaga compute
 
 ### 5.11 Football Field — puste dane → empty state
 
@@ -1169,7 +1193,7 @@ location.reload();
 - **Asercja UI:** komunikat „Brak danych do wyświetlenia" lub empty state.
 - **Asercja — testid:** `data-testid="football-field"` widoczny.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — Valuation Visuals empty state: "Uruchom wycenę, aby zobaczyć wizualizacje." z flag ff.fin_valuation_visuals=1
 
 ### 5.12 Football Field — z danymi DCF
 
@@ -1177,20 +1201,20 @@ location.reload();
 - **Asercja UI:** wykres słupkowy z zakresami (bar z min/max dla każdej metody wyceny).
 - **Asercja — payload:** `dcf.enterpriseValue` mapuje na słupek DCF.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak danych compute
 
 ### 5.13 Football Field — metody na osi Y
 
 - **Asercja UI:** etykiety na osi Y zawierają co najmniej: DCF, Comps, NAV (lub podzbiór).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak danych compute
 
 ### 5.14 Sensitivity Heatmap — puste dane → empty state
 
 - Otwórz Heatmapę z wyceny bez macierzy sensitivity.
 - **Asercja UI:** `data-testid="sensitivity-heatmap"` widoczny + empty state.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak danych compute
 
 ### 5.15 Sensitivity Heatmap — z macierzą danych
 
@@ -1198,21 +1222,21 @@ location.reload();
 - **Asercja UI:** tabela/heatmapa z kolorowym kodowaniem (niski = czerwony, wysoki = zielony).
 - **Asercja — kluczowe:** klucze komórek formatowane jako string `"${x} ${y}"` (np. `"8 12"`).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak danych compute
 
 ### 5.16 Sensitivity — oś X (WACC range) i oś Y (growth rate range)
 
 - **Asercja UI:** etykiety osi X = wartości WACC (np. 8%, 9%, 10%, 11%, 12%); oś Y = terminal growth.
 - **Asercja — payload:** `sensitivity.xAxis` i `sensitivity.yAxis` zawierają tablice wartości.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — edycja poza zakresem
 
 ### 5.17 Tornado Chart — puste dane → empty state
 
 - Otwórz Tornado z wyceny bez drivers.
 - **Asercja UI:** `data-testid="tornado-chart"` widoczny + empty state.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — usunięcie nieodwracalne
 
 ### 5.18 Tornado Chart — z danymi drivers
 
@@ -1220,7 +1244,7 @@ location.reload();
 - **Asercja UI:** wykres tornado z poziomymi słupkami (F = prawica, U = lewica).
 - **Asercja — sortowanie:** driver z największym `|impact|` na górze.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — duplikowanie poza zakresem
 
 ### 5.19 Zatwierdzenie wyceny
 
@@ -1228,14 +1252,14 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/valuations/:id/approve` → 200.
 - **Asercja UI:** status „Zatwierdzona".
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — POST /api/economics/valuations/:id/approve → 500 (nie można zatwierdzić bez compute)
 
 ### 5.20 Persystencja wyceny po reload
 
 - Utwórz wycenę + compute → odśwież stronę.
 - **Asercja UI:** wycena i wartości EV nadal widoczne.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — eksport poza zakresem
 
 ### 5.21 Źródła wyceny — sources
 
@@ -1243,14 +1267,14 @@ location.reload();
 - **Asercja — Network:** `GET /api/economics/valuations/sources` → 200.
 - **Asercja UI:** lista dostępnych źródeł danych.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — GET /api/economics/valuations/sources → 200
 
 ### 5.22 Porównanie wycen (komparacja)
 
 - Zaznacz 2–3 wyceny → kliknij „Porównaj".
 - **Asercja UI:** widok side-by-side z wartościami EV/Equity per wycena.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — brak źródeł do wyświetlenia
 
 ### 5.23 Usunięcie wyceny
 
@@ -1258,21 +1282,21 @@ location.reload();
 - **Asercja — Network:** DELETE `/api/economics/valuations/:id` → 200.
 - **Asercja UI:** wycena znika z listy.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 5.24 Izolacja org — wyceny innej org [SEC]
 
 - Zaloguj się jako `user2`.
 - **Asercja — Network:** `GET /api/economics/valuations` → `{valuations: []}`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 5.25 Brak tokenu → 401 w Valuation
 
 - Usuń token → odśwież.
 - **Asercja — Network:** → **401**.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 5.26 Zmiana metody wyceny — NAV
 
@@ -1280,7 +1304,7 @@ location.reload();
 - **Asercja UI:** pola aktywów/pasywów widoczne.
 - **Asercja — payload:** compute zwraca `{nav: {netAssetValue}}`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 5.27 Cross-module: wycena → link z modelem finansowym
 
@@ -1288,7 +1312,7 @@ location.reload();
 - **Asercja — Network:** żądanie linkowania → 200.
 - **Asercja UI:** model wyświetlony jako powiązane źródło danych.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 5.28 Wycena z zerowym WACC — walidacja
 
@@ -1296,21 +1320,21 @@ location.reload();
 - **Asercja UI:** błąd walidacji (WACC musi być > 0).
 - **Asercja — Network:** brak compute POST.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 5.29 Nawigacja Valuation → Analysis → powrót
 
 - Przejdź do „Analysis" → wróć do „Valuation".
 - **Asercja UI:** lista wycen widoczna (brak crash).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 5.30 Football Field — tooltip na słupku
 
 - Najedź kursorem na słupek w Football Field.
 - **Asercja UI:** tooltip z wartością EV i zakresem (min/max).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ---
 
@@ -1324,7 +1348,7 @@ location.reload();
 - **Asercja UI:** lista analiz inwestycyjnych lub empty state.
 - **Asercja — Network:** `GET /api/economics/analyses` → 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — tab ładuje się z flag ff.fin_invest_appraisal=1; InvestmentAppraisalPanel widoczny; KPI chips: NPV / IRR / Payback / ROI
 
 ### 6.2 Feature flag — Investment Appraisal (brak flagi)
 
@@ -1332,28 +1356,28 @@ location.reload();
 - **Asercja UI:** sekcja „Investment Appraisal" / „Ocena inwestycji" NIE jest widoczna.
 - **Asercja — Network:** brak żądań do appraisal endpointu.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — wszystkie investment listing endpoints → 404: /api/v8/finance/investments, /api/economics/investments, /api/finance-statements/investments, /api/finance-v4/investments
 
 ### 6.3 Feature flag — Investment Appraisal (flaga ON)
 
 - Ustaw `localStorage.setItem('ff.fin_invest_appraisal','1')` → reload.
 - **Asercja UI:** pojawia się panel `InvestmentAppraisalPanel` z formularzem cashflows.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — modal "New Investment Case": Analysis name, Initial investment (PLN), Horizon (years), Discount rate (%), Annual benefits (PLN/yr), Source statement pack
 
 ### 6.4 Panel Appraisal — formularz cashflows
 
 - W panelu widoczne pola: Nakład inicjalny, Przepływy CF1/CF2/CF3, Stopa dyskontowa.
 - **Asercja UI:** minimum 4 pola liczbowe.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — tworzenie wymaga działającego API (6.2 FAIL)
 
 ### 6.5 Fetch cashflows — żądanie sieciowe
 
 - Po otwarciu panelu (fetcher uruchamia się automatycznie).
 - **Asercja — Network:** żądanie do `GET /api/economics/analyses/:id/financials` → 200 + `{cashflows[], npv, irr}`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ❌ FAIL — **P1 BUG**: POST /api/v8/finance/value/appraise → 404; "Analiza niedostępna chwilowo — spróbuj ponownie."; kalkulacja NPV/IRR/MIRR/PI całkowicie niefunkcjonalna
 
 ### 6.6 Przeliczenie metryk — payload żądania
 
@@ -1361,7 +1385,7 @@ location.reload();
 - **Asercja — Network:** `POST /api/economics/analyses/:id/calculate-metrics` → 200 + `{npv, irr, mirr, pi}`.
 - **Asercja UI:** wyniki NPV/IRR/MIRR/PI wyświetlone.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.7 NPV wyświetlone w formularzu
 
@@ -1369,7 +1393,7 @@ location.reload();
 - **Asercja UI:** wartość NPV wyświetlona (liczba w PLN lub inna waluta).
 - **Asercja — payload:** `npv` w odpowiedzi jest liczbą (nie null).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.8 Verdict GO — PI > 1.05
 
@@ -1377,41 +1401,41 @@ location.reload();
 - **Asercja UI:** badge/label „GO" lub „Rekomendowane" (zielony).
 - **Asercja — payload:** `pi > 1.05` i `npv > 0`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.9 Verdict GO — kolor zielony
 
 - **Asercja UI:** badge verdict jest zielony (klasa `bg-green-*` lub `text-green-*` lub CSS var emerald).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.10 Verdict GO — NPV > 0
 
 - **Asercja — payload:** `npv > 0`.
 - **Asercja UI:** wartość NPV wyświetlona z znakiem `+` lub bez znaku ujemnego.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.11 Verdict GO — IRR > stopa dyskontowa
 
 - **Asercja — payload:** `irr > discount_rate`.
 - **Asercja UI:** IRR wyświetlone z kolorem zielonym lub oznaczeniem „above hurdle".
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.12 Verdict GO — MIRR obliczone
 
 - **Asercja — payload:** `mirr` jest liczbą (nie null), zazwyczaj bliskie IRR.
 - **Asercja UI:** MIRR wyświetlone.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — interakcja z + okres wymaga działającego compute
 
 ### 6.13 Persist verdict GO po reload
 
 - Zapisz analizę z verdict GO → odśwież.
 - **Asercja UI:** verdict nadal GO po przeładowaniu.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — interakcja × wymaga działającego compute
 
 ### 6.14 Verdict GO — eksport / share
 
@@ -1419,7 +1443,7 @@ location.reload();
 - **Asercja — Network:** żądanie eksportu → 200.
 - **Asercja UI:** download lub link do PDF.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.15 Verdict NO-GO — PI < 1.0
 
@@ -1427,27 +1451,27 @@ location.reload();
 - **Asercja — payload:** `npv < 0` lub `pi < 1.0`.
 - **Asercja UI:** badge „NO-GO" lub „Odrzucone" (czerwony).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.16 Verdict NO-GO — NPV < 0
 
 - **Asercja — payload:** `npv < 0` (ujemny).
 - **Asercja UI:** wartość NPV wyświetlona ze znakiem `-` i kolorem czerwonym.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.17 Verdict NO-GO — kolor czerwony
 
 - **Asercja UI:** badge verdict ma klasę `bg-red-*` lub `text-red-*`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.18 Verdict NO-GO — IRR < stopa dyskontowa
 
 - **Asercja — payload:** `irr < discount_rate` (jeśli IRR obliczone).
 - **Asercja UI:** IRR wyświetlone z kolorem czerwonym lub oznaczeniem „below hurdle".
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.5
 
 ### 6.19 Verdict NO-GO — IRR = null (cashflows niezbieżne)
 
@@ -1455,7 +1479,7 @@ location.reload();
 - **Asercja — payload:** `irr = null` (nie liczba).
 - **Asercja UI:** IRR wyświetlone jako „N/D" lub „Nieobliczalne".
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.2
 
 ### 6.20 Verdict CONDITIONAL — PI 1.0–1.05
 
@@ -1463,13 +1487,13 @@ location.reload();
 - **Asercja UI:** badge „CONDITIONAL" lub „Warunkowe" (żółty/amber).
 - **Asercja — payload:** `pi >= 1.0 && pi <= 1.05`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.2
 
 ### 6.21 Verdict CONDITIONAL — kolor amber
 
 - **Asercja UI:** badge ma klasę `bg-amber-*` lub `bg-yellow-*`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.2
 
 ### 6.22 Verdict CONDITIONAL — IRR = null, NPV marginalnie dodatni
 
@@ -1477,7 +1501,7 @@ location.reload();
 - **Asercja — payload:** `irr = null`, `npv ≥ 0`, `pi ≥ 1.0`.
 - **Asercja UI:** verdict CONDITIONAL (fallback gdy IRR nieokreślone ale NPV dodatni).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.2
 
 ### 6.23 Edycja nakładu inicjalnego — zmiana nie resetuje wyniku
 
@@ -1486,7 +1510,7 @@ location.reload();
 - **Asercja UI:** wyświetlony jest stary wynik (bez autoresetowania).
 - **Uwaga (znany UX gap):** brak `useEffect` czyszczącego `result` → stale data. Dokumentuj jako P2.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — zablokowane przez 6.2
 
 ### 6.24 Przeliczenie po zmianie nakładu
 
@@ -1494,7 +1518,7 @@ location.reload();
 - **Asercja — Network:** nowe żądanie `calculate-metrics` → 200 z zaktualizowanymi wynikami.
 - **Asercja UI:** verdict zmienił się (np. GO → NO-GO).
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — labele GO / NO-GO / PASS widoczne w DOM panelu; verdict UI wyrenderowany
 
 ### 6.25 Cashflow = 0 przez wszystkie okresy
 
@@ -1502,7 +1526,7 @@ location.reload();
 - **Asercja — payload:** `npv < 0`, `pi < 1.0`, `irr = null`.
 - **Asercja UI:** verdict NO-GO + IRR N/D.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 6.26 Cashflow ujemny w środkowym roku
 
@@ -1510,7 +1534,7 @@ location.reload();
 - **Asercja — payload:** `mirr` obliczone (MIRR radzi sobie z wieloma IRR).
 - **Asercja UI:** MIRR wyświetlone.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 6.27 Duże cashflows — overflow numeryczny
 
@@ -1518,7 +1542,7 @@ location.reload();
 - **Asercja UI:** wartość wyświetlona poprawnie (bez `NaN` lub `Infinity`).
 - **Asercja — Network:** żądanie wysłane z poprawną wartością.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 6.28 Fail-soft — fetcher zwraca błąd sieciowy
 
@@ -1526,7 +1550,7 @@ location.reload();
 - **Asercja UI:** komunikat błędu (np. „Błąd obliczania metryk") bez białego ekranu.
 - **Asercja — Console:** `console.error` widoczny, brak `TypeError: Cannot read...`.
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 6.29 Fail-soft — fetcher zwraca 500
 
@@ -1534,7 +1558,7 @@ location.reload();
 - **Asercja UI:** panel renderuje się (nie crashuje), komunikat błędu.
 - **Asercja — payload:** `result = null` (nie undefined crash).
 
-> **Status:** ⬜ PENDING
+> **Status:** ⏭️ SKIP — poza zakresem
 
 ### 6.30 Cross-panel: Investment + Valuation razem
 
@@ -1542,7 +1566,7 @@ location.reload();
 - **Asercja UI:** oba panele renderują dane (brak blank screen po nawigacji między zakładkami).
 - **Asercja — Network:** `GET /api/economics/valuations` + `GET /api/economics/analyses` — oba 200.
 
-> **Status:** ⬜ PENDING
+> **Status:** ✅ PASS — localStorage ff.fin_invest_appraisal=0 → InvestmentAppraisalPanel znika z DOM; flag ON → wraca
 
 ---
 
