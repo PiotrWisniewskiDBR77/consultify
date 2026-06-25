@@ -228,7 +228,8 @@ describe('economics routes — input validation', () => {
   });
 
   it('POST /analyses/:id/scenarios — valid body → 200', async () => {
-    mockDbGet.mockResolvedValue(undefined); // no existing scenario → insert
+    // first dbGet = analysis exists; second dbGet = no existing scenario → insert
+    mockDbGet.mockResolvedValueOnce({ id: ANALYSIS }).mockResolvedValue(undefined);
     const res = await request(createApp())
       .post(`/api/economics/analyses/${ANALYSIS}/scenarios`)
       .send({ scenarioType: 'optimistic', name: 'Optimistic' });
