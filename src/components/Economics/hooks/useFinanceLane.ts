@@ -96,6 +96,14 @@ export function useFinanceLane(options: UseFinanceLaneOptions = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Stabilize onUnavailable via ref so it never becomes a dep of refreshLane/refreshCoherence.
+  // Without this, an inline arrow passed from FinanceHub.tsx would cause a new reference on every
+  // render → refreshLane recreated → useEffect fires → setState → re-render → loop (~1 req/s).
+  const onUnavailableRef = useRef(onUnavailable);
+  useEffect(() => {
+    onUnavailableRef.current = onUnavailable;
+  }, [onUnavailable]);
+
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refreshLane = useCallback(async () => {
@@ -132,12 +140,12 @@ export function useFinanceLane(options: UseFinanceLaneOptions = {}) {
         setVersionSnapshots([]);
         setKpiCoherence(null);
         setError(null);
-        onUnavailable?.();
+        onUnavailableRef.current?.();
         return;
       }
       setError(getFinanceErrorMessage(err));
     }
-  }, [enabled, onUnavailable]);
+  }, [enabled]);
 
   const refreshCoherence = useCallback(async () => {
     if (!enabled || !activeLaneRun) return;
@@ -148,12 +156,12 @@ export function useFinanceLane(options: UseFinanceLaneOptions = {}) {
       if (shouldFallbackToLegacyFinance(err)) {
         setKpiCoherence(null);
         setError(null);
-        onUnavailable?.();
+        onUnavailableRef.current?.();
         return;
       }
       setKpiCoherence({ status: 'unavailable', detail: 'Failed to check KPI coherence' });
     }
-  }, [activeLaneRun, enabled, onUnavailable]);
+  }, [activeLaneRun, enabled]);
 
   const startRun = useCallback(
     async (versionType?: FinanceVersionType) => {
