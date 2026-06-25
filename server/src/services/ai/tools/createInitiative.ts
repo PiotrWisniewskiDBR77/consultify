@@ -6,6 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import * as DbPromise from '../../../utils/DbPromise.js';
+import { createInitiative as funnelCreateInitiative } from '../../initiative/createInitiativeService.js';
 
 type CreateInitiativeParams = {
   projectId: string;
@@ -13,6 +14,7 @@ type CreateInitiativeParams = {
   description: string;
   priority: string;
   estimatedEffort?: string;
+  toolSessionId?: string;
 };
 
 type ToolContext = {
@@ -24,8 +26,31 @@ export async function createInitiative(
   params: CreateInitiativeParams,
   context: ToolContext = {}
 ): Promise<Record<string, unknown>> {
-  const { projectId, title, description, priority, estimatedEffort } = params;
+  const { projectId, title, description, priority, estimatedEffort, toolSessionId } = params;
   const { userId, organizationId } = context;
+
+  // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
+  if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    const orgId = organizationId || '';
+    const __r = await funnelCreateInitiative(
+      orgId,
+      {
+        title,
+        description: description ?? null,
+        projectId: projectId ?? null,
+        priority: priority ?? null,
+        ownerBusinessId: userId ?? null,
+        sourceType: 'tool',
+        sourceId: toolSessionId ?? null,
+      },
+      { validate: false, actor: { id: userId } }
+    );
+    return {
+      id: __r.id,
+      status: 'CREATED',
+      message: `Initiative "${title}" created successfully`,
+    };
+  }
 
   const id = uuidv4();
 

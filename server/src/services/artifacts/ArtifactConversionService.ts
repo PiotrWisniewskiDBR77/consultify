@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { type Conclusion, conclusionService } from '../conclusions/ConclusionService.js';
+import { createInitiative as funnelCreateInitiative } from '../initiative/createInitiativeService.js';
 
 export type ConversionStatus =
   | 'draft'
@@ -415,62 +416,87 @@ export class ArtifactConversionService {
     }
 
     const payload = conversion.payload;
-    const initiativeId = uuidv4();
     const now = new Date().toISOString();
-    try {
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (
-          id, organization_id, project_id, title, name, summary, hypothesis, status,
-          confidence_level, problem_statement, deliverables, success_criteria, key_risks,
-          source_type, source_id, created_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          initiativeId,
-          params.organizationId,
-          conversion.projectId ?? null,
-          String(payload.title || conversion.sourceArtifactTitle),
-          String(payload.title || conversion.sourceArtifactTitle),
-          String(payload.summary || ''),
-          String(payload.hypothesis || ''),
-          InitiativeStatus.DRAFT,
-          String(payload.confidenceLevel || conversion.confidenceLevel || ''),
-          String(payload.problemStatement || ''),
-          JSON.stringify(payload.deliverables || []),
-          JSON.stringify(payload.successCriteria || []),
-          JSON.stringify(payload.keyRisks || []),
-          'conclusion',
-          conversion.sourceConclusionId || conversion.sourceArtifactId,
-          params.actorUserId,
-          now,
-          now,
-        ]
+    const artifactSourceId = conversion.sourceConclusionId || conversion.sourceArtifactId;
+
+    // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
+    let initiativeId: string;
+    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      const __r = await funnelCreateInitiative(
+        params.organizationId,
+        {
+          title: String(payload.title || conversion.sourceArtifactTitle),
+          projectId: conversion.projectId ?? null,
+          summary: String(payload.summary || ''),
+          hypothesis: String(payload.hypothesis || ''),
+          confidenceLevel: String(payload.confidenceLevel || conversion.confidenceLevel || '') || null,
+          problemStatement: String(payload.problemStatement || '') || null,
+          deliverables: payload.deliverables || [],
+          successCriteria: payload.successCriteria || [],
+          keyRisks: payload.keyRisks || [],
+          sourceType: 'artifact',
+          sourceId: artifactSourceId || null,
+        },
+        { validate: false, actor: { id: params.actorUserId } }
       );
-    } catch {
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (
-          id, organization_id, project_id, title, summary, hypothesis, status,
-          confidence_level, problem_statement, deliverables, success_criteria, key_risks,
-          source_type, source_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          initiativeId,
-          params.organizationId,
-          conversion.projectId ?? null,
-          String(payload.title || conversion.sourceArtifactTitle),
-          String(payload.summary || ''),
-          String(payload.hypothesis || ''),
-          InitiativeStatus.DRAFT,
-          String(payload.confidenceLevel || conversion.confidenceLevel || ''),
-          String(payload.problemStatement || ''),
-          JSON.stringify(payload.deliverables || []),
-          JSON.stringify(payload.successCriteria || []),
-          JSON.stringify(payload.keyRisks || []),
-          'conclusion',
-          conversion.sourceConclusionId || conversion.sourceArtifactId,
-          now,
-          now,
-        ]
-      );
+      initiativeId = __r.id;
+    } else {
+      initiativeId = uuidv4();
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (
+            id, organization_id, project_id, title, name, summary, hypothesis, status,
+            confidence_level, problem_statement, deliverables, success_criteria, key_risks,
+            source_type, source_id, created_by, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            initiativeId,
+            params.organizationId,
+            conversion.projectId ?? null,
+            String(payload.title || conversion.sourceArtifactTitle),
+            String(payload.title || conversion.sourceArtifactTitle),
+            String(payload.summary || ''),
+            String(payload.hypothesis || ''),
+            InitiativeStatus.DRAFT,
+            String(payload.confidenceLevel || conversion.confidenceLevel || ''),
+            String(payload.problemStatement || ''),
+            JSON.stringify(payload.deliverables || []),
+            JSON.stringify(payload.successCriteria || []),
+            JSON.stringify(payload.keyRisks || []),
+            'conclusion',
+            artifactSourceId,
+            params.actorUserId,
+            now,
+            now,
+          ]
+        );
+      } catch {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (
+            id, organization_id, project_id, title, summary, hypothesis, status,
+            confidence_level, problem_statement, deliverables, success_criteria, key_risks,
+            source_type, source_id, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            initiativeId,
+            params.organizationId,
+            conversion.projectId ?? null,
+            String(payload.title || conversion.sourceArtifactTitle),
+            String(payload.summary || ''),
+            String(payload.hypothesis || ''),
+            InitiativeStatus.DRAFT,
+            String(payload.confidenceLevel || conversion.confidenceLevel || ''),
+            String(payload.problemStatement || ''),
+            JSON.stringify(payload.deliverables || []),
+            JSON.stringify(payload.successCriteria || []),
+            JSON.stringify(payload.keyRisks || []),
+            'conclusion',
+            artifactSourceId,
+            now,
+            now,
+          ]
+        );
+      }
     }
 
     await queryHelpers.queryRun(
