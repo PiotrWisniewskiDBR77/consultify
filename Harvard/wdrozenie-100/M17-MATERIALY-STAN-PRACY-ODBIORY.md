@@ -41,7 +41,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F2.4 | Wejście 3: „Przygotuj narzędzie" handoff | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F3.1 | Rejestr motywów (fonty+paleta)→4 renderery | F3 | ✅ | ✅ | ✅ f18ceba | n/d | 🟡 3/4 rend. | ⬜ | ⬜ | 🟢 (docx/xlsx/pptx wpięte; web-viewer→F4.4) |
 | F3.2 | Biblioteka template'ów per format | F3 | ✅ | ✅ | ✅ d4a059c | n/d | ✅ | ⬜ | ⬜ | 🟢 (3/format: doc+deck+table; mig 785) |
-| F3.3 | Pogłębione formatowanie (H1-3/listy/tabele) | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F3.3 | Pogłębione formatowanie (H1-3/listy/tabele) | F3 | ✅ | ✅ | ✅ 4f6861f | n/d | ✅ | ⬜ | ⬜ | 🟢 (typografia SSOT wg spec §1-4: fonty/skala/listy; PPT scale wpięta) |
 | F4.1 | PPTX render z wiązki | F4 | ✅ | ✅ | ✅ 5e13ccd | n/d | n/d | ⬜ | ⬜ | 🟢 |
 | F4.2 | „Pobierz komplet" (3 pliki) | F4 | ✅ | ✅ | ✅ e0729c9 | n/d | n/d | ⬜ | ⬜ | 🟢 (zip docx+xlsx+pptx) |
 | F4.3 | Publiczny share-link viewer | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
@@ -72,7 +72,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | ⊕ | Gramatyka układu §5B (Gamma-killer) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | ⊕ | Biblioteka palet kolorów (kuratorowane motywy) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 
-**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8) — czekają na →F/→UI + flagę. Realizacja-kod 🟢: F1.1/F1.3/F1.4 (d7974eb/272defe/a541716), F3.1 (f18ceba: rejestr 5 motywów→docx/xlsx/pptx), F4.1 (5e13ccd: PPTX z wiązki), F4.2 (e0729c9: teczka zip). F1.2 ⛔ Piotr (Railway flag). Następny krok: F1.2 (flaga) → deploy demo → Krok Zerowy head-to-head; kod-side dalej F3.2/F3.3/F4.3/F4.4. **Krok zerowy nowej rozmowy = head-to-head (ustal bar piękna) — patrz [`M17-MATERIALY-HANDOFF.md`](M17-MATERIALY-HANDOFF.md) §11.**
+**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8) — czekają na →F/→UI + flagę. Realizacja-kod 🟢: F1.1/F1.3/F1.4 (d7974eb/272defe/a541716), F3.1 (f18ceba: rejestr 5 motywów→docx/xlsx/pptx), F3.2 (d4a059c: ≥3 template'y/format), F3.3 (4f6861f: typografia SSOT wg spec §1-4), F4.1 (5e13ccd: PPTX z wiązki), F4.2 (e0729c9: teczka zip). **Cała Faza F3 kod 🟢.** F1.2 ⛔ Piotr (Railway flag). Następny krok: F1.2 (flaga) → deploy demo → odbiory; kod-side dalej F4.3 (share-link), F4.4 (web-viewer=4. renderer), F2 (panel „Nowy"). Krok zerowy head-to-head ZROBIONY (runs/ + [`M17-BAR-HEAD-TO-HEAD-2026-06-25.md`](M17-BAR-HEAD-TO-HEAD-2026-06-25.md)).
 
 ---
 
