@@ -166,7 +166,7 @@ router.get(
       const stage = stageFromInitiative({ status: i.status ?? undefined, hasRoiBaseline, hasRealized });
       const confidence = STAGE_DEFAULT_CONFIDENCE[stage];
       const realizationPct = valueAtStake > 0 ? realizedValue / valueAtStake : 0;
-      return { id: String(i.id), name: i.name, realizationPct, confidence, valueAtStake };
+      return { initiativeId: String(i.id), name: i.name, realizationPct, confidence, valueAtStake };
     });
 
     const signals = buildBenefitSignals(items);
@@ -227,7 +227,18 @@ router.get(
       };
     });
 
-    const timing = valueTimingSplit(timingItems);
+    const timingSplit = valueTimingSplit(timingItems);
+    const aheadOfPlanCount = timingItems.filter((item) => {
+      const t = item as any;
+      const expectedByNow = (t.targetValue || 0) * (periodMonths / 12);
+      return expectedByNow > 0 && (t.realizedToDate || 0) >= expectedByNow;
+    }).length;
+    const behindPlanCount = timingItems.filter((item) => {
+      const t = item as any;
+      const expectedByNow = (t.targetValue || 0) * (periodMonths / 12);
+      return expectedByNow > 0 && (t.realizedToDate || 0) < expectedByNow * 0.8;
+    }).length;
+    const timing = { ...timingSplit, aheadOfPlanCount, behindPlanCount };
     res.json({ bridge, timing });
   })
 );

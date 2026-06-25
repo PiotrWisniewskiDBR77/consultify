@@ -45,6 +45,8 @@ interface RunRateData {
   timing: {
     totalRunRate: number;
     totalRealized: number;
+    aheadOfPlanCount?: number;
+    behindPlanCount?: number;
   };
 }
 
@@ -177,9 +179,19 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             ))}
           </div>
           {runRate.timing && (
-            <div className="mt-2 text-xs text-slate-400 flex gap-4">
+            <div className="mt-2 text-xs text-slate-400 flex flex-wrap gap-4">
               <span>Run-rate: {fmtPLN(runRate.timing.totalRunRate)}</span>
               <span>Zrealizowane: {fmtPLN(runRate.timing.totalRealized)}</span>
+              {runRate.timing.aheadOfPlanCount != null && (
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {runRate.timing.aheadOfPlanCount} inicjatyw przed planem
+                </span>
+              )}
+              {runRate.timing.behindPlanCount != null && runRate.timing.behindPlanCount > 0 && (
+                <span className="text-amber-600 dark:text-amber-400">
+                  {runRate.timing.behindPlanCount} inicjatyw za planem
+                </span>
+              )}
             </div>
           )}
         </section>

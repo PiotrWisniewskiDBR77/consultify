@@ -84,6 +84,13 @@ const STATUS_COLORS: Record<string, string> = {
   'overdue-review': 'text-red-600 dark:text-red-400',
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  sustained: 'Utrzymana',
+  'at-risk': 'Zagrożona',
+  unowned: 'Bez właściciela',
+  'overdue-review': 'Przegląd przeterminowany',
+};
+
 interface Props {
   projectId?: string;
 }
@@ -136,6 +143,17 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
               ({Object.values(bscPerspectives).reduce((s, p) => s + p.count, 0)} KPI)
             </span>
           )}
+          {strategic?.bsc?.overallHealthPct != null && (
+            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+              strategic.bsc.overallHealthPct >= 0.7
+                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                : strategic.bsc.overallHealthPct >= 0.4
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+            }`}>
+              {Math.round(strategic.bsc.overallHealthPct * 100)}% {t('results.strategic.bscHealth', 'zdrowie')}
+            </span>
+          )}
         </h3>
 
         {!bscPerspectives ? (
@@ -145,26 +163,32 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(['financial', 'customer', 'process', 'learning'] as const).map((persp) => {
-              const p = bscPerspectives[persp] ?? {
-                count: 0, onTarget: 0, below: 0, noData: 0, healthPct: 0,
-              };
-              const healthColor = p.healthPct >= 0.7 ? 'text-emerald-600 dark:text-emerald-400'
-                : p.healthPct >= 0.4 ? 'text-amber-600 dark:text-amber-400'
+              const p = bscPerspectives[persp] ?? null;
+              const healthColor = p && p.healthPct >= 0.7 ? 'text-emerald-600 dark:text-emerald-400'
+                : p && p.healthPct >= 0.4 ? 'text-amber-600 dark:text-amber-400'
                 : 'text-red-600 dark:text-red-400';
               return (
                 <div key={persp} className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] p-4">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
                     {t(`results.strategic.perspective.${persp}`, PERSPECTIVE_LABELS[persp])}
                   </div>
-                  <div className={`text-2xl font-bold ${healthColor}`}>
-                    {Math.round(p.healthPct * 100)}%
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {p.onTarget} OK / {p.below} niżej / {p.noData} brak
-                  </div>
-                  <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
-                    <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(p.healthPct * 100)}%` }} />
-                  </div>
+                  {p == null || p.count === 0 ? (
+                    <div className="text-sm text-slate-400 italic py-2">
+                      {t('results.strategic.perspectiveNoKpi', 'Brak KPI')}
+                    </div>
+                  ) : (
+                    <>
+                      <div className={`text-2xl font-bold ${healthColor}`}>
+                        {Math.round(p.healthPct * 100)}%
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {p.onTarget} OK / {p.below} niżej / {p.noData} brak
+                      </div>
+                      <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
+                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(p.healthPct * 100)}%` }} />
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -255,7 +279,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                 .map((s) => (
                   <div key={s.id} className="flex items-start gap-2 rounded-lg bg-slate-50 dark:bg-white/[0.03] px-3 py-2 text-sm">
                     <span className={`font-medium shrink-0 ${STATUS_COLORS[s.status] ?? 'text-slate-500'}`}>
-                      {s.status}
+                      {STATUS_LABELS[s.status] ?? s.status}
                     </span>
                     <span className="text-slate-700 dark:text-slate-300 truncate">{s.name}</span>
                     {s.reasons[0] && (

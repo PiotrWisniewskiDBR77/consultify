@@ -24,6 +24,7 @@ export type BenefitSignalSeverity = 'warning' | 'critical';
 
 export interface BenefitSignal {
   initiativeId?: string;
+  initiativeName?: string;
   type: BenefitSignalType;
   severity: BenefitSignalSeverity;
   /** Human-readable title that quotes the realization. */
@@ -93,6 +94,7 @@ export function buildBenefitSignals(items: BenefitInput[]): BenefitSignal[] {
 
     signals.push({
       initiativeId: item.initiativeId,
+      initiativeName: item.name && item.name.trim().length > 0 ? item.name.trim() : undefined,
       type: 'BENEFIT_AT_RISK',
       severity,
       title,

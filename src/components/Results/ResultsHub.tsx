@@ -1537,12 +1537,20 @@ export const ResultsHub: React.FC = () => {
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
         ) : activeTab === 'results_strategic' ? (
-          <div className="p-4 overflow-auto">
+          <div className="p-4 overflow-auto space-y-6">
             {isResultsFlagEnabled('strategicLayer') ? (
               <StrategicLayerPanel projectId="all" />
             ) : (
               <div className="text-sm text-slate-400 py-8 text-center">
                 {t('results.strategic.disabled', 'Warstwa strategiczna wyłączona — włącz flagę ff_strategicLayer.')}
+              </div>
+            )}
+            {isResultsFlagEnabled('valueDriverTree') && (
+              <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/40 dark:bg-white/[0.02] p-4">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                  {t('results.driverTree.title', 'Value Driver Tree')}
+                </h3>
+                <ValueDriverTree projectId="all" />
               </div>
             )}
           </div>
