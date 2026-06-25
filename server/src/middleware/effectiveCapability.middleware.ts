@@ -17,17 +17,85 @@ type CapabilityOptions = {
   allowWithoutProject?: boolean;
 };
 
-const shouldEnforceEffectiveAccess = () => process.env.EFFECTIVE_ACCESS_ENFORCE === 'true';
-const shouldShadowEffectiveAccess = () => process.env.EFFECTIVE_ACCESS_SHADOW === 'true';
+const shouldEnforceEffectiveAccess = () =>
+  (process.env.EFFECTIVE_ACCESS_ENFORCE ?? '').trim().toLowerCase() === 'true';
+const shouldShadowEffectiveAccess = () =>
+  (process.env.EFFECTIVE_ACCESS_SHADOW ?? '').trim().toLowerCase() === 'true';
 
 function firstString(...values: unknown[]): string | null {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) return value.trim();
-    if (Array.isArray(value) && typeof value[0] === 'string' && value[0].trim()) {
-      return value[0].trim();
-    }
   }
   return null;
+}
+
+function safePath(req: AuthRequest): string {
+  try { return req.path ?? ''; } catch { return ''; }
+}
+
+function isResponseCommitted(res: Response): boolean {
+  try {
+    if ((res as any).headersSent) return true;
+    if ((res as any).writableFinished) return true;
+    if ((res as any).finished) return true;
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+function safeWriteJson(res: Response, status: number, body: object, phase: string, extra: Record<string, unknown>): void {
+  if (isResponseCommitted(res)) {
+    logger.warn('[effectiveCapability] response already committed; skipping json write', {
+      status,
+      phase,
+      ...extra,
+    });
+    return;
+  }
+  if (isResponseCommitted(res)) {
+    logger.warn('[effectiveCapability] response committed before json write; skipping', {
+      status,
+      phase,
+      ...extra,
+    });
+    return;
+  }
+  if (typeof (res as any).status !== 'function' || typeof (res as any).json !== 'function') {
+    logger.error('[effectiveCapability] response object missing status/json handlers', {
+      status,
+      phase,
+      ...extra,
+    });
+    return;
+  }
+  try {
+    res.status(status).json(body);
+  } catch (writeErr) {
+    logger.error('[effectiveCapability] failed to write json response', {
+      status,
+      phase,
+      error: (writeErr as Error).message,
+      ...extra,
+    });
+  }
+}
+
+function safeNext(next: NextFunction, phase: string, capability: string | string[]): void {
+  let result: unknown;
+  try {
+    result = next();
+  } catch (syncErr) {
+    logger.error('[effectiveCapability] next() threw synchronously', { phase, capability });
+    next(syncErr as Error);
+    return;
+  }
+  if (result instanceof Promise) {
+    result.catch((asyncErr: unknown) => {
+      logger.error('[effectiveCapability] next() returned rejected promise', { phase, capability });
+      next(asyncErr as Error);
+    });
+  }
 }
 
 function getUserContext(req: AuthRequest) {
@@ -40,14 +108,18 @@ function getUserContext(req: AuthRequest) {
 }
 
 export async function resolveProjectIdFromRequest(req: AuthRequest): Promise<string | null> {
-  return firstString(
-    req.params?.projectId,
-    req.params?.id,
-    req.body?.projectId,
-    req.body?.project_id,
-    req.query?.projectId,
-    req.query?.project_id
-  );
+  try {
+    return firstString(
+      req.params?.projectId,
+      req.params?.id,
+      req.body?.projectId,
+      req.body?.project_id,
+      req.query?.projectId,
+      req.query?.project_id
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function resolveTaskProjectId(req: AuthRequest): Promise<string | null> {
@@ -57,7 +129,7 @@ export async function resolveTaskProjectId(req: AuthRequest): Promise<string | n
     req.body?.taskId,
     req.body?.task_id
   );
-  if (!taskId) return await resolveProjectIdFromRequest(req);
+  if (!taskId || taskId.length > 128) return await resolveProjectIdFromRequest(req);
   const row = await queryHelpers
     .queryOne<{
       project_id?: string;
@@ -128,66 +200,121 @@ export function requireProjectCapability(
   options: CapabilityOptions = {}
 ) {
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { userId, organizationId, applicationRole, isImpersonating } = getUserContext(req);
-    if (!userId || !organizationId) {
-      res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
-      return;
-    }
-    if (!shouldEnforceEffectiveAccess() && !shouldShadowEffectiveAccess()) {
-      next();
+    if (!capability || !capability.trim()) {
+      safeWriteJson(res, 400, { error: 'Capability name is required', code: 'CAPABILITY_INVALID' }, 'validate', {});
       return;
     }
 
-    const projectId = (await resolveProjectId(req)) || null;
+    let userId: string | null, organizationId: string | null, applicationRole: string | null, isImpersonating: boolean;
+    try {
+      ({ userId, organizationId, applicationRole, isImpersonating } = getUserContext(req));
+    } catch {
+      safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+      return;
+    }
+    if (!userId || !organizationId) {
+      safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+      return;
+    }
+    if (!shouldEnforceEffectiveAccess() && !shouldShadowEffectiveAccess()) {
+      safeNext(next, 'allow', capability);
+      return;
+    }
+
+    let projectId: string | null;
+    try {
+      projectId = firstString(await resolveProjectId(req));
+    } catch (err) {
+      logger.error('[effectiveCapability] resolveProjectId failed', {
+        capability,
+        error: (err as Error).message,
+      });
+      if (!shouldEnforceEffectiveAccess()) {
+        safeNext(next, 'allow', capability);
+        return;
+      }
+      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capability });
+      return;
+    }
     if (!projectId && !options.allowWithoutProject) {
       if (!shouldEnforceEffectiveAccess()) {
         logger.warn('[effectiveCapability] shadow missing project context', {
           capability,
-          path: req.path,
+          path: safePath(req),
         });
-        next();
+        safeNext(next, 'allow', capability);
         return;
       }
-      res.status(400).json({
+      safeWriteJson(res, 400, {
         error: 'Project context is required',
         code: 'PROJECT_CONTEXT_REQUIRED',
         required: capability,
         reason: options.reason || 'missing_project_context',
-      });
+      }, 'deny', { capability });
       return;
     }
 
-    const access = await resolveEffectiveAccess({
-      userId,
-      organizationId,
-      applicationRole,
-      projectId,
-      isImpersonating,
-    });
+    let access: unknown;
+    try {
+      access = await resolveEffectiveAccess({
+        userId,
+        organizationId,
+        applicationRole,
+        projectId,
+        isImpersonating,
+      });
+    } catch (err) {
+      logger.error('[effectiveCapability] resolveEffectiveAccess failed', {
+        capability,
+        error: (err as Error).message,
+      });
+      if (!shouldEnforceEffectiveAccess()) {
+        safeNext(next, 'allow', capability);
+        return;
+      }
+      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capability });
+      return;
+    }
 
-    if (!hasEffectiveCapability(access, capability)) {
+    let capable: boolean;
+    try {
+      capable = hasEffectiveCapability(access, capability);
+    } catch (err) {
+      logger.error('[effectiveCapability] capability evaluator failed', {
+        capability,
+        error: (err as Error).message,
+      });
+      if (!shouldEnforceEffectiveAccess()) {
+        safeNext(next, 'allow', capability);
+        return;
+      }
+      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capability });
+      return;
+    }
+
+    if (!capable) {
       if (!shouldEnforceEffectiveAccess()) {
         logger.warn('[effectiveCapability] shadow capability mismatch', {
           capability,
           projectId,
-          path: req.path,
+          path: safePath(req),
         });
         (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = access;
-        next();
+        safeNext(next, 'allow', capability);
         return;
       }
-      res.status(403).json({
+      safeWriteJson(res, 403, {
         error: 'Capability required',
         code: 'CAPABILITY_REQUIRED',
         required: capability,
         projectId,
         reason: options.reason || 'missing_capability_or_scope',
-      });
+      }, 'deny', { capability, path: safePath(req) });
       return;
     }
 
     (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = access;
-    next();
+    safeNext(next, 'allow', capability);
   };
 }
 
@@ -197,66 +324,121 @@ export function requireAnyProjectCapability(
   options: CapabilityOptions = {}
 ) {
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { userId, organizationId, applicationRole, isImpersonating } = getUserContext(req);
-    if (!userId || !organizationId) {
-      res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
-      return;
-    }
-    if (!shouldEnforceEffectiveAccess() && !shouldShadowEffectiveAccess()) {
-      next();
+    if (!capabilities.length) {
+      safeWriteJson(res, 400, { error: 'At least one capability is required', code: 'CAPABILITY_LIST_INVALID' }, 'validate', {});
       return;
     }
 
-    const projectId = (await resolveProjectId(req)) || null;
+    let userId: string | null, organizationId: string | null, applicationRole: string | null, isImpersonating: boolean;
+    try {
+      ({ userId, organizationId, applicationRole, isImpersonating } = getUserContext(req));
+    } catch {
+      safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+      return;
+    }
+    if (!userId || !organizationId) {
+      safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+      return;
+    }
+    if (!shouldEnforceEffectiveAccess() && !shouldShadowEffectiveAccess()) {
+      safeNext(next, 'allow', capabilities);
+      return;
+    }
+
+    let projectId: string | null;
+    try {
+      projectId = firstString(await resolveProjectId(req));
+    } catch (err) {
+      logger.error('[effectiveCapability] resolveProjectId failed', {
+        capabilities,
+        error: (err as Error).message,
+      });
+      if (!shouldEnforceEffectiveAccess()) {
+        safeNext(next, 'allow', capabilities);
+        return;
+      }
+      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capabilities });
+      return;
+    }
     if (!projectId && !options.allowWithoutProject) {
       if (!shouldEnforceEffectiveAccess()) {
         logger.warn('[effectiveCapability] shadow missing project context', {
           capabilities,
-          path: req.path,
+          path: safePath(req),
         });
-        next();
+        safeNext(next, 'allow', capabilities);
         return;
       }
-      res.status(400).json({
+      safeWriteJson(res, 400, {
         error: 'Project context is required',
         code: 'PROJECT_CONTEXT_REQUIRED',
         required: capabilities,
         reason: options.reason || 'missing_project_context',
-      });
+      }, 'deny', { capabilities });
       return;
     }
 
-    const access = await resolveEffectiveAccess({
-      userId,
-      organizationId,
-      applicationRole,
-      projectId,
-      isImpersonating,
-    });
+    let access: unknown;
+    try {
+      access = await resolveEffectiveAccess({
+        userId,
+        organizationId,
+        applicationRole,
+        projectId,
+        isImpersonating,
+      });
+    } catch (err) {
+      logger.error('[effectiveCapability] resolveEffectiveAccess failed', {
+        capabilities,
+        error: (err as Error).message,
+      });
+      if (!shouldEnforceEffectiveAccess()) {
+        safeNext(next, 'allow', capabilities);
+        return;
+      }
+      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capabilities });
+      return;
+    }
 
-    if (!capabilities.some((capability) => hasEffectiveCapability(access, capability))) {
+    let capable: boolean;
+    try {
+      capable = capabilities.some((cap) => hasEffectiveCapability(access, cap));
+    } catch (err) {
+      logger.error('[effectiveCapability] capability evaluator failed', {
+        capabilities,
+        error: (err as Error).message,
+      });
+      if (!shouldEnforceEffectiveAccess()) {
+        safeNext(next, 'allow', capabilities);
+        return;
+      }
+      safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capabilities });
+      return;
+    }
+
+    if (!capable) {
       if (!shouldEnforceEffectiveAccess()) {
         logger.warn('[effectiveCapability] shadow capability mismatch', {
           capabilities,
           projectId,
-          path: req.path,
+          path: safePath(req),
         });
         (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = access;
-        next();
+        safeNext(next, 'allow', capabilities);
         return;
       }
-      res.status(403).json({
+      safeWriteJson(res, 403, {
         error: 'Capability required',
         code: 'CAPABILITY_REQUIRED',
         required: capabilities,
         projectId,
         reason: options.reason || 'missing_capability_or_scope',
-      });
+      }, 'deny', { capabilities });
       return;
     }
 
     (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = access;
-    next();
+    safeNext(next, 'allow', capabilities);
   };
 }
 
