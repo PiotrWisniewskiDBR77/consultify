@@ -319,16 +319,16 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const ok = await financeEnterpriseService.approveBudget(
+    const result = await financeEnterpriseService.approveBudget(
       identity.orgId,
       req.params.budgetId,
       identity.userId
     );
-    if (!ok) {
+    if (!result) {
       res.status(404).json({ error: 'Budget not found' });
       return;
     }
-    res.json({ ok: true });
+    res.json({ ok: true, id: result.id, status: result.status });
   })
 );
 

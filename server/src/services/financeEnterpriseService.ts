@@ -480,12 +480,17 @@ class FinanceEnterpriseService {
     return true;
   }
 
-  async approveBudget(orgId: string, budgetVersionId: string, userId: string): Promise<boolean> {
+  async approveBudget(
+    orgId: string,
+    budgetVersionId: string,
+    userId: string
+  ): Promise<{ id: string; status: 'approved' } | null> {
     const result = await queryHelpers.queryRun(
       `UPDATE financial_budget_versions SET status = 'approved', approved_by = ?, approved_at = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
       [userId, new Date().toISOString(), new Date().toISOString(), budgetVersionId, orgId]
     );
-    return (result?.changes || 0) > 0;
+    if ((result?.changes || 0) === 0) return null;
+    return { id: budgetVersionId, status: 'approved' };
   }
 
   async createForecastCycle(
