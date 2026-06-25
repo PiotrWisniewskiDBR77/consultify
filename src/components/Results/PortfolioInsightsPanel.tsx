@@ -4,7 +4,7 @@
  *           scenarios+IRR (6.5), finance link (6.6), board-pack CTA (4.4).
  * Behind flags (shown in ROI-Analysis tab alongside existing views).
  */
-import { ArrowRight, BarChart3, Clock, DollarSign, MoveRight, TrendingUp, Zap } from 'lucide-react';
+import { ArrowRight, BarChart3, Clock, DollarSign, ExternalLink, MoveRight, TrendingUp, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -133,6 +133,14 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                 {signals.summary.critical} krytycznych
               </span>
             )}
+            <a
+              href="/implementation"
+              className="ml-auto flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline shrink-0"
+              title={t('results.portfolio.goToM14', 'Przejdź do M14 Wdrożenie')}
+            >
+              <ExternalLink size={11} />
+              M14
+            </a>
           </h3>
           <div className="space-y-2">
             {signals.signals.slice(0, 6).map((sig, i) => (

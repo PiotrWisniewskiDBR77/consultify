@@ -31,6 +31,7 @@ export interface BenefitSignal {
   title: string;
   valueAtStake?: number;
   suggestedAction: string;
+  realizationPct?: number;
 }
 
 export interface EscalationTarget {
@@ -100,6 +101,7 @@ export function buildBenefitSignals(items: BenefitInput[]): BenefitSignal[] {
       title,
       valueAtStake: isFiniteNumber(item.valueAtStake) ? item.valueAtStake : undefined,
       suggestedAction,
+      realizationPct: isFiniteNumber(realization) ? realization : undefined,
     });
   }
 

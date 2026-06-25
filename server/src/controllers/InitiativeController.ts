@@ -439,6 +439,19 @@ export class InitiativeController {
       }
       sql += ` ORDER BY i.created_at DESC`;
 
+      const limitRaw = Number((req.query as any)?.limit);
+      const offsetRaw = Number((req.query as any)?.offset);
+      const pageLimit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 1000) : null;
+      const pageOffset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+      if (pageLimit !== null) {
+        sql += ` LIMIT ?`;
+        params.push(pageLimit);
+        if (pageOffset > 0) {
+          sql += ` OFFSET ?`;
+          params.push(pageOffset);
+        }
+      }
+
       let rows: Record<string, unknown>[] = [];
       try {
         if (typeof qh.queryAll !== 'function') {
@@ -654,7 +667,7 @@ export class InitiativeController {
 
       const sql = `
             INSERT INTO initiatives (
-                id, organization_id, project_id, program_id, title, category, priority, impact, effort,
+                id, organization_id, project_id, program_id, title, name, category, priority, impact, effort,
                 axis, area, summary, hypothesis, status,
                 business_value, cost_capex, cost_opex, expected_roi,
                 value_driver, confidence_level, value_timing,
@@ -662,8 +675,8 @@ export class InitiativeController {
                 owner_business_id, owner_execution_id,
                 problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
                 source_type, source_id, action_contract_json, source_pack_json, evidence_refs_json,
-                created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                created_by, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       try {
@@ -673,6 +686,7 @@ export class InitiativeController {
           projectId ?? null,
           programId ?? null,
           title,
+          title, // name mirrors title (legacy column, NOT NULL in older schemas)
           category ?? null,
           priority ?? 'medium',
           impact ?? 'medium',
@@ -706,6 +720,7 @@ export class InitiativeController {
           ),
           JSON.stringify(sourcePack && typeof sourcePack === 'object' ? sourcePack : {}),
           JSON.stringify(Array.isArray(evidenceRefs) ? evidenceRefs : []),
+          req.user?.id ?? null, // created_by
           now,
           now,
         ]);
@@ -718,8 +733,8 @@ export class InitiativeController {
                   owner_business_id, owner_execution_id,
                   problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
                   source_type, source_id,
-                  created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  created_by, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
         await queryHelpers.queryRun(legacySql, [
           id,
@@ -747,6 +762,7 @@ export class InitiativeController {
           JSON.stringify(keyRisks || []),
           normalizedSourceType,
           normalizedSourceId || null,
+          req.user?.id ?? null, // created_by
           now,
           now,
         ]);
@@ -1259,7 +1275,11 @@ export class InitiativeController {
       // RBAC + gate enforcement (enterprise governance)
       // - Consultant can only SUBMIT_FOR_REVIEW for initiatives they authored (created_by)
       // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
-      const gate = getGateForTransition(currentStatus as any, nextStatus as any);
+      // CANCELLED is a lifecycle escape hatch — no gate, no AI soft-block, no readiness check.
+      const gate =
+        nextStatus === 'CANCELLED'
+          ? null
+          : getGateForTransition(currentStatus as any, nextStatus as any);
       if (gate) {
         const accessCtx = await resolveInitiativeAccessContext(orgId, id, actorId, req.user?.role);
         const isAdmin = accessCtx.effectiveRoles.includes('ADMIN');
@@ -1377,8 +1397,10 @@ export class InitiativeController {
         }
       }
 
-      // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist
-      const blockingItems = await getBlockingReadinessItems(orgId, id);
+      // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist.
+      // CANCELLED bypasses readiness (same as gate bypass above).
+      const blockingItems =
+        nextStatus === 'CANCELLED' ? [] : await getBlockingReadinessItems(orgId, id);
       if (blockingItems.length > 0) {
         try {
           const recipients = await getInitiativeNotificationRecipients(orgId, id);

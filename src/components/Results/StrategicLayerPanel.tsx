@@ -156,6 +156,13 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           )}
         </h3>
 
+        {strategic?.bsc?.balanced === false && bscPerspectives && (
+          <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+            <AlertTriangle size={12} className="shrink-0" />
+            {t('results.strategic.bscUnbalanced', 'Scorecard niezrównoważony — brakuje KPI w co najmniej jednej perspektywie.')}
+          </div>
+        )}
+
         {!bscPerspectives ? (
           <div className="text-sm text-slate-400 py-4 text-center">
             {t('results.strategic.bscNoData', 'Brak KPI — dodaj KPI i powiąż je z inicjatywami.')}

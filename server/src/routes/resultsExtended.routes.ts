@@ -239,7 +239,13 @@ router.get(
       return expectedByNow > 0 && (t.realizedToDate || 0) < expectedByNow * 0.8;
     }).length;
     const timing = { ...timingSplit, aheadOfPlanCount, behindPlanCount };
-    res.json({ bridge, timing });
+    const bridgeWithAliases = {
+      ...bridge,
+      annualizedRunRate: bridge.runRate,
+      projectedFullYear: bridge.projectedInYear,
+      remainingRunRateContribution: bridge.projectedInYear - bridge.alreadyRealized,
+    };
+    res.json({ bridge: bridgeWithAliases, timing });
   })
 );
 
@@ -288,7 +294,9 @@ router.get(
 
     const moves = recommendReallocation(items);
     const summary = reallocationSummary(moves);
-    res.json({ moves, summary });
+    const movesArr = Array.isArray(moves) ? (moves as any[]) : [];
+    const totalAmount = movesArr.reduce((s: number, m: any) => s + (m.valueAtStake ?? (m.fteSuggested ?? 0) * 50_000), 0);
+    res.json({ moves, summary: { ...summary, totalAmount } });
   })
 );
 
@@ -319,7 +327,8 @@ router.get(
       return { id: String(i.id), name: i.name, adoptionScore };
     });
 
-    const flags = flagBenefitAtRiskByAdoption(adoptionItems);
+    const rawFlags = flagBenefitAtRiskByAdoption(adoptionItems);
+    const flags = (rawFlags as any[]).map((f) => ({ ...f, atRisk: f.atRisk ?? f.atRiskByAdoption ?? false }));
     res.json({ flags, total: initiatives.length, atRiskCount: flags.length });
   })
 );
@@ -403,7 +412,12 @@ router.get(
     const sensitivityInput: SensitivityInput = { cashflows: baseCashflows, rate: 0.1 };
     const sensitivityResults = sensitivity(sensitivityInput, [-0.3, -0.15, 0, 0.15, 0.3]);
 
-    res.json({ scenarios: results, irr: baseIrr, paybackPeriod: payback, sensitivity: sensitivityResults, initiativeCount: assumptions.length });
+    const SCENARIO_NAMES = ['Pesymistyczny', 'Bazowy', 'Optymistyczny'];
+    const scenariosWithName = results.map((sc: any, i: number) => ({
+      ...sc,
+      name: sc.name ?? sc.label ?? SCENARIO_NAMES[i] ?? `Scenariusz ${i + 1}`,
+    }));
+    res.json({ scenarios: scenariosWithName, irr: baseIrr, paybackPeriod: payback, sensitivity: sensitivityResults, initiativeCount: assumptions.length });
   })
 );
 
@@ -490,7 +504,12 @@ router.get(
     }
 
     if (financialMappings.length === 0) {
-      res.json({ aggregate: null, byStatement: {}, bridge: [], mappingCount: 0 });
+      res.json({
+        aggregate: { totalPositiveImpact: 0, totalNegativeImpact: 0, netImpact: 0 },
+        byStatement: {},
+        bridge: [],
+        mappingCount: 0,
+      });
       return;
     }
 
