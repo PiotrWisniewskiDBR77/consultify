@@ -39,11 +39,11 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F2.2 | Wejście 1: input → retrieval z org | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F2.3 | Wejście 2: upload pliku → parse | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F2.4 | Wejście 3: „Przygotuj narzędzie" handoff | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F3.1 | Rejestr motywów (fonty+paleta)→4 renderery | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F3.1 | Rejestr motywów (fonty+paleta)→4 renderery | F3 | ✅ | ✅ | ✅ f18ceba | n/d | 🟡 3/4 rend. | ⬜ | ⬜ | 🟢 (docx/xlsx/pptx wpięte; web-viewer→F4.4) |
 | F3.2 | Biblioteka template'ów per format | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | 🟡 galerie są |
 | F3.3 | Pogłębione formatowanie (H1-3/listy/tabele) | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F4.1 | PPTX render z wiązki | F4 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ |
-| F4.2 | „Pobierz komplet" (3 pliki) | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | 🟡 docx/xlsx są |
+| F4.1 | PPTX render z wiązki | F4 | ✅ | ✅ | ✅ 5e13ccd | n/d | n/d | ⬜ | ⬜ | 🟢 |
+| F4.2 | „Pobierz komplet" (3 pliki) | F4 | ✅ | ✅ | ✅ e0729c9 | n/d | n/d | ⬜ | ⬜ | 🟢 (zip docx+xlsx+pptx) |
 | F4.3 | Publiczny share-link viewer | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F4.4 | In-app viewer (3 formaty) | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | 🟡 preview jest |
 | F5.1 | Konektory do baz | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
@@ -72,7 +72,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | ⊕ | Gramatyka układu §5B (Gamma-killer) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | ⊕ | Biblioteka palet kolorów (kuratorowane motywy) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 
-**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8). F0: 5 tasków 🟢. F1.1/F1.3/F1.4 🟢 (d7974eb/272defe/a541716). F1.2 ⛔ Piotr (Railway flag). Następny krok: F1.2 (Piotr flaga) → deploy demo → Krok Zerowy head-to-head. **Krok zerowy nowej rozmowy = head-to-head (ustal bar piękna) — patrz [`M17-MATERIALY-HANDOFF.md`](M17-MATERIALY-HANDOFF.md) §11.**
+**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8) — czekają na →F/→UI + flagę. Realizacja-kod 🟢: F1.1/F1.3/F1.4 (d7974eb/272defe/a541716), F3.1 (f18ceba: rejestr 5 motywów→docx/xlsx/pptx), F4.1 (5e13ccd: PPTX z wiązki), F4.2 (e0729c9: teczka zip). F1.2 ⛔ Piotr (Railway flag). Następny krok: F1.2 (flaga) → deploy demo → Krok Zerowy head-to-head; kod-side dalej F3.2/F3.3/F4.3/F4.4. **Krok zerowy nowej rozmowy = head-to-head (ustal bar piękna) — patrz [`M17-MATERIALY-HANDOFF.md`](M17-MATERIALY-HANDOFF.md) §11.**
 
 ---
 
