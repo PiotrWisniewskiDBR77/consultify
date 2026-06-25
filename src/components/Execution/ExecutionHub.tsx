@@ -88,6 +88,7 @@ import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilo
 import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 
 import { useAppStore } from '../../store/useAppStore';
+import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import {
@@ -722,6 +723,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const queueExecutionTruthRefresh = useCallback(() => {
     setExecutionTruthRefreshKey((prev) => prev + 1);
   }, []);
+
+  // F4.2 — globalny sygnał z useInitiativeRefreshStore (bumped przez każdą mutację)
+  const sharedInitiativeRefreshVersion = useInitiativeRefreshStore((s) => s.version);
+  useEffect(() => {
+    if (sharedInitiativeRefreshVersion > 0) {
+      setExecutionTruthRefreshKey((k) => k + 1);
+    }
+  }, [sharedInitiativeRefreshVersion]);
 
   useEffect(() => {
     if (deepLinkHandled) return;

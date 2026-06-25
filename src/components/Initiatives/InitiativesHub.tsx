@@ -54,9 +54,11 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
+import { buildInitiativeDeepLink } from '@/utils/initiativeDeepLink';
 
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
+import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
 // Detail views
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
@@ -495,6 +497,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       fetchData(true);
     }
   }, [refreshTrigger, fetchData]);
+
+  // F4.1 — globalny sygnał z useInitiativeRefreshStore (bumped przez każdą mutację z initiativeWriteTruth)
+  const sharedRefreshVersion = useInitiativeRefreshStore((s) => s.version);
+  useEffect(() => {
+    if (sharedRefreshVersion > 0) {
+      fetchData(true);
+    }
+  }, [sharedRefreshVersion, fetchData]);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -1513,7 +1523,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         extraActionsAfterSlot={
           <button
             type="button"
-            onClick={() => navigate(`/economics?tab=models&initiativeId=${item.id}`)}
+            onClick={() => navigate(buildInitiativeDeepLink(item.id, { module: 'economics', tab: 'models' }))}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition"
           >
             {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
