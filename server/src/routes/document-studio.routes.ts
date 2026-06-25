@@ -506,6 +506,36 @@ router.post(
         });
       }
 
+      // X6 — W5 Transactional Outputs Registry: fire-and-forget parallel registration
+      // ensuring both v8_output_artifacts + v8_artifact_origin_links are inserted
+      // atomically. Additive to the registerArtifactOrigin call above (idempotent
+      // on originRecordId). Fail-open — errors are swallowed so generation is unaffected.
+      import('../services/v8/outputsTransactionalRegistry.js')
+        .then(({ registerOutputArtifactTransactional }) =>
+          registerOutputArtifactTransactional({
+            organizationId,
+            outputType: 'report',
+            artifactFamily: 'document',
+            originRuntime: 'native_artifact',
+            originRecordId: String(result.artifactId),
+            titleSnapshot: String(result.schema?.title || intake.title || 'Untitled document'),
+            ownerUserId: String(userId),
+            createdBy: String(userId),
+            projectId,
+            originSummary: {
+              sourceType: 'document_studio',
+              templateId: templateId ? String(templateId) : null,
+              sourceTable: 'document_studio_artifacts',
+            },
+          })
+        )
+        .catch((x6Err: unknown) => {
+          logger.warn('[DocumentStudio] X6 transactional registration failed (non-blocking)', {
+            artifactId: String(result.artifactId),
+            message: x6Err instanceof Error ? x6Err.message : String(x6Err),
+          });
+        });
+
       res.json({ artifactId: result.artifactId, schema: result.schema });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate document artifact';

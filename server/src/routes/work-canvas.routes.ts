@@ -4501,6 +4501,36 @@ router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res
       },
     });
 
+    // X6 — W5 Transactional Outputs Registry: fire-and-forget parallel call to
+    // ensure both v8_output_artifacts + v8_artifact_origin_links are registered
+    // atomically. Runs alongside the existing registerArtifactOrigin path (additive,
+    // idempotent). Fail-open: errors are swallowed so the primary response is unaffected.
+    import('../services/v8/outputsTransactionalRegistry.js')
+      .then(({ registerOutputArtifactTransactional }) =>
+        registerOutputArtifactTransactional({
+          organizationId,
+          outputType: 'report',
+          artifactFamily: 'document',
+          originRuntime: 'native_artifact',
+          originRecordId: draft.id,
+          titleSnapshot: title,
+          ownerUserId: userId,
+          createdBy: userId,
+          projectId: draft.projectId || null,
+          originSummary: {
+            sourceType: 'work_canvas',
+            sourceTable: 'work_canvas_drafts',
+            contentMdLength: (draft.contentMd || '').length,
+          },
+        })
+      )
+      .catch((x6Err: unknown) => {
+        logger.warn('[work-canvas] X6 registerOutputArtifactTransactional failed (non-blocking)', {
+          draftId: draft.id,
+          error: x6Err instanceof Error ? x6Err.message : String(x6Err),
+        });
+      });
+
     const previousLinks =
       draft.provenance?.linkedWorkspaceResources &&
       typeof draft.provenance.linkedWorkspaceResources === 'object'
@@ -4669,6 +4699,7 @@ router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest,
 router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const { organizationId, userId } = authContext(req);
   const artifactId = `artifact-${randomUUID()}`;
   const artifactRunId = `run-${randomUUID()}`;
   const now = new Date().toISOString();
@@ -4720,6 +4751,26 @@ router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) =
     ],
     { fallback: false }
   );
+
+  // X5 — W5 Unified Doc Entity: commit draft → wave5_artifacts transactionally.
+  // Fail-open: if commitDraftToArtifact throws, the draft UPDATE above already
+  // succeeded so the canvas is still saved; we just won't have a wave5_artifacts row.
+  try {
+    const { commitDraftToArtifact } = await import(
+      '../services/deliverables/unifiedDocEntityService.js'
+    );
+    await commitDraftToArtifact({
+      organizationId,
+      draftId: draft.id,
+      committedBy: userId,
+    });
+  } catch (x5Err) {
+    logger.warn('[work-canvas] X5 commitDraftToArtifact failed (non-blocking)', {
+      draftId: draft.id,
+      error: x5Err instanceof Error ? x5Err.message : String(x5Err),
+    });
+  }
+
   const readBack = {
     target: 'artifact',
     targetObjectId: artifactId,
