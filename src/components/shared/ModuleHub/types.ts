@@ -50,6 +50,8 @@ export type ModuleTab =
   // V3-H03 — Results Operational + ROI Analysis
   | 'operational'
   | 'roi_analysis'
+  | 'results_strategic'
+  | 'results_ai'
   // V3-F02 — Initiatives Portfolio Analysis
   | 'analysis'
   // V3-Phase10 — Unified Report Builder Hub
