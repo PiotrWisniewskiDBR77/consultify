@@ -10,6 +10,8 @@
  * doktrynie konsultanckiej (Minto/answer-first, ≤6 bulletów, action-titles).
  */
 
+import { resolveTheme, DEFAULT_THEME_ID } from './themeRegistry.js';
+
 export type DeliverableFormat = 'deck' | 'report' | 'table';
 export type Register = 'executive' | 'professional' | 'operational';
 export type Density = 'concise' | 'standard' | 'detailed';
@@ -27,6 +29,8 @@ export interface ContentDefaults {
   /** Deck: limity czytelności. */
   maxBullets?: number;
   maxWordsPerBullet?: number;
+  /** Deck/report: twardy limit długości action-title (headline, nie akapit). */
+  maxWordsPerTitle?: number;
   /** Table: realne dane przykładowe + wiersz sumy. */
   seedRows?: number;
   totalsRow?: boolean;
@@ -82,6 +86,7 @@ const DEFAULTS: Record<DeliverableFormat, DeliverableDefaults> = {
       narrativeArc: ['problem', 'approach', 'findings', 'recommendations', 'roadmap', 'risks'],
       maxBullets: 6,
       maxWordsPerBullet: 8,
+      maxWordsPerTitle: 12,
       actionTitles: true,
     },
     graphic: {
@@ -98,6 +103,7 @@ const DEFAULTS: Record<DeliverableFormat, DeliverableDefaults> = {
       answerFirst: true,
       targetUnits: 8,
       narrativeArc: ['exec_summary', 'context', 'methodology', 'findings', 'recommendations', 'risks', 'next_steps'],
+      maxWordsPerTitle: 16,
       actionTitles: true,
     },
     graphic: {

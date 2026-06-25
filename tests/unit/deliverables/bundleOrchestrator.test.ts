@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  buildSpine, spineToDeckSlides, spineToDocOutline, spineToTableIntent,
+  buildSpine, spineToDeckSlides, spineToDocOutline, spineToTableIntent, clampActionTitle,
 } from '../../../server/src/services/deliverables/bundleOrchestrator';
 import { buildMarketSizing, validateAssumptions, type BusinessPlanInput } from '../../../server/src/services/deliverables/assumptionsModel';
 
@@ -80,6 +80,37 @@ describe('BundleOrchestrator — buildSpine', () => {
     // appendix niesie źródło i zakres (obrona due-diligence)
     const appendix = risks!.blocks.find((b) => b.hint.includes('obronności założeń'));
     expect(appendix?.hint).toContain('źródło');
+  });
+
+  it('action-title z długiego pola free-text = headline, nie akapit (bar 2026-06-25, F1.1)', () => {
+    const longThesis = 'Firmy produkcyjne w Polsce i regionie CEE stoją przed presją automatyzacji i AI, ale nie wiedzą od czego zacząć — brakuje im ustrukturyzowanej diagnozy luk kompetencyjnych, danych i procesowych, a każde chybione wdrożenie kosztuje setki tysięcy euro.';
+    const bad = input();
+    bad.thesis = longThesis;
+    bad.product = 'Usługa diagnostyki gotowości organizacji produkcyjnych na wdrożenie AI obejmująca warsztat, ankietę oraz analizę danych zakończona raportem zarządczym z indeksem gotowości i roadmapą transformacji.';
+    bad.ask = 'Pozyskanie 400 000 EUR rundy pre-seed na zatrudnienie konsultantów, budowę platformy SaaS oraz uruchomienie sprzedaży B2B na rynkach CEE.';
+    const s = buildSpine(bad);
+
+    // 3 pola free-text (teza/produkt/ask) skrócone do headline'a, nie akapitu.
+    // (Tytuły z hero-numbers pomijamy — PL grupuje liczby spacjami, więc rozbijają się na tokeny.)
+    for (const id of ['exec_summary', 'solution', 'ask'] as const) {
+      const t = s.sections.find((x) => x.id === id)!.actionTitle;
+      expect(t.split(/\s+/).length).toBeLessThanOrEqual(13); // 12 słów + ewentualne …
+      expect(t.endsWith('…')).toBe(true); // wszystkie 3 były dłuższe niż limit
+    }
+    // exec_summary faktycznie krótszy niż surowe pole
+    expect(s.sections.find((x) => x.id === 'exec_summary')!.actionTitle.length).toBeLessThan(longThesis.length);
+    // pełna teza nie ginie — zostaje w meta (ciało raportu)
+    expect(s.meta.thesis).toBe(longThesis);
+  });
+
+  it('clampActionTitle: krótkie zostają nietknięte, długie cięte do N słów + …', () => {
+    expect(clampActionTitle('Krótki, mocny tytuł')).toBe('Krótki, mocny tytuł');
+    const long = clampActionTitle('jeden dwa trzy cztery pięć sześć siedem osiem dziewięć dziesięć jedenaście dwanaście trzynaście czternaście', 12);
+    expect(long.endsWith('…')).toBe(true);
+    expect(long.replace('…', '').trim().split(/\s+/).length).toBe(12);
+    // pierwsze zdanie wygrywa nad resztą
+    expect(clampActionTitle('Zwięzła teza. Druga, dłuższa część zdania która nie powinna trafić do tytułu.')).toBe('Zwięzła teza');
+    expect(clampActionTitle('')).toBe('');
   });
 
   it('deck: sekcje rynkowe/finansowe reużywają tabelę, produktowe wymagają grafiki (§E4)', () => {

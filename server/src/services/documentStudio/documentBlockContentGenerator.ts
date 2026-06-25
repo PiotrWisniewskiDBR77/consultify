@@ -26,8 +26,18 @@ import {
   deliverableModelConfig,
 } from '../deliverableGenerationTier.js';
 import logger from '../../utils/Logger.js';
+import { resolveDeliverableDefaults } from '../deliverables/deliverableDefaults.js';
 
 const LOG_PREFIX = '[docContentGen]';
+
+// Założenia raportu (F1.1) — gęstość prozy sterowana defaultem, nie hardcode.
+const REPORT_DEFAULTS = resolveDeliverableDefaults('report');
+const DENSITY_WORDS: Record<string, string> = {
+  concise: '40-70 words per text block',
+  standard: '70-110 words per text block',
+  detailed: '110-160 words per text block',
+};
+const DENSITY_GUIDANCE = DENSITY_WORDS[REPORT_DEFAULTS.content.density] ?? DENSITY_WORDS.standard;
 
 // ──────────────────────────────────────────────────────────────
 // Parametry graficzne
@@ -390,6 +400,7 @@ const CONTENT_SYSTEM_PROMPT =
   '- bulletList/numberedList: {items:[string]}\n' +
   '- quote: {text, author}\n' +
   '- text/heading: {text}\n' +
+  `Density default (override only if the hint says otherwise): aim for ${DENSITY_GUIDANCE}.\n` +
   'Example block: {"blockId":"b-0-1","contentJson":"{\\"text\\":\\"...\\"}"}.\n' +
   'Reply with ONLY a JSON object: {blocks:[{blockId, contentJson}]}.';
 

@@ -16,6 +16,24 @@ import {
   type BusinessPlanInput, type GenOpts, generateAssumptions, toFinancialDrivers,
   buildMarketSizing, buildAssumptionRegistry, validateAssumptions,
 } from './assumptionsModel.js';
+import { resolveDeliverableDefaults } from './deliverableDefaults.js';
+
+/** Limit długości action-title (headline) z defaultów — najściślejszy (deck). */
+const MAX_TITLE_WORDS = resolveDeliverableDefaults('deck').content.maxWordsPerTitle ?? 12;
+
+/**
+ * Action-title z długiego pola free-text (teza/produkt/ask): bierze pierwsze zdanie,
+ * przycina do maxWords słów. Headline, nie akapit (bar 2026-06-25). Pełna treść pola
+ * zostaje w ciele artefaktu (meta.thesis → intent raportu), więc nic nie ginie.
+ */
+export function clampActionTitle(text: string | undefined, maxWords = MAX_TITLE_WORDS): string {
+  const trimmed = (text ?? '').trim();
+  if (!trimmed) return trimmed;
+  const firstSentence = trimmed.split(/\.\s+/)[0]?.trim() || trimmed;
+  const words = firstSentence.split(/\s+/);
+  if (words.length <= maxWords) return firstSentence.replace(/[\s.,;:—–-]+$/, '');
+  return words.slice(0, maxWords).join(' ').replace(/[\s.,;:—–-]+$/, '') + '…';
+}
 
 /** Pojedyncze policzenie+sformatowanie hero-number → reużywane przez 3 generatory (§D3). */
 function makeHero(key: string, label: string, value: number, unit: string, lang: 'PL' | 'EN'): HeroNumber {
@@ -27,9 +45,9 @@ function buildSections(input: BusinessPlanInput, hero: Record<string, HeroNumber
   const lastYear = input.startYear + input.years - 1;
   const h = (k: string) => hero[k]?.formatted ?? '';
   return [
-    { id: 'exec_summary', actionTitle: input.thesis, heroNumberKeys: ['revenue_last', 'ebitda_last', 'ask'], deck: { slideIntent: 'executive_summary', reusesTable: false, needsProductGraphic: false } },
+    { id: 'exec_summary', actionTitle: clampActionTitle(input.thesis), heroNumberKeys: ['revenue_last', 'ebitda_last', 'ask'], deck: { slideIntent: 'executive_summary', reusesTable: false, needsProductGraphic: false } },
     { id: 'problem', actionTitle: 'Status quo jest wolny i kosztowny — to realny ból rynku', heroNumberKeys: ['tam'], deck: { slideIntent: 'root_cause', reusesTable: false, needsProductGraphic: true } },
-    { id: 'solution', actionTitle: input.product, heroNumberKeys: [], deck: { slideIntent: 'single_insight', reusesTable: false, needsProductGraphic: true } },
+    { id: 'solution', actionTitle: clampActionTitle(input.product), heroNumberKeys: [], deck: { slideIntent: 'single_insight', reusesTable: false, needsProductGraphic: true } },
     { id: 'market', actionTitle: `Rynek ${h('tam')} (TAM); realnie zdobywalne ${h('som')} (SOM)`, heroNumberKeys: ['tam', 'sam', 'som'], deck: { slideIntent: 'performance_overview', reusesTable: true, needsProductGraphic: false } },
     { id: 'business_model', actionTitle: 'Hybryda usługi + SaaS — dwa wzmacniające się strumienie', heroNumberKeys: ['arr_last'], deck: { slideIntent: 'comparison', reusesTable: true, needsProductGraphic: false } },
     { id: 'gtm', actionTitle: 'Land-and-expand: usługi otwierają drzwi, SaaS skaluje', heroNumberKeys: [], deck: { slideIntent: 'process_flow', reusesTable: false, needsProductGraphic: false } },
@@ -39,7 +57,7 @@ function buildSections(input: BusinessPlanInput, hero: Record<string, HeroNumber
     { id: 'unit_economics', actionTitle: `LTV/CAC ${h('ltv_cac')}, payback ${h('cac_payback')} — ekonomika zdrowa`, heroNumberKeys: ['ltv_cac', 'cac_payback'], deck: { slideIntent: 'recommendation_portfolio', reusesTable: true, needsProductGraphic: false } },
     { id: 'team', actionTitle: 'Zespół łączy ekspertyzę doradczą z inżynierią AI', heroNumberKeys: [], deck: { slideIntent: 'single_insight', reusesTable: false, needsProductGraphic: true } },
     { id: 'risks', actionTitle: 'Ryzyka zidentyfikowane i zmitygowane', heroNumberKeys: [], deck: { slideIntent: 'risk_management', reusesTable: false, needsProductGraphic: false } },
-    { id: 'ask', actionTitle: input.ask, heroNumberKeys: ['ask'], deck: { slideIntent: 'recommendation_single', reusesTable: true, needsProductGraphic: false } },
+    { id: 'ask', actionTitle: clampActionTitle(input.ask), heroNumberKeys: ['ask'], deck: { slideIntent: 'recommendation_single', reusesTable: true, needsProductGraphic: false } },
     { id: 'roadmap', actionTitle: `Roadmapa do ${lastYear}`, heroNumberKeys: [], deck: { slideIntent: 'roadmap', reusesTable: false, needsProductGraphic: false } },
   ];
 }
