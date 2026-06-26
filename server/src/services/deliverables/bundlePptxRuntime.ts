@@ -12,6 +12,7 @@
 import { createRequire } from 'node:module';
 import logger from '../../utils/Logger.js';
 import { resolveTheme, PPT_TYPE_SCALE } from './themeRegistry.js';
+import { seriesPalette } from './paletteLibrary.js';
 
 const require = createRequire(import.meta.url);
 
@@ -101,7 +102,7 @@ function renderChartOnSlide(
   slide: any,
   pptx: any,
   spec: SlideChartSpec,
-  ctx: { accent: string; neutral: string; bodyFont: string; isPolish: boolean },
+  ctx: { accent: string; neutral: string; bodyFont: string; isPolish: boolean; themeId?: string | null },
 ): boolean {
   if (!spec) return false;
   try {
@@ -111,11 +112,13 @@ function renderChartOnSlide(
         labels: spec.labels,
         values: s.values,
       }));
+      // W7.4 — dystynktywne kolory per seria (zamiast wszystkie=akcent gdy brak s.color).
+      const palette = seriesPalette(spec.series.length, { themeId: ctx.themeId });
       slide.addChart('bar', data, {
         x: 0.6, y: 2.1, w: 8.8, h: 2.9,
         barDir: 'col',
         barGrouping: 'clustered',
-        chartColors: spec.series.map((s) => s.color ?? ctx.accent),
+        chartColors: spec.series.map((s, i) => hex(s.color ?? palette[i] ?? ctx.accent)),
         showLegend: true,
         legendPos: 'b',
         legendFontSize: 9,
@@ -239,7 +242,7 @@ export async function deckPlansToPptxBuffer(
       const textW = hasImage ? 5.5 : 8.8;
 
       // W1.5 — chart rendering: gdy jest chartSpec, chart zastępuje/uzupełnia key-message.
-      const chartRendered = renderChartOnSlide(slide, pptx, plan.chartSpec ?? null, { accent, neutral, bodyFont, isPolish });
+      const chartRendered = renderChartOnSlide(slide, pptx, plan.chartSpec ?? null, { accent, neutral, bodyFont, isPolish, themeId: opts.themeId });
       // Key-message (proza pod tytułem) — skrócone gdy chart zajmuje dolną część.
       if (message && !chartRendered) {
         slide.addText(message, {
