@@ -54,7 +54,7 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
-import { buildInitiativeDeepLink } from '@/utils/initiativeDeepLink';
+import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
@@ -792,8 +792,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Deep link: open initiative preview via URL params
   // Supported: /initiatives?open=<initiativeId>&mode=drawer|doc
+  // USPOJNIENIE D1 — odczyt przez kanoniczny helper (jeden param `open`).
   useEffect(() => {
-    const openId = searchParams.get('open');
+    const openId = readInitiativeDeepLinkId(searchParams.toString());
     if (!openId) {
       handledDeepLinkOpenRef.current = null;
       return;

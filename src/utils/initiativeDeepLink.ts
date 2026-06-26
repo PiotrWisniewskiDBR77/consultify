@@ -5,8 +5,13 @@
  * per moduł, hardkodowane `?initiativeId=`). Ten helper to jedyne źródło budowania
  * i odczytu deep-linku — wszystkie moduły (Initiatives/Execution/Economics) używają go,
  * dzięki czemu link z dowolnego miejsca otwiera tę samą inicjatywę spójnie.
+ *
+ * USPOJNIENIE D1 (2026-06-26): param ujednolicony na `open` — to FAKTYCZNA
+ * konwencja produktu (InitiativesHub/ExecutionHub/ResultsHub czytają `?open=`).
+ * Wcześniej builder emitował `?initiativeId=`, którego ŻADEN czytnik nie czytał
+ * → link zbudowany utilem nie otwierał inicjatywy (martwy mismatch).
  */
-export const INITIATIVE_DEEP_LINK_PARAM = 'initiativeId';
+export const INITIATIVE_DEEP_LINK_PARAM = 'open';
 
 export type InitiativeLinkModule = 'initiatives' | 'execution' | 'economics';
 
