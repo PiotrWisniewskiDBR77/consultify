@@ -39,6 +39,8 @@ import { detectDeckAntiPatterns, type AntiPatternReport } from './deckAntiPatter
 import { critiqueDeck, type DeckCritique } from './deckDesignCritic.js';
 // W7.3 — arsenał archetypów z realną geometrią regionów:
 import { resolveArchetype } from './slideArchetypes.js';
+// W10.1 — scorecard agregujący wszystkie sygnały jakości w jeden wynik:
+import { buildQualityScorecard, type QualityScorecard } from './bundleQualityScorecard.js';
 
 /** Raport jakości wiązki — wynik bramek/audytów wpiętych w generację (W1). */
 export interface BundleQuality {
@@ -56,6 +58,8 @@ export interface BundleQuality {
   antiPatterns: AntiPatternReport | null;
   /** W7.2 — design-rule critic per slajd (typografia/kontrast/gęstość/grid → regen). */
   designCritique: DeckCritique | null;
+  /** W10.1 — zagregowany scorecard 0-100 + ocena + breakdown (wszystkie sygnały). */
+  scorecard: QualityScorecard | null;
   /** Zbiorcze: czy wiązka przeszła twarde bramki (content+beauty). */
   passed: boolean;
 }
@@ -244,7 +248,9 @@ export async function generateBundleFromSpine(
       : null;
 
     const passed = content.passed && factContradictions.length === 0 && (beauty?.passed ?? true);
-    quality = { beauty, content, factContradictions, provenance, variants, docQa, deckQa, antiPatterns, designCritique, passed };
+    quality = { beauty, content, factContradictions, provenance, variants, docQa, deckQa, antiPatterns, designCritique, scorecard: null, passed };
+    // W10.1 — scorecard agreguje powyższe sygnały + flagi finansowe ze spine.
+    quality.scorecard = buildQualityScorecard(quality, spine);
     if (!passed) {
       logger.warn(`${LOG} quality gate flagged issues`, {
         contentIssues: content.issues.length,
@@ -254,7 +260,7 @@ export async function generateBundleFromSpine(
     }
   } catch (err) {
     logger.warn(`${LOG} quality gate error (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
-    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, docQa: null, deckQa: null, antiPatterns: null, designCritique: null, passed: true };
+    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, docQa: null, deckQa: null, antiPatterns: null, designCritique: null, scorecard: null, passed: true };
   }
 
   return {
