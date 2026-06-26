@@ -857,7 +857,7 @@ router.post(
       { title, periodStart, periodEnd, currency, granularity, description },
       userId
     );
-    return res.json({ data: { budget }, meta: financeMeta() });
+    return res.status(201).json({ data: { budget }, meta: financeMeta() });
   })
 );
 

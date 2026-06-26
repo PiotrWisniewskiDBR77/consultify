@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import PDFParserService from '../pdfParserService.js';
 
 import { getDatabase } from '../../database/Database.js';
 import * as DbPromise from '../../utils/DbPromise.js';
@@ -671,14 +672,8 @@ export class KnowledgeIndexer {
    * Extract text content from PDF
    */
   async extractPdfContent(filePath: string): Promise<string> {
-    const parser = await getPdfParse();
-    if (!parser) {
-      throw new Error('pdf-parse library not available');
-    }
-
     const dataBuffer = fs.readFileSync(filePath);
-    const data = await parser(dataBuffer);
-    return data.text;
+    return PDFParserService.extractTextFromBuffer(dataBuffer);
   }
 
   /**

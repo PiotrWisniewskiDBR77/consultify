@@ -240,6 +240,40 @@ def seed_enterprise_budget(token, model_id):
     return ebid
 
 
+def seed_investment_analysis(token):
+    """Analiza inwestycyjna (Investment tab) — idempotentna."""
+    print("\n── ANALIZA INWESTYCYJNA (Investment tab) ──")
+    st, d = req("GET", "/api/economics/analyses", token)
+    analyses = d.get("analyses", d.get("data", {}).get("analyses", [])) if st == 200 else []
+    existing = next((a for a in analyses if str(a.get("name", "")).startswith(SEED) and "Inwest" in str(a.get("name", ""))), None)
+    if existing:
+        aid = existing.get("id")
+        step(f"Analiza inwest. istnieje: {aid}", True)
+        return aid
+    # utwórz investment_case
+    st, d = req("POST", "/api/economics/analyses", token, {
+        "name": f"{SEED}Analiza Inwestycyjna — Linia Prod",
+        "analysisType": "investment_case",
+        "currency": "PLN",
+        "horizonYears": 5,
+        "description": "Ocena opłacalności nowej linii produkcyjnej",
+    })
+    aid = d.get("analysis", {}).get("id") or d.get("id") or d.get("data", {}).get("id")
+    step(f"Utwórz analizę inwest.: {aid}", bool(aid))
+    if not aid:
+        return None
+    # dodaj finansiale (cashflows)
+    ast, _ = req("POST", f"/api/economics/financial-analyses", token, {
+        "analysisId": aid,
+        "cashFlows": [-2000000, 450000, 650000, 780000, 900000, 1050000],
+        "discountRate": 0.1,
+        "currency": "PLN",
+        "periods": ["2025", "2026", "2027", "2028", "2029", "2030"],
+    })
+    step(f"Cashflows → {ast}", ast in (200, 201))
+    return aid
+
+
 def seed_throwaways(token):
     """Rekordy-jednorazówki do testów destrukcyjnych (delete/edit)."""
     print("\n── REKORDY-JEDNORAZÓWKI (testy delete/edit) ──")
@@ -278,6 +312,7 @@ def main():
     manifest["valuation"] = seed_valuation(token)
     manifest["budget_v8"] = seed_budget_v8(token)
     manifest["enterprise_budget"] = seed_enterprise_budget(token, manifest["model"])
+    manifest["investment_analysis"] = seed_investment_analysis(token)
     manifest["throwaway"] = seed_throwaways(token)
 
     out = "/tmp/m16_seed_manifest.json"

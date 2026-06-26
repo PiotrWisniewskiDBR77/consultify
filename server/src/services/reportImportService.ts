@@ -3,6 +3,7 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import DbPromise from '../utils/DbPromise.js';
+import PDFParserService from './pdfParserService.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 import logger from '../utils/Logger.js';
 
@@ -1159,13 +1160,10 @@ Extract and return JSON:
 
     if (format === 'pdf') {
       try {
-        const pdfParse = (await import('pdf-parse')).default;
         const buffer = fs.readFileSync(filePath);
-        const pdfData = await pdfParse(buffer);
-        logger.info(
-          `[ReportImport] PDF parsed: ${pdfData.numpages} pages, ${pdfData.text.length} chars`
-        );
-        return pdfData.text;
+        const text = await PDFParserService.extractTextFromBuffer(buffer);
+        logger.info(`[ReportImport] PDF parsed: ${text.length} chars`);
+        return text;
       } catch (err: any) {
         logger.warn(`[ReportImport] pdf-parse failed: ${err.message}, falling back to raw read`);
         // Fallback: try to read as text

@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import PDFParserService from '../services/pdfParserService.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { featureFlags } from '../config/FeatureFlags.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
@@ -367,10 +368,7 @@ router.post(
     let text = '';
     try {
       if (mimeType === 'application/pdf') {
-        const pdfParseMod = (await import('pdf-parse')) as any;
-        const pdf = pdfParseMod.default || pdfParseMod;
-        const out = await pdf(req.file.buffer);
-        text = String(out?.text || '');
+        text = await PDFParserService.extractTextFromBuffer(req.file.buffer);
       } else if (
         mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
         filename.toLowerCase().endsWith('.docx')
@@ -684,10 +682,7 @@ router.post(
         urlObj.pathname.toLowerCase().endsWith('.pdf');
       if (isPdf) {
         detectedMimeType = 'application/pdf';
-        const pdfParseMod = (await import('pdf-parse')) as any;
-        const pdf = pdfParseMod.default || pdfParseMod;
-        const out = await pdf(buf);
-        extractedText = String(out?.text || '');
+        extractedText = await PDFParserService.extractTextFromBuffer(buf);
       } else if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
         detectedMimeType = 'text/html';
         const html = buf.toString('utf8');
