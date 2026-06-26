@@ -578,6 +578,58 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.model?.id).toBe('copy-1');
   });
 
+  it('POST /models/:id/duplicate — stale FK + stale pack → retry bez obu (NIE 500) [BUG-09b regress]', async () => {
+    // Model ma initiative_id (stale FK) + source_statement_pack_id (niekompletny pack).
+    // 1. próba (z FK) rzuca "not found" → catch → retry BEZ initiativeId I BEZ pack → sukces.
+    mockGetModel.mockImplementation((id: string) =>
+      id === 'copy-2'
+        ? Promise.resolve({ id: 'copy-2', organization_id: ORG, name: 'Src2 (kopia)', start_date: '2026-01-01' })
+        : Promise.resolve({
+            id: 'src-2', organization_id: ORG, name: 'Src2',
+            initiative_id: 'ghost-init-2',
+            source_statement_pack_id: 'ghost-pack',
+            start_date: '2026-01-01', currency: 'PLN',
+          })
+    );
+    mockCreateModel
+      .mockRejectedValueOnce(new Error('Source initiative not found'))
+      .mockResolvedValueOnce('copy-2');
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/src-2/duplicate').send({});
+
+    expect(res.status).toBe(201);
+    expect(mockCreateModel).toHaveBeenCalledTimes(2);
+    // retry NIE grafuje martwego initiativeId ANI pack (undefined = falsy → createModel pomija)
+    expect(mockCreateModel.mock.calls[1][0]).not.toHaveProperty('initiativeId');
+    expect(mockCreateModel.mock.calls[1][0].sourceStatementPackId).toBeUndefined();
+    expect(res.body.data?.model?.id).toBe('copy-2');
+  });
+
+  it('POST /models/:id/duplicate — stale pack (bez FK) → retry bez pack (NIE 500) [BUG-09c regress]', async () => {
+    // Model NIE ma stale FK ale pack jest niekompletny → 1. próba rzuca "must contain" → catch → retry bez pack.
+    mockGetModel.mockImplementation((id: string) =>
+      id === 'copy-3'
+        ? Promise.resolve({ id: 'copy-3', organization_id: ORG, name: 'Src3 (kopia)', start_date: '2026-01-01' })
+        : Promise.resolve({
+            id: 'src-3', organization_id: ORG, name: 'Src3',
+            source_statement_pack_id: 'bad-pack',
+            start_date: '2026-01-01', currency: 'PLN',
+          })
+    );
+    mockCreateModel
+      .mockRejectedValueOnce(new Error('Statement pack must contain P&L, Balance Sheet, and Cash Flow'))
+      .mockResolvedValueOnce('copy-3');
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/src-3/duplicate').send({});
+
+    expect(res.status).toBe(201);
+    expect(mockCreateModel).toHaveBeenCalledTimes(2);
+    expect(mockCreateModel.mock.calls[1][0].sourceStatementPackId).toBeUndefined();
+    expect(res.body.data?.model?.id).toBe('copy-3');
+  });
+
   it('GET /api/v8/finance/models/:id returns envelope and delegates to getModel', async () => {
     mockGetModel.mockResolvedValue({
       id: 'model-1',

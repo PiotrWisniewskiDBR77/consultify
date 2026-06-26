@@ -718,9 +718,17 @@ router.post(
         initiativeId: sourceModel.initiative_id || undefined,
       });
     } catch (err) {
-      // Stale source FK (project/initiative usunięte) → kopiuj bez graftu FK.
-      if (err instanceof Error && /not found/i.test(err.message)) {
-        newModelId = await createModel(baseParams);
+      // Stale source FK (project/initiative usunięte) lub stale sourceStatementPackId
+      // (niekompletny pack seed) → kopiuj bez graftu FK i bez seeded assumptions.
+      if (
+        err instanceof Error &&
+        (/not found/i.test(err.message) || /must contain/i.test(err.message))
+      ) {
+        newModelId = await createModel({
+          ...baseParams,
+          sourceStatementId: undefined,
+          sourceStatementPackId: undefined,
+        });
       } else {
         throw err;
       }
