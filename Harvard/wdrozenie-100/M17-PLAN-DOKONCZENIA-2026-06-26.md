@@ -51,10 +51,10 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 ### W1 — Wpiąć MARTWY mózg premium w żywy pipeline (rdzeń „anty-powierzchowności")
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| W1.1 | beauty-gate (F1.3) w deck-path `bundleGenerationRuntime:77` (wrap `planDeckLayout`) | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (S, self-contained) |
-| W1.2 | content-gate (F1.4) na końcu `generateBundleFromSpine` + surface w route | ✅ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ | 🟡 (S-M) |
-| W1.3 | factBook (F10.1) audit + provenance (F10.2) jako QA-pass | ✅ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ | 🟡 (audit=S; token-subst wymaga gen→tokeny) |
-| W1.4 | audience-variants (F10.3) w `bundleExportRuntime:142` (`buildBothVariants`) | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (S, idealny fit typów) |
+| W1.1 | beauty-gate (F1.3) w deck-path — `applyDeckBeautyGate` wrap | ✅ | ✅ | ✅ | 🟡 | ⬜ | 🟢 | ⬜ | ⬜ | 🟢 **WPIĘTE** (bundle.quality.beauty na każdym decku) |
+| W1.2 | content-gate (F1.4) w `generateBundleFromSpine` + bundle.quality | ✅ | ✅ | ✅ | 🟡 | n/d | 🟢 | ⬜ | ⬜ | 🟢 **WPIĘTE** (placeholder+hero-consistency) |
+| W1.3 | factBook (F10.1) audit + provenance (F10.2) jako QA-pass | ✅ | ✅ | ✅ | 🟡 | n/d | 🟢 | ⬜ | ⬜ | 🟢 **WPIĘTE** (audit; token-subst dalej ⬜) |
+| W1.4 | audience-variants (F10.3) — quality.variants + board-cut PPTX w teczce | ✅ | ✅ | ✅ | 🟡 | ⬜ | 🟢 | ⬜ | ⬜ | 🟢 **WPIĘTE** (board deck materializowany w zip) |
 | W1.5 | chart-spec (F11.1) → renderer rozumie waterfall/2×2/RAG (`spineToDocPlan` chart hints) | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (M-L, renderer musi switch'ować spec.type) |
 | W1.6 | brand-ingestion (F8.1) → upload w `/bundle/export` → `resolveTheme(themeId, override)` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (S-M, `resolveTheme` gotowy na to) |
 | W1.7 | image-router (F9.1) → `deckImageResolverService`/`stockImageProvider` (T0 teraz; T1-3 za adapterami) | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (M; T1-3 executory brak) |
@@ -63,8 +63,8 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 ### W2 — Naprawić ŻYWE bugi jakości (z audytu + head-to-head BAR)
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| W2.1 | **BUG: deck LLM bez timeout** `presentationLayoutDirectorService.ts:575` → dodać `timeoutMs:120000` (baseClient 20s zabija premium deck → cichy `deck:null`) | ⬜ | ⬜ | ⬜ | n/d | n/d | ⬜ | ⬜ | n/d | ⬜ (P0, S) |
-| W2.2 | CFO range-validators: BAR znalazł ŻYWE wady — LTV/CAC 19.2×, payback 3.13mo, ARR=0, jednostka „8 200 000 thousands EUR" | ⬜ | ⬜ | ⬜ | n/d | n/d | ⬜ | ⬜ | n/d | ⬜ (P0 wiarygodność liczb) |
+| W2.1 | **BUG P0: deck LLM bez timeout** → `timeoutMs:120000` | ✅ | ✅ | ✅ | n/d | n/d | 🟢 | ⬜ | n/d | 🟢 **NAPRAWIONE** (deck już nie ginie cicho) |
+| W2.2 | CFO range-validators + bug „thousands EUR" (ltv_cac_ceiling/payback_floor/arr_positive/false_precision + normalizeCurrencyUnit) | ✅ | ✅ | ✅ | n/d | n/d | 🟢 | ⬜ | n/d | 🟢 **NAPRAWIONE** (7 testów) |
 | W2.3 | Tytuły-headline'y (clamp ✅ F1.1) + **chipy sekcji** + ≥8 distinct layouts egzekwowane na renderze | 🟡 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (clamp jest; chipy ⬜) |
 
 ### W3 — Frontend unified „Materiały" (user dociera do pipeline'u)
@@ -99,7 +99,7 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
 | W6.1 | **Bridge: `executeSchedule` → generator M17** (zamiast legacy report-builder) `scheduledReportService.ts:508` | 🟢infra | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | n/d | 🟡 (M) |
-| W6.2 | **Un-stub `deliverViaEmail`** `scheduledReportService.ts:645` → `emailService.send` + załącznik | 🟢infra | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | n/d | 🟡 (S, krytyczne) |
+| W6.2 | **Un-stub `deliverViaEmail`** → realny `emailService.send` per odbiorca (fail-soft) | ✅ | ✅ | ✅ | n/d | n/d | 🟢 | ⬜ | n/d | 🟢 **NAPRAWIONE** (4 testy; załącznik→W6.1) |
 | W6.3 | Governance odbiorców + opt-out (F7.2) | 🟡 | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | n/d | 🟡 (`notificationService` reuse) |
 | W6.4 | UI „Automatyzuj" panel na materiale (cron + odbiorcy) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | W6.5 | F6.4 live-bind resolver (`liveBindingResolver.ts` + refresh-on-open) | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | n/d | ⬜ (build new, thin M) |
@@ -153,8 +153,8 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 ### W13 — Testy + zgodność do realnego 8/8
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| W13.1 | Route integration test `/bundle` + `/bundle/export` (404/403/400/200 + zip/Content-Disposition) | ⬜ | ⬜ | ⬜ | ⬜ | n/d | n/d | n/d | n/d | ⬜ (P0) |
-| W13.2 | `generateBundle` integration test — fail-open-per-artifact (`produced`) | ⬜ | ⬜ | ⬜ | ⬜ | n/d | n/d | n/d | n/d | ⬜ (P0) |
+| W13.1 | Route integration test `/bundle` + `/bundle/export` (404/400/200 + zip/Content-Disposition) | ✅ | ✅ | ✅ | ✅ | n/d | n/d | n/d | n/d | 🟢 **ZROBIONE** (7 testów supertest) |
+| W13.2 | `generateBundle` integration test — quality wpięte + fail-soft | ✅ | ✅ | ✅ | ✅ | n/d | n/d | n/d | n/d | 🟢 **ZROBIONE** (7 testów, dowód że mózg żyje) |
 | W13.3 | SoT-through-generate: hero-number w DOCX==XLSX==PPTX z realnej generacji | ⬜ | ⬜ | ⬜ | ⬜ | n/d | n/d | n/d | n/d | ⬜ |
 | W13.4 | E2E: brief→„Pobierz komplet"→niepusty .zip | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | n/d | ⬜ |
 | W13.5 | Color-token sweep (43 wystąpień rose/hex/red w 3 obszarach FE) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (DoD#4 FAIL) |
@@ -170,7 +170,7 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 | W14.2 | Doc: tagged-PDF / heading-order / PDF-UA | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | W14.3 | Table/charts: colorblind-safe palety | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 
-**Postęp jako PRODUKT: ~25-35%.** Bramka „Wpięte" zielona tylko dla: F3.1 (theme→docx/xlsx/pptx), F4.1 (pptx z wiązki), F4.2 (zip), F1.1 (defaulty w generatorach). Cała reszta mózgu premium = Kod ✅ / Wpięte ⬜.
+**Postęp jako PRODUKT: ~40-45%** (było ~25-35%). **Sesja nocna 2026-06-26 (autonomiczna):** bramka „Wpięte" zazieleniona dla **W1.1-W1.4** (mózg premium realnie liczy się na każdym materiale — beauty/content/factbook/provenance/warianty w `bundle.quality`), P0 bugi **W2.1** (deck-timeout) + **W2.2** (CFO range-validators + „thousands EUR") naprawione, **W6.2** email un-stub, **W1.4-export** board-cut PPTX w teczce, **W13.1/W13.2** testy integracyjne (dowód że ścieżka HTTP + mózg żyją). Deliverables suite **484/484** + studio **862/862**, 0 błędów tsc w moich plikach. Deploy: feat→demo (non-prod), PROD nietknięty. ZOSTAŁO „Wpięte ⬜": W1.5 charts→renderer, W1.6 brand-upload, W1.7 image-router, W1.8 adopcja studio-QA, W3 frontend unified, W4 persystencja cyklu życia, W5/W6.1 dane/bridge, W7+ piękno/edytor/fidelity/telemetria.
 
 ---
 
