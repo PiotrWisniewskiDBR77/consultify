@@ -105,8 +105,41 @@ async function main() {
     [CHAMP_IDS[2], ORG, MID_INIT, 'lead', 'active', now]
   );
 
+  // 4) D10 — OKR cascade (objectives → key results). Create tables if absent
+  //    (mirrors the route's lazy-DDL) so the seed is self-contained.
+  await pool.query(`CREATE TABLE IF NOT EXISTS okr_objectives (
+    id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, project_id TEXT,
+    label TEXT NOT NULL, parent_id TEXT, created_at TIMESTAMPTZ DEFAULT now())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS okr_key_results (
+    id TEXT PRIMARY KEY, objective_id TEXT NOT NULL, organization_id TEXT NOT NULL,
+    label TEXT NOT NULL, baseline DOUBLE PRECISION, target DOUBLE PRECISION,
+    current DOUBLE PRECISION, weight DOUBLE PRECISION, created_at TIMESTAMPTZ DEFAULT now())`);
+  await pool.query('DELETE FROM okr_key_results WHERE organization_id=$1 AND id LIKE $2', [ORG, 'seed-m15-kr-%']);
+  await pool.query('DELETE FROM okr_objectives WHERE organization_id=$1 AND id LIKE $2', [ORG, 'seed-m15-obj-%']);
+
+  const OBJ_PARENT = 'seed-m15-obj-parent';
+  const OBJ_C1 = 'seed-m15-obj-c1';
+  const OBJ_C2 = 'seed-m15-obj-c2';
+  await pool.query(
+    `INSERT INTO okr_objectives (id, organization_id, label, parent_id) VALUES
+       ($1,$2,'Transformacja cyfrowa 2026',NULL),
+       ($3,$2,'Zwiększyć efektywność operacyjną',$1),
+       ($4,$2,'Poprawić doświadczenie klienta',$1)`,
+    [OBJ_PARENT, ORG, OBJ_C1, OBJ_C2]
+  );
+  // Child 1 KRs (strong progress), Child 2 KRs (weak → at-risk)
+  await pool.query(
+    `INSERT INTO okr_key_results (id, objective_id, organization_id, label, baseline, target, current, weight) VALUES
+       ('seed-m15-kr-1',$1,$3,'OEE z 68% do 85%',68,85,79,1),
+       ('seed-m15-kr-2',$1,$3,'On-Time Delivery do 95%',80,95,93,1),
+       ('seed-m15-kr-3',$2,$3,'NPS z 20 do 50',20,50,28,1),
+       ('seed-m15-kr-4',$2,$3,'Czas obsługi -30%',100,70,95,1)`,
+    [OBJ_C1, OBJ_C2, ORG]
+  );
+
   // Verify
   const fin = await pool.query('SELECT COUNT(*) c FROM kpi_financial_mappings WHERE organization_id=$1', [ORG]);
+  const okr = await pool.query('SELECT COUNT(*) c FROM okr_objectives WHERE organization_id=$1', [ORG]);
   const sent = await pool.query('SELECT COUNT(*) c FROM change_sentiment_snapshots WHERE organization_id=$1', [ORG]);
   const champ = await pool.query('SELECT COUNT(*) c FROM change_champions WHERE organization_id=$1', [ORG]);
   const warnNet = 15000 - (-5000) + 5000;
@@ -114,6 +147,7 @@ async function main() {
   console.log('✓ finance mappings now:', fin.rows[0].c);
   console.log('✓ warning init realized net:', warnNet, '/', warnExpected, '=', (warnNet / warnExpected).toFixed(2));
   console.log('✓ ADKAR sentiment rows:', sent.rows[0].c, '· champions:', champ.rows[0].c);
+  console.log('✓ OKR objectives:', okr.rows[0].c, '(1 parent + 2 children, 4 KRs)');
   await pool.end();
 }
 

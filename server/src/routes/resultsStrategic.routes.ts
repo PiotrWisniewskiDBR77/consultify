@@ -10,13 +10,52 @@ import { Router, type Response } from 'express';
 
 import verifyToken from '../middleware/auth.middleware.js';
 import {
+  cascadeRollup,
+  okrSummary,
+  type Objective,
+  type KeyResult,
+} from '../services/results/okrService.js';
+import {
   buildStrategicView,
   type StrategicInitiative,
   type StrategicInitiativeToKpi,
   type StrategicKpi,
 } from '../services/results/resultsStrategicViewService.js';
-import { all as dbAll } from '../utils/DbPromise.js';
+import { all as dbAll, exec as dbExec } from '../utils/DbPromise.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+
+/**
+ * D10: OKR cascade tables (lazy-DDL so staging+demo provision on first hit —
+ * no separate migration deploy needed). objectives → key_results, org-scoped.
+ */
+let okrTablesReady = false;
+async function ensureOkrTables(): Promise<void> {
+  if (okrTablesReady) return;
+  await dbExec(`
+    CREATE TABLE IF NOT EXISTS okr_objectives (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      project_id TEXT,
+      label TEXT NOT NULL,
+      parent_id TEXT,
+      created_at TIMESTAMPTZ DEFAULT now()
+    );
+  `);
+  await dbExec(`
+    CREATE TABLE IF NOT EXISTS okr_key_results (
+      id TEXT PRIMARY KEY,
+      objective_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      label TEXT NOT NULL,
+      baseline DOUBLE PRECISION,
+      target DOUBLE PRECISION,
+      current DOUBLE PRECISION,
+      weight DOUBLE PRECISION,
+      created_at TIMESTAMPTZ DEFAULT now()
+    );
+  `);
+  okrTablesReady = true;
+}
 
 interface AuthedRequest {
   user?: { organizationId?: string };
@@ -100,6 +139,60 @@ router.get(
     // `response.data` to the whole payload, so a wrapper would hide the fields.
     res.json(data);
   })
+);
+
+// ─── GET /okr ─────────────────────────────────────────────────────────────
+// D10: OKR cascade — Objectives → Key Results, cascade roll-up + summary.
+// Reads okr_objectives + okr_key_results (lazy-provisioned). Empty → graceful.
+router.get(
+  '/:projectId/okr',
+  verifyToken,
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      res.status(401).json({ success: false, error: 'organization context required' });
+      return;
+    }
+    await ensureOkrTables();
+
+    const objRows = ((await dbAll(
+      `SELECT id, label, parent_id FROM okr_objectives WHERE organization_id = ?`,
+      [orgId],
+    )) as Array<{ id: string; label: string; parent_id: string | null }>) || [];
+    const krRows = ((await dbAll(
+      `SELECT id, objective_id, label, baseline, target, current, weight
+       FROM okr_key_results WHERE organization_id = ?`,
+      [orgId],
+    )) as Array<{
+      id: string; objective_id: string; label: string;
+      baseline: number | null; target: number | null; current: number | null; weight: number | null;
+    }>) || [];
+
+    const krByObjective = new Map<string, KeyResult[]>();
+    for (const k of krRows) {
+      const list = krByObjective.get(String(k.objective_id)) ?? [];
+      list.push({
+        id: String(k.id),
+        label: k.label,
+        baseline: k.baseline ?? undefined,
+        target: k.target ?? undefined,
+        current: k.current ?? undefined,
+        weight: k.weight ?? undefined,
+      });
+      krByObjective.set(String(k.objective_id), list);
+    }
+
+    const objectives: Objective[] = objRows.map((o) => ({
+      id: String(o.id),
+      label: o.label,
+      parentId: o.parent_id ?? undefined,
+      keyResults: krByObjective.get(String(o.id)) ?? [],
+    }));
+
+    const cascaded = cascadeRollup(objectives);
+    const summary = okrSummary(objectives);
+    res.json({ objectives: cascaded, summary });
+  }),
 );
 
 export default router;
