@@ -1,0 +1,120 @@
+# Raport przebiegu testów + lista obszarów do uzupełnienia i naprawy
+
+> **Data:** 2026-06-26 · **Branch:** `feat/deliverables-w1` · **Wykonał:** Claude (CTO)
+> **Zakres:** pełny przebieg testów (vitest unit/integration/component + Playwright E2E) warstwami; identyfikacja i naprawa realnych defektów; reklamacja martwego pokrycia; lista luk.
+> **Bezpieczeństwo:** wyłącznie staging/lokalnie. Prod (centerbeam) NIETKNIĘTY. Zero deployu na prod.
+
+---
+
+## 1. Skrót wykonawczy
+
+Testy uruchomione warstwami (pełny zestaw 1201 plików vitest OOM-uje lokalnie — CI dzieli go na 8 shardów). W trakcie **znalazłem i naprawiłem 9 realnych problemów** (w tym 2 ukryte błędy produkcyjne i 1 fail-open w access-control), zhardenowałem 1 middleware bezpieczeństwa i **odzyskałem warstwę martwego pokrycia testowego**.
+
+| Kategoria | Wynik |
+|---|---|
+| **Naprawione defekty / hardening** | **9** — 7 commitów |
+| **Reklamowane testy (martwe → żywe)** | **8 plików / 169 asercji** |
+| **i18n bare-missing gate** | ✅ 0 |
+| **tsc (root)** | ✅ 0 błędów |
+| **Największa luka systemowa** | 🔴 **~90 martwych plików testów** backendu (utracona końcówka `.ts`) |
+
+---
+
+## 2. Naprawione defekty i hardening (ten przebieg)
+
+| # | Problem | Waga | Commit |
+|---|---|---|---|
+| 1 | **`initiativeDueBreachService` nigdy nie wgrany** — cron + Scheduler go importują; flaga ON → `ERR_MODULE_NOT_FOUND`. Odtworzony z kontraktu testu (8/8 zielone), feature znów żywy. | 🔴 prod-latent | `b742355f00` |
+| 2 | **`featureGate` fail-open na roli** — `requireFeature`/`isFeatureAccessible` pomijały sprawdzenie roli gdy użytkownik nie ma roli → żądanie bez roli przechodziło przez bramkę roli. Teraz fail-closed. | 🔴 security | `4e80c3062d` |
+| 3 | **`featureGate` hardening** — deep-freeze konfiguracji (anti-privilege-escalation), own-property lookup (anti-prototype-pollution: `toString` itd.), walidacja długości/control-chars/liczby reguł (anti-DoS), snapshot wymagań, guardy na sfinalizowany res. 39/39 testów. | 🟠 security | `4e80c3062d` |
+| 4 | **`generate-section`** — przestarzała asercja `withReview:false` (F3.8 → default ON). | 🟡 stale | `b742355f00` |
+| 5 | **`r0-workqueue`** — osierocony test skasowanego serwisu (martwy kod M14/F0). Usunięty. | 🟡 stale | `05e5d599f8` |
+| 6 | **`demoGuard` testy** — 4 testy asertowały stary synchroniczny, „ufający nagłówkowi" projekt; obecny middleware jest async z walidacją sesji w DB (bezpieczniejszy). Testy zaktualizowane do bezpiecznego kontraktu (await + fallback do bazowej org). | 🟡 stale | `4e80c3062d` |
+| 7 | **`security-csrf-sanitization`** — mock `res` bez `setHeader`, który produkt poprawnie woła (no-store + nagłówki bezpieczeństwa na 403 CSRF). Dodany. | 🟡 stale | `4e80c3062d` |
+| 8 | **`security.routes`** — route przepisany na `organization_settings` + bramkę `requireOrgAdmin`; test mockował usuniętą tabelę `security_settings` bez roli admina → 403. Przepisane mocki + default (12 nie 8). | 🟡 stale | `275e555735` |
+| 9 | **`MyWorkWorkflow` gatePolicy** — test oczekiwał odmowy SUBMIT z `submitted`, ale bramka świadomie pozwala in_progress/submitted/sent_back (idempotentny re-submit). Test przekierowany na stan terminalny (`approved`). | 🟡 stale | `275e555735` |
+
+---
+
+## 3. Reklamacja martwego pokrycia (F-1, częściowa)
+
+**Odkrycie:** sprzątanie `75de2c4eeb` ucięło końcówkę `.ts` z ~90 backendowych testów → vitest ich NIE zbiera → **fałszywe pokrycie**. Klasyfikacja 46 testów (których serwis nadal istnieje):
+
+| Pula | Liczba | Akcja |
+|---|---|---|
+| Reklamowalne (serwis żyje) | 46 | przetestowane 1:1 |
+| → przeszły zielone **i stabilne razem** | **8** | ✅ przywrócone `.test.ts` (`4e4a0c7103`) |
+| → zielone solo, ale **kolizja mocków** przy współbiegu | ~5 | odrzucone (ryzyko flaky CI) |
+| → fail (przestarzałe mocki/API) | ~33 | quarantine — triáż osobno |
+| Martwe na zawsze (serwis skasowany) | 57 | do usunięcia |
+
+**Przywrócone 8 (169 asercji):** aiAssessmentPartnerService, aiContextBuilder, aiMemoryManager, aiPolicyEngine, assessmentReportService, Database (auditService), reportGeneration, budgetService.
+
+---
+
+## 4. Wyniki przebiegu (warstwami)
+
+| Warstwa / klaster | Wynik | Uwaga |
+|---|---|---|
+| M15 unit+component (`results`) | ✅ 475 / 4 skip | klean |
+| M15 integration (`results`) | ✅ 76 (w tym SEC 20) | klean |
+| M13/M14/M16 (comp+integ) | ✅ po naprawie (#1,#4) | przed: 2 fail |
+| M17-M19 + audit + interview | ✅ 358 / 20 skip | 1 plik wymaga PG (env) |
+| mywork/settings/partner/org/security | ✅ po naprawie (#2,#3,#6,#7,#8,#9) | przed: 6 fail |
+| Pełna warstwa unit | ✅ po naprawie (#2,#3,#6) | przed: featureGate+demoGuard |
+| E2E M01-M04 | 🟡 17/19 | 2× headless canvas blind |
+| E2E M06/M07/M13/M14/M15 | 🟡 mieszane | 34 fail = błąd wywołania harnessa (F-3) |
+
+---
+
+## 5. Lista obszarów do UZUPEŁNIENIA i NAPRAWY (priorytetyzowana)
+
+### 🔴 P0 — Fałszywe / martwe pokrycie
+
+| # | Obszar | Akcja |
+|---|---|---|
+| F-1a | **~33 reklamowalne testy fail** (serwis żyje, mocki przestarzałe) | triáż partiami — napraw mocki, przywróć `.test.ts` |
+| F-1b | **~57 martwe testy** (serwis skasowany) | usunąć — to martwy kod |
+| F-1c | **~5 testów z kolizją mocków** | naprawić izolację (global state) zanim przywrócić |
+| F-2 | **E2E M17/M20/M21/M23/A1 — ZERO spec** | napisać per moduł |
+
+### 🟠 P1 — Środowisko / harness
+
+| # | Obszar | Problem |
+|---|---|---|
+| F-3 | **34 „fail" E2E M06/M07/M13** | wymagają bootstrapu `E2E_USE_WEB_SERVER=true` (`.tmp/e2e/...`); odpalone przeciw zwykłemu dev → puste seedy. NIE regresja. |
+| F-4 | **Integration `.db` wymaga PG** | `voice-stt-save`, `my-work.v2.routes`, `organization-management.workflow` padają lokalnie: `role "iris" does not exist`. Przechodzą w CI. |
+| F-5 | **E2E canvas headless-blind** | M02/M06/M07/M09 — weryfikować w realnej przeglądarce. |
+
+### 🟡 P2 — Pokrycie niepełne
+
+| # | Moduł | Czego brak |
+|---|---|---|
+| F-6 | M12 Audyty | brak E2E spec |
+| F-7 | M18 Dokumenty | E2E bez AI-flow |
+| F-8 | M22 AI OS | tylko mock-backend E2E |
+| F-9 | M25 Ustawienia | brak per-panel E2E |
+| F-10 | M05 Ideas Zarządzanie | brak dedykowanych testów |
+
+### 🔵 P3 — Manualne (recorded)
+
+| # | Obszar | Stan |
+|---|---|---|
+| F-11 | **Recorded WYNIKI tylko M01-M04 + M15** | ~24 moduły mają SPEC, brak udokumentowanego przebiegu |
+| F-12 | **Pre-existing duplikaty `.test`+`.test.ts`** | 8 par (permissionService, tokenBillingService, InitiativeController…) — usunąć dead `.test` |
+
+---
+
+## 6. Rekomendacja kolejności
+
+1. **F-1a** (~33 reklamowalne) — największy zwrot pokrycia backendu, partiami po ~10.
+2. **F-1b** (~57 martwe) — szybkie usunięcie cruftu.
+3. **F-3/F-4/F-5** — naprawić harness/env (wiarygodny sygnał E2E).
+4. **F-2** — E2E dla 5 modułów bez żadnego.
+5. **F-11** — uruchomić i zapisać WYNIKI dla modułów spec-only.
+
+---
+
+## 7. Commity tego przebiegu
+
+`b742355f00` (due-breach + generate-section) · `05e5d599f8` (workqueue) · `4e80c3062d` (featureGate hardening + demoGuard + CSRF) · `275e555735` (security.routes + gatePolicy) · `4e4a0c7103` (8 reklamowanych testów) · wcześniej `29903183f5`+`eaa1fe649b` (M15 SEC).
