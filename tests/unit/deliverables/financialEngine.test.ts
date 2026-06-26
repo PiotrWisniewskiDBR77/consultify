@@ -122,4 +122,53 @@ describe('FinancialEngine — CFO-review wyłapuje złamane założenia', () => 
     const rev = runCfoReview(m, d);
     expect(rev.checks.find((c) => c.id === 'ltv_cac_min')?.passed).toBe(false);
   });
+
+  // ── W2.2 range-validators (head-to-head wykrył nierealne wartości) ──
+  it('W2.2: LTV:CAC absurdalnie wysoki → ltv_cac_ceiling FAIL + false_precision flag', () => {
+    const d = { ...dbr77(), cac: 100 }; // CAC zaniżony → LTV:CAC > 8
+    const m = computeFinancialModel(d);
+    const rev = runCfoReview(m, d);
+    const ceil = rev.checks.find((c) => c.id === 'ltv_cac_ceiling');
+    expect(ceil?.passed).toBe(false);
+    expect(rev.antiPatterns.some((a) => a.pattern === 'false_precision')).toBe(true);
+    // ceiling jest MIĘKKI — nie wywraca passed sam z siebie
+    expect(rev.checks.find((c) => c.id === 'ltv_cac_min')?.passed).toBe(true);
+  });
+
+  it('W2.2: payback < 3 mies → cac_payback_floor FAIL (nierealnie szybki)', () => {
+    const d = { ...dbr77(), cac: 200 }; // bardzo niski CAC → szybki payback
+    const m = computeFinancialModel(d);
+    const rev = runCfoReview(m, d);
+    const floor = rev.checks.find((c) => c.id === 'cac_payback_floor');
+    expect(floor).toBeDefined();
+    if ((floor?.value ?? 99) < 3) expect(floor?.passed).toBe(false);
+  });
+
+  it('W2.2: DBR77 — arr_positive + payback_floor PASS; ceiling SOFT (nie wywraca passed)', () => {
+    const d = dbr77();
+    const m = computeFinancialModel(d);
+    const rev = runCfoReview(m, d);
+    expect(rev.checks.find((c) => c.id === 'arr_positive')?.passed).toBe(true);
+    expect(rev.checks.find((c) => c.id === 'cac_payback_floor')?.passed).toBe(true);
+    // DBR77 ma LTV:CAC ~11× (churn 12% + 80% marża) → ceiling słusznie flaguje,
+    // ale jest MIĘKKI: model dalej fundowalny (passed=true mimo flagi).
+    const ceil = rev.checks.find((c) => c.id === 'ltv_cac_ceiling');
+    expect(ceil?.value).toBeGreaterThan(8);
+    expect(rev.passed).toBe(true); // ceiling NIE jest hard-fail
+  });
+});
+
+describe('normalizeCurrencyUnit (W2.2 — bug „thousands EUR")', () => {
+  it('tnie kwalifikatory skali z waluty', async () => {
+    const { normalizeCurrencyUnit, formatHero } = await import(
+      '../../../server/src/services/deliverables/businessPlanSpine'
+    );
+    expect(normalizeCurrencyUnit('thousands EUR')).toBe('EUR');
+    expect(normalizeCurrencyUnit('tys EUR')).toBe('EUR');
+    expect(normalizeCurrencyUnit('mln EUR')).toBe('EUR');
+    expect(normalizeCurrencyUnit('EUR')).toBe('EUR');
+    // NIE psuje pełnoskalowej liczby: 8.2M nie staje się „thousands"
+    expect(formatHero(8200000, 'thousands EUR', 'PL')).toBe('8 200 000 EUR');
+    expect(formatHero(8200000, 'thousands EUR', 'EN')).toBe('8,200,000 EUR');
+  });
 });

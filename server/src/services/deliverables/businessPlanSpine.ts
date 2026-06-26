@@ -235,10 +235,26 @@ export interface BusinessPlanSpine {
 }
 
 /** Format liczby raz, reużyj wszędzie (gwarancja identyczności hero-numbers, §D3). */
+/**
+ * Usuń z jednostki kwalifikatory SKALI (thousands/tys/mln/mld/k/m/'000…), które
+ * LLM czasem dokleja do waluty — przy pełnoskalowych liczbach daje to absurdy
+ * typu „8 200 000 thousands EUR". Zostawiamy czysty token waluty (head-to-head W2.2).
+ */
+export function normalizeCurrencyUnit(unit: string): string {
+  if (!unit) return unit;
+  // tnij wiodące słowa skali (z opcjonalnym separatorem), case-insensitive
+  const cleaned = unit
+    .replace(/\b(thousands?|tys(?:i[ąa]ce|\.)?|tysi[ęe]cy|millions?|mln|mld|miliard(?:y|ów)?|milion(?:y|ów)?|billions?|'?000)\b\s*/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return cleaned.length > 0 ? cleaned : unit; // jeśli zostałoby puste, zachowaj oryginał
+}
+
 export function formatHero(value: number, unit: string, language: 'PL' | 'EN' = 'PL'): string {
+  const u = normalizeCurrencyUnit(unit);
   const sep = language === 'PL' ? ' ' : ',';
   const grouped = Math.abs(value) >= 1000
     ? Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep)
     : value.toString();
-  return unit === '%' ? `${value}%` : `${grouped}${unit ? ' ' + unit : ''}`;
+  return u === '%' ? `${value}%` : `${grouped}${u ? ' ' + u : ''}`;
 }

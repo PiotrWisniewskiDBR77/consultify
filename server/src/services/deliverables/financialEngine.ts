@@ -235,10 +235,18 @@ export function runCfoReview(model: FinancialModel, d: FinancialDrivers): Valida
   const opexTotal = d.smPctRevenue + d.rdPctRevenue + d.gaPctRevenue;
   add('opex_band', 'OpEx total 40-95% rev (early-stage)', opexTotal <= 0.95, r2(opexTotal), '≤0.95');
 
-  // C3 — unit economics
+  // C3 — unit economics (z range-validatorami, W2.2 — head-to-head wykrył nierealne wartości)
   add('ltv_cac_min', 'LTV:CAC ≥ 3', ue.ltvCacRatio >= 3, ue.ltvCacRatio, '≥3');
+  // Górny pułap: LTV:CAC > 8 zwykle = zaniżony CAC / fałszywa precyzja (nie hard-fail, flaga wiarygodności).
+  add('ltv_cac_ceiling', 'LTV:CAC ≤ 8 (wiarygodne)', ue.ltvCacRatio <= 8, ue.ltvCacRatio, '≤8');
   add('cac_payback', 'CAC payback ≤ 24 mies', ue.cacPaybackMonths <= 24, ue.cacPaybackMonths, '≤24');
+  // Dolny pułap: payback < 3 mies dla B2B SaaS jest nierealistycznie szybki (flaga).
+  add('cac_payback_floor', 'CAC payback ≥ 3 mies (realny)', ue.cacPaybackMonths >= 3, ue.cacPaybackMonths, '≥3');
   add('rule_of_40', 'Rule of 40 ≥ 40', model.kpis.ruleOf40 >= 40, model.kpis.ruleOf40, '≥40');
+  // ARR > 0 gdy są przychody (ARR=0 przy SaaS = błąd modelu, wykryty w head-to-head).
+  const lastArrEnding = model.arrBridge[model.arrBridge.length - 1]?.ending ?? 0;
+  const hasRevenue = model.pnl[model.pnl.length - 1]?.revenue > 0;
+  add('arr_positive', 'ARR (ost.) > 0 gdy są przychody', !hasRevenue || lastArrEnding > 0, lastArrEnding, '>0');
 
   // C4 — brak ujemnej gotówki bez finansowania
   const everNegative = model.cashFlow.some((c) => c.endingCash < 0);
@@ -265,6 +273,8 @@ export function runCfoReview(model: FinancialModel, d: FinancialDrivers): Valida
   });
   // revenue ramp bez CAC
   if (!d.cac || d.cac <= 0) antiPatterns.push({ pattern: 'revenue_ramp_without_cac', severity: 'reject', detail: 'Brak CAC przy rampie przychodu SaaS' });
+  // fałszywa precyzja: LTV:CAC absurdalnie wysoki (W2.2)
+  if (ue.ltvCacRatio > 8) antiPatterns.push({ pattern: 'false_precision', severity: 'flag', detail: `LTV:CAC ${r2(ue.ltvCacRatio)}× nierealnie wysoki — zweryfikuj CAC`, ref: 'ue.cac' });
 
   // hard gate = integralność modelu + kanoniczny próg fundowalności (LTV:CAC≥3, Rule of 40)
   const hardFail = checks.some((c) => !c.passed && ['bs_balances', 'cf_ties_cash', 'no_negative_cash', 'arr_bridge_reconciles', 'ltv_cac_min', 'rule_of_40'].includes(c.id));
