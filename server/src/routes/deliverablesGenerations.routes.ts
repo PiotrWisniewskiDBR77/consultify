@@ -54,6 +54,7 @@ import { enrichBriefWithOrgContext } from '../services/deliverables/briefEnrichm
 // W3.3 (F2.3) — upload pliku → tekst kontekstowy:
 import { extractUploadContext } from '../services/deliverables/uploadContextExtract.js';
 import { aggregateQualityTelemetry, recordsFromRows } from '../services/deliverables/qualityTelemetry.js';
+import { firstRunSeedPlan } from '../services/deliverables/starterTemplates.js';
 
 const router = Router();
 
@@ -549,6 +550,21 @@ router.get('/bundles', async (req: any, res: Response) => {
         updatedAt: r.updated_at,
       })),
     });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// GET /starters — W10.2 (seeding): katalog startowych szablonów dla first-run.
+router.get('/starters', async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  try {
+    const industryHint = typeof req.query?.industry === 'string' ? req.query.industry : undefined;
+    const plan = firstRunSeedPlan(industryHint);
+    res.status(200).json({ success: true, ...plan });
   } catch (err) {
     handleServiceError(res, err);
   }
