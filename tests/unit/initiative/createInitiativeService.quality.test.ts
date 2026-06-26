@@ -83,11 +83,15 @@ describe('createInitiativeService — F3.2/F3.9 advisory quality', () => {
     expect(res.qualityWarnings).toBeUndefined();
   });
 
-  it('does NOT attach qualityWarnings when enforceQuality is false (default)', async () => {
+  it('C3: attaches qualityWarnings as advisory even when enforceQuality is false', async () => {
+    // USPOJNIENIE C3 — ostrzeżenia §B3 są ZAWSZE widoczne (advisory), nie tylko
+    // przy enforceQuality. Tworzenie nadal NIE jest blokowane (patrz test (c)).
     const res = await createInitiative(ORG, { title: 'Cienka karta' });
     expect(res.id).toBeTruthy();
-    expect(res.qualityWarnings).toBeUndefined();
-    // ...but the advisory result is still logged.
+    expect(res.qualityWarnings).toBeDefined();
+    expect(Array.isArray(res.qualityWarnings)).toBe(true);
+    expect(res.qualityWarnings!.length).toBeGreaterThan(0);
+    // ...and the advisory result is still logged.
     expect(loggerInfo).toHaveBeenCalledWith(expect.stringContaining('§B3 quality (advisory)'));
   });
 

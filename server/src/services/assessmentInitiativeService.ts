@@ -457,18 +457,17 @@ Return a JSON array with exactly ${count} initiatives in this format:
    * Call AI service
    */
   private static async callAI(prompt: string, count: number): Promise<GeneratedInitiative[]> {
-    try {
-      const { generateChatResponse } = await import('./aiService.js');
+    const { generateChatResponse } = await import('./aiService.js');
 
+    // Jedna próba na danym tierze; rzuca przy timeout/błędzie/pustym payloadzie.
+    const tryTier = async (model: string): Promise<GeneratedInitiative[]> => {
       const response = await generateChatResponse({
         messages: [{ role: 'user', content: prompt }],
         systemPrompt: 'You are an expert consultant. Return only valid JSON arrays.',
-        model: 'premium',
+        model,
         maxTokens: 2000,
       });
-
       if (response?.content) {
-        // Extract JSON from response
         const jsonMatch = response.content.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
@@ -478,11 +477,27 @@ Return a JSON array with exactly ${count} initiatives in this format:
         }
       }
       throw new AppError('AI returned invalid initiatives payload', 503, 'FEATURE_UNAVAILABLE');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      throw new AppError('Initiative generation is not available', 503, 'FEATURE_UNAVAILABLE', {
-        message: msg,
-      });
+    };
+
+    try {
+      return await tryTier('premium');
+    } catch (primaryErr: unknown) {
+      // USPOJNIENIE C4 — graceful degradation: przy timeout/awarii tieru premium
+      // ponawiamy RAZ na tańszym tierze ('budget') zanim oddamy 503. Wcześniej
+      // assessment robił wyłącznie fail-fast (premium timeout → twarde 503),
+      // mimo że plan obiecywał „timeout + fallback".
+      const pMsg = primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
+      logger.warn(
+        `[assessmentInitiativeService] premium tier failed (${pMsg}) — fallback to budget tier`
+      );
+      try {
+        return await tryTier('budget');
+      } catch (fallbackErr: unknown) {
+        const fMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+        throw new AppError('Initiative generation is not available', 503, 'FEATURE_UNAVAILABLE', {
+          message: `premium: ${pMsg}; budget: ${fMsg}`,
+        });
+      }
     }
   }
 

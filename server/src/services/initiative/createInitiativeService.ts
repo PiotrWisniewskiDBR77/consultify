@@ -341,8 +341,12 @@ export async function createInitiative(
     sourceType,
     sourceId: sourceId || null,
   };
-  // Only attach warnings when explicitly asked to enforce — never blocks either way.
-  if (options.enforceQuality && qualityWarnings.length > 0) {
+  // USPOJNIENIE C3 — ostrzeżenia §B3 są ZAWSZE zwracane (advisory, widoczny
+  // sygnał jakości dla wołającego), ale NIGDY nie blokują tworzenia. Wcześniej
+  // wracały tylko przy options.enforceQuality → jakość była mierzona, lecz
+  // niewidoczna. Decyzja: sygnalizuj zawsze, egzekwowanie (twarda blokada)
+  // pozostaje osobną, opcjonalną bramką po stronie wołającego.
+  if (qualityWarnings.length > 0) {
     result.qualityWarnings = qualityWarnings;
   }
   return result;

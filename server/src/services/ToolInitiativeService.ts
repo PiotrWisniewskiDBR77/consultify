@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { AIPipeline } from './ai/AIPipeline.js';
+import { CARD_CONTENT_FORMULA_A3_LITE } from './initiative/cardContentFormulaPrompt.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
 type ToolSessionRow = {
@@ -124,6 +125,7 @@ ${JSON.stringify(answers)}
 Context (JSON):
 ${JSON.stringify(context)}
 ${buildInterviewFindingsSection(context)}
+${CARD_CONTENT_FORMULA_A3_LITE}
 Return ONLY valid JSON in this format:
 {"initiatives":[{"title":"...","description":"...","category":"Strategy|Operations|Digital|Process Auto","priority":"P1|P2|P3","risk":"Low|Medium|High"}]}`;
 };
