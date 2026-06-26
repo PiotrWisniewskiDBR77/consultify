@@ -31,12 +31,12 @@ function resolveTemplate(themeId?: string): 'corporate' | 'minimal' | 'modern' {
 
 /** hero formatted po kluczu (lub '' gdy brak). */
 function heroFmt(spine: BusinessPlanSpine, key: string): string {
-  return spine.heroNumbers.find((h) => h.key === key)?.formatted ?? '';
+  return (spine.heroNumbers ?? []).find((h) => h.key === key)?.formatted ?? '';
 }
 
 /** hero → KpiData (name=label, value=formatted string — renderer pokaże jak jest). */
 function heroKpi(spine: BusinessPlanSpine, key: string): KpiData | null {
-  const h = spine.heroNumbers.find((x) => x.key === key);
+  const h = (spine.heroNumbers ?? []).find((x) => x.key === key);
   if (!h) return null;
   return { name: h.label, value: h.formatted };
 }
@@ -47,7 +47,7 @@ function heroKpis(spine: BusinessPlanSpine, keys: string[]): KpiData[] {
 
 /** action-title sekcji po id (lub '' gdy brak). */
 function sectionTitle(spine: BusinessPlanSpine, id: string): string {
-  return spine.sections.find((s) => s.id === id)?.actionTitle ?? '';
+  return (spine.sections ?? []).find((s) => s.id === id)?.actionTitle ?? '';
 }
 
 /**
@@ -134,7 +134,7 @@ export function spineToUnifiedReport(
       content: {
         type: 'performance_overview',
         kpis: marketKpis,
-        context: spine.market.bottomUp.formula,
+        context: spine.market?.bottomUp?.formula,
       },
     });
   }
@@ -210,7 +210,7 @@ export function spineToUnifiedReport(
   }
 
   // 9 — RISKS (risk_management z top-założeń wg sensitivityRank) — REAL ranks
-  const topAssumptions = spine.assumptions
+  const topAssumptions = (spine.assumptions ?? [])
     .slice()
     .sort((a, b) => b.sensitivityRank - a.sensitivityRank)
     .slice(0, 5);

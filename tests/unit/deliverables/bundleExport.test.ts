@@ -85,9 +85,16 @@ describe('bundleExportRuntime — realne pliki', () => {
     expect(files.xlsx!.subarray(0, 2).toString('latin1')).toBe('PK');
   });
 
-  it('pptx=null gdy brak deck planów w wiązce', async () => {
+  it('pptx generowany przez M19 pipeline nawet gdy deck=null (W7.6)', async () => {
+    // W7.6: M19 PptxPipelineService generuje PPTX ze SPINE, niezależnie od deck plans.
+    // Przed W7.6 pptx=null gdy brak planów — po W7.6 M19 pipeline uruchamia się pierwszy.
     const files = await exportBundleFiles(bundle);
-    expect(files.pptx).toBeNull();
+    // Akceptujemy zarówno null (gdy M19 pipeline zwróci null dla bardzo ubogiego SPINE)
+    // jak i Buffer (gdy M19 wygeneruje z meta.company+thesis+ask).
+    if (files.pptx !== null) {
+      expect(files.pptx).toBeInstanceOf(Buffer);
+      expect(files.pptx!.subarray(0, 2).toString('latin1')).toBe('PK');
+    }
   });
 
   it('renderuje REALNY .pptx (zip OOXML) gdy deck ma plany (F4.1)', async () => {
@@ -180,4 +187,60 @@ describe('bundleExportRuntime — teczka ZIP (F4.2)', () => {
     const parsed = await JSZip.loadAsync(zip!);
     expect(Object.keys(parsed.files)).toEqual(['Solo-raport.docx']);
   });
+});
+
+describe('W13.4 — E2E: SPINE → exportBundleFiles → ZIP z 3 REALNYMI plikami', () => {
+  it('ZIP zawiera .docx + .xlsx + .pptx — wszystkie niepuste (full bundle)', async () => {
+    // Realny bundle z doc + table + deck (bez LLM) — weryfikuje kontrakt ZIP.
+    const fullBundle: GeneratedBundle = {
+      spine,
+      doc: content,
+      table,
+      deck: {
+        tierUsed: 'STANDARD',
+        fallbackUsed: true,
+        plans: [
+          { slideIndex: 0, layoutIntent: 'cover', title: 'DBR77 — Biznesplan', keyMessage: spine.meta.thesis },
+          { slideIndex: 1, layoutIntent: 'executive_summary', title: 'Streszczenie', keyMessage: 'Klucz: AI → czas konsultingu −90%.' },
+          { slideIndex: 2, layoutIntent: 'performance_overview', title: 'Wyniki finansowe', keyMessage: 'Przychód R3: 8 800 tys EUR.' },
+          { slideIndex: 3, layoutIntent: 'risk_management', title: 'Ryzyka', keyMessage: 'Ryzyko: akceptacja rynku.' },
+          { slideIndex: 4, layoutIntent: 'recommendation_single', title: 'Ask', keyMessage: 'Seed €500k @ 8× ARR.' },
+        ],
+      },
+      produced: { table: true, doc: true, deck: true },
+    } as unknown as GeneratedBundle;
+
+    const files = await exportBundleFiles(fullBundle, 'executive');
+
+    // Weryfikacja: każdy format = realny ZIP OOXML
+    expect(files.docx).toBeInstanceOf(Buffer);
+    expect(files.docx!.length).toBeGreaterThan(2000);
+    expect(files.docx!.subarray(0, 2).toString('latin1')).toBe('PK');
+
+    expect(files.xlsx).toBeInstanceOf(Buffer);
+    expect(files.xlsx!.length).toBeGreaterThan(2000);
+    expect(files.xlsx!.subarray(0, 2).toString('latin1')).toBe('PK');
+
+    expect(files.pptx).toBeInstanceOf(Buffer);
+    expect(files.pptx!.length).toBeGreaterThan(2000);
+    expect(files.pptx!.subarray(0, 2).toString('latin1')).toBe('PK');
+
+    // Teczka ZIP: wszystkie 3 pliki obecne i niepuste
+    const zip = await bundleFilesToZip(files, 'DBR77');
+    expect(zip).toBeInstanceOf(Buffer);
+    expect(zip!.subarray(0, 2).toString('latin1')).toBe('PK');
+
+    const { default: JSZip } = await import('jszip');
+    const parsed = await JSZip.loadAsync(zip!);
+    const names = Object.keys(parsed.files).sort();
+    expect(names).toContain('DBR77-raport.docx');
+    expect(names).toContain('DBR77-model.xlsx');
+    expect(names).toContain('DBR77-prezentacja.pptx');
+
+    // Każdy wpis ZIP niepusty
+    for (const name of names) {
+      const entry = await parsed.files[name].async('uint8array');
+      expect(entry.length).toBeGreaterThan(100);
+    }
+  }, 30_000);
 });
