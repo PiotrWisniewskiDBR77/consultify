@@ -9,6 +9,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
+import { governRecipients } from './deliverables/recipientGovernance.js';
 
 // ============================================
 // TYPES
@@ -70,6 +71,8 @@ export interface DeliveryConfig {
     subject?: string;
     includeAttachment?: boolean;
     attachmentFormat?: 'pdf' | 'pptx' | 'xlsx';
+    /** W6.4 — adresy, które zrezygnowały z dostawy (opt-out). */
+    optOut?: string[];
   };
   webhook?: {
     url: string;
@@ -674,6 +677,21 @@ class ScheduledReportService {
     const emailConfig = schedule.deliveryConfig.email;
     if (!emailConfig || !emailConfig.recipients?.length) return;
 
+    // W6.3/W6.4 — governance odbiorców: walidacja + dedupe + opt-out + limit PRZED wysyłką.
+    const { allowed: governedRecipients, rejected } = governRecipients(emailConfig.recipients, {
+      optOut: emailConfig.optOut ?? [],
+    });
+    if (rejected.length > 0) {
+      logger.info(
+        `[ScheduledReportService] ${rejected.length} odbiorców odrzuconych (governance): ` +
+        rejected.map((r) => `${r.email}:${r.reason}`).join(', '),
+      );
+    }
+    if (governedRecipients.length === 0) {
+      logger.warn(`[ScheduledReportService] brak ważnych odbiorców po governance (report ${reportId})`);
+      return;
+    }
+
     // W6.2 — un-stub: realnie WYŚLIJ przez emailService. Wcześniej tylko logowało
     // (a `this.emailService` bywa nieustawiony w cron-path → 0 wysyłek). Importujemy
     // realny `send` z modułu; fallback na wstrzyknięty serwis gdy obecny.
@@ -698,7 +716,7 @@ class ScheduledReportService {
       sendFn = (opts) => mod.send(opts as never);
     }
 
-    for (const to of emailConfig.recipients) {
+    for (const to of governedRecipients) {
       try {
         await sendFn({ to, subject, html, ...(attachments ? { attachments } : {}) });
         logger.info(`[ScheduledReportService] email sent to ${to} (report ${reportId})`);
