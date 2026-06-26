@@ -209,6 +209,32 @@ function applyConditionalFormatting(
 }
 
 // ---------------------------------------------------------------------------
+// W7.7 — Auto-width helpers
+// ---------------------------------------------------------------------------
+
+/** Total-row sentinel labels (case-sensitive match on trimmed first-cell text). */
+const TOTAL_ROW_LABELS = new Set(['TOTAL', 'Razem', 'Total', 'SUMA', 'Ogółem', 'Grand Total']);
+
+/** Detect whether a row is a "total/summary" row by its first non-empty cell value. */
+function isTotalRow(cells: Record<string, { value?: any; formula?: string }>): boolean {
+  for (const key of Object.keys(cells)) {
+    const raw = cells[key]?.value;
+    if (raw !== undefined && raw !== null) {
+      const str = String(raw).trim();
+      if (TOTAL_ROW_LABELS.has(str)) return true;
+      break; // only inspect first-present cell
+    }
+  }
+  return false;
+}
+
+/** Return character-width estimate for a cell value (used for auto-width). */
+function cellTextWidth(value: unknown): number {
+  if (value === undefined || value === null) return 0;
+  return String(value).length;
+}
+
+// ---------------------------------------------------------------------------
 // Builder
 // ---------------------------------------------------------------------------
 
@@ -232,7 +258,14 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
       },
     });
 
-    // Column definitions
+    // W7.7 — track max content width per column key for auto-width pass
+    const colWidths = new Map<string, number>();
+    for (const col of sheetDef.columns) {
+      // Seed with header label length
+      colWidths.set(col.key, cellTextWidth(col.header));
+    }
+
+    // Column definitions — use explicit width if provided, otherwise placeholder (overridden later)
     ws.columns = sheetDef.columns.map((col) => ({
       key: col.key,
       header: col.header,
@@ -256,6 +289,9 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
       const rowDef = sheetDef.rows[rowIdx];
       const excelRow = ws.getRow(rowIdx + 2); // +2 because row 1 is header
 
+      // W7.7 — detect total rows for bold styling
+      const isTotal = isTotalRow(rowDef.cells);
+
       for (const col of sheetDef.columns) {
         const cellDef = rowDef.cells[col.key];
         if (!cellDef) continue;
@@ -264,6 +300,10 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
 
         if (cellDef.formula) {
           cell.value = { formula: cellDef.formula } as ExcelJS.CellFormulaValue;
+          // W7.7 — track formula width estimate
+          const fw = cellTextWidth(cellDef.formula);
+          const prev = colWidths.get(col.key) ?? 0;
+          if (fw > prev) colWidths.set(col.key, fw);
         } else if (cellDef.value !== undefined && cellDef.value !== null) {
           if (
             col.type === 'number' ||
@@ -279,6 +319,10 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
           } else {
             cell.value = cellDef.value;
           }
+          // W7.7 — track content width
+          const vw = cellTextWidth(cellDef.value);
+          const prev = colWidths.get(col.key) ?? 0;
+          if (vw > prev) colWidths.set(col.key, vw);
         }
 
         // Number format: cell-level > column-level > type default
@@ -314,7 +358,18 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
         });
       }
 
-      // Alternating row colors
+      // W7.7 — Bold total rows (TOTAL / Razem / Total / etc.)
+      if (isTotal && !rowDef.isSummary) {
+        try {
+          excelRow.eachCell((cell) => {
+            cell.font = { ...(cell.font ?? {}), bold: true };
+          });
+        } catch {
+          // fail-soft: skip if cell iteration errors
+        }
+      }
+
+      // Alternating row colors (banded rows)
       if (sheetDef.alternateRowColor && rowIdx % 2 === 1 && !rowDef.isHeader && !rowDef.isSummary) {
         excelRow.eachCell((cell) => {
           if (!cell.fill || (cell.fill as any).pattern === 'none') {
@@ -324,6 +379,20 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
       }
 
       excelRow.commit();
+    }
+
+    // W7.7 — Apply auto-width to columns that have no explicit width defined
+    try {
+      for (const col of sheetDef.columns) {
+        if (col.width == null) {
+          const maxLen = colWidths.get(col.key) ?? 8;
+          // clamp to [8, 30], add padding of 2
+          const autoWidth = Math.min(30, Math.max(8, maxLen + 2));
+          ws.getColumn(col.key).width = autoWidth;
+        }
+      }
+    } catch {
+      // fail-soft: auto-width is cosmetic, don't break export
     }
 
     // Merged cells
