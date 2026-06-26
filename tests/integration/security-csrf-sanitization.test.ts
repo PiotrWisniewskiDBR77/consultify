@@ -33,6 +33,8 @@ function createRes() {
     }),
     status: vi.fn().mockReturnThis(),
     json: vi.fn(),
+    // sendCsrfForbidden() sets no-store + security headers on the 403 response.
+    setHeader: vi.fn().mockReturnThis(),
     _cookies: cookies,
   } as any;
 }
