@@ -10,6 +10,16 @@ Skupiłem się na **sednie problemu „powierzchowności"**, który ujawnił 7-a
 
 **Postęp jako PRODUKT: ~25-35% → ~55-60%.** Kluczowy skok sesji 3: W2.3 chipy sekcji (beat Gamma), W12.2 sensitivity matrix wyceny, W4.1+W4.2+W4.3 persystencja bundli w DB + endpoint listy, W3.6 FE hook listy bundli, W13.6 i18n Komplet AI (PL+EN).
 
+### SESJA 4 — DECYZJA W0.1 = KOMPONUJ dojrzałe studia (odblokowane ~40%)
+Piotr: „buduj, odblokuj, jedź kolejne 40%". Zrealizowałem rdzeń strategii **kompozycji** (nie 4. równoległy stos):
+| Task | Co realnie teraz działa | Dowód |
+|---|---|---|
+| **W7.6** | Deck wiązki idzie przez **DOJRZAŁY M19 PptxPipelineService** (17 intencji, BCG layouty, master slides, branding) zamiast minimalnego renderera. `spineToUnifiedReport` = czysty most SPINE→UnifiedReportJSON (cover→exec KPI→problem/solution→rynek→model→wykres finansowy z realnego pnl→ARR→unit econ→ryzyka z sensitivityRank→roadmapa→ask+wycena→appendix). ZERO fabrykacji. Fail-soft fallback do minimalnego. | 8 testów (realny 13-slajdowy .pptx, PK header) |
+| **W1.8a** | Raport wiązki przechodzi **DOJRZAŁY M18 documentQaService** (10 kategorii: brand/language/completeness/sources/methodology/executive/risk/data/format/export) → `bundle.quality.docQa`. | `bundleDocQa.ts`, 6 testów |
+| **W1.8b** | Deck wiązki przechodzi **M19 strukturalny gate** (`validateReport`/RulesEngine, in-memory odpowiednik presentationQualityGatesService który wymaga DB) → `bundle.quality.deckQa`. | `bundleDeckQa.ts`, 5 testów |
+
+> **Współbieżna sesja (drugi agent, ten sam branch)** równolegle domknęła: W1.7 (image router T0), W3.7 (progress UI), W3.8 (bundle history panel), W4.4 (lifecycle badges), W7.7 (piękny XLSX), W13.4 (E2E), W13.8 (CI guard). Dzielone drzewo = git-race realny; rozwiązany bez utraty pracy (commituj-natychmiast + tylko-moje-pliki). **Łącznie pakiet deliverables: 539/539, 0 tsc.**
+
 ## 2. CO ZROBIŁEM (task po tasku, z dowodem)
 
 ### Faza W2 — żywe bugi P0 (naprawione)
