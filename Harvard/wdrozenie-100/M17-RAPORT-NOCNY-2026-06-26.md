@@ -282,5 +282,33 @@ actionable (capstone całej jakości W1/W7/W12); a11y alt-text na wizualizacjach
 opt-out), polityka żywych danych. Backend deterministyczny M17 w dużej mierze domknięty.
 
 ---
+
+## SESJA 12 (kontynuacja, 2026-06-26) — first-run seeding + capstone
+
+| Task | Co realnie działa | Dowód |
+|---|---|---|
+| **W10.2 (seeding)** | `starterTemplates.ts`: 6 startowych szablonów materiałów (szkielet briefu z `{{placeholder}}` + rekomendowany motyw + format + audytorium) zabija pusty stan nowej org: biznesplan inwestorski / diagnoza AI / raport zarządczy / deck strategiczny / oferta / analiza rynku. API `firstRunSeedPlan(industryHint)`. Endpoint `GET /starters`. | 10 testów |
+| **Capstone** | Test integracyjny rozszerzony: WSZYSTKIE nowe sygnały (antiPatterns W12.1 + designCritique W7.2 + scorecard W10.1) populują się end-to-end przez `generateBundleFromSpine` + spójność (scorecard.capped ⇔ twarda wada). Dowód że cały „mózg jakości" działa razem. | +5 asercji |
+
+### Testy — wyniki sesja 12
+- Sesja 12 start: **776/776** (73 pliki)
+- Sesja 12 koniec: **791/791** (74 pliki) → **+15 testów**
+- Zero regresji. **Wszystkie pliki tknięte w sesjach 5-12 = tsc CLEAN.**
+
+### Stan końcowy backendu deterministycznego M17 (sesje 5-12)
+**~80-82% → ~82-84%.** Backend deterministyczny **w dużej mierze WYCZERPANY**:
+- **Jakość:** beauty/content/factbook/provenance/variants (W1) + anti-patterny decka (W12.1) + design critic (W7.2) + hockey-stick finansowy (W12.1) + **scorecard 0-100/A-F** (W10.1) + **telemetria org-wide** (W10.2) — wszystko wpięte w pipeline + capstone-test.
+- **Piękno:** palety semantic/colorblind (W7.4/14.3) + think-cell charts mekko/harvey (W7.5) + arsenał 24 archetypów z geometrią (W7.3) + grid transform (W7.1) — logika kompletna.
+- **a11y:** alt-text z danych (W14.1) + colorblind-safe (W14.3).
+- **Dane/dostawa:** live-binding resolver (W6.5) + governance odbiorców/opt-out (W6.3/6.4).
+- **Onboarding:** starter templates (W10.2-seed).
+
+**ZOSTAJE (wymaga Piotra — nie do zrobienia deterministycznie/bez blokera):**
+- Wizualne wpięcie renderera composition per-pudełko (W7.1-render) — **oczy Piotra na binarnym PPTX**
+- W8 edytor WYSIWYG (FE+preview) · W9.1 Office-fidelity (realny MS/Google) · W9.2 współpraca (FE+schema M18) · W9.3 share-password (migracja M18)
+- W11.2 Puppeteer / W14.2 tagged-PDF (decyzja infra; W11.1 `@napi-rs/canvas` już rozwiązany współbieżnie)
+- `hidden_circularity` (wymaga grafu zależności założeń)
+
+---
 *21 tasków, 57 nowych testów, 519/519, 0 regresji. Commity na origin/feat/deliverables-w1.*
 *Szczegół: M17-PLAN-DOKONCZENIA-2026-06-26.md (dashboard 8-bramkowy) + M17-AUDYT-REALIZACJI-2026-06-26.md (audyt źródłowy).*
