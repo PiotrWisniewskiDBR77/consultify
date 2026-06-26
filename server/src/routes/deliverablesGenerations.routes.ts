@@ -51,6 +51,9 @@ import { connectorDataset, formDataset } from '../services/deliverables/material
 import formService from '../services/tablePlatform/FormService.js';
 // W3.2 (F2.2) — wzbogacenie briefu o kontekst organizacji przed generacją:
 import { enrichBriefWithOrgContext } from '../services/deliverables/briefEnrichment.js';
+// W3.3 (F2.3) — upload pliku → tekst kontekstowy:
+import { extractUploadContext } from '../services/deliverables/uploadContextExtract.js';
+import { aggregateQualityTelemetry, recordsFromRows } from '../services/deliverables/qualityTelemetry.js';
 
 const router = Router();
 
@@ -551,6 +554,34 @@ router.get('/bundles', async (req: any, res: Response) => {
   }
 });
 
+// GET /bundles/telemetry — W10.2: agregat jakości materiałów org (scorecardy w czasie).
+router.get('/bundles/telemetry', async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(400).json({ success: false, error: 'Organization not found' });
+      return;
+    }
+    const result = await db.query(
+      `SELECT quality_json, created_at
+       FROM deliverable_bundles
+       WHERE organization_id = $1
+       ORDER BY created_at DESC
+       LIMIT 200`,
+      [orgId],
+    );
+    const rows = (result?.rows ?? []) as Array<{ quality_json?: unknown; created_at?: string | number }>;
+    const telemetry = aggregateQualityTelemetry(recordsFromRows(rows));
+    res.status(200).json({ success: true, telemetry });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
 // ── W5 (F5) — Dane: konektory + formularze → tabela materiału (kompozycja) ──
 
 // GET /data/connectors — W5.1: lista dostępnych typów konektorów (z rejestru F5).
@@ -627,6 +658,44 @@ router.post('/data/forms/:formId/dataset', async (req: any, res: Response) => {
       return;
     }
     res.status(200).json({ success: true, dataset });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// POST /data/extract — W3.3: upload pliku (pdf/docx/xlsx/csv/txt) → tekst kontekstowy.
+const contextUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 },
+}).single('contextFile');
+function parseContextUpload(req: any, res: Response): Promise<void> {
+  return new Promise((resolve, reject) => {
+    contextUpload(req, res as any, (err: any) => (err ? reject(err) : resolve()));
+  });
+}
+router.post('/data/extract', aiRateLimiter, async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  try {
+    await parseContextUpload(req, res);
+  } catch {
+    res.status(400).json({ success: false, error: 'Upload too large or malformed', code: 'invalid_setup' });
+    return;
+  }
+  const file = req.file;
+  if (!file?.buffer) {
+    res.status(400).json({ success: false, error: 'Missing contextFile', code: 'invalid_setup' });
+    return;
+  }
+  try {
+    const result = await extractUploadContext(file.buffer, file.originalname ?? 'upload', file.mimetype);
+    if (!result.ok) {
+      res.status(422).json({ success: false, error: `Unsupported or empty file (${result.kind})`, code: 'invalid_setup' });
+      return;
+    }
+    res.status(200).json({ success: true, extract: result });
   } catch (err) {
     handleServiceError(res, err);
   }
