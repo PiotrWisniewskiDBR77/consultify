@@ -37,6 +37,8 @@ import { runBundleDeckQa, type BundleDeckQaSummary } from './bundleDeckQa.js';
 import { detectDeckAntiPatterns, type AntiPatternReport } from './deckAntiPatternDetector.js';
 // W7.2 — design-rule critic (typografia/kontrast/gęstość/grid) per slajd:
 import { critiqueDeck, type DeckCritique } from './deckDesignCritic.js';
+// W7.3 — arsenał archetypów z realną geometrią regionów:
+import { resolveArchetype } from './slideArchetypes.js';
 
 /** Raport jakości wiązki — wynik bramek/audytów wpiętych w generację (W1). */
 export interface BundleQuality {
@@ -225,10 +227,19 @@ export async function generateBundleFromSpine(
     // W12.1 — McKinsey anti-pattern detector na planach slajdów.
     const antiPatterns = plans.length > 0 ? detectDeckAntiPatterns(plans) : null;
     // W7.2 — design-rule critic per slajd (mapuje plany na wejście critica).
+    // W7.3 — gdy plan wskazuje archetyp (composition.layoutVariantId), bierzemy jego
+    // REALNĄ geometrię regionów z arsenału → critic DR-06 waliduje faktyczny układ.
     const designCritique = plans.length > 0
       ? critiqueDeck(plans.map((p) => {
-          const pl = p as { slideIndex?: number; layoutIntent?: string; title?: string; keyMessage?: string; bullets?: string[] };
-          return { slideIndex: pl.slideIndex, layoutIntent: pl.layoutIntent, title: pl.title, keyMessage: pl.keyMessage, bullets: pl.bullets };
+          const pl = p as {
+            slideIndex?: number; layoutIntent?: string; title?: string; keyMessage?: string;
+            bullets?: string[]; composition?: { layoutVariantId?: string } | null;
+          };
+          const variantId = pl.composition?.layoutVariantId;
+          const intent = pl.layoutIntent ?? '';
+          const archetype = intent ? resolveArchetype(intent, variantId) : null;
+          const regions = archetype?.regions.map((r) => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
+          return { slideIndex: pl.slideIndex, layoutIntent: pl.layoutIntent, title: pl.title, keyMessage: pl.keyMessage, bullets: pl.bullets, regions };
         }))
       : null;
 
