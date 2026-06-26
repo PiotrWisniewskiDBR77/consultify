@@ -32,6 +32,8 @@ export interface DeckPlanSlide {
     type: 'rag';
     items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }>;
   } | null;
+  /** W1.7 — URL obrazu stockowego (T0 Unsplash/Pexels) dla slajdów z needsProductGraphic. */
+  imageUrl?: string | null;
 }
 
 export interface DeckPptxOptions {
@@ -219,19 +221,36 @@ export async function deckPlansToPptxBuffer(
         align: 'left', valign: 'top',
       });
 
+      // W1.7 — image panel (right side, 38% width) gdy slide ma imageUrl.
+      const hasImage = !!plan.imageUrl;
+      if (hasImage) {
+        try {
+          // Półprzezroczysty akcentowy panel pod obraz.
+          slide.addShape(pptx.ShapeType.rect, {
+            x: 6.4, y: 0.5, w: 3.3, h: 4.85,
+            fill: { color: accent, transparency: 92 },
+            line: { color: accent, transparency: 80, width: 1 },
+          });
+          slide.addImage({ path: plan.imageUrl, x: 6.4, y: 0.5, w: 3.3, h: 4.85, sizing: { type: 'cover', w: 3.3, h: 4.85 } });
+        } catch {
+          // fail-soft — pptxgenjs addImage może nie obsługiwać wszystkich URL-i
+        }
+      }
+      const textW = hasImage ? 5.5 : 8.8;
+
       // W1.5 — chart rendering: gdy jest chartSpec, chart zastępuje/uzupełnia key-message.
       const chartRendered = renderChartOnSlide(slide, pptx, plan.chartSpec ?? null, { accent, neutral, bodyFont, isPolish });
       // Key-message (proza pod tytułem) — skrócone gdy chart zajmuje dolną część.
       if (message && !chartRendered) {
         slide.addText(message, {
-          x: 0.6, y: 1.7, w: 8.8, h: 3.0,
+          x: 0.6, y: 1.7, w: textW, h: 3.0,
           fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.body, color: neutral,
           align: 'left', valign: 'top',
         });
       } else if (message && chartRendered) {
         // Key-message jako krótka podpis ponad wykresem.
         slide.addText(message, {
-          x: 0.6, y: 1.55, w: 8.8, h: 0.45,
+          x: 0.6, y: 1.55, w: textW, h: 0.45,
           fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.caption, color: neutral,
           align: 'left', valign: 'top',
         });

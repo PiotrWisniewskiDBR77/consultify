@@ -22,6 +22,8 @@ import { resolveTheme } from './themeRegistry.js';
 import type { BrandThemeOverride } from './brandIngestion.js';
 import { deckPlansToPptxBuffer, type DeckPlanSlide } from './bundlePptxRuntime.js';
 import { buildAudienceVariant } from './deckAudienceVariants.js';
+import { spineToUnifiedReport } from './spineToUnifiedReport.js';
+import { PptxPipelineService } from '../report/pptx/PptxPipelineService.js';
 
 const LOG = '[bundleExportRuntime]';
 
@@ -114,6 +116,37 @@ function extractDeckPlans(deck: unknown): DeckPlanSlide[] {
   return (d.plans as DeckPlanSlide[]).filter((p) => p && typeof p.slideIndex === 'number');
 }
 
+/**
+ * W7.6 — deck PPTX przez DOJRZAŁY M19 PptxPipelineService (17 intencji, BCG layouty,
+ * master slides, branding). Most: SPINE → UnifiedReportJSON → bufor .pptx.
+ * Fail-soft: zwraca null gdy pipeline padnie (caller spada na minimalny renderer).
+ */
+async function spinePptxViaPipeline(
+  bundle: GeneratedBundle,
+  themeId: string | undefined,
+  brandColor: string,
+): Promise<Buffer | null> {
+  try {
+    const report = spineToUnifiedReport(bundle.spine, {
+      themeId,
+      brandColor,
+      date: new Date().toISOString().slice(0, 10),
+    });
+    if (!report.slides.length) return null;
+    const pipeline = new PptxPipelineService();
+    const result = await pipeline.generateFromUnifiedJson(report, {
+      language: bundle.spine.meta.language === 'EN' ? 'en' : 'pl',
+      brandColor,
+      confidentiality: 'confidential',
+      skipValidation: true, // bundle ma własne bramki; per-slajd render i tak fail-soft
+    });
+    return result.buffer ?? null;
+  } catch (err) {
+    logger.warn(`${LOG} M19 pptx pipeline failed (fallback to minimal): ${err instanceof Error ? err.message : String(err)}`);
+    return null;
+  }
+}
+
 /** Wiązka → bufory plików (fail-soft per format): DOCX + XLSX + PPTX.
  *  `themeId` (F3.1) steruje fontami/paletą na 3 powierzchniach.
  *  `brandOverride` (F8.1) nadpisuje fonty/kolory motywy klientem (brand > motyw > default). */
@@ -150,16 +183,23 @@ export async function exportBundleFiles(
   let pptx: Buffer | null = null;
   let pptxBoard: Buffer | null = null;
   try {
+    const lang = bundle.spine.meta.language === 'EN' ? 'en' : 'pl';
+    // W7.6 — najpierw DOJRZAŁY M19 pipeline (17 intencji, BCG layouty, branding).
+    pptx = await spinePptxViaPipeline(bundle, themeId, theme.palette.dominant);
+
+    // Fallback: minimalny renderer z planów decka (gdy M19 pipeline zwrócił null).
     const plans = extractDeckPlans(bundle.deck);
-    if (plans.length > 0) {
-      const lang = bundle.spine.meta.language === 'EN' ? 'en' : 'pl';
+    if (!pptx && plans.length > 0) {
       pptx = await deckPlansToPptxBuffer(plans, {
         themeId, brandOverride,
         title: `${bundle.spine.meta.company} — Biznesplan inwestorski`,
         company: bundle.spine.meta.company,
         language: lang,
       });
-      // F10.3 materializowane: board cut (≤7) jako osobny plik — tylko gdy się skraca.
+    }
+
+    // F10.3 materializowane: board cut (≤7) jako osobny plik — minimalny renderer z planów.
+    if (plans.length > 0) {
       const board = buildAudienceVariant(plans as never, 'board');
       if (board.droppedSlideIndices.length > 0) {
         pptxBoard = await deckPlansToPptxBuffer(board.plans as never, {

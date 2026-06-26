@@ -27,6 +27,8 @@ import { runBundleContentGate, type ContentGateReport } from './bundleContentGat
 import { buildFactBook, auditFactConsistency, type FactContradiction } from './factBook.js';
 import { auditProvenance, type ProvenanceAudit, type Claim, type ProvenanceKind } from './provenance.js';
 import { buildBothVariants, type AudienceVariantResult } from './deckAudienceVariants.js';
+import { routeImage } from './imageRouter.js';
+import { selectStockImageProvider } from './stockImageProvider.js';
 
 /** Raport jakości wiązki — wynik bramek/audytów wpiętych w generację (W1). */
 export interface BundleQuality {
@@ -138,7 +140,9 @@ export async function generateBundleFromSpine(
   let deck: unknown | null = null;
   let beauty: BeautyScore | null = null;
   try {
-    const slides = spineToDeckSlides(spine).map((s) => ({
+    // Zachowujemy needsProductGraphic dla W1.7 image-router (przed strippingiem w map).
+    const fullSlides = spineToDeckSlides(spine);
+    const slides = fullSlides.map((s) => ({
       intent: s.intent,
       key_message: s.key_message,
       content: s.content,
@@ -157,6 +161,25 @@ export async function generateBundleFromSpine(
     // W1.5 — chart-spec WPIĘTY: dołącz chart specs do planów slajdów (post-layout, additive).
     if (gated.plans) {
       gated.plans = attachChartSpecs(gated.plans, spine);
+    }
+    // W1.7 — image-router: T0 stock images dla slajdów z needsProductGraphic.
+    if (gated.plans && Array.isArray(gated.plans)) {
+      const provider = selectStockImageProvider();
+      const imageQueries: Record<string, string> = {
+        root_cause: `${spine.meta.company} business challenge`,
+        single_insight: `${spine.meta.company} technology innovation`,
+      };
+      const imagePromises = (gated.plans as Array<{ slideIndex?: number; layoutIntent?: string; imageUrl?: string | null }>)
+        .map(async (plan, idx) => {
+          const src = fullSlides[idx];
+          if (!src?.needsProductGraphic) return;
+          const route = routeImage({ contentType: 'photo', package: 'lite' });
+          if (route.isChartRoute) return;
+          const query = imageQueries[plan.layoutIntent ?? ''] ?? `${spine.meta.company} business`;
+          const img = await provider.fetchImage(query, { orientation: 'landscape' });
+          if (img?.url) plan.imageUrl = img.url;
+        });
+      await Promise.allSettled(imagePromises);
     }
     deck = gated;
     beauty = gated.beautyScore ?? null;

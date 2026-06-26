@@ -12723,6 +12723,11 @@
         "bundleGenerate": "Generate & download ZIP",
         "bundleBriefTooShort": "Brief must be at least 20 characters",
         "bundleError": "Generation failed — please try again",
+        "phase0": "Analyzing brief & extracting KPIs…",
+        "phase1": "Building financial model…",
+        "phase2": "Writing report sections…",
+        "phase3": "Composing slide deck…",
+        "phase4": "Rendering DOCX + XLSX + PPTX…",
         "tpl": {
           "blank": "Blank",
           "auditReport": "Audit report",
@@ -12820,6 +12825,24 @@
       "breadcrumb": {
         "library": "Library"
       }
+    },
+    "bundles": {
+      "title": "AI Bundle — generation history",
+      "empty": "No bundles generated yet",
+      "loading": "Loading history…",
+      "qualityOk": "Quality OK",
+      "qualityIssues": "Quality issues",
+      "qualityUnknown": "Quality unknown",
+      "statusDraft": "Draft",
+      "statusGenerating": "Generating",
+      "statusReady": "Ready",
+      "statusError": "Error",
+      "detailTitle": "Bundle details",
+      "detailClose": "Close",
+      "redownload": "Re-download",
+      "redownloadUnavailable": "Re-download unavailable (brief not stored)",
+      "showHistory": "AI Bundle generation history",
+      "hideHistory": "Hide history"
     },
     "errors": {
       "realReportsTitle": "Real reports source needs attention",

@@ -173,6 +173,9 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   const [bundleBrief, setBundleBrief] = useState('');
   const [bundleLoading, setBundleLoading] = useState(false);
   const [bundleError, setBundleError] = useState<string | null>(null);
+  // W3.7 — animated generation phases (simulated 20s per phase, 5 phases total).
+  const [bundlePhase, setBundlePhase] = useState(0);
+  const bundlePhaseRef = useRef(0);
 
   // Reset kroku przy każdym otwarciu.
   useEffect(() => {
@@ -183,9 +186,36 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
       setBundleStep(false);
       setBundleBrief('');
       setBundleError(null);
+      setBundlePhase(0);
+      bundlePhaseRef.current = 0;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // W3.7 — cycle through generation phases while loading.
+  useEffect(() => {
+    if (!bundleLoading) {
+      setBundlePhase(0);
+      bundlePhaseRef.current = 0;
+      return;
+    }
+    bundlePhaseRef.current = 0;
+    setBundlePhase(0);
+    const PHASE_DURATION = 22_000; // ~22s per phase → 5 × 22 = 110s fits within 120s timeout
+    const tick = () => {
+      if (bundlePhaseRef.current < 4) {
+        bundlePhaseRef.current += 1;
+        setBundlePhase(bundlePhaseRef.current);
+      }
+    };
+    const timers = [
+      setTimeout(tick, PHASE_DURATION),
+      setTimeout(tick, PHASE_DURATION * 2),
+      setTimeout(tick, PHASE_DURATION * 3),
+      setTimeout(tick, PHASE_DURATION * 4),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [bundleLoading]);
 
   useEffect(() => {
     if (!open) return;
@@ -309,6 +339,33 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
               {bundleError && (
                 <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs">
                   {bundleError}
+                </div>
+              )}
+              {bundleLoading && (
+                <div className="flex flex-col gap-2 px-1">
+                  {[
+                    t('rap.outputs.launcher.phase0', 'Analyzing brief & extracting KPIs…'),
+                    t('rap.outputs.launcher.phase1', 'Building financial model…'),
+                    t('rap.outputs.launcher.phase2', 'Writing report sections…'),
+                    t('rap.outputs.launcher.phase3', 'Composing slide deck…'),
+                    t('rap.outputs.launcher.phase4', 'Rendering DOCX + XLSX + PPTX…'),
+                  ].map((label, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] ${
+                        idx < bundlePhase
+                          ? 'bg-violet-600 text-white'
+                          : idx === bundlePhase
+                          ? 'border-2 border-violet-500 bg-white dark:bg-navy-900'
+                          : 'border-2 border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+                      }`}>
+                        {idx < bundlePhase && '✓'}
+                        {idx === bundlePhase && <span className="block w-2 h-2 rounded-full bg-violet-500 animate-pulse" />}
+                      </div>
+                      <span className={`text-xs ${idx === bundlePhase ? 'text-slate-900 dark:text-white font-medium' : idx < bundlePhase ? 'text-slate-400 line-through' : 'text-slate-300 dark:text-navy-600'}`}>
+                        {label}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
               <button

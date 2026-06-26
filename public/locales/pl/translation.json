@@ -13315,6 +13315,11 @@
         "bundleGenerate": "Generuj i pobierz ZIP",
         "bundleBriefTooShort": "Brief musi mieć co najmniej 20 znaków",
         "bundleError": "Generowanie nie powiodło się — spróbuj ponownie",
+        "phase0": "Analiza briefu i ekstrakcja KPI…",
+        "phase1": "Budowanie modelu finansowego…",
+        "phase2": "Pisanie sekcji raportu…",
+        "phase3": "Komponowanie deck'u…",
+        "phase4": "Renderowanie DOCX + XLSX + PPTX…",
         "tpl": {
           "blank": "Pusty",
           "auditReport": "Raport audytowy",
@@ -13412,6 +13417,24 @@
       "breadcrumb": {
         "library": "Biblioteka"
       }
+    },
+    "bundles": {
+      "title": "Komplet AI — historia generacji",
+      "empty": "Brak wygenerowanych materiałów",
+      "loading": "Ładowanie historii…",
+      "qualityOk": "Jakość OK",
+      "qualityIssues": "Problemy z jakością",
+      "qualityUnknown": "Jakość nieznana",
+      "statusDraft": "Szkic",
+      "statusGenerating": "Generowanie",
+      "statusReady": "Gotowy",
+      "statusError": "Błąd",
+      "detailTitle": "Szczegóły wiązki",
+      "detailClose": "Zamknij",
+      "redownload": "Pobierz ponownie",
+      "redownloadUnavailable": "Ponowne pobranie niedostępne (brak zapisanego briefu)",
+      "showHistory": "Historia generacji Komplet AI",
+      "hideHistory": "Ukryj historię"
     },
     "errors": {
       "realReportsTitle": "Źródło rzeczywistych raportów wymaga uwagi",
