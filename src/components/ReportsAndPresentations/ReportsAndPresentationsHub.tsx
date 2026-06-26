@@ -7,11 +7,14 @@
 
 import {
   BookTemplate,
+  ChevronDown,
+  ChevronUp,
   FileText,
   Filter,
   Inbox,
   LayoutGrid,
   MessageSquare,
+  Package2,
   Plus,
   Presentation,
   Table2,
@@ -41,6 +44,7 @@ import {
 } from '../shared/ModuleMenu3';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { deliverableKickoffSeed, deliverableTypeLabel } from './deliverableKickoff';
+import { BundleHistoryPanel } from './BundleHistoryPanel';
 import { type LauncherSelection, OutputsLauncherModal } from './OutputsLauncherModal';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
@@ -143,6 +147,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   } = useSheetOutputs();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [bundleHistoryOpen, setBundleHistoryOpen] = useState(false);
 
   const tabs = useMemo(
     () => [
@@ -1130,6 +1135,35 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onClose={() => setLauncherOpen(false)}
         onSelect={handleLauncherSelect}
       />
+
+      {/* W3.8 / W4.4 — Komplet AI bundle history (only when deliverables premium is enabled) */}
+      {isDeliverablesLightEnabled() && (
+        <div className="mx-4 mb-4 mt-2">
+          {/* Section header with collapse toggle */}
+          <button
+            onClick={() => setBundleHistoryOpen((v) => !v)}
+            className="flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left text-sm font-semibold text-slate-700 transition-colors hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            aria-expanded={bundleHistoryOpen}
+            data-testid="bundle-history-toggle"
+          >
+            <Package2 className="h-4 w-4 shrink-0 text-blue-500" />
+            <span className="flex-1">
+              {t('rap.bundles.sectionTitle', 'Komplet AI — historia generacji')}
+            </span>
+            {bundleHistoryOpen ? (
+              <ChevronUp className="h-4 w-4 text-slate-400" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            )}
+          </button>
+
+          {bundleHistoryOpen && (
+            <div className="mt-2">
+              <BundleHistoryPanel />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
