@@ -45,6 +45,10 @@ import type {
 } from '../types/deliverablesGeneration.js';
 import logger from '../utils/Logger.js';
 import db from '../database/PostgresDatabase.js';
+// W5 (F5 kompozycja) — konektory + formularze → tabela materiału:
+import { connectorRegistry } from '../services/dataCollection/connectorFramework.js';
+import { connectorDataset, formDataset } from '../services/deliverables/materialDataBinding.js';
+import formService from '../services/tablePlatform/FormService.js';
 
 const router = Router();
 
@@ -521,6 +525,87 @@ router.get('/bundles', async (req: any, res: Response) => {
         updatedAt: r.updated_at,
       })),
     });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// ── W5 (F5) — Dane: konektory + formularze → tabela materiału (kompozycja) ──
+
+// GET /data/connectors — W5.1: lista dostępnych typów konektorów (z rejestru F5).
+router.get('/data/connectors', async (_req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  try {
+    res.status(200).json({ success: true, types: connectorRegistry.listTypes() });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// POST /data/connectors/preview — W5.1: podgląd danych ze źródła (komponuje fetchRecords).
+const ConnectorPreviewSchema = z.object({
+  type: z.string().min(1).max(64),
+  config: z.record(z.unknown()),
+  limit: z.number().int().min(1).max(500).optional(),
+});
+router.post('/data/connectors/preview', aiRateLimiter, async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  const parsed = ConnectorPreviewSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: 'Invalid connector preview request', code: 'invalid_setup' });
+    return;
+  }
+  try {
+    const dataset = await connectorDataset(parsed.data.type, parsed.data.config, { limit: parsed.data.limit ?? 25 });
+    if (!dataset) {
+      res.status(502).json({ success: false, error: 'Connector returned no data', code: 'internal_error' });
+      return;
+    }
+    res.status(200).json({ success: true, dataset });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// POST /data/forms/:formId/dataset — W5.2: zgłoszenia formularza → dataset materiału.
+router.post('/data/forms/:formId/dataset', async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  const formId = String(req.params.formId ?? '');
+  if (!formId) {
+    res.status(400).json({ success: false, error: 'Missing formId' });
+    return;
+  }
+  try {
+    // Etykiety kolumn z definicji formularza (fieldId → label) — czytelne nagłówki.
+    let fieldLabels: Record<string, string> | undefined;
+    try {
+      const form = await formService.getForm(formId);
+      fieldLabels = Object.fromEntries(
+        (form.config?.fields ?? [])
+          .filter((f: any) => f.label)
+          .map((f: any) => [f.fieldId, f.label as string]),
+      );
+    } catch {
+      fieldLabels = undefined; // brak etykiet → klucze surowe (fail-soft)
+    }
+    const dataset = await formDataset(formId, {
+      fetchSubmissions: (id) => formService.getSubmissions(id, { limit: 500 }),
+      fieldLabels,
+    });
+    if (!dataset) {
+      res.status(502).json({ success: false, error: 'Form returned no data', code: 'internal_error' });
+      return;
+    }
+    res.status(200).json({ success: true, dataset });
   } catch (err) {
     handleServiceError(res, err);
   }
