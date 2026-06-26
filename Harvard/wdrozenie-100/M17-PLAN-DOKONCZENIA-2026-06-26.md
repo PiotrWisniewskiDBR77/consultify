@@ -91,9 +91,9 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 ### W5 — Dane (F5) — KOMPONUJ istniejące (~90% gotowe)
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| W5.1 | Wystaw konektory (`connectorFramework`+postgres) na tabelę materiału (`materialDataBinding.ts` + endpoint) | 🟢infra | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (S-M, kompozycja) |
-| W5.2 | Generowane formularze→tabela materiału (`FormService`/`FormIntakeService`) (F5.2) | 🟢infra | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (intake żywy, brak UI w Materiałach) |
-| W5.3 | UI „Dane" tab na materiale (Connect source + Collect via form) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| W5.1 | Wystaw konektory (`connectorFramework`) na tabelę materiału (`materialDataBinding.ts` + endpointy) | ✅ | ✅ | ✅ | ✅ | n/d | ✅ | ⬜ | ⬜ | 🟢 **ZROBIONE** (connectorDataset + GET /data/connectors + POST /preview; 10 testów) |
+| W5.2 | Generowane formularze→tabela materiału (`FormService`) (F5.2) | ✅ | ✅ | ✅ | ✅ | n/d | ✅ | ⬜ | ⬜ | 🟢 **ZROBIONE** (formDataset DI + POST /data/forms/:id/dataset) |
+| W5.3 | UI „Dane" tab na materiale (Connect source + Collect via form) | 🟡 | 🟡 | ✅ | ⬜ | 🟡 | ⬜ | ⬜ | ⬜ | 🟡 (FE-klient `materialData.ts` gotowy + 7 testów; komponent tabu = sesja FE) |
 
 ### W6 — Automatyzacja (F7) — BRIDGE istniejącego szkieletu
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |

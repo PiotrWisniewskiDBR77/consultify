@@ -18,7 +18,16 @@ Piotr: „buduj, odblokuj, jedź kolejne 40%". Zrealizowałem rdzeń strategii *
 | **W1.8a** | Raport wiązki przechodzi **DOJRZAŁY M18 documentQaService** (10 kategorii: brand/language/completeness/sources/methodology/executive/risk/data/format/export) → `bundle.quality.docQa`. | `bundleDocQa.ts`, 6 testów |
 | **W1.8b** | Deck wiązki przechodzi **M19 strukturalny gate** (`validateReport`/RulesEngine, in-memory odpowiednik presentationQualityGatesService który wymaga DB) → `bundle.quality.deckQa`. | `bundleDeckQa.ts`, 5 testów |
 
-> **Współbieżna sesja (drugi agent, ten sam branch)** równolegle domknęła: W1.7 (image router T0), W3.7 (progress UI), W3.8 (bundle history panel), W4.4 (lifecycle badges), W7.7 (piękny XLSX), W13.4 (E2E), W13.8 (CI guard). Dzielone drzewo = git-race realny; rozwiązany bez utraty pracy (commituj-natychmiast + tylko-moje-pliki). **Łącznie pakiet deliverables: 539/539, 0 tsc.**
+> **Współbieżna sesja (drugi agent, ten sam branch)** równolegle domknęła: W1.7 (image router T0), W3.7 (progress UI), W3.8 (bundle history panel), W4.4 (lifecycle badges), W7.7 (piękny XLSX), W12.1 (anti-pattern detector), W13.4 (E2E), W13.8 (CI guard). Dzielone drzewo = git-race realny; rozwiązany bez utraty pracy (commituj-natychmiast + tylko-moje-pliki).
+
+### SESJA 4 (cd.) — W5 Dane (F5) skomponowane
+| Task | Co realnie teraz działa | Dowód |
+|---|---|---|
+| **W5.1** | Konektory F5 (postgres/airtable/jira/sheets/csv/webhook) → `MaterialDataset` przez `materialDataBinding.connectorDataset` (komponuje `connectorRegistry.fetchRecords`). Endpointy `GET /data/connectors` + `POST /data/connectors/preview`. `datasetToTableIntent` seeduje `generateTableSchema` realnymi danymi (zero fabrykacji). | `materialDataBinding.ts`, 10 testów |
+| **W5.2** | Formularze intake → `MaterialDataset` przez `formDataset` (DI na `getSubmissions`, etykiety pól→nagłówki). Endpoint `POST /data/forms/:formId/dataset`. | tamże |
+| **W5.3** | FE-klient `materialData.ts` (`listConnectorTypes`/`previewConnector`/`fetchFormDataset`) gotowy dla tabu „Dane". Komponent tabu = sesja FE. | `materialData.ts`, 7 testów |
+
+> **Decyzja W0.1 zrealizowana w pełni:** M17 komponuje M18 (doc-QA) + M19 (PPTX pipeline + deck-gate) + F5 (dane) + F7 (scheduler, W6.1) zamiast budować równoległe stosy.
 
 ## 2. CO ZROBIŁEM (task po tasku, z dowodem)
 
