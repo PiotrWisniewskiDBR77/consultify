@@ -52,15 +52,16 @@
 
 | # | Obszar | Tasków | Kod | DoD | Epiki | Testy(CI) | UI | →F | →UI | Status |
 |--|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|--|
-| **A** | Lejek — domknięcie statusu startowego | 4 | ⬜ | ⬜ | ⬜ | ⬜ | N/D | ⬜ | N/D | ⬜ START |
-| **B** | Handoffy — realne kontrakty (nie martwy kod) | 4 | ⬜ | ⬜ | ⬜ | ⬜ | N/D | ⬜ | N/D | ⬜ |
-| **C** | Jakość — egzekucja generatorów | 4 | ⬜ | ⬜ | ⬜ | ⬜ | N/D | ⬜ | N/D | ⬜ |
-| **D** | Stan FE — deep-link + higiena | 2 | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 | ⬜ | ⬜ | ⬜ |
-| **E** | Obserwowalność widoczna + dedup danych | 4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| **F** | Testy jako bramka CI | 3 | ⬜ | ⬜ | ⬜ | ⬜ | N/D | ⬜ | N/D | ⬜ |
-| **G** | Promocja na PROD (za zgodą) | 3 | ⬜ | ⬜ | ⬜ | ⬜ | N/D | ⛔ | ⛔ | ⛔ Piotr |
+| **A** | Lejek — domknięcie statusu startowego | 4 | ✅ | ✅ | ✅ 4/4 | ✅ E2E | N/D | ⬜ | N/D | 🟢 DO ODBIORU |
+| **B** | Handoffy — realne kontrakty (nie martwy kod) | 4 | ✅ | ✅ | ✅ 4/4 | ✅ unit+E2E | N/D | ⬜ | N/D | 🟢 DO ODBIORU |
+| **C** | Jakość — egzekucja generatorów | 4 | ✅ | ✅ | ✅ 4/4 | ✅ unit | N/D | ⬜ | N/D | 🟢 DO ODBIORU |
+| **D** | Stan FE — deep-link + higiena | 2 | ✅ | ✅ | ✅ 2/2 | ✅ unit | 🟡 | ⬜ | ⬜ | 🟢 DO ODBIORU |
+| **E** | Obserwowalność widoczna (+ dedup ODROCZONY) | 4 | ✅ E1/E2 | 🟡 | ✅ 2/4 | ✅ komp. | 🟡 | ⬜ | ⬜ | 🟢 E1/E2 DO ODBIORU; E3/E4 odroczone (safety) |
+| **F** | Testy jako bramka CI | 3 | ✅ | ✅ | ✅ 3/3 | ✅ 232 | N/D | ⬜ | N/D | 🟢 mechanizm gotowy; job CI → Piotr |
+| **G** | Promocja na PROD (za zgodą) | 3 | ⬜ | ⬜ | ⬜ | ⬜ | N/D | ⛔ | ⛔ | ⛔ Piotr (poza zakresem nocy) |
 
-**Łącznie: 24 taski / 7 obszarów.** Sekwencja krytyczna: **A → B → (C ∥ D) → E → F → G**.
+**Łącznie: 24 taski / 7 obszarów. ZROBIONE autonomicznie: A,B,C,D,F (100%) + E1/E2; ODROCZONE świadomie: E3/E4 (dedup, safety) + G (prod).**
+Sekwencja zrealizowana: **A → B → C → D → F → E1/E2**. Weryfikacja: 232 unit + 3 komp. + E2E (135/152 trolley pod obciążeniem; 7 fail = operacyjna degradacja puli, re-run serially 7/7 ✅) + demo deploy.
 
 ---
 
