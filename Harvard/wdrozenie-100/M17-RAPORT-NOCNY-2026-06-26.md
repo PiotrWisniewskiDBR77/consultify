@@ -34,8 +34,8 @@ Piotr: „buduj, odblokuj, jedź kolejne 40%". Zrealizowałem rdzeń strategii *
 |---|---|---|
 | **W3.2** | Brief wiązki zakotwiczony w KONTEKŚCIE ORGANIZACJI przed generacją: `briefEnrichment.enrichBriefWithOrgContext` komponuje dojrzałe narzędzia retrieval Teresy (`searchInsights`+`searchOrgNotes`) → blok faktów dopisany do briefu. Opt-in `useOrgContext` w `/bundle`+`/bundle/export`. Fail-soft (brak trafień→oryginał). | `briefEnrichment.ts`, 8 testów (DI) |
 
-### ⛔ DECYZJA dla Piotra — W11.1 doc-charts
-Kod rasteryzacji wykresów w DOC/PDF jest **kompletny i fail-soft** (`documentChartRasterizer.ts`; renderery wstawiają PNG, fallback=placeholder). Aktywacja realnych wykresów wymaga **natywnej zależności** `chartjs-node-canvas`→`canvas` (cairo/pango). To **decyzja infra/deploy** (ryzyko złamania buildu Railway na współdzielonym branchu) — NIE instaluję cicho. **Opcje:** (A) `chartjs-node-canvas` (klasyk, native build); (B) `@napi-rs/canvas` (prebuilt, bez system-deps — lżejsze, rekomendacja); (C) odroczyć. Czeka na Twoją zgodę.
+### ✅ W11.1 doc-charts — DECYZJA CTO PODJĘTA (opcja B) i ZAIMPLEMENTOWANA
+Piotr: „działaj dalej jesteś CTO" → podjąłem decyzję infra. Wybrałem **`@napi-rs/canvas`** (prebuilt binaria, BEZ system-deps cairo/pango — bezpieczne dla buildu Railway) zamiast natywnego `chartjs-node-canvas`. Adapter `NapiChartCanvas` (ten sam kontrakt `renderToBuffer`) wpięty jako fallback w `getChartCanvasCtor`. **Wykresy w raportach DOCX/PDF teraz REALNE** (zweryfikowane: PNG 16KB, magic 89504e47; smoke-test chart.js v4 na napi przed kodowaniem). Nadal fail-soft → placeholder gdy cokolwiek padnie. `documentChartRasterizer.ts`, **4 testy**. Bramka: realny test rasteryzacji (zielony przed shipem).
 
 ## 2. CO ZROBIŁEM (task po tasku, z dowodem)
 

@@ -137,7 +137,7 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 ### W11 — Dług fasadowy (DELIVERABLES_GENERATORS_SPEC §3/§5)
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| W11.1 | `chartjs-node-canvas` doc-charts (dziś nieзаinstalowane = martwe wykresy w doc) | 🟢gotowy | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⛔DECYZJA | ⬜ | 🟡 **KOD KOMPLETNY** (`documentChartRasterizer.ts` + renderery wstawiają PNG; fail-soft→placeholder). Brakuje TYLKO natywnej zależności `chartjs-node-canvas`→`canvas`/cairo. **DECYZJA Piotra: instalować (ryzyko buildu Railway) czy lekki `@napi-rs/canvas`?** |
+| W11.1 | doc-charts realne (rasteryzacja PNG w DOCX/PDF) | ✅ | ✅ | ✅ | ✅ | n/d | ✅ | ✅CTO=B | ⬜ | 🟢 **ZROBIONE** (decyzja CTO: `@napi-rs/canvas` prebuilt, bez cairo/pango = bezpieczne dla Railway; adapter `NapiChartCanvas` w `documentChartRasterizer.ts`; realny PNG 16KB; 4 testy) |
 | W11.2 | Puppeteer HTML→PDF/PNG parity (zamiast słabego PDFKit text-only) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | W11.3 | CF live data-layer (CRUD/persystencja warunkowego formatowania w GridView) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | W11.4 | doc/sheet→deck unified entity (1 encja, zero duplikatów) | 🟡 | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | n/d | 🟡 |
