@@ -13,9 +13,11 @@
 import {
   ArrowLeft,
   ClipboardList,
+  Download,
   FileText,
   LayoutDashboard,
   Loader2,
+  Package2,
   Presentation,
   ShieldAlert,
   Sparkles,
@@ -26,6 +28,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { downloadBundleZip } from '../../services/deliverablesBundle';
 import { useDeliverableTemplates } from './useDeliverableTemplates';
 import { useTemplateSuggestion } from './useTemplateSuggestion';
 
@@ -165,12 +168,21 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
 
   const [intentInput, setIntentInput] = useState('');
 
+  // W3.5 — Komplet AI: brief → ZIP generation state.
+  const [bundleStep, setBundleStep] = useState(false);
+  const [bundleBrief, setBundleBrief] = useState('');
+  const [bundleLoading, setBundleLoading] = useState(false);
+  const [bundleError, setBundleError] = useState<string | null>(null);
+
   // Reset kroku przy każdym otwarciu.
   useEffect(() => {
     if (open) {
       setSelectedType(null);
       setIntentInput('');
       resetSuggestion();
+      setBundleStep(false);
+      setBundleBrief('');
+      setBundleError(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -179,7 +191,8 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
     if (!open) return;
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (selectedType) setSelectedType(null);
+        if (bundleStep) setBundleStep(false);
+        else if (selectedType) setSelectedType(null);
         else onClose();
       }
     };
@@ -207,6 +220,24 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedType, intentInput, suggest, t]);
 
+  const handleBundleGenerate = useCallback(async () => {
+    const brief = bundleBrief.trim();
+    if (brief.length < 20) {
+      setBundleError(t('rap.outputs.launcher.bundleBriefTooShort', 'Brief must be at least 20 characters'));
+      return;
+    }
+    setBundleLoading(true);
+    setBundleError(null);
+    const ok = await downloadBundleZip(brief);
+    setBundleLoading(false);
+    if (ok) {
+      onClose();
+    } else {
+      setBundleError(t('rap.outputs.launcher.bundleError', 'Generation failed — please try again'));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundleBrief, onClose, t]);
+
   if (!open) return null;
 
   return (
@@ -224,9 +255,9 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
       <div className="w-full max-w-xl mx-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-800">
           <div className="flex items-center gap-2 min-w-0">
-            {selectedType && (
+            {(selectedType || bundleStep) && (
               <button
-                onClick={() => setSelectedType(null)}
+                onClick={() => { setBundleStep(false); setSelectedType(null); }}
                 data-testid="launcher-back"
                 className="p-1 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
                 aria-label={t('rap.outputs.launcher.back', 'Back')}
@@ -238,9 +269,11 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
               id="outputs-launcher-title"
               className="text-base font-semibold text-slate-900 dark:text-white truncate"
             >
-              {selectedType
-                ? t('rap.outputs.launcher.chooseTemplate', 'Choose a template')
-                : t('rap.outputs.launcher.title', 'New output')}
+              {bundleStep
+                ? t('rap.outputs.launcher.bundleTitle', 'Komplet AI — brief')
+                : selectedType
+                  ? t('rap.outputs.launcher.chooseTemplate', 'Choose a template')
+                  : t('rap.outputs.launcher.title', 'New output')}
             </h2>
           </div>
           <button
@@ -254,7 +287,43 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
         </div>
 
         <div className="p-4">
-          {!selectedType ? (
+          {bundleStep ? (
+            /* W3.5 — Komplet AI: brief textarea → ZIP generation */
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t('rap.outputs.launcher.bundleSubtitle', 'Describe your company, product, market, and ask in one paragraph. The AI will produce DOCX + XLSX + PPTX and download them as a ZIP.')}
+              </p>
+              <textarea
+                data-testid="launcher-bundle-brief"
+                value={bundleBrief}
+                onChange={(e) => { setBundleBrief(e.target.value); setBundleError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void handleBundleGenerate(); }}
+                rows={5}
+                maxLength={4000}
+                placeholder={t('rap.outputs.launcher.bundleBriefPlaceholder', 'e.g. Acme is a SaaS B2B platform for logistics companies in Central Europe. TAM €3B, asking €500k seed. Primary KPIs: MRR €40k, NRR 115%, burn €25k/mo…')}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"
+              />
+              <div className="text-[11px] text-slate-400 -mt-2">
+                {bundleBrief.length}/4000 {t('common.characters', 'characters')}
+              </div>
+              {bundleError && (
+                <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs">
+                  {bundleError}
+                </div>
+              )}
+              <button
+                type="button"
+                data-testid="launcher-bundle-generate"
+                onClick={() => void handleBundleGenerate()}
+                disabled={bundleLoading || bundleBrief.trim().length < 20}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {bundleLoading
+                  ? <><Loader2 size={16} className="animate-spin" /> {t('rap.outputs.launcher.bundleGenerating', 'Generating…')}</>
+                  : <><Download size={16} /> {t('rap.outputs.launcher.bundleGenerate', 'Generate & download ZIP')}</>}
+              </button>
+            </div>
+          ) : !selectedType ? (
             <>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                 {t('rap.outputs.launcher.subtitle', 'Pick what you want to create')}
@@ -288,6 +357,31 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                   );
                 })}
               </div>
+              {/* W3.5 — Komplet AI tile: pełna szerokość, wyróżniona */}
+              <button
+                type="button"
+                data-testid="launcher-type-bundle"
+                onClick={() => setBundleStep(true)}
+                className="group mt-3 flex items-center gap-3 w-full p-4 rounded-xl text-left border border-violet-200 dark:border-violet-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 transition-all duration-150 hover:-translate-y-0.5"
+              >
+                <div className="shrink-0 p-2.5 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white">
+                  <Package2 size={22} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm text-violet-900 dark:text-violet-100">
+                      {t('rap.outputs.launcher.bundle', 'Komplet AI')}
+                    </span>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300">
+                      {t('common.new', 'NEW')}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-violet-700 dark:text-violet-400 mt-0.5">
+                    {t('rap.outputs.launcher.bundleHint', 'One brief → DOCX + XLSX + PPTX downloaded as ZIP')}
+                  </div>
+                </div>
+                <Sparkles size={16} className="shrink-0 text-violet-400 dark:text-violet-500" />
+              </button>
             </>
           ) : (
             <>

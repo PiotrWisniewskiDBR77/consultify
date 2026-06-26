@@ -7,6 +7,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+// Prevent deliverablesBundle → api.ts → i18n.ts import chain from breaking test env.
+vi.mock('@/services/deliverablesBundle', () => ({
+  downloadBundleZip: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock('@/components/ReportsAndPresentations/useDeliverableTemplates', () => ({
   useDeliverableTemplates: (type: any) => {
     const TEMPLATES: Record<string, any[]> = {
