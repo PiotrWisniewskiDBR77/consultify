@@ -72,7 +72,7 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 |---|---|---|---|---|---|---|---|---|---|---|
 | W3.1 | Unified panel „Nowy" + wybór formatu (rozszerz `OutputsLauncherModal`) | 🟡 | 🟡 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (launcher istnieje za flagą) |
 | W3.2 | Wejście 1: brief→retrieval z org (F2.2) | ✅ | ✅ | ✅ | ✅ | n/d | ✅ | ⬜ | ⬜ | 🟢 **ZROBIONE** (`briefEnrichment.ts` komponuje searchInsights+searchOrgNotes; opt-in `useOrgContext` w /bundle+/export; 8 testów) |
-| W3.3 | Wejście 2: upload pliku→parse (F2.3) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (brak UI uploadu) |
+| W3.3 | Wejście 2: upload pliku→parse (F2.3) | ✅ | ✅ | ✅ | ✅ | 🟡FE | ✅ | ⬜ | ⬜ | 🟢 **BACKEND ZROBIONE** (`uploadContextExtract.ts` komponuje xlsx/jszip/parseCSV/PDFParser → txt/csv/xlsx/docx/pdf; `POST /data/extract`; 11 testów. UI uploadu = sesja FE) |
 | W3.4 | Wejście 3: „Przygotuj narzędzie" handoff (F2.4) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (0 hits w src) |
 | W3.5 | **FE → `/bundle/export`** (nowy `deliverablesBundle.ts`: `generateBundle`/`exportBundle`) ⟵ największa luka | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (0 frontend callerów) |
 | W3.6 | In-app unified viewer (3 formaty z 1 wiersza biblioteki) | 🟡 | 🟡 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (`ArtifactViewer` częściowy) |
