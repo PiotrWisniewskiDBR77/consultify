@@ -22,6 +22,7 @@ const mockGetValidations = vi.fn();
 const mockListEvents = vi.fn();
 const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
+const mockCreateBudget = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -210,6 +211,7 @@ vi.mock('../../../services/valuationService.js', () => ({
 
 vi.mock('../../../services/budgetingService.js', () => ({
   listBudgets: (...args: unknown[]) => mockListBudgets(...args),
+  createBudget: (...args: unknown[]) => mockCreateBudget(...args),
 }));
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
@@ -331,6 +333,7 @@ describe('V8 finance read-only routes', () => {
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
     mockListBudgets.mockResolvedValue([]);
+    mockCreateBudget.mockResolvedValue({ id: 'budget-new', title: 'Test Budget', status: 'DRAFT' });
     mockListAnalyses.mockResolvedValue([]);
     mockGetAnalysisRatios.mockResolvedValue([]);
     mockGetAnalysisInsights.mockResolvedValue([]);
@@ -1446,6 +1449,40 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.budgets?.[0]?.title).toBe('FY26 operating budget');
     expect(mockListBudgets).toHaveBeenCalledWith(ORG);
+  });
+
+  it('POST /api/v8/finance/budgets creates a budget and returns 200', async () => {
+    mockCreateBudget.mockResolvedValue({
+      id: 'budget-created',
+      organizationId: ORG,
+      title: 'FY26 Budget',
+      status: 'DRAFT',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-12-31',
+      currency: 'PLN',
+      granularity: 'monthly',
+    });
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/budgets').send({
+      title: 'FY26 Budget',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-12-31',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.budget?.id).toBe('budget-created');
+    expect(mockCreateBudget).toHaveBeenCalledWith(
+      ORG,
+      expect.objectContaining({ title: 'FY26 Budget', periodStart: '2026-01-01' }),
+      expect.any(String)
+    );
+  });
+
+  it('POST /api/v8/finance/budgets — 400 when required fields missing', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/budgets').send({ title: 'No dates' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/required/i);
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

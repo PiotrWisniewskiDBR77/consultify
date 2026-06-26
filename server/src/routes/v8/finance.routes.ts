@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { listBudgets } from '../../services/budgetingService.js';
+import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
@@ -840,6 +840,24 @@ router.get(
       data: { budgets, count: budgets.length },
       meta: financeMeta(),
     });
+  })
+);
+
+router.post(
+  '/budgets',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const { title, periodStart, periodEnd, currency, granularity, description } = req.body || {};
+    if (!title || !periodStart || !periodEnd) {
+      return res.status(400).json({ error: 'title, periodStart, periodEnd required' });
+    }
+    const budget = await createBudget(
+      organizationId,
+      { title, periodStart, periodEnd, currency, granularity, description },
+      userId
+    );
+    return res.json({ data: { budget }, meta: financeMeta() });
   })
 );
 
