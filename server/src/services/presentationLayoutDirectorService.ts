@@ -581,6 +581,10 @@ async function planViaLlm(
     maxTokens: 1500,
     temperature: 0.3,
     cache: false,
+    // W2.1 fix: premium deck planning is heavy; without this override the
+    // baseClient 20s hard-timeout silently kills it → deck:null → missing PPTX.
+    // Aligns with assumptionsModel/tableSchema/docBlock (all 120000).
+    timeoutMs: 120000,
   });
 
   const obj = (result as any)?.object;
