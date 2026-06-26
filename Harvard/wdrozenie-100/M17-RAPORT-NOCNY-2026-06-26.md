@@ -232,5 +232,18 @@ critic, palety, charts, transform gridu. Brakuje wyłącznie wizualnego wpięcia
 Następny skok: W3.7+ (progress UI podczas generacji), W3.8 (in-app preview), W4.4 (lifecycle UI), W1.7 (obrazy), W1.8 (adopcja dojrzałych studiów — wymaga decyzji W0.1).
 
 ---
+
+## SESJA 9 (kontynuacja, 2026-06-26) — W12.1 finanse: hockey-stick
+
+| Task | Co realnie działa | Dowód |
+|---|---|---|
+| **W12.1 (fin)** | `financialAntiPatterns.ts`: detektor **hockey-stick** na WYLICZONEJ trajektorii przychodu (skok ≥2.5× + ≥2× szybszy niż rok wcześniej + ≥60% wzrostu skumulowane na końcu → flag). Domyka pattern `hockey_stick_no_driver` **zadeklarowany w typie ale nigdy nieemitowany**. Wpięty w `buildSpine` → `spine.validation.antiPatterns`. **Uczciwie:** `hidden_circularity` NIE zaimplementowany — wymaga grafu zależności założeń, generyczny detektor byłby zgadywaniem (odroczony, nie udawany). | 9 testów (z guardem false-positive: zdrowy compound growth nie flagowany) |
+
+### Testy — wyniki sesja 9
+- Sesja 9 start: **685/685** (65 plików)
+- Sesja 9 koniec: **694/694** (66 plików) → **+9 testów**
+- Zero regresji. Zero tsc errors.
+
+---
 *21 tasków, 57 nowych testów, 519/519, 0 regresji. Commity na origin/feat/deliverables-w1.*
 *Szczegół: M17-PLAN-DOKONCZENIA-2026-06-26.md (dashboard 8-bramkowy) + M17-AUDYT-REALIZACJI-2026-06-26.md (audyt źródłowy).*
