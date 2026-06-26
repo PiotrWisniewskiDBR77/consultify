@@ -32,7 +32,7 @@ const DOMAIN_SCHEMAS: Record<
       'status',
       'priority',
       'category',
-      'estimated_roi',
+      'expected_roi',
       'estimated_cost',
       'estimated_benefit',
       'start_date',
@@ -218,7 +218,7 @@ class TextToSqlService {
     if (/roi\s*>\s*(\d+)/i.test(q)) {
       const match = q.match(/roi\s*>\s*(\d+)/i);
       if (match) {
-        conditions.push('estimated_roi > ?');
+        conditions.push('expected_roi > ?');
         params.push(Number(match[1]));
       }
     }
@@ -226,13 +226,13 @@ class TextToSqlService {
     if (/roi\s*<\s*(\d+)/i.test(q)) {
       const match = q.match(/roi\s*<\s*(\d+)/i);
       if (match) {
-        conditions.push('estimated_roi < ?');
+        conditions.push('expected_roi < ?');
         params.push(Number(match[1]));
       }
     }
 
     if (/\b(top|highest|biggest|largest|najwyż|największ)/i.test(q)) {
-      if (domain === 'initiatives') orderBy = 'estimated_roi DESC';
+      if (domain === 'initiatives') orderBy = 'expected_roi DESC';
       if (domain === 'financials') orderBy = 'revenue DESC';
     }
 

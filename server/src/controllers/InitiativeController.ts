@@ -14,6 +14,7 @@ import {
   GATE_PERMISSIONS,
   GateType,
   getGateForTransition,
+  isScheduledOnward,
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
@@ -6061,7 +6062,7 @@ export class InitiativeController {
           );
         }
       }
-      if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
+      if (isScheduledOnward(currentStatus)) {
         const start = ini.planned_start_date || ini.start_date || null;
         const end = ini.planned_end_date || ini.end_date || null;
         addCheck(
