@@ -53,11 +53,14 @@ Wykonałem autonomicznie **5 z 6 obszarów w całości (A, B, C, D, F) + E1/E2**
 |---|---|
 | Unit (`npm run test:initiatives`) | **232/232** zielone (25 plików) |
 | Komponent (panel obserwowalności) | **3/3** zielone |
-| E2E `tests/e2e/uspojnienie` (trolley, flaga ON) | 135/152; 7 fail = **operacyjna degradacja puli** (2-poł. trolley pod workers=2/6.7min: `ConnectionPool Operation timeout` w logu, zero wyjątków kodu); **re-run serially 7/7 ✅** = nie regresje |
-| Deploy demo | db41fa1e0a (z E) — patrz §6 (status na koniec runu) |
+| E2E `tests/e2e/uspojnienie` (trolley lokalnie, flaga ON) | 135/152; 7 fail = **operacyjna degradacja puli** (2-poł. trolley pod workers=2/6.7min: `ConnectionPool Operation timeout` w logu, zero wyjątków kodu); **re-run serially 7/7 ✅** = nie regresje |
+| **E2E przeciw DEMO (wdrożony build, flaga ON)** | **152/152 PASSED (2.0m), zero failów** — definitywna weryfikacja całości A–F na demo.consultify.ai |
+| B1+B2 live na demo | `initiative_handoffs` zapisywane (10 wierszy) z wynikiem `evaluateHandoff`, np. `BLOCKED→EXECUTING ready=false missing=[hasDates,hasMilestone,hasKpi]` — martwy kod ożywiony |
+| Deploy demo | `db41fa1e0a` SUCCESS — **vite-build przeszedł = FE (panel obserwowalności + wpięcie hubu) kompiluje się** |
+| Dane trolley po sprzątaniu | 1341 inicjatyw, **0 name<>title**, 0 legacy status |
 | tsc | baseline (build `--noCheck`); nasze pliki bez nowych błędów |
 
-**Kluczowy wniosek E2E:** żaden z 7 failów nie jest regresją kodu — wszystkie to znana degradacja zdalnej puli trolley pod sustained-load (potwierdzona logiem + serially-pass). Definitywna weryfikacja = demo (wewn. szybka baza).
+**Kluczowy wniosek E2E:** żaden z 7 lokalnych failów nie jest regresją kodu — to znana degradacja zdalnej puli trolley pod sustained-load (log + serially-pass + **152/152 na demo** tym samym kodem).
 
 ---
 
