@@ -539,6 +539,9 @@ router.get('/bundles', async (req: any, res: Response) => {
         language: r.language,
         isLocked: r.is_locked,
         qualityPassed: (r.quality_json as any)?.passed ?? null,
+        // W10.1 — zagregowana ocena jakości (scorecard) do podglądu w historii.
+        qualityScore: (r.quality_json as any)?.scorecard?.overall ?? null,
+        qualityGrade: (r.quality_json as any)?.scorecard?.grade ?? null,
         createdAt: r.created_at,
         updatedAt: r.updated_at,
       })),
@@ -566,7 +569,7 @@ router.get('/data/connectors', async (_req: any, res: Response) => {
 // POST /data/connectors/preview — W5.1: podgląd danych ze źródła (komponuje fetchRecords).
 const ConnectorPreviewSchema = z.object({
   type: z.string().min(1).max(64),
-  config: z.record(z.unknown()),
+  config: z.record(z.string(), z.unknown()),
   limit: z.number().int().min(1).max(500).optional(),
 });
 router.post('/data/connectors/preview', aiRateLimiter, async (req: any, res: Response) => {
