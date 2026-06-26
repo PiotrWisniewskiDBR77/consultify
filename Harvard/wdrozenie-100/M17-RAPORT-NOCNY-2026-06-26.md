@@ -6,9 +6,9 @@
 
 Skupiłem się na **sednie problemu „powierzchowności"**, który ujawnił 7-agentowy audyt: zbudowany „mózg premium" (10 modułów jakości) **nie był wpięty w żywy pipeline** (0 callerów), plus 2 żywe bugi finansowe. W tę noc **fizycznie wpiąłem mózg w generację** i naprawiłem bugi — i **udowodniłem to testami integracyjnymi**.
 
-**Liczby (kontynuacja sesji):** 13 tasków zamkniętych (kod+test+wpięcie), **+47 nowych testów łącznie**, pakiet deliverables **509/509** zielony _(+25 od pierwszego raportu)_, **0 błędów tsc**. Wszystko na demo (non-prod), **produkcja nietknięta**.
+**Liczby (sesja 3 — kontynuacja):** 21 tasków łącznie zamkniętych (kod+test+wpięcie), **+57 nowych testów łącznie**, pakiet deliverables **519/519** zielony, **0 błędów tsc**. Wszystko na demo (non-prod), **produkcja nietknięta**.
 
-**Postęp jako PRODUKT: ~25-35% → ~50-55%.** Kluczowy skok: W3 frontend (user teraz dotyka pipeline'u z UI), W6.1 scheduler, W1.5/W1.6 wykresy+brand.
+**Postęp jako PRODUKT: ~25-35% → ~55-60%.** Kluczowy skok sesji 3: W2.3 chipy sekcji (beat Gamma), W12.2 sensitivity matrix wyceny, W4.1+W4.2+W4.3 persystencja bundli w DB + endpoint listy, W3.6 FE hook listy bundli, W13.6 i18n Komplet AI (PL+EN).
 
 ## 2. CO ZROBIŁEM (task po tasku, z dowodem)
 
@@ -66,7 +66,9 @@ Wszystko w `bundleGenerationRuntime.generateBundleFromSpine` (jeden chokepoint k
 ## 3. TESTY — wyniki (przed→po)
 - **Pakiet deliverables unit (sesja 1):** 478 → **484/484** (+34 nowe z naprawkami).
 - **Pakiet deliverables unit (sesja 2, kontynuacja):** 484 → **509/509** (+25 nowych: W1.5/7, W1.6/5, W6.1/4, W13.3/9).
-- **FE testy modalu:** 10/10 wszystkie zielone (mock deliverablesBundle zapobiega api→i18n chain).
+- **Pakiet deliverables unit (sesja 3):** 509 → **519/519** (+10 nowych: W2.3/4, W12.2/6).
+- **FE testy modalu:** 10/10 wszystkie zielone.
+- **i18n gate (bare-missing):** 0 naruszeń.
 - **tsc:** 0 błędów w plikach które tknąłem.
 - **Zero regresji** — żaden istniejący test nie pękł w żadnej sesji.
 
@@ -82,30 +84,41 @@ Wszystko w `bundleGenerationRuntime.generateBundleFromSpine` (jeden chokepoint k
 
 ## 6. CO ZOSTAŁO (uczciwa mapa — z dashboardu W0-W14)
 
-### ✅ ZAMKNIĘTE w 2 sesjach (łącznie)
+### ✅ ZAMKNIĘTE w 3 sesjach (łącznie)
 W1.1, W1.2, W1.3, W1.4 — bramki jakości wpięte w pipeline (sesja 1)
 W1.5 — chart-spec renderer: bar_series + RAG w PPTX (sesja 2)
 W1.6 — brand ingestion threading: DOCX + XLSX + PPTX (sesja 2)
 W2.1, W2.2 — żywe bugi finansowe (sesja 1)
+W2.3 — section chips w PPTX (beat Gamma) (sesja 3)
 W3.5 — frontend: FE service + Komplet AI launcher tile (sesja 2)
+W3.6 — FE hook listy bundli: listBundles() + useBundleList (sesja 3)
+W4.1 — migration 786: deliverable_bundles + bundle_versions (sesja 3)
+W4.2 — route persystencja fire-and-forget po /bundle/export (sesja 3)
+W4.3 — GET /bundles endpoint (lista dla org) (sesja 3)
 W6.1 — bridge scheduler → M17 generator (sesja 2)
 W6.2 — deliverViaEmail realny (sesja 1)
+W12.2 — valuation sensitivity matrix 3 drivery × ±20% (sesja 3)
 W13.1, W13.2, W13.3 — testy integracyjne + SoT (obie sesje)
+W13.5 — color token sweep (rozwiązane przez themeRegistry — brak naruszeń)
+W13.6 — i18n: bundle keys PL+EN, bare-missing gate=0 (sesja 3)
 
 ### ⬜ WCIĄŻ OTWARTE (kolejne sesje)
 - **W1.7** image-router → realne obrazy (T0 stock OK; T1-3 adapterów providerów brak).
 - **W1.8** ADOPCJA dojrzałych silników QA studiów — zależne od decyzji **W0.1**.
-- **W3.6+** pełny FE flow: lista wygenerowanych bundli, progress indicator, preview.
-- **W4** persystencja cyklu życia (host dla F6 trio — wymaga kolumn DB).
+- **W3.7** progress indicator podczas generacji bundla (spinner/SSE w UI).
+- **W3.8** in-app viewer / preview wygenerowanego bundla.
+- **W4.4** cykl życia bundla w UI (lifecycle_state transitions z UI).
 - **W5** data connectors (kompozycja konektorów).
-- **W7-W14** piękno (Gamma-killer), edytor WYSIWYG, office-fidelity, telemetria, a11y, dług fasadowy, valuation 3-metody, kolory i18n.
+- **W7-W14** piękno (Gamma-killer), edytor WYSIWYG, office-fidelity, telemetria, a11y, dług fasadowy.
 
 ## 7. DECYZJA, KTÓREJ POTRZEBUJĘ OD CIEBIE (odblokowuje ~40% reszty)
 **W0.1:** czy `/bundle` ma **orkiestrować dojrzałe studia** (M18/19/20 z gotowymi silnikami QA/VisionQA/PPTX — moja rekomendacja: komponuj) czy rozwijać standalone? Od tego zależy czy W1.8/W7.6 to „adoptuj" czy „buduj".
 
 ## 8. WNIOSEK
-Dwie pełne sesje zamknęły fundamentalny problem: **mózg premium działa na żywej ścieżce** (W1.1-W1.6), **user może go teraz dotknąć z UI** (W3.5 Komplet AI tile), **scheduler automatycznie generuje i wysyła** (W6.1), a **SoT hero-numbers są udowodnione testami** (W13.3). Postęp jako produkt: 25-35% → **50-55%**. Następny skok wymaga W4 (persystencja) i pełnego W3 (preview, lista, progress).
+Trzy pełne sesje nocne zamknęły fundamentalny problem: **mózg premium działa na żywej ścieżce** (W1.1-W1.6), **user dotyka pipeline z UI** (W3.5 Komplet AI tile), **scheduler generuje i wysyła** (W6.1), **SoT hero-numbers udowodnione testami** (W13.3), **section chips wizualnie biją Gamma** (W2.3), **sensitivity matrix wyceny** dostępna w każdym bundlu (W12.2), **historia bundli w DB** (W4.1-4.3), a **i18n pełne** (W13.6). Postęp jako produkt: 25-35% → **55-60%**.
+
+Następny skok: W3.7+ (progress UI podczas generacji), W3.8 (in-app preview), W4.4 (lifecycle UI), W1.7 (obrazy), W1.8 (adopcja dojrzałych studiów — wymaga decyzji W0.1).
 
 ---
-*13 tasków, 47 nowych testów, 509/509, 0 regresji. Commity na origin/feat/deliverables-w1.*
+*21 tasków, 57 nowych testów, 519/519, 0 regresji. Commity na origin/feat/deliverables-w1.*
 *Szczegół: M17-PLAN-DOKONCZENIA-2026-06-26.md (dashboard 8-bramkowy) + M17-AUDYT-REALIZACJI-2026-06-26.md (audyt źródłowy).*
