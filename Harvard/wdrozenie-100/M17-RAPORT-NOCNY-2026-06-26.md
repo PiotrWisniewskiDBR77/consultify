@@ -245,5 +245,23 @@ Następny skok: W3.7+ (progress UI podczas generacji), W3.8 (in-app preview), W4
 - Zero regresji. Zero tsc errors.
 
 ---
+
+## SESJA 10 (kontynuacja, 2026-06-26) — W10.1 scorecard + W14.1 a11y
+
+| Task | Co realnie działa | Dowód |
+|---|---|---|
+| **W10.1** | `bundleQualityScorecard.ts`: zwija WSZYSTKIE rozproszone sygnały `bundle.quality.*` (beauty/content/fakty/anti-patterny/design-critique/docQa/deckQa + flagi finansowe spine) w JEDEN wynik 0-100 + ocena A-F + breakdown 7 wymiarów + actionable top-issues. **Twarde capy:** krytyczna wada (content FAIL/sprzeczność/krytyczny AP/błąd M19/regen/finansowy reject) → max 59 (D) niezależnie od reszty. Wpięty w `generateBundleFromSpine` → `bundle.quality.scorecard`; wystawiony w `GET /bundles` (qualityScore+qualityGrade). | 10 testów + drive-by fix Zod `z.record` build-error |
+| **W14.1** | `deckAltText.ts`: deterministyczny alt-text WYPROWADZONY Z DANYCH (nie generyczne „wykres"): bar→trend+zakres, RAG→rozkład statusów, mekko→kolumny+dominant, harvey→poziomy słownie; `imageAltText` kontekstowy; `slideAltText` całość. Wpięty w `bundlePptxRuntime` (altText na wykresie+obrazie → czytniki ekranu / PDF-UA). | 16 testów + wiring assertion |
+
+### Testy — wyniki sesja 10
+- Sesja 10 start: **694/694** (66 plików)
+- Sesja 10 koniec: **724/724** (69 plików) → **+30 testów**
+- Zero regresji. Zero tsc errors w moich plikach (+ naprawiony 1 pre-existing Zod błąd współbieżnego agenta).
+
+### Postęp jako produkt (sesja 10)
+**~76-78% → ~78-80%** — scorecard = „czy ten materiał jest dobry?" jako jedna liczba
+actionable (capstone całej jakości W1/W7/W12); a11y alt-text na wizualizacjach.
+
+---
 *21 tasków, 57 nowych testów, 519/519, 0 regresji. Commity na origin/feat/deliverables-w1.*
 *Szczegół: M17-PLAN-DOKONCZENIA-2026-06-26.md (dashboard 8-bramkowy) + M17-AUDYT-REALIZACJI-2026-06-26.md (audyt źródłowy).*
