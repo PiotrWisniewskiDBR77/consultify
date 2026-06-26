@@ -706,7 +706,16 @@ function loadForecastFromManual(
     .map((y, idx) => ({ ...y, year: idx + 1 }));
 
   if (yearsSorted.length < 1) throw new Error('Manual forecast missing');
-  return { years: yearsSorted, sourceQuality: { sourceType: 'manual' } };
+  // BUG-FIX (comps zero na manual): pozostałe loadery (model/analysis/budget) ustawiają
+  // companyMetric z ostatniego roku — manual to pomijał, przez co computeComps liczyło
+  // impliedEnterpriseValue = 0 (brak bazy ebitda/revenue) i pasmo comps na football-field
+  // zapadało się do zera mimo ustawionych peers. Mirror tej samej derywacji co inne loadery.
+  const last = yearsSorted[yearsSorted.length - 1];
+  return {
+    years: yearsSorted,
+    sourceQuality: { sourceType: 'manual' },
+    companyMetric: { revenueLastYear: last?.revenue, ebitdaLastYear: last?.ebitda },
+  };
 }
 
 export interface DcfResult {

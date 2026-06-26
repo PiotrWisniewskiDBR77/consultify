@@ -94,6 +94,15 @@ describe('valuationService.computeValuation', () => {
       expect.stringContaining('UPDATE valuations SET results = ?'),
       [expect.any(String), 'val-1', 'org-1']
     );
+
+    // REGRESJA (comps zero na manual): manual loader MUSI wyprowadzić companyMetric
+    // z ostatniego roku prognozy, inaczej computeComps daje impliedEnterpriseValue=0
+    // i pasmo comps na football-field zapada się mimo ustawionych peers.
+    // base = ebitdaLastYear (Y3) = 100; EV/EBITDA min/median/max = 6/8/10 → 600/800/1000.
+    expect(results.comps).toBeTruthy();
+    expect(results.comps.impliedEnterpriseValue.min).toBeCloseTo(600, 2);
+    expect(results.comps.impliedEnterpriseValue.median).toBeCloseTo(800, 2);
+    expect(results.comps.impliedEnterpriseValue.max).toBeCloseTo(1000, 2);
   });
 
   it('throws when manual forecast is missing', async () => {
