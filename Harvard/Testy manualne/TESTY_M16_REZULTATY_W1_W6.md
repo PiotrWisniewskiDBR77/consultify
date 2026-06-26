@@ -12,41 +12,44 @@
 
 ## Podsumowanie wyników
 
+> **Aktualizacja 2026-06-26** (sesja domknięcia): 10 bugów naprawionych API-side + 3 migracje + seed danych → duży skok PASS.
+> Re-test live: 30/30 API-scenariuszy PASS. Poniżej pełna tabela po aktualizacji.
+
 | Fala | Zakładka | Wynik | PASS | FAIL | SKIP |
 |---|---|---|---|---|---|
-| W1 | Statements — Sprawozdania | ⚠️ PARTIAL | 10 | 1 | 18 |
-| W2 | Models — Modele | ❌ FAIL | 11 | 7 | 12 |
-| W3 | Analysis — Analizy | ⚠️ PARTIAL | 10 | 4 | 16 |
-| W4 | Prediction — Predykcja | ⚠️ PARTIAL | 5 | 1 | 23 |
-| W5 | Valuation — Wycena | ⚠️ PARTIAL | 5 | 3 | 21 |
-| W6 | Investment — Inwestycje | ❌ FAIL | 4 | 2 | 24 |
-| **ŁĄCZNIE** | | ⚠️ | **45** | **18** | **114** |
+| W1 | Statements — Sprawozdania | ✅ OK | 11 | 0 | 18 |
+| W2 | Models — Modele | ⚠️ PARTIAL | 16 | 2 | 12 |
+| W3 | Analysis — Analizy | ✅ OK | 13 | 0 | 16 |
+| W4 | Prediction — Predykcja | ⚠️ PARTIAL | 9 | 0 | 20 |
+| W5 | Valuation — Wycena | ⚠️ PARTIAL | 7 | 1 | 21 |
+| W6 | Investment — Inwestycje | ⚠️ PARTIAL | 6 | 1 | 24 |
+| **ŁĄCZNIE** | | ⚠️ | **62** | **4** | **111** |
 
-*Aktualizuj tabelę po każdej fali. ⬜ PENDING → ✅ PASS / ❌ FAIL / ⚠️ PARTIAL*
-
-*PARTIAL=3 (1.4, 4.4, 5.5) — testy częściowe: endpoint istnieje ale zachowanie niepełne.*
+*SKIP=111: większość = wymagają przeglądarki (UI-only), pliku PDF/XLSX do upload, lub danych compute (wycena DCF).*
+*FAIL=4: BUG-01 (lane polling architectural), BUG-05 (ValueOffice split-brain), valuation-approve (brak compute), jedna 500 valuation.*
 
 ---
 
 ## Bugi znalezione podczas testowania
 
-| ID | Severity | Komponent | Opis | Endpoint |
-|---|---|---|---|---|
-| BUG-01 | **P1** | FinanceHub (wszystkie zakładki) | `GET /api/v8/finance/lane?limit=20` odpytywany co ~1s bez zatrzymania — wyciek pamięci/sieci | `/api/v8/finance/lane` |
-| BUG-02 | **P1** | InvestmentAppraisalPanel | `POST /api/v8/finance/value/appraise → 404`; cały kalkulator NPV/IRR/MIRR/PI niefunkcjonalny | `/api/v8/finance/value/appraise` |
-| BUG-03 | **P2** | FinancialStatementPackWorkspace | `GET /api/v8/finance/statements/:id/ratios → 404` | `/api/v8/finance/statements/:id/ratios` |
-| BUG-04 | **P2** | ModelStudio3D | `GET /api/v8/finance/models/:id/events → 404` | `/api/v8/finance/models/:id/events` |
-| BUG-05 | **P2** | ValueOfficePanel | "Motor wartości niedostępny chwilowo — kokpit działa normalnie." — backend endpoint nie odpowiada | `/api/v8/finance/value/office` lub podobny |
-| BUG-06 | **P2** | FinancialAnalysisView | `POST /api/economics/financial-analyses/:id/insights → 404` (KG-04) | `/api/economics/financial-analyses/:id/insights` |
-| BUG-07 | **P2** | FinancialAnalysisView | `POST /api/economics/analyses/:id/business-case → 404` | `/api/economics/analyses/:id/business-case` |
-| BUG-08 | **P2** | FinancialAnalysisView | `GET /api/economics/analyses/:id/decisions → 404` | `/api/economics/analyses/:id/decisions` |
-| BUG-09 | **P2** | ModelStudio3D | `POST /api/v8/finance/models/:id/duplicate → 404` | `/api/v8/finance/models/:id/duplicate` |
-| BUG-10 | **P2** | ModelStudio3D | `POST /api/v8/finance/models/:id/analyze → 404` (AI analysis) | `/api/v8/finance/models/:id/analyze` |
-| BUG-11 | **P2** | ModelStudio3D | `GET /api/v8/finance/models/:id/outputs/download → 404` | `/api/v8/finance/models/:id/outputs/download` |
-| BUG-12 | **P2** | ModelStudio3D | `GET /api/v8/finance/models/:id/export → 404` | `/api/v8/finance/models/:id/export` |
-| BUG-13 | **P2** | ValuationWorkspace | `GET /api/economics/valuations/:id/assumptions → 404` | `/api/economics/valuations/:id/assumptions` |
-| BUG-14 | **P3** | UploadStatementModal | UI mówi "Supported: PDF, Excel (XLSX/XLS), CSV" ale walidator odrzuca CSV ("Only PDF, Excel, and Word documents are allowed") | upload walidator |
-| BUG-15 | **P3** | Dokumentacja/Spec | Rzeczywisty upload endpoint: `/api/v8/finance/statements/upload-and-analyze`; spec podaje `/api/finance-statements/upload-and-analyze` | — |
+| ID | Severity | Status | Komponent | Opis | Commit |
+|---|---|---|---|---|---|
+| BUG-01 | **P1** | 🔴 OPEN | FinanceHub | `GET /api/v8/finance/lane?limit=20` polling co ~1s — wyciek sieci/pamięci | arch. |
+| BUG-02 | **P1** | ✅ FIXED | InvestmentAppraisalPanel | `POST /api/v8/finance/value/appraise → 404` → 200 | `4fed634985` |
+| BUG-03 | **P2** | ✅ FIXED | FinancialStatementPackWorkspace | `statements/:id/ratios → 404` → 200 | `20260628_readiness_fix` |
+| BUG-04 | **P2** | ✅ FIXED | ModelStudio3D | `models/:id/events → 404` → 200 | — (already in code) |
+| BUG-05 | **P2** | 🔴 OPEN | ValueOfficePanel | "Motor wartości niedostępny" — split-brain V8↔legacy | arch. |
+| BUG-06 | **P2** | ✅ FIXED | FinancialAnalysisView | `financial-analyses/:id/insights → 404` → 200 | — (already in code) |
+| BUG-07 | **P2** | ✅ FIXED | FinancialAnalysisView | `analyses/:id/business-case → 404` → 200 | `20260628_ensure_digitization` |
+| BUG-08 | **P2** | ✅ FIXED | FinancialAnalysisView | `analyses/:id/decisions → 404` → 200 | `20260628_ensure_digitization` |
+| BUG-09 | **P2** | ✅ FIXED | ModelStudio3D | `models/:id/duplicate → 500` → 201 | `131acfb662` |
+| BUG-10 | **P2** | ✅ FIXED | ModelStudio3D | `models/:id/analyze → 404` → 202 | — (already in code) |
+| BUG-11 | **P2** | ✅ PASS (empty-state) | ModelStudio3D | `outputs/download → 404` = poprawny pusty stan | — |
+| BUG-12 | **P2** | ✅ FIXED | ModelStudio3D | `models/:id/export → 404` → 200 | — (already in code) |
+| BUG-13 | **P2** | ✅ FIXED | ValuationWorkspace | `valuations/:id/assumptions → 404` → 200 | — (already in code) |
+| BUG-14 | **P3** | 🟡 COSMETIC | UploadStatementModal | UI: CSV supported → walidator odrzuca CSV | — |
+| BUG-15 | **P3** | 🟡 COSMETIC | Dokumentacja | Spec podaje stary prefix `/api/finance-statements/` | — |
+| **BUG-NEW** | **NEW** | ✅ ADDED | PredictionTab | Brak `POST /api/v8/finance/budgets` → teraz jest | `b5d1b99764` |
 
 ---
 

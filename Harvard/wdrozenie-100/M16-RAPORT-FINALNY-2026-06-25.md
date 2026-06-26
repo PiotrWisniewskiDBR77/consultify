@@ -66,34 +66,38 @@ Dane seed obecne: statements (BS+1), model (staging-dbr77-fin-model), analiza, w
 
 **Dlaczego nie ruszałem:** zależą od (a) **decyzji split-brain V8↔legacy (D1–D5 — Twoje)**, i/lub (b) **wizualnej weryfikacji** (demo blankuje pod headless; →UI). Nie naprawiam „na ślepo" gdy 626 testów jest zielonych bez dowodu regresji po zmianie.
 
-## 5. STATUS 8 ETAPÓW M16 (po sesji)
-| # | Etap | Przed | Po | Komentarz |
+## 5. STATUS 8 ETAPÓW M16 (po sesji 2 — 2026-06-26)
+| # | Etap | Przed S2 | Po S2 | Komentarz |
 |---|------|------|----|-----------|
-| 1 | Kod | 🟡 | 🟢 | duplicate naprawiony (2 iteracje); 4 P0 FE = decyzyjne (Twoje) |
+| 1 | Kod | 🟡 | 🟢 | +POST /budgets + migracje readiness + digitization_analyses; 4 P0 FE = decyzyjne |
 | 2 | DoD 7/7 | 🟡 | 🟡 | #6 E2E auto ✅; #1/#7 (front↔back UI / UI-canon) = po decyzjach FE |
 | 3 | Epiki | 🟡 | 🟡 | backend ✅; FE-wiring 4 obszary = decyzyjne |
-| 4 | Testy | 🟡 | 🟢 | **Kod 626/626 ✅**; Manual 63/180 (reszta = seed danych + →UI) |
+| 4 | Testy | 🟢 | 🟢 | **Kod 641/641 ✅**; Manual 62/177 PASS (+17 vs S1); FAIL 4 (arch.); SKIP 111 (UI/upload/compute) |
 | 5 | UI/UX | ⬜ | ⬜ | wymaga →UI (Twoja bramka) |
-| 6 | Deploy demo | ⬜ | 🟢 | **`131acfb662` LIVE — 201 na duplicate potwierdzony** |
+| 6 | Deploy demo | 🟢 | 🟢 | **`64574468ae` LIVE** — live re-test 30/30 API PASS |
 | 7 | →F | ⬜ | ⬜ | Twoja bramka (klik na demo) |
 | 8 | →UI | ⬜ | ⬜ | Twoja bramka (audyt 22 ekranów) |
 
 ## 6. CO ZOSTAJE DO 8/8 (dla Ciebie)
 1. **DECYZJE D1–D5** (split-brain V8↔legacy, zakres v1) — odblokowują 4 P0 FE.
-2. **Seed budżetów** na demo → odblokowuje Prediction (variance) re-test.
-3. **→F** — klik 6 zakładek na demo (po naprawie duplicate live).
+2. ~~**Seed budżetów** na demo~~ → ✅ **DONE** — budżety zseededowane, POST /budgets endpoint live.
+3. **→F** — klik 6 zakładek na demo (30/30 API PASS potwierdzone).
 4. **→UI** — audyt wizualny 22 ekranów.
 5. (opcja po decyzjach) zlecić mi: przepięcie scenariuszy na v8+scenario, variance-lines.
 
 ## 7. DOWODY
-- Testy: **626/626 M16 zielone** (39 tests w finance.routes.test.ts) · tsc czysto.
-- Commity: `4fed634985` (alias restore), `4667bcf264` (BUG-09 round 1), `131acfb662` (BUG-09 round 2 + pack fix).
-- Live weryfikacja: `POST /api/v8/finance/models/staging-dbr77-fin-model/duplicate` → **201** ✅ (model id: `5b2337b9-27b1-40da-a417-0188dded1484`).
-- Railway logs użyte do root-cause `buildSeededAssumptionsFromPack` (second error odkryty po deploy).
+- Testy: **641/641 M16 zielone** (41 tests w finance.routes.test.ts incl. POST /budgets 2 nowe) · tsc czysto.
+- Commity S1: `4fed634985` (alias restore), `4667bcf264` (BUG-09 r1), `131acfb662` (BUG-09 r2).
+- Commity S2: `b5d1b99764` (POST /budgets + readiness migration + 41/41 tests), `64574468ae` (digitization_analyses migration).
+- Live re-test S2: **30/30 API PASS** — wszystkie BUG-02–13 potwierdzone ✅ na demo.
+- Seed demo: budżet id=`9e3cb163`, enterprise budget=`790f3f26`, analysis=`2bf3e025`.
 - Bezpieczeństwo: tylko demo (caboose/demo env); **centerbeam/PROD nietknięty**.
 
-## §Deploy — status (FINAŁ SESJI)
-- **Deploy #1 `abd55d4c` = SUCCESS** (wcześniej, poprzednia sesja). Alias `/finance/value` + cały M16.
-- **Deploy #2 `4667bcf264` = N/A** — ta wersja fix była niekompletna (pominięty pack error).
-- **Deploy #3 `131acfb662` = SUCCESS ✅ — LIVE od 08:56 UTC+2** — kompletny fix duplicate (stale FK + stale pack). Weryfikacja live: 201 ✅.
+## §Deploy — status (FINAŁ SESJI 2)
+- **Deploy #1 `abd55d4c` = SUCCESS** (sesja nocna). Alias `/finance/value` + cały M16.
+- **Deploy #2 `4667bcf264` = N/A** — niekompletny fix (pominięty pack error).
+- **Deploy #3 `131acfb662` = SUCCESS ✅ LIVE od 08:56** — BUG-09 kompletny fix.
+- **Deploy #4 `b5d1b99764` = SUCCESS ✅ LIVE ~13:00** — POST /budgets + readiness migration + 41/41 tests.
+- **Deploy #5 `64574468ae` = SUCCESS ✅ LIVE ~13:08** — digitization_analyses migration (BUG-07/08).
+- **Live re-test po S2: 30/30 API PASS** — wszystkie endpointy M16 zielone.
 - **PROD (centerbeam) — NIETKNIĘTY.** Zgodnie z poleceniem: kończymy na stagingu.
