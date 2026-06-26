@@ -30,7 +30,7 @@
 
 ### Poprawa vs RUN2 (FAIL/BLOCKED → PASS w RUN4)
 
-**46 scenariuszy** przeszło z FAIL/BLOCKED(RUN2) → PASS(RUN4). Główne źródła:
+**~44 scenariusze** przeszły z FAIL/BLOCKED(RUN2) → PASS(RUN4) (10× FAIL→PASS + ~34× BLOCKED→PASS; dokładny rozkład per sekcja niżej). Główne źródła:
 - **§1 (13):** 1.7–1.19 benefit-profiles — były `🔴 BLOCKED profiles:[]`; teraz **9 profili live** (BUG-22 + D2 wpięcie w panel). Test route `benefit-profiles > returns profiles[]` + FE `renders the benefit-profiles section`.
 - **§2 (6):** 2.4/2.5 objective/driver (były FAIL), 2.9/2.11/2.13/2.15 (były BLOCKED) — driver-tree live ma `objectiveCount:1, driverCount:2, kpiCount:9` + `rolledUpValue/confidence/coveredValue` (BUG-17/18). Test `synthesises an objective + per-category driver nodes` + `kpi nodes carry a confidence in [0,1]`.
 - **§3 (4):** 3.4 warning-signal, 3.24 realizationPct, 3.30 link-M14, 3.13/3.14→**3.29** reallocation moves (live `moves:3`, było `moves:0`).
@@ -295,20 +295,20 @@
 
 ---
 
-## Klasa BLOCKED — uczciwy podział przyczyn (23 łącznie)
+## Klasa BLOCKED — uczciwy podział przyczyn (18 łącznie)
 
 | Przyczyna | Testy | Co odblokuje |
 |---|---|---|
-| **Test-infra: druga / pusta org (SEC + empty-state)** | 1.23, 1.28, 2.14, 2.25, 4.12, 4.14, 5.28, 5.29, 6.27 | Drugie konto testowe innej org + pusta org. Izolacja egzekwowana w kodzie (401-gated route'y zielone), brak żywego cross-org dowodu. |
-| **Data-edge: brak żywego rekordu skrajnego** | 3.11 (info-severity), 3.28 (multi-signal/init), 4.15 (multi-year measure), 4.20 (aheadPct opcjonalne), 5.17 (at-risk sustainment), 5.2 (balanced=true ripple) | Większy/strojony seed; część to świadome edge-case v1 (5.2 ripple psuje 2.30). |
-| **Interakcja-danych w UI (create→refetch)** | 2.29 | Create-KPI w przeglądarce + re-fetch (poza harnessem route/FE). |
-| **Cross-moduł + dane** | 6.28 | Weryfikacja M16 P&L z żywymi danymi (opcjonalny). |
+| **Test-infra: druga / pusta org (SEC + empty-state)** | 1.23, 1.28, 2.14, 2.25, 3.19, 4.12, 4.14, 5.28, 5.29, 6.27 (10) | Drugie konto testowe innej org + pusta org. Izolacja egzekwowana w kodzie (401-gated route'y zielone), brak żywego cross-org dowodu. |
+| **Data-edge: brak żywego rekordu skrajnego** | 3.11 (info-severity), 3.28 (multi-signal/init), 4.15 (multi-year measure), 4.20 (aheadPct opcjonalne), 5.17 (at-risk sustainment), 5.2 (balanced=true ripple) (6) | Większy/strojony seed; część to świadome edge-case v1 (5.2 ripple psuje 2.30). |
+| **Interakcja-danych w UI (create→refetch)** | 2.29 (1) | Create-KPI w przeglądarce + re-fetch (poza harnessem route/FE). |
+| **Cross-moduł + dane** | 6.28 (1) | Weryfikacja M16 P&L z żywymi danymi (opcjonalny). |
 
 **Żaden BLOCKED nie jest ukrytym bugiem kodu** — wszystkie endpointy DB-backed i zielone na 200+401 (route'y) oraz renderują (FE). RUN3 wyeliminował „ukryte bugi-jako-blocked" (BUG-19b/22). Pozostałe BLOCKED = test-infra (druga org) lub świadome edge'y v1.
 
-## Klasa SKIP — interakcje poza zakresem harnessu (23 łącznie)
+## Klasa SKIP — interakcje poza zakresem harnessu (16 łącznie)
 
-Drag/dblclick/expand-collapse, dark-toggle, console-localStorage, throttling, create-w-UI, gating-komunikaty, opcjonalne cross-moduły: 1.3, 1.22, 1.26, 2.8, 2.10, 2.17, 2.28, 3.2, 3.22, 4.13, 4.19, 4.21, 4.29, 5.22, 5.30, 6.2 (+ graniczne). Część pokryta zastępczo E2E-capture (dark) lub FE empty-state.
+Drag/dblclick/expand-collapse, dark-toggle, console-localStorage, throttling, create-w-UI, gating-komunikaty, opcjonalne cross-moduły: 1.3, 1.22, 1.26, 2.8, 2.10, 2.17, 2.28, 3.2, 3.22, 4.13, 4.19, 4.21, 4.29, 5.22, 5.30, 6.2. Część pokryta zastępczo E2E-capture (dark) lub FE empty-state.
 
 ---
 
@@ -316,9 +316,9 @@ Drag/dblclick/expand-collapse, dark-toggle, console-localStorage, throttling, cr
 
 Po Serii D (4 commity) i Serii T (piramida 108 testów route+FE zielonych + 388 unit + live-sweep 13 endpointów + E2E spec):
 
-- **134/180 PASS** z twardym dowodem (test automatyczny / live payload / naprawa D + curl).
-- **23 BLOCKED** — uczciwie: 9× druga/pusta org (test-infra), 6× data-edge skrajny, reszta interakcja-danych/cross-moduł. Zero fake-PASS.
-- **23 SKIP** — interakcje przeglądarki poza harnessem (drag/toggle/throttle), część pokryta E2E-capture.
-- **46 scenariuszy FAIL/BLOCKED(RUN2) → PASS(RUN4)** — głównie §1 benefit-profiles (13), §2 VDT objective/driver/rolledUp/confidence (6), §5 sustainment-destub + DICE + OKR (8), §4 run-rate aliasy (3), §6 finance/scenarios/counterfactual-empty (10+), §3 signals/realloc/link-M14 (4+).
+- **146/180 PASS** z twardym dowodem (test automatyczny / live payload / naprawa D + curl).
+- **18 BLOCKED** — uczciwie: 9× druga/pusta org (test-infra), 6× data-edge skrajny, 1× interakcja-danych w UI, 1× cross-moduł, 1× ripple v1 (5.2). Zero fake-PASS.
+- **16 SKIP** — interakcje przeglądarki poza harnessem (drag/toggle/throttle/console), część pokryta E2E-capture.
+- **~44 scenariusze FAIL/BLOCKED(RUN2) → PASS(RUN4)** — głównie §1 benefit-profiles+stage-gate (14), §2 VDT objective/driver/rolledUp/confidence (4), §5 sustainment-destub + DICE + OKR (8+), §4 run-rate aliasy (3), §6 finance/scenarios/counterfactual-empty (6+), §3 signals/realloc/link-M14 (6).
 
 Pozostała droga do 180/180 PASS = **wyłącznie test-infra (drugie konto org + większy seed skrajny)**, nie kod. DoD #2/#6 (testy) domknięte tą rundą; zostają bramki Z (i18n keys, deploy demo, →F, →UI).
