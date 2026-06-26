@@ -12,7 +12,8 @@
 import { createRequire } from 'node:module';
 import logger from '../../utils/Logger.js';
 import { resolveTheme, PPT_TYPE_SCALE } from './themeRegistry.js';
-import { seriesPalette } from './paletteLibrary.js';
+import { seriesPalette, readableTextOn } from './paletteLibrary.js';
+import { computeMarimekkoLayout, computeHarveyBalls } from './advancedCharts.js';
 
 const require = createRequire(import.meta.url);
 
@@ -32,6 +33,14 @@ export interface DeckPlanSlide {
   } | {
     type: 'rag';
     items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }>;
+  } | {
+    // W7.5 — marimekko: kolumny zmiennej szerokości × stos segmentów.
+    type: 'marimekko';
+    columns: Array<{ label: string; segments: Array<{ name: string; value: number }> }>;
+  } | {
+    // W7.5 — harvey balls: jakościowa ocena 0..4 (dojrzałość/spełnienie).
+    type: 'harvey_balls';
+    rows: Array<{ label: string; level: number; note?: string }>;
   } | null;
   /** W1.7 — URL obrazu stockowego (T0 Unsplash/Pexels) dla slajdów z needsProductGraphic. */
   imageUrl?: string | null;
@@ -142,6 +151,77 @@ function renderChartOnSlide(
           x: 1.1, y, w: 7.5, h: 0.38,
           fontFace: ctx.bodyFont, fontSize: 11, color: ctx.neutral,
           align: 'left', valign: 'middle',
+        });
+      });
+      return true;
+    }
+    if (spec.type === 'marimekko') {
+      // W7.5 — kolumny zmiennej szerokości × stos segmentów (znormalizowane → kanwa).
+      const layout = computeMarimekkoLayout({ columns: spec.columns }, { columnGutter: 0.01 });
+      if (layout.rects.length === 0) return false;
+      const CX = 0.6, CY = 2.1, CW = 8.8, CH = 2.7; // ramka wykresu (cale)
+      // stała kolejność nazw segmentów → spójny kolor serii w kolumnach
+      const segNames = [...new Set(layout.rects.map((r) => r.segmentName))];
+      const palette = seriesPalette(segNames.length, { themeId: ctx.themeId });
+      const colorOf = (name: string) => hex(palette[segNames.indexOf(name)] ?? ctx.accent);
+      for (const r of layout.rects) {
+        const fillColor = colorOf(r.segmentName);
+        slide.addShape(pptx.ShapeType.rect, {
+          x: CX + r.x * CW, y: CY + r.y * CH, w: r.w * CW, h: r.h * CH,
+          fill: { color: fillColor },
+          line: { color: 'FFFFFF', width: 1 },
+        });
+        // etykieta % gdy segment dość duży (czytelny auto-tekst)
+        if (r.w * CW > 0.8 && r.h * CH > 0.3) {
+          slide.addText(`${Math.round(r.shareOfTotal * 100)}%`, {
+            x: CX + r.x * CW, y: CY + r.y * CH, w: r.w * CW, h: r.h * CH,
+            fontFace: ctx.bodyFont, fontSize: 10,
+            color: hex(readableTextOn(`#${fillColor}`)),
+            align: 'center', valign: 'middle',
+          });
+        }
+      }
+      // etykiety kolumn pod wykresem
+      for (const cb of layout.columnBounds) {
+        slide.addText(cb.label, {
+          x: CX + cb.x * CW, y: CY + CH + 0.05, w: cb.w * CW, h: 0.3,
+          fontFace: ctx.bodyFont, fontSize: 9, color: ctx.neutral,
+          align: 'center', valign: 'top',
+        });
+      }
+      return true;
+    }
+    if (spec.type === 'harvey_balls') {
+      // W7.5 — jakościowa ocena 0..4 jako wycinek koła (pie angleRange).
+      const balls = computeHarveyBalls({ rows: spec.rows });
+      if (balls.length === 0) return false;
+      const accent = hex(ctx.accent);
+      balls.slice(0, 8).forEach((ball, i) => {
+        const y = 2.1 + i * 0.45;
+        const D = 0.34; // średnica
+        // tło: pełny okrąg (obrys)
+        slide.addShape(pptx.ShapeType.ellipse, {
+          x: 0.6, y, w: D, h: D,
+          fill: { color: 'FFFFFF' }, line: { color: accent, width: 1 },
+        });
+        // wypełnienie: wycinek 0..(fraction*360) gdy >0
+        if (ball.fillFraction > 0) {
+          slide.addShape(pptx.ShapeType.pie, {
+            x: 0.6, y, w: D, h: D,
+            fill: { color: accent }, line: { color: accent, width: 1 },
+            angleRange: [0, Math.round(ball.fillFraction * 360)],
+          });
+        }
+        slide.addText(ball.label, {
+          x: 1.05, y, w: 6.5, h: 0.4,
+          fontFace: ctx.bodyFont, fontSize: 11, color: ctx.neutral,
+          align: 'left', valign: 'middle',
+        });
+        // poziom tekstowo (dostępność + szybki odczyt)
+        slide.addText(ball.fillLabel, {
+          x: 7.6, y, w: 1.8, h: 0.4,
+          fontFace: ctx.bodyFont, fontSize: 9, color: ctx.neutral, italic: true,
+          align: 'right', valign: 'middle',
         });
       });
       return true;

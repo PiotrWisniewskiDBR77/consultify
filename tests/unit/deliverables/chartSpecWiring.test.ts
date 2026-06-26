@@ -93,7 +93,7 @@ const mockPptx: any = {
   company: '',
   title: '',
   addSlide: vi.fn(() => mockSlide),
-  ShapeType: { rect: 'rect' },
+  ShapeType: { rect: 'rect', ellipse: 'ellipse', pie: 'pie' },
   write: vi.fn().mockResolvedValue(Buffer.from('pptx')),
 };
 
@@ -164,5 +164,47 @@ describe('W1.5 — deckPlansToPptxBuffer renders chart when chartSpec present', 
     }];
     await deckPlansToPptxBuffer(plans);
     expect(mockAddChart).not.toHaveBeenCalled();
+  });
+
+  // W7.5 — marimekko + harvey balls
+  it('marimekko chart spec → addShape called with rect per segment', async () => {
+    const plans = [{
+      slideIndex: 0,
+      layoutIntent: 'comparison',
+      title: 'Udział rynku wg segmentu',
+      keyMessage: 'Dominujemy w SMB, gonimy Enterprise.',
+      chartSpec: {
+        type: 'marimekko' as const,
+        columns: [
+          { label: 'Enterprise', segments: [{ name: 'My', value: 30 }, { name: 'Konkurent', value: 70 }] },
+          { label: 'SMB', segments: [{ name: 'My', value: 60 }, { name: 'Konkurent', value: 40 }] },
+        ],
+      },
+    }];
+    await deckPlansToPptxBuffer(plans);
+    const rectCalls = mockAddShape.mock.calls.filter((c) => c[0] === 'rect');
+    expect(rectCalls.length).toBeGreaterThanOrEqual(4); // 4 segmenty
+  });
+
+  it('harvey_balls chart spec → addShape called with ellipse + pie', async () => {
+    const plans = [{
+      slideIndex: 0,
+      layoutIntent: 'assessment',
+      title: 'Dojrzałość AI wg wymiaru',
+      keyMessage: 'Dane wysoko, kompetencje nisko.',
+      chartSpec: {
+        type: 'harvey_balls' as const,
+        rows: [
+          { label: 'Dane', level: 3 },
+          { label: 'Procesy', level: 2 },
+          { label: 'Kompetencje', level: 0 },
+        ],
+      },
+    }];
+    await deckPlansToPptxBuffer(plans);
+    const ellipseCalls = mockAddShape.mock.calls.filter((c) => c[0] === 'ellipse');
+    const pieCalls = mockAddShape.mock.calls.filter((c) => c[0] === 'pie');
+    expect(ellipseCalls.length).toBe(3); // 3 okręgi tła
+    expect(pieCalls.length).toBe(2); // tylko poziomy >0 (Dane, Procesy)
   });
 });
