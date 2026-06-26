@@ -35,6 +35,8 @@ import { runBundleDocQa, type BundleDocQaSummary } from './bundleDocQa.js';
 import { runBundleDeckQa, type BundleDeckQaSummary } from './bundleDeckQa.js';
 // W12.1 — deterministyczny detektor McKinsey anti-patternów w planach slajdów:
 import { detectDeckAntiPatterns, type AntiPatternReport } from './deckAntiPatternDetector.js';
+// W7.2 — design-rule critic (typografia/kontrast/gęstość/grid) per slajd:
+import { critiqueDeck, type DeckCritique } from './deckDesignCritic.js';
 
 /** Raport jakości wiązki — wynik bramek/audytów wpiętych w generację (W1). */
 export interface BundleQuality {
@@ -50,6 +52,8 @@ export interface BundleQuality {
   deckQa: BundleDeckQaSummary | null;
   /** W12.1 — deterministyczne wykrycie 8 McKinsey anti-patternów w planach slajdów. */
   antiPatterns: AntiPatternReport | null;
+  /** W7.2 — design-rule critic per slajd (typografia/kontrast/gęstość/grid → regen). */
+  designCritique: DeckCritique | null;
   /** Zbiorcze: czy wiązka przeszła twarde bramki (content+beauty). */
   passed: boolean;
 }
@@ -220,9 +224,16 @@ export async function generateBundleFromSpine(
     const deckQa = runBundleDeckQa(spine);
     // W12.1 — McKinsey anti-pattern detector na planach slajdów.
     const antiPatterns = plans.length > 0 ? detectDeckAntiPatterns(plans) : null;
+    // W7.2 — design-rule critic per slajd (mapuje plany na wejście critica).
+    const designCritique = plans.length > 0
+      ? critiqueDeck(plans.map((p) => {
+          const pl = p as { slideIndex?: number; layoutIntent?: string; title?: string; keyMessage?: string; bullets?: string[] };
+          return { slideIndex: pl.slideIndex, layoutIntent: pl.layoutIntent, title: pl.title, keyMessage: pl.keyMessage, bullets: pl.bullets };
+        }))
+      : null;
 
     const passed = content.passed && factContradictions.length === 0 && (beauty?.passed ?? true);
-    quality = { beauty, content, factContradictions, provenance, variants, docQa, deckQa, antiPatterns, passed };
+    quality = { beauty, content, factContradictions, provenance, variants, docQa, deckQa, antiPatterns, designCritique, passed };
     if (!passed) {
       logger.warn(`${LOG} quality gate flagged issues`, {
         contentIssues: content.issues.length,
@@ -232,7 +243,7 @@ export async function generateBundleFromSpine(
     }
   } catch (err) {
     logger.warn(`${LOG} quality gate error (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
-    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, docQa: null, deckQa: null, antiPatterns: null, passed: true };
+    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, docQa: null, deckQa: null, antiPatterns: null, designCritique: null, passed: true };
   }
 
   return {

@@ -46,11 +46,12 @@ export interface AntiPatternReport {
 }
 
 // Slide plan shape (minimal — works with SlideLayoutPlan from presentationLayoutDirectorService).
+// title/keyMessage akceptują null (SlideLayoutPlan ma `string | null`).
 interface SlidePlan {
   slideIndex?: number;
   layoutIntent?: string;
-  title?: string;
-  keyMessage?: string;
+  title?: string | null;
+  keyMessage?: string | null;
   bullets?: string[];
 }
 
@@ -80,7 +81,7 @@ function hit(
   return { code, severity, slideIndex, message };
 }
 
-function isGenericTitle(title: string | undefined): boolean {
+function isGenericTitle(title: string | null | undefined): boolean {
   if (!title) return false;
   return GENERIC_TITLES_PL.has(title.trim().toLowerCase());
 }
