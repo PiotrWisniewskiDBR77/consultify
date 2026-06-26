@@ -478,27 +478,39 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) { res.status(401).json({ error: 'org required' }); return; }
 
+    // Schema: kpi_financial_mappings(kpi_id, statement_line_id, multiplier, direction, ...).
+    // There is no annual_impact column — the financial impact is computed from the KPI's
+    // own delta (current − baseline) × multiplier × sign(direction). JOIN the KPI to read it.
     let financialMappings: KpiFinanceMapping[] = [];
     try {
       const rows = ((await dbAll(
-        `SELECT kpi_id, statement_type, line_item, annual_impact, impact_direction
-         FROM kpi_financial_mappings WHERE organization_id = ?`,
+        `SELECT m.kpi_id, m.statement_line_id, m.multiplier, m.direction,
+                k.current_value, k.baseline_value
+         FROM kpi_financial_mappings m
+         LEFT JOIN initiative_kpis k ON k.id = m.kpi_id
+         WHERE m.organization_id = ?`,
         [orgId]
       )) as Array<{
         kpi_id: string;
-        statement_type: string;
-        line_item: string;
-        annual_impact: number | null;
-        impact_direction: string;
+        statement_line_id: string | null;
+        multiplier: number | null;
+        direction: string | null;
+        current_value: number | null;
+        baseline_value: number | null;
       }>) || [];
-      financialMappings = rows.map((r) => ({
-        kpiId: String(r.kpi_id),
-        statementLineId: String(r.kpi_id) + '_line',
-        statementType: (r.statement_type || 'P&L') as any,
-        multiplier: r.annual_impact ?? 1,
-        direction: (r.impact_direction || 'positive') as any,
-        kpiDelta: r.annual_impact ?? 0,
-      }));
+      financialMappings = rows.map((r) => {
+        const delta = num(r.current_value) - num(r.baseline_value);
+        const dir = (r.direction || 'positive').toLowerCase();
+        const direction = dir === 'negative' ? 'negative' : dir === 'neutral' ? 'neutral' : 'positive';
+        return {
+          kpiId: String(r.kpi_id),
+          statementLineId: r.statement_line_id ? String(r.statement_line_id) : String(r.kpi_id) + '_line',
+          statementType: 'P&L' as any,
+          multiplier: r.multiplier ?? 1,
+          direction: direction as any,
+          kpiDelta: delta,
+        };
+      });
     } catch {
       // table may not exist
     }
