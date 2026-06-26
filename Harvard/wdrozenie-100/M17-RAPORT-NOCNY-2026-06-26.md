@@ -182,6 +182,23 @@ Trzy pełne sesje nocne zamknęły fundamentalny problem: **mózg premium dział
 **~65-70% → ~70-72%** — W7.4/W7.2 to pierwszy realny krok w bloku „piękno" (Gamma-killer):
 kolory dostępne+semantyczne+per-seria oraz krytyk projektowy z werdyktem regen.
 
+---
+
+## SESJA 7 (kontynuacja, 2026-06-26) — PIĘKNO cd. (W7.5)
+
+| Task | Co realnie działa | Dowód |
+|---|---|---|
+| **W7.5** | `advancedCharts.ts`: domknięcie arsenału think-cell — (a) **marimekko/mekko** (`computeMarimekkoLayout`): kolumny zmiennej szerokości ∝ udział × stos segmentów ∝ pod-wartość, znormalizowane rects 0..1 + shareOfTotal + gutter; (b) **harvey-balls** (`computeHarveyBalls`/`toHarveyLevel`): jakościowa ocena 0..4 → ułamek wypełnienia + etykieta dostępności PL. Czysta matematyka (testowalna bez pptxgenjs). **Wpięte w `bundlePptxRuntime`**: mekko→rects z `seriesPalette`+`readableTextOn`+% etykiety; harvey→ellipse obrys + pie wycinek (`angleRange`)+poziom tekstowo. | 17 testów matematyki + 2 renderer-wiring |
+
+### Testy — wyniki sesja 7
+- Sesja 7 start: **622/622** (60 plików)
+- Sesja 7 koniec: **648/648** (62 pliki) → **+26 testów**
+- Zero regresji. Zero tsc errors w dotkniętych plikach.
+
+### Postęp jako produkt (sesja 7)
+**~70-72% → ~72-74%** — komplet think-cell (waterfall/2×2/RAG/mekko/harvey) = pełny
+arsenał wykresów klasy konsultanckiej; renderery honorują wszystkie 4 typy chart-spec.
+
 Następny skok: W3.7+ (progress UI podczas generacji), W3.8 (in-app preview), W4.4 (lifecycle UI), W1.7 (obrazy), W1.8 (adopcja dojrzałych studiów — wymaga decyzji W0.1).
 
 ---
