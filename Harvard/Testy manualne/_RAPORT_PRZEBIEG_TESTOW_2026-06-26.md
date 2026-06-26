@@ -36,19 +36,24 @@ Testy uruchomione warstwami (pełny zestaw 1201 plików vitest OOM-uje lokalnie 
 
 ---
 
-## 3. Reklamacja martwego pokrycia (F-1, częściowa)
+## 3. Reklamacja martwego pokrycia (F-1)
 
-**Odkrycie:** sprzątanie `75de2c4eeb` ucięło końcówkę `.ts` z ~90 backendowych testów → vitest ich NIE zbiera → **fałszywe pokrycie**. Klasyfikacja 46 testów (których serwis nadal istnieje):
+**Odkrycie:** sprzątanie `75de2c4eeb` ucięło końcówkę `.ts` z ~90 backendowych testów → vitest ich NIE zbiera → **fałszywe pokrycie**. Pełna klasyfikacja ~54 reklamowalnych (serwis nadal istnieje):
 
 | Pula | Liczba | Akcja |
 |---|---|---|
-| Reklamowalne (serwis żyje) | 46 | przetestowane 1:1 |
-| → przeszły zielone **i stabilne razem** | **8** | ✅ przywrócone `.test.ts` (`4e4a0c7103`) |
-| → zielone solo, ale **kolizja mocków** przy współbiegu | ~5 | odrzucone (ryzyko flaky CI) |
-| → fail (przestarzałe mocki/API) | ~33 | quarantine — triáż osobno |
-| Martwe na zawsze (serwis skasowany) | 57 | do usunięcia |
+| **Przywrócone** (zielone solo **i** stabilne we współbiegu) | **11** | ✅ `.test.ts` (commity niżej) |
+| Zielone solo, **kolizja mocków** współbieg (np. multiTenant) | ~3 | odrzucone (ryzyko flaky CI) |
+| Już w CI (pre-existing `.test.ts`, dubel `.test`) | ~4 | bez akcji (już zbierane) |
+| **Dryf strukturalny** (`setDependencies`/stałe/API zniknęły) | ~36 | quarantine — wymaga przepisania mocków per-serwis |
+| Martwe (serwis skasowany — klasyfikacja zawodna, NIE usunięto) | ~50 | quarantine — arbiter = uruchomienie testu, nie heurystyka |
 
-**Przywrócone 8 (169 asercji):** aiAssessmentPartnerService, aiContextBuilder, aiMemoryManager, aiPolicyEngine, assessmentReportService, Database (auditService), reportGeneration, budgetService.
+**11 przywróconych:** aiAssessmentPartnerService, aiContextBuilder, aiMemoryManager, aiPolicyEngine, assessmentReportService, Database (auditService), reportGeneration, budgetService (`4e4a0c7103`) + initiativeTemplateService (`49090d516a`) + aiActions (7→8 typów) + promoCodeService (PROMO_TYPES=obiekt) (`96bf507286`). Razem **180+ asercji** odzyskanych.
+
+**Czego NIE zrobiłem (świadomie):**
+- **Nie usuwałem masowo „martwych"** — spot-check pokazał, że klasyfikacja jest zawodna (np. `aiCoach`, `aiSimulationEngine` mają żywe serwisy). Zasada „verify before delete" — jedyny wiarygodny arbiter to uruchomienie.
+- **Masowy `perl mockDb→mocks.db` jest niebezpieczny** — łamie pliki deklarujące lokalny `mockDb` (`let mocks.db` = błąd składni). Cofnięte.
+- **~36 z dryfem strukturalnym** wymaga przepisania strategii mocków pod aktualne API serwisów — to dedykowana praca per-plik, nie szybka partia. Pozostają w quarantine (inertne, nie psują CI).
 
 ---
 
@@ -117,4 +122,6 @@ Testy uruchomione warstwami (pełny zestaw 1201 plików vitest OOM-uje lokalnie 
 
 ## 7. Commity tego przebiegu
 
-`b742355f00` (due-breach + generate-section) · `05e5d599f8` (workqueue) · `4e80c3062d` (featureGate hardening + demoGuard + CSRF) · `275e555735` (security.routes + gatePolicy) · `4e4a0c7103` (8 reklamowanych testów) · wcześniej `29903183f5`+`eaa1fe649b` (M15 SEC).
+`b742355f00` (due-breach + generate-section) · `05e5d599f8` (workqueue) · `4e80c3062d` (featureGate hardening + demoGuard + CSRF) · `275e555735` (security.routes + gatePolicy) · `4e4a0c7103` (8 reklamowanych) · `49090d516a` (initiativeTemplateService) · `96bf507286` (aiActions + promoCodeService) · wcześniej `29903183f5`+`eaa1fe649b` (M15 SEC).
+
+**Bilans:** 9 defektów naprawionych + 11 testów odzyskanych (180+ asercji) + hardening featureGate. Pozostałe ~36 quarantine = dedykowana praca per-serwis (dryf strukturalny API).
