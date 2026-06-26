@@ -30,8 +30,18 @@ import {
 } from '../services/results/benefitProfileService.js';
 import {
   flagBenefitAtRiskByAdoption,
+  diceScore,
+  adoptionToBenefitRisk,
   type BenefitAdoptionItem,
+  type SentimentTrend,
 } from '../services/results/adoptionBenefitRiskService.js';
+import {
+  buildFunnel,
+  funnelConversion,
+  valueAtRisk,
+  mapInitiativeToFunnel,
+  type FunnelItem,
+} from '../services/results/valueFunnelService.js';
 import {
   sustainmentStatus,
   buildGovernanceCalendar,
@@ -122,7 +132,7 @@ async function fetchRoiRealized(orgId: string) {
 
 async function fetchRoiAssumptions(orgId: string) {
   return ((await dbAll(
-    `SELECT initiative_id, expected_npv, expected_revenue_delta, expected_cost_delta
+    `SELECT initiative_id, expected_npv, expected_revenue_delta, expected_cost_delta, effect_start_date
      FROM roi_assumptions WHERE organization_id = ?`,
     [orgId]
   )) as Array<{
@@ -130,7 +140,31 @@ async function fetchRoiAssumptions(orgId: string) {
     expected_npv: number | null;
     expected_revenue_delta: number | null;
     expected_cost_delta: number | null;
+    effect_start_date: string | null;
   }>) || [];
+}
+
+/**
+ * D7: derive the measurement window (months) from the EARLIEST effect_start_date
+ * across assumptions, instead of a hardcoded 6. Falls back to `fallback` (and
+ * flags `assumed: true`) when no usable start date exists.
+ */
+function derivePeriodMonths(
+  assumptions: Array<{ effect_start_date: string | null }>,
+  nowMs: number,
+  fallback = 6,
+): { periodMonths: number; assumed: boolean } {
+  let earliest = Number.POSITIVE_INFINITY;
+  for (const a of assumptions) {
+    if (!a.effect_start_date) continue;
+    const ms = Date.parse(a.effect_start_date);
+    if (Number.isFinite(ms) && ms < earliest) earliest = ms;
+  }
+  if (!Number.isFinite(earliest) || earliest > nowMs) {
+    return { periodMonths: fallback, assumed: true };
+  }
+  const months = Math.max(1, Math.round((nowMs - earliest) / (30 * 24 * 60 * 60 * 1000)));
+  return { periodMonths: months, assumed: false };
 }
 
 // ─── GET /signals ─────────────────────────────────────────────────────────
@@ -197,8 +231,9 @@ router.get(
     }
 
     const totalRealized = Array.from(realizedByInit.values()).reduce((s, v) => s + v, 0);
-    const periodMonths = 6; // assume 6 months of data as default
+    // D7: real measurement window from earliest effect_start_date (was hardcoded 6).
     const now = new Date();
+    const { periodMonths, assumed: periodMonthsAssumed } = derivePeriodMonths(assumptions, now.getTime());
     const remainingMonthsInYear = 12 - now.getMonth();
 
     const bridgeInput: RunRateBridgeInput = {
@@ -245,7 +280,7 @@ router.get(
       projectedFullYear: bridge.projectedInYear,
       remainingRunRateContribution: bridge.projectedInYear - bridge.alreadyRealized,
     };
-    res.json({ bridge: bridgeWithAliases, timing });
+    res.json({ bridge: bridgeWithAliases, timing, periodMonths, periodMonthsAssumed });
   })
 );
 
@@ -263,6 +298,21 @@ router.get(
       fetchRoiRealized(orgId),
       fetchRoiAssumptions(orgId),
     ]);
+
+    // D8: real FTE capacity from initiative_resources (sum allocation_percentage/100),
+    // fallback to 1.0 when no staffing rows exist (flagged via capacityAssumed).
+    let capacityRows: Array<{ initiative_id: string; allocation_percentage: number | null }> = [];
+    try {
+      capacityRows = ((await dbAll(
+        `SELECT initiative_id, allocation_percentage FROM initiative_resources WHERE organization_id = ?`,
+        [orgId],
+      )) as Array<{ initiative_id: string; allocation_percentage: number | null }>) || [];
+    } catch { /* table absent */ }
+    const fteByInit = new Map<string, number>();
+    for (const r of capacityRows) {
+      fteByInit.set(String(r.initiative_id), (fteByInit.get(String(r.initiative_id)) || 0) + num(r.allocation_percentage) / 100);
+    }
+    const capacityAssumed = capacityRows.length === 0;
 
     const assumptionByInit = new Map(assumptions.map((a) => [String(a.initiative_id), a]));
     const realizedByInit = new Map<string, number>();
@@ -288,7 +338,7 @@ router.get(
         realizationPct,
         confidence,
         valueAtStake,
-        capacityFte: 1, // default; no capacity table yet
+        capacityFte: fteByInit.get(String(i.id)) ?? 1, // D8: real FTE; 1.0 when unstaffed
       };
     });
 
@@ -296,7 +346,7 @@ router.get(
     const summary = reallocationSummary(moves);
     const movesArr = Array.isArray(moves) ? (moves as any[]) : [];
     const totalAmount = movesArr.reduce((s: number, m: any) => s + (m.valueAtStake ?? (m.fteSuggested ?? 0) * 50_000), 0);
-    res.json({ moves, summary: { ...summary, totalAmount } });
+    res.json({ moves, summary: { ...summary, totalAmount }, capacityAssumed });
   })
 );
 
@@ -320,16 +370,93 @@ router.get(
       realizedByInit.set(String(r.initiative_id), (realizedByInit.get(String(r.initiative_id)) || 0) + v);
     }
 
-    // Infer adoption score from realization progress (proxy until dedicated tracking)
-    const adoptionItems: BenefitAdoptionItem[] = initiatives.map((i) => {
-      const realized2 = realizedByInit.get(String(i.id)) || 0;
-      const adoptionScore = realized2 > 0 ? Math.min(realized2 / 1000, 1) : 0.3; // proxy
-      return { id: String(i.id), name: i.name, adoptionScore };
+    // D4: REAL adoption signals from M14 change-management tables (was a hardcoded
+    // realized/1000 proxy). Sentiment → adoptionScore + trend; champions → coverage.
+    // Tables may be empty for an org → graceful fallback to the realization proxy,
+    // flagged via `dataSource` so the UI can be honest about it.
+    type SentRow = { initiative_id: string; avg_rating: number | null; trend: string | null };
+    type ChampRow = { initiative_id: string; status: string | null };
+    let sentiment: SentRow[] = [];
+    let champions: ChampRow[] = [];
+    try {
+      sentiment = ((await dbAll(
+        `SELECT DISTINCT ON (initiative_id) initiative_id, avg_rating, trend
+         FROM change_sentiment_snapshots WHERE organization_id = ?
+         ORDER BY initiative_id, period_end DESC`,
+        [orgId],
+      )) as SentRow[]) || [];
+    } catch { /* table absent */ }
+    try {
+      champions = ((await dbAll(
+        `SELECT initiative_id, status FROM change_champions WHERE organization_id = ?`,
+        [orgId],
+      )) as ChampRow[]) || [];
+    } catch { /* table absent */ }
+
+    const sentByInit = new Map(sentiment.map((s) => [String(s.initiative_id), s]));
+    const champCountByInit = new Map<string, number>();
+    for (const c of champions) {
+      if ((c.status ?? 'active') === 'active') {
+        champCountByInit.set(String(c.initiative_id), (champCountByInit.get(String(c.initiative_id)) || 0) + 1);
+      }
+    }
+    const hasRealAdoption = sentiment.length > 0 || champions.length > 0;
+
+    const normTrend = (t: string | null | undefined): SentimentTrend | undefined => {
+      const v = (t ?? '').toLowerCase();
+      if (v === 'improving' || v === 'up' || v === 'positive') return 'improving';
+      if (v === 'declining' || v === 'down' || v === 'negative') return 'declining';
+      if (v === 'flat' || v === 'stable' || v === 'neutral') return 'flat';
+      return undefined;
+    };
+
+    const items = initiatives.map((i) => {
+      const id = String(i.id);
+      const s = sentByInit.get(id);
+      // avg_rating assumed 1–5 → normalise to [0,1]; fallback to realization proxy.
+      const realized2 = realizedByInit.get(id) || 0;
+      const adoptionFromSentiment = s?.avg_rating != null ? Math.min(Math.max((Number(s.avg_rating) - 1) / 4, 0), 1) : undefined;
+      const adoptionScore = adoptionFromSentiment ?? (realized2 > 0 ? Math.min(realized2 / 1000, 1) : 0.3);
+      const sentimentTrend = normTrend(s?.trend);
+      const champCoveragePct = champCountByInit.has(id) ? Math.min(champCountByInit.get(id)! * 25, 100) : 0;
+
+      // DICE per initiative from available change signals (neutral 2 where unknown).
+      const dice = diceScore({
+        seniorCommitment: adoptionScore >= 0.7 ? 1 : adoptionScore >= 0.4 ? 2 : 3,
+        localCommitment: champCoveragePct >= 50 ? 1 : champCoveragePct >= 25 ? 2 : 3,
+      });
+      const risk = adoptionToBenefitRisk({ adoptionScore, sentimentTrend, championCoveragePct: champCoveragePct });
+      return {
+        id,
+        name: i.name,
+        adoptionScore,
+        diceScore: dice.score,
+        diceZone: dice.zone,
+        sentimentTrend: sentimentTrend ?? null,
+        championCoveragePct: champCoveragePct,
+        risk: risk.risk,
+        riskReasons: risk.reasons,
+      };
     });
 
+    const adoptionItems: BenefitAdoptionItem[] = items.map((it) => ({
+      id: it.id,
+      name: it.name,
+      adoptionScore: it.adoptionScore,
+      diceZone: it.diceZone,
+    }));
     const rawFlags = flagBenefitAtRiskByAdoption(adoptionItems);
-    const flags = (rawFlags as any[]).map((f) => ({ ...f, atRisk: f.atRisk ?? f.atRiskByAdoption ?? false }));
-    res.json({ flags, total: initiatives.length, atRiskCount: flags.length });
+    const flagById = new Map(
+      (rawFlags as any[]).map((f) => [String(f.id), { ...f, atRisk: f.atRisk ?? f.atRiskByAdoption ?? false }]),
+    );
+    const flags = items.map((it) => ({ ...it, ...flagById.get(it.id) }));
+    const atRiskCount = flags.filter((f: any) => f.atRiskByAdoption || f.atRisk).length;
+    res.json({
+      flags,
+      total: initiatives.length,
+      atRiskCount,
+      dataSource: hasRealAdoption ? 'change-management' : 'realization-proxy',
+    });
   })
 );
 
@@ -342,16 +469,68 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) { res.status(401).json({ error: 'org required' }); return; }
 
-    const initiatives = await fetchOrgInitiatives(orgId, req.params.projectId);
+    // D1: read REAL sustainment signals from DB (was a stub hardcoding
+    // realizationPct:0 + lastReviewIso:null → only 'unowned'/'overdue' reachable).
+    //  - ownershipTransferred = owner_business_id set (benefit handed to business)
+    //  - lastReviewIso        = updated_at (proxy for last governance touch)
+    //  - realizationPct       = realized / expected (from ROI, like /signals)
+    //  - cadence              = quarterly (no per-initiative cadence column yet)
+    const orgWide =
+      !req.params.projectId ||
+      req.params.projectId === 'all' ||
+      req.params.projectId === 'null' ||
+      req.params.projectId === 'undefined';
+    const initiatives = ((await dbAll(
+      orgWide
+        ? `SELECT id, name, status, owner_business_id, updated_at
+           FROM initiatives WHERE organization_id = ?`
+        : `SELECT id, name, status, owner_business_id, updated_at
+           FROM initiatives WHERE project_id = ? AND organization_id = ?`,
+      orgWide ? [orgId] : [req.params.projectId, orgId],
+    )) as Array<{
+      id: string;
+      name: string;
+      status: string | null;
+      owner_business_id: string | null;
+      updated_at: string | null;
+    }>) || [];
 
+    const [realized, assumptions] = await Promise.all([
+      fetchRoiRealized(orgId),
+      fetchRoiAssumptions(orgId),
+    ]);
+    const realizedByInit = new Map<string, number>();
+    for (const r of realized) {
+      const v = num(r.realized_revenue_delta) - num(r.realized_cost_delta) + num(r.realized_savings);
+      realizedByInit.set(String(r.initiative_id), (realizedByInit.get(String(r.initiative_id)) || 0) + v);
+    }
+    const assumptionByInit = new Map(assumptions.map((a) => [String(a.initiative_id), a]));
+
+    function realizationFor(initId: string): number | undefined {
+      const a = assumptionByInit.get(initId);
+      if (!a) return undefined;
+      const valueAtStake =
+        a.expected_npv != null
+          ? num(a.expected_npv)
+          : num(a.expected_revenue_delta) - num(a.expected_cost_delta);
+      if (valueAtStake <= 0) return undefined;
+      return (realizedByInit.get(initId) || 0) / valueAtStake;
+    }
+
+    const toIso = (v: string | null): string | null => {
+      if (!v) return null;
+      const ms = Date.parse(v);
+      return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+    };
+
+    const nowMs = Date.now();
     const statuses = initiatives.map((i) => {
       const input: SustainmentInput = {
-        ownershipTransferred: i.status === 'COMPLETED',
-        lastReviewIso: null,
+        ownershipTransferred: i.owner_business_id != null,
+        lastReviewIso: toIso(i.updated_at),
         cadence: 'quarterly',
-        realizationPct: 0,
+        realizationPct: realizationFor(String(i.id)),
       };
-      const nowMs = Date.now();
       return { id: String(i.id), name: i.name, ...sustainmentStatus(input, nowMs) };
     });
 
@@ -360,15 +539,16 @@ router.get(
         id: String(i.id),
         name: i.name,
         cadence: 'quarterly' as const,
-        lastReviewIso: null,
+        lastReviewIso: toIso(i.updated_at),
       })),
-      Date.now()
+      nowMs,
     );
 
     const summary = {
       total: statuses.length,
       sustained: statuses.filter((s) => s.status === 'sustained').length,
       atRisk: statuses.filter((s) => s.status === 'at-risk').length,
+      overdueReview: statuses.filter((s) => s.status === 'overdue-review').length,
       unowned: statuses.filter((s) => s.status === 'unowned').length,
     };
 
@@ -624,6 +804,56 @@ router.get(
     const summary = executiveSummary(input);
     res.json({ narrative, executiveSummary: summary });
   })
+);
+
+// ─── GET /funnel ──────────────────────────────────────────────────────────
+// D6: Value Funnel — portfolio value through stages (ideas→validated→inflight→
+// realized): count + value + risk-adjusted value per stage, conversion/leakage,
+// value-at-risk. Was an unimplemented 404; now backed by valueFunnelService.
+router.get(
+  '/:projectId/funnel',
+  verifyToken,
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) { res.status(401).json({ error: 'org required' }); return; }
+
+    const [initiatives, realized, assumptions] = await Promise.all([
+      fetchOrgInitiatives(orgId, req.params.projectId),
+      fetchRoiRealized(orgId),
+      fetchRoiAssumptions(orgId),
+    ]);
+    const assumptionByInit = new Map(assumptions.map((a) => [String(a.initiative_id), a]));
+    const realizedByInit = new Map<string, number>();
+    for (const r of realized) {
+      const v = num(r.realized_revenue_delta) - num(r.realized_cost_delta) + num(r.realized_savings);
+      realizedByInit.set(String(r.initiative_id), (realizedByInit.get(String(r.initiative_id)) || 0) + v);
+    }
+
+    const items: FunnelItem[] = initiatives.map((i) => {
+      const a = assumptionByInit.get(String(i.id));
+      const stage = mapInitiativeToFunnel(i.status ?? undefined);
+      const expected = a?.expected_npv != null
+        ? num(a.expected_npv)
+        : num(a?.expected_revenue_delta) - num(a?.expected_cost_delta);
+      // Realized stage carries banked value; earlier stages carry expected value.
+      const value = stage === 'realized'
+        ? (realizedByInit.get(String(i.id)) || expected)
+        : expected;
+      const hasRoi = !!a;
+      const hasRealized = (realizedByInit.get(String(i.id)) || 0) !== 0;
+      const confidence = STAGE_DEFAULT_CONFIDENCE[
+        stageFromInitiative({ status: i.status ?? undefined, hasRoiBaseline: hasRoi, hasRealized })
+      ];
+      return { funnelStage: stage, value: Math.max(value, 0), confidence };
+    });
+
+    const stages = buildFunnel(items);
+    const conversion = funnelConversion(stages);
+    const var_ = valueAtRisk(
+      items.map((it) => ({ value: it.value, confidence: it.confidence, behindPlan: (it.confidence ?? 1) < 0.5 })),
+    );
+    res.json({ stages, conversion, valueAtRisk: var_, total: initiatives.length });
+  }),
 );
 
 export default router;
