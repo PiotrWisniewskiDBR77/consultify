@@ -127,6 +127,30 @@ W13.6 — i18n: bundle keys PL+EN, bare-missing gate=0 (sesja 3)
 ## 8. WNIOSEK
 Trzy pełne sesje nocne zamknęły fundamentalny problem: **mózg premium działa na żywej ścieżce** (W1.1-W1.6), **user dotyka pipeline z UI** (W3.5 Komplet AI tile), **scheduler generuje i wysyła** (W6.1), **SoT hero-numbers udowodnione testami** (W13.3), **section chips wizualnie biją Gamma** (W2.3), **sensitivity matrix wyceny** dostępna w każdym bundlu (W12.2), **historia bundli w DB** (W4.1-4.3), a **i18n pełne** (W13.6). Postęp jako produkt: 25-35% → **55-60%**.
 
+---
+
+## SESJA 5 (kontynuacja, 2026-06-26)
+
+**Zakres:** testy + guardy + anti-pattern detector. Brak LLM, brak DB, czyste addle.
+
+### Zamknięte taski (sesja 5)
+
+| Task | Co | Dowód |
+|---|---|---|
+| **W13.4** | E2E brief→exportBundleFiles→ZIP: cały bundle (doc+table+deck) → ZIP → 3 realne pliki OOXML. + `spineToUnifiedReport` defensive guards dla shallow spines (heroNumbers/sections/assumptions/market ?? []). | 1 nowy test `bundleExport.test.ts`; zaktualizowano `spineToUnifiedReport.ts` |
+| **W13.8** | CI guard `check-test-tracking.cjs`: sprawdza że all `tests/unit/deliverables/*.test.ts` są w git (wychwytuje ciche pominięcia przez `.gitignore /tests/`). Złapał realny pominięty plik (`bundleDeckQa.test.ts`). Dodany script `test:deliverables:tracked`. | `scripts/deliverables/check-test-tracking.cjs`, `package.json` |
+| **W12.1** | Deterministyczny McKinsey anti-pattern detector: 8 kodów (AP-01 >6 bullets / AP-02 generic title / AP-03 no key-message / AP-04 duplicate adjacent intent / AP-05 no cover / AP-06 no CTA / AP-07 too short / AP-08 too long). Wpięty w `bundleGenerationRuntime.quality.antiPatterns`. | `deckAntiPatternDetector.ts`; 16 testów |
+| **W12.3** | BundleOrchestrator parity validator: 13 testów weryfikujących że `buildSpine` + pochodne (spineToDeckSlides / spineToDocPlan / spineToTableIntent / attachChartSpecs) są ze sobą spójne. Siatka regresyjna na refaktory. | `bundleOrchestratorParity.test.ts` |
+| **W13.9** | VTS golden test: 8 inwariantów dla profilu produkcja (VTS Group S.A., PLN, AI-readiness). G1-G8 weryfikują SPINE, PnL, hero-numbers, anti-patterns, M19 report, ZIP export. | `vtsGolden.test.ts` |
+
+### Testy — wyniki sesja 5
+- Sesja 5 start: **527/527** (52 pliki)
+- Sesja 5 koniec: **575/575** (57 pliki) → **+48 testów**
+- Zero regresji. Zero tsc errors w dotkniętych plikach.
+
+### Postęp jako produkt (zaktualizowany)
+**~55-60% → ~65-70%** — W12.1/W12.3 to systemowe zabezpieczenie jakości (nie fasada).
+
 Następny skok: W3.7+ (progress UI podczas generacji), W3.8 (in-app preview), W4.4 (lifecycle UI), W1.7 (obrazy), W1.8 (adopcja dojrzałych studiów — wymaga decyzji W0.1).
 
 ---
