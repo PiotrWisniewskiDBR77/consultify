@@ -6,48 +6,37 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-type SecuritySettingsRow = {
-  organization_id: string;
-  require_2fa: number;
-  password_min_length: number;
-  password_require_uppercase: number;
-  password_require_number: number;
-  password_require_special: number;
-  password_expiry_days: number;
-  session_timeout_minutes: number;
-  max_sessions_per_user: number;
-  ip_whitelist: string | null;
-  updated_at?: string | null;
-};
-
 const ORG_ID = 'org-1';
 
-const settingsStore = new Map<string, SecuritySettingsRow>();
+// Current route persists security settings as a JSON blob in organization_settings
+// (setting_key='security') and MFA on the organizations row; access is gated by
+// requireOrgAdmin → organization_members.role.
+const settingsStore = new Map<string, string>(); // orgId → setting_value JSON
+const mfaStore = new Map<string, number>(); // orgId → mfa_required
 
 const dbGet = vi.fn(async (sql: string, params: unknown[] = []) => {
-  if (sql.includes('FROM security_settings WHERE organization_id = ?')) {
+  if (/FROM organization_members/i.test(sql)) {
+    return { role: 'ADMIN' }; // requesting user is an org admin
+  }
+  if (/FROM organizations\b/i.test(sql)) {
     const orgId = String(params[0] ?? '');
-    return settingsStore.get(orgId) || null;
+    return { mfa_required: mfaStore.get(orgId) ?? 0, mfa_grace_period_days: 0 };
+  }
+  if (/FROM organization_settings/i.test(sql)) {
+    const orgId = String(params[0] ?? '');
+    const value = settingsStore.get(orgId);
+    return value ? { setting_value: value, updated_at: new Date().toISOString() } : null;
   }
   return null;
 });
 
 const dbRun = vi.fn(async (sql: string, params: unknown[] = []) => {
-  if (sql.startsWith('INSERT INTO security_settings')) {
-    const orgId = String(params[0] ?? '');
-    settingsStore.set(orgId, {
-      organization_id: orgId,
-      require_2fa: Number(params[1] ?? 0),
-      password_min_length: Number(params[2] ?? 8),
-      password_require_uppercase: Number(params[3] ?? 0),
-      password_require_number: Number(params[4] ?? 0),
-      password_require_special: Number(params[5] ?? 0),
-      password_expiry_days: Number(params[6] ?? 0),
-      session_timeout_minutes: Number(params[7] ?? 30),
-      max_sessions_per_user: Number(params[8] ?? 5),
-      ip_whitelist: String(params[9] ?? '[]'),
-      updated_at: new Date().toISOString(),
-    });
+  if (/UPDATE organizations SET mfa_required/i.test(sql)) {
+    mfaStore.set(String(params[1] ?? ''), Number(params[0] ?? 0));
+  }
+  if (/INTO organization_settings/i.test(sql)) {
+    // params: [orgId, settingValueJson]
+    settingsStore.set(String(params[0] ?? ''), String(params[1] ?? '{}'));
   }
   return { success: true, changes: 1 };
 });
@@ -56,7 +45,7 @@ const dbAll = vi.fn(async () => []);
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: any) => {
-    req.user = { id: 'u-1', organizationId: ORG_ID };
+    req.user = { id: 'u-1', organizationId: ORG_ID, role: 'ADMIN' };
     next();
   },
 }));
@@ -79,6 +68,7 @@ describe('security.routes', () => {
 
   beforeEach(() => {
     settingsStore.clear();
+    mfaStore.clear();
     dbGet.mockClear();
     dbRun.mockClear();
     dbAll.mockClear();
@@ -88,10 +78,10 @@ describe('security.routes', () => {
     app.use('/api/security', securityRouter);
   });
 
-  it('GET /api/security/settings seeds defaults when missing', async () => {
+  it('GET /api/security/settings returns defaults when none stored', async () => {
     const res = await request(app).get('/api/security/settings').expect(200);
     expect(res.body.organizationId).toBe(ORG_ID);
-    expect(res.body.passwordMinLength).toBe(8);
+    expect(res.body.passwordMinLength).toBe(12); // route default
     expect(Array.isArray(res.body.ipWhitelist)).toBe(true);
   });
 
