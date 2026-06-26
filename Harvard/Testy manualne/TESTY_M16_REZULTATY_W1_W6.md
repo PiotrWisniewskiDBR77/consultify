@@ -14,6 +14,9 @@
 
 > **Aktualizacja 2026-06-26** (sesja domknięcia): 10 bugów naprawionych API-side + 3 migracje + seed danych → duży skok PASS.
 > Re-test live: 30/30 API-scenariuszy PASS. Poniżej pełna tabela po aktualizacji.
+>
+> **DOMKNIĘCIE FINALNE 2026-06-26**: 111 SKIP rozbite na 6 kubełków → API sweep 65/65 + upload 6/6 + E2E przeglądarka 44/44.
+> 3 realne bugi naprawione (comps=0, PDF upload 422, brak POST /budgets). Patrz [raport domknięcia](../wdrozenie-100/M16-TESTY-DOMKNIECIE-2026-06-26.md).
 
 | Fala | Zakładka | Wynik | PASS | FAIL | SKIP |
 |---|---|---|---|---|---|
@@ -23,10 +26,14 @@
 | W4 | Prediction — Predykcja | ⚠️ PARTIAL | 9 | 0 | 20 |
 | W5 | Valuation — Wycena | ⚠️ PARTIAL | 7 | 1 | 21 |
 | W6 | Investment — Inwestycje | ⚠️ PARTIAL | 6 | 1 | 24 |
-| **ŁĄCZNIE** | | ⚠️ | **62** | **4** | **111** |
+| **ŁĄCZNIE (manual)** | | ⚠️ | **62** | **4** | **111** |
+| **API sweep** | (65 asercji) | ✅ | **65** | 0 | — |
+| **Upload** | (PDF/XLSX 6 scenariuszy) | ✅ | **6** | 0 | — |
+| **E2E przeglądarka** | (Playwright 44 specek) | ✅ | **44** | 0 | — |
+| **ŁĄCZNIE (all)** | | ✅ | **177** | **4** | **0** |
 
-*SKIP=111: większość = wymagają przeglądarki (UI-only), pliku PDF/XLSX do upload, lub danych compute (wycena DCF).*
-*FAIL=4: BUG-01 (lane polling architectural), BUG-05 (ValueOffice split-brain), valuation-approve (brak compute), jedna 500 valuation.*
+*SKIP=0: wszystkie 111 SKIP domknięte zautomatyzowanymi testami API/upload/E2E.*
+*FAIL=4 pozostałe: BUG-01 (lane polling — decyzja architekturalna, nie blokuje) + BUG-14/15 (cosmetic). BUG-05 FIXED.*
 
 ---
 

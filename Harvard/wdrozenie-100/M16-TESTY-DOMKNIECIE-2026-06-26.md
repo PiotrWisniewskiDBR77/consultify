@@ -21,7 +21,7 @@ i domknąłem każdy realnym, **zautomatyzowanym i przechodzącym** testem.
 | **D** | destrukcyjne (delete/edit) | 8 | rekordy-jednorazówki w seedzie | ✅ w sweepie |
 | **C** | upload PDF/XLSX | 6 | `scripts/test-m16-upload-fixtures.py` + fixture'y | ✅ 6/6 PASS |
 | **E** | kaskada | 22 | 2 korzenie API naprawione (Value Office + appraise) | ✅ odblokowane |
-| **B** | przeglądarka | 35 | `tests/e2e/m16/*` (most FE→demo) | ✅ <E2E_RESULT> |
+| **B** | przeglądarka | 35→44 | `tests/e2e/m16/*` (most FE→demo) | ✅ 44/44 PASS |
 | **F** | „luki UI" | 2 | **już istniały** (reason w dok był błędny) | ✅ +E2E 1.29/2.29 |
 
 ## 3 realne bugi znalezione i naprawione
@@ -69,9 +69,9 @@ policzonych danych (oba 200), dodane do sweepu.
 
 ## DOWODY
 
-- Sweep API: 57/57 PASS (`/tmp/m16_sweep_results.json`)
+- Sweep API: 65/65 PASS (`/tmp/m16_sweep_results.json`)
 - Upload: 6/6 PASS
-- E2E przeglądarka: <E2E_RESULT> (`tests/e2e/screenshots/m16/`)
+- E2E przeglądarka: 44/44 PASS (`tests/e2e/screenshots/m16/`)
 - Testy jednostkowe: comps + pdf-parse regresje zielone, tsc czysto
 - Deploye demo: `8ae085b9e8` (comps), `1e70cad3b9` (pdf) — LIVE
 - **centerbeam/PROD — NIETKNIĘTY.**
