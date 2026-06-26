@@ -6,9 +6,11 @@
 
 ## Werdykt w jednym zdaniu
 
-Proces jest **dobrze zaprojektowany architektonicznie** (jeden SSOT statusów, bramki role-gated, warstwa AI-readiness, podwójny ślad audytu, kanoniczny emiter powiadomień), ale jest **w połowie migracji** i ma **realne nieszczelności integralności** — z których **dwie pozwalają inicjatywie ominąć cały łańcuch zatwierdzeń**. To nie jest „zepsute", to jest „mocny szkielet z policzalnymi dziurami".
+Proces jest **dobrze zaprojektowany architektonicznie** (jeden SSOT statusów, bramki role-gated, warstwa AI-readiness, podwójny ślad audytu, kanoniczny emiter powiadomień). Główne ryzyko to **niedokończona migracja** (lejek kreacji za flagą OFF) i kilka footgunów spójności — **nie** obejścia governance. To „mocny szkielet, w połowie ujednolicony".
 
-**Ocena dojrzałości procesu: ~7/10** — szkielet 9/10, szczelność egzekwowania 5/10.
+**Ocena dojrzałości procesu: ~8/10** — szkielet 9/10, szczelność egzekwowania 7/10.
+
+> ⚠️ **KOREKTA 2026-06-26 (po weryfikacji w kodzie).** Pierwotny nagłówkowy P0 „F1 — Pomysły→inicjatywa tworzą APPROVED, omijając łańcuch" był **FAŁSZYWYM ALARMEM** automatycznego audytu. Linia `notebookConversionService.ts:88` ustawia status **sesji narzędzia** (`tool_sessions`), nie inicjatywy; inicjatywa powstaje jako **DRAFT** (`:326` + funnel `:289`). F1 **wycofany**. F3 (import PDF→PENDING_REVIEW) jest **celowy i defensywny**, nie naruszenie. Lekcja: każdy claim file:line z audytu = zweryfikuj runtime przed działaniem (zgodnie z zasadą projektu „audyty zawyżają ~1 na 7"). Ocena podniesiona po korekcie.
 
 ---
 
@@ -28,23 +30,21 @@ Proces jest **dobrze zaprojektowany architektonicznie** (jeden SSOT statusów, b
 
 ## Ustalenia (posortowane wg dotkliwości)
 
-### 🔴 KRYTYCZNE — szczelność egzekwowania
+### ✅ WYCOFANE — fałszywy alarm audytu
 
-**F1 — Pomysły→inicjatywa tworzą od razu `APPROVED`, omijając CAŁY łańcuch zatwierdzeń.**
-`notebookConversionService.ts:88` pisze status `APPROVED` bez DRAFT→REVIEW→PROMOTED→PLANNING→APPROVED. Inicjatywa z Mind-mapy **pomija**: przegląd PM, decyzję Go/No-Go, akceptację Sponsora, zatwierdzenie Komitetu Sterującego, decyzję Zasoby. Każdy kto może konwertować pomysł obchodzi cały governance.
-- **Wpływ:** dziura w kontroli — „tylnymi drzwiami" inicjatywa wchodzi jako zatwierdzona.
-- **Naprawa:** zmień na `DRAFT` (lub `PENDING_REVIEW` jeśli ma być szybka ścieżka), zachowując lineage `source_type='mywork_idea'`. 1-linijkowa zmiana + test.
+**~~F1 — Pomysły→inicjatywa tworzą `APPROVED`, omijając łańcuch~~ → NIEPRAWDA.**
+Zweryfikowane w kodzie 2026-06-26: `notebookConversionService.ts:88` ustawia status **sesji narzędzia** (`tool_sessions`, INSERT do `tool_sessions`), co jest poprawne (ukończona sesja MyWork = APPROVED/100%). FAKTYCZNa inicjatywa powstaje w bloku `target==='initiative'` (`:275-337`) ze statusem **DRAFT** — zarówno przez kanoniczny funnel (`:289`) jak i fallback (`:326`). **Żadnego obejścia governance nie ma.** Finding wycofany; był to przykład zawyżania audytu (verify-runtime-before-acting).
 
-**F2 — Lejek kreacji za flagą OFF → ~23 rozproszone INSERT-y, brak gwarancji integralności.**
-`createInitiativeService.ts` (kanoniczny lejek: zawsze DRAFT, name+title, lineage, audyt, QA §B3) działa tylko gdy `INITIATIVE_FUNNEL_ENABLED==='true'`. Przy OFF (domyślnie) każda ścieżka ma własny INSERT → niespójny status startowy (stąd F1), różne pola, brak jednolitego audytu.
-- **Wpływ:** F1 i wszystkie przyszłe wyłomy są SKUTKIEM tego — bez jednego lejka nie ma jak wymusić niezmienników.
-- **Naprawa:** dokończyć migrację i włączyć flagę (staging→prod). To „matka" pozostałych ustaleń.
+### 🟠 WYSOKIE — niedokończona migracja
 
-### 🟠 WYSOKIE — obejścia governance
+**F2 — Lejek kreacji za flagą OFF → rozproszone INSERT-y, brak jednolitych gwarancji.**
+`createInitiativeService.ts` (kanoniczny lejek: zawsze DRAFT, name+title, lineage, audyt, QA §B3) działa tylko gdy `INITIATIVE_FUNNEL_ENABLED==='true'` (potwierdzone `notebookConversionService.ts:288`, `reportImportService.ts:1527`). Przy OFF każda ścieżka ma własny INSERT — niespójne pola, brak jednolitego audytu (choć status startowy i tak wychodzi DRAFT na zweryfikowanych ścieżkach).
+- **Wpływ:** brak jednego punktu wymuszania niezmienników — przyszłe ścieżki mogą się rozjechać.
+- **Naprawa:** dokończyć migrację i włączyć flagę (staging→prod). „Matka" higieny kreacji.
 
-**F3 — Import PDF tworzy `PENDING_REVIEW` (drugi wyłom DRAFT).**
-`reportImportService.ts:1536`. Mniej groźne niż F1 (PENDING_REVIEW wciąż przechodzi przez PM-review), ale niespójne z kanonem „zawsze DRAFT". Świadoma decyzja czy bug?
-- **Naprawa:** potwierdzić intencję; jeśli celowe — udokumentować jako wyjątek, jeśli nie — DRAFT.
+**F3 — Import PDF tworzy `PENDING_REVIEW` (celowe, nie wyłom).**
+`reportImportService.ts:1536` — jawnie `status: 'PENDING_REVIEW'`, komentarz „status importu ważny w cyklu". To **świadomy, defensywny wybór**: treść jest już zwalidowana w raporcie źródłowym, więc pomija się tylko etap autorski DRAFT — inicjatywa i tak przechodzi przez PM-review (PENDING_REVIEW→REVIEW→…). Nie omija governance.
+- **Naprawa:** żadna wymagana; ewentualnie udokumentować jako oficjalny wyjątek w `INITIATIVE_FORMULA.md`.
 
 **F4 — Teresa `generate_initiative` omija blokadę pilotów.**
 Narzędzie jest typu READ (`ai/tools/generateInitiative.ts`) → NIE przechodzi `evaluateInitiativeWriteAccess`. Użytkownik z pasma „pilot" (VIEWER/CLIENT/TEAM_MEMBER) może utworzyć inicjatywę z czatu, której PMO API by mu zabroniło.
@@ -87,20 +87,20 @@ Narzędzie jest typu READ (`ai/tools/generateInitiative.ts`) → NIE przechodzi 
 - **Bypass ADMIN to miecz obosieczny** — odblokowuje zatory, ale obchodzi cały governance. W małych zespołach gdzie większość to ADMIN, łańcuch bramek faktycznie nie egzekwuje nic.
 - **Powiadomienie `gate_action_required`** jest dobre (mówi „czeka na Twoją decyzję"), ale jeśli rola następnej bramki jest nieobsadzona — nikt nie dostaje sygnału, inicjatywa cicho stoi.
 
-**Wniosek efektywnościowy:** proces jest „enterprise-grade" w projekcie, ale jego **skuteczność zależy od obsady ról** i od **włączenia flag** (funnel, due-breach). W obecnym stanie (flagi OFF, 2 wyłomy DRAFT, bypass ADMIN dostępny) realna szczelność jest znacznie niższa niż sugeruje architektura.
+**Wniosek efektywnościowy:** proces jest „enterprise-grade" w projekcie i — po korekcie F1 — jego **szczelność statusu startowego jest dobra** (wszystkie zweryfikowane ścieżki = DRAFT/PENDING_REVIEW, oba przechodzą przez review). Realne ryzyko to nie obejścia governance, lecz: **skuteczność zależna od obsady ról** (zatory gdy rola następnej bramki nieobsadzona), **bypass ADMIN** (w małych zespołach łańcuch nie egzekwuje), i **niedokończona migracja lejka** (higiena, nie bezpieczeństwo).
 
 ---
 
-## Co naprawić najpierw (priorytet)
+## Co naprawić najpierw (priorytet — po korekcie F1)
 
 | Prio | Akcja | Ustalenie | Koszt |
 |---|---|---|---|
-| **P0** | Pomysły→inicjatywa: `APPROVED`→`DRAFT` | F1 | 1 linia + test |
-| **P0** | Decyzja + włączenie lejka kreacji (staging→prod) | F2 | migracja flagi |
-| **P1** | Ujednolicić import PDF + ścieżkę Teresy z polityką | F3, F4 | mała + decyzja produktowa |
+| **P1** | Dokończyć migrację + włączyć lejek kreacji (staging→prod) | F2 | migracja flagi |
+| **P1** | Decyzja produktowa: czy Teresa (czat) może tworzyć drafty dla pasma pilot | F4 | decyzja + ew. guard |
 | **P1** | Skonsolidować walidację przejść (handler → `validateTransition`) | F9 | refactor |
 | **P2** | Usunąć drift enuma + ujednolicić źródło Gantta | F6, F7 | refactor |
 | **P2** | Decyzja o due-breach cronie na prod | F8 | flaga + weryfikacja |
+| **P2** | Bypass ADMIN — rozważyć audyt/ostrzeżenie przy ominięciu bramki | (tarcie) | mały |
 | **P3** | Sprzątanie martwego kodu | F10, F11 | cleanup |
 
-> **Uwaga metodologiczna:** część szczegółów (dokładne numery migracji, niektóre claimy schematu M15/M16) pochodzi z czytania dokumentów i NIE została niezależnie potwierdzona w kodzie — oznaczone w `INITIATIVE_LIFECYCLE.md`. Nazwy modułów, lokalizacje bramek, RBAC i side-effecty są zweryfikowane file:line.
+> **Uwaga metodologiczna (wzmocniona po F1):** automatyczny audyt miał ≥1 błąd file:line (F1 — pomylił `tool_sessions` z `initiatives`). **Każdy claim z audytu = zweryfikuj runtime PRZED działaniem.** Niezależnie zweryfikowane file:line: F2 (`:288`/`:1527`), F3 (`:1536`), ścieżki kreacji DRAFT (`notebookConversionService.ts:326`). Pozostałe (F4-F11, schematy M15/M16, numery migracji) — potwierdzić przed naprawą.

@@ -62,8 +62,8 @@ stateDiagram-v2
     ARCHIVED --> [*]
 
     note right of DRAFT
-        *2 wyłomy: Pomysły→APPROVED,
-        import PDF→PENDING_REVIEW
+        *prawie wszystko startuje DRAFT;
+        import PDF→PENDING_REVIEW (celowo)
     end note
 ```
 
@@ -77,14 +77,16 @@ stateDiagram-v2
 |---|---|---|---|
 | Ręcznie — Charter/AI Wizard w `InitiativesHub` | `InitiativeController.createInitiative:572` ← `POST /initiatives` | DRAFT | M13 |
 | Z wywiadu (insight) | `routes/v8/interview-insights.routes.ts:1047` | DRAFT | Wywiad |
-| Z Pomysłów/Mind-map (MyWork) | `notebookConversionService.ts:88` | ⚠️ **APPROVED** | MyWork |
+| Z Pomysłów/Mind-map (MyWork) | `notebookConversionService.ts:326` (init) / funnel `:289` | **DRAFT** | MyWork |
 | Z Assessmentu | `assessmentInitiativeService.ts:646` | DRAFT | Assessment |
 | Z Narzędzi | `ToolInitiativeService.ts:271` | DRAFT | Narzędzia |
 | Z czatu Teresy (`generate_initiative`) | `ai/tools/generateInitiative.ts` | DRAFT | Czat |
-| Z importu PDF | `reportImportService.ts:1536` | ⚠️ **PENDING_REVIEW** | Import |
+| Z importu PDF | `reportImportService.ts:1536` | **PENDING_REVIEW** (celowo) | Import |
 | Z Discovery (pain points) | `routes/discovery.routes.ts:270` | DRAFT | Discovery |
 
 > **Lejek kanoniczny** `createInitiativeService.ts:96` ma ujednolicić wszystkie ścieżki (zawsze DRAFT, name+title, lineage, audyt, doradczy QA §B3), ale jest **za flagą `INITIATIVE_FUNNEL_ENABLED`** — przy OFF każda ścieżka używa legacy INSERT. Patrz analiza B.
+>
+> **Korekta 2026-06-26:** wcześniejszy automatyczny audyt twierdził, że Pomysł→inicjatywa pisze `APPROVED` — to **błąd**: linia `:88` ustawia status **sesji narzędzia** (`tool_sessions`), nie inicjatywy. Inicjatywa powstaje jako **DRAFT** (`:326` fallback + funnel `:289`). Import PDF→`PENDING_REVIEW` jest **celowy** (treść już zwalidowana w raporcie źródłowym; i tak przechodzi przez PM-review). Żadna ścieżka nie omija governance.
 
 ### Kto może tworzyć (RBAC)
 `evaluateInitiativeWriteAccess` (`initiativeGovernanceGuard.ts:135`), egzekwowane w `createInitiative:582`:
