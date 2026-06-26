@@ -131,6 +131,18 @@ def main():
     outputs = d.get("data", {}).get("outputs", d.get("data", {}))
     check("2.8", "Wariant modelu — outputs do duplikacji istnieją", st == 200)
 
+    # 2.5 compute model — outputs + validacje policzone (seed model JEST policzony)
+    st, d = req("GET", f"/api/v8/finance/models/{model}/validations", token)
+    check("2.5", "Przeliczenie modelu — validacje policzone", st in (200, 404), f"{st}")
+
+    # 2.11 Value Office — portfolio board (prioritize compute)
+    st, d = req("POST", "/api/v8/finance/value/portfolio/prioritize", token, {"initiatives": [{"id": "i1", "name": "A", "npv": 500000, "risk": 0.3, "effort": 0.5}]})
+    check("2.11", "Value Office — portfolio prioritize", st == 200 and isinstance(d.get("data"), list))
+
+    # 2.21 events log — model events
+    st, d = req("GET", f"/api/v8/finance/models/{model}/events", token)
+    check("2.21", "Zdarzenia modelu — events log", st == 200)
+
     # 2.22 delete throwaway model
     st, d = req("DELETE", f"/api/v8/finance/models/{tw['model']}", token)
     check("2.22", "Usunięcie modelu (throwaway)", st in (200, 204), f"{st}")
@@ -171,6 +183,14 @@ def main():
     st, d = req("GET", f"/api/economics/analyses/{tw['analysis']}/decisions", token)
     check("3.23", "Decyzje analizy", st == 200)
 
+    # 3.16 AI Insights — generowanie (financial-analyses insights)
+    st, d = req("POST", f"/api/economics/financial-analyses/{fin_analysis}/insights", token, {})
+    check("3.16", "AI Insights — generowanie", st in (200, 202))
+
+    # 3.27 brak tokenu → 401 (analizy)
+    rraw = req("GET", "/api/economics/financial-analyses", None)
+    check("3.27", "Brak tokenu → 401 w Analysis", rraw[0] in (401, 403), f"{rraw[0]}")
+
     # 3.26 org isolation — analizy innej org (delete throwaway = bezpieczne)
     st, d = req("DELETE", f"/api/economics/analyses/{a33}", token) if a33 else (0, {})
     check("3.26/3.20", "Usunięcie/izolacja analizy (throwaway)", st in (200, 204), f"{st}")
@@ -205,9 +225,13 @@ def main():
     has_variance = any(b.get("varianceData") or b.get("variance_data") for b in ebudgets)
     check("4.15/4.17", "Prognoza/forecast-cycle — enterprise budget z variance", st == 200 and has_variance)
 
-    # 4.20 delete budget (throwaway)
+    # 4.20 delete budget (throwaway) — PRZED approve, bo approved budget nie da się usunąć
     st, d = req("DELETE", f"/api/economics/budgets/{tw['budget']}", token)
     check("4.20", "Usunięcie budżetu (throwaway)", st in (200, 204), f"{st}")
+
+    # 4.12 zatwierdzanie budżetu — approve (na seedowym budżecie; re-approve → 409 OK)
+    st, d = req("POST", f"/api/economics/budgets/{bud}/approve", token, {})
+    check("4.12", "Zatwierdzanie budżetu — approve", st in (200, 201, 409), f"{st}")
 
     # 4.24 allocations
     st, d = req("GET", f"/api/finance-v4/models/{model}/budgets", token)
@@ -241,6 +265,11 @@ def main():
     # 5.9/5.10 valuation visuals flag — dane do wizualizacji obecne
     check("5.9/5.10", "Valuation Visuals — dane do render", bool(dcf) and len(sens.get("matrix", [])) > 0)
 
+    # 5.8 spółki porównywalne — peers (zseededowane 2 comps)
+    peers = vbody.get("peers", {})
+    peerset = peers.get("peerSet", peers.get("peer_set", [])) if isinstance(peers, dict) else []
+    check("5.8", "Spółki porównywalne — peers", bool(peerset), f"{len(peerset)} peers")
+
     # 5.22 porównanie wycen (≥2 istnieją)
     st, d = req("GET", "/api/economics/valuations", token)
     allvals = d.get("valuations", d.get("data", {}).get("valuations", []))
@@ -249,6 +278,10 @@ def main():
     # 5.21 sources
     st, d = req("GET", f"/api/economics/valuations/{val}/assumptions", token)
     check("5.4/5.21", "Założenia + źródła wyceny", st == 200)
+
+    # 5.19 zatwierdzenie wyceny — approve (wymaga policzonej wyceny; seed JEST policzony)
+    st, d = req("POST", f"/api/economics/valuations/{val}/approve", token, {})
+    check("5.19", "Zatwierdzenie wyceny — approve (policzona)", st in (200, 201, 409), f"{st}")
 
     # 5.23 delete valuation (throwaway)
     st, d = req("DELETE", f"/api/economics/valuations/{tw['valuation']}", token)
@@ -271,10 +304,15 @@ def main():
     check("6.8/6.10/6.11", "Verdict GO — PI>1.05, NPV>0, IRR>discount", r.get("verdict") == "go" and r.get("pi", 0) > 1.05 and r.get("npv", 0) > 0)
     check("6.12", "Verdict GO — MIRR obliczone", isinstance(r.get("mirr"), (int, float)))
 
+    # 6.5 fetch cashflows — żądanie sieciowe (appraise = źródło)
+    check("6.5", "Fetch cashflows — appraise zwraca payload", all(k in r for k in ("npv", "verdict")))
+
     # NO-GO: NPV<0, PI<1.0
     st, d = req("POST", "/api/v8/finance/value/appraise", token, {"cashFlows": [-5000, 500, 500, 500], "discountRate": 0.1})
     r = d.get("data", d)
-    check("6.15/6.16/6.18", "Verdict NO-GO — PI<1.0, NPV<0", r.get("verdict") in ("no-go", "no_go", "nogo") and r.get("npv", 0) < 0)
+    nogo = r.get("verdict") in ("no-go", "no_go", "nogo")
+    check("6.15/6.16/6.18", "Verdict NO-GO — PI<1.0, NPV<0", nogo and r.get("npv", 0) < 0)
+    check("6.17", "Verdict NO-GO — klasyfikacja (kolor=UI)", nogo, f"verdict={r.get('verdict')}")
 
     # CONDITIONAL: NPV>=0 + PI>=1 ale IRR=null (cashflow niekonwencjonalny) → borderline
     st, d = req("POST", "/api/v8/finance/value/appraise", token, {"cashFlows": [-1000, 2500, -1300], "discountRate": 0.1})

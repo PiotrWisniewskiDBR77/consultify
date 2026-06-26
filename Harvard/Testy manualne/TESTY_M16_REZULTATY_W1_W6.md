@@ -38,7 +38,7 @@
 | BUG-02 | **P1** | ✅ FIXED | InvestmentAppraisalPanel | `POST /api/v8/finance/value/appraise → 404` → 200 | `4fed634985` |
 | BUG-03 | **P2** | ✅ FIXED | FinancialStatementPackWorkspace | `statements/:id/ratios → 404` → 200 | `20260628_readiness_fix` |
 | BUG-04 | **P2** | ✅ FIXED | ModelStudio3D | `models/:id/events → 404` → 200 | — (already in code) |
-| BUG-05 | **P2** | 🔴 OPEN | ValueOfficePanel | "Motor wartości niedostępny" — split-brain V8↔legacy | arch. |
+| BUG-05 | **P2** | ✅ FIXED | ValueOfficePanel | mount `/finance/value` przywrócony po rebase; `value-bridge`+`portfolio/prioritize`+`variance-bridge` → 200 (zweryfikowane live) | mount restore |
 | BUG-06 | **P2** | ✅ FIXED | FinancialAnalysisView | `financial-analyses/:id/insights → 404` → 200 | — (already in code) |
 | BUG-07 | **P2** | ✅ FIXED | FinancialAnalysisView | `analyses/:id/business-case → 404` → 200 | `20260628_ensure_digitization` |
 | BUG-08 | **P2** | ✅ FIXED | FinancialAnalysisView | `analyses/:id/decisions → 404` → 200 | `20260628_ensure_digitization` |
@@ -50,6 +50,11 @@
 | BUG-14 | **P3** | 🟡 COSMETIC | UploadStatementModal | UI: CSV supported → walidator odrzuca CSV | — |
 | BUG-15 | **P3** | 🟡 COSMETIC | Dokumentacja | Spec podaje stary prefix `/api/finance-statements/` | — |
 | **BUG-NEW** | **NEW** | ✅ ADDED | PredictionTab | Brak `POST /api/v8/finance/budgets` → teraz jest | `b5d1b99764` |
+| **BUG-16** | **P2** | ✅ FIXED | valuationService | Comps=0 na wycenie `manual` (brak `companyMetric`) → football-field comps band zapadał się mimo peers | `8ae085b9e8` |
+| **BUG-17** | **P1** | ✅ FIXED | pdfParserService | Upload PDF zepsuty — `pdf-parse` v2 API (kod wołał martwy v1 default) → KAŻDY upload PDF 422. RADIUJE na 6 innych plików (osobny task) | `1e70cad3b9` |
+
+> **Domknięcie testów 2026-06-26** (sesja „111 SKIP"): patrz [M16-TESTY-DOMKNIECIE-2026-06-26.md](../wdrozenie-100/M16-TESTY-DOMKNIECIE-2026-06-26.md).
+> 111 SKIP rozbite na 6 kubełków i domknięte: API 73 ID (sweep 57/57), upload 6/6, przeglądarka 35 specek E2E, 2 „luki UI" okazały się istnieć. 3 realne bugi naprawione (comps, PDF, budgets).
 
 ---
 
