@@ -553,6 +553,31 @@ describe('V8 finance read-only routes', () => {
     expect(mockGetModel).toHaveBeenCalledWith('model-1');
   });
 
+  it('POST /models/:id/duplicate — stale source FK → kopiuje bez graftu (NIE 500) [BUG-09 regress]', async () => {
+    // Model źródłowy wskazuje na usuniętą/syntetyczną inicjatywę (jak seed na demo).
+    mockGetModel.mockImplementation((id: string) =>
+      id === 'copy-1'
+        ? Promise.resolve({ id: 'copy-1', organization_id: ORG, name: 'Src (kopia)', start_date: '2026-01-01' })
+        : Promise.resolve({
+            id: 'src-1', organization_id: ORG, name: 'Src',
+            initiative_id: 'ghost-initiative', start_date: '2026-01-01', currency: 'PLN',
+          })
+    );
+    // 1. próba (z FK) rzuca guard cross-org; 2. (bez FK) sukces.
+    mockCreateModel
+      .mockRejectedValueOnce(new Error('Source initiative not found'))
+      .mockResolvedValueOnce('copy-1');
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/src-1/duplicate').send({});
+
+    expect(res.status).toBe(201); // KLUCZ: nie 500
+    expect(mockCreateModel).toHaveBeenCalledTimes(2);
+    // retry NIE grafuje martwego initiativeId
+    expect(mockCreateModel.mock.calls[1][0]).not.toHaveProperty('initiativeId');
+    expect(res.body.data?.model?.id).toBe('copy-1');
+  });
+
   it('GET /api/v8/finance/models/:id returns envelope and delegates to getModel', async () => {
     mockGetModel.mockResolvedValue({
       id: 'model-1',

@@ -690,10 +690,13 @@ router.post(
       return res.status(404).json({ error: 'Model not found' });
     }
 
-    const newModelId = await createModel({
+    // Wspólne pola kopii. project/initiative FK kopiujemy tylko gdy WCIĄŻ istnieją —
+    // createModel ma guard cross-org (rzuca 'not found'), a model źródłowy może
+    // wskazywać na usuniętą/syntetyczną inicjatywę (BUG-09: 500 przy duplikacji
+    // modelu ze stale FK, potwierdzone na demo dla initiative_id seed). Duplikat
+    // NIE może padać przez nieaktualny FK źródła — degradujemy bez graftu.
+    const baseParams = {
       organizationId,
-      projectId: sourceModel.project_id || undefined,
-      initiativeId: sourceModel.initiative_id || undefined,
       name: `${sourceModel.name} (kopia)`,
       description: sourceModel.description || undefined,
       currency: sourceModel.currency || 'PLN',
@@ -706,7 +709,22 @@ router.post(
       createdBy: userId,
       sourceStatementId: sourceModel.source_statement_id || undefined,
       sourceStatementPackId: sourceModel.source_statement_pack_id || undefined,
-    });
+    };
+    let newModelId: string;
+    try {
+      newModelId = await createModel({
+        ...baseParams,
+        projectId: sourceModel.project_id || undefined,
+        initiativeId: sourceModel.initiative_id || undefined,
+      });
+    } catch (err) {
+      // Stale source FK (project/initiative usunięte) → kopiuj bez graftu FK.
+      if (err instanceof Error && /not found/i.test(err.message)) {
+        newModelId = await createModel(baseParams);
+      } else {
+        throw err;
+      }
+    }
 
     const newModel = await getModel(newModelId);
     return res.status(201).json({
