@@ -53,6 +53,28 @@ export interface InitiativeEconomicsLink {
   updatedAt: string;
 }
 
+// USPOJNIENIE E2 — kształt odpowiedzi GET /initiatives/funnel/stats
+export interface InitiativeFunnelStats {
+  byStatus: Record<string, number>;
+  bySource: Record<string, number>;
+  conversion: {
+    created: number;
+    inExecution: number;
+    tracking: number;
+    conversionPct: number;
+  };
+}
+
+// USPOJNIENIE E1 — kształt odpowiedzi GET /initiatives/:id/lineage
+export interface InitiativeLineageChain {
+  source: { type: string; id: string } | null;
+  initiative: { id: string; title: string; status: string };
+  downstream: {
+    executionStatus?: string;
+    benefits?: Array<{ kpi: string }>;
+  };
+}
+
 export const InitiativeApi = {
   // ==========================================
   // INITIATIVES CRUD
@@ -118,6 +140,38 @@ export const InitiativeApi = {
     });
     if (!response.ok) throw new Error('Enrichment failed');
     return response.json();
+  },
+
+  // ==========================================
+  // USPOJNIENIE E1/E2 — OBSERWOWALNOŚĆ ŁAŃCUCHA (lineage + funnel)
+  // ==========================================
+
+  /**
+   * Org-wide funnel: liczby per status, per źródło i konwersja
+   * created → in-execution → tracking. Degraduje do pustych liczb na błędzie.
+   */
+  getFunnelStats: async (): Promise<InitiativeFunnelStats> => {
+    try {
+      const res = await fetch(`${API_URL}/initiatives/funnel/stats`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('funnel stats failed');
+      return (await res.json()) as InitiativeFunnelStats;
+    } catch {
+      return { byStatus: {}, bySource: {}, conversion: { created: 0, inExecution: 0, tracking: 0, conversionPct: 0 } };
+    }
+  },
+
+  /**
+   * Łańcuch pochodzenia JEDNEJ inicjatywy: źródło → inicjatywa → wykonanie →
+   * rezultaty. Zwraca null gdy inicjatywa nie rozwiązuje się w org / na błędzie.
+   */
+  getLineage: async (id: string): Promise<InitiativeLineageChain | null> => {
+    try {
+      const res = await fetch(`${API_URL}/initiatives/${id}/lineage`, { headers: getHeaders() });
+      if (!res.ok) return null;
+      return (await res.json()) as InitiativeLineageChain;
+    } catch {
+      return null;
+    }
   },
 
   // ==========================================

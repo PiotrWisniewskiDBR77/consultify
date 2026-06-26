@@ -55,6 +55,7 @@ import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
+import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
 
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
@@ -551,7 +552,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Available view modes — hide when Analysis tab is active
   const availableViewModes: ViewMode[] =
-    activeTab === 'analysis' ? [] : ['table', 'kanban', 'timeline', 'grid'];
+    activeTab === 'analysis' || activeTab === 'observability'
+      ? []
+      : ['table', 'kanban', 'timeline', 'grid'];
 
   // V3-F02: Portfolio Analysis tab + main portfolio tab
   const tabs = useMemo(
@@ -565,6 +568,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         id: 'analysis' as ModuleTab,
         label: t('initiatives.tabs.analysis', 'Analysis'),
         icon: <BarChart3 size={16} />,
+      },
+      {
+        // USPOJNIENIE E1/E2 — obserwowalność łańcucha (lineage + funnel)
+        id: 'observability' as ModuleTab,
+        label: t('initiatives.tabs.observability', 'Obserwowalność'),
+        icon: <GitBranch size={16} />,
       },
     ],
     [t]
@@ -1282,6 +1291,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
+    // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
+    if (activeTab === 'observability') {
+      return <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />;
+    }
     // V3-F02: Analysis tab — portfolio quality gate
     if (activeTab === 'analysis') {
       return (

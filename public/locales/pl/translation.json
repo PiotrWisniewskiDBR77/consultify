@@ -2398,7 +2398,8 @@
     },
     "tabs": {
       "portfolio": "Portfolio",
-      "analysis": "Analiza"
+      "analysis": "Analiza",
+      "observability": "Obserwowalność"
     },
     "analysis": {
       "resources": {
@@ -4160,6 +4161,25 @@
     "thisInitiative": "tę inicjatywę",
     "card": {
       "nextStep": "Następny krok"
+    },
+    "observability": {
+      "funnelTitle": "Lejek konwersji portfela",
+      "lineageTitle": "Łańcuch pochodzenia inicjatywy",
+      "created": "Utworzone",
+      "inExecution": "W wykonaniu",
+      "tracking": "Rezultaty",
+      "conversion": "Konwersja",
+      "byStatus": "Wg statusu",
+      "bySource": "Wg źródła",
+      "source": "Źródło",
+      "sourceManual": "ręczne",
+      "initiative": "Inicjatywa",
+      "execution": "Wykonanie",
+      "results": "Rezultaty",
+      "kpiCount": "{{count}} KPI",
+      "pickInitiative": "Wybierz inicjatywę",
+      "empty": "Brak danych obserwowalności.",
+      "noLineage": "Brak łańcucha dla wybranej inicjatywy."
     }
   },
   "execution": {

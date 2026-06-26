@@ -3191,7 +3191,8 @@
     },
     "tabs": {
       "portfolio": "Portfolio",
-      "analysis": "Analysis"
+      "analysis": "Analysis",
+      "observability": "Observability"
     },
     "analysis": {
       "resources": {
@@ -4953,6 +4954,25 @@
     "thisInitiative": "this initiative",
     "card": {
       "nextStep": "Next step"
+    },
+    "observability": {
+      "funnelTitle": "Portfolio conversion funnel",
+      "lineageTitle": "Initiative lineage chain",
+      "created": "Created",
+      "inExecution": "In execution",
+      "tracking": "Results",
+      "conversion": "Conversion",
+      "byStatus": "By status",
+      "bySource": "By source",
+      "source": "Source",
+      "sourceManual": "manual",
+      "initiative": "Initiative",
+      "execution": "Execution",
+      "results": "Results",
+      "kpiCount": "{{count}} KPI",
+      "pickInitiative": "Select initiative",
+      "empty": "No observability data.",
+      "noLineage": "No lineage for the selected initiative."
     }
   },
   "execution": {

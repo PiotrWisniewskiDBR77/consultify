@@ -54,6 +54,8 @@ export type ModuleTab =
   | 'results_ai'
   // V3-F02 — Initiatives Portfolio Analysis
   | 'analysis'
+  // USPOJNIENIE E1/E2 — Initiatives observability (lineage + funnel)
+  | 'observability'
   // V3-Phase10 — Unified Report Builder Hub
   | 'my_reports'
   | 'r1_r4'
