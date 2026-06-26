@@ -20,6 +20,7 @@ import type { BusinessPlanSpine } from './businessPlanSpine.js';
 import type { GeneratedBundle } from './bundleGenerationRuntime.js';
 import { resolveTheme } from './themeRegistry.js';
 import { deckPlansToPptxBuffer, type DeckPlanSlide } from './bundlePptxRuntime.js';
+import { buildAudienceVariant } from './deckAudienceVariants.js';
 
 const LOG = '[bundleExportRuntime]';
 
@@ -100,6 +101,8 @@ export interface BundleFiles {
   docx: Buffer | null;
   xlsx: Buffer | null;
   pptx: Buffer | null;
+  /** Board cut (≤7 slajdów) — wariant zarządczy (F10.3 materializowany). */
+  pptxBoard: Buffer | null;
 }
 
 /** Wyłuskaj plany decka z bundle.deck (DeckLayoutDirectorResult). */
@@ -138,21 +141,33 @@ export async function exportBundleFiles(bundle: GeneratedBundle, themeId?: strin
   }
 
   let pptx: Buffer | null = null;
+  let pptxBoard: Buffer | null = null;
   try {
     const plans = extractDeckPlans(bundle.deck);
     if (plans.length > 0) {
+      const lang = bundle.spine.meta.language === 'EN' ? 'en' : 'pl';
       pptx = await deckPlansToPptxBuffer(plans, {
         themeId,
         title: `${bundle.spine.meta.company} — Biznesplan inwestorski`,
         company: bundle.spine.meta.company,
-        language: bundle.spine.meta.language === 'EN' ? 'en' : 'pl',
+        language: lang,
       });
+      // F10.3 materializowane: board cut (≤7) jako osobny plik — tylko gdy się skraca.
+      const board = buildAudienceVariant(plans as never, 'board');
+      if (board.droppedSlideIndices.length > 0) {
+        pptxBoard = await deckPlansToPptxBuffer(board.plans as never, {
+          themeId,
+          title: `${bundle.spine.meta.company} — Wersja dla zarządu`,
+          company: bundle.spine.meta.company,
+          language: lang,
+        });
+      }
     }
   } catch (err) {
     logger.warn(`${LOG} pptx render failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  return { docx, xlsx, pptx };
+  return { docx, xlsx, pptx, pptxBoard };
 }
 
 /** Bezpieczna nazwa-baza pliku z nazwy firmy (litera/cyfra/_/-, max 60). */
@@ -165,11 +180,12 @@ export function safeBundleBaseName(company?: string): string {
  * Pomija formaty których nie ma. Zwraca Buffer zip (lub null gdy 0 plików).
  */
 export async function bundleFilesToZip(files: BundleFiles, baseName: string): Promise<Buffer | null> {
-  if (!files.docx && !files.xlsx && !files.pptx) return null;
+  if (!files.docx && !files.xlsx && !files.pptx && !files.pptxBoard) return null;
   const { default: JSZip } = await import('jszip');
   const zip = new JSZip();
   if (files.docx) zip.file(`${baseName}-raport.docx`, files.docx);
   if (files.xlsx) zip.file(`${baseName}-model.xlsx`, files.xlsx);
   if (files.pptx) zip.file(`${baseName}-prezentacja.pptx`, files.pptx);
+  if (files.pptxBoard) zip.file(`${baseName}-prezentacja-zarzad.pptx`, files.pptxBoard);
   return zip.generateAsync({ type: 'nodebuffer' });
 }

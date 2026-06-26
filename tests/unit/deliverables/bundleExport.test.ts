@@ -111,6 +111,36 @@ describe('bundleExportRuntime — realne pliki', () => {
     // .pptx = zip → magic bytes "PK"
     expect(files.pptx!.subarray(0, 2).toString('latin1')).toBe('PK');
   });
+
+  it('board cut: deck ≤7 → brak osobnego pliku zarządczego (pptxBoard null)', async () => {
+    const deckBundle = {
+      ...bundle,
+      deck: { plans: Array.from({ length: 4 }, (_, i) => ({ slideIndex: i, layoutIntent: i === 0 ? 'cover' : 'key_messages', title: `S${i}`, keyMessage: `m${i}` })) },
+    } as unknown as GeneratedBundle;
+    const files = await exportBundleFiles(deckBundle);
+    expect(files.pptxBoard).toBeNull();
+  });
+
+  it('board cut: deck >7 → REALNY osobny .pptx zarządczy (F10.3 materializowany)', async () => {
+    const intents = ['cover', 'key_messages', 'single_insight', 'data_overview', 'analysis',
+      'recommendation_single', 'performance_overview', 'comparison', 'risk_management', 'next_steps'];
+    const deckBundle = {
+      ...bundle,
+      deck: { plans: intents.map((intent, i) => ({ slideIndex: i, layoutIntent: intent, title: `Slajd ${i}`, keyMessage: `Teza ${i}` })) },
+    } as unknown as GeneratedBundle;
+
+    const files = await exportBundleFiles(deckBundle, 'executive');
+    expect(files.pptx).toBeInstanceOf(Buffer);
+    expect(files.pptxBoard).toBeInstanceOf(Buffer);
+    expect(files.pptxBoard!.subarray(0, 2).toString('latin1')).toBe('PK');
+
+    // teczka zawiera oba decki
+    const zip = await bundleFilesToZip(files, 'Acme');
+    const { default: JSZip } = await import('jszip');
+    const parsed = await JSZip.loadAsync(zip!);
+    expect(Object.keys(parsed.files)).toContain('Acme-prezentacja.pptx');
+    expect(Object.keys(parsed.files)).toContain('Acme-prezentacja-zarzad.pptx');
+  });
 });
 
 describe('bundleExportRuntime — teczka ZIP (F4.2)', () => {
