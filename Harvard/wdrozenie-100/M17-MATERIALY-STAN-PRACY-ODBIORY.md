@@ -14,7 +14,7 @@ Ten plik = jedyne miejsce prawdy o postępie tej przebudowy. Szczegół (epiki/l
 1. Spięcie front↔back (zero fasad/mocków/martwych przycisków) · 2. Bezpieczeństwo (0 P0/P1; fix z testem regresji) · 3. i18n PL/EN przez t() · 4. Tokeny kolorów (0 rose/hex; EntityStatusChip/c.*) · 5. §27 (listy przez FilterableTable + Menu 1/2/3) · 6. E2E w PR-gate (scenariusze S zielone) · 7. Zgodność komponentów ze standardem UI/UX (canon).
 
 ## BRAMKA WSTĘPNA (przed pełną jakością)
-- ⛔ **Flaga `ENABLE_DELIVERABLES_PREMIUM=true` na Railway demo** (Piotr) — odblokowuje content-fill + premium-kompozycję we wszystkich 3 formatach naraz. **#1 bloker jakości.**
+- ✅ **Flaga `ENABLE_DELIVERABLES_PREMIUM=true` na Railway demo USTAWIONA 2026-06-25** (Claude, railway CLI) — deploy `3ad8a2c9` SUCCESS, live-verified (gitBranch=demo, /bundle/export→401). Odblokowane: content-fill + premium-kompozycja we wszystkich 3 formatach.
 - ⛔ Klucze obrazów na demo: `GEMINI_API_KEY` (nano-banana), później Ideogram/Recraft/Replicate (F9).
 - ⛔ Re-login na demo do odbiorów →F/→UI (sesja się wylogowała).
 - 🟡 Branch współdzielony (inni agenci) — commity chirurgiczne, git races realne.
@@ -32,7 +32,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F0.4 | Fixy żywe (timeout/deck/table/tytuły) | F0 | ✅ | ✅ | ✅ live | ✅ deck10/table8 | 🟡 | 🟡 | ⬜ | 🟢 |
 | F0.5 | Eksport DOCX+XLSX | F0 | ✅ | 🟡 | ✅ 4/4 | ⬜ | n/d | ⬜ | ⬜ | 🟢 |
 | F1.1 | Wpiąć defaulty w B1/B3/B4 | F1 | ✅ | ✅ | ✅ d7974eb | n/d | n/d | n/d | n/d | 🟢 |
-| F1.2 | Flaga premium ON (demo) | F1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⛔ Piotr |
+| F1.2 | Flaga premium ON (demo) | F1 | ✅ | ✅ | ✅ railway | ✅ live | ✅ | ✅ deploy 3ad8a2c9 | ⬜ | 🟢 (flaga ON+deploy SUCCESS+401 verified; →UI=Piotr klik) |
 | F1.3 | Beauty gate (VisionQA) | F1 | ✅ | ✅ | ✅ 272defe | n/d | n/d | n/d | n/d | 🟢 |
 | F1.4 | Content gate (0 placeholderów/sprzeczności) | F1 | ✅ | ✅ | ✅ a541716 | n/d | n/d | n/d | n/d | 🟢 |
 | F2.1 | „Nowy" → panel + wybór formatu | F2 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
