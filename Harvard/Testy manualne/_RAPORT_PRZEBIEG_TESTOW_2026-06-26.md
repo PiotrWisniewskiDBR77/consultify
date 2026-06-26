@@ -57,6 +57,31 @@ Testy uruchomione warstwami (pełny zestaw 1201 plików vitest OOM-uje lokalnie 
 
 ---
 
+## 3b. 🔴 ODKRYCIE SYSTEMOWE — 42 serwisy „broken stub" eksportują `undefined`
+
+Drążąc dlaczego testy serwisów padają (`Cannot read ... 'setDependencies'`), znalazłem **realną przyczynę u źródła**: migracja ESM (`b0b7d1cd5f`→cleanup) usunęła implementacje `.js`, ale zostawiła **42 wrappery `.ts`** w `server/src/services/` o wzorcu:
+
+```ts
+// @ts-nocheck
+import service from './baselineService.js';  // ← ten .js NIE ISTNIEJE
+export default service;                        // → resolwuje się cyklicznie do siebie → undefined
+```
+
+**Skutek (zweryfikowany `npx tsx`):** `import X from '…/service.ts'` → `default === undefined` dla wszystkich 42.
+
+| Pula | Liczba | Status |
+|---|---|---|
+| Martwe sieroty (nieużywane w prod) | ~22+ | inertne — testy słusznie w quarantine |
+| **Wpięte w PROD** | **≥2** | `backupService` (admin backup), `demoService` (TrialCron) |
+
+**Realny wpływ:** konsumenci mają `import(...).then(m => m.default \|\| m)` + try/catch → **NIE crashują**, ale feature jest **cicho martwy**: `BackupService.listBackups` → `undefined` → catch → „backup unavailable". Czyli **admin-backup nie działa wcale** (zawsze „niedostępny"), analogicznie demo/trial cron.
+
+**Odzysk:** implementacje `.js` są w historii git (`b0b7d1cd5f`) — odtwarzalne. **Decyzja produktowa Piotra:** które z 42 są jeszcze potrzebne (większość to martwy kod do usunięcia; backup/demo wymagają decyzji „czy ten feature żyje"). NIE odtwarzam masowo — to świadoma robota per-serwis z priorytetem biznesowym.
+
+→ Wykrywanie: `for s in server/src/services/*.ts; do grep -q "from './$(basename $s .ts).js'" $s && [ ! -f "${s%.ts}.js" ] && echo $s; done`
+
+---
+
 ## 4. Wyniki przebiegu (warstwami)
 
 | Warstwa / klaster | Wynik | Uwaga |
