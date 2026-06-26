@@ -486,4 +486,44 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
   }
 });
 
+// GET /bundles — W4.3: lista wygenerowanych bundli dla org (ostatnie 50).
+router.get('/bundles', async (req: any, res: Response) => {
+  if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(400).json({ success: false, error: 'Organization not found' });
+      return;
+    }
+    const result = await db.query(
+      `SELECT id, title, brief, lifecycle_state, theme_id, language, is_locked,
+              quality_json, created_at, updated_at
+       FROM deliverable_bundles
+       WHERE organization_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [orgId],
+    );
+    res.status(200).json({
+      success: true,
+      bundles: (result?.rows ?? []).map((r: any) => ({
+        id: r.id,
+        title: r.title || r.brief?.slice(0, 80),
+        lifecycleState: r.lifecycle_state,
+        themeId: r.theme_id,
+        language: r.language,
+        isLocked: r.is_locked,
+        qualityPassed: (r.quality_json as any)?.passed ?? null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      })),
+    });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
 export default router;
