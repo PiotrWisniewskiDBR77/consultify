@@ -646,11 +646,37 @@ class ScheduledReportService {
    */
   private async deliverViaEmail(schedule: ReportSchedule, reportId: string): Promise<void> {
     const emailConfig = schedule.deliveryConfig.email;
-    if (!emailConfig || !this.emailService) return;
+    if (!emailConfig || !emailConfig.recipients?.length) return;
 
-    // Get report data for attachment
-    // This would integrate with the actual email service
-    logger.info(`[ScheduledReportService] Sending email to ${emailConfig.recipients.join(', ')}`);
+    // W6.2 — un-stub: realnie WYŚLIJ przez emailService. Wcześniej tylko logowało
+    // (a `this.emailService` bywa nieustawiony w cron-path → 0 wysyłek). Importujemy
+    // realny `send` z modułu; fallback na wstrzyknięty serwis gdy obecny.
+    const subject = emailConfig.subject || `Raport „${schedule.name}" gotowy`;
+    const html =
+      `<p>Zaplanowany raport <strong>${schedule.name}</strong> został wygenerowany.</p>` +
+      `<p>Identyfikator raportu: <code>${reportId}</code></p>` +
+      `<p>Materiał jest dostępny w bibliotece „Materiały".</p>`;
+    // Załącznik pliku dociągniemy z bridge'em generatora (W6.1); tu wysyłka powiadomienia
+    // z referencją. attachmentFormat = ${emailConfig.attachmentFormat ?? 'brak'}.
+
+    let sendFn: ((opts: { to: string; subject: string; html: string }) => Promise<unknown>) | null = null;
+    if (this.emailService?.send) {
+      sendFn = (opts) => this.emailService.send(opts);
+    } else {
+      const mod = await import('./emailService.js');
+      sendFn = (opts) => mod.send(opts as never);
+    }
+
+    for (const to of emailConfig.recipients) {
+      try {
+        await sendFn({ to, subject, html });
+        logger.info(`[ScheduledReportService] email sent to ${to} (report ${reportId})`);
+      } catch (err) {
+        logger.warn(
+          `[ScheduledReportService] email to ${to} failed: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
   }
 
   /**
