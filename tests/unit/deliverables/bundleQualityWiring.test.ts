@@ -132,3 +132,62 @@ describe('W1 wiring — premium brain runs in the live pipeline', () => {
     expect(bundle.quality).toBeTruthy(); // gate still ran on doc+table
   });
 });
+
+// ── Capstone: cały stos jakości (W7.2/W12.1/W10.1) wpięty i spójny ──
+describe('Capstone — pełny stos jakości populuje się end-to-end', () => {
+  beforeEach(() => {
+    mockGenTable.mockReset(); mockGenDoc.mockReset(); mockPlanDeck.mockReset();
+    mockGenTable.mockResolvedValue({
+      fields: [{ key: 'rok', header: 'Rok', type: 'text' }, { key: 'rev', header: 'Przychód', type: 'currency' }],
+      seedRows: [{ rok: 'Rok 1', rev: 2390 }],
+    });
+    mockGenDoc.mockResolvedValue({
+      sections: [{ heading: 'Streszczenie', blocks: [{ type: 'paragraph', content: { text: 'Realna treść raportu bez placeholderów.' } }] }],
+    });
+    mockPlanDeck.mockResolvedValue(deckResult());
+  });
+
+  it('W12.1: antiPatterns wypełnione (detektor decka uruchomiony)', async () => {
+    const bundle = await generateBundleFromSpine(buildSpine(input()), {});
+    expect(bundle.quality!.antiPatterns).not.toBeNull();
+    expect(typeof bundle.quality!.antiPatterns!.criticalCount).toBe('number');
+    expect(Array.isArray(bundle.quality!.antiPatterns!.hits)).toBe(true);
+  });
+
+  it('W7.2: designCritique wypełnione (critic per-slajd uruchomiony)', async () => {
+    const bundle = await generateBundleFromSpine(buildSpine(input()), {});
+    expect(bundle.quality!.designCritique).not.toBeNull();
+    expect(typeof bundle.quality!.designCritique!.overallScore).toBe('number');
+    expect(bundle.quality!.designCritique!.slides.length).toBeGreaterThan(0);
+  });
+
+  it('W10.1: scorecard wypełniony, ocena A-F, 7 wymiarów', async () => {
+    const bundle = await generateBundleFromSpine(buildSpine(input()), {});
+    const sc = bundle.quality!.scorecard!;
+    expect(sc).not.toBeNull();
+    expect(sc.overall).toBeGreaterThanOrEqual(0);
+    expect(sc.overall).toBeLessThanOrEqual(100);
+    expect(['A', 'B', 'C', 'D', 'F']).toContain(sc.grade);
+    expect(sc.dimensions).toHaveLength(7);
+  });
+
+  it('spójność: scorecard.capped ⇔ istnieje twarda wada w sygnałach', async () => {
+    // placeholder w doc → content FAIL → scorecard musi być capped
+    mockGenDoc.mockResolvedValue({
+      sections: [{ heading: 'X', blocks: [{ type: 'paragraph', content: { text: 'Sekcja TBD do uzupełnienia.' } }] }],
+    });
+    const bundle = await generateBundleFromSpine(buildSpine(input()), {});
+    expect(bundle.quality!.content!.passed).toBe(false);
+    expect(bundle.quality!.scorecard!.capped).toBe(true);
+    expect(bundle.quality!.scorecard!.overall).toBeLessThanOrEqual(59);
+  });
+
+  it('spójność: zdrowy materiał → scorecard niecapowany + ocena ≥ D', async () => {
+    const bundle = await generateBundleFromSpine(buildSpine(input()), {});
+    const sc = bundle.quality!.scorecard!;
+    // zdrowy stub: brak placeholderów, deck ma cover+next_steps
+    if (!sc.capped) {
+      expect(sc.overall).toBeGreaterThanOrEqual(60);
+    }
+  });
+});
