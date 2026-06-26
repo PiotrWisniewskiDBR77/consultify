@@ -14,6 +14,7 @@ import logger from '../../utils/Logger.js';
 import { resolveTheme, PPT_TYPE_SCALE } from './themeRegistry.js';
 import { seriesPalette, readableTextOn } from './paletteLibrary.js';
 import { computeMarimekkoLayout, computeHarveyBalls } from './advancedCharts.js';
+import { chartAltText, imageAltText } from './deckAltText.js';
 
 const require = createRequire(import.meta.url);
 
@@ -127,6 +128,7 @@ function renderChartOnSlide(
         x: 0.6, y: 2.1, w: 8.8, h: 2.9,
         barDir: 'col',
         barGrouping: 'clustered',
+        altText: chartAltText(spec), // W14.1 — a11y
         chartColors: spec.series.map((s, i) => hex(s.color ?? palette[i] ?? ctx.accent)),
         showLegend: true,
         legendPos: 'b',
@@ -314,7 +316,7 @@ export async function deckPlansToPptxBuffer(
             fill: { color: accent, transparency: 92 },
             line: { color: accent, transparency: 80, width: 1 },
           });
-          slide.addImage({ path: plan.imageUrl, x: 6.4, y: 0.5, w: 3.3, h: 4.85, sizing: { type: 'cover', w: 3.3, h: 4.85 } });
+          slide.addImage({ path: plan.imageUrl, x: 6.4, y: 0.5, w: 3.3, h: 4.85, sizing: { type: 'cover', w: 3.3, h: 4.85 }, altText: imageAltText({ title: plan.title, keyMessage: plan.keyMessage }) });
         } catch {
           // fail-soft — pptxgenjs addImage może nie obsługiwać wszystkich URL-i
         }

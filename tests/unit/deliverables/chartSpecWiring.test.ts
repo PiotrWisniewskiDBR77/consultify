@@ -156,6 +156,10 @@ describe('W1.5 — deckPlansToPptxBuffer renders chart when chartSpec present', 
     }];
     await deckPlansToPptxBuffer(plans);
     expect(mockAddChart).toHaveBeenCalledWith('bar', expect.any(Array), expect.objectContaining({ barDir: 'col' }));
+    // W14.1 — altText obecny i wyprowadzony z danych (a11y)
+    const chartOpts = mockAddChart.mock.calls[0][2];
+    expect(typeof chartOpts.altText).toBe('string');
+    expect(chartOpts.altText.length).toBeGreaterThan(0);
   });
 
   it('rag chart spec → addShape called with colored rect per item', async () => {
