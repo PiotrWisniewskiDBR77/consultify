@@ -4,7 +4,20 @@
 >
 > Dokumenty siostrzane: `M15-WIZJA-I-PLAN-FUNKCJONALNY-2026-06-24.md` (wizja+cel), `M15-ANALIZA-SWIATOWA-2026-06-24.md` (benchmark światowy+luki+inicjatywy+standard graficzny), `M15-AUDYT-2026-06-24.md` (stan techniczny).
 
-## STATUS PRAWDY (2026-06-24, po sprincie W1–W6)
+## ⚠ KOREKTA PRAWDY (2026-06-25, po audycie + Serii D domknięcia)
+
+Audyt 2026-06-25 wykazał, że poniższa tablica (2026-06-24) **PRZESZACOWYWAŁA** gotowość: „🟢" oznaczało „serwis + unit-testy", a kilka zadań było stubami/martwym kodem/sierotami mimo 🟢. **Seria D planu `M15-PLAN-DOMKNIECIA-100.md` zlikwidowała te luki** (commity `ef4a76a41e`/`5439e5dd89`/`256296278b`, wszystkie live-verified):
+- **5.7 Sustainment** — był STUB (`realizationPct:0`/`lastReviewIso:null` zaszyte → tylko 'unowned'). TERAZ realne dane (owner_business_id+updated_at+ROI) → 3 statusy live. ✅
+- **5.2 OKR** — był VAPOR (`okrService` 0 importów, brak UI). TERAZ tabele okr_objectives/key_results (lazy-DDL) + endpoint `/okr` + sekcja kaskady UI. ✅
+- **5.5/5.6 Adoption/DICE** — był PROXY (realizacja/1000). TERAZ realny ADKAR (sentiment+champions) + DICE per inicjatywa + badge źródła. ✅
+- **1.2 Benefit Profiles** — był OSIEROCONY (endpoint bez FE). TERAZ sekcja „Profil korzyści" w StrategicLayerPanel. ✅
+- **6.4 Anomaly** — był ZAGUBIONY plik. TERAZ `kpiAnomalyService` odtworzony (z-score+IQR, 18 testów) + sekcja UI. ✅
+- **2.19–2.24 Funnel** — endpoint był 404. TERAZ `/funnel` + wizualizacja FunnelStage. ✅
+- **Parametry syntetyczne** (periodMonths/capacityFte) — TERAZ realne źródła + jawne flagi założeń w UI. ✅
+
+Pozostało do M15 8/8: Seria T (testy route+FE+E2E + Manual 180/180), Seria U (screenshoty 17 ekr.), Seria Z (i18n keys→translation.json, deploy demo, →F, →UI). SSOT postępu = `M15-PLAN-DOMKNIECIA-100.md`.
+
+## STATUS PRAWDY (2026-06-24, po sprincie W1–W6) — PATRZ KOREKTA WYŻEJ
 - Żywy moduł = `ResultsHub` (7 zakładek: Initiatives/KPI/Reports/ROI/ROI-Analysis/Strategic/AI+Portfolio za flagami), trasa `/benefits`, BetaGate `MODULE_BENEFITS`.
 - **Backend canonical V8:** 6 routerów: `results-kpi-reports` + `results-value` (value intelligence + scorecard) + `results-strategic` (BSC+BDN+narrative) + `results-driver-tree` (W2.3) + `results-extended` (W3–W6: signals/run-rate/realloc/adoption/sustainment/scenarios/counterfactual/finance-link/narrative/benefit-profiles).
 - **Legacy oznaczone @deprecated:** `benefits.routes.ts` (`/api/benefits`) + `results-enterprise.routes.ts` (`/api/results-v4`) — zachowane dla backwards-compat, bez nowych tras.
