@@ -83,5 +83,8 @@ Dokument poprzednika (`M16-AUDYT-DETALICZNY-2026-06-24`) wymieniał 10 P0 UI. Po
 - Audyt + plan: M16-WERYFIKACJA-PRZENIESIENIA + M16-DOMKNIECIE-PLAN.
 - Bezpieczeństwo: tylko demo (caboose/demo env); **centerbeam/PROD nietknięty**.
 
-## §Deploy — status
-(uzupełniane na końcu sesji — patrz ostatnia linia)
+## §Deploy — status (FINAŁ)
+- **Deploy #1 `abd55d4c` = SUCCESS i LIVE na demo** (build OK ~22:15). Zawiera alias `/finance/value` + CAŁY dotychczasowy M16. → **demo nadaje się do →F większości obszarów już teraz.**
+- **Deploy #2 `4667bcf264` (fix duplicate) = pushnięty na gałąź `demo`, ale NIE wdrożony.** Bloker INFRA, nie kod: token Railway API wygasł w nocy (`Not Authorized` na obu tokenach z config.json), `railway up` = timeout uploadu (×2), auto-deploy-z-push nieaktywny. Token odświeża tylko `railway login` (flow przeglądarkowy) — niewykonalne autonomicznie.
+- **Twoja akcja (≈15 s):** `railway login` (odśwież token) → `./scripts/deploy-demo.sh` → wdroży `4667bcf264` z fixem duplicate. Weryfikacja live: `POST /api/v8/finance/models/staging-dbr77-fin-model/duplicate` powinien zwrócić **201** (teraz 500).
+- **PROD (centerbeam) — NIETKNIĘTY.** Zgodnie z poleceniem: kończymy na stagingu.
