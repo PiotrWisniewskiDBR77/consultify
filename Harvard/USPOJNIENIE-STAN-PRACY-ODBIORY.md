@@ -7,7 +7,7 @@
 ## STATUS PRAWDY (2026-06-25)
 - **Kręgosłup = cykl życia inicjatywy** (`initiativeStatuses.ts`): analiza→inicjatywa→stage'e→wykonanie→rezultaty→finanse. Status = kontrakt międzymodułowy (`getStatusesForModule()`).
 - **Diagnoza (zweryfikowana greppem):** ~23 ścieżki `INSERT INTO initiatives` (29×), niespójny status startowy (`DRAFT`/`step3`/`PENDING_REVIEW`), ~60 kolumn z duplikatami, brak CHECK na statusie, 4/16 validatorów §B3, 2 Ganty z 2 źródłami zależności, martwy `InitiativeDetailModal`.
-- **Program:** 40 zadań / 5 fal. **STAN 2026-06-25: 40/40 GOTOWE — migracje 1.12+5.4 zaaplikowane na staging (trolley). Czeka: prod (za zgodą Piotra) + →F/→UI per ścieżka.**
+- **Program:** 40 zadań / 5 fal. **STAN 2026-06-26: 40/40 GOTOWE — FUNNEL LIVE NA DEMO (flaga ON, 151/151 E2E na wdrożonym buildzie). Migracje zaaplikowane na staging/demo (trolley). Czeka: →F/→UI na demo + prod (migracje+flaga za zgodą Piotra).**
 - **CO ZROBIONE:** F1 lejek `createInitiativeService` (zweryfikowany live) + wszystkie 23 ścieżki INSERT przekierowane (1.1–1.10 + 1.14 martwy kod usunięty); migracja status-CHECK + name/title NAPISANA (nie aplikowana); F2 `stageHandoffService` + recordHandoff wpięty w każdą zmianę statusu; F3 wszystkie 10 validatorów §B3 + CARD_CONTENT_FORMULA §A3 w promptach + AIPipeline + MECE-endpoint + reviewer ON; F4 stan-FE+deep-link+Gantt-truth; F5 lineage+funnel endpointy + SoT-doc + dedup-migracja.
 - **Zasady:** flagi `default OFF` dla ryzyka; **prod (centerbeam) NIE bez osobnej zgody**; migracje: najpierw staging (caboose).
 
@@ -63,19 +63,19 @@
 | 5.3 | SoT per domena udokumentowany + deduplikacja kolumn (stage×4→1, ROI×3→1, axis/drd_axis, daty) | F5 | ✅ | ✅ | N/A | N/A | N/A | ✅ | N/A | 🟢 `docs/initiatives/INITIATIVE_DATA_MODEL_SOT.md` — 230 linii, wszystkie kolumny, plan deprecacji |
 | 5.4 | Migracje porządkujące martwe/zduplikowane kolumny (po potwierdzeniu nieużycia) | F5 | ✅ | ✅ | N/A | ✅ | N/A | ⬜ | N/A | 🟢 migracja `20260624_initiative_column_dedup.sql` ZAAPLIKOWANA na staging (trolley) 2026-06-25 — zweryfikowana w `tp_migration_history` |
 
-**Postęp: 40/40 🟢 GOTOWE (realizacja).** F1 lejek+redirecty (23 ścieżki) ✅ · F2 handoffy+lineage ✅ · F3 walidatory+quality+MECE+prompty ✅ · F4 stan-FE+deep-link+Gantt-truth ✅ · F5 lineage-view+funnel-analityka+SoT+migracje ✅. tsc 0. Flaga `INITIATIVE_FUNNEL_ENABLED` default OFF.
+**Postęp: 40/40 🟢 GOTOWE (realizacja) — FUNNEL LIVE NA DEMO.** F1 lejek+redirecty (23 ścieżki) ✅ · F2 handoffy+lineage ✅ · F3 walidatory+quality+MECE+prompty ✅ · F4 stan-FE+deep-link+Gantt-truth ✅ · F5 lineage-view+funnel-analityka+SoT+migracje ✅. tsc 0.
 
-**Weryfikacja LIVE 2026-06-25 (trolley staging, flaga ON):** pełny bieg E2E **150/150 PASS** + regresyjny **F4-31** (mirror name←title na PATCH); suite force-added do repo (`56cf1b552c` — była w .gitignore `/tests/`, nigdy nie zacommitowana). Dane trolley: 1947 inicjatyw, 0 NULL `name`, 0 legacy/lowercase status, 6/6 nowych kolumn, 4/4 migracje w `tp_migration_history`. Wszystkie 31 wierszy z rozjazdem name/title to śmieci z naszych testów (F1-14/F4-02/P1/P3), zero realnych.
+**🟢 FLAGA ON NA DEMO 2026-06-26:** `INITIATIVE_FUNNEL_ENABLED=true` ustawiona na Railway env `demo` (serwis consultify) → redeploy SUCCESS (`8ec82beeaf`, branch `demo`). Lejek **już nie jest uśpiony** na `demo.consultify.ai`. Prod (centerbeam) wciąż OFF — czeka na →F + zgodę.
+
+**Weryfikacja LIVE na wdrożonym buildzie demo (flaga ON):** smoke 7/7 (CREATE→DRAFT+name=title, PATCH→name mirroruje, DRAFT→CANCELLED bez bramki P1, lineage, funnel/stats) + **pełny bieg E2E 151/151 PASS** przeciw `demo.consultify.ai` (f1 30 + f2–f5 121, w tym regresyjny F4-31). Wcześniej także 150/150 lokalnie przeciw trolley. Dane (trolley = ta sama baza co demo): 0 NULL `name`, 0 legacy/lowercase status, 6/6 nowych kolumn, 4/4 migracje w `tp_migration_history`, **0 name<>title** (śmieci testowe sprzątnięte). Suite force-added do repo (`56cf1b552c` — była w .gitignore `/tests/`).
 
 **Pending (wymagają Piotra / decyzji):**
-- **Migracje na PROD (4)** — wszystkie zaaplikowane+zweryfikowane na staging (trolley), bezpieczne (ADD COLUMN IF NOT EXISTS / UPDATE WHERE NULL), żadnej destrukcyjnej:
-  - `20260624_initiative_status_normalize.sql`
-  - `20260624_initiative_column_dedup.sql`
-  - `20260625_initiative_title_name_sync.sql`
-  - `20260625_initiative_missing_columns.sql`
-- **Włączenie flagi `INITIATIVE_FUNNEL_ENABLED=true`** — najpierw staging/demo (Railway env), po →F potwierdzeniu prod. Domyślnie OFF do czasu decyzji.
-- →F/→UI dla 1.3–1.10, 2.3–2.5, 3.3–3.7, 4.2, 5.1–5.2 (bramki akceptacji Piotra)
-- **Perf-follow-up (nie-blokujący):** `GET /api/initiatives` zwraca ~820 KB / ~7.6 s ciepły dla ~1000 wierszy (76 kolumn × cap 1000) — kandydat do odchudzenia SELECT-a do kolumn listy. Osobne zadanie, poza zakresem 40.
+- **→F/→UI na demo** — klikalna akceptacja funkcjonalna/wizualna lejka live na `demo.consultify.ai` (1.3–1.10, 2.3–2.5, 3.3–3.7, 4.2, 5.1–5.2).
+- **Migracje na PROD (4)** — wszystkie zaaplikowane+zweryfikowane na staging/demo (trolley), bezpieczne (ADD COLUMN IF NOT EXISTS / UPDATE WHERE NULL), żadnej destrukcyjnej:
+  - `20260624_initiative_status_normalize.sql` · `20260624_initiative_column_dedup.sql`
+  - `20260625_initiative_title_name_sync.sql` · `20260625_initiative_missing_columns.sql`
+- **Flaga ON na PROD (centerbeam)** — po →F na demo + osobna zgoda. Domyślnie OFF.
+- **Perf-follow-up (nie-blokujący):** `GET /api/initiatives` ~820 KB / ~7.6 s ciepły (76 kolumn × cap 1000) — odchudzić SELECT do kolumn listy. Osobny task.
 
 ---
 
