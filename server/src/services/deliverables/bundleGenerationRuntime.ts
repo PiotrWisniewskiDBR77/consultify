@@ -29,6 +29,8 @@ import { auditProvenance, type ProvenanceAudit, type Claim, type ProvenanceKind 
 import { buildBothVariants, type AudienceVariantResult } from './deckAudienceVariants.js';
 import { routeImage } from './imageRouter.js';
 import { selectStockImageProvider } from './stockImageProvider.js';
+// W1.8a — kompozycja dojrzałego silnika M18 Document Studio QA (10 kategorii):
+import { runBundleDocQa, type BundleDocQaSummary } from './bundleDocQa.js';
 
 /** Raport jakości wiązki — wynik bramek/audytów wpiętych w generację (W1). */
 export interface BundleQuality {
@@ -38,6 +40,8 @@ export interface BundleQuality {
   provenance: ProvenanceAudit | null;
   /** Warianty audytorium z planów decka (board ≤7 / working pełny). */
   variants: { board: AudienceVariantResult; working: AudienceVariantResult } | null;
+  /** W1.8a — M18 Document Studio QA (10 kategorii) na raporcie wiązki. */
+  docQa: BundleDocQaSummary | null;
   /** Zbiorcze: czy wiązka przeszła twarde bramki (content+beauty). */
   passed: boolean;
 }
@@ -202,9 +206,11 @@ export async function generateBundleFromSpine(
     // W1.4 warianty audytorium z planów decka (board ≤7 / working).
     const plans = deckPlansOf(deck);
     const variants = plans.length > 0 ? buildBothVariants(plans) : null;
+    // W1.8a — M18 Document Studio QA (10 kategorii) na raporcie (fail-soft, null gdy doc pusty).
+    const docQa = runBundleDocQa(doc, spine);
 
     const passed = content.passed && factContradictions.length === 0 && (beauty?.passed ?? true);
-    quality = { beauty, content, factContradictions, provenance, variants, passed };
+    quality = { beauty, content, factContradictions, provenance, variants, docQa, passed };
     if (!passed) {
       logger.warn(`${LOG} quality gate flagged issues`, {
         contentIssues: content.issues.length,
@@ -214,7 +220,7 @@ export async function generateBundleFromSpine(
     }
   } catch (err) {
     logger.warn(`${LOG} quality gate error (fail-soft): ${err instanceof Error ? err.message : String(err)}`);
-    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, passed: true };
+    quality = { beauty, content: null, factContradictions: [], provenance: null, variants: null, docQa: null, passed: true };
   }
 
   return {

@@ -62,8 +62,10 @@ export function spineToUnifiedReport(
   const lang: 'en' | 'pl' = spine.meta.language === 'EN' ? 'en' : 'pl';
   const isPl = lang === 'pl';
   const company = spine.meta.company;
-  const pnl = spine.financials.pnl;
-  const lastPnl = pnl[pnl.length - 1];
+  const pnl = spine.financials?.pnl ?? [];
+  const arrBridge = spine.financials?.arrBridge ?? [];
+  const kpis = spine.financials?.kpis ?? { nrr: 100, ruleOf40: 0 };
+  const val = spine.financials?.valuation ?? null;
 
   const meta: UnifiedReportMeta = {
     client: company,
@@ -174,8 +176,7 @@ export function spineToUnifiedReport(
   }
 
   // 7 — TRACTION (single_insight: line chart ARR) — REAL arrBridge
-  const arr = spine.financials.arrBridge;
-  if (arr.length) {
+  if (arrBridge.length) {
     slides.push({
       intent: 'single_insight',
       key_message: `ARR ${heroFmt(spine, 'arr_last')}`,
@@ -183,8 +184,8 @@ export function spineToUnifiedReport(
         type: 'single_insight',
         chart_type: 'line',
         chart_data: {
-          labels: arr.map((a) => a.period),
-          series: [{ name: 'ARR', values: arr.map((a) => Math.round(a.ending)) }],
+          labels: arrBridge.map((a) => a.period),
+          series: [{ name: 'ARR', values: arrBridge.map((a) => Math.round(a.ending)) }],
         },
         insight_text: sectionTitle(spine, 'traction') ||
           (isPl ? 'ARR rośnie w horyzoncie planu.' : 'ARR grows across the plan horizon.'),
@@ -194,9 +195,8 @@ export function spineToUnifiedReport(
 
   // 8 — UNIT ECONOMICS (performance_overview KPIs) — REAL
   const ueKpis = heroKpis(spine, ['ltv_cac', 'cac_payback']);
-  const k = spine.financials.kpis;
-  ueKpis.push({ name: 'NRR', value: `${Math.round(k.nrr)}%` });
-  ueKpis.push({ name: 'Rule of 40', value: Math.round(k.ruleOf40) });
+  ueKpis.push({ name: 'NRR', value: `${Math.round(kpis.nrr)}%` });
+  ueKpis.push({ name: 'Rule of 40', value: Math.round(kpis.ruleOf40) });
   if (ueKpis.length) {
     slides.push({
       intent: 'performance_overview',
@@ -253,7 +253,6 @@ export function spineToUnifiedReport(
   }
 
   // 11 — ASK (recommendation_single + wycena W12.2) — REAL valuation
-  const val = spine.financials.valuation;
   slides.push({
     intent: 'recommendation_single',
     key_message: spine.meta.ask,
