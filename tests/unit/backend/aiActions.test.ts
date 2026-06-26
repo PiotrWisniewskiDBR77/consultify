@@ -25,8 +25,8 @@ describe('AIActionExecutor', () => {
     });
 
     describe('ACTION_TYPES', () => {
-        it('should have 7 action types', () => {
-            expect(Object.keys(AIActionExecutor.ACTION_TYPES)).toHaveLength(7);
+        it('should have 8 action types', () => {
+            expect(Object.keys(AIActionExecutor.ACTION_TYPES)).toHaveLength(8);
         });
 
         it('should define CREATE_DRAFT_TASK type', () => {
@@ -35,6 +35,10 @@ describe('AIActionExecutor', () => {
 
         it('should define CREATE_DRAFT_INITIATIVE type', () => {
             expect(AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_INITIATIVE).toBe('CREATE_DRAFT_INITIATIVE');
+        });
+
+        it('should define CREATE_DRAFT_DECISION type', () => {
+            expect(AIActionExecutor.ACTION_TYPES.CREATE_DRAFT_DECISION).toBe('CREATE_DRAFT_DECISION');
         });
 
         it('should define SUGGEST_ROADMAP_CHANGE type', () => {

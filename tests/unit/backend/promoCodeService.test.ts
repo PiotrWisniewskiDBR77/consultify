@@ -32,7 +32,8 @@ describe('Promo Code Service', () => {
         it('should have promo constants', () => {
             if (PromoCodeService.PROMO_TYPES) {
                 expect(PromoCodeService.PROMO_TYPES).toBeDefined();
-                expect(Array.isArray(PromoCodeService.PROMO_TYPES)).toBe(true);
+                // PROMO_TYPES is an object map ({ DISCOUNT, PARTNER, CAMPAIGN }), not an array.
+                expect(typeof PromoCodeService.PROMO_TYPES).toBe('object');
             }
         });
     });
