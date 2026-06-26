@@ -22,16 +22,59 @@ let defaultChartCanvas: {
   renderToBuffer: (configuration: ChartConfiguration, mimeType?: string) => Promise<Buffer>;
 } | null = null;
 
+/**
+ * W11.1 — adapter `@napi-rs/canvas` (prebuilt binaria, BEZ system-deps cairo/pango)
+ * + chart.js. Implementuje ten sam kontrakt co ChartJSNodeCanvas, więc reszta
+ * renderera nie wie którego backendu używa. Decyzja CTO: lekki napi-rs zamiast
+ * natywnego chartjs-node-canvas (ryzyko buildu Railway).
+ */
+class NapiChartCanvas {
+  private readonly width: number;
+  private readonly height: number;
+  private readonly bg: string;
+  constructor(opts: { width: number; height: number; backgroundColour: string }) {
+    this.width = opts.width;
+    this.height = opts.height;
+    this.bg = opts.backgroundColour || 'white';
+  }
+  async renderToBuffer(configuration: ChartConfiguration, _mimeType = 'image/png'): Promise<Buffer> {
+    const { createCanvas } = await import('@napi-rs/canvas');
+    const ChartJS = (await import('chart.js/auto')).default;
+    const canvas = createCanvas(this.width, this.height);
+    const ctx = canvas.getContext('2d');
+    // Shim: chart.js v4 czyta canvas.style przy sizing w środowisku bez DOM.
+    if (!(canvas as unknown as { style?: unknown }).style) {
+      (canvas as unknown as { style: unknown }).style = {};
+    }
+    // Tło (chart.js domyślnie rysuje na przezroczystym).
+    ctx.fillStyle = this.bg;
+    ctx.fillRect(0, 0, this.width, this.height);
+    const chart = new ChartJS(ctx as unknown as CanvasRenderingContext2D, configuration);
+    chart.update();
+    const buffer = canvas.toBuffer('image/png');
+    chart.destroy();
+    return buffer as Buffer;
+  }
+}
+
 async function getChartCanvasCtor(): Promise<ChartCanvasCtor | null> {
   if (chartCanvasCtor !== undefined) return chartCanvasCtor;
+  // 1) Preferuj chartjs-node-canvas gdy zainstalowany (środowiska z node-canvas).
   try {
     const optionalModule = 'chartjs-node-canvas';
     const mod = await import(optionalModule);
     chartCanvasCtor = mod.ChartJSNodeCanvas as unknown as ChartCanvasCtor;
     return chartCanvasCtor;
   } catch {
-    chartCanvasCtor = null;
-    return null;
+    // 2) Fallback: @napi-rs/canvas (prebuilt) + chart.js — W11.1.
+    try {
+      await import('@napi-rs/canvas');
+      chartCanvasCtor = NapiChartCanvas as unknown as ChartCanvasCtor;
+      return chartCanvasCtor;
+    } catch {
+      chartCanvasCtor = null;
+      return null;
+    }
   }
 }
 

@@ -263,6 +263,7 @@
     "@google-cloud/storage": "^7.18.0",
     "@google/genai": "^1.46.0",
     "@google/generative-ai": "^0.24.1",
+    "@napi-rs/canvas": "^1.0.1",
     "@pact-foundation/pact": "^14.0.0",
     "@reactflow/node-resizer": "^2.2.14",
     "@sentry/node": "^10.32.1",
