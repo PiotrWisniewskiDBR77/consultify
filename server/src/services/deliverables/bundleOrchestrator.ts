@@ -255,6 +255,59 @@ export function spineToDocPlan(spine: BusinessPlanSpine) {
   };
 }
 
+/**
+ * W1.5 — Dołącz chart specs do planów slajdów na podstawie SPINE (post-layout, fail-soft).
+ * Nie zmienia planów bez chartSpec — addytywne. Renderery honorują gdy obecny.
+ *
+ * performance_overview → bar_series (Przychód + EBITDA z P&L)
+ * risk_management      → RAG (top-5 założeń wg sensitivity rank)
+ */
+export function attachChartSpecs<T extends { layoutIntent: string; chartSpec?: unknown }>(
+  plans: T[],
+  spine: BusinessPlanSpine,
+): T[] {
+  const pnl = spine.financials?.pnl ?? [];
+  const labels = pnl.map((p) => String(p.period ?? `Y${pnl.indexOf(p) + 1}`));
+  const revenueValues = pnl.map((p) => p.revenue ?? 0);
+  const ebitdaValues = pnl.map((p) => p.ebitda ?? 0);
+
+  const assumptions = [...(spine.assumptions ?? [])]
+    .sort((a, b) => (b.sensitivityRank ?? 0) - (a.sensitivityRank ?? 0))
+    .slice(0, 5);
+
+  return plans.map((plan) => {
+    if (plan.layoutIntent === 'performance_overview' || plan.layoutIntent === 'key_metrics_overview') {
+      if (labels.length === 0) return plan;
+      return {
+        ...plan,
+        chartSpec: {
+          type: 'bar_series' as const,
+          labels,
+          series: [
+            { name: 'Przychód', values: revenueValues, color: '0C447C' },
+            { name: 'EBITDA', values: ebitdaValues, color: '1D9E75' },
+          ],
+        },
+      };
+    }
+    if (plan.layoutIntent === 'risk_management') {
+      if (assumptions.length === 0) return plan;
+      return {
+        ...plan,
+        chartSpec: {
+          type: 'rag' as const,
+          items: assumptions.map((a) => ({
+            label: String(a.label ?? a.key),
+            value: a.sensitivityRank ?? 0,
+            status: (a.sensitivityRank ?? 0) >= 8 ? 'red' as const : (a.sensitivityRank ?? 0) >= 5 ? 'amber' as const : 'green' as const,
+          })),
+        },
+      };
+    }
+    return plan;
+  });
+}
+
 /** Intent tabeli finansowej z SPINE — realne wiersze P&L (single source of truth, §D2). */
 export function spineToTableIntent(spine: BusinessPlanSpine): string {
   const rows = spine.financials.pnl.map((p) => ({

@@ -18,6 +18,7 @@ import {
   spineToDeckSlides,
   spineToDocPlan,
   spineToTableIntent,
+  attachChartSpecs,
 } from './bundleOrchestrator.js';
 import type { GenOpts } from './assumptionsModel.js';
 // W1 — wpięcie „mózgu premium" w żywy pipeline (bramki jakości realnie działają):
@@ -153,6 +154,10 @@ export async function generateBundleFromSpine(
     const gated = await applyDeckBeautyGate(first, () =>
       planDeckLayout(slides as never, meta as never, genOpts as never)
     );
+    // W1.5 — chart-spec WPIĘTY: dołącz chart specs do planów slajdów (post-layout, additive).
+    if (gated.plans) {
+      gated.plans = attachChartSpecs(gated.plans, spine);
+    }
     deck = gated;
     beauty = gated.beautyScore ?? null;
   } catch (err) {

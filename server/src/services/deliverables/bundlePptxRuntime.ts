@@ -23,6 +23,15 @@ export interface DeckPlanSlide {
   layoutIntent: string;
   title?: string | null;
   keyMessage?: string | null;
+  /** W1.5 — chart spec dołączony po layout (nie authorizowany przez LLM). */
+  chartSpec?: {
+    type: 'bar_series';
+    labels: string[];
+    series: Array<{ name: string; values: number[]; color?: string }>;
+  } | {
+    type: 'rag';
+    items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }>;
+  } | null;
 }
 
 export interface DeckPptxOptions {
@@ -40,6 +49,64 @@ export interface DeckPptxOptions {
 /** #RRGGBB → RRGGBB (pptxgenjs chce hex bez #). */
 function hex(color: string): string {
   return color.replace('#', '').toUpperCase();
+}
+
+type SlideChartSpec = DeckPlanSlide['chartSpec'];
+
+/**
+ * W1.5 — renderuje chart spec na slajdzie pptxgenjs. Zwraca true gdy coś narysował.
+ * Fail-soft: błąd → false (caller spada na text layout).
+ */
+function renderChartOnSlide(
+  slide: any,
+  pptx: any,
+  spec: SlideChartSpec,
+  ctx: { accent: string; neutral: string; bodyFont: string; isPolish: boolean },
+): boolean {
+  if (!spec) return false;
+  try {
+    if (spec.type === 'bar_series') {
+      const data = spec.series.map((s) => ({
+        name: s.name,
+        labels: spec.labels,
+        values: s.values,
+      }));
+      slide.addChart('bar', data, {
+        x: 0.6, y: 2.1, w: 8.8, h: 2.9,
+        barDir: 'col',
+        barGrouping: 'clustered',
+        chartColors: spec.series.map((s) => s.color ?? ctx.accent),
+        showLegend: true,
+        legendPos: 'b',
+        legendFontSize: 9,
+        dataLabelFontSize: 9,
+        valAxisLabelFontSize: 9,
+        catAxisLabelFontSize: 9,
+        showValue: false,
+      });
+      return true;
+    }
+    if (spec.type === 'rag') {
+      const RAG_COLORS: Record<string, string> = { green: '00A651', amber: 'FFC000', red: 'FF0000' };
+      spec.items.slice(0, 7).forEach((item, i) => {
+        const y = 2.1 + i * 0.48;
+        slide.addShape(pptx.ShapeType.rect, {
+          x: 0.6, y, w: 0.35, h: 0.35,
+          fill: { color: RAG_COLORS[item.status] ?? 'CCCCCC' },
+          line: { color: RAG_COLORS[item.status] ?? 'CCCCCC', width: 0 },
+        });
+        slide.addText(item.label, {
+          x: 1.1, y, w: 7.5, h: 0.38,
+          fontFace: ctx.bodyFont, fontSize: 11, color: ctx.neutral,
+          align: 'left', valign: 'middle',
+        });
+      });
+      return true;
+    }
+  } catch {
+    // fail-soft — renderer nie rzuca, spada na text layout
+  }
+  return false;
 }
 
 /**
@@ -111,11 +178,20 @@ export async function deckPlansToPptxBuffer(
         align: 'left', valign: 'top',
       });
 
-      // Key-message (proza pod tytułem).
-      if (message) {
+      // W1.5 — chart rendering: gdy jest chartSpec, chart zastępuje/uzupełnia key-message.
+      const chartRendered = renderChartOnSlide(slide, pptx, plan.chartSpec ?? null, { accent, neutral, bodyFont, isPolish });
+      // Key-message (proza pod tytułem) — skrócone gdy chart zajmuje dolną część.
+      if (message && !chartRendered) {
         slide.addText(message, {
           x: 0.6, y: 1.7, w: 8.8, h: 3.0,
           fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.body, color: neutral,
+          align: 'left', valign: 'top',
+        });
+      } else if (message && chartRendered) {
+        // Key-message jako krótka podpis ponad wykresem.
+        slide.addText(message, {
+          x: 0.6, y: 1.55, w: 8.8, h: 0.45,
+          fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.caption, color: neutral,
           align: 'left', valign: 'top',
         });
       }

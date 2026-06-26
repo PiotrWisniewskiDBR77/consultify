@@ -246,7 +246,18 @@ export interface SlideLayoutPlan {
    * hint (e.g. "data", "narrative", "visual") for what the slide leads with.
    */
   composition?: SlideComposition | null;
+  /**
+   * W1.5 — chart spec attached POST layout (not authored by LLM). When present,
+   * the PPTX renderer draws the chart in place of / alongside the key-message text.
+   * Absent = renderer falls back to text layout.
+   */
+  chartSpec?: SlideChartSpec | null;
 }
+
+/** Union of supported chart specs for slides (W1.5 / F11.1). */
+export type SlideChartSpec =
+  | { type: 'bar_series'; labels: string[]; series: Array<{ name: string; values: number[]; color?: string }> }
+  | { type: 'rag'; items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }> };
 
 export interface SlideCompositionRegion {
   area: CompositionArea;
