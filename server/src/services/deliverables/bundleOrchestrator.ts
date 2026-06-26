@@ -12,6 +12,7 @@ import {
   type AntiPatternFinding, formatHero,
 } from './businessPlanSpine.js';
 import { computeFinancialModel, runCfoReview } from './financialEngine.js';
+import { detectFinancialAntiPatterns } from './financialAntiPatterns.js';
 import {
   type BusinessPlanInput, type GenOpts, generateAssumptions, toFinancialDrivers,
   buildMarketSizing, buildAssumptionRegistry, validateAssumptions,
@@ -100,7 +101,9 @@ export function buildSpine(input: BusinessPlanInput): BusinessPlanSpine {
   const heroMap = Object.fromEntries(heroList.map((h) => [h.key, h]));
 
   const assumptionAnti = validateAssumptions(input);
-  const antiPatterns: AntiPatternFinding[] = [...assumptionAnti, ...cfo.antiPatterns];
+  // W12.1 (finanse) — hockey-stick na wyliczonej trajektorii przychodu.
+  const financialAnti = detectFinancialAntiPatterns(model.pnl);
+  const antiPatterns: AntiPatternFinding[] = [...assumptionAnti, ...financialAnti, ...cfo.antiPatterns];
   const validation: ValidationReport = {
     checks: cfo.checks,
     antiPatterns,
