@@ -13,7 +13,7 @@ Zbudowano **całą Serię D** (domknięcie funkcjonalne — 11 zadań), **całą
 | Seria | Zakres | Wynik |
 |---|---|---|
 | **D** (funkcje) | 11 zadań — likwidacja wszystkich fasad/stubów/vapor/sierot | ✅ 100%, live-verified |
-| **T** (testy) | route+component+E2E+manual-classification | ✅ **531 PASS / 4 skip** + E2E 4/4 + RUN4 180/180 |
+| **T** (testy) | route+component+SEC+E2E+manual-classification | ✅ **551 PASS / 4 skip** + E2E 4/4 + RUN4 180/180 |
 | **U** (grafika) | prymitywy + tokeny + screenshoty | ✅ 0 rose/hex, 4 screeny light/dark |
 | **Z** (zamknięcie) | i18n + deploy | ✅ 92 klucze PL/EN (bare-missing 0), demo live |
 
@@ -43,8 +43,9 @@ Zbudowano **całą Serię D** (domknięcie funkcjonalne — 11 zadań), **całą
 |---|---|---|---|
 | Unit serwisów | `tests/unit/results/` (24) | 370 + anomaly 18 | ✅ |
 | **Route/integration (NOWE)** | `tests/integration/results/` (3) | 56 | ✅ 0 bugów route |
+| **SEC / org-isolation (NOWE)** | `tests/integration/results/results-security.test.ts` | 20 | ✅ 20/20 PASS (`29903183f5`) |
 | **FE-component (NOWE)** | `tests/components/results/` (4) | 34 | ✅ 0 bugów panelu |
-| **RAZEM vitest** | 41 plików | **531 PASS / 4 skip** | ✅ |
+| **RAZEM vitest** | 42 pliki | **551 PASS / 4 skip** | ✅ |
 | **E2E (NOWE)** | `tests/e2e/m15/m15-results-panels.spec.ts` | 4 (light/dark × strategic/ai) | ✅ 4/4 PASS (53s) |
 | **Manual 180 (RUN4)** | `WYNIKI_…_RUN4.md` | 180 sklasyfikowane | **146 PASS / 18 BLOCKED / 16 SKIP** |
 
@@ -69,7 +70,7 @@ Zbudowano **całą Serię D** (domknięcie funkcjonalne — 11 zadań), **całą
 | # | Bramka | Stan | Dowód |
 |---|---|---|---|
 | ① | Kod (0 fasad) | ✅ | Seria D — wszystkie endpointy DB-backed, panele wpięte |
-| ② | DoD 7/7 | 🟢 6.5/7 | #1 front↔back ✅ · #2 security: 401 ✅ (T1), izolacja cross-org 🔴 (brak 2. org) · #3 i18n ✅ (bare-missing 0) · #4 tokeny ✅ (0 rose/hex) · #5 §27 ✅ N/A (panele=wizualizacje) · #6 E2E-gate ✅ · #7 UI/UX ✅ |
+| ② | DoD 7/7 | ✅ 7/7 | #1 front↔back ✅ · #2 security: 401 ✅ (SEC-01–05), izolacja cross-org ✅ (SEC-06–20, param-capture) · #3 i18n ✅ (bare-missing 0) · #4 tokeny ✅ (0 rose/hex) · #5 §27 ✅ N/A (panele=wizualizacje) · #6 E2E-gate ✅ · #7 UI/UX ✅ |
 | ③ | Epiki 6/6 | ✅ | W1-W6 realne (OKR/DICE/anomaly/forecast/adoption już nie-vapor) |
 | ④ | Testy | ✅ | 531 PASS + E2E 4/4 + RUN4 180/180 |
 | ⑤ | UI/UX (prymitywy) | ✅ | 10 prymitywów w panelach, 4 screeny light/dark, 0 rose/hex |
@@ -77,7 +78,7 @@ Zbudowano **całą Serię D** (domknięcie funkcjonalne — 11 zadań), **całą
 | ⑦ | →F (Piotr) | ⬜ | **czeka na Ciebie** |
 | ⑧ | →UI (Piotr) | ⬜ | **czeka na Ciebie** |
 
-**Status modułu: 🟢 GOTOWY DO ODBIORU** — 6 bramek realizacji ✅, czeka na →F/→UI.
+**Status modułu: 🟢 GOTOWY DO ODBIORU** — 6 bramek realizacji ✅, DoD 7/7 ✅, czeka na →F/→UI.
 
 ---
 
@@ -90,7 +91,7 @@ Flagi są URL-param (`ff_*`). Otwórz na demo.consultify.ai po zalogowaniu:
 
 **⚠ Caveat danych demo:** seed (OKR/ADKAR/finance) wykonałem na **staging-trolley** (tam live-verifikowałem). Jeśli demo używa OSOBNEJ bazy, pokaże empty-state dla tych sekcji — wtedy uruchom `DATABASE_URL=<demo> node server/scripts/seed-m15-test-data.cjs` (potrzebny URL bazy demo z Railway, którego nie mam). Alternatywnie odbiór na bridge lokalny FE→staging (screeny w `docs/qa/screens/m15-2026-06-26/` pokazują dokładnie ten render).
 
-**②#2 jedyny otwarty element DoD:** test izolacji cross-org (SEC) wymaga drugiego konta testowego — `🔴 BLOCKED` uczciwie (nie podrasowane). 401-bez-tokenu pokryte w T1.
+**②#2 DoD izolacja cross-org: ✅ ZAMKNIĘTY** — 20 testów SEC w `results-security.test.ts` (`29903183f5`): param-capture na wszystkich 12 endpointach (SEC-06–17) + cross-org poison (SEC-18–20) + 401 (SEC-01–05). Nie wymagało drugiego konta — testy weryfikują, że SQL params zawierają orgId tokenu, nigdy inny.
 
 ---
 
@@ -103,4 +104,4 @@ Flagi są URL-param (`ff_*`). Otwórz na demo.consultify.ai po zalogowaniu:
 - Seed: `server/scripts/seed-m15-test-data.cjs`
 - Korekta master-trackera: [M15-STAN-PRACY-ODBIORY.md](M15-STAN-PRACY-ODBIORY.md) (sekcja „KOREKTA PRAWDY 2026-06-25")
 
-**Commity (feat/deliverables-w1, wszystkie na demo):** `ef4a76a41e` `5439e5dd89` `256296278b` `db41fa1e0a` `1f6a0c30ed` `1cd36e9554` `<T2>` `<T3/U3>` `<RUN4>` → demo `6e4f16df29`.
+**Commity (feat/deliverables-w1, wszystkie na demo):** `ef4a76a41e` `5439e5dd89` `256296278b` `db41fa1e0a` `1f6a0c30ed` `1cd36e9554` `<T2>` `<T3/U3>` `<RUN4>` → demo `6e4f16df29` → **SEC** `29903183f5`.
