@@ -57,7 +57,8 @@ function buildSections(input: BusinessPlanInput, hero: Record<string, HeroNumber
     { id: 'unit_economics', actionTitle: `LTV/CAC ${h('ltv_cac')}, payback ${h('cac_payback')} — ekonomika zdrowa`, heroNumberKeys: ['ltv_cac', 'cac_payback'], deck: { slideIntent: 'recommendation_portfolio', reusesTable: true, needsProductGraphic: false } },
     { id: 'team', actionTitle: 'Zespół łączy ekspertyzę doradczą z inżynierią AI', heroNumberKeys: [], deck: { slideIntent: 'single_insight', reusesTable: false, needsProductGraphic: true } },
     { id: 'risks', actionTitle: 'Ryzyka zidentyfikowane i zmitygowane', heroNumberKeys: [], deck: { slideIntent: 'risk_management', reusesTable: false, needsProductGraphic: false } },
-    { id: 'ask', actionTitle: clampActionTitle(input.ask), heroNumberKeys: ['ask'], deck: { slideIntent: 'recommendation_single', reusesTable: true, needsProductGraphic: false } },
+    // W12.2: wycena 3-metody pojawia się na slajdzie ASK (low-high range z DCF/comps/VC)
+    { id: 'ask', actionTitle: clampActionTitle(input.ask), heroNumberKeys: ['ask', 'valuation_low', 'valuation_high'], deck: { slideIntent: 'recommendation_single', reusesTable: true, needsProductGraphic: false } },
     { id: 'roadmap', actionTitle: `Roadmapa do ${lastYear}`, heroNumberKeys: [], deck: { slideIntent: 'roadmap', reusesTable: false, needsProductGraphic: false } },
   ];
 }
@@ -91,6 +92,10 @@ export function buildSpine(input: BusinessPlanInput): BusinessPlanSpine {
     makeHero('tam', 'TAM', market.tam.value, market.tam.unit, lang),
     makeHero('sam', 'SAM', market.sam.value, market.sam.unit, lang),
     makeHero('som', 'SOM', market.som.value, market.som.unit, lang),
+    // W12.2 — valuation heroes (3 metody wyceny z FinancialEngine)
+    makeHero('valuation_low', 'Wycena min', model.valuation.low, cur, lang),
+    makeHero('valuation_high', 'Wycena max', model.valuation.high, cur, lang),
+    makeHero('valuation_dcf', 'Wycena DCF', model.valuation.dcf, cur, lang),
   ];
   const heroMap = Object.fromEntries(heroList.map((h) => [h.key, h]));
 

@@ -147,6 +147,16 @@ export interface ValuationRange {
 
 export type ScenarioName = 'base' | 'bull' | 'bear';
 
+/** W12.2 — sensitivity matrix: jak zmienia się wycena gdy ruszamy kluczowy driver ±20%. */
+export interface ValuationSensitivityRow {
+  driver: string;      // np. "Wzrost przychodów"
+  driverKey: string;   // np. "revenueGrowth"
+  unit: string;        // "%" | "×" | "EUR"
+  pessimistic: ValuationRange; // driver −20%
+  base: ValuationRange;        // base case
+  optimistic: ValuationRange;  // driver +20%
+}
+
 export interface FinancialModel {
   currency: string;
   pnl: PnLPeriod[];
@@ -157,6 +167,8 @@ export interface FinancialModel {
   kpis: SaasKpis;
   breakEven: { ebitdaPositivePeriod: string | null; runwayMonths: number | null };
   valuation: ValuationRange;
+  /** W12.2 — sensitivity matrix per kluczowy driver (3 metody wyceny × ±20%). */
+  valuationSensitivity?: ValuationSensitivityRow[];
   /** base/bull/bear z udokumentowanych delt (§B11). */
   scenarios: Record<ScenarioName, { pnl: PnLPeriod[]; note: string }>;
 }

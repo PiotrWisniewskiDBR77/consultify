@@ -51,6 +51,44 @@ function hex(color: string): string {
   return color.replace('#', '').toUpperCase();
 }
 
+// W2.3 — sekcja chip: mały kolorowy label w prawym górnym rogu slajdu (beat Gamma).
+const SECTION_CHIP: Record<string, { pl: string; en: string }> = {
+  executive_summary:       { pl: 'EXEC SUMMARY', en: 'EXEC SUMMARY' },
+  root_cause:              { pl: 'PROBLEM',       en: 'PROBLEM' },
+  single_insight:          { pl: 'ROZWIĄZANIE',   en: 'SOLUTION' },
+  performance_overview:    { pl: 'FINANSE',        en: 'FINANCIALS' },
+  key_metrics_overview:    { pl: 'KPI',            en: 'KPIs' },
+  comparison:              { pl: 'RYNEK',          en: 'MARKET' },
+  process_flow:            { pl: 'GTM',            en: 'GTM' },
+  recommendation_single:   { pl: 'ASK',            en: 'ASK' },
+  recommendation_portfolio:{ pl: 'UNIT ECONOMICS', en: 'UNIT ECONOMICS' },
+  roadmap:                 { pl: 'ROADMAPA',       en: 'ROADMAP' },
+  risk_management:         { pl: 'RYZYKO',         en: 'RISK' },
+};
+
+function addSectionChip(
+  slide: any,
+  layoutIntent: string,
+  opts: { accent: string; bodyFont: string; isPolish: boolean },
+): void {
+  const chip = SECTION_CHIP[layoutIntent];
+  if (!chip) return;
+  const label = opts.isPolish ? chip.pl : chip.en;
+  // Tło chipa — accent color, prawy górny róg pod paskiem.
+  const w = Math.max(0.9, label.length * 0.082 + 0.2);
+  slide.addShape('roundRect', {
+    x: 9.6 - w, y: 0.18, w, h: 0.26,
+    fill: { color: opts.accent },
+    line: { color: opts.accent, width: 0 },
+    rectRadius: 0.04,
+  });
+  slide.addText(label, {
+    x: 9.6 - w, y: 0.18, w, h: 0.26,
+    fontFace: opts.bodyFont, fontSize: 7, bold: true, color: 'FFFFFF',
+    align: 'center', valign: 'middle',
+  });
+}
+
 type SlideChartSpec = DeckPlanSlide['chartSpec'];
 
 /**
@@ -170,6 +208,9 @@ export async function deckPlansToPptxBuffer(
       slide.addShape(pptx.ShapeType.rect, {
         x: 0, y: 0, w: 10, h: 0.12, fill: { color: accent },
       });
+
+      // W2.3 — section chip (prawy górny róg, beat Gamma "punchy chipy sekcji").
+      addSectionChip(slide, plan.layoutIntent, { accent, bodyFont, isPolish });
 
       // Action-title.
       slide.addText(heading || (isPolish ? `Slajd ${n}` : `Slide ${n}`), {

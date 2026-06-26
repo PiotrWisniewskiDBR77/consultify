@@ -9,7 +9,7 @@
  */
 import type {
   PnLPeriod, ArrBridgePeriod, BalanceSheetPeriod, CashFlowPeriod,
-  UnitEconomics, SaasKpis, ValuationRange, FinancialModel, ScenarioName,
+  UnitEconomics, SaasKpis, ValuationRange, ValuationSensitivityRow, FinancialModel, ScenarioName,
   ValidationCheck, ValidationReport, AntiPatternFinding,
 } from './businessPlanSpine.js';
 
@@ -184,6 +184,48 @@ function applyScenario(d: FinancialDrivers, mult: number): FinancialDrivers {
   return { ...d, saasSeatGrowthYoY: d.saasSeatGrowthYoY * mult, nrr: 1 + (d.nrr - 1) * mult, servicesGrowthYoY: d.servicesGrowthYoY * mult };
 }
 
+/**
+ * W12.2 — sensitivity matrix dla wyceny. Każdy driver ±20% → 3 ValuationRange.
+ * Pure function: nie dotyka żadnego I/O, deterministyczna.
+ */
+function buildValuationSensitivity(d: FinancialDrivers): ValuationSensitivityRow[] {
+  const compute = (override: Partial<FinancialDrivers>): ValuationRange => {
+    const dd = { ...d, ...override };
+    const arr = buildArrBridge(dd);
+    const pnl = buildPnL(dd, arr);
+    return buildValuation(pnl, dd);
+  };
+
+  const DELTA = 0.20;
+
+  return [
+    {
+      driver: 'Wzrost przychodów (SaaS seats)',
+      driverKey: 'saasSeatGrowthYoY',
+      unit: '×',
+      pessimistic: compute({ saasSeatGrowthYoY: d.saasSeatGrowthYoY * (1 - DELTA) }),
+      base: buildValuation(buildPnL(d, buildArrBridge(d)), d),
+      optimistic: compute({ saasSeatGrowthYoY: d.saasSeatGrowthYoY * (1 + DELTA) }),
+    },
+    {
+      driver: 'Net Revenue Retention (NRR)',
+      driverKey: 'nrr',
+      unit: '×',
+      pessimistic: compute({ nrr: Math.max(0.8, d.nrr * (1 - DELTA)) }),
+      base: buildValuation(buildPnL(d, buildArrBridge(d)), d),
+      optimistic: compute({ nrr: Math.min(1.5, d.nrr * (1 + DELTA)) }),
+    },
+    {
+      driver: 'Marża brutto',
+      driverKey: 'grossMargin',
+      unit: '%',
+      pessimistic: compute({ grossMargin: Math.max(0.4, d.grossMargin - DELTA) }),
+      base: buildValuation(buildPnL(d, buildArrBridge(d)), d),
+      optimistic: compute({ grossMargin: Math.min(0.95, d.grossMargin + DELTA) }),
+    },
+  ];
+}
+
 /** Pełny model z driverów (§B). */
 export function computeFinancialModel(d: FinancialDrivers): FinancialModel {
   const arrBridge = buildArrBridge(d);
@@ -209,7 +251,10 @@ export function computeFinancialModel(d: FinancialDrivers): FinancialModel {
   return {
     currency: d.currency, pnl, arrBridge, balanceSheet: bs, cashFlow: cf,
     unitEconomics: [ue], kpis, breakEven: { ebitdaPositivePeriod: ebitdaPositive, runwayMonths },
-    valuation, scenarios,
+    valuation,
+    // W12.2 — sensitivity matrix (fail-soft: nie blokuje gdy coś padnie)
+    valuationSensitivity: (() => { try { return buildValuationSensitivity(d); } catch { return undefined; } })(),
+    scenarios,
   };
 }
 
