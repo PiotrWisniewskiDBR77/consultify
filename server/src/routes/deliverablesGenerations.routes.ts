@@ -44,6 +44,7 @@ import type {
   StartGenerationRequest,
 } from '../types/deliverablesGeneration.js';
 import logger from '../utils/Logger.js';
+import db from '../database/PostgresDatabase.js';
 
 const router = Router();
 
@@ -316,6 +317,38 @@ router.post('/business-plan', aiRateLimiter, async (req: any, res: Response) => 
   }
 });
 
+/**
+ * W4.2 — zapis wiązki do deliverable_bundles po eksporcie (fire-and-forget;
+ * nigdy nie blokuje odpowiedzi ZIP, fail-soft: błąd tylko w logu).
+ */
+async function persistBundleRecord(opts: {
+  orgId: string;
+  userId?: string;
+  brief: string;
+  title: string;
+  language: string;
+  themeId: string | undefined;
+  qualityJson: unknown;
+  heroNumbersJson: unknown;
+}): Promise<void> {
+  try {
+    const { orgId, userId, brief, title, language, themeId, qualityJson, heroNumbersJson } = opts;
+    await db.query(
+      `INSERT INTO deliverable_bundles
+        (organization_id, user_id, brief, title, lifecycle_state, theme_id, language, quality_json, hero_numbers_json, is_locked)
+       VALUES ($1, $2, $3, $4, 'draft', $5, $6, $7, $8, FALSE)
+       ON CONFLICT DO NOTHING`,
+      [
+        orgId, userId ?? null, brief.slice(0, 4000), title,
+        themeId ?? null, language,
+        JSON.stringify(qualityJson ?? null), JSON.stringify(heroNumbersJson ?? null),
+      ],
+    );
+  } catch (err) {
+    logger.warn('[bundle/export] persistBundleRecord failed (non-fatal):', err instanceof Error ? err.message : String(err));
+  }
+}
+
 // POST /bundle — B5 (W4): brief → SPINE → spójna wiązka (tabela+raport+deck).
 // Za flagą ENABLE_DELIVERABLES_PREMIUM (OFF → 404). Fail-open per artefakt
 // (każdy timeout nie kładzie całej wiązki — sprawdź `produced` w odpowiedzi).
@@ -436,6 +469,18 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${base}-komplet.zip"`);
     res.status(200).send(zipBuffer);
+
+    // W4.2 — fire-and-forget persistence (sent after res.send, non-blocking)
+    void persistBundleRecord({
+      orgId: getOrgId(req),
+      userId: req.user?.id,
+      brief: parsed.data.brief,
+      title: base,
+      language: parsed.data.language ?? 'pl',
+      themeId,
+      qualityJson: bundle.quality ?? null,
+      heroNumbersJson: bundle.spine.heroNumbers ?? null,
+    });
   } catch (err) {
     handleServiceError(res, err);
   }
