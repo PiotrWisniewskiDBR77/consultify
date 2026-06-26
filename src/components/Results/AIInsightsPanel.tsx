@@ -1,14 +1,28 @@
 /**
- * AIInsightsPanel — M15/W6 tasks 6.1–6.4 + 6.8.
- * Renders: forecast alerts, RCA suggestions, value narrative, counterfactual.
- * Fetches from /results-extended/:projectId endpoints.
- * Behind flag resultsFeatureFlags('aiInsights').
+ * AIInsightsPanel — M15/W6 tasks 6.1–6.4 + 6.8 + domknięcie M15 (D5 + D11).
+ * Renders: value narrative, counterfactual, KPI anomaly detection (D5),
+ *          KPI trajectory forecast (D11) + heuristic RCA suggestion (D11).
+ * Fetches from /results-extended/:projectId endpoints (narrative + counterfactual).
+ * Forecast/RCA/Anomaly nie mają jeszcze osobnych endpointów — prezentowane jako
+ * sekcje informacyjne premium-style (silniki istnieją po stronie serwera:
+ * kpiAnomalyService / kpiForecastService / deviationRcaSuggestService).
+ * Cały panel jest osadzony za flagą resultsFeatureFlags('aiInsights') w ResultsHub.
  */
-import { AlertTriangle, BrainCircuit, FileText, TrendingDown, TrendingUp } from 'lucide-react';
+import {
+  AlertTriangle,
+  Activity,
+  BrainCircuit,
+  FileText,
+  LineChart,
+  Search,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { RagPill } from './ResultsUIPrimitives';
 
 interface ValueNarrative {
   executiveSummary: string;
@@ -35,11 +49,56 @@ const CONFIDENCE_BADGE: Record<string, string> = {
   high: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
 };
 
+/**
+ * RCA playbook — odzwierciedla CATEGORY_ACTION_MAP z deviationRcaSuggestService
+ * (kategoria przyczyny → akcja naprawcza → rola właściciela). Statyczny podgląd
+ * heurystyki do czasu podpięcia endpointu RCA.
+ */
+const RCA_PLAYBOOK: Array<{
+  key: string;
+  catFallback: string;
+  actionFallback: string;
+  ownerFallback: string;
+}> = [
+  { key: 'dataQuality', catFallback: 'Jakość danych', actionFallback: 'Napraw źródło pomiaru', ownerFallback: 'Data Owner' },
+  { key: 'adoption', catFallback: 'Adopcja', actionFallback: 'Wzmocnij komunikację/szkolenia', ownerFallback: 'Change Manager' },
+  { key: 'scope', catFallback: 'Zakres', actionFallback: 'Rewaliduj zakres', ownerFallback: 'Initiative Owner' },
+  { key: 'capacity', catFallback: 'Zasoby', actionFallback: 'Realokuj zasoby', ownerFallback: 'Resource Manager' },
+  { key: 'measurement', catFallback: 'Pomiar', actionFallback: 'Zweryfikuj definicję KPI', ownerFallback: 'KPI Owner' },
+  { key: 'external', catFallback: 'Zewnętrzne', actionFallback: 'Aktualizuj założenia', ownerFallback: 'Sponsor' },
+];
+
 function fmtPLN(v: number): string {
   if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)} M PLN`;
   if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(0)} k PLN`;
   return `${v.toFixed(0)} PLN`;
 }
+
+/**
+ * PremiumNote — wspólny „kafelek informacyjny" dla sekcji AI premium, których
+ * pełny model jeszcze nie ma osobnego endpointu (prognoza / anomalie / RCA).
+ * Spójny ze stylem istniejącej noty Forecast (dashed border, light/dark).
+ */
+const PremiumNote: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  premiumLabel: string;
+  children: React.ReactNode;
+}> = ({ icon, title, premiumLabel, children }) => (
+  <section className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] p-4">
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-slate-500 dark:text-slate-400">{icon}</span>
+      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</span>
+      <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-primary-50 dark:bg-primary-900/20 px-2 py-0.5 text-[11px] font-medium text-primary-600 dark:text-primary-300">
+        <BrainCircuit size={11} />
+        {premiumLabel}
+      </span>
+    </div>
+    <div className="text-xs text-slate-500 dark:text-slate-400 space-y-2">
+      {children}
+    </div>
+  </section>
+);
 
 const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
   const { t } = useTranslation();
@@ -151,16 +210,100 @@ const AIInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
         )}
       </section>
 
-      {/* Forecast note (6.1 — placeholder, full AI model in W6) */}
-      <section className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] p-4 text-sm text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-2 mb-1 font-medium text-slate-600 dark:text-slate-300">
-          <BrainCircuit size={14} />
-          {t('results.ai.forecastNote', 'Prognoza trajektorii KPI (6.1 — AI premium)')}
-        </div>
-        <p className="text-xs">
-          {t('results.ai.forecastNoteCopy', 'Automatyczna prognoza trendu dla każdego KPI + alert kiedy ryzyko nieosiągnięcia celu. Wymaga min. 6 pomiarów. Dostępna po konfiguracji AI premium.')}
+      {/* D5 — Wykrywanie anomalii KPI (z-score + IQR) */}
+      <PremiumNote
+        icon={<Activity size={14} />}
+        title={t('results.ai.anomalyTitle', 'Wykrywanie anomalii KPI')}
+        premiumLabel={t('results.ai.premiumBadge', 'AI premium')}
+      >
+        <p>
+          {t(
+            'results.ai.anomalyCopy',
+            'Automatyczne wykrywanie punktów odstających w szeregu pomiarów KPI — metodą z-score (|z| > 2) oraz IQR (poza Q1−1.5·IQR / Q3+1.5·IQR). Punkt wskazany przez obie metody lub przy |z| ≥ 3 oznaczany jest jako poważny (severe).',
+          )}
         </p>
-      </section>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <RagPill status="amber" label={t('results.ai.anomalySevere', 'Poważne')} />
+          <RagPill status="grey" label={t('results.ai.anomalyMild', 'Łagodne')} />
+          <span className="text-[11px] text-slate-400">
+            {t('results.ai.anomalyMinPoints', 'Wymaga min. 6 pomiarów na KPI')}
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-400">
+          {t(
+            'results.ai.anomalyServerNote',
+            'Anomalie liczone po stronie serwera (silnik kpiAnomalyService) — wynik pojawi się tu po podpięciu endpointu pomiarów KPI.',
+          )}
+        </p>
+      </PremiumNote>
+
+      {/* D11 — Prognoza trajektorii KPI (regresja liniowa + alert wyprzedzający) */}
+      <PremiumNote
+        icon={<LineChart size={14} />}
+        title={t('results.ai.forecastTitle', 'Prognoza trajektorii KPI')}
+        premiumLabel={t('results.ai.premiumBadge', 'AI premium')}
+      >
+        <p>
+          {t(
+            'results.ai.forecastCopy',
+            'Regresja liniowa (least squares) na historii pomiarów każdego KPI: prognoza wartości, szacowany termin osiągnięcia celu (ETA) oraz alert wyprzedzający, gdy trend nie trafia w cel przed deadline.',
+          )}
+        </p>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium">
+            <TrendingUp size={12} />
+            {t('results.ai.forecastOnTrack', 'Na trajektorii do celu')}
+          </span>
+          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 text-[11px] font-medium">
+            <TrendingDown size={12} />
+            {t('results.ai.forecastAtRisk', 'Cel zagrożony')}
+          </span>
+          <span className="text-[11px] text-slate-400">
+            {t('results.ai.forecastConfidence', 'Pewność: low / medium / high (z liczby pomiarów + dopasowania R²)')}
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-400">
+          {t(
+            'results.ai.forecastMinPoints',
+            'Wymaga min. 6 pomiarów na KPI. Silnik kpiForecastService — dostępne po konfiguracji AI premium.',
+          )}
+        </p>
+      </PremiumNote>
+
+      {/* D11 — Sugestia RCA / akcji naprawczej (heurystyczny silnik) */}
+      <PremiumNote
+        icon={<Search size={14} />}
+        title={t('results.ai.rcaTitle', 'Sugestia RCA / akcji naprawczej')}
+        premiumLabel={t('results.ai.premiumBadge', 'AI premium')}
+      >
+        <p>
+          {t(
+            'results.ai.rcaCopy',
+            'Dla każdego odchylenia KPI heurystyczny silnik (bez LLM, deterministyczny) generuje hipotezy przyczyn źródłowych na podstawie sygnałów: odchylenie, trend, adopcja, świeżość danych, zmiana zakresu, przeciążenie zasobów — i mapuje je na konkretne akcje naprawcze z właścicielem.',
+          )}
+        </p>
+        <ul className="space-y-1.5 pt-1">
+          {RCA_PLAYBOOK.map((row) => (
+            <li key={row.key} className="flex items-center gap-2">
+              <span className="inline-flex shrink-0 items-center rounded-md bg-slate-100 dark:bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                {t(`results.ai.rcaCat.${row.key}`, row.catFallback)}
+              </span>
+              <span className="text-slate-600 dark:text-slate-300 text-[12px]">
+                {t(`results.ai.rcaAction.${row.key}`, row.actionFallback)}
+              </span>
+              <span className="ml-auto text-[10px] text-slate-400 shrink-0">
+                {t(`results.ai.rcaOwner.${row.key}`, row.ownerFallback)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[11px] text-slate-400">
+          {t(
+            'results.ai.rcaServerNote',
+            'Sugestie liczone po stronie serwera (silnik deviationRcaSuggestService) — pojawią się tu dla wykrytych odchyleń po podpięciu endpointu RCA.',
+          )}
+        </p>
+      </PremiumNote>
 
     </div>
   );

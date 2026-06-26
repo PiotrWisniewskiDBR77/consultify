@@ -4,11 +4,12 @@
  *           scenarios+IRR (6.5), finance link (6.6), board-pack CTA (4.4).
  * Behind flags (shown in ROI-Analysis tab alongside existing views).
  */
-import { ArrowRight, BarChart3, Clock, DollarSign, ExternalLink, MoveRight, TrendingUp, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Clock, DollarSign, ExternalLink, Filter, MoveRight, TrendingUp, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { FunnelStage } from './ResultsUIPrimitives';
 
 interface BenefitSignal {
   id?: string;
@@ -48,6 +49,31 @@ interface RunRateData {
     aheadOfPlanCount?: number;
     behindPlanCount?: number;
   };
+  periodMonths?: number;
+  periodMonthsAssumed?: boolean;
+}
+
+type FunnelStageKey = 'ideas' | 'validated' | 'inflight' | 'realized';
+
+interface FunnelStageAggregate {
+  stage: FunnelStageKey;
+  count: number;
+  value: number;
+  riskAdjustedValue: number;
+}
+
+interface FunnelConversionStep {
+  from: FunnelStageKey;
+  to: FunnelStageKey;
+  conversionPct: number;
+  leakageValue: number;
+}
+
+interface FunnelData {
+  stages: FunnelStageAggregate[];
+  conversion: FunnelConversionStep[];
+  valueAtRisk: { atRiskValue: number; atRiskCount: number };
+  total: number;
 }
 
 interface ScenarioResult {
@@ -80,6 +106,16 @@ function fmtPct(v: number | null | undefined): string {
   return `${(v * 100).toFixed(1)}%`;
 }
 
+function stageLabel(stage: FunnelStageKey, t: (k: string, d: string) => string): string {
+  switch (stage) {
+    case 'ideas': return t('results.portfolio.funnelStageIdeas', 'Pomysły');
+    case 'validated': return t('results.portfolio.funnelStageValidated', 'Zwalidowane');
+    case 'inflight': return t('results.portfolio.funnelStageInflight', 'W realizacji');
+    case 'realized': return t('results.portfolio.funnelStageRealized', 'Zrealizowane');
+    default: return stage;
+  }
+}
+
 interface Props {
   projectId?: string;
 }
@@ -87,10 +123,11 @@ interface Props {
 const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
   const { t } = useTranslation();
   const [signals, setSignals] = useState<SignalsData | null>(null);
-  const [realloc, setRealloc] = useState<{ moves: ReallocationMove[]; summary: any } | null>(null);
+  const [realloc, setRealloc] = useState<{ moves: ReallocationMove[]; summary: any; capacityAssumed?: boolean } | null>(null);
   const [runRate, setRunRate] = useState<RunRateData | null>(null);
   const [scenarios, setScenarios] = useState<ScenariosData | null>(null);
   const [financeLink, setFinanceLink] = useState<FinanceLinkData | null>(null);
+  const [funnel, setFunnel] = useState<FunnelData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -101,12 +138,14 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
       Api.get(`/results-extended/${projectId}/run-rate`),
       Api.get(`/results-extended/${projectId}/scenarios`),
       Api.get(`/results-extended/${projectId}/finance-link`),
-    ]).then(([s, r, rr, sc, fl]) => {
+      Api.get(`/results-extended/${projectId}/funnel`),
+    ]).then(([s, r, rr, sc, fl, fn]) => {
       if (s.status === 'fulfilled') setSignals((s.value as any)?.data ?? s.value);
       if (r.status === 'fulfilled') setRealloc((r.value as any)?.data ?? r.value);
       if (rr.status === 'fulfilled') setRunRate((rr.value as any)?.data ?? rr.value);
       if (sc.status === 'fulfilled') setScenarios((sc.value as any)?.data ?? sc.value);
       if (fl.status === 'fulfilled') setFinanceLink((fl.value as any)?.data ?? fl.value);
+      if (fn.status === 'fulfilled') setFunnel((fn.value as any)?.data ?? fn.value);
     }).finally(() => setLoading(false));
   }, [projectId]);
 
@@ -121,6 +160,67 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
 
   return (
     <div data-testid="portfolio-insights-panel" className="space-y-6">
+
+      {/* Value funnel (D6 — lejek wartości portfela) */}
+      {funnel?.stages && funnel.stages.length > 0 && (funnel.total ?? 0) > 0 && (
+        <section data-testid="portfolio-funnel">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
+            <Filter size={14} />
+            {t('results.portfolio.funnel', 'Lejek wartości portfela')}
+            <span className="text-xs font-normal text-slate-400">
+              ({funnel.total} {t('results.portfolio.funnelInitiatives', 'inicjatyw')})
+            </span>
+          </h3>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {funnel.stages.map((st, i) => (
+              <FunnelStage
+                key={st.stage}
+                label={stageLabel(st.stage, t)}
+                count={st.count}
+                value={st.value}
+                isActive={i === funnel.stages.length - 1}
+              />
+            ))}
+          </div>
+          {/* risk-adjusted value per stage */}
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {funnel.stages.map((st) => (
+              <div key={`ra-${st.stage}`} className="text-center text-xs text-slate-400">
+                {t('results.portfolio.funnelRiskAdjusted', 'po ryzyku')}: {fmtPLN(st.riskAdjustedValue)}
+              </div>
+            ))}
+          </div>
+          {/* conversion + leakage between adjacent stages */}
+          {funnel.conversion && funnel.conversion.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+              {funnel.conversion.map((c) => (
+                <span key={`${c.from}-${c.to}`} className="inline-flex items-center gap-1.5">
+                  <span className="text-slate-400">{stageLabel(c.from, t)}</span>
+                  <ArrowRight size={11} className="text-primary-500 shrink-0" />
+                  <span className="text-slate-400">{stageLabel(c.to, t)}</span>
+                  <span className="font-medium text-slate-600 dark:text-slate-300">{Math.round(c.conversionPct)}%</span>
+                  {c.leakageValue > 0 && (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      −{fmtPLN(c.leakageValue)} {t('results.portfolio.funnelLeakage', 'wyciek')}
+                    </span>
+                  )}
+                </span>
+              ))}
+            </div>
+          )}
+          {/* value at risk */}
+          {funnel.valueAtRisk && funnel.valueAtRisk.atRiskCount > 0 && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm">
+              <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-slate-700 dark:text-slate-200">
+                {t('results.portfolio.funnelValueAtRisk', 'Wartość zagrożona')}:{' '}
+                <span className="font-semibold">{fmtPLN(funnel.valueAtRisk.atRiskValue)}</span>
+                {' '}({funnel.valueAtRisk.atRiskCount} {t('results.portfolio.funnelInitiatives', 'inicjatyw')})
+              </span>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Manager signals (3.2 — M15→M14 loop) */}
       {signals && (signals.summary.total > 0) && (
@@ -202,6 +302,14 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
               )}
             </div>
           )}
+          {/* D8 — assumption flag for measurement window */}
+          {runRate.periodMonths != null && (
+            <div className="mt-1.5 text-xs text-slate-400 italic">
+              {runRate.periodMonthsAssumed
+                ? t('results.portfolio.runRateAssumed', 'założenie: 6 mies. okno pomiaru')
+                : t('results.portfolio.runRateMeasured', 'okno pomiaru: {{months}} mies. (z danych)').replace('{{months}}', String(runRate.periodMonths))}
+            </div>
+          )}
         </section>
       )}
 
@@ -222,6 +330,12 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
               </div>
             ))}
           </div>
+          {/* D8 — capacity assumption flag */}
+          {realloc.capacityAssumed && (
+            <div className="mt-1.5 text-xs text-slate-400 italic">
+              {t('results.portfolio.reallocCapacityAssumed', 'pojemność FTE = założenie (brak danych kadrowych)')}
+            </div>
+          )}
         </section>
       )}
 
@@ -265,6 +379,10 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
               )}
             </div>
           )}
+          {/* D8 — derived-figures assumption note */}
+          <div className="mt-1.5 text-xs text-slate-400 italic">
+            {t('results.portfolio.scenariosAssumptionNote', 'IRR / cashflow — model i założenia v1')}
+          </div>
         </section>
       )}
 
