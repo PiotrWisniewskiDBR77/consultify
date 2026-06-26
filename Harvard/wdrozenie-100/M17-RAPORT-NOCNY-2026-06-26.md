@@ -263,5 +263,24 @@ Następny skok: W3.7+ (progress UI podczas generacji), W3.8 (in-app preview), W4
 actionable (capstone całej jakości W1/W7/W12); a11y alt-text na wizualizacjach.
 
 ---
+
+## SESJA 11 (kontynuacja, 2026-06-26) — W10.2 telemetria + W6.5 + W6.3/6.4
+
+| Task | Co realnie działa | Dowód |
+|---|---|---|
+| **W10.2** | `qualityTelemetry.ts`: agregat scorecardów org w czasie — średnia/mediana, rozkład A-F, cappedRate, goodRate, **top recurring issues** (grupowane po AP-xx/DR-xx → priorytetyzacja napraw systemowych), trendDelta (ostatnia połowa vs wcześniejsza). Endpoint `GET /bundles/telemetry` (200 ostatnich). Czysty, testowalny bez DB. | 15 testów |
+| **W6.5** | `liveBindingResolver.ts`: polityka świeżości żywych powiązań danych (TTL + tryb on_open/manual/scheduled) — rozdziela „kiedy odświeżać" od „jak pobrać" (fetch zostaje w materialDataBinding). `resolveBindingFreshness`/`planRefresh`/`markFetched`. Wstrzykiwany zegar. | 14 testów |
+| **W6.3/6.4** | `recipientGovernance.ts`: walidacja adresu + **opt-out** (case-insensitive) + dedupe + limit (domyślnie 100) PRZED wysyłką; każdy odrzucony niesie powód. **Wpięty w `scheduledReportService.deliverViaEmail`** (pętla iteruje governedRecipients, nie surową listę). | 12 testów |
+
+### Testy — wyniki sesja 11
+- Sesja 11 start: **724/724** (69 plików)
+- Sesja 11 koniec: **776/776** (73 pliki) → **+52 testy** (część równolegle od współbieżnego agenta)
+- Zero regresji. Zero tsc errors w moich plikach (+ drive-by fix Zod `z.record` współbieżnego agenta).
+
+### Postęp jako produkt (sesja 11)
+**~78-80% → ~80-82%** — telemetria jakości org-wide, governance odbiorców (anti-spam +
+opt-out), polityka żywych danych. Backend deterministyczny M17 w dużej mierze domknięty.
+
+---
 *21 tasków, 57 nowych testów, 519/519, 0 regresji. Commity na origin/feat/deliverables-w1.*
 *Szczegół: M17-PLAN-DOKONCZENIA-2026-06-26.md (dashboard 8-bramkowy) + M17-AUDYT-REALIZACJI-2026-06-26.md (audyt źródłowy).*
