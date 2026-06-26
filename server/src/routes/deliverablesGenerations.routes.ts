@@ -35,6 +35,8 @@ import {
 } from '../services/deliverables/bundleGenerationRuntime.js';
 import { exportBundleFiles, bundleFilesToZip, safeBundleBaseName } from '../services/deliverables/bundleExportRuntime.js';
 import { isThemeId } from '../services/deliverables/themeRegistry.js';
+import { extractBrandTheme } from '../services/deliverables/brandIngestion.js';
+import multer from 'multer';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import type {
   CreateGenerationRequest,
@@ -360,11 +362,27 @@ router.post('/bundle', aiRateLimiter, async (req: any, res: Response) => {
 // „Pobierz komplet": jeden materiał, trzy spójne pliki Office w jednym pobraniu.
 // Za flagą ENABLE_DELIVERABLES_PREMIUM (OFF → 404). `themeId` z themeRegistry steruje
 // fontami/paletą na wszystkich 3 powierzchniach (spójność wizualna).
+// F8.1: opcjonalne pole `brandFile` (multipart) → extractBrandTheme → override fontów/palety.
 const BundleExportSchema = z.object({
   brief: z.string().min(20).max(8000),
   language: z.enum(['pl', 'en']).optional(),
   themeId: z.string().max(32).optional(),
 });
+
+// Multer: opcjonalne pole brandFile (pptx/docx klienta) — max 10 MB, memoryStorage.
+const brandUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+}).single('brandFile');
+
+function parseBrandUpload(req: any, res: Response): Promise<void> {
+  return new Promise((resolve, reject) => {
+    brandUpload(req, res as any, (err: any) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
 
 router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => {
   if (!featureFlags.ENABLE_DELIVERABLES_PREMIUM) {
@@ -372,7 +390,17 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
     return;
   }
   if (!ensureGenerateCapability(req, res)) return;
-  const parsed = BundleExportSchema.safeParse(req.body ?? {});
+
+  // Parse optional multipart (brand file) — falls through for plain JSON too.
+  try {
+    await parseBrandUpload(req, res);
+  } catch {
+    // multer error (e.g. file too large) — ignore, proceed without brand override
+  }
+
+  // Body can come from JSON (no file) or from multipart form-data fields.
+  const bodySource = (req.body ?? {});
+  const parsed = BundleExportSchema.safeParse(bodySource);
   if (!parsed.success) {
     res.status(400).json({
       success: false,
@@ -392,7 +420,12 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
     }
 
     const themeId = isThemeId(parsed.data.themeId) ? parsed.data.themeId : undefined;
-    const files = await exportBundleFiles(bundle, themeId);
+    // F8.1: jeśli klient wrzucił plik brandowy → wyciągnij override fontów/palety (fail-soft).
+    const brandOverride = req.file?.buffer
+      ? await extractBrandTheme(req.file.buffer).catch(() => null)
+      : undefined;
+
+    const files = await exportBundleFiles(bundle, themeId, brandOverride ?? undefined);
     const base = safeBundleBaseName(bundle.spine.meta.company);
     const zipBuffer = await bundleFilesToZip(files, base);
     if (!zipBuffer) {

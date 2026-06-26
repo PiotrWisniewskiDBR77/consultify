@@ -33,6 +33,8 @@ export interface DeckPptxOptions {
   company?: string;
   /** 'pl' | 'en' — etykiety. */
   language?: string;
+  /** Opcjonalny override brandu klienta (F8.1). Nadpisuje fonty/paletę motywu bazowego. */
+  brandOverride?: { fontPair?: Partial<{ heading: string; body: string }>; palette?: Partial<{ dominant: string; supporting: string; accent: string; neutralText: string }> };
 }
 
 /** #RRGGBB → RRGGBB (pptxgenjs chce hex bez #). */
@@ -50,7 +52,7 @@ export async function deckPlansToPptxBuffer(
   try {
     if (!plans || plans.length === 0) return null;
 
-    const theme = resolveTheme(opts.themeId);
+    const theme = resolveTheme(opts.themeId, opts.brandOverride);
     const isPolish = (opts.language ?? 'pl') !== 'en';
     const headingFont = theme.fontPair.heading;
     const bodyFont = theme.fontPair.body;

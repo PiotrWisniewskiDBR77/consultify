@@ -19,6 +19,7 @@ import { buildWorkbookBuffer, tableSchemaToWorkbook } from '../workbook/Workbook
 import type { BusinessPlanSpine } from './businessPlanSpine.js';
 import type { GeneratedBundle } from './bundleGenerationRuntime.js';
 import { resolveTheme } from './themeRegistry.js';
+import type { BrandThemeOverride } from './brandIngestion.js';
 import { deckPlansToPptxBuffer, type DeckPlanSlide } from './bundlePptxRuntime.js';
 import { buildAudienceVariant } from './deckAudienceVariants.js';
 
@@ -47,10 +48,11 @@ interface GenContentLike {
 export function contentToDocumentSchema(
   content: GenContentLike,
   spine: BusinessPlanSpine,
-  themeId?: string
+  themeId?: string,
+  brandOverride?: BrandThemeOverride
 ): DocumentSchema {
   const now = new Date().toISOString();
-  const theme = resolveTheme(themeId);
+  const theme = resolveTheme(themeId, brandOverride);
   const formattingSchema = {
     ...DEFAULT_CONSULTING_FORMATTING_SCHEMA,
     fonts: {
@@ -113,13 +115,18 @@ function extractDeckPlans(deck: unknown): DeckPlanSlide[] {
 }
 
 /** Wiązka → bufory plików (fail-soft per format): DOCX + XLSX + PPTX.
- *  `themeId` (F3.1) steruje fontami DOCX + tintem nagłówka XLSX + motywem PPTX. */
-export async function exportBundleFiles(bundle: GeneratedBundle, themeId?: string): Promise<BundleFiles> {
-  const theme = resolveTheme(themeId);
+ *  `themeId` (F3.1) steruje fontami/paletą na 3 powierzchniach.
+ *  `brandOverride` (F8.1) nadpisuje fonty/kolory motywy klientem (brand > motyw > default). */
+export async function exportBundleFiles(
+  bundle: GeneratedBundle,
+  themeId?: string,
+  brandOverride?: BrandThemeOverride,
+): Promise<BundleFiles> {
+  const theme = resolveTheme(themeId, brandOverride);
   let docx: Buffer | null = null;
   try {
     if (bundle.doc && (bundle.doc as GenContentLike).sections?.length) {
-      const schema = contentToDocumentSchema(bundle.doc as GenContentLike, bundle.spine, themeId);
+      const schema = contentToDocumentSchema(bundle.doc as GenContentLike, bundle.spine, themeId, brandOverride);
       docx = await renderDocumentSchemaToDocxBuffer(schema);
     }
   } catch (err) {
@@ -147,7 +154,7 @@ export async function exportBundleFiles(bundle: GeneratedBundle, themeId?: strin
     if (plans.length > 0) {
       const lang = bundle.spine.meta.language === 'EN' ? 'en' : 'pl';
       pptx = await deckPlansToPptxBuffer(plans, {
-        themeId,
+        themeId, brandOverride,
         title: `${bundle.spine.meta.company} — Biznesplan inwestorski`,
         company: bundle.spine.meta.company,
         language: lang,
@@ -156,7 +163,7 @@ export async function exportBundleFiles(bundle: GeneratedBundle, themeId?: strin
       const board = buildAudienceVariant(plans as never, 'board');
       if (board.droppedSlideIndices.length > 0) {
         pptxBoard = await deckPlansToPptxBuffer(board.plans as never, {
-          themeId,
+          themeId, brandOverride,
           title: `${bundle.spine.meta.company} — Wersja dla zarządu`,
           company: bundle.spine.meta.company,
           language: lang,

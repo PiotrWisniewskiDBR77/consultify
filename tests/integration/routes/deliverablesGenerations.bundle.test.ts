@@ -127,7 +127,7 @@ describe('W13.1 — POST /bundle/export (zip teczka)', () => {
     // body to realny bufor zip (PK magic) z naszego zamockowanego zip-payloadu
     expect(Buffer.isBuffer(res.body)).toBe(true);
     expect(res.body.subarray(0, 2).toString('latin1')).toBe('PK');
-    expect(exportFiles).toHaveBeenCalledWith(BUNDLE_STUB, 'modern');
+    expect(exportFiles).toHaveBeenCalledWith(BUNDLE_STUB, 'modern', undefined);
   });
 
   it('zero plików → 502', async () => {
