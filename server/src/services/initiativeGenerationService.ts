@@ -839,7 +839,10 @@ export async function createInitiative(params: {
     organization_id: params.organizationId,
     title: String(params.title || 'Teresa initiative').slice(0, 500),
     summary: String(params.description || ''),
-    status: 'step3',
+    // USPOJNIENIE A1: status startowy MUSI być kanoniczny (DRAFT). Wcześniej
+    // 'step3' — legacy poza enumem cyklu życia → łamał CHECK constraint
+    // (initiatives_status_check) i wstrzykiwał status spoza kanonu przez lejek.
+    status: 'DRAFT',
   } as any);
   return { id: String(created?.id || '') };
 }

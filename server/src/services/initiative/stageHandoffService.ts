@@ -15,8 +15,11 @@
  * Wszystkie funkcje poza `recordHandoff` są CZYSTE (bez DB, bez efektów).
  */
 
+import { v4 as uuidv4 } from 'uuid';
+
 import auditEventsService from '../AuditEventsService.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   InitiativeStatus,
   type InitiativeStatusType,
@@ -217,9 +220,63 @@ export function evaluateHandoff(
 // ============================================
 
 /**
- * Best-effort zapis zdarzenia handoffu do unified audit log. Fail-safe:
- * NIGDY nie rzuca — błąd jest logowany i połykany (handoff nie może paść przez
- * audyt).
+ * USPOJNIENIE B1 — wyliczenie sygnałów kontraktu gotowości z rzeczywistego
+ * rekordu inicjatywy. Czyni `evaluateHandoff` ŻYWYM kodem (był martwy: 0 wywołań).
+ * Fail-safe: schema-drift / brak tabel → sygnał = false (advisory, nie blokuje).
+ */
+async function deriveReadiness(
+  orgId: string,
+  initiativeId: string
+): Promise<HandoffPayload> {
+  const payload: HandoffPayload = {};
+  try {
+    const row = await queryHelpers.queryOne<Record<string, unknown>>(
+      `SELECT planned_start_date, planned_end_date, start_date, end_date,
+              owner_execution_id, owner_business_id, sponsor_id
+         FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    if (row) {
+      payload.hasDates = Boolean(
+        (row.planned_start_date && row.planned_end_date) ||
+          (row.start_date && row.end_date)
+      );
+      payload.hasOwner = Boolean(
+        row.owner_execution_id || row.owner_business_id || row.sponsor_id
+      );
+    }
+  } catch {
+    /* schema drift — leave hasDates/hasOwner undefined */
+  }
+  // hasKpi / hasMilestone — best-effort counts, każdy osobno guarded.
+  try {
+    const k = await queryHelpers.queryOne<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM initiative_kpis WHERE initiative_id = ?`,
+      [initiativeId]
+    );
+    payload.hasKpi = Boolean(k && Number(k.n) > 0);
+  } catch {
+    /* table absent */
+  }
+  try {
+    const m = await queryHelpers.queryOne<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM tasks
+        WHERE initiative_id = ? AND LOWER(COALESCE(task_type,'')) = 'milestone'`,
+      [initiativeId]
+    );
+    payload.hasMilestone = Boolean(m && Number(m.n) > 0);
+  } catch {
+    /* table absent */
+  }
+  return payload;
+}
+
+/**
+ * Best-effort zapis zdarzenia handoffu. Fail-safe: NIGDY nie rzuca — błąd jest
+ * logowany i połykany (handoff nie może paść przez audyt). Zapisuje DWA ślady:
+ *   1. ustrukturyzowany wiersz `initiative_handoffs` (B2) z wynikiem kontraktu
+ *      gotowości (evaluateHandoff — B1), advisory,
+ *   2. wpis w unified audit-logu (provenance).
  */
 export async function recordHandoff(
   orgId: string,
@@ -232,6 +289,49 @@ export async function recordHandoff(
   const to = String(toStatus || '').toUpperCase();
   const boundary = handoffBoundary(from, to);
 
+  // B1 — oceń kontrakt gotowości na podstawie realnego stanu inicjatywy.
+  // ADVISORY: zapisujemy wynik, ale NIE blokujemy przejścia (bramki M13/decyzje
+  // pozostają autorytatywne). To czyni evaluateHandoff żywym + obserwowalnym.
+  let evaluation: HandoffEvaluation | null = null;
+  try {
+    const payload = await deriveReadiness(orgId, initiativeId);
+    evaluation = evaluateHandoff(from, to, payload);
+  } catch {
+    /* readiness best-effort */
+  }
+
+  // B2 — ustrukturyzowany wiersz handoffu (dedykowana tabela, nie tylko audit-log).
+  try {
+    await queryHelpers.queryRun(
+      `INSERT INTO initiative_handoffs (
+         id, organization_id, initiative_id, from_status, to_status,
+         boundary, from_module, to_module,
+         readiness_allowed, readiness_missing, readiness_reasons, actor_id
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        orgId,
+        initiativeId,
+        from,
+        to,
+        boundary,
+        moduleForStatus(from),
+        moduleForStatus(to),
+        evaluation ? evaluation.allowed : null,
+        evaluation ? JSON.stringify(evaluation.missing) : null,
+        evaluation ? JSON.stringify(evaluation.reasons) : null,
+        actorId || null,
+      ]
+    );
+  } catch (err: unknown) {
+    logger.warn(
+      `[stageHandoff] handoff-row insert failed (non-fatal) for ${initiativeId} ${from}→${to}: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
+  }
+
+  // Provenance — unified audit log (jak dotąd).
   try {
     await auditEventsService.log({
       actorId: actorId || undefined,
@@ -246,10 +346,13 @@ export async function recordHandoff(
         boundary,
         fromModule: moduleForStatus(from),
         toModule: moduleForStatus(to),
+        readinessAllowed: evaluation ? evaluation.allowed : undefined,
+        readinessMissing: evaluation ? evaluation.missing : undefined,
       },
     });
     logger.info(
-      `[stageHandoff] ${initiativeId} ${from}→${to} (${boundary}) org=${orgId}`
+      `[stageHandoff] ${initiativeId} ${from}→${to} (${boundary}) org=${orgId}` +
+        (evaluation ? ` ready=${evaluation.allowed}` : '')
     );
   } catch (err: unknown) {
     logger.warn(

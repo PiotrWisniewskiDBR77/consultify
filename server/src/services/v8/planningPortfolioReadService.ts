@@ -1,6 +1,7 @@
 import {
   GATE_PERMISSIONS,
   getGateForTransition,
+  isScheduledOnward,
   VALID_TRANSITIONS,
 } from '../../constants/initiativeStatuses.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
@@ -1046,7 +1047,7 @@ export async function getInitiativeGateReadinessRead(
       );
     }
   }
-  if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
+  if (isScheduledOnward(currentStatus)) {
     const start = ini.planned_start_date || ini.start_date || null;
     const end = ini.planned_end_date || ini.end_date || null;
     addCheck(

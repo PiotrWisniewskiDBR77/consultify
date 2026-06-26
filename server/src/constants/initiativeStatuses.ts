@@ -656,6 +656,28 @@ export function isActiveStatus(status: InitiativeStatusType): boolean {
 }
 
 /**
+ * USPOJNIENIE B3 — kanoniczne grupy statusów (jedno źródło prawdy zamiast
+ * rozsianych literałów-tablic). Zmiana grupy w jednym miejscu odbija się wszędzie.
+ *
+ * SCHEDULED_ONWARD = inicjatywa weszła w realizację: od zaplanowania (SCHEDULED)
+ * przez wykonanie (EXECUTING/BLOCKED/DONE) po śledzenie rezultatów (TRACKING).
+ * Używane przez bramki gotowości (readiness/timeline/milestone) w gate-readiness
+ * i portfolio-read — wcześniej zduplikowane jako literał w obu serwisach.
+ */
+export const SCHEDULED_ONWARD_STATUSES: InitiativeStatusType[] = [
+  InitiativeStatus.SCHEDULED,
+  InitiativeStatus.EXECUTING,
+  InitiativeStatus.BLOCKED,
+  InitiativeStatus.DONE,
+  InitiativeStatus.TRACKING,
+];
+
+/** Czy status oznacza „inicjatywa w realizacji lub dalej" (od SCHEDULED w górę). */
+export function isScheduledOnward(status: InitiativeStatusType | string): boolean {
+  return (SCHEDULED_ONWARD_STATUSES as string[]).includes(String(status || '').toUpperCase());
+}
+
+/**
  * Check if an initiative needs attention (blocked, pending review, or in review)
  */
 export function needsAttention(status: InitiativeStatusType): boolean {

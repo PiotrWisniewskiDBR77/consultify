@@ -2209,6 +2209,12 @@ async function upsertInitiatives(
       vals.push(initiative.budgetCapex + initiative.budgetOpex);
     }
 
+    // USPOJNIENIE A3: ŚWIADOMY WYJĄTEK od „jeden lejek". Seed demo jest
+    // idempotentny (deterministyczne id via makeId + ON CONFLICT DO UPDATE) —
+    // przejście przez createInitiativeService (świeże UUID, brak upsertu)
+    // złamałoby re-seedowalność. Statusy pochodzą z definicji seedu i są
+    // kanoniczne (zgodne z initiatives_status_check). NIE jest to ścieżka
+    // tworzenia przez użytkownika.
     await DbPromise.run(
       `INSERT INTO initiatives (${cols.join(', ')})
        VALUES (${cols.map(() => '?').join(', ')})

@@ -448,4 +448,36 @@ test.describe('F1 — Initiative Funnel', () => {
     const ct = res.headers()['content-type'] ?? '';
     expect(ct).toContain('application/json');
   });
+
+  // ──────────────────────────────────────────────────────────────────────
+  // F1-31  Every initiative has a CANONICAL status (A1/A4 regression).
+  // The status CHECK constraint (initiatives_status_check) rejects non-enum
+  // values; this asserts no creation path smuggled a legacy status (e.g. the
+  // Teresa-handoff 'step3' bug, fixed in A1). DRAFT is the default everywhere.
+  // ──────────────────────────────────────────────────────────────────────
+  test('F1-31 — all initiatives have a canonical lifecycle status (no legacy)', async ({
+    request,
+  }) => {
+    const CANONICAL = new Set([
+      'DRAFT',
+      'PENDING_REVIEW',
+      'REVIEW',
+      'PROMOTED',
+      'PLANNING',
+      'APPROVED',
+      'SCHEDULED',
+      'EXECUTING',
+      'BLOCKED',
+      'DONE',
+      'TRACKING',
+      'CANCELLED',
+      'ARCHIVED',
+    ]);
+    const { json } = await api(request, 'GET', '/initiatives?limit=200');
+    const list: any[] = json?.initiatives ?? json?.data ?? (Array.isArray(json) ? json : []);
+    const offenders = list
+      .map((i: any) => i?.status)
+      .filter((s: any) => s && !CANONICAL.has(String(s).toUpperCase()));
+    expect(offenders, `Non-canonical statuses found: ${JSON.stringify(offenders)}`).toEqual([]);
+  });
 });

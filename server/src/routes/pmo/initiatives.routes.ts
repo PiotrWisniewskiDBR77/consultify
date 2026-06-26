@@ -1037,6 +1037,11 @@ router.get('/', InitiativeController.getInitiatives);
  *
  * Note: This intentionally duplicates only the main `initiatives` row and does not clone
  * deep project-management sub-entities (tasks, RAID, etc.). Those can be re-generated later.
+ *
+ * USPOJNIENIE A3: ŚWIADOMY WYJĄTEK od „jeden lejek". Duplikacja kopiuje wszystkie
+ * kolumny istniejącego rekordu (nie jest świeżym tworzeniem z walidacją) i SAMA
+ * wymusza status startowy `DRAFT` + nowy UUID + org-scope + created_by (niżej).
+ * Przejście przez createInitiativeService zgubiłoby skopiowane pola/lineage.
  */
 router.post('/:id/duplicate', async (req: any, res: any) => {
   try {

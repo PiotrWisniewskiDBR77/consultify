@@ -2,6 +2,7 @@
  * V4-INIT-01: Gate readiness service
  * Shared logic for blocking items used by gate-readiness-check and updateInitiativeStatus.
  */
+import { isScheduledOnward } from '../../constants/initiativeStatuses.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 export interface BlockingItem {
@@ -104,7 +105,7 @@ export async function getBlockingReadinessItems(
     }
   }
 
-  if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
+  if (isScheduledOnward(currentStatus)) {
     const start = ini.planned_start_date || ini.start_date || null;
     const end = ini.planned_end_date || ini.end_date || null;
     add(
