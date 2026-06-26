@@ -254,23 +254,9 @@ def seed_investment_analysis(token):
     st, d = req("POST", "/api/economics/analyses", token, {
         "name": f"{SEED}Analiza Inwestycyjna — Linia Prod",
         "analysisType": "investment_case",
-        "currency": "PLN",
-        "horizonYears": 5,
-        "description": "Ocena opłacalności nowej linii produkcyjnej",
     })
     aid = d.get("analysis", {}).get("id") or d.get("id") or d.get("data", {}).get("id")
     step(f"Utwórz analizę inwest.: {aid}", bool(aid))
-    if not aid:
-        return None
-    # dodaj finansiale (cashflows)
-    ast, _ = req("POST", f"/api/economics/financial-analyses", token, {
-        "analysisId": aid,
-        "cashFlows": [-2000000, 450000, 650000, 780000, 900000, 1050000],
-        "discountRate": 0.1,
-        "currency": "PLN",
-        "periods": ["2025", "2026", "2027", "2028", "2029", "2030"],
-    })
-    step(f"Cashflows → {ast}", ast in (200, 201))
     return aid
 
 
