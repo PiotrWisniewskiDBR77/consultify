@@ -292,9 +292,19 @@ export async function recordHandoff(
   // B1 — oceń kontrakt gotowości na podstawie realnego stanu inicjatywy.
   // ADVISORY: zapisujemy wynik, ale NIE blokujemy przejścia (bramki M13/decyzje
   // pozostają autorytatywne). To czyni evaluateHandoff żywym + obserwowalnym.
+  //
+  // PERF: deriveReadiness (3 zapytania) wykonujemy WYŁĄCZNIE gdy kontrakt gotowości
+  // jest faktycznie sprawdzany przez evaluateHandoff — czyli dla granic
+  // →SCHEDULED/EXECUTING (ready-for-execution) i →TRACKING (closure). Dla
+  // pozostałych przejść (np. DRAFT→PENDING_REVIEW) payload jest nieużywany, więc
+  // nie obciążamy puli DB zbędnymi zapytaniami pod obciążeniem.
   let evaluation: HandoffEvaluation | null = null;
   try {
-    const payload = await deriveReadiness(orgId, initiativeId);
+    const needsReadiness =
+      to === InitiativeStatus.SCHEDULED ||
+      to === InitiativeStatus.EXECUTING ||
+      to === InitiativeStatus.TRACKING;
+    const payload = needsReadiness ? await deriveReadiness(orgId, initiativeId) : {};
     evaluation = evaluateHandoff(from, to, payload);
   } catch {
     /* readiness best-effort */
