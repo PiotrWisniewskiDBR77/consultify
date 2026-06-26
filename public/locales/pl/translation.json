@@ -869,6 +869,8 @@
       "alternativeLayout": "Alternatywny układ",
       "regenerateSlide": "Wygeneruj slajd ponownie",
       "regenerating": "Generowanie ponowne…",
+      "rewritePlaceholder": "Przerób ten slajd…",
+      "rewriteSlide": "Przerób",
       "notesPlaceholder": "Notatki prelegenta do tego slajdu..."
     },
     "agent": {

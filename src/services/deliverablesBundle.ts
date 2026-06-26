@@ -1,7 +1,8 @@
 /**
- * deliverablesBundle.ts — FE-side client for the M17 bundle generator (W3.5).
+ * deliverablesBundle.ts — FE-side client for the M17 bundle generator (W3.5, W3.6).
  *
  * POST /api/deliverables/generations/bundle/export → ZIP blob → browser download.
+ * GET  /api/deliverables/generations/bundles → list of org's bundles.
  * Optional: multipart with brandFile (PPTX/PDF/XLSX) for brand extraction (W1.6).
  *
  * No retry — generation is expensive; one attempt per user action.
@@ -94,6 +95,32 @@ function _extractFilename(res: Response): string | null {
   const cd = res.headers.get('Content-Disposition') ?? '';
   const m = cd.match(/filename[^;=\n]*=(?:['"]?)([^'"\n;]+)/i);
   return m?.[1] ?? null;
+}
+
+/** W3.6 — pobierz listę bundli dla aktualnej org (max 50, posortowane od najnowszych). */
+export interface BundleListItem {
+  id: string;
+  title: string | null;
+  lifecycleState: string;
+  themeId: string | null;
+  language: string;
+  isLocked: boolean;
+  qualityPassed: boolean | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function listBundles(): Promise<BundleListItem[]> {
+  try {
+    const { token, orgId } = _extractAuth();
+    const headers = _buildHeaders(token, orgId, 'application/json');
+    const res = await fetch(`${API_URL}/deliverables/generations/bundles`, { headers });
+    if (!res.ok) return [];
+    const data = await res.json() as { success: boolean; bundles?: BundleListItem[] };
+    return data.bundles ?? [];
+  } catch {
+    return [];
+  }
 }
 
 function _triggerDownload(blob: Blob, filename: string): void {

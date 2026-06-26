@@ -10724,6 +10724,8 @@
       "alternativeLayout": "Alternative layout",
       "regenerateSlide": "Regenerate slide",
       "regenerating": "Regenerating…",
+      "rewritePlaceholder": "Rewrite this slide…",
+      "rewriteSlide": "Rewrite",
       "notesPlaceholder": "Speaker notes for this slide..."
     },
     "governance": {
