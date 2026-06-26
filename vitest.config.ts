@@ -210,6 +210,12 @@ export default defineConfig({
       DB_TYPE: 'sqlite',
       NODE_ENV: 'test',
       ENABLE_TEST_GATEWAY: 'true', // Mount full Gateway routes for integration tests
+      // Pin encryption inputs so EncryptionService's module-singleton keyManager
+      // derives a STABLE key regardless of which test loads it first. Without this,
+      // test order (e.g. a gateway test temporarily setting an invalid-hex salt)
+      // poisons the shared key → cross-file "Invalid encrypted format" pollution.
+      ENCRYPTION_KEY: 'test-encryption-key-stable-deterministic-0123456789',
+      ENCRYPTION_SALT: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
     },
     setupFiles: './tests/setup.ts',
     include: [
