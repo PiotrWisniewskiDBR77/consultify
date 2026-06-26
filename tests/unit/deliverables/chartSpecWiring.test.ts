@@ -71,6 +71,30 @@ describe('W1.5 — attachChartSpecs', () => {
     }
   });
 
+  it('W7.5 — market → marimekko z grounded TAM/SAM/SOM (zero fabrykacji)', () => {
+    const plans = [{ layoutIntent: 'market', slideIndex: 4 }];
+    const result = attachChartSpecs(plans, spine);
+    const spec = result[0].chartSpec;
+    expect(spec?.type).toBe('marimekko');
+    if (spec?.type === 'marimekko') {
+      expect(spec.columns).toHaveLength(2); // TAM→SAM, SAM→SOM
+      // segmenty addytywne: SAM osiągalny + reszta = TAM
+      const col0 = spec.columns[0];
+      const sam = col0.segments.find((s) => s.name.includes('SAM'))!.value;
+      const rest = col0.segments.find((s) => s.name.includes('Reszta'))!.value;
+      // tam=10000, sam=1000 → reszta 9000 (z derived som=100 w GTM; sprawdzamy spójność hierarchii)
+      expect(sam + rest).toBeCloseTo(spine.market.tam.value, 5);
+    }
+  });
+
+  it('W7.5 — market z niepoprawną hierarchią → brak mekko (fail-safe, brak fabrykacji)', () => {
+    // sztuczny spine z som > sam → pomijamy
+    const broken = { ...spine, market: { ...spine.market, som: { ...spine.market.som, value: 999999 } } };
+    const plans = [{ layoutIntent: 'market', slideIndex: 4 }];
+    const result = attachChartSpecs(plans, broken as typeof spine);
+    expect(result[0].chartSpec ?? null).toBeNull();
+  });
+
   it('key_metrics_overview → bar_series (alias)', () => {
     const plans = [{ layoutIntent: 'key_metrics_overview', slideIndex: 3 }];
     const result = attachChartSpecs(plans, spine);

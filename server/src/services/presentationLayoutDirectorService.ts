@@ -254,10 +254,12 @@ export interface SlideLayoutPlan {
   chartSpec?: SlideChartSpec | null;
 }
 
-/** Union of supported chart specs for slides (W1.5 / F11.1). */
+/** Union of supported chart specs for slides (W1.5 / F11.1 / W7.5). */
 export type SlideChartSpec =
   | { type: 'bar_series'; labels: string[]; series: Array<{ name: string; values: number[]; color?: string }> }
-  | { type: 'rag'; items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }> };
+  | { type: 'rag'; items: Array<{ label: string; value: number; status: 'green' | 'amber' | 'red' }> }
+  | { type: 'marimekko'; columns: Array<{ label: string; segments: Array<{ name: string; value: number }> }> }
+  | { type: 'harvey_balls'; rows: Array<{ label: string; level: number; note?: string }> };
 
 export interface SlideCompositionRegion {
   area: CompositionArea;

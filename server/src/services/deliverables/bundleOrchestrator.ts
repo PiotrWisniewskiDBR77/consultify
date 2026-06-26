@@ -266,6 +266,11 @@ export function spineToDocPlan(spine: BusinessPlanSpine) {
  *
  * performance_overview → bar_series (Przychód + EBITDA z P&L)
  * risk_management      → RAG (top-5 założeń wg sensitivity rank)
+ * market               → marimekko struktury rynku (TAM→SAM→SOM, realne liczby)
+ *
+ * UWAGA (grounding): generujemy TYLKO z danych obecnych w SPINE. Harvey-balls
+ * (dojrzałość/gotowość) renderer wspiera, ale finansowy SPINE ich nie ma — emitują
+ * je deliverable'y typu assessment (przekazują harvey_balls spec wprost). Zero fabrykacji.
  */
 export function attachChartSpecs<T extends { layoutIntent: string; chartSpec?: unknown }>(
   plans: T[],
@@ -308,6 +313,33 @@ export function attachChartSpecs<T extends { layoutIntent: string; chartSpec?: u
           })),
         },
       };
+    }
+    if (plan.layoutIntent === 'market') {
+      // W7.5 — marimekko struktury rynku: zagnieżdżenie TAM⊃SAM⊃SOM jako 2 kolumny
+      // addytywne (osiągalny vs reszta). Wszystkie wartości realne ze SPINE.
+      const tam = spine.market?.tam?.value ?? 0;
+      const sam = spine.market?.sam?.value ?? 0;
+      const som = spine.market?.som?.value ?? 0;
+      // wymagamy poprawnej hierarchii dodatniej, inaczej pomijamy (brak fabrykacji)
+      if (tam > 0 && sam > 0 && som > 0 && tam >= sam && sam >= som) {
+        return {
+          ...plan,
+          chartSpec: {
+            type: 'marimekko' as const,
+            columns: [
+              { label: 'TAM → SAM', segments: [
+                { name: 'SAM (osiągalny)', value: sam },
+                { name: 'Reszta rynku', value: tam - sam },
+              ] },
+              { label: 'SAM → SOM', segments: [
+                { name: 'SOM (cel)', value: som },
+                { name: 'Reszta SAM', value: sam - som },
+              ] },
+            ],
+          },
+        };
+      }
+      return plan;
     }
     return plan;
   });
