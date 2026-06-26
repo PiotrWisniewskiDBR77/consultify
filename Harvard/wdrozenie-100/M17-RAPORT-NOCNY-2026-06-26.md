@@ -29,6 +29,14 @@ Piotr: „buduj, odblokuj, jedź kolejne 40%". Zrealizowałem rdzeń strategii *
 
 > **Decyzja W0.1 zrealizowana w pełni:** M17 komponuje M18 (doc-QA) + M19 (PPTX pipeline + deck-gate) + F5 (dane) + F7 (scheduler, W6.1) zamiast budować równoległe stosy.
 
+### SESJA 4 (cd.) — W3.2 wspólny kontekst (F2.2)
+| Task | Co realnie teraz działa | Dowód |
+|---|---|---|
+| **W3.2** | Brief wiązki zakotwiczony w KONTEKŚCIE ORGANIZACJI przed generacją: `briefEnrichment.enrichBriefWithOrgContext` komponuje dojrzałe narzędzia retrieval Teresy (`searchInsights`+`searchOrgNotes`) → blok faktów dopisany do briefu. Opt-in `useOrgContext` w `/bundle`+`/bundle/export`. Fail-soft (brak trafień→oryginał). | `briefEnrichment.ts`, 8 testów (DI) |
+
+### ⛔ DECYZJA dla Piotra — W11.1 doc-charts
+Kod rasteryzacji wykresów w DOC/PDF jest **kompletny i fail-soft** (`documentChartRasterizer.ts`; renderery wstawiają PNG, fallback=placeholder). Aktywacja realnych wykresów wymaga **natywnej zależności** `chartjs-node-canvas`→`canvas` (cairo/pango). To **decyzja infra/deploy** (ryzyko złamania buildu Railway na współdzielonym branchu) — NIE instaluję cicho. **Opcje:** (A) `chartjs-node-canvas` (klasyk, native build); (B) `@napi-rs/canvas` (prebuilt, bez system-deps — lżejsze, rekomendacja); (C) odroczyć. Czeka na Twoją zgodę.
+
 ## 2. CO ZROBIŁEM (task po tasku, z dowodem)
 
 ### Faza W2 — żywe bugi P0 (naprawione)

@@ -71,7 +71,7 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
 | W3.1 | Unified panel „Nowy" + wybór formatu (rozszerz `OutputsLauncherModal`) | 🟡 | 🟡 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🟡 (launcher istnieje za flagą) |
-| W3.2 | Wejście 1: brief→retrieval z org (F2.2) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| W3.2 | Wejście 1: brief→retrieval z org (F2.2) | ✅ | ✅ | ✅ | ✅ | n/d | ✅ | ⬜ | ⬜ | 🟢 **ZROBIONE** (`briefEnrichment.ts` komponuje searchInsights+searchOrgNotes; opt-in `useOrgContext` w /bundle+/export; 8 testów) |
 | W3.3 | Wejście 2: upload pliku→parse (F2.3) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (brak UI uploadu) |
 | W3.4 | Wejście 3: „Przygotuj narzędzie" handoff (F2.4) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (0 hits w src) |
 | W3.5 | **FE → `/bundle/export`** (nowy `deliverablesBundle.ts`: `generateBundle`/`exportBundle`) ⟵ największa luka | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (0 frontend callerów) |
@@ -137,7 +137,7 @@ Start: 2026-06-26 · Branch: `feat/deliverables-w1` · Deploy odbioru: demo.cons
 ### W11 — Dług fasadowy (DELIVERABLES_GENERATORS_SPEC §3/§5)
 | # | Task | Kod | Wpięte | Testy | DoD | UI | Dep | →F | →UI | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| W11.1 | `chartjs-node-canvas` doc-charts (dziś nieзаinstalowane = martwe wykresy w doc) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| W11.1 | `chartjs-node-canvas` doc-charts (dziś nieзаinstalowane = martwe wykresy w doc) | 🟢gotowy | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⛔DECYZJA | ⬜ | 🟡 **KOD KOMPLETNY** (`documentChartRasterizer.ts` + renderery wstawiają PNG; fail-soft→placeholder). Brakuje TYLKO natywnej zależności `chartjs-node-canvas`→`canvas`/cairo. **DECYZJA Piotra: instalować (ryzyko buildu Railway) czy lekki `@napi-rs/canvas`?** |
 | W11.2 | Puppeteer HTML→PDF/PNG parity (zamiast słabego PDFKit text-only) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | W11.3 | CF live data-layer (CRUD/persystencja warunkowego formatowania w GridView) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | W11.4 | doc/sheet→deck unified entity (1 encja, zero duplikatów) | 🟡 | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | n/d | 🟡 |
