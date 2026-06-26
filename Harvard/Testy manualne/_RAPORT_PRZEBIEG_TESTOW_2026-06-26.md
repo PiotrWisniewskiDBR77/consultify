@@ -76,7 +76,12 @@ export default service;                        // → resolwuje się cyklicznie 
 
 **Realny wpływ:** konsumenci mają `import(...).then(m => m.default \|\| m)` + try/catch → **NIE crashują**, ale feature jest **cicho martwy**: `BackupService.listBackups` → `undefined` → catch → „backup unavailable". Czyli **admin-backup nie działa wcale** (zawsze „niedostępny"), analogicznie demo/trial cron.
 
-**Odzysk:** implementacje `.js` są w historii git (`b0b7d1cd5f`) — odtwarzalne. **Decyzja produktowa Piotra:** które z 42 są jeszcze potrzebne (większość to martwy kod do usunięcia; backup/demo wymagają decyzji „czy ten feature żyje"). NIE odtwarzam masowo — to świadoma robota per-serwis z priorytetem biznesowym.
+**Pełna anatomia (po dochodzeniu):**
+- **35 z 42 nieużywane** (martwe sieroty) · **7 wpięte w prod**: aiExecutiveReporting, backupService, budgetService, cohortService, connectorRegistry, demoService, demoSessionService.
+- Implementacje są częściowo w `server/src/_backup/ts-js-collisions/services/*.js` ALE: (a) ten katalog jest **wykluczony z buildu** (`server/tsconfig.json: src/_backup/**`) **i z deployu** (`.railwayignore: /_backup/`) — czysto archiwalny; (b) część backupów to **też re-export stuby** (np. `connectorRegistry.js` = 90 bajtów `export * from './connectorRegistry.js'` — cyklicznie). Wiarygodne źródło = **git `b0b7d1cd5f`** per-serwis.
+- **NIE usuwam masowo** (35 stubów + ~35 testów + backupy = 100+ plików) — reguła „verify before delete" + współbieżni agenci na branchu. Rekomendacja: osobny, przeglądany PR czyszczący.
+
+**Decyzja produktowa Piotra:** które z 7 prod-used features (backup/demo/cohort/connector/budget/exec-reporting) jeszcze żyją → odtworzyć z git; reszta (35) → usunąć w dedykowanym PR. Spawned `task_872f89f4`.
 
 → Wykrywanie: `for s in server/src/services/*.ts; do grep -q "from './$(basename $s .ts).js'" $s && [ ! -f "${s%.ts}.js" ] && echo $s; done`
 
