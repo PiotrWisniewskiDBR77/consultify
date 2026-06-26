@@ -199,6 +199,28 @@ kolory dostępne+semantyczne+per-seria oraz krytyk projektowy z werdyktem regen.
 **~70-72% → ~72-74%** — komplet think-cell (waterfall/2×2/RAG/mekko/harvey) = pełny
 arsenał wykresów klasy konsultanckiej; renderery honorują wszystkie 4 typy chart-spec.
 
+---
+
+## SESJA 8 (kontynuacja, 2026-06-26) — W7 PIĘKNO domknięty (rdzeń deterministyczny)
+
+| Task | Co realnie działa | Dowód |
+|---|---|---|
+| **W7.5 (cd.)** | `market` intent generuje **grounded marimekko** struktury rynku (TAM→SAM→SOM, same realne liczby SPINE, guard hierarchii TAM≥SAM≥SOM; zła hierarchia→brak wykresu, zero fabrykacji). | +2 testy wiring |
+| **W7.3** | `slideArchetypes.ts`: **arsenał 24 archetypów** (>20 DoD) z REALNĄ geometrią regionów (x,y,w,h 0..1) + dozwolone prymitywy + dopasowane intencje. Pokrywa kanon: SCQA/2×2/before-after/funnel/heatmap/Minto/big-number/logo-wall/quote-hero/swimlane… API `resolveArchetype`/`archetypesForIntent`. **KAŻDY archetyp walidowany critic'iem DR-06** (W7.2 waliduje W7.3). Wpięty: plany z `layoutVariantId` karmią critic realną geometrią. | 12 testów |
+| **W7.1** | `gridLayout.ts`: czysty most regiony 0..1 → pudełka kanwy PPTX (16:9, cale) z marginesem+gutterem, klampowanie/fail-soft. `resolveSlideBoxes` = intencja+archetyp→pudełka gotowe dla renderera (łączy W7.3+grid). **Uczciwie:** wizualne wpięcie renderera (bloki per pudełko) = krok wymagający wzrokowej akceptacji Piotra na realnym PPTX — NIE zadeklarowane, dostarczony przetestowany prymityw+resolver. | 16 testów |
+
+> **Blok W7 (piękno/Gamma-killer) — rdzeń deterministyczny kompletny:** W7.1 (transform geometrii) · W7.2 (design critic) · W7.3 (arsenał archetypów) · W7.4 (palety) · W7.5 (think-cell charts) · W7.6 (M19 pipeline, wcześniej) · W7.7 (piękny XLSX, współbieżnie). Zostaje TYLKO wizualne wpięcie renderera composition (wymaga oczu Piotra).
+
+### Testy — wyniki sesja 8
+- Sesja 8 start: **650/650** (62 pliki)
+- Sesja 8 koniec: **685/685** (65 plików) → **+35 testów**
+- Zero regresji. Zero tsc errors w dotkniętych plikach.
+
+### Postęp jako produkt (sesja 8)
+**~72-74% → ~76-78%** — cały W7 (piękno) gotowy po stronie logiki: archetypy z geometrią,
+critic, palety, charts, transform gridu. Brakuje wyłącznie wizualnego wpięcia renderera
+(świadomie wstrzymane do akceptacji wzrokowej — zasada „weryfikuj przed deklaracją").
+
 Następny skok: W3.7+ (progress UI podczas generacji), W3.8 (in-app preview), W4.4 (lifecycle UI), W1.7 (obrazy), W1.8 (adopcja dojrzałych studiów — wymaga decyzji W0.1).
 
 ---
