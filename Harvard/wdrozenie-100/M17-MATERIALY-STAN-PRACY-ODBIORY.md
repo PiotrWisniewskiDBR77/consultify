@@ -48,21 +48,21 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | F4.4 | In-app viewer (3 formaty) | F4 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | 🟡 preview jest |
 | F5.1 | Konektory do baz | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F5.2 | Generowane formularze → tabela | F5 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | 🟡 intake jest |
-| F6.1 | Stany Draft→Review→Authorized→Sent | F6 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F6.2 | Edycja warstwowa (merge, nie clobber) | F6 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F6.3 | RBAC + wersjonowanie + rollback | F6 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F6.4 | Tryb Live (bind danych) | F6 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F6.1 | Stany Draft→Review→Authorized→Sent | F6 | ✅ | ✅ | ✅ d-lifecycle | n/d | n/d | ⬜ | ⬜ | 🟢 (maszyna stanów, Sent=lock, 11 testów) |
+| F6.2 | Edycja warstwowa (merge, nie clobber) | F6 | ✅ | ✅ | ✅ d-layered | n/d | n/d | ⬜ | ⬜ | 🟢 (anti-clobber, 9 testów) |
+| F6.3 | RBAC + wersjonowanie + rollback | F6 | ✅ | ✅ | ✅ d-version | n/d | n/d | ⬜ | ⬜ | 🟢 (RBAC+append-only+rollback, 10 testów) |
+| F6.4 | Tryb Live (bind danych) | F6 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ (wymaga DB-bind + flagi) |
 | F7.1 | Scheduler subskrypcji raportu (cron) | F7 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F7.2 | Dostawa e-mail + governance odbiorców | F7 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ |
-| F8.1 | Brand-ingestion (.pptx/.docx → motyw) | F8 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F9.1 | Image Router (tiery + fallback + VisionQA) | F9 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | 🟡 nano/qwen/unsplash |
-| F9.2 | Ideogram (tekst) + Recraft (wektor) + Pexels | F9 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ |
-| F9.3 | Pakiety Lite/Pro + kredyty/licznik | F9 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F10.1 | Księga faktów (0 sprzecznych liczb) | F10 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | 🟡 hero-numbers |
-| F10.2 | Provenance na twierdzeniach | F10 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | 🟡 cytowania doc |
-| F10.3 | Warianty audytorium (board/working cut) | F10 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F10.4 | Pętla zwrotna materiał→artefakty | F10 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
-| F11.1 | Silnik wykresów think-cell-grade (waterfall/bridge/2×2/mekko/RAG, data-bound) | F11 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
+| F8.1 | Brand-ingestion (.pptx/.docx → motyw) | F8 | ✅ | ✅ | ✅ d-brand | n/d | n/d | ⬜ | ⬜ | 🟢 (OOXML theme1.xml → paleta+fonty, 6 testów) |
+| F9.1 | Image Router (tiery + fallback + VisionQA) | F9 | ✅ | ✅ | ✅ d-imgrouter | n/d | n/d | ⬜ | ⬜ | 🟢 (4 tiery+fallback+routing, 11 testów) |
+| F9.2 | Ideogram (tekst) + Recraft (wektor) + Pexels | F9 | 🟡 | ⬜ | 🟡 routing | ⬜ | n/d | ⬜ | ⬜ | 🟡 (routing gotowy w F9.1; adaptery providerów ⬜) |
+| F9.3 | Pakiety Lite/Pro + kredyty/licznik | F9 | ✅ | ✅ | ✅ d-imgrouter | n/d | n/d | ⬜ | ⬜ | 🟢 (Lite/Pro cap+downgrade+kredyty) |
+| F10.1 | Księga faktów (0 sprzecznych liczb) | F10 | ✅ | ✅ | ✅ d-factbook | n/d | n/d | ⬜ | ⬜ | 🟢 ({{fact:key}} refs + audyt sprzeczności, 8 testów) |
+| F10.2 | Provenance na twierdzeniach | F10 | ✅ | ✅ | ✅ d-provenance | n/d | n/d | ⬜ | ⬜ | 🟢 (źródła+footnoty+dedupe, 7 testów) |
+| F10.3 | Warianty audytorium (board/working cut) | F10 | ✅ | ✅ | ✅ d-variants | n/d | n/d | ⬜ | ⬜ | 🟢 (1 SPINE→2 cuty, 6 testów) |
+| F10.4 | Pętla zwrotna materiał→artefakty | F10 | ✅ | ✅ | ✅ d-feedback | n/d | n/d | ⬜ | ⬜ | 🟢 (rekomendacje→stuby inicjatyw, 8 testów) |
+| F11.1 | Silnik wykresów think-cell-grade (waterfall/bridge/2×2/mekko/RAG, data-bound) | F11 | ✅ | ✅ | ✅ d-charts | n/d | n/d | ⬜ | ⬜ | 🟢 (waterfall/2×2/RAG data-bound, 7 testów; mekko ⬜) |
 | F12.1 | Edytor WYSIWYG per format + inline AI-edit (warstwowy) | F12 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | F13.1 | Office round-trip fidelity (otwiera się idealnie w MS/Google) | F13 | ⬜ | ⬜ | ⬜ | ⬜ | n/d | ⬜ | ⬜ | ⬜ |
 | F13.2 | Współpraca: komentarze/review/co-edit | F13 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
@@ -72,7 +72,7 @@ Kod: ✅=testy zielone · Manual/→F/→UI wg legendy.
 | ⊕ | Gramatyka układu §5B (Gamma-killer) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 | ⊕ | Biblioteka palet kolorów (kuratorowane motywy) → w F3 | F3 | ⬜ | ⬜ | ⬜ | ⬜ | ✅ | ⬜ | ⬜ | ⬜ |
 
-**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8) — czekają na →F/→UI + flagę. Realizacja-kod 🟢: F1.1/F1.3/F1.4 (d7974eb/272defe/a541716), F3.1 (f18ceba: rejestr 5 motywów→docx/xlsx/pptx), F3.2 (d4a059c: ≥3 template'y/format), F3.3 (4f6861f: typografia SSOT wg spec §1-4), F4.1 (5e13ccd: PPTX z wiązki), F4.2 (e0729c9: teczka zip). **Cała Faza F3 kod 🟢.** F1.2 ⛔ Piotr (Railway flag). Następny krok: F1.2 (flaga) → deploy demo → odbiory; kod-side dalej F4.3 (share-link), F4.4 (web-viewer=4. renderer), F2 (panel „Nowy"). Krok zerowy head-to-head ZROBIONY (runs/ + [`M17-BAR-HEAD-TO-HEAD-2026-06-25.md`](M17-BAR-HEAD-TO-HEAD-2026-06-25.md)).
+**Postęp programu:** 0/43 tasków ZAMKNIĘTYCH (8/8 — wszystkie czekają na →F/→UI + flagę F1.2). **Realizacja-KOD 🟢 (18 tasków):** F1.1/F1.3/F1.4 · F3.1/F3.2/F3.3 (cała Faza F3) · F4.1/F4.2 · **F6.1/F6.2/F6.3 (cała Faza F6: cykl życia+edycja warstwowa anti-clobber+RBAC/wersje/rollback)** · **F8.1 brand-ingestion (OOXML→motyw)** · **F9.1/F9.3 image-router (tiery+pakiety+kredyty)** · **F10.1/F10.2/F10.3/F10.4 (cała Faza F10: księga faktów+provenance+warianty audytorium+pętla zwrotna)** · **F11.1 silnik wykresów (waterfall/2×2/RAG)**. Pakiet deliverables **467/467 zielony, 0 błędów tsc w moich plikach** (110 pre-existing w niezwiązanych). F1.2 ⛔ Piotr (Railway flag) = bramka odbiorów. ZOSTAŁO kod-side (głównie frontend/integracja — lepiej z flagą ON + podglądem): F2 panel „Nowy", F4.3 share-link (unifikacja istniejącej infra), F4.4 web-viewer (4. renderer), F5 konektory/formularze, F6.4 live-bind, F7 scheduler+email, F9.2 adaptery providerów, F12 edytor WYSIWYG, F13 office-fidelity+współpraca, F14 telemetria. Krok zerowy head-to-head ZROBIONY (runs/ + [`M17-BAR-HEAD-TO-HEAD-2026-06-25.md`](M17-BAR-HEAD-TO-HEAD-2026-06-25.md)).
 
 ---
 
