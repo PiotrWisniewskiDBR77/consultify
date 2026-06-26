@@ -49,6 +49,8 @@ import db from '../database/PostgresDatabase.js';
 import { connectorRegistry } from '../services/dataCollection/connectorFramework.js';
 import { connectorDataset, formDataset } from '../services/deliverables/materialDataBinding.js';
 import formService from '../services/tablePlatform/FormService.js';
+// W3.2 (F2.2) — wzbogacenie briefu o kontekst organizacji przed generacją:
+import { enrichBriefWithOrgContext } from '../services/deliverables/briefEnrichment.js';
 
 const router = Router();
 
@@ -359,6 +361,7 @@ async function persistBundleRecord(opts: {
 const BundleSchema = z.object({
   brief: z.string().min(20).max(8000),
   language: z.enum(['pl', 'en']).optional(),
+  useOrgContext: z.boolean().optional(),
 });
 
 router.post('/bundle', aiRateLimiter, async (req: any, res: Response) => {
@@ -377,8 +380,15 @@ router.post('/bundle', aiRateLimiter, async (req: any, res: Response) => {
     return;
   }
   try {
-    const bundle = await generateBundle(parsed.data.brief, {
-      orgId: getOrgId(req),
+    const orgId = getOrgId(req);
+    // W3.2 — opcjonalnie zakotwicz brief w kontekście org (fail-soft: brak trafień → oryginał).
+    let brief = parsed.data.brief;
+    if (parsed.data.useOrgContext && orgId) {
+      const enriched = await enrichBriefWithOrgContext(brief, orgId, undefined, { language: parsed.data.language });
+      brief = enriched.enrichedBrief;
+    }
+    const bundle = await generateBundle(brief, {
+      orgId,
       preferPremium: true,
     });
     if (!bundle) {
@@ -404,6 +414,7 @@ const BundleExportSchema = z.object({
   brief: z.string().min(20).max(8000),
   language: z.enum(['pl', 'en']).optional(),
   themeId: z.string().max(32).optional(),
+  useOrgContext: z.coerce.boolean().optional(),
 });
 
 // Multer: opcjonalne pole brandFile (pptx/docx klienta) — max 10 MB, memoryStorage.
@@ -447,8 +458,15 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
     return;
   }
   try {
-    const bundle = await generateBundle(parsed.data.brief, {
-      orgId: getOrgId(req),
+    const orgId = getOrgId(req);
+    // W3.2 — opcjonalne zakotwiczenie briefu w kontekście org (fail-soft).
+    let exportBrief = parsed.data.brief;
+    if (parsed.data.useOrgContext && orgId) {
+      const enriched = await enrichBriefWithOrgContext(exportBrief, orgId, undefined, { language: parsed.data.language });
+      exportBrief = enriched.enrichedBrief;
+    }
+    const bundle = await generateBundle(exportBrief, {
+      orgId,
       preferPremium: true,
     });
     if (!bundle) {
