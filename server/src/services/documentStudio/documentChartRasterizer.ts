@@ -22,6 +22,15 @@ let defaultChartCanvas: {
   renderToBuffer: (configuration: ChartConfiguration, mimeType?: string) => Promise<Buffer>;
 } | null = null;
 
+// Test-seam: vitest nie mockuje głębokiego dynamic-import('@napi-rs/canvas'),
+// więc testy wstrzykują kontrolowany ctor (FakeChartCanvas). Prod nie używa.
+let testCtorOverride: ChartCanvasCtor | null | undefined;
+export function __setChartCanvasCtorForTest(ctor: ChartCanvasCtor | null | undefined): void {
+  testCtorOverride = ctor;
+  chartCanvasCtor = undefined;
+  defaultChartCanvas = null;
+}
+
 /**
  * W11.1 — adapter `@napi-rs/canvas` (prebuilt binaria, BEZ system-deps cairo/pango)
  * + chart.js. Implementuje ten sam kontrakt co ChartJSNodeCanvas, więc reszta
@@ -58,6 +67,7 @@ class NapiChartCanvas {
 }
 
 async function getChartCanvasCtor(): Promise<ChartCanvasCtor | null> {
+  if (testCtorOverride !== undefined) return testCtorOverride;
   if (chartCanvasCtor !== undefined) return chartCanvasCtor;
   // 1) Preferuj @napi-rs/canvas (prebuilt binaria, BEZ natywnego buildu) — W11.1.
   // UWAGA: chartjs-node-canvas IMPORTUJE się nawet bez zbudowanego node-canvas,
@@ -65,9 +75,13 @@ async function getChartCanvasCtor(): Promise<ChartCanvasCtor | null> {
   // cały render DOCX na Railway. @napi-rs/canvas nie ma tego problemu, więc idzie
   // pierwszy; chartjs-node-canvas tylko jako fallback dla środowisk z node-canvas.
   try {
-    await import('@napi-rs/canvas');
-    chartCanvasCtor = NapiChartCanvas as unknown as ChartCanvasCtor;
-    return chartCanvasCtor;
+    const napi = await import('@napi-rs/canvas');
+    // Wybierz napi TYLKO gdy realnie eksportuje createCanvas (inaczej → fallback).
+    if (typeof (napi as { createCanvas?: unknown }).createCanvas === 'function') {
+      chartCanvasCtor = NapiChartCanvas as unknown as ChartCanvasCtor;
+      return chartCanvasCtor;
+    }
+    throw new Error('napi createCanvas unavailable');
   } catch {
     try {
       const optionalModule = 'chartjs-node-canvas';

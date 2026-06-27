@@ -33,6 +33,7 @@ vi.mock('chartjs-node-canvas', () => ({
   ChartJSNodeCanvas: FakeChartCanvas,
 }));
 
+
 function mkChartBlock(
   kind: DocumentChartKind,
   overrides: Partial<{
@@ -71,6 +72,10 @@ describe('documentChartRasterizer (X3)', () => {
       '../../../server/src/services/documentStudio/documentChartRasterizer.js'
     );
     renderChartBlockToPng = mod.renderChartBlockToPng;
+    // Wstrzyknij kontrolowany ctor (FakeChartCanvas z mockiem renderToBuffer) —
+    // omija realny @napi-rs/canvas, którego vitest nie mockuje na dynamic-import.
+    (mod as unknown as { __setChartCanvasCtorForTest: (c: unknown) => void })
+      .__setChartCanvasCtorForTest(FakeChartCanvas);
   });
 
   afterEach(() => {

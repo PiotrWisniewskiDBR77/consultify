@@ -241,7 +241,7 @@ export function spineToUnifiedReport(
         type: 'roadmap',
         phases: pnl.map((p, i) => ({
           label: p.period,
-          timeframe: p.period,
+          timeframe: '', // NIE duplikuj p.period (label już je niesie — było „Rok 1 (2023)" 2×)
           items: [
             `${isPl ? 'Przychód' : 'Revenue'}: ${Math.round(p.revenue).toLocaleString(isPl ? 'pl-PL' : 'en-US')}`,
             `EBITDA: ${Math.round(p.ebitda).toLocaleString(isPl ? 'pl-PL' : 'en-US')}`,
@@ -260,8 +260,9 @@ export function spineToUnifiedReport(
       type: 'recommendation_single',
       title: isPl ? 'Ask inwestorski' : 'Investment ask',
       description: spine.meta.ask,
+      // Krótko, by zmieścić się w boxie (wcześniej przelewało się przez kartę).
       impact: val
-        ? `${isPl ? 'Wycena' : 'Valuation'} ${heroFmt(spine, 'valuation_low')}–${heroFmt(spine, 'valuation_high')} (DCF ${heroFmt(spine, 'valuation_dcf')})`
+        ? `${isPl ? 'Wycena' : 'Valuation'} ${heroFmt(spine, 'valuation_low')}–${heroFmt(spine, 'valuation_high')}`
         : (isPl ? 'Zwrot z inwestycji w horyzoncie planu' : 'Return on investment within the plan horizon'),
       effort: heroFmt(spine, 'ask') || spine.meta.ask,
       priority: 'critical',

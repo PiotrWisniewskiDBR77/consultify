@@ -264,9 +264,22 @@ export function normalizeCurrencyUnit(unit: string): string {
 
 export function formatHero(value: number, unit: string, language: 'PL' | 'EN' = 'PL'): string {
   const u = normalizeCurrencyUnit(unit);
+  if (u === '%') return `${value}%`;
   const sep = language === 'PL' ? ' ' : ',';
-  const grouped = Math.abs(value) >= 1000
+  const isPl = language === 'PL';
+  const abs = Math.abs(value);
+  // Skala walutowa/liczbowa — surowe miliardy/miliony szpecą („300 000 000 000 EUR").
+  // Skracaj tylko jednostki walutowe/szt (NIE „×", „mies", „pkt"), zachowując < 1e6 grupowane.
+  const isScalable = !u || /^(EUR|USD|PLN|GBP|zł|€|\$|szt)$/i.test(u);
+  // Skracaj WYŁĄCZNIE miliardy (surowe „300 000 000 000 EUR" szpeci); miliony
+  // zostają grupowane („8 200 000 EUR") — celowo (W2.2, czytelność precyzji).
+  if (isScalable && abs >= 1e9) {
+    const r = Math.round((value / 1e9) * 10) / 10;
+    const s = Number.isInteger(r) ? String(r) : String(r).replace('.', isPl ? ',' : '.');
+    return `${s} ${isPl ? 'mld' : 'B'}${u ? ' ' + u : ''}`;
+  }
+  const grouped = abs >= 1000
     ? Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep)
     : value.toString();
-  return u === '%' ? `${value}%` : `${grouped}${u ? ' ' + u : ''}`;
+  return `${grouped}${u ? ' ' + u : ''}`;
 }

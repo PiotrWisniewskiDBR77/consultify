@@ -28,6 +28,11 @@ export function KpiValue(props: KpiValueProps, tokens: DesignTokens): RenderedEl
         bold: true,
         align: 'center',
         valign: 'middle',
+        // Długie liczby walutowe („609 368 EUR") muszą zmieścić się w kafelku
+        // na JEDNEJ linii — bez tego zawijały się i nachodziły na sąsiednie pola.
+        fit: 'shrink',
+        breakLine: false,
+        wrap: false,
       });
     },
   };

@@ -265,14 +265,17 @@ export class PptxPipelineService {
     if (pageNumber === 1) return;
     const confidentiality = String(meta.confidentiality || 'internal').toUpperCase();
     const footer = `${confidentiality} · Consultify · ${pageNumber}/${totalPages}`;
+    // PRAWA strona stopki — lewą zajmuje Footnote("client — project") z layoutu;
+    // wcześniej oba startowały w tym samym x i NACHODZIŁY (garbled footer).
     slide.addText(footer, {
-      x: 0.45,
-      y: 5.28,
-      w: 9.1,
+      x: 6.3,
+      y: tokens.grid.footerY ?? 5.28,
+      w: 3.25,
       h: 0.16,
       fontFace: tokens.fonts.body,
       fontSize: 6.5,
       color: tokens.colors.textSecondary,
+      align: 'right',
       margin: 0,
       breakLine: false,
       fit: 'shrink',

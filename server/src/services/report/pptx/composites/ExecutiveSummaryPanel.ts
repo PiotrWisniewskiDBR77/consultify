@@ -24,12 +24,13 @@ export function ExecutiveSummaryPanel(
   const elements: RenderedElement[] = [];
   let currentY = p.y;
 
-  // Headline
+  // Headline — do 2 linii; wcześniej 0.45h/0.55 advance ucinał miejsce i tekst
+  // ZACHODZIŁ na pasek KPI poniżej (najgorszy bug exec-summary).
   elements.push(
     BodyText(
       {
         text: props.headline,
-        position: { x: p.x, y: currentY, w: p.w, h: 0.45 },
+        position: { x: p.x, y: currentY, w: p.w, h: 0.72 },
         bold: true,
         fontSize: tokens.fontSizes.heading,
         color: tokens.colors.primary,
@@ -37,11 +38,11 @@ export function ExecutiveSummaryPanel(
       tokens
     )
   );
-  currentY += 0.55;
+  currentY += 0.92;
 
   // KPI strip (if present, max 4 for exec summary)
   if (props.kpis && props.kpis.length > 0) {
-    const kpiH = 0.8;
+    const kpiH = 0.92;
     const kpiElements = KpiStrip(
       {
         kpis: props.kpis.slice(0, 4),
@@ -95,7 +96,9 @@ export function ExecutiveSummaryPanel(
     elements.push(
       BodyText(
         {
-          text: `Recommendation: ${props.recommendation}`,
+          // Bez angielskiego prefiksu „Recommendation:" — zielony pasek niesie sens;
+          // prefiks szpecił w polskim decku.
+          text: props.recommendation,
           position: { x: p.x + 0.15, y: currentY, w: p.w - 0.3, h: 0.45 },
           bold: true,
           color: tokens.colors.textInverse,

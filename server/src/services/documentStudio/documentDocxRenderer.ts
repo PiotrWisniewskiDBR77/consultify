@@ -442,13 +442,13 @@ function renderCalloutBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
   const text = asString(value.text ?? '');
   // Premium content-gen emits `tone`; legacy schema emits `variant`.
   const marker = value.tone ?? value.variant;
-  const label = marker ? `[${String(marker).toUpperCase()}] ` : '[Key message] ';
   const accent = (marker && CALLOUT_TONE_COLOR[String(marker).toLowerCase()]) || '4338CA';
+  // Callout wyróżnia się STYLEM (akcent + kursywa), nie brzydkim tagiem „[INFO]"
+  // w środku prozy — tag był nieprofesjonalny w dokumencie konsultanta.
   return new Paragraph({
     style: DOCX_STYLE_IDS.CALLOUT,
     children: [
-      new TextRun({ text: label, bold: true, color: accent, font: ctx.bodyFont }),
-      new TextRun({ text, italics: true, font: ctx.bodyFont }),
+      new TextRun({ text, italics: true, bold: true, color: accent, font: ctx.bodyFont }),
     ],
   });
 }
