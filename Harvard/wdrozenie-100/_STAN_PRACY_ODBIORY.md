@@ -93,7 +93,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M12 | Audyty | 3 | 0/5 | 0/7 | ⬜ | 0/49 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
 | M13 | Inicjatywy | 2 | 15/16 depth | — | 🔵 | **152/152 E2E demo** (INICJATYWY-100) + 20/~121 (depth) | 🟡 | ⬜ | ⬜ | 38 | 🔵 3 PROGRAMY: **M13 DEPTH** ([`M13-STAN-PRACY-ODBIORY.md`](M13-STAN-PRACY-ODBIORY.md)) 15/16 sub-modułów · **INICJATYWY-100** ([`../INICJATYWY-100-STAN-PRACY-ODBIORY.md`](../INICJATYWY-100-STAN-PRACY-ODBIORY.md)) 6/7 obszarów A–F, **E2E 152/152 demo** `db41fa1e0a`, 1341 inicjatyw 0 legacy · **USPOJNIENIE** ([`../USPOJNIENIE-STAN-PRACY-ODBIORY.md`](../USPOJNIENIE-STAN-PRACY-ODBIORY.md)) 40/40, lejek+handoffy+walidatory, 150 E2E+150 manual, migracje na staging. Flagi default OFF. Czeka: →F/→UI + 4 migracje PROD + decyzje A2/B1/C3. **Postęp 2026-06-21:** Serie G(5/5)+R(W2 5/5)+**W5 Gantt drag**+**Calendar drag**+**K4 AI-fill**+**Serie C konsolidacja** code-side. **Manual gate: `m13-manual.spec.ts` 14/14 zielone + 38 screenów** (§1/§2 26-sekcji/§3/§4/§5/§6/§11) → [`_ANALIZA_UIUX_M13_2026-06-21.md`](_ANALIZA_UIUX_M13_2026-06-21.md). **Regresja 7/7** (M07 data-loss lock + W5 + K4). **P1 NAPRAWIONY+UDOWODNIONY** (`973138a3a3`): DRAFT/utworzone inicjatywy znikały z Kanban → DRAFT+PENDING_REVIEW na początku `ACTIVE_STATUSES`, kolumna „DRAFT" z kartami widoczna (s1a-P1-draft-visible-kanban, 6 kart); **manual 20/20**. Reszta scenariuszy (cross-module/AI-gen/pilot/DB) poza headless → backlog. Branch `feat/deliverables-w1`→demo |
 | M14 | Wdrożenie | 2/4 | 8/35 | ✅ | 252✅ | 0/~50 | 🟡 | ⬜ | ⬜ | 18 | 🔵 PROGRAM M14 (osobny SSOT: [`M14-STAN-PRACY-ODBIORY.md`](M14-STAN-PRACY-ODBIORY.md)) — backend kompletny (18 serwisów+5 routerów+2 crony OFF), **252/252 testów**, **DEPLOYED na demo** (8 PR). Czeka: flip flag + pixel-verify kokpitu + →F/→UI |
-| M15 | Rezultaty | 2 | W1–W6 ✅ | ✅ | 335✅ | 🟡 | ✅ | ⬜ | ⬜ | 17 | 🔵 PROGRAM M15 (osobny SSOT: [`M15-STAN-PRACY-ODBIORY.md`](M15-STAN-PRACY-ODBIORY.md)) — 36 zadań W1–W6, **335/335 testów**, V8 canonical (22 serwisy+6 routerów+6 paneli FE), handoff M14→M15 LIVE. Czeka: Seria T (E2E 180) + U (screeny) + Z (i18n+deploy) + →F/→UI |
+| M15 | Rezultaty | 2 | W1–W6 ✅ | ✅ | **551✅** | ✅ **4/4 E2E + 180 manual** | ✅ | ⬜ | ⬜ | 17 | 🟢 GOTOWY DO ODBIORU (SSOT: [`M15-RAPORT-FINALNY-2026-06-26.md`](M15-RAPORT-FINALNY-2026-06-26.md)) — Seria D 11/11 fasad zlikwidowanych, **551/551 testów**, E2E 4/4, manual 180/180 (RUN4), 92 klucze i18n, deploy `6e4f16df29` LIVE. DoD 7/7 ✅. Czeka: →F/→UI Piotra (flagi URL, caveat seed danych) |
 | M16 | Finanse | 2 | F0✅ F1–F9🟡 | ✅ | ~577✅ | **44 E2E + 65 API ✅** | 🟡 | ⬜ | ⬜ | 22 | 🔵 PROGRAM M16 (osobny SSOT: [`M16-STAN-PRACY-ODBIORY.md`](M16-STAN-PRACY-ODBIORY.md)) — 48 zadań/9 faz, ~70% backend realny. **E2E 44/44 PASS · API-sweep 65/65 PASS · upload 6/6 PASS** (2026-06-26). Fix pdf-parse v2 (7 plików), POST /budgets 201, Investment tab zaseedowany. **LIVE na demo** (commit `a26db23c09`). Czeka: →F Piotra + decyzje D1–D5 (split-brain V8/legacy) + wiring UI |
 | M17 | Materiały (Outputs) | 3 | F0–F11 🟢 | 🟡 | 791✅ | 🟡 demo | 🟡 | ⬜ | ⬜ | 11 | 🔵 PROGRAM MATERIAŁY — osobny SSOT: [`M17-MATERIALY-STAN-PRACY-ODBIORY.md`](M17-MATERIALY-STAN-PRACY-ODBIORY.md) · audyt: [`M17-AUDYT-GOTOWOSCI-TESTOW-2026-06-26.md`](M17-AUDYT-GOTOWOSCI-TESTOW-2026-06-26.md). **AKTUALIZACJA 2026-06-26 (audyt ground-truth 2-agentowy, plik:linia):** ~10 bramek jakości JUŻ NIE martwe — **WPIĘTE w `generateBundleFromSpine`** (beauty/content/factbook/provenance/warianty + **M18 doc-QA** + **M19 deck-gate** + anti-patterns → `bundle.quality`). Decyzja **W0.1 = KOMPONUJ studia**: deck przez dojrzały **M19 PptxPipelineService** (W7.6), raport przez **M18 doc-QA** (W1.8a), **wykresy w DOCX/PDF realne** (W11.1 `@napi-rs/canvas`). **F2 wejścia**: W3.2 org-retrieval + W3.3 upload→parse backend✅; **F5 dane**: W5.1/5.2/5.3 konektory+formularze backend✅ + FE-klient. Backend brief→bundle→export→ZIP→persist→email **wpięty end-to-end**, **0 tsc**. **Deploy demo**: 5 blokerów konfig naprawione (3 flagi + ff demo + LLM-routing na zdrowego OpenRoutera, bo klucz OpenAI martwy). FE: „Komplet AI" w launcharze osiągalny; **tab „Dane" + upload-UI = sesja FE** (martwe w UI). Produkt realnie **~65–70%**. **Live-gen w weryfikacji** (chained test). Czeka: live-confirm + reszta FE + →F/→UI |
 | M18 | Dokumenty | 1 | 6/6 | 6/7 | 15+74✅ | 0/72 | ✅ | ⬜ | ⬜ | 7 | 🟢 GOTOWY code-side (real. 5/5 zweryf. 2026-06-21; #3 i18n→Fala4; czeka deploy+flaga V8+dowody żywe+→F/→UI). **2026-06-26: silnik `documentQaService` (10-kat) + docx-renderer KOMPONOWANY przez M17** (W1.8a) + **wykresy DOCX/PDF teraz realne** (W11.1 `documentChartRasterizer` + `@napi-rs/canvas`) |
@@ -383,21 +383,21 @@ DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M13-inicjatywy.md](M13-inicjaty
 DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M14-wdrozenie.md](M14-wdrozenie.md)
 
 ### M15 — Rezultaty · Faza 2 · 6 epików · 17 ekranów
-**Status:** ⬜ NIE ROZPOCZĘTY
+**Status:** 🟢 GOTOWY DO ODBIORU — realizacja 6/6 bramek ✅ (2026-06-26). Czeka →F/→UI Piotra. Pełny dziennik: [`M15-RAPORT-FINALNY-2026-06-26.md`](M15-RAPORT-FINALNY-2026-06-26.md)
 
-| # | Etap | ✓ | Odbiór |
+| # | Etap | ✓ | Odbiór / dowód |
 |---|---|:--:|---|
-| 1 | Kod — luki domknięte (⚠ usuń untracked Results*View.tsx) | ⬜ | |
-| 2 | DoD 7/7 | ⬜ | |
-| 3 | Epiki 0/6 | ⬜ | |
-| 4 | Testy | ⬜ | |
-| 5 | Zgodność UI/UX | ⬜ | |
-| 6 | Deploy demo | ⬜ | |
-| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
-| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
+| 1 | Kod — luki domknięte | ✅ | **Seria D: 11/11 fasad zlikwidowanych.** D1 sustainment (sustained/overdue/unowned realne) · D2 benefit-profiles (9 profili w UI) · D3 DICE score+zone per inicjatywa · D4 adoption ADKAR (sentiment+champions) · D5 kpiAnomalyService z-score+IQR · D6 `/funnel` endpoint+FunnelStage · D7 periodMonths z effect_start_date · D8 capacity z initiative_resources · D9 master-tracker korekta · D10 OKR kaskada+`/okr` · D11 forecast+anomaly+RCA sekcje. Commity: `ef4a76a41e` `5439e5dd89` `256296278b` `db41fa1e0a` |
+| 2 | DoD 7/7 | ✅ | #1 front↔back ✅ (0 fasad) · #2 security ✅ (401 SEC-01–05 + cross-org param-capture SEC-06–17 + poison SEC-18–20, 20/20 testów `29903183f5`) · #3 i18n ✅ (92 klucze PL/EN, bare-missing 0) · #4 tokeny ✅ (0 rose/hex) · #5 §27 ✅ N/A (panele=wizualizacje) · #6 E2E gate ✅ (4/4 PASS) · #7 UI/UX ✅ (10 prymitywów, screenshoty light/dark) |
+| 3 | Epiki 6/6 | ✅ | **W1** OKR kaskada · **W2** DICE+portfolio · **W3** adoption ADKAR · **W4** anomaly/forecast/RCA · **W5** benefit-profiles · **W6** funnel+capacity. Wszystkie DB-backed, 0 vapor. |
+| 4 | Testy | ✅ | **551 PASS / 4 skip** (42 pliki vitest, zweryf. 2026-06-26): unit 370 + route/integration 56 + SEC org-isolation 20 + FE-component 34. **E2E Playwright 4/4** (53s, light/dark × strategic/ai). **Manual RUN4 180/180** (146 PASS / 18 BLOCKED uczciwe / 16 SKIP interakcje UI). |
+| 5 | Zgodność UI/UX | ✅ | 10 prymitywów w panelach (progress-bars, strefy DICE, drzewa OKR). 0 rose/hex. Screenshoty: `docs/qa/screens/m15-2026-06-26/{light,dark}-{strategic,ai}.png` |
+| 6 | Deploy demo | ✅ | **LIVE na demo.consultify.ai** — commit `6e4f16df29` (Railway 2026-06-26). Flagi URL: Strategic `?tab=results_strategic&ff_strategicLayer=1&ff_valueTree=1` · AI `?tab=results_ai&ff_aiInsights=1&ff_portfolioInsights=1`. ⚠ Seed OKR/ADKAR/finance na staging-trolley — jeśli demo DB osobna, uruchom `seed-m15-test-data.cjs` na jej URL. |
+| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | Czeka na Piotra → →F |
+| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | Czeka po →F |
 | ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | |
 
-DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M15-rezultaty.md](M15-rezultaty.md)
+DoD: 1✅front↔back 2✅security(SEC×20) 3✅i18n(92 klucze) 4✅tokeny 5✅§27(N/A) 6✅E2E-gate 7✅UI(screeny) · 📁 [M15-rezultaty.md](M15-rezultaty.md) · SSOT: [M15-RAPORT-FINALNY-2026-06-26.md](M15-RAPORT-FINALNY-2026-06-26.md)
 
 ### M16 — Finanse · Faza 2 · 5 epików · 22 ekrany
 **Status:** 🟢 DO ODBIORU — domknięcie testów 2026-06-26 (E2E 44/44 · API 65/65 · upload 6/6 · self-audit bugi naprawione · LIVE na demo). Czeka →F Piotra + decyzje D1–D5.
