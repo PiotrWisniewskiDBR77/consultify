@@ -96,12 +96,20 @@ export function spineToUnifiedReport(
 
   // 2 — EXECUTIVE SUMMARY (KPIs + findings)
   const execKpis = heroKpis(spine, ['revenue_last', 'ebitda_last', 'arr_last', 'ask']);
+  // Headline board-grade = PUNCHY (≤2 linie); długa teza ucinała 3. linię na KPI.
+  const clampHeadline = (s: string, max = 130): string => {
+    const t = (s || '').trim();
+    if (t.length <= max) return t;
+    const cut = t.slice(0, max);
+    const lastSpace = cut.lastIndexOf(' ');
+    return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trim()}…`;
+  };
   slides.push({
     intent: 'executive_summary',
     key_message: spine.meta.thesis,
     content: {
       type: 'executive_summary',
-      headline: spine.meta.thesis,
+      headline: clampHeadline(spine.meta.thesis),
       kpis: execKpis.length ? execKpis : undefined,
       key_findings: [
         sectionTitle(spine, 'problem'),
