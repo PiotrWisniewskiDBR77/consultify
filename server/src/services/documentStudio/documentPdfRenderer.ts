@@ -303,9 +303,14 @@ async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<strin
   for (const section of schema.sections) {
     for (const block of section.blocks) {
       if (block.type !== 'chart') continue;
-      const png = await renderChartBlockToPng(block);
-      if (png && png.length > 0) {
-        out.set(block.blockId, png);
+      // Fail-soft per-blok: błąd rasteryzacji NIE kładzie całego renderu PDF.
+      try {
+        const png = await renderChartBlockToPng(block);
+        if (png && png.length > 0) {
+          out.set(block.blockId, png);
+        }
+      } catch {
+        /* pomiń wykres — placeholder */
       }
     }
   }

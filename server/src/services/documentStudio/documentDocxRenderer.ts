@@ -233,9 +233,15 @@ async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<strin
   for (const section of schema.sections) {
     for (const block of section.blocks) {
       if (block.type !== 'chart') continue;
-      const png = await renderChartBlockToPng(block);
-      if (png && png.length > 0) {
-        out.set(block.blockId, png);
+      // Fail-soft per-blok: błąd rasteryzacji (np. brak natywnej binarki canvas)
+      // NIE może położyć całego renderu dokumentu — slajd spada na placeholder.
+      try {
+        const png = await renderChartBlockToPng(block);
+        if (png && png.length > 0) {
+          out.set(block.blockId, png);
+        }
+      } catch {
+        /* pomiń wykres — renderChartBlock użyje placeholdera */
       }
     }
   }

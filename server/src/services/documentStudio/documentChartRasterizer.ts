@@ -59,17 +59,20 @@ class NapiChartCanvas {
 
 async function getChartCanvasCtor(): Promise<ChartCanvasCtor | null> {
   if (chartCanvasCtor !== undefined) return chartCanvasCtor;
-  // 1) Preferuj chartjs-node-canvas gdy zainstalowany (środowiska z node-canvas).
+  // 1) Preferuj @napi-rs/canvas (prebuilt binaria, BEZ natywnego buildu) — W11.1.
+  // UWAGA: chartjs-node-canvas IMPORTUJE się nawet bez zbudowanego node-canvas,
+  // ale dopiero `renderToBuffer` woła brakujący `canvas.node` i RZUCA — co kładło
+  // cały render DOCX na Railway. @napi-rs/canvas nie ma tego problemu, więc idzie
+  // pierwszy; chartjs-node-canvas tylko jako fallback dla środowisk z node-canvas.
   try {
-    const optionalModule = 'chartjs-node-canvas';
-    const mod = await import(optionalModule);
-    chartCanvasCtor = mod.ChartJSNodeCanvas as unknown as ChartCanvasCtor;
+    await import('@napi-rs/canvas');
+    chartCanvasCtor = NapiChartCanvas as unknown as ChartCanvasCtor;
     return chartCanvasCtor;
   } catch {
-    // 2) Fallback: @napi-rs/canvas (prebuilt) + chart.js — W11.1.
     try {
-      await import('@napi-rs/canvas');
-      chartCanvasCtor = NapiChartCanvas as unknown as ChartCanvasCtor;
+      const optionalModule = 'chartjs-node-canvas';
+      const mod = await import(optionalModule);
+      chartCanvasCtor = mod.ChartJSNodeCanvas as unknown as ChartCanvasCtor;
       return chartCanvasCtor;
     } catch {
       chartCanvasCtor = null;
