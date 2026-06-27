@@ -22,10 +22,10 @@ Każdy element procesu testowany na 3 poziomach abstrakcji + raport. **90 scenar
 
 **Postęp ogólny: 62 / 92 scenariuszy (67%)** — L1+L2 domknięte, L3 do wykonania (Playwright, żywy backend).
 
-### 🔴 Defekty znalezione przez testy (backlog hardingu — test-driven)
-| ID | Defekt | Dowód | Naprawa |
+### Defekty znalezione przez testy (test-driven hardening)
+| ID | Defekt | Dowód | Stan |
 |---|---|---|---|
-| **DEF-1** (L2-13) | `updateInitiativeStatus` NIE egzekwuje BLOCKED-bez-powodu inline — rozbieżność z kanonicznym `validateTransition` (F2). Handler zapisuje BLOCKED bez `reason`. | test L2-13 pinuje realne zachowanie (proceeduje) | dodać guard: BLOCKED bez `reason` → 400 (jak `validateTransition`); wymaga zgody Piotra (zmiana zachowania live governance) |
+| **DEF-1** (L2-13) | `updateInitiativeStatus` nie egzekwował BLOCKED-bez-powodu inline — rozbieżność z kanonicznym `validateTransition` (F2). | test L2-13 | ✅ **NAPRAWIONY** — guard `BLOCKED_REASON_REQUIRED` (400) w `InitiativeController.ts`; L2-13 asertuje nowe zachowanie; regresja 129/129 zielona |
 
 ---
 

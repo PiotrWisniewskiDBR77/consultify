@@ -161,14 +161,15 @@ describe('L2 — updateInitiativeStatus (realny handler, mock-DB)', () => {
   });
 
   // ── O4 bramka rozpoznana (3) ──
-  it('L2-13: [DEFEKT F9] handler NIE egzekwuje BLOCKED-bez-powodu inline (rozbieżność z validateTransition)', async () => {
-    // Kanoniczny validateTransition (L1 F2) wymaga powodu dla BLOCKED, ale żywy
-    // handler tego NIE sprawdza inline (zweryfikowane: brak guardu w InitiativeController,
-    // tylko zapis kolumny). Pinujemy realne zachowanie i znaczymy 🔴 do hardeningu (tracker).
+  it('L2-13: [DEF-1 naprawiony] BLOCKED bez powodu → 400 BLOCKED_REASON_REQUIRED', async () => {
+    // DEF-1 hardening: handler egzekwuje teraz parytet z kanonicznym validateTransition
+    // (L1 F2) — BLOCKED bez `reason` jest odrzucany przed zapisem.
     req.params.id = 'i1'; req.body = { status: 'BLOCKED' };
     existing('EXECUTING'); roles(['PMO']);
     await handler();
-    expect(updateRan()).toBe(true); // proceeduje bez powodu — DEFEKT do naprawy
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rule: 'BLOCKED_REASON_REQUIRED' }));
+    expect(updateRan()).toBe(false);
   });
   it('L2-14: zapis statusu trafia do UPDATE initiatives SET', async () => {
     req.params.id = 'i1'; req.body = { status: 'PENDING_REVIEW' };

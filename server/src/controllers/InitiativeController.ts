@@ -1759,6 +1759,17 @@ export class InitiativeController {
         }
       }
 
+      // DEF-1 hardening (parytet z kanonicznym validateTransition): BLOCKED wymaga
+      // powodu. Wcześniej handler zapisywał blocked_reason=null bez walidacji — co
+      // rozjeżdżało się z modelem stanów. Dotyczy tylko PATCH /:id/status.
+      if (nextStatus === 'BLOCKED' && !String(reason ?? '').trim()) {
+        res.status(400).json({
+          error: 'Blocked status requires a reason',
+          rule: 'BLOCKED_REASON_REQUIRED',
+        });
+        return;
+      }
+
       if (
         ['EXECUTING', 'BLOCKED'].includes(currentStatus) &&
         nextStatus === 'DONE' &&
