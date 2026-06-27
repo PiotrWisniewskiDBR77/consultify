@@ -52,7 +52,7 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 > - **M14 Wdrożenie/ExecutionHub** — NIE „NIE ROZP."! **8/35 zadań code-side, 252✅ testów, DEPLOYED na demo** (8 PR). Backend kompletny (18 serwisów + 5 routerów + 2 crony flag-gated OFF). Czeka: flip flag + →F/→UI + pixel-verify kokpitu. SSOT: [`M14-STAN-PRACY-ODBIORY.md`](M14-STAN-PRACY-ODBIORY.md).
 > - **M15 Rezultaty/ResultsHub** — NIE „NIE ROZP."! **36 zadań W1–W6, 335✅ testów**, handoff M14→M15 LIVE (`f494c8e593`), V8 canonical (22 serwisy + 6 routerów + 6 paneli FE). Czeka: Seria T (E2E real-data 180) + Seria U (17 screenów) + Seria Z (i18n+deploy+→F/→UI). SSOT: [`M15-STAN-PRACY-ODBIORY.md`](M15-STAN-PRACY-ODBIORY.md) + [`M15-RAPORT-FINALNY-2026-06-26.md`](M15-RAPORT-FINALNY-2026-06-26.md).
 > - **M16 Finanse/FinanceHub** — **DOMKNIĘCIE TESTÓW 2026-06-26.** ~577✅ testów: serwisy ~400 + F0.2/F0.3 (67) + **E2E Playwright 44/44 PASS + API-sweep 65/65 PASS + upload 6/6 PASS**. Self-audit naprawił 3 realne bugi: (1) pdf-parse v2 crash w 7 plikach całej aplikacji → PDFParserService wrapper; (2) Investment tab pusty → investment_case zaseedowany; (3) POST /budgets 200→201. **LIVE na demo** (`a26db23c09`, `b730f85df2`). Czeka: →F Piotra + decyzje D1–D5 (split-brain V8/legacy) + wiring UI. SSOT: [`M16-STAN-PRACY-ODBIORY.md`](M16-STAN-PRACY-ODBIORY.md) + [`M16-RAPORT-FINALNY-2026-06-25.md`](M16-RAPORT-FINALNY-2026-06-25.md).
-> - **M17 Materiały** — postęp z „24/24 / 466 testów / flaga OFF" → **791✅ testów, flaga `ENABLE_DELIVERABLES_PREMIUM=true` ON na demo** (`3ad8a2c9`), ~82–84% backend deterministyczny. F0/F1/F3/F4(częśc.)/F7-F14 backend zbudowany, ALE **~10 bramek jakości zbudowanych z 0 żywych callerów** (martwe w pipeline) + **F2/F5 frontend 0%**. „Produkt" realnie ~25–35%. SSOT: [`M17-MATERIALY-STAN-PRACY-ODBIORY.md`](M17-MATERIALY-STAN-PRACY-ODBIORY.md).
+> - **M17 Materiały** — **AKTUALIZACJA 2026-06-26 (audyt ground-truth 2-agentowy):** poprzednia diagnoza „~10 martwych bramek + FE 0% → 25–35%" jest NIEAKTUALNA. Decyzja **W0.1 = KOMPONUJ studia M18/M19/M20** zrealizowana: ~10 bramek jakości **WPIĘTE** w `generateBundleFromSpine` (→`bundle.quality`), deck przez dojrzały **M19 PptxPipelineService** (W7.6), raport przez **M18 doc-QA** (W1.8a), wykresy DOCX/PDF realne (W11.1). **F2 wejścia** (W3.2 org-retrieval + W3.3 upload) + **F5 dane** (W5.1-5.3 konektory/formularze) backend✅. **791✅ testów, 0 tsc**, backend brief→bundle→export→ZIP→persist→email wpięty. **Deploy demo** z naprawą 5 blokerów konfig (3 flagi + ff demo + LLM-routing OpenRouter — klucz OpenAI martwy). FE „Komplet AI" osiągalny; tab „Dane"+upload-UI = sesja FE. Produkt realnie **~65–70%**. Live-gen w weryfikacji. SSOT: [`M17-MATERIALY-STAN-PRACY-ODBIORY.md`](M17-MATERIALY-STAN-PRACY-ODBIORY.md) · audyt: [`M17-AUDYT-GOTOWOSCI-TESTOW-2026-06-26.md`](M17-AUDYT-GOTOWOSCI-TESTOW-2026-06-26.md).
 > - **Wniosek:** **realizacja techniczna M13–M17 jest DUŻO dalej niż dashboard pokazywał** — wszystkie czekają głównie na bramki odbioru Piotra (→F/→UI), decyzje (M16 D1–D5; M13 A2/B1/C3), oraz wpięcie martwych bramek M17 w pipeline. Zero z M13–M17 nie jest ZAMKNIĘTE 8/8 (bo 8/8 wymaga →F/→UI).
 >
 > **2026-06-23 — pula Ideas M05–M09: GOTOWE DO TESTÓW RĘCZNYCH (poza i18n).** Epiki ✅, DoD domknięte we wszystkim **poza #3 i18n** (odroczone do Fazy 4 — decyzja Piotra, robimy gdy na targach): M05/M06/M07/M08 = **6/7**, **M09 = 7/7** (i18n wzorcowy, 189 kluczy). Testy security WS org-scope **już istniały** (notatki „dodać test" były stale). Manualne scenariusze gotowe (~481 łącznie). **SSOT gotowości: [`_GOTOWOSC_IDEAS_M05_M09.md`](_GOTOWOSC_IDEAS_M05_M09.md)** + per-moduł `_GOTOWOSC_M0X.md`. Pozostaje: ręczne przejście Piotra → →F/→UI/deploy + i18n (Faza 4).
@@ -95,10 +95,10 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M14 | Wdrożenie | 2/4 | 8/35 | ✅ | 252✅ | 0/~50 | 🟡 | ⬜ | ⬜ | 18 | 🔵 PROGRAM M14 (osobny SSOT: [`M14-STAN-PRACY-ODBIORY.md`](M14-STAN-PRACY-ODBIORY.md)) — backend kompletny (18 serwisów+5 routerów+2 crony OFF), **252/252 testów**, **DEPLOYED na demo** (8 PR). Czeka: flip flag + pixel-verify kokpitu + →F/→UI |
 | M15 | Rezultaty | 2 | W1–W6 ✅ | ✅ | 335✅ | 🟡 | ✅ | ⬜ | ⬜ | 17 | 🔵 PROGRAM M15 (osobny SSOT: [`M15-STAN-PRACY-ODBIORY.md`](M15-STAN-PRACY-ODBIORY.md)) — 36 zadań W1–W6, **335/335 testów**, V8 canonical (22 serwisy+6 routerów+6 paneli FE), handoff M14→M15 LIVE. Czeka: Seria T (E2E 180) + U (screeny) + Z (i18n+deploy) + →F/→UI |
 | M16 | Finanse | 2 | F0✅ F1–F9🟡 | ✅ | ~577✅ | **44 E2E + 65 API ✅** | 🟡 | ⬜ | ⬜ | 22 | 🔵 PROGRAM M16 (osobny SSOT: [`M16-STAN-PRACY-ODBIORY.md`](M16-STAN-PRACY-ODBIORY.md)) — 48 zadań/9 faz, ~70% backend realny. **E2E 44/44 PASS · API-sweep 65/65 PASS · upload 6/6 PASS** (2026-06-26). Fix pdf-parse v2 (7 plików), POST /budgets 201, Investment tab zaseedowany. **LIVE na demo** (commit `a26db23c09`). Czeka: →F Piotra + decyzje D1–D5 (split-brain V8/legacy) + wiring UI |
-| M17 | Materiały (Outputs) | 3 | F0/F1/F3/F4 🟢 | 🟡 | 791✅ | 🟡 | 🟡 | ⬜ | ⬜ | 11 | 🔵 PROGRAM MATERIAŁY — osobny SSOT: [`M17-MATERIALY-STAN-PRACY-ODBIORY.md`](M17-MATERIALY-STAN-PRACY-ODBIORY.md). **791/791 testów, flaga premium ON na demo** (`3ad8a2c9`), ~82–84% backend. ALE ~10 bramek jakości zbudowane z 0 żywych callerów (martwe w pipeline) + **F2/F5 frontend 0%** → produkt realnie ~25–35%. Czeka: wpięcie bramek + FE + →F/→UI |
-| M18 | Dokumenty | 1 | 6/6 | 6/7 | 15+74✅ | 0/72 | ✅ | ⬜ | ⬜ | 7 | 🟢 GOTOWY code-side (real. 5/5 zweryf. 2026-06-21; #3 i18n→Fala4; czeka deploy+flaga V8+dowody żywe+→F/→UI) |
-| M19 | Prezentacje | 3/4 | 0/4 | 0/7 | ⬜ | 0/81 | ⬜ | ⬜ | ⬜ | 21 | ⬜ NIE ROZP. |
-| M20 | Tabele Studio | 1 | 0/4 | 0/7 | ⬜ | 0/95 | ⬜ | ⬜ | ⬜ | 13 | ⬜ NIE ROZP. |
+| M17 | Materiały (Outputs) | 3 | F0–F11 🟢 | 🟡 | 791✅ | 🟡 demo | 🟡 | ⬜ | ⬜ | 11 | 🔵 PROGRAM MATERIAŁY — osobny SSOT: [`M17-MATERIALY-STAN-PRACY-ODBIORY.md`](M17-MATERIALY-STAN-PRACY-ODBIORY.md) · audyt: [`M17-AUDYT-GOTOWOSCI-TESTOW-2026-06-26.md`](M17-AUDYT-GOTOWOSCI-TESTOW-2026-06-26.md). **AKTUALIZACJA 2026-06-26 (audyt ground-truth 2-agentowy, plik:linia):** ~10 bramek jakości JUŻ NIE martwe — **WPIĘTE w `generateBundleFromSpine`** (beauty/content/factbook/provenance/warianty + **M18 doc-QA** + **M19 deck-gate** + anti-patterns → `bundle.quality`). Decyzja **W0.1 = KOMPONUJ studia**: deck przez dojrzały **M19 PptxPipelineService** (W7.6), raport przez **M18 doc-QA** (W1.8a), **wykresy w DOCX/PDF realne** (W11.1 `@napi-rs/canvas`). **F2 wejścia**: W3.2 org-retrieval + W3.3 upload→parse backend✅; **F5 dane**: W5.1/5.2/5.3 konektory+formularze backend✅ + FE-klient. Backend brief→bundle→export→ZIP→persist→email **wpięty end-to-end**, **0 tsc**. **Deploy demo**: 5 blokerów konfig naprawione (3 flagi + ff demo + LLM-routing na zdrowego OpenRoutera, bo klucz OpenAI martwy). FE: „Komplet AI" w launcharze osiągalny; **tab „Dane" + upload-UI = sesja FE** (martwe w UI). Produkt realnie **~65–70%**. **Live-gen w weryfikacji** (chained test). Czeka: live-confirm + reszta FE + →F/→UI |
+| M18 | Dokumenty | 1 | 6/6 | 6/7 | 15+74✅ | 0/72 | ✅ | ⬜ | ⬜ | 7 | 🟢 GOTOWY code-side (real. 5/5 zweryf. 2026-06-21; #3 i18n→Fala4; czeka deploy+flaga V8+dowody żywe+→F/→UI). **2026-06-26: silnik `documentQaService` (10-kat) + docx-renderer KOMPONOWANY przez M17** (W1.8a) + **wykresy DOCX/PDF teraz realne** (W11.1 `documentChartRasterizer` + `@napi-rs/canvas`) |
+| M19 | Prezentacje | 3/4 | 0/4 | 0/7 | ⬜ | 0/81 | ⬜ | ⬜ | ⬜ | 21 | 🟡 SILNIKI ŻYWE, STUDIO STANDALONE NIE ODEBRANE. **Korekta 2026-06-26 (audyt):** „NIE ROZP." było błędne — **dojrzałe silniki M19 są ŻYWE i KOMPONOWANE przez M17**: `PptxPipelineService` (17 intencji, BCG layouty, branding) generuje deck wiązki (W7.6), `RulesEngine.validateReport` = strukturalny gate decka (W1.8b). Czego brak: standalone Studio Prezentacji jako odebrany moduł (UI/DoD/→F osobno) |
+| M20 | Tabele Studio | 1 | 0/4 | 0/7 | ⬜ | 0/95 | ⬜ | ⬜ | ⬜ | 13 | 🟡 SILNIKI ŻYWE, STUDIO STANDALONE NIE ODEBRANE. **Korekta 2026-06-26 (audyt):** silniki Tabel ŻYWE i KOMPONOWANE przez M17 — `tableSchemaGenerator` (tabela wiązki) + Table Platform `connectorFramework`/`FormService` (W5 dane→tabela materiału). Czego brak: standalone Studio Tabel jako odebrany moduł (UI/DoD/→F osobno) |
 | M21 | Meeting | 3/4 | 0/4 | 0/7 | ⬜ | 0/59 | ⬜ | ⬜ | ⬜ | 8 | ⬜ NIE ROZP. |
 | M22 | AI OS | 1 | 0/5 | 0/7 | ⬜ | 0/92 | ⬜ | ⬜ | ⬜ | 9 | ⬜ NIE ROZP. |
 | M23 | Organizacja | 1 | 0/5 | 0/7 | ⬜ | 0/80 | ⬜ | ⬜ | ⬜ | 6 | ⬜ NIE ROZP. |
@@ -416,22 +416,22 @@ DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M15-rezultaty.md](M15-rezultaty
 
 DoD: 1🟡 2🟡 3🟡 4✅ 5🟡 6✅ 7🟡 · 📁 [M16-finanse.md](M16-finanse.md) · SSOT: [M16-STAN-PRACY-ODBIORY.md](M16-STAN-PRACY-ODBIORY.md)
 
-### M17 — Outputs · Faza 3 · 4 epiki · 11 ekranów
-**Status:** ⬜ NIE ROZPOCZĘTY
+### M17 — Materiały (Outputs) · Faza 3 · 4 epiki · 11 ekranów
+**Status:** 🔵 PROGRAM W TOKU — backend WPIĘTY end-to-end + DEPLOYED na demo (5 blokerów konfig naprawione 2026-06-26); FE częściowy; live-gen w weryfikacji; czeka →F/→UI. Pełny dziennik: [`M17-MATERIALY-STAN-PRACY-ODBIORY.md`](M17-MATERIALY-STAN-PRACY-ODBIORY.md) · audyt gotowości: [`M17-AUDYT-GOTOWOSCI-TESTOW-2026-06-26.md`](M17-AUDYT-GOTOWOSCI-TESTOW-2026-06-26.md).
 
-| # | Etap | ✓ | Odbiór |
+| # | Etap | ✓ | Odbiór / dowód |
 |---|---|:--:|---|
-| 1 | Kod — luki domknięte (zależność: M18 trwałość publish) | ⬜ | |
-| 2 | DoD 7/7 | ⬜ | |
-| 3 | Epiki 0/4 | ⬜ | |
-| 4 | Testy | ⬜ | |
-| 5 | Zgodność UI/UX | ⬜ | |
-| 6 | Deploy demo | ⬜ | |
-| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
-| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
+| 1 | Kod — bramki jakości WPIĘTE w pipeline | ✅ | audyt 2-agentowy plik:linia: 11 modułów (beauty/content/factbook/provenance/warianty/M18-docQA/M19-deck-gate/anti-patterns/critic/archetypy/scorecard) wołane w `generateBundleFromSpine` → `bundle.quality`. KOMPOZYCJA M18/M19 (W0.1) |
+| 2 | DoD | 🟡 | front↔back ✅(backend) · security n/d(flaga) · tokeny ✅(themeRegistry) · testy ✅791 · §27 🟡 · i18n PL/EN ✅(bundle) · **#3/#5 UI live = →UI** |
+| 3 | Epiki (F0–F11 backend) | 🟡 | F0 sidebar · F1 bramki+mózg · F2 wejścia (W3.2/W3.3 backend) · F3 motywy · F4 eksport+zip · F5 dane (W5) · F7 scheduler+email · F11 wykresy (W11.1). **Reszta FE (F2-UI/F12 edytor) ⬜** |
+| 4 | Testy | ✅ | **791/791 deliverables zielone, 0 tsc** (pełny build) |
+| 5 | Zgodność UI/UX | 🟡 | „Komplet AI" launcher osiągalny za flagą; tab „Dane"+upload-UI = sesja FE |
+| 6 | Deploy demo | ✅ | demo.consultify.ai — feat→demo ff + 3 flagi (`ENABLE_DELIVERABLES_LIGHT`/`_PREMIUM`/`VITE_…`) + LLM-routing OpenRouter (klucz OpenAI martwy). Endpoint live |
+| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | brief→„Komplet AI"→ZIP(docx+xlsx+pptx) na demo — **po live-confirm generacji** |
+| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | jakość deck/raport/tabela vs Gamma + 11 ekranów |
 | ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | |
 
-DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M17-outputs.md](M17-outputs.md)
+DoD: 1✅ 2🟡 3🟡 4✅ 5🟡 6✅ 7⬜ 8⬜ · 📁 [M17-outputs.md](M17-outputs.md) · [M17-MATERIALY-STAN-PRACY-ODBIORY.md](M17-MATERIALY-STAN-PRACY-ODBIORY.md)
 
 ### M18 — Dokumenty · Faza 1 · 6 epików · 7 ekranów
 **Status:** 🟢 GOTOWY DO ODBIORU code-side (2026-06-21) — realizacja 5/5 zweryfikowana, czeka na deploy demo + dowody żywe (cold-start + S-A E2E za flagą V8) + →F/→UI. ⚠ Dashboard był rozjechany z teczką (pokazywał NIE ROZP.) — uzgodniono z realnym kodem.
@@ -452,7 +452,7 @@ DoD: 1✅front↔back 2✅security 3🟡i18n(→Fala4) 4✅tokeny 5✅§27 6✅t
 ✅ **WERYFIKACJA 2026-06-21:** L-01 (data-loss in-memory) realnie zamknięta — teczka §C opisywała stan sprzed wave5 (3/8 persyst.), kod ma teraz 6/6 brakujących warstw z `INSERT INTO` + migr. 780/781/782. Testy 15 kontraktowych + 74 serwisowe zielone lokalnie. Realizacja (etapy 1–5) gotowa; do 8/8 brakuje deploy demo + flagi V8 + dowodów żywych + odbiorów Piotra.
 
 ### M19 — Prezentacje · Faza 3/4 · 4 epiki · 21 ekranów
-**Status:** ⬜ NIE ROZPOCZĘTY
+**Status:** 🟡 SILNIKI ŻYWE + KOMPONOWANE przez M17 · STUDIO STANDALONE NIE ODEBRANE. **Korekta 2026-06-26 (audyt M17):** „NIE ROZPOCZĘTY" było mylące — dojrzałe silniki M19 są ŻYWE i używane: `PptxPipelineService` (17 intencji, BCG layouty, master slides, branding) generuje deck wiązki M17 (W7.6), `RulesEngine.validateReport` = strukturalny gate decka (W1.8b), `presentationQualityGatesService`/`presentationVisionQAService` istnieją (DB-bound). Poniższe 8/8 dotyczy **standalone Studia Prezentacji** (własny UI/odbiór) — to NIE było przedmiotem prac M17 i pozostaje nieodebrane.
 
 | # | Etap | ✓ | Odbiór |
 |---|---|:--:|---|
@@ -469,7 +469,7 @@ DoD: 1✅front↔back 2✅security 3🟡i18n(→Fala4) 4✅tokeny 5✅§27 6✅t
 DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M19-prezentacje.md](M19-prezentacje.md)
 
 ### M20 — Tabele Studio · Faza 1 · 4 epiki · 13 ekranów
-**Status:** ⬜ NIE ROZPOCZĘTY
+**Status:** 🟡 SILNIKI ŻYWE + KOMPONOWANE przez M17 · STUDIO STANDALONE NIE ODEBRANE. **Korekta 2026-06-26 (audyt M17):** silniki Tabel są ŻYWE i używane: `tableSchemaGenerator` generuje tabelę wiązki M17, a Table Platform (`connectorFramework` + `FormService`) zasila tabelę materiału danymi (W5.1/5.2 — konektory postgres/airtable/jira/sheets/csv + formularze intake). Poniższe 8/8 dotyczy **standalone Studia Tabel** (własny UI/odbiór) — to NIE było przedmiotem prac M17 i pozostaje nieodebrane.
 
 | # | Etap | ✓ | Odbiór |
 |---|---|:--:|---|
