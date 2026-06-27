@@ -81,6 +81,7 @@ describe('InitiativeController', () => {
       user: {
         id: 'user-123',
         organizationId: 'org-123',
+        role: 'ADMIN',
       },
       params: {},
       query: {},
