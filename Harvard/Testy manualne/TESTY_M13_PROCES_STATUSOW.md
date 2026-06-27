@@ -16,11 +16,16 @@ Każdy element procesu testowany na 3 poziomach abstrakcji + raport. **90 scenar
 | Warstwa | Co testuje | Plik | Wykonanie | Stan |
 |---|---|---|---|---|
 | **L1 — Unit (maszyna stanów)** | czysty rdzeń: VALID_TRANSITIONS, GATE_PERMISSIONS, validateTransition, RBAC-mapa | `tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts` | vitest, deterministyczny | ✅ **30/30** |
-| **L2 — Integration (`updateInitiativeStatus` live)** | realny handler: RBAC 403, AI soft-block 422, governance 400, invalid 400, side-effecty, dedykowane endpointy | `tests/integration/initiatives/statusLifecycle.test.ts` | vitest + supertest/mock-DB | ⬜ **0/30** |
-| **L3 — E2E (Playwright, ja wykonuję)** | przejście CAŁEJ ścieżki DRAFT→TRACKING na żywej apce: Network+UI+Reload+screenshot per status, kanban, raporty | `tests/e2e/m13/m13-status-lifecycle.spec.ts` | Playwright na żywym backendzie | ⬜ **0/30** |
+| **L2 — Integration (`updateInitiativeStatus` live)** | realny handler: RBAC 403, AI soft-block 422, governance 400, invalid 400, side-effecty, dedykowane endpointy | `tests/integration/initiatives/statusLifecycle.test.ts` | vitest + mock-DB (realny handler) | ✅ **32/32** (1 defekt udokumentowany) |
+| **L3 — E2E (Playwright, ja wykonuję)** | przejście CAŁEJ ścieżki DRAFT→TRACKING na żywej apce: Network+UI+Reload+screenshot per status, kanban, raporty | `tests/e2e/m13/m13-status-lifecycle.spec.ts` | Playwright na żywym backendzie | ⬜ **0/30** (wymaga żywego backendu) |
 | **L4 — Raport realizacji** | klasyfikacja KAŻDEGO scenariusza z dowodem (format M15 RUN) | `Harvard/Testy manualne/WYNIKI_M13_INICJATYWY_RUN1.md` | synteza po L1-L3 | ⬜ |
 
-**Postęp ogólny: 30 / 90 scenariuszy (33%)** — L1 domknięty, L2+L3 do budowy.
+**Postęp ogólny: 62 / 92 scenariuszy (67%)** — L1+L2 domknięte, L3 do wykonania (Playwright, żywy backend).
+
+### 🔴 Defekty znalezione przez testy (backlog hardingu — test-driven)
+| ID | Defekt | Dowód | Naprawa |
+|---|---|---|---|
+| **DEF-1** (L2-13) | `updateInitiativeStatus` NIE egzekwuje BLOCKED-bez-powodu inline — rozbieżność z kanonicznym `validateTransition` (F2). Handler zapisuje BLOCKED bez `reason`. | test L2-13 pinuje realne zachowanie (proceeduje) | dodać guard: BLOCKED bez `reason` → 400 (jak `validateTransition`); wymaga zgody Piotra (zmiana zachowania live governance) |
 
 ---
 
@@ -144,7 +149,7 @@ Każda warstwa pokrywa te same 8 obszarów procesu (różnym poziomem):
 ## 6. Kolejność realizacji (plan)
 
 1. ✅ **L1** (30) — DONE.
-2. ⬜ **L2** (30) — integracja handlera; tu wyjdą realne defekty (RBAC gap, governance gates). Hardening na bieżąco.
-3. ⬜ **L3** (30) — Playwright pełne przejście; ja wykonuję, screeny do `docs/qa/screens/m13-status/`.
+2. ✅ **L2** (32) — DONE; wykrył DEF-1 (BLOCKED-reason). Hardening DEF-1 czeka na zgodę Piotra (zmiana live).
+3. ⬜ **L3** (30) — Playwright pełne przejście; ja wykonuję, screeny do `docs/qa/screens/m13-status/`. **Wymaga żywego backendu** (lokalny staging-trolley lub demo).
 4. ⬜ **L4** — raport realizacji `WYNIKI_M13_INICJATYWY_RUN1.md`.
 5. ⬜ Rozszerzenie na M14 (wykonanie: zadania/Gantt) i M15/M16 (rezultaty/ROI) — analogiczne 30×warstwa.
