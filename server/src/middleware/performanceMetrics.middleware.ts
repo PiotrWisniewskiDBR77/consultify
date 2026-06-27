@@ -86,15 +86,64 @@ const metricsStore: MetricsStore = {
 };
 
 const MAX_ENTRIES = 1000;
-const SLOW_REQUEST_THRESHOLD_MS = Number(process.env.SLOW_REQUEST_THRESHOLD_MS || 1000);
+
+// ==========================================
+// HELPERS
+// ==========================================
+
+/**
+ * Resolve SLOW_REQUEST_THRESHOLD_MS from an env-var string.
+ * - undefined / empty / non-numeric / <= 0 → 1000 (default)
+ * - value > 86_400_000 (24 h) → capped at 86_400_000
+ */
+export function resolveSlowRequestThresholdMs(raw: string | undefined): number {
+  const DEFAULT = 1000;
+  const MAX = 86_400_000;
+  if (raw === undefined || raw === '') return DEFAULT;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT;
+  return Math.min(parsed, MAX);
+}
+
+const SLOW_REQUEST_THRESHOLD_MS = resolveSlowRequestThresholdMs(
+  process.env.SLOW_REQUEST_THRESHOLD_MS
+);
+
+/** Safe string read from a property that may throw */
+function safeStr(fn: () => unknown, fallback: string): string {
+  try {
+    const v = fn();
+    return typeof v === 'string' ? v : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Cap a string to maxLen chars */
+function cap(s: string, maxLen: number): string {
+  return s.length > maxLen ? s.slice(0, maxLen) : s;
+}
+
+/** Return 0 for non-finite deltas */
+function finiteOrZero(n: number): number {
+  return Number.isFinite(n) ? n : 0;
+}
 
 function getRouteLabel(req: Request): string {
-  const routePath = (req.route as any)?.path;
-  if (typeof routePath === 'string') {
-    return `${req.baseUrl || ''}${routePath}` || req.path;
+  try {
+    const routePath = (req.route as any)?.path;
+    if (typeof routePath === 'string') {
+      return cap(`${req.baseUrl || ''}${routePath}` || req.path, 2048);
+    }
+    const raw = req.baseUrl || req.path || req.originalUrl || 'unknown';
+    return cap(raw, 2048);
+  } catch {
+    return 'unknown';
   }
-  return req.baseUrl || req.path || req.originalUrl || 'unknown';
 }
+
+// Symbol used as a flag on the response to avoid double-registration
+const FINISH_REGISTERED = Symbol('__perfMetricsFinishRegistered');
 
 // ==========================================
 // MIDDLEWARE
@@ -113,92 +162,224 @@ export function performanceMetricsMiddleware(
   const startMemory = process.memoryUsage();
 
   // Store metrics in request for later access
-  req._performanceMetrics = {
-    startTime,
-    startMemory,
-    dbQueryCount: 0,
-    dbQueryTime: 0,
-  };
-
-  // Enable performance tracking for this request (if available)
-  const metricsService = getMetricsService();
-  if (typeof queryHelpers.enablePerformanceTracking === 'function') {
-    queryHelpers.enablePerformanceTracking((_queryType: string, duration: number) => {
-      if (req._performanceMetrics) {
-        req._performanceMetrics.dbQueryCount++;
-        req._performanceMetrics.dbQueryTime += duration;
-      }
-      // Record DB query metric for Prometheus
-      const dbType = process.env.DB_TYPE || 'postgres';
-      metricsService.recordDbQuery(_queryType, dbType, duration / 1000); // Convert to seconds
-    });
+  try {
+    req._performanceMetrics = {
+      startTime,
+      startMemory,
+      dbQueryCount: 0,
+      dbQueryTime: 0,
+    };
+  } catch {
+    // setter may throw — continue without storing
   }
 
-  // Track response finish
-  res.on('finish', () => {
-    const responseTime = Date.now() - startTime;
-    const routeLabel = getRouteLabel(req);
-    const endMemory = process.memoryUsage();
-    const memoryDelta = {
-      heapUsed: endMemory.heapUsed - startMemory.heapUsed,
-      external: endMemory.external - startMemory.external,
-      rss: endMemory.rss - startMemory.rss,
-    };
+  // Obtain metrics service — bail gracefully if unavailable
+  let metricsService: ReturnType<typeof getMetricsService> | null = null;
+  try {
+    metricsService = getMetricsService();
+  } catch (err) {
+    logger.warn('Performance middleware getMetricsService failed', err);
+  }
 
-    const metrics = req._performanceMetrics || { dbQueryCount: 0, dbQueryTime: 0 };
-    const metric: Metric = {
-      timestamp: new Date().toISOString(),
-      method: req.method,
-      path: req.originalUrl || req.path,
-      statusCode: res.statusCode,
-      responseTime,
-      dbQueryCount: metrics.dbQueryCount,
-      dbQueryTime: metrics.dbQueryTime,
-      memoryDelta,
-      userId: req.user?.id || null,
-      organizationId: req.user?.organizationId || null,
-    };
+  // Enable performance tracking for this request (if available)
+  if (typeof queryHelpers.enablePerformanceTracking === 'function') {
+    try {
+      queryHelpers.enablePerformanceTracking((queryType: string, duration: number) => {
+        // Validate duration
+        if (!Number.isFinite(duration) || duration < 0) return;
+        // Validate queryType
+        const rawType = typeof queryType === 'string' ? queryType : 'unknown';
+        const safeType = cap(rawType.trim().toLowerCase(), 128);
+        const normalizedType = safeType || 'unknown';
 
-    metricsService.recordHttpRequest(req.method, routeLabel, res.statusCode, responseTime / 1000);
+        // Accumulate in request metrics
+        try {
+          const pm = req._performanceMetrics;
+          if (pm) {
+            pm.dbQueryCount++;
+            pm.dbQueryTime += duration;
+          }
+        } catch {
+          // _performanceMetrics getter may throw — skip accumulation
+        }
 
-    // Store metric
-    metricsStore.requests.push(metric);
-    if (metricsStore.requests.length > MAX_ENTRIES) {
-      metricsStore.requests.shift();
-    }
-
-    // Log slow requests (>1s) or errors
-    if (responseTime > SLOW_REQUEST_THRESHOLD_MS || res.statusCode >= 400) {
-      logger.warn('Performance metric', {
-        ...metric,
-        route: routeLabel,
-        isSlow: responseTime > SLOW_REQUEST_THRESHOLD_MS,
-        isError: res.statusCode >= 400,
+        // Record DB query metric for Prometheus
+        try {
+          const dbType = process.env.DB_TYPE || 'postgres';
+          if (metricsService) {
+            metricsService.recordDbQuery(normalizedType, dbType, duration / 1000);
+          }
+        } catch (err) {
+          logger.warn('Performance middleware DB tracking callback failed', err);
+        }
       });
+    } catch (err) {
+      logger.warn('Performance middleware enablePerformanceTracking failed', err);
     }
+  }
 
-    // Log high DB query count (>10 queries)
-    if (metrics.dbQueryCount > 10) {
-      logger.warn('High DB query count', {
-        path: req.originalUrl || req.path,
-        dbQueryCount: metrics.dbQueryCount,
-        dbQueryTime: metrics.dbQueryTime,
-      });
-    }
+  // Guard: register the finish handler only once per response object
+  const resAny = res as any;
+  if (resAny[FINISH_REGISTERED]) {
+    // Already wired up — just proceed
+    next();
+    return;
+  }
 
-    // Record error metric if status >= 400
-    if (res.statusCode >= 400) {
-      const errorType = res.statusCode >= 500 ? 'server_error' : 'client_error';
-      metricsService.recordError(errorType, 'http');
-    }
+  // Prefer res.once (auto-removes after first fire) over res.on
+  const addFinishListener =
+    typeof resAny.once === 'function'
+      ? (cb: () => void) => resAny.once('finish', cb)
+      : typeof resAny.on === 'function'
+        ? (cb: () => void) => resAny.on('finish', cb)
+        : null;
 
-    // Disable performance tracking when request finishes
+  if (!addFinishListener) {
+    // Response doesn't support event listeners — clean up and bail
     if (typeof queryHelpers.disablePerformanceTracking === 'function') {
       queryHelpers.disablePerformanceTracking();
     }
-  });
+    next();
+    return;
+  }
 
-  next();
+  try {
+    let finished = false;
+
+    addFinishListener(() => {
+      // Idempotency guard: record only once even if callback fires multiple times
+      if (finished) return;
+      finished = true;
+
+      const endTime = Date.now();
+      const responseTime = Math.max(0, endTime - startTime);
+
+      // Sanitize statusCode (NaN → 500)
+      const rawStatus = res.statusCode;
+      const statusCode = Number.isFinite(rawStatus) ? rawStatus : 500;
+
+      // Read request fields safely (they may throw)
+      const method = cap(safeStr(() => req.method, 'UNKNOWN'), 32);
+      const path = cap(safeStr(() => req.originalUrl || req.path, 'unknown'), 2048);
+      const routeLabel = getRouteLabel(req);
+      const userId = cap(safeStr(() => req.user?.id ?? '', ''), 256) || null;
+      const organizationId = cap(safeStr(() => req.user?.organizationId ?? '', ''), 256) || null;
+
+      // Read stored performance metrics (getter may throw)
+      let dbQueryCount = 0;
+      let dbQueryTime = 0;
+      try {
+        const pm = req._performanceMetrics;
+        if (pm) {
+          dbQueryCount = pm.dbQueryCount;
+          dbQueryTime = pm.dbQueryTime;
+        }
+      } catch {
+        // fall through with 0/0
+      }
+
+      // Compute memory delta, clamping non-finite values to 0
+      const endMemory = process.memoryUsage();
+      const memoryDelta = {
+        heapUsed: finiteOrZero(endMemory.heapUsed - startMemory.heapUsed),
+        external: finiteOrZero(endMemory.external - startMemory.external),
+        rss: finiteOrZero(endMemory.rss - startMemory.rss),
+      };
+
+      const metric: Metric = {
+        timestamp: new Date().toISOString(),
+        method,
+        path,
+        statusCode,
+        responseTime,
+        dbQueryCount,
+        dbQueryTime,
+        memoryDelta,
+        userId,
+        organizationId,
+      };
+
+      // Store metric first (before any throws from the service)
+      metricsStore.requests.push(metric);
+      if (metricsStore.requests.length > MAX_ENTRIES) {
+        metricsStore.requests.shift();
+      }
+
+      // Export to metrics service
+      try {
+        if (metricsService) {
+          metricsService.recordHttpRequest(method, routeLabel, statusCode, responseTime / 1000);
+        }
+      } catch (err) {
+        logger.warn('Performance middleware recordHttpRequest failed', err);
+      }
+
+      // Log slow requests or errors
+      if (responseTime > SLOW_REQUEST_THRESHOLD_MS || statusCode >= 400) {
+        logger.warn('Performance metric', {
+          ...metric,
+          route: routeLabel,
+          isSlow: responseTime > SLOW_REQUEST_THRESHOLD_MS,
+          isError: statusCode >= 400,
+        });
+      }
+
+      // Log high DB query count (>10 queries)
+      if (dbQueryCount > 10) {
+        logger.warn('High DB query count', {
+          path,
+          dbQueryCount,
+          dbQueryTime,
+        });
+      }
+
+      // Record error metric if status >= 400
+      if (statusCode >= 400) {
+        const errorType = statusCode >= 500 ? 'server_error' : 'client_error';
+        try {
+          if (metricsService) {
+            metricsService.recordError(errorType, 'http');
+          }
+        } catch (err) {
+          logger.warn('Performance middleware recordError failed', err);
+        }
+      }
+
+      // Disable performance tracking when request finishes
+      if (typeof queryHelpers.disablePerformanceTracking === 'function') {
+        queryHelpers.disablePerformanceTracking();
+      }
+    });
+
+    // Also listen for close (connection aborted before finish)
+    if (typeof resAny.once === 'function') {
+      resAny.once('close', () => {
+        if (typeof queryHelpers.disablePerformanceTracking === 'function') {
+          queryHelpers.disablePerformanceTracking();
+        }
+      });
+    }
+
+    resAny[FINISH_REGISTERED] = true;
+  } catch (err) {
+    // res.on / res.once itself threw — clean up and continue
+    logger.warn('Performance middleware finish-listener registration failed', err);
+    if (typeof queryHelpers.disablePerformanceTracking === 'function') {
+      queryHelpers.disablePerformanceTracking();
+    }
+    next();
+    return;
+  }
+
+  try {
+    next();
+  } catch (err) {
+    // next() threw synchronously — release tracking then rethrow
+    if (typeof queryHelpers.disablePerformanceTracking === 'function') {
+      queryHelpers.disablePerformanceTracking();
+    }
+    throw err;
+  }
 }
 
 // ==========================================

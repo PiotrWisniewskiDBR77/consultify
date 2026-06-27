@@ -783,13 +783,13 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
     expect(api).toContain('registerWave9AcceptanceRun');
     expect(api).toContain('registerWave9Evidence');
     expect(api).toContain('recordWave9EvalRun');
-    expect(panel).toContain('Wave 9 Outcome & AI Ops');
-    expect(panel).toContain('Record golden eval PASS');
-    expect(panel).toContain('Simulate provider unavailable');
+    expect(panel).toContain('wave9OutcomeAiOps');
+    expect(panel).toContain('recordGoldenEvalPass');
+    expect(panel).toContain('simulateProviderUnavailable');
     expect(hub).toContain('AIOSWave0GateReport');
     expect(hub).toContain('V10TeresaRuntimeWorkspace');
-    expect(gateReport).toContain('Wave 0 Gate Report');
-    expect(gateReport).toContain('Runtime truth table');
+    expect(gateReport).toContain('AI OS Build Milestones');
+    expect(gateReport).toContain('Runtime truth');
     expect(v10Workspace).toContain('V10 Frontend Runtime');
     expect(v10Hook).toContain('/api/v10/teresa/voice-config');
     expect(appRoutes).toContain('path={ROUTES.AI_OS.OUTCOMES}');

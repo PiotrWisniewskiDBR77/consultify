@@ -12,6 +12,7 @@ vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
     req.user = { id: 'test-user-id', organizationId: 'test-org-id', role: 'ADMIN' };
     next();
   },
+  requireRole: (..._roles: string[]) => (_req: any, _res: any, next: any) => next(),
 }));
 
 // Mock DB helpers so the route can execute without hitting a real DB

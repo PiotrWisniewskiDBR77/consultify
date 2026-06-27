@@ -520,8 +520,8 @@ describe('Wave 6 context and controlled learning runtime', () => {
     expect(routes).toContain('normalizeWave6AssistantScope');
     expect(aiIndex).not.toContain("router.use('/memory-v2'");
     expect(api).toContain('captureWave6MemoryCandidate');
-    expect(panel).toContain('Organization snapshot');
-    expect(panel).toContain('Memory Stewardship Queue');
+    expect(panel).toContain('organizationSnapshot');
+    expect(panel).toContain('memoryStewardshipQueue');
     expect(panel).toContain('visible in the stewardship queue');
     expect(panel).not.toContain('JSON.stringify(snapshot.facts');
     expect(streamHook).toContain("evt.type === 'memory_candidate'");

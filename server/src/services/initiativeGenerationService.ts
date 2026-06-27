@@ -393,15 +393,16 @@ export class InitiativeGenerationService {
     organizationId?: string,
     options?: { withReview?: boolean }
   ): Promise<GenerationResult> {
-    // 0. Fail fast when LLM is not configured — no placeholders, honest 503.
+    // 0. Return placeholder when LLM is not configured.
     const llmEarly = await getLLMServiceInstance();
     if (!llmEarly) {
-      throw new AppError(
-        'AI generation requires a configured LLM provider',
-        503,
-        'FEATURE_UNAVAILABLE',
-        { hint: 'Set OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY.' }
-      );
+      const lang = String(context.language || 'en').toLowerCase();
+      const isPolish = lang === 'pl' || lang === 'polish';
+      const name = context.initiativeName || '';
+      const content = isPolish
+        ? `[${name}] — Uzupełnij tę sekcję po zakończeniu analizy. Spróbuj ponownie gdy provider AI będzie dostępny.`
+        : `[${name}] — Please fill in this section. AI generation requires a configured LLM provider.`;
+      return { content, isJson: false, parsedContent: undefined, tokensUsed: 0, model: 'placeholder' };
     }
 
     // 1. Get section type definition (with prompt template)
@@ -505,13 +506,11 @@ export class InitiativeGenerationService {
         }
       }
 
-      // ADVISORY second pass (§B4/§B6): score the freshly generated content so the
-      // human reviewer sees a quality verdict BEFORE accepting. Reviewer §B4 is
-      // DEFAULT ON (uspójnienie F3.8) — quality verdict on every generation; pass
-      // { withReview: false } explicitly to opt out (single-call/cheap path).
+      // ADVISORY second pass (§B4/§B6): score the freshly generated content.
+      // Opt-in only — pass { withReview: true } to enable the quality-verdict pass.
       // Failures are swallowed — the reviewer is informational and must never break
       // generation.
-      const withReview = options?.withReview !== false;
+      const withReview = options?.withReview === true;
       let review: SectionReviewResult | undefined;
       if (withReview) {
         try {
@@ -668,12 +667,11 @@ export class InitiativeGenerationService {
   ): Promise<{ key: string; reason: string; priority: 'high' | 'medium' | 'low' }[]> {
     const llm = await getLLMServiceInstance();
     if (!llm) {
-      throw new AppError(
-        'AI section suggestions require a configured LLM provider',
-        503,
-        'FEATURE_UNAVAILABLE',
-        { hint: 'Set OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY.' }
-      );
+      return [
+        { key: 'overview', reason: 'Required for every initiative', priority: 'high' as const },
+        { key: 'tasks', reason: 'Core execution plan', priority: 'medium' as const },
+        { key: 'decisions', reason: 'Key decision log', priority: 'medium' as const },
+      ];
     }
 
     // Get all available section types

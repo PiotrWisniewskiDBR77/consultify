@@ -27,11 +27,7 @@ const isCallable = (value: unknown): value is (...args: unknown[]) => unknown =>
 
 const isConnectionClosed = (req: AuthRequest, res: Response): boolean =>
   Boolean(
-    // NOTE: req.destroyed is intentionally excluded — the JSON body-parser marks
-    // the IncomingMessage stream as destroyed after consuming the body for POST/PATCH
-    // requests. The underlying socket is still open; checking req.destroyed here
-    // would cause all mutations to short-circuit without calling next().
-    // Use socket.destroyed (actual network state) and response state instead.
+    safeRead(() => (req as any).destroyed, false) ||
     safeRead(() => (req as any).socket?.destroyed, false) ||
     safeRead(() => (res as any).writableEnded, false) ||
     safeRead(() => (res as any).headersSent, false)

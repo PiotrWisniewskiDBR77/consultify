@@ -313,6 +313,7 @@ import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
+import referralsRoutes from './routes/referrals.routes.js';
 import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import logger from './utils/Logger.js';
 
@@ -1024,6 +1025,7 @@ export class ApiGateway {
       app.use('/api/financial-modeling', gatewayVerifyToken, betaGate, financialModelingRoutes);
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
+      app.use('/api/referrals', referralsRoutes);
 
       // V8 API namespace — feature-gated
       logger.info('[ApiGateway] Mounting /api/v8');

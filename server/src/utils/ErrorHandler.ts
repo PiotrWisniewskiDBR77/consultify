@@ -183,7 +183,8 @@ export function errorHandlerMiddleware(
   const errorStack = err instanceof Error ? err.stack : undefined;
   const errorName = err instanceof Error ? err.name : 'Error';
   const correlationId =
-    (req as Request & { correlationId?: string }).correlationId || req.get('X-Correlation-ID');
+    (req as Request & { correlationId?: string }).correlationId ||
+    (typeof req.get === 'function' ? req.get('X-Correlation-ID') : undefined);
 
   // Standardize status code
   let statusCode = 500;
