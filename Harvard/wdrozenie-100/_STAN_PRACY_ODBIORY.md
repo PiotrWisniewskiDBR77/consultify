@@ -426,8 +426,8 @@ DoD: 1🟡 2🟡 3🟡 4✅ 5🟡 6✅ 7🟡 · 📁 [M16-finanse.md](M16-finans
 | 3 | Epiki (F0–F11 backend) | 🟡 | F0 sidebar · F1 bramki+mózg · F2 wejścia (W3.2/W3.3 backend) · F3 motywy · F4 eksport+zip · F5 dane (W5) · F7 scheduler+email · F11 wykresy (W11.1). **Reszta FE (F2-UI/F12 edytor) ⬜** |
 | 4 | Testy | ✅ | **791/791 deliverables zielone, 0 tsc** (pełny build) |
 | 5 | Zgodność UI/UX | 🟡 | „Komplet AI" launcher osiągalny za flagą; tab „Dane"+upload-UI = sesja FE |
-| 6 | Deploy demo | ✅ | demo.consultify.ai — feat→demo ff + 3 flagi (`ENABLE_DELIVERABLES_LIGHT`/`_PREMIUM`/`VITE_…`) + LLM-routing OpenRouter (klucz OpenAI martwy). Endpoint live |
-| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | brief→„Komplet AI"→ZIP(docx+xlsx+pptx) na demo — **po live-confirm generacji** |
+| 6 | Deploy demo | ✅ | demo.consultify.ai — feat→demo ff + 3 flagi (`ENABLE_DELIVERABLES_LIGHT`/`_PREMIUM`/`VITE_…`) + LLM-routing OpenRouter (klucz OpenAI martwy) + fix docx (canvas.node→napi-first). **LIVE-GEN ✅ POTWIERDZONY 2026-06-26**: brief→ZIP 586 KB, 4 pliki (docx 38 KB/16,5k znaków **0 placeholderów**, deck 13 slajdów .pptx, wariant zarząd, xlsx) |
+| 7 | **ODBIÓR FUNKCJA — Piotr** | 🟡 GOTOWE DO ODBIORU | brief→„Komplet AI"→ZIP(4 pliki) DZIAŁA na demo (zweryf. end-to-end). Czeka klik Piotra |
 | 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | jakość deck/raport/tabela vs Gamma + 11 ekranów |
 | ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | |
 
