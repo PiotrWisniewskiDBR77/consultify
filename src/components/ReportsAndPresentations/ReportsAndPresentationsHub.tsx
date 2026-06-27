@@ -148,6 +148,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [bundleHistoryOpen, setBundleHistoryOpen] = useState(false);
+  // Licznik zwiększany po udanej generacji Kompletu AI → wymusza refetch historii.
+  const [bundleRefresh, setBundleRefresh] = useState(0);
 
   const tabs = useMemo(
     () => [
@@ -1134,6 +1136,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         open={launcherOpen}
         onClose={() => setLauncherOpen(false)}
         onSelect={handleLauncherSelect}
+        onBundleGenerated={() => {
+          setBundleRefresh((n) => n + 1);
+          setBundleHistoryOpen(true); // rozwiń historię, żeby świeży bundle był widoczny
+        }}
       />
 
       {/* W3.8 / W4.4 — Komplet AI bundle history (only when deliverables premium is enabled) */}
@@ -1159,7 +1165,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
           {bundleHistoryOpen && (
             <div className="mt-2">
-              <BundleHistoryPanel />
+              <BundleHistoryPanel refreshSignal={bundleRefresh} />
             </div>
           )}
         </div>

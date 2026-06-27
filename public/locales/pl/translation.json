@@ -13320,6 +13320,7 @@
         "phase2": "Pisanie sekcji raportu…",
         "phase3": "Komponowanie deck'u…",
         "phase4": "Renderowanie DOCX + XLSX + PPTX…",
+        "phaseEstimateNote": "Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.",
         "tpl": {
           "blank": "Pusty",
           "auditReport": "Raport audytowy",

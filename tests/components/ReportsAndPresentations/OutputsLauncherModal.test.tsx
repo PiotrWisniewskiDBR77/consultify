@@ -4,7 +4,7 @@
  * FT-1 (unit) dla E1+E2 — OutputsLauncherModal (wspólne wejście 2-krokowe:
  * typ → template). Tracker: Harvard/wdrozenie-100/DELIVERABLES-STAN-PRACY-ODBIORY.md.
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Prevent deliverablesBundle → api.ts → i18n.ts import chain from breaking test env.
@@ -137,5 +137,28 @@ describe('OutputsLauncherModal (E1+E2 · FT-1)', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  // Komplet AI — udana generacja woła onBundleGenerated (dowód wpięcia refetch historii)
+  it('Komplet AI: udana generacja woła onBundleGenerated + onClose', async () => {
+    const onBundleGenerated = vi.fn();
+    const { onClose } = setup({ onBundleGenerated });
+    // krok: kafel "Komplet AI" → brief step
+    fireEvent.click(screen.getByTestId('launcher-type-bundle'));
+    fireEvent.change(screen.getByTestId('launcher-bundle-brief'), {
+      target: { value: 'Biznesplan AI dla firmy produkcyjnej z modelem finansowym 3 lata.' },
+    });
+    fireEvent.click(screen.getByTestId('launcher-bundle-generate'));
+    await waitFor(() => expect(onBundleGenerated).toHaveBeenCalledTimes(1));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('Komplet AI: brief < 20 znaków nie generuje (brak onBundleGenerated)', () => {
+    const onBundleGenerated = vi.fn();
+    setup({ onBundleGenerated });
+    fireEvent.click(screen.getByTestId('launcher-type-bundle'));
+    fireEvent.change(screen.getByTestId('launcher-bundle-brief'), { target: { value: 'za krótki' } });
+    fireEvent.click(screen.getByTestId('launcher-bundle-generate'));
+    expect(onBundleGenerated).not.toHaveBeenCalled();
   });
 });

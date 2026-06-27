@@ -12728,6 +12728,7 @@
         "phase2": "Writing report sections…",
         "phase3": "Composing slide deck…",
         "phase4": "Rendering DOCX + XLSX + PPTX…",
+        "phaseEstimateNote": "Estimated progress — generation usually takes 1–2 min; the download starts once it's done.",
         "tpl": {
           "blank": "Blank",
           "auditReport": "Audit report",

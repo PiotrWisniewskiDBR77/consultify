@@ -6,8 +6,8 @@
  * Clicking a row opens a detail overlay with metadata.
  */
 
-import { CheckCircle2, Clock, Download, Package2, XCircle } from 'lucide-react';
-import React, { useState } from 'react';
+import { CheckCircle2, Clock, Package2, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { BundleListItem } from '../../services/deliverablesBundle';
@@ -167,21 +167,6 @@ function BundleDetailModal({ bundle, onClose }: BundleDetailModalProps) {
             <dd className="text-slate-700 dark:text-slate-300">{bundle.language.toUpperCase()}</dd>
           </div>
         </dl>
-
-        {/* Re-download placeholder */}
-        <div className="mt-5">
-          <button
-            disabled
-            title={t('rap.bundles.redownload.tooltip', 'Re-download not available for past bundles yet')}
-            className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-400 dark:border-slate-700 dark:text-slate-600"
-          >
-            <Download className="h-4 w-4" />
-            {t('rap.bundles.redownload', 'Re-download')}
-          </button>
-          <p className="mt-1.5 text-center text-xs text-slate-400 dark:text-slate-600">
-            {t('rap.bundles.redownload.hint', 'Re-download from history coming soon')}
-          </p>
-        </div>
       </div>
     </div>
   );
@@ -209,10 +194,20 @@ function SkeletonRows() {
 // Main panel
 // ---------------------------------------------------------------------------
 
-export function BundleHistoryPanel() {
+export interface BundleHistoryPanelProps {
+  /** Zmiana tej wartości wymusza odświeżenie listy (np. po wygenerowaniu bundla). */
+  refreshSignal?: number;
+}
+
+export function BundleHistoryPanel({ refreshSignal }: BundleHistoryPanelProps = {}) {
   const { t } = useTranslation();
-  const { bundles, loading, error } = useBundleList();
+  const { bundles, loading, error, refetch } = useBundleList();
   const [selected, setSelected] = useState<BundleListItem | null>(null);
+
+  // Po sygnale z huba (świeżo wygenerowany bundle) — pobierz listę ponownie.
+  useEffect(() => {
+    if (refreshSignal !== undefined && refreshSignal > 0) refetch();
+  }, [refreshSignal, refetch]);
 
   return (
     <div

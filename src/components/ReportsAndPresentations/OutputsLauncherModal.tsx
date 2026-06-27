@@ -149,12 +149,15 @@ export interface OutputsLauncherModalProps {
   onClose: () => void;
   /** Wywoływane po wyborze typu + template. */
   onSelect: (selection: LauncherSelection) => void;
+  /** Wywoływane po udanej generacji Kompletu AI — pozwala odświeżyć historię. */
+  onBundleGenerated?: () => void;
 }
 
 export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
   open,
   onClose,
   onSelect,
+  onBundleGenerated,
 }) => {
   const { t } = useTranslation();
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -261,12 +264,13 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
     const ok = await downloadBundleZip(brief);
     setBundleLoading(false);
     if (ok) {
+      onBundleGenerated?.(); // odśwież historię bundli w hubie
       onClose();
     } else {
       setBundleError(t('rap.outputs.launcher.bundleError', 'Generation failed — please try again'));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundleBrief, onClose, t]);
+  }, [bundleBrief, onClose, onBundleGenerated, t]);
 
   if (!open) return null;
 
@@ -366,6 +370,9 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                       </span>
                     </div>
                   ))}
+                  <p className="mt-1 text-[11px] text-slate-400 dark:text-navy-600">
+                    {t('rap.outputs.launcher.phaseEstimateNote', 'Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.')}
+                  </p>
                 </div>
               )}
               <button
