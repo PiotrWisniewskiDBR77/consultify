@@ -8,7 +8,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 
-import usageService from '../../services/usageService.js';
+import usageService from '../services/usageService.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
@@ -58,6 +58,15 @@ interface Dependencies {
 }
 
 // ==========================================
+// CONSTANTS
+// ==========================================
+
+const ORG_ID_MAX_LEN = 256;
+const ACTION_MAX_LEN = 128;
+const STRING_FIELD_MAX_LEN = 512;
+const TOKEN_MAX = 50_000_000;
+
+// ==========================================
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
@@ -77,6 +86,122 @@ async function getAccessPolicyService() {
 }
 
 // ==========================================
+// HELPERS
+// ==========================================
+
+function safeGet<T>(fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
+
+function isResponseCommitted(res: any): boolean {
+  return (
+    safeGet(() => res.headersSent, false) ||
+    safeGet(() => res.writableEnded, false) ||
+    safeGet(() => res.finished, false) ||
+    safeGet(() => res.closed, false)
+  );
+}
+
+function sanitizeFinite(n: unknown, fallback = 0): number {
+  const v = Number(n);
+  if (!Number.isFinite(v) || v < 0) return fallback;
+  return v;
+}
+
+function safeOrgId(req: any): string | undefined {
+  const fromUser = safeGet(() => req.user?.organizationId, undefined);
+  if (fromUser !== undefined) return fromUser;
+  return safeGet(() => req.organizationId, undefined);
+}
+
+function safeUserId(req: any): string | undefined {
+  const fromUser = safeGet(() => req.user?.id, undefined);
+  if (fromUser !== undefined) return fromUser;
+  return safeGet(() => req.userId, undefined);
+}
+
+function safeBody(req: any): any {
+  return safeGet(() => req.body, {});
+}
+
+function safeFile(req: any): any {
+  return safeGet(() => req.file, undefined);
+}
+
+function truncate(s: string | undefined, max: number): string | undefined {
+  if (s === undefined) return undefined;
+  return String(s).slice(0, max);
+}
+
+function writeHeader(res: any, name: string, value: string): void {
+  try {
+    if (typeof res.set === 'function') {
+      res.set(name, value);
+      return;
+    }
+  } catch {
+    // fall through to setHeader
+  }
+  try {
+    if (typeof res.setHeader === 'function') {
+      res.setHeader(name, value);
+    }
+  } catch {
+    // swallow header write failures
+  }
+}
+
+function safeQuotaPayload(raw: any, orgId: string): QuotaInfo | null {
+  if (!raw || typeof raw !== 'object') return null;
+  try {
+    const allowed = safeGet(() => raw.allowed, undefined);
+    const used = safeGet(() => raw.used, undefined);
+    const limit = safeGet(() => raw.limit, undefined);
+    const percentage = safeGet(() => raw.percentage, undefined);
+    if (typeof allowed !== 'boolean') return null;
+    return {
+      allowed,
+      used: sanitizeFinite(used),
+      limit: sanitizeFinite(limit),
+      percentage: sanitizeFinite(percentage),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Returns true if the 401 was successfully written; false if it failed (caller should call next). */
+function writeUnauthorized(res: any, logKey: string, next: () => void): boolean {
+  if (isResponseCommitted(res)) {
+    return false;
+  }
+  if (typeof res.status !== 'function') {
+    logger.error(logKey);
+    return false;
+  }
+  try {
+    res.status(401).json({ error: 'Unauthorized - no organization' });
+    return true;
+  } catch {
+    logger.error(logKey);
+    return false;
+  }
+}
+
+function writeError(res: any, status: number, body: Record<string, unknown>): void {
+  if (isResponseCommitted(res)) return;
+  try {
+    res.status(status).json(body);
+  } catch {
+    // swallow
+  }
+}
+
+// ==========================================
 // MIDDLEWARE
 // ==========================================
 
@@ -89,35 +214,25 @@ export async function enforceTokenQuota(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  const orgId = safeOrgId(req);
+
+  if (!orgId) {
+    const wrote = writeUnauthorized(res, '[QuotaMiddleware] Failed to write token unauthorized response', next);
+    if (!wrote) { try { next(); } catch { /* swallow */ } }
+    return;
+  }
+
+  if (orgId.length > ORG_ID_MAX_LEN) {
+    writeError(res, 401, { error: 'Unauthorized - invalid organization' });
+    return;
+  }
+
   try {
-    const { usageService } = deps;
-    const orgId = req.user?.organizationId;
-
-    if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized - no organization' });
-      return;
-    }
-
+    let aps: any;
     try {
-      const aps = await getAccessPolicyService();
-      const accessResult = await aps.checkAccess(orgId, 'ai_call');
-      if (!accessResult.allowed) {
-        res.status(429).json({
-          error: accessResult.reason,
-          errorCode: accessResult.errorCode,
-          code: accessResult.errorCode,
-          message: accessResult.reason,
-          upgradeUrl: '/settings?tab=billing',
-          upgradeCta:
-            accessResult.errorCode === 'AI_TOKEN_BUDGET_EXCEEDED'
-              ? 'Add payment method'
-              : 'Upgrade plan',
-        });
-        return;
-      }
-    } catch (policyErr) {
-      logger.error('[QuotaMiddleware] Access policy check failed:', policyErr);
-      res.status(503).json({
+      aps = await getAccessPolicyService();
+    } catch {
+      writeError(res, 503, {
         error: 'Access policy is temporarily unavailable',
         errorCode: 'ACCESS_POLICY_UNAVAILABLE',
         code: 'ACCESS_POLICY_UNAVAILABLE',
@@ -125,11 +240,81 @@ export async function enforceTokenQuota(
       return;
     }
 
-    const quota = await usageService.checkQuota(orgId, 'token');
+    let accessResult: any;
+    try {
+      accessResult = await aps.checkAccess(orgId, 'ai_call');
+    } catch (policyErr) {
+      logger.error('[QuotaMiddleware] Access policy check failed:', policyErr);
+      writeError(res, 503, {
+        error: 'Access policy is temporarily unavailable',
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+        code: 'ACCESS_POLICY_UNAVAILABLE',
+      });
+      return;
+    }
+
+    if (!accessResult || typeof accessResult.allowed !== 'boolean') {
+      logger.error('[QuotaMiddleware] Invalid access policy payload', { orgId });
+      writeError(res, 503, {
+        error: 'Access policy is temporarily unavailable',
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+        code: 'ACCESS_POLICY_UNAVAILABLE',
+      });
+      return;
+    }
+
+    if (!accessResult.allowed) {
+      writeError(res, 429, {
+        error: accessResult.reason,
+        errorCode: accessResult.errorCode,
+        code: accessResult.errorCode,
+        message: accessResult.reason,
+        upgradeUrl: '/settings?tab=billing',
+        upgradeCta:
+          accessResult.errorCode === 'AI_TOKEN_BUDGET_EXCEEDED'
+            ? 'Add payment method'
+            : 'Upgrade plan',
+      });
+      return;
+    }
+
+    const { usageService: svc } = deps;
+    let rawQuota: any;
+    try {
+      rawQuota = await svc.checkQuota(orgId, 'token');
+    } catch (quotaErr) {
+      logger.error('Quota check error:', quotaErr);
+      if (!isResponseCommitted(res)) {
+        writeError(res, 503, {
+          error: 'Token quota service unavailable',
+          errorCode: 'QUOTA_CHECK_UNAVAILABLE',
+          code: 'QUOTA_CHECK_UNAVAILABLE',
+        });
+      } else {
+        try { next(); } catch { /* swallow */ }
+      }
+      return;
+    }
+
+    const quota = safeQuotaPayload(rawQuota, orgId);
+    if (!quota) {
+      logger.error('[QuotaMiddleware] Invalid token quota payload', { orgId });
+      writeError(res, 503, {
+        error: 'Token quota service unavailable',
+        errorCode: 'QUOTA_CHECK_UNAVAILABLE',
+        code: 'QUOTA_CHECK_UNAVAILABLE',
+      });
+      return;
+    }
+
     req.quotaInfo = quota;
 
     if (!quota.allowed) {
-      res.status(429).json({
+      if (isResponseCommitted(res)) {
+        try { next(); } catch { /* swallow */ }
+        return;
+      }
+      writeError(res, 429, {
         error: 'Token quota exceeded',
         errorCode: 'QUOTA_EXCEEDED',
         code: 'QUOTA_EXCEEDED',
@@ -145,19 +330,23 @@ export async function enforceTokenQuota(
       return;
     }
 
-    if (quota.percentage >= 80 && quota.percentage < 100) {
-      res.set('X-Quota-Warning', 'true');
-      res.set('X-Quota-Percentage', quota.percentage.toString());
+    if (Number.isFinite(quota.percentage) && quota.percentage >= 80 && quota.percentage < 100) {
+      writeHeader(res as any, 'X-Quota-Warning', 'true');
+      writeHeader(res as any, 'X-Quota-Percentage', quota.percentage.toString());
     }
 
-    next();
+    try { next(); } catch { /* swallow downstream next errors */ }
   } catch (error: unknown) {
     logger.error('Quota check error:', error);
-    res.status(503).json({
-      error: 'Token quota service unavailable',
-      errorCode: 'QUOTA_CHECK_UNAVAILABLE',
-      code: 'QUOTA_CHECK_UNAVAILABLE',
-    });
+    if (!isResponseCommitted(res)) {
+      writeError(res, 503, {
+        error: 'Token quota service unavailable',
+        errorCode: 'QUOTA_CHECK_UNAVAILABLE',
+        code: 'QUOTA_CHECK_UNAVAILABLE',
+      });
+    } else {
+      try { next(); } catch { /* swallow */ }
+    }
   }
 }
 
@@ -170,31 +359,24 @@ export async function enforceStorageQuota(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  const orgId = safeOrgId(req);
+
+  if (!orgId) {
+    writeError(res, 401, { error: 'Unauthorized - no organization' });
+    return;
+  }
+
+  if (orgId.length > ORG_ID_MAX_LEN) {
+    writeError(res, 401, { error: 'Unauthorized - invalid organization' });
+    return;
+  }
+
   try {
-    const { usageService } = deps;
-    const orgId = req.user?.organizationId;
-
-    if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized - no organization' });
-      return;
-    }
-
+    let aps: any;
     try {
-      const aps = await getAccessPolicyService();
-      const accessResult = await aps.checkAccess(orgId, 'upload');
-      if (!accessResult.allowed) {
-        res.status(429).json({
-          error: accessResult.reason,
-          errorCode: accessResult.errorCode,
-          code: accessResult.errorCode,
-          message: accessResult.reason,
-          upgradeUrl: '/settings?tab=billing',
-        });
-        return;
-      }
-    } catch (policyErr) {
-      logger.error('[QuotaMiddleware] Storage access policy check failed:', policyErr);
-      res.status(503).json({
+      aps = await getAccessPolicyService();
+    } catch {
+      writeError(res, 503, {
         error: 'Access policy is temporarily unavailable',
         errorCode: 'ACCESS_POLICY_UNAVAILABLE',
         code: 'ACCESS_POLICY_UNAVAILABLE',
@@ -202,17 +384,85 @@ export async function enforceStorageQuota(
       return;
     }
 
-    const quota = await usageService.checkQuota(orgId, 'storage');
+    let accessResult: any;
+    try {
+      accessResult = await aps.checkAccess(orgId, 'upload');
+    } catch (policyErr) {
+      logger.error('[QuotaMiddleware] Storage access policy check failed:', policyErr);
+      writeError(res, 503, {
+        error: 'Access policy is temporarily unavailable',
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+        code: 'ACCESS_POLICY_UNAVAILABLE',
+      });
+      return;
+    }
+
+    if (!accessResult || typeof accessResult.allowed !== 'boolean') {
+      logger.error('[QuotaMiddleware] Invalid access policy payload', { orgId });
+      writeError(res, 503, {
+        error: 'Access policy is temporarily unavailable',
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+        code: 'ACCESS_POLICY_UNAVAILABLE',
+      });
+      return;
+    }
+
+    if (!accessResult.allowed) {
+      writeError(res, 429, {
+        error: accessResult.reason,
+        errorCode: accessResult.errorCode,
+        code: accessResult.errorCode,
+        message: accessResult.reason,
+        upgradeUrl: '/settings?tab=billing',
+      });
+      return;
+    }
+
+    const { usageService: svc } = deps;
+    let rawQuota: any;
+    try {
+      rawQuota = await svc.checkQuota(orgId, 'storage');
+    } catch (quotaErr) {
+      logger.error('Storage quota check error:', quotaErr);
+      if (!isResponseCommitted(res)) {
+        writeError(res, 503, {
+          error: 'Storage quota service unavailable',
+          errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+          code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+        });
+      } else {
+        try { next(); } catch { /* swallow */ }
+      }
+      return;
+    }
+
+    const quota = safeQuotaPayload(rawQuota, orgId);
+    if (!quota) {
+      logger.error('[QuotaMiddleware] Invalid storage quota payload', { orgId });
+      writeError(res, 503, {
+        error: 'Storage quota service unavailable',
+        errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+        code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+      });
+      return;
+    }
+
     req.storageQuotaInfo = quota;
 
     if (!quota.allowed) {
-      res.status(429).json({
+      if (isResponseCommitted(res)) {
+        try { next(); } catch { /* swallow */ }
+        return;
+      }
+      const usedBytes = Math.max(0, quota.used);
+      const limitBytes = Math.max(0, quota.limit);
+      writeError(res, 429, {
         error: 'Storage quota exceeded',
         errorCode: 'STORAGE_QUOTA_EXCEEDED',
         code: 'STORAGE_QUOTA_EXCEEDED',
         usage: {
-          usedGB: (quota.used / (1024 * 1024 * 1024)).toFixed(2),
-          limitGB: (quota.limit / (1024 * 1024 * 1024)).toFixed(2),
+          usedGB: (usedBytes / (1024 * 1024 * 1024)).toFixed(2),
+          limitGB: (limitBytes / (1024 * 1024 * 1024)).toFixed(2),
           percentage: quota.percentage,
         },
         message:
@@ -222,14 +472,18 @@ export async function enforceStorageQuota(
       return;
     }
 
-    next();
+    try { next(); } catch { /* swallow downstream next errors */ }
   } catch (error: unknown) {
     logger.error('Storage quota check error:', error);
-    res.status(503).json({
-      error: 'Storage quota service unavailable',
-      errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
-      code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
-    });
+    if (!isResponseCommitted(res)) {
+      writeError(res, 503, {
+        error: 'Storage quota service unavailable',
+        errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+        code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+      });
+    } else {
+      try { next(); } catch { /* swallow */ }
+    }
   }
 }
 
@@ -239,22 +493,35 @@ export async function enforceStorageQuota(
  */
 export async function recordTokenUsageAfterResponse(
   req: QuotaRequest,
-  res: Response,
+  _res: Response,
   tokens: number,
   action: string
 ): Promise<void> {
   try {
-    const { usageService } = deps;
+    const { usageService: svc } = deps;
 
-    const orgId = req.user?.organizationId;
-    const userId = req.user?.id;
+    const orgId = safeOrgId(req);
+    const userId = safeUserId(req);
+    const body = safeBody(req);
 
-    if (orgId && tokens > 0) {
-      await usageService.recordTokenUsage(orgId, userId, tokens, action, {
-        endpoint: req.path,
-        model: (req.body as { model?: string })?.model || 'default',
-      });
-    }
+    if (!orgId) return;
+    if (orgId.length > ORG_ID_MAX_LEN) return;
+
+    const rawTokens = Number(tokens);
+    if (!Number.isFinite(rawTokens) || rawTokens <= 0) return;
+    const safeTokens = Math.min(rawTokens, TOKEN_MAX);
+
+    const safeAction = String(action).slice(0, ACTION_MAX_LEN);
+    const endpoint = truncate(safeGet(() => req.path, ''), STRING_FIELD_MAX_LEN);
+    const model = truncate(
+      safeGet(() => (body as { model?: string })?.model, undefined) ?? 'default',
+      STRING_FIELD_MAX_LEN
+    ) ?? 'default';
+
+    await svc.recordTokenUsage(orgId, userId, safeTokens, safeAction, {
+      endpoint,
+      model,
+    });
   } catch (error: unknown) {
     logger.error('Failed to record token usage:', error);
   }
@@ -269,16 +536,29 @@ export async function recordStorageAfterUpload(
   action = 'upload'
 ): Promise<void> {
   try {
-    const { usageService } = deps;
+    const { usageService: svc } = deps;
 
-    const orgId = (req as AuthRequest).user?.organizationId;
+    const orgId = safeOrgId(req as any);
 
-    if (orgId && bytes > 0) {
-      await usageService.recordStorageUsage(orgId, bytes, action, {
-        endpoint: req.path,
-        filename: req.file?.originalname,
-      });
-    }
+    if (!orgId) return;
+    if (orgId.length > ORG_ID_MAX_LEN) return;
+
+    const rawBytes = Number(String(bytes).trim());
+    if (!Number.isFinite(rawBytes) || rawBytes <= 0) return;
+
+    const file = safeFile(req);
+
+    const safeAction = String(action).slice(0, ACTION_MAX_LEN);
+    const endpoint = truncate(safeGet(() => req.path, ''), STRING_FIELD_MAX_LEN);
+    const filename = truncate(
+      safeGet(() => file?.originalname, undefined),
+      STRING_FIELD_MAX_LEN
+    );
+
+    await svc.recordStorageUsage(orgId, rawBytes, safeAction, {
+      endpoint,
+      filename,
+    });
   } catch (error: unknown) {
     logger.error('Failed to record storage usage:', error);
   }

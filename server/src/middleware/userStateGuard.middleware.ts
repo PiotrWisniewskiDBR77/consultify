@@ -10,7 +10,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 
-import UserStateMachine from '../../services/userStateMachine.js';
+import UserStateMachine from '../services/userStateMachine.js';
 import { getDatabase as getDb } from '../database/Database.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
@@ -21,7 +21,7 @@ import type { AuthRequest } from './auth.middleware.js';
 
 interface Database {
   getAsync: (sql: string, params: unknown[]) => Promise<unknown>;
-  run: (sql: string, params: unknown[]) => Promise<void>;
+  run: (sql: string, params: unknown[]) => Promise<{ changes?: number } | undefined | void>;
 }
 
 interface UserRow {
@@ -35,7 +35,7 @@ interface UserStateRequest extends AuthRequest {
   statePermissions?: Record<string, unknown>;
 }
 
-interface UserStateMachine {
+interface UserStateMachineShape {
   USER_STATES: Record<string, string>;
   PHASES: Record<string, string>;
   getPermissions: (state: string) => Record<string, unknown>;
@@ -49,7 +49,7 @@ interface UserStateMachine {
 }
 
 interface Dependencies {
-  UserStateMachine: UserStateMachine;
+  UserStateMachine: UserStateMachineShape;
   db: Database | null;
 }
 
@@ -61,6 +61,36 @@ let deps: Dependencies = {
   UserStateMachine,
   db: getDb() as unknown as Database,
 };
+
+// ==========================================
+// HELPERS
+// ==========================================
+
+function safeGet<T>(fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
+
+function trimStr(s: unknown): string {
+  if (typeof s !== 'string') return '';
+  return s.trim();
+}
+
+function getPermissionsSafe(
+  usm: UserStateMachineShape,
+  state: string
+): Record<string, unknown> | null {
+  try {
+    const perms = usm.getPermissions(state);
+    if (perms && typeof perms === 'object' && !Array.isArray(perms)) return perms;
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 // ==========================================
 // MIDDLEWARE
@@ -76,48 +106,78 @@ export async function attachUserState(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { UserStateMachine, db } = deps;
+    const { UserStateMachine: usm, db } = deps;
+    const ANON = usm.USER_STATES.ANON;
+    const DEFAULT_PHASE = usm.PHASES.A;
 
-    // Skip if no user
-    if (!req.user?.id) {
-      req.userState = UserStateMachine.USER_STATES.ANON;
-      req.currentPhase = UserStateMachine.PHASES.A;
+    const setAnonAndNext = (): void => {
+      req.userState = ANON;
+      req.currentPhase = DEFAULT_PHASE;
+      const perms = getPermissionsSafe(usm, ANON);
+      req.statePermissions =
+        perms ?? (getPermissionsSafe(usm, ANON) || {});
       next();
+    };
+
+    const userId = safeGet(() => req.user?.id, undefined);
+
+    if (!userId) {
+      setAnonAndNext();
       return;
     }
 
-    // Fetch from database
     if (!db) {
-      req.userState = UserStateMachine.USER_STATES.ANON;
-      req.currentPhase = UserStateMachine.PHASES.A;
-      next();
+      setAnonAndNext();
       return;
     }
 
-    const user = (await db.getAsync(
+    const row = await db.getAsync(
       'SELECT user_journey_state, current_phase FROM users WHERE id = ?',
-      [req.user.id]
-    )) as UserRow | null;
+      [userId]
+    );
 
-    if (user) {
-      req.userState = user.user_journey_state || UserStateMachine.USER_STATES.ANON;
-      req.currentPhase = user.current_phase || UserStateMachine.PHASES.A;
-    } else {
-      req.userState = UserStateMachine.USER_STATES.ANON;
-      req.currentPhase = UserStateMachine.PHASES.A;
+    if (!row || typeof row !== 'object' || Array.isArray(row)) {
+      setAnonAndNext();
+      return;
     }
 
-    // Attach permissions for convenience
-    req.statePermissions = UserStateMachine.getPermissions(req.userState);
+    const userRow = row as UserRow;
+
+    // Trim and validate state
+    const rawState = trimStr(userRow.user_journey_state);
+    const knownStates = Object.values(usm.USER_STATES);
+    const resolvedState = knownStates.includes(rawState) ? rawState : ANON;
+
+    // Trim and validate phase
+    const rawPhase = trimStr(userRow.current_phase);
+    const knownPhases = Object.values(usm.PHASES);
+    let resolvedPhase: string;
+    if (knownPhases.includes(rawPhase)) {
+      resolvedPhase = rawPhase;
+    } else {
+      // Repair: derive from state machine
+      resolvedPhase = safeGet(() => usm.getPhase(resolvedState), DEFAULT_PHASE);
+    }
+
+    req.userState = resolvedState;
+    req.currentPhase = resolvedPhase;
+
+    // Attach permissions
+    const perms = getPermissionsSafe(usm, resolvedState);
+    if (perms) {
+      req.statePermissions = perms;
+    } else {
+      req.statePermissions = getPermissionsSafe(usm, ANON) || {};
+    }
 
     next();
   } catch (error: unknown) {
     logger.error('attachUserState error:', error);
-    const { UserStateMachine } = deps;
-    // Fail closed - treat as ANON
-    req.userState = UserStateMachine.USER_STATES.ANON;
-    req.currentPhase = UserStateMachine.PHASES.A;
-    req.statePermissions = UserStateMachine.getPermissions(UserStateMachine.USER_STATES.ANON);
+    const { UserStateMachine: usm } = deps;
+    const ANON = usm.USER_STATES.ANON;
+    req.userState = ANON;
+    req.currentPhase = usm.PHASES.A;
+    req.statePermissions = getPermissionsSafe(usm, ANON) || {};
     next();
   }
 }
@@ -128,12 +188,36 @@ export async function attachUserState(
  * @returns Express middleware
  */
 export function requireState(allowedStates: string | string[]) {
-  const states = Array.isArray(allowedStates) ? allowedStates : [allowedStates];
+  const rawStates = Array.isArray(allowedStates) ? allowedStates : [allowedStates];
+  const trimmedStates = rawStates.map(trimStr).filter(Boolean);
 
   return (req: UserStateRequest, res: Response, next: NextFunction): void => {
-    const currentState = req.userState;
+    const { UserStateMachine: usm } = deps;
 
-    if (!currentState) {
+    // Misconfiguration guard: blank list
+    if (trimmedStates.length === 0) {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: 'requireState was configured with no valid states.',
+      });
+      return;
+    }
+
+    // Misconfiguration guard: unknown states
+    const knownStates = Object.values(usm.USER_STATES);
+    const invalidStates = trimmedStates.filter((s) => !knownStates.includes(s));
+    if (invalidStates.length > 0) {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: `requireState was configured with unknown states: ${invalidStates.join(', ')}`,
+        invalidStates,
+      });
+      return;
+    }
+
+    const currentState = safeGet(() => req.userState, undefined);
+
+    if (!currentState || !trimStr(currentState)) {
       res.status(401).json({
         error: 'USER_STATE_UNKNOWN',
         message: 'User state not determined. Are you logged in?',
@@ -141,12 +225,12 @@ export function requireState(allowedStates: string | string[]) {
       return;
     }
 
-    if (!states.includes(currentState)) {
+    if (!trimmedStates.includes(currentState)) {
       res.status(403).json({
         error: 'INVALID_USER_STATE',
-        message: `This action requires state: ${states.join(' or ')}. Current state: ${currentState}`,
+        message: `This action requires state: ${trimmedStates.join(' or ')}. Current state: ${currentState}`,
         currentState,
-        requiredStates: states,
+        requiredStates: trimmedStates,
         currentPhase: req.currentPhase,
       });
       return;
@@ -162,17 +246,40 @@ export function requireState(allowedStates: string | string[]) {
  * @returns Express middleware
  */
 export function requirePhase(allowedPhases: string | string[]) {
-  const phases = Array.isArray(allowedPhases) ? allowedPhases : [allowedPhases];
+  const rawPhases = Array.isArray(allowedPhases) ? allowedPhases : [allowedPhases];
+  const trimmedPhases = rawPhases.map(trimStr).filter(Boolean);
 
   return (req: UserStateRequest, res: Response, next: NextFunction): void => {
-    const currentPhase = req.currentPhase;
+    const { UserStateMachine: usm } = deps;
 
-    if (!phases.includes(currentPhase || '')) {
+    // Misconfiguration guard: unknown phases
+    const knownPhases = Object.values(usm.PHASES);
+    const invalidPhases = trimmedPhases.filter((p) => !knownPhases.includes(p));
+    if (invalidPhases.length > 0) {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: `requirePhase was configured with unknown phases: ${invalidPhases.join(', ')}`,
+        invalidPhases,
+      });
+      return;
+    }
+
+    const currentPhase = safeGet(() => req.currentPhase, undefined);
+
+    if (!currentPhase) {
+      res.status(401).json({
+        error: 'USER_PHASE_UNKNOWN',
+        message: 'User phase not determined. Are you logged in?',
+      });
+      return;
+    }
+
+    if (!trimmedPhases.includes(currentPhase)) {
       res.status(403).json({
         error: 'INVALID_PHASE',
-        message: `This action requires phase: ${phases.join(' or ')}. Current phase: ${currentPhase}`,
+        message: `This action requires phase: ${trimmedPhases.join(' or ')}. Current phase: ${currentPhase}`,
         currentPhase,
-        requiredPhases: phases,
+        requiredPhases: trimmedPhases,
       });
       return;
     }
@@ -187,17 +294,43 @@ export function requirePhase(allowedPhases: string | string[]) {
  * @returns Express middleware
  */
 export function requirePermission(permission: string) {
-  return (req: UserStateRequest, res: Response, next: NextFunction): void => {
-    const { UserStateMachine } = deps;
+  const trimmedPermission = trimStr(permission);
 
-    const hasPermission = UserStateMachine.hasPermission(req.userState || '', permission);
+  return (req: UserStateRequest, res: Response, next: NextFunction): void => {
+    // Misconfiguration guard
+    if (!trimmedPermission) {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: 'requirePermission was configured with no valid permission key.',
+      });
+      return;
+    }
+
+    const { UserStateMachine: usm } = deps;
+
+    const currentState = safeGet(() => req.userState, undefined);
+
+    if (!currentState) {
+      res.status(401).json({
+        error: 'USER_STATE_UNKNOWN',
+        message: 'User state not determined. Are you logged in?',
+      });
+      return;
+    }
+
+    let hasPermission: boolean;
+    try {
+      hasPermission = usm.hasPermission(currentState, trimmedPermission);
+    } catch {
+      hasPermission = false;
+    }
 
     if (!hasPermission) {
       res.status(403).json({
         error: 'PERMISSION_DENIED',
-        message: `Permission '${permission}' not available in state: ${req.userState}`,
-        currentState: req.userState,
-        requiredPermission: permission,
+        message: `Permission '${trimmedPermission}' not available in state: ${currentState}`,
+        currentState,
+        requiredPermission: trimmedPermission,
       });
       return;
     }
@@ -208,11 +341,6 @@ export function requirePermission(permission: string) {
 
 /**
  * Transition user state in database
- * @param userId - User ID
- * @param fromState - Current state
- * @param toState - Target state
- * @param context - Transition context
- * @returns Promise with success status
  */
 export async function transitionState(
   userId: string,
@@ -220,46 +348,86 @@ export async function transitionState(
   toState: string,
   context: Record<string, unknown> = {}
 ): Promise<{ success: boolean; error?: string }> {
-  const { UserStateMachine, db } = deps;
+  const { UserStateMachine: usm, db } = deps;
+
+  // Validate and trim userId
+  const trimmedUserId = trimStr(userId);
+  if (!trimmedUserId) {
+    return { success: false, error: 'Invalid user id' };
+  }
+
+  // Validate states before calling machine
+  const knownStates = Object.values(usm.USER_STATES);
+  const trimmedFrom = trimStr(fromState);
+  const trimmedTo = trimStr(toState);
+
+  if (!trimmedFrom) {
+    return { success: false, error: 'Invalid state: fromState is blank' };
+  }
+  if (!trimmedTo) {
+    return { success: false, error: 'Invalid state: toState is blank' };
+  }
+  if (!knownStates.includes(trimmedFrom)) {
+    return { success: false, error: `Unknown user state: ${trimmedFrom}` };
+  }
+  if (!knownStates.includes(trimmedTo)) {
+    return { success: false, error: `Unknown user state: ${trimmedTo}` };
+  }
+
+  // Resolve new phase for target state before DB (may throw)
+  let newPhase: string;
+  try {
+    newPhase = usm.getPhase(trimmedTo);
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
 
   // Validate transition
-  const validation = UserStateMachine.validateTransition(fromState, toState, context);
+  let validation: { valid: boolean; reason?: string };
+  try {
+    validation = usm.validateTransition(trimmedFrom, trimmedTo, context ?? {});
+  } catch (e) {
+    return { success: false, error: `validation failed: ${(e as Error).message}` };
+  }
+
   if (!validation.valid) {
     return { success: false, error: validation.reason };
   }
-
-  // Get new phase
-  const newPhase = UserStateMachine.getPhase(toState);
 
   if (!db) {
     return { success: false, error: 'Database not available' };
   }
 
   try {
-    await db.run(
-      `UPDATE users 
-             SET user_journey_state = ?, 
+    const result = await db.run(
+      `UPDATE users
+             SET user_journey_state = ?,
                  current_phase = ?,
                  journey_state_changed_at = datetime('now'),
                  phase_changed_at = datetime('now')
              WHERE id = ?`,
-      [toState, newPhase, userId]
+      [trimmedTo, newPhase, trimmedUserId]
     );
 
-    // Log to audit (if auditService available)
+    if (result && typeof result === 'object' && 'changes' in result && result.changes === 0) {
+      return { success: false, error: 'User not updated: user not found' };
+    }
+
+    // Log to audit (if auditService available) — swallow all errors
     try {
-      const AuditService = await import('../../services/auditService.js').then(
+      const AuditService = await import('../services/auditService.js').then(
         (m) => m.default || m
       );
+      const fromPhase = safeGet(() => usm.getPhase(trimmedFrom), '');
       await (AuditService as any).log({
         eventType: 'USER_STATE_TRANSITION',
-        userId,
+        userId: trimmedUserId,
         metadata: {
-          fromState,
-          toState,
-          fromPhase: UserStateMachine.getPhase(fromState),
+          fromState: trimmedFrom,
+          toState: trimmedTo,
+          fromPhase,
           toPhase: newPhase,
-          context: { ...context, timestamp: new Date().toISOString() },
+          context: { ...(context ?? {}), timestamp: new Date().toISOString() },
         },
       });
     } catch (auditError) {
@@ -275,13 +443,6 @@ export async function transitionState(
 
 // ==========================================
 // EXPORTS
-// ==========================================
-
-export const USER_STATES = UserStateMachine.USER_STATES;
-export const PHASES = UserStateMachine.PHASES;
-
-// ==========================================
-// DEPENDENCY INJECTION (for testing)
 // ==========================================
 
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {

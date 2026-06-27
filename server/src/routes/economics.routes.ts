@@ -2398,8 +2398,28 @@ router.post(
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
-    await valuationSvc.approveValuation(orgId, req.params.id, userId);
-    return res.json({ success: true, status: 'APPROVED' });
+    try {
+      await valuationSvc.approveValuation(orgId, req.params.id, userId);
+      return res.json({ success: true, status: 'APPROVED' });
+    } catch (err: any) {
+      const msg = String(err?.message || 'Approval failed');
+      // Pre-conditions that the caller can fix → 400 (not 500).
+      // "Compute valuation before approval" — no DCF results yet.
+      // "Validation failed:" — g >= WACC constraint.
+      // "Valuation not found" → 404.
+      if (msg.includes('not found') || msg.includes('Not found')) {
+        return res.status(404).json({ error: msg });
+      }
+      if (
+        msg.includes('Compute valuation') ||
+        msg.includes('Validation failed') ||
+        msg.includes('terminal growth') ||
+        msg.includes('approved before')
+      ) {
+        return res.status(400).json({ error: msg });
+      }
+      throw err;
+    }
   })
 );
 
@@ -2676,8 +2696,25 @@ router.post(
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
-    await budgetingSvc.approveBudget(orgId, req.params.id, userId);
-    return res.json({ success: true });
+    try {
+      await budgetingSvc.approveBudget(orgId, req.params.id, userId);
+      return res.json({ success: true });
+    } catch (err: any) {
+      const msg = String(err?.message || 'Approval failed');
+      if (msg.toLowerCase().includes('not found')) {
+        return res.status(404).json({ error: msg });
+      }
+      // Pre-condition failures (missing CAPEX line etc.) → 400.
+      if (
+        msg.includes('CAPEX') ||
+        msg.includes('required before approval') ||
+        msg.includes('approved before') ||
+        msg.includes('Cannot approve')
+      ) {
+        return res.status(400).json({ error: msg });
+      }
+      throw err;
+    }
   })
 );
 
