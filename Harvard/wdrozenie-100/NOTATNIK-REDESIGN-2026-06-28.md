@@ -57,7 +57,7 @@ Wszystkie uwagi w jednym spójnym ekranie: górny pasek **bez 3-tools-strip** (U
 - **N5** ✅ — lewa kolumna (U11): Capture + 2 filtry + czysta lista; usuń Inbox/Active/All taby, progress bar, słońce-toggle, filtr-ikonę. **ZROBIONE** `b3dc957231` (patrz niżej).
 - **N6** 🟡 — Context panel (U14): **UUID→czytelne nazwy ✅** (`e727ee1af2`: usunięty `typ·UUID` row, etykiety PL/EN, status-chip). ZOSTAJE: ukryć puste sekcje, zweryfikować Insert/Open.
 - **N7** ⬜ — slash `/` menu: insert bloków (`BLOCK_TYPES_CANON.md`) + markdown skróty.
-- **N8** ⬜ — polish: typografia, spacing, oddech, floating format toolbar.
+- **N8** ✅ — **floating format toolbar** (`dfbb6fd53f`): selection bubble menu (Bold/Italic/Underline/Strike·Code/Highlight/Link) = `NotebookBubbleToolbar.tsx`, reużywa komend `NotebookToolbar`, monochrome, `shouldShow` chowa dla pustego/code-block/node-selection. TipTap v3 → `@tiptap/react/menus`. Stub w manual-gate (BubbleMenu nie montuje się na mocku edytora). 260 testów zielone. *(typografia/spacing = drobny dalszy szlif, nie-blokujący)*.
 Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane. **Zrobione 2026-06-28 (multi-agent, 4 agenty równolegle + ja na monolicie):**
 - **N1 ✅** hamburger ⋯ wpięty (`c8fb71081e`): ⋯ button → NotebookHamburgerMenu (Note/Convert/AI/Danger). *(addytywny — panel/rail jeszcze zostaje, pełne zastąpienie po N7 slash przejmie Insert)*.
 - **N2 ✅** 3-tools-strip ukryty za odwracalną flagą `SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP=false` (`ee300c1598`).
