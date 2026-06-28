@@ -43,7 +43,8 @@ U1-U14. Kluczowe nieadresowane/funkcjonalne:
 - **U9 ✅** „Failed to save notebook" (`6d72aab903`) — goły `catch{}` w `NotebookModal.handleSave` połykał realny błąd serwera (403 owner-only / „Not a team member" / 5xx) → teraz doklejony do toasta, generyczny szum (Failed to fetch) ukryty. +2 testy komponentu. *Root-cause najpewniej `canMutateNotebook` owner-only (notatnik nie-własny) — realna przyczyna pokaże się teraz w toaście na żywo.*
 - **N5 ✅ · N7 ✅ · N8 ✅** (powyżej). **FAZA 1 KOMPLETNA — całość redesignu UI Notatnika domknięta i live-zweryfikowana na demo. NASTĘPNY KROK = FAZA 2 (killery funkcjonalne) albo odbiór Piotra.**
 
-**FAZA 2 (funkcje, ~tygodnie, backend) — D4:** K1 @mention+dwukierunkowe linki (rozbudowa Context=graf wiedzy, NASZ wyróżnik) · K2 bookmark rich-link (backend fetch) · K3 AI rozszerzone · K4 więcej bloków.
+**FAZA 2 (funkcje) — RUSZYŁA:**
+- **K1 🟢 pierwszy przyrost DONE** (`df21cc84ac`, na demo) — @mention + dwukierunkowe linki. „@" w edytorze → picker (inicjatywy/zadania/decyzje/pomysły/notatki) → `embeddedRef` inline + krawędź `link_graph_edges` (note→encja) → encja dostaje backlink (Context panel pokazuje). **ODKRYCIE: cały backend K1 JUŻ ISTNIAŁ** (link_graph_edges+backlinks API+EmbeddedRefNode+search endpointy+embed-resolve) — to był frontend-only (`NotebookMentionMenu.tsx`, mirror SlashMenu). Mapę infry zrobił agent Explore. **ZOSTAŁO K1:** podgląd backlinków w edytorze (sekcja „Wzmiankowane w" — dziś tylko w Context panel). **Następne FAZA 2:** K2 bookmark rich-link (backend fetch) · K3 AI rozszerzone · K4 więcej bloków.
 
 **Rozstrzygnięcia (rekomendacje, do potwierdzenia Piotra):** D1 stepper w nagłówku · D2 status pigułka+popover · D3 rich-link FAZA 2 · D4 redesign-UI-najpierw.
 

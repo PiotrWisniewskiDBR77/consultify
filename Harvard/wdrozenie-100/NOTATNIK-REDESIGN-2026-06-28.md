@@ -69,7 +69,7 @@ Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane. **Zr
 **Cofalność:** każda fala = osobny commit (Piotr: „żeby móc cofnąć"). **GIT-RACES:** rebase wciągnął cudzy WIP z 10 tsc-błędami (Ideas reactflow/Economics/DocumentStudio — NIE Notatnik; vite buduje, ale Ideas runtime ryzyko — osobny problem brancha).
 
 ### FAZA 2 — Killery funkcjonalne (program, ~tygodnie, backend) — D4
-- **K1** — @mention + **dwukierunkowe linki** notatka↔artefakty (rozbudowa Context = żywy graf wiedzy; backlinks index). NASZ wyróżnik ponad Notion.
+- **K1** 🟢 PIERWSZY PRZYROST DONE (`df21cc84ac`) — @mention + **dwukierunkowe linki** notatka↔artefakty. Wpisz „@" w edytorze → szukaj inicjatyw/zadań/decyzji/pomysłów/notatek → wstaw inline `embeddedRef` + krawędź grafu (note→encja) → encja dostaje backlink do notatki (Context panel już pokazuje). **REUŻYTO CAŁY istniejący backend** (`link_graph_edges`+backlinks API, `EmbeddedRefNode`, search endpointy, embed-chip resolve) — zero nowego backendu, zero nowych zależności. Nowy `NotebookMentionMenu.tsx` (mirror wzorca SlashMenu: `detectMentionTrigger`, „@" tylko po spacji/starcie→maile nie triggerują, query wielowyrazowe+PL). tsc+260+7 testów+vite build zielone. **ZOSTAŁO K1:** podgląd backlinków w samym edytorze (nie tylko Context panel) + ewentualnie note↔note widoczność. NASZ wyróżnik ponad Notion.
 - **K2** — bookmark rich-link (backend fetch tytuł/opis/favicon + AI-summary) — wiąże capture U11/D3.
 - **K3** — AI rozszerzone (pisz-dalej / podsumuj / action-items / zapytaj-o-notatkę) — ponad obecne Command/Chat/Translate/Style.
 - **K4** — więcej bloków (nagłówki/listy/kod/obraz/cytat) — pełny edytor blokowy.
