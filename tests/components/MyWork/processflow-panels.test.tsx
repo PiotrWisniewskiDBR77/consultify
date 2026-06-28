@@ -356,11 +356,44 @@ describe('ProcessFlow context menu helpers', () => {
       onDelete,
       onOpenProperties,
     });
-    expect(actions.map((a) => a.label)).toEqual(['Edit label', 'Duplicate', 'Properties', 'Delete']);
-    actions[0].onClick();
+    // Canon K6 order: Open → Context (edit/duplicate) → Danger. Optional AI/convert/auto
+    // items only appear when their handlers are passed.
+    expect(actions.map((a) => a.label)).toEqual([
+      'Open properties',
+      'Edit label',
+      'Duplicate',
+      'Delete',
+    ]);
+    actions[1].onClick();
     expect(onEditLabel).toHaveBeenCalled();
     actions[3].onClick();
     expect(onDelete).toHaveBeenCalled();
+    // Delete is danger-styled and separated from the group above (K6).
+    expect(actions[3].danger).toBe(true);
+    expect(actions[3].separatorBefore).toBe(true);
+  });
+
+  it('getNodeContextActions adds Auto-layout + Convert only when handlers provided', () => {
+    const onAutoLayout = vi.fn();
+    const onConvertInitiative = vi.fn();
+    const actions = getNodeContextActions({
+      nodeId: 'n1',
+      isPl: false,
+      locked: false,
+      onEditLabel: vi.fn(),
+      onDuplicate: vi.fn(),
+      onDelete: vi.fn(),
+      onOpenProperties: vi.fn(),
+      onAutoLayout,
+      onConvertInitiative,
+    });
+    const labels = actions.map((a) => a.label);
+    expect(labels).toContain('Auto-layout');
+    expect(labels).toContain('Convert to initiative');
+    actions.find((a) => a.id === 'auto-layout')?.onClick();
+    expect(onAutoLayout).toHaveBeenCalled();
+    actions.find((a) => a.id === 'convert-initiative')?.onClick();
+    expect(onConvertInitiative).toHaveBeenCalled();
   });
 
   it('getNodeContextActions disables destructive actions when locked', () => {

@@ -2625,20 +2625,32 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   isPl: !!isPl,
                   locked,
                   onEditLabel: () => {
-                    const node = nodes.find((n) => n.id === contextMenu.nodeId);
-                    if (node?.data?.onLabelChange) {
-                      setNodes((prev) =>
-                        prev.map((n) =>
-                          n.id === contextMenu.nodeId ? { ...n, selected: true } : n
-                        )
-                      );
-                    }
+                    // Bump editSignal on the node → FlowNodeComponent starts inline edit
+                    // (fixes U8: previously this only selected, never opened the editor).
+                    setNodes((prev) =>
+                      prev.map((n) =>
+                        n.id === contextMenu.nodeId
+                          ? {
+                              ...n,
+                              selected: true,
+                              data: {
+                                ...n.data,
+                                editSignal: (Number(n.data?.editSignal) || 0) + 1,
+                              },
+                            }
+                          : n
+                      )
+                    );
                   },
                   onDuplicate: () => duplicateSelected(),
                   onDelete: () => deleteSelected(),
                   onOpenProperties: () => {
                     setShowPropertiesPanel(true);
                   },
+                  onAutoLayout: () => handleAutoLayout(),
+                  onConvertInitiative: onQuickAction
+                    ? () => handleConvert('pf_convert_initiative')
+                    : undefined,
                 })
               : getCanvasContextActions({
                   isPl: !!isPl,
