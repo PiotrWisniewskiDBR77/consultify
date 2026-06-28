@@ -343,10 +343,19 @@ export class AIPipeline {
             const mcpModule = await import('./mcpServer.js');
             const mcp = (mcpModule.mcpServer || mcpModule.default) as any;
             await import('./tools/index.js').catch(() => {});
-            const def = mcp
+            // Expose BOTH chat-creation tools so the model can choose the right one:
+            //   generate_deliverable → document/sheet/deck artifact (canvas)
+            //   generate_initiative  → a real DRAFT initiative entity (PMO backbone)
+            // Previously only generate_deliverable was passed, so "stwórz inicjatywę"
+            // could ONLY become a document — the model literally had no initiative
+            // tool to call. The route's deliverableTools.context already carries
+            // organizationId/userId/language, which is exactly what generate_initiative
+            // needs; callStream runs every passed tool with that same context.
+            const CHAT_CREATION_TOOLS = new Set(['generate_deliverable', 'generate_initiative']);
+            const defs = mcp
               .getToolDefinitions()
-              .find((d: { name: string }) => d.name === 'generate_deliverable');
-            if (def) deliverableToolDefs = [def];
+              .filter((d: { name: string }) => CHAT_CREATION_TOOLS.has(d.name));
+            if (defs.length > 0) deliverableToolDefs = defs;
           } catch (e: any) {
             logger.warn(
               `[AIPipeline] deliverable tool wiring skipped: ${String(e?.message || e).slice(0, 160)}`
