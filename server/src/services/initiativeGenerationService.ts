@@ -12,6 +12,7 @@ import DbPromise from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import initiativeSectionTypeService from './initiativeSectionTypeService.js';
+import { buildOrgFinancialsSummary } from './initiative/financialsGrounding.js';
 
 // ==========================================
 // TYPES
@@ -817,6 +818,16 @@ Return valid JSON array only.`;
           /* best-effort — portfolio grounding optional */
         }
 
+        // F0 — financials: realne dane finansowe org (P&L) dla business-case. Best-effort.
+        let financialsSummary: string | undefined;
+        try {
+          if (initiative.organization_id) {
+            financialsSummary = await buildOrgFinancialsSummary(this.db, initiative.organization_id);
+          }
+        } catch {
+          /* best-effort — financialsGrounding fail-soft */
+        }
+
         // F0 — org-context: profil organizacji (nazwa + branża) dla ugruntowania. Best-effort.
         let orgContext: string | undefined;
         try {
@@ -849,6 +860,7 @@ Return valid JSON array only.`;
           existingKpis: context.existingKpis || existingKpis,
           portfolioSummary: context.portfolioSummary || portfolioSummary,
           orgContext: context.orgContext || orgContext,
+          financialsSummary: context.financialsSummary || financialsSummary,
           language: context.language || 'en',
         };
       }

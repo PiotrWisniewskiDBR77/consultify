@@ -197,6 +197,8 @@ import decisionsRoutes from './routes/pmo/decisions.routes.js';
 import executionRoutes from './routes/pmo/execution.routes.js';
 import governanceRoutes from './routes/pmo/governance.routes.js';
 import initiativesRoutes from './routes/pmo/initiatives.routes.js';
+import initiativeCandidatesRouter from './routes/initiativeCandidates.routes.js';
+import initiativeMaterializeRoutes from './routes/initiativeMaterialize.routes.js';
 import pmoRoutes from './routes/pmo/pmo.routes.js';
 import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
 import pmoContextRoutes from './routes/pmo/pmo-context.routes.js';
@@ -468,7 +470,12 @@ export class ApiGateway {
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
       app.use('/api/teams', teamsRoutes);
+      // F2 — skrzynka kandydatów AI. MUSI być PRZED initiativesRoutes: GET /candidates
+      // inaczej łapie się na initiativesRoutes GET /:id (id="candidates").
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeCandidatesRouter);
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
+      // F5 — „Zrób materiał": /:id/materialize + /portfolio/materialize (additive, POST sub-paths).
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeMaterializeRoutes);
       // Additive initiative slices (suggested-changes CRUD + propose engine). Mounted
       // on the same base path AFTER the main router so it only serves the new paths
       // (/:id/suggested-changes, /suggested-changes/:id, /propose) the main router
