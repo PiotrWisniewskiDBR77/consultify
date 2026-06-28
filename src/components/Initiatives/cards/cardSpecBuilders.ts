@@ -256,6 +256,192 @@ export function buildBusinessCaseCardSpec(
   return { sectionKey: 'businessCase', title: L.title, blocks };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 4) SCOPE — inScope[] / outScope[] / killCriteria[]
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ScopeCardData {
+  /** Co WCHODZI w zakres. */
+  inScope?: string[] | null;
+  /** Co JEST poza zakresem (świadome wykluczenia). */
+  outScope?: string[] | null;
+  /** Warunki przerwania (stop / kill). */
+  killCriteria?: string[] | null;
+}
+
+export interface ScopeCardLabels {
+  title?: string;
+  inScopeHeading?: string;
+  outScopeHeading?: string;
+  killCriteriaHeading?: string;
+}
+
+const SCOPE_FALLBACK_LABELS: Required<ScopeCardLabels> = {
+  title: 'Zakres',
+  inScopeHeading: 'W zakresie',
+  outScopeHeading: 'Poza zakresem',
+  killCriteriaHeading: 'Kryteria przerwania',
+};
+
+/**
+ * Buduje `CardSpec` karty zakresu:
+ *   inScope       → heading + bullet_list
+ *   outScope      → heading + bullet_list
+ *   killCriteria  → heading + bullet_list (warunki stop)
+ */
+export function buildScopeCardSpec(
+  data: ScopeCardData | null | undefined,
+  labels: ScopeCardLabels = {},
+): CardSpec {
+  const L = { ...SCOPE_FALLBACK_LABELS, ...labels };
+  const blocks: CardBlock[] = [];
+
+  const inScope = cleanList(data?.inScope);
+  if (inScope.length > 0) {
+    blocks.push({ type: 'heading', text: L.inScopeHeading, level: 4 });
+    blocks.push({ type: 'bullet_list', items: inScope });
+  }
+
+  const outScope = cleanList(data?.outScope);
+  if (outScope.length > 0) {
+    blocks.push({ type: 'heading', text: L.outScopeHeading, level: 4 });
+    blocks.push({ type: 'bullet_list', items: outScope });
+  }
+
+  const killCriteria = cleanList(data?.killCriteria);
+  if (killCriteria.length > 0) {
+    blocks.push({ type: 'heading', text: L.killCriteriaHeading, level: 4 });
+    blocks.push({ type: 'bullet_list', items: killCriteria });
+  }
+
+  return { sectionKey: 'scope', title: L.title, blocks };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5) CONTROL — fakty zarządcze: moduł / status / priorytet / właściciel
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Wartości są już SFORMATOWANE/etykietowane po stronie producenta. */
+export interface ControlCardData {
+  module?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  owner?: string | null;
+}
+
+export interface ControlCardLabels {
+  title?: string;
+  moduleLabel?: string;
+  statusLabel?: string;
+  priorityLabel?: string;
+  ownerLabel?: string;
+}
+
+const CONTROL_FALLBACK_LABELS: Required<ControlCardLabels> = {
+  title: 'Kontrola',
+  moduleLabel: 'Moduł',
+  statusLabel: 'Status',
+  priorityLabel: 'Priorytet',
+  ownerLabel: 'Właściciel',
+};
+
+/**
+ * Buduje `CardSpec` karty kontroli (governance):
+ *   module/status/priority/owner → kpi_strip (kafelki etykieta→wartość).
+ * Tylko wypełnione pola tworzą kafelki; brak wszystkich → karta bez bloków.
+ */
+export function buildControlCardSpec(
+  data: ControlCardData | null | undefined,
+  labels: ControlCardLabels = {},
+): CardSpec {
+  const L = { ...CONTROL_FALLBACK_LABELS, ...labels };
+  const tiles: KpiTile[] = [];
+
+  const moduleVal = clean(data?.module);
+  if (moduleVal) tiles.push({ label: L.moduleLabel, value: moduleVal });
+  const status = clean(data?.status);
+  if (status) tiles.push({ label: L.statusLabel, value: status });
+  const priority = clean(data?.priority);
+  if (priority) tiles.push({ label: L.priorityLabel, value: priority });
+  const owner = clean(data?.owner);
+  if (owner) tiles.push({ label: L.ownerLabel, value: owner });
+
+  const blocks: CardBlock[] = tiles.length > 0 ? [{ type: 'kpi_strip', tiles }] : [];
+
+  return { sectionKey: 'control', title: L.title, blocks };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6) KPIs — wiersze wskaźników (nazwa / baza / aktualnie / cel / jednostka)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Pojedynczy wskaźnik; wartości są stringami (sformatowane po stronie sekcji). */
+export interface KpiRowData {
+  name?: string | null;
+  unit?: string | null;
+  baseline?: string | null;
+  current?: string | null;
+  target?: string | null;
+}
+
+export interface KpisCardLabels {
+  title?: string;
+  columnName?: string;
+  columnBaseline?: string;
+  columnCurrent?: string;
+  columnTarget?: string;
+  columnUnit?: string;
+}
+
+const KPIS_FALLBACK_LABELS: Required<KpisCardLabels> = {
+  title: 'Wskaźniki (KPI)',
+  columnName: 'Wskaźnik',
+  columnBaseline: 'Baza',
+  columnCurrent: 'Aktualnie',
+  columnTarget: 'Cel',
+  columnUnit: 'Jednostka',
+};
+
+const KPI_DASH = '—';
+
+/**
+ * Buduje `CardSpec` karty KPI:
+ *   wiersze wskaźników → table [Wskaźnik, Baza, Aktualnie, Cel, Jednostka].
+ * Pomijane są wiersze bez nazwy; brak wszystkich → karta bez bloków.
+ * Puste komórki wartości wypełniane są myślnikiem (spójna szerokość tabeli).
+ */
+export function buildKpisCardSpec(
+  rows: KpiRowData[] | null | undefined,
+  labels: KpisCardLabels = {},
+): CardSpec {
+  const L = { ...KPIS_FALLBACK_LABELS, ...labels };
+  const blocks: CardBlock[] = [];
+
+  const valid = Array.isArray(rows)
+    ? rows.filter((r): r is KpiRowData => !!r && isNonEmpty(r.name))
+    : [];
+
+  if (valid.length > 0) {
+    const columns = [
+      L.columnName,
+      L.columnBaseline,
+      L.columnCurrent,
+      L.columnTarget,
+      L.columnUnit,
+    ];
+    const tableRows = valid.map((r) => [
+      clean(r.name) ?? KPI_DASH,
+      clean(r.baseline) ?? KPI_DASH,
+      clean(r.current) ?? KPI_DASH,
+      clean(r.target) ?? KPI_DASH,
+      clean(r.unit) ?? KPI_DASH,
+    ]);
+    blocks.push({ type: 'table', columns, rows: tableRows });
+  }
+
+  return { sectionKey: 'kpis', title: L.title, blocks };
+}
+
 // ── opcjonalny convenience: builder + walidacja w jednym ─────────────────────
 
 /**
