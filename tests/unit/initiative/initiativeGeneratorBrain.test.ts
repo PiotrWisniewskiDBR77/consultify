@@ -302,3 +302,45 @@ describe('F1 — defaultDeps()', () => {
     expect(r.cards.scope).toContain('default-content for scope');
   });
 });
+
+// ── R3 enablement: structured JSON capture (parsedContent → clean field-JSON) ──
+describe('F1 — structured JSON capture for typed-column hydration (R3)', () => {
+  it('stores parsedContent as CLEAN field-JSON in cards (not the fenced raw string)', async () => {
+    const fields = { inScope: ['Moduł zamówień'], outOfScope: ['Migracja'], killCriteria: ['ROI<0'] };
+    const gen: SectionGenerator = {
+      generateSectionContent: vi.fn(async (sectionKey: string) => ({
+        content: '```json\n' + JSON.stringify(fields) + '\n```', // fenced raw
+        isJson: true,
+        parsedContent: fields, // structured, already parsed
+        tokensUsed: 1,
+        model: 'mock',
+        review: { score: 95, verdict: 'PASS', failedValidators: [], qualityGaps: [], fixes: [], sectionKey, model: 'mock', degraded: false },
+      })),
+    } as any;
+    const r = await generateFullInitiative({ generationService: gen, passThreshold: 90 }, {
+      initiativeId: 'i-r3',
+      cardKeys: ['scope'],
+    });
+    // card content is the clean JSON (no markdown fences) → R3 parseJsonLoose hydrates cleanly
+    expect(r.cards.scope).toBe(JSON.stringify(fields));
+    expect(r.cards.scope).not.toContain('```');
+    expect(JSON.parse(r.cards.scope)).toEqual(fields);
+  });
+
+  it('prose sections (no parsedContent) keep their text unchanged', async () => {
+    const gen: SectionGenerator = {
+      generateSectionContent: vi.fn(async (sectionKey: string) => ({
+        content: `prose for ${sectionKey}`,
+        isJson: false,
+        tokensUsed: 1,
+        model: 'mock',
+        review: { score: 95, verdict: 'PASS', failedValidators: [], qualityGaps: [], fixes: [], sectionKey, model: 'mock', degraded: false },
+      })),
+    } as any;
+    const r = await generateFullInitiative({ generationService: gen, passThreshold: 90 }, {
+      initiativeId: 'i-prose',
+      cardKeys: ['problemDefinition'],
+    });
+    expect(r.cards.problemDefinition).toBe('prose for problemDefinition');
+  });
+});

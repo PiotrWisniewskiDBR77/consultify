@@ -329,7 +329,17 @@ export async function generateFullInitiative(
         }
       }
 
-      outcome.content = String(finalResult?.content ?? '');
+      // R3 enablement: when a section emitted STRUCTURED JSON (parsedContent),
+      // store the CLEAN field-shaped JSON (no markdown fences) so typed-column
+      // hydration (cardColumnHydration) can populate the authoritative columns
+      // (problem_statement/scope_in/…). Prose sections keep their text. The
+      // `ai_generated_sections` sink is not rendered as prose in the FE, so
+      // normalizing JSON sections here is display-safe and strictly helps R3.
+      const parsed = finalResult?.parsedContent;
+      outcome.content =
+        parsed && typeof parsed === 'object'
+          ? JSON.stringify(parsed)
+          : String(finalResult?.content ?? '');
       const finalScore = reviewScore(finalResult);
       if (typeof finalScore === 'number') outcome.score = finalScore;
     } catch (err: any) {
