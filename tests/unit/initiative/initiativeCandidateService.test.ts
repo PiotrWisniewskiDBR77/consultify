@@ -19,12 +19,45 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryRun: vi.fn(async () => ({ changes: 0 })),
 }));
 
+// F2→F1 wiring imports the canonical funnel + generator brain. Mock both so the
+// service module imports cleanly without pulling the real LLM/DB chain. Per-test
+// behaviour is exercised through INJECTED deps (opts.deps), not these spies —
+// these only guarantee the module graph stays light + give a real-default safety net.
+// vi.hoisted lifts the spies above the hoisted vi.mock factories.
+const { mockFunnelCreate, mockGenerateFull, mockGeneratorDefaultDeps } = vi.hoisted(() => ({
+  mockFunnelCreate: vi.fn(async (_orgId: string, input: any) => ({
+    id: 'init-default',
+    name: input?.title ?? 'T',
+    title: input?.title ?? 'T',
+    status: 'DRAFT',
+    sourceType: input?.sourceType ?? 'manual',
+    sourceId: input?.sourceId ?? null,
+  })),
+  mockGenerateFull: vi.fn(async (_deps: any, input: any) => ({
+    initiativeId: input?.initiativeId ?? 'init-default',
+    language: 'pl',
+    cards: {},
+    outcomes: [],
+    qualitySummary: { total: 0, filled: 0, failed: 0, healed: 0, averageScore: null, belowThreshold: [] },
+  })),
+  mockGeneratorDefaultDeps: vi.fn(() => ({ generationService: {} as any })),
+}));
+vi.mock('../../../server/src/services/initiative/createInitiativeService.js', () => ({
+  createInitiative: mockFunnelCreate,
+  default: { createInitiative: mockFunnelCreate },
+}));
+vi.mock('../../../server/src/services/initiative/initiativeGeneratorBrain.js', () => ({
+  generateFullInitiative: mockGenerateFull,
+  defaultDeps: mockGeneratorDefaultDeps,
+}));
+
 import {
   acceptCandidate,
   buildCandidateFromArtifact,
   dismissCandidate,
   listCandidates,
   scanForCandidates,
+  type AcceptDeps,
   type CandidateDb,
   type DiscoveryArtifact,
 } from '../../../server/src/services/initiative/initiativeCandidateService.ts';
@@ -317,6 +350,178 @@ describe('F2/L1 — acceptCandidate', () => {
     const payload = await acceptCandidate(db, 'c1', 'org-1');
     expect(payload).not.toBeNull();
     expect(payload!.candidateId).toBe('c1');
+  });
+});
+
+// ===========================================================================
+describe('F2→F1 — acceptCandidate tworzy DRAFT + uruchamia generator', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const candidateRow = {
+    id: 'c1',
+    organization_id: 'org-1',
+    source_type: 'interview_insight',
+    source_id: 'ins-1',
+    title: 'Inicjatywa: Czas obsługi',
+    rationale: 'AI sugeruje na podstawie insightu',
+    fit_score: 0.7,
+    status: 'pending',
+  };
+
+  function makeAcceptDeps(over: Partial<AcceptDeps> = {}): AcceptDeps & {
+    createCalls: any[][];
+    fillCalls: any[][];
+  } {
+    const createCalls: any[][] = [];
+    const fillCalls: any[][] = [];
+    return {
+      createCalls,
+      fillCalls,
+      createInitiative: over.createInitiative
+        ? over.createInitiative
+        : (((orgId: string, input: any, options: any) => {
+            createCalls.push([orgId, input, options]);
+            return Promise.resolve({
+              id: 'init-9',
+              name: input.title,
+              title: input.title,
+              status: 'DRAFT',
+              sourceType: input.sourceType,
+              sourceId: input.sourceId ?? null,
+            });
+          }) as any),
+      generateFull: over.generateFull
+        ? over.generateFull
+        : (((deps: any, input: any) => {
+            fillCalls.push([deps, input]);
+            return Promise.resolve({
+              initiativeId: input.initiativeId,
+              language: 'pl',
+              cards: { problemDefinition: 'x' },
+              outcomes: [],
+              qualitySummary: { total: 6, filled: 5, failed: 1, healed: 0, averageScore: 8, belowThreshold: [] },
+            });
+          }) as any),
+      generatorDeps: over.generatorDeps ?? ((() => ({ generationService: {} as any })) as any),
+    };
+  }
+
+  it('tworzy DRAFT z liniażem kandydata (source_type/source_id) i zwraca initiativeId', async () => {
+    const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
+    const deps = makeAcceptDeps();
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', userId: 'u-1', deps });
+
+    expect(payload).not.toBeNull();
+    expect(payload!.initiativeId).toBe('init-9');
+    expect(deps.createCalls).toHaveLength(1);
+    const [orgArg, inputArg, optsArg] = deps.createCalls[0];
+    expect(orgArg).toBe('org-1');
+    expect(inputArg.title).toBe('Inicjatywa: Czas obsługi');
+    expect(inputArg.sourceType).toBe('interview_insight');
+    expect(inputArg.sourceId).toBe('ins-1');
+    expect(inputArg.status).toBeUndefined(); // funnel normalizuje do DRAFT
+    expect(optsArg.actor.id).toBe('u-1');
+  });
+
+  it('uruchamia generator (fill domyślnie true) z initiativeId + brief + sourceType', async () => {
+    const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
+    const deps = makeAcceptDeps();
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
+
+    expect(deps.fillCalls).toHaveLength(1);
+    const [, fillInput] = deps.fillCalls[0];
+    expect(fillInput.initiativeId).toBe('init-9');
+    expect(fillInput.brief).toContain('Inicjatywa: Czas obsługi');
+    expect(fillInput.sourceType).toBe('interview_insight');
+    expect(payload!.filled).toBe(true); // qualitySummary.filled > 0
+  });
+
+  it('fill=false tworzy DRAFT ale NIE uruchamia generatora', async () => {
+    const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
+    const deps = makeAcceptDeps();
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', fill: false, deps });
+
+    expect(payload!.initiativeId).toBe('init-9');
+    expect(deps.createCalls).toHaveLength(1);
+    expect(deps.fillCalls).toHaveLength(0);
+    expect(payload!.filled).toBe(false);
+  });
+
+  it('fail-soft: fill rzuca → DRAFT nadal utworzony, filled=false, accept OK', async () => {
+    const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
+    const deps = makeAcceptDeps({
+      generateFull: (async () => {
+        throw new Error('LLM down');
+      }) as any,
+    });
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
+
+    expect(payload).not.toBeNull();
+    expect(payload!.initiativeId).toBe('init-9'); // DRAFT przetrwał
+    expect(payload!.filled).toBe(false);
+  });
+
+  it('fail-soft: createInitiative rzuca → payload z initiativeId=null, brak fill', async () => {
+    const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
+    const deps = makeAcceptDeps({
+      createInitiative: (async () => {
+        throw new Error('funnel boom');
+      }) as any,
+    });
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
+
+    expect(payload).not.toBeNull();
+    expect(payload!.initiativeId).toBeNull();
+    expect(payload!.filled).toBe(false);
+    expect(deps.fillCalls).toHaveLength(0); // brak initiativeId → brak fill
+  });
+
+  it('oznacza kandydata accepted przed tworzeniem DRAFTU', async () => {
+    const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
+    const deps = makeAcceptDeps();
+    await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
+
+    const updateCall = db.calls.run.find(([sql]) => sql.includes("status = 'accepted'"));
+    expect(updateCall).toBeDefined();
+  });
+
+  it('filled=false gdy generator nic nie wypełnił (qualitySummary.filled=0)', async () => {
+    const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
+    const deps = makeAcceptDeps({
+      generateFull: (async (_d: any, input: any) => ({
+        initiativeId: input.initiativeId,
+        language: 'pl',
+        cards: {},
+        outcomes: [],
+        qualitySummary: { total: 6, filled: 0, failed: 6, healed: 0, averageScore: null, belowThreshold: [] },
+      })) as any,
+    });
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
+    expect(payload!.filled).toBe(false);
+  });
+
+  it('liniaż degraduje do manual gdy kandydat nie ma sourceId', async () => {
+    const db = makeDb({
+      queryOne: async () => ({ ...candidateRow, source_id: null }),
+      queryRun: async () => ({ changes: 1 }),
+    });
+    const deps = makeAcceptDeps();
+    await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
+
+    const [, inputArg] = deps.createCalls[0];
+    expect(inputArg.sourceType).toBe('manual');
+    expect(inputArg.sourceId).toBeNull();
+  });
+
+  it('back-compat: 3-ci argument jako string traktowany jako orgId', async () => {
+    const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
+    // brak deps → użyje zamockowanych modułów (mockFunnelCreate / mockGenerateFull)
+    const payload = await acceptCandidate(db, 'c1', 'org-1');
+    expect(payload).not.toBeNull();
+    expect(payload!.candidateId).toBe('c1');
+    // org-scoped lookup wykonany (SELECT z organization_id)
+    const selectCall = db.calls.one.find(([sql]) => sql.includes('organization_id'));
+    expect(selectCall).toBeDefined();
   });
 });
 

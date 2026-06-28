@@ -20,7 +20,13 @@
  * dzięki czemu logika jest testowalna z mock-DB bez realnej bazy.
  */
 
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { createInitiative as funnelCreateInitiative } from './createInitiativeService.js';
+import {
+  defaultDeps as generatorDefaultDeps,
+  generateFullInitiative,
+} from './initiativeGeneratorBrain.js';
 
 // ---------------------------------------------------------------------------
 // Injectable DB interface
@@ -77,6 +83,54 @@ export interface AcceptCandidatePayload {
   title: string;
   rationale: string;
   brief: string;
+  /**
+   * F2→F1: id of the DRAFT initiative created from this candidate via the canonical
+   * funnel. Null only when creation failed (accept still succeeds; recoverable).
+   * The FE navigates to this id instead of creating the DRAFT itself.
+   */
+  initiativeId: string | null;
+  /** True when generateFullInitiative ran and produced ≥1 filled card (fail-soft). */
+  filled: boolean;
+}
+
+/**
+ * Injectable funnel + generator deps for acceptCandidate. Real defaults wire the
+ * canonical create funnel + the F1 generator brain; tests pass mocks so they never
+ * touch an LLM / real DB. Kept here (not on the shared files) so this service owns
+ * the F2→F1 wiring without editing the brain/funnel/generationService.
+ */
+export interface AcceptDeps {
+  /** Canonical create funnel — persists a DRAFT initiative + stamps lineage. */
+  createInitiative: typeof funnelCreateInitiative;
+  /** F1 fast-track: brief → fully-filled initiative. */
+  generateFull: typeof generateFullInitiative;
+  /** Factory for the generator's production deps (injected so tests can stub). */
+  generatorDeps: typeof generatorDefaultDeps;
+}
+
+/** Production wiring: canonical funnel + F1 brain. */
+function defaultAcceptDeps(): AcceptDeps {
+  return {
+    createInitiative: funnelCreateInitiative,
+    generateFull: generateFullInitiative,
+    generatorDeps: generatorDefaultDeps,
+  };
+}
+
+export interface AcceptCandidateOptions {
+  /** Org scope (org-scoped lookup when provided). */
+  orgId?: string;
+  /** Creating user (forwarded to the funnel actor + created_by). */
+  userId?: string;
+  /**
+   * Trigger F1 generateFullInitiative after creating the DRAFT (default true).
+   * Fail-soft: when fill fails the accept + DRAFT still succeed (filled=false).
+   */
+  fill?: boolean;
+  /** Language forwarded to the generator (default 'pl'). */
+  language?: 'en' | 'pl';
+  /** Injectable funnel + generator deps (tests pass mocks). */
+  deps?: AcceptDeps;
 }
 
 // ---------------------------------------------------------------------------
@@ -349,18 +403,34 @@ export async function listCandidates(
 // ---------------------------------------------------------------------------
 
 /**
- * Marks a candidate accepted and returns the payload F1 needs to launch the
- * generator. Does NOT call the generator (the route / F1 owns that). Returns null
- * if the candidate does not resolve (org-scoped when orgId is provided).
+ * Accept a candidate → (a) mark it accepted, (b) CREATE a DRAFT initiative from it
+ * through the canonical funnel (lineage source_type/source_id from the candidate),
+ * and (c) OPTIONALLY trigger the F1 generator (generateFullInitiative) to fill the
+ * DRAFT (default ON, fail-soft). Returns the launch payload PLUS the new
+ * `initiativeId` so the FE navigates to it instead of creating the DRAFT itself.
  *
- * Fail-soft → null on error.
+ * The 3rd argument is back-compatible: a bare string is treated as the legacy
+ * `orgId`; an object unlocks userId / fill / language / injectable deps.
+ *
+ * Fail-soft posture (the accept itself never throws → null only when unresolvable):
+ *   - mark-accepted failing → still proceed (stale 'pending' is recoverable).
+ *   - DRAFT creation failing → payload returned with initiativeId=null, filled=false.
+ *   - fill failing → DRAFT still created; filled=false.
  */
 export async function acceptCandidate(
   db: CandidateDb = defaultDb,
   id?: string,
-  orgId?: string
+  optsOrOrgId?: string | AcceptCandidateOptions
 ): Promise<AcceptCandidatePayload | null> {
   if (!id) return null;
+
+  const opts: AcceptCandidateOptions =
+    typeof optsOrOrgId === 'string' ? { orgId: optsOrOrgId } : optsOrOrgId ?? {};
+  const { orgId, userId } = opts;
+  const fill = opts.fill !== false; // default true
+  const language: 'en' | 'pl' = opts.language === 'en' ? 'en' : 'pl';
+  const deps = opts.deps ?? defaultAcceptDeps();
+
   try {
     const params: unknown[] = [id];
     let sql = `SELECT * FROM initiative_candidates WHERE id = ?`;
@@ -374,18 +444,68 @@ export async function acceptCandidate(
 
     const candidate = mapRow(row);
 
-    // Mark accepted (idempotent — accepting an accepted candidate is a no-op-ish).
+    // (a) Mark accepted (idempotent — accepting an accepted candidate is a no-op-ish).
     try {
       await db.queryRun(
         `UPDATE initiative_candidates SET status = 'accepted' WHERE id = ?`,
         [candidate.id]
       );
     } catch {
-      // degrade — even if the status write fails we still return the launch payload,
-      // so the generator can proceed; a stale 'pending' is recoverable.
+      // degrade — even if the status write fails we still proceed; a stale
+      // 'pending' is recoverable.
     }
 
     const brief = [candidate.title, candidate.rationale].filter(Boolean).join('\n\n');
+    // Lineage source_type must be non-'manual' so the funnel enforces sourceId. A
+    // candidate without a sourceId would trip the lineage guard → degrade source to
+    // 'manual' in that edge case so the DRAFT still persists.
+    const lineageSourceType = candidate.sourceType && candidate.sourceId ? candidate.sourceType : 'manual';
+    const lineageSourceId = candidate.sourceType && candidate.sourceId ? candidate.sourceId : null;
+
+    // (b) CREATE the DRAFT initiative through the canonical funnel.
+    let initiativeId: string | null = null;
+    try {
+      const orgForCreate = orgId || candidate.organizationId;
+      const created = await deps.createInitiative(
+        orgForCreate,
+        {
+          title: candidate.title,
+          problemStatement: candidate.rationale || null,
+          sourceType: lineageSourceType,
+          sourceId: lineageSourceId,
+          // status DRAFT intentionally OMITTED — the funnel normalizes it.
+        },
+        { validate: false, actor: { id: userId ?? null } }
+      );
+      initiativeId = created?.id ?? null;
+    } catch (createErr) {
+      logger.warn(
+        `[initiativeCandidateService] DRAFT creation failed for candidate ${candidate.id} (recoverable): ${
+          (createErr as Error)?.message || createErr
+        }`
+      );
+    }
+
+    // (c) OPTIONALLY trigger F1 fill — fail-soft so accept still succeeds.
+    let filled = false;
+    if (fill && initiativeId) {
+      try {
+        const result = await deps.generateFull(deps.generatorDeps(), {
+          initiativeId,
+          brief,
+          sourceType: lineageSourceType,
+          organizationId: orgId || candidate.organizationId,
+          language,
+        });
+        filled = (result?.qualitySummary?.filled ?? 0) > 0;
+      } catch (fillErr) {
+        logger.warn(
+          `[initiativeCandidateService] generateFullInitiative failed for initiative ${initiativeId} (fail-soft): ${
+            (fillErr as Error)?.message || fillErr
+          }`
+        );
+      }
+    }
 
     return {
       candidateId: candidate.id,
@@ -395,6 +515,8 @@ export async function acceptCandidate(
       title: candidate.title,
       rationale: candidate.rationale,
       brief,
+      initiativeId,
+      filled,
     };
   } catch {
     return null;

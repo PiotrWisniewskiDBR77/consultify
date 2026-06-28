@@ -14,6 +14,9 @@ import { useTranslation } from 'react-i18next';
 
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 
+import { CardBlockRenderer } from '../cards/CardBlockRenderer';
+import { buildProblemCardSpec } from '../cards/cardSpecBuilders';
+
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -45,6 +48,19 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
   );
 
   const filledCount = [symptom, rootCause, costOfInaction].filter(Boolean).length;
+
+  // F3 (D11) proof-of-pattern: declarative display layer via the generic
+  // CardBlockRenderer. ADDITIVE — rendered as a read-only preview below the
+  // structured edit fields. Built from the live edit state so it stays in sync.
+  const problemCardSpec = buildProblemCardSpec(
+    { symptom, rootCause, costOfInaction },
+    {
+      title: t('initiatives.problemDefinitionSection.problemDefinition'),
+      symptomHeading: t('initiatives.problemDefinitionSection.symptomTitle'),
+      rootCauseHeading: t('initiatives.problemDefinitionSection.rootCause'),
+      costOfInactionTitle: t('initiatives.problemDefinitionSection.costOfInaction'),
+    }
+  );
 
   return (
     <CollapsibleSection
@@ -241,6 +257,18 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             />
           </div>
         </div>
+
+        {/* F3 (D11) display layer — generic CardBlockRenderer preview.
+            ADDITIVE: a read-only "as it reads" view built from the same data,
+            shown only once there is content. Does not replace the edit fields. */}
+        {filledCount > 0 && (
+          <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+              {t('initiatives.problemDefinitionSection.problemDefinition')}
+            </div>
+            <CardBlockRenderer spec={problemCardSpec} showTitle={false} />
+          </div>
+        )}
       </div>
     </CollapsibleSection>
   );

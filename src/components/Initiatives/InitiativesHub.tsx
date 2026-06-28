@@ -1366,16 +1366,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return;
       }
       try {
-        const { createdId, truth } = await createInitiativeWriteTruth({
-          projectId: currentProjectId || undefined,
-          title: payload.title.trim(),
-          axis: 'operational',
-          level: 'standard',
-          summary: (payload.brief || payload.rationale || '').trim() || undefined,
-          status: 'DRAFT',
-          sourceType: payload.sourceType || undefined,
-          sourceId: payload.sourceId || undefined,
-        });
+        // F2→F1 anty-dublet: jeśli accept utworzył inicjatywę serwerowo (i wypełnił
+        // przez generator), NIE twórz drugiej — nawiguj do zwróconego initiativeId.
+        let createdId: string | null;
+        let truth: { initiative?: unknown } = {};
+        if (payload.initiativeId) {
+          createdId = payload.initiativeId;
+        } else {
+          const r = await createInitiativeWriteTruth({
+            projectId: currentProjectId || undefined,
+            title: payload.title.trim(),
+            axis: 'operational',
+            level: 'standard',
+            summary: (payload.brief || payload.rationale || '').trim() || undefined,
+            status: 'DRAFT',
+            sourceType: payload.sourceType || undefined,
+            sourceId: payload.sourceId || undefined,
+          });
+          createdId = r.createdId;
+          truth = r.truth;
+        }
         toast.success(t('initiatives.form.initiativeCreated', 'Initiative created'));
         if (createdId) {
           try {

@@ -94,8 +94,12 @@ router.post(
 // ==================== ACCEPT ====================
 /**
  * POST /api/initiatives/candidates/:id/accept
- * Akceptuje kandydata → zwraca payload do uruchomienia generatora F1.
- * (Nie uruchamia generatora — to robi warstwa F1.)
+ * Akceptuje kandydata → tworzy DRAFT inicjatywę (kanoniczny lejek) z liniażem
+ * z kandydata i (domyślnie) uruchamia generator F1, który wypełnia karty.
+ * Zwraca `initiativeId`, do którego FE nawiguje (nie tworzy DRAFTU sam).
+ *
+ * Body (opcjonalny): { fill?: boolean } — domyślnie true; fill=false tworzy
+ * sam DRAFT bez wypełniania (np. szybkie przyjęcie do edycji ręcznej).
  */
 router.post(
   '/candidates/:id/accept',
@@ -106,13 +110,23 @@ router.post(
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const { id } = req.params;
+    const fill = req.body?.fill !== false; // default true
 
     try {
-      const payload = await acceptCandidate(undefined, id, orgId);
+      const payload = await acceptCandidate(undefined, id, {
+        orgId,
+        userId: req.user?.id,
+        fill,
+      });
       if (!payload) {
         return res.status(404).json({ error: 'Candidate not found' });
       }
-      return res.json({ accepted: true, payload });
+      return res.json({
+        accepted: true,
+        initiativeId: payload.initiativeId,
+        filled: payload.filled,
+        payload,
+      });
     } catch (err: unknown) {
       logger.error('[InitiativeCandidates] Accept error:', err);
       return res.status(500).json({ error: 'Failed to accept candidate' });

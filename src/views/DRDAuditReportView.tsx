@@ -17,6 +17,7 @@ import { Send, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { Api, api } from '@/services/api';
 
 import { ReportBuilder } from '../components/Reports/ReportBuilder';
@@ -635,6 +636,9 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
                 <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 rounded-full">
                   {t('reports.unsaved', 'Unsaved')}
                 </span>
+              )}
+              {reportId && (
+                <InitiativeSuggestionBadge sourceType="audit" sourceId={reportId} />
               )}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">

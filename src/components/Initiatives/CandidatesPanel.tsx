@@ -42,6 +42,10 @@ export interface AcceptCandidatePayload {
   title: string;
   rationale: string;
   brief: string;
+  /** Gdy serwer już utworzył inicjatywę z kandydata (accept tworzy+wypełnia) — nawiguj do niej, nie twórz drugiej. */
+  initiativeId?: string | null;
+  /** Czy generator wypełnił karty (auto-fill). */
+  filled?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -123,7 +127,15 @@ export function useCandidates(status: CandidateStatus = 'pending'): UseCandidate
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await readJson(res);
         setCandidates((prev) => prev.filter((c) => c.id !== id));
-        return (data?.payload as AcceptCandidatePayload) ?? null;
+        // Serwer tworzy+wypełnia inicjatywę i zwraca initiativeId — scal do payloadu,
+        // żeby hub nawigował do niej zamiast tworzyć drugą (anty-dublet F2→F1).
+        const payload = (data?.payload as AcceptCandidatePayload) ?? null;
+        if (!payload && !data?.initiativeId) return null;
+        return {
+          ...(payload ?? ({} as AcceptCandidatePayload)),
+          initiativeId: data?.initiativeId ?? null,
+          filled: !!data?.filled,
+        };
       } catch (e) {
         setError(e instanceof Error ? e.message : 'error');
         return null;

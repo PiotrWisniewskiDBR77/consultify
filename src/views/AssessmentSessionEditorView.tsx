@@ -28,6 +28,7 @@ import { AssessmentManagePanel } from '@/components/assessment/manage/Assessment
 import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
 import { RequestAccessModal, useAssessmentPermissions } from '@/components/assessment/permissions';
 import { SIRIAssessmentEditor } from '@/components/assessment/siri/SIRIAssessmentEditor';
+import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { CMPracticeForm } from '@/components/assessment/tools/CMPracticeForm';
 import { LeanForm } from '@/components/assessment/tools/LeanForm';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
@@ -1798,6 +1799,12 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 >
                   {String(status).toUpperCase()}
                 </span>
+                {assessmentId && (
+                  <InitiativeSuggestionBadge
+                    sourceType="assessment"
+                    sourceId={assessmentId}
+                  />
+                )}
               </div>
             </div>
           </div>

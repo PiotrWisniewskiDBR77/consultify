@@ -1,5 +1,5 @@
 /**
- * generate_initiative tool handler (M13 Depth · Seria C · C2).
+ * generate_initiative tool handler (M13 Depth · Seria C · C2 → F1 upgrade).
  *
  * READ/auto tool (mirrors generate_deliverable): lets Teresa create a DRAFT
  * initiative directly from chat — no approval gate, because a draft is fully
@@ -7,36 +7,181 @@
  * the canonical, Postgres-correct create path (initiativeGenerationService →
  * initiativeService) rather than the legacy create_initiative handler, which
  * uses SQLite `datetime('now')` and is broken on Postgres.
+ *
+ * F1 UPGRADE (2026-06-28) — full-fill + lineage, both additive & fail-soft:
+ *  1. LINEAGE STAMP: after the DRAFT is created, a schema-safe post-create
+ *     UPDATE sets `source_type` + `source_id` on the new row (the canonical
+ *     create path only takes `source:'teresa_chat'` and DROPS lineage). Mirrors
+ *     the post-create UPDATE pattern in assessmentInitiativeService.ts /
+ *     auditInitiativeService.ts (getTableColumns guard → only existing cols).
+ *  2. FULL-FILL: kicks off `generateFullInitiative` (the F1 brain) so the 6 core
+ *     cards are generated, auto-healed, and (best-effort) persisted to a
+ *     schema-safe lazy-ALTER'd `ai_generated_sections` JSON column — mirroring
+ *     the `section_completions` lazy-ALTER pattern in InitiativeController.
+ *
+ * Every enrichment step is wrapped so a failure NEVER breaks the tool: the DRAFT
+ * is always returned once created.
  */
 import logger from '../../../utils/Logger.js';
+import * as queryHelpers from '../../../utils/queryHelpers.js';
 import { createInitiative as createInitiativeRecord } from '../../initiativeGenerationService.js';
+import {
+  generateFullInitiative,
+  defaultDeps,
+} from '../../initiative/initiativeGeneratorBrain.js';
 
-type ToolContext = { userId?: string; organizationId?: string };
+type ToolContext = {
+  userId?: string;
+  organizationId?: string;
+  /** Optional originating artifact type (e.g. 'idea','notebook') if Teresa knows it. */
+  sourceType?: string;
+  /** Optional originating artifact id, paired with sourceType. */
+  sourceId?: string;
+  /** UI language for the generated cards. */
+  language?: 'en' | 'pl' | string;
+};
+
+/**
+ * Best-effort, schema-safe lineage stamp on a freshly-created initiative.
+ * Mirrors the post-create UPDATE pattern in assessment/audit services: read the
+ * live columns, only set the ones that exist, swallow any error.
+ */
+async function stampLineage(
+  initiativeId: string,
+  organizationId: string,
+  sourceType: string,
+  sourceId: string,
+): Promise<void> {
+  try {
+    const cols = await queryHelpers.getTableColumns('initiatives').catch(() => null);
+    const colSet = cols
+      ? new Set((cols || []).map((c) => c.name).filter(Boolean) as string[])
+      : null;
+    if (colSet === null) return; // unknown schema → skip optional columns
+
+    const upCols: string[] = [];
+    const upVals: unknown[] = [];
+    const setIf = (col: string, value: unknown) => {
+      if (!colSet.has(col)) return;
+      upCols.push(`${col} = ?`);
+      upVals.push(value);
+    };
+    setIf('source_type', sourceType);
+    setIf('source_id', sourceId);
+    if (upCols.length === 0) return;
+
+    await queryHelpers.queryRun(
+      `UPDATE initiatives SET ${upCols.join(', ')} WHERE id = ? AND organization_id = ?`,
+      [...upVals, initiativeId, organizationId],
+    );
+  } catch (e: any) {
+    logger.warn('[teresa] generate_initiative lineage stamp failed (ignored):', e?.message || e);
+  }
+}
+
+/**
+ * Best-effort persist of the brain's card output into a schema-safe lazy-ALTER'd
+ * `ai_generated_sections` TEXT(JSON) column on `initiatives`. Mirrors the
+ * `section_completions` lazy-ALTER pattern in InitiativeController so content is
+ * NOT lost. See the PERSIST NOTE in the module doc / report for the FE read step
+ * that turns this into typed-column hydration.
+ */
+async function persistCards(
+  initiativeId: string,
+  organizationId: string,
+  cards: Record<string, string>,
+): Promise<void> {
+  if (!cards || Object.keys(cards).length === 0) return;
+  try {
+    const cols = await queryHelpers.getTableColumns('initiatives').catch(() => null);
+    const colSet = cols
+      ? new Set((cols || []).map((c) => c.name).filter(Boolean) as string[])
+      : null;
+    if (colSet === null) return; // unknown schema → do not ALTER/insert blindly
+
+    if (!colSet.has('ai_generated_sections')) {
+      try {
+        await queryHelpers.queryRun(
+          `ALTER TABLE initiatives ADD COLUMN ai_generated_sections TEXT`,
+        );
+      } catch (err: any) {
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
+    }
+
+    await queryHelpers.queryRun(
+      `UPDATE initiatives SET ai_generated_sections = ? WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(cards), initiativeId, organizationId],
+    );
+  } catch (e: any) {
+    logger.warn('[teresa] generate_initiative card persist failed (ignored):', e?.message || e);
+  }
+}
 
 export async function generateInitiative(
   params: { title?: string; problem?: string },
-  context: ToolContext = {}
+  context: ToolContext = {},
 ): Promise<Record<string, unknown>> {
   const orgId = context.organizationId;
   if (!orgId) {
     return { ok: false, message: 'No organization context to create an initiative in.' };
   }
   const title = String(params?.title || '').trim() || 'New initiative';
+  const problem = String(params?.problem || '');
+
+  // Lineage: prefer an originating artifact type the caller passed, else default
+  // to the chat source. source_id is the paired artifact id, else the initiative
+  // id itself (self-reference) so the column is never left null.
+  const sourceType = String(context.sourceType || '').trim() || 'teresa_chat';
+  const language: 'en' | 'pl' = context.language === 'en' ? 'en' : 'pl';
+
   try {
     const { id } = await createInitiativeRecord({
       organizationId: orgId,
       title,
-      description: String(params?.problem || ''),
+      description: problem,
       source: 'teresa_chat',
     });
     if (!id) {
       return { ok: false, message: 'Could not create the initiative.' };
     }
+
+    const sourceId = String(context.sourceId || '').trim() || id;
+
+    // (1) LINEAGE STAMP — best-effort, never breaks the tool.
+    await stampLineage(id, orgId, sourceType, sourceId);
+
+    // (2) FULL-FILL — kick off the F1 brain; fail-soft. A fill error must NOT
+    // break initiative creation (the DRAFT still returns).
+    let filledCount = 0;
+    try {
+      const fill = await generateFullInitiative(defaultDeps(), {
+        initiativeId: id,
+        brief: problem,
+        sourceType: 'teresa_chat',
+        language,
+        organizationId: orgId,
+      });
+      const cards = fill?.cards ?? {};
+      filledCount = Object.keys(cards).length;
+      await persistCards(id, orgId, cards);
+    } catch (fillErr: any) {
+      logger.warn('[teresa] generate_initiative full-fill failed (ignored):', fillErr?.message || fillErr);
+    }
+
     return {
       ok: true,
       id,
       title,
-      message: `Created a draft initiative "${title}". Open it from Initiatives to flesh it out.`,
+      sourceType,
+      filledCards: filledCount,
+      message:
+        filledCount > 0
+          ? `Created and drafted initiative "${title}" with ${filledCount} AI-filled section${
+              filledCount === 1 ? '' : 's'
+            }. Open it from Initiatives to review.`
+          : `Created a draft initiative "${title}". Open it from Initiatives to flesh it out.`,
     };
   } catch (e: any) {
     logger.warn('[teresa] generate_initiative failed:', e?.message);
