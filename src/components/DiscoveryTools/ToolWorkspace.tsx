@@ -276,6 +276,23 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         if (!force?.drivers?.length) gaps.push(`Missing drivers for ${force?.name}`);
       });
     }
+    if (toolType === 'value-chain') {
+      if (!data.context?.industry) gaps.push('Missing industry');
+      if (!data.context?.valueChainScope) gaps.push('Missing value chain scope');
+      const scored = Object.values(data.activities || {}).filter(
+        (a: any) => a?.drivers?.length || a?.implication
+      );
+      if (!scored.length) gaps.push('Missing scored value-chain activities');
+      if (!accepted(data.levers).length) gaps.push('Missing margin levers');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
     if (toolType === 'growth-paths') {
       if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
         gaps.push('Missing growth mission');

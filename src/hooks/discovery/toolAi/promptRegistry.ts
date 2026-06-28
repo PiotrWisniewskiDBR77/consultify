@@ -85,6 +85,52 @@ Return JSON:
     return '';
   }
 
+  if (toolType === 'value-chain') {
+    const vcData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Improve the brief for this Value Chain analysis.
+
+Current context:
+- Industry: ${vcData?.context?.industry || 'missing'}
+- Value chain scope: ${vcData?.context?.valueChainScope || 'missing'}
+- Positioning: ${vcData?.context?.position || 'undefined'}
+
+Return JSON:
+{"mission": {"industry": "...", "valueChainScope": "...", "position": "cost-leader|differentiator|hybrid|undefined", "goal": "...", "successSignal": "...", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the brief and organization context, propose 4-6 high-value signals about cost structure, operations, and differentiation for a Value Chain analysis.
+
+Context:
+- Industry: ${vcData?.context?.industry || 'missing'}
+- Value chain scope: ${vcData?.context?.valueChainScope || 'missing'}
+- Positioning: ${vcData?.context?.position || 'undefined'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["inboundLogistics|operations|outboundLogistics|marketingSales|service|infrastructure|hrManagement|technology|procurement"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'activities') {
+      const signalsSummary = (vcData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Score the 9 value-chain activities (5 primary, 4 support) from these signals and the organization context.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- costContribution = share of total cost the activity drives (high|medium|low)
+- valueContribution = contribution to differentiation / willingness-to-pay (high|medium|low)
+- marginRole = creator (builds margin) | neutral | drain (erodes margin)
+- separate drivers from evidence; make implications concrete for margin and positioning
+- also return a positioningVerdict (cost-advantage | differentiation | stuck-in-the-middle) with a one-line summary
+
+Return JSON:
+{"activities": {"inboundLogistics": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "operations": {"...": "..."}, "outboundLogistics": {"...": "..."}, "marketingSales": {"...": "..."}, "service": {"...": "..."}, "infrastructure": {"...": "..."}, "hrManagement": {"...": "..."}, "technology": {"...": "..."}, "procurement": {"...": "..."}}, "positioningVerdict": {"positioning": "cost-advantage|differentiation|stuck-in-the-middle", "summary": "..."}}`;
+    }
+    return '';
+  }
+
   if (toolType === 'growth-paths') {
     const growthData = inputData as any;
     if (stepId === 'mission') {
@@ -353,6 +399,38 @@ Return as JSON:
   "moves": [{"title":"...","category":"positioning|pricing|partnership|capability-build|defensive-move","rationale":"...","linkedForceIds":["buyerPower"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["buyerPower"]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedForceIds": ["buyerPower"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'value-chain') {
+    const vcData = inputData as any;
+    const activitiesSummary = Object.entries(vcData?.activities || {})
+      .map(
+        ([, a]: [string, any]) =>
+          `- ${a.name}: cost ${a.costContribution}, value ${a.valueContribution}, margin ${a.marginRole}`
+      )
+      .join('\n');
+
+    return `Based on this Value Chain analysis, create a consulting-grade final summary:
+
+${activitiesSummary}
+${vcData?.positioningVerdict ? `Positioning verdict: ${vcData.positioningVerdict.positioning} — ${vcData.positioningVerdict.summary}` : ''}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Margin Levers (where cost can fall or value can rise)
+3. Applied Conclusions: where to cut cost, where to invest for differentiation, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","linkedActivityIds":["operations"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["operations"]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedActivityIds": ["operations"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
   }
 

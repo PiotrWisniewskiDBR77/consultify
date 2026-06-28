@@ -53,6 +53,7 @@ Zmienione: `NotebookContent.tsx` (monolit 3505 lin — N1/N3/N4), `NotebookProgr
 
 ## 5. ⚠️ BLOKERY / RYZYKA
 - **GIT-RACES: 10 cudzych tsc błędów na branchu** (Ideas reactflow `useNodesInitialized`/`useUpdateNodeInternals`/`fitView`/`DEP_EDGE_COLOR` + Economics brakujące moduły + DocumentStudio `PMDoc`). NIE z Notatnika. **Vite buduje mimo nich** (esbuild ignoruje typy — demo zbudował). ALE Ideas runtime-glitch ryzyko. Zgłoszone: `task_c4a0f1ec`. Gdy robisz tsc, te 10 błędów to szum — filtruj po swoich plikach.
+- **★ BUILD-PUŁAPKA (N8 zepsuł demo deploy, fix `2699730db5`):** bare `resolve.alias '@tiptap/react'`@`vite.config.ts` = PREFIX-match → przepisuje subpath `@tiptap/react/menus`→`<dir>/menus` OMIJAJĄC exports-map → `Could not load … ENOENT` w `vite build` (Node `require` działa, rollup NIE; tsc+vitest NIE łapią). Fix: alias subpath PRZED ogólnym. **REGUŁA: przy KAŻDYM imporcie subpath za aliasowanym pakietem → `NODE_OPTIONS=--max-old-space-size=8192 node node_modules/vite/bin/vite.js build` LOKALNIE przed deployem na shared-branch.** (lokalny build może paść na ENOTEMPTY/OOM = artefakt maszyny, NIE kod — `rm -rf dist` + heap 8GB; Railway ma więcej RAM.)
 - **Cudzy uncommitted WIP w working tree** (persona.ts/mcpServer.ts/documentSchemaRenderer.ts + nowe pliki) — PRE-EXISTING od początku sesji, NIE moje. NIE commituj ich (cudze).
 - **U4/U9 funkcjonalne** niezaadresowane (osobne taski).
 

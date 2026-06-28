@@ -57,6 +57,7 @@ const SUMMARY_STEP_IDS = new Set([
 const TOOLS_WITH_APPLY_HANDLER: ReadonlySet<ToolType> = new Set<ToolType>([
   'dynamic-swot',
   'market-forces',
+  'value-chain',
   'growth-paths',
   'portfolio-priority',
   'risk-uncertainty',
@@ -92,6 +93,12 @@ export function getToolPhaseAiActions(
       title: 'Turn accepted signals into Ansoff growth options',
       titlePl: 'Zamień zaakceptowane sygnały w opcje wzrostu Ansoffa',
     },
+    'value-chain': {
+      label: 'Build Chain',
+      labelPl: 'Buduj łańcuch',
+      title: 'Turn accepted signals into scored value-chain activities',
+      titlePl: 'Zamień zaakceptowane sygnały w ocenione aktywności łańcucha wartości',
+    },
     'portfolio-priority': {
       label: 'Build Portfolio',
       labelPl: 'Buduj portfolio',
@@ -109,6 +116,7 @@ export function getToolPhaseAiActions(
   const analysisStepIds: Partial<Record<ToolType, string>> = {
     'dynamic-swot': 'swot',
     'market-forces': 'forces',
+    'value-chain': 'activities',
     'growth-paths': 'options',
     'portfolio-priority': 'items',
     'risk-uncertainty': 'assumptions',

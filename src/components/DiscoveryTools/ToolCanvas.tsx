@@ -42,6 +42,12 @@ import {
   MarketForcesOutputsPhase,
 } from './tools/MarketForces/MarketForcesPhases';
 import {
+  ValueChainBuildPhase,
+  ValueChainInputPhase,
+  ValueChainInsightsPhase,
+  ValueChainOutputsPhase,
+} from './tools/ValueChain/ValueChainPhases';
+import {
   A3CountermeasuresStep,
   A3ProblemStep,
   A3RootCauseStep,
@@ -334,6 +340,78 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
         return (
           <div className="space-y-6">
             <MarketForcesOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'value-chain') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <ValueChainInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'activities') {
+        return (
+          <ValueChainBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <ValueChainInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <ValueChainOutputsPhase
               session={session}
               isPolish={isPolish}
               onAcceptCard={onAcceptCard}

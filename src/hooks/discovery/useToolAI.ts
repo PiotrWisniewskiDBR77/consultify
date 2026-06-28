@@ -60,6 +60,12 @@ import {
   buildRiskSynthesisPrompt,
 } from './toolAi/riskUncertainty';
 import { getToolSystemPrompt } from './toolAi/systemPrompts';
+import {
+  applyValueChainPendingAction,
+  buildValueChainFullSessionPrompt,
+  buildValueChainLeversPrompt,
+  buildValueChainRethinkPrompt,
+} from './toolAi/valueChain';
 import { useOrganizationContext } from './useOrganizationContext';
 
 // ==================== TYPES ====================
@@ -266,6 +272,19 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       return;
     }
 
+    if (toolType === 'value-chain') {
+      setError(null);
+      const prompt = buildValueChainLeversPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need scored value-chain activities to generate levers');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
     if (toolType !== 'dynamic-swot') return;
 
     setError(null);
@@ -322,12 +341,17 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                   currentSession.inputData as any,
                   formatForPrompt()
                 )
-              : toolType === 'dynamic-swot'
-                ? buildDynamicSwotFullSessionPrompt(
-                    currentSession.inputData as SWOTData | undefined,
+              : toolType === 'value-chain'
+                ? buildValueChainFullSessionPrompt(
+                    currentSession.inputData as any,
                     formatForPrompt()
                   )
-                : '';
+                : toolType === 'dynamic-swot'
+                  ? buildDynamicSwotFullSessionPrompt(
+                      currentSession.inputData as SWOTData | undefined,
+                      formatForPrompt()
+                    )
+                  : '';
 
     if (!prompt) {
       setSessionGenerationStatus('idle');
@@ -389,6 +413,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         !currentSession ||
         (toolType !== 'dynamic-swot' &&
           toolType !== 'market-forces' &&
+          toolType !== 'value-chain' &&
           toolType !== 'growth-paths' &&
           toolType !== 'portfolio-priority' &&
           toolType !== 'risk-uncertainty')
@@ -427,7 +452,14 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                     cardId,
                     userComment
                   )
-                : buildDynamicSwotRethinkPrompt(
+                : toolType === 'value-chain'
+                  ? buildValueChainRethinkPrompt(
+                      currentSession.inputData as any,
+                      cardType,
+                      cardId,
+                      userComment
+                    )
+                  : buildDynamicSwotRethinkPrompt(
                     currentSession.inputData as SWOTData,
                     cardType,
                     cardId,
@@ -447,6 +479,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       !streamedContent ||
       (toolType !== 'dynamic-swot' &&
         toolType !== 'market-forces' &&
+        toolType !== 'value-chain' &&
         toolType !== 'growth-paths' &&
         toolType !== 'portfolio-priority' &&
         toolType !== 'risk-uncertainty')
@@ -555,7 +588,29 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                     updateCardAfterRethink,
                   },
                 })
-              : applyDynamicSwotPendingAction({
+              : toolType === 'value-chain'
+                ? applyValueChainPendingAction({
+                    pendingAction,
+                    parsed,
+                    currentStepId: currentStepDef?.id,
+                    valueChainData: (currentSession?.inputData as any) || {
+                      context: { industry: '', valueChainScope: '', position: 'undefined' },
+                      signals: [],
+                      activities: {},
+                      levers: [],
+                      recommendedMoves: [],
+                      outputCandidates: [],
+                    },
+                    rethinkTarget,
+                    toolType,
+                    actions: {
+                      updateInputData,
+                      setInitiatives,
+                      setSessionGenerationStatus,
+                      updateCardAfterRethink,
+                    },
+                  })
+                : applyDynamicSwotPendingAction({
                   pendingAction,
                   parsed,
                   currentStepId: currentStepDef?.id,

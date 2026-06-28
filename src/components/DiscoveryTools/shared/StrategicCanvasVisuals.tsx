@@ -6,6 +6,9 @@ import type {
   PortfolioPriorityData,
   RiskUncertaintyData,
   SWOTData,
+  ValueActivity,
+  ValueActivityId,
+  ValueChainData,
 } from '@/store/useToolStore';
 
 const cardClass =
@@ -204,6 +207,199 @@ export function RiskMatrixVisual({
           ? 'Scenariusze tworzą pas reakcji dla ryzyk w prawym górnym rogu.'
           : 'Scenarios create a response lane for upper-right risks.'}
       </div>
+    </div>
+  );
+}
+
+const VALUE_CHAIN_PRIMARY_IDS: ValueActivityId[] = [
+  'inboundLogistics',
+  'operations',
+  'outboundLogistics',
+  'marketingSales',
+  'service',
+];
+
+const VALUE_CHAIN_SUPPORT_IDS: ValueActivityId[] = [
+  'infrastructure',
+  'hrManagement',
+  'technology',
+  'procurement',
+];
+
+const VALUE_CHAIN_LABELS: Record<ValueActivityId, { pl: string; en: string }> = {
+  inboundLogistics: { pl: 'Logistyka wej.', en: 'Inbound' },
+  operations: { pl: 'Operacje', en: 'Operations' },
+  outboundLogistics: { pl: 'Logistyka wyj.', en: 'Outbound' },
+  marketingSales: { pl: 'Marketing', en: 'Marketing' },
+  service: { pl: 'Serwis', en: 'Service' },
+  infrastructure: { pl: 'Infrastruktura', en: 'Infrastructure' },
+  hrManagement: { pl: 'Zasoby ludzkie', en: 'HR management' },
+  technology: { pl: 'Technologia', en: 'Technology' },
+  procurement: { pl: 'Zaopatrzenie', en: 'Procurement' },
+};
+
+const valueChainRoleTone: Record<ValueActivity['marginRole'], string> = {
+  creator: 'bg-emerald-500',
+  neutral: 'bg-slate-400',
+  drain: 'bg-amber-500',
+};
+
+const valueChainContributionLabel = (
+  level: 'high' | 'medium' | 'low',
+  isPolish: boolean
+): string => {
+  if (isPolish) {
+    return level === 'high' ? 'wys.' : level === 'medium' ? 'śr.' : 'nis.';
+  }
+  return level === 'high' ? 'hi' : level === 'medium' ? 'mid' : 'lo';
+};
+
+export function ValueChainVisual({
+  activities,
+  positioningVerdict,
+  isPolish,
+}: {
+  activities: Record<ValueActivityId, ValueActivity>;
+  positioningVerdict?: ValueChainData['positioningVerdict'];
+  isPolish: boolean;
+}) {
+  const labelFor = (id: ValueActivityId): string => {
+    const activity = activities?.[id];
+    if (activity?.name) return activity.name;
+    return isPolish ? VALUE_CHAIN_LABELS[id].pl : VALUE_CHAIN_LABELS[id].en;
+  };
+
+  const renderActivityMeta = (activity?: ValueActivity) => {
+    if (!activity) return null;
+    return (
+      <span className="text-[9px] font-medium text-white/85">
+        {`${isPolish ? 'koszt' : 'cost'} ${valueChainContributionLabel(
+          activity.costContribution,
+          isPolish
+        )} · ${isPolish ? 'wartość' : 'value'} ${valueChainContributionLabel(
+          activity.valueContribution,
+          isPolish
+        )}`}
+      </span>
+    );
+  };
+
+  const verdictTone =
+    positioningVerdict?.positioning === 'cost-advantage'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+      : positioningVerdict?.positioning === 'differentiation'
+        ? 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300'
+        : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300';
+
+  return (
+    <div className={cardClass}>
+      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+        {isPolish ? 'Łańcuch wartości Portera' : 'Porter value chain'}
+      </div>
+
+      <div className="flex items-stretch gap-1">
+        <div className="min-w-0 flex-1">
+          {/* Support activities — horizontal bands across the top */}
+          <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Aktywności wspierające' : 'Support activities'}
+          </div>
+          <div className="space-y-1">
+            {VALUE_CHAIN_SUPPORT_IDS.map((id) => {
+              const activity = activities?.[id];
+              const tone = valueChainRoleTone[activity?.marginRole ?? 'neutral'];
+              return (
+                <div
+                  key={id}
+                  className={`flex items-center justify-between gap-2 rounded-md px-2 py-1 text-[11px] font-semibold text-white ${tone}`}
+                  title={labelFor(id)}
+                >
+                  <span className="truncate">{labelFor(id)}</span>
+                  {renderActivityMeta(activity)}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Primary activities — chevrons across the bottom */}
+          <div className="mb-1 mt-3 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Aktywności pierwotne' : 'Primary activities'}
+          </div>
+          <div className="flex gap-0.5">
+            {VALUE_CHAIN_PRIMARY_IDS.map((id, index) => {
+              const activity = activities?.[id];
+              const tone = valueChainRoleTone[activity?.marginRole ?? 'neutral'];
+              return (
+                <div
+                  key={id}
+                  className={`flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-center text-[10px] font-semibold leading-tight text-white ${tone}`}
+                  style={{
+                    clipPath:
+                      index === 0
+                        ? 'polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%)'
+                        : 'polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%, 18% 50%)',
+                    marginLeft: index === 0 ? 0 : '-6px',
+                  }}
+                  title={labelFor(id)}
+                >
+                  <span className="truncate">{labelFor(id)}</span>
+                  {renderActivityMeta(activity)}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* MARGIN wedge pointing right */}
+        <div
+          className="flex w-14 items-center justify-center bg-gradient-to-br from-emerald-500 to-emerald-600 text-center text-[11px] font-bold uppercase tracking-wide text-white"
+          style={{ clipPath: 'polygon(0 0, 60% 0, 100% 50%, 60% 100%, 0 100%, 40% 50%)' }}
+        >
+          {isPolish ? 'Marża' : 'Margin'}
+        </div>
+      </div>
+
+      {/* Margin-role legend */}
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+        {(
+          [
+            ['creator', isPolish ? 'Tworzy marżę' : 'Creates margin'],
+            ['neutral', isPolish ? 'Neutralna' : 'Neutral'],
+            ['drain', isPolish ? 'Drenuje marżę' : 'Drains margin'],
+          ] as Array<[ValueActivity['marginRole'], string]>
+        ).map(([role, text]) => (
+          <div key={role} className="flex items-center gap-1.5">
+            <span className={`h-2.5 w-2.5 rounded-full ${valueChainRoleTone[role]}`} />
+            <span className="text-[11px] text-slate-600 dark:text-slate-300">{text}</span>
+          </div>
+        ))}
+      </div>
+
+      {positioningVerdict ? (
+        <div className={`mt-3 rounded-xl border px-3 py-2 text-xs ${verdictTone}`}>
+          <span className="font-semibold uppercase tracking-[0.12em]">
+            {positioningVerdict.positioning === 'cost-advantage'
+              ? isPolish
+                ? 'Przewaga kosztowa'
+                : 'Cost advantage'
+              : positioningVerdict.positioning === 'differentiation'
+                ? isPolish
+                  ? 'Różnicowanie'
+                  : 'Differentiation'
+                : isPolish
+                  ? 'Utknięcie w środku'
+                  : 'Stuck in the middle'}
+          </span>
+          {positioningVerdict.summary ? (
+            <span className="ml-2 font-normal">{positioningVerdict.summary}</span>
+          ) : null}
+        </div>
+      ) : (
+        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Kolor aktywności = rola w marży, adnotacje = wkład w koszt i wartość.'
+            : 'Activity color = margin role, annotations = cost and value contribution.'}
+        </div>
+      )}
     </div>
   );
 }
