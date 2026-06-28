@@ -29,6 +29,10 @@ import {
   generateFullInitiative,
   defaultDeps,
 } from '../../initiative/initiativeGeneratorBrain.js';
+import {
+  buildTypedColumnUpdates,
+  toUpdateSql,
+} from '../../initiative/cardColumnHydration.js';
 
 type ToolContext = {
   userId?: string;
@@ -114,8 +118,71 @@ async function persistCards(
       `UPDATE initiatives SET ai_generated_sections = ? WHERE id = ? AND organization_id = ?`,
       [JSON.stringify(cards), initiativeId, organizationId],
     );
+
+    // R3 — HYDRATE TYPED COLUMNS (non-destructive): so generated cards land in the
+    // authoritative columns (problem_statement/scope_in/…), not just the JSON sink.
+    // Best-effort & additive — never overwrites a non-empty column, never throws.
+    await hydrateTypedColumns(initiativeId, organizationId, cards, colSet);
   } catch (e: any) {
     logger.warn('[teresa] generate_initiative card persist failed (ignored):', e?.message || e);
+  }
+}
+
+/**
+ * R3 — map generated cards → authoritative typed columns, filling ONLY empty
+ * columns (read-before-write). Fail-soft: any error is swallowed (the JSON sink
+ * already holds the content). Mirrors FIELD_MAP/JSON_FIELDS formats.
+ */
+export async function hydrateTypedColumns(
+  initiativeId: string,
+  organizationId: string,
+  cards: Record<string, string>,
+  colSet: Set<string>,
+): Promise<void> {
+  try {
+    // Candidate target columns we know how to hydrate.
+    const TARGETS = [
+      'problem_statement',
+      'scope_in',
+      'scope_out',
+      'kill_criteria',
+      'success_criteria',
+      'deliverables',
+      'business_value',
+      'cost_capex',
+      'cost_opex',
+      'expected_roi',
+    ].filter((c) => colSet.has(c));
+    if (TARGETS.length === 0) return;
+
+    // Read current values so hydration is non-destructive (only fills empties).
+    let existingRow: Record<string, unknown> = {};
+    try {
+      const row = await queryHelpers.queryOne<Record<string, unknown>>(
+        `SELECT ${TARGETS.join(', ')} FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+      );
+      if (row) existingRow = row;
+    } catch {
+      // If the read fails, fall back to treating all as empty (fresh DRAFT).
+      existingRow = {};
+    }
+
+    const updates = buildTypedColumnUpdates(cards, new Set(TARGETS), existingRow);
+    if (updates.length === 0) return;
+
+    const { setClause, params } = toUpdateSql(updates);
+    await queryHelpers.queryRun(
+      `UPDATE initiatives SET ${setClause} WHERE id = ? AND organization_id = ?`,
+      [...params, initiativeId, organizationId],
+    );
+    logger.info(
+      `[teresa] hydrated ${updates.length} typed column(s) for initiative ${initiativeId}: ${updates
+        .map((u) => u.column)
+        .join(', ')}`,
+    );
+  } catch (e: any) {
+    logger.warn('[teresa] typed-column hydration failed (ignored):', e?.message || e);
   }
 }
 
