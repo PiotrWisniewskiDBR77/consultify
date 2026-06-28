@@ -172,7 +172,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
                       type="checkbox"
                       checked={selected.has(idx)}
                       onChange={() => toggleItem(idx)}
-                      className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
+                      className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-[var(--c-focus)]"
                     />
                     <span
                       className={`text-sm ${item.checked ? 'line-through text-slate-600 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}

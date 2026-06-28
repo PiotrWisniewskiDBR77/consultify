@@ -2113,7 +2113,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       <style>{EDITOR_STYLES}</style>
 
       {/* Sidebar */}
-      <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/30 flex flex-col">
+      <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-navy-900 flex flex-col">
         {/* Sidebar header */}
         <div className="px-4 py-3 border-b border-slate-200/60 dark:border-navy-800/60">
           <div className="flex items-center justify-between mb-2">
@@ -2134,12 +2134,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </TooltipContent>
                 </Tooltip>
               ) : (
-                <div className="w-7 h-7 shrink-0 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shadow-sm">
-                  <BookOpen size={14} className="text-white" />
+                <div className="w-7 h-7 shrink-0 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                  <BookOpen size={14} className="text-slate-500 dark:text-slate-400" />
                 </div>
               )}
               <div className="min-w-0">
-                <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                   {notebookTitle || t('myWork.notebook.title', 'Notebook')}
                 </div>
                 <div className="text-[10px] text-slate-600 dark:text-slate-500">
@@ -2206,7 +2206,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 setSidebarTab(tab.key);
                 onPageStatusFilterChange?.(tab.key);
               }}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-semibold transition-all border-b-2 ${
+              className={`flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-semibold transition-all border-b-2 ${
                 sidebarTab === tab.key
                   ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                   : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
@@ -2387,7 +2387,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
                           <div className="mt-1.5 flex items-center gap-1 flex-wrap">
                             <span
-                              className={`inline-flex items-center gap-0.5 rounded-md ${matCfg.bg} ${matCfg.text} px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide`}
+                              className={`inline-flex items-center gap-0.5 rounded-md ${matCfg.bg} ${matCfg.text} px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide`}
                             >
                               <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
                               {isPolish ? matCfg.labelPl : matCfg.label}
@@ -2419,7 +2419,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               if (!uploadSource) return null;
                               return (
                                 <span
-                                  className="rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                  className="rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.5 text-[11px] font-medium"
                                   title={uploadSource.title}
                                 >
                                   {uploadSource.label}
@@ -2433,7 +2433,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               if (convertedSummary.total === 0) return null;
                               return (
                                 <span
-                                  className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                  className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[11px] font-medium"
                                   title={convertedSummary.visibleTypes.join(', ')}
                                 >
                                   ✓ {convertedSummary.visibleTypes.join(', ')}
@@ -2447,7 +2447,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               p.tags.slice(0, 2).map((tag) => (
                                 <span
                                   key={tag}
-                                  className="rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                  className="rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 text-[11px] font-medium"
                                 >
                                   {tag}
                                 </span>
@@ -2527,7 +2527,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
       {/* Editor + Ideas panel */}
       <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
-        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20">
+        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-slate-50 dark:bg-navy-900">
           {!activePage && pagesLoading ? (
             /* Editor skeleton — avoids a blank "white" pane during first load. */
             <div className="flex-1 overflow-hidden">
@@ -2628,9 +2628,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 </div>
 
                 {/* AI suggestion prompt */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-crimson-50 to-primary-50 dark:from-crimson-950/30 dark:to-primary-950/20 border border-indigo-200/50 dark:border-indigo-800/30">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shrink-0">
-                    <Sparkles size={14} className="text-white" />
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-white/[0.06]">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center shrink-0">
+                    <Sparkles size={14} className="text-[var(--c-info)]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
@@ -2819,7 +2819,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             scheduleSave({ title: e.target.value });
                           }}
                           placeholder={isPolish ? 'Bez tytułu' : 'Untitled'}
-                          className="w-full bg-transparent text-3xl font-bold tracking-tight text-slate-900 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          className="w-full bg-transparent text-3xl font-semibold tracking-tight text-slate-900 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                         />
                         {/* Tags inline */}
                         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">

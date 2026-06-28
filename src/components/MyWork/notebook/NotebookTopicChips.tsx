@@ -165,7 +165,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
               }}
               disabled={busy}
               placeholder={isPl ? 'Nowy temat…' : 'New topic…'}
-              className="w-32 rounded-full border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-0.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/50"
+              className="w-32 rounded-full border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-0.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)]"
             />
             <button
               type="button"

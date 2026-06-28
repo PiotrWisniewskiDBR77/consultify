@@ -178,12 +178,12 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
                       {n.title || (isPl ? 'Bez tytułu' : 'Untitled')}
                     </span>
                     {n.source === 'ai' && (
-                      <span className="text-[9px] uppercase tracking-wide text-primary-500 shrink-0">
+                      <span className="text-[11px] uppercase tracking-wide text-primary-500 shrink-0">
                         AI
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-slate-400">{formatDate(n.updatedAt, isPl)}</span>
+                  <span className="text-[11px] text-slate-400">{formatDate(n.updatedAt, isPl)}</span>
                 </button>
               ))
             )}
@@ -237,7 +237,7 @@ const Empty: React.FC<{ text: string }> = ({ text }) => (
 
 const ArtifactRow: React.FC<{ artifact: AggregatedArtifact }> = ({ artifact }) => (
   <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/50 px-2.5 py-1.5">
-    <span className="text-[9px] uppercase tracking-wide text-slate-400 shrink-0">
+    <span className="text-[11px] uppercase tracking-wide text-slate-400 shrink-0">
       {artifact.type}
     </span>
     <span className="text-xs text-slate-700 dark:text-slate-300 truncate">{artifact.id}</span>
