@@ -1,6 +1,12 @@
 # Plan dla agenta-następcy — dokończenie kręgosłupa inicjatyw
 
-> **To jest Twoja robota.** Czysty, uporządkowany plan. Kontekst i historię masz w
+> **STATUS 2026-06-28: R1–R7 WYKONANE.** Cały plan zrealizowany (708/708 testów,
+> staging zmigrowany, demo zdeployowane). Wyniki + dowody: `WYNIKI_M13_BACKBONE_RUN2.md`.
+> Zostały TYLKO: odbiór uwierzytelniony Piotra + decyzja o mapowaniach R3, oraz
+> 3 świadomie odłożone pogłębienia (sekcja 6 raportu WYNIKI) — wymagają decyzji, nie kodu.
+> Poniższy plan zostaje jako referencja „co i dlaczego".
+
+> **To była Twoja robota.** Czysty, uporządkowany plan. Kontekst i historię masz w
 > `INITIATIVE_BACKBONE_HANDOFF.md`; wizję+decyzje w `INITIATIVE_SYSTEM_SSOT.md`. Tu
 > jest TYLKO to, co zostało, w kolejności, z dokładnością do plików/funkcji/testów.
 
