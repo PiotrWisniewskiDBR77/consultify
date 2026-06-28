@@ -197,10 +197,11 @@ type SeedKnownTool = {
 // Everything NOT in this set is rendered as "Coming soon" (isComingSoon: true)
 // in the Library and is blocked from starting a session.
 export const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
-  // 7 fully-worked strategic + automation
+  // 8 fully-worked strategic + automation
   'dynamic-swot',
   'market-forces',
   'value-chain',
+  'capability-mapper',
   'growth-paths',
   'portfolio-priority',
   'risk-uncertainty',
@@ -339,7 +340,7 @@ export const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'capabilities', 'roadmap'],
     icon: 'Users',
     sortOrder: 107,
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'tool-known-ambition-decomposer',

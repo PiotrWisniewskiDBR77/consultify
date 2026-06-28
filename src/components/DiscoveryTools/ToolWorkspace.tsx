@@ -293,6 +293,20 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       }
       if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
     }
+    if (toolType === 'capability-mapper') {
+      if (!data.context?.industry) gaps.push('Missing industry');
+      if (!data.context?.capabilityDomains) gaps.push('Missing capability domains');
+      if (!accepted(data.capabilities).length) gaps.push('Missing scored capabilities');
+      if (!accepted(data.gaps).length) gaps.push('Missing capability gaps');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
     if (toolType === 'growth-paths') {
       if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
         gaps.push('Missing growth mission');

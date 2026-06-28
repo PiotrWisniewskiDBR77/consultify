@@ -131,6 +131,52 @@ Return JSON:
     return '';
   }
 
+  if (toolType === 'capability-mapper') {
+    const capData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Improve the brief for this Capability Mapper analysis.
+
+Current context:
+- Industry: ${capData?.context?.industry || 'missing'}
+- Capability domains: ${capData?.context?.capabilityDomains || 'missing'}
+- Strategic priorities: ${capData?.context?.strategicPriorities || 'missing'}
+
+Return JSON:
+{"mission": {"industry": "...", "capabilityDomains": "...", "strategicPriorities": "...", "goal": "...", "successSignal": "...", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the brief and organization context, propose 4-6 high-value signals about organizational capabilities, skills, processes, and gaps.
+
+Context:
+- Industry: ${capData?.context?.industry || 'missing'}
+- Capability domains: ${capData?.context?.capabilityDomains || 'missing'}
+- Strategic priorities: ${capData?.context?.strategicPriorities || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["technology|talent|processes|data|partnerships"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'capabilities') {
+      const signalsSummary = (capData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Turn these signals and the organization context into a scored capability map.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- score each capability on currentMaturity and targetMaturity (1-5)
+- importance = strategic importance (high|medium|low)
+- gapSize = critical|moderate|minor (derived from the maturity gap weighted by importance)
+- sourcing = build|buy|partner|sustain
+- separate drivers from evidence; make implications concrete for the transformation roadmap
+
+Return JSON:
+{"capabilities": [{"name": "...", "domain": "...", "currentMaturity": 1-5, "targetMaturity": 1-5, "importance": "high|medium|low", "gapSize": "critical|moderate|minor", "sourcing": "build|buy|partner|sustain", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}]}`;
+    }
+    return '';
+  }
+
   if (toolType === 'growth-paths') {
     const growthData = inputData as any;
     if (stepId === 'mission') {
@@ -431,6 +477,37 @@ Return as JSON:
   "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","linkedActivityIds":["operations"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["operations"]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedActivityIds": ["operations"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'capability-mapper') {
+    const capData = inputData as any;
+    const capsSummary = (capData?.capabilities || [])
+      .map(
+        (c: any) =>
+          `- ${c.name} (${c.domain}): ${c.currentMaturity}→${c.targetMaturity}, importance ${c.importance}, ${c.sourcing || 'tbd'}`
+      )
+      .join('\n');
+
+    return `Based on this Capability Map, create a consulting-grade final summary:
+
+${capsSummary}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Capability Gaps (where maturity is furthest below target on high-importance capabilities)
+3. Applied Conclusions: what to build, what to buy/partner, what to reskill, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"build|buy|partner|reskill|restructure","rationale":"...","linkedCapabilityIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedCapabilityIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
   }
 

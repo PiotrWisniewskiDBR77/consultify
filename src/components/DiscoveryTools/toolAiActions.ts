@@ -58,6 +58,7 @@ const TOOLS_WITH_APPLY_HANDLER: ReadonlySet<ToolType> = new Set<ToolType>([
   'dynamic-swot',
   'market-forces',
   'value-chain',
+  'capability-mapper',
   'growth-paths',
   'portfolio-priority',
   'risk-uncertainty',
@@ -99,6 +100,12 @@ export function getToolPhaseAiActions(
       title: 'Turn accepted signals into scored value-chain activities',
       titlePl: 'Zamień zaakceptowane sygnały w ocenione aktywności łańcucha wartości',
     },
+    'capability-mapper': {
+      label: 'Build Map',
+      labelPl: 'Buduj mapę',
+      title: 'Turn accepted signals into scored capabilities',
+      titlePl: 'Zamień zaakceptowane sygnały w ocenione kompetencje',
+    },
     'portfolio-priority': {
       label: 'Build Portfolio',
       labelPl: 'Buduj portfolio',
@@ -117,6 +124,7 @@ export function getToolPhaseAiActions(
     'dynamic-swot': 'swot',
     'market-forces': 'forces',
     'value-chain': 'activities',
+    'capability-mapper': 'capabilities',
     'growth-paths': 'options',
     'portfolio-priority': 'items',
     'risk-uncertainty': 'assumptions',

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import type {
+  Capability,
   GrowthPathsData,
   PorterData,
   PortfolioPriorityData,
@@ -399,6 +400,158 @@ export function ValueChainVisual({
             ? 'Kolor aktywności = rola w marży, adnotacje = wkład w koszt i wartość.'
             : 'Activity color = margin role, annotations = cost and value contribution.'}
         </div>
+      )}
+    </div>
+  );
+}
+
+const CAPABILITY_IMPORTANCE_RANK: Record<Capability['importance'], number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+};
+
+const capabilityGapTone: Record<NonNullable<Capability['gapSize']>, string> = {
+  critical: 'bg-amber-500',
+  moderate: 'bg-slate-400',
+  minor: 'bg-emerald-500',
+};
+
+const capabilityImportanceLabel = (
+  importance: Capability['importance'],
+  isPolish: boolean
+): string => {
+  if (isPolish) {
+    return importance === 'high' ? 'wysoka' : importance === 'medium' ? 'średnia' : 'niska';
+  }
+  return importance === 'high' ? 'high' : importance === 'medium' ? 'medium' : 'low';
+};
+
+export function CapabilityMaturityVisual({
+  capabilities,
+  isPolish,
+}: {
+  capabilities: Capability[];
+  isPolish: boolean;
+}) {
+  // Sort by strategic importance (high → low), then by widest current→target gap.
+  const sorted = [...(capabilities || [])].sort((a, b) => {
+    const byImportance =
+      CAPABILITY_IMPORTANCE_RANK[a.importance] - CAPABILITY_IMPORTANCE_RANK[b.importance];
+    if (byImportance !== 0) return byImportance;
+    return b.targetMaturity - b.currentMaturity - (a.targetMaturity - a.currentMaturity);
+  });
+
+  return (
+    <div className={cardClass}>
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+          {isPolish ? 'Drabina dojrzałości zdolności' : 'Capability maturity ladder'}
+        </div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          {isPolish ? 'Skala 1-5' : 'Scale 1-5'}
+        </div>
+      </div>
+
+      {sorted.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs text-slate-400 dark:border-navy-700 dark:bg-navy-900/40 dark:text-slate-500">
+          {isPolish
+            ? 'Brak zdolności do pokazania. Dodaj zdolności, aby zobaczyć dojrzałość obecną vs docelową.'
+            : 'No capabilities to show yet. Add capabilities to see current vs target maturity.'}
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2.5">
+            {sorted.map((capability) => {
+              const current = Math.max(0, Math.min(5, capability.currentMaturity || 0));
+              const target = Math.max(0, Math.min(5, capability.targetMaturity || 0));
+              const lo = Math.min(current, target);
+              const hi = Math.max(current, target);
+              const loPct = (lo / 5) * 100;
+              const hiPct = (hi / 5) * 100;
+              const tone = capabilityGapTone[capability.gapSize ?? 'moderate'];
+              return (
+                <div key={capability.id}>
+                  <div className="mb-1 flex items-baseline justify-between gap-2">
+                    <span
+                      className="truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200"
+                      title={capability.name}
+                    >
+                      {capability.name}
+                      {capability.domain ? (
+                        <span className="ml-1.5 text-[10px] font-normal text-slate-400">
+                          {capability.domain}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="shrink-0 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                      {current} → {target}
+                    </span>
+                  </div>
+                  <div
+                    className="relative h-3 rounded-full bg-slate-100 dark:bg-navy-800"
+                    title={`${isPolish ? 'waga' : 'importance'}: ${capabilityImportanceLabel(
+                      capability.importance,
+                      isPolish
+                    )}`}
+                  >
+                    {/* Gap fill from lower to higher maturity */}
+                    <div
+                      className={`absolute top-0 h-3 rounded-full ${tone}`}
+                      style={{ left: `${loPct}%`, width: `${Math.max(0, hiPct - loPct)}%` }}
+                    />
+                    {/* Current-maturity marker */}
+                    <div
+                      className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-slate-700 shadow dark:border-navy-950"
+                      style={{ left: `${(current / 5) * 100}%` }}
+                      title={`${isPolish ? 'Obecna' : 'Current'}: ${current}`}
+                    />
+                    {/* Target-maturity marker */}
+                    <div
+                      className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-emerald-600 shadow dark:border-navy-950"
+                      style={{ left: `${(target / 5) * 100}%` }}
+                      title={`${isPolish ? 'Docelowa' : 'Target'}: ${target}`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Marker + gap-size legend */}
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-700 shadow-sm dark:border-navy-950" />
+              <span className="text-[11px] text-slate-600 dark:text-slate-300">
+                {isPolish ? 'Obecna' : 'Current'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-600 shadow-sm dark:border-navy-950" />
+              <span className="text-[11px] text-slate-600 dark:text-slate-300">
+                {isPolish ? 'Docelowa' : 'Target'}
+              </span>
+            </div>
+            {(
+              [
+                ['critical', isPolish ? 'Krytyczna luka' : 'Critical gap'],
+                ['moderate', isPolish ? 'Umiarkowana luka' : 'Moderate gap'],
+                ['minor', isPolish ? 'Drobna luka' : 'Minor gap'],
+              ] as Array<[NonNullable<Capability['gapSize']>, string]>
+            ).map(([gap, text]) => (
+              <div key={gap} className="flex items-center gap-1.5">
+                <span className={`h-2.5 w-2.5 rounded-full ${capabilityGapTone[gap]}`} />
+                <span className="text-[11px] text-slate-600 dark:text-slate-300">{text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Sortowanie wg wagi strategicznej, kolor wypełnienia = rozmiar luki, znaczniki = dojrzałość obecna i docelowa.'
+              : 'Sorted by strategic importance, fill color = gap size, markers = current and target maturity.'}
+          </div>
+        </>
       )}
     </div>
   );

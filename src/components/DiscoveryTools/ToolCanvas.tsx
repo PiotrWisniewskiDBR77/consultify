@@ -42,6 +42,12 @@ import {
   MarketForcesOutputsPhase,
 } from './tools/MarketForces/MarketForcesPhases';
 import {
+  CapabilityMapperBuildPhase,
+  CapabilityMapperInputPhase,
+  CapabilityMapperInsightsPhase,
+  CapabilityMapperOutputsPhase,
+} from './tools/CapabilityMapper';
+import {
   ValueChainBuildPhase,
   ValueChainInputPhase,
   ValueChainInsightsPhase,
@@ -412,6 +418,78 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
         return (
           <div className="space-y-6">
             <ValueChainOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'capability-mapper') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <CapabilityMapperInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'capabilities') {
+        return (
+          <CapabilityMapperBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <CapabilityMapperInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <CapabilityMapperOutputsPhase
               session={session}
               isPolish={isPolish}
               onAcceptCard={onAcceptCard}

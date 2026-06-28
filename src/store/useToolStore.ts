@@ -436,6 +436,105 @@ export interface ValueChainData {
   };
 }
 
+// ==================== Capability Mapper types ====================
+// Dynamic list of organizational capabilities scored on current vs target
+// maturity and strategic importance → gaps → build/buy/partner moves.
+export interface CapabilitySignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface Capability {
+  id: string;
+  name: string;
+  domain: string; // e.g. technology, talent, processes, data, partnerships
+  currentMaturity: number; // 1-5
+  targetMaturity: number; // 1-5
+  importance: 'high' | 'medium' | 'low'; // strategic importance
+  gapSize?: 'critical' | 'moderate' | 'minor'; // derived from target-current × importance
+  sourcing?: 'build' | 'buy' | 'partner' | 'sustain';
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+// Synthesized capability gap/priority — the "where to act and why" unit.
+export interface CapabilityGap {
+  id: string;
+  title: string;
+  capabilityIds: string[];
+  insight: string;
+  priority: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface CapabilityMove {
+  id: string;
+  title: string;
+  category: 'build' | 'buy' | 'partner' | 'reskill' | 'restructure';
+  rationale: string;
+  linkedGapIds: string[];
+  linkedCapabilityIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface CapabilityOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedCapabilityIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface CapabilityMapperData {
+  context: {
+    industry: string;
+    capabilityDomains: string;
+    strategicPriorities?: string;
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: CapabilitySignal[];
+  capabilities: Capability[];
+  gaps: CapabilityGap[];
+  recommendedMoves: CapabilityMove[];
+  outputCandidates: CapabilityOutputCandidate[];
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
 // Growth Paths (Ansoff) types
 export type GrowthQuadrantId =
   | 'marketPenetration'
@@ -829,6 +928,7 @@ export interface ToolSession {
     | SWOTData
     | PorterData
     | ValueChainData
+    | CapabilityMapperData
     | GrowthPathsData
     | PortfolioPriorityData
     | RiskUncertaintyData
@@ -984,6 +1084,54 @@ export const VALUE_CHAIN_STEPS: StepDefinition[] = [
     namePl: 'Dźwignie marży i ruchy',
     description: 'Synthesize the chain into margin levers, a positioning verdict, and strategic moves',
     descriptionPl: 'Przekształć łańcuch w dźwignie marży, werdykt pozycjonowania i ruchy strategiczne',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const CAPABILITY_MAPPER_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Mission & Scope',
+    namePl: 'Misja i zakres',
+    description: 'Define the strategic priorities, capability domains, and success signal',
+    descriptionPl: 'Zdefiniuj priorytety strategiczne, domeny zdolności i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture capability signals from context, interviews, and benchmarks',
+    descriptionPl: 'Zbierz sygnały o zdolnościach z kontekstu, wywiadów i benchmarków',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'capabilities',
+    name: 'Capability Map',
+    namePl: 'Mapa zdolności',
+    description: 'Score capabilities on current vs target maturity and strategic importance',
+    descriptionPl: 'Oceń zdolności wg dojrzałości obecnej/docelowej i ważności strategicznej',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Gaps & Moves',
+    namePl: 'Luki i ruchy',
+    description: 'Synthesize maturity gaps into priorities and build/buy/partner moves',
+    descriptionPl: 'Przekształć luki dojrzałości w priorytety i ruchy build/buy/partner',
     required: true,
     aiAssisted: true,
   },
@@ -1706,6 +1854,7 @@ interface ToolStoreState {
       | SWOTData
       | PorterData
       | ValueChainData
+      | CapabilityMapperData
       | GrowthPathsData
       | PortfolioPriorityData
       | RiskUncertaintyData
@@ -1846,6 +1995,26 @@ const createInitialValueChainData = (): ValueChainData => ({
   outputCandidates: [],
 });
 
+const createInitialCapabilityMapperData = (): CapabilityMapperData => ({
+  context: {
+    industry: '',
+    capabilityDomains: '',
+    strategicPriorities: '',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  capabilities: [],
+  gaps: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
 const createInitialGrowthPathsData = (): GrowthPathsData => ({
   context: createConsultingMissionContext(),
   signals: [],
@@ -1960,7 +2129,7 @@ const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'ambition-decomposer': PORTER_STEPS,
   'focus-tradeoff': PORTER_STEPS,
   'risk-uncertainty': RISK_UNCERTAINTY_STEPS,
-  'capability-mapper': PORTER_STEPS,
+  'capability-mapper': CAPABILITY_MAPPER_STEPS,
   'narrative-engine': PORTER_STEPS,
   'sop-builder': SOP_STEPS,
   'a3-problem-solving': A3_STEPS,
@@ -1990,6 +2159,7 @@ const TOOL_INITIAL_DATA: Record<
   | SWOTData
   | PorterData
   | ValueChainData
+  | CapabilityMapperData
   | GrowthPathsData
   | PortfolioPriorityData
   | RiskUncertaintyData
@@ -2004,7 +2174,7 @@ const TOOL_INITIAL_DATA: Record<
   'ambition-decomposer': createInitialPorterData(),
   'focus-tradeoff': createInitialPorterData(),
   'risk-uncertainty': createInitialRiskUncertaintyData(),
-  'capability-mapper': createInitialPorterData(),
+  'capability-mapper': createInitialCapabilityMapperData(),
   'narrative-engine': createInitialPorterData(),
   'sop-builder': createInitialOperationalData(SOP_STEPS),
   'a3-problem-solving': createInitialOperationalData(A3_STEPS),
@@ -2478,6 +2648,7 @@ const mergeToolAnswersWithInitialData = (
   | SWOTData
   | PorterData
   | ValueChainData
+  | CapabilityMapperData
   | GrowthPathsData
   | PortfolioPriorityData
   | RiskUncertaintyData
@@ -3281,6 +3452,7 @@ export const useToolStore = create<ToolStoreState>()(
             | SWOTData
             | PorterData
             | ValueChainData
+            | CapabilityMapperData
             | GrowthPathsData
             | PortfolioPriorityData
             | RiskUncertaintyData
