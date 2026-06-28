@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   CalendarDays,
   CheckSquare,
-  ChevronRight,
   Code,
   Columns2,
   Columns3,
@@ -30,6 +29,8 @@ import { useTranslation } from 'react-i18next';
 
 import type { AICommandType } from './AIInlineResponse';
 
+type SlashGroupId = 'basic' | 'insert' | 'ai' | 'create';
+
 interface SlashCommand {
   id: string;
   label: string;
@@ -41,6 +42,43 @@ interface SlashCommand {
   action: (editor: Editor) => void;
   aiCommand?: AICommandType;
 }
+
+const SLASH_GROUP_ORDER: SlashGroupId[] = ['basic', 'insert', 'ai', 'create'];
+
+const SLASH_GROUP_LABELS: Record<SlashGroupId, { en: string; pl: string }> = {
+  basic: { en: 'Basic blocks', pl: 'Podstawowe' },
+  insert: { en: 'Insert', pl: 'Wstaw' },
+  ai: { en: 'AI', pl: 'AI' },
+  create: { en: 'Create', pl: 'Utwórz' },
+};
+
+// Group derived from command id (keeps the 23 command objects untouched).
+const SLASH_GROUP_OF: Record<string, SlashGroupId> = {
+  h1: 'basic',
+  h2: 'basic',
+  h3: 'basic',
+  bullet: 'basic',
+  ordered: 'basic',
+  todo: 'basic',
+  quote: 'basic',
+  callout: 'basic',
+  warning: 'basic',
+  toggle: 'basic',
+  divider: 'basic',
+  code: 'basic',
+  image: 'insert',
+  date: 'insert',
+  columns: 'insert',
+  table: 'insert',
+  'ai-ask': 'ai',
+  'ai-expand': 'ai',
+  'ai-challenge': 'ai',
+  'ai-action': 'ai',
+  'create-task': 'create',
+  'create-decision': 'create',
+  'save-as-idea': 'create',
+};
+const slashGroupOf = (id: string): SlashGroupId => SLASH_GROUP_OF[id] ?? 'basic';
 
 const ICON_SIZE = 16;
 
@@ -450,44 +488,63 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 w-64 max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg"
+      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1"
       style={{ top, left }}
     >
-      <div className="p-1">
-        {filteredItems.map((cmd, idx) => (
-          <button
-            key={cmd.id}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              executeCommand(cmd);
-            }}
-            onMouseEnter={() => setSelectedIdx(idx)}
-            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-              idx === selectedIdx
-                ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
-                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
-            }`}
-          >
-            <span className="shrink-0 text-slate-500 dark:text-slate-400">{cmd.icon}</span>
-            <div className="min-w-0">
-              <div className="font-medium text-sm">{isPolish ? cmd.labelPl : cmd.label}</div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                {isPolish ? cmd.descriptionPl : cmd.description}
-              </div>
+      {SLASH_GROUP_ORDER.map((groupId) => {
+        const groupItems = filteredItems.filter((c) => slashGroupOf(c.id) === groupId);
+        if (groupItems.length === 0) return null;
+        const groupLabel = SLASH_GROUP_LABELS[groupId];
+        return (
+          <div key={groupId} className="px-1">
+            <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+              {isPolish ? groupLabel.pl : groupLabel.en}
             </div>
-            {cmd.aiCommand ? (
-              <span className="ml-auto shrink-0 text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-500/10 px-1.5 py-0.5 rounded">
-                AI
-              </span>
-            ) : cmd.id === 'h1' ||
-              cmd.id === 'todo' ||
-              cmd.id === 'callout' ||
-              cmd.id === 'toggle' ? (
-              <ChevronRight size={12} className="ml-auto shrink-0 text-slate-600" />
-            ) : null}
-          </button>
-        ))}
-      </div>
+            {groupItems.map((cmd) => {
+              const idx = filteredItems.indexOf(cmd);
+              const isActive = idx === selectedIdx;
+              return (
+                <button
+                  key={cmd.id}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    executeCommand(cmd);
+                  }}
+                  onMouseEnter={() => setSelectedIdx(idx)}
+                  className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors ${
+                    isActive
+                      ? 'bg-slate-100 dark:bg-navy-800'
+                      : 'hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
+                      cmd.aiCommand
+                        ? 'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-300'
+                        : 'border-slate-200 bg-white text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400'
+                    }`}
+                  >
+                    {cmd.icon}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium text-[13px] text-slate-700 dark:text-slate-200">
+                      {isPolish ? cmd.labelPl : cmd.label}
+                    </span>
+                    <span className="block truncate text-[11px] text-slate-400 dark:text-slate-500">
+                      {isPolish ? cmd.descriptionPl : cmd.description}
+                    </span>
+                  </span>
+                  {cmd.aiCommand ? (
+                    <span className="ml-auto shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-400">
+                      AI
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 };
