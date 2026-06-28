@@ -19,7 +19,9 @@ export interface RoadmapBandProps {
 const STATUS_COLORS: Record<string, (tokens: DesignTokens) => string> = {
   completed: (t) => t.colors.success,
   in_progress: (t) => t.colors.info,
-  planned: (t) => t.colors.muted,
+  // 'planned' used muted grey → bland. Use the brand secondary for a confident,
+  // non-washed-out header while still differentiating from completed/in-progress.
+  planned: (t) => t.colors.secondary,
 };
 
 export function RoadmapBand(props: RoadmapBandProps, tokens: DesignTokens): RenderedElement[] {
@@ -27,7 +29,7 @@ export function RoadmapBand(props: RoadmapBandProps, tokens: DesignTokens): Rend
   const elements: RenderedElement[] = [];
   const count = phases.length;
   const colW = (p.w - tokens.spacing.gutter * (count - 1)) / count;
-  const headerH = 0.5;
+  const headerH = 0.62;
 
   for (let i = 0; i < count; i++) {
     const phase = phases[i];
@@ -35,7 +37,24 @@ export function RoadmapBand(props: RoadmapBandProps, tokens: DesignTokens): Rend
     const statusFn = STATUS_COLORS[phase.status ?? 'planned'];
     const bandColor = statusFn(tokens);
 
-    // Phase header band
+    // Full-height column card (surface panel) — gives the roadmap structure and
+    // fills the slide instead of leaving a large void under the headers.
+    elements.push({
+      kind: 'shape',
+      apply(slide) {
+        slide.addShape('roundRect', {
+          x: colX,
+          y: p.y,
+          w: colW,
+          h: p.h,
+          fill: { color: tokens.colors.surface },
+          line: { color: tokens.colors.border, width: 1 },
+          rectRadius: 0.05,
+        });
+      },
+    });
+
+    // Phase header band (sits on top of the card)
     elements.push({
       kind: 'shape',
       apply(slide) {
@@ -45,7 +64,8 @@ export function RoadmapBand(props: RoadmapBandProps, tokens: DesignTokens): Rend
           w: colW,
           h: headerH,
           fill: { color: bandColor },
-          rectRadius: 0.04,
+          line: { color: bandColor, width: 0 },
+          rectRadius: 0.05,
         });
       },
     });
@@ -55,29 +75,29 @@ export function RoadmapBand(props: RoadmapBandProps, tokens: DesignTokens): Rend
       BodyText(
         {
           text: `${phase.label}\n${phase.timeframe}`,
-          position: { x: colX, y: p.y, w: colW, h: headerH },
+          position: { x: colX + 0.1, y: p.y, w: colW - 0.2, h: headerH },
           bold: true,
           color: tokens.colors.textInverse,
           align: 'center',
           valign: 'middle',
-          fontSize: 11,
+          fontSize: 12,
         },
         tokens
       )
     );
 
-    // Phase items
+    // Phase items — anchored directly under the header (Bullet is top-aligned).
     elements.push(
       Bullet(
         {
-          items: phase.items.slice(0, 5),
+          items: phase.items.slice(0, 6),
           position: {
-            x: colX + 0.05,
-            y: p.y + headerH + 0.1,
-            w: colW - 0.1,
-            h: p.h - headerH - 0.2,
+            x: colX + 0.2,
+            y: p.y + headerH + 0.2,
+            w: colW - 0.4,
+            h: p.h - headerH - 0.4,
           },
-          fontSize: 10,
+          fontSize: 11,
         },
         tokens
       )
