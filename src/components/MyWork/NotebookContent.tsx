@@ -81,6 +81,7 @@ import {
   NotebookHamburgerMenu,
   type NotebookConvertTarget,
 } from './notebook/NotebookHamburgerMenu';
+import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
 import { NotebookProgressChip } from './notebook/NotebookProgressChip';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
@@ -3201,6 +3202,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   />
 
                   {/* Rich editor */}
+                  {editor && <NotebookBubbleToolbar editor={editor} />}
                   <EditorContent editor={editor} />
 
                   {activePage ? (

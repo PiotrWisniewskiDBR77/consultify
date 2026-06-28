@@ -118,6 +118,9 @@ vi.mock('../../../src/components/MyWork/notebook/NotebookContextPanel', () => ({
 vi.mock('../../../src/components/MyWork/notebook/NotebookToolbar', () => ({
   NotebookToolbar: () => <div />,
 }));
+vi.mock('../../../src/components/MyWork/notebook/NotebookBubbleToolbar', () => ({
+  NotebookBubbleToolbar: () => <div />,
+}));
 vi.mock('../../../src/components/MyWork/notebook/SlashMenu', () => ({
   INITIAL_SLASH_STATE: { open: false },
   detectSlashTrigger: () => null,

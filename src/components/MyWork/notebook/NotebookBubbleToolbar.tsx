@@ -1,0 +1,148 @@
+import type { Editor } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
+import {
+  Bold,
+  Code as CodeIcon,
+  Highlighter,
+  Italic,
+  Link as LinkIcon,
+  Strikethrough,
+  Underline as UnderlineIcon,
+} from 'lucide-react';
+import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+
+/**
+ * NotebookBubbleToolbar — N8 floating format toolbar (Notion/Craft-grade).
+ *
+ * A selection bubble that appears over highlighted text in the Living Notebook
+ * editor, exposing the most-used inline marks without reaching for the static
+ * top toolbar. Reuses the exact same TipTap commands as NotebookToolbar so the
+ * two stay in lockstep.
+ *
+ * Self-contained: owns only the bubble + buttons. Monochrome chrome (slate/navy)
+ * per the UI canon — the only colour budget here is the active-mark slate fill.
+ * Hidden inside code blocks (inline marks don't apply) and for node selections
+ * (e.g. images), and never shows for an empty/collapsed selection.
+ */
+interface NotebookBubbleToolbarProps {
+  editor: Editor;
+}
+
+interface MarkBtnProps {
+  icon: React.ComponentType<{ size?: number }>;
+  onClick: () => void;
+  isActive?: boolean;
+  title: string;
+  ariaLabel: string;
+}
+
+const MarkBtn: React.FC<MarkBtnProps> = ({ icon: Icon, onClick, isActive, title, ariaLabel }) => (
+  <button
+    type="button"
+    aria-label={ariaLabel}
+    aria-pressed={!!isActive}
+    title={title}
+    // onMouseDown (not onClick) so the editor keeps its text selection.
+    onMouseDown={(e) => {
+      e.preventDefault();
+      onClick();
+    }}
+    className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+      isActive
+        ? 'bg-slate-200 text-slate-900 dark:bg-navy-700 dark:text-white'
+        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.06]'
+    }`}
+  >
+    <Icon size={15} />
+  </button>
+);
+
+export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ editor }) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
+  const t = (en: string, pl: string) => (isPolish ? pl : en);
+
+  const setLink = useCallback(() => {
+    const previous = editor.getAttributes('link').href as string | undefined;
+    const url = window.prompt(t('Link URL', 'Adres linku'), previous || '');
+    if (url === null) return; // cancelled
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }, [editor, isPolish]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <BubbleMenu
+      editor={editor}
+      options={{ placement: 'top', offset: 8 }}
+      // Show only for a real, non-empty text selection — never inside a code
+      // block (inline marks are meaningless there) or over a node selection.
+      shouldShow={({ editor: ed, from, to, state }) => {
+        if (!ed.isEditable) return false;
+        if (from === to) return false;
+        if (ed.isActive('codeBlock')) return false;
+        // Node selection (image, hr, …) → ProseMirror NodeSelection has node set.
+        if ((state.selection as { node?: unknown }).node) return false;
+        const text = state.doc.textBetween(from, to, ' ').trim();
+        return text.length > 0;
+      }}
+      className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-navy-700 dark:bg-navy-900"
+    >
+      <MarkBtn
+        icon={Bold}
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        isActive={editor.isActive('bold')}
+        title={t('Bold', 'Pogrubienie')}
+        ariaLabel={t('Bold', 'Pogrubienie')}
+      />
+      <MarkBtn
+        icon={Italic}
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        isActive={editor.isActive('italic')}
+        title={t('Italic', 'Kursywa')}
+        ariaLabel={t('Italic', 'Kursywa')}
+      />
+      <MarkBtn
+        icon={UnderlineIcon}
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        isActive={editor.isActive('underline')}
+        title={t('Underline', 'Podkreślenie')}
+        ariaLabel={t('Underline', 'Podkreślenie')}
+      />
+      <MarkBtn
+        icon={Strikethrough}
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        isActive={editor.isActive('strike')}
+        title={t('Strikethrough', 'Przekreślenie')}
+        ariaLabel={t('Strikethrough', 'Przekreślenie')}
+      />
+      <div className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-navy-700" />
+      <MarkBtn
+        icon={CodeIcon}
+        onClick={() => editor.chain().focus().toggleCode().run()}
+        isActive={editor.isActive('code')}
+        title={t('Inline code', 'Kod w linii')}
+        ariaLabel={t('Inline code', 'Kod w linii')}
+      />
+      <MarkBtn
+        icon={Highlighter}
+        onClick={() => editor.chain().focus().toggleHighlight().run()}
+        isActive={editor.isActive('highlight')}
+        title={t('Highlight', 'Podświetlenie')}
+        ariaLabel={t('Highlight', 'Podświetlenie')}
+      />
+      <MarkBtn
+        icon={LinkIcon}
+        onClick={setLink}
+        isActive={editor.isActive('link')}
+        title={t('Link', 'Link')}
+        ariaLabel={t('Link', 'Link')}
+      />
+    </BubbleMenu>
+  );
+};
+
+export default NotebookBubbleToolbar;
