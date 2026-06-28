@@ -658,26 +658,31 @@ USER MESSAGE: ${userMessage}`;
    * Identify data sources used in context
    */
   _identifyDataSources: (context: any) => {
+    // DEFENSIVE: context sub-objects (execution/knowledge/external) can be partially
+    // built when an enrichment query degrades (e.g. schema drift leaves a field
+    // undefined). Optional-chain every access so a missing field never crashes the
+    // whole chat turn (2026-06-28: `knowledge.previousDecisions` was undefined →
+    // TypeError reading 'length' → Teresa returned no output).
     const sources = ['Platform Configuration', 'Organization Data'];
 
-    if (context.project) {
+    if (context?.project) {
       sources.push('Project Data');
       sources.push(`Phase: ${context.project.currentPhase}`);
     }
 
-    if (context.execution.userTasks.length > 0) {
+    if ((context?.execution?.userTasks?.length ?? 0) > 0) {
       sources.push('User Tasks');
     }
 
-    if (context.execution.pendingDecisions.length > 0) {
+    if ((context?.execution?.pendingDecisions?.length ?? 0) > 0) {
       sources.push('Pending Decisions');
     }
 
-    if (context.knowledge.previousDecisions.length > 0) {
+    if ((context?.knowledge?.previousDecisions?.length ?? 0) > 0) {
       sources.push('Decision History');
     }
 
-    if (context.external.internetEnabled) {
+    if (context?.external?.internetEnabled) {
       sources.push('External Knowledge (if used)');
     }
 
