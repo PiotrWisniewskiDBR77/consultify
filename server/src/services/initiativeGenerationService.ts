@@ -40,6 +40,12 @@ export interface GenerationContext {
   sourceLineage?: string;
   /** Existing KPIs summarized for grounding (baseline→target + unit). */
   existingKpis?: string;
+  /** F0 — istniejące inicjatywy w org (dedup/MECE awareness): "Tytuł [STATUS]; ...". */
+  portfolioSummary?: string;
+  /** F0 — kontekst organizacji (branża/cele/standardy) dla ugruntowania. */
+  orgContext?: string;
+  /** F0 — twarde dane finansowe org dla business-case/financial-impact. */
+  financialsSummary?: string;
   language: 'en' | 'pl';
   [key: string]: any;
 }
@@ -361,13 +367,17 @@ function getFormulaGuidance(sectionKey: string): string | null {
  * model cites real data instead of inventing it (CARD_CONTENT_FORMULA §A8).
  * Returns null when there is nothing concrete to ground in.
  */
-function buildGroundingBlock(context: GenerationContext): string | null {
+export function buildGroundingBlock(context: GenerationContext): string | null {
   const lines: string[] = [];
+  if (context.orgContext) lines.push(`Kontekst organizacji: ${String(context.orgContext).slice(0, 800)}`);
   if (context.summary) lines.push(`Streszczenie inicjatywy: ${String(context.summary).slice(0, 800)}`);
   if (context.problemStatement)
     lines.push(`Problem: ${String(context.problemStatement).slice(0, 800)}`);
   if (context.sourceLineage) lines.push(`Pochodzenie (lineage): ${context.sourceLineage}`);
   if (context.existingKpis) lines.push(`Istniejące KPI: ${context.existingKpis}`);
+  if (context.financialsSummary) lines.push(`Dane finansowe org: ${String(context.financialsSummary).slice(0, 800)}`);
+  if (context.portfolioSummary)
+    lines.push(`Istniejące inicjatywy w organizacji (NIE duplikuj; dopasuj do luk): ${String(context.portfolioSummary).slice(0, 1000)}`);
   if (context.category) lines.push(`Kategoria: ${context.category}`);
   if (context.module) lines.push(`Obszar/moduł: ${context.module}`);
   return lines.length ? lines.join('\n') : null;
@@ -785,6 +795,28 @@ Return valid JSON array only.`;
           /* initiative_kpis table may be absent — grounding is best-effort */
         }
 
+        // F0 — portfolio awareness: istniejące inicjatywy w org (dedup/MECE). Best-effort.
+        let portfolioSummary: string | undefined;
+        try {
+          const orgId = initiative.organization_id;
+          if (orgId) {
+            const others = await DbPromise.all<any>(
+              this.db,
+              `SELECT name, status FROM initiatives
+               WHERE organization_id = ? AND id != ? AND status NOT IN ('ARCHIVED','CANCELLED')
+               ORDER BY updated_at DESC LIMIT 15`,
+              [orgId, context.initiativeId]
+            );
+            if (Array.isArray(others) && others.length) {
+              portfolioSummary = others
+                .map((o: any) => `${o.name || '—'} [${o.status || '—'}]`)
+                .join('; ');
+            }
+          }
+        } catch {
+          /* best-effort — portfolio grounding optional */
+        }
+
         return {
           ...context,
           initiativeName: context.initiativeName || initiative.name,
@@ -796,6 +828,7 @@ Return valid JSON array only.`;
           currentPhase: context.currentPhase || initiative.current_phase,
           sourceLineage: context.sourceLineage || sourceLineage,
           existingKpis: context.existingKpis || existingKpis,
+          portfolioSummary: context.portfolioSummary || portfolioSummary,
           language: context.language || 'en',
         };
       }

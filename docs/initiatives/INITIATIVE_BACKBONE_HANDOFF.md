@@ -147,6 +147,10 @@
 ## 4. GDZIE SKOŃCZYŁEM / NASTĘPNA AKCJA
 > Aktualizuj tę sekcję po KAŻDYM kroku (Piotr: „cały czas dokumentuj działania”).
 
-- **2026-06-27:** SSOT + ten handoff napisane i zacommitowane. Proces statusów GOTOWY (92/92). 
-- **NASTĘPNA AKCJA:** zaczynam **F0 (grunt)** — zadanie 1 (Audyt→inicjatywa) lub 2 (Financials/KPI grounding), zależnie co szybciej zweryfikowalne. Najpierw grep istniejących serwisów audytu/financials.
+- **2026-06-27:** SSOT + ten handoff napisane, zacommitowane, **wypchnięte na GitHub** (`2fd964f6a9`). Proces statusów GOTOWY (92/92).
+- **2026-06-27 F0-inkrement-1 (ZROBIONE):** grunt portfolio/org/financials w generacji.
+  - `initiativeGenerationService.ts`: `GenerationContext` +3 pola (`portfolioSummary`/`orgContext`/`financialsSummary`); `buildGroundingBlock` EKSPORTOWANY + emituje je (org pierwszy, portfolio z instrukcją „NIE duplikuj"); `enrichContext` POPULUJE `portfolioSummary` (query ≤15 aktywnych inicjatyw org, best-effort).
+  - `validators/initiative.validators.ts:54`: enum source +`'audit'`.
+  - Test L1: `tests/unit/initiative/groundingBlock.test.ts` (5/5). Regresja 256/256, tsc czysto.
+- **NASTĘPNA AKCJA (F0 reszta):** (a) POPULOWAĆ `orgContext` w enrichContext — znajdź serwis org-context (`grep OrganizationContextService`), wstrzyknij profil org; (b) POPULOWAĆ `financialsSummary` — z `finance*` services (np. `financeEnterpriseService`/`economicsFinancials`), realne liczby org; (c) **Audyt→inicjatywa** ścieżka konwersji (wzór `assessmentInitiativeService.ts:646/689`, serwis audytu = `auditService.ts`/`auditProgramService.ts`), stamp `source_type='audit'`. Potem L2 (enrichContext z mock-DB → portfolio w prompcie) + L3.
 - *(kolejne wpisy dopisuje agent w trakcie)*
