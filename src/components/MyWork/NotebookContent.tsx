@@ -1163,8 +1163,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const handleMentionSelect = useCallback(
     (entity: MentionEntity) => {
       if (!editor || !activePage) return;
+      // Delete the literal "@query" deterministically from the trigger position
+      // (length = 1 for "@" + the query). Reading editor.state.selection here is
+      // fragile — clicking the menu can collapse/reset the editor selection,
+      // yielding to < from and a no-op deleteRange.
       const from = mentionState.triggerPos;
-      const to = editor.state.selection.from;
+      const to = from + 1 + mentionState.query.length;
       const ref = mentionEntityToEmbedRef(entity, isPolish);
       editor
         .chain()
@@ -1186,7 +1190,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       emitMyWorkEvent({ type: 'item:updated', entityType: 'notebook', entityId: activePage.id });
       toast.success(isPolish ? 'Powiązano' : 'Linked');
     },
-    [editor, activePage, mentionState.triggerPos, isPolish, emitMyWorkEvent]
+    [editor, activePage, mentionState.triggerPos, mentionState.query, isPolish, emitMyWorkEvent]
   );
 
   const generateSummary = useCallback(
