@@ -27,6 +27,9 @@ import { type CardValidationIssue, validateCard } from '@/services/api/cardValid
 import { checkSimilarInitiatives, type SimilarInitiative } from '@/services/api/initiativeSimilar';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
 
+import { ProposedCardsPanel } from './ProposedCardsPanel';
+import { useProposeCards } from './useProposeCards';
+
 // ──────────────────────────────────────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────────────────────────────────────
@@ -244,6 +247,26 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
     return () => clearTimeout(h);
   }, [title, thesis]);
 
+  // AI-proposed cards (R6) — surface the deterministic card proposal for the
+  // chosen lever/type and let the user opt extra cards in. Selection is held in
+  // wizard state (rendered below); persisting it further is out of scope here.
+  const { core: proposedCore, proposed: proposedExtra, loading: proposalLoading, fetchProposal } =
+    useProposeCards();
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const toggleSelectedCard = useCallback((key: string) => {
+    setSelectedCards((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  }, []);
+  // Re-propose whenever the lever (the closest "type" signal) changes.
+  useEffect(() => {
+    if (!isOpen) return;
+    void fetchProposal({ type: lever, sourceType: source?.sourceType, brief: thesis });
+    // brief/title intentionally excluded from deps — the proposal keys off type;
+    // refetching on every keystroke would be noisy.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, lever, source?.sourceType, fetchProposal]);
+
   // M13 Depth · K1 — debounced §B3 quality hints on the thesis/hypothesis field.
   const [cardIssues, setCardIssues] = useState<CardValidationIssue[]>([]);
   useEffect(() => {
@@ -287,6 +310,7 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
     setTitle(source?.title ?? '');
     setThesis(source?.thesis ?? '');
     setLever('cost');
+    setSelectedCards([]);
     setOwnerId('');
     setSponsorId('');
     setImpact('high');
@@ -540,6 +564,20 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           ]}
         />
       </div>
+      {(proposedCore.length > 0 || proposedExtra.length > 0) && (
+        <div>
+          <label className={labelCls}>
+            {tr('Karty inicjatywy (propozycja AI)', 'Initiative cards (AI proposal)')}
+          </label>
+          <ProposedCardsPanel
+            core={proposedCore}
+            proposed={proposedExtra}
+            selected={selectedCards}
+            onToggle={toggleSelectedCard}
+            loading={proposalLoading}
+          />
+        </div>
+      )}
     </div>
   );
 
