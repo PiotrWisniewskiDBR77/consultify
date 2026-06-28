@@ -152,6 +152,18 @@
   - `initiativeGenerationService.ts`: `GenerationContext` +3 pola (`portfolioSummary`/`orgContext`/`financialsSummary`); `buildGroundingBlock` EKSPORTOWANY + emituje je (org pierwszy, portfolio z instrukcją „NIE duplikuj"); `enrichContext` POPULUJE `portfolioSummary` (query ≤15 aktywnych inicjatyw org, best-effort).
   - `validators/initiative.validators.ts:54`: enum source +`'audit'`.
   - Test L1: `tests/unit/initiative/groundingBlock.test.ts` (5/5). Regresja 256/256, tsc czysto.
-- **2026-06-27 F0-inkrement-2 (ZROBIONE):** `enrichContext` populuje `orgContext` (query `organizations.name, industry` po org inicjatywy, best-effort). tsc czysto, grounding 5/5.
-- **NASTĘPNA AKCJA (F0 reszta):** (a) POPULOWAĆ `financialsSummary` — z `finance*` services (`financeEnterpriseService`/`economicsFinancials`), realne liczby org (P&L/budżet) → wstrzyknąć w enrichContext jak orgContext; (b) **Audyt→inicjatywa** ścieżka konwersji (wzór `assessmentInitiativeService.ts:646/689`; serwis audytu = `auditService.ts`/`auditProgramService.ts`), stamp `source_type='audit'`; (c) L2 test: `enrichContext` z mock-DB → prompt zawiera portfolio+org (rozszerz `tests/integration/initiatives/`). Potem F0 zamknięte → F1 mózg generatora.
+- **2026-06-27 F0-ink-2 (ZROBIONE):** `enrichContext` populuje `orgContext` (organizations.name+industry).
+- **2026-06-27 — 5 AGENTÓW RÓWNOLEGLE (ZROBIONE, ~110 testów, wszystko na GitHubie):**
+  - **F0 reszta:** `financialsGrounding.ts` (org P&L→grunt, wpięty w enrichContext → 4/4 źródła) + `auditInitiativeService.ts` (`createInitiativeFromAudit`, source_type=audit, DRAFT). [16 testów]
+  - **F2 kandydaci:** `initiativeCandidateService.ts` + `initiativeCandidates.routes.ts` + migracja `20260627_initiative_candidates.sql` + `CandidatesPanel.tsx`. Router ZAMONTOWANY (przed initiativesRoutes). [24 testy]
+  - **F3 silnik bloków:** `cards/cardBlockSchema.ts` (validateCardSpec critic) + `cards/CardBlockRenderer.tsx`. [32 testy]
+  - **F4 portfel:** `portfolioAnalysisService.ts` (Jaccard dedup + MECE + balans, czysty) + `PortfolioHealthView.tsx`. Endpoint `GET /portfolio-health` ZAMONTOWANY. [24 testy]
+  - **F5 materiał:** `initiativeMaterializeService.ts` (inicjatywa/portfel→deck/raport/TABELA via M17) + `initiativeMaterialize.routes.ts` ZAMONTOWANY. [14 testów]
+  - **Wiring backendu ZROBIONY:** financials w enrichContext; 4 routery zamontowane w Gateway (kandydaci+backbone PRZED initiativesRoutes — shadow `/:id`; materialize PO). `initiativeBackbone.routes.ts` = from-audit + portfolio-health. Regresja 347/347, tsc czysto. Commity `67e90e27e1`, `b9461d33a7`, `5efd2273af`.
+- **CO ZOSTAŁO (dla następcy):**
+  1. **F1 MÓZG GENERATORA** (NIE zbudowany — to orkiestracja spinająca moduły): tor szybki `generateFullInitiative(brief)` = grunt(F0) → dobór kart (6 rdzenia + propozycje via biblioteka) → fill wszystkich (`generateSectionContent`) → auto-heal (recenzent <próg → regen) → DRAFT. + endpoint `POST /propose-cards`. + Teresa pełny fill + lineage (`generateInitiative.ts`). To rdzeń — rób następne.
+  2. **FE wiring (wymaga preview, kontendowane pliki):** taby „Kandydaci"+„Zdrowie portfela" w `InitiativesHub.tsx` (+ `ModuleTab` union w `src/components/shared/ModuleHub/types.ts`); przyciski „Zrób materiał" w `InitiativeDocumentView.tsx`+hub (POST /:id/materialize, blob); badge „AI sugeruje inicjatywę" przy insight/assessment/audyt. Szczegóły lokalizacji = w raportach agentów (zob. wiring notes powyżej / git log).
+  3. **F3 migracja kart:** adopcja `CardBlockRenderer` przez 6 kart rdzenia (kontrakt AI→CardSpec gotowy; `validateCardSpec` jako critic gate auto-heal).
+  4. **Tabela `audits`:** scan kandydatów z audytów = no-op aż tabela powstanie (F0 audit→initiative działa gdy audit istnieje).
+  5. **F6/F7:** handoff rezultatów (w dużej części gotowy 92/92) + raport WYNIKI dla nowych zdolności (L3 E2E — komenda w §1).
 - *(kolejne wpisy dopisuje agent w trakcie)*
