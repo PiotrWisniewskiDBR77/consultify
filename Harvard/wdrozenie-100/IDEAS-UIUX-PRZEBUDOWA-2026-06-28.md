@@ -90,7 +90,7 @@ Right-click przejmuje gęstość → odciąża topbar (wiąże U6).
 - **F-D ✅ — Panel sygnałów (U3):** crimson→neutral, hierarchia akcji (2 solid+3 ghost), semibold. Commit `840ee37af0` (zrobione wcześniej w nocy).
 - **F-E ✅ — Notatki M04:** 117 crimson AI-akcentów/aktywnych tabów → violet (spójne z AI=violet w ProcessFlowToolbar). Commit `6b72121258`, tsc+vitest 258/258.
 - **F-F ✅ — Weryfikacja:** tsc 0 + vitest zielony po każdej fali. Wizualna (Ideas/Notatki headless = gates) → demo.
-- **F-G 🟡 — Deploy demo:** push feat HEAD→demo (ff, `6b72121258`) + Railway build trigger (w toku). Piotr weryfikuje wizualnie rano.
+- **F-G ✅ — Deploy demo:** push feat HEAD→demo (ff) + Railway build **SUCCESS** (`demo/6b721212`, 13:45). Health 200, gitSha `6b72121258` potwierdzony żywy, DB+redis connected. **Czeka: wizualny odbiór Piotra na demo.consultify.ai** (Ideas → Process Flow + Notatki).
 
 **Status uwag Piotra:** U3 ✅ (F-D) · U6 ✅ (F-B gęstość + F-A/F-E czerwień) · U8 ✅ (F-C) · U2 🟡 (hipoteza Speechify — do potwierdzenia) · U5 ⏸️ (tool-rail position — odłożony, ryzyko) · U4 🔴 (mind-map AI no-output — funkcjonalny P1, OSOBNY od UI, niezaadresowany — wymaga diagnozy ścieżki proposalUnification).
 
