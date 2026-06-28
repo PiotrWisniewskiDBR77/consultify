@@ -1527,7 +1527,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       );
                     }
                   }}
-                  className="px-2 py-0.5 text-xs font-semibold rounded bg-violet-500/20 text-violet-700 hover:bg-violet-500/30"
+                  className="px-2 py-0.5 text-xs font-semibold rounded bg-slate-500/20 text-slate-700 hover:bg-slate-500/30"
                 >
                   {isPolish ? 'Konwertuj' : 'Convert'}
                 </button>
@@ -2555,7 +2555,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <button
                   type="button"
                   onClick={() => void fetchPages()}
-                  className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
+                  className="text-sm font-medium text-slate-600 hover:underline dark:text-slate-400"
                 >
                   {isPolish ? 'Spróbuj ponownie' : 'Retry'}
                 </button>
@@ -3077,14 +3077,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {pendingAIProposals.length > 0 && (
                     <div
                       ref={proposalReviewRef}
-                      className="mb-4 rounded-xl border border-violet-200/70 bg-violet-50/80 px-3 py-3 dark:border-violet-500/20 dark:bg-violet-500/10"
+                      className="mb-4 rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-3 dark:border-slate-500/20 dark:bg-slate-500/10"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+                          <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                             {isPolish ? 'AI propose -> accept' : 'AI propose -> accept'}
                           </div>
-                          <div className="text-[11px] text-violet-600 dark:text-violet-200/80">
+                          <div className="text-[11px] text-slate-600 dark:text-slate-200/80">
                             {isPolish
                               ? `${pendingAIProposals.length} propozycje czekają na review`
                               : `${pendingAIProposals.length} proposals waiting for review`}
@@ -3095,7 +3095,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         {pendingAIProposals.slice(0, 3).map((proposal) => (
                           <div
                             key={proposal.id}
-                            className="rounded-lg border border-violet-200/80 bg-white/80 px-3 py-2 dark:border-violet-400/20 dark:bg-navy-950/40"
+                            className="rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-slate-400/20 dark:bg-navy-950/40"
                           >
                             <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
                               {proposal.rationale || (isPolish ? 'Propozycja AI' : 'AI proposal')}
@@ -3109,7 +3109,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 onClick={() =>
                                   void resolveNotebookAIProposal(proposal.id, 'accepted')
                                 }
-                                className="rounded-md bg-violet-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-violet-500"
+                                className="rounded-md bg-slate-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-slate-500"
                               >
                                 {isPolish ? 'Akceptuj' : 'Accept'}
                               </button>
@@ -3260,13 +3260,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         }}
                         className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
                           codeLangMenu.current === lang.id
-                            ? 'bg-violet-500/10 text-violet-700 dark:text-violet-300'
+                            ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
                             : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]'
                         }`}
                       >
                         {lang.label}
                         {codeLangMenu.current === lang.id ? (
-                          <CheckCircle2 size={13} className="text-violet-500" />
+                          <CheckCircle2 size={13} className="text-slate-500" />
                         ) : null}
                       </button>
                     ))}

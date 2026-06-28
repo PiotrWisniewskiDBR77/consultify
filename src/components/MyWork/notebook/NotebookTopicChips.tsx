@@ -126,11 +126,11 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
           <button
             type="button"
             onClick={() => onOpenTopic?.(t.id)}
-            className="inline-flex items-center gap-1 hover:text-violet-600 dark:hover:text-violet-300"
+            className="inline-flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300"
             title={isPl ? 'Otwórz temat' : 'Open topic'}
           >
             {t.source === 'ai' ? (
-              <Sparkles size={11} className="text-violet-500" />
+              <Sparkles size={11} className="text-slate-500" />
             ) : (
               <Hash size={11} className="text-slate-400" />
             )}
@@ -171,7 +171,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
               type="button"
               onClick={handleAdd}
               disabled={busy || !newName.trim()}
-              className="rounded-full p-1 text-violet-600 hover:bg-violet-500/10 disabled:opacity-40"
+              className="rounded-full p-1 text-slate-600 hover:bg-slate-500/10 disabled:opacity-40"
               aria-label={isPl ? 'Dodaj' : 'Add'}
             >
               {busy ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
@@ -181,7 +181,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 dark:border-navy-700 px-2 py-0.5 text-[11px] text-slate-500 hover:text-violet-600 hover:border-violet-400 transition-colors"
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 dark:border-navy-700 px-2 py-0.5 text-[11px] text-slate-500 hover:text-slate-600 hover:border-slate-400 transition-colors"
           >
             <Plus size={11} />
             {isPl ? 'Temat' : 'Topic'}

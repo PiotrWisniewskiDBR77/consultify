@@ -133,9 +133,9 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg border border-violet-200/60 dark:border-violet-800/40 bg-violet-50/50 dark:bg-violet-950/20 px-3 py-1.5 ${className}`}
+      className={`flex items-center gap-2 rounded-lg border border-slate-200/60 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-1.5 ${className}`}
     >
-      <Sparkles size={14} className="shrink-0 text-violet-500 dark:text-violet-400" />
+      <Sparkles size={14} className="shrink-0 text-slate-500 dark:text-slate-400" />
       <input
         ref={inputRef}
         type="text"
@@ -151,7 +151,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
       <button
         onClick={execute}
         disabled={!command.trim() || isGenerating}
-        className="p-1.5 rounded-md bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+        className="p-1.5 rounded-md bg-slate-500/20 text-slate-600 dark:text-slate-400 hover:bg-slate-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
         title={isPl ? 'Wykonaj polecenie' : 'Execute command'}
       >
         {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
