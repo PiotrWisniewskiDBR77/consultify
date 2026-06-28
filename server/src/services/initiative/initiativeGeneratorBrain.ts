@@ -294,9 +294,9 @@ export async function generateFullInitiative(
     ...(input.sourceType ? { sourceLineage: input.sourceType } : {}),
   };
 
-  const outcomes: CardOutcome[] = [];
-
-  for (const key of keys) {
+  // Fill ONE card (generate → advisory review → optional auto-heal). Extracted so
+  // the cards can run CONCURRENTLY (see Promise.all below).
+  const fillCard = async (key: (typeof keys)[number]): Promise<CardOutcome> => {
     const outcome: CardOutcome = { key, content: null, failed: false, healed: false };
     try {
       // First pass — always with review so we can decide whether to heal (D12).
@@ -348,8 +348,14 @@ export async function generateFullInitiative(
       outcome.error = err?.message || String(err);
       logger.warn(`[GeneratorBrain] card "${key}" failed (fail-soft):`, outcome.error);
     }
-    outcomes.push(outcome);
-  }
+    return outcome;
+  };
+
+  // Cards are independent (shared read-only baseContext), so fill them
+  // CONCURRENTLY. Sequential filling was N× slower and, with slow reasoning
+  // models (GLM-4.6), exceeded any reasonable wait window; wall time is now ≈ the
+  // slowest single card instead of the sum.
+  const outcomes: CardOutcome[] = await Promise.all(keys.map((key) => fillCard(key)));
 
   // Assemble cards map (only successfully-filled cards) + quality summary.
   const cards: Record<string, string> = {};

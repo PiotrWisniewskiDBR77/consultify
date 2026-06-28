@@ -520,6 +520,13 @@ export class InitiativeGenerationService {
         temperature: 0.4,
         cache: true,
         cacheTtl: 3600,
+        // Reasoning models (e.g. Z.ai GLM-4.6) think for a long time before
+        // emitting the card JSON; the heavy doctrine prompt + 4096-token output
+        // routinely exceeds callText's default 60s timeout → the whole card
+        // failed (fail-soft) and the initiative was left empty (verified on demo
+        // 2026-06-28). Give the generation real headroom; fast models (gpt-4o)
+        // finish well under it, so they are unaffected.
+        timeoutMs: 150000,
       });
 
       const content = String(result?.content || '');
@@ -624,6 +631,9 @@ export class InitiativeGenerationService {
         maxTokens: 1536,
         // Low temperature: adversarial scoring should be stable, not creative.
         temperature: 0.1,
+        // Reasoning models are slow; the review is fail-soft but a 60s timeout
+        // here just wastes a retry cycle and drops the heal signal. Give it room.
+        timeoutMs: 120000,
         cache: true,
         cacheTtl: 1800,
       });

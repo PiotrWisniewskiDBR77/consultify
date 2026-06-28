@@ -145,7 +145,12 @@ describe('generate_initiative — full-fill (F1)', () => {
       { title: 'X', problem: 'slow manual flow' },
       { organizationId: ORG, language: 'en' }
     );
-    expect(mockGenerateFull).toHaveBeenCalledTimes(1);
+    // Full-fill is fire-and-forget (backgrounded since the async change), so the
+    // tool returns immediately with filledCards:0 and the brain runs after.
+    expect(r.filledCards).toBe(0);
+    await vi.waitFor(() => {
+      expect(mockGenerateFull).toHaveBeenCalledTimes(1);
+    });
     const [, input] = mockGenerateFull.mock.calls[0];
     expect(input).toMatchObject({
       initiativeId: 'init-9',
@@ -154,17 +159,16 @@ describe('generate_initiative — full-fill (F1)', () => {
       language: 'en',
       organizationId: ORG,
     });
-    // The returned card count is surfaced.
-    expect(r.filledCards).toBe(2);
   });
 
   it('persists the brain cards into ai_generated_sections (lazy-ALTER + UPDATE)', async () => {
     mockCreate.mockResolvedValueOnce({ id: 'init-9' });
     await generateInitiative({ title: 'X', problem: 'p' }, { organizationId: ORG });
-    const persistCall = mockQueryRun.mock.calls.find((c) =>
-      /ai_generated_sections = \?/.test(String(c[0]))
-    );
-    expect(persistCall).toBeDefined();
+    const persistCall = await vi.waitFor(() => {
+      const c = mockQueryRun.mock.calls.find((c) => /ai_generated_sections = \?/.test(String(c[0])));
+      if (!c) throw new Error('persist UPDATE not issued yet');
+      return c;
+    });
     const stored = JSON.parse(String(persistCall![1][0]));
     expect(stored).toEqual({ problemDefinition: 'P', kpis: 'K' });
   });
@@ -177,10 +181,12 @@ describe('generate_initiative — full-fill (F1)', () => {
       { name: 'source_id' },
     ]); // no ai_generated_sections
     await generateInitiative({ title: 'X', problem: 'p' }, { organizationId: ORG });
-    const alter = mockQueryRun.mock.calls.find((c) =>
-      /ALTER TABLE initiatives ADD COLUMN ai_generated_sections/.test(String(c[0]))
-    );
-    expect(alter).toBeDefined();
+    await vi.waitFor(() => {
+      const alter = mockQueryRun.mock.calls.find((c) =>
+        /ALTER TABLE initiatives ADD COLUMN ai_generated_sections/.test(String(c[0]))
+      );
+      if (!alter) throw new Error('ALTER not issued yet');
+    });
   });
 
   it('FAIL-SOFT: a full-fill error never breaks initiative creation', async () => {
