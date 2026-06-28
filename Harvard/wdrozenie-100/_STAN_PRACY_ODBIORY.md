@@ -46,6 +46,21 @@ Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegó
 
 ## Tabela zbiorcza (dashboard PM)
 
+> ## 🚨 AKTUALIZACJA 2026-06-28 — audyt prawdy 9 modułów: WSZYSTKIE ZIELONE (CTO)
+> Audyt 9-agentowy (read-only, kod+routy+testy) wykazał: **9 modułów oznaczonych „NIE ROZP." to faktycznie ZIELONA-REALIZACJA, gotowe-do-odbioru.** Dashboard zaniżał systemowo. Stan realny:
+> - **M10 Wywiad** — 32 komp, 4 routery wpięte, ~27 testów, voice STT FE działa. Czeka: serwerowy STT-key (env). ⚠ importuje Initiatives/Presentations (koordynacja z aktywnymi agentami).
+> - **M12 Audyty** — AssessmentHub + AuditsHub żywe, ~65 testów, flow pytania→raport→inicjatywy. Gotowy.
+> - **M21 Meeting** — MeetingHub wpięty, 9 endpointów, ~43 testy. Gotowy (Archive świadomie disabled).
+> - **M22 AI OS** — AIOSHub + 8 paneli wpięte, ~52 testy. W menu dla dbr77/ADMIN (`Sidebar.tsx:532`). Gotowy.
+> - **M23 Organizacja** — OrganizationView 5 modułów, ~50 testów. Gotowy (admin-redirect = defense-in-depth, nie bug).
+> - **M24 Admin** — AdminSettingsModule 5 paneli, adminP32 39 routów, ~35 testów. Gotowy.
+> - **M25 Ustawienia** — SettingsView ~45 sekcji, settings.routes 122 endpointy, ~28 testów. Gotowy.
+> - **M26 Portal Partnerski** — 4 widoki + portal 9 sekcji, v8/partner 25 endpointów, ~128 testów. Czeka: `PARTNER_SELF_CONNECT_ENABLED` (env).
+> - **M27 SuperAdmin** — ~130 komp, superadmin.routes 272 endpointy, ~153 testy. Czeka: konto superadmin demo (env) + live-smoke (testy BE cienkie).
+>
+> **Wniosek:** program realizacyjnie **~90% gotowy** — głównie odbiory Piotra + 3 env-bramki + live-smoke, NIE budowa. Mapa szczegółowa: workflow-audyt 2026-06-28.
+> **Sprzątanie 2026-06-28:** usunięto **~69 martwych plików** (59 orphan komponentów w M12/M24/M25 + 10 testów) — zweryf. 2-metodowo (0 realnych importów + tsc czysty + vitest 154/154). Repo odchudzone. `eb4142cf26` + (54 usunięcia zgarnął współbieżny commit `26374aac0d` — shared-tree).
+>
 > ## 🔄 AKTUALIZACJA 2026-06-26 — synchronizacja dashboardu z realnym stanem prac (CTO)
 > Główny raport był nieaktualny dla M13–M17 (data 06-25 nie obejmowała prac z 06-25/06-26). Zebrane ze SSOT-ów modułów + git log. **Co się zmieniło od ostatniej aktualizacji:**
 > - **M13 Inicjatywy** — domknięte 2 duże programy poboczne: **INICJATYWY-100** (6/7 obszarów A–F, **E2E 152/152 na demo**, 1341 inicjatyw, 0 legacy-statusów; commit `db41fa1e0a` LIVE) + **USPOJNIENIE** (40/40 zadań, F1 lejek+23 ścieżki INSERT scalone, F2 handoffy, F3 walidatory §B3, F4 stan-FE, F5 lineage/funnel; 150 E2E + 150 manual; migracje 1.12/5.4 zaaplikowane na staging). Flaga `INITIATIVE_FUNNEL_ENABLED` default OFF. **Czeka: →F/→UI + 4 migracje na PROD (zgoda Piotra) + 3 decyzje A2/B1/C3.**
