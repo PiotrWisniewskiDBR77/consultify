@@ -11,9 +11,15 @@ import type { DesignTokens } from './types.js';
 // SHARED CONSTANTS
 // ============================================================
 
+// Premium type — aligned with the curated font library (themeRegistry / §1
+// DELIVERABLE_FORMATTING_SPEC). Inter is a confident, modern grotesque that
+// reads far less "Office template" than Calibri Light; it renders in .pptx /
+// .docx / web, and where unavailable PowerPoint substitutes to a clean sans
+// (still better than thin Calibri Light). Title uses a heavier presence via the
+// per-element `bold` flag rather than a Light weight.
 const FONTS = {
-  title: 'Calibri Light',
-  body: 'Calibri',
+  title: 'Inter',
+  body: 'Inter',
   mono: 'Courier New',
 };
 
