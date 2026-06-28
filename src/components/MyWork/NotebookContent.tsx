@@ -71,6 +71,7 @@ import {
   DetailsSummaryNode,
   EmbeddedRefNode,
   NOTEBOOK_CODE_LANGUAGES,
+  NotebookBookmark,
   NotebookCodeBlock,
   NotebookImage,
 } from './notebook/extensions';
@@ -635,6 +636,41 @@ const EDITOR_STYLES = `
 }
 .dark .ProseMirror img.ProseMirror-selectednode { outline-color: #6E8AAF; }
 
+/* Bookmark card (rich link preview) */
+.ProseMirror a.nb-bookmark {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0.75rem 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  text-decoration: none;
+  background: #ffffff;
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+.ProseMirror a.nb-bookmark:hover { border-color: #cbd5e1; background: #f8fafc; }
+.dark .ProseMirror a.nb-bookmark { border-color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.02); }
+.dark .ProseMirror a.nb-bookmark:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); }
+.ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline: 2px solid #1E3A5F; outline-offset: 2px; }
+.dark .ProseMirror a.nb-bookmark.ProseMirror-selectednode { outline-color: #6E8AAF; }
+.ProseMirror .nb-bookmark-body { flex: 1 1 auto; min-width: 0; padding: 0.7rem 0.85rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.ProseMirror .nb-bookmark-title {
+  font-weight: 600; font-size: 0.9rem; color: #0f172a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dark .ProseMirror .nb-bookmark-title { color: #e2e8f0; }
+.ProseMirror .nb-bookmark-desc {
+  font-size: 0.8rem; color: #64748b; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.dark .ProseMirror .nb-bookmark-desc { color: #94a3b8; }
+.ProseMirror .nb-bookmark-link { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem; font-size: 0.72rem; color: #94a3b8; }
+.ProseMirror img.nb-bookmark-favicon { width: 14px; height: 14px; margin: 0; border: none; border-radius: 3px; display: inline-block; flex: none; }
+.ProseMirror .nb-bookmark-thumb { flex: none; width: 120px; align-self: stretch; }
+.ProseMirror .nb-bookmark-thumb img { width: 120px; height: 100%; object-fit: cover; margin: 0; border: none; border-radius: 0; display: block; }
+
 /* Code-block language hint */
 .ProseMirror pre.nb-code-block { position: relative; }
 .ProseMirror pre.nb-code-block::after {
@@ -791,6 +827,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Inline-image upload bridge — set after the upload helper is defined so the
   // editor's paste/drop handlers (declared earlier inside useEditor) can call it.
   const uploadInlineImageRef = useRef<((file: File) => void) | null>(null);
+  // K2 — fetch a URL's preview (SSRF-guarded) and insert a bookmark card.
+  const insertBookmarkRef = useRef<((url: string) => void) | null>(null);
   // Hidden file input backing the slash "/image" command.
   const imageInputRef = useRef<HTMLInputElement>(null);
   // Cover image (note header) — stored server-side via notebookCover.routes.
@@ -859,6 +897,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         Highlight.configure({ multicolor: false }),
         Link.configure({ openOnClick: false, HTMLAttributes: { class: 'nb-link' } }),
         EmbeddedRefNode,
+        NotebookBookmark,
         CalloutNode,
         DetailsNode,
         DetailsSummaryNode,
@@ -913,15 +952,25 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         });
         return true;
       },
-      handlePaste: (_view, event) => {
+      handlePaste: (view, event) => {
         const items = Array.from(event.clipboardData?.items || []);
         const imageItem = items.find((it) => it.type.startsWith('image/'));
-        if (!imageItem) return false;
-        const file = imageItem.getAsFile();
-        if (!file || !uploadInlineImageRef.current) return false;
-        event.preventDefault();
-        uploadInlineImageRef.current(file);
-        return true;
+        if (imageItem) {
+          const file = imageItem.getAsFile();
+          if (!file || !uploadInlineImageRef.current) return false;
+          event.preventDefault();
+          uploadInlineImageRef.current(file);
+          return true;
+        }
+        // Pasting a single bare URL into an empty selection → rich bookmark card.
+        const text = (event.clipboardData?.getData('text/plain') || '').trim();
+        const isBareUrl = /^https?:\/\/\S+$/i.test(text) && !/\s/.test(text);
+        if (isBareUrl && view.state.selection.empty && insertBookmarkRef.current) {
+          event.preventDefault();
+          insertBookmarkRef.current(text);
+          return true;
+        }
+        return false;
       },
       handleDrop: (_view, event) => {
         const dt = (event as DragEvent).dataTransfer;
@@ -1766,6 +1815,39 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   useEffect(() => {
     uploadInlineImageRef.current = uploadInlineImage;
   }, [uploadInlineImage]);
+
+  // K2 — turn a URL into a rich bookmark card: fetch OG metadata via the
+  // SSRF-guarded /api/link-preview, then insert the bookmark node. On failure
+  // we still insert a bookmark with just the URL (degrades, never blocks).
+  const insertBookmarkFromUrl = useCallback(
+    (rawUrl: string) => {
+      if (!editor) return;
+      const url = rawUrl.trim();
+      if (!/^https?:\/\//i.test(url)) return;
+      const toastId = toast.loading(isPolish ? 'Pobieram podgląd…' : 'Fetching preview…');
+      fetch(`/api/link-preview?url=${encodeURIComponent(url)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((meta) => {
+          toast.dismiss(toastId);
+          (editor.commands as any).setBookmark({
+            url,
+            title: meta?.ogTitle || '',
+            description: meta?.ogDescription || '',
+            image: meta?.ogImage || '',
+            favicon: meta?.favicon || '',
+          });
+        })
+        .catch(() => {
+          toast.dismiss(toastId);
+          (editor.commands as any).setBookmark({ url });
+        });
+    },
+    [editor, isPolish]
+  );
+
+  useEffect(() => {
+    insertBookmarkRef.current = insertBookmarkFromUrl;
+  }, [insertBookmarkFromUrl]);
 
   // Slash "/image" command → open the hidden file picker.
   useEffect(() => {

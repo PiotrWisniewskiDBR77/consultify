@@ -234,6 +234,115 @@ export const EmbeddedRefNode = Node.create({
 });
 
 /* ------------------------------------------------------------------ */
+/*  Bookmark  (rich link card — title / description / image / favicon)  */
+/* ------------------------------------------------------------------ */
+
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    bookmark: {
+      setBookmark: (attrs: {
+        url: string;
+        title?: string;
+        description?: string;
+        image?: string;
+        favicon?: string;
+      }) => ReturnType;
+    };
+  }
+}
+
+const safeHttpUrl = (raw: string): string => {
+  try {
+    const u = new URL(raw);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.toString() : '';
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Block-level bookmark card. Metadata is fetched once (via the SSRF-guarded
+ * /api/link-preview) when inserted and stored in attrs, so the node renders
+ * statically with no runtime fetch — a single anchor card that opens the link.
+ */
+export const NotebookBookmark = Node.create({
+  name: 'bookmark',
+  group: 'block',
+  atom: true,
+  selectable: true,
+  draggable: true,
+
+  addAttributes() {
+    const attr = (name: string, dataKey: string) => ({
+      default: '',
+      parseHTML: (el: HTMLElement) => el.getAttribute(dataKey) || '',
+      renderHTML: (attrs: Record<string, any>) => (attrs[name] ? { [dataKey]: attrs[name] } : {}),
+    });
+    return {
+      url: attr('url', 'data-url'),
+      title: attr('title', 'data-title'),
+      description: attr('description', 'data-description'),
+      image: attr('image', 'data-image'),
+      favicon: attr('favicon', 'data-favicon'),
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'a[data-bookmark]' }];
+  },
+
+  renderHTML({ HTMLAttributes, node }) {
+    const url = safeHttpUrl(String(node.attrs.url || ''));
+    let host = '';
+    try {
+      host = url ? new URL(url).hostname.replace(/^www\./, '') : '';
+    } catch {
+      host = '';
+    }
+    const title = String(node.attrs.title || host || url || 'Link');
+    const description = String(node.attrs.description || '');
+    const image = safeHttpUrl(String(node.attrs.image || ''));
+    const favicon = safeHttpUrl(String(node.attrs.favicon || ''));
+
+    const linkRow: any[] = ['div', { class: 'nb-bookmark-link' }];
+    if (favicon) linkRow.push(['img', { class: 'nb-bookmark-favicon', src: favicon, alt: '' }]);
+    linkRow.push(['span', {}, host || url]);
+
+    const body: any[] = ['div', { class: 'nb-bookmark-body' }, ['div', { class: 'nb-bookmark-title' }, title]];
+    if (description) body.push(['div', { class: 'nb-bookmark-desc' }, description]);
+    body.push(linkRow);
+
+    const children: any[] = [body];
+    if (image) children.push(['div', { class: 'nb-bookmark-thumb' }, ['img', { src: image, alt: '' }]]);
+
+    return [
+      'a',
+      mergeAttributes(
+        {
+          'data-bookmark': '',
+          class: 'nb-bookmark',
+          href: url || '#',
+          target: '_blank',
+          rel: 'noopener noreferrer nofollow',
+          contenteditable: 'false',
+        },
+        HTMLAttributes
+      ),
+      ...children,
+    ];
+  },
+
+  addCommands() {
+    return {
+      setBookmark:
+        (attrs) =>
+        ({ commands }) =>
+          commands.insertContent({ type: 'bookmark', attrs }),
+    };
+  },
+});
+
+/* ------------------------------------------------------------------ */
 /*  Inline images (paste / drag-drop / upload, resizable)              */
 /* ------------------------------------------------------------------ */
 
