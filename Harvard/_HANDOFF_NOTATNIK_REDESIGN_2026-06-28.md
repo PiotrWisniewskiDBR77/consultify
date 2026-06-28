@@ -34,9 +34,13 @@ U1-U14. Kluczowe nieadresowane/funkcjonalne:
 - **N6 ✅** Context: UUID-leak fix + puste sekcje ukryte + Insert/Open ZWERYFIKOWANE ŻYWE `NotebookContextPanel.tsx`.
 
 **ZOSTAŁO FAZA 1:**
-- **N5 ⬜** lewa kolumna (U11) — Capture + 2 filtry (zakres `scopeFilter` istnieje + widok pinned/recent/to-review/fresh), usunąć Inbox/Active/All taby + progress + słońce-toggle. Duża zmiana w monolicie `NotebookContent.tsx` (lista ~2300-2600 + `NotebookTodayView`). Mockup `notebook_left_column_control`.
-- **N7 🟡** slash — stary `SlashMenu.tsx` JUŻ DZIAŁA wpięty; nowy lepszy `NotebookSlashMenu.tsx` ZBUDOWANY (`5bc77b5861`) ale niewpięty. Wpięcie = zamiana w edytorze (TipTap suggestion) — ostrożnie.
+- **N5 ✅ ZROBIONE** (`b3dc957231`, na demo z U9) — lewa kolumna przebudowana: **Capture** na górze + **segmented zakres** Wszystkie·Moje·Zespół (wg `ownerUserId`, auto-chowa się gdy brak stron zespołu) + **chipy widoku** Wszystkie·Przypięte·Ostatnie·Do przeglądu·Świeże (spłaszczone sekcje Today, live-liczniki) + czysta lista. Usunięte: taby Inbox/Active/All (status żyje w Menu 3 huba — koniec dublowania), słońce/Today-mode, filtr-ikona+selecty, pasek maturity. Empty-state świadomy filtra. tsc+vitest (57/260) zielone. **Decyzja: „Moje/Zespół"=autor strony** (oś niezależna od statusu). Mockup efektu = widget `notatnik_lewa_kolumna_N5`. *Czeka na żywy odbiór Piotra na demo.*
+- **N7 🟡** slash — stary `SlashMenu.tsx` JUŻ DZIAŁA wpięty; nowy lepszy `NotebookSlashMenu.tsx` ZBUDOWANY (`5bc77b5861`) ale niewpięty. Wpięcie = zamiana w edytorze (TipTap suggestion) — ostrożnie. **= NASTĘPNA fala FAZA 1.**
 - N6-2 reszta (drobne), N8 polish.
+
+**ZROBIONE PO HANDOFFIE (sesja-kontynuacja 2026-06-28):**
+- **U9 ✅** „Failed to save notebook" (`6d72aab903`) — goły `catch{}` w `NotebookModal.handleSave` połykał realny błąd serwera (403 owner-only / „Not a team member" / 5xx) → teraz doklejony do toasta, generyczny szum (Failed to fetch) ukryty. +2 testy komponentu. *Root-cause najpewniej `canMutateNotebook` owner-only (notatnik nie-własny) — realna przyczyna pokaże się teraz w toaście na żywo.*
+- **N5 ✅** (powyżej).
 
 **FAZA 2 (funkcje, ~tygodnie, backend) — D4:** K1 @mention+dwukierunkowe linki (rozbudowa Context=graf wiedzy, NASZ wyróżnik) · K2 bookmark rich-link (backend fetch) · K3 AI rozszerzone · K4 więcej bloków.
 
