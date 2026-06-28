@@ -2885,72 +2885,72 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       </div>
                     </div>
 
-                    {/* V4-NOTE-05: Lifecycle strip — verification, review cadence, stale */}
-                    <div className="mt-3 flex items-center gap-3 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                          {isPolish ? 'Weryfikacja' : 'Verification'}
-                        </span>
-                        <select
-                          value={
-                            (activePage.verificationStatus as NotebookVerificationStatus) ??
-                            'unverified'
-                          }
-                          onChange={(e) => {
-                            const v = e.target.value as NotebookVerificationStatus;
-                            scheduleSave({ verificationStatus: v });
-                            setPages((prev) =>
-                              prev.map((p) =>
-                                p.id === activePage.id ? { ...p, verificationStatus: v } : p
-                              )
-                            );
-                          }}
-                          className="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300"
-                        >
-                          <option value="unverified">
-                            {isPolish ? 'Nieweryfikowana' : 'Unverified'}
-                          </option>
-                          <option value="verified">
-                            {isPolish ? 'Zweryfikowana' : 'Verified'}
-                          </option>
-                          <option value="disputed">
-                            {isPolish ? 'Zakwestionowana' : 'Disputed'}
-                          </option>
-                        </select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                          {isPolish ? 'Recenzja' : 'Review'}
-                        </span>
-                        <select
-                          value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
-                          onChange={(e) => {
-                            const v = e.target.value as NotebookReviewCadence;
-                            scheduleSave({ reviewCadence: v });
-                            setPages((prev) =>
-                              prev.map((p) =>
-                                p.id === activePage.id ? { ...p, reviewCadence: v } : p
-                              )
-                            );
-                          }}
-                          className="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300"
-                        >
-                          <option value="weekly">{isPolish ? 'Tygodniowo' : 'Weekly'}</option>
-                          <option value="monthly">{isPolish ? 'Miesięcznie' : 'Monthly'}</option>
-                          <option value="quarterly">{isPolish ? 'Kwartalnie' : 'Quarterly'}</option>
-                          <option value="never">{isPolish ? 'Nigdy' : 'Never'}</option>
-                        </select>
-                      </div>
+                    {/* N3: Lifecycle strip — clean status pills (status-aware, no raw selects) */}
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      <select
+                        value={
+                          (activePage.verificationStatus as NotebookVerificationStatus) ??
+                          'unverified'
+                        }
+                        onChange={(e) => {
+                          const v = e.target.value as NotebookVerificationStatus;
+                          scheduleSave({ verificationStatus: v });
+                          setPages((prev) =>
+                            prev.map((p) =>
+                              p.id === activePage.id ? { ...p, verificationStatus: v } : p
+                            )
+                          );
+                        }}
+                        title={isPolish ? 'Weryfikacja' : 'Verification'}
+                        className={`text-[11px] px-2.5 py-1 rounded-md border cursor-pointer transition-colors ${
+                          (activePage.verificationStatus as NotebookVerificationStatus) ===
+                          'verified'
+                            ? 'bg-emerald-500/10 border-emerald-300/40 text-emerald-700 dark:text-emerald-300'
+                            : (activePage.verificationStatus as NotebookVerificationStatus) ===
+                                'disputed'
+                              ? 'bg-amber-500/10 border-amber-300/40 text-amber-700 dark:text-amber-300'
+                              : 'bg-slate-100 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        <option value="unverified">
+                          {isPolish ? '○ Nieweryfikowana' : '○ Unverified'}
+                        </option>
+                        <option value="verified">
+                          {isPolish ? '✓ Zweryfikowana' : '✓ Verified'}
+                        </option>
+                        <option value="disputed">
+                          {isPolish ? '! Zakwestionowana' : '! Disputed'}
+                        </option>
+                      </select>
+                      <select
+                        value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
+                        onChange={(e) => {
+                          const v = e.target.value as NotebookReviewCadence;
+                          scheduleSave({ reviewCadence: v });
+                          setPages((prev) =>
+                            prev.map((p) =>
+                              p.id === activePage.id ? { ...p, reviewCadence: v } : p
+                            )
+                          );
+                        }}
+                        title={isPolish ? 'Cykl recenzji' : 'Review cadence'}
+                        className="text-[11px] px-2.5 py-1 rounded-md border bg-slate-100 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 cursor-pointer"
+                      >
+                        <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
+                        <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
+                        <option value="quarterly">{isPolish ? 'Co kwartał' : 'Quarterly'}</option>
+                        <option value="never">{isPolish ? 'Nigdy' : 'Never'}</option>
+                      </select>
                       {(activePage.staleAt || activePage.lastReviewedAt) && (
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px]">
                           {activePage.staleAt ? (
                             <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                              <AlertTriangle size={10} />
+                              <AlertTriangle size={11} />
                               {isPolish ? 'Nieaktualna' : 'Stale'}
                             </span>
                           ) : activePage.lastReviewedAt ? (
-                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                              <CheckCircle2 size={10} />
+                            <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                              <CheckCircle2 size={11} className="text-emerald-500" />
                               {isPolish ? 'Sprawdzono' : 'Reviewed'}{' '}
                               {relativeTime(activePage.lastReviewedAt)}
                             </span>
@@ -2983,10 +2983,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             )
                           );
                         }}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-medium transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 text-[11px] font-medium transition-colors"
                       >
                         <RefreshCw size={10} />
-                        {isPolish ? 'Oznacz jako sprawdzone' : 'Mark as reviewed'}
+                        {isPolish ? 'Oznacz sprawdzone' : 'Mark reviewed'}
                       </button>
                     </div>
 
