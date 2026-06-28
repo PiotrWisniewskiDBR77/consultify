@@ -194,6 +194,22 @@ export async function generateInitiative(
   if (!orgId) {
     return { ok: false, message: 'No organization context to create an initiative in.' };
   }
+
+  // TURN IDEMPOTENCY — generate_initiative has a CREATE side-effect, but one chat
+  // turn can invoke it MANY times: (a) the SDK maxSteps loop, and (b) AIPipeline's
+  // candidate-model fallback — when the model calls the tool but then streams no
+  // text, the pipeline reports EMPTY_STREAM and retries callStream with the next
+  // model, re-running the tool. All of these share the SAME `context` object
+  // reference (AIPipeline passes `deliverableTools.context` to every callStream),
+  // so we memoize the first successful result on it and return it for any repeat
+  // in the same turn. Verified on demo 2026-06-28: without this, a single "stwórz
+  // inicjatywę" message created up to 4 duplicate DRAFT initiatives. A per-
+  // callStream guard could NOT fix this (the dupes come from cross-callStream
+  // retries), so the dedup must live on the turn-scoped context.
+  const turn = context as Record<string, unknown>;
+  const memoized = turn.__generatedInitiative as Record<string, unknown> | undefined;
+  if (memoized) return memoized;
+
   const title = String(params?.title || '').trim() || 'New initiative';
   const problem = String(params?.problem || '');
 
@@ -250,7 +266,7 @@ export async function generateInitiative(
       }
     })();
 
-    return {
+    const result = {
       ok: true,
       id,
       title,
@@ -260,6 +276,10 @@ export async function generateInitiative(
         `Created a draft initiative "${title}" and started filling its sections with AI ` +
         `in the background — open it from Initiatives in a moment to review.`,
     };
+    // Memoize on the turn context so any retry in this turn returns this exact
+    // result instead of creating a duplicate (see TURN IDEMPOTENCY above).
+    turn.__generatedInitiative = result;
+    return result;
   } catch (e: any) {
     logger.warn('[teresa] generate_initiative failed:', e?.message);
     return { ok: false, message: 'Failed to create the initiative.' };

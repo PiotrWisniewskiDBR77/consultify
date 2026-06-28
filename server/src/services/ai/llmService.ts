@@ -1066,30 +1066,11 @@ export class LLMService {
       const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
       await import('./tools/index.js').catch(() => {});
       streamToolDefinitions = {};
-      // SPEC_01 idempotency: some tools have CREATE side-effects that must fire
-      // at most ONCE per chat turn. The SDK multi-step loop (maxSteps) can emit
-      // the same tool call several times in one turn — verified on demo
-      // 2026-06-28: a single "stwórz inicjatywę" message produced 4 duplicate
-      // DRAFT initiatives (maxSteps:4 → 4 generate_initiative calls). A
-      // per-callStream cache returns the FIRST result for any repeat invocation,
-      // so the model still sees a coherent ok:true tool result but only one
-      // entity is created. Scoped to creation tools; read tools are unaffected.
-      const ONCE_PER_TURN_TOOLS = new Set(['generate_initiative']);
-      const onceResults = new Map<string, unknown>();
       for (const def of params.tools) {
-        const runTool = (args: unknown) =>
-          mcpServer.execute(def.name, args, params.context as any);
         streamToolDefinitions[def.name] = tool({
           description: def.description,
           inputSchema: jsonSchema(def.parameters as any),
-          execute: async (args: unknown) => {
-            if (!ONCE_PER_TURN_TOOLS.has(def.name)) return runTool(args);
-            const cached = onceResults.get(def.name);
-            if (cached !== undefined) return cached;
-            const result = await runTool(args);
-            onceResults.set(def.name, result);
-            return result;
-          },
+          execute: async (args: unknown) => mcpServer.execute(def.name, args, params.context as any),
         } as any);
       }
     }

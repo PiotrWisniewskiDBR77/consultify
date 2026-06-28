@@ -71,12 +71,16 @@ describe('Teresa generate_initiative → typed-column hydration (R3 L3)', () => 
     );
     expect((res as any).ok).not.toBe(false);
 
-    // Find the typed-column hydration UPDATE among all queryRun calls.
-    const calls = mockQueryRun.mock.calls.map((c) => String(c[0]));
-    const hydrationCall = mockQueryRun.mock.calls.find((c) =>
-      String(c[0]).includes('scope_in') || String(c[0]).includes('problem_statement'),
-    );
-    expect(hydrationCall, `no hydration UPDATE in: ${calls.join(' | ')}`).toBeTruthy();
+    // Hydration runs in the BACKGROUND full-fill (fire-and-forget since the #7
+    // async change), so poll until the UPDATE lands instead of asserting
+    // synchronously (was a flaky race).
+    const hydrationCall = await vi.waitFor(() => {
+      const found = mockQueryRun.mock.calls.find((c) =>
+        String(c[0]).includes('scope_in') || String(c[0]).includes('problem_statement'),
+      );
+      if (!found) throw new Error('hydration UPDATE not issued yet');
+      return found;
+    });
 
     const [sql, paramArr] = hydrationCall as [string, any[]];
     expect(sql).toContain('problem_statement = ?');
@@ -93,11 +97,15 @@ describe('Teresa generate_initiative → typed-column hydration (R3 L3)', () => 
       cards: { problemDefinition: 'Po prostu opis problemu prozą.' },
     });
     await generateInitiative({ title: 'X', problem: 'p' }, { organizationId: 'org-2' });
-    // problem_statement scalar accepts raw text fallback → it DOES hydrate problem_statement.
-    const hydrationCall = mockQueryRun.mock.calls.find((c) =>
-      String(c[0]).includes('problem_statement'),
-    );
-    expect(hydrationCall).toBeTruthy();
+    // problem_statement scalar accepts raw text fallback → it DOES hydrate
+    // problem_statement (background fill → poll for it).
+    const hydrationCall = await vi.waitFor(() => {
+      const found = mockQueryRun.mock.calls.find((c) =>
+        String(c[0]).includes('problem_statement'),
+      );
+      if (!found) throw new Error('hydration UPDATE not issued yet');
+      return found;
+    });
     expect((hydrationCall as any)[1]).toContain('Po prostu opis problemu prozą.');
   });
 
@@ -106,5 +114,25 @@ describe('Teresa generate_initiative → typed-column hydration (R3 L3)', () => 
     const res = await generateInitiative({ title: 'X', problem: 'p' }, { organizationId: 'org-3' });
     expect((res as any).ok).not.toBe(false);
     expect(mockCreate).toHaveBeenCalled();
+  });
+
+  it('TURN IDEMPOTENCY: repeat calls sharing one context create exactly ONE initiative', async () => {
+    // Reproduces the demo 2026-06-28 duplicate storm: the model calls the tool,
+    // the stream ends empty, AIPipeline retries with the next candidate model and
+    // re-runs the tool — all sharing the SAME context object. The memo on the
+    // context must collapse them to a single create.
+    mockFullFill.mockResolvedValue({ cards: {} });
+    const turn = { organizationId: 'org-dup', userId: 'u-dup' };
+    const r1 = await generateInitiative({ title: 'Pierwsza', problem: 'p' }, turn);
+    const r2 = await generateInitiative({ title: 'Druga (retry)', problem: 'p' }, turn);
+    const r3 = await generateInitiative({ title: 'Trzecia (retry)', problem: 'p' }, turn);
+    expect(mockCreate).toHaveBeenCalledTimes(1); // only the first call creates
+    expect(r2).toBe(r1); // retries return the memoized result
+    expect(r3).toBe(r1);
+
+    // A genuinely NEW turn (fresh context) creates again.
+    const r4 = await generateInitiative({ title: 'Nowa tura', problem: 'p' }, { organizationId: 'org-dup' });
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(r4).not.toBe(r1);
   });
 });
