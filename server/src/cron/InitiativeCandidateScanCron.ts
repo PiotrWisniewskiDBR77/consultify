@@ -34,6 +34,28 @@ export interface CandidateScanResult {
 }
 
 /**
+ * F0 grounding: zwięzła lista istniejących inicjatyw org (nazwa [status]) tak, by
+ * proposer AI nie duplikował już zaadresowanych tematów. Best-effort → undefined.
+ * Parytet zapytania z initiativeGenerationService (portfolio awareness).
+ */
+async function buildOrgPortfolioSummary(orgId: string): Promise<string | undefined> {
+  try {
+    const rows = await queryHelpers.queryAll<{ name: string; status: string }>(
+      `SELECT name, status FROM initiatives
+       WHERE organization_id = ? AND status NOT IN ('ARCHIVED','CANCELLED')
+       ORDER BY updated_at DESC LIMIT 15`,
+      [orgId],
+    );
+    if (Array.isArray(rows) && rows.length) {
+      return rows.map((o) => `${o?.name || '—'} [${o?.status || '—'}]`).join('; ');
+    }
+  } catch {
+    /* best-effort — grounding opcjonalne */
+  }
+  return undefined;
+}
+
+/**
  * Scans all active orgs and proposes candidates from new discovery artifacts.
  * Never throws — aggregates per-org errors into the result.
  */
@@ -51,8 +73,10 @@ export async function runCandidateScan(): Promise<CandidateScanResult> {
       if (!orgId) continue;
       orgs++;
       try {
+        const portfolioSummary = await buildOrgPortfolioSummary(orgId);
         const newOnes = await scanForCandidates(undefined, orgId, {
-          propose: (artifact) => buildCandidateFromArtifactAI(artifact, { language: 'pl' }),
+          propose: (artifact) =>
+            buildCandidateFromArtifactAI(artifact, { language: 'pl', portfolioSummary }),
         });
         created += newOnes.length;
       } catch (e: any) {

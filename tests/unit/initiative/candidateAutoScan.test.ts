@@ -20,9 +20,13 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
 
 // L3 cron path uses the DEFAULT (lazy) LLM via getCandidateLlm() → mock the
 // llmService module so no real network call fires; returns a benign JSON.
+// Hoisted spy so tests can assert the prompt (e.g. portfolio grounding).
+const { mockLlmCall } = vi.hoisted(() => ({
+  mockLlmCall: vi.fn(async () => ({ content: JSON.stringify({ title: 'X', rationale: 'Y', fitScore: 0.5 }) })),
+}));
 vi.mock('../../../server/src/services/ai/llmService.js', () => ({
-  llmService: { call: vi.fn(async () => ({ content: JSON.stringify({ title: 'X', rationale: 'Y', fitScore: 0.5 }) })) },
-  default: { call: vi.fn(async () => ({ content: '{}' })) },
+  llmService: { call: (...a: any[]) => mockLlmCall(...a) },
+  default: { call: (...a: any[]) => mockLlmCall(...a) },
 }));
 
 // F2→F1 wiring imports the funnel + brain — mock so the module graph stays light.
@@ -198,6 +202,25 @@ describe('runCandidateScan (cron) — proactive sweep', () => {
     expect(res.orgs).toBe(2);
     expect(res.errors).toBe(0);
     expect(typeof res.created).toBe('number');
+  });
+
+  it('feeds F0 portfolio grounding into the proposer prompt', async () => {
+    mockLlmCall.mockClear();
+    mockQueryAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('DISTINCT organization_id')) return [{ organization_id: 'org-1' }];
+      // portfolio summary query (name+status from initiatives)
+      if (sql.includes('SELECT name, status FROM initiatives')) {
+        return [{ name: 'Projekt Alfa', status: 'ACTIVE' }];
+      }
+      if (sql.includes('FROM interview_insights')) return [{ id: 'ins-x', title: 'T', summary: 'S' }];
+      if (sql.includes('FROM initiative_candidates')) return [];
+      return [];
+    });
+    await runCandidateScan();
+    // proposer was called with portfolioSummary → the prompt cites the existing initiative.
+    expect(mockLlmCall).toHaveBeenCalled();
+    const prompt = mockLlmCall.mock.calls[0][0].messages[0].content;
+    expect(prompt).toContain('Projekt Alfa');
   });
 
   it('fail-soft: org enumeration error → errors counted, no throw', async () => {
