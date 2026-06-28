@@ -13,6 +13,15 @@ import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import initiativeSectionTypeService from './initiativeSectionTypeService.js';
 import { buildOrgFinancialsSummary } from './initiative/financialsGrounding.js';
+import {
+  type CardSpec,
+  CARD_BLOCK_TYPES,
+  coerceToCardSpec,
+  hasCriticalIssues,
+  summarizeIssues,
+  validateCardSpec,
+  type CardIssue,
+} from './initiative/cardSpecSchema.js';
 
 // ==========================================
 // TYPES
@@ -63,6 +72,23 @@ export interface GenerationResult {
    * never used to auto-reject or block; the human still reviews and saves.
    */
   review?: SectionReviewResult;
+}
+
+/**
+ * R2 — wynik generacji sekcji jako CardSpec (grammar bloków) z bramką-recenzentem.
+ * `ok=false` → wołający robi fallback do buildera per-pole (legacy/ręczne).
+ */
+export interface CardSpecGenerationResult {
+  /** Zwalidowany/skoercjonowany spec (null gdy LLM niedostępny lub padł). */
+  cardSpec: CardSpec | null;
+  /** Wynik `validateCardSpec` na zwróconym specu. */
+  issues: CardIssue[];
+  /** Brak issues CRITICAL → renderowalny. */
+  ok: boolean;
+  /** Czy uruchomiono pętlę auto-heal (regen) po odrzuceniu przez bramkę. */
+  regenerated: boolean;
+  tokensUsed: number;
+  model: string;
 }
 
 /**
@@ -872,6 +898,105 @@ Return valid JSON array only.`;
   }
 
   /**
+   * R2 (payoff F3 / D11 + D12) — generuje treść sekcji JAKO `CardSpec` (grammar
+   * bloków) zamiast wolnego tekstu, i przepuszcza ją przez DETERMINISTYCZNĄ
+   * bramkę `validateCardSpec`. Issue CRITICAL → JEDNA regeneracja z feedbackiem
+   * (auto-heal, wzór deckDesignCritic M17). Po wyczerpaniu prób zwraca
+   * `ok=false` — wołający robi fallback do buildera per-pole (sekcja R1).
+   *
+   * NIE zastępuje `generateSectionContent` (tor wolnotekstowy żyje dalej) —
+   * to równoległa, opt-in zdolność strukturalna.
+   */
+  async generateSectionCardSpec(
+    sectionKey: string,
+    context: GenerationContext,
+    _organizationId?: string,
+    options?: { maxRegen?: number; sectionTitle?: string }
+  ): Promise<CardSpecGenerationResult> {
+    const llm = await getLLMServiceInstance();
+    if (!llm) {
+      return { cardSpec: null, issues: [], ok: false, regenerated: false, tokensUsed: 0, model: 'placeholder' };
+    }
+
+    // Enrich for grounding parity (fail-soft: DB hiccup nie psuje generacji).
+    let enriched = context;
+    try {
+      enriched = await this.enrichContext(context);
+    } catch {
+      enriched = context;
+    }
+
+    const lang = String(enriched.language || context.language || 'en').toLowerCase();
+    const isPolish = lang === 'pl' || lang === 'polish';
+    const guidance = getFormulaGuidance(sectionKey) || '';
+    const grounding = buildGroundingBlock(enriched) || '';
+    const fallbackTitle = String(options?.sectionTitle || enriched.initiativeName || sectionKey);
+
+    const systemPrompt = buildCardSpecSystemPrompt(isPolish);
+    const baseUserPrompt = buildCardSpecUserPrompt({
+      sectionKey,
+      isPolish,
+      context: enriched,
+      guidance,
+      grounding,
+      fallbackTitle,
+    });
+
+    // D12: domyślnie JEDNA regeneracja (maxRegen=1 → łącznie do 2 prób).
+    const maxRegen = Math.max(0, options?.maxRegen ?? 1);
+
+    let spec: CardSpec | null = null;
+    let issues: CardIssue[] = [];
+    let regenerated = false;
+    let tokensUsed = 0;
+    let model = 'llm-standard';
+    let lastBadSpecJson = '';
+
+    for (let attempt = 0; attempt <= maxRegen; attempt++) {
+      const userPrompt =
+        attempt === 0
+          ? baseUserPrompt
+          : `${baseUserPrompt}\n\n--- POPRZEDNIA PRÓBA ODRZUCONA PRZEZ WALIDATOR ---\nSpec:\n${lastBadSpecJson}\n\nProblemy (napraw KAŻDY, zwłaszcza CRITICAL):\n${summarizeIssues(issues)}\n\nZwróć POPRAWIONY CardSpec — sam JSON.`;
+      if (attempt > 0) regenerated = true;
+
+      let content = '';
+      try {
+        const result = await llm.call({
+          type: 'text',
+          modelConfig: { id: 'premium' },
+          systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+          maxTokens: 4096,
+          temperature: 0.3,
+          cache: false,
+        });
+        content = String(result?.content || '');
+        const usage = (result?.usage || {}) as Record<string, number>;
+        tokensUsed += usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
+        model = String(result?.model || result?.modelId || model);
+      } catch (err: any) {
+        logger.error('[InitiativeGeneration] cardSpec LLM call failed:', err?.message || err);
+        break;
+      }
+
+      const raw = extractJsonObject(content);
+      spec = coerceToCardSpec(raw, sectionKey, fallbackTitle);
+      issues = validateCardSpec(spec);
+      if (!hasCriticalIssues(issues)) break; // bramka przeszła — koniec
+      lastBadSpecJson = JSON.stringify(spec).slice(0, 2000);
+    }
+
+    return {
+      cardSpec: spec,
+      issues,
+      ok: !!spec && !hasCriticalIssues(issues),
+      regenerated,
+      tokensUsed,
+      model,
+    };
+  }
+
+  /**
    * Dependency injection for tests
    */
   setDependencies(deps: { db?: any }) {
@@ -880,6 +1005,98 @@ Return valid JSON array only.`;
 }
 
 export default new InitiativeGenerationService();
+
+// ==========================================
+// R2 — CardSpec generation helpers (pure, module-scope)
+// ==========================================
+
+/** Wyłuskuje obiekt JSON z odpowiedzi LLM (fences / otaczająca proza). null gdy brak. */
+export function extractJsonObject(content: string): unknown {
+  const text = String(content || '').trim();
+  if (!text) return null;
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  const candidate = (fenced?.[1] || text).trim();
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    /* fallthrough */
+  }
+  const start = candidate.indexOf('{');
+  const end = candidate.lastIndexOf('}');
+  if (start >= 0 && end > start) {
+    try {
+      return JSON.parse(candidate.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function buildCardSpecSystemPrompt(isPolish: boolean): string {
+  return isPolish
+    ? `Jesteś konsultantem klasy McKinsey (docs/standards/CARD_CONTENT_FORMULA.md, docs/initiatives/INITIATIVE_FORMULA.md). Komponujesz KARTĘ inicjatywy jako listę deklaratywnych BLOKÓW (grammar), nie wolny tekst. Zwracasz WYŁĄCZNIE poprawny JSON — bez markdown, bez code-fence, bez komentarza.`
+    : `You are a McKinsey-grade consultant (per docs/standards/CARD_CONTENT_FORMULA.md and docs/initiatives/INITIATIVE_FORMULA.md). You compose an initiative CARD as a list of declarative BLOCKS (a grammar), not free prose. Return ONLY valid JSON — no markdown, no code fences, no commentary.`;
+}
+
+interface CardSpecUserPromptArgs {
+  sectionKey: string;
+  isPolish: boolean;
+  context: GenerationContext;
+  guidance: string;
+  grounding: string;
+  fallbackTitle: string;
+}
+
+function buildCardSpecUserPrompt(args: CardSpecUserPromptArgs): string {
+  const { sectionKey, isPolish, context, guidance, grounding, fallbackTitle } = args;
+  const vocab = CARD_BLOCK_TYPES.join(', ');
+  const schema = [
+    `heading   { "type":"heading", "text": string, "level"?: 3|4 }`,
+    `paragraph { "type":"paragraph", "text": string, "emphasis"?: "normal"|"lead"|"muted" }`,
+    `bullet_list { "type":"bullet_list", "items": string[], "ordered"?: boolean }`,
+    `kpi_strip { "type":"kpi_strip", "tiles": [{ "label": string, "value": string, "delta"?: string, "trend"?: "up"|"down"|"flat" }] }`,
+    `table     { "type":"table", "columns": string[], "rows": string[][] }  // KAŻDY wiersz == liczba kolumn`,
+    `callout   { "type":"callout", "tone": "info"|"success"|"warning"|"danger", "title"?: string, "text": string }`,
+    `chart     { "type":"chart", "chartKind": "bar"|"line"|"pie"|"area", "title"?: string, "series": [{ "label": string, "value": number }] }`,
+  ].join('\n');
+
+  const header = isPolish
+    ? `Zbuduj kartę sekcji "${sectionKey}" dla inicjatywy "${context.initiativeName || ''}".`
+    : `Build the "${sectionKey}" section card for initiative "${context.initiativeName || ''}".`;
+
+  const rules = isPolish
+    ? [
+        `Dozwolone typy bloków: ${vocab}.`,
+        `Zwróć obiekt: { "title": string, "blocks": Block[] } — "title" to action-title sekcji.`,
+        `Używaj WYŁĄCZNIE liczb/faktów z sekcji DOWODY poniżej; brak danych → POMIŃ blok (nie wymyślaj).`,
+        `Min. 1 blok z treścią. Wartości KPI/finansów już sformatowane (np. "1,2 mln zł", "37%").`,
+        `Tytuł, jeśli nie masz lepszego: "${fallbackTitle}".`,
+      ].join('\n')
+    : [
+        `Allowed block types: ${vocab}.`,
+        `Return an object: { "title": string, "blocks": Block[] } — "title" is the section action-title.`,
+        `Use ONLY numbers/facts from the EVIDENCE section below; if data is missing → OMIT the block (never invent).`,
+        `At least 1 block with content. KPI/financial values pre-formatted (e.g. "1.2M PLN", "37%").`,
+        `Title fallback if none better: "${fallbackTitle}".`,
+      ].join('\n');
+
+  const parts = [header, '', isPolish ? 'SCHEMAT BLOKÓW:' : 'BLOCK SCHEMA:', schema, '', rules];
+  if (guidance) {
+    parts.push('', `--- KANON JAKOŚCI (CARD_CONTENT_FORMULA) ---`, guidance);
+  }
+  if (grounding) {
+    parts.push(
+      '',
+      isPolish
+        ? '--- DOWODY DOSTĘPNE DO UGRUNTOWANIA (nie wykraczaj poza nie) ---'
+        : '--- EVIDENCE AVAILABLE FOR GROUNDING (do not go beyond it) ---',
+      grounding
+    );
+  }
+  parts.push('', isPolish ? 'Zwróć WYŁĄCZNIE JSON.' : 'Return JSON ONLY.');
+  return parts.join('\n');
+}
 
 /**
  * Teresa last-mile (backlog #1): create a REAL initiative from a Teresa handoff.
