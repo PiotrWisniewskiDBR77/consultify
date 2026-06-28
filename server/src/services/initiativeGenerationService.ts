@@ -817,6 +817,25 @@ Return valid JSON array only.`;
           /* best-effort — portfolio grounding optional */
         }
 
+        // F0 — org-context: profil organizacji (nazwa + branża) dla ugruntowania. Best-effort.
+        let orgContext: string | undefined;
+        try {
+          const orgId = initiative.organization_id;
+          if (orgId) {
+            const org = await DbPromise.get<any>(
+              this.db,
+              `SELECT name, industry FROM organizations WHERE id = ?`,
+              [orgId]
+            );
+            if (org) {
+              const parts = [org.name, org.industry ? `branża: ${org.industry}` : ''].filter(Boolean);
+              if (parts.length) orgContext = parts.join(' — ');
+            }
+          }
+        } catch {
+          /* best-effort — kolumna industry może nie istnieć */
+        }
+
         return {
           ...context,
           initiativeName: context.initiativeName || initiative.name,
@@ -829,6 +848,7 @@ Return valid JSON array only.`;
           sourceLineage: context.sourceLineage || sourceLineage,
           existingKpis: context.existingKpis || existingKpis,
           portfolioSummary: context.portfolioSummary || portfolioSummary,
+          orgContext: context.orgContext || orgContext,
           language: context.language || 'en',
         };
       }
