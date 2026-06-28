@@ -127,8 +127,8 @@ const ADMAPentagonRadar: React.FC<{
       {/* Target area */}
       <path
         d={createPath(target)}
-        fill="rgba(34, 197, 94, 0.15)"
-        stroke="rgb(34, 197, 94)"
+        fill="rgba(29, 158, 117, 0.15)"
+        stroke="rgb(29, 158, 117)"
         strokeWidth="2"
         strokeDasharray="4 4"
       />
@@ -507,7 +507,7 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
               Current
             </span>
             <span className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-dashed border-green-600"></div>
+              <div className="w-3 h-3 bg-teal-500 rounded-full border-2 border-dashed border-teal-600"></div>
               Target
             </span>
           </div>
