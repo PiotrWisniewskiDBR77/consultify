@@ -32,6 +32,9 @@ import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
+import { CardBlockRenderer } from '../cards/CardBlockRenderer';
+import { buildTargetStateCardSpec } from '../cards/cardSpecBuilders';
+
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -285,6 +288,23 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
     successCriteria.length > 0,
     deliverables.length > 0,
   ].filter(Boolean).length;
+
+  // F3 (D11) display layer: generic CardBlockRenderer preview. ADDITIVE —
+  // a read-only "as it reads" view built from the same live edit state, shown
+  // at the bottom only once there is content. Does not replace the edit panels.
+  const targetStateCardSpec = buildTargetStateCardSpec(
+    {
+      vision: targetDescriptionDraft,
+      successCriteria,
+      deliverables,
+    },
+    {
+      title: t('initiatives.targetStateSection.successCriteria'),
+      visionHeading: t('initiatives.targetStateSection.targetState'),
+      successCriteriaHeading: t('initiatives.targetStateSection.successCriteria'),
+      deliverablesHeading: t('initiatives.targetStateSection.deliverables'),
+    }
+  );
 
   type AIListProposal = {
     add: Array<{ text: string; rationale?: string }>;
@@ -1288,6 +1308,18 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
             />
           </div>
         </ResizablePanel>
+
+        {/* F3 (D11) display layer — generic CardBlockRenderer preview.
+            ADDITIVE: a read-only "as it reads" view built from the same data,
+            shown only once there is content. Does not replace the edit panels. */}
+        {filledCount > 0 && (
+          <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+              {t('initiatives.targetStateSection.successCriteria')}
+            </div>
+            <CardBlockRenderer spec={targetStateCardSpec} showTitle={false} />
+          </div>
+        )}
       </div>
     </CollapsibleSection>
   );
