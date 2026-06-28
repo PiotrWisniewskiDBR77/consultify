@@ -199,6 +199,7 @@ import governanceRoutes from './routes/pmo/governance.routes.js';
 import initiativesRoutes from './routes/pmo/initiatives.routes.js';
 import initiativeCandidatesRouter from './routes/initiativeCandidates.routes.js';
 import initiativeMaterializeRoutes from './routes/initiativeMaterialize.routes.js';
+import initiativeBackboneRoutes from './routes/initiativeBackbone.routes.js';
 import pmoRoutes from './routes/pmo/pmo.routes.js';
 import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
 import pmoContextRoutes from './routes/pmo/pmo-context.routes.js';
@@ -470,11 +471,13 @@ export class ApiGateway {
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
       app.use('/api/teams', teamsRoutes);
-      // F2 — skrzynka kandydatów AI. MUSI być PRZED initiativesRoutes: GET /candidates
-      // inaczej łapie się na initiativesRoutes GET /:id (id="candidates").
+      // F2/F0/F4 — kandydaci + from-audit + portfolio-health. MUSZĄ być PRZED initiativesRoutes:
+      // GET /candidates, GET /portfolio-health łapią się inaczej na GET /:id; POST /from-audit
+      // na POST /:id (status-alias). Konkretne ścieżki przed parametrycznymi.
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeCandidatesRouter);
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeBackboneRoutes);
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
-      // F5 — „Zrób materiał": /:id/materialize + /portfolio/materialize (additive, POST sub-paths).
+      // F5 — „Zrób materiał": /:id/materialize + /portfolio/materialize (additive POST sub-paths, po głównym OK).
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeMaterializeRoutes);
       // Additive initiative slices (suggested-changes CRUD + propose engine). Mounted
       // on the same base path AFTER the main router so it only serves the new paths
