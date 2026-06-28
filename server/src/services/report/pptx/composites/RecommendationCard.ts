@@ -62,12 +62,23 @@ export function RecommendationCard(
     )
   );
 
+  // Anti-sparseness: let the description fill the body of the card so a tall
+  // single-recommendation card doesn't leave a void between title and the
+  // metric row pinned to the bottom.
+  const padX = 0.2;
+  const titleY = p.y + 0.18;
+  const titleH = 0.4;
+  const metricH = 0.46; // larger impact/effort/timeline pills
+  const metricY = p.y + p.h - metricH - 0.2;
+  const descY = titleY + titleH + 0.12;
+  const descH = Math.max(0.4, metricY - descY - 0.15);
+
   // Title
   elements.push(
     BodyText(
       {
         text: props.title,
-        position: { x: p.x + 0.2, y: p.y + 0.1, w: p.w - 1.3, h: 0.3 },
+        position: { x: p.x + padX, y: titleY, w: p.w - 1.3, h: titleH },
         bold: true,
         fontSize: tokens.fontSizes.subheading,
       },
@@ -75,40 +86,43 @@ export function RecommendationCard(
     )
   );
 
-  // Description
+  // Description — fills the body region between title and the metric row.
   elements.push(
     BodyText(
       {
         text: props.description,
-        position: { x: p.x + 0.2, y: p.y + 0.45, w: p.w - 0.4, h: p.h * 0.3 },
+        position: { x: p.x + padX, y: descY, w: p.w - padX * 2, h: descH },
         color: tokens.colors.textSecondary,
       },
       tokens
     )
   );
 
-  // Impact + Effort row
-  const metaY = p.y + p.h - 0.5;
-  elements.push(
-    Highlight(
-      {
-        text: `Impact: ${props.impact}`,
-        position: { x: p.x + 0.2, y: metaY, w: (p.w - 0.6) / 2, h: 0.3 },
-        bgColor: tokens.colors.primary,
-      },
-      tokens
-    )
-  );
-  elements.push(
-    Highlight(
-      {
-        text: `Effort: ${props.effort}`,
-        position: { x: p.x + 0.2 + (p.w - 0.6) / 2 + 0.1, y: metaY, w: (p.w - 0.6) / 2, h: 0.3 },
-        bgColor: tokens.colors.secondary,
-      },
-      tokens
-    )
-  );
+  // Metric row: Impact + Effort (+ Timeline when present), pinned to the bottom.
+  const hasTimeline = !!props.timeline;
+  const cols = hasTimeline ? 3 : 2;
+  const gap = 0.1;
+  const innerW = p.w - padX * 2;
+  const cellW = (innerW - gap * (cols - 1)) / cols;
+  const metrics: Array<{ text: string; bgColor: string }> = [
+    { text: `Impact: ${props.impact}`, bgColor: tokens.colors.primary },
+    { text: `Effort: ${props.effort}`, bgColor: tokens.colors.secondary },
+  ];
+  if (hasTimeline) {
+    metrics.push({ text: `Timeline: ${props.timeline}`, bgColor: prioColor });
+  }
+  metrics.forEach((m, i) => {
+    elements.push(
+      Highlight(
+        {
+          text: m.text,
+          position: { x: p.x + padX + i * (cellW + gap), y: metricY, w: cellW, h: metricH },
+          bgColor: m.bgColor,
+        },
+        tokens
+      )
+    );
+  });
 
   return elements;
 }

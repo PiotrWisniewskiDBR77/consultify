@@ -97,35 +97,42 @@ export function InitiativeCard(
     );
   }
 
+  // ── Adaptive vertical rhythm ──
+  // Tall cards (few initiatives) get extra breathing room between blocks so the
+  // content fills the card instead of clustering at the top (anti-sparseness).
+  const roomy = p.h >= 2.6;
+  const blockGap = roomy ? 0.18 : 0.0;
+
   // ── Name ──
-  let currentY = p.y + 0.4;
+  let currentY = p.y + 0.4 + (roomy ? 0.15 : 0);
   elements.push(
     BodyText(
       {
         text: item.name,
-        position: { x: p.x + 0.12, y: currentY, w: p.w - 0.24, h: 0.25 },
+        position: { x: p.x + 0.12, y: currentY, w: p.w - 0.24, h: roomy ? 0.35 : 0.25 },
         bold: true,
-        fontSize: tokens.fontSizes.subheading - 2,
+        fontSize: roomy ? tokens.fontSizes.subheading : tokens.fontSizes.subheading - 2,
       },
       tokens
     )
   );
-  currentY += 0.28;
+  currentY += (roomy ? 0.4 : 0.28) + blockGap;
 
   // ── Summary ──
   if (item.summary) {
+    const sumH = roomy ? 0.7 : 0.4;
     elements.push(
       BodyText(
         {
           text: item.summary,
-          position: { x: p.x + 0.12, y: currentY, w: p.w - 0.24, h: 0.4 },
+          position: { x: p.x + 0.12, y: currentY, w: p.w - 0.24, h: sumH },
           color: tokens.colors.textSecondary,
-          fontSize: 10,
+          fontSize: roomy ? 11 : 10,
         },
         tokens
       )
     );
-    currentY += 0.42;
+    currentY += sumH + 0.04 + blockGap;
   }
 
   // ── Impact / Effort dots ──
@@ -161,22 +168,23 @@ export function InitiativeCard(
         )
       );
     }
-    currentY += 0.22;
+    currentY += 0.22 + blockGap;
   }
 
   // ── Effort Profile ──
   if (props.showEffortBars && item.effortProfile) {
+    const epH = roomy ? 0.6 : 0.4;
     const epElements = EffortProfileBar(
       {
         analytical: item.effortProfile.analytical,
         operational: item.effortProfile.operational,
         change: item.effortProfile.change,
-        position: { x: p.x + 0.12, y: currentY, w: p.w - 0.24, h: 0.4 },
+        position: { x: p.x + 0.12, y: currentY, w: p.w - 0.24, h: epH },
       },
       tokens
     );
     elements.push(...epElements);
-    currentY += 0.42;
+    currentY += epH + 0.02 + blockGap;
   }
 
   // ── Metadata row: timeline + owner ──

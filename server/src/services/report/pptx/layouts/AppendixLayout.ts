@@ -62,6 +62,11 @@ export function AppendixLayout(
     );
 
     const tableY = g.contentY + bodyH + 0.15;
+    // Distribute remaining vertical space across the rows so the table fills the
+    // region rather than leaving an empty bottom (anti-sparseness).
+    const tableAvailH = g.contentY + g.contentH - tableY;
+    const rowCount = dataRows.length + 1; // +1 header
+    const rowH = Math.min(0.6, Math.max(0.3, tableAvailH / Math.max(rowCount, 1)));
     elements.push({
       kind: 'table' as const,
       apply(s: any) {
@@ -72,7 +77,8 @@ export function AppendixLayout(
           colW: table.headers.map(() => g.contentW / table.headers.length),
           border: { pt: 0.5, color: tokens.colors.border },
           fontFace: tokens.fonts.body,
-          rowH: 0.3,
+          rowH,
+          valign: 'middle',
           autoPage: false,
         });
       },

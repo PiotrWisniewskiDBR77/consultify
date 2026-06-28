@@ -70,8 +70,8 @@ export function InitiativePortfolioLayout(
       )
     );
   } else {
-    // Decide grid: cols × rows
-    const cols = count <= 2 ? 2 : count <= 4 ? 2 : 3;
+    // Decide grid: cols × rows — fill the region with as few empty cells as possible.
+    const cols = count === 1 ? 1 : count <= 4 ? 2 : 3;
     const rows = Math.ceil(count / cols);
     const gutter = tokens.spacing.gutter;
     const cardW = (g.contentW - (cols - 1) * gutter) / cols;

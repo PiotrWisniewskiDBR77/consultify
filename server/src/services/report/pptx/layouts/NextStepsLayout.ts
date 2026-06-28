@@ -114,7 +114,17 @@ export function NextStepsLayout(
     },
   ]);
 
-  const tableH = c.closing_message ? g.contentH - 0.7 : g.contentH;
+  // Anti-sparseness: stretch the actions table to fill the usable region, then
+  // anchor the closing message as a low callout bar (NOT floating mid-slide).
+  const calloutH = 0.46;
+  const calloutGap = 0.18;
+  // Region reserved for the table = everything above the low callout bar.
+  const tableRegionH = c.closing_message ? g.contentH - calloutH - calloutGap : g.contentH;
+  const rowCount = 1 + dataRows.length; // header + data rows
+  // Grow row height so the table breathes and fills tableRegionH; cap so a tiny
+  // table doesn't become absurd. Header is slightly shorter than data rows.
+  const rowH = Math.max(0.38, Math.min(0.62, tableRegionH / rowCount));
+
   elements.push({
     kind: 'table' as const,
     apply(s: any) {
@@ -125,22 +135,39 @@ export function NextStepsLayout(
         colW: [g.contentW * 0.07, g.contentW * 0.48, g.contentW * 0.22, g.contentW * 0.23],
         border: { pt: 0.5, color: tokens.colors.border },
         fontFace: tokens.fonts.body,
-        rowH: 0.38,
+        rowH,
+        valign: 'middle',
         autoPage: false,
       });
     },
   });
 
-  // Closing message
+  // Closing message — full-width accent callout bar anchored low (~y 4.5).
   if (c.closing_message) {
+    const calloutY = g.contentY + g.contentH - calloutH;
+    elements.push({
+      kind: 'shape' as const,
+      apply(s: any) {
+        s.addShape('roundRect', {
+          x: g.contentX,
+          y: calloutY,
+          w: g.contentW,
+          h: calloutH,
+          fill: { color: tokens.colors.primary },
+          line: { color: tokens.colors.primary, width: 0 },
+          rectRadius: 0.05,
+        });
+      },
+    });
     elements.push(
       BodyText(
         {
           text: c.closing_message,
-          position: { x: g.contentX, y: g.contentY + tableH + 0.1, w: g.contentW, h: 0.5 },
+          position: { x: g.contentX + 0.3, y: calloutY, w: g.contentW - 0.6, h: calloutH },
           bold: true,
-          color: tokens.colors.primary,
+          color: 'FFFFFF',
           align: 'center',
+          valign: 'middle',
         },
         tokens
       )

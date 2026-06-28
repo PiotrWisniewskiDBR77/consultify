@@ -63,13 +63,21 @@ export function KeyMessagesLayout(
 
   const g = tokens.grid;
   const count = Math.min(c.messages.length, 4);
+  // Cards fill the full content region (anti-sparseness): full height, even gutters.
   const cardW = (g.contentW - tokens.spacing.gutter * (count - 1)) / count;
+  const cardY = g.contentY;
+  const cardH = g.contentH;
+  // Vertically center the icon→title→description block inside the tall card so
+  // content breathes instead of clinging to the top, leaving an empty bottom.
+  const iconH = 0.5;
+  const titleH = 0.5;
+  const descH = Math.min(cardH - (iconH + titleH) - 0.5, 1.8);
+  const blockH = iconH + 0.1 + titleH + 0.1 + descH;
+  const blockTop = cardY + Math.max(0.2, (cardH - blockH) / 2);
 
   for (let i = 0; i < count; i++) {
     const msg = c.messages[i];
     const cardX = g.contentX + i * (cardW + tokens.spacing.gutter);
-    const cardY = g.contentY + 0.1;
-    const cardH = g.contentH - 0.2;
 
     // Card background
     elements.push({
@@ -92,9 +100,9 @@ export function KeyMessagesLayout(
       Icon(
         {
           icon: msg.icon || ICONS.diamond,
-          position: { x: cardX, y: cardY + 0.15, w: cardW, h: 0.35 },
+          position: { x: cardX, y: blockTop, w: cardW, h: iconH },
           color: tokens.colors.primary,
-          fontSize: 20,
+          fontSize: 28,
         },
         tokens
       )
@@ -105,9 +113,9 @@ export function KeyMessagesLayout(
       BodyText(
         {
           text: msg.title,
-          position: { x: cardX + 0.1, y: cardY + 0.6, w: cardW - 0.2, h: 0.4 },
+          position: { x: cardX + 0.15, y: blockTop + iconH + 0.1, w: cardW - 0.3, h: titleH },
           bold: true,
-          fontSize: 12,
+          fontSize: 14,
           align: 'center',
         },
         tokens
@@ -119,10 +127,16 @@ export function KeyMessagesLayout(
       BodyText(
         {
           text: msg.description,
-          position: { x: cardX + 0.1, y: cardY + 1.05, w: cardW - 0.2, h: cardH - 1.2 },
-          fontSize: 10,
+          position: {
+            x: cardX + 0.15,
+            y: blockTop + iconH + 0.1 + titleH + 0.1,
+            w: cardW - 0.3,
+            h: descH,
+          },
+          fontSize: 11,
           color: tokens.colors.textSecondary,
           align: 'center',
+          valign: 'top',
         },
         tokens
       )

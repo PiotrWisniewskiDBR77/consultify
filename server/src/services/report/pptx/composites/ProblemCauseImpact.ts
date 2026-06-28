@@ -24,6 +24,16 @@ export function ProblemCauseImpact(
   const { position: p } = props;
   const elements: RenderedElement[] = [];
 
+  // ── Vertical rhythm: problem banner on top, table fills the rest ──
+  const problemH = 0.8;
+  const gapBelowProblem = 0.25;
+  const tableY = p.y + problemH + gapBelowProblem;
+  const tableAvailH = p.y + p.h - tableY;
+  // Distribute available height across header + data rows so the table fills
+  // the region instead of leaving an empty bottom (anti-sparseness).
+  const totalRows = props.causes.length + 1; // +1 for header
+  const rowH = Math.min(0.9, Math.max(0.35, tableAvailH / Math.max(totalRows, 1)));
+
   // Problem statement box
   elements.push({
     kind: 'shape',
@@ -32,7 +42,7 @@ export function ProblemCauseImpact(
         x: p.x,
         y: p.y,
         w: p.w,
-        h: 0.5,
+        h: problemH,
         fill: { color: tokens.colors.danger },
         rectRadius: 0.05,
       });
@@ -42,8 +52,9 @@ export function ProblemCauseImpact(
     BodyText(
       {
         text: `Problem: ${props.problem}`,
-        position: { x: p.x + 0.15, y: p.y, w: p.w - 0.3, h: 0.5 },
+        position: { x: p.x + 0.2, y: p.y, w: p.w - 0.4, h: problemH },
         bold: true,
+        fontSize: tokens.fontSizes.subheading,
         color: tokens.colors.textInverse,
         valign: 'middle',
       },
@@ -116,12 +127,13 @@ export function ProblemCauseImpact(
     apply(slide) {
       slide.addTable([headerRow, ...dataRows], {
         x: p.x,
-        y: p.y + 0.65,
+        y: tableY,
         w: p.w,
         colW: [p.w * 0.4, p.w * 0.4, p.w * 0.2],
         border: { pt: 0.5, color: tokens.colors.border },
         fontFace: tokens.fonts.body,
-        rowH: 0.35,
+        rowH,
+        valign: 'middle',
       });
     },
   });

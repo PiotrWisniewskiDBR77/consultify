@@ -122,6 +122,21 @@ export function Heatmap(props: HeatmapProps, tokens: DesignTokens): RenderedElem
     ];
   });
 
+  // ── Anti-sparseness (W7): grow rows so the grid fills the usable region ──
+  // Reserve room at the bottom for the Overall badge when present so the table
+  // and badge together span p.h instead of leaving an empty lower band.
+  const hasBadge = props.overallScore != null;
+  const badgeH = 0.5;
+  const badgeGap = hasBadge ? 0.2 : 0;
+  const tableRegionH = p.h - (hasBadge ? badgeH + badgeGap : 0);
+  const totalRows = dataRows.length + 1; // +1 header
+  const naturalRowH = 0.35;
+  const fittedRowH = Math.min(
+    0.9,
+    Math.max(naturalRowH, tableRegionH / totalRows)
+  );
+  const tableH = fittedRowH * totalRows;
+
   elements.push({
     kind: 'table',
     apply(slide) {
@@ -132,31 +147,37 @@ export function Heatmap(props: HeatmapProps, tokens: DesignTokens): RenderedElem
         colW: [p.w * 0.35, p.w * 0.15, p.w * 0.15, p.w * 0.15, p.w * 0.2],
         border: { pt: 0.5, color: tokens.colors.border },
         fontFace: tokens.fonts.body,
-        rowH: 0.35,
+        rowH: fittedRowH,
+        valign: 'middle',
+        autoPage: false,
       });
     },
   });
 
-  // Overall score badge (if present)
+  // Overall score badge (if present) — placed below the table, bottom-right,
+  // inside the region (never intrudes into the header band).
   if (props.overallScore != null) {
     const badgeColor = scoreToColor(props.overallScore, scaleMax, tokens);
+    const badgeW = 1.8;
+    const badgeX = p.x + p.w - badgeW;
+    const badgeY = p.y + tableH + badgeGap;
     elements.push({
       kind: 'shape',
       apply(slide) {
         slide.addShape('roundRect', {
-          x: p.x + p.w - 1.5,
-          y: p.y - 0.55,
-          w: 1.5,
-          h: 0.45,
+          x: badgeX,
+          y: badgeY,
+          w: badgeW,
+          h: badgeH,
           fill: { color: badgeColor },
           rectRadius: 0.06,
         });
         slide.addText(`Overall: ${props.overallScore!.toFixed(1)}/${scaleMax}`, {
-          x: p.x + p.w - 1.5,
-          y: p.y - 0.55,
-          w: 1.5,
-          h: 0.45,
-          fontSize: 11,
+          x: badgeX,
+          y: badgeY,
+          w: badgeW,
+          h: badgeH,
+          fontSize: 12,
           fontFace: tokens.fonts.body,
           color: 'FFFFFF',
           bold: true,

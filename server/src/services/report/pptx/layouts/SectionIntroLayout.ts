@@ -45,12 +45,14 @@ export function SectionIntroLayout(
 
   elements.push(PageNumber({ color: tokens.colors.textInverse }, tokens));
 
+  // Divider slides have no header/footer chrome — centre the block over the full
+  // slide height (minus a small page-number margin) so it reads as deliberate.
   const blockElements = SectionIntroBlock(
     {
       sectionTitle: c.section_title,
       sectionNumber: c.section_number,
       description: c.description,
-      position: { x: 0.5, y: 1.5, w: 9, h: 2.5 },
+      position: { x: 0.5, y: 0.6, w: 9, h: tokens.grid.slideH - 1.2 },
     },
     tokens
   );
