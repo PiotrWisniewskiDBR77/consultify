@@ -348,7 +348,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
             <button
               type="button"
               onClick={() => void load()}
-              className="text-sm text-primary-600 hover:underline"
+              className="text-sm text-violet-600 hover:underline"
             >
               {pl ? 'Spróbuj ponownie' : 'Retry'}
             </button>
@@ -553,7 +553,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             if (e.key === 'Enter' && canSave) void handleSave();
           }}
           placeholder={pl ? 'np. Strategia 2026' : 'e.g. Strategy 2026'}
-          className="w-full px-3 py-2 mb-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+          className="w-full px-3 py-2 mb-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
         />
 
         <span className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
@@ -565,7 +565,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             onClick={() => setScope('personal')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
               scope === 'personal'
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
                 : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
             }`}
           >
@@ -577,7 +577,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             onClick={() => setScope('team')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
               scope === 'team'
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
                 : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
             }`}
           >
@@ -595,7 +595,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
               <select
                 value={teamId}
                 onChange={(e) => setTeamId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-primary-500/30"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-100 text-sm outline-none focus:ring-2 focus:ring-violet-500/30"
               >
                 {teams.map((t) => (
                   <option key={t.id} value={t.id}>

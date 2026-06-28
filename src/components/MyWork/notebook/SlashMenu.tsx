@@ -227,7 +227,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Zapytaj',
     description: "Ask AI about your note's context",
     descriptionPl: 'Zapytaj AI o kontekst notatki',
-    icon: <MessageCircle size={ICON_SIZE} className="text-primary-500" />,
+    icon: <MessageCircle size={ICON_SIZE} className="text-violet-500" />,
     keywords: ['ask', 'ai', 'question', 'pytanie', 'zapytaj'],
     action: () => {},
     aiCommand: 'ask',
@@ -238,7 +238,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Rozwiń',
     description: 'AI expands and elaborates on your content',
     descriptionPl: 'AI rozwija i wzbogaca Twoją treść',
-    icon: <Sparkles size={ICON_SIZE} className="text-primary-500" />,
+    icon: <Sparkles size={ICON_SIZE} className="text-violet-500" />,
     keywords: ['expand', 'ai', 'elaborate', 'rozwin', 'wzbogac'],
     action: () => {},
     aiCommand: 'expand',
@@ -249,7 +249,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Podważ',
     description: 'AI asks critical questions about your content',
     descriptionPl: 'AI zadaje krytyczne pytania o Twoją treść',
-    icon: <ShieldQuestion size={ICON_SIZE} className="text-primary-500" />,
+    icon: <ShieldQuestion size={ICON_SIZE} className="text-violet-500" />,
     keywords: ['challenge', 'ai', 'critical', 'question', 'podwaz', 'krytyczne'],
     action: () => {},
     aiCommand: 'challenge',
@@ -260,7 +260,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Następne kroki',
     description: 'AI proposes concrete next steps',
     descriptionPl: 'AI proponuje konkretne następne kroki',
-    icon: <Zap size={ICON_SIZE} className="text-primary-500" />,
+    icon: <Zap size={ICON_SIZE} className="text-violet-500" />,
     keywords: ['action', 'ai', 'next', 'steps', 'kroki', 'plan'],
     action: () => {},
     aiCommand: 'action',
@@ -464,7 +464,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
             onMouseEnter={() => setSelectedIdx(idx)}
             className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
               idx === selectedIdx
-                ? 'bg-primary-500/10 text-primary-700 dark:text-primary-300'
+                ? 'bg-violet-500/10 text-violet-700 dark:text-violet-300'
                 : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
             }`}
           >
@@ -476,7 +476,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
               </div>
             </div>
             {cmd.aiCommand ? (
-              <span className="ml-auto shrink-0 text-[10px] font-medium text-primary-500 dark:text-primary-400 bg-primary-500/10 px-1.5 py-0.5 rounded">
+              <span className="ml-auto shrink-0 text-[10px] font-medium text-violet-500 dark:text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded">
                 AI
               </span>
             ) : cmd.id === 'h1' ||
