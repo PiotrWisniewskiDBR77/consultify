@@ -39,14 +39,14 @@ function isBlockedIpv4(ip: string): boolean {
   if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) {
     return true; // malformed → block
   }
-  const [a, b] = parts;
+  const [a, b, c] = parts;
   if (a === 0) return true; // 0.0.0.0/8 "this network"
   if (a === 10) return true; // private
   if (a === 127) return true; // loopback
   if (a === 169 && b === 254) return true; // link-local incl. 169.254.169.254 metadata
   if (a === 172 && b >= 16 && b <= 31) return true; // private
   if (a === 192 && b === 168) return true; // private
-  if (a === 192 && b === 0) return true; // 192.0.0.0/24 IETF protocol assignments
+  if (a === 192 && b === 0 && c === 0) return true; // 192.0.0.0/24 IETF protocol assignments
   if (a === 100 && b >= 64 && b <= 127) return true; // 100.64.0.0/10 CGNAT
   if (a === 198 && (b === 18 || b === 19)) return true; // 198.18.0.0/15 benchmarking
   if (a >= 224) return true; // 224.0.0.0/4 multicast + 240.0.0.0/4 reserved + broadcast
@@ -158,34 +158,26 @@ export async function assertUrlIsSafe(rawUrl: string): Promise<URL> {
 }
 
 /**
- * A DNS lookup that validates the resolved address(es) and only ever yields a
- * public one. Used as the http/https `lookup` option so validation happens at
- * the moment of connection (no rebinding TOCTOU). Bare-IP hosts are checked
- * directly without DNS.
+ * Resolve a host to a single PUBLIC address (or throw). Bare-IP literals are
+ * validated directly; domains are DNS-resolved and every address checked.
  */
-type LookupCb = (err: NodeJS.ErrnoException | null, address: string, family: number) => void;
-function validatingLookup(hostname: string, _options: unknown, callback: LookupCb): void {
+async function resolvePublicAddress(hostname: string): Promise<{ address: string; family: number }> {
   const literal = net.isIP(hostname);
   if (literal) {
-    if (isBlockedIp(hostname)) {
-      callback(new SsrfBlockedError('Blocked address') as NodeJS.ErrnoException, '', 0);
-      return;
-    }
-    callback(null, hostname, literal);
-    return;
+    if (isBlockedIp(hostname)) throw new SsrfBlockedError('URL resolves to a blocked address');
+    return { address: hostname, family: literal };
   }
-  dns.lookup(hostname, { all: true }, (err, addresses) => {
-    if (err) return callback(err, '', 0);
-    if (!addresses || addresses.length === 0) {
-      return callback(new SsrfBlockedError('No addresses') as NodeJS.ErrnoException, '', 0);
-    }
-    for (const a of addresses) {
-      if (isBlockedIp(a.address)) {
-        return callback(new SsrfBlockedError('Blocked address') as NodeJS.ErrnoException, '', 0);
-      }
-    }
-    callback(null, addresses[0].address, addresses[0].family);
-  });
+  let addresses: dns.LookupAddress[];
+  try {
+    addresses = await dns.promises.lookup(hostname, { all: true });
+  } catch {
+    throw new SsrfBlockedError('DNS resolution failed');
+  }
+  if (!addresses.length) throw new SsrfBlockedError('No addresses for host');
+  for (const a of addresses) {
+    if (isBlockedIp(a.address)) throw new SsrfBlockedError('URL resolves to a blocked address');
+  }
+  return { address: addresses[0].address, family: addresses[0].family };
 }
 
 export interface SafeFetchOptions {
@@ -201,27 +193,44 @@ interface OneHopResult {
   html: string;
 }
 
-function fetchOnce(
+async function fetchOnce(
   urlStr: string,
   opts: { timeoutMs: number; maxBytes: number; userAgent: string }
 ): Promise<OneHopResult> {
-  return new Promise((resolve, reject) => {
-    let parsed: URL;
-    try {
-      parsed = new URL(urlStr);
-    } catch {
-      return reject(new SsrfBlockedError('Malformed URL'));
-    }
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return reject(new SsrfBlockedError('Only http(s) URLs are allowed'));
-    }
-    const mod = parsed.protocol === 'https:' ? https : http;
-    const req = mod.get(
-      urlStr,
+  let parsed: URL;
+  try {
+    parsed = new URL(urlStr);
+  } catch {
+    throw new SsrfBlockedError('Malformed URL');
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new SsrfBlockedError('Only http(s) URLs are allowed');
+  }
+  const isHttps = parsed.protocol === 'https:';
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
+  // Resolve + validate ONCE, then connect to that exact IP — closes the DNS
+  // rebinding TOCTOU (the validated address is the one connected to) and covers
+  // IP-literal hosts (node's `lookup` option is never called for those).
+  const { address, family } = await resolvePublicAddress(hostname);
+  const mod = isHttps ? https : http;
+  const port = parsed.port ? Number(parsed.port) : isHttps ? 443 : 80;
+
+  return new Promise<OneHopResult>((resolve, reject) => {
+    const req = mod.request(
       {
-        lookup: validatingLookup as never,
+        host: address,
+        family,
+        port,
+        path: `${parsed.pathname}${parsed.search}`,
+        method: 'GET',
         timeout: opts.timeoutMs,
-        headers: { 'User-Agent': opts.userAgent, Accept: 'text/html,application/xhtml+xml' },
+        // Preserve the real host for virtual hosting + TLS SNI/cert validation.
+        headers: {
+          Host: parsed.host,
+          'User-Agent': opts.userAgent,
+          Accept: 'text/html,application/xhtml+xml',
+        },
+        ...(isHttps ? { servername: hostname } : {}),
       },
       (res) => {
         const status = res.statusCode || 0;
@@ -254,6 +263,7 @@ function fetchOnce(
     );
     req.on('timeout', () => req.destroy(new SsrfBlockedError('Request timed out')));
     req.on('error', (e) => reject(e));
+    req.end();
   });
 }
 

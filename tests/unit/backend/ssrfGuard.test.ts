@@ -31,6 +31,14 @@ describe('ssrfGuard.isBlockedIp', () => {
     }
   });
 
+  it('blocks ONLY 192.0.0.0/24, not the public 192.0/16 around it (IANA/ICANN)', () => {
+    expect(isBlockedIp('192.0.0.1'), '192.0.0.1').toBe(true);
+    expect(isBlockedIp('192.0.0.255'), '192.0.0.255').toBe(true);
+    // 192.0.32.x / 192.0.43.x are public (example.com, iana.org) — must NOT block.
+    expect(isBlockedIp('192.0.32.8'), '192.0.32.8').toBe(false);
+    expect(isBlockedIp('192.0.43.7'), '192.0.43.7').toBe(false);
+  });
+
   it('blocks loopback / ULA / link-local / IPv4-mapped IPv6', () => {
     for (const ip of ['::1', '::', 'fe80::1', 'fc00::1', 'fd12:3456::1', '::ffff:127.0.0.1']) {
       expect(isBlockedIp(ip), ip).toBe(true);
