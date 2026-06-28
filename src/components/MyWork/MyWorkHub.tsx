@@ -193,6 +193,10 @@ type ModuleTab =
 // other change required. While disabled, the home tab is removed from the nav and
 // HomeView is never mounted (so its scanning hooks never run).
 const RADAR_ENABLED = false;
+// N2 (Notebook redesign): the legacy 3-icon topbar strip (Tools / Context / AI
+// suggestions) is redundant — those panels now live inside the notebook window
+// (NotebookRightRail). Hidden by default; flip to `true` to restore the topbar strip.
+const SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP = false;
 const MY_WORK_FALLBACK_TAB: ModuleTab = 'inbox';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
@@ -3812,8 +3816,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               )}
 
               {/* Workspace 3-tools strip — Notebook only (when the editor is shown,
-                  i.e. inside an open notebook or on a deep-linked page) */}
-              {activeTab === 'notebook' &&
+                  i.e. inside an open notebook or on a deep-linked page).
+                  N2 redesign: redundant — Tools/Context/AI panels now live inside the
+                  notebook window (NotebookRightRail). Hidden behind a reversible flag;
+                  flip SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP back to `true` to restore. */}
+              {SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP &&
+                activeTab === 'notebook' &&
                 !activeDocumentId &&
                 (notebookOpenId || notebookOpenPageId) && (
                   <WorkspacePanelStrip
