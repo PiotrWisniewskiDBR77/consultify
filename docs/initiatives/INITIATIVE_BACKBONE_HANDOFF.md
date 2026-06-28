@@ -147,6 +147,11 @@
 ## 4. GDZIE SKOŃCZYŁEM / NASTĘPNA AKCJA
 > Aktualizuj tę sekcję po KAŻDYM kroku (Piotr: „cały czas dokumentuj działania”).
 
+- **2026-06-28 — R1 DOMKNIĘTE (F3: 6/6 kart rdzenia z bloków):**
+  - **3 nowe buildery** w `cards/cardSpecBuilders.ts`: `buildScopeCardSpec` (in/out/kill → heading+bullet_list), `buildControlCardSpec` (moduł/status/priorytet/właściciel → kpi_strip), `buildKpisCardSpec` (wiersze → table 5-kol). FinancialImpact reużywa `buildBusinessCaseCardSpec` (spłaszczenie revenueImpact/costSavings/benefitsRealized → kafelki). Commit `03fcdce682` (+12 testów, builder 30/30).
+  - **5 sekcji zmigrowanych** (additive preview `<CardBlockRenderer showTitle={false}/>` pod polami edycji, gated na obecność treści — edycje/AIFieldEnhancer/AI NIETKNIĘTE): TargetState, FinancialImpact, KPIs, Scope, Control. Karty narzędziowe (Gantt/RAID) zostają bespoke (hybryda celowa). Commit `0587286f32` (+5 testów render jsdom). Cała suita Initiatives 126/126, tsc czysto na plikach R1.
+  - **DoD R1:** ✅ kod+testy, ⏳ preview-pass wizualny przesunięty do R7 (wymaga dev-server+auth na widoku dokumentu).
+  - **NASTĘPNE = R2** (generator emituje CardSpec + `validateCardSpec` jako critic gate).
 - **2026-06-27:** SSOT + ten handoff napisane, zacommitowane, **wypchnięte na GitHub** (`2fd964f6a9`). Proces statusów GOTOWY (92/92).
 - **2026-06-27 F0-inkrement-1 (ZROBIONE):** grunt portfolio/org/financials w generacji.
   - `initiativeGenerationService.ts`: `GenerationContext` +3 pola (`portfolioSummary`/`orgContext`/`financialsSummary`); `buildGroundingBlock` EKSPORTOWANY + emituje je (org pierwszy, portfolio z instrukcją „NIE duplikuj"); `enrichContext` POPULUJE `portfolioSummary` (query ≤15 aktywnych inicjatyw org, best-effort).
