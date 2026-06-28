@@ -9,8 +9,8 @@
  * - Axis 2: Digital Products (5 areas, 5 levels)
  * - Axis 3: Digital Business Models (5 areas, 5 levels)
  * - Axis 4: Data Management (5 areas, 7 levels)
- * - Axis 5: Culture of Transformation (5 areas, 5 levels)
- * - Axis 6: Cybersecurity (5 areas, 5 levels)
+ * - Axis 5: Culture of Transformation (5 areas, 6 levels)
+ * - Axis 6: Cybersecurity (5 areas, 6 levels)
  * - Axis 7: AI Maturity (5 areas, 5 levels)
  */
 
@@ -1149,198 +1149,205 @@ const AXIS_4_DATA_MANAGEMENT: DRDAxis = {
 };
 
 // ============================================
-// AXIS 5: CULTURE OF TRANSFORMATION (5 areas, 5 levels)
+// AXIS 5: CULTURE OF TRANSFORMATION (5 areas, 6 levels)
 // ============================================
 
 const AXIS_5_CULTURE: DRDAxis = {
   id: 5,
   name: 'Culture of Transformation',
   namePL: 'Kultura Transformacji',
-  description: 'Assessment of organizational culture readiness for digital transformation',
-  levelCount: 5,
+  description:
+    'Assessment of whether culture and competencies enable transformation (not just buying technology). Per the DRD book, 5A describes leadership TYPES (not better/worse), while 5B–5E use a 1–6 maturity scale.',
+  levelCount: 6,
   areas: [
     {
       id: '5A',
-      name: 'Leadership Style',
-      namePL: 'Styl Przywództwa',
+      name: 'Leadership Attitudes',
+      namePL: 'Postawy przywódcze',
       levels: [
         {
           level: 1,
-          title: 'Traditional',
+          title: 'Pasywny',
           description:
-            'Leadership follows traditional hierarchical patterns. Decision-making is centralized at the top. Leaders focus on maintaining status quo and operational efficiency.',
+            'Typ przywództwa (nie „lepszy/gorszy") wg książki: lider pasywny, brak wsparcia dla innowacji i zmiany.',
         },
         {
           level: 2,
-          title: 'Transitional',
+          title: 'Autokratyczny',
           description:
-            'Leaders begin to recognize the need for change. Some delegation of decision-making occurs. Initial experiments with new leadership approaches are undertaken.',
+            'Typ przywództwa wg książki: decyzje podejmowane centralnie, niski udział zespołu w procesie decyzyjnym.',
         },
         {
           level: 3,
-          title: 'Adaptive',
+          title: 'Dyrektywny',
           description:
-            'Leadership actively promotes change and innovation. Decision-making is more distributed. Leaders encourage experimentation and learning from failures.',
+            'Typ przywództwa wg książki: wysokie wymagania połączone z zapewnieniem narzędzi i zasobów do ich realizacji.',
         },
         {
           level: 4,
-          title: 'Transformational',
+          title: 'Wspierający',
           description:
-            'Leaders inspire and motivate teams towards digital transformation. They model digital-first behaviors and champion new technologies. Empowerment and autonomy are core leadership principles.',
+            'Typ przywództwa wg książki: budowanie bezpieczeństwa psychologicznego i motywowanie zespołu.',
         },
         {
           level: 5,
-          title: 'Visionary',
+          title: 'Innowator',
           description:
-            'Leadership drives industry-leading innovation. Leaders anticipate future trends and position the organization accordingly. They create a culture of continuous reinvention and breakthrough thinking.',
+            'Typ przywództwa wg książki: podejmowanie ryzyka, eksperymentowanie i napędzanie zmiany.',
+        },
+        {
+          level: 6,
+          title: 'Transformacyjny',
+          description:
+            'Typ przywództwa wg książki: wizja, etyka, odrzucenie status quo i rozwój ludzi. To skala typów, nie rosnąca dojrzałość — oceniaj typ dominujący i 1–2 wspierające.',
         },
       ],
     },
     {
       id: '5B',
       name: 'Readiness for Change',
-      namePL: 'Gotowość na Zmiany',
+      namePL: 'Gotowość na zmianę',
       levels: [
         {
           level: 1,
-          title: 'Resistant',
-          description:
-            'Organization shows significant resistance to change. Employees prefer established processes and tools. Change initiatives face substantial pushback.',
+          title: 'Rozpoznanie potrzeby',
+          description: 'Organizacja rozpoznaje potrzebę zmiany.',
         },
         {
           level: 2,
-          title: 'Cautious',
-          description:
-            'Some openness to change exists but with reservations. Changes are accepted when clearly beneficial. Risk aversion still dominates decision-making.',
+          title: 'Koalicja zmiany',
+          description: 'Budowana jest koalicja zmiany — zespół i sponsorzy.',
         },
         {
           level: 3,
-          title: 'Accepting',
-          description:
-            'Organization accepts change as necessary for growth. Employees participate in change initiatives. Structured change management processes are in place.',
+          title: 'Poszukiwanie wizji',
+          description: 'Trwa poszukiwanie wizji i strategii zmiany.',
         },
         {
           level: 4,
-          title: 'Embracing',
-          description:
-            'Change is welcomed as an opportunity. Employees actively seek improvements and innovations. Agile methodologies support rapid adaptation.',
+          title: 'Komunikowanie wizji',
+          description: 'Wizja jest komunikowana w organizacji, dwukierunkowo.',
         },
         {
           level: 5,
-          title: 'Driving',
-          description:
-            'Organization proactively drives change in the industry. Employees are change agents who continuously seek transformation opportunities. Change is embedded in organizational DNA.',
+          title: 'Wdrażanie zmiany',
+          description: 'Zmiana jest wdrażana poprzez inicjatywy i kryteria postępu.',
+        },
+        {
+          level: 6,
+          title: 'Instytucjonalizacja',
+          description: 'Zmiana jest zinstytucjonalizowana — zakorzeniona w kulturze i sposobie pracy.',
         },
       ],
     },
     {
       id: '5C',
-      name: 'Continuous Improvement',
-      namePL: 'Ciągłe Doskonalenie',
+      name: 'Continuous Competency Development',
+      namePL: 'Ciągły rozwój kompetencji',
       levels: [
         {
           level: 1,
-          title: 'Ad-hoc',
-          description:
-            'Improvements occur sporadically without systematic approach. No formal processes for capturing and implementing improvements. Learning is individual rather than organizational.',
+          title: 'Kontakt zewnętrzny',
+          description: 'Rozwój przez kontakt zewnętrzny — udział w targach i konferencjach.',
         },
         {
           level: 2,
-          title: 'Reactive',
-          description:
-            'Improvements are made in response to problems. Some documentation of lessons learned exists. Improvement initiatives are project-based rather than continuous.',
+          title: 'Szkolenia wewnętrzne',
+          description: 'Prowadzone są szkolenia wewnętrzne.',
         },
         {
           level: 3,
-          title: 'Systematic',
-          description:
-            'Formal continuous improvement programs are established. Regular reviews and retrospectives occur. Best practices are documented and shared.',
+          title: 'Szkolenia zewnętrzne',
+          description: 'Organizacja korzysta ze szkoleń zewnętrznych.',
         },
         {
           level: 4,
-          title: 'Proactive',
-          description:
-            'Organization actively seeks improvement opportunities. Data-driven decision making guides improvements. Innovation labs and experiments are common.',
+          title: 'Self-learning',
+          description: 'Wspierany jest self-learning — platformy, książki, kursy.',
         },
         {
           level: 5,
-          title: 'Optimizing',
-          description:
-            'Continuous improvement is embedded in all processes. AI and analytics drive optimization. Organization achieves industry-leading performance through relentless improvement.',
+          title: 'Zespoły projektowe',
+          description: 'Rozwój przez pracę w zespołach projektowych (learning-by-doing).',
+        },
+        {
+          level: 6,
+          title: 'Mentoring',
+          description: 'Działa mentoring — systemowe rozwijanie juniorów.',
         },
       ],
     },
     {
       id: '5D',
       name: 'Innovation Culture',
-      namePL: 'Kultura Innowacji',
+      namePL: 'Kultura innowacji',
       levels: [
         {
           level: 1,
-          title: 'Conservative',
-          description:
-            'Innovation is not prioritized. Focus is on maintaining existing products and services. New ideas are rarely explored or implemented.',
+          title: 'Promowanie pomysłów',
+          description: 'Promowanie pomysłów — hackathony, platformy idei.',
         },
         {
           level: 2,
-          title: 'Incremental',
-          description:
-            'Small improvements to existing offerings are made. Innovation is limited to specific departments. Risk-taking is discouraged.',
+          title: 'Eksperymentowanie',
+          description: 'Eksperymentowanie — prototypy i pilotaże.',
         },
         {
           level: 3,
-          title: 'Structured',
-          description:
-            'Formal innovation processes exist. Dedicated resources for R&D and innovation. Regular ideation sessions and innovation challenges.',
+          title: 'Analiza trendów',
+          description: 'Aktywna analiza trendów rynkowych.',
         },
         {
           level: 4,
-          title: 'Entrepreneurial',
-          description:
-            'Innovation is encouraged across all levels. Intrapreneurship programs exist. Failure is seen as learning opportunity. Cross-functional innovation teams operate.',
+          title: 'Akceptacja błędów',
+          description: 'Akceptacja błędów jako element uczenia się.',
         },
         {
           level: 5,
-          title: 'Disruptive',
-          description:
-            'Organization leads industry disruption. Breakthrough innovations are regularly achieved. Open innovation and ecosystem partnerships drive new value creation.',
+          title: 'R&D w strategii',
+          description: 'R&D wpisane w strategię firmy — ciągłe, nie „ad hoc".',
+        },
+        {
+          level: 6,
+          title: 'Współpraca zewnętrzna',
+          description: 'Współpraca zewnętrzna w strategii — startupy, uczelnie, partnerzy.',
         },
       ],
     },
     {
       id: '5E',
       name: 'Resource Availability',
-      namePL: 'Dostępność Zasobów',
+      namePL: 'Dostępność zasobów',
       levels: [
         {
           level: 1,
-          title: 'Constrained',
-          description:
-            'Limited resources for transformation initiatives. Budget constraints limit digital investments. Talent gaps exist in key digital skills.',
+          title: 'Kapitał',
+          description: 'Dostęp do kapitału — plan finansowania inicjatyw.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Minimum resources allocated for digital initiatives. Some investment in training and tools. Resource allocation is project-by-project.',
+          title: 'Szkolenia',
+          description: 'Dostęp do szkoleń — ścieżki rozwoju.',
         },
         {
           level: 3,
-          title: 'Adequate',
-          description:
-            'Sufficient resources for planned transformation. Dedicated digital transformation budget. Training programs address skill gaps.',
+          title: 'Eksperci',
+          description: 'Dostęp do ekspertów — wewnętrznych i zewnętrznych.',
         },
         {
           level: 4,
-          title: 'Strategic',
-          description:
-            'Resources are strategically allocated to transformation. Significant investment in digital capabilities. Talent acquisition and development are prioritized.',
+          title: 'Dane',
+          description: 'Dostęp do danych — systemy, bezpieczeństwo, sposób użycia.',
         },
         {
           level: 5,
-          title: 'Abundant',
-          description:
-            'Organization invests heavily in digital transformation. Best-in-class tools and technologies are available. Top digital talent is attracted and retained.',
+          title: 'Technologia',
+          description: 'Dostęp do technologii — narzędzia wraz ze wsparciem.',
+        },
+        {
+          level: 6,
+          title: 'Partnerzy',
+          description: 'Dostęp do partnerów — ekosystem i współpraca.',
         },
       ],
     },
@@ -1348,198 +1355,199 @@ const AXIS_5_CULTURE: DRDAxis = {
 };
 
 // ============================================
-// AXIS 6: CYBERSECURITY (5 areas, 5 levels)
+// AXIS 6: CYBERSECURITY (5 areas, 6 levels)
 // ============================================
 
 const AXIS_6_CYBERSECURITY: DRDAxis = {
   id: 6,
   name: 'Cybersecurity',
   namePL: 'Cyberbezpieczeństwo',
-  description: 'Assessment of cybersecurity posture and data protection capabilities',
-  levelCount: 5,
+  description:
+    'Assessment of cybersecurity maturity as a condition for survival (not just an IT problem). Each area uses a cumulative 1–6 scale per the DRD book.',
+  levelCount: 6,
   areas: [
     {
       id: '6A',
       name: 'Strategy and Risk Management',
-      namePL: 'Strategia i Zarządzanie Ryzykiem',
+      namePL: 'Strategia i zarządzanie ryzykiem',
       levels: [
         {
           level: 1,
-          title: 'Ad-hoc',
-          description:
-            'No formal cybersecurity strategy exists. Risk management is reactive. Security decisions are made on case-by-case basis without overall framework.',
+          title: 'Brak strategii',
+          description: 'Brak strategii i polityk bezpieczeństwa.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Basic security policies are documented. Some risk assessment activities occur. Security is considered but not systematically managed.',
+          title: 'Analiza ryzyka',
+          description: 'Prowadzona jest analiza ryzyka.',
         },
         {
           level: 3,
-          title: 'Defined',
-          description:
-            'Comprehensive cybersecurity strategy is in place. Regular risk assessments are conducted. Security governance structure is established.',
+          title: 'Plan działań',
+          description: 'Powstaje plan działań w obszarze bezpieczeństwa.',
         },
         {
           level: 4,
-          title: 'Managed',
-          description:
-            'Risk management is integrated into business processes. Continuous monitoring of security posture. Metrics and KPIs track security performance.',
+          title: 'Polityki bezpieczeństwa',
+          description: 'Wdrożone polityki bezpieczeństwa — standardy i procedury.',
         },
         {
           level: 5,
-          title: 'Optimized',
-          description:
-            'Cybersecurity strategy drives competitive advantage. Predictive risk management using AI. Industry-leading security practices are implemented.',
+          title: 'HR w strategii',
+          description: 'HR włączone w strategię — szkolenia i budowanie kompetencji.',
+        },
+        {
+          level: 6,
+          title: 'Monitoring i ocena',
+          description: 'Monitoring i ocena skuteczności — audyty, testy, analiza logów.',
         },
       ],
     },
     {
       id: '6B',
       name: 'Network and System Protection',
-      namePL: 'Ochrona Sieci i Systemów',
+      namePL: 'Ochrona sieci i systemów',
       levels: [
         {
           level: 1,
-          title: 'Minimal',
-          description:
-            'Basic firewall and antivirus protection. No network segmentation. Limited monitoring of network traffic.',
+          title: 'Firewalle',
+          description: 'Stosowane są firewalle.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Standard security controls are implemented. Some network segmentation exists. Regular patching of known vulnerabilities.',
+          title: 'Antywirus',
+          description: 'Wdrożona ochrona antywirusowa.',
         },
         {
           level: 3,
-          title: 'Intermediate',
-          description:
-            'Defense-in-depth approach is applied. Intrusion detection systems are deployed. Regular vulnerability assessments are conducted.',
+          title: 'IDS',
+          description: 'Działają systemy wykrywania włamań (IDS).',
         },
         {
           level: 4,
-          title: 'Advanced',
-          description:
-            'Zero-trust architecture principles are applied. Advanced threat detection and response. Automated security orchestration.',
+          title: 'SIEM/IDS korelujące',
+          description: 'SIEM/IDS korelujące zdarzenia z wielu źródeł.',
         },
         {
           level: 5,
-          title: 'Leading',
-          description:
-            'AI-powered threat detection and response. Continuous security validation. Proactive threat hunting and intelligence.',
+          title: 'Autoryzacja i uwierzytelnianie',
+          description: 'Wdrożone mechanizmy autoryzacji i uwierzytelniania.',
+        },
+        {
+          level: 6,
+          title: 'VPN i segmentacja',
+          description: 'VPN — bezpieczne kanały i segmentacja połączeń.',
         },
       ],
     },
     {
       id: '6C',
       name: 'Data Security',
-      namePL: 'Bezpieczeństwo Danych',
+      namePL: 'Ochrona danych',
       levels: [
         {
           level: 1,
-          title: 'Unprotected',
-          description:
-            'Data classification is not performed. Encryption is not consistently applied. Data access controls are minimal.',
+          title: 'Szyfrowanie',
+          description: 'Stosowane jest szyfrowanie danych.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Some data classification exists. Encryption for sensitive data in transit. Basic access controls are implemented.',
+          title: 'Polityka haseł',
+          description: 'Polityka haseł i bezpieczne przechowywanie.',
         },
         {
           level: 3,
-          title: 'Controlled',
-          description:
-            'Comprehensive data classification scheme. Encryption at rest and in transit. Role-based access controls are enforced.',
+          title: 'Kontrola dostępu',
+          description: 'Kontrola dostępu — role i audyt.',
         },
         {
           level: 4,
-          title: 'Protected',
-          description:
-            'Data loss prevention tools are deployed. Advanced encryption and key management. Data access is monitored and audited.',
+          title: 'Backup i DR',
+          description: 'Backup oraz disaster recovery.',
         },
         {
           level: 5,
-          title: 'Secured',
-          description:
-            'Privacy by design principles are applied. Automated data protection. Compliance with all relevant regulations is maintained.',
+          title: 'Monitoring i detekcja',
+          description: 'Monitoring i detekcja zagrożeń.',
+        },
+        {
+          level: 6,
+          title: 'Weryfikacja tożsamości',
+          description: 'Weryfikacja tożsamości (np. certyfikaty/biometria) wraz z procesami.',
         },
       ],
     },
     {
       id: '6D',
-      name: 'Education and Training',
-      namePL: 'Edukacja i Szkolenia',
+      name: 'Security Education and System Quality',
+      namePL: 'Edukacja i jakość systemów',
       levels: [
         {
           level: 1,
-          title: 'None',
-          description:
-            'No formal security awareness training. Employees are unaware of security risks. Security is seen as IT responsibility only.',
+          title: 'Opis systemu szkoleń',
+          description: 'Istnieje opis systemu szkoleń z bezpieczeństwa.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Annual security awareness training. Basic phishing awareness. Security policies are communicated to employees.',
+          title: 'Plan wdrożenia szkoleń',
+          description: 'Plan wdrożenia szkoleń w różnych formach.',
         },
         {
           level: 3,
-          title: 'Regular',
-          description:
-            'Quarterly security training programs. Simulated phishing exercises. Role-specific security training is provided.',
+          title: 'System testów',
+          description: 'Działa system testów bezpieczeństwa.',
         },
         {
           level: 4,
-          title: 'Comprehensive',
-          description:
-            'Continuous security education program. Gamified learning and engagement. Security champions program exists.',
+          title: 'Audytorzy wewnętrzni',
+          description: 'Wyznaczeni audytorzy wewnętrzni.',
         },
         {
           level: 5,
-          title: 'Culture',
-          description:
-            'Security is embedded in organizational culture. Employees are proactive about security. Security awareness is measured and optimized.',
+          title: 'Plan audytów cyber',
+          description: 'Istnieje plan audytów cyberbezpieczeństwa.',
+        },
+        {
+          level: 6,
+          title: 'ISO 27001',
+          description: 'Certyfikacja ISO 27001 (system zarządzania bezpieczeństwem informacji, ISMS).',
         },
       ],
     },
     {
       id: '6E',
-      name: 'Incident Response',
-      namePL: 'Reagowanie na Incydenty',
+      name: 'Contingency Plans',
+      namePL: 'Plany awaryjne',
       levels: [
         {
           level: 1,
-          title: 'Unprepared',
-          description:
-            'No incident response plan exists. Incidents are handled ad-hoc. No lessons learned process.',
+          title: 'Identyfikacja zagrożeń',
+          description: 'Identyfikacja zagrożeń.',
         },
         {
           level: 2,
-          title: 'Basic',
-          description:
-            'Basic incident response plan is documented. Key contacts are identified. Post-incident reviews are sometimes conducted.',
+          title: 'Priorytety w incydencie',
+          description: 'Ustalone priorytety postępowania w incydencie.',
         },
         {
           level: 3,
-          title: 'Defined',
-          description:
-            'Comprehensive incident response procedures. Regular tabletop exercises. Incident tracking and reporting.',
+          title: 'Procedury postępowania',
+          description: 'Opracowane procedury postępowania.',
         },
         {
           level: 4,
-          title: 'Managed',
-          description:
-            'Dedicated incident response team. Automated incident detection and triage. Regular drills and simulations.',
+          title: 'Szkolenia awaryjne',
+          description: 'Regularne szkolenia awaryjne.',
         },
         {
           level: 5,
-          title: 'Optimized',
-          description:
-            'AI-assisted incident response. Continuous improvement of response capabilities. Industry-leading response times and effectiveness.',
+          title: 'Testy planów',
+          description: 'Testy planów awaryjnych w oparciu o scenariusze.',
+        },
+        {
+          level: 6,
+          title: 'Dokumentacja i doskonalenie',
+          description: 'Dokumentacja i ciągłe doskonalenie planów.',
         },
       ],
     },
