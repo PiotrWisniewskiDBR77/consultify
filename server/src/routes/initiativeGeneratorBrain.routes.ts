@@ -27,6 +27,7 @@ import {
   generateFullInitiative,
   proposeCards,
 } from '../services/initiative/initiativeGeneratorBrain.js';
+import initiativeGenerationService from '../services/initiativeGenerationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -51,6 +52,15 @@ const GenerateFullSchema = z.object({
   sourceType: z.string().trim().max(200).optional(),
   type: z.string().trim().max(200).optional(),
   language: z.enum(['en', 'pl']).optional(),
+});
+
+const GenerateSectionCardSchema = z.object({
+  sectionKey: z.string().trim().min(1).max(200),
+  initiativeName: z.string().trim().max(500).optional(),
+  brief: z.string().trim().max(8000).optional(),
+  language: z.enum(['en', 'pl']).optional(),
+  /** D12 auto-heal budget (0 = single attempt, default 1 = one regen). */
+  maxRegen: z.number().int().min(0).max(2).optional(),
 });
 
 // POST /initiatives/propose-cards — deterministic card proposal (no :id).
@@ -94,6 +104,45 @@ router.post(
       filled: result.qualitySummary.filled,
       failed: result.qualitySummary.failed,
       healed: result.qualitySummary.healed,
+    });
+
+    return res.status(200).json(result);
+  }),
+);
+
+// POST /initiatives/:id/generate-section-card — R2: emit ONE section as a CardSpec
+// (block grammar) gated by validateCardSpec (CRITICAL → one regen). Returns
+// { cardSpec, issues, ok, regenerated, ... }; ok=false → caller falls back to the
+// per-field builder. Reachable surface for the F3/R2 structured-generation path.
+router.post(
+  '/:id/generate-section-card',
+  validateBody(GenerateSectionCardSchema),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const initiativeId = String(req.params.id);
+
+    const { sectionKey, initiativeName, brief, language, maxRegen } =
+      req.body as z.infer<typeof GenerateSectionCardSchema>;
+
+    const result = await initiativeGenerationService.generateSectionCardSpec(
+      sectionKey,
+      {
+        initiativeId,
+        initiativeName: initiativeName || '',
+        language: language || 'pl',
+        ...(brief ? { summary: brief } : {}),
+      },
+      orgId,
+      typeof maxRegen === 'number' ? { maxRegen } : undefined,
+    );
+
+    logger.info('[initiativeGenerator] generate-section-card', {
+      initiativeId,
+      orgId,
+      sectionKey,
+      ok: result.ok,
+      regenerated: result.regenerated,
     });
 
     return res.status(200).json(result);
