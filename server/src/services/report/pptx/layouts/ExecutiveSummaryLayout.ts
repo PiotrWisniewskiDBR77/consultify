@@ -45,9 +45,17 @@ export function ExecutiveSummaryLayout(
   }
 
   elements.push(HeaderBar({}, tokens));
+  // Action-title (beat-Gamma): the slide's thesis (key_message) becomes the title,
+  // consistent with every other layout. The generic label is only a fallback.
+  // The board-level headline is rendered separately inside ExecutiveSummaryPanel,
+  // so there is no duplication.
   elements.push(
     SlideTitle(
-      { text: meta.language === 'pl' ? 'Podsumowanie Wykonawcze' : 'Executive Summary' },
+      {
+        text:
+          slide.key_message ||
+          (meta.language === 'pl' ? 'Podsumowanie Wykonawcze' : 'Executive Summary'),
+      },
       tokens
     )
   );
