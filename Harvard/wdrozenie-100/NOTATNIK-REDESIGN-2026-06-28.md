@@ -58,7 +58,14 @@ Wszystkie uwagi w jednym spójnym ekranie: górny pasek **bez 3-tools-strip** (U
 - **N6** 🟡 — Context panel (U14): **UUID→czytelne nazwy ✅** (`e727ee1af2`: usunięty `typ·UUID` row, etykiety PL/EN, status-chip). ZOSTAJE: ukryć puste sekcje, zweryfikować Insert/Open.
 - **N7** ⬜ — slash `/` menu: insert bloków (`BLOCK_TYPES_CANON.md`) + markdown skróty.
 - **N8** ⬜ — polish: typografia, spacing, oddech, floating format toolbar.
-Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane. **Zrobione 2026-06-28: N4 ✅, N6-1 ✅, N3 ✅ (3 fale na demo `56b53ca9`).** Wstrzymane do oceny kierunku Piotra: N1/N5/N7 (większe UX-zmiany).
+Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane. **Zrobione 2026-06-28 (multi-agent, 4 agenty równolegle + ja na monolicie):**
+- **N1 ✅** hamburger ⋯ wpięty (`c8fb71081e`): ⋯ button → NotebookHamburgerMenu (Note/Convert/AI/Danger). *(addytywny — panel/rail jeszcze zostaje, pełne zastąpienie po N7 slash przejmie Insert)*.
+- **N2 ✅** 3-tools-strip ukryty za odwracalną flagą `SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP=false` (`ee300c1598`).
+- **N3 ✅** nagłówek: lifecycle pigułki + flow-stepper numerki→chevrony (`0721098362`) + N4 ikony+tooltip (wcześniej).
+- **N6 ✅** Context: UUID-fix + puste sekcje ukryte + Insert/Open zweryfikowane żywe (`8a419df97f`).
+- **N7 🟡** slash: stary `SlashMenu` już działa; nowy `NotebookSlashMenu` zbudowany (`5bc77b5861`), wpięcie (zamiana) = osobna fala (TipTap).
+- **N5 ⬜** lewa kolumna (Capture+2 filtry) — następna.
+**Cofalność:** każda fala = osobny commit (Piotr: „żeby móc cofnąć"). **GIT-RACES:** rebase wciągnął cudzy WIP z 10 tsc-błędami (Ideas reactflow/Economics/DocumentStudio — NIE Notatnik; vite buduje, ale Ideas runtime ryzyko — osobny problem brancha).
 
 ### FAZA 2 — Killery funkcjonalne (program, ~tygodnie, backend) — D4
 - **K1** — @mention + **dwukierunkowe linki** notatka↔artefakty (rozbudowa Context = żywy graf wiedzy; backlinks index). NASZ wyróżnik ponad Notion.
