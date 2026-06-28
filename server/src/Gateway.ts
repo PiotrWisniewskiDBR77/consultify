@@ -597,7 +597,10 @@ export class ApiGateway {
       // Link preview (og:meta fetcher for whiteboard LinkNodes + notebook bookmarks)
       app.get('/api/link-preview', async (req, res) => {
         const url = String(req.query.url || '');
-        if (!url || !url.startsWith('http')) return res.status(400).json({ error: 'Invalid URL' });
+        // Presence only — the http(s) protocol allowlist is enforced
+        // authoritatively inside safeFetchHtml (a `startsWith('http')` prefix
+        // gate is misleading: it passes httpx:// etc.).
+        if (!url) return res.status(400).json({ error: 'Invalid URL' });
         try {
           // SSRF-guarded fetch: http(s) only, DNS-validated against private/
           // loopback/link-local/metadata ranges, redirects re-validated per hop,

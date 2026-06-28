@@ -37,8 +37,45 @@ describe('ssrfGuard.isBlockedIp', () => {
     }
   });
 
-  it('allows public IPv6', () => {
+  it('blocks IPv4-mapped IPv6 in the COMPRESSED-HEX form that new URL() actually yields', () => {
+    // new URL('http://[::ffff:169.254.169.254]/').hostname === '::ffff:a9fe:a9fe'
+    for (const ip of [
+      '::ffff:a9fe:a9fe', // 169.254.169.254 metadata
+      '::ffff:7f00:1', // 127.0.0.1 loopback
+      '0:0:0:0:0:ffff:7f00:1', // expanded form
+      '::ffff:c0a8:1', // 192.168.0.1
+    ]) {
+      expect(isBlockedIp(ip), ip).toBe(true);
+    }
+  });
+
+  it('blocks NAT64 / 6to4 / Teredo / documentation IPv6 embedding private targets', () => {
+    for (const ip of [
+      '64:ff9b::a9fe:a9fe', // NAT64 → 169.254.169.254
+      '2002:a9fe:a9fe::', // 6to4 → 169.254.169.254
+      '2001:0:0:0:0:0:0:1', // Teredo 2001::/32
+      '2001:db8::1', // documentation
+    ]) {
+      expect(isBlockedIp(ip), ip).toBe(true);
+    }
+  });
+
+  it('allows public IPv6 (incl. NAT64/6to4 wrapping a PUBLIC v4)', () => {
     expect(isBlockedIp('2606:4700:4700::1111')).toBe(false);
+    expect(isBlockedIp('2002:0808:0808::'), '6to4 of 8.8.8.8').toBe(false); // 8.8.8.8 public
+  });
+});
+
+describe('ssrfGuard.assertUrlIsSafe — IPv6-mapped bracket hosts (real bypass attempts)', () => {
+  it('rejects bracketed IPv4-mapped metadata/loopback hosts', async () => {
+    for (const u of [
+      'http://[::ffff:169.254.169.254]/latest/meta-data/',
+      'http://[::ffff:127.0.0.1]/',
+      'http://[0:0:0:0:0:ffff:127.0.0.1]/',
+      'http://[64:ff9b::a9fe:a9fe]/',
+    ]) {
+      await expect(assertUrlIsSafe(u), u).rejects.toBeInstanceOf(SsrfBlockedError);
+    }
   });
 });
 

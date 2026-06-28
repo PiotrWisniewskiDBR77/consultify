@@ -1,4 +1,6 @@
-import dns from 'node:dns/promises';
+import dns from 'node:dns';
+import http from 'node:http';
+import https from 'node:https';
 import net from 'node:net';
 
 /**
@@ -7,9 +9,13 @@ import net from 'node:net';
  *
  * Without this, an attacker can point the fetcher at internal infrastructure or
  * the cloud metadata endpoint (169.254.169.254 → instance credentials). The
- * guard: allows only http/https, DNS-resolves the host and rejects any address
- * in a private/loopback/link-local/reserved range, and re-validates every
- * redirect hop (so an external URL that 3xx-redirects inward is still blocked).
+ * guard allows only http/https and validates the *actual connecting address*:
+ * a custom DNS `lookup` runs at TCP-connect time and rejects any address in a
+ * private/loopback/link-local/reserved range. Doing the check at connect time
+ * (instead of "resolve then fetch") closes the DNS-rebinding TOCTOU — the
+ * address that is validated is exactly the one connected to. Redirects are
+ * followed manually so every hop is re-validated; body size and total time are
+ * capped.
  */
 
 export class SsrfBlockedError extends Error {
@@ -23,7 +29,7 @@ export class SsrfBlockedError extends Error {
 export function isBlockedIp(ip: string): boolean {
   const kind = net.isIP(ip);
   if (kind === 4) return isBlockedIpv4(ip);
-  if (kind === 6) return isBlockedIpv6(ip.toLowerCase());
+  if (kind === 6) return isBlockedIpv6(ip);
   // Not a bare IP literal — caller resolves DNS first.
   return false;
 }
@@ -47,20 +53,80 @@ function isBlockedIpv4(ip: string): boolean {
   return false;
 }
 
+/**
+ * Expand any valid IPv6 string (compressed, with optional dotted-quad tail) to
+ * its 16 bytes. Returns null on malformed input.
+ */
+function ipv6ToBytes(input: string): number[] | null {
+  let ip = input.toLowerCase();
+  // A trailing dotted-quad (e.g. ::ffff:127.0.0.1) → fold into two hex groups.
+  const lastColon = ip.lastIndexOf(':');
+  const tail = ip.slice(lastColon + 1);
+  if (tail.includes('.')) {
+    const v4 = tail.split('.').map((n) => Number(n));
+    if (v4.length !== 4 || v4.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return null;
+    const hi = ((v4[0] << 8) | v4[1]).toString(16);
+    const lo = ((v4[2] << 8) | v4[3]).toString(16);
+    ip = ip.slice(0, lastColon + 1) + hi + ':' + lo;
+  }
+  const halves = ip.split('::');
+  if (halves.length > 2) return null;
+  const head = halves[0] ? halves[0].split(':') : [];
+  const back = halves.length === 2 ? (halves[1] ? halves[1].split(':') : []) : [];
+  let groups: string[];
+  if (halves.length === 2) {
+    const missing = 8 - head.length - back.length;
+    if (missing < 0) return null;
+    groups = [...head, ...Array(missing).fill('0'), ...back];
+  } else {
+    groups = head;
+  }
+  if (groups.length !== 8) return null;
+  const bytes: number[] = [];
+  for (const g of groups) {
+    if (!/^[0-9a-f]{1,4}$/.test(g)) return null;
+    const v = parseInt(g, 16);
+    bytes.push((v >> 8) & 0xff, v & 0xff);
+  }
+  return bytes;
+}
+
 function isBlockedIpv6(ip: string): boolean {
-  if (ip === '::1' || ip === '::') return true; // loopback / unspecified
-  if (ip.startsWith('fe80') || ip.startsWith('fe9') || ip.startsWith('fea') || ip.startsWith('feb'))
-    return true; // fe80::/10 link-local
-  if (ip.startsWith('fc') || ip.startsWith('fd')) return true; // fc00::/7 unique-local
-  // IPv4-mapped (::ffff:a.b.c.d) — validate the embedded IPv4.
-  const mapped = ip.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-  if (mapped) return isBlockedIpv4(mapped[1]);
+  const b = ipv6ToBytes(ip);
+  if (!b) return true; // unparseable → block
+  // Loopback ::1 and unspecified ::
+  if (b.every((x, i) => (i === 15 ? x === 1 : x === 0))) return true;
+  if (b.every((x) => x === 0)) return true;
+  // Unique-local fc00::/7
+  if ((b[0] & 0xfe) === 0xfc) return true;
+  // Link-local fe80::/10
+  if (b[0] === 0xfe && (b[1] & 0xc0) === 0x80) return true;
+  // IPv4-mapped ::ffff:0:0/96 → validate the embedded IPv4
+  if (b.slice(0, 10).every((x) => x === 0) && b[10] === 0xff && b[11] === 0xff) {
+    return isBlockedIpv4(`${b[12]}.${b[13]}.${b[14]}.${b[15]}`);
+  }
+  // IPv4-compatible ::a.b.c.d (deprecated) — validate embedded
+  if (b.slice(0, 12).every((x) => x === 0) && (b[12] || b[13] || b[14] || b[15])) {
+    return isBlockedIpv4(`${b[12]}.${b[13]}.${b[14]}.${b[15]}`);
+  }
+  // NAT64 64:ff9b::/96 → embedded IPv4 in last 4 bytes
+  if (b[0] === 0x00 && b[1] === 0x64 && b[2] === 0xff && b[3] === 0x9b && b.slice(4, 12).every((x) => x === 0)) {
+    return isBlockedIpv4(`${b[12]}.${b[13]}.${b[14]}.${b[15]}`);
+  }
+  // 6to4 2002::/16 → embedded IPv4 in bytes 2..5
+  if (b[0] === 0x20 && b[1] === 0x02) {
+    return isBlockedIpv4(`${b[2]}.${b[3]}.${b[4]}.${b[5]}`);
+  }
+  // Teredo 2001:0000::/32 and documentation 2001:db8::/32 → block conservatively
+  if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x00 && b[3] === 0x00) return true;
+  if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x0d && b[3] === 0xb8) return true;
   return false;
 }
 
 /**
- * Parse + validate a user URL: only http(s), and every DNS-resolved address must
- * be public. Throws SsrfBlockedError otherwise. Returns the parsed URL.
+ * Parse + validate a user URL: only http(s); if the host is a bare IP literal it
+ * must be public. Domain hosts are validated at connect time by safeFetchHtml's
+ * lookup (which is what actually closes the rebinding window). Returns the URL.
  */
 export async function assertUrlIsSafe(rawUrl: string): Promise<URL> {
   let parsed: URL;
@@ -73,17 +139,14 @@ export async function assertUrlIsSafe(rawUrl: string): Promise<URL> {
     throw new SsrfBlockedError('Only http(s) URLs are allowed');
   }
   const hostname = parsed.hostname.replace(/^\[|\]$/g, ''); // strip IPv6 brackets
-
-  // If the host is a bare IP literal, validate it directly (no DNS).
   if (net.isIP(hostname)) {
     if (isBlockedIp(hostname)) throw new SsrfBlockedError('URL resolves to a blocked address');
     return parsed;
   }
-
-  // Otherwise resolve and validate every address the host maps to.
-  let addresses: { address: string }[];
+  // Fail-fast pre-check for domains (authoritative check is the connect lookup).
+  let addresses: dns.LookupAddress[];
   try {
-    addresses = await dns.lookup(hostname, { all: true });
+    addresses = await dns.promises.lookup(hostname, { all: true });
   } catch {
     throw new SsrfBlockedError('DNS resolution failed');
   }
@@ -94,6 +157,37 @@ export async function assertUrlIsSafe(rawUrl: string): Promise<URL> {
   return parsed;
 }
 
+/**
+ * A DNS lookup that validates the resolved address(es) and only ever yields a
+ * public one. Used as the http/https `lookup` option so validation happens at
+ * the moment of connection (no rebinding TOCTOU). Bare-IP hosts are checked
+ * directly without DNS.
+ */
+type LookupCb = (err: NodeJS.ErrnoException | null, address: string, family: number) => void;
+function validatingLookup(hostname: string, _options: unknown, callback: LookupCb): void {
+  const literal = net.isIP(hostname);
+  if (literal) {
+    if (isBlockedIp(hostname)) {
+      callback(new SsrfBlockedError('Blocked address') as NodeJS.ErrnoException, '', 0);
+      return;
+    }
+    callback(null, hostname, literal);
+    return;
+  }
+  dns.lookup(hostname, { all: true }, (err, addresses) => {
+    if (err) return callback(err, '', 0);
+    if (!addresses || addresses.length === 0) {
+      return callback(new SsrfBlockedError('No addresses') as NodeJS.ErrnoException, '', 0);
+    }
+    for (const a of addresses) {
+      if (isBlockedIp(a.address)) {
+        return callback(new SsrfBlockedError('Blocked address') as NodeJS.ErrnoException, '', 0);
+      }
+    }
+    callback(null, addresses[0].address, addresses[0].family);
+  });
+}
+
 export interface SafeFetchOptions {
   timeoutMs?: number;
   maxBytes?: number;
@@ -101,58 +195,96 @@ export interface SafeFetchOptions {
   userAgent?: string;
 }
 
+interface OneHopResult {
+  status: number;
+  location: string;
+  html: string;
+}
+
+function fetchOnce(
+  urlStr: string,
+  opts: { timeoutMs: number; maxBytes: number; userAgent: string }
+): Promise<OneHopResult> {
+  return new Promise((resolve, reject) => {
+    let parsed: URL;
+    try {
+      parsed = new URL(urlStr);
+    } catch {
+      return reject(new SsrfBlockedError('Malformed URL'));
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return reject(new SsrfBlockedError('Only http(s) URLs are allowed'));
+    }
+    const mod = parsed.protocol === 'https:' ? https : http;
+    const req = mod.get(
+      urlStr,
+      {
+        lookup: validatingLookup as never,
+        timeout: opts.timeoutMs,
+        headers: { 'User-Agent': opts.userAgent, Accept: 'text/html,application/xhtml+xml' },
+      },
+      (res) => {
+        const status = res.statusCode || 0;
+        if (status >= 300 && status < 400) {
+          res.resume(); // drain
+          resolve({ status, location: String(res.headers.location || ''), html: '' });
+          return;
+        }
+        const chunks: Buffer[] = [];
+        let total = 0;
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          resolve({ status, location: '', html: Buffer.concat(chunks).toString('utf8') });
+        };
+        res.on('data', (c: Buffer) => {
+          total += c.length;
+          if (total > opts.maxBytes) {
+            res.destroy();
+            finish();
+            return;
+          }
+          chunks.push(c);
+        });
+        res.on('end', finish);
+        res.on('close', finish);
+        res.on('error', (e) => reject(e));
+      }
+    );
+    req.on('timeout', () => req.destroy(new SsrfBlockedError('Request timed out')));
+    req.on('error', (e) => reject(e));
+  });
+}
+
 /**
  * Fetch the HTML body of a user URL with SSRF protection. Follows redirects
- * manually, re-validating each hop's target so an allowed URL cannot bounce into
- * private space. Caps body size and total time. Returns { finalUrl, html }.
+ * manually, re-validating each hop. Caps body size and total time. Returns
+ * { finalUrl, html }.
  */
 export async function safeFetchHtml(
   rawUrl: string,
   opts: SafeFetchOptions = {}
 ): Promise<{ finalUrl: string; html: string }> {
-  const { timeoutMs = 5000, maxBytes = 1_000_000, maxRedirects = 4, userAgent = 'Consultify-LinkPreview/1.0' } = opts;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    let current = rawUrl;
-    for (let hop = 0; hop <= maxRedirects; hop++) {
-      const safeUrl = await assertUrlIsSafe(current);
-      const resp = await fetch(safeUrl.toString(), {
-        signal: controller.signal,
-        redirect: 'manual',
-        headers: { 'User-Agent': userAgent, Accept: 'text/html,application/xhtml+xml' },
-      });
-      // Manual redirect handling: re-validate the next hop.
-      if (resp.status >= 300 && resp.status < 400) {
-        const location = resp.headers.get('location');
-        if (!location) throw new SsrfBlockedError('Redirect without location');
-        current = new URL(location, safeUrl).toString();
-        continue;
-      }
-      if (!resp.ok) throw new SsrfBlockedError(`Upstream responded ${resp.status}`);
+  const {
+    timeoutMs = 5000,
+    maxBytes = 1_000_000,
+    maxRedirects = 4,
+    userAgent = 'Consultify-LinkPreview/1.0',
+  } = opts;
 
-      // Read the body with a hard byte cap.
-      const reader = resp.body?.getReader();
-      if (!reader) return { finalUrl: safeUrl.toString(), html: '' };
-      const chunks: Uint8Array[] = [];
-      let total = 0;
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          total += value.byteLength;
-          if (total > maxBytes) {
-            await reader.cancel().catch(() => undefined);
-            break;
-          }
-          chunks.push(value);
-        }
-      }
-      const html = Buffer.concat(chunks.map((c) => Buffer.from(c))).toString('utf8');
-      return { finalUrl: safeUrl.toString(), html };
+  let current = rawUrl;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    const { status, location, html } = await fetchOnce(current, { timeoutMs, maxBytes, userAgent });
+    if (status >= 300 && status < 400) {
+      if (!location) throw new SsrfBlockedError('Redirect without location');
+      current = new URL(location, current).toString();
+      continue;
     }
-    throw new SsrfBlockedError('Too many redirects');
-  } finally {
-    clearTimeout(timer);
+    if (status < 200 || status >= 300) {
+      throw new SsrfBlockedError(`Upstream responded ${status}`);
+    }
+    return { finalUrl: current, html };
   }
+  throw new SsrfBlockedError('Too many redirects');
 }
