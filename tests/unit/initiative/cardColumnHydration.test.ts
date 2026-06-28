@@ -91,6 +91,35 @@ describe('buildTypedColumnUpdates (R3 mapper)', () => {
     expect(byCol.expected_roi).toBe('37%');
   });
 
+  it('financialImpact premium narrative shape → business_value composed (revenueImpact/costSavings/benefitsRealization)', () => {
+    // Real shape emitted by the live section prompt (verified on demo 2026-06-28):
+    // no `businessValue` field at all → composed from the narrative parts.
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          revenueImpact: 'Brak bezpośredniego wzrostu przychodu.',
+          costSavings: 'Oszczędności ~150K PLN/rok (10% OPEX).',
+          benefitsRealization: 'Korzyści w 12 mies.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    // costSavings first (most value-relevant), then revenue, then realization.
+    expect(byCol.business_value).toBe(
+      'Oszczędności ~150K PLN/rok (10% OPEX). Brak bezpośredniego wzrostu przychodu. Korzyści w 12 mies.',
+    );
+  });
+
+  it('explicit businessValue still wins over the narrative fallback', () => {
+    const ups = buildTypedColumnUpdates(
+      { financialImpact: JSON.stringify({ businessValue: 'Wartość X', costSavings: 'Oszczędności Y' }) },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.business_value).toBe('Wartość X');
+  });
+
   it('is NON-DESTRUCTIVE: skips columns that already have a value', () => {
     const ups = buildTypedColumnUpdates(
       { problemDefinition: JSON.stringify({ symptom: 'nowy' }), scope: JSON.stringify({ inScope: ['a'] }) },

@@ -20,6 +20,8 @@
  *   scope            → { inScope[], outOfScope[]|outScope[], killCriteria[] }
  *   targetState      → { successCriteria[], deliverables[], vision? }
  *   financialImpact / businessCase → { businessValue, costCapex, costOpex, expectedRoi }
+ *        LUB realny kształt premium: { revenueImpact, costSavings, benefitsRealization }
+ *        (narracja składana w business_value, gdy brak jawnego businessValue)
  *   kpis             → POMIJANE (osobna tabela `/initiatives/:id/kpis`)
  *   control          → POMIJANE (owner_* = referencja user-id, nie z tekstu AI)
  */
@@ -140,7 +142,19 @@ export function buildTypedColumnUpdates(
   if (fin !== undefined) {
     const j = parseJsonLoose(fin);
     if (j && typeof j === 'object') {
-      push('business_value', cleanStr(j.businessValue ?? j.rationale ?? j.value));
+      // business_value (text): najpierw jawne pole, a gdy go brak — złóż je z
+      // NARRACYJNEGO kształtu, który realnie emituje żywy section-prompt
+      // financialImpact ({revenueImpact, costSavings, benefitsRealization}).
+      // Bez tego (zweryfikowane na demo 2026-06-28) kolumna zostawała NULL mimo
+      // wygenerowanej karty, bo żadna z nazw `businessValue/rationale/value` nie
+      // pasowała. Kolejność: oszczędności (najbardziej „wartościowe") → przychód
+      // → realizacja korzyści.
+      const explicitBv = cleanStr(j.businessValue ?? j.rationale ?? j.value);
+      const narrativeBv =
+        [cleanStr(j.costSavings), cleanStr(j.revenueImpact), cleanStr(j.benefitsRealization)]
+          .filter(Boolean)
+          .join(' ') || undefined;
+      push('business_value', explicitBv ?? narrativeBv);
       push('cost_capex', cleanStr(j.costCapex ?? j.capex));
       push('cost_opex', cleanStr(j.costOpex ?? j.opex));
       push('expected_roi', cleanStr(j.expectedRoi ?? j.roi));
