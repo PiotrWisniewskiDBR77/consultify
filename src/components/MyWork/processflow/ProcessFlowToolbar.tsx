@@ -203,13 +203,13 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
             <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {isPl ? 'Nawigacja procesu' : 'Process navigation'}
             </div>
-            <span className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-primary-600 dark:text-primary-300">
+            <span className="inline-flex items-center rounded-full bg-slate-900/[0.06] dark:bg-white/[0.10] px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? FLOW_MODE_LABELS[flowMode].pl : FLOW_MODE_LABELS[flowMode].en}
             </span>
             <span className="inline-flex items-center rounded-full bg-slate-200/70 dark:bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
               {isPl ? guidance.stagePl : guidance.stageEn}
             </span>
-            <span className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-300">
+            <span className="inline-flex items-center rounded-full bg-slate-200/70 dark:bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
               Kit {semanticKit}
             </span>
           </div>
@@ -258,7 +258,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 onClick={() => setFlowMode(mode)}
                 className={`px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all ${
                   flowMode === mode
-                    ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                    ? 'bg-white dark:bg-navy-700 text-slate-900 dark:text-slate-100 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
@@ -336,7 +336,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               onClick={() => setShowKPIDashboard((v) => !v)}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                 showKPIDashboard
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                  ? 'text-slate-900 dark:text-slate-100 bg-slate-200/70 dark:bg-navy-800'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
               title="KPI Dashboard"
@@ -363,8 +363,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={locked || coachLoading}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
                 showCoach
-                  ? 'text-primary-700 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-300'
-                  : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                  ? 'text-slate-900 dark:text-slate-100 bg-slate-200/70 dark:bg-navy-800'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
               title="AI Coach"
             >

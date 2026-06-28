@@ -158,7 +158,8 @@ const PF_CONTEXT_SLOTS: ToolSlot[] = [
     action: 'pf_add_decision',
   },
   { id: 'lane', icon: Plus, labelPl: 'Lane', labelEn: 'Lane', action: 'pf_add_lane' },
-  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_add_frame' },
+  // Frame removed: Process Flow has no frame concept (lanes group instead).
+  // It emitted dead `wb_add_frame` (no PF handler) = no-op copy-paste from whiteboard.
 ];
 
 const TBL_CONTEXT_SLOTS: ToolSlot[] = [
