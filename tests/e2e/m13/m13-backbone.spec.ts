@@ -162,23 +162,16 @@ test.describe('M13 L3 — kręgosłup inicjatyw (E2E żywy)', () => {
     expect([422, 404]).toContain(r.status());
   });
 
-  // ── F0: from-audit (4xx dla braku audytu, NIE 5xx) ──
-  test('L3-BB-16: POST /from-audit {auditId:nonexistent} → błąd (oczekiwane 404; ZNANY DEFEKT: 500 schema-drift)', async ({ page }) => {
+  // ── F0: from-audit (brak audytu → STRICT 404, NIE 5xx) ──
+  test('L3-BB-16: POST /from-audit {auditId:nonexistent} → 404 (Audit not found)', async ({ page }) => {
     const r = await post(page, '/api/initiatives/from-audit', { auditId: `nonexistent-${Date.now()}` });
-    // KONTRAKT (intencja): brak audytu → 404 „Audit not found".
-    // ZNANY DEFEKT (2026-06-28): żywa tabela `audits` NIE ma kolumny `project_id`,
-    // więc queryOne w createInitiativeFromAudit (auditInitiativeService.ts:163-167)
-    // rzuca `column "project_id" does not exist` ZANIM dojdzie do gałęzi 404. Błąd
-    // nie ma statusCode → route mapuje na 500. Skutek: kontrakt fail-soft (404) jest
-    // złamany na produkcji. FIX = guard kolumn (getTableColumns) na SELECT audits.
-    expect(r.status()).toBeGreaterThanOrEqual(400); // zawsze błąd (nigdy 2xx dla braku audytu)
-    if (r.status() === 500) {
-      const b = (await r.json().catch(() => ({}))) as any;
-      // Dokumentujemy, że to schema-drift (a nie inny 5xx), żeby fix był weryfikowalny.
-      expect(JSON.stringify(b)).toMatch(/project_id|from_audit_failed|Audit/i);
-    } else {
-      expect([404, 422, 400]).toContain(r.status()); // pożądany stan po naprawie
-    }
+    // KONTRAKT: brak audytu → 404 „Audit not found". Po migracji `20260627_audits`
+    // (staging 2026-06-28: dodane project_id/title/summary/description/created_by)
+    // SELECT na `audits` przechodzi czysto → null → 404. Kod jest też schema-safe
+    // (auditInitiativeService.ts: try pełny SELECT → fallback gwarantowane kolumny
+    // → null → 404), więc 404 trzyma niezależnie od driftu. Wcześniej poluzowane do
+    // ≥400 z udokumentowanym defektem 500 — teraz zaostrzone do strict 404.
+    expect(r.status()).toBe(404);
   });
 
   test('L3-BB-17: POST /from-audit bez auditId → 400 (walidacja zod min(1))', async ({ page }) => {
