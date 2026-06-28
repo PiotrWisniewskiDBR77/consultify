@@ -194,7 +194,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
           </div>
           <button
             onClick={() => refresh()}
-            className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+            className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:underline"
           >
             {t('common.refresh', 'Refresh')}
           </button>
@@ -212,7 +212,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
                   key={n.key}
                   className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 p-3"
                 >
-                  <div className="text-sm font-medium text-slate-900 dark:text-white">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
                     {n.title || t('aiChat.signals.untitled', 'Signal')}
                   </div>
                   <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
@@ -228,7 +228,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       onClick={() => handleSaveToNotebook(n)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500/12 text-primary-700 dark:text-primary-300 px-2.5 py-1.5 text-xs font-medium hover:bg-primary-500/18"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-white/[0.08] text-slate-800 dark:text-slate-100 px-2.5 py-1.5 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-white/[0.12]"
                     >
                       <BookOpen size={14} />
                       {t('aiChat.signals.saveNotebook', 'Save to Notebook')}
@@ -236,7 +236,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
 
                     <button
                       onClick={() => handleSaveToIdeas(n)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500/12 text-primary-700 dark:text-primary-300 px-2.5 py-1.5 text-xs font-medium hover:bg-primary-500/18"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-white/[0.08] text-slate-800 dark:text-slate-100 px-2.5 py-1.5 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-white/[0.12]"
                     >
                       <BookOpen size={14} />
                       {t('aiChat.signals.saveIdeas', 'Save to My Ideas')}
@@ -244,7 +244,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
 
                     <button
                       onClick={() => handleSnooze(n, '1h')}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 px-2.5 py-1.5 text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/[0.10]"
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
                     >
                       <Clock size={14} />
                       {t('aiChat.signals.snooze', 'Snooze')}
@@ -252,7 +252,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
 
                     <button
                       onClick={() => handleMuteType(n)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 px-2.5 py-1.5 text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/[0.10]"
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
                     >
                       <BellOff size={14} />
                       {t('aiChat.signals.muteType', 'Mute type')}
@@ -260,7 +260,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
 
                     <button
                       onClick={() => handleDismiss(n)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 px-2.5 py-1.5 text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/[0.10]"
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
                     >
                       <X size={14} />
                       {t('aiChat.signals.dismiss', 'Dismiss')}
