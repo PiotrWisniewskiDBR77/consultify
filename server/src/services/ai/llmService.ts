@@ -1061,6 +1061,9 @@ export class LLMService {
     // Reasoning models (deepseek-reasoner) don't support tools, so AIPipeline
     // only passes tools when reasoning is OFF — guarded again here for safety.
     let streamToolDefinitions: Record<string, ReturnType<typeof tool>> | undefined;
+    // Captured when a tool runs successfully: its user-facing confirmation, used
+    // to rescue a post-tool empty stream (see firstChunk.done branch).
+    let lastToolMessage: string | undefined;
     if (params.tools?.length && !wantsReasoning) {
       const mcpModule = await import('./mcpServer.js');
       const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
@@ -1070,7 +1073,24 @@ export class LLMService {
         streamToolDefinitions[def.name] = tool({
           description: def.description,
           inputSchema: jsonSchema(def.parameters as any),
-          execute: async (args: unknown) => mcpServer.execute(def.name, args, params.context as any),
+          execute: async (args: unknown) => {
+            const r = await mcpServer.execute(def.name, args, params.context as any);
+            // Remember a successful tool's user-facing confirmation. Some
+            // providers/routes (e.g. gpt-4o via OpenRouter) invoke a tool but then
+            // emit NO text on the post-tool step, which looks like an empty stream
+            // (see the firstChunk.done branch below). Surfacing this message there
+            // gives the user a result AND stops a successful tool turn from being
+            // misread as a failure that triggers duplicate-causing retries.
+            try {
+              const m = (r as { ok?: unknown; message?: unknown })?.message;
+              if ((r as { ok?: unknown })?.ok !== false && typeof m === 'string' && m.trim()) {
+                lastToolMessage = m;
+              }
+            } catch {
+              /* never let result inspection break tool execution */
+            }
+            return r;
+          },
         } as any);
       }
     }
@@ -1209,6 +1229,22 @@ export class LLMService {
           // without producing any tokens (e.g. blocked/empty completion). Treat this as
           // a failure so AIPipeline can try its cross-provider fallback chain.
           if (firstChunk.done) {
+            // RESCUE: the model invoked a tool that SUCCEEDED (we captured its
+            // confirmation) but then streamed no text — common for gpt-4o via
+            // OpenRouter on the post-tool step. Surface the tool's message as the
+            // answer instead of throwing. This both shows the user a result and
+            // stops AIPipeline from retrying a successful tool turn with the next
+            // candidate model — those retries re-ran the tool and created
+            // duplicate initiatives (verified on demo 2026-06-28).
+            if (lastToolMessage) {
+              const toolMsg = lastToolMessage;
+              async function* toolOnlyStream(): AsyncGenerator<StreamItem> {
+                yield toolMsg;
+              }
+              await circuitBreaker.recordSuccess(providerId);
+              const usagePromise = buildStreamUsagePromise(result);
+              return { stream: toolOnlyStream(), usagePromise };
+            }
             const emptyErr: any = new Error(
               `LLM stream ended immediately without output (${providerId}/${String(modelConfig.id)}).`
             );
