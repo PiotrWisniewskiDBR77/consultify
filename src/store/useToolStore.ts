@@ -310,6 +310,132 @@ export interface PorterData {
   };
 }
 
+// ==================== Value Chain (Porter) types ====================
+// 9 canonical activities: 5 primary + 4 support. Each is scored on cost
+// contribution, value contribution, and margin role — the methodology spine.
+export type ValueActivityId =
+  | 'inboundLogistics'
+  | 'operations'
+  | 'outboundLogistics'
+  | 'marketingSales'
+  | 'service'
+  | 'infrastructure'
+  | 'hrManagement'
+  | 'technology'
+  | 'procurement';
+
+export type ValueActivityKind = 'primary' | 'support';
+
+export interface ValueActivity {
+  id: ValueActivityId;
+  name: string;
+  kind: ValueActivityKind;
+  costContribution: 'high' | 'medium' | 'low'; // share of total cost
+  valueContribution: 'high' | 'medium' | 'low'; // contribution to differentiation / willingness-to-pay
+  marginRole: 'creator' | 'neutral' | 'drain'; // does this activity create or erode margin
+  maturity?: 'strong' | 'adequate' | 'weak'; // current capability strength
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface ValueChainSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+// A margin lever — the synthesized "where to act and why" unit.
+export interface ValueLever {
+  id: string;
+  title: string;
+  activityIds: ValueActivityId[];
+  insight: string;
+  leverType:
+    | 'cost-reduction'
+    | 'value-enhancement'
+    | 'linkage-optimization'
+    | 'outsource'
+    | 'integrate';
+  marginImpact: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface ValueChainMove {
+  id: string;
+  title: string;
+  category:
+    | 'cost-advantage'
+    | 'differentiation'
+    | 'linkage-optimization'
+    | 'capability-build'
+    | 'restructure';
+  rationale: string;
+  linkedLeverIds: string[];
+  linkedActivityIds: ValueActivityId[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface ValueChainOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedActivityIds: ValueActivityId[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface ValueChainData {
+  context: {
+    industry: string;
+    valueChainScope: string;
+    position: 'cost-leader' | 'differentiator' | 'hybrid' | 'undefined';
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: ValueChainSignal[];
+  activities: Record<ValueActivityId, ValueActivity>;
+  levers: ValueLever[];
+  recommendedMoves: ValueChainMove[];
+  outputCandidates: ValueChainOutputCandidate[];
+  positioningVerdict?: {
+    positioning: 'cost-advantage' | 'differentiation' | 'stuck-in-the-middle';
+    summary: string;
+  };
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
 // Growth Paths (Ansoff) types
 export type GrowthQuadrantId =
   | 'marketPenetration'
@@ -702,6 +828,7 @@ export interface ToolSession {
   inputData:
     | SWOTData
     | PorterData
+    | ValueChainData
     | GrowthPathsData
     | PortfolioPriorityData
     | RiskUncertaintyData
@@ -817,6 +944,55 @@ export const PORTER_STEPS: StepDefinition[] = [
     namePl: 'Outputs & Actions',
     description: 'Prepare the final source summary and generate downstream outputs and initiatives',
     descriptionPl: 'Przygotuj final source summary oraz wygeneruj outputy i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const VALUE_CHAIN_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Mission & Scope',
+    namePl: 'Misja i zakres',
+    description: 'Define the business, value chain scope, strategic positioning, and success signal',
+    descriptionPl: 'Zdefiniuj biznes, zakres łańcucha wartości, pozycjonowanie i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture cost, operations, and differentiation signals from context and interviews',
+    descriptionPl: 'Zbierz sygnały kosztu, operacji i różnicowania z kontekstu i wywiadów',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'activities',
+    name: 'Value Chain Build',
+    namePl: 'Budowa łańcucha wartości',
+    description:
+      'Map the 9 activities with cost contribution, value contribution, and margin role',
+    descriptionPl: 'Zmapuj 9 aktywności wg kontrybucji kosztu, wartości i roli w marży',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Margin Levers & Moves',
+    namePl: 'Dźwignie marży i ruchy',
+    description: 'Synthesize the chain into margin levers, a positioning verdict, and strategic moves',
+    descriptionPl: 'Przekształć łańcuch w dźwignie marży, werdykt pozycjonowania i ruchy strategiczne',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
     required: true,
     aiAssisted: true,
   },
@@ -1529,6 +1705,7 @@ interface ToolStoreState {
     data: Partial<
       | SWOTData
       | PorterData
+      | ValueChainData
       | GrowthPathsData
       | PortfolioPriorityData
       | RiskUncertaintyData
@@ -1620,6 +1797,51 @@ const createInitialPorterData = (): PorterData => ({
     },
   },
   implications: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
+const makeValueActivity = (
+  id: ValueActivityId,
+  name: string,
+  kind: ValueActivityKind
+): ValueActivity => ({
+  id,
+  name,
+  kind,
+  costContribution: 'medium',
+  valueContribution: 'medium',
+  marginRole: 'neutral',
+  drivers: [],
+  evidence: [],
+});
+
+const createInitialValueChainData = (): ValueChainData => ({
+  context: {
+    industry: '',
+    valueChainScope: '',
+    position: 'undefined',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  activities: {
+    inboundLogistics: makeValueActivity('inboundLogistics', 'Inbound Logistics', 'primary'),
+    operations: makeValueActivity('operations', 'Operations', 'primary'),
+    outboundLogistics: makeValueActivity('outboundLogistics', 'Outbound Logistics', 'primary'),
+    marketingSales: makeValueActivity('marketingSales', 'Marketing & Sales', 'primary'),
+    service: makeValueActivity('service', 'Service', 'primary'),
+    infrastructure: makeValueActivity('infrastructure', 'Firm Infrastructure', 'support'),
+    hrManagement: makeValueActivity('hrManagement', 'HR Management', 'support'),
+    technology: makeValueActivity('technology', 'Technology Development', 'support'),
+    procurement: makeValueActivity('procurement', 'Procurement', 'support'),
+  },
+  levers: [],
   recommendedMoves: [],
   outputCandidates: [],
 });
@@ -1733,7 +1955,7 @@ const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'dynamic-swot': SWOT_STEPS,
   'market-forces': PORTER_STEPS,
   'growth-paths': GROWTH_PATHS_STEPS,
-  'value-chain': PORTER_STEPS,
+  'value-chain': VALUE_CHAIN_STEPS,
   'portfolio-priority': PORTFOLIO_PRIORITY_STEPS,
   'ambition-decomposer': PORTER_STEPS,
   'focus-tradeoff': PORTER_STEPS,
@@ -1767,6 +1989,7 @@ const TOOL_INITIAL_DATA: Record<
   ToolType,
   | SWOTData
   | PorterData
+  | ValueChainData
   | GrowthPathsData
   | PortfolioPriorityData
   | RiskUncertaintyData
@@ -1776,7 +1999,7 @@ const TOOL_INITIAL_DATA: Record<
   'dynamic-swot': createInitialSWOTData(),
   'market-forces': createInitialPorterData(),
   'growth-paths': createInitialGrowthPathsData(),
-  'value-chain': createInitialPorterData(),
+  'value-chain': createInitialValueChainData(),
   'portfolio-priority': createInitialPortfolioPriorityData(),
   'ambition-decomposer': createInitialPorterData(),
   'focus-tradeoff': createInitialPorterData(),
@@ -2254,6 +2477,7 @@ const mergeToolAnswersWithInitialData = (
 ):
   | SWOTData
   | PorterData
+  | ValueChainData
   | GrowthPathsData
   | PortfolioPriorityData
   | RiskUncertaintyData
@@ -3056,6 +3280,7 @@ export const useToolStore = create<ToolStoreState>()(
           const data = currentSession.inputData as
             | SWOTData
             | PorterData
+            | ValueChainData
             | GrowthPathsData
             | PortfolioPriorityData
             | RiskUncertaintyData
