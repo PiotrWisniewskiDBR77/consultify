@@ -50,15 +50,15 @@ Wszystkie uwagi w jednym spójnym ekranie: górny pasek **bez 3-tools-strip** (U
 ## 9. PLAN WYKONAWCZY — 2 fazy
 
 ### FAZA 1 — Redesign UI (spójny wygląd, ~dni, niskie ryzyko, demo-first)
-- **N1** — hamburger ⋯ menu: zbiera akcje z paska (Sources/Convert/Initiatives) + `NotebookRightRail` Tools → pogrupowany dropdown (Note / Convert to / AI / Danger). Usuwa stały prawy panel.
-- **N2** — usuń 3-tools-strip z topbara My Work (U10); Context → on-demand pod ⋯ / ikona grafu.
-- **N3** — nagłówek (§3): ikona+tytuł 22/500, meta 1-linia, status pigułki+popover, flow-stepper chevrony.
-- **N4** — prawe menu edytora = ikony+tooltip (U12): Expand→ikona, Network✓, ⋯; usuń Layers (rail znika).
-- **N5** — lewa kolumna (U11): Capture + 2 filtry + czysta lista; usuń Inbox/Active/All taby, progress bar, słońce-toggle, filtr-ikonę.
-- **N6** — Context panel naprawa (U14): **UUID→czytelne nazwy**, ukryć/zwinąć puste sekcje, zweryfikować Insert/Open (naprawić jeśli martwe), redesign kart, scalić z ⋯.
-- **N7** — slash `/` menu: insert bloków (kanon `BLOCK_TYPES_CANON.md`) + markdown skróty (`##`/`-`/`[]`).
-- **N8** — polish: typografia, spacing, oddech, floating format toolbar na zaznaczeniu.
-Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane (przeniesione, nie usunięte).
+- **N1** ⬜ — hamburger ⋯ menu: zbiera akcje z paska (Sources/Convert/Initiatives) + `NotebookRightRail` Tools → pogrupowany dropdown (Note / Convert to / AI / Danger). Usuwa stały prawy panel.
+- **N2** ⬜ — usuń 3-tools-strip z topbara My Work (U10); Context → on-demand pod ⋯ / ikona grafu.
+- **N3** ✅ — nagłówek lifecycle strip: surowe `<select>` Verification/Review + UPPERCASE labele + emerald-fill button → **czyste status-pigułki** (verified→emerald, disputed→amber, unverified→slate; review neutral; Mark reviewed ghost). `56b53ca9` na demo. *(pełny header §3 — ikona+tytuł 22/500 + meta 1-linia + flow-stepper chevrony = kolejny krok)*.
+- **N4** ✅ — prawe menu edytora ikony+tooltip (U12): Expand→ikona, History/Network→monochrome. `e727ee1af2`. *(Layers/rail toggle zostaje do N1)*.
+- **N5** ⬜ — lewa kolumna (U11): Capture + 2 filtry + czysta lista; usuń Inbox/Active/All taby, progress bar, słońce-toggle, filtr-ikonę.
+- **N6** 🟡 — Context panel (U14): **UUID→czytelne nazwy ✅** (`e727ee1af2`: usunięty `typ·UUID` row, etykiety PL/EN, status-chip). ZOSTAJE: ukryć puste sekcje, zweryfikować Insert/Open.
+- **N7** ⬜ — slash `/` menu: insert bloków (`BLOCK_TYPES_CANON.md`) + markdown skróty.
+- **N8** ⬜ — polish: typografia, spacing, oddech, floating format toolbar.
+Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane. **Zrobione 2026-06-28: N4 ✅, N6-1 ✅, N3 ✅ (3 fale na demo `56b53ca9`).** Wstrzymane do oceny kierunku Piotra: N1/N5/N7 (większe UX-zmiany).
 
 ### FAZA 2 — Killery funkcjonalne (program, ~tygodnie, backend) — D4
 - **K1** — @mention + **dwukierunkowe linki** notatka↔artefakty (rozbudowa Context = żywy graf wiedzy; backlinks index). NASZ wyróżnik ponad Notion.
