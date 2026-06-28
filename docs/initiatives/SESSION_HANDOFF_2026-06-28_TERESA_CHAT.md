@@ -8,7 +8,7 @@
 ---
 
 ## 0. TL;DR — stan na teraz
-- **Demo** (`demo.consultify.ai`) działa na commicie **`f452d4f2fd`** (gałąź `feat/deliverables-w1` = `demo`) — zawiera fix crasha doc-gen (3a).
+- **Demo** (`demo.consultify.ai`) — gałąź `feat/deliverables-w1` = `demo`; aktualne fixy: 3a doc-gen (`f452d4f2fd`), 3d business_value (`009e23bb5e`), 3b duplikaty + EMPTY_STREAM rescue (`e57fba5faa`+`d214d9c633`). **Uwaga: build Railway potrafi mocno odstawać** od tipa gałęzi (wielu agentów pushuje równolegle) — sprawdzaj `gitSha` w `/api/health` zanim testujesz.
 - **Teresa przez czat tworzy inicjatywę** (`source_type=teresa_chat`), z 6 kartami AI wypełnionymi po polsku, hydrowanymi do typowanych kolumn. **Udowodnione na żywo** (HTTP `/api/ai/chat/stream` + weryfikacja w DB: 124→128, treść kart obecna).
 - Dane testowe **sprzątnięte** (0 śmieci).
 - Baza demo = **trolley** (demo+staging współdzielą). PROD = centerbeam = **NIETKNIĘTE**.
@@ -52,14 +52,27 @@ Te rzeczy są w TWOIM pasie. Zostawiam z pełną diagnozą:
 ### 3a. ✅ `[DeliverablesGen:doc] row.join is not a function` — ROZWIĄZANE (`f452d4f2fd`)
 **Root cause był inny niż w pierwotnej diagnozie:** fix renderera (`normalizeTableContent` w `documentSchemaRenderer.ts`, do który woła `docGenerationRuntime.ts:1311`) istniał **tylko w working tree — nigdy nie zacommitowany**. Handoff błędnie przypisał go do `501b53a64f` (grep `normalizeTableContent` w tamtym HEAD = 0). Demo deployuje z pushniętej gałęzi, więc wciąż leciał stary `row.join(...)` na keyed-row → crash → cały dokument spadał do angielskiego stubu. **Nie było „drugiej ścieżki `.join`"** — był jeden niezacommitowany fix. Zacommitowany+wypchnięty+demo `f452d4f2fd`; regresja `documentSchemaRendererTable.test.ts` 4/4 zielona. (Sprawdzone czyste: `wave5ArtifactRuntimeService.ts:279` twarde tablice, `docGenerationRuntime.ts:629` `fields.map().join`.) Chip `task_91c639ac` można zamknąć.
 
-### 3b. Architektura czatu — tool-loop działa, ale full-fill blokuje
-Stream czatu (`/api/ai/chat/stream`, handler ~`ai.routes.ts:1421`) MA model-driven tool-loop (SPEC_01 Tryb A, `maxIterations:4`). Po moim fix #6 oferuje `generate_deliverable` + `generate_initiative`. **Uwaga:** `maxIterations:4` + duplikaty — w teście LLM wywołał `generate_initiative` kilka razy (124→128). Rozważ idempotencję/dedup per-tura.
+### 3b. ✅ Duplikaty inicjatyw — ROZWIĄZANE (`d214d9c633` + `e57fba5faa`); root cause był inny
+Pierwotna diagnoza („maxIterations:4 → LLM woła narzędzie kilka razy") była **niepełna**. Żywe trasowanie na demo (logi serwera 2026-06-28) ujawniło prawdziwy mechanizm — **łańcuch**:
+1. Model woła `generate_initiative` → narzędzie **tworzy DRAFT i kończy sukcesem** (log `[teresa] hydrated … business_value` + `full-fill done`).
+2. Ale model **nie emituje żadnego tekstu** po tool-callu (gpt-4o przez openrouter na kroku post-tool).
+3. `callStream` konsumuje pierwszy chunk `textStream`, widzi `done` (zero tekstu) → rzuca **`EMPTY_STREAM`** (`llmService.ts:1211`).
+4. `AIPipeline` traktuje to jako porażkę → **retry następnym modelem-kandydatem** (pętla `for candidateModelId`) → narzędzie **odpala się znowu** → kolejny duplikat. Stąd 4 inicjatywy z jednej wiadomości (NIE z pętli `maxSteps`, lecz z retry'ów **między** `callStream`).
 
-### 3c. Schema drift na trolley (degraduje kontekst Teresy, NIE blokuje)
+**Dwa fixy (oba na demo):**
+- **`d214d9c633` — wycięcie u źródła:** `callStream` zapamiętuje `message` udanego narzędzia; gdy stream kończy się pusty, **emituje ten komunikat jako odpowiedź** zamiast `EMPTY_STREAM`. To daje userowi widoczne potwierdzenie ORAZ kasuje wyzwalacz retry'ów. Czysto-pusty stream (bez narzędzia) dalej rzuca `EMPTY_STREAM` i fallbackuje.
+- **`e57fba5faa` — idempotencja per-tura (pas + szelki):** memoizacja pierwszego wyniku na współdzielonym obiekcie `context` (`generateInitiative.ts`); każdy powtórny call w turze (pętla maxSteps LUB retry kandydatów — wszystkie dzielą `deliverableTools.context`) zwraca memo zamiast tworzyć. Test `TURN IDEMPOTENCY` (3 wywołania / 1 create).
+
+> **GŁĘBSZA LEKCJA:** „EMPTY_STREAM po udanym tool-callu" promieniuje na KAŻDE narzędzie tworzące (też `generate_deliverable`). Jeśli zobaczysz duplikaty deliverable'ów albo pustą odpowiedź Teresy po akcji — to ten sam mechanizm.
+
+### 3c. Schema drift na trolley (degraduje kontekst Teresy, NIE blokuje) — DALEJ OTWARTE
 Brakuje (połykane błędy w `aiContextBuilder`/`contextPackService`): `organization_memory`, `ai_user_preferences` (tabele), `organization_ai_settings.context_policy_json` (kolumna), `projects.is_closed` (kolumna). Teresa działa z gorszym kontekstem. Warto domknąć migracją (staging-first).
 
-### 3d. `business_value` nie hydrowane
-Karta `financialImpact` generuje się (jest w `ai_generated_sections`), ale kolumna `business_value` zostaje pusta — mapowanie financialImpact→kolumna w `cardColumnHydration.ts` / `hydrateTypedColumns` (`generateInitiative.ts:136`). Drobny szlif R3.
+### 3d. ✅ `business_value` nie hydrowane — ROZWIĄZANE (`009e23bb5e`)
+Karta `financialImpact` generuje się, ale `business_value` zostawała NULL. **Root cause (zobaczony na żywej karcie):** żywy section-prompt emituje kształt `{revenueImpact, costSavings, benefitsRealization}` — a mapper szukał `businessValue/rationale/value`: **zero pokrycia**. `buildTypedColumnUpdates` (`cardColumnHydration.ts`) składa teraz `business_value` z pól narracyjnych (costSavings → revenue → benefits), gdy brak jawnego `businessValue`; jawne nadal wygrywa. +2 testy jednostkowe (14/14). Potwierdzone w logu: `[teresa] hydrated 7 typed column(s) … business_value`.
+
+### 3e. ⚠️ Demo LLM flaky — `openai/gpt-4o` przez openrouter zwraca `EMPTY_STREAM`
+Trasa **openrouter→openai/gpt-4o** bywa martwa (zwraca pusty stream nawet bez narzędzi); `gpt-4o-mini` działa → to problem trasy modelu, NIE kredytów konta. Tier PREMIUM→model jest cache'owany w procesie (zmiana `llm_providers.model_id` w DB nie wchodzi bez restartu). Jeśli Teresa „milczy" — sprawdź `health_status`/żywy stream zanim podejrzewasz kod.
 
 ---
 
