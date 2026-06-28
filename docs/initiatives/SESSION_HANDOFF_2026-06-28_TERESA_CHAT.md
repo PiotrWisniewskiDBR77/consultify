@@ -84,7 +84,18 @@ Karta `financialImpact` generuje się, ale `business_value` zostawała NULL. **R
 
 **GŁĘBSZA LEKCJA:** nie-reasoning modele (gpt-4o) niezmienione w praktyce (fullStream daje te same `text-delta`). Diagnostyka „nasz kod vs provider": probe openrouter BEZPOŚREDNIO (klucz z `llm_providers.api_key`) + probe SDK (`createOpenAI`+`streamText`, dump typów `fullStream`). Tier→model cache'owany → zmiana `model_id` w DB wymaga `railway redeploy --service consultify -y`.
 
-> **Uwaga ops:** GLM rozumuje ~13s przed tool-callem → testując DANE poczekaj 20s+; created_at vs `now()` w skryptach testowych potrafi się rozjechać (mierz czasem WZGLĘDNYM `created_at > now()-interval`, nie zapisanym `tb`).
+> **Uwaga ops:** GLM rozumuje ~13s przed tool-callem → testując DANE poczekaj 20s+; created_at vs `now()` w skryptach testowych potrafi się rozjechać (mierz czasem WZGLĘDNYM `created_at > now()-interval`, nie zapisanym `tb`). `ai_generated_sections` to kolumna **TEXT** (nie jsonb) — w SQL nie rób `COALESCE(...,'{}'::jsonb)`.
+
+### 3f. 🔴 Full-fill (6 kart AI) NIE działa z GLM — DRAFT powstaje PUSTY (OTWARTE — kod)
+**Potwierdzone na żywo (2026-06-28):** z `z-ai/glm-4.6` chat tworzy inicjatywę-DRAFT (tool-call OK), ale **background full-fill nie wypełnia ŻADNEJ sekcji** — `ai_generated_sections` zostaje pusty (`length=0`), `business_value`/`problem_statement`/`scope_in` = NULL przez 4+ min. Z gpt-4o full-fill działał (log `hydrated 7 … business_value`).
+
+**Ścieżka:** `generateInitiative` → background `generateFullInitiative` (`initiativeGeneratorBrain.ts:275`) → per-karta `deps.generationService.generateSectionContent(..., {withReview:true})` (`initiativeGenerationService.ts`, używa **`llm.call()` non-streaming**, PREMIUM tier, ~linie 514/619/758/964). Fail-soft per karta → wszystkie karty GLM padają cicho → 0 kart → `persistCards` nic nie zapisuje → 0 hydracji.
+
+**Hipoteza root cause:** `llm.call()` (non-streaming `generateText`/`callStructured`) nie obsługuje reasoning-modeli tak jak naprawiony `callStream` — GLM zwraca reasoning, a `result.text`/structured JSON wychodzi pusty lub nieparsowanlny. To **ten sam wzorzec co 3e, ale na ścieżce NON-streaming** (`call`/`callStructured` w `llmService.ts`, NIE `callStream`). Probe SDK pokazał że GLM streamuje content (2511 znaków text-delta) — więc `generateText` POWINIEN coś zwrócić; trzeba zdiagnozować czy to pusty content, błąd json-schema, czy review-gate odrzuca.
+
+**ZADANIE (następna sesja):** zdiagnozować dokładny błąd (logi full-fillu / bezpośredni `llm.call` z GLM) i zastosować analogiczne traktowanie reasoning-modeli na ścieżce non-streaming (`call`/`callStructured`). DOPÓKI to nie zrobione: na GLM inicjatywy z czatu są PUSTE. Decyzja Piotra: albo (a) dokończyć full-fill dla reasoning-modeli, albo (b) full-fill (structured) routować na model nie-reasoning, a chat-tool zostawić na GLM (hybryda per-purpose tier).
+
+**Stan demo zostawiony:** `z-ai/glm-4.6` (wybór Piotra) — chat→inicjatywa działa, ale DRAFT pusty do czasu fixu 3f.
 
 ---
 
