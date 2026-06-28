@@ -14,6 +14,7 @@ import DRD_STRUCTURE, {
   calculateAxisScore,
   calculateOverallScore,
   getTotalAreaCount,
+  DRD_AXIS_KEY_MAP,
 } from './drdStructure';
 
 /**
@@ -66,6 +67,46 @@ export const buildDRDVisualizationData = (
     overallScore: overall.actual,
     targetScore: overall.target,
     completionPercent,
+  };
+};
+
+/**
+ * Build the shared visualization payload from AXIS-LEVEL scores.
+ *
+ * Keyed by the internal axis key (processes | digitalProducts | businessModels |
+ * dataManagement | culture | cybersecurity | aiMaturity — see DRD_AXIS_KEY_MAP).
+ * Used by the report editor, whose `axisData` is stored per-axis (already
+ * aggregated), not per-area. Honours per-axis maxLevel (mixed scales 5/6/7).
+ */
+export const buildDRDVisualizationDataFromAxes = (
+  axisData: Record<string, { actual?: number; target?: number }>
+): AssessmentVisualizationData => {
+  const dimensions = DRD_STRUCTURE.map((axis, index) => {
+    const key = DRD_AXIS_KEY_MAP[axis.id];
+    const entry = (key && axisData[key]) || {};
+    return {
+      id: String(axis.id),
+      name: axis.name,
+      namePL: axis.namePL,
+      current: Number(entry.actual ?? 0),
+      target: Number(entry.target ?? 0),
+      maxLevel: axis.levelCount,
+      color: DRD_AXIS_COLORS[index % DRD_AXIS_COLORS.length],
+    };
+  });
+
+  const avg = (nums: number[]) =>
+    nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 10) / 10 : 0;
+  const assessed = dimensions.filter((d) => d.current > 0 || d.target > 0).length;
+
+  return {
+    framework: 'DRD',
+    dimensions,
+    overallScore: avg(dimensions.map((d) => d.current)),
+    targetScore: avg(dimensions.map((d) => d.target)),
+    completionPercent: dimensions.length
+      ? Math.round((assessed / dimensions.length) * 100)
+      : 0,
   };
 };
 

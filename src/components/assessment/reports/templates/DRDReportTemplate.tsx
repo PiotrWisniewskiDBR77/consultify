@@ -28,6 +28,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { buildDRDVisualizationData } from '../../../../services/drdVizAdapter';
+import type { AssessmentVisualizationData } from '../AssessmentReportVisualizations';
 import {
   DimensionBars,
   AssessmentRadarChart,
@@ -36,20 +37,27 @@ import {
 } from '../AssessmentReportVisualizations';
 
 interface DRDReportTemplateProps {
-  areaScores: Record<string, { actual: number; target: number }>;
+  /** Per-area actual/target levels keyed by area id (e.g. "1A"). */
+  areaScores?: Record<string, { actual: number; target: number }>;
+  /** Pre-built visualization payload (e.g. from axis-level report data). Takes precedence over areaScores. */
+  visualizationData?: AssessmentVisualizationData;
   companyName?: string;
   readOnly?: boolean;
 }
 
 export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
   areaScores,
+  visualizationData,
   companyName = 'Organizacja',
   readOnly = false,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  const vizData = useMemo(() => buildDRDVisualizationData(areaScores), [areaScores]);
+  const vizData = useMemo(
+    () => visualizationData ?? buildDRDVisualizationData(areaScores ?? {}),
+    [visualizationData, areaScores]
+  );
 
   // Normalize each axis to a 0..100% scale (axes have different maxLevel) then
   // average. This makes the headline maturity comparable across mixed scales.
