@@ -23,6 +23,7 @@ import {
   FileText,
   Filter,
   History,
+  MoreHorizontal,
   Inbox,
   Layers,
   Lightbulb,
@@ -80,6 +81,10 @@ import {
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
 import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
+import {
+  NotebookHamburgerMenu,
+  type NotebookConvertTarget,
+} from './notebook/NotebookHamburgerMenu';
 import { NotebookProgressChip } from './notebook/NotebookProgressChip';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
@@ -784,6 +789,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showGraphView, setShowGraphView] = useState(false);
+  // N1: hamburger ⋯ menu position (null = closed)
+  const [hamburgerPos, setHamburgerPos] = useState<{ x: number; y: number } | null>(null);
   const [todayRefreshKey, setTodayRefreshKey] = useState(0);
   const coverInputRef = useRef<HTMLInputElement>(null);
   // Code-block language picker overlay anchor.
@@ -2714,8 +2721,36 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   >
                     <Layers size={12} />
                   </button>
+                  {/* N1: hamburger ⋯ — all note actions in one menu */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      setHamburgerPos({ x: Math.max(8, r.right - 240), y: r.bottom + 4 });
+                    }}
+                    title={isPolish ? 'Menu notatki' : 'Note menu'}
+                    aria-label={isPolish ? 'Menu notatki' : 'Note menu'}
+                    className="shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    <MoreHorizontal size={16} />
+                  </button>
                 </div>
               </div>
+
+              {hamburgerPos && activePage && (
+                <NotebookHamburgerMenu
+                  x={hamburgerPos.x}
+                  y={hamburgerPos.y}
+                  isPolish={!!isPolish}
+                  onClose={() => setHamburgerPos(null)}
+                  onExpandDocument={() => void handleExpandToDocument()}
+                  onConvert={(t: NotebookConvertTarget) =>
+                    void handleConvertFromPanel(t as ConvertTarget)
+                  }
+                  onAskAI={() => setAiCommand('action')}
+                  onDelete={() => void handleDeletePage()}
+                />
+              )}
 
               {/* Version History panel (toggleable) */}
               {showVersionHistory && activePage && (
