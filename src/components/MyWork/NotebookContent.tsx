@@ -81,6 +81,7 @@ import {
   NotebookHamburgerMenu,
   type NotebookConvertTarget,
 } from './notebook/NotebookHamburgerMenu';
+import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
 import {
   detectMentionTrigger,
@@ -783,6 +784,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Slash menu
   const [slashState, setSlashState] = useState<SlashMenuState>(INITIAL_SLASH_STATE);
   const [mentionState, setMentionState] = useState<MentionMenuState>(INITIAL_MENTION_STATE);
+  // Bumped whenever this note's link graph changes, to refresh the backlinks bar.
+  const [backlinksRefresh, setBacklinksRefresh] = useState(0);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   // Inline-image upload bridge — set after the upload helper is defined so the
@@ -1188,6 +1191,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
       // Nudge dependent panels (e.g. Context backlinks) to refresh.
       emitMyWorkEvent({ type: 'item:updated', entityType: 'notebook', entityId: activePage.id });
+      setBacklinksRefresh((k) => k + 1);
       toast.success(isPolish ? 'Powiązano' : 'Linked');
     },
     [editor, activePage, mentionState.triggerPos, mentionState.query, isPolish, emitMyWorkEvent]
@@ -3258,6 +3262,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {/* Rich editor */}
                   {editor && <NotebookBubbleToolbar editor={editor} />}
                   <EditorContent editor={editor} />
+
+                  {/* K1 — incoming backlinks ("Mentioned in") surfaced inline. */}
+                  {activePage && (
+                    <NotebookBacklinksBar
+                      noteId={activePage.id}
+                      isPolish={isPolish}
+                      refreshKey={backlinksRefresh}
+                    />
+                  )}
 
                   {activePage ? (
                     <div ref={attachmentsSectionRef} className="mt-4">
