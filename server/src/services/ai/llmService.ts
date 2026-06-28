@@ -1081,9 +1081,18 @@ export class LLMService {
             // (see the firstChunk.done branch below). Surfacing this message there
             // gives the user a result AND stops a successful tool turn from being
             // misread as a failure that triggers duplicate-causing retries.
+            // NOTE: mcpServer.execute wraps the handler result as
+            // `{ status: 'SUCCESS', data: <handlerResult> }`, so the confirmation
+            // lives at r.data.message — NOT r.message.
             try {
-              const m = (r as { ok?: unknown; message?: unknown })?.message;
-              if ((r as { ok?: unknown })?.ok !== false && typeof m === 'string' && m.trim()) {
+              const wrapped = r as { status?: string; data?: { ok?: unknown; message?: unknown } };
+              const m = wrapped?.data?.message;
+              if (
+                wrapped?.status === 'SUCCESS' &&
+                wrapped?.data?.ok !== false &&
+                typeof m === 'string' &&
+                m.trim()
+              ) {
                 lastToolMessage = m;
               }
             } catch {
