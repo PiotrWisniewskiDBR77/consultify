@@ -122,15 +122,18 @@ export function NextStepsLayout(
   const tableRegionH = c.closing_message ? g.contentH - calloutH - calloutGap : g.contentH;
   const rowCount = 1 + dataRows.length; // header + data rows
   // Grow row height so the table breathes and fills tableRegionH; cap so a tiny
-  // table doesn't become absurd. Header is slightly shorter than data rows.
-  const rowH = Math.max(0.38, Math.min(0.62, tableRegionH / rowCount));
+  // table doesn't become absurd. When capped (few rows), CENTRE the table in its
+  // region instead of clinging to the top (kills the table↔callout gap).
+  const rowH = Math.max(0.42, Math.min(0.9, tableRegionH / rowCount));
+  const tableH = rowH * rowCount;
+  const tableY = g.contentY + Math.max(0, (tableRegionH - tableH) / 2);
 
   elements.push({
     kind: 'table' as const,
     apply(s: any) {
       s.addTable([headerRow, ...dataRows], {
         x: g.contentX,
-        y: g.contentY,
+        y: tableY,
         w: g.contentW,
         colW: [g.contentW * 0.07, g.contentW * 0.48, g.contentW * 0.22, g.contentW * 0.23],
         border: { pt: 0.5, color: tokens.colors.border },

@@ -34,7 +34,9 @@ export function ProblemCauseImpact(
   const totalRows = props.causes.length + 1; // +1 for header
   const rowH = Math.min(0.9, Math.max(0.35, tableAvailH / Math.max(totalRows, 1)));
 
-  // Problem statement box
+  // Problem statement box — editorial, not alarming: light surface panel with a
+  // red accent spine + a small uppercase "PROBLEM" label, dark problem text.
+  // (Full-bleed red read as an alarm; this is calmer and more consultant-grade.)
   elements.push({
     kind: 'shape',
     apply(slide) {
@@ -43,19 +45,29 @@ export function ProblemCauseImpact(
         y: p.y,
         w: p.w,
         h: problemH,
-        fill: { color: tokens.colors.danger },
+        fill: { color: tokens.colors.surface },
+        line: { color: tokens.colors.border, width: 1 },
         rectRadius: 0.05,
+      });
+      // Red accent spine on the left edge.
+      slide.addShape('rect', {
+        x: p.x,
+        y: p.y + 0.06,
+        w: 0.08,
+        h: problemH - 0.12,
+        fill: { color: tokens.colors.danger },
+        line: { color: tokens.colors.danger, width: 0 },
       });
     },
   });
   elements.push(
     BodyText(
       {
-        text: `Problem: ${props.problem}`,
-        position: { x: p.x + 0.2, y: p.y, w: p.w - 0.4, h: problemH },
+        text: props.problem,
+        position: { x: p.x + 0.3, y: p.y, w: p.w - 0.5, h: problemH },
         bold: true,
         fontSize: tokens.fontSizes.subheading,
-        color: tokens.colors.textInverse,
+        color: tokens.colors.textPrimary,
         valign: 'middle',
       },
       tokens
