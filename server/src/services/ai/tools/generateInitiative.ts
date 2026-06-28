@@ -219,36 +219,46 @@ export async function generateInitiative(
     // (1) LINEAGE STAMP — best-effort, never breaks the tool.
     await stampLineage(id, orgId, sourceType, sourceId);
 
-    // (2) FULL-FILL — kick off the F1 brain; fail-soft. A fill error must NOT
-    // break initiative creation (the DRAFT still returns).
-    let filledCount = 0;
-    try {
-      const fill = await generateFullInitiative(defaultDeps(), {
-        initiativeId: id,
-        brief: problem,
-        sourceType: 'teresa_chat',
-        language,
-        organizationId: orgId,
-      });
-      const cards = fill?.cards ?? {};
-      filledCount = Object.keys(cards).length;
-      await persistCards(id, orgId, cards);
-    } catch (fillErr: any) {
-      logger.warn('[teresa] generate_initiative full-fill failed (ignored):', fillErr?.message || fillErr);
-    }
+    // (2) FULL-FILL — kick off the F1 brain in the BACKGROUND (fire-and-forget).
+    // Generating 6 cards is ~6 LLM calls (30-90s); awaiting it here blocked the
+    // chat stream for the whole duration (the tool runs INSIDE callStream), so
+    // Teresa appeared to hang / time out. The DRAFT is already created, so we
+    // return immediately and let the cards populate asynchronously. Railway runs
+    // a persistent process, so the detached promise completes. Fail-soft: any
+    // error is logged and never affects the (already-created) DRAFT.
+    void (async () => {
+      try {
+        const fill = await generateFullInitiative(defaultDeps(), {
+          initiativeId: id,
+          brief: problem,
+          sourceType: 'teresa_chat',
+          language,
+          organizationId: orgId,
+        });
+        const cards = fill?.cards ?? {};
+        await persistCards(id, orgId, cards);
+        logger.info(
+          `[teresa] generate_initiative background full-fill done for ${id} (${
+            Object.keys(cards).length
+          } cards)`,
+        );
+      } catch (fillErr: any) {
+        logger.warn(
+          '[teresa] generate_initiative background full-fill failed (ignored):',
+          fillErr?.message || fillErr,
+        );
+      }
+    })();
 
     return {
       ok: true,
       id,
       title,
       sourceType,
-      filledCards: filledCount,
+      filledCards: 0,
       message:
-        filledCount > 0
-          ? `Created and drafted initiative "${title}" with ${filledCount} AI-filled section${
-              filledCount === 1 ? '' : 's'
-            }. Open it from Initiatives to review.`
-          : `Created a draft initiative "${title}". Open it from Initiatives to flesh it out.`,
+        `Created a draft initiative "${title}" and started filling its sections with AI ` +
+        `in the background — open it from Initiatives in a moment to review.`,
     };
   } catch (e: any) {
     logger.warn('[teresa] generate_initiative failed:', e?.message);
