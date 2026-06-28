@@ -93,7 +93,7 @@ const CTRL_LABEL = 'text-[11px] text-slate-500 dark:text-slate-400 w-24 shrink-0
 const PILL_BTN =
   'h-7 px-2.5 rounded-lg text-[10px] font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors';
 const PILL_ACTIVE =
-  'h-7 px-2.5 rounded-lg text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/20';
+  'h-7 px-2.5 rounded-lg text-[10px] font-semibold bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100 ring-1 ring-slate-300/40 dark:ring-navy-700';
 
 export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
   selectedNodeId,
@@ -176,7 +176,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, width: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-primary-500"
+                  className="flex-1 h-1.5 accent-slate-500"
                 />
                 <span className="text-[10px] text-slate-600 w-8 text-right">
                   {nodeStyle.width || 200}
@@ -241,7 +241,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   onChange={(e) =>
                     patchNode({ style: { ...nodeStyle, fillOpacity: Number(e.target.value) } })
                   }
-                  className="flex-1 h-1.5 accent-primary-500"
+                  className="flex-1 h-1.5 accent-slate-500"
                 />
                 <span className="text-[10px] text-slate-600 w-8 text-right">
                   {nodeStyle.fillOpacity ?? 100}%
@@ -297,7 +297,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
               type="checkbox"
               checked={autoLayout}
               onChange={(e) => setAutoLayout(e.target.checked)}
-              className="w-3.5 h-3.5 rounded accent-primary-500"
+              className="w-3.5 h-3.5 rounded accent-slate-500"
             />
             <span className="text-[11px] text-slate-600 dark:text-slate-300">
               {isPl ? 'Auto-layout przy zmianach' : 'Auto-layout on changes'}
@@ -328,7 +328,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
               </span>
               <button
                 onClick={() => onApplyTheme(theme.id)}
-                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-200/70 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-300/70 dark:hover:bg-navy-700 transition-colors"
               >
                 {isPl ? 'Zastosuj' : 'Apply'}
               </button>

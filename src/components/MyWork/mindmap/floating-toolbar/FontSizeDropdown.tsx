@@ -26,7 +26,7 @@ export const FontSizeDropdown: React.FC<FontSizeDropdownProps> = ({
             }}
             className={`w-full px-3 py-1.5 text-left transition-colors ${
               isActive
-                ? 'bg-primary-500/8 text-primary-600 dark:text-primary-400 font-semibold'
+                ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100 font-semibold'
                 : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
             }`}
             style={{ fontSize: Math.min(s, 20) }}

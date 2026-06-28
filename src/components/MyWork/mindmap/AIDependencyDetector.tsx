@@ -153,7 +153,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div>
             <div className="flex items-center gap-2">
-              <Network size={16} className="text-primary-500" />
+              <Network size={16} className="text-slate-500" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">
                 {isPl ? 'AI: Wykrywanie zależności' : 'AI: Dependency Detection'}
               </h3>
@@ -184,7 +184,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
               <button
                 onClick={detectDependencies}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/15 to-crimson-500/10 text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-crimson-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-all disabled:opacity-40"
               >
                 <Network size={14} />
                 {isPl ? 'Analizuj zależności' : 'Analyze dependencies'}
@@ -194,7 +194,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-primary-500" />
+              <Loader2 size={16} className="animate-spin text-slate-500" />
               <span className="text-[11px] text-slate-500">
                 {isPl ? 'Analizuję powiązania...' : 'Analyzing connections...'}
               </span>
@@ -252,7 +252,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                       <button
                         onClick={() => handleApply(dep)}
                         disabled={locked}
-                        className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40"
+                        className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
                       >
                         <Plus size={9} />
                         {isPl ? 'Dodaj połączenie' : 'Add connection'}
@@ -274,7 +274,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 <button
                   onClick={handleApplyAll}
                   disabled={locked || applied.size === dependencies.length}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 transition-colors disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.10] dark:hover:bg-white/[0.14] transition-colors disabled:opacity-40"
                 >
                   <Network size={12} />
                   {isPl ? 'Dodaj wszystkie' : 'Add all'}

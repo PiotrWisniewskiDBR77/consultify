@@ -63,7 +63,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
           value={nodeData?.semanticType || ''}
           onChange={(e) => onUpdate({ semanticType: e.target.value || '' })}
           disabled={disabled}
-          className="w-full rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-950/30 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
+          className="w-full rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-950/30 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400/30 disabled:opacity-50"
         >
           <option value="">{isPl ? 'Wybierz typ semantyczny' : 'Select semantic type'}</option>
           {SEMANTIC_TYPE_OPTIONS.map((option) => (
@@ -107,7 +107,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
             placeholder={
               isPl ? 'Dodaj tag lub kilka po przecinku' : 'Add tag or comma-separated tags'
             }
-            className="flex-1 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-950/30 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-950/30 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400/30 disabled:opacity-50"
           />
           <button
             type="button"
@@ -139,7 +139,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
           placeholder={
             isPl ? 'Krótki kontekst, znaczenie, decyzja...' : 'Short context, meaning, decision...'
           }
-          className="w-full rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-950/30 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none disabled:opacity-50"
+          className="w-full rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-950/30 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400/30 resize-none disabled:opacity-50"
         />
       </div>
 

@@ -167,7 +167,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
         >
           <ChevronLeft size={16} />
         </button>
-        <Box size={16} className="text-primary-400" />
+        <Box size={16} className="text-slate-400" />
         <h2 className="text-sm font-bold text-white">{isPl ? 'Widok 3D' : '3D View'}</h2>
         <span className="text-[10px] text-slate-500 ml-2">
           {isPl ? 'Przeciągnij, aby obrócić' : 'Drag to rotate'}

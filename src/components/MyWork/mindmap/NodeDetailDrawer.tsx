@@ -720,14 +720,14 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             <button
               onClick={handleAIExpand}
               disabled={locked || aiExpanding}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/10 to-crimson-500/8 hover:from-primary-500/15 hover:to-crimson-500/12 transition-all disabled:opacity-40"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 transition-all disabled:opacity-40"
             >
               {aiExpanding ? (
-                <Loader2 size={14} className="animate-spin text-primary-500" />
+                <Loader2 size={14} className="animate-spin text-slate-500" />
               ) : (
-                <Sparkles size={14} className="text-primary-500" />
+                <Sparkles size={14} className="text-slate-500" />
               )}
-              <span className="text-[11px] font-bold text-primary-700 dark:text-primary-300">
+              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                 {aiExpanding
                   ? isPl
                     ? 'Generuję pomysły...'
@@ -743,15 +743,15 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 {aiSuggestions.map((s, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 p-2 rounded-xl bg-primary-500/5 border border-primary-400/10 hover:bg-primary-500/10 transition-colors"
+                    className="flex items-center gap-2 p-2 rounded-xl bg-slate-900/[0.04] dark:bg-white/[0.04] border border-slate-300/30 dark:border-navy-700/30 hover:bg-slate-900/[0.08] dark:hover:bg-white/[0.08] transition-colors"
                   >
-                    <Zap size={10} className="text-primary-500 shrink-0" />
+                    <Zap size={10} className="text-slate-500 shrink-0" />
                     <span className="text-[11px] text-slate-700 dark:text-slate-200 flex-1">
                       {s}
                     </span>
                     <button
                       onClick={() => handleApplyAISuggestion(s)}
-                      className="text-[9px] font-bold text-primary-600 dark:text-primary-400 hover:underline shrink-0"
+                      className="text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:underline shrink-0"
                     >
                       {isPl ? 'Dodaj' : 'Add'}
                     </button>
@@ -1011,7 +1011,7 @@ const DepthField: React.FC<{
       <div className="py-0.5">
         <button
           onClick={() => setExpanded(true)}
-          className="text-[10px] font-semibold text-slate-600 hover:text-primary-500 transition-colors"
+          className="text-[10px] font-semibold text-slate-600 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
         >
           + {label}
         </button>

@@ -411,7 +411,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
                         onMouseEnter={() => setSelectedIdx(globalIdx)}
                         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors ${
                           isActive
-                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200'
+                            ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100'
                             : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04]'
                         }`}
                       >
@@ -422,7 +422,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
                           <kbd
                             className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
                               isActive
-                                ? 'bg-primary-200/60 dark:bg-primary-800/40 text-primary-700 dark:text-primary-300'
+                                ? 'bg-slate-300/60 dark:bg-navy-700/40 text-slate-700 dark:text-slate-200'
                                 : 'bg-slate-100 dark:bg-white/10 text-slate-600'
                             }`}
                           >

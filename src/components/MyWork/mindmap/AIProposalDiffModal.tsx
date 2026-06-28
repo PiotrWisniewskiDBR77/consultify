@@ -82,7 +82,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-              <GitBranch size={15} className="text-primary-500" />
+              <GitBranch size={15} className="text-slate-500" />
               {isPl ? 'Propozycja AI — podgląd zmian' : 'AI Proposal — Change Preview'}
             </h3>
             {proposal.rationale && (
@@ -203,7 +203,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
 
         {/* Plan summary */}
         {proposal.rationale && (
-          <div className="mx-5 mb-3 px-3 py-2 rounded-hig-xl bg-primary-50/50 dark:bg-primary-900/10 border border-primary-200/40 dark:border-primary-800/30 text-[11px] text-primary-700 dark:text-primary-300">
+          <div className="mx-5 mb-3 px-3 py-2 rounded-hig-xl bg-slate-50/50 dark:bg-navy-900/10 border border-slate-200/40 dark:border-navy-700/30 text-[11px] text-slate-700 dark:text-slate-200">
             <strong>{isPl ? 'Plan:' : 'Plan:'}</strong>{' '}
             {isPl
               ? `Dodaj ${selectedCount} wybranych węzłów.`

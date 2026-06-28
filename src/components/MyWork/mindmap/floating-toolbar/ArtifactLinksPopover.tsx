@@ -61,7 +61,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenArtifact(link)}
-                    className="text-slate-600 hover:text-primary-600 transition-colors"
+                    className="text-slate-600 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
                     title={isPl ? 'Otwórz artefakt' : 'Open artifact'}
                   >
                     <ExternalLink size={12} />

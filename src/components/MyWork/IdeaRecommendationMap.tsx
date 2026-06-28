@@ -839,7 +839,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <button
           type="button"
           title={data._isPl ? 'Dodaj węzeł (Tab)' : 'Add node (Tab)'}
-          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 active:scale-[0.98] transition-all"
+          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-slate-600 text-white shadow-lg hover:bg-slate-700 active:scale-[0.98] transition-all"
           onClick={(e) => {
             e.stopPropagation();
             window.dispatchEvent(
@@ -867,7 +867,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
           <button
             type="button"
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-600 text-white text-[9px] font-medium shadow-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-600 text-white text-[9px] font-medium shadow-lg hover:bg-slate-700 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               window.dispatchEvent(
@@ -1201,7 +1201,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         style={nodeSurfaceStyle}
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
           data._dropTarget
-            ? 'ring-3 ring-primary-400 ring-offset-2 border-primary-500 shadow-lg shadow-primary-500/30'
+            ? 'ring-3 ring-slate-400 ring-offset-2 border-slate-500 shadow-lg shadow-slate-500/30'
             : data._justMoved
               ? 'ring-2 ring-emerald-400 animate-pulse'
               : selected
@@ -1249,7 +1249,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <button
               type="button"
               title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all"
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-600 text-white hover:bg-slate-700 active:scale-[0.98] transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1293,7 +1293,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* Artifact link badge */}
         {Array.isArray(data.artifactLinks) && data.artifactLinks.length > 0 && (
           <div
-            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-primary-500 text-white px-1 py-0.5 shadow-sm cursor-pointer hover:bg-primary-600 transition-colors"
+            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-slate-600 text-white px-1 py-0.5 shadow-sm cursor-pointer hover:bg-slate-700 transition-colors"
             title={data.artifactLinks
               .map((l: any) => l.label || l.title || `${l.artifactRef?.type || l.type}`)
               .join(', ')}
@@ -1367,7 +1367,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   {[72, 56, 64].map((w, i) => (
                     <span
                       key={i}
-                      className="inline-block h-[18px] rounded-full bg-primary-100 dark:bg-primary-900/30 animate-pulse"
+                      className="inline-block h-[18px] rounded-full bg-slate-200 dark:bg-navy-800 animate-pulse"
                       style={{ width: w }}
                     />
                   ))}
@@ -1379,7 +1379,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     <button
                       key={i}
                       type="button"
-                      className="text-[9px] px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800/40 transition-colors"
+                      className="text-[9px] px-2 py-0.5 rounded-full bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.10] dark:hover:bg-white/[0.14] transition-colors"
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -5399,7 +5399,7 @@ function MindMapInner({
               {sidekickCtx && nodes.length > 1 && (
                 <Panel position="top-center">
                   <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/10 text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
-                    <Sparkles size={10} className="text-primary-500 shrink-0" />
+                    <Sparkles size={10} className="text-slate-500 shrink-0" />
                     <span>{isPolish ? sidekickCtx.promptHintPl : sidekickCtx.promptHint}</span>
                   </div>
                 </Panel>

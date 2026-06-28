@@ -53,7 +53,7 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={isPl ? 'Dodaj notatkę…' : 'Add a note…'}
-        className="w-full h-20 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg p-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+        className="w-full h-20 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg p-2 resize-none focus:outline-none focus:ring-1 focus:ring-slate-400"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSave();
         }}
@@ -131,7 +131,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
           {tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200"
             >
               {tag}
               <button onClick={() => removeTag(tag)} className="hover:text-danger-500">
@@ -153,7 +153,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
             }
           }}
           placeholder={isPl ? 'Nowy tag…' : 'New tag…'}
-          className="flex-1 h-7 px-2 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="flex-1 h-7 px-2 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400"
         />
         <button
           onClick={addTag}
@@ -214,7 +214,7 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="https://…"
-        className="w-full h-8 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+        className="w-full h-8 text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 focus:outline-none focus:ring-1 focus:ring-slate-400"
         onKeyDown={(e) => {
           if (e.key === 'Enter') handleSave();
         }}

@@ -158,19 +158,19 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
               onChange={(e) => setEditValue(e.target.value)}
               onBlur={handleConfirm}
               onKeyDown={handleKeyDown}
-              className="px-1.5 py-0.5 text-[10px] rounded-md border border-primary-400/60 bg-white dark:bg-navy-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-400/50 w-20 text-center"
+              className="px-1.5 py-0.5 text-[10px] rounded-md border border-slate-400/60 dark:border-navy-500/60 bg-white dark:bg-navy-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400/50 w-20 text-center"
             />
           ) : label ? (
             <div
               onDoubleClick={handleDoubleClick}
-              className="px-1.5 py-0.5 text-[9px] font-medium text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-navy-900/80 rounded-md border border-slate-200/40 dark:border-navy-700/40 cursor-pointer hover:border-primary-400/40 transition-colors"
+              className="px-1.5 py-0.5 text-[9px] font-medium text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-navy-900/80 rounded-md border border-slate-200/40 dark:border-navy-700/40 cursor-pointer hover:border-slate-400/40 transition-colors"
             >
               {label}
             </div>
           ) : (
             <div
               onDoubleClick={handleDoubleClick}
-              className="w-4 h-4 rounded-full bg-transparent hover:bg-primary-500/10 cursor-pointer transition-colors"
+              className="w-4 h-4 rounded-full bg-transparent hover:bg-slate-400/10 cursor-pointer transition-colors"
               title="Double-click to add label"
             />
           )}

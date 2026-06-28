@@ -138,7 +138,7 @@ class CanvasToolErrorBoundary extends React.Component<
                 this.setState({ hasError: false, error: null });
                 this.props.onRetry?.();
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.10] dark:hover:bg-white/[0.14] transition-colors"
             >
               <RefreshCw size={14} />
               {isPl ? 'Ponów' : 'Retry'}
@@ -2665,7 +2665,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           <div className="absolute top-2 left-4 z-[60] flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
             <button
               onClick={() => handleDrillUp(0)}
-              className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+              className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:underline"
             >
               {isPolish ? 'Główna mapa' : 'Root map'}
             </button>
@@ -2677,7 +2677,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   className={`text-[10px] font-medium truncate max-w-[120px] ${
                     i === drillDownStack.length - 1
                       ? 'text-slate-700 dark:text-slate-200'
-                      : 'text-primary-600 dark:text-primary-400 hover:underline'
+                      : 'text-slate-600 dark:text-slate-300 hover:underline'
                   }`}
                 >
                   {item.label}
@@ -2690,7 +2690,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {/* V5-IDEA-15: Focus mode indicator */}
         {focusMode !== 'full' && (
           <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[58] flex items-center gap-2 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400">
+            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
               {focusMode === 'system'
                 ? isPolish
                   ? `Tryb skupiony: ${activeToolLabel}`
@@ -2716,7 +2716,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <button
               type="button"
               onClick={() => navigate('/my-work')}
-              className="text-[11px] font-semibold text-primary-600 hover:underline dark:text-primary-400"
+              className="text-[11px] font-semibold text-slate-600 hover:underline dark:text-slate-300"
             >
               {isPolish ? 'Idee' : 'Ideas'}
             </button>
@@ -2745,7 +2745,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               const ps = rootNode?.data?.pipelineStage;
               if (!ps || ps === 'draft') return null;
               return (
-                <span className="rounded-full bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                <span className="rounded-full bg-slate-900/[0.06] dark:bg-white/[0.10] px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700">
                   {ps}
                 </span>
               );
