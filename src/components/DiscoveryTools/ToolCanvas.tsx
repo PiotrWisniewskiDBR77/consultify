@@ -42,11 +42,29 @@ import {
   MarketForcesOutputsPhase,
 } from './tools/MarketForces/MarketForcesPhases';
 import {
+  AmbitionDecomposerBuildPhase,
+  AmbitionDecomposerInputPhase,
+  AmbitionDecomposerInsightsPhase,
+  AmbitionDecomposerOutputsPhase,
+} from './tools/AmbitionDecomposer';
+import {
   CapabilityMapperBuildPhase,
   CapabilityMapperInputPhase,
   CapabilityMapperInsightsPhase,
   CapabilityMapperOutputsPhase,
 } from './tools/CapabilityMapper';
+import {
+  FocusTradeoffBuildPhase,
+  FocusTradeoffInputPhase,
+  FocusTradeoffInsightsPhase,
+  FocusTradeoffOutputsPhase,
+} from './tools/FocusTradeoff';
+import {
+  NarrativeEngineBuildPhase,
+  NarrativeEngineInputPhase,
+  NarrativeEngineInsightsPhase,
+  NarrativeEngineOutputsPhase,
+} from './tools/NarrativeEngine';
 import {
   ValueChainBuildPhase,
   ValueChainInputPhase,
@@ -490,6 +508,222 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
         return (
           <div className="space-y-6">
             <CapabilityMapperOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'ambition-decomposer') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <AmbitionDecomposerInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'themes') {
+        return (
+          <AmbitionDecomposerBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <AmbitionDecomposerInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <AmbitionDecomposerOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'focus-tradeoff') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <FocusTradeoffInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'priorities') {
+        return (
+          <FocusTradeoffBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <FocusTradeoffInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <FocusTradeoffOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
+    }
+
+    if (toolType === 'narrative-engine') {
+      if (stepDefinition.id === 'mission') {
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <NarrativeEngineInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'pillars') {
+        return (
+          <NarrativeEngineBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <NarrativeEngineInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <NarrativeEngineOutputsPhase
               session={session}
               isPolish={isPolish}
               onAcceptCard={onAcceptCard}

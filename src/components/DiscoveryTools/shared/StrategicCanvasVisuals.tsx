@@ -1,8 +1,11 @@
 import React from 'react';
 
 import type {
+  AmbitionTheme,
   Capability,
+  FocusPriority,
   GrowthPathsData,
+  NarrativePillar,
   PorterData,
   PortfolioPriorityData,
   RiskUncertaintyData,
@@ -550,6 +553,473 @@ export function CapabilityMaturityVisual({
             {isPolish
               ? 'Sortowanie wg wagi strategicznej, kolor wypełnienia = rozmiar luki, znaczniki = dojrzałość obecna i docelowa.'
               : 'Sorted by strategic importance, fill color = gap size, markers = current and target maturity.'}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const AMBITION_HORIZON_ORDER: Array<AmbitionTheme['horizon']> = ['short', 'medium', 'long'];
+
+const AMBITION_IMPORTANCE_RANK: Record<AmbitionTheme['importance'], number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+};
+
+// Importance drives the chip emphasis: high = accent (violet), medium = slate, low = muted.
+const ambitionImportanceTone: Record<AmbitionTheme['importance'], string> = {
+  high: 'border-violet-300 bg-violet-50 dark:border-violet-700/60 dark:bg-violet-900/20',
+  medium: 'border-slate-200 bg-slate-50 dark:border-navy-700 dark:bg-navy-900/50',
+  low: 'border-slate-200 bg-white dark:border-navy-800 dark:bg-navy-950/40',
+};
+const ambitionImportanceDot: Record<AmbitionTheme['importance'], string> = {
+  high: 'bg-violet-500',
+  medium: 'bg-slate-400',
+  low: 'bg-slate-300',
+};
+
+const ambitionHorizonTone: Record<AmbitionTheme['horizon'], string> = {
+  short: 'text-emerald-700 dark:text-emerald-300',
+  medium: 'text-sky-700 dark:text-sky-300',
+  long: 'text-indigo-700 dark:text-indigo-300',
+};
+
+const ambitionHorizonLabel = (
+  horizon: AmbitionTheme['horizon'],
+  isPolish: boolean
+): string => {
+  if (isPolish) {
+    return horizon === 'short' ? 'Krótki' : horizon === 'medium' ? 'Średni' : 'Długi';
+  }
+  return horizon === 'short' ? 'Short' : horizon === 'medium' ? 'Medium' : 'Long';
+};
+
+const ambitionImportanceLabel = (
+  importance: AmbitionTheme['importance'],
+  isPolish: boolean
+): string => {
+  if (isPolish) {
+    return importance === 'high' ? 'Wysoka' : importance === 'medium' ? 'Średnia' : 'Niska';
+  }
+  return importance === 'high' ? 'High' : importance === 'medium' ? 'Medium' : 'Low';
+};
+
+export function AmbitionDecompositionVisual({
+  themes,
+  ambitionStatement,
+  isPolish,
+}: {
+  themes: AmbitionTheme[];
+  ambitionStatement?: string;
+  isPolish: boolean;
+}) {
+  const safeThemes = themes || [];
+
+  return (
+    <div className={cardClass}>
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+          {isPolish ? 'Kaskada ambicji' : 'Ambition cascade'}
+        </div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          {isPolish ? 'Motywy wg horyzontu' : 'Themes by horizon'}
+        </div>
+      </div>
+
+      {/* Central ambition node sits at the top of the cascade. */}
+      <div className="rounded-xl border border-violet-300 bg-violet-50 px-3 py-2.5 text-center dark:border-violet-700/60 dark:bg-violet-900/20">
+        <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">
+          {isPolish ? 'Ambicja' : 'Ambition'}
+        </div>
+        <div className="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">
+          {ambitionStatement?.trim()
+            ? ambitionStatement
+            : isPolish
+              ? 'Nazwij ambicję jednym zdaniem'
+              : 'Name the ambition in one sentence'}
+        </div>
+      </div>
+
+      {safeThemes.length === 0 ? (
+        <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs text-slate-400 dark:border-navy-700 dark:bg-navy-900/40 dark:text-slate-500">
+          {isPolish
+            ? 'Brak motywów do pokazania. Rozłóż ambicję na motywy strategiczne z celem i horyzontem.'
+            : 'No themes to show yet. Decompose the ambition into strategic themes with a target and horizon.'}
+        </div>
+      ) : (
+        <>
+          {/* Connector dropping from the ambition into the themes below. */}
+          <div className="mx-auto h-3 w-px bg-violet-300 dark:bg-violet-700/60" />
+
+          {/* Themes grouped and sorted by horizon (short → medium → long). */}
+          <div className="space-y-3">
+            {AMBITION_HORIZON_ORDER.map((horizon) => {
+              const group = safeThemes
+                .filter((theme) => theme.horizon === horizon)
+                .sort(
+                  (a, b) =>
+                    AMBITION_IMPORTANCE_RANK[a.importance] -
+                    AMBITION_IMPORTANCE_RANK[b.importance]
+                );
+              if (group.length === 0) return null;
+              return (
+                <div key={horizon}>
+                  <div
+                    className={`mb-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] ${ambitionHorizonTone[horizon]}`}
+                  >
+                    {ambitionHorizonLabel(horizon, isPolish)}
+                    <span className="ml-1.5 font-normal text-slate-400">{group.length}</span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {group.map((theme) => (
+                      <div
+                        key={theme.id}
+                        className={`rounded-xl border p-2.5 ${ambitionImportanceTone[theme.importance]}`}
+                        title={`${isPolish ? 'Istotność' : 'Importance'}: ${ambitionImportanceLabel(
+                          theme.importance,
+                          isPolish
+                        )}`}
+                      >
+                        <div className="flex items-start gap-1.5">
+                          <span
+                            className={`mt-1 h-2 w-2 shrink-0 rounded-full ${ambitionImportanceDot[theme.importance]}`}
+                          />
+                          <div className="min-w-0">
+                            <div
+                              className="truncate text-[12px] font-semibold text-slate-900 dark:text-white"
+                              title={theme.title}
+                            >
+                              {theme.title}
+                            </div>
+                            {theme.targetValue || theme.targetMetric ? (
+                              <div className="mt-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                                {[theme.targetValue, theme.targetMetric]
+                                  .filter((part) => Boolean(part && part.trim()))
+                                  .join(' · ')}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Importance legend. */}
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+            {(
+              [
+                ['high', isPolish ? 'Wysoka istotność' : 'High importance'],
+                ['medium', isPolish ? 'Średnia istotność' : 'Medium importance'],
+                ['low', isPolish ? 'Niska istotność' : 'Low importance'],
+              ] as Array<[AmbitionTheme['importance'], string]>
+            ).map(([importance, text]) => (
+              <div key={importance} className="flex items-center gap-1.5">
+                <span className={`h-2.5 w-2.5 rounded-full ${ambitionImportanceDot[importance]}`} />
+                <span className="text-[11px] text-slate-600 dark:text-slate-300">{text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Motywy pogrupowane wg horyzontu (krótki → długi), kolor chipa = istotność, podpis = cel i metryka.'
+              : 'Themes grouped by horizon (short → long), chip color = importance, caption = target and metric.'}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const focusRecommendationTone: Record<FocusPriority['recommendation'], string> = {
+  pursue: 'bg-emerald-500',
+  defer: 'bg-slate-400',
+  drop: 'bg-amber-500',
+};
+
+const focusRecommendationLabel = (
+  recommendation: FocusPriority['recommendation'],
+  isPolish: boolean
+): string => {
+  if (isPolish) {
+    return recommendation === 'pursue'
+      ? 'Realizuj'
+      : recommendation === 'defer'
+        ? 'Odłóż'
+        : 'Odpuść';
+  }
+  return recommendation === 'pursue' ? 'Pursue' : recommendation === 'defer' ? 'Defer' : 'Drop';
+};
+
+export function FocusTradeoffVisual({
+  priorities,
+  isPolish,
+}: {
+  priorities: FocusPriority[];
+  isPolish: boolean;
+}) {
+  const safePriorities = priorities || [];
+
+  // Quadrant guide labels: value (y) × effort (x), midpoint at score 3.
+  const quadrants: Array<[string, string]> = isPolish
+    ? [
+        ['Quick wins', 'Wys. wartość, niski wysiłek'],
+        ['Big bets', 'Wys. wartość, wysoki wysiłek'],
+        ['Fill-ins', 'Nis. wartość, niski wysiłek'],
+        ['Money pit', 'Nis. wartość, wysoki wysiłek'],
+      ]
+    : [
+        ['Quick wins', 'High value, low effort'],
+        ['Big bets', 'High value, high effort'],
+        ['Fill-ins', 'Low value, low effort'],
+        ['Money pit', 'Low value, high effort'],
+      ];
+
+  return (
+    <div className={cardClass}>
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+          {isPolish ? 'Macierz wartość x wysiłek' : 'Value x effort matrix'}
+        </div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          {isPolish ? 'Skala 1-5' : 'Scale 1-5'}
+        </div>
+      </div>
+
+      {safePriorities.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs text-slate-400 dark:border-navy-700 dark:bg-navy-900/40 dark:text-slate-500">
+          {isPolish
+            ? 'Brak priorytetów do pokazania. Dodaj priorytety z oceną wartości i wysiłku, aby zobaczyć macierz.'
+            : 'No priorities to show yet. Add priorities with value and effort scores to see the matrix.'}
+        </div>
+      ) : (
+        <>
+          <div className="flex gap-2">
+            {/* Vertical value-axis label */}
+            <div className="flex items-center">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500 [writing-mode:vertical-rl] [transform:rotate(180deg)] dark:text-slate-400">
+                {isPolish ? 'Wartość' : 'Value'}
+              </span>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="relative h-56 rounded-2xl bg-slate-50 dark:bg-navy-900">
+                {/* Quadrant dividers at the midpoint */}
+                <div className="absolute inset-x-1/2 top-0 h-full w-px bg-slate-200 dark:bg-navy-700" />
+                <div className="absolute inset-y-1/2 left-0 h-px w-full bg-slate-200 dark:bg-navy-700" />
+
+                {/* Quadrant guide labels */}
+                <span className="absolute left-2 top-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-emerald-600/70 dark:text-emerald-300/70">
+                  {quadrants[0][0]}
+                </span>
+                <span className="absolute right-2 top-1.5 text-right text-[8px] font-semibold uppercase tracking-[0.1em] text-emerald-600/70 dark:text-emerald-300/70">
+                  {quadrants[1][0]}
+                </span>
+                <span className="absolute bottom-1.5 left-2 text-[8px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                  {quadrants[2][0]}
+                </span>
+                <span className="absolute bottom-1.5 right-2 text-right text-[8px] font-semibold uppercase tracking-[0.1em] text-amber-600/80 dark:text-amber-300/80">
+                  {quadrants[3][0]}
+                </span>
+
+                {/* One bubble per priority: effort drives left (x), value drives bottom (y),
+                    color drives recommendation. Scores clamped to 1-5 and mapped on a 0-6 span. */}
+                {safePriorities.map((priority) => {
+                  const value = Math.max(1, Math.min(5, priority.valueScore || 0));
+                  const effort = Math.max(1, Math.min(5, priority.effortScore || 0));
+                  return (
+                    <div
+                      key={priority.id}
+                      className={`absolute flex h-6 w-6 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full text-[8px] font-bold text-white shadow ${focusRecommendationTone[priority.recommendation]}`}
+                      style={{
+                        left: `${(effort / 6) * 100}%`,
+                        bottom: `${(value / 6) * 100}%`,
+                      }}
+                      title={`${priority.title} · ${
+                        isPolish ? 'wartość' : 'value'
+                      } ${value} / ${isPolish ? 'wysiłek' : 'effort'} ${effort} · ${focusRecommendationLabel(
+                        priority.recommendation,
+                        isPolish
+                      )}`}
+                    >
+                      {value}/{effort}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Horizontal effort-axis label */}
+              <div className="mt-1 text-center text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Wysiłek' : 'Effort'}
+              </div>
+            </div>
+          </div>
+
+          {/* Recommendation legend */}
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+            {(
+              [
+                ['pursue', isPolish ? 'Realizuj' : 'Pursue'],
+                ['defer', isPolish ? 'Odłóż' : 'Defer'],
+                ['drop', isPolish ? 'Odpuść' : 'Drop'],
+              ] as Array<[FocusPriority['recommendation'], string]>
+            ).map(([reco, text]) => (
+              <div key={reco} className="flex items-center gap-1.5">
+                <span className={`h-2.5 w-2.5 rounded-full ${focusRecommendationTone[reco]}`} />
+                <span className="text-[11px] text-slate-600 dark:text-slate-300">{text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Pozycja = wartość (oś Y) i wysiłek (oś X), kolor bąbla = rekomendacja pursue/defer/drop.'
+              : 'Position = value (y) and effort (x), bubble color = pursue/defer/drop recommendation.'}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const narrativeResonanceColumn: Record<NarrativePillar['audienceResonance'], string> = {
+  high: 'border-emerald-300 bg-emerald-50 dark:border-emerald-700/60 dark:bg-emerald-900/20',
+  medium: 'border-slate-300 bg-slate-50 dark:border-navy-700 dark:bg-navy-900/40',
+  low: 'border-slate-200 bg-slate-50/60 dark:border-navy-800 dark:bg-navy-900/20',
+};
+
+const narrativeResonanceDot: Record<NarrativePillar['audienceResonance'], string> = {
+  high: 'bg-emerald-500',
+  medium: 'bg-slate-400',
+  low: 'bg-slate-300',
+};
+
+const narrativeResonanceLabel = (
+  resonance: NarrativePillar['audienceResonance'],
+  isPolish: boolean
+): string => {
+  if (isPolish) {
+    return resonance === 'high' ? 'Wysoki' : resonance === 'medium' ? 'Średni' : 'Niski';
+  }
+  return resonance === 'high' ? 'High' : resonance === 'medium' ? 'Medium' : 'Low';
+};
+
+export function NarrativeArcVisual({
+  pillars,
+  coreMessage,
+  isPolish,
+}: {
+  pillars: NarrativePillar[];
+  coreMessage?: string;
+  isPolish: boolean;
+}) {
+  const safePillars = pillars || [];
+
+  return (
+    <div className={cardClass}>
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+          {isPolish ? 'Dom komunikatu' : 'Message house'}
+        </div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          {isPolish ? 'Dach + filary' : 'Roof + pillars'}
+        </div>
+      </div>
+
+      {/* Roof / apex: the single core message that the pillars hold up. */}
+      <div className="rounded-t-2xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-center dark:border-emerald-700/60 dark:bg-emerald-900/20">
+        <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">
+          {isPolish ? 'Myśl przewodnia' : 'Core message'}
+        </div>
+        <div className="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">
+          {coreMessage?.trim()
+            ? coreMessage
+            : isPolish
+              ? 'Nazwij jedną myśl przewodnią'
+              : 'Name one core message'}
+        </div>
+      </div>
+
+      {safePillars.length === 0 ? (
+        <>
+          {/* Lintel under the roof even when there are no pillars yet. */}
+          <div className="mx-auto h-1.5 w-[92%] bg-emerald-200 dark:bg-emerald-900/40" />
+          <div className="rounded-b-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs text-slate-400 dark:border-navy-700 dark:bg-navy-900/40 dark:text-slate-500">
+            {isPolish
+              ? 'Brak filarów do pokazania. Dodaj filary z twierdzeniem i dowodami, aby zbudować dom komunikatu.'
+              : 'No pillars to show yet. Add pillars with a claim and proof points to build the message house.'}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Lintel spanning the pillar columns below the roof. */}
+          <div className="mx-auto h-1.5 w-[92%] bg-emerald-200 dark:bg-emerald-900/40" />
+
+          {/* Each pillar is a column: title + claim + proof-point count, colored by resonance. */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {safePillars.map((pillar) => (
+              <div
+                key={pillar.id}
+                className={`flex min-h-[120px] flex-col rounded-b-xl border border-t-0 p-2.5 ${narrativeResonanceColumn[pillar.audienceResonance]}`}
+                title={`${isPolish ? 'Rezonans' : 'Resonance'}: ${narrativeResonanceLabel(
+                  pillar.audienceResonance,
+                  isPolish
+                )}`}
+              >
+                <div className="flex items-start gap-1.5">
+                  <span
+                    className={`mt-1 h-2 w-2 shrink-0 rounded-full ${narrativeResonanceDot[pillar.audienceResonance]}`}
+                  />
+                  <div
+                    className="text-[12px] font-semibold leading-tight text-slate-900 dark:text-white"
+                    title={pillar.title}
+                  >
+                    {pillar.title}
+                  </div>
+                </div>
+                {pillar.message?.trim() ? (
+                  <div className="mt-1 flex-1 text-[11px] leading-snug text-slate-600 dark:text-slate-300">
+                    {pillar.message}
+                  </div>
+                ) : (
+                  <div className="flex-1" />
+                )}
+                <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                  {(pillar.proofPoints || []).length} {isPolish ? 'dowody' : 'proof'}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Foundation slab the pillars rest on. */}
+          <div className="mx-auto h-1.5 w-[96%] rounded-b-md bg-slate-300/70 dark:bg-navy-700" />
+
+          {/* Resonance legend. */}
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+            {(
+              [
+                ['high', isPolish ? 'Wysoki rezonans' : 'High resonance'],
+                ['medium', isPolish ? 'Średni rezonans' : 'Medium resonance'],
+                ['low', isPolish ? 'Niski rezonans' : 'Low resonance'],
+              ] as Array<[NarrativePillar['audienceResonance'], string]>
+            ).map(([resonance, text]) => (
+              <div key={resonance} className="flex items-center gap-1.5">
+                <span className={`h-2.5 w-2.5 rounded-full ${narrativeResonanceDot[resonance]}`} />
+                <span className="text-[11px] text-slate-600 dark:text-slate-300">{text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Dach = myśl przewodnia, kolumny = filary (twierdzenie + liczba dowodów), kolor = rezonans u odbiorcy.'
+              : 'Roof = core message, columns = pillars (claim + proof count), color = audience resonance.'}
           </div>
         </>
       )}

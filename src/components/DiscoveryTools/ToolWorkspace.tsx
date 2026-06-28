@@ -307,6 +307,46 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       }
       if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
     }
+    if (toolType === 'ambition-decomposer') {
+      if (!data.context?.ambitionStatement) gaps.push('Missing ambition statement');
+      if (!accepted(data.themes).length) gaps.push('Missing strategic themes');
+      if (!accepted(data.priorities).length) gaps.push('Missing priorities');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
+    if (toolType === 'focus-tradeoff') {
+      if (!data.context?.competingPriorities) gaps.push('Missing competing priorities');
+      if (!accepted(data.priorities).length) gaps.push('Missing scored priorities');
+      if (!accepted(data.tradeoffs).length) gaps.push('Missing trade-offs');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
+    if (toolType === 'narrative-engine') {
+      if (!data.context?.audience) gaps.push('Missing audience');
+      if (!data.context?.coreMessage) gaps.push('Missing core message');
+      if (!accepted(data.pillars).length) gaps.push('Missing narrative pillars');
+      if (!accepted(data.threads).length) gaps.push('Missing storyline threads');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
     if (toolType === 'growth-paths') {
       if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
         gaps.push('Missing growth mission');

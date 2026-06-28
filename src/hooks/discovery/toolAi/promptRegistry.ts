@@ -177,6 +177,133 @@ Return JSON:
     return '';
   }
 
+  if (toolType === 'ambition-decomposer') {
+    const ambData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Sharpen the ambition for this Ambition Decomposer session.
+
+Current context:
+- Ambition: ${ambData?.context?.ambitionStatement || 'missing'}
+- Scope: ${ambData?.context?.scope || 'missing'}
+
+Return JSON:
+{"mission": {"ambitionStatement": "...", "scope": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the ambition and organization context, propose 4-6 high-value signals about what the ambition requires (markets, capabilities, constraints, enablers).
+
+Ambition: ${ambData?.context?.ambitionStatement || 'missing'}
+Scope: ${ambData?.context?.scope || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["market|capability|constraint|enabler"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'themes') {
+      const signalsSummary = (ambData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Decompose the ambition into 4-7 strategic themes with measurable targets.
+
+Ambition: ${ambData?.context?.ambitionStatement || 'missing'}
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- each theme = a coherent strand of work toward the ambition
+- targetMetric = what to measure; targetValue = the goal value
+- horizon = short|medium|long; importance = high|medium|low
+- separate drivers from evidence; make implications concrete
+
+Return JSON:
+{"themes": [{"title": "...", "description": "...", "targetMetric": "...", "targetValue": "...", "horizon": "short|medium|long", "importance": "high|medium|low", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}]}`;
+    }
+    return '';
+  }
+
+  if (toolType === 'focus-tradeoff') {
+    const focData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Sharpen the focus question for this Focus & Trade-offs session.
+
+Current context:
+- Competing priorities: ${focData?.context?.competingPriorities || 'missing'}
+- Decision criteria: ${focData?.context?.decisionCriteria || 'missing'}
+
+Return JSON:
+{"mission": {"competingPriorities": "...", "decisionCriteria": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the focus question and organization context, propose 4-6 signals about the competing options and what truly matters for the decision.
+
+Competing priorities: ${focData?.context?.competingPriorities || 'missing'}
+Decision criteria: ${focData?.context?.decisionCriteria || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["value|effort|risk|fit"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'priorities') {
+      const signalsSummary = (focData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Score the competing priorities for a focus decision.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- valueScore = strategic value (1-5); effortScore = effort/cost (1-5); strategicFit = fit with strategy (1-5)
+- recommendation = pursue|defer|drop (high value + low effort + high fit → pursue)
+- separate drivers from evidence; make implications concrete
+
+Return JSON:
+{"priorities": [{"title": "...", "description": "...", "valueScore": 1-5, "effortScore": 1-5, "strategicFit": 1-5, "recommendation": "pursue|defer|drop", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}]}`;
+    }
+    return '';
+  }
+
+  if (toolType === 'narrative-engine') {
+    const narData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI communications strategist. Sharpen the brief for this Narrative Engine session.
+
+Current context:
+- Audience: ${narData?.context?.audience || 'missing'}
+- Core message: ${narData?.context?.coreMessage || 'missing'}
+
+Return JSON:
+{"mission": {"audience": "...", "coreMessage": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI communications strategist. Based on the audience, core message, and organization context, propose 4-6 signals: proof points, audience insights, objections to preempt.
+
+Audience: ${narData?.context?.audience || 'missing'}
+Core message: ${narData?.context?.coreMessage || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["proof|audience|objection|emotion"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'pillars') {
+      const signalsSummary = (narData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI communications strategist. Build 3-5 narrative pillars that support the core message.
+
+Core message: ${narData?.context?.coreMessage || 'missing'}
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- each pillar = one claim that advances the core message
+- proofPoints = concrete evidence backing the claim
+- audienceResonance = high|medium|low (how strongly it lands with the audience)
+- separate drivers from evidence; make implications concrete
+
+Return JSON:
+{"pillars": [{"title": "...", "message": "...", "proofPoints": ["..."], "audienceResonance": "high|medium|low", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}]}`;
+    }
+    return '';
+  }
+
   if (toolType === 'growth-paths') {
     const growthData = inputData as any;
     if (stepId === 'mission') {
@@ -508,6 +635,93 @@ Return as JSON:
   "moves": [{"title":"...","category":"build|buy|partner|reskill|restructure","rationale":"...","linkedCapabilityIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedCapabilityIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'ambition-decomposer') {
+    const ambData = inputData as any;
+    const themesSummary = (ambData?.themes || [])
+      .map((t: any) => `- ${t.title}: ${t.targetMetric} → ${t.targetValue} (${t.horizon}, ${t.importance})`)
+      .join('\n');
+
+    return `Based on this Ambition Decomposition, create a consulting-grade final summary:
+
+Ambition: ${ambData?.context?.ambitionStatement || 'n/a'}
+${themesSummary}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Priorities (which themes to sequence first and why)
+3. Applied Conclusions: where to start, what to enable, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"foundation|accelerator|bet|enabler|quick-win","rationale":"...","linkedThemeIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedThemeIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'focus-tradeoff') {
+    const focData = inputData as any;
+    const prioritiesSummary = (focData?.priorities || [])
+      .map((p: any) => `- ${p.title}: value ${p.valueScore}, effort ${p.effortScore}, fit ${p.strategicFit} → ${p.recommendation}`)
+      .join('\n');
+
+    return `Based on this Focus & Trade-offs analysis, create a consulting-grade final summary:
+
+${prioritiesSummary}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Trade-offs (the hardest tensions between competing priorities)
+3. Applied Conclusions: what to commit to, what to sequence later, what to cut, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"commit|sequence|cut|rebalance|experiment","rationale":"...","linkedPriorityIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedPriorityIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'narrative-engine') {
+    const narData = inputData as any;
+    const pillarsSummary = (narData?.pillars || [])
+      .map((p: any) => `- ${p.title}: ${p.message} (${(p.proofPoints || []).length} proof, ${p.audienceResonance})`)
+      .join('\n');
+
+    return `Based on this Narrative, create a consulting-grade final summary:
+
+Core message: ${narData?.context?.coreMessage || 'n/a'}
+Audience: ${narData?.context?.audience || 'n/a'}
+${pillarsSummary}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Storyline Threads (how the pillars connect into a persuasive arc)
+3. Applied Conclusions: how to open, what to prove, what call-to-action, what to validate next
+4. 3-5 Recommended Delivery Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"open|build|prove|cta|reframe","rationale":"...","linkedPillarIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedPillarIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
   }
 

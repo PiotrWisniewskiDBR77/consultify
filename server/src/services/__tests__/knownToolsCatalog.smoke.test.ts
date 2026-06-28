@@ -14,6 +14,9 @@ const SHIP = [
   'market-forces',
   'value-chain',
   'capability-mapper',
+  'ambition-decomposer',
+  'focus-tradeoff',
+  'narrative-engine',
   'growth-paths',
   'portfolio-priority',
   'risk-uncertainty',
@@ -29,8 +32,8 @@ const SHIP = [
 ];
 
 describe('known-tools catalog SHIP/HIDE decision', () => {
-  it('activates exactly the 16 curated SHIP tools', () => {
-    expect(ACTIVE_KNOWN_TOOL_TYPES.size).toBe(16);
+  it('activates exactly the 19 curated SHIP tools', () => {
+    expect(ACTIVE_KNOWN_TOOL_TYPES.size).toBe(19);
     for (const t of SHIP) {
       expect(ACTIVE_KNOWN_TOOL_TYPES.has(t)).toBe(true);
     }
@@ -38,7 +41,7 @@ describe('known-tools catalog SHIP/HIDE decision', () => {
 
   it('marks every non-SHIP seed tool as coming-soon', () => {
     const hidden = SQLITE_KNOWN_TOOLS_SEED.filter((s) => !ACTIVE_KNOWN_TOOL_TYPES.has(s.toolType));
-    expect(hidden.length).toBeGreaterThanOrEqual(15);
+    expect(hidden.length).toBeGreaterThanOrEqual(12);
     for (const tool of hidden) {
       expect(tool.isComingSoon).toBe(true);
     }

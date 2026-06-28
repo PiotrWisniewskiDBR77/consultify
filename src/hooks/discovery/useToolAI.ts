@@ -61,6 +61,24 @@ import {
 } from './toolAi/riskUncertainty';
 import { getToolSystemPrompt } from './toolAi/systemPrompts';
 import {
+  applyAmbitionDecomposerPendingAction,
+  buildAmbitionDecomposerFullSessionPrompt,
+  buildAmbitionDecomposerPrioritiesPrompt,
+  buildAmbitionDecomposerRethinkPrompt,
+} from './toolAi/ambitionDecomposer';
+import {
+  applyFocusTradeoffPendingAction,
+  buildFocusTradeoffFullSessionPrompt,
+  buildFocusTradeoffRethinkPrompt,
+  buildFocusTradeoffTradeoffsPrompt,
+} from './toolAi/focusTradeoff';
+import {
+  applyNarrativeEnginePendingAction,
+  buildNarrativeEngineFullSessionPrompt,
+  buildNarrativeEngineRethinkPrompt,
+  buildNarrativeEngineThreadsPrompt,
+} from './toolAi/narrativeEngine';
+import {
   applyCapabilityMapperPendingAction,
   buildCapabilityMapperFullSessionPrompt,
   buildCapabilityMapperGapsPrompt,
@@ -304,6 +322,45 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       return;
     }
 
+    if (toolType === 'ambition-decomposer') {
+      setError(null);
+      const prompt = buildAmbitionDecomposerPrioritiesPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need strategic themes to generate priorities');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
+    if (toolType === 'focus-tradeoff') {
+      setError(null);
+      const prompt = buildFocusTradeoffTradeoffsPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need scored priorities to generate trade-offs');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
+    if (toolType === 'narrative-engine') {
+      setError(null);
+      const prompt = buildNarrativeEngineThreadsPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need narrative pillars to generate the storyline');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('synthesize-insights');
+      await sendMessage(prompt);
+      return;
+    }
+
     if (toolType !== 'dynamic-swot') return;
 
     setError(null);
@@ -370,7 +427,22 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                       currentSession.inputData as any,
                       formatForPrompt()
                     )
-                  : toolType === 'dynamic-swot'
+                  : toolType === 'ambition-decomposer'
+                    ? buildAmbitionDecomposerFullSessionPrompt(
+                        currentSession.inputData as any,
+                        formatForPrompt()
+                      )
+                    : toolType === 'focus-tradeoff'
+                      ? buildFocusTradeoffFullSessionPrompt(
+                          currentSession.inputData as any,
+                          formatForPrompt()
+                        )
+                      : toolType === 'narrative-engine'
+                        ? buildNarrativeEngineFullSessionPrompt(
+                            currentSession.inputData as any,
+                            formatForPrompt()
+                          )
+                        : toolType === 'dynamic-swot'
                   ? buildDynamicSwotFullSessionPrompt(
                       currentSession.inputData as SWOTData | undefined,
                       formatForPrompt()
@@ -439,6 +511,9 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
           toolType !== 'market-forces' &&
           toolType !== 'value-chain' &&
           toolType !== 'capability-mapper' &&
+          toolType !== 'ambition-decomposer' &&
+          toolType !== 'focus-tradeoff' &&
+          toolType !== 'narrative-engine' &&
           toolType !== 'growth-paths' &&
           toolType !== 'portfolio-priority' &&
           toolType !== 'risk-uncertainty')
@@ -491,7 +566,28 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                         cardId,
                         userComment
                       )
-                    : buildDynamicSwotRethinkPrompt(
+                    : toolType === 'ambition-decomposer'
+                      ? buildAmbitionDecomposerRethinkPrompt(
+                          currentSession.inputData as any,
+                          cardType,
+                          cardId,
+                          userComment
+                        )
+                      : toolType === 'focus-tradeoff'
+                        ? buildFocusTradeoffRethinkPrompt(
+                            currentSession.inputData as any,
+                            cardType,
+                            cardId,
+                            userComment
+                          )
+                        : toolType === 'narrative-engine'
+                          ? buildNarrativeEngineRethinkPrompt(
+                              currentSession.inputData as any,
+                              cardType,
+                              cardId,
+                              userComment
+                            )
+                          : buildDynamicSwotRethinkPrompt(
                     currentSession.inputData as SWOTData,
                     cardType,
                     cardId,
@@ -513,6 +609,9 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         toolType !== 'market-forces' &&
         toolType !== 'value-chain' &&
         toolType !== 'capability-mapper' &&
+        toolType !== 'ambition-decomposer' &&
+        toolType !== 'focus-tradeoff' &&
+        toolType !== 'narrative-engine' &&
         toolType !== 'growth-paths' &&
         toolType !== 'portfolio-priority' &&
         toolType !== 'risk-uncertainty')
@@ -665,7 +764,73 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                         updateCardAfterRethink,
                       },
                     })
-                  : applyDynamicSwotPendingAction({
+                  : toolType === 'ambition-decomposer'
+                    ? applyAmbitionDecomposerPendingAction({
+                        pendingAction,
+                        parsed,
+                        currentStepId: currentStepDef?.id,
+                        ambitionData: (currentSession?.inputData as any) || {
+                          context: { ambitionStatement: '', scope: '' },
+                          signals: [],
+                          themes: [],
+                          priorities: [],
+                          recommendedMoves: [],
+                          outputCandidates: [],
+                        },
+                        rethinkTarget,
+                        toolType,
+                        actions: {
+                          updateInputData,
+                          setInitiatives,
+                          setSessionGenerationStatus,
+                          updateCardAfterRethink,
+                        },
+                      })
+                    : toolType === 'focus-tradeoff'
+                      ? applyFocusTradeoffPendingAction({
+                          pendingAction,
+                          parsed,
+                          currentStepId: currentStepDef?.id,
+                          focusData: (currentSession?.inputData as any) || {
+                            context: { competingPriorities: '', decisionCriteria: '' },
+                            signals: [],
+                            priorities: [],
+                            tradeoffs: [],
+                            recommendedMoves: [],
+                            outputCandidates: [],
+                          },
+                          rethinkTarget,
+                          toolType,
+                          actions: {
+                            updateInputData,
+                            setInitiatives,
+                            setSessionGenerationStatus,
+                            updateCardAfterRethink,
+                          },
+                        })
+                      : toolType === 'narrative-engine'
+                        ? applyNarrativeEnginePendingAction({
+                            pendingAction,
+                            parsed,
+                            currentStepId: currentStepDef?.id,
+                            narrativeData: (currentSession?.inputData as any) || {
+                              context: { audience: '', coreMessage: '' },
+                              signals: [],
+                              pillars: [],
+                              threads: [],
+                              recommendedMoves: [],
+                              outputCandidates: [],
+                            },
+                            rethinkTarget,
+                            toolType,
+                            actions: {
+                              updateInputData,
+                              setInitiatives,
+                              setSessionGenerationStatus,
+                              updateCardAfterRethink,
+                            },
+                          })
+                        : applyDynamicSwotPendingAction({
                   pendingAction,
                   parsed,
                   currentStepId: currentStepDef?.id,

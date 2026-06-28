@@ -535,6 +535,288 @@ export interface CapabilityMapperData {
   };
 }
 
+// ==================== Ambition Decomposer types ====================
+// Cascade a big ambition into strategic themes → measurable targets → moves.
+export interface AmbitionSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionTheme {
+  id: string;
+  title: string;
+  description: string;
+  targetMetric: string; // what to measure
+  targetValue: string; // the goal value
+  horizon: 'short' | 'medium' | 'long';
+  importance: 'high' | 'medium' | 'low';
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionPriority {
+  id: string;
+  title: string;
+  themeIds: string[];
+  insight: string;
+  priority: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionMove {
+  id: string;
+  title: string;
+  category: 'foundation' | 'accelerator' | 'bet' | 'enabler' | 'quick-win';
+  rationale: string;
+  linkedPriorityIds: string[];
+  linkedThemeIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedThemeIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionDecomposerData {
+  context: {
+    ambitionStatement: string;
+    scope: string;
+    goal?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: AmbitionSignal[];
+  themes: AmbitionTheme[];
+  priorities: AmbitionPriority[];
+  recommendedMoves: AmbitionMove[];
+  outputCandidates: AmbitionOutputCandidate[];
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// ==================== Focus & Trade-offs types ====================
+// Score competing priorities on value/effort/fit → trade-offs → focus decision.
+export interface FocusSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusPriority {
+  id: string;
+  title: string;
+  description: string;
+  valueScore: number; // 1-5 strategic value
+  effortScore: number; // 1-5 effort/cost
+  strategicFit: number; // 1-5 fit with strategy
+  recommendation: 'pursue' | 'defer' | 'drop';
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusTradeoff {
+  id: string;
+  title: string;
+  priorityIds: string[];
+  insight: string;
+  priority: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusMove {
+  id: string;
+  title: string;
+  category: 'commit' | 'sequence' | 'cut' | 'rebalance' | 'experiment';
+  rationale: string;
+  linkedTradeoffIds: string[];
+  linkedPriorityIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedPriorityIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusTradeoffData {
+  context: {
+    competingPriorities: string;
+    decisionCriteria: string;
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: FocusSignal[];
+  priorities: FocusPriority[];
+  tradeoffs: FocusTradeoff[];
+  recommendedMoves: FocusMove[];
+  outputCandidates: FocusOutputCandidate[];
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// ==================== Narrative Engine types ====================
+// Build a persuasive narrative: audience + core message → pillars with proof → arc.
+export interface NarrativeSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativePillar {
+  id: string;
+  title: string;
+  message: string; // the claim this pillar makes
+  proofPoints: string[]; // evidence backing the claim
+  audienceResonance: 'high' | 'medium' | 'low';
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativeThread {
+  id: string;
+  title: string;
+  pillarIds: string[];
+  insight: string;
+  priority: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativeMove {
+  id: string;
+  title: string;
+  category: 'open' | 'build' | 'prove' | 'cta' | 'reframe';
+  rationale: string;
+  linkedThreadIds: string[];
+  linkedPillarIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativeOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedPillarIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativeEngineData {
+  context: {
+    audience: string;
+    coreMessage: string;
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: NarrativeSignal[];
+  pillars: NarrativePillar[];
+  threads: NarrativeThread[];
+  recommendedMoves: NarrativeMove[];
+  outputCandidates: NarrativeOutputCandidate[];
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
 // Growth Paths (Ansoff) types
 export type GrowthQuadrantId =
   | 'marketPenetration'
@@ -929,6 +1211,9 @@ export interface ToolSession {
     | PorterData
     | ValueChainData
     | CapabilityMapperData
+    | AmbitionDecomposerData
+    | FocusTradeoffData
+    | NarrativeEngineData
     | GrowthPathsData
     | PortfolioPriorityData
     | RiskUncertaintyData
@@ -1132,6 +1417,150 @@ export const CAPABILITY_MAPPER_STEPS: StepDefinition[] = [
     namePl: 'Luki i ruchy',
     description: 'Synthesize maturity gaps into priorities and build/buy/partner moves',
     descriptionPl: 'Przekształć luki dojrzałości w priorytety i ruchy build/buy/partner',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const AMBITION_DECOMPOSER_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Ambition & Scope',
+    namePl: 'Ambicja i zakres',
+    description: 'State the ambition, scope, time horizon, and success signal',
+    descriptionPl: 'Określ ambicję, zakres, horyzont czasowy i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture signals that inform how the ambition can be decomposed',
+    descriptionPl: 'Zbierz sygnały, jak rozłożyć ambicję na czynniki',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'themes',
+    name: 'Strategic Themes',
+    namePl: 'Tematy strategiczne',
+    description: 'Decompose the ambition into strategic themes with measurable targets',
+    descriptionPl: 'Rozłóż ambicję na tematy strategiczne z mierzalnymi celami',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Priorities & Moves',
+    namePl: 'Priorytety i ruchy',
+    description: 'Sequence themes into priorities and enabling strategic moves',
+    descriptionPl: 'Ułóż tematy w priorytety i wspierające ruchy strategiczne',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const FOCUS_TRADEOFF_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Focus Question & Criteria',
+    namePl: 'Pytanie i kryteria',
+    description: 'Frame the competing priorities, decision criteria, and success signal',
+    descriptionPl: 'Określ konkurujące priorytety, kryteria decyzji i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture signals about the competing options and what matters',
+    descriptionPl: 'Zbierz sygnały o konkurujących opcjach i tym, co się liczy',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'priorities',
+    name: 'Score Priorities',
+    namePl: 'Ocena priorytetów',
+    description: 'Score competing priorities on value, effort, and strategic fit',
+    descriptionPl: 'Oceń konkurujące priorytety wg wartości, wysiłku i dopasowania',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Trade-offs & Decision',
+    namePl: 'Kompromisy i decyzja',
+    description: 'Expose trade-offs and decide what to commit, sequence, or cut',
+    descriptionPl: 'Pokaż kompromisy i zdecyduj, co podjąć, ułożyć w czasie lub odrzucić',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const NARRATIVE_ENGINE_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Audience & Core Message',
+    namePl: 'Audytorium i przekaz',
+    description: 'Define the audience, the core message, and the success signal',
+    descriptionPl: 'Określ audytorium, główny przekaz i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture proof points, audience insights, and supporting evidence',
+    descriptionPl: 'Zbierz dowody, insighty o audytorium i materiał wspierający',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'pillars',
+    name: 'Narrative Pillars',
+    namePl: 'Filary narracji',
+    description: 'Build message pillars, each with proof points and audience resonance',
+    descriptionPl: 'Zbuduj filary przekazu z dowodami i rezonansem u audytorium',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Storyline & Moves',
+    namePl: 'Narracja i ruchy',
+    description: 'Weave pillars into a storyline arc and decide delivery moves',
+    descriptionPl: 'Ułóż filary w łuk narracyjny i zdecyduj o ruchach przekazu',
     required: true,
     aiAssisted: true,
   },
@@ -1855,6 +2284,9 @@ interface ToolStoreState {
       | PorterData
       | ValueChainData
       | CapabilityMapperData
+      | AmbitionDecomposerData
+      | FocusTradeoffData
+      | NarrativeEngineData
       | GrowthPathsData
       | PortfolioPriorityData
       | RiskUncertaintyData
@@ -1995,6 +2427,62 @@ const createInitialValueChainData = (): ValueChainData => ({
   outputCandidates: [],
 });
 
+const createInitialNarrativeEngineData = (): NarrativeEngineData => ({
+  context: {
+    audience: '',
+    coreMessage: '',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  pillars: [],
+  threads: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
+const createInitialFocusTradeoffData = (): FocusTradeoffData => ({
+  context: {
+    competingPriorities: '',
+    decisionCriteria: '',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  priorities: [],
+  tradeoffs: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
+const createInitialAmbitionDecomposerData = (): AmbitionDecomposerData => ({
+  context: {
+    ambitionStatement: '',
+    scope: '',
+    goal: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  themes: [],
+  priorities: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
 const createInitialCapabilityMapperData = (): CapabilityMapperData => ({
   context: {
     industry: '',
@@ -2126,11 +2614,11 @@ const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'growth-paths': GROWTH_PATHS_STEPS,
   'value-chain': VALUE_CHAIN_STEPS,
   'portfolio-priority': PORTFOLIO_PRIORITY_STEPS,
-  'ambition-decomposer': PORTER_STEPS,
-  'focus-tradeoff': PORTER_STEPS,
+  'ambition-decomposer': AMBITION_DECOMPOSER_STEPS,
+  'focus-tradeoff': FOCUS_TRADEOFF_STEPS,
   'risk-uncertainty': RISK_UNCERTAINTY_STEPS,
   'capability-mapper': CAPABILITY_MAPPER_STEPS,
-  'narrative-engine': PORTER_STEPS,
+  'narrative-engine': NARRATIVE_ENGINE_STEPS,
   'sop-builder': SOP_STEPS,
   'a3-problem-solving': A3_STEPS,
   'smed-planner': SMED_STEPS,
@@ -2160,6 +2648,9 @@ const TOOL_INITIAL_DATA: Record<
   | PorterData
   | ValueChainData
   | CapabilityMapperData
+  | AmbitionDecomposerData
+  | FocusTradeoffData
+  | NarrativeEngineData
   | GrowthPathsData
   | PortfolioPriorityData
   | RiskUncertaintyData
@@ -2171,11 +2662,11 @@ const TOOL_INITIAL_DATA: Record<
   'growth-paths': createInitialGrowthPathsData(),
   'value-chain': createInitialValueChainData(),
   'portfolio-priority': createInitialPortfolioPriorityData(),
-  'ambition-decomposer': createInitialPorterData(),
-  'focus-tradeoff': createInitialPorterData(),
+  'ambition-decomposer': createInitialAmbitionDecomposerData(),
+  'focus-tradeoff': createInitialFocusTradeoffData(),
   'risk-uncertainty': createInitialRiskUncertaintyData(),
   'capability-mapper': createInitialCapabilityMapperData(),
-  'narrative-engine': createInitialPorterData(),
+  'narrative-engine': createInitialNarrativeEngineData(),
   'sop-builder': createInitialOperationalData(SOP_STEPS),
   'a3-problem-solving': createInitialOperationalData(A3_STEPS),
   'smed-planner': createInitialOperationalData(SMED_STEPS),
@@ -2649,6 +3140,9 @@ const mergeToolAnswersWithInitialData = (
   | PorterData
   | ValueChainData
   | CapabilityMapperData
+  | AmbitionDecomposerData
+  | FocusTradeoffData
+  | NarrativeEngineData
   | GrowthPathsData
   | PortfolioPriorityData
   | RiskUncertaintyData
@@ -3453,6 +3947,9 @@ export const useToolStore = create<ToolStoreState>()(
             | PorterData
             | ValueChainData
             | CapabilityMapperData
+            | AmbitionDecomposerData
+            | FocusTradeoffData
+            | NarrativeEngineData
             | GrowthPathsData
             | PortfolioPriorityData
             | RiskUncertaintyData
