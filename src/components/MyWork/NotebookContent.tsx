@@ -2665,36 +2665,32 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   <button
                     onClick={() => setShowVersionHistory((v) => !v)}
                     title={isPolish ? 'Historia wersji' : 'Version history'}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                    aria-label={isPolish ? 'Historia wersji' : 'Version history'}
+                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                   >
                     <History size={14} />
                   </button>
-                  {/* C3 (KROK 6): expand the note into a Canvas document draft */}
+                  {/* N4 (U12): icon-only + tooltip — expand note into a Canvas document draft */}
                   <button
                     onClick={() => void handleExpandToDocument()}
                     disabled={isExpandingToDocument}
                     data-testid="notebook-expand-to-document"
                     title={
                       isPolish
-                        ? 'Utwórz dokument w Canvas z kopią tej notatki i rozwijaj go z Teresą'
-                        : 'Create a Canvas document from a copy of this note and extend it with Teresa'
+                        ? 'Rozwiń w dokument — utwórz dokument w Canvas z kopią notatki'
+                        : 'Expand into document — create a Canvas doc from this note'
                     }
-                    className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/60 dark:bg-indigo-950/30 px-2.5 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/40 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                    aria-label={isPolish ? 'Rozwiń w dokument' : 'Expand into document'}
+                    className="ml-auto shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-60 disabled:cursor-wait"
                   >
-                    <FileText size={12} />
-                    {isExpandingToDocument
-                      ? isPolish
-                        ? 'Tworzenie…'
-                        : 'Creating…'
-                      : isPolish
-                        ? 'Rozwiń w dokument'
-                        : 'Expand into document'}
+                    <FileText size={14} className={isExpandingToDocument ? 'animate-pulse' : ''} />
                   </button>
-                  {/* L-03: Rail toggle button */}
+                  {/* N4 (U12): connection graph — icon-only + tooltip, monochrome active */}
                   <button
                     onClick={() => setShowGraphView((v) => !v)}
                     title={isPolish ? 'Graf powiązań' : 'Connection graph'}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                    aria-label={isPolish ? 'Graf powiązań' : 'Connection graph'}
+                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                   >
                     <Network size={14} />
                   </button>

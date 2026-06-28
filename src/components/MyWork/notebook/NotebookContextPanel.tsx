@@ -627,19 +627,42 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
-                                {chip?.title || x.sourceType}
+                                {chip?.title ||
+                                  (() => {
+                                    const TL: Record<string, string> = pl
+                                      ? {
+                                          task: 'Zadanie',
+                                          decision: 'Decyzja',
+                                          idea: 'Pomysł',
+                                          initiative: 'Inicjatywa',
+                                          notebook: 'Notatka',
+                                          note: 'Notatka',
+                                          report: 'Raport',
+                                          presentation: 'Prezentacja',
+                                        }
+                                      : {
+                                          task: 'Task',
+                                          decision: 'Decision',
+                                          idea: 'Idea',
+                                          initiative: 'Initiative',
+                                          notebook: 'Note',
+                                          note: 'Note',
+                                          report: 'Report',
+                                          presentation: 'Presentation',
+                                        };
+                                    return TL[x.sourceType] || x.sourceType;
+                                  })()}
                               </div>
-                              <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                                {chip?.snippet || x.sourceId}
-                              </div>
+                              {chip?.snippet ? (
+                                <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                  {chip.snippet}
+                                </div>
+                              ) : null}
                               {chip?.status ? (
-                                <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                                <div className="mt-1 inline-flex items-center rounded-md bg-slate-100 dark:bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-400">
                                   {chip.status}
                                 </div>
                               ) : null}
-                              <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-500 truncate">
-                                {x.sourceType} · {x.sourceId}
-                              </div>
                             </div>
                             {[
                               'task',
