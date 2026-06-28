@@ -12,6 +12,7 @@
 export { ADMAReportTemplate } from './ADMAReportTemplate';
 export { CMMIReportTemplate } from './CMMIReportTemplate';
 export { DBR77ReportTemplate } from './DBR77ReportTemplate';
+export { DRDReportTemplate } from './DRDReportTemplate';
 export { SIRIReportTemplate } from './SIRIReportTemplate';
 
 // Visualization components
