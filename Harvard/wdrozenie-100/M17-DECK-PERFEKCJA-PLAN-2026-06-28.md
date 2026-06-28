@@ -146,7 +146,14 @@ Każda fala: **fix → generuj realny .pptx (skrypt tsx + PptxPipelineService) �
 - Deck dowodowy: `docs/qa/deliverables/runs/2026-06-28-DECK-PERFEKCJA-W7.pptx` (13 slajdów) + pulpit. Screeny `docs/qa/screens/m17-deck-2026-06-28/s-01..13`.
 - 42 testy reports zielone, tsc czysty w report/pptx. Demo: `21c779acba`.
 
-**ZOSTAŁO do M2-M4 (następna noc/sesja):**
+**2026-06-28 noc cd. (przegląd + domknięcie + hardening):**
+- ✅ Pełna regresja: **824/828** deliverables+reports (4 fail = pre-existing i18n `copySuffix`, nie nasze) — ZERO regresji po 7 agentach.
+- ✅ Polish nity (`9bd529dc`): root-cause pełna czerwień→editorial panel (akcent-spine); next-steps dziura tabela↔callout→tabela centrowana/wypełnia.
+- ✅ **W15 bramka regresji wizualnej** (`9bd529dc`): test integracyjny renderuje WSZYSTKIE 17 intencji → asercja valid buffer + ZERO ostrzeżeń (łapie wywalony layout).
+- ✅ Finalny deck 13 slajdów (`d4409b3d`) na pulpicie + screeny. Demo `d4409b3dd4`.
+- **Decyzje CTO (noc, Piotr spał):** font=Inter zostaje · bez zdjęć (clean) · roadmap 1-odcień · **W14 docx/xlsx ODŁOŻONE** (zmiana rendererów niezweryfikowanych wizualnie tej nocy = ryzyko dla „nic-nie-zepsute") · **W11 wariancja ODŁOŻONA** (mamy 17 wyraźnie różnych layoutów = różnorodność między-slajdowa już jest; marginalna wartość vs ryzyko rdzenia).
+
+**ZOSTAŁO do M3-M4 (następna sesja — świadomie odłożone, NIE blokery):**
 - Drobiazgi: root-cause czerwony baner stonować; next-steps mniejszy odstęp tabela↔callout; 3-wierszowe tabele lekko niedopełnione (cap rowH).
 - W10.3/10.4 więcej wykresów (heatmap/waterfall), W11 wariancja kompozycji (resolveLayout→layoutVariantId), W12 font fidelity w realnym MS PowerPoint (test podstawienia Inter), W13 obrazy (decyzja: na razie clean/no-photo), W14 spójność docx/xlsx, W15 bramka sparseness w deckDesignCritic + golden visual.
 
