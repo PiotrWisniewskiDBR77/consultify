@@ -17,14 +17,11 @@ import {
   BookOpen,
   CheckCircle2,
   CheckSquare,
-  ChevronDown,
   ChevronLeft,
   Clock,
   FileText,
-  Filter,
   History,
   MoreHorizontal,
-  Inbox,
   Layers,
   Lightbulb,
   Network,
@@ -35,7 +32,6 @@ import {
   Plus,
   RefreshCw,
   Sparkles,
-  Sun,
   Tag,
   Trash2,
   Type,
@@ -101,7 +97,6 @@ import { buildAskAIMessage } from './shared/askAiHelper';
 import { NotebookExportMenu } from './notebook/NotebookExportMenu';
 import { NotebookGraphView } from './notebook/NotebookGraphView';
 import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
-import { NotebookTodayView } from './notebook/NotebookTodayView';
 import { NotebookTopicChips } from './notebook/NotebookTopicChips';
 import { NotebookTopicView } from './notebook/NotebookTopicView';
 import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
@@ -717,7 +712,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     notebookRailTab,
     setNotebookRailOpen,
     setNotebookRailTab,
+    currentUser,
   } = useAppStore();
+  const currentUserId = String(currentUser?.id || '');
   const [pages, setPages] = useState<NotebookPage[]>([]);
   const [pagesLoading, setPagesLoading] = useState(true);
   const [pagesError, setPagesError] = useState(false);
@@ -791,7 +788,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [showGraphView, setShowGraphView] = useState(false);
   // N1: hamburger ⋯ menu position (null = closed)
   const [hamburgerPos, setHamburgerPos] = useState<{ x: number; y: number } | null>(null);
-  const [todayRefreshKey, setTodayRefreshKey] = useState(0);
   const coverInputRef = useRef<HTMLInputElement>(null);
   // Code-block language picker overlay anchor.
   const [codeLangMenu, setCodeLangMenu] = useState<{
@@ -1043,39 +1039,86 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   }, [fetchPages, refreshTrigger]);
 
   // Sidebar filters & inbox state
-  const [sidebarTab, setSidebarTab] = useState<'inbox' | 'active' | 'all' | 'today'>(
-    pageStatusFilter ?? 'all'
+  // Status axis (Wszystkie/Inbox/Aktywne) is owned by Menu 3 in the hub — the
+  // in-column tab bar that used to duplicate it is gone (N5/U11).
+  const [statusTab, setStatusTab] = useState<'inbox' | 'active' | 'all'>(pageStatusFilter ?? 'all');
+  useEffect(() => {
+    if (pageStatusFilter !== undefined) setStatusTab(pageStatusFilter);
+  }, [pageStatusFilter]);
+
+  // N5 left-column lenses (independent of the status axis):
+  //  • scope — who owns the page (mine vs the rest of the team)
+  //  • view  — flattened "Today" sections (pinned / recent / to-review / fresh)
+  type NotebookScopeLens = 'all' | 'mine' | 'team';
+  type NotebookViewLens = 'all' | 'pinned' | 'recent' | 'toReview' | 'fresh';
+  const [scopeLens, setScopeLens] = useState<NotebookScopeLens>('all');
+  const [viewLens, setViewLens] = useState<NotebookViewLens>('all');
+
+  const isMinePage = useCallback(
+    (p: NotebookPage) => !p.ownerUserId || p.ownerUserId === currentUserId,
+    [currentUserId]
+  );
+  // A page is "to review" when its knowledge is disputed/stale or still in inbox.
+  const isToReviewPage = useCallback(
+    (p: NotebookPage) =>
+      p.verificationStatus === 'disputed' || !!p.staleAt || p.status === 'inbox',
+    []
+  );
+  // "Fresh" = arrived via a capture source (quick-capture, email, file, canvas).
+  const isFreshPage = useCallback(
+    (p: NotebookPage) => !!(p.captureSource || p.captureMetadata?.captureSource),
+    []
+  );
+  // "Recent" = touched within the last 7 days.
+  const isRecentPage = useCallback((p: NotebookPage) => {
+    if (!p.updatedAt) return false;
+    const t = new Date(p.updatedAt).getTime();
+    if (Number.isNaN(t)) return false;
+    return Date.now() - t <= 7 * 24 * 60 * 60 * 1000;
+  }, []);
+
+  const matchesView = useCallback(
+    (p: NotebookPage, lens: NotebookViewLens) => {
+      if (lens === 'pinned') return !!p.pinned;
+      if (lens === 'recent') return isRecentPage(p);
+      if (lens === 'toReview') return isToReviewPage(p);
+      if (lens === 'fresh') return isFreshPage(p);
+      return true;
+    },
+    [isRecentPage, isToReviewPage, isFreshPage]
   );
 
-  // Keep sidebarTab in sync when parent (Menu 3 L2) drives the filter
-  useEffect(() => {
-    if (pageStatusFilter !== undefined) setSidebarTab(pageStatusFilter);
-  }, [pageStatusFilter]);
-  const [sortBy, setSortBy] = useState<'updated' | 'created' | 'title'>('updated');
-  const [maturityFilter, setMaturityFilter] = useState<NotebookMaturity | 'all'>('all');
-  const [showFilters, setShowFilters] = useState(false);
+  // Pages after the status (Menu 3) + scope lens — the base the view chips count against.
+  const scopedPages = useMemo(() => {
+    let result = [...pages];
+    if (statusTab === 'inbox') result = result.filter((p) => p.status === 'inbox');
+    else if (statusTab === 'active') result = result.filter((p) => p.status === 'active');
+    if (scopeLens === 'mine') result = result.filter(isMinePage);
+    else if (scopeLens === 'team') result = result.filter((p) => !isMinePage(p));
+    return result;
+  }, [pages, statusTab, scopeLens, isMinePage]);
 
-  const inboxCount = useMemo(() => pages.filter((p) => p.status === 'inbox').length, [pages]);
-  const activeCount = useMemo(() => pages.filter((p) => p.status === 'active').length, [pages]);
+  const viewCounts = useMemo(
+    () => ({
+      all: scopedPages.length,
+      pinned: scopedPages.filter((p) => p.pinned).length,
+      recent: scopedPages.filter(isRecentPage).length,
+      toReview: scopedPages.filter(isToReviewPage).length,
+      fresh: scopedPages.filter(isFreshPage).length,
+    }),
+    [scopedPages, isRecentPage, isToReviewPage, isFreshPage]
+  );
+
+  const teamPagesExist = useMemo(() => pages.some((p) => !isMinePage(p)), [pages, isMinePage]);
 
   const filteredPages = useMemo(() => {
-    let result = [...pages];
-
-    if (sidebarTab === 'inbox') result = result.filter((p) => p.status === 'inbox');
-    else if (sidebarTab === 'active') result = result.filter((p) => p.status === 'active');
-
-    if (maturityFilter !== 'all')
-      result = result.filter((p) => (p.maturity || 'seed') === maturityFilter);
-
+    const result = scopedPages.filter((p) => matchesView(p, viewLens));
     result.sort((a, b) => {
       if ((a.pinned ? 1 : 0) !== (b.pinned ? 1 : 0)) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
-      if (sortBy === 'created') return (b.createdAt || '').localeCompare(a.createdAt || '');
       return (b.updatedAt || '').localeCompare(a.updatedAt || '');
     });
-
     return result;
-  }, [pages, sidebarTab, sortBy, maturityFilter]);
+  }, [scopedPages, viewLens, matchesView]);
 
   const handleTogglePin = useCallback(async (pageId: string) => {
     try {
@@ -2167,166 +2210,122 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
             </Tooltip>
           </div>
-
-          {/* Maturity distribution mini-bar */}
-          {filteredPages.length > 0 && (
-            <div className="flex items-center gap-0.5 h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-navy-800">
-              {(['actionable', 'mature', 'growing', 'seed'] as NotebookMaturity[]).map((m) => {
-                const count = filteredPages.filter(
-                  (p) => (p.maturity || computeMaturity(p)) === m
-                ).length;
-                if (!count) return null;
-                const pct = (count / filteredPages.length) * 100;
-                return (
-                  <div
-                    key={m}
-                    className={`h-full ${MATURITY_CONFIG[m].dot} transition-all duration-300`}
-                    style={{ width: `${pct}%` }}
-                    title={`${MATURITY_CONFIG[m].label}: ${count}`}
-                  />
-                );
-              })}
-            </div>
-          )}
         </div>
 
-        {/* Inbox/Active/All/Today tab bar */}
-        <div className="flex items-center border-b border-slate-200/60 dark:border-white/[0.06] px-2">
-          {[
-            { key: 'inbox' as const, label: 'Inbox', count: inboxCount, icon: <Inbox size={12} /> },
-            {
-              key: 'active' as const,
-              label: isPolish ? 'Aktywne' : 'Active',
-              count: activeCount,
-              icon: <Play size={12} />,
-            },
-            {
-              key: 'all' as const,
-              label: isPolish ? 'Wszystkie' : 'All',
-              count: pages.length,
-              icon: <FileText size={12} />,
-            },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => {
-                setSidebarTab(tab.key);
-                onPageStatusFilterChange?.(tab.key);
-              }}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-semibold transition-all border-b-2 ${
-                sidebarTab === tab.key
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-              {tab.count > 0 && (
-                <span
-                  className={`ml-0.5 px-1 py-0 rounded-full text-[9px] ${
-                    sidebarTab === tab.key
-                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                      : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600'
+        {/* N5 — Capture box: drop a thought or link straight into this notebook */}
+        <div className="px-3 pt-3 pb-2 border-b border-slate-200/60 dark:border-white/[0.06]">
+          <NotebookQuickCapture notebookId={notebookId} onCreated={() => void fetchPages()} />
+        </div>
+
+        {/* N5 — Scope lens (who owns the page). Auto-hides when there is nothing
+            from teammates, so personal notebooks stay clutter-free. */}
+        {teamPagesExist && (
+          <div className="px-3 pt-2.5">
+            <div className="inline-flex w-full items-center rounded-lg bg-slate-100 dark:bg-white/[0.04] p-0.5">
+              {(
+                [
+                  { key: 'all', label: isPolish ? 'Wszystkie' : 'All' },
+                  { key: 'mine', label: isPolish ? 'Moje' : 'Mine' },
+                  { key: 'team', label: isPolish ? 'Zespół' : 'Team' },
+                ] as Array<{ key: NotebookScopeLens; label: string }>
+              ).map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => setScopeLens(s.key)}
+                  className={`flex-1 rounded-md py-1 text-[11px] font-semibold transition-colors ${
+                    scopeLens === s.key
+                      ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-          <button
-            onClick={() => setSidebarTab('today')}
-            className={`flex items-center justify-center gap-1 px-2 py-2 text-[10px] font-semibold transition-all border-b-2 ${
-              sidebarTab === 'today'
-                ? 'border-amber-500 text-amber-600 dark:text-amber-400'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-            }`}
-            title={isPolish ? 'Widok dnia' : "Today's view"}
-          >
-            <Sun size={12} />
-          </button>
-          <button
-            onClick={() => setShowFilters((v) => !v)}
-            className={`p-1.5 rounded-md ml-1 transition-colors ${showFilters ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
-            title={isPolish ? 'Filtry' : 'Filters'}
-          >
-            <Filter size={12} />
-          </button>
-        </div>
-
-        {/* Filter bar (collapsible) */}
-        {showFilters && (
-          <div className="px-2 py-1.5 border-b border-slate-200/60 dark:border-white/[0.06] flex items-center gap-1.5 flex-wrap bg-slate-50/50 dark:bg-white/[0.01]">
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="appearance-none pl-2 pr-5 py-1 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium"
-              >
-                <option value="updated">{isPolish ? 'Ostatnio edytowane' : 'Last updated'}</option>
-                <option value="created">{isPolish ? 'Data utworzenia' : 'Created'}</option>
-                <option value="title">{isPolish ? 'Tytuł A-Z' : 'Title A-Z'}</option>
-              </select>
-              <ChevronDown
-                size={10}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
-              />
-            </div>
-            <div className="relative">
-              <select
-                value={maturityFilter}
-                onChange={(e) => setMaturityFilter(e.target.value as any)}
-                className="appearance-none pl-2 pr-5 py-1 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium"
-              >
-                <option value="all">{isPolish ? 'Wszystkie etapy' : 'All stages'}</option>
-                <option value="seed">🌱 Seed</option>
-                <option value="growing">🌿 Growing</option>
-                <option value="mature">🌳 Mature</option>
-                <option value="actionable">⚡ Actionable</option>
-              </select>
-              <ChevronDown
-                size={10}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
-              />
+                  {s.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Page list / Today cockpit */}
+        {/* N5 — View lens (flattened "Today" sections as chips). */}
+        <div className="flex flex-wrap items-center gap-1 px-3 py-2.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+          {(
+            [
+              { key: 'all', label: isPolish ? 'Wszystkie' : 'All', icon: null },
+              { key: 'pinned', label: isPolish ? 'Przypięte' : 'Pinned', icon: <Pin size={11} /> },
+              { key: 'recent', label: isPolish ? 'Ostatnie' : 'Recent', icon: <Clock size={11} /> },
+              {
+                key: 'toReview',
+                label: isPolish ? 'Do przeglądu' : 'To review',
+                icon: <AlertTriangle size={11} />,
+              },
+              { key: 'fresh', label: isPolish ? 'Świeże' : 'Fresh', icon: <Sparkles size={11} /> },
+            ] as Array<{ key: NotebookViewLens; label: string; icon: React.ReactNode }>
+          ).map((v) => {
+            const count = viewCounts[v.key];
+            const active = viewLens === v.key;
+            return (
+              <button
+                key={v.key}
+                onClick={() => setViewLens(v.key)}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                  active
+                    ? 'bg-slate-800 dark:bg-white text-white dark:text-navy-900'
+                    : 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08]'
+                }`}
+              >
+                {v.icon}
+                {v.label}
+                {v.key !== 'all' && count > 0 && (
+                  <span
+                    className={`rounded-full px-1 text-[9px] ${
+                      active
+                        ? 'bg-white/20 dark:bg-navy-900/20'
+                        : 'bg-white dark:bg-white/[0.08] text-slate-500'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Page list */}
         <div className="flex-1 overflow-y-auto nb-scroll p-2 space-y-1">
-          {sidebarTab === 'today' ? (
-            <NotebookTodayView
-              isPolish={isPolish}
-              onOpenNote={(id) => {
-                void flushPendingSave().then(() => setActiveId(id));
-                setSidebarTab('all');
-              }}
-              captureSlot={
-                <NotebookQuickCapture
-                  notebookId={notebookId}
-                  onCreated={() => {
-                    setTodayRefreshKey((k) => k + 1);
-                    void fetchPages();
-                  }}
-                />
-              }
-              refreshKey={todayRefreshKey}
-            />
-          ) : filteredPages.length === 0 ? (
+          {filteredPages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-700 flex items-center justify-center mb-3">
                 <FileText size={20} className="text-slate-600" />
               </div>
-              <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {sidebarTab === 'inbox'
-                  ? isPolish
-                    ? 'Inbox pusty!'
-                    : 'Inbox zero!'
-                  : t('myWork.notebook.empty', 'No pages yet')}
-              </div>
-              <div className="text-[11px] text-slate-600 dark:text-slate-500 mt-1">
-                {isPolish ? 'Utwórz pierwszą stronę' : 'Create your first page'}
-              </div>
+              {(() => {
+                // A lens/filter is narrowing an otherwise non-empty notebook →
+                // say "no matches", not "create your first page".
+                const isFiltered =
+                  statusTab !== 'all' || scopeLens !== 'all' || viewLens !== 'all';
+                const hasAnyPages = pages.length > 0;
+                if (isFiltered && hasAnyPages) {
+                  return (
+                    <>
+                      <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Brak pasujących stron' : 'No matching pages'}
+                      </div>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-500 mt-1">
+                        {isPolish ? 'Zmień filtr powyżej' : 'Try a different filter above'}
+                      </div>
+                    </>
+                  );
+                }
+                return (
+                  <>
+                    <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      {t('myWork.notebook.empty', 'No pages yet')}
+                    </div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-500 mt-1">
+                      {isPolish ? 'Utwórz pierwszą stronę' : 'Create your first page'}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           ) : (
             <>
