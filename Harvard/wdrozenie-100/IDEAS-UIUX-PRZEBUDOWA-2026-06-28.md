@@ -92,11 +92,24 @@ Right-click przejmuje gęstość → odciąża topbar (wiąże U6).
 - **F-F — Weryfikacja:** tsc + vitest (Ideas+Notebook suites) + Playwright screeny before/after na demo → dowód.
 - **F-G — Deploy demo** (merge feat→demo) → Piotr rano widzi.
 
-## 7. INWENTARYZACJA AKCJI (martwe/żywe) — uzupełnię po agencie
-*(pending: agent inwentaryzacji Ideas)*
+## 7. INWENTARYZACJA AKCJI IDEAS (ground-truth z kodu, ~44 akcje)
+**Licznik:** 13 ✅ działa · ~22 ⚠️ warunkowa (zaznaczenie/flaga/AI-klucz/aktywne narzędzie) · **4 🔴 twardo martwe.**
+**🔴 TWARDE MARTWE (priorytet):**
+1. **Rail Import/Export + AI + More-tools martwe poza Mind Mapą** (największy zasięg) — `CanvasLeftToolbar.tsx:179-195` renderuje SHARED_BOTTOM dla każdego narzędzia, ale akcje `mm_`-prefiks obsługuje TYLKO `useMindMapQuickActions`. W Whiteboard/PF/Table = eksport+AI+15 more-tools nic nie robią. **Fix-kierunek:** ukryć SHARED_BOTTOM poza Mind Mapą ALBO routować per-tool prefiks.
+2. **Context-menu „Edit label" = no-op** (`IdeaProcessFlowTool.tsx:2627-2635`) — ustawia tylko `selected`, nie otwiera edytora (inline edit w `FlowNodeComponent` osiągalny tylko double-click). **= U8.** Fix: podpiąć do inline-edit/Properties.
+3. **Frame w PF** (`CanvasLeftToolbar.tsx:161`) wysyłał `wb_add_frame` (brak handlera PF) → **✅ NAPRAWIONE (slot usunięty, PF nie ma ramek)**.
+4. **Rail Undo/Redo w Table** — emituje `mm_undo/redo`, `useTableQuickActions` nie obsługuje undo/redo.
+- **Floating „Rename (F2)"** otwiera Properties, nie inline rename (mylący tooltip).
 
-## 8. NOTATKI M04 — grzechy graficzne — uzupełnię po agencie
-*(pending: agent analizy Notatek)*
+**🔴 U4 — mind-map z czatu „AI returned no output" (root-cause):** ścieżka czat→mind-map pęknięta. `generate_deliverable` w MCP (`mcpServer.ts:116-121`) ma enum `['document','sheet','presentation']` — **BEZ `mindmap`**. Intencja mind-map łapana regexem (`mindmapIntentDetector`) → wysyła `CustomEvent` do listenera żyjącego TYLKO w canvasie Ideas → w czacie brak listenera → pusty stream → `EMPTY_STREAM` (`llmService.ts:1211`). Deck działa bo ma generator in-place + enum. **Fix-kierunek:** (1) generator mind-map in-place w `UnifiedChatPanel` (wzorem decka), ALBO (2) dodać `mindmap` do enuma + handler backend. **RYZYKO:** dotyka mcpServer/llmService = rdzeń czatu żywych klientów → osobny task z weryfikacją, NIE nocą bez testów.
+
+## 8. NOTATKI M04 — ✅ ZROBIONE (agent, 6 plików, tsc czysty, vitest 37/37)
+Crimson-leak dekoracyjny → neutral (ikona książki, welcome banner) · `font-bold`→`font-semibold` (tytuły) · gradientowe płótna → flat surfaces · mikro-typografia `text-[9px/10px]`→`11px` · hardkod `#1a1a1d`→`navy-900` · focus-ring → token `--c-focus`. **Pominięte świadomie:** inverted-primary CTA (333 plików app-wide = celowy idiom, ryzyko) + konsolidacja 4 akcentów primary/indigo/blue/sky (osobny task). EDITOR_STYLES + `text-danger` nietknięte.
 
 ---
-**Status:** spec v0 (reguły+layout+plan). Czekam na 2 inwentaryzacje → v1 → implementacja F-A.
+## STATUS FAL (2026-06-28 noc)
+- **F-A budżet czerwieni:** ✅ ChatSignalsPanel (commit) + ✅ ProcessFlowToolbar (crimson→neutral, 6 miejsc) + ✅ Notatki (agent). 
+- **F-C/F-E częściowo:** ✅ Notatki grafika (agent) + ✅ Frame martwy slot usunięty (PF).
+- **⏳ DO ZROBIENIA (wymaga weryfikacji wizualnej / większe):** F-B layout toolbara (przeniesienie ~20 akcji → primary+overflow+dock — RYZYKO bez live-verify), context-menu „Edit label" fix (U8), rail SHARED_BOTTOM poza Mind Mapą (martwe), U4 mind-map MCP (rdzeń czatu — osobny task). 
+- **Decyzja CTO (noc):** robię BEZPIECZNE czysto-graficzne + jednoznaczne martwe-bugi 1-liniowe. Layout-redesign + MCP-rewrite = oznaczone do weryfikacji z Piotrem (za duże/ryzykowne na headless bez screenów live).
+**Status:** spec v1. Implementacja F-A done; deploy demo + raport poranny następnie.
