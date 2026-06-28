@@ -686,6 +686,24 @@ export const Scheduler = {
     });
     this.jobs.push(job35);
 
+    // 36. Initiative candidate auto-scan (R5) — proactive inbox, every 30min.
+    // Behavioural + spends LLM tokens → behind a flag (default OFF, safe for live).
+    const job36 = cron.schedule('*/30 * * * *', async () => {
+      if (process.env.INITIATIVE_CANDIDATE_SCAN_CRON_ENABLED !== 'true') return;
+      try {
+        const { runCandidateScan } = await import('./InitiativeCandidateScanCron.js');
+        const r = await runCandidateScan();
+        if (r.created > 0 || r.errors > 0) {
+          logger.info(
+            `[Scheduler] Initiative candidate scan: orgs=${r.orgs} created=${r.created} errors=${r.errors}`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Initiative candidate scan failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job36);
+
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly)'
     );

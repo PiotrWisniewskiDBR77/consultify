@@ -178,6 +178,118 @@ export function buildCandidateFromArtifact(
 }
 
 // ---------------------------------------------------------------------------
+// LLM-backed proposer (real F1/F4 seam) — fail-soft to the deterministic builder
+// ---------------------------------------------------------------------------
+
+/** Lazy LLM accessor (premium tier resolved inside llmService — no key here). */
+async function getCandidateLlm(): Promise<{ call: (req: any) => Promise<any> } | null> {
+  try {
+    const mod: any = await import('../ai/llmService.js');
+    return mod.llmService || mod.default || null;
+  } catch {
+    return null;
+  }
+}
+
+function parseProposeJson(content: string): any | null {
+  const text = String(content || '').trim();
+  if (!text) return null;
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  const candidate = (fenced?.[1] || text).trim();
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    const s = candidate.indexOf('{');
+    const e = candidate.lastIndexOf('}');
+    if (s >= 0 && e > s) {
+      try {
+        return JSON.parse(candidate.slice(s, e + 1));
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+function pickStr(v: unknown, fallback: string): string {
+  return typeof v === 'string' && v.trim() ? v.trim() : fallback;
+}
+
+export interface ProposeCandidateOptions {
+  language?: 'pl' | 'en';
+  /** F0/F4 grounding: istniejące inicjatywy/portfel, by AI nie duplikował. */
+  portfolioSummary?: string;
+  /** Wstrzyknięty LLM dla testów; domyślnie leniwy `llmService`. */
+  llm?: { call: (req: any) => Promise<any> } | null;
+}
+
+/**
+ * Real LLM-backed candidate proposer (zastępuje deterministyczny stub w skanie).
+ * Zwraca ostrzejszy {title, rationale, fitScore} ugruntowany w artefakcie (+portfel).
+ * FAIL-SOFT na każdym kroku: brak LLM / błąd / niewalidny JSON → deterministyczny
+ * `buildCandidateFromArtifact`. Pola brakujące/niepoprawne → fallback per-pole;
+ * fitScore klamrowany do 0..1.
+ */
+export async function buildCandidateFromArtifactAI(
+  artifact: DiscoveryArtifact,
+  options: ProposeCandidateOptions = {},
+): Promise<{ title: string; rationale: string; fitScore: number }> {
+  const fallback = buildCandidateFromArtifact(artifact);
+  try {
+    const llm = options.llm !== undefined ? options.llm : await getCandidateLlm();
+    if (!llm) return fallback;
+
+    const isPolish = (options.language ?? 'pl') !== 'en';
+    const sourceLabel =
+      artifact.sourceType === 'interview_insight'
+        ? isPolish ? 'insight z wywiadu' : 'interview insight'
+        : artifact.sourceType === 'assessment'
+          ? isPolish ? 'wynik assessmentu' : 'assessment result'
+          : isPolish ? 'audyt' : 'audit';
+
+    const systemPrompt = isPolish
+      ? `Jesteś konsultantem PMO. Z pojedynczego artefaktu rozpoznania proponujesz JEDNĄ inicjatywę: ostry, akcyjny tytuł, zwięzłe uzasadnienie i fit_score 0..1 (jak bardzo warto ją podjąć w kontekście portfela). Nie wymyślaj faktów spoza artefaktu. Zwróć WYŁĄCZNIE JSON: {"title": string, "rationale": string, "fitScore": number}.`
+      : `You are a PMO consultant. From a single discovery artifact, propose ONE initiative: a sharp action title, a concise rationale, and a fit_score 0..1 (how worth pursuing it is in portfolio context). Do not invent facts beyond the artifact. Return ONLY JSON: {"title": string, "rationale": string, "fitScore": number}.`;
+
+    const lines = [
+      `${isPolish ? 'Źródło' : 'Source'}: ${sourceLabel}`,
+      `${isPolish ? 'Tytuł artefaktu' : 'Artifact title'}: ${artifact.title || ''}`,
+      `${isPolish ? 'Treść' : 'Summary'}: ${(artifact.summary || '').slice(0, 1500)}`,
+    ];
+    if (options.portfolioSummary) {
+      lines.push(
+        '',
+        isPolish
+          ? `Istniejące inicjatywy (NIE duplikuj; celuj w luki): ${options.portfolioSummary.slice(0, 1000)}`
+          : `Existing initiatives (do NOT duplicate; target gaps): ${options.portfolioSummary.slice(0, 1000)}`,
+      );
+    }
+    lines.push('', isPolish ? 'Zwróć WYŁĄCZNIE JSON.' : 'Return JSON ONLY.');
+
+    const res = await llm.call({
+      type: 'text',
+      modelConfig: { id: 'premium' },
+      systemPrompt,
+      messages: [{ role: 'user', content: lines.join('\n') }],
+      maxTokens: 512,
+      temperature: 0.4,
+      cache: false,
+    });
+
+    const parsed = parseProposeJson(String(res?.content || ''));
+    const title = pickStr(parsed?.title, fallback.title).slice(0, 200);
+    const rationale = pickStr(parsed?.rationale, fallback.rationale).slice(0, 600);
+    let fit = Number(parsed?.fitScore);
+    if (!Number.isFinite(fit)) fit = fallback.fitScore;
+    fit = Math.max(0, Math.min(1, fit));
+    return { title, rationale, fitScore: Math.round(fit * 100) / 100 };
+  } catch {
+    return fallback;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -310,7 +422,15 @@ async function loadDiscoveryArtifacts(db: CandidateDb, orgId: string): Promise<D
 export async function scanForCandidates(
   db: CandidateDb = defaultDb,
   orgId?: string,
-  opts: { createdBy?: string } = {}
+  opts: {
+    createdBy?: string;
+    /**
+     * Optional async proposer (R5 LLM seam). When provided, used per artifact to
+     * build {title, rationale, fitScore}; a throw falls back to the deterministic
+     * builder (fail-soft). Default (undefined) = deterministic builder.
+     */
+    propose?: (artifact: DiscoveryArtifact) => Promise<{ title: string; rationale: string; fitScore: number }>;
+  } = {}
 ): Promise<InitiativeCandidate[]> {
   if (!orgId) return [];
 
@@ -337,7 +457,12 @@ export async function scanForCandidates(
       const key = `${artifact.sourceType}::${artifact.sourceId}`;
       if (existingKeys.has(key)) continue;
 
-      const built = buildCandidateFromArtifact(artifact);
+      let built;
+      try {
+        built = opts.propose ? await opts.propose(artifact) : buildCandidateFromArtifact(artifact);
+      } catch {
+        built = buildCandidateFromArtifact(artifact); // fail-soft → deterministic
+      }
       try {
         const row = await db.queryOne<Record<string, unknown>>(
           `INSERT INTO initiative_candidates
