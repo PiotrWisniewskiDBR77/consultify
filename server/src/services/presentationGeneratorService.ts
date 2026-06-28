@@ -56,6 +56,7 @@ import {
   buildTransformationReadDeckPack,
 } from './transformationReadDeckPackService.js';
 import * as artifactRegistryService from './v8/artifactRegistryService.js';
+import { runBundleContentGate } from './deliverables/bundleContentGate.js';
 
 // ============================================================
 // TYPES
@@ -1519,6 +1520,41 @@ export async function generateDeck(
 
     const unifiedJson: UnifiedReportJSON = { meta, slides: auditedSlides };
     const warnings = [...extraWarnings];
+
+    // ------------------------------------------------------------
+    // F1.4 — per-deck CONTENT GATE (placeholder scan on final slides).
+    // The bundle pipeline (bundleGenerationRuntime) already runs this for
+    // the premium 3-format bundle, but a standalone L1 deck never did — so
+    // a "[PLACEHOLDER]" / "TBD" / "AWAITING CONTENT" leak could ship in a
+    // solo deck unnoticed. We scan the assembled slide text (key_message +
+    // content + narrative enrichment) and surface any hit as a warning the
+    // Studio banner + PPTX review marker already know how to display.
+    // Pure + fail-open (runBundleContentGate never throws); JSON.stringify
+    // the discriminated-union content so every slide variant is covered
+    // without hand-mapping 17 content shapes.
+    // ------------------------------------------------------------
+    try {
+      const deckTextForGate = auditedSlides
+        .map((s) => {
+          const narrative = (s as { _narrative_enrichment?: { content?: string } })
+            ._narrative_enrichment?.content;
+          return [s.key_message, JSON.stringify(s.content ?? ''), narrative]
+            .filter(Boolean)
+            .join(' ');
+        })
+        .filter(Boolean)
+        .join('\n');
+      const contentGate = runBundleContentGate({ deckText: deckTextForGate });
+      if (!contentGate.passed) {
+        for (const issue of contentGate.issues) warnings.push(`content-gate: ${issue}`);
+        logger.warn(
+          `[PresentationGen] content-gate flagged ${contentGate.placeholderHits.length} placeholder(s) in deck ${deckId}`,
+          { hits: contentGate.placeholderHits.slice(0, 3).map((h) => h.pattern) }
+        );
+      }
+    } catch (gateErr) {
+      logger.warn(`[PresentationGen] content-gate skipped (non-fatal)`, { gateErr });
+    }
 
     // ──────────────────────────────────────────────────────────────
     // B2 (W4): PREMIUM layout variants — 3 distinct palette+intent

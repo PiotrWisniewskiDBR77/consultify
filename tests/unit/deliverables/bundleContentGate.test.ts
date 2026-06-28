@@ -120,3 +120,64 @@ describe('bundleContentGate — fail-open', () => {
     expect(result.passed).toBe(true);
   });
 });
+
+// ── CG-5: per-deck L1 wiring — JSON.stringified discriminated-union slides ──
+// presentationGeneratorService.generateDeck builds deckText by JSON.stringify-ing
+// each slide's `content` (17-variant union) instead of hand-mapping every shape.
+// These tests guard that approach: a placeholder buried in ANY content variant
+// still surfaces through the stringified scan.
+
+describe('bundleContentGate — per-deck L1 stringified-content scan', () => {
+  const slideToText = (slides: Array<{ key_message: string; content: unknown }>): string =>
+    slides
+      .map((s) => [s.key_message, JSON.stringify(s.content ?? '')].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .join('\n');
+
+  it('CG-5.1: placeholder inside executive_summary.key_findings is caught', () => {
+    const deckText = slideToText([
+      {
+        key_message: 'Transformation thesis',
+        content: {
+          type: 'executive_summary',
+          headline: 'AI readiness assessment',
+          key_findings: ['Strong data foundation', 'TBD'],
+        },
+      },
+    ]);
+    const result = runBundleContentGate({ deckText });
+    expect(result.passed).toBe(false);
+    expect(result.placeholderHits.some((h) => h.format === 'deck')).toBe(true);
+  });
+
+  it('CG-5.2: AWAITING CONTENT in a key_messages slide is caught (premium-off leak)', () => {
+    const deckText = slideToText([
+      {
+        key_message: 'Key moves',
+        content: {
+          type: 'key_messages',
+          messages: [{ title: 'Move 1', description: 'AWAITING CONTENT' }],
+        },
+      },
+    ]);
+    const result = runBundleContentGate({ deckText });
+    expect(result.passed).toBe(false);
+  });
+
+  it('CG-5.3: a fully-populated deck passes (no false positive on real content)', () => {
+    const deckText = slideToText([
+      {
+        key_message: 'Market opportunity',
+        content: {
+          type: 'single_insight',
+          chart_type: 'bar',
+          chart_data: { labels: ['2024', '2025'], series: [{ name: 'ARR', data: [1.2, 3.4] }] },
+          insight_text: 'ARR scales from €1.2M to €3.4M within 18 months',
+        },
+      },
+    ]);
+    const result = runBundleContentGate({ deckText });
+    expect(result.passed).toBe(true);
+    expect(result.issues).toHaveLength(0);
+  });
+});
