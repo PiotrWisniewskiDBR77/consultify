@@ -2401,7 +2401,9 @@
     "tabs": {
       "portfolio": "Portfolio",
       "analysis": "Analiza",
-      "observability": "Obserwowalność"
+      "observability": "Obserwowalność",
+      "candidates": "Kandydaci",
+      "portfolioHealth": "Zdrowie portfela"
     },
     "analysis": {
       "resources": {

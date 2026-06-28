@@ -55,6 +55,7 @@ import {
   Shield,
   ShieldCheck,
   Sparkles,
+  Table2,
   Target,
   Trash2,
   TrendingUp,
@@ -74,7 +75,7 @@ import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/type
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
-import { Api } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
 import { V8ResultsApi } from '@/services/api/v8/results';
 import {
@@ -577,6 +578,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showToolbarKebab, setShowToolbarKebab] = useState(false);
+
+  // F5 — "Zrób materiał": one-click deck/report/table via the M17 pipeline.
+  // POST /api/initiatives/:id/materialize { format } → binary blob download.
+  const [showMaterializeMenu, setShowMaterializeMenu] = useState(false);
+  const [materializingFormat, setMaterializingFormat] = useState<
+    null | 'deck' | 'report' | 'table'
+  >(null);
 
   // Suggested changes (Formula §5 / Faza 4) — owner-side mini-gate. The Generator
   // proposes CHANGES to an existing initiative as pending suggested changes; the
@@ -9097,6 +9105,64 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setPresentOpen(true);
   }, []);
 
+  // F5 — "Zrób materiał": ask the M17 pipeline to render a deck / report / table
+  // from this initiative's real data and trigger a browser download. The endpoint
+  // returns a binary blob with a Content-Disposition filename.
+  const handleMaterialize = useCallback(
+    async (format: 'deck' | 'report' | 'table') => {
+      if (materializingFormat) return;
+      setShowMaterializeMenu(false);
+      setMaterializingFormat(format);
+      const loadingLabel = isPolish ? 'Tworzę materiał…' : 'Creating material…';
+      const toastId = toast.loading(loadingLabel);
+      try {
+        const res = await fetch(`${API_URL}/initiatives/${initiativeId}/materialize`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ format }),
+        });
+        if (!res.ok) {
+          throw new Error(`Materialize failed (HTTP ${res.status})`);
+        }
+        const blob = await res.blob();
+        // Resolve filename from Content-Disposition (RFC5987 first, then plain).
+        const contentDisposition = res.headers.get('Content-Disposition') || '';
+        const encodedMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+        const plainMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+        const extByFormat: Record<typeof format, string> = {
+          deck: 'pptx',
+          report: 'pdf',
+          table: 'xlsx',
+        };
+        const fallbackName = `initiative-${initiativeId}-${format}.${extByFormat[format]}`;
+        const filename = encodedMatch?.[1]
+          ? decodeURIComponent(encodedMatch[1])
+          : plainMatch?.[1] || fallbackName;
+        const objectUrl = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success(isPolish ? 'Materiał gotowy' : 'Material ready', { id: toastId });
+      } catch (err) {
+        toast.error(
+          isPolish
+            ? 'Nie udało się utworzyć materiału'
+            : 'Failed to create material',
+          { id: toastId }
+        );
+        // eslint-disable-next-line no-console
+        console.error('[InitiativeDocumentView] materialize failed', err);
+      } finally {
+        setMaterializingFormat(null);
+      }
+    },
+    [materializingFormat, isPolish, initiativeId]
+  );
+
   const handleExportNotebook = useCallback(async () => {
     setIsExporting('notebook');
     try {
@@ -9990,6 +10056,79 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     >
                                       <ItemIcon size={13} className="shrink-0 opacity-70" />
                                       <span>{isPolish ? item.label.pl : item.label.en}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Slot 3b — Zrób materiał ▾ (F5: deck / report / table via M17) */}
+                        <div className="relative">
+                          <ToolbarSubtleButton
+                            icon={
+                              materializingFormat ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <Package size={14} />
+                              )
+                            }
+                            onClick={() => setShowMaterializeMenu((v) => !v)}
+                            aria-expanded={showMaterializeMenu}
+                            disabled={!!materializingFormat}
+                          >
+                            <span>{t('initiatives.makeMaterial', 'Zrób materiał')}</span>
+                            <ChevronDown size={12} className="opacity-60" />
+                          </ToolbarSubtleButton>
+                          {showMaterializeMenu && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowMaterializeMenu(false)}
+                              />
+                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                {(
+                                  [
+                                    {
+                                      id: 'deck',
+                                      format: 'deck',
+                                      label: t('initiatives.materialDeck', 'Prezentacja'),
+                                      icon: Presentation,
+                                    },
+                                    {
+                                      id: 'report',
+                                      format: 'report',
+                                      label: t('initiatives.materialReport', 'Raport'),
+                                      icon: FileText,
+                                    },
+                                    {
+                                      id: 'table',
+                                      format: 'table',
+                                      label: t('initiatives.materialTable', 'Tabela'),
+                                      icon: Table2,
+                                    },
+                                  ] as const
+                                ).map((item) => {
+                                  const ItemIcon = item.icon;
+                                  const busy = materializingFormat === item.format;
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      disabled={!!materializingFormat}
+                                      onClick={() => void handleMaterialize(item.format)}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      {busy ? (
+                                        <Loader2
+                                          size={13}
+                                          className="shrink-0 animate-spin opacity-70"
+                                        />
+                                      ) : (
+                                        <ItemIcon size={13} className="shrink-0 opacity-70" />
+                                      )}
+                                      <span>{item.label}</span>
                                     </button>
                                   );
                                 })}

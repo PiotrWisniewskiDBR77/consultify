@@ -158,13 +158,29 @@ export async function createInitiativeFromAudit(
   if (!organizationId) throw new Error('organizationId is required');
 
   // Resolve the audit row (DB read unless caller pre-supplied it).
+  // Schema-safe: the live `audits` table may lack project_id (added by migration
+  // 20260627_audits). A schema-drift error MUST degrade to not-found (404), never a
+  // raw 500 — so we try the full select, then fall back to the guaranteed columns.
   let audit: AuditRow | null = params.audit ?? null;
   if (!audit) {
-    audit = await queryHelpers.queryOne<AuditRow>(
-      `SELECT id, organization_id, project_id, name, findings
-       FROM audits WHERE id = ? AND organization_id = ?`,
-      [auditId, organizationId]
-    );
+    try {
+      audit = await queryHelpers.queryOne<AuditRow>(
+        `SELECT id, organization_id, project_id, name, findings
+         FROM audits WHERE id = ? AND organization_id = ?`,
+        [auditId, organizationId]
+      );
+    } catch {
+      // missing optional column (e.g. project_id) — retry with the guaranteed set
+      try {
+        audit = await queryHelpers.queryOne<AuditRow>(
+          `SELECT id, organization_id, name, findings
+           FROM audits WHERE id = ? AND organization_id = ?`,
+          [auditId, organizationId]
+        );
+      } catch {
+        audit = null; // table/columns absent → treat as not found (→ 404)
+      }
+    }
   }
   if (!audit) {
     const err = new Error('Audit not found');

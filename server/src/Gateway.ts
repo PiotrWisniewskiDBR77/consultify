@@ -200,6 +200,7 @@ import initiativesRoutes from './routes/pmo/initiatives.routes.js';
 import initiativeCandidatesRouter from './routes/initiativeCandidates.routes.js';
 import initiativeMaterializeRoutes from './routes/initiativeMaterialize.routes.js';
 import initiativeBackboneRoutes from './routes/initiativeBackbone.routes.js';
+import initiativeGeneratorBrainRoutes from './routes/initiativeGeneratorBrain.routes.js';
 import pmoRoutes from './routes/pmo/pmo.routes.js';
 import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
 import pmoContextRoutes from './routes/pmo/pmo-context.routes.js';
@@ -476,6 +477,8 @@ export class ApiGateway {
       // na POST /:id (status-alias). Konkretne ścieżki przed parametrycznymi.
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeCandidatesRouter);
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeBackboneRoutes);
+      // F1 — mózg generatora: POST /propose-cards (przed POST /:id), POST /:id/generate-full.
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeGeneratorBrainRoutes);
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
       // F5 — „Zrób materiał": /:id/materialize + /portfolio/materialize (additive POST sub-paths, po głównym OK).
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeMaterializeRoutes);

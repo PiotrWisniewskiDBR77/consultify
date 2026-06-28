@@ -6,6 +6,7 @@
  */
 
 import {
+  Activity,
   AlertTriangle,
   Archive,
   BarChart3,
@@ -37,6 +38,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
+import { API_URL, getHeaders } from '@/services/api/baseClient';
 import {
   V8PlanningApi,
   type V8PlanningDecisionChain,
@@ -56,6 +58,8 @@ import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
+import { CandidatesPanel, type AcceptCandidatePayload } from './CandidatesPanel';
+import PortfolioHealthView from './PortfolioHealthView';
 
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
@@ -552,7 +556,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Available view modes — hide when Analysis tab is active
   const availableViewModes: ViewMode[] =
-    activeTab === 'analysis' || activeTab === 'observability'
+    activeTab === 'analysis' ||
+    activeTab === 'observability' ||
+    activeTab === 'candidates' ||
+    activeTab === 'portfolioHealth'
       ? []
       : ['table', 'kanban', 'timeline', 'grid'];
 
@@ -574,6 +581,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         id: 'observability' as ModuleTab,
         label: t('initiatives.tabs.observability', 'Obserwowalność'),
         icon: <GitBranch size={16} />,
+      },
+      {
+        // F2 — skrzynka kandydatów (AI sugeruje inicjatywy z rozpoznania)
+        id: 'candidates' as ModuleTab,
+        label: t('initiatives.tabs.candidates', 'Kandydaci'),
+        icon: <Sparkles size={16} />,
+      },
+      {
+        // F4 — zdrowie portfela (MECE / luki / balans / duplikaty)
+        id: 'portfolioHealth' as ModuleTab,
+        label: t('initiatives.tabs.portfolioHealth', 'Zdrowie portfela'),
+        icon: <Activity size={16} />,
       },
     ],
     [t]
@@ -1286,6 +1305,122 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (showBulkModal) setShowBulkModal(false);
   }, [isPilotParticipant, showBulkModal, showInitiativeWizard, showNewModal]);
 
+  // F5 — portfolio-level "Zrób materiał": POST /initiatives/portfolio/materialize
+  // and download the returned blob (deck/report/table). Best-effort UX with toasts.
+  const [isMaterializing, setIsMaterializing] = useState(false);
+  const handleMaterializePortfolio = useCallback(
+    async (format: 'deck' | 'report' | 'table') => {
+      if (isMaterializing) return;
+      setIsMaterializing(true);
+      const toastId = toast.loading(
+        t('initiatives.materialize.working', 'Generuję materiał z portfela…')
+      );
+      try {
+        const res = await fetch(`${API_URL}/initiatives/portfolio/materialize`, {
+          method: 'POST',
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ format }),
+        });
+        if (!res.ok) {
+          let message = `HTTP ${res.status}`;
+          try {
+            const body = await res.json();
+            message = body?.message || body?.error || message;
+          } catch {
+            /* non-JSON error body */
+          }
+          throw new Error(message);
+        }
+        const blob = await res.blob();
+        const disposition = res.headers.get('Content-Disposition') || '';
+        const match = /filename="?([^"]+)"?/i.exec(disposition);
+        const filename = match?.[1] || `portfolio-${format}`;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success(t('initiatives.materialize.done', 'Materiał gotowy'), { id: toastId });
+      } catch (e: any) {
+        toast.error(
+          e?.message || t('initiatives.materialize.failed', 'Nie udało się wygenerować materiału'),
+          { id: toastId }
+        );
+      } finally {
+        setIsMaterializing(false);
+      }
+    },
+    [isMaterializing, t]
+  );
+
+  // F2 — accept candidate: create a DRAFT initiative via the existing create flow
+  // (no dependency on a not-yet-built generator endpoint). The candidate's
+  // rationale/brief seeds the summary; source lineage is stamped when available.
+  const handleAcceptCandidate = useCallback(
+    async (payload: AcceptCandidatePayload) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({ href: '/initiatives' });
+        return;
+      }
+      try {
+        const { createdId, truth } = await createInitiativeWriteTruth({
+          projectId: currentProjectId || undefined,
+          title: payload.title.trim(),
+          axis: 'operational',
+          level: 'standard',
+          summary: (payload.brief || payload.rationale || '').trim() || undefined,
+          status: 'DRAFT',
+          sourceType: payload.sourceType || undefined,
+          sourceId: payload.sourceId || undefined,
+        });
+        toast.success(t('initiatives.form.initiativeCreated', 'Initiative created'));
+        if (createdId) {
+          try {
+            const full = truth.initiative || (await V8PlanningApi.getInitiative(createdId));
+            const normalized = normalizeInitiativeForPortfolio(
+              full as Record<string, any>,
+              createdId
+            );
+            if (normalized) {
+              setAllInitiatives((prev) => upsertPortfolioInitiative(prev, normalized));
+              setInitiatives((prev) => upsertPortfolioInitiative(prev, normalized));
+              const revealState = getCreatedInitiativeRevealState(
+                { scope, activeStatusFilter },
+                normalized.status
+              );
+              setScope(revealState.scope);
+              setActiveStatusFilter(revealState.activeStatusFilter);
+              setActiveTab('list');
+              handleInitiativeClick(normalized);
+              return;
+            }
+          } catch {
+            /* fall through to refetch */
+          }
+        }
+        await fetchData(true);
+      } catch (e: any) {
+        toast.error(
+          e?.response?.data?.error ||
+            e?.message ||
+            t('initiatives.form.createFailed', 'Failed to create initiative')
+        );
+      }
+    },
+    [
+      activeStatusFilter,
+      currentProjectId,
+      fetchData,
+      handleInitiativeClick,
+      isPilotParticipant,
+      scope,
+      t,
+    ]
+  );
+
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
   // ============================================
@@ -1294,6 +1429,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
     if (activeTab === 'observability') {
       return <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />;
+    }
+    // F2: Candidates inbox — AI proposes initiatives from discovery (insights/assessments/audits).
+    if (activeTab === 'candidates') {
+      return <CandidatesPanel onAccept={handleAcceptCandidate} />;
+    }
+    // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
+    if (activeTab === 'portfolioHealth') {
+      return <PortfolioHealthView />;
     }
     // V3-F02: Analysis tab — portfolio quality gate
     if (activeTab === 'analysis') {
@@ -1714,9 +1857,37 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
+  // F5: show the portfolio-level "Make material" control only on portfolio-style
+  // tabs (not on candidates/health/observability where it would be out of context).
+  const showMaterializeControl =
+    activeTab !== 'candidates' &&
+    activeTab !== 'portfolioHealth' &&
+    activeTab !== 'observability' &&
+    !activeDocumentId;
+
   const rightControls = (
     <div className="flex items-center gap-2">
       {scopeToggle}
+      {showMaterializeControl && (
+        <button
+          type="button"
+          onClick={() => void handleMaterializePortfolio('deck')}
+          disabled={isMaterializing}
+          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          title={
+            i18n.language?.startsWith('pl')
+              ? 'Zrób materiał z portfela (prezentacja)'
+              : 'Make a deck from the portfolio'
+          }
+        >
+          {isMaterializing ? (
+            <RefreshCw size={13} className="animate-spin" />
+          ) : (
+            <Sparkles size={13} />
+          )}
+          {t('initiatives.materialize.cta', 'Zrób materiał')}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => navigate(ROUTES.ROI)}

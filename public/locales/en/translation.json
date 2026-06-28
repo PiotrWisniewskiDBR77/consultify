@@ -3192,7 +3192,9 @@
     "tabs": {
       "portfolio": "Portfolio",
       "analysis": "Analysis",
-      "observability": "Observability"
+      "observability": "Observability",
+      "candidates": "Candidates",
+      "portfolioHealth": "Portfolio health"
     },
     "analysis": {
       "resources": {
