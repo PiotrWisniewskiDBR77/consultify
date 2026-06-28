@@ -320,6 +320,7 @@ import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
 import referralsRoutes from './routes/referrals.routes.js';
 import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import logger from './utils/Logger.js';
+import { safeFetchHtml, SsrfBlockedError } from './utils/ssrfGuard.js';
 
 const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
 const orgMembershipGuard = validateOrgMembership as unknown as RequestHandler;
@@ -593,19 +594,24 @@ export class ApiGateway {
       });
       app.use('/api/backups', backupRoutes);
 
-      // Link preview (og:meta fetcher for whiteboard LinkNodes)
+      // Link preview (og:meta fetcher for whiteboard LinkNodes + notebook bookmarks)
       app.get('/api/link-preview', async (req, res) => {
         const url = String(req.query.url || '');
         if (!url || !url.startsWith('http')) return res.status(400).json({ error: 'Invalid URL' });
         try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 5000);
-          const resp = await fetch(url, {
-            signal: controller.signal,
-            headers: { 'User-Agent': 'Consultify-LinkPreview/1.0' },
-          });
-          clearTimeout(timeout);
-          const html = await resp.text();
+          // SSRF-guarded fetch: http(s) only, DNS-validated against private/
+          // loopback/link-local/metadata ranges, redirects re-validated per hop,
+          // body size-capped. Prevents the fetcher being aimed at internal infra
+          // or the cloud metadata endpoint (169.254.169.254).
+          let html: string;
+          try {
+            ({ html } = await safeFetchHtml(url, { timeoutMs: 5000 }));
+          } catch (e) {
+            if (e instanceof SsrfBlockedError) {
+              return res.status(400).json({ error: 'URL not allowed' });
+            }
+            throw e;
+          }
           const getMetaContent = (name: string) => {
             const re = new RegExp(
               `<meta[^>]*(?:property|name)=["']${name}["'][^>]*content=["']([^"']*)["']`,
