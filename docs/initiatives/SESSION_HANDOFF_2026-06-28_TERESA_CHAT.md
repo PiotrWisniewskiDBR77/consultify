@@ -71,8 +71,15 @@ Brakuje (połykane błędy w `aiContextBuilder`/`contextPackService`): `organiza
 ### 3d. ✅ `business_value` nie hydrowane — ROZWIĄZANE (`009e23bb5e`)
 Karta `financialImpact` generuje się, ale `business_value` zostawała NULL. **Root cause (zobaczony na żywej karcie):** żywy section-prompt emituje kształt `{revenueImpact, costSavings, benefitsRealization}` — a mapper szukał `businessValue/rationale/value`: **zero pokrycia**. `buildTypedColumnUpdates` (`cardColumnHydration.ts`) składa teraz `business_value` z pól narracyjnych (costSavings → revenue → benefits), gdy brak jawnego `businessValue`; jawne nadal wygrywa. +2 testy jednostkowe (14/14). Potwierdzone w logu: `[teresa] hydrated 7 typed column(s) … business_value`.
 
-### 3e. ⚠️ Demo LLM flaky — `openai/gpt-4o` przez openrouter zwraca `EMPTY_STREAM`
-Trasa **openrouter→openai/gpt-4o** bywa martwa (zwraca pusty stream nawet bez narzędzi); `gpt-4o-mini` działa → to problem trasy modelu, NIE kredytów konta. Tier PREMIUM→model jest cache'owany w procesie (zmiana `llm_providers.model_id` w DB nie wchodzi bez restartu). Jeśli Teresa „milczy" — sprawdź `health_status`/żywy stream zanim podejrzewasz kod.
+### 3e. ⚠️ Wybór modelu demo + reasoning-models nie działają na chat-path (OTWARTE — kod)
+Stan ustalony 2026-06-28 (live testy na demo). Tier PREMIUM→model rezolwuje z `llm_providers(provider='openrouter').model_id` i jest **cache'owany w procesie** → zmiana w DB **wymaga restartu** (`railway redeploy --service consultify -y`; bywa odrzucony „cannot be redeployed" gdy trwa inny build — wtedy następny push i tak przeładuje config).
+
+Porównanie modeli przez NASZ chat-streaming+tools path:
+- **`openai/gpt-4o`** — dobry tool-caller (tworzył inicjatywy 16:00), ale trasa openrouter **miga na pusty stream** (10/10 empty później). NIE kredyty (gpt-4o-mini działał w tym samym czasie) — to flaky trasa gpt-4o.
+- **`openai/gpt-4o-mini`** — trasa zdrowa (Teresa odpowiada), ale **słaby tool-caller** (18/18 prób: odpowiadał tekstem, nie wołał `generate_initiative`). **Demo zostawione na tym** (żywe, ale chat→inicjatywa niepewny).
+- **`z-ai/glm-4.6` (Z.ai, wybór Piotra)** — działa BEZPOŚREDNIO na openrouter (probe 200 OK), ale przez nasz serwer = `EMPTY_STREAM`. **Root cause:** GLM to model ROZUMUJĄCY — streamuje wyjście w polu `delta.reasoning`, a nasz chat-path ma reasoning **WYŁĄCZONY** (narzędzia podawane tylko gdy reasoning off — patrz `AIPipeline` + `llmService.callStream` `wantsReasoning`), więc `textStream` dostaje pusty `content` → EMPTY_STREAM. Dodatkowo GLM w teście nie wywołał narzędzia (`finish=stop`, `tool_calls=false`).
+
+**ZADANIE (większe, kod):** żeby użyć Z.ai/GLM (lub innego reasoning-modelu) na czacie z narzędziami, trzeba przebudować chat-path tak, by reasoning-models mogły JEDNOCZEŚNIE rozumować I dostawać narzędzia (dziś wzajemnie się wykluczają: `tools` tylko gdy `reasoning` off). To NIE jest szybki fix — wymaga przemyślenia interakcji maxSteps/reasoning/tool-loop + testów. Diagnoza bezpośrednia: `z-ai/glm-4.6` na openrouter zwraca `reasoning` deltas, nie `content`.
 
 ---
 
