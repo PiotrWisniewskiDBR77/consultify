@@ -103,7 +103,7 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
             disabled={discussDisabled}
             aria-label={discussLabel}
             title={discussLabel}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-hig-xl text-xs font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-hig-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             <MessagesSquare size={14} />
             <span className="hidden md:inline">{discussLabel}</span>
@@ -127,7 +127,7 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
               onClick={() => onToolChange(tool.id)}
               className={`relative flex items-center gap-1.5 h-9 px-3 rounded-hig-xl text-xs font-semibold transition-all ${
                 isActive
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                  ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
               title={getIdeaWorkspaceToolLabel(tool.id, Boolean(isPl))}
