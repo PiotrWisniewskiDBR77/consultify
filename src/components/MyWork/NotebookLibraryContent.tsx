@@ -509,16 +509,25 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
         ? await Api.updateNotebook(editing!.id, payload)
         : await Api.createNotebook(payload);
       onSaved(nb as Notebook, isEdit ? 'edit' : 'create');
-    } catch {
-      toast.error(
-        isEdit
-          ? pl
-            ? 'Nie udało się zapisać notatnika'
-            : 'Failed to save notebook'
-          : pl
-            ? 'Nie udało się utworzyć notatnika'
-            : 'Failed to create notebook'
-      );
+    } catch (e: any) {
+      // Surface the real server reason (e.g. "Only the owner can modify this
+      // notebook", "Not a team member", HTTP 5xx) instead of swallowing it —
+      // a bare catch made every failure read as an opaque "Failed to save".
+      const fallback = isEdit
+        ? pl
+          ? 'Nie udało się zapisać notatnika'
+          : 'Failed to save notebook'
+        : pl
+          ? 'Nie udało się utworzyć notatnika'
+          : 'Failed to create notebook';
+      const serverMessage = typeof e?.message === 'string' ? e.message.trim() : '';
+      // Hide useless generic JS errors ("Failed to fetch", "Request failed") —
+      // only append a message that actually tells the user what went wrong.
+      const isUseful =
+        serverMessage &&
+        !/^failed to (fetch|save|create|update)/i.test(serverMessage) &&
+        !/^request failed/i.test(serverMessage);
+      toast.error(isUseful ? `${fallback}: ${serverMessage}` : fallback);
       setSaving(false);
     }
   }, [canSave, title, scope, teamId, contextSharing, isEdit, editing, onSaved, pl]);
