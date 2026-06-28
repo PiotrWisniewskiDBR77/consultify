@@ -454,17 +454,6 @@ Return JSON:
     return '';
   }
 
-  if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
-    if (stepId !== 'context' && stepId !== 'summary') {
-      return `Act as an AI operations mentor. Provide 3-5 concise items for ${stepId}.
-
-Prefer items that can later support applied conclusions and concrete outputs.
-
-Return JSON:
-{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
-    }
-  }
-
   const swotData = inputData as SWOTData | undefined;
   if (toolType === 'dynamic-swot') {
     if (stepId === 'mission') {

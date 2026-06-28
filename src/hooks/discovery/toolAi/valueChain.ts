@@ -197,7 +197,11 @@ export function applyValueChainPendingAction({
         ...valueChainData.context,
         industry: mission.industry || valueChainData.context.industry,
         valueChainScope: mission.valueChainScope || valueChainData.context.valueChainScope,
-        position: mission.position || valueChainData.context.position,
+        position: (['cost-leader', 'differentiator', 'hybrid', 'undefined'].includes(
+          mission.position
+        )
+          ? mission.position
+          : valueChainData.context.position) as ValueChainData['context']['position'],
         goal: mission.goal || valueChainData.context.goal,
         successSignal: mission.successSignal || valueChainData.context.successSignal,
         constraints: mission.constraints || valueChainData.context.constraints,

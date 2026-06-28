@@ -68,19 +68,6 @@ const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
   return isPolish ? 'Zaakceptowane' : 'Accepted';
 };
 
-const levelBadge = (level: 'high' | 'medium' | 'low', isPolish: boolean) =>
-  level === 'high'
-    ? isPolish
-      ? 'Wysoki'
-      : 'High'
-    : level === 'medium'
-      ? isPolish
-        ? 'Średni'
-        : 'Medium'
-      : isPolish
-        ? 'Niski'
-        : 'Low';
-
 const marginBadge = (role: 'creator' | 'neutral' | 'drain', isPolish: boolean) =>
   role === 'creator'
     ? isPolish

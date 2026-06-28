@@ -10,6 +10,8 @@ import type {
   InitiativeDraft,
   OperationalItem,
   OperationalToolData,
+  ToolFlowResults,
+  ToolsetFlowData,
   ToolType,
 } from '@/store/useToolStore';
 
@@ -101,10 +103,42 @@ Each section array item shape:
 }
 
 interface OperationalActionHandlers {
-  updateInputData: (data: Partial<OperationalToolData>) => void;
+  updateInputData: (data: Partial<ToolsetFlowData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
   setSessionGenerationStatus: (status: 'idle' | 'generating' | 'ready' | 'error') => void;
 }
+
+// ToolsetFlowData tools (ai-discovery, pain-explorer, rpa-scanner, process-automation)
+// surface the final summary from flow.results, NOT data.summary. Populate both so
+// the finalize output is never silently dropped for either UI shape.
+const buildFlowResults = (parsed: Record<string, any>): ToolFlowResults => {
+  const summaryObj =
+    parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
+  const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
+  const keyFindings = Array.isArray(summaryObj?.keyInsights)
+    ? summaryObj.keyInsights.filter(Boolean)
+    : Array.isArray(parsed.insights)
+      ? parsed.insights.filter(Boolean)
+      : [];
+  const titlesWhere = (pred: (i: any) => boolean) =>
+    initiatives.filter(pred).map((i: any) => String(i.title || '')).filter(Boolean);
+  return {
+    executiveSummary:
+      typeof summaryObj?.executiveSummary === 'string'
+        ? summaryObj.executiveSummary
+        : typeof parsed.summary === 'string'
+          ? parsed.summary
+          : '',
+    keyFindings,
+    quickWins: titlesWhere((i) => i.estimatedEffort === 'low'),
+    strategicBets: titlesWhere((i) => i.estimatedImpact === 'high'),
+    prerequisites: Array.isArray(summaryObj?.appliedConclusions)
+      ? summaryObj.appliedConclusions.filter(Boolean)
+      : [],
+    risks: [],
+    dependencies: [],
+  };
+};
 
 interface ApplyOperationalPendingActionOptions {
   pendingAction: ToolAiPendingAction;
@@ -210,15 +244,25 @@ export function applyOperationalPendingAction({
     actions.updateInputData({
       sections: nextSections,
       summary: buildSummary(parsed, toolType),
+      flow: {
+        ...(operationalData as ToolsetFlowData).flow,
+        results: buildFlowResults(parsed),
+      },
     });
     setInitiativesFromParsed(parsed, toolType, actions);
     actions.setSessionGenerationStatus('ready');
     return {};
   }
 
-  // Finalize: summary + initiatives.
+  // Finalize: summary + initiatives (+ flow.results for ToolsetFlow tools).
   if (pendingAction === 'summary') {
-    actions.updateInputData({ summary: buildSummary(parsed, toolType) });
+    actions.updateInputData({
+      summary: buildSummary(parsed, toolType),
+      flow: {
+        ...(operationalData as ToolsetFlowData).flow,
+        results: buildFlowResults(parsed),
+      },
+    });
     setInitiativesFromParsed(parsed, toolType, actions);
     return {};
   }
