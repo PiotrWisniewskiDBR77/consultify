@@ -4,6 +4,18 @@
 > **Branch:** `feat/deliverables-w1` (pushed) · **Demo:** push na `demo` + deploy odpalony (build ~5 min).
 > **SSOT:** koncepcja `docs/product/ASSESSMENT_CONCEPT_V4_2026-06-28.md` · plan `docs/product/ASSESSMENT_IMPLEMENTATION_PLAN_2026-06-28.md`.
 
+## ⭐ NOC 2 (2026-06-29) — przegląd + dalsze wdrożenie
+Po nocy 1 Piotr zlecił „pełen przegląd + pełne wdrożenie ustaleń, 100% na rano". Zrobione (4 agenty przeglądu + budowa):
+- **Pełny przegląd** (4 agenty): ścieżka raportów, SIRI canon-vs-kod, ADMA canon-vs-kod, audyt pracy nocy 1 → wszystko OK, mapa bezpiecznych punktów wpięcia.
+- **★ Raport DRD WIDOCZNY end-to-end** (`8a861e6b75`): `DRDReportTemplate` wpięty w `ReportEditor.tsx` jako zakładka **„Podgląd raportu"** (z `report.axisData` → nowy `buildDRDVisualizationDataFromAxes`). Gate: tylko gdy axisData ma klucze osi DRD. To rozwiązuje „templaty niewpięte" — DRD ma teraz graficzny raport w żywej apce.
+- **ADMA radar 3-serie** (`3d304b605b`): Twoja firma + FoF=4 (green) + średnia peers (amber) + legenda + seed `ADMA_DEFAULT_PEER_SCORES`; tabela gap-to-FoF już była.
+- **SIRI Prioritisation Matrix — silnik** (`ff77a85230`): `src/services/siriPrioritisation.ts` (formuła Impact Value `Wc·Cost+Wk·KPI+Wp·(BIC−AMS)`) + `tests/unit/siriPrioritisation.test.ts` 8/8. **Serwis gotowy, NIEWPIĘTY w UI** (świadomie — wpięcie wymaga UI na wejścia cost/KPI/BIC; następny krok).
+- tsc czysty (16GB heap; maszyna pod obciążeniem agentów → używaj dużego heapu), SIRI test 8/8. Pushed feat+demo, deploy odpalony. HEAD nocy 2 ≈ `6a559f494e` (współdzielony branch, inni agenci dobijają commity).
+
+**ZOSTAŁO po nocy 2:** SIRI — UI wejść (cost%/KPI/BIC/wagi) + wpięcie rankingu Impact Value w SIRIAssessmentMap (silnik gotowy); SIRI/ADMA raporty — analogiczny Preview jak DRD (templaty istnieją); signature-visuals premium (donut 3-8-16, heatmapa-roadmap) na wspólnym SVG; DRD krok 3 ROI; coach/qbank.
+
+---
+
 ## 0. Decyzje zamknięte (wcześniej w rozmowie)
 D1 IP „inspired-by" + disclaimer · D2 DRD=7 osi/39 obszarów · **D2a skala oś5/6 = 1–6** · D3 kolejność DRD→output→SIRI→ADMA · D4 per-framework signature-visuals · D5 CMMI/LEAN później · **D8 warstwa graficzna = wspólny system SVG/HTML, 2 tryby (roboczy+prezentacyjny), koniec crimson-leak**.
 
