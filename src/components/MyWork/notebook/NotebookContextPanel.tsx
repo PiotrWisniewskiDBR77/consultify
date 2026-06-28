@@ -696,7 +696,13 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
               </EmbeddedView>
             </div>
 
-            <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
+            {allLinkedOutputRows.length === 0 && !linkedOutputsBusy && !linkedOutputsErrorMessage ? (
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-navy-800 text-[11px] text-slate-400 dark:text-slate-500">
+                <Link2 size={12} />
+                <span>{pl ? 'Brak powiązanych outputów' : 'No linked outputs'}</span>
+              </div>
+            ) : (
+              <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
               <EmbeddedView
                 title={pl ? 'Powiązane outputy' : 'Linked outputs'}
                 count={allLinkedOutputRows.length}
@@ -707,18 +713,6 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                 {linkedOutputsErrorMessage ? (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
                     {linkedOutputsErrorMessage}
-                  </div>
-                ) : allLinkedOutputRows.length === 0 &&
-                  initiativeBacklinkIds.length === 0 &&
-                  !linkedOutputsBusy ? (
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                    {pl
-                      ? 'Brak outputów powiązanych z inicjatywami tej notatki.'
-                      : 'No outputs linked to this note yet.'}
-                  </div>
-                ) : allLinkedOutputRows.length === 0 && !linkedOutputsBusy ? (
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                    {pl ? 'Brak powiązanych outputów.' : 'No linked outputs yet.'}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -762,15 +756,12 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                   </div>
                 )}
               </EmbeddedView>
-            </div>
+              </div>
+            )}
 
-            <Section k="idea" count={ideas.length}>
-              {take('idea', ideas).length === 0 ? (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {pl ? 'Brak sugestii' : 'No suggestions'}
-                </div>
-              ) : (
-                take('idea', ideas).map((idea) => (
+            {ideas.length > 0 && (
+              <Section k="idea" count={ideas.length}>
+                {take('idea', ideas).map((idea) => (
                   <Row
                     key={idea.id}
                     title={idea.title}
@@ -778,9 +769,9 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                     onInsert={() => handleInsertIdea(idea)}
                     onOpen={() => openItem('idea', idea.id, idea.title)}
                   />
-                ))
-              )}
-            </Section>
+                ))}
+              </Section>
+            )}
 
             <Section
               k="initiative"
@@ -788,8 +779,8 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
               onMore={() => setPickerType('initiative')}
             >
               {take('initiative', initiatives).length === 0 ? (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {pl ? 'Brak sugestii' : 'No suggestions'}
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+                  {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
                 </div>
               ) : (
                 take('initiative', initiatives).map((item) => (
@@ -806,8 +797,8 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
             <Section k="task" count={tasks.length} onMore={() => setPickerType('task')}>
               {take('task', tasks).length === 0 ? (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {pl ? 'Brak sugestii' : 'No suggestions'}
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+                  {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
                 </div>
               ) : (
                 take('task', tasks).map((item) => (
@@ -824,8 +815,8 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
             <Section k="decision" count={decisions.length} onMore={() => setPickerType('decision')}>
               {take('decision', decisions).length === 0 ? (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {pl ? 'Brak sugestii' : 'No suggestions'}
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+                  {pl ? 'Brak — dodaj przez „Wszystkie”' : 'None — add via “All”'}
                 </div>
               ) : (
                 take('decision', decisions).map((item) => (
@@ -840,13 +831,9 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
               )}
             </Section>
 
-            <Section k="note" count={noteSuggestions.length}>
-              {take('note', noteSuggestions).length === 0 ? (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {pl ? 'Brak sugestii' : 'No suggestions'}
-                </div>
-              ) : (
-                take('note', noteSuggestions).map((n) => (
+            {noteSuggestions.length > 0 && (
+              <Section k="note" count={noteSuggestions.length}>
+                {take('note', noteSuggestions).map((n) => (
                   <Row
                     key={n.id}
                     title={n.title || (pl ? 'Bez tytułu' : 'Untitled')}
@@ -854,9 +841,9 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                     onInsert={() => handleInsertNoteRef(n)}
                     onOpen={() => openItem('notebook', n.id, n.title || 'Note')}
                   />
-                ))
-              )}
-            </Section>
+                ))}
+              </Section>
+            )}
           </>
         )}
       </div>
