@@ -135,4 +135,20 @@ Każda fala: **fix → generuj realny .pptx (skrypt tsx + PptxPipelineService) �
 
 ---
 
-*Ten plik = SSOT dojścia decka do perfekcji. Aktualizuję po każdej fali (✅/🟡/⬜). Zaczynamy od W7 (rytm pionowy).*
+## 6. POSTĘP
+
+**2026-06-28 noc (7 agentów równolegle + integracja) — KAMIEŃ M1 „KOMPLETNY" OSIĄGNIĘTY:**
+- ✅ **W7 rytm pionowy** (`168c7c86`): helper `verticalRhythm` + 13 layoutów/composites wypełniają płótno; zero pustych dołów. Zweryfikowane wizualnie na renderze 13 slajdów.
+- ✅ **W8 bookend** (`21c779ac`): closing = lustro coveru (spine/eyebrow/duży tytuł/akcent/wordmark).
+- ✅ **W9 polish** (`21c779ac`): paleta premium 60-30-10 (3 motywy), confidential subtelny, danger mniej alarmowy.
+- ✅ wcześniej F1-F6: cover premium, action-titles, Inter, fix overflow, roadmap-karty.
+- **Roadmap (W7.4):** progresja jednego odcienia + numery faz + pigułki ✅. Charts (W10.1/10.2): bar w single_insight ŻYWY ✅.
+- Deck dowodowy: `docs/qa/deliverables/runs/2026-06-28-DECK-PERFEKCJA-W7.pptx` (13 slajdów) + pulpit. Screeny `docs/qa/screens/m17-deck-2026-06-28/s-01..13`.
+- 42 testy reports zielone, tsc czysty w report/pptx. Demo: `21c779acba`.
+
+**ZOSTAŁO do M2-M4 (następna noc/sesja):**
+- Drobiazgi: root-cause czerwony baner stonować; next-steps mniejszy odstęp tabela↔callout; 3-wierszowe tabele lekko niedopełnione (cap rowH).
+- W10.3/10.4 więcej wykresów (heatmap/waterfall), W11 wariancja kompozycji (resolveLayout→layoutVariantId), W12 font fidelity w realnym MS PowerPoint (test podstawienia Inter), W13 obrazy (decyzja: na razie clean/no-photo), W14 spójność docx/xlsx, W15 bramka sparseness w deckDesignCritic + golden visual.
+
+---
+*Ten plik = SSOT dojścia decka do perfekcji. Aktualizuję po każdej fali (✅/🟡/⬜). M1 (W7+W8) ✅ — następne M2 (W9 done + W10 wykresy).*
