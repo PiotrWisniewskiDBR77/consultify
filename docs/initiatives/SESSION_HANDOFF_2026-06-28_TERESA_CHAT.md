@@ -86,16 +86,21 @@ Karta `financialImpact` generuje się, ale `business_value` zostawała NULL. **R
 
 > **Uwaga ops:** GLM rozumuje ~13s przed tool-callem → testując DANE poczekaj 20s+; created_at vs `now()` w skryptach testowych potrafi się rozjechać (mierz czasem WZGLĘDNYM `created_at > now()-interval`, nie zapisanym `tb`). `ai_generated_sections` to kolumna **TEXT** (nie jsonb) — w SQL nie rób `COALESCE(...,'{}'::jsonb)`.
 
-### 3f. 🔴 Full-fill (6 kart AI) NIE działa z GLM — DRAFT powstaje PUSTY (OTWARTE — kod)
-**Potwierdzone na żywo (2026-06-28):** z `z-ai/glm-4.6` chat tworzy inicjatywę-DRAFT (tool-call OK), ale **background full-fill nie wypełnia ŻADNEJ sekcji** — `ai_generated_sections` zostaje pusty (`length=0`), `business_value`/`problem_statement`/`scope_in` = NULL przez 4+ min. Z gpt-4o full-fill działał (log `hydrated 7 … business_value`).
+### 3f. ✅ Full-fill (6 kart AI) z GLM — ROZWIĄZANE (`dfb09d18aa`)
+**Potwierdzone na żywo (2026-06-28, stabilne okno bez restartu):** z `z-ai/glm-4.6` pełny przepływ działa — `secs_len=7123` (karty wypełnione), `business_value` SET („Estimated annual cost savings of up to 100,000 PLN…"), `problem_statement` set. Full-fill kończy ~200s.
 
-**Ścieżka:** `generateInitiative` → background `generateFullInitiative` (`initiativeGeneratorBrain.ts:275`) → per-karta `deps.generationService.generateSectionContent(..., {withReview:true})` (`initiativeGenerationService.ts`, używa **`llm.call()` non-streaming**, PREMIUM tier, ~linie 514/619/758/964). Fail-soft per karta → wszystkie karty GLM padają cicho → 0 kart → `persistCards` nic nie zapisuje → 0 hydracji.
+**Root cause (NIE timeout-hipoteza pierwotna — zweryfikowane logiem):** `generateSectionContent` używa `llm.call({id:'premium'})` → `callText` z **domyślnym 60s timeoutem** (`AbortSignal.timeout(60000)`). Ciężki prompt doktryny McKinsey + 4096-token JSON + GLM rozumuje najpierw → KAŻDA karta >60s → abort → karta pada (fail-soft) → `cards={}` → 0 hydracji. (Probe `generateText` z prostym promptem był 28s; realna karta dłuższa.)
 
-**Hipoteza root cause:** `llm.call()` (non-streaming `generateText`/`callStructured`) nie obsługuje reasoning-modeli tak jak naprawiony `callStream` — GLM zwraca reasoning, a `result.text`/structured JSON wychodzi pusty lub nieparsowanlny. To **ten sam wzorzec co 3e, ale na ścieżce NON-streaming** (`call`/`callStructured` w `llmService.ts`, NIE `callStream`). Probe SDK pokazał że GLM streamuje content (2511 znaków text-delta) — więc `generateText` POWINIEN coś zwrócić; trzeba zdiagnozować czy to pusty content, błąd json-schema, czy review-gate odrzuca.
+**Fix (`dfb09d18aa`):**
+- `generateSectionContent`: `timeoutMs:150000` (generacja) / `120000` (review) — callText honoruje `params.timeoutMs`; gpt-4o (~15s) niezmieniony.
+- `generateFullInitiative`: 6 kart **współbieżnie** (`Promise.all` zamiast sekwencyjnej pętli) — niezależne, wspólny read-only `baseContext`. Wall-time ≈ najwolniejsza karta zamiast sumy.
+- de-flake 3 testów full-fill (vi.waitFor + filledCards=0). 54/54 zielone.
 
-**ZADANIE (następna sesja):** zdiagnozować dokładny błąd (logi full-fillu / bezpośredni `llm.call` z GLM) i zastosować analogiczne traktowanie reasoning-modeli na ścieżce non-streaming (`call`/`callStructured`). DOPÓKI to nie zrobione: na GLM inicjatywy z czatu są PUSTE. Decyzja Piotra: albo (a) dokończyć full-fill dla reasoning-modeli, albo (b) full-fill (structured) routować na model nie-reasoning, a chat-tool zostawić na GLM (hybryda per-purpose tier).
+**Przegląd:** 3 adversarialnych recenzentów — zero bugów high/med (baseContext read-only, Promise.all nie odrzuci, timeoutMs poprawnie do callText, GLM idzie callText nie reasoning-short-circuit).
 
-**Stan demo zostawiony:** `z-ai/glm-4.6` (wybór Piotra) — chat→inicjatywa działa, ale DRAFT pusty do czasu fixu 3f.
+> **⚠️ ZNANE OGRANICZENIE (follow-up, nie blokuje normalnej pracy):** full-fill to fire-and-forget ~200s; **restart serwera w trakcie ZABIJA go** (DRAFT zostaje pusty). Na demo widać to przy ciągłych deployach wielu agentów. Rozwiązania na przyszłość: (a) persist kart INKREMENTALNIE (każda po skończeniu, nie wszystkie na końcu) → restart zostawia częściowe; (b) kolejka/job zamiast fire-and-forget. Dodatkowo `acquireProviderSlot` rzuca (nie kolejkuje) przy wielu jednoczesnych inicjatywach → pod obciążeniem karty mogą wyjść puste (fail-soft) → semafor w przyszłości. W normalnej pracy (bez burst+restartów) full-fill dochodzi.
+
+**Stan demo:** `z-ai/glm-4.6` (wybór Piotra) — PEŁNY przepływ chat→inicjatywa+wypełnienie działa.
 
 ---
 
