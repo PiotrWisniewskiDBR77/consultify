@@ -54,7 +54,7 @@ Wszystkie uwagi w jednym spójnym ekranie: górny pasek **bez 3-tools-strip** (U
 - **N2** ⬜ — usuń 3-tools-strip z topbara My Work (U10); Context → on-demand pod ⋯ / ikona grafu.
 - **N3** ✅ — nagłówek lifecycle strip: surowe `<select>` Verification/Review + UPPERCASE labele + emerald-fill button → **czyste status-pigułki** (verified→emerald, disputed→amber, unverified→slate; review neutral; Mark reviewed ghost). `56b53ca9` na demo. *(pełny header §3 — ikona+tytuł 22/500 + meta 1-linia + flow-stepper chevrony = kolejny krok)*.
 - **N4** ✅ — prawe menu edytora ikony+tooltip (U12): Expand→ikona, History/Network→monochrome. `e727ee1af2`. *(Layers/rail toggle zostaje do N1)*.
-- **N5** ⬜ — lewa kolumna (U11): Capture + 2 filtry + czysta lista; usuń Inbox/Active/All taby, progress bar, słońce-toggle, filtr-ikonę.
+- **N5** ✅ — lewa kolumna (U11): Capture + 2 filtry + czysta lista; usuń Inbox/Active/All taby, progress bar, słońce-toggle, filtr-ikonę. **ZROBIONE** `b3dc957231` (patrz niżej).
 - **N6** 🟡 — Context panel (U14): **UUID→czytelne nazwy ✅** (`e727ee1af2`: usunięty `typ·UUID` row, etykiety PL/EN, status-chip). ZOSTAJE: ukryć puste sekcje, zweryfikować Insert/Open.
 - **N7** ⬜ — slash `/` menu: insert bloków (`BLOCK_TYPES_CANON.md`) + markdown skróty.
 - **N8** ⬜ — polish: typografia, spacing, oddech, floating format toolbar.
@@ -64,7 +64,8 @@ Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane. **Zr
 - **N3 ✅** nagłówek: lifecycle pigułki + flow-stepper numerki→chevrony (`0721098362`) + N4 ikony+tooltip (wcześniej).
 - **N6 ✅** Context: UUID-fix + puste sekcje ukryte + Insert/Open zweryfikowane żywe (`8a419df97f`).
 - **N7 🟡** slash: stary `SlashMenu` już działa; nowy `NotebookSlashMenu` zbudowany (`5bc77b5861`), wpięcie (zamiana) = osobna fala (TipTap).
-- **N5 ⬜** lewa kolumna (Capture+2 filtry) — następna.
+- **N5 ✅** lewa kolumna (`b3dc957231`): **Capture** (NotebookQuickCapture na górze) + **segmented zakres** Wszystkie·Moje·Zespół (wg `ownerUserId`, auto-chowa się gdy brak stron zespołu) + **chipy widoku** Wszystkie·Przypięte·Ostatnie·Do przeglądu·Świeże (spłaszczone sekcje Today, z live-licznikami) + czysta lista. Usunięte: taby Inbox/Active/All (status żyje w **Menu 3 huba** — koniec dublowania), słońce/Today-mode, filtr-ikona+selecty sort/maturity, pasek „progress" maturity. Empty-state świadomy filtra. Martwe importy (Sun/Filter/Inbox/ChevronDown/NotebookTodayView) + `todayRefreshKey` usunięte. tsc+vitest (57 plików/260) zielone. *Decyzja: „Moje/Zespół" = autor strony (oś niezależna od statusu); rich-link wrzutek = FAZA 2 (D3).*
+- **U9 ✅** (przy okazji) „Failed to save notebook" (`6d72aab903`): goły `catch{}` w NotebookModal połykał realny błąd serwera (403 owner-only / 5xx) → teraz doklejony, generyczny szum ukryty; +2 testy.
 **Cofalność:** każda fala = osobny commit (Piotr: „żeby móc cofnąć"). **GIT-RACES:** rebase wciągnął cudzy WIP z 10 tsc-błędami (Ideas reactflow/Economics/DocumentStudio — NIE Notatnik; vite buduje, ale Ideas runtime ryzyko — osobny problem brancha).
 
 ### FAZA 2 — Killery funkcjonalne (program, ~tygodnie, backend) — D4
