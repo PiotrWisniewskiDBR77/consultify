@@ -1,0 +1,79 @@
+# NOTATNIK (M04) — redesign UI/UX do 2026-grade (spec, ZATWIERDZONY KIERUNEK)
+
+> **Status:** Piotr zatwierdził kierunek 2026-06-28 („tak robimy"). Zbieram jeszcze uwagi przed implementacją (NotebookContent.tsx = 3505 linii → komplet wymagań przed kodem).
+> **Mandat:** „nie wygląda jak profesjonalny notatnik… zaplanuj układ lepiej… nazwa i z prawej hamburger… super profesjonalne, zgodne z naszymi planami."
+> **Mockupy zatwierdzone:** czysty edytor + hamburger (widget `notebook_redesign_clean_layout`) · nagłówek (widget `notebook_header_redesign`).
+> **Zasada nadrzędna:** funkcje OK — przebudowa CZYSTO prezentacyjna + reorganizacja (zero utraty funkcji). Egzekucja kanonu, nie nowy kanon.
+
+## 1. Diagnoza (co nieprofesjonalne dziś)
+3 konkurujące strefy akcji naraz: (a) górny stepper `① Sources · ② AI · ③ Review · ④ Convert · Initiatives` (numerki = mylący wymuszony porządek), (b) surowe `<select>` Verification/Review z zielonymi tekstami inline, (c) **stały prawy panel „Tools"** (Insert block / AI / Create from note / Transform). To „panel sterowania", nie notatnik. Anty-Notion/Craft.
+
+## 2. Docelowy układ (zatwierdzony)
+**Czysty edytor + JEDNO hamburger menu (⋯) z prawej.** Mapowanie:
+| Element dziś | Cel |
+|---|---|
+| Pasek Sources/AI/Review/Convert/Initiatives | lekki „flow dojrzewania notatki" (chevrony, monochrome) — **decyzja D1**: w nagłówku czy pod hamburger |
+| Stały prawy panel „Tools" | **USUNĄĆ** — Insert przez slash `/`, reszta → hamburger |
+| Insert block (Callout/Table/Toggle/Divider) | slash `/` w treści |
+| Create from note (7 kafli) | hamburger „Convert to" |
+| Transform text | hamburger „AI" + floating toolbar na zaznaczeniu |
+| Verification/Review `<select>` inline | **wyciszone pigułki + popover** (klik → zmień), nie surowy select |
+| Expand into document | hamburger „Note" |
+| Top formatting toolbar | zostaje SLIM lub floating na zaznaczeniu |
+
+## 3. Nagłówek notatki (zatwierdzony mockup)
+- Ikona w subtelnym kontenerze (nie gołe emoji) + tytuł **22px/500**.
+- Tagi + plik = jedna wyciszona monochrome linia.
+- Status = pigułki: `Verified` (success subtelny zielony — semantyczny, w budżecie czerwieni), `Reviewed 3h · monthly` (neutral), `Mark reviewed` (ghost). Zmiana = popover (**decyzja D2**).
+- Flow-stepper: chevrony zamiast numerków, aktywny etap monochrome-podświetlony, w jednym wyciszonym kontenerze.
+
+## 4. Zgodność z kanonem
+monochrome-chrome (slate/navy, aktywne podświetlone nie kolorowe) · budżet czerwieni (tylko success/danger semantyczne) · typografia 22/12px · hierarchia tytuł›meta›status›flow · module-hub progresywne ujawnianie · workspace-3-tools-strip (panel prawy on-demand, nie stały).
+
+## 5. Plan implementacji (fale — po zebraniu wszystkich uwag)
+- **N1** — komponent hamburger menu (zbiera akcje z paska + RightRail → pogrupowany dropdown: Note / Convert to / AI / Danger).
+- **N2** — usunięcie stałego RightRail (`NotebookRightRail.tsx`) + numerowanego paska z głównego widoku → przeniesienie do N1.
+- **N3** — nagłówek: tytuł+ikona, metadata 1-linia, status-pigułki+popover (wg §3).
+- **N4** — slash `/` insert + floating format toolbar na zaznaczeniu.
+- **N5** — polish: typografia, spacing, oddech Notion-grade.
+Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane.
+
+## 6. DECYZJE — rozstrzygnięte (rekomendacja CTO 2026-06-28, do potwierdzenia Piotra)
+- **D1** — flow-stepper: **w nagłówku, czysty** (chevrony, monochrome). Wartość workflow widoczna, zajmuje 1 wąski rząd. Mockup zaakceptowany.
+- **D2** — status: **pigułka + popover** (klik „Verified"/„Reviewed" → zmiana w popoverze). Zero surowych `<select>` w głównym widoku.
+- **D3** — rich-link: **FAZA 2** (po redesign UI). Wymaga backendu (fetch metadanych).
+- **D4** — skala: **redesign UI najpierw (FAZA 1, dni), killery FAZA 2 (program, tygodnie).** Wyjątek: slash `/` menu wchodzi do FAZA 1 (fundament UX + szybkość). Uzasadnienie: na czystym edytorze łatwiej dokładać moc; szybka widoczna wygrana.
+
+## 8. SYNTEZA — pełny układ (mockup `notebook_full_redesign_overview`)
+Wszystkie uwagi w jednym spójnym ekranie: górny pasek **bez 3-tools-strip** (U10) · lewa kolumna = **Capture + filtr zakresu + filtr widoku + lista** (U11) · główny **czysty edytor** z przeprojektowanym nagłówkiem (§3) + **ikony-tooltip prawego menu** (U12) + **akcje pod ⋯** (hamburger zamiast stałego panelu Tools) · podpowiedzi `/` i `@` w treści. Spójność z aplikacją: **monochrome-chrome, budżet czerwieni, typografia 22/18/12px, hamburger-wzorzec jak Ideas (U5/U6), te same prymitywy** (`Button` ghost/secondary, chipy Menu3). Notatnik przestaje być „panelem sterowania" → staje się czystym narzędziem klasy Notion/Craft z konsultingowym grafem wiedzy.
+
+## 9. PLAN WYKONAWCZY — 2 fazy
+
+### FAZA 1 — Redesign UI (spójny wygląd, ~dni, niskie ryzyko, demo-first)
+- **N1** — hamburger ⋯ menu: zbiera akcje z paska (Sources/Convert/Initiatives) + `NotebookRightRail` Tools → pogrupowany dropdown (Note / Convert to / AI / Danger). Usuwa stały prawy panel.
+- **N2** — usuń 3-tools-strip z topbara My Work (U10); Context → on-demand pod ⋯ / ikona grafu.
+- **N3** — nagłówek (§3): ikona+tytuł 22/500, meta 1-linia, status pigułki+popover, flow-stepper chevrony.
+- **N4** — prawe menu edytora = ikony+tooltip (U12): Expand→ikona, Network✓, ⋯; usuń Layers (rail znika).
+- **N5** — lewa kolumna (U11): Capture + 2 filtry + czysta lista; usuń Inbox/Active/All taby, progress bar, słońce-toggle, filtr-ikonę.
+- **N6** — Context panel naprawa (U14): **UUID→czytelne nazwy**, ukryć/zwinąć puste sekcje, zweryfikować Insert/Open (naprawić jeśli martwe), redesign kart, scalić z ⋯.
+- **N7** — slash `/` menu: insert bloków (kanon `BLOCK_TYPES_CANON.md`) + markdown skróty (`##`/`-`/`[]`).
+- **N8** — polish: typografia, spacing, oddech, floating format toolbar na zaznaczeniu.
+Każda fala: kod → tsc → vitest → commit → demo. Funkcje zachowane (przeniesione, nie usunięte).
+
+### FAZA 2 — Killery funkcjonalne (program, ~tygodnie, backend) — D4
+- **K1** — @mention + **dwukierunkowe linki** notatka↔artefakty (rozbudowa Context = żywy graf wiedzy; backlinks index). NASZ wyróżnik ponad Notion.
+- **K2** — bookmark rich-link (backend fetch tytuł/opis/favicon + AI-summary) — wiąże capture U11/D3.
+- **K3** — AI rozszerzone (pisz-dalej / podsumuj / action-items / zapytaj-o-notatkę) — ponad obecne Command/Chat/Translate/Style.
+- **K4** — więcej bloków (nagłówki/listy/kod/obraz/cytat) — pełny edytor blokowy.
+
+## 7. DALSZE UWAGI PIOTRA (zbieram — „to nie koniec moich uwag")
+
+- **U10 — usunąć redundantny 3-tools-strip** (3 ikony: suwaki=Tools / żarówka=Context / dymek=AI-suggestions) z topbara. Piotr: „kilka poziomów menu i sterowania — te przyciski nie są już potrzebne, bo mamy te w oknie." **Ustalenie:** to `workspace-3-tools-strip` (kanon `02-components/workspace-3-tools-strip.md`) otwierający prawy panel — ale po wprowadzeniu hamburger ⋯ + akcji w oknie staje się **zdublowanym poziomem nawigacji**. **UWAGA: strip jest WSPÓLNY** dla zakładek My Work (Ideas/Notebook/Inbox/…), nie tylko Notatnika → usunięcie/konsolidacja dotyka całego huba My Work (komponent topbar `MyWorkHub`/wspólny). Decyzja architektury: hamburger per-kontekst zastępuje globalny 3-strip. **Wiąże z redesignem (N1 hamburger).** Spójność: ten sam wzorzec „1 menu zamiast kilku poziomów" w Ideas (U5/U6) i Notatkach.
+
+- **U11 — lewa kolumna (sterowanie listy):** z 5 nakładających się przełączników (Inbox/Active/All taby + Today-toggle + filtr-ikona + 4 sekcje Today) → **2 filtry + Capture**. (1) Capture na wierzchu („Drop a thought or link"); (2) filtr zakresu segmented `Wszystkie · Moje · Zespół` (`scopeFilter` istnieje); (3) filtr widoku chipy `Wszystkie · Przypięte · Ostatnie · Do przeglądu · Świeże` (spłaszczone sekcje Today); (4) czysta lista kart. Znika: Inbox/Active/All taby, progress bar, słońce-toggle, osobna filtr-ikona. Mockup: widget `notebook_left_column_control`. **RICH-LINK (osobny feature, decyzja D3):** dziś `NotebookQuickCapture.tsx` zapisuje surowy URL jako treść; propozycja = backend fetch tytuł+opis+favicon (+AI-summary 1 zdanie) → czytelny bookmark zamiast gołego URL. Wymaga server-side (CORS). *(domyślnie: UI sterowania teraz, rich-link osobny krok)*.
+- **U12 — prawe menu edytora = same ikony + tooltip** (Piotr: „zrob same ikony z rozwijanym tekstem czego dotyczą"). `NotebookContent.tsx:~2695`: „Expand into document" (tekst) → **ikona `file-export` + tooltip** „Rozwiń w dokument"; Network (graf powiązań) już ikona+tooltip ✓; Layers (toggle prawego rail) → **USUNĄĆ** (rail znika wg U10, hamburger ⋯ zastępuje). Wzorzec spójny z F-B ProcessFlowToolbar (icon-only+title). Wpina się w N4.
+
+- **U13 — panel Tools funkcjonalnie ubogi** (Piotr: „graficznie OK, funkcjonalnie ubogie, nie na poziomie najlepszych"). Mamy: 5 bloków (Callout/Warning/Toggle/Table/Divider) + AI (Command/Chat) + 7 convert + 2 transform. Brak vs Notion/Craft/Reflect: slash `/` menu + markdown skróty, bogate bloki (nagłówki/listy/kod/obraz/bookmark/kolumny/równania), @mention + dwukierunkowe linki, AI rozszerzone (pisz-dalej/podsumuj/action-items/zapytaj). **4 KILLERY (rekomendacja, nie cały Notion):** (1) slash `/` + markdown; (2) @mention + dwukierunkowe linki notatka↔artefakty (NASZ wyróżnik — patrz U14); (3) AI rozszerzone; (4) bookmark z podglądem (wiąże U11 rich-link). Mockup: widget `notebook_slash_command_premium`. **D4 (decyzja skali):** killery RAZEM z redesignem (program tygodnie+backend) czy redesign-UI-najpierw (dni) → killery jako następny program? *(rekomendacja: redesign najpierw, killery potem)*.
+- **U14 — panel Context „nie działa + vintage"** (Piotr). **Ustalenie: NIE martwy** — `NotebookContextPanel.tsx` (850 lin) ma realne API (initiatives/backlinks/tasks/decisions/linked-outputs via `useArtifactOutputsForInitiatives`). **Wrażenie „nie działa" z prezentacji:** (a) **surowe UUID zamiast nazw** (`adec3630-ce63…` jako nazwa inicjatywy = dev-leak/„vintage"); (b) puste sekcje renderowane mimo 0 (Ideas/Linked outputs „No suggestions" — martwo wygląda); (c) za dużo sekcji bez hierarchii; (d) Insert/Open — zweryfikować czy handlery żywe (ryzyko martwe jak U7). **To FUNDAMENT killera #2** (graf wiedzy) — naprawa: UUID→nazwy, ukryć/zwinąć puste, zweryfikować Insert/Open, redesign kart, scalić z hamburgerem (Context = część ⋯ lub on-demand, nie stały vintage panel). Wiąże U13.
+
+*(dopisuję U15+ w miarę testów, zanim ruszę kod)*
