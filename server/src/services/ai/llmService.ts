@@ -1164,7 +1164,19 @@ export class LLMService {
           // invoked for any side-channel consumers. Reasoning OFF: legacy
           // textStream — string-for-string identical, never yields objects.
           type StreamItem = string | { reasoning: string };
-          const rawIterator: AsyncIterator<StreamItem> = wantsReasoning
+          // Use the reasoning-aware fullStream iterator whenever reasoning is
+          // requested OR tools are present. Reasoning models (e.g. Z.ai GLM-4.6
+          // via OpenRouter) emit a reasoning block around their content + tool
+          // calls; the plain textStream path mishandled that and produced
+          // EMPTY_STREAM. `surfaceReasoning` controls whether internal reasoning
+          // is forwarded to the user — only when they asked (showReasoning);
+          // otherwise it is consumed SILENTLY so a tool-calling model's thinking
+          // never leaks into the visible answer. text-delta + tool execution flow
+          // identically for non-reasoning models (e.g. gpt-4o), so their path is
+          // unchanged in practice.
+          const useFullStream = wantsReasoning || !!streamToolDefinitions;
+          const surfaceReasoning = wantsReasoning;
+          const rawIterator: AsyncIterator<StreamItem> = useFullStream
             ? (function () {
                 const fs = result.fullStream[Symbol.asyncIterator]();
                 return {
@@ -1182,7 +1194,7 @@ export class LLMService {
                       if (p?.type === 'reasoning-delta') {
                         // Native reasoning channel: Anthropic extended thinking,
                         // OpenAI Responses API reasoning summaries, etc.
-                        if (typeof p.text === 'string' && p.text.length > 0) {
+                        if (surfaceReasoning && typeof p.text === 'string' && p.text.length > 0) {
                           try {
                             onReasoning?.(p.text);
                           } catch {
@@ -1201,7 +1213,9 @@ export class LLMService {
                         // We recover them from the raw chunk and yield inline so
                         // they reach the FE in real time. text-delta still carries
                         // the visible answer below.
-                        const reasoningChunk = extractReasoningFromRawChunk(p.rawValue);
+                        const reasoningChunk = surfaceReasoning
+                          ? extractReasoningFromRawChunk(p.rawValue)
+                          : '';
                         if (reasoningChunk) {
                           try {
                             onReasoning?.(reasoningChunk);
@@ -1266,11 +1280,32 @@ export class LLMService {
           // may yield `{ reasoning }` objects interleaved with text strings (in
           // arrival order); with reasoning OFF only strings flow (unchanged).
           async function* prependedStream(): AsyncGenerator<StreamItem> {
-            if (firstChunk.value !== undefined) yield firstChunk.value;
+            let emittedText = false;
+            const track = (v: StreamItem) => {
+              if (typeof v === 'string' && v.trim().length > 0) emittedText = true;
+            };
+            if (firstChunk.value !== undefined) {
+              track(firstChunk.value);
+              yield firstChunk.value;
+            }
             while (true) {
               const next = await rawIterator.next();
               if (next.done) break;
-              if (next.value !== undefined) yield next.value;
+              if (next.value !== undefined) {
+                track(next.value);
+                yield next.value;
+              }
+            }
+            // END-OF-STREAM RESCUE: a reasoning model can call a tool successfully
+            // and emit NO meaningful visible text (e.g. GLM-4.6 finishes on the
+            // tool-call step with only whitespace). The firstChunk.done rescue
+            // above only fires when the FIRST pull is already done; here we also
+            // cover the case where some whitespace/reasoning flowed first. If the
+            // turn produced a successful tool message but no real answer text,
+            // surface that message so the user sees a confirmation (and the turn
+            // is not perceived as empty).
+            if (!emittedText && lastToolMessage) {
+              yield lastToolMessage;
             }
           }
 
