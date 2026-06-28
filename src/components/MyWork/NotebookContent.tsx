@@ -82,6 +82,14 @@ import {
   type NotebookConvertTarget,
 } from './notebook/NotebookHamburgerMenu';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
+import {
+  detectMentionTrigger,
+  INITIAL_MENTION_STATE,
+  type MentionEntity,
+  type MentionMenuState,
+  mentionEntityToEmbedRef,
+  NotebookMentionMenu,
+} from './notebook/NotebookMentionMenu';
 import { NotebookProgressChip } from './notebook/NotebookProgressChip';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
@@ -774,6 +782,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   // Slash menu
   const [slashState, setSlashState] = useState<SlashMenuState>(INITIAL_SLASH_STATE);
+  const [mentionState, setMentionState] = useState<MentionMenuState>(INITIAL_MENTION_STATE);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   // Inline-image upload bridge — set after the upload helper is defined so the
@@ -921,11 +930,20 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       },
     },
     onTransaction({ editor: ed }) {
+      // Slash and @-mention are mutually exclusive (the cursor ends with one or
+      // the other, never both). Detect slash first; fall through to mention.
       const trigger = detectSlashTrigger(ed);
       if (trigger) {
         setSlashState(trigger);
-      } else if (slashState.open) {
-        setSlashState(INITIAL_SLASH_STATE);
+        if (mentionState.open) setMentionState(INITIAL_MENTION_STATE);
+      } else {
+        if (slashState.open) setSlashState(INITIAL_SLASH_STATE);
+        const mention = detectMentionTrigger(ed);
+        if (mention) {
+          setMentionState(mention);
+        } else if (mentionState.open) {
+          setMentionState(INITIAL_MENTION_STATE);
+        }
       }
 
       // Active block highlight — keep block visually marked for 7s
@@ -1138,6 +1156,38 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       toast.error('Failed to update status');
     }
   }, []);
+
+  // K1 @mention: replace the "@query" with an embeddedRef to the chosen entity
+  // and record a link-graph edge (note → entity) so the mention is bidirectional
+  // — the entity gains a backlink to this note (visible in its Context panel).
+  const handleMentionSelect = useCallback(
+    (entity: MentionEntity) => {
+      if (!editor || !activePage) return;
+      const from = mentionState.triggerPos;
+      const to = editor.state.selection.from;
+      const ref = mentionEntityToEmbedRef(entity, isPolish);
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from, to })
+        .insertContent({ type: 'embeddedRef', attrs: { ...ref, updatedAt: '' } })
+        .insertContent({ type: 'text', text: ' ' })
+        .run();
+      setMentionState(INITIAL_MENTION_STATE);
+
+      Api.createLinkGraphEdge({
+        source: { type: 'notebook', id: activePage.id },
+        target: { type: entity.type, id: entity.id },
+        relation: 'ref',
+        context: { containerType: 'notebook_mention', containerId: activePage.id },
+      }).catch(() => undefined);
+
+      // Nudge dependent panels (e.g. Context backlinks) to refresh.
+      emitMyWorkEvent({ type: 'item:updated', entityType: 'notebook', entityId: activePage.id });
+      toast.success(isPolish ? 'Powiązano' : 'Linked');
+    },
+    [editor, activePage, mentionState.triggerPos, isPolish, emitMyWorkEvent]
+  );
 
   const generateSummary = useCallback(
     (pageId: string, pageTitle: string, contentText: string) => {
@@ -3274,6 +3324,29 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     onAICommand={(cmd) => setAiCommand(cmd)}
                   />
                 )}
+
+                {/* @mention entity picker (K1) — coords are container-relative
+                    like SlashMenu, so the absolutely-positioned menu lands at the caret. */}
+                {editor &&
+                  mentionState.open &&
+                  (() => {
+                    const rect = editorContainerRef.current?.getBoundingClientRect();
+                    return (
+                      <NotebookMentionMenu
+                        open={mentionState.open}
+                        query={mentionState.query}
+                        position={{
+                          x: mentionState.coords.left - (rect?.left ?? 0),
+                          y: mentionState.coords.top - (rect?.top ?? 0),
+                        }}
+                        onSelect={handleMentionSelect}
+                        onClose={() => setMentionState(INITIAL_MENTION_STATE)}
+                        isPolish={isPolish}
+                        notes={pages}
+                        activeNoteId={activePage?.id ?? null}
+                      />
+                    );
+                  })()}
 
                 {/* Code-block language picker */}
                 {editor && codeLangMenu && (
