@@ -84,13 +84,15 @@ Right-click przejmuje gęstość → odciąża topbar (wiąże U6).
 ## 6. PLAN IMPLEMENTACJI (fale — sekwencyjnie, każda: kod→tsc→vitest→commit)
 > Czeka na: inwentaryzację akcji (martwe vs żywe — agent w toku) + analizę Notatek (agent w toku). Uzupełnię §7/§8 po ich powrocie.
 
-- **F-A — Budżet czerwieni (systemowy, radiuje):** crimson-leak na akcjach nie-destrukcyjnych → neutral/primary. Komponenty: panel sygnałów (`ChatSignalsPanel`/`RadarTriageCard`), Ideas toolbar (Delete zostaje, reszta nie). Najtańszy, najszerszy efekt.
-- **F-B — Layout toolbara Ideas:** zwinięcie ~20 akcji → primary `Dodaj▾` + 3-tools-strip + dock + context (wg §2). Tool-rail do krawędzi płótna.
-- **F-C — Context-menu węzła:** wzbogacić wg §3 (przenieść istniejące akcje + dodać AI/typ/kolor jeśli handlery istnieją; martwe NIE dodawać).
-- **F-D — Gęstość/typografia:** spacing, karty, oddech (§5).
-- **F-E — Notatki M04:** wg analizy (agent w toku) — modernizacja grafiki, ten sam budżet czerwieni + typografia.
-- **F-F — Weryfikacja:** tsc + vitest (Ideas+Notebook suites) + Playwright screeny before/after na demo → dowód.
-- **F-G — Deploy demo** (merge feat→demo) → Piotr rano widzi.
+- **F-A ✅ — Budżet czerwieni (systemowy):** crimson-leak sweep 31 plików MyWork/mindmap (gradient primary/crimson → slate neutral). Commit `e90a079b8b`, tsc+vitest 358/358.
+- **F-B ✅ — Layout toolbara Process Flow:** 4 ciężkie bordered-karty z uppercase-labelami → jeden smukły pasek (Figma/Linear): kształty ikony+tooltip, separatory, header odchudzony, Save primary + Delete danger. Wszystkie akcje/handlery zachowane. Commit `37ca88f362`. *(Tool-rail-position U5 — krawędź płótna — odłożony, większe ryzyko layoutu; toolbar gęstość rozwiązuje rdzeń U6.)*
+- **F-C ✅ — Context-menu węzła (U8):** naprawa no-op „Edit label" (data.editSignal → inline edit) + struktura K6 (Open→Edit/Duplicate→Auto-layout→Convert→Delete-danger) + separatory + akcje tylko gdy handler. Commit `01c8d842cd`, vitest 23/23.
+- **F-D ✅ — Panel sygnałów (U3):** crimson→neutral, hierarchia akcji (2 solid+3 ghost), semibold. Commit `840ee37af0` (zrobione wcześniej w nocy).
+- **F-E ✅ — Notatki M04:** 117 crimson AI-akcentów/aktywnych tabów → violet (spójne z AI=violet w ProcessFlowToolbar). Commit `6b72121258`, tsc+vitest 258/258.
+- **F-F ✅ — Weryfikacja:** tsc 0 + vitest zielony po każdej fali. Wizualna (Ideas/Notatki headless = gates) → demo.
+- **F-G 🟡 — Deploy demo:** push feat HEAD→demo (ff, `6b72121258`) + Railway build trigger (w toku). Piotr weryfikuje wizualnie rano.
+
+**Status uwag Piotra:** U3 ✅ (F-D) · U6 ✅ (F-B gęstość + F-A/F-E czerwień) · U8 ✅ (F-C) · U2 🟡 (hipoteza Speechify — do potwierdzenia) · U5 ⏸️ (tool-rail position — odłożony, ryzyko) · U4 🔴 (mind-map AI no-output — funkcjonalny P1, OSOBNY od UI, niezaadresowany — wymaga diagnozy ścieżki proposalUnification).
 
 ## 7. INWENTARYZACJA AKCJI IDEAS (ground-truth z kodu, ~44 akcje)
 **Licznik:** 13 ✅ działa · ~22 ⚠️ warunkowa (zaznaczenie/flaga/AI-klucz/aktywne narzędzie) · **4 🔴 twardo martwe.**
