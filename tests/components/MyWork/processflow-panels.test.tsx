@@ -394,3 +394,73 @@ describe('ProcessFlow context menu helpers', () => {
     expect(onAddNode).toHaveBeenCalledWith('decision');
   });
 });
+
+// ── ProcessFlowToolbar — AI Proposal / Readback triggers (M07 gap fix) ──────
+// The AIProposalPanel and ReadbackPanel were fully wired but UNREACHABLE: no
+// trigger ever set showAIPanel/showReadbackPanel to true. These guard the new
+// toolbar buttons that open them (and that they stay hidden when the optional
+// callbacks are not supplied).
+import { ProcessFlowToolbar } from '../../../src/components/MyWork/processflow/ProcessFlowToolbar';
+
+function baseToolbarProps() {
+  return {
+    isPl: false,
+    locked: false,
+    flowMode: 'classic' as const,
+    setFlowMode: vi.fn(),
+    semanticKit: 'none',
+    availableShapes: [],
+    addNode: vi.fn(),
+    addLane: vi.fn(),
+    insertBetween: vi.fn(),
+    splitPath: vi.fn(),
+    runValidation: vi.fn(),
+    showWarnings: false,
+    warnings: [],
+    showCoach: false,
+    setShowCoach: vi.fn(),
+    coachLoading: false,
+    runProcessCoach: vi.fn(),
+    showSummary: false,
+    setShowSummary: vi.fn(),
+    summaryLoading: false,
+    generateSummary: vi.fn(),
+    showKPIDashboard: false,
+    setShowKPIDashboard: vi.fn(),
+    canUndo: false,
+    canRedo: false,
+    undo: vi.fn(),
+    redo: vi.fn(),
+    handleAutoLayout: vi.fn(),
+    duplicateSelected: vi.fn(),
+    deleteSelected: vi.fn(),
+    saving: false,
+    syncLabel: 'Saved',
+    handleSave: vi.fn(),
+    stepCount: 3,
+    laneCount: 1,
+    guidance: { en: 'g', pl: 'g', stageEn: 's', stagePl: 's' },
+  };
+}
+
+describe('ProcessFlowToolbar — AI panel triggers', () => {
+  it('renders AI Proposal + Readback buttons and fires callbacks on click', () => {
+    const onAIProposal = vi.fn();
+    const onReadback = vi.fn();
+    render(<ProcessFlowToolbar {...baseToolbarProps()} onAIProposal={onAIProposal} onReadback={onReadback} />);
+
+    const aiBtn = screen.getByTitle(/AI Proposal — flow edits/i);
+    const readbackBtn = screen.getByTitle(/Semantic readback/i);
+    fireEvent.click(aiBtn);
+    fireEvent.click(readbackBtn);
+
+    expect(onAIProposal).toHaveBeenCalledTimes(1);
+    expect(onReadback).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides both buttons when callbacks are not supplied (back-compat)', () => {
+    render(<ProcessFlowToolbar {...baseToolbarProps()} />);
+    expect(screen.queryByTitle(/AI Proposal — flow edits/i)).toBeNull();
+    expect(screen.queryByTitle(/Semantic readback/i)).toBeNull();
+  });
+});

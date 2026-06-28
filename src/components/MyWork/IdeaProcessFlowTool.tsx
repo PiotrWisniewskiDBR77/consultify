@@ -1985,6 +1985,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         guidance={FLOW_MODE_GUIDANCE[flowMode]}
         onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
         onConvert={onQuickAction ? handleConvert : undefined}
+        onAIProposal={() => setShowAIPanel(true)}
+        onReadback={() => {
+          setShowReadbackPanel(true);
+          // Readback reads the existing graph (no user prompt needed) — fetch on open
+          // so the panel shows content immediately instead of an empty "fetch" prompt.
+          fetchReadback();
+        }}
       />
       </div>
 

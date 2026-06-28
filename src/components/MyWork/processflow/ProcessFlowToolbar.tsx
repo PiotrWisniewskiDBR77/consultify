@@ -10,6 +10,8 @@ import {
   Redo2,
   Rocket,
   Save,
+  ScanText,
+  Sparkles,
   Trash2,
   Undo2,
 } from 'lucide-react';
@@ -136,6 +138,10 @@ export interface ProcessFlowToolbarProps {
   guidance: { en: string; pl: string; stageEn: string; stagePl: string };
   onOpenChat?: () => void;
   onConvert?: (action: string) => void;
+  /** Open the AI Proposal side panel (AI suggests graph operations). Optional — button hidden when unset. */
+  onAIProposal?: () => void;
+  /** Open the Semantic Readback side panel (plain-language read of the flow). Optional — button hidden when unset. */
+  onReadback?: () => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -182,6 +188,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   guidance,
   onOpenChat,
   onConvert,
+  onAIProposal,
+  onReadback,
 }) => (
   <div className="border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
     <div className="px-4 py-3 flex flex-col gap-3">
@@ -385,6 +393,29 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               )}
               {isPl ? 'Podsumuj' : 'Summary'}
             </button>
+            {onAIProposal && (
+              <button
+                type="button"
+                onClick={onAIProposal}
+                disabled={locked}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                title={isPl ? 'Propozycja AI — zmiany w przepływie' : 'AI Proposal — flow edits'}
+              >
+                <Sparkles size={14} />
+                {isPl ? 'Propozycja AI' : 'AI Proposal'}
+              </button>
+            )}
+            {onReadback && (
+              <button
+                type="button"
+                onClick={onReadback}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20"
+                title={isPl ? 'Odczyt semantyczny przepływu' : 'Semantic readback of the flow'}
+              >
+                <ScanText size={14} />
+                {isPl ? 'Odczyt' : 'Readback'}
+              </button>
+            )}
           </div>
         </div>
 
