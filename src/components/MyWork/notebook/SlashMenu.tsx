@@ -424,6 +424,14 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
     );
   }, [state.query]);
 
+  // Keyboard nav must follow the VISUAL (grouped) order, not the flat COMMANDS
+  // order — otherwise the highlight jumps between groups because COMMANDS
+  // interleaves insert/ai/create items among the basic ones.
+  const orderedItems = useMemo(
+    () => SLASH_GROUP_ORDER.flatMap((g) => filteredItems.filter((c) => slashGroupOf(c.id) === g)),
+    [filteredItems]
+  );
+
   useEffect(() => {
     setSelectedIdx(0);
   }, [state.query]);
@@ -456,20 +464,20 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev + 1) % Math.max(filteredItems.length, 1));
+        setSelectedIdx((prev) => (prev + 1) % Math.max(orderedItems.length, 1));
         return;
       }
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev - 1 + filteredItems.length) % Math.max(filteredItems.length, 1));
+        setSelectedIdx((prev) => (prev - 1 + orderedItems.length) % Math.max(orderedItems.length, 1));
         return;
       }
 
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (filteredItems[selectedIdx]) {
-          executeCommand(filteredItems[selectedIdx]);
+        if (orderedItems[selectedIdx]) {
+          executeCommand(orderedItems[selectedIdx]);
         }
         return;
       }
@@ -477,7 +485,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [state.open, filteredItems, selectedIdx, executeCommand, onClose]);
+  }, [state.open, orderedItems, selectedIdx, executeCommand, onClose]);
 
   if (!state.open || filteredItems.length === 0) return null;
 
@@ -501,7 +509,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
               {isPolish ? groupLabel.pl : groupLabel.en}
             </div>
             {groupItems.map((cmd) => {
-              const idx = filteredItems.indexOf(cmd);
+              const idx = orderedItems.indexOf(cmd);
               const isActive = idx === selectedIdx;
               return (
                 <button

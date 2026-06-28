@@ -51,10 +51,13 @@ export const INITIAL_MENTION_STATE: MentionMenuState = {
 export function detectMentionTrigger(editor: Editor): MentionMenuState | null {
   const { $from } = editor.state.selection;
   const textBefore = $from.parent.textContent.slice(0, $from.parentOffset);
-  const match = textBefore.match(/(?:^|\s)@([\p{L}\p{N} _-]{0,40})$/u);
+  // The "@" must follow whitespace/start (so "email@host" doesn't trigger). The
+  // query is optional and may NOT begin with a space — otherwise a lone "@ " in
+  // ordinary prose ("@ meet at noon") would keep the picker open and searching.
+  const match = textBefore.match(/(?:^|\s)@([\p{L}\p{N}_-][\p{L}\p{N} _-]{0,39})?$/u);
   if (!match) return null;
 
-  const query = match[1];
+  const query = match[1] || '';
   // Position of the "@" itself = cursor - query length - 1.
   const from = $from.pos - query.length - 1;
   try {

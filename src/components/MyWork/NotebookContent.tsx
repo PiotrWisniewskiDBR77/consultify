@@ -963,9 +963,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           return true;
         }
         // Pasting a single bare URL into an empty selection → rich bookmark card.
+        // Never inside a code block — there the literal URL text is what's wanted.
         const text = (event.clipboardData?.getData('text/plain') || '').trim();
         const isBareUrl = /^https?:\/\/\S+$/i.test(text) && !/\s/.test(text);
-        if (isBareUrl && view.state.selection.empty && insertBookmarkRef.current) {
+        const inCodeBlock = view.state.selection.$from.parent.type.name === 'codeBlock';
+        if (isBareUrl && !inCodeBlock && view.state.selection.empty && insertBookmarkRef.current) {
           event.preventDefault();
           insertBookmarkRef.current(text);
           return true;
@@ -1238,9 +1240,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         context: { containerType: 'notebook_mention', containerId: activePage.id },
       }).catch(() => undefined);
 
-      // Nudge dependent panels (e.g. Context backlinks) to refresh.
+      // A mention is an OUTGOING edge (note → entity): it makes this note a
+      // backlink of the entity, but does not change this note's own incoming
+      // "Mentioned in" list — so we don't bump backlinksRefresh here. Just nudge
+      // the side Context panel.
       emitMyWorkEvent({ type: 'item:updated', entityType: 'notebook', entityId: activePage.id });
-      setBacklinksRefresh((k) => k + 1);
       toast.success(isPolish ? 'Powiązano' : 'Linked');
     },
     [editor, activePage, mentionState.triggerPos, mentionState.query, isPolish, emitMyWorkEvent]
@@ -1560,6 +1564,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           } catch {
             /* best-effort */
           }
+          // Incoming edge (task → note) → refresh this note's "Mentioned in" bar.
+          setBacklinksRefresh((k) => k + 1);
         }
         emitMyWorkEvent({
           type: 'item:created',
@@ -1595,6 +1601,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           } catch {
             /* best-effort */
           }
+          setBacklinksRefresh((k) => k + 1);
         }
         emitMyWorkEvent({
           type: 'item:created',
@@ -1631,6 +1638,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           } catch {
             /* best-effort */
           }
+          setBacklinksRefresh((k) => k + 1);
         }
         emitMyWorkEvent({
           type: 'item:created',
