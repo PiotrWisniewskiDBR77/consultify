@@ -180,4 +180,26 @@
   4. **Teresa upgrade:** `generateInitiative.ts` → wołaj `generateFullInitiative` + stampuj source_type/source_id (dziś szkic, gubi lineage).
   5. **Migracja audits na staging** (ALTER additive, staging-first), potem from-audit strict-4xx.
   6. F7 WYNIKI: `WYNIKI_M13_BACKBONE_RUN1.md` (draft jest) — uzupełnić L3 po pełnym przebiegu.
+- **2026-06-27 — RUNDA 3 (5 agentów, +81 testów, pushed 55c53bb817):**
+  - **Teresa pełny-fill + lineage:** `generateInitiative.ts` stampuje source_type/source_id (było gubione) + woła `generateFullInitiative` + persystuje karty do `ai_generated_sections` (fail-soft; mapowanie na kolumny typowane = udokumentowane). [14 t]
+  - **Badge'y wpięte** w 3 widoki discovery (InsightDetailView, AssessmentSessionEditorView, DRDAuditReportView).
+  - **F3 karty:** `cardSpecBuilders.ts` + `ProblemDefinitionSection` renderuje preview `CardBlockRenderer` (additive). [17 t]
+  - **F2→F1 spięte:** `acceptCandidate` tworzy DRAFT + wypełnia przez brain + zwraca initiativeId. [33 t]
+  - **Grounding L2:** `groundingEnrichment.test.ts` — enrichContext populuje 4 źródła przez prompt. [17 t]
+  - **WYNIKI_M13_BACKBONE_RUN1 ukończony:** 502 testy backbone zielone (L3 19 URUCHOMIONE NA ŻYWO — backend znów zapisywalny: m13-backbone 17/17 + FE-smoke 2/2 → taby renderują się OK).
+  - **ANTY-DUBLET (ja):** acceptCandidate-serwer vs hub-klient tworzyły 2 inicjatywy → hub nawiguje do initiativeId z serwera gdy obecny. Single-create. 81 zielonych, tsc czysto.
+
+---
+## STAN DEFINITYWNY (po 3 rundach, 2026-06-27)
+
+**ZBUDOWANE + OSIĄGALNE (API + UI, L3 na żywo):** F0 grunt 4-źródła · F1 mózg (generate-full+auto-heal) · F2 kandydaci (skrzynka+badge+accept→fill) · F3 silnik bloków + 1 karta zmigrowana · F4 zdrowie portfela · F5 materiał (deck/raport/tabela) · F6 handoff rezultatów · Teresa pełny-fill+lineage · proces statusów (92/92). **~600 testów inicjatyw zielonych łącznie.**
+
+**CO ZOSTAŁO (dla następcy — priorytet):**
+1. **F3 reszta kart:** zmigruj 5 pozostałych kart rdzenia na `CardBlockRenderer` wzorem `ProblemDefinitionSection` (`cardSpecBuilders` ma już builder dla targetState+businessCase). Docelowo: generator emituje `CardSpec` bezpośrednio (kontrakt w raporcie agenta C).
+2. **Teresa persystencja typowana:** dziś karty lądują w `ai_generated_sections` (JSON sink); dorób mapper componentKey→kolumny typowane (problem_statement/target_state/kpis/...) w `InitiativeController` FIELD_MAP — szczegóły w raporcie agenta A rundy 3.
+3. **Migracja `audits` na staging** (ALTER additive 20260627_audits) → potem from-audit strict-4xx (test L3-BB-16 poluzowany).
+4. **Preview wizualny pełny:** L3 smoke potwierdził render bez error-boundary; pełny przegląd UX (spacing/placement badge'y+przyciski) wart oka Piotra.
+5. **Trigger auto-skanu kandydatów:** dziś ręczny `/candidates/scan`; dorób event/cron po nowym insight/assessment/audyt.
+6. **propose-cards UI:** endpoint `POST /propose-cards` żyje; dorób UI w torze szybkim/kreatorze pokazujący proponowane karty.
+7. **Deploy demo + odbiór Piotra** całości.
 - *(kolejne wpisy dopisuje agent w trakcie)*
