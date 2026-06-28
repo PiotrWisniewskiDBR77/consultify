@@ -8,7 +8,7 @@
 ---
 
 ## 0. TL;DR — stan na teraz
-- **Demo** (`demo.consultify.ai`) działa na commicie **`f883522cd1`** (gałąź `feat/deliverables-w1` = `demo`).
+- **Demo** (`demo.consultify.ai`) działa na commicie **`f452d4f2fd`** (gałąź `feat/deliverables-w1` = `demo`) — zawiera fix crasha doc-gen (3a).
 - **Teresa przez czat tworzy inicjatywę** (`source_type=teresa_chat`), z 6 kartami AI wypełnionymi po polsku, hydrowanymi do typowanych kolumn. **Udowodnione na żywo** (HTTP `/api/ai/chat/stream` + weryfikacja w DB: 124→128, treść kart obecna).
 - Dane testowe **sprzątnięte** (0 śmieci).
 - Baza demo = **trolley** (demo+staging współdzielą). PROD = centerbeam = **NIETKNIĘTE**.
@@ -49,8 +49,8 @@ Odbiór Piotra: „stwórz inicjatywę" w czacie robiło **dokument** (English p
 ## 3. DLA CIEBIE (następny agent — chat/canvas/ideas/notes/deliverables)
 Te rzeczy są w TWOIM pasie. Zostawiam z pełną diagnozą:
 
-### 3a. 🔴 `[DeliverablesGen:doc] row.join is not a function` (NADAL pada na demo)
-Generator DOKUMENTÓW crashuje przy każdej generacji. `documentSchemaRenderer.ts` (`renderSchemaToMarkdown`) został naprawiony (`501b53a64f`, w deployu), ale crash **nadal występuje** → fix niekompletny, jest INNA ścieżka `.join` na nie-tablicy. Sprawdzone i czyste: `wave5ArtifactRuntimeService.ts:279` (twarde tablice), `docGenerationRuntime.ts:629` (`fields.map().join`). Nieznalezione miejsce: gdzieś w stacku `[DeliverablesGen:doc]` (docGenerationRuntime → ?). Chip: `task_91c639ac`.
+### 3a. ✅ `[DeliverablesGen:doc] row.join is not a function` — ROZWIĄZANE (`f452d4f2fd`)
+**Root cause był inny niż w pierwotnej diagnozie:** fix renderera (`normalizeTableContent` w `documentSchemaRenderer.ts`, do który woła `docGenerationRuntime.ts:1311`) istniał **tylko w working tree — nigdy nie zacommitowany**. Handoff błędnie przypisał go do `501b53a64f` (grep `normalizeTableContent` w tamtym HEAD = 0). Demo deployuje z pushniętej gałęzi, więc wciąż leciał stary `row.join(...)` na keyed-row → crash → cały dokument spadał do angielskiego stubu. **Nie było „drugiej ścieżki `.join`"** — był jeden niezacommitowany fix. Zacommitowany+wypchnięty+demo `f452d4f2fd`; regresja `documentSchemaRendererTable.test.ts` 4/4 zielona. (Sprawdzone czyste: `wave5ArtifactRuntimeService.ts:279` twarde tablice, `docGenerationRuntime.ts:629` `fields.map().join`.) Chip `task_91c639ac` można zamknąć.
 
 ### 3b. Architektura czatu — tool-loop działa, ale full-fill blokuje
 Stream czatu (`/api/ai/chat/stream`, handler ~`ai.routes.ts:1421`) MA model-driven tool-loop (SPEC_01 Tryb A, `maxIterations:4`). Po moim fix #6 oferuje `generate_deliverable` + `generate_initiative`. **Uwaga:** `maxIterations:4` + duplikaty — w teście LLM wywołał `generate_initiative` kilka razy (124→128). Rozważ idempotencję/dedup per-tura.
@@ -81,5 +81,5 @@ SSOT planu: `docs/initiatives/INITIATIVE_BACKBONE_NEXT_AGENT_PLAN.md`. W tej ses
 - Plan R1-R7: `docs/initiatives/INITIATIVE_BACKBONE_NEXT_AGENT_PLAN.md`
 - Kontekst+historia: `docs/initiatives/INITIATIVE_BACKBONE_HANDOFF.md`
 - Wizja+decyzje: `docs/initiatives/INITIATIVE_SYSTEM_SSOT.md`
-- Chip (doc-gen+routing): `task_91c639ac` (routing CZĘŚCIOWO rozwiązany przez #6; row.join NADAL otwarty)
+- Chip (doc-gen+routing): `task_91c639ac` — OBA domknięte (routing #6 + `7d99c2e166`/`f452d4f2fd`; row.join `f452d4f2fd`)
 - Pamięć: `finding_teresa_chat_initiative_2026-06-28` (kluczowe fakty tej sesji)
