@@ -1,5 +1,12 @@
 export type ADMATransformationId = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7';
 
+/**
+ * Seed/example "Average Scan Responses" benchmark per ADMA pillar (5 axes).
+ * SSOT pillar order: strategy, smart_products, smart_operations, smart_supply, data_driven.
+ * NOTE: these are illustrative/example values (dane przykładowe), NOT real peer data.
+ */
+export const ADMA_DEFAULT_PEER_SCORES: number[] = [3.1, 2.7, 2.9, 2.6, 2.8];
+
 export type ADMADimensionScore = {
   current?: number | null;
   target?: number | null;
