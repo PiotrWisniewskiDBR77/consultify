@@ -166,4 +166,18 @@
   3. **F3 migracja kart:** adopcja `CardBlockRenderer` przez 6 kart rdzenia (kontrakt AI→CardSpec gotowy; `validateCardSpec` jako critic gate auto-heal).
   4. **Tabela `audits`:** scan kandydatów z audytów = no-op aż tabela powstanie (F0 audit→initiative działa gdy audit istnieje).
   5. **F6/F7:** handoff rezultatów (w dużej części gotowy 92/92) + raport WYNIKI dla nowych zdolności (L3 E2E — komenda w §1).
+- **2026-06-27 — BATCH 2 (5 agentów, +73 testy, pushed da5a2b48f8):**
+  - **F1 MÓZG ZROBIONY:** `initiativeGeneratorBrain.ts` (`proposeCards` 6-rdzeń+opcjonalne; `generateFullInitiative` z auto-heal D12 — regen <próg raz, fail-soft) + `initiativeGeneratorBrain.routes.ts` (ZAMONTOWANY przed initiativesRoutes; nazwa *Brain by nie kolidować z istniejącym `initiative-generator.routes`). [20 testów]
+  - **FE WIRING ZROBIONY (czeka na PREVIEW):** taby „Kandydaci"+„Zdrowie portfela" + portfolio „Zrób materiał" w `InitiativesHub` (+ `ModuleTab` union + locale); dropdown „Zrób materiał" (deck/raport/tabela→blob) w `InitiativeDocumentView`. tsc czysto, hub-smoke 3/3, i18n gate 0.
+  - **AUDYTY:** `20260627_audits.sql` ALTER dodaje kolumny które serwisy pytają (project_id/title/summary/description) — parytet F0/F2. + `InitiativeSuggestionBadge.tsx` (reużywalny).
+  - **TESTY:** `backboneEndpoints.test.ts` (34 L2) + `m13-backbone.spec.ts` (17 L3 ŻYWE) + `resultsHandoff.test.ts` (F6 — handoff POTWIERDZONY kompletny).
+  - **DEFEKT NAPRAWIONY:** `POST /from-audit` 500→404 (audits bez project_id → PG throw przed gałęzią not-found); `auditInitiativeService` schema-safe (try full→fallback→null=404).
+  - Regresja 519/519 (1 pre-existing infra fail: brak roli PG "iris"). Wszystkie zdolności osiągalne API + w UI.
+- **CO ZOSTAŁO TERAZ:**
+  1. **PREVIEW PASS FE** (jakość — wymaga dev-servera; :3000 bywa zajęty): wizualnie potwierdzić taby Kandydaci/Zdrowie-portfela + przyciski „Zrób materiał". jsdom+tsc zielone, ale piksele niezweryfikowane.
+  2. **F3 migracja kart** na `CardBlockRenderer` (incremental; kontrakt AI→CardSpec gotowy).
+  3. **Badge insertion** do widoków discovery (InsightDetailView/AssessmentSessionEditorView/DRDAuditReportView — lokalizacje w raporcie agenta 5).
+  4. **Teresa upgrade:** `generateInitiative.ts` → wołaj `generateFullInitiative` + stampuj source_type/source_id (dziś szkic, gubi lineage).
+  5. **Migracja audits na staging** (ALTER additive, staging-first), potem from-audit strict-4xx.
+  6. F7 WYNIKI: `WYNIKI_M13_BACKBONE_RUN1.md` (draft jest) — uzupełnić L3 po pełnym przebiegu.
 - *(kolejne wpisy dopisuje agent w trakcie)*
