@@ -79,6 +79,11 @@ import {
   buildNarrativeEngineThreadsPrompt,
 } from './toolAi/narrativeEngine';
 import {
+  applyOperationalPendingAction,
+  buildOperationalFullSessionPrompt,
+  type OperationalSectionMeta,
+} from './toolAi/operationalTool';
+import {
   applyCapabilityMapperPendingAction,
   buildCapabilityMapperFullSessionPrompt,
   buildCapabilityMapperGapsPrompt,
@@ -129,6 +134,32 @@ interface UseToolAIReturn {
 }
 
 // ==================== HOOK ====================
+
+// Operational/digital tools that share OperationalToolData and are deepened with
+// a single generic AI handler (sections + summary).
+const OPERATIONAL_AI_TOOLS: ReadonlySet<ToolType> = new Set<ToolType>([
+  'sop-builder',
+  'a3-problem-solving',
+  'smed-planner',
+  'dms-builder',
+  'inventory-autopilot',
+  'ai-discovery',
+  'pain-explorer',
+  'rpa-scanner',
+  'process-automation',
+]);
+
+const OPERATIONAL_AI_TOOL_NAMES: Partial<Record<ToolType, string>> = {
+  'sop-builder': 'SOP Builder',
+  'a3-problem-solving': 'A3 Problem Solving',
+  'smed-planner': 'SMED Planner',
+  'dms-builder': 'Daily Management System',
+  'inventory-autopilot': 'Inventory Autopilot',
+  'ai-discovery': 'AI Discovery',
+  'pain-explorer': 'Pain Explorer',
+  'rpa-scanner': 'RPA Scanner',
+  'process-automation': 'Process Automation',
+};
 
 export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   const { formatForPrompt } = useOrganizationContext();
@@ -396,6 +427,37 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
     setError(null);
     setSessionGenerationStatus('generating');
+
+    if (OPERATIONAL_AI_TOOLS.has(toolType)) {
+      const opData = currentSession.inputData as any;
+      const sectionIds = Object.keys(opData?.sections || {});
+      if (!sectionIds.length) {
+        setSessionGenerationStatus('idle');
+        return;
+      }
+      const stepsById = new Map(
+        ((currentSession.steps || []) as any[]).map((s) => [s.id, s])
+      );
+      const sectionMeta: OperationalSectionMeta[] = sectionIds.map((id) => {
+        const step = stepsById.get(id) as any;
+        return {
+          id,
+          name: step?.name || step?.title || id.replace(/[-_]/g, ' '),
+          description: step?.description,
+        };
+      });
+      const opPrompt = buildOperationalFullSessionPrompt(
+        opData,
+        sectionMeta,
+        OPERATIONAL_AI_TOOL_NAMES[toolType] || toolType,
+        formatForPrompt()
+      );
+      setPendingAction('full-session');
+      setActiveAiActionId('draft-session');
+      await sendMessage(opPrompt);
+      return;
+    }
+
     const prompt =
       toolType === 'risk-uncertainty'
         ? buildRiskFullSessionPrompt(
@@ -614,7 +676,8 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         toolType !== 'narrative-engine' &&
         toolType !== 'growth-paths' &&
         toolType !== 'portfolio-priority' &&
-        toolType !== 'risk-uncertainty')
+        toolType !== 'risk-uncertainty' &&
+        !OPERATIONAL_AI_TOOLS.has(toolType))
     )
       return;
 
@@ -830,7 +893,23 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
                               updateCardAfterRethink,
                             },
                           })
-                        : applyDynamicSwotPendingAction({
+                        : OPERATIONAL_AI_TOOLS.has(toolType)
+                          ? applyOperationalPendingAction({
+                              pendingAction,
+                              parsed,
+                              currentStepId: currentStepDef?.id,
+                              operationalData: (currentSession?.inputData as any) || {
+                                context: {},
+                                sections: {},
+                              },
+                              toolType,
+                              actions: {
+                                updateInputData,
+                                setInitiatives,
+                                setSessionGenerationStatus,
+                              },
+                            })
+                          : applyDynamicSwotPendingAction({
                   pendingAction,
                   parsed,
                   currentStepId: currentStepDef?.id,

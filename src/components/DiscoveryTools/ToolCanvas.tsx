@@ -234,7 +234,15 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
 
     // Context step (first step for all tools)
     if (stepDefinition.id === 'context') {
-      return <ContextStep toolType={toolType} session={session} isPolish={isPolish} />;
+      return (
+        <ContextStep
+          toolType={toolType}
+          session={session}
+          isPolish={isPolish}
+          onGenerateFullSession={onGenerateFullSession}
+          sessionGenerationStatus={sessionGenerationStatus}
+        />
+      );
     }
 
     // Summary step (last step for all tools)

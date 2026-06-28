@@ -25,11 +25,36 @@ const OPERATIONAL_TOOL_TYPES: ToolType[] = [
   'process-automation',
 ];
 
+const humanizeStepId = (stepId: string): string =>
+  stepId
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 export function getToolSuggestionPrompt(
   toolType: ToolType,
   stepId: string,
   inputData: unknown
 ): string {
+  if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
+    // The shared OperationalToolData tools: each non-context/summary step is a
+    // section. Generate concrete operational items for the current section.
+    if (stepId === 'context' || stepId === 'summary') return '';
+    const opData = inputData as any;
+    const ctx = opData?.context || {};
+    const sectionName = humanizeStepId(stepId);
+    return `Act as a senior operations consultant. Generate 3-6 concrete, specific items for the "${sectionName}" section of this engagement.
+
+Context:
+- Goal: ${ctx.goal || 'not specified'}
+- Scope: ${ctx.scope || 'not specified'}
+- Success signal: ${ctx.successSignal || 'not specified'}
+
+Each item: clear title, actionable description, impact/effort ratings. Where relevant set category, owner, target, frequency, threshold, or durationMinutes. Ground items in the context; do not invent fake data.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "owner": "...", "target": "...", "frequency": "...", "threshold": "...", "durationMinutes": 0}]}`;
+  }
+
   if (toolType === 'market-forces') {
     const porterData = inputData as any;
     if (stepId === 'rivalry') {
@@ -489,6 +514,35 @@ Return JSON:
 }
 
 export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): string {
+  if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
+    const opData = inputData as any;
+    const sectionsSummary = Object.entries(opData?.sections || {})
+      .map(
+        ([key, items]: [string, any]) =>
+          `- ${humanizeStepId(key)}: ${(Array.isArray(items) ? items : []).length} item(s)`
+      )
+      .join('\n');
+
+    return `Based on this completed operational analysis, create a consulting-grade final summary:
+
+${sectionsSummary || '- (no sections populated yet)'}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Key Insights
+3. Applied Conclusions: what to do, what to standardize, what to validate next
+4. Initiatives to drive the work forward
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "initiatives": [{"title": "...", "description": "...", "type": "operational|strategic|growth|defensive", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "..."}]
+}`;
+  }
+
   if (toolType === 'dynamic-swot') {
     const swotData = inputData as SWOTData | undefined;
     const itemsSummary = (swotData?.items || [])

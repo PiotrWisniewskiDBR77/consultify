@@ -65,6 +65,16 @@ const TOOLS_WITH_APPLY_HANDLER: ReadonlySet<ToolType> = new Set<ToolType>([
   'growth-paths',
   'portfolio-priority',
   'risk-uncertainty',
+  // operational/digital tools deepened with the generic operational AI handler
+  'sop-builder',
+  'a3-problem-solving',
+  'smed-planner',
+  'dms-builder',
+  'inventory-autopilot',
+  'ai-discovery',
+  'pain-explorer',
+  'rpa-scanner',
+  'process-automation',
 ]);
 
 export function getToolPhaseAiActions(
