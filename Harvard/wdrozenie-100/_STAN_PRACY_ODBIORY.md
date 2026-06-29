@@ -163,7 +163,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M14 Wdrożenie (ExecutionHub) | 🟡 | ✅ | — | 🟡 | L1: **5 flag OFF** ukrywa gotowe funkcje (Intelligence/What-If/Rollout/Benefits). L4: **M14→M15 handoff ZERO wywołań = martwy**; „PDF" eksport = faktycznie Markdown. |
 | M15 Rezultaty | ✅ | ✅ | — | 🟡 | V8 ~38 endpointów realne. L4: pomost M14→M15 (benefits-register) realny ale **za flagą `m14Handoff` = OFF**. |
 | M16 Finanse | 🟡 | ✅ | — | ✅ | closed beta. V8 żywy; **split-brain: Valuations+Budgets idą TYLKO legacy** `/economics/*`. Export-do-Outputs ❓ (finalny krok nieprześledzony). |
-| M17 Materiały | ✅ | 🟡 | — | 🟡 | pipeline backend **REALNY** (brief→bundle→export→ZIP→persist). **★ tab „Dane"/connectors = MARTWY w FE** (services są, UI brak). Email tylko w cron (nie z launchera). 2 flagi (`VITE_…LIGHT` + `ENABLE_DELIVERABLES_PREMIUM`) muszą być ON. |
+| M17 Materiały | ✅ | 🟡 | — | 🟡 | pipeline backend **REALNY** (brief→bundle→export→ZIP→persist). **★ tab „Dane"/connectors OŻYWIONY 2026-06-29 (T4.3, `0d85388a8b`)** — `DataSourcesTabContent` w RAP hub (Połącz źródło + Zbierz przez formularz), test 5/5, build✅; wizualny odbiór na demo. Email tylko w cron (nie z launchera). 2 flagi (`VITE_…LIGHT` + `ENABLE_DELIVERABLES_PREMIUM`) muszą być ON. |
 | ↳ M18/M19/M20 silniki | — | — | — | — | **ŻYWE i komponowane przez M17** (doc-QA / PptxPipeline / tableSchema). Odbiory standalone ZNIKAJĄ. |
 | *L4 globalne* | | | | ✅ | link-graph+backlinks, convert (7 celów), `mywork-open-item`, `artifactLinks` = **wszystko REAL, end-to-end**. |
 | M21 Meeting | ✅ | ✅ | — | ✅ | najpełniejszy z platformy; backend+DB realny; 1 uczciwy martwy „Archive" (coming soon). |
