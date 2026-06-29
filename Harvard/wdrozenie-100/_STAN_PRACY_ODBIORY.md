@@ -138,6 +138,57 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 
 ---
 
+## 🔬 MACIERZ 4 POZIOMÓW — AS-IS, skan z KODU 2026-06-29 (ground-truth)
+
+> **Pomiar całości** (6 równoległych agentów, `plik:linia`), konserwatywnie: **✅ tylko gdy zweryfikowane w kodzie; gated/niepewne → 🟡 lub ❓.** Mierzy 4 warstwy odbioru (model Piotra): **L1** nawigacja+uprawnienia · **L2** funkcjonalność (realny backend vs fasada) · **L3** rozwój (tylko Tools/Assess) · **L4** integracja cross-tool. **Ta macierz jest świeższa niż per-modułowe sekcje niżej — przy rozbieżności wierz macierzy.**
+
+| Moduł | L1 nawig+upr | L2 funkcja | L3 rozwój | L4 integ | Główny fakt / caveat (z kodu) |
+|---|:--:|:--:|:--:|:--:|---|
+| M01 Czat | ✅ | ✅ | — | ✅ | realny SSE chat + wiring canvas/studia/my-work. Brak @mention w samym czacie. |
+| M02 Canvas | ✅ | ✅ | — | ✅ | TipTap+autosave realne; handoff do studiów. (orphan: `WorkCanvasShell`) |
+| M03 My Work (Inbox/Tasks/Decisions) | 🟡 | ✅ | — | 🟡 | L1: pilot-gating tabów niejasny. L4: convert→initiative UI **niewpięty** w taby (`ConvertToMenu` istnieje, nieużyty). |
+| M04 Notatnik | 🟡 | ✅ | — | ✅ | L1: permission-gate taba notebook niejasny. L4 bogaty (mention/backlinks/convert); canvas↔note = copy-on-expand (brak live-sync). |
+| M05 Ideas-Zarządzanie | ✅ | ✅ | — | ✅ | lista realny DB CRUD + foldery; bramka beta+pilot. |
+| M06 Mind Map | ✅ | ✅ | — | ✅ | kanoniczny graf, rail w pełni obsłużony, anty-race persist. |
+| M07 Process Flow | ✅ | ✅ | — | ✅ | data-loss naprawiony; martwy `wb_add_frame` usunięty. |
+| M08 Table | 🟡 | ✅ | — | ✅ | **L1: rail Undo/Redo MARTWY dla Table** (emituje `mm_*`, stan z mind mapy); tabela ma własne undo w-narzędziu → rozjazd. |
+| M09 Whiteboard | ✅ | ✅ | — | ✅ | facilitation/voting; convert z `whiteboardContext`. |
+| *Ideas L4 wspólny* | | | | 🟡 | convert = **REAL** (6 celów live, 7 „wkrótce"); **Export→Outputs/Materiały = STUB OFF** (świadomy, L-05). |
+| M10 Wywiad | ✅ | ✅ | — | ✅ | **★ KOREKTA: P0 STT NAPRAWIONY** (dual zapis `voiceTranscript`+`answerText`, interim-merge). Zalecane live-verify server-STT (OpenAI key) na prodzie. |
+| M12 Audyty | ✅ | 🟡 | — | 🟡 | ta sama powierzchnia co M12B (assessment). |
+| **M12B Assessmenty** | ✅ | 🟡 | 🟡 | 🟡 | **realnie OSIĄGALNE 2/5** (DRD+SIRI kompletne raport+mapa). ADMA kompletny ale `coming_soon` (zbramkowany). CMMI = wydmuszka (brak KB/AI). LEAN = struktura bez warstwy doradczej. AI-triage = **display-only** (LLM niezweryfikowany). **★ KOREKTA: „DRD bez raportu/mapy" = FAŁSZ** (DRD jeden z najpełniejszych). |
+| **M12A Tools** | ✅ | 🟡 | 🟡 | 🟡 | **1 tool e2e-pewny (Dynamic SWOT)**; ~13 z runtime ale **output niezweryfikowany**; ~15 stuby/read-only. „14 Active/17 in-dev" **optymistyczne** (in-dev = stuby bez planu). Brak licensing/role-gate na toole. |
+| M13 Inicjatywy | ✅ | ✅ | — | 🟡 | „dwa Gantty/dwa źródła zależności" = **ROZWIĄZANE** (oba czytają `task_dependencies`). L4: M13→M14 statusowy nie encja; materialize generuje pliki ale **bez rejestru Outputs**. |
+| M14 Wdrożenie (ExecutionHub) | 🟡 | ✅ | — | 🟡 | L1: **5 flag OFF** ukrywa gotowe funkcje (Intelligence/What-If/Rollout/Benefits). L4: **M14→M15 handoff ZERO wywołań = martwy**; „PDF" eksport = faktycznie Markdown. |
+| M15 Rezultaty | ✅ | ✅ | — | 🟡 | V8 ~38 endpointów realne. L4: pomost M14→M15 (benefits-register) realny ale **za flagą `m14Handoff` = OFF**. |
+| M16 Finanse | 🟡 | ✅ | — | ✅ | closed beta. V8 żywy; **split-brain: Valuations+Budgets idą TYLKO legacy** `/economics/*`. Export-do-Outputs ❓ (finalny krok nieprześledzony). |
+| M17 Materiały | ✅ | 🟡 | — | 🟡 | pipeline backend **REALNY** (brief→bundle→export→ZIP→persist). **★ tab „Dane"/connectors = MARTWY w FE** (services są, UI brak). Email tylko w cron (nie z launchera). 2 flagi (`VITE_…LIGHT` + `ENABLE_DELIVERABLES_PREMIUM`) muszą być ON. |
+| ↳ M18/M19/M20 silniki | — | — | — | — | **ŻYWE i komponowane przez M17** (doc-QA / PptxPipeline / tableSchema). Odbiory standalone ZNIKAJĄ. |
+| *L4 globalne* | | | | ✅ | link-graph+backlinks, convert (7 celów), `mywork-open-item`, `artifactLinks` = **wszystko REAL, end-to-end**. |
+| M21 Meeting | ✅ | ✅ | — | ✅ | najpełniejszy z platformy; backend+DB realny; 1 uczciwy martwy „Archive" (coming soon). |
+| M22 AI OS | 🟡 | 🟡 | — | ❓ | **dbr77-internal, PODWÓJNA bramka env** (`VITE_INTERNAL_TOOLS_ENABLED` + `ENABLE_V8_GLOBAL`) → dla klienta w prod zwykle **OFF/niewidoczny**. Nie ✅ bez live-verify. |
+| M23 Organizacja | ✅ | ✅ | — | ✅ | backend realny (shimy→`organization/`); sekcje admina delegują do M24. |
+| M24 Admin | ✅ | ✅ | — | ✅ | 5 paneli API-backed (`adminP32` 77KB). 2 orphany martwe (`AdminInitiativeCreatorPanel`, `InterviewAssignmentsPanel`). |
+| M25 Ustawienia | ✅ | 🟡 | — | ✅ | **mieszane: ~8 paneli AI/Voice/Memory = fasada/read-only** (UI bez persist). Reszta realna. |
+| M26 Portal Partnerski | 🟡 | ✅ | — | ✅ | widoczny w UI **tylko gdy `connected:true`**; backend 102KB realny + fallbacky. |
+| M27 SuperAdmin | ✅ | ✅ | — | ✅ | backend 158KB realny. Nie wszystkie 22 podsekcje zsamplowane (część ❓). |
+
+### Wnioski przekrojowe (mapują się na 3 poziomy Piotra — gdzie jest realna praca)
+- **L1 (nawigacja+uprawnienia) — rozproszone, nie krytyczne.** Konkretne rozjazdy: **M08 rail-undo martwy**, **M03/M04 niejasny pilot/permission-gate**, **M14/M15 funkcje ukryte za flagami OFF** (gotowy kod niewidoczny), M22/M26 nietypowe/zbramkowane wejścia. Sweep L1 = ujednolicić wzorzec (mamy go z Notatnika) + **przegląd flag** (co włączyć na demo).
+- **L2 (funkcjonalność) — najmocniejsza warstwa.** Backend prawie wszędzie REALNY/DB (V8). Fasady są **lokalne**: M17 tab „Dane", M25 panele AI/Voice. Niepewność systemowa: czy migracje wgrane na demo/prod (osobny `db:migrate`).
+- **L3 (rozwój Tools+Assess) — TU jest realny duży build.** Tools: **1/~31 pewny e2e**. Assessmenty: **2/5 osiągalne**. To jedyna warstwa z dużą luką merytoryczną — i serce produktu konsultingowego.
+- **L4 (integracja) — najsłabsza systemowo.** Kręgosłup M13→M14→M15→M16 jest **statusowo/lifecycle-centryczny, nie encja-centryczny**; **M14→M15 handoff martwy** (zero wywołań); **eksport-do-Outputs rozjechany** (M13 materialize bez rejestru, M14 „PDF"=MD, M15/M16 = nawigacja). Pojedyncze integracje (link-graph/convert/mention) = realne; brak spójnego „jeden deliverable → rejestr Outputs".
+
+### ★ Korekty do raportu (był ~miesiąc nieaktualny)
+1. **M10 Wywiad P0 STT = NAPRAWIONY** (raport/pamięć mówiły „żywy P0"). Pozostaje tylko live-verify server-STT na prodzie.
+2. **M12B: „DRD bez raportu/mapy" = BŁĄD** — DRD jest jednym z dwóch najpełniejszych. Realnie osiągalne 2/5 (DRD+SIRI), nie 5.
+3. **M22 AI OS to wewnętrzne narzędzie dbr77** (podwójna bramka env), nie funkcja klienta — wcześniej „NIE ROZP." bez tej nuancji.
+4. **M14→M15 handoff jest martwy** (`emitResultsHandoffEvent` zero wywołań) — wcześniej liczony jako „handoff live".
+5. **M17 tab „Dane"** (connectors/forms) = martwy w FE mimo realnego backendu.
+6. **Dużo gotowego kodu ukryte za flagami OFF** (M14/M15) — żywy użytkownik widzi szczuplejszą apkę niż jest.
+
+---
+
 ## Odbiory szczegółowe (moduł po module)
 
 > Każdy moduł: 8 etapów + linia DoD. Odhaczamy `⬜→✅`, wpisujemy datę/kto przy odbiorach 7–8.
