@@ -35,6 +35,10 @@
 | 6 | M13 Inicjatywy | Faza II | [M13.md](M13.md) |
 | 7 | M15 Rezultaty | Faza II (flagi URL) | [M15.md](M15.md) |
 | 8 | M17 Materiały | Faza II (flagi ON) | [M17.md](M17.md) |
-| — | M16/M21/M23/M24/M27 | dopiszę w Fazie II | — |
+| 9 | M16 Finanse | Faza II (closed beta — admin) | [M16.md](M16.md) |
+| 10 | M23 Organizacja | Faza II | [M23.md](M23.md) |
+| 11 | M24 Admin | Faza II (admin) | [M24.md](M24.md) |
+| 12 | M21 Meeting | Faza II — **nawigacja do potwierdzenia** (MeetingHub wpięty, wejście z sidebara niejasne) | — |
+| 13 | M27 SuperAdmin | Faza II — **nawigacja do potwierdzenia** (osobny route superadmin) | — |
 
 **Reguła twarda:** to są moduły z macierzy L1✅/L2✅ czekające na →F/→UI. Odbiór = klik na demo, NIE nowy kod. Problemy realne → 🔴 do C → Claude naprawia w Torze 2/3/4.

@@ -45,7 +45,8 @@
 - [2026-06-29] **★ GOTOWE 8 pakietów** w [`_PAKIETY_ODBIORU/`](_PAKIETY_ODBIORU/_INDEX.md) (każdy = nawigacja sidebar PL + kroki + oczekiwane + dowody-screeny + zastrzeżenia). Start = INDEX. · ✅
   - **Klaster Ideas (priorytet Fazy I):** [M05](_PAKIETY_ODBIORU/M05.md) · [M06](_PAKIETY_ODBIORU/M06.md) · [M07](_PAKIETY_ODBIORU/M07.md) · [M08](_PAKIETY_ODBIORU/M08.md) (weryfikuje fix rail-undo T2.2) · [M09](_PAKIETY_ODBIORU/M09.md)
   - **Faza II:** [M13](_PAKIETY_ODBIORU/M13.md) · [M15](_PAKIETY_ODBIORU/M15.md) (flagi URL) · [M17](_PAKIETY_ODBIORU/M17.md) (flagi ON + nowy tab Dane)
-- [2026-06-29] Dojdą: M16 (closed-beta admin), M21 Meeting, M23 Organizacja, M24 Admin, M27 SuperAdmin — dopiszę w Fazie II. · 🟡
+- [2026-06-29] **+3 pakiety:** [M16](_PAKIETY_ODBIORU/M16.md) (closed-beta admin) · [M23](_PAKIETY_ODBIORU/M23.md) · [M24](_PAKIETY_ODBIORU/M24.md). **Razem 11 pakietów.** · ✅
+- [2026-06-29] M21 Meeting + M27 SuperAdmin — **nawigacja do potwierdzenia** (MeetingHub/superadmin route — wejście z sidebara niejasne, nie zmyślam ścieżki). Dopiszę po ustaleniu wejścia. · 🟡
 
 ## C. ⬆ OD PIOTRA: odbiory / problemy / decyzje (Piotr pisze)
 - *(pusto — Piotr dopisuje: odpowiedzi na D-*, odbiory ✅/🔴, problemy z demo z opisem co nie działa)*
