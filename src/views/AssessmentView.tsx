@@ -7,7 +7,7 @@
  * Supported frameworks:
  * - DRD (Digital Readiness Diagnosis) - Full implementation
  * - SIRI (Smart Industry Readiness Index) - Full implementation
- * - ADMA - Coming soon
+ * - ADMA (Advanced Digital Maturity Assessment) - Full implementation
  * - CMMI - Coming soon
  * - Lean 4.0 - Coming soon
  */
@@ -79,7 +79,10 @@ const FRAMEWORKS: {
     descriptionPL: 'Kompleksowy model dojrzałości cyfrowej dla doskonałości produkcyjnej.',
     icon: <Database size={32} />,
     color: 'blue',
-    status: 'coming_soon',
+    // T3A 2026-06-29: odbramkowane — ADMA kompletny (editor/map/report/knowledgeBase
+    // = full integration w frameworkRegistry; weryfikacja przed flipem). CMMI/LEAN
+    // zostają coming_soon (D-B: wydmuszka/brak warstwy doradczej).
+    status: 'available',
   },
   {
     id: 'CMMI',
