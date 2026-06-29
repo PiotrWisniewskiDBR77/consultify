@@ -2,6 +2,7 @@
 
 **Start:** 2026-06-19 · **Branch:** Londyn · **Deploy odbioru:** demo.consultify.ai (`scripts/deploy-demo.sh`)
 **Zasada twarda:** idziemy moduł po module **po kolei (M01→M27, A1 na końcu)**. **Nie przechodzę do kolejnego modułu, póki poprzedni nie jest ZAMKNIĘTY (8/8).** Zero odstępstw.
+**Aktualizacja 2026-06-29 (Piotr):** dołożone dwa obszary nieobecne w pierwotnym audycie Harvard, wstawione **między M12 Audyty a M13 Inicjatywy**: **M12A — Tools consultingowe** i **M12B — Assessmenty digitalne**. (Sekwencja: …M12 → M12A → M12B → M13…)
 
 Ten plik = jedyne miejsce prawdy o postępie. Odhaczamy tu każdy etap. Szczegół (epiki, luki, kryteria) = w teczce `MXX-*.md`.
 
@@ -106,6 +107,8 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M09 | Ideas — Whiteboard | 1 | 6/6 | 7/7 | 65✅ | ✅ **Cases 29/1/0** (06-22 II fala) · 4/4 (live) | ✅ | ⬜ | ⬜ | 11 | 🟢 DO ODBIORU (re-weryf. live 2026-06-21 = 4/4; root-cause register-demo email + fix react-flow v11 prop; czeka →F/→UI/deploy) |
 | M10 | Wywiad | 1 | 0/6 | 0/7 | ⬜ | 0/75 | ⬜ | ⬜ | ⬜ | 28 | ⬜ NIE ROZP. |
 | M12 | Audyty | 3 | 0/5 | 0/7 | ⬜ | 0/49 | ⬜ | ⬜ | ⬜ | 7 | ⬜ NIE ROZP. |
+| M12A | Tools consultingowe | — | 🟡 std | — | 🟡 częśc. | ⬜ | 🟡 | ⬜ | ⬜ | ~? | 🟡 KONCEPCJA + częściowa realizacja — **NIEOBECNY w audycie Harvard** (dodany 2026-06-29 na żądanie Piotra). Standard zdefiniowany (V1/V3/V8) + ref-impl **Dynamic SWOT**; katalog **31 frameworków (14 Active / 17 in-dev)**; szkielet doktryny `src/config/consultingToolsStandard.ts`. SSOT: [`CONSULTING_TOOLS_STANDARD_V1`](../../docs/product/CONSULTING_TOOLS_STANDARD_V1.md) · [`TOOLS_V8_SSOT`](../../docs/product/TOOLS_V8_SSOT.md) · [`TOOLS_CATALOG_V3`](../../docs/product/TOOLS_CATALOG_V3.md). Decyzja Piotra 2026-06-28: wypracować koncepcję domknięcia (merytoryczne/szybki-efekt/ładne/cały-kontekst). |
+| M12B | Assessmenty digitalne | — | 🟡 V4 | — | 🟡 częśc. | ⬜ | 🟡 | ⬜ | ⬜ | ~? | 🟡 KONCEPCJA w realizacji (V4) — **najstarsze narzędzie, dziś najsłabsze**; rozdzielony od M12 Audyty (dodany 2026-06-29). Picker+forma dla 5 frameworków (DRD/SIRI/ADMA/CMMI/LEAN); **zakres fali = SIRI+DRD+ADMA** (CMMI/LEAN „wkrótce"). LUKI: raport/mapa transformacji + klasa wizualna outputów (DRD bez raportu/mapy; CMMI/LEAN wydmuszki). SSOT: [`ASSESSMENT_CONCEPT_V4`](../../docs/product/ASSESSMENT_CONCEPT_V4_2026-06-28.md) + [`ASSESSMENT_IMPLEMENTATION_PLAN`](../../docs/product/ASSESSMENT_IMPLEMENTATION_PLAN_2026-06-28.md). D1 „inspired-by" (IP SIRI/ADMA) potwierdzona. |
 | M13 | Inicjatywy | 2 | 15/16 depth | — | 🔵 | **152/152 E2E demo** (INICJATYWY-100) + 20/~121 (depth) | 🟡 | ⬜ | ⬜ | 38 | 🔵 3 PROGRAMY: **M13 DEPTH** ([`M13-STAN-PRACY-ODBIORY.md`](M13-STAN-PRACY-ODBIORY.md)) 15/16 sub-modułów · **INICJATYWY-100** ([`../INICJATYWY-100-STAN-PRACY-ODBIORY.md`](../INICJATYWY-100-STAN-PRACY-ODBIORY.md)) 6/7 obszarów A–F, **E2E 152/152 demo** `db41fa1e0a`, 1341 inicjatyw 0 legacy · **USPOJNIENIE** ([`../USPOJNIENIE-STAN-PRACY-ODBIORY.md`](../USPOJNIENIE-STAN-PRACY-ODBIORY.md)) 40/40, lejek+handoffy+walidatory, 150 E2E+150 manual, migracje na staging. Flagi default OFF. Czeka: →F/→UI + 4 migracje PROD + decyzje A2/B1/C3. **Postęp 2026-06-21:** Serie G(5/5)+R(W2 5/5)+**W5 Gantt drag**+**Calendar drag**+**K4 AI-fill**+**Serie C konsolidacja** code-side. **Manual gate: `m13-manual.spec.ts` 14/14 zielone + 38 screenów** (§1/§2 26-sekcji/§3/§4/§5/§6/§11) → [`_ANALIZA_UIUX_M13_2026-06-21.md`](_ANALIZA_UIUX_M13_2026-06-21.md). **Regresja 7/7** (M07 data-loss lock + W5 + K4). **P1 NAPRAWIONY+UDOWODNIONY** (`973138a3a3`): DRAFT/utworzone inicjatywy znikały z Kanban → DRAFT+PENDING_REVIEW na początku `ACTIVE_STATUSES`, kolumna „DRAFT" z kartami widoczna (s1a-P1-draft-visible-kanban, 6 kart); **manual 20/20**. Reszta scenariuszy (cross-module/AI-gen/pilot/DB) poza headless → backlog. Branch `feat/deliverables-w1`→demo |
 | M14 | Wdrożenie | 2/4 | 8/35 | ✅ | 252✅ | 0/~50 | 🟡 | ⬜ | ⬜ | 18 | 🔵 PROGRAM M14 (osobny SSOT: [`M14-STAN-PRACY-ODBIORY.md`](M14-STAN-PRACY-ODBIORY.md)) — backend kompletny (18 serwisów+5 routerów+2 crony OFF), **252/252 testów**, **DEPLOYED na demo** (8 PR). Czeka: flip flag + pixel-verify kokpitu + →F/→UI |
 | M15 | Rezultaty | 2 | W1–W6 ✅ | ✅ | **551✅** | ✅ **4/4 E2E + 180 manual** | ✅ | ⬜ | ⬜ | 17 | 🟢 GOTOWY DO ODBIORU (SSOT: [`M15-RAPORT-FINALNY-2026-06-26.md`](M15-RAPORT-FINALNY-2026-06-26.md)) — Seria D 11/11 fasad zlikwidowanych, **551/551 testów**, E2E 4/4, manual 180/180 (RUN4), 92 klucze i18n, deploy `6e4f16df29` LIVE. DoD 7/7 ✅. Czeka: →F/→UI Piotra (flagi URL, caveat seed danych) |
@@ -362,6 +365,46 @@ DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M10-wywiad.md](M10-wywiad.md)
 | ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | |
 
 DoD: 1⬜ 2⬜ 3⬜ 4⬜ 5⬜ 6⬜ 7⬜ · 📁 [M12-audyty.md](M12-audyty.md)
+
+### M12A — Tools consultingowe · koncepcja+częściowa realizacja · (dodany 2026-06-29)
+**Status:** 🟡 KONCEPCJA + częściowa realizacja (NIEOBECNY w pierwotnym audycie Harvard 28 kart)
+
+**Czym jest:** moduł `Tools` — narzędzia konsultingowe (Dynamic SWOT i in.) jako sesje na wspólnym standardzie (runtime/AI-kontrakt/outputy/Help). Ref-impl = Dynamic SWOT. Katalog 31 frameworków (14 Active / 17 in-dev).
+
+| # | Etap | ✓ | Odbiór |
+|---|---|:--:|---|
+| 1 | Kod — standard + ref-impl (Dynamic SWOT) | 🟡 | szkielet `consultingToolsStandard.ts`, część toolsów żywa |
+| 2 | DoD 7/7 | ⬜ | |
+| 3 | Epiki — domknięcie 31 frameworków do standardu | ⬜ | 14/31 Active |
+| 4 | Testy | ⬜ | |
+| 5 | Zgodność UI/UX (klasa konsultanta) | 🟡 | |
+| 6 | Deploy demo | 🟡 | część za bramką |
+| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
+| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
+| ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | |
+
+DoD: 1🟡 2⬜ 3⬜ 4⬜ 5🟡 6🟡 7⬜ · 📁 SSOT: [`CONSULTING_TOOLS_STANDARD_V1`](../../docs/product/CONSULTING_TOOLS_STANDARD_V1.md) · [`CONSULTING_TOOLS_V3`](../../docs/product/CONSULTING_TOOLS_V3.md) · [`TOOLS_V8_SSOT`](../../docs/product/TOOLS_V8_SSOT.md) · [`TOOLS_CATALOG_V3`](../../docs/product/TOOLS_CATALOG_V3.md) · `src/config/consultingToolsStandard.ts`
+**Następny krok:** koncepcja domknięcia (Piotr 2026-06-28: merytoryczne / szybki efekt / ładne / cały kontekst) → plan fal → realizacja.
+
+### M12B — Assessmenty digitalne · koncepcja w realizacji (V4) · (dodany 2026-06-29)
+**Status:** 🟡 KONCEPCJA w realizacji (V4) — najstarsze narzędzie Consultify, dziś najsłabsze; rozdzielony od M12 Audyty
+
+**Czym jest:** silnik diagnoz dojrzałości cyfrowej. 5 frameworków w pickerze (DRD/SIRI/ADMA/CMMI/LEAN); **zakres bieżącej fali = SIRI + DRD + ADMA** (CMMI/LEAN „wkrótce"). Stan AS-IS: picker+forma dla wszystkich 5 ✅; **luki = raport + mapa transformacji + klasa wizualna** (DRD bez raportu/mapy; CMMI/LEAN wydmuszki).
+
+| # | Etap | ✓ | Odbiór |
+|---|---|:--:|---|
+| 1 | Kod — domknięcie SIRI/DRD/ADMA (raport+mapa) | 🟡 | input ✅, output luki |
+| 2 | DoD 7/7 | ⬜ | |
+| 3 | Epiki — merytoryka per framework + outputy klasy konsultanta | ⬜ | |
+| 4 | Testy | ⬜ | |
+| 5 | Zgodność UI/UX + klasa wizualna outputów | 🟡 | |
+| 6 | Deploy demo | 🟡 | |
+| 7 | **ODBIÓR FUNKCJA — Piotr** | ⬜ | |
+| 8 | **ODBIÓR UI/grafik — audytor + Piotr** | ⬜ | |
+| ✔ | **ZAMKNIĘTY (8/8)** | ⬜ | |
+
+DoD: 1🟡 2⬜ 3⬜ 4⬜ 5🟡 6🟡 7⬜ · 📁 SSOT: [`ASSESSMENT_CONCEPT_V4`](../../docs/product/ASSESSMENT_CONCEPT_V4_2026-06-28.md) + [`ASSESSMENT_IMPLEMENTATION_PLAN`](../../docs/product/ASSESSMENT_IMPLEMENTATION_PLAN_2026-06-28.md) · nadbudowa [`ASSESSMENT_WORKBENCH_STANDARD_V3`](../../docs/product/ASSESSMENT_WORKBENCH_STANDARD_V3.md) · packi: [`SIRI`](../../docs/product/SIRI_ASSESSMENT_PACK_V3.md)/[`DRD`](../../docs/product/DRD_ASSESSMENT_PACK_V3.md)/[`ADMA`](../../docs/product/ADMA_ASSESSMENT_PACK_V3.md)
+**Decyzje otwarte:** D1 „inspired-by" potwierdzona (IP SIRI/ADMA) · D2–D4 (merytoryka/wizualizacja/fidelity) — patrz koncepcja V4.
 
 ### M13 — Inicjatywy · Faza 2 · 6 epików · 30 ekranów
 **Status:** ⬜ NIE ROZPOCZĘTY
