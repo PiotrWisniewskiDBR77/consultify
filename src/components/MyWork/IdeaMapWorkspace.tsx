@@ -288,7 +288,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       setMmCanRedo(Boolean(canRedo));
     };
     window.addEventListener('mm-undo-state', handler);
-    return () => window.removeEventListener('mm-undo-state', handler);
+    // Table tool reports its own undo/redo availability on a dedicated channel.
+    window.addEventListener('tbl-undo-state', handler);
+    return () => {
+      window.removeEventListener('mm-undo-state', handler);
+      window.removeEventListener('tbl-undo-state', handler);
+    };
   }, []);
   // discoveryPanel removed — replaced by CanvasLeftToolbar
   const [whiteboardFacilitation, setWhiteboardFacilitation] = useState<{

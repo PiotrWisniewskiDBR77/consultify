@@ -358,6 +358,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [edges, setEdges] = useState<TableEdge[]>([]);
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
   const nodesUndo = useUndoRedo<TableNode[]>([]);
+  // Bridge for the canvas rail undo (CanvasLeftToolbar emits tbl_undo before handlePlatformUndo is defined).
+  const platformUndoRef = useRef<() => void | Promise<void>>(() => nodesUndo.undo());
   const [formatRules, setFormatRules] = useState<FormatRule[]>([]);
   const [matrixAxisXKey, setMatrixAxisXKey] = useState<string | null>(null);
   const [matrixAxisYKey, setMatrixAxisYKey] = useState<string | null>(null);
@@ -878,6 +880,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       setShowVoiceInput,
       setShowCrossRelations,
       setShowHeatmap,
+      onUndo: () => platformUndoRef.current(),
+      onRedo: () => nodesUndo.redo(),
     },
   });
 
@@ -1166,6 +1170,23 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       toast.error(isPl ? 'Nie udało się cofnąć' : 'Undo failed');
     }
   }, [usePlatform, ideaId, isPl, nodesUndo, platformIntegration]);
+
+  // Keep the rail-undo bridge pointed at the live platform-aware undo handler.
+  platformUndoRef.current = handlePlatformUndo;
+
+  // Feed the canvas rail's Undo/Redo enabled state (CanvasLeftToolbar reads it via
+  // IdeaMapWorkspace). Platform mode has no client stack, so Undo stays enabled there.
+  useEffect(() => {
+    if (!open) return;
+    window.dispatchEvent(
+      new CustomEvent('tbl-undo-state', {
+        detail: {
+          canUndo: usePlatform || nodesUndo.canUndo,
+          canRedo: nodesUndo.canRedo,
+        },
+      })
+    );
+  }, [open, usePlatform, nodesUndo.canUndo, nodesUndo.canRedo]);
 
   // ── Keyboard ───────────────────────────────────────────────────────────────
   useTableKeyboard({

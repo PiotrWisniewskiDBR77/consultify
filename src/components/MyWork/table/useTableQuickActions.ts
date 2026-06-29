@@ -35,6 +35,8 @@ export interface QuickActionHandlers {
   setShowVoiceInput: (v: boolean) => void;
   setShowCrossRelations: (v: boolean) => void;
   setShowHeatmap: (v: boolean) => void;
+  onUndo: () => void | Promise<void>;
+  onRedo: () => void;
 }
 
 export interface UseTableQuickActionsOpts {
@@ -56,6 +58,16 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
       if (!detail?.action) return;
 
       const { action } = detail;
+
+      // Undo / redo from the canvas rail (CanvasLeftToolbar emits tbl_undo/tbl_redo)
+      if (action === 'tbl_undo') {
+        void handlers.onUndo();
+        return;
+      }
+      if (action === 'tbl_redo') {
+        handlers.onRedo();
+        return;
+      }
 
       // Simple toggle actions
       const toggleMap: Record<string, () => void> = {

@@ -199,7 +199,7 @@ const UNDO_REDO_PREFIX: Record<CanvasToolType, string> = {
   mindmap: 'mm',
   whiteboard: 'wb',
   process_flow: 'pf',
-  table: 'mm',
+  table: 'tbl',
 };
 
 function getUndoRedoSlots(activeTool: CanvasToolType): ToolSlot[] {
