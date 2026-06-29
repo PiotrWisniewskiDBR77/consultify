@@ -152,7 +152,7 @@ Komórka: ⬜ nie · 🟡 w toku · ✅ tak. Moduł **ZAMKNIĘTY** dopiero gdy W
 | M05 Ideas-Zarządzanie | ✅ | ✅ | — | ✅ | lista realny DB CRUD + foldery; bramka beta+pilot. |
 | M06 Mind Map | ✅ | ✅ | — | ✅ | kanoniczny graf, rail w pełni obsłużony, anty-race persist. |
 | M07 Process Flow | ✅ | ✅ | — | ✅ | data-loss naprawiony; martwy `wb_add_frame` usunięty. |
-| M08 Table | 🟡 | ✅ | — | ✅ | **L1: rail Undo/Redo MARTWY dla Table** (emituje `mm_*`, stan z mind mapy); tabela ma własne undo w-narzędziu → rozjazd. |
+| M08 Table | ✅ | ✅ | — | ✅ | **★ T2.2 NAPRAWIONE 2026-06-29** (`166421b3f5`): rail emituje `tbl_undo/redo` (był `mm_*`→martwa mind-mapa), `useTableQuickActions` je obsługuje, tabela emituje `tbl-undo-state`→rail pokazuje realny stan. Test 4/4 (`5ed6b41bd2`), `vite build`✅, live demo gitSha `166421b3f5`. Live-click na canvasie = przy odbiorze Piotra (bramka Ideas). |
 | M09 Whiteboard | ✅ | ✅ | — | ✅ | facilitation/voting; convert z `whiteboardContext`. |
 | *Ideas L4 wspólny* | | | | 🟡 | convert = **REAL** (6 celów live, 7 „wkrótce"); **Export→Outputs/Materiały = STUB OFF** (świadomy, L-05). |
 | M10 Wywiad | ✅ | ✅ | — | ✅ | **★ KOREKTA: P0 STT NAPRAWIONY** (dual zapis `voiceTranscript`+`answerText`, interim-merge). Zalecane live-verify server-STT (OpenAI key) na prodzie. |

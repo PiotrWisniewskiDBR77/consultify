@@ -16,7 +16,10 @@
 
 ## A. STATUS (Claude aktualizuje)
 - **2026-06-29:** struktura dwóch strumieni założona. Claude gotowy ruszyć **FAZĘ I** (kanon nawigacji · fix M08 rail-undo · przegląd+flip flag · L4 quick-wins: handoff M14→M15 + tab „Dane") po zielonym świetle / lub od razu wg planu. Burn-down = macierz L1-L4.
-- Aktualna faza: **I (start)**. Następny krok Claude: T2.1 kanon nawigacji + T4 quick-wins; równolegle generacja pakietów odbioru do sekcji B.
+- **2026-06-29 (krok 1) ✅ T2.2 — fix M08 Table rail-undo.** Rail emitował `mm_*` dla Table (→ martwa mind-mapa); teraz prefiks `tbl_`, `useTableQuickActions` obsługuje `tbl_undo/redo`, tabela emituje `tbl-undo-state` → rail pokazuje realny stan. 4 pliki, `vite build` ✅, commit `166421b3f5`, push demo (`HEAD:demo`, auto-deploy ~5min). Macierz: M08 L1 🟡→✅ po live-verify na demo.
+- **2026-06-29 (krok 1 domknięty):** M08 LIVE na demo (gitSha `166421b3f5`), test komponentowy 4/4 (`5ed6b41bd2`, `tests/components/MyWork/useTableQuickActions.railUndo.test.tsx`). Macierz L1 M08 🟡→✅. Live-click na canvasie Ideas = przy odbiorze Piotra (bramka pilot/demo, headless flaky).
+- **2026-06-29 (krok 2):** T4.1 handoff M14→M15 **ESKALOWANY** — sekcja B1b [PYTANIE]: semantyka wpięcia niejednoznaczna (`emitResultsHandoffEvent` martwy+bez czytelnika; realna ścieżka `handoffFromClosure`→benefits_register bez auto-callera; który moment/źródło). Nie buduję spekulacyjnie na wrażliwym kontrolerze cyklu życia. Default po 72h opisany w B1b.
+- Aktualna faza: **I**. Następny krok Claude: **T4.3 tab „Dane"** (martwy FE `materialData.ts` → tab w `ReportsAndPresentationsHub` + upload; jednoznaczny, agent-owned) lub **pakiety odbioru Tor 1** (odblokowanie strumienia Piotra). T2.3 flagi czeka na D-D.
 
 ## B. ⬇ ZADANIA / PYTANIA DLA PIOTRA (Claude pisze)
 
@@ -29,6 +32,9 @@
 - [2026-06-29] **D-F** M22 AI OS w GA? → DEFAULT: nie, internal-only (dbr77). · ⬜
 - [2026-06-29] **D-G** promocja PROD → **BEZ DEFAULTU — czeka na Twoje jawne „tak"** (po GA-v1 zielonym). · ⬜
 - [2026-06-29] **D-H** AI-guidance assessmentów (realne zasilanie LLM per framework DRD/SIRI/ADMA) → DEFAULT: tak. · ⬜
+
+### B1b — PYTANIA TECHNICZNE (Claude pyta, blokują konkretny krok)
+- [2026-06-29] **[PYTANIE] T4.1 handoff M14→M15 — semantyka wpięcia.** Skan kodu: są DWA równoległe mechanizmy. (1) `emitResultsHandoffEvent`→`v8_results_handoff_events` = **martwy** ORAZ `getExecutionDashboard` który to czyta **nie ma żadnego routu** → ożywienie tej funkcji = zapis do tabeli, której nikt nie czyta (mała wartość). (2) Realna ścieżka do **M15 inbox** (`M14HandoffInbox`) = `handoffFromClosure`→`benefits_register` (source `M14_CLOSURE_HANDOFF`), też **bez auto-callera**. Aby benefit „wpadł" do inbox trzeba wpiąć (2) w moment zamknięcia. **Niejednoznaczność:** (a) **który moment** — `* → DONE` (zamknięcie) czy `DONE → TRACKING` (start benefitów, bramka wymaga już ≥1 KPI w `initiative_kpis`)? (b) **z jakiego źródła** karmić benefit — planning-KPIs (`initiative_kpis`) czy realized-delta z egzekucji? Przy seedzie z planning-KPIs + późniejszym `promote→initiative_kpis` grozi **zapętlenie/dubel KPI**. To wrażliwy, wieloagentowy kontroler cyklu życia (jest tam już historia dubla notyfikacji) → **nie buduję spekulacyjnie.** **Rekomendacja/DEFAULT (po 72h):** wpiąć `handoffFromClosure` fail-safe w blok `nextStatus === 'DONE'` (zamknięcie), źródło = `initiative_kpis` inicjatywy, dedup już w serwisie; `promote` w M15 tworzy KPI sustainmentu (zgodnie z copy inboxu „promuj do śledzonych KPI"). Potwierdź moment+źródło albo przyjmij default. · ⬜
 
 ### B2 — ODBIORY (pakiety dopisywane przez Claude w Fazie I; Piotr odbiera seriami)
 - [2026-06-29] Pakiety odbioru ~11 modułów (M05/06/07/09/M13/M15/M16/M17/M21/M23/M24/M27) — **w przygotowaniu** (Claude generuje w Fazie I, każdy = URL+kliknięcia+oczekiwane+screeny). · 🟡
