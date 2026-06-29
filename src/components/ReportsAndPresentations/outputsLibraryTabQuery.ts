@@ -13,6 +13,7 @@ export const RAP_TAB_TO_QUERY: Record<RapTab, string> = {
   outputs_documents: 'documents',
   presentations: 'presentations',
   outputs_sheets: 'sheets',
+  outputs_data: 'data',
   templates: 'templates',
 };
 
@@ -28,6 +29,7 @@ export function parseRapTabFromQuery(raw: string | null): RapTab | null {
     reports: 'outputs_documents',
     presentations: 'presentations',
     sheets: 'outputs_sheets',
+    data: 'outputs_data',
     templates: 'templates',
   };
   return map[n] ?? null;

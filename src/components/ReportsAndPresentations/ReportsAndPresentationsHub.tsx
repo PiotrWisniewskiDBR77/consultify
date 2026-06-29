@@ -9,6 +9,7 @@ import {
   BookTemplate,
   ChevronDown,
   ChevronUp,
+  Database,
   FileText,
   Filter,
   Inbox,
@@ -46,6 +47,7 @@ import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { deliverableKickoffSeed, deliverableTypeLabel } from './deliverableKickoff';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
 import { type LauncherSelection, OutputsLauncherModal } from './OutputsLauncherModal';
+import { DataSourcesTabContent } from './DataSourcesTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
@@ -184,6 +186,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         icon: <Table2 size={16} />,
       },
       {
+        id: 'outputs_data' as ModuleTab,
+        label: t('rap.outputs.tabs.data', 'Dane'),
+        icon: <Database size={16} />,
+      },
+      {
         id: 'templates' as ModuleTab,
         label: t('rap.tabs.templates', 'Template Library'),
         icon: <BookTemplate size={16} />,
@@ -200,6 +207,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       outputs_documents: t('rap.actions.newReport', 'New report'),
       presentations: t('rap.actions.newPresentation', 'New presentation'),
       outputs_sheets: '',
+      outputs_data: '',
       templates: t('rap.actions.newTemplate', 'New template'),
     }),
     [t]
@@ -1090,6 +1098,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             initialArtifactId={initialArtifactId}
           />
         );
+      case 'outputs_data':
+        return <DataSourcesTabContent />;
       default:
         return null;
     }
@@ -1123,7 +1133,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={activeTab === 'outputs_sheets' ? undefined : handleNewItem}
+        onNewItem={
+          activeTab === 'outputs_sheets' || activeTab === 'outputs_data'
+            ? undefined
+            : handleNewItem
+        }
         newItemLabel={ctaLabels[activeTab]}
         newItemTestId="outputs-new-btn"
         availableViewModes={['table', 'grid']}

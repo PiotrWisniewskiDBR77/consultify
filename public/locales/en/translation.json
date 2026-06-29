@@ -12583,7 +12583,8 @@
       "documents": "Documents",
       "mine": "Mine",
       "needsReview": "Needs review",
-      "sheets": "Sheets"
+      "sheets": "Sheets",
+      "data": "Data"
     },
     "columns": {
       "name": "Name",

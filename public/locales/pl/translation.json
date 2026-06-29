@@ -13175,7 +13175,8 @@
       "documents": "Dokumenty",
       "mine": "Moje",
       "needsReview": "Wymaga przeglądu",
-      "sheets": "Arkusze"
+      "sheets": "Arkusze",
+      "data": "Dane"
     },
     "columns": {
       "name": "Nazwa",
