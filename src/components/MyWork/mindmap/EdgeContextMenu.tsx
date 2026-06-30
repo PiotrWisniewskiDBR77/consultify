@@ -1,6 +1,7 @@
 import { ArrowLeftRight, Edit3, Paintbrush, Plus, Trash2, Type } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
 
+import { ContextMenuPortal } from './ContextMenuPortal';
 import { MENU_CONTAINER_CLASS, type MenuItemBase, menuItemClass } from './contextMenuTypes';
 
 export interface EdgeContextMenuProps {
@@ -99,8 +100,9 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
   const clampedY = Math.min(y, window.innerHeight - items.length * 34 - 20);
 
   return (
-    <div ref={ref} className={MENU_CONTAINER_CLASS} style={{ left: clampedX, top: clampedY }}>
-      {items.map((item) => {
+    <ContextMenuPortal>
+      <div ref={ref} className={MENU_CONTAINER_CLASS} style={{ left: clampedX, top: clampedY }}>
+        {items.map((item) => {
         const Icon = item.icon;
         return (
           <React.Fragment key={item.id}>
@@ -122,6 +124,7 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
           </React.Fragment>
         );
       })}
-    </div>
+      </div>
+    </ContextMenuPortal>
   );
 };

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ContextMenuPortal } from './ContextMenuPortal';
 import { MENU_CONTAINER_CLASS, type MenuItemBase, menuItemClass } from './contextMenuTypes';
 
 export interface NodeContextMenuProps {
@@ -505,12 +506,13 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
   if (!hasSubmenuGroups) {
     return (
-      <div
-        ref={ref}
-        className={`${MENU_CONTAINER_CLASS} min-w-[230px] max-h-[80vh] overflow-y-auto`}
-        style={{ left: clampedX, top: clampedY }}
-      >
-        {groups.map((group, gi) => (
+      <ContextMenuPortal>
+        <div
+          ref={ref}
+          className={`${MENU_CONTAINER_CLASS} min-w-[230px] max-h-[80vh] overflow-y-auto`}
+          style={{ left: clampedX, top: clampedY }}
+        >
+          {groups.map((group, gi) => (
           <React.Fragment key={gi}>
             {group.titlePl && (
               <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
@@ -523,7 +525,8 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
             )}
           </React.Fragment>
         ))}
-      </div>
+        </div>
+      </ContextMenuPortal>
     );
   }
 
@@ -532,11 +535,12 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   const deleteGroup = groups[groups.length - 1];
 
   return (
-    <div
-      ref={ref}
-      className={`${MENU_CONTAINER_CLASS} min-w-[230px]`}
-      style={{ left: clampedX, top: clampedY }}
-    >
+    <ContextMenuPortal>
+      <div
+        ref={ref}
+        className={`${MENU_CONTAINER_CLASS} min-w-[230px]`}
+        style={{ left: clampedX, top: clampedY }}
+      >
       {mainItems.map((group, gi) => (
         <React.Fragment key={gi}>
           <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
@@ -586,8 +590,9 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         </div>
       ))}
 
-      <div className="my-1.5 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
-      {deleteGroup.items.map(renderItem)}
-    </div>
+        <div className="my-1.5 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+        {deleteGroup.items.map(renderItem)}
+      </div>
+    </ContextMenuPortal>
   );
 };
