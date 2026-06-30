@@ -7,6 +7,8 @@
  * localStorage → Vite build env → default false.
  */
 
+import { isPublicProductionHost } from '@/utils/publicProduction';
+
 type FlagKeys = { query: string; localStorage: string; env: string };
 
 const FLAGS = {
@@ -81,7 +83,14 @@ export function isExecutionFlagEnabled(flag: ExecutionFlag): boolean {
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
-  return readEnv(keys.env);
+  if (readEnv(keys.env)) return true;
+  // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
+  // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
+  // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).
+  // Reversible: drop this line to restore default-OFF.
+  return !isPublicProductionHost(
+    typeof window !== 'undefined' ? window.location.hostname : ''
+  );
 }
 
 export const EXECUTION_FLAG_KEYS = FLAGS;
