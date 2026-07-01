@@ -16,15 +16,23 @@
 | 5 Light mode | wszystkie klastry | ⬜ |
 
 ## FALA 0 — komponenty (szczegół)
+Branch kodu: `reskin/wave-0-foundation`. Weryfikacja: `type-check` — moje 4 pliki ZERO błędów; 12 błędów TS = PRE-EXISTING (cudze WIP: DocumentStudio/MyWork/Results/settings), NIE moje.
 | Element | Plik | Stan |
 |---------|------|------|
-| Edit Columns (eye/CAPS/instrukcja) | `Admin/shared/ColumnSelector.tsx` | 🟨 |
+| Edit Columns (crimson eye/„Show All") | `Admin/shared/ColumnSelector.tsx` | 🟦 staged |
+| Badge default crimson→neutral | `ui/badge.tsx` | 🟦 staged |
+| Powłoka root | `layouts/MainLayout.tsx` → bg-c-bg | 🟦 staged |
+| Powłoka wrapper hubów | `shared/ModuleHub/ModuleHub.tsx` → bg-c-bg | 🟦 staged |
+| Sidebar → tokeny | `navigation/Sidebar` | ⬜ |
 | ESLint token gate | (nowa reguła) | ⬜ |
 | selection=neutral (SYS-1) | shared row/FilterableTable | ⬜ |
 | Menu 2 pill (A-2) | ModuleMenu3/tabs | ⬜ |
 | chip Menu 3 ramki (A-3) | ModuleMenu3 | ⬜ |
-| powłoka (MainLayout/Sidebar/ModuleHub) | layouts+navigation | ⬜ |
+| editor-shell (D-I) | editor-shell-canon | ⬜ |
 | test-data cleanup | skrypt | ⬜ |
+| przemianować Menu 1/2/3 | kod+spec | ⬜ |
+
+**PRE-EXISTING dług do flagi (NIE mój, NIE tykam):** 12 błędów TS na `feat/deliverables-w1` — `Results/PortfolioInsightsPanel`, `Results/ValueDriverTree`, `settings/AIPreferencesModule` (brak modułu), `MyWork/Idea*Tool`, `DocumentStudio/editor/*`. Branch roboczy sam z siebie nie type-check'uje się w pełni.
 
 ---
 
@@ -49,4 +57,5 @@
 
 ## LOG (co wydarzyło się w nocy)
 - 2026-07-01: scaffold `_AGENCI/` utworzony (protokół + 5 zleceń + ta tablica). Inwentarz ze skanu routingu (~115 ekranów).
-- (dopisywane niżej przez przebiegi)
+- 2026-07-01 noc: Fala 0 — 4 fixy na `reskin/wave-0-foundation` (ColumnSelector, badge, MainLayout, ModuleHub). Type-check: moje pliki czyste; 12 błędów pre-existing (cudze). Raport: `../_RAPORT_NOCNY_2026-07-01.md`.
+- Wstrzymano dalszy grind: skala=115 ekranów, praca modułowa wymaga odbioru Piotra (G0). Maszyna gotowa do wypuszczenia 5 agentów.
