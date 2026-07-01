@@ -7,7 +7,7 @@ interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
+  default: 'border-c-border bg-c-surface-raised text-c-text hover:bg-c-surface-raised/80',
   secondary: 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
   destructive: 'border-transparent bg-danger-600 text-white hover:bg-danger-700',
   outline: 'text-foreground',
