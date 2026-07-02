@@ -125,7 +125,7 @@ const ResultsControlSelect: React.FC<ResultsControlSelectProps> = ({
       aria-label={ariaLabel}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-9 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] px-3 pr-8 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+      className="h-9 rounded-full border border-c-border bg-c-surface px-3 pr-8 text-sm text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
@@ -954,7 +954,7 @@ export const ResultsHub: React.FC = () => {
         <ResultsRuntimeChip
           label={t('results.runtime.realizedRoi', 'Realized ROI')}
           value={runtimeSnapshot.roiDashboard.totalRealized.toLocaleString()}
-          dotClassName="bg-primary-400"
+          dotClassName="bg-emerald-400"
         />
         <ResultsRuntimeChip
           label={t('results.runtime.reconciliation', 'Reconciliation')}

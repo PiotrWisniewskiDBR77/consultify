@@ -677,7 +677,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           </div>
 
           {file && (
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/80">
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface p-3 shadow-sm">
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                   file.name.endsWith('.pdf')

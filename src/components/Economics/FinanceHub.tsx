@@ -1187,7 +1187,7 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 transition-colors duration-150 active:scale-[0.97]"
+        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-bg hover:opacity-90 transition-colors duration-150 active:scale-[0.97]"
       >
         <span>{labels[currentKind] || labels.models}</span>
       </button>

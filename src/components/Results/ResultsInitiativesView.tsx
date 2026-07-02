@@ -227,7 +227,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
   if (initiatives.length === 0) {
     return (
       <div className="p-4">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
           <div className="text-lg font-semibold text-slate-900 dark:text-white">
             {t('results.initiatives.emptyTitle', 'No tracked initiatives in this bucket')}
           </div>
@@ -299,7 +299,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                             }}
                             className={`w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
                               status === initiative.initiativeStatus
-                                ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300'
+                                ? 'bg-c-surface-raised text-c-text'
                                 : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                             }`}
                           >
@@ -515,7 +515,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                       type="checkbox"
                       checked={selectedIds.size === sortedItems.length && sortedItems.length > 0}
                       onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
+                      className="w-4 h-4 rounded border-c-border bg-c-surface text-c-focus-solid focus:ring-c-focus"
                     />
                   </th>
                   <th className="text-left px-4 py-2">
@@ -579,7 +579,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                           type="checkbox"
                           checked={selectedIds.has(initiative.id)}
                           onChange={() => toggleSelect(initiative.id)}
-                          className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
+                          className="w-4 h-4 rounded border-c-border bg-c-surface text-c-focus-solid focus:ring-c-focus"
                         />
                       </td>
 
@@ -597,7 +597,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                             onChange={(e) =>
                               void onChangeInitiativeStatus?.(initiative, e.target.value)
                             }
-                            className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                            className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-c-focus"
                           >
                             {statusOptions.map((status) => (
                               <option key={status} value={status}>

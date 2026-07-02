@@ -93,7 +93,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
 
   return (
     <div
-      className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 dark:border-white/[0.08]"
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface"
       role="grid"
       aria-label={isPl ? 'Tabela sprawozdania finansowego' : 'Financial statement table'}
     >
@@ -103,7 +103,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
           hasTwoPeriods
             ? 'grid-cols-[minmax(200px,3fr)_minmax(100px,1fr)_minmax(100px,1fr)_minmax(60px,0.5fr)]'
             : 'grid-cols-[minmax(220px,3fr)_minmax(120px,1fr)]'
-        } border-b border-slate-200/70 bg-slate-50/95 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/95 dark:text-slate-400`}
+        } border-b border-c-border-subtle bg-c-surface-raised px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted`}
         role="row"
       >
         <div role="columnheader">{lineLabel}</div>
@@ -127,7 +127,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
       </div>
 
       {/* Currency bar */}
-      <div className="border-b border-slate-200/40 bg-slate-50/50 px-4 py-1 text-[10px] text-slate-600 dark:border-white/[0.04] dark:bg-white/[0.015] dark:text-slate-500">
+      <div className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-1 text-[10px] text-c-text-muted">
         {isPl ? 'Waluta' : 'Currency'}: <span className="font-semibold">{currencyDisplay}</span>
       </div>
 
@@ -144,26 +144,26 @@ export const CanonicalStatementTable: React.FC<Props> = ({
           const rowBg = isSelected
             ? 'bg-blue-50/90 dark:bg-blue-500/[0.12]'
             : isTotal
-              ? 'bg-slate-100/80 dark:bg-white/[0.06]'
+              ? 'bg-black/[0.04] dark:bg-white/[0.06]'
               : isSubtotal
-                ? 'bg-slate-50/70 dark:bg-white/[0.03]'
+                ? 'bg-black/[0.02] dark:bg-white/[0.03]'
                 : isEvenRow
-                  ? 'bg-white dark:bg-transparent'
-                  : 'bg-slate-50/30 dark:bg-white/[0.012]';
+                  ? 'bg-transparent'
+                  : 'bg-black/[0.015] dark:bg-white/[0.012]';
 
           const borderStyle = isTotal
-            ? 'border-t-2 border-b-2 border-slate-300/70 dark:border-white/[0.12]'
+            ? 'border-t-2 border-b-2 border-c-border'
             : isSubtotal
-              ? 'border-t border-b border-slate-200/70 dark:border-white/[0.08]'
-              : 'border-b border-slate-200/80 dark:border-white/[0.03]';
+              ? 'border-t border-b border-c-border-subtle'
+              : 'border-b border-c-border-subtle';
 
           const fontWeight = isTotal ? 'font-bold' : isSubtotal ? 'font-semibold' : 'font-normal';
 
           const textColor = isTotal
-            ? 'text-slate-900 dark:text-white'
+            ? 'text-c-text'
             : isSubtotal
-              ? 'text-slate-800 dark:text-slate-100'
-              : 'text-slate-700 dark:text-slate-200';
+              ? 'text-c-text'
+              : 'text-c-text-secondary';
 
           const nameWeight = isTotal ? 'font-bold' : isSubtotal ? 'font-semibold' : 'font-medium';
 
@@ -188,7 +188,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                 }`}
               >
                 {level >= 2 && !emphasized && (
-                  <span className="mr-1.5 inline-block h-3.5 w-px bg-slate-300/50 dark:bg-white/[0.08]" />
+                  <span className="mr-1.5 inline-block h-3.5 w-px bg-c-border-subtle" />
                 )}
                 <span className={`truncate ${nameWeight} ${textColor}`} title={row.label}>
                   {row.label}
@@ -200,7 +200,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                   {/* Older period (left) */}
                   <div
                     role="gridcell"
-                    className={`text-right font-mono tabular-nums ${fontWeight} text-slate-500 dark:text-slate-400`}
+                    className={`text-right font-mono tabular-nums ${fontWeight} text-c-text-muted`}
                   >
                     {row.olderValue != null ? formatValue(row.olderValue) : '—'}
                   </div>
@@ -219,10 +219,10 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                       <span
                         className={`inline-flex items-center gap-0.5 text-[10px] font-medium tabular-nums ${
                           row.delta.direction === 'up'
-                            ? 'text-emerald-600 dark:text-emerald-400'
+                            ? 'text-c-success'
                             : row.delta.direction === 'down'
-                              ? 'text-danger-600 dark:text-danger-400'
-                              : 'text-slate-600 dark:text-slate-500'
+                              ? 'text-c-danger'
+                              : 'text-c-text-muted'
                         }`}
                       >
                         {row.delta.direction === 'up' ? (
@@ -235,7 +235,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                           : `${row.delta.pct > 0 ? '+' : ''}${row.delta.pct.toFixed(1)}%`}
                       </span>
                     ) : (
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400">—</span>
+                      <span className="text-[10px] text-c-text-muted">—</span>
                     )}
                   </div>
                 </>

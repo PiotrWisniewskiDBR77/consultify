@@ -23,9 +23,9 @@ import type { KPIStatus, KPITrend, ResultsKPI } from './kpiDomain';
 // ---------------------------------------------------------------------------
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
-  'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
-  below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
-  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
+  'on-target': { bg: 'bg-emerald-500/10', text: 'text-c-success', dot: 'bg-c-success' },
+  below: { bg: 'bg-danger-500/10', text: 'text-c-danger', dot: 'bg-c-danger' },
+  'no-data': { bg: 'bg-c-surface-raised', text: 'text-c-text-secondary', dot: 'bg-c-text-muted' },
 };
 
 const STATUS_LABELS: Record<KPIStatus, string> = {
@@ -46,7 +46,7 @@ const StatusBadge: React.FC<{ status: KPIStatus }> = ({ status }) => {
 
 const NeedsEntryBadge: React.FC = () => {
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-c-warning">
       <span className="text-xs font-medium">Needs entry</span>
     </span>
   );
@@ -57,9 +57,9 @@ const NeedsEntryBadge: React.FC = () => {
 // ---------------------------------------------------------------------------
 
 const TREND_ICON: Record<KPITrend, { Icon: typeof ArrowUp; color: string }> = {
-  up: { Icon: ArrowUp, color: 'text-emerald-400' },
-  down: { Icon: ArrowDown, color: 'text-danger-400' },
-  stable: { Icon: ArrowRight, color: 'text-slate-600' },
+  up: { Icon: ArrowUp, color: 'text-c-success' },
+  down: { Icon: ArrowDown, color: 'text-c-danger' },
+  stable: { Icon: ArrowRight, color: 'text-c-text-secondary' },
 };
 
 const TrendArrow: React.FC<{ trend: KPITrend }> = ({ trend }) => {
@@ -74,7 +74,7 @@ const TrendArrow: React.FC<{ trend: KPITrend }> = ({ trend }) => {
 const FrequencyBadge: React.FC<{ freq: string }> = ({ freq }) => {
   const label = freq?.charAt(0) + freq?.slice(1).toLowerCase();
   return (
-    <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-600">
+    <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-c-surface-raised text-c-text-secondary">
       {label}
     </span>
   );
@@ -90,18 +90,18 @@ const ValueCell: React.FC<{
   colored?: boolean;
   status?: KPIStatus;
 }> = ({ value, unit, colored, status }) => {
-  if (value == null) return <span className="text-sm text-slate-500">—</span>;
+  if (value == null) return <span className="text-sm text-c-text-muted">—</span>;
   const color = colored
     ? status === 'on-target'
-      ? 'text-emerald-400'
+      ? 'text-c-success'
       : status === 'below'
-        ? 'text-danger-400'
-        : 'text-slate-600'
-    : 'text-slate-600';
+        ? 'text-c-danger'
+        : 'text-c-text-secondary'
+    : 'text-c-text-secondary';
   return (
     <span className={`text-sm font-medium ${color}`}>
       {value.toLocaleString()}
-      {unit && <span className="ml-0.5 text-xs text-slate-500">{unit}</span>}
+      {unit && <span className="ml-0.5 text-xs text-c-text-muted">{unit}</span>}
     </span>
   );
 };
@@ -128,17 +128,17 @@ function formatRelativeTime(date: string | undefined): string {
 // ---------------------------------------------------------------------------
 
 const OwnerCell: React.FC<{ name?: string }> = ({ name }) => {
-  if (!name) return <span className="text-sm text-slate-500">—</span>;
+  if (!name) return <span className="text-sm text-c-text-muted">—</span>;
   return (
     <div className="flex items-center gap-2">
-      <div className="w-6 h-6 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-[10px] font-bold">
+      <div className="w-6 h-6 rounded-full bg-c-surface-raised text-c-text-secondary flex items-center justify-center text-[10px] font-bold">
         {name
           .split(' ')
           .map((n) => n[0])
           .join('')
           .slice(0, 2)}
       </div>
-      <span className="text-sm text-slate-600 truncate max-w-[80px]">{name}</span>
+      <span className="text-sm text-c-text-secondary truncate max-w-[80px]">{name}</span>
     </div>
   );
 };
@@ -268,11 +268,11 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
           const kpi = byId.get(row.id);
           return (
             <div className="min-w-0">
-              <span className="text-sm font-medium text-slate-900 dark:text-white block truncate">
+              <span className="text-sm font-medium text-c-text block truncate">
                 {row.name}
               </span>
               {kpi?.description && (
-                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{kpi.description}</p>
+                <p className="text-xs text-c-text-muted mt-0.5 line-clamp-1">{kpi.description}</p>
               )}
             </div>
           );
@@ -292,9 +292,9 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
         ].map((n) => ({ value: n, label: n })),
         render: (row: any) =>
           row.initiative ? (
-            <span className="text-sm text-primary-400 hover:underline">{row.initiative}</span>
+            <span className="text-sm text-c-info hover:underline">{row.initiative}</span>
           ) : (
-            <span className="text-sm text-slate-500">—</span>
+            <span className="text-sm text-c-text-muted">—</span>
           ),
       },
       {
@@ -326,9 +326,9 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
         width: '150px',
         filterable: true,
         filterOptions: [
-          { value: 'on-target', label: 'On Target', color: 'bg-emerald-500' },
-          { value: 'below', label: 'Below Target', color: 'bg-danger-500' },
-          { value: 'no-data', label: 'No Data', color: 'bg-slate-400' },
+          { value: 'on-target', label: 'On Target', color: 'bg-c-success' },
+          { value: 'below', label: 'Below Target', color: 'bg-c-danger' },
+          { value: 'no-data', label: 'No Data', color: 'bg-c-text-muted' },
         ],
         render: (row: any) => (
           <div className="flex flex-col gap-1">
@@ -367,7 +367,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
         label: t('results.columns.lastUpdated', 'Updated'),
         width: '110px',
         render: (row: any) => (
-          <span className="text-xs text-slate-500">{formatRelativeTime(row.lastUpdated)}</span>
+          <span className="text-xs text-c-text-muted">{formatRelativeTime(row.lastUpdated)}</span>
         ),
       },
     ],
@@ -483,7 +483,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
         role="group"
         aria-label={t('results.sort.label', 'Sort by')}
       >
-        <span className="inline-flex items-center gap-1 pr-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1 pr-1 text-xs font-medium text-c-text-muted">
           <ArrowUpDown size={13} aria-hidden="true" />
           {t('results.sort.label', 'Sort by')}
         </span>
@@ -513,8 +513,8 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
               className={[
                 'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors',
                 active
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300 border border-primary-500/30'
-                  : 'text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-navy-800/60',
+                  ? 'bg-c-surface-raised text-c-text border border-c-border-strong'
+                  : 'text-c-text-secondary border border-c-border hover:bg-c-surface-raised',
               ].join(' ')}
             >
               {t(col.labelKey, col.labelDefault)}
@@ -531,7 +531,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
           <button
             type="button"
             onClick={() => setSortCol(null)}
-            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
             aria-label={t('results.sort.clear', 'Clear sort')}
           >
             {t('results.sort.clear', 'Clear sort')}
@@ -595,8 +595,8 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
 
   if (kpis.length === 0 && !onNewItem) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-slate-500 gap-2">
-        <Target size={32} className="text-slate-600" />
+      <div className="flex flex-col items-center justify-center py-16 text-c-text-muted gap-2">
+        <Target size={32} className="text-c-text-secondary" />
         <span>{t('results.emptyState', 'No KPIs found')}</span>
       </div>
     );
@@ -609,10 +609,10 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
         const { Icon: TIcon, color: tColor } = TREND_ICON[kpi.trend] || TREND_ICON.stable;
         const statusAccent =
           kpi.status === 'on-target'
-            ? 'border-l-emerald-500 dark:border-l-emerald-400'
+            ? 'border-l-c-success'
             : kpi.status === 'below'
-              ? 'border-l-danger-500 dark:border-l-danger-400'
-              : 'border-l-slate-400 dark:border-l-slate-500';
+              ? 'border-l-c-danger'
+              : 'border-l-c-border-strong';
 
         return (
           <div
@@ -621,10 +621,10 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
             onDoubleClick={() => onItemAction?.('open', kpi)}
             className={[
               'group relative cursor-pointer rounded-xl overflow-hidden',
-              'border-l-[3px] border border-slate-200/60 dark:border-white/[0.06]',
+              'border-l-[3px] border border-c-border-subtle',
               statusAccent,
-              'bg-slate-50/80 dark:bg-navy-800/60',
-              'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-sm transition-all duration-150',
+              'bg-c-surface',
+              'hover:bg-c-surface-raised hover:shadow-sm transition-all duration-150',
             ].join(' ')}
           >
             <div className="p-4">
@@ -639,7 +639,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                         e.stopPropagation();
                         setMenuCardId((prev) => (prev === kpi.id ? null : kpi.id));
                       }}
-                      className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      className="p-1.5 rounded hover:bg-c-surface-raised text-c-text-muted hover:text-c-text transition-colors"
                       aria-label={t('common.more', 'More')}
                     >
                       <MoreVertical size={14} />
@@ -653,7 +653,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                             setMenuCardId(null);
                           }}
                         />
-                        <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                        <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-c-surface-raised border border-c-border rounded-lg shadow-xl overflow-hidden">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -661,7 +661,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('open', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06]"
                           >
                             <Maximize2 size={14} />
                             {t('results.actions.openDetail', 'Open detail')}
@@ -673,7 +673,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('record', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06]"
                           >
                             <Target size={14} />
                             {t('results.actions.recordValue', 'Record value')}
@@ -685,7 +685,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('edit', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06]"
                           >
                             <Pencil size={14} />
                             {t('results.drawer.definitionTitle', 'Definition')}
@@ -697,7 +697,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('links', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06]"
                           >
                             <Link2 size={14} />
                             {t('results.drawer.lineageTitle', 'Lineage')}
@@ -720,40 +720,40 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                   </div>
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 mb-1">
+              <h3 className="text-sm font-medium text-c-text line-clamp-2 mb-1">
                 {kpi.name}
               </h3>
               {kpi.initiativeName && (
-                <p className="text-xs text-primary-400 mb-3 truncate">{kpi.initiativeName}</p>
+                <p className="text-xs text-c-info mb-3 truncate">{kpi.initiativeName}</p>
               )}
-              <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200/70 dark:border-white/[0.06]">
+              <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-c-border-subtle">
                 <div>
-                  <p className="text-[10px] uppercase text-slate-500 mb-0.5">
+                  <p className="text-[10px] uppercase text-c-text-muted mb-0.5">
                     {t('results.columns.baseline', 'Baseline')}
                   </p>
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                  <p className="text-xs font-medium text-c-text-secondary">
                     {kpi.baselineValue != null ? kpi.baselineValue.toLocaleString() : '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase text-slate-500 mb-0.5">
+                  <p className="text-[10px] uppercase text-c-text-muted mb-0.5">
                     {t('results.columns.target', 'Target')}
                   </p>
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                  <p className="text-xs font-medium text-c-text-secondary">
                     {kpi.targetValue != null ? kpi.targetValue.toLocaleString() : '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase text-slate-500 mb-0.5">
+                  <p className="text-[10px] uppercase text-c-text-muted mb-0.5">
                     {t('results.columns.current', 'Current')}
                   </p>
                   <p
                     className={`text-xs font-medium ${
                       kpi.status === 'on-target'
-                        ? 'text-emerald-600 dark:text-emerald-400'
+                        ? 'text-c-success'
                         : kpi.status === 'below'
-                          ? 'text-danger-600 dark:text-danger-400'
-                          : 'text-slate-700 dark:text-slate-200'
+                          ? 'text-c-danger'
+                          : 'text-c-text-secondary'
                     }`}
                   >
                     {kpi.latestValue != null ? kpi.latestValue.toLocaleString() : '—'}
@@ -761,9 +761,9 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-200/70 dark:border-white/[0.06] bg-white/50 dark:bg-white/[0.02]">
+            <div className="flex items-center justify-between px-4 py-2.5 border-t border-c-border-subtle bg-black/[0.02] dark:bg-white/[0.02]">
               <FrequencyBadge freq={kpi.measurementFrequency} />
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-c-text-muted">
                 {formatRelativeTime(kpi.latestMeasurementDate || kpi.createdAt)}
               </span>
             </div>
@@ -774,7 +774,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
       {onNewItem && (
         <button
           onClick={onNewItem}
-          className="flex flex-col items-center justify-center gap-2 min-h-[180px] rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 hover:text-primary-400 hover:border-primary-500/50 transition-all"
+          className="flex flex-col items-center justify-center gap-2 min-h-[180px] rounded-xl border-2 border-dashed border-c-border text-c-text-muted hover:text-c-text hover:border-c-border-strong transition-all"
         >
           <Plus size={24} />
           <span className="text-sm font-medium">{t('results.addKpi', '+ Add KPI')}</span>
