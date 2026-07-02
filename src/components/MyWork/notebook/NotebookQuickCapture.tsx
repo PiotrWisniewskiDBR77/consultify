@@ -89,7 +89,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/40 px-2.5 py-2 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-500/15 ${className}`}
+      className={`flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/40 px-2.5 py-2 focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-500/15 ${className}`}
     >
       <span className="text-slate-400">
         {isUrl ? <Link2 size={15} /> : <Plus size={15} />}
@@ -113,7 +113,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
         type="button"
         onClick={submit}
         disabled={busy || !value.trim()}
-        className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-40"
+        className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-slate-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-slate-700 disabled:opacity-40"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : null}
         {isPl ? 'Wrzuć' : 'Capture'}

@@ -3,7 +3,15 @@
  * Replaces NotebookCanonicalPathStrip (4-card layout) with a slim pill strip.
  * L-03: same callbacks as NotebookCanonicalPathStrip, much smaller footprint.
  */
-import { FileOutput, Lightbulb, Paperclip, Radar, Sparkles } from 'lucide-react';
+import {
+  ChevronRight,
+  Eye,
+  FileOutput,
+  Lightbulb,
+  Paperclip,
+  Radar,
+  Sparkles,
+} from 'lucide-react';
 import React from 'react';
 
 interface NotebookProgressChipProps {
@@ -39,7 +47,9 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
     'cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-white/[0.04] dark:text-slate-500';
   const pillHighlight =
     'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/15';
-  const sep = <span className="text-slate-300 dark:text-slate-600 select-none">·</span>;
+  const sep = (
+    <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 select-none" aria-hidden />
+  );
 
   return (
     <div className="mt-3 flex items-center flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.07] dark:bg-white/[0.03] px-3 py-1.5">
@@ -51,7 +61,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         className={`${pillBase} ${pillActive}`}
       >
         <Paperclip size={11} />
-        {isPolish ? '① Źródła' : '① Sources'}
+        {isPolish ? 'Źródła' : 'Sources'}
       </button>
 
       {sep}
@@ -64,7 +74,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         className={`${pillBase} ${pillActive}`}
       >
         <Sparkles size={11} />
-        {isPolish ? '② AI' : '② AI'}
+        AI
       </button>
 
       {sep}
@@ -85,7 +95,8 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         }
         className={`${pillBase} ${hasPendingAIProposals ? pillHighlight : pillDisabled}`}
       >
-        {isPolish ? '③ Review' : '③ Review'}
+        <Eye size={11} />
+        Review
         {hasPendingAIProposals && (
           <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
         )}
@@ -102,7 +113,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         className={`${pillBase} ${canConvertDeliverable ? 'bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]' : pillDisabled}`}
       >
         <FileOutput size={11} />
-        {isPolish ? '④ Konwertuj' : '④ Convert'}
+        {isPolish ? 'Konwertuj' : 'Convert'}
       </button>
 
       {/* Handoff buttons */}

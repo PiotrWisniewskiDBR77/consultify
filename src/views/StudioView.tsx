@@ -146,10 +146,10 @@ export const StudioView: React.FC<StudioViewProps> = ({
   if (loading && !document) {
     return (
       <SplitLayout title="Studio" currentView={AppView.STUDIO}>
-        <div className="h-full flex items-center justify-center bg-slate-950">
+        <div className="h-full flex items-center justify-center bg-c-bg">
           <div className="text-center">
-            <Loader2 size={32} className="text-blue-500 animate-spin mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-500">Loading Studio...</p>
+            <Loader2 size={32} className="text-c-accent animate-spin mx-auto mb-4" />
+            <p className="text-c-text-muted">Loading Studio...</p>
           </div>
         </div>
       </SplitLayout>
@@ -159,14 +159,14 @@ export const StudioView: React.FC<StudioViewProps> = ({
   return (
     <SplitLayout title="Studio" currentView={AppView.STUDIO}>
       <ReactFlowProvider>
-        <div className="h-full flex flex-col bg-slate-950">
+        <div className="h-full flex flex-col bg-c-bg">
           {/* Header */}
-          <header className="shrink-0 h-14 px-4 flex items-center justify-between border-b border-white/10 bg-slate-900/50">
+          <header className="shrink-0 h-14 px-4 flex items-center justify-between border-b border-c-border-subtle bg-c-surface">
             <div className="flex items-center gap-3">
               {/* Toggle Sidebar */}
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className="p-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                className="p-2 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
               >
                 <FolderOpen size={18} />
               </button>
@@ -177,15 +177,15 @@ export const StudioView: React.FC<StudioViewProps> = ({
                   type="text"
                   value={document?.name || 'Untitled'}
                   onChange={(e) => updateMetadata({ name: e.target.value })}
-                  className="bg-transparent border-none text-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-2 py-1"
+                  className="bg-transparent border-none text-c-text font-medium focus:outline-none focus:ring-1 focus:ring-c-focus rounded px-2 py-1"
                 />
                 {hasUnsavedChanges && (
-                  <span className="w-2 h-2 bg-amber-500 rounded-full" title="Unsaved changes" />
+                  <span className="w-2 h-2 bg-c-warning rounded-full" title="Unsaved changes" />
                 )}
               </div>
 
               {/* Document Type Badge */}
-              <div className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-md capitalize">
+              <div className="px-2 py-0.5 bg-c-accent-soft text-c-accent text-xs rounded-md capitalize">
                 {document?.type?.replace('_', ' ') || 'Diagram'}
               </div>
             </div>
@@ -193,7 +193,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
             <div className="flex items-center gap-2">
               {/* Save Status */}
               {lastSaved && (
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-c-text-muted">
                   Saved{' '}
                   {new Date(lastSaved).toLocaleTimeString([], {
                     hour: '2-digit',
@@ -206,7 +206,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-slate-600 hover:text-white rounded-lg transition-colors text-sm"
+                className="flex items-center gap-2 px-3 py-1.5 bg-c-surface-raised hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text rounded-lg transition-colors text-sm"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 Save
@@ -215,7 +215,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               {/* Link Button */}
               <button
                 onClick={handleLink}
-                className="p-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                className="p-2 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
                 title="Link to Task/Project"
               >
                 <Link2 size={18} />
@@ -224,7 +224,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               {/* Export Button */}
               <button
                 onClick={handleExport}
-                className="p-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                className="p-2 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
                 title="Export"
               >
                 <Download size={18} />
@@ -235,8 +235,8 @@ export const StudioView: React.FC<StudioViewProps> = ({
                 onClick={() => setShowChat(!showChat)}
                 className={`p-2 rounded-lg transition-colors ${
                   showChat
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                    ? 'bg-c-accent-soft text-c-accent'
+                    : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
                 }`}
                 title={showChat ? 'Hide AI Chat' : 'Show AI Chat'}
               >
@@ -247,7 +247,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="p-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                  className="p-2 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -271,7 +271,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
 
             {/* Chat Panel */}
             {showChat && (
-              <div className="w-80 shrink-0 border-r border-white/10">
+              <div className="w-80 shrink-0 border-r border-c-border-subtle">
                 <StudioChat
                   messages={messages}
                   isProcessing={isProcessing}

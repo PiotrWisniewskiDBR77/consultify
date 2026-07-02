@@ -14,6 +14,72 @@
 
 import type { DocumentBlock, DocumentSchema, DocumentSection } from './documentStudioTypes.js';
 
+/** Coerce any cell value (string, number, `{value}`, etc.) to a flat string. */
+function cellToString(cell: unknown): string {
+  if (cell == null) return '';
+  if (typeof cell === 'object') {
+    if ('value' in (cell as object)) return cellToString((cell as { value?: unknown }).value);
+    return '';
+  }
+  return String(cell).replace(/\s*\|\s*/g, ' / ').replace(/\n+/g, ' ');
+}
+
+/**
+ * Project a table block's content into uniform `{ columns, rows: string[][] }`.
+ * Accepts BOTH the legacy array shape (`{ columns: [], rows: string[][] }`) and
+ * the premium content-gen keyed shape (`{ rows: [{ cells: { col: { value } } }] }`),
+ * mirroring the DOCX renderer's `normalizeTableContent`. Without this guard a
+ * keyed row is an object, so the old `row.join(...)` threw `row.join is not a
+ * function` and the whole document fell back to English stub prose.
+ */
+function normalizeTableContent(content: unknown): { columns: string[]; rows: string[][] } {
+  const value = (content ?? {}) as { columns?: unknown; headers?: unknown; rows?: unknown };
+  const rawRows = Array.isArray(value.rows) ? (value.rows as unknown[]) : [];
+  const isKeyed = rawRows.some((r) => r != null && typeof r === 'object' && !Array.isArray(r));
+
+  if (isKeyed) {
+    const columnKeys: string[] = [];
+    const seen = new Set<string>();
+    const cellsOf = (row: unknown): Record<string, unknown> => {
+      const keyed = row as { cells?: unknown };
+      return (keyed?.cells && typeof keyed.cells === 'object' ? keyed.cells : row) as Record<
+        string,
+        unknown
+      >;
+    };
+    for (const row of rawRows) {
+      for (const k of Object.keys(cellsOf(row) ?? {})) {
+        if (k === 'cells') continue;
+        if (!seen.has(k)) {
+          seen.add(k);
+          columnKeys.push(k);
+        }
+      }
+    }
+    const rows = rawRows.map((row) => {
+      const cells = cellsOf(row);
+      return columnKeys.map((key) => cellToString(cells?.[key]));
+    });
+    const columns = columnKeys.map((k) =>
+      k
+        .replace(/[_-]+/g, ' ')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/^\w/, (m) => m.toUpperCase())
+    );
+    return { columns, rows };
+  }
+
+  // Legacy array-of-arrays shape; honor either `columns` or `headers`.
+  const rawColumns = Array.isArray(value.columns)
+    ? value.columns
+    : Array.isArray(value.headers)
+      ? value.headers
+      : [];
+  const columns = rawColumns.map((c) => cellToString(c));
+  const rows = rawRows.map((row) => (Array.isArray(row) ? row.map((cell) => cellToString(cell)) : [cellToString(row)]));
+  return { columns, rows };
+}
+
 function renderBlock(block: DocumentBlock): string {
   switch (block.type) {
     case 'heading': {
@@ -49,13 +115,21 @@ function renderBlock(block: DocumentBlock): string {
     case 'table':
     case 'risk_table':
     case 'kpi_strip': {
-      const content = block.content as { columns?: string[]; rows?: string[][] };
-      const columns = content.columns ?? [];
-      const rows = content.rows ?? [];
+      const { columns, rows } = normalizeTableContent(block.content);
+      if (columns.length === 0 && rows.length === 0) return '';
+      // Pad/truncate each data row to the column count so the GFM table is valid.
+      const width = columns.length || Math.max(0, ...rows.map((r) => r.length));
       const header = `| ${columns.join(' | ')} |`;
       const separator = `| ${columns.map(() => '---').join(' | ')} |`;
-      const body = rows.map((row) => `| ${row.join(' | ')} |`).join('\n');
-      return [header, separator, body].filter(Boolean).join('\n');
+      const body = rows
+        .map((row) => {
+          const padded = Array.from({ length: width }, (_, i) => row[i] ?? '');
+          return `| ${padded.join(' | ')} |`;
+        })
+        .join('\n');
+      return [columns.length ? header : '', columns.length ? separator : '', body]
+        .filter(Boolean)
+        .join('\n');
     }
     case 'image': {
       const content = block.content as { url?: string; alt?: string };

@@ -287,7 +287,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
             className={`rounded-full border px-3 py-1 transition-colors ${
               scope === s
                 ? 'border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300'
-                : 'border-slate-300 text-slate-600 hover:border-sky-300 dark:border-navy-600 dark:text-slate-300'
+                : 'border-c-border text-c-text-secondary hover:border-sky-300'
             }`}
           >
             {s === 'local'
@@ -307,10 +307,10 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
 
       <div className="grid gap-3 md:grid-cols-2">
         {scope === 'local' ? (
-          <label className="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+          <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
             <span>{t('documentStudio.editor.target', 'Target block')}</span>
             <select
-              className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm dark:border-navy-600 dark:bg-navy-900"
+              className="h-9 rounded-lg border border-c-border bg-c-surface px-2 text-sm text-c-text"
               value={targetKey}
               onChange={(event) => setTargetKey(event.target.value)}
             >
@@ -328,10 +328,10 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
             </select>
           </label>
         ) : scope === 'section' ? (
-          <label className="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+          <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
             <span>{t('documentStudio.editor.sectionTarget', 'Target section')}</span>
             <select
-              className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm dark:border-navy-600 dark:bg-navy-900"
+              className="h-9 rounded-lg border border-c-border bg-c-surface px-2 text-sm text-c-text"
               value={sectionTargetId}
               onChange={(event) => setSectionTargetId(event.target.value)}
             >
@@ -346,17 +346,17 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
             </select>
           </label>
         ) : (
-          <div className="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+          <div className="flex flex-col gap-1 text-xs text-c-text-secondary">
             <span>{t('documentStudio.editor.globalScopeLabel', 'Scope')}</span>
-            <span className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-slate-700 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-200">
+            <span className="rounded-lg border border-c-border bg-c-surface-raised px-2 py-1 text-c-text">
               {t('documentStudio.editor.globalScopeNote', 'Edits every block of every section.')}
             </span>
           </div>
         )}
-        <label className="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+        <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
           <span>{t('documentStudio.editor.instruction', 'Edit instruction')}</span>
           <textarea
-            className="min-h-[72px] rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-navy-600 dark:bg-navy-900"
+            className="min-h-[72px] rounded-lg border border-c-border bg-c-surface px-2 py-2 text-sm text-c-text"
             value={instruction}
             onChange={(event) => setInstruction(event.target.value)}
             placeholder={t(
@@ -368,10 +368,10 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+        <label className="flex items-center gap-2 text-xs text-c-text-secondary">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-c-focus-solid focus:ring-c-focus"
+            className="h-4 w-4 rounded border-c-border text-c-focus-solid focus:ring-c-focus"
             checked={useLlm}
             onChange={(e) => setUseLlm(e.target.checked)}
             disabled={submitting}
@@ -410,8 +410,8 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       </div>
 
       {pendingProposal ? (
-        <div className="mt-3 rounded-lg border border-sky-300/60 bg-white p-3 dark:border-sky-400/30 dark:bg-navy-900">
-          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="mt-3 rounded-lg border border-sky-300/60 bg-c-surface p-3 dark:border-sky-400/30">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium text-c-text-muted">
             <span>
               {t('documentStudio.editor.diff', 'Diff preview')} · {pendingProposal.status}
             </span>
@@ -422,11 +422,11 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
             ) : null}
           </div>
           <div className="grid gap-2 md:grid-cols-2">
-            <div className="rounded-md border border-slate-200 p-2 text-xs dark:border-navy-700">
-              <div className="mb-1 font-semibold text-slate-500 dark:text-slate-400">
+            <div className="rounded-md border border-c-border p-2 text-xs">
+              <div className="mb-1 font-semibold text-c-text-muted">
                 {t('documentStudio.editor.before', 'Before')}
               </div>
-              <pre className="whitespace-pre-wrap text-slate-700 dark:text-slate-200">
+              <pre className="whitespace-pre-wrap text-c-text">
                 {pendingProposal.diff.before}
               </pre>
             </div>
@@ -434,32 +434,32 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
               <div className="mb-1 font-semibold text-sky-700 dark:text-sky-300">
                 {t('documentStudio.editor.after', 'After')}
               </div>
-              <pre className="whitespace-pre-wrap text-slate-700 dark:text-slate-200">
+              <pre className="whitespace-pre-wrap text-c-text">
                 {pendingProposal.diff.after}
               </pre>
             </div>
           </div>
           {pendingProposal.proposedChanges && pendingProposal.proposedChanges.length > 0 ? (
-            <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs dark:border-navy-700 dark:bg-navy-950">
-              <div className="mb-2 font-semibold text-slate-600 dark:text-slate-300">
+            <div className="mt-3 rounded-md border border-c-border bg-c-surface-raised p-2 text-xs">
+              <div className="mb-2 font-semibold text-c-text-secondary">
                 {t('documentStudio.editor.structuredChanges', 'Structured changes')}
               </div>
               <ul className="space-y-2">
                 {pendingProposal.proposedChanges.map((change, index) => (
                   <li
                     key={`${change.targetSectionId}:${change.targetBlockId ?? 'section'}:${index}`}
-                    className="rounded border border-slate-200 bg-white p-2 dark:border-navy-700 dark:bg-navy-900"
+                    className="rounded border border-c-border bg-c-surface p-2"
                   >
-                    <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                       {change.targetSectionId}
                       {change.targetBlockId ? ` · ${change.targetBlockId}` : ''} ·{' '}
                       {change.editType ?? 'rewrite'}
                     </div>
                     <div className="grid gap-2 md:grid-cols-2">
-                      <pre className="whitespace-pre-wrap rounded bg-slate-100 p-2 text-slate-700 dark:bg-navy-800 dark:text-slate-200">
+                      <pre className="whitespace-pre-wrap rounded bg-c-surface-raised p-2 text-c-text">
                         {change.before}
                       </pre>
-                      <pre className="whitespace-pre-wrap rounded bg-sky-50 p-2 text-slate-700 dark:bg-sky-500/10 dark:text-slate-200">
+                      <pre className="whitespace-pre-wrap rounded bg-sky-50 p-2 text-c-text dark:bg-sky-500/10">
                         {change.after}
                       </pre>
                     </div>
@@ -469,7 +469,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
             </div>
           ) : null}
           {pendingProposal.versionBeforeId || pendingProposal.versionAfterId ? (
-            <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="mt-2 text-[11px] text-c-text-muted">
               {pendingProposal.versionBeforeId
                 ? `Before snapshot: ${pendingProposal.versionBeforeId}`
                 : null}
@@ -494,11 +494,11 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       ) : null}
 
       {auditTrail.length > 0 ? (
-        <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900">
-          <div className="mb-2 font-semibold text-slate-600 dark:text-slate-300">
+        <div className="mt-3 rounded-lg border border-c-border bg-c-surface p-3 text-xs">
+          <div className="mb-2 font-semibold text-c-text-secondary">
             {t('documentStudio.editor.auditTrail', 'Audit trail')}
           </div>
-          <ul className="space-y-1 text-slate-600 dark:text-slate-300">
+          <ul className="space-y-1 text-c-text-secondary">
             {auditTrail
               .slice(-6)
               .reverse()

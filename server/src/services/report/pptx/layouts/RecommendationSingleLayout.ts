@@ -7,6 +7,7 @@ import { HeaderBar } from '../atomics/HeaderBar.js';
 import { PageNumber } from '../atomics/PageNumber.js';
 import { SlideTitle } from '../atomics/SlideTitle.js';
 import { RecommendationCard } from '../composites/RecommendationCard.js';
+import { centerY } from '../composites/verticalRhythm.js';
 import type {
   DesignTokens,
   LayoutResult,
@@ -33,6 +34,11 @@ export function RecommendationSingleLayout(
   );
   elements.push(PageNumber({}, tokens));
 
+  // Single recommendation: a substantial card centred vertically in the region
+  // so it reads as a deliberate focal point (not clinging to the top, not a
+  // full-bleed slab). Tall enough to fill ~85% of the usable height.
+  const cardH = Math.min(g.contentH - 0.2, 3.4);
+  const cardY = centerY({ y: g.contentY, h: g.contentH }, cardH);
   const cardElements = RecommendationCard(
     {
       title: c.title,
@@ -43,9 +49,9 @@ export function RecommendationSingleLayout(
       timeline: c.timeline,
       position: {
         x: g.contentX + 0.5,
-        y: g.contentY + 0.1,
+        y: cardY,
         w: g.contentW - 1,
-        h: g.contentH - 0.2,
+        h: cardH,
       },
     },
     tokens

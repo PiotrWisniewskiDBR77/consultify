@@ -256,9 +256,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-excel',
-    'text/csv',
   ]);
-  const ACCEPTED_EXTS = ['.pdf', '.xlsx', '.xls', '.csv'];
+  const ACCEPTED_EXTS = ['.pdf', '.xlsx', '.xls'];
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -272,7 +271,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         setFile(f);
       } else {
         setError(
-          t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS, CSV')
+          t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS')
         );
       }
     },
@@ -664,13 +663,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             <p className="text-sm text-slate-600 dark:text-slate-500">
               {t(
                 'finance.importWizard.supportedFormats',
-                'Supported: PDF, Excel (XLSX/XLS), CSV financial statements'
+                'Supported: PDF, Excel (XLSX/XLS) financial statements'
               )}
             </p>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.xlsx,.xls,.csv"
+              accept=".pdf,.xlsx,.xls"
               onChange={handleFileSelect}
               className="hidden"
               aria-hidden="true"
@@ -678,7 +677,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           </div>
 
           {file && (
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/80">
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface p-3 shadow-sm">
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                   file.name.endsWith('.pdf')

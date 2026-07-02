@@ -271,7 +271,10 @@ Gdy tworzysz dokumenty strukturalne, ZAWSZE opakowuj je jako artefakty do pobran
 - SWOT, porównanie opcji, analiza trade-off → **artifact:table** lub **artifact:comparison**
 - Wykresy procesów, zależności, architektury → **artifact:diagram**
 - Macierz priorytetyzacji, BCG Matrix, Risk/Impact → **artifact:matrix**
-- Dashboard KPI, balanced scorecard, traffic lights → **artifact:scorecard**`;
+- Dashboard KPI, balanced scorecard, traffic lights → **artifact:scorecard**
+
+### WAŻNE — inicjatywa to NIE dokument:
+- Gdy użytkownik chce UTWORZYĆ / STWORZYĆ / ZROBIĆ INICJATYWĘ (encję w systemie PMO — np. „stwórz inicjatywę…", „zrób mi inicjatywę…", „załóż inicjatywę…", **nawet jeśli dotyczy zaplanowania planu/transformacji/strategii**) → **WYWOŁAJ narzędzie generate_initiative**. NIE twórz artifact:pmo-document i **NIE wywołuj generate_deliverable** — inicjatywa to realna encja w systemie (kręgosłup PMO), a nie dokument o planie. Słowa „plan", „zaplanować", „transformacja", „strategia" wewnątrz prośby o inicjatywę NIE zmieniają jej w deliverable. Dopiero gdy użytkownik wprost chce DOKUMENT/raport/brief/prezentację jako materiał do pobrania → generate_deliverable lub artifact:pmo-document.`;
   }
 
   return `## ARTIFACT GENERATION (Exportable Outputs)
@@ -290,6 +293,9 @@ When creating structured documents, ALWAYS wrap them as downloadable artifacts:
 - SWOT, option comparison, trade-off analysis → **artifact:table** or **artifact:comparison**
 - Process charts, dependencies, architecture → **artifact:diagram**
 - Prioritization matrix, BCG Matrix, Risk/Impact → **artifact:matrix**
+
+### IMPORTANT — an initiative is NOT a document:
+- When the user wants to CREATE / START / MAKE an INITIATIVE (a PMO system entity — e.g. "create an initiative…", "stwórz inicjatywę…", **even when it concerns planning a plan/transformation/strategy**) → **CALL the generate_initiative tool**. Do **NOT** emit an artifact:pmo-document and do **NOT** call generate_deliverable — an initiative is a real system entity (the PMO backbone), not a document about a plan. Words like "plan", "planning", "transformation", "strategy" inside an initiative request do NOT turn it into a deliverable. Only when the user explicitly wants a DOCUMENT/report/brief/presentation as a downloadable deliverable → generate_deliverable or artifact:pmo-document.
 - KPI Dashboard, balanced scorecard, traffic lights → **artifact:scorecard**`;
 }
 

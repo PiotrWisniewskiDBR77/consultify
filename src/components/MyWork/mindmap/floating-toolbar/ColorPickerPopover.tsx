@@ -129,7 +129,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               onClick={() => onUpdate({ lineStyle: ls.id })}
               className={`flex-1 py-1 text-center rounded-lg text-[11px] transition-colors ${
                 currentLineStyle === ls.id
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-semibold'
+                  ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100 font-semibold'
                   : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
               }`}
             >
@@ -152,7 +152,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
           step={5}
           value={opacity}
           onChange={handleOpacityChange}
-          className="w-full h-1 rounded-full accent-primary-500"
+          className="w-full h-1 rounded-full accent-slate-500"
         />
       </div>
 
@@ -164,7 +164,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
           </span>
           <button
             onClick={handleRandomize}
-            className="flex items-center gap-1 text-[9px] text-slate-600 hover:text-primary-500 transition-colors"
+            className="flex items-center gap-1 text-[9px] text-slate-600 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
             <Shuffle size={10} /> {isPl ? 'Losuj' : 'Random'}
           </button>

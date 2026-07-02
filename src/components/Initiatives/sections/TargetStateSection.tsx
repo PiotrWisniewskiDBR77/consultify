@@ -32,6 +32,9 @@ import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
+import { CardBlockRenderer } from '../cards/CardBlockRenderer';
+import { buildTargetStateCardSpec } from '../cards/cardSpecBuilders';
+
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -105,17 +108,17 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
 
   return (
     <div
-      className="relative rounded-xl border border-slate-200/70 dark:border-navy-700/50 bg-white/60 dark:bg-navy-900/40 overflow-hidden flex flex-col"
+      className="relative rounded-xl border border-c-border bg-white/60 dark:bg-navy-900/40 overflow-hidden flex flex-col"
       style={{ height: effectiveHeight, minHeight: MIN_HEIGHT }}
     >
       {/* ── Header row ─────────────────────────────────────────────── */}
       <div className="flex items-start justify-between px-4 pt-3 pb-0 shrink-0">
         {/* Left: title + description */}
         <div className="flex-1 min-w-0">
-          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
             {title}
           </h4>
-          <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5 leading-snug">
+          <p className="text-[10px] text-c-text-secondary mt-0.5 leading-snug">
             {description}
           </p>
         </div>
@@ -125,7 +128,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
           {aiControl}
           <button
             onClick={onAdd}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             <Plus size={11} />
             {addLabel}
@@ -134,7 +137,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
       </div>
 
       {/* ── Separator ──────────────────────────────────────────────── */}
-      <div className="mx-4 mt-2 border-t border-slate-200/60 dark:border-navy-700/40" />
+      <div className="mx-4 mt-2 border-t border-c-border-subtle" />
 
       {/* ── Content area ───────────────────────────────────────────── */}
       <div
@@ -149,7 +152,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
         <div className="absolute bottom-5 left-0 right-0 flex justify-center pointer-events-none">
           <button
             onClick={() => setIsExpanded((v) => !v)}
-            className="pointer-events-auto inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-white/90 dark:bg-navy-900/90 border border-slate-200 dark:border-navy-700 text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 shadow-sm transition-colors backdrop-blur-sm"
+            className="pointer-events-auto inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-white/90 dark:bg-navy-900/90 border border-c-border text-[10px] font-medium text-c-text-muted hover:text-c-text-secondary shadow-sm transition-colors backdrop-blur-sm"
           >
             {isExpanded ? (
               <>
@@ -167,7 +170,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
       {/* ── Resize handle (bottom-right) ───────────────────────────── */}
       <div
         onPointerDown={onPointerDown}
-        className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center cursor-ns-resize text-slate-600 dark:text-navy-600 hover:text-slate-400 dark:hover:text-navy-500 transition-colors"
+        className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center cursor-ns-resize text-c-text-secondary hover:text-c-text-muted transition-colors"
         title="Drag to resize"
       >
         <GripVertical size={12} className="rotate-90" />
@@ -202,12 +205,12 @@ const ItemRow: React.FC<ItemRowProps> = ({ children, onRemove, color, badge }) =
       >
         {badge}
       </div>
-      <span className="flex-1 text-xs text-slate-700 dark:text-slate-300 leading-snug">
+      <span className="flex-1 text-xs text-c-text-secondary leading-snug">
         {children}
       </span>
       <button
         onClick={onRemove}
-        className="text-slate-600 hover:text-danger-500 transition-colors shrink-0"
+        className="text-c-text-secondary hover:text-danger-500 transition-colors shrink-0"
       >
         <X size={12} />
       </button>
@@ -233,7 +236,7 @@ const InlineAdd: React.FC<InlineAddProps> = ({ value, onChange, onSubmit, placeh
       if (e.key === 'Enter' && value.trim()) onSubmit();
     }}
     placeholder={placeholder}
-    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50/60 dark:bg-navy-800/40 border border-dashed border-slate-200/80 dark:border-navy-700/50 text-xs text-slate-600 dark:text-slate-400 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-slate-300 dark:focus:border-navy-600 transition-colors"
+    className="w-full px-2.5 py-1.5 rounded-lg bg-c-surface-raised border border-dashed border-c-border text-xs text-c-text-secondary placeholder:text-c-text-muted focus:outline-none focus:border-c-border-strong transition-colors"
   />
 );
 
@@ -285,6 +288,23 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
     successCriteria.length > 0,
     deliverables.length > 0,
   ].filter(Boolean).length;
+
+  // F3 (D11) display layer: generic CardBlockRenderer preview. ADDITIVE —
+  // a read-only "as it reads" view built from the same live edit state, shown
+  // at the bottom only once there is content. Does not replace the edit panels.
+  const targetStateCardSpec = buildTargetStateCardSpec(
+    {
+      vision: targetDescriptionDraft,
+      successCriteria,
+      deliverables,
+    },
+    {
+      title: t('initiatives.targetStateSection.successCriteria'),
+      visionHeading: t('initiatives.targetStateSection.targetState'),
+      successCriteriaHeading: t('initiatives.targetStateSection.successCriteria'),
+      deliverablesHeading: t('initiatives.targetStateSection.deliverables'),
+    }
+  );
 
   type AIListProposal = {
     add: Array<{ text: string; rationale?: string }>;
@@ -639,7 +659,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
       onToggle={onToggle}
       badge={
         filledCount > 0 ? (
-          <span className="text-xs text-slate-600">{filledCount}/3</span>
+          <span className="text-xs text-c-text-secondary">{filledCount}/3</span>
         ) : undefined
       }
     >
@@ -654,19 +674,19 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
         {showAIModal && aiProposal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
             <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
-              <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+              <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                  <h3 className="text-sm font-semibold text-c-text">
                     {t('initiatives.targetStateSection.proposedSuccessCriteriaChanges')}
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-c-text-muted mt-0.5">
                     {t('initiatives.targetStateSection.selectItemsThenApply')}
                   </p>
                 </div>
                 <button
                   onClick={closeAIModal}
                   disabled={isAIProposing}
-                  className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                  className="p-2 rounded-lg text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                   title={t('initiatives.targetStateSection.close')}
                 >
                   <X size={16} />
@@ -687,15 +707,15 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                 {/* Success criteria suggestions */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <h4 className="text-xs font-semibold text-c-text-secondary">
                       {t('initiatives.targetStateSection.successCriteria')}
                     </h4>
                   </div>
 
                   {/* To remove */}
-                  <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                  <div className="rounded-xl bg-c-surface-raised p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-semibold text-c-text-secondary">
                         {t('initiatives.targetStateSection.toRemove')} (
                         {aiProposal.successCriteria?.remove?.length || 0})
                       </span>
@@ -708,7 +728,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               ) as Record<string, boolean>
                             )
                           }
-                          className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                          className="text-[11px] text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
                         >
                           {t('initiatives.targetStateSection.selectAll')}
                         </button>
@@ -744,7 +764,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                                 className="mt-1"
                               />
                               <div className="min-w-0">
-                                <span className="text-sm font-medium text-slate-800 dark:text-white">
+                                <span className="text-sm font-medium text-c-text">
                                   {existing?.text || r.id}
                                 </span>
                                 <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
@@ -759,9 +779,9 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   </div>
 
                   {/* To add */}
-                  <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                  <div className="rounded-xl bg-c-surface-raised p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-semibold text-c-text-secondary">
                         {t('initiatives.targetStateSection.toAdd')} (
                         {aiProposal.successCriteria?.add?.length || 0})
                       </span>
@@ -774,7 +794,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               ) as Record<number, boolean>
                             )
                           }
-                          className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                          className="text-[11px] text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
                         >
                           {t('initiatives.targetStateSection.selectAll')}
                         </button>
@@ -806,11 +826,11 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               className="mt-1"
                             />
                             <div className="min-w-0">
-                              <span className="text-sm font-medium text-slate-800 dark:text-white">
+                              <span className="text-sm font-medium text-c-text">
                                 {a.text}
                               </span>
                               {a.rationale ? (
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                <p className="text-[11px] text-c-text-muted mt-1">
                                   {a.rationale}
                                 </p>
                               ) : null}
@@ -822,13 +842,13 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   </div>
 
                   {/* Suggested order */}
-                  <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                  <div className="rounded-xl bg-c-surface-raised p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-semibold text-c-text-secondary">
                         {t('initiatives.targetStateSection.suggestedOrder')} (
                         {aiProposal.successCriteria?.reorder?.order?.length || 0})
                       </span>
-                      <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
+                      <label className="inline-flex items-center gap-2 text-[11px] text-c-text-muted select-none">
                         <input
                           type="checkbox"
                           checked={applySuggestedOrderSC}
@@ -848,7 +868,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                     ) : (
                       <>
                         {aiProposal.successCriteria?.reorder?.note ? (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          <p className="text-[11px] text-c-text-muted">
                             {aiProposal.successCriteria.reorder.note}
                           </p>
                         ) : null}
@@ -858,7 +878,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               (i) => String(i.id) === String(id)
                             );
                             return (
-                              <li key={id} className="text-xs text-slate-700 dark:text-slate-200">
+                              <li key={id} className="text-xs text-c-text-secondary">
                                 {existing?.text || id}
                               </li>
                             );
@@ -872,15 +892,15 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                 {/* Deliverables suggestions */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <h4 className="text-xs font-semibold text-c-text-secondary">
                       {t('initiatives.targetStateSection.deliverables')}
                     </h4>
                   </div>
 
                   {/* To remove */}
-                  <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                  <div className="rounded-xl bg-c-surface-raised p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-semibold text-c-text-secondary">
                         {t('initiatives.targetStateSection.toRemove')} (
                         {aiProposal.deliverables?.remove?.length || 0})
                       </span>
@@ -893,7 +913,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               ) as Record<string, boolean>
                             )
                           }
-                          className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                          className="text-[11px] text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
                         >
                           {t('initiatives.targetStateSection.selectAll')}
                         </button>
@@ -929,7 +949,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                                 className="mt-1"
                               />
                               <div className="min-w-0">
-                                <span className="text-sm font-medium text-slate-800 dark:text-white">
+                                <span className="text-sm font-medium text-c-text">
                                   {existing?.text || r.id}
                                 </span>
                                 <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
@@ -944,9 +964,9 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   </div>
 
                   {/* To add */}
-                  <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                  <div className="rounded-xl bg-c-surface-raised p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-semibold text-c-text-secondary">
                         {t('initiatives.targetStateSection.toAdd')} (
                         {aiProposal.deliverables?.add?.length || 0})
                       </span>
@@ -959,7 +979,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               ) as Record<number, boolean>
                             )
                           }
-                          className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                          className="text-[11px] text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
                         >
                           {t('initiatives.targetStateSection.selectAll')}
                         </button>
@@ -991,11 +1011,11 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               className="mt-1"
                             />
                             <div className="min-w-0">
-                              <span className="text-sm font-medium text-slate-800 dark:text-white">
+                              <span className="text-sm font-medium text-c-text">
                                 {a.text}
                               </span>
                               {a.rationale ? (
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                <p className="text-[11px] text-c-text-muted mt-1">
                                   {a.rationale}
                                 </p>
                               ) : null}
@@ -1007,13 +1027,13 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                   </div>
 
                   {/* Suggested order */}
-                  <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                  <div className="rounded-xl bg-c-surface-raised p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-semibold text-c-text-secondary">
                         {t('initiatives.targetStateSection.suggestedOrder')} (
                         {aiProposal.deliverables?.reorder?.order?.length || 0})
                       </span>
-                      <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
+                      <label className="inline-flex items-center gap-2 text-[11px] text-c-text-muted select-none">
                         <input
                           type="checkbox"
                           checked={applySuggestedOrderDL}
@@ -1033,7 +1053,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                     ) : (
                       <>
                         {aiProposal.deliverables?.reorder?.note ? (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          <p className="text-[11px] text-c-text-muted">
                             {aiProposal.deliverables.reorder.note}
                           </p>
                         ) : null}
@@ -1043,7 +1063,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                               (i) => String(i.id) === String(id)
                             );
                             return (
-                              <li key={id} className="text-xs text-slate-700 dark:text-slate-200">
+                              <li key={id} className="text-xs text-c-text-secondary">
                                 {existing?.text || id}
                               </li>
                             );
@@ -1086,18 +1106,18 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                 </Callout>
               </div>
 
-              <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
+              <div className="px-5 py-4 border-t border-c-border-subtle flex items-center justify-end gap-2">
                 <button
                   onClick={closeAIModal}
                   disabled={isAIProposing}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                 >
                   {t('initiatives.targetStateSection.cancel')}
                 </button>
                 <button
                   onClick={() => void applyAIProposal()}
                   disabled={isAIProposing}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                 >
                   {isAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
                   {t('initiatives.targetStateSection.apply')}
@@ -1127,7 +1147,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
           hasContent={!!targetDescriptionDraft}
         >
           {targetDescriptionDraft ? (
-            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+            <p className="text-xs text-c-text-secondary leading-relaxed whitespace-pre-wrap">
               {targetDescriptionDraft}
             </p>
           ) : showTargetInput ? (
@@ -1136,7 +1156,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               value={targetDescriptionDraft}
               onChange={(e) => setTargetDescriptionDraft(e.target.value)}
               rows={3}
-              className="w-full px-2.5 py-2 rounded-lg bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/80 dark:border-navy-700/50 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/20 resize-none transition-all"
+              className="w-full px-2.5 py-2 rounded-lg bg-c-surface-raised border border-c-border text-xs text-c-text-secondary placeholder:text-c-text-muted focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/20 resize-none transition-all"
               placeholder={t('initiatives.targetStateSection.describeEndStatePlaceholder')}
               onBlur={() => {
                 if (!targetDescriptionDraft) setShowTargetInput(false);
@@ -1144,7 +1164,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               readOnly={readonly}
             />
           ) : (
-            <p className="text-xs text-slate-600 dark:text-slate-500 italic">
+            <p className="text-xs text-c-text-secondary italic">
               {t('initiatives.targetStateSection.noDescriptionHint')}
             </p>
           )}
@@ -1288,6 +1308,18 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
             />
           </div>
         </ResizablePanel>
+
+        {/* F3 (D11) display layer — generic CardBlockRenderer preview.
+            ADDITIVE: a read-only "as it reads" view built from the same data,
+            shown only once there is content. Does not replace the edit panels. */}
+        {filledCount > 0 && (
+          <div className="pt-3 border-t border-c-border">
+            <div className="text-xs font-medium uppercase tracking-wide text-c-text-muted mb-2">
+              {t('initiatives.targetStateSection.successCriteria')}
+            </div>
+            <CardBlockRenderer spec={targetStateCardSpec} showTitle={false} />
+          </div>
+        )}
       </div>
     </CollapsibleSection>
   );

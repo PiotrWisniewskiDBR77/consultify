@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import PDFParserService from '../services/pdfParserService.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { featureFlags } from '../config/FeatureFlags.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
@@ -367,10 +368,7 @@ router.post(
     let text = '';
     try {
       if (mimeType === 'application/pdf') {
-        const pdfParseMod = (await import('pdf-parse')) as any;
-        const pdf = pdfParseMod.default || pdfParseMod;
-        const out = await pdf(req.file.buffer);
-        text = String(out?.text || '');
+        text = await PDFParserService.extractTextFromBuffer(req.file.buffer);
       } else if (
         mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
         filename.toLowerCase().endsWith('.docx')
@@ -684,10 +682,7 @@ router.post(
         urlObj.pathname.toLowerCase().endsWith('.pdf');
       if (isPdf) {
         detectedMimeType = 'application/pdf';
-        const pdfParseMod = (await import('pdf-parse')) as any;
-        const pdf = pdfParseMod.default || pdfParseMod;
-        const out = await pdf(buf);
-        extractedText = String(out?.text || '');
+        extractedText = await PDFParserService.extractTextFromBuffer(buf);
       } else if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
         detectedMimeType = 'text/html';
         const html = buf.toString('utf8');
@@ -1807,6 +1802,7 @@ router.post(
       'Never claim access to data outside the current tenant/user permissions.',
       'For any state-changing work, propose and wait for explicit approval. Do not silently execute mutations.',
       'For requests like "create a Canvas/document/table/task", do not refuse due to autonomy policy; generate a governed proposal and ask for approval.',
+      'To create, start, or draft an initiative, call the generate_initiative tool — it makes a reversible DRAFT (no approval needed for a draft; it never promotes or approves). Then confirm in one sentence.',
       'When asked to act without approval, explain that governed_execution requires approval first.',
     ].join('\n');
 

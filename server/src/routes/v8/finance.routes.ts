@@ -12,7 +12,8 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { listBudgets } from '../../services/budgetingService.js';
+import { createBudget, listBudgets } from '../../services/budgetingService.js';
+import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import {
@@ -606,6 +607,218 @@ router.delete(
   })
 );
 
+/** GET /models/:modelId/versions — list all saved versions of a model (audit trail). */
+router.get(
+  '/models/:modelId/versions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const { FinanceEnterpriseService } = await import(
+      '../../services/financeEnterpriseService.js'
+    );
+    const svc = new FinanceEnterpriseService();
+    const versions = await svc.getModelVersions(organizationId, modelId);
+    return res.json({ data: { versions, count: versions.length }, meta: financeMeta() });
+  })
+);
+
+/** GET /models/:modelId/versions/diff?from=id1&to=id2 — assumption diff between two versions. */
+router.get(
+  '/models/:modelId/versions/diff',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const from = String(req.query.from || '');
+    const to = String(req.query.to || '');
+    if (!from || !to) {
+      return res.status(400).json({ error: 'from and to version IDs are required' });
+    }
+    if (!modelId) {
+      return res.status(400).json({ error: 'modelId is required' });
+    }
+    const { FinanceEnterpriseService } = await import(
+      '../../services/financeEnterpriseService.js'
+    );
+    const svc = new FinanceEnterpriseService();
+    const diff = await svc.compareVersions(organizationId, from, to);
+    if (!diff) {
+      return res.status(404).json({ error: 'One or both versions not found' });
+    }
+    return res.json({ data: { diff }, meta: financeMeta() });
+  })
+);
+
+/** BUG-04: GET /models/:modelId/events — list change/event log for a model. */
+router.get(
+  '/models/:modelId/events',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    try {
+      const events = await listEvents(modelId);
+      return res.json({
+        data: { events, count: events.length },
+        meta: { version: 'v8' as const, contract: 'finance_runtime_read_v1' },
+      });
+    } catch {
+      return res.json({
+        data: { events: [], count: 0 },
+        meta: { version: 'v8' as const, contract: 'finance_runtime_read_v1' },
+      });
+    }
+  })
+);
+
+/** BUG-09: POST /models/:modelId/duplicate — create a copy of an existing model. */
+router.post(
+  '/models/:modelId/duplicate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const sourceModel = await getModel(modelId);
+    if (!sourceModel || String(sourceModel.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    // Wspólne pola kopii. project/initiative FK kopiujemy tylko gdy WCIĄŻ istnieją —
+    // createModel ma guard cross-org (rzuca 'not found'), a model źródłowy może
+    // wskazywać na usuniętą/syntetyczną inicjatywę (BUG-09: 500 przy duplikacji
+    // modelu ze stale FK, potwierdzone na demo dla initiative_id seed). Duplikat
+    // NIE może padać przez nieaktualny FK źródła — degradujemy bez graftu.
+    const baseParams = {
+      organizationId,
+      name: `${sourceModel.name} (kopia)`,
+      description: sourceModel.description || undefined,
+      currency: sourceModel.currency || 'PLN',
+      horizonMonths: sourceModel.horizon_months || 60,
+      startDate: sourceModel.start_date,
+      granularity: sourceModel.granularity || 'monthly',
+      scenario: sourceModel.scenario || 'base',
+      assumptions:
+        typeof sourceModel.assumptions_json === 'object' ? sourceModel.assumptions_json : undefined,
+      createdBy: userId,
+      sourceStatementId: sourceModel.source_statement_id || undefined,
+      sourceStatementPackId: sourceModel.source_statement_pack_id || undefined,
+    };
+    let newModelId: string;
+    try {
+      newModelId = await createModel({
+        ...baseParams,
+        projectId: sourceModel.project_id || undefined,
+        initiativeId: sourceModel.initiative_id || undefined,
+      });
+    } catch (err) {
+      // Stale source FK (project/initiative usunięte) lub stale sourceStatementPackId
+      // (niekompletny pack seed) → kopiuj bez graftu FK i bez seeded assumptions.
+      if (
+        err instanceof Error &&
+        (/not found/i.test(err.message) || /must contain/i.test(err.message))
+      ) {
+        newModelId = await createModel({
+          ...baseParams,
+          sourceStatementId: undefined,
+          sourceStatementPackId: undefined,
+        });
+      } else {
+        throw err;
+      }
+    }
+
+    const newModel = await getModel(newModelId);
+    return res.status(201).json({
+      data: { model: newModel ?? { id: newModelId } },
+      meta: { version: 'v8' as const, contract: 'finance_runtime_write_v1' },
+    });
+  })
+);
+
+/** BUG-10: POST /models/:modelId/analyze — queue AI analysis of a model (stub). */
+router.post(
+  '/models/:modelId/analyze',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const analysisId = uuidv4();
+    return res.status(202).json({
+      data: {
+        analysisId,
+        status: 'queued',
+        message: 'Analiza w kolejce',
+        modelId,
+        type: String(req.body?.type || 'standard'),
+      },
+      meta: { version: 'v8' as const, contract: 'finance_runtime_write_v1' },
+    });
+  })
+);
+
+/** BUG-11: GET /models/:modelId/outputs/download — download model outputs as JSON file. */
+router.get(
+  '/models/:modelId/outputs/download',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const scenario =
+      typeof req.query.scenario === 'string' && req.query.scenario.trim()
+        ? String(req.query.scenario).trim()
+        : undefined;
+    const outputs = await getOutputs(modelId, scenario);
+    if (!outputs || outputs.length === 0) {
+      return res.status(404).json({ error: 'No outputs available for this model' });
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="model-${modelId}-outputs.json"`
+    );
+    return res.json({ modelId, outputs, exportedAt: new Date().toISOString() });
+  })
+);
+
+/** BUG-12: GET /models/:modelId/export — export full model definition as JSON file. */
+router.get(
+  '/models/:modelId/export',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const events = await listEvents(modelId);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="model-${modelId}.json"`);
+    return res.json({
+      model: { ...model, events },
+      exportedAt: new Date().toISOString(),
+      exportVersion: '1.0',
+    });
+  })
+);
+
 router.get(
   '/valuations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -627,6 +840,24 @@ router.get(
       data: { budgets, count: budgets.length },
       meta: financeMeta(),
     });
+  })
+);
+
+router.post(
+  '/budgets',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const { title, periodStart, periodEnd, currency, granularity, description } = req.body || {};
+    if (!title || !periodStart || !periodEnd) {
+      return res.status(400).json({ error: 'title, periodStart, periodEnd required' });
+    }
+    const budget = await createBudget(
+      organizationId,
+      { title, periodStart, periodEnd, currency, granularity, description },
+      userId
+    );
+    return res.status(201).json({ data: { budget }, meta: financeMeta() });
   })
 );
 
@@ -1948,29 +2179,46 @@ router.post(
     const created: string[] = [];
 
     for (const insight of insights || []) {
-      const initiativeId = uuidv4();
       const name = String(insight.title || `Initiative from analysis ${analysisId.slice(0, 8)}`);
       const summary = String(insight.description || '');
 
-      await dbRun(
-        `INSERT INTO initiatives (
+      // Uspójnienie F1.4 — przez kanoniczny lejek (status→DRAFT zamiast legacy 'step3').
+      let initiativeId: string;
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          organizationId,
+          {
+            title: name,
+            projectId: analysis.project_id || null,
+            summary: summary || null,
+            sourceType: 'financial_analysis',
+            sourceId: analysisId,
+          },
+          { validate: false, actor: { id: req.user?.id } }
+        );
+        initiativeId = __r.id;
+      } else {
+        initiativeId = uuidv4();
+        await dbRun(
+          `INSERT INTO initiatives (
           id, organization_id, project_id, name, summary, status,
           source_type, source_id,
           created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          initiativeId,
-          organizationId,
-          analysis.project_id || null,
-          name,
-          summary || null,
-          'step3',
-          'financial_analysis',
-          analysisId,
-          now,
-          now,
-        ]
-      );
+          [
+            initiativeId,
+            organizationId,
+            analysis.project_id || null,
+            name,
+            summary || null,
+            'step3',
+            'financial_analysis',
+            analysisId,
+            now,
+            now,
+          ]
+        );
+      }
 
       created.push(initiativeId);
     }

@@ -36,12 +36,14 @@ const FRAMEWORKS: {
   gradient: string;
   border: string;
   textColor: string;
+  comingSoon?: boolean;
 }[] = [
   {
     value: 'DRD',
     name: 'Digital Readiness Diagnosis',
     shortName: 'DRD',
-    description: 'Comprehensive digital maturity assessment across 8 key dimensions',
+    description:
+      'Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)',
     icon: <Activity size={20} />,
     gradient: 'from-primary-500/20 to-primary-600/10',
     border: 'border-primary-500/30 hover:border-primary-500/60',
@@ -77,6 +79,7 @@ const FRAMEWORKS: {
     gradient: 'from-amber-500/20 to-amber-600/10',
     border: 'border-amber-500/30 hover:border-amber-500/60',
     textColor: 'text-amber-400',
+    comingSoon: true,
   },
   {
     value: 'LEAN',
@@ -87,6 +90,7 @@ const FRAMEWORKS: {
     gradient: 'from-green-500/20 to-green-600/10',
     border: 'border-green-500/30 hover:border-green-500/60',
     textColor: 'text-green-400',
+    comingSoon: true,
   },
 ];
 
@@ -267,13 +271,22 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
               {FRAMEWORKS.map((framework) => (
                 <button
                   key={framework.value}
-                  onClick={() => handleFrameworkSelect(framework.value)}
+                  onClick={
+                    framework.comingSoon
+                      ? undefined
+                      : () => handleFrameworkSelect(framework.value)
+                  }
+                  disabled={framework.comingSoon}
                   className={`
                     flex items-start gap-4 w-full p-4 rounded-xl text-left
                     bg-gradient-to-br ${framework.gradient}
                     border ${framework.border}
                     transition-all duration-200
-                    hover:shadow-lg hover:-translate-y-0.5
+                    ${
+                      framework.comingSoon
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'hover:shadow-lg hover:-translate-y-0.5'
+                    }
                   `}
                 >
                   <div
@@ -290,6 +303,11 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                         {framework.shortName}
                       </span>
                       <span className="text-white font-medium">{framework.name}</span>
+                      {framework.comingSoon && (
+                        <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-navy-800/70 text-slate-300 border border-slate-500/30">
+                          Coming soon
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-slate-600 mt-1 line-clamp-2">
                       {framework.description}

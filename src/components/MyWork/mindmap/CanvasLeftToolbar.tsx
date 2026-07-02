@@ -158,7 +158,8 @@ const PF_CONTEXT_SLOTS: ToolSlot[] = [
     action: 'pf_add_decision',
   },
   { id: 'lane', icon: Plus, labelPl: 'Lane', labelEn: 'Lane', action: 'pf_add_lane' },
-  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_add_frame' },
+  // Frame removed: Process Flow has no frame concept (lanes group instead).
+  // It emitted dead `wb_add_frame` (no PF handler) = no-op copy-paste from whiteboard.
 ];
 
 const TBL_CONTEXT_SLOTS: ToolSlot[] = [
@@ -198,7 +199,7 @@ const UNDO_REDO_PREFIX: Record<CanvasToolType, string> = {
   mindmap: 'mm',
   whiteboard: 'wb',
   process_flow: 'pf',
-  table: 'mm',
+  table: 'tbl',
 };
 
 function getUndoRedoSlots(activeTool: CanvasToolType): ToolSlot[] {
@@ -279,12 +280,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
-            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-primary-500/10 text-primary-600 dark:text-primary-400"
+            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100"
           >
             <PointerIcon size={15} />
           </button>
           <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
-            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-primary-500/10 text-primary-500 dark:text-primary-400">
+            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-slate-200/70 dark:bg-navy-800 text-slate-700 dark:text-slate-200">
               {interactionMode === 'pan'
                 ? 'PAN'
                 : interactionMode === 'connect'
@@ -329,7 +330,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           aria-label={slotTitle}
           className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
             isActive
-              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+              ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100'
               : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
           }`}
         >

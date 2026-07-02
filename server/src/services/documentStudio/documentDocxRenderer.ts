@@ -153,8 +153,27 @@ interface BlockTableContent {
   rows?: unknown[][];
 }
 
+/**
+ * Premium content-gen table shape (documentBlockContentGenerator
+ * `normalizeTableContent`): `{ rows: [{ cells: { colKey: { value, style?:
+ * { bgColor } } } }] }`. Distinct from the legacy `BlockTableContent`
+ * (`{ headers: [], rows: [][] }`). The renderer accepts BOTH so a table
+ * authored by either path renders with real `<w:tbl>` cells.
+ */
+interface KeyedTableRow {
+  cells?: Record<string, { value?: unknown; style?: { bgColor?: string } } | unknown>;
+}
+
+/** Premium content-gen KPI shape: `{ items: [{ label, value, delta }] }`. */
+interface KpiStripContent {
+  items?: Array<{ label?: unknown; value?: unknown; delta?: unknown }>;
+}
+
 interface BlockCalloutContent {
+  /** Legacy schema field. */
   variant?: string;
+  /** Premium content-gen field (info | warning | danger | success). */
+  tone?: string;
   text?: string;
 }
 
@@ -214,9 +233,15 @@ async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<strin
   for (const section of schema.sections) {
     for (const block of section.blocks) {
       if (block.type !== 'chart') continue;
-      const png = await renderChartBlockToPng(block);
-      if (png && png.length > 0) {
-        out.set(block.blockId, png);
+      // Fail-soft per-blok: błąd rasteryzacji (np. brak natywnej binarki canvas)
+      // NIE może położyć całego renderu dokumentu — slajd spada na placeholder.
+      try {
+        const png = await renderChartBlockToPng(block);
+        if (png && png.length > 0) {
+          out.set(block.blockId, png);
+        }
+      } catch {
+        /* pomiń wykres — renderChartBlock użyje placeholdera */
       }
     }
   }
@@ -389,17 +414,112 @@ function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[]
   });
 }
 
+/** Tone → accent hex (no leading `#`) for callout labels + KPI deltas. */
+const CALLOUT_TONE_COLOR: Record<string, string> = {
+  info: '2563EB',
+  warning: 'D97706',
+  danger: 'DC2626',
+  success: '16A34A',
+};
+
+/** Normalize a CSS hex (`#RRGGBB` / `RRGGBB`) to bare 6-digit uppercase, or null. */
+function normalizeHex(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const clean = raw.trim().replace(/^#/, '');
+  return /^[0-9a-fA-F]{6}$/.test(clean) ? clean.toUpperCase() : null;
+}
+
+/** Perceived-luminance test so dark status fills get white text. */
+function isDarkFill(hex: string): boolean {
+  const r = Number.parseInt(hex.slice(0, 2), 16);
+  const g = Number.parseInt(hex.slice(2, 4), 16);
+  const b = Number.parseInt(hex.slice(4, 6), 16);
+  return 0.299 * r + 0.587 * g + 0.114 * b < 140;
+}
+
 function renderCalloutBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as BlockCalloutContent;
   const text = asString(value.text ?? '');
-  const label = value.variant ? `[${String(value.variant).toUpperCase()}] ` : '[Key message] ';
+  // Premium content-gen emits `tone`; legacy schema emits `variant`.
+  const marker = value.tone ?? value.variant;
+  const accent = (marker && CALLOUT_TONE_COLOR[String(marker).toLowerCase()]) || '4338CA';
+  // Callout wyróżnia się STYLEM (akcent + kursywa), nie brzydkim tagiem „[INFO]"
+  // w środku prozy — tag był nieprofesjonalny w dokumencie konsultanta.
   return new Paragraph({
     style: DOCX_STYLE_IDS.CALLOUT,
     children: [
-      new TextRun({ text: label, bold: true, color: '4338CA', font: ctx.bodyFont }),
-      new TextRun({ text, italics: true, font: ctx.bodyFont }),
+      new TextRun({ text, italics: true, bold: true, color: accent, font: ctx.bodyFont }),
     ],
   });
+}
+
+/**
+ * KPI strip → a single-row table of metric cells (label / value / delta),
+ * each cell lightly shaded so it reads as a metric card rather than plain
+ * text. Consumes the premium content-gen shape `{ items: [{label, value,
+ * delta}] }`. Empty / malformed items degrade to a caption placeholder.
+ */
+function renderKpiStripBlock(block: DocumentBlock, ctx: RenderContext): (Table | Paragraph)[] {
+  const value = (block.content ?? {}) as KpiStripContent;
+  const items = Array.isArray(value.items) ? value.items : [];
+  if (items.length === 0) {
+    // Legacy schema may have used the table shape for a "kpi_strip" — try that
+    // before giving up so older schemas keep rendering.
+    const legacy = (block.content ?? {}) as BlockTableContent;
+    if ((legacy.headers?.length ?? 0) > 0 || (legacy.rows?.length ?? 0) > 0) {
+      return renderTableBlock(block, ctx);
+    }
+    return [
+      new Paragraph({
+        style: DOCX_STYLE_IDS.CAPTION,
+        children: [
+          new TextRun({
+            text: '[KPI strip placeholder — no metrics provided.]',
+            font: ctx.bodyFont,
+          }),
+        ],
+      }),
+    ];
+  }
+  const cells = items.map((item) => {
+    const label = asString(item?.label ?? '');
+    const metricValue = asString(item?.value ?? '');
+    const delta = asString(item?.delta ?? '').trim();
+    // Colour the delta by direction marker (▲ up / ▼ down / + / −) so the
+    // strip reads at a glance. Falls back to neutral slate.
+    let deltaColor = '64748B';
+    if (/[▲]|^\+|\bvs\b.*\+|up/i.test(delta)) deltaColor = '16A34A';
+    else if (/[▼]|^−|^-/.test(delta)) deltaColor = 'DC2626';
+    const cellChildren: DocxParagraph[] = [
+      new Paragraph({
+        style: DOCX_STYLE_IDS.CAPTION,
+        children: [new TextRun({ text: label, font: ctx.bodyFont, size: 16, color: '64748B' })],
+      }),
+      new Paragraph({
+        style: DOCX_STYLE_IDS.BODY_TEXT,
+        children: [new TextRun({ text: metricValue, bold: true, font: ctx.headingFont, size: 28 })],
+      }),
+    ];
+    if (delta.length > 0 && delta !== '0') {
+      cellChildren.push(
+        new Paragraph({
+          style: DOCX_STYLE_IDS.CAPTION,
+          children: [new TextRun({ text: delta, font: ctx.bodyFont, size: 16, color: deltaColor })],
+        })
+      );
+    }
+    return new TableCell({
+      shading: { fill: 'F1F5F9' },
+      margins: { top: 80, bottom: 80, left: 120, right: 120 },
+      children: cellChildren,
+    });
+  });
+  ctx.tableCounter.value += 1;
+  const table = new Table({
+    rows: [new TableRow({ children: cells })],
+    width: { size: 100, type: WidthType.PERCENTAGE },
+  });
+  return [table];
 }
 
 function renderQuoteBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
@@ -419,10 +539,76 @@ function renderQuoteBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   });
 }
 
+/**
+ * Project a table block's content into a uniform `{ headers, rows }` where
+ * each cell carries optional shading. Accepts BOTH the legacy schema shape
+ * (`{ headers: [], rows: [][] }`) and the premium content-gen keyed shape
+ * (`{ rows: [{ cells: { colKey: { value, style?: { bgColor } } } }] }`).
+ */
+interface NormalizedCell {
+  text: string;
+  fill: string | null;
+}
+function normalizeTableContent(content: unknown): {
+  headers: string[];
+  rows: NormalizedCell[][];
+} {
+  const value = (content ?? {}) as BlockTableContent & { rows?: unknown };
+  const rawRows = Array.isArray(value.rows) ? (value.rows as unknown[]) : [];
+  // Keyed shape: rows are objects carrying a `cells` map (or a flat object).
+  const isKeyed = rawRows.some((r) => r != null && typeof r === 'object' && !Array.isArray(r));
+  if (isKeyed) {
+    // Derive a stable, ordered column key list from the union of all cell keys.
+    const columnKeys: string[] = [];
+    const seen = new Set<string>();
+    for (const row of rawRows) {
+      const keyed = row as KeyedTableRow;
+      const cells = (keyed?.cells && typeof keyed.cells === 'object' ? keyed.cells : row) as Record<
+        string,
+        unknown
+      >;
+      for (const k of Object.keys(cells ?? {})) {
+        if (!seen.has(k)) {
+          seen.add(k);
+          columnKeys.push(k);
+        }
+      }
+    }
+    const rows: NormalizedCell[][] = rawRows.map((row) => {
+      const keyed = row as KeyedTableRow;
+      const cells = (keyed?.cells && typeof keyed.cells === 'object' ? keyed.cells : row) as Record<
+        string,
+        unknown
+      >;
+      return columnKeys.map((key) => {
+        const cell = cells?.[key];
+        if (cell != null && typeof cell === 'object' && 'value' in (cell as object)) {
+          const c = cell as { value?: unknown; style?: { bgColor?: string } };
+          return { text: asString(c.value ?? ''), fill: normalizeHex(c.style?.bgColor) };
+        }
+        return { text: asString(cell ?? ''), fill: null };
+      });
+    });
+    // Humanize camelCase / snake_case column keys for the header row.
+    const headers = columnKeys.map((k) =>
+      k
+        .replace(/[_-]+/g, ' ')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/^\w/, (m) => m.toUpperCase())
+    );
+    return { headers, rows };
+  }
+  // Legacy array-of-arrays shape.
+  const headers = Array.isArray(value.headers) ? value.headers.map((h) => asString(h)) : [];
+  const rows: NormalizedCell[][] = rawRows.map((row) =>
+    (Array.isArray(row) ? row : []).map((cell) => ({ text: asString(cell), fill: null }))
+  );
+  return { headers, rows };
+}
+
 function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Paragraph)[] {
-  const value = (block.content ?? {}) as BlockTableContent & { caption?: string };
-  const headers = Array.isArray(value.headers) ? value.headers : [];
-  const rows = Array.isArray(value.rows) ? value.rows : [];
+  const value = (block.content ?? {}) as { caption?: string };
+  const { headers, rows } = normalizeTableContent(block.content);
 
   if (headers.length === 0 && rows.length === 0) {
     return [
@@ -446,12 +632,11 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
         children: headers.map(
           (cell) =>
             new TableCell({
+              shading: { fill: 'E2E8F0' },
               children: [
                 new Paragraph({
                   style: DOCX_STYLE_IDS.BODY_TEXT,
-                  children: [
-                    new TextRun({ text: asString(cell), bold: true, font: ctx.bodyFont, size: 20 }),
-                  ],
+                  children: [new TextRun({ text: cell, bold: true, font: ctx.bodyFont, size: 20 })],
                 }),
               ],
             })
@@ -460,16 +645,26 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
     );
   }
   for (const row of rows) {
-    const cells = Array.isArray(row) ? row : [];
     tableRows.push(
       new TableRow({
-        children: cells.map(
+        children: row.map(
           (cell) =>
             new TableCell({
+              ...(cell.fill ? { shading: { fill: cell.fill } } : {}),
               children: [
                 new Paragraph({
                   style: DOCX_STYLE_IDS.BODY_TEXT,
-                  children: [new TextRun({ text: asString(cell), font: ctx.bodyFont, size: 20 })],
+                  children: [
+                    new TextRun({
+                      text: cell.text,
+                      font: ctx.bodyFont,
+                      size: 20,
+                      // White text on dark status fills keeps it legible.
+                      ...(cell.fill && isDarkFill(cell.fill)
+                        ? { color: 'FFFFFF', bold: true }
+                        : {}),
+                    }),
+                  ],
                 }),
               ],
             })
@@ -629,8 +824,9 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
       return [renderQuoteBlock(block, ctx)];
     case 'table':
     case 'risk_table':
-    case 'kpi_strip':
       return renderTableBlock(block, ctx);
+    case 'kpi_strip':
+      return renderKpiStripBlock(block, ctx);
     case 'image':
       return renderImagePlaceholder(block, ctx);
     case 'chart':

@@ -208,7 +208,7 @@ export const DocumentStudioView: React.FC = () => {
         kind: 'toggle',
         active: activeTab === 'generate',
         onClick: () => setActiveTab('generate'),
-        tooltip: 'Mode 1 / Mode 3 — intake → outline → document.',
+        tooltip: 'Generuj dokument',
       },
       {
         id: 'templates',
@@ -217,14 +217,17 @@ export const DocumentStudioView: React.FC = () => {
         kind: 'toggle',
         active: activeTab === 'templates',
         onClick: () => setActiveTab('templates'),
-        tooltip: 'Mode 2 — Document Template Architect.',
+        tooltip: 'Szablon dokumentu',
       },
     ],
     [activeTab]
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-slate-50 dark:bg-navy-950">
+    <div
+      data-testid="document-studio-view"
+      className="flex h-full min-h-0 flex-col bg-slate-50 dark:bg-navy-950"
+    >
       {showDocumentShell ? null : (
         <TopBar
           moduleLabel="Document Studio"
@@ -232,7 +235,7 @@ export const DocumentStudioView: React.FC = () => {
           chips={tabChips}
           respectMelsOrder={false}
           presenceSlot={
-            <span className="hidden text-[11px] text-slate-500 dark:text-slate-400 lg:inline">
+            <span className="hidden text-[11px] text-c-text-muted lg:inline">
               Modes 1, 2, 3 · Word/PDF artifact runtime
             </span>
           }
@@ -272,7 +275,7 @@ export const DocumentStudioView: React.FC = () => {
             onSchemaUpdated={setSchema}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+          <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
             {error ?? 'No document loaded.'}
           </div>
         )}

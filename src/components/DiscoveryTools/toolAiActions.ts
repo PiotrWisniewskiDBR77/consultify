@@ -57,9 +57,24 @@ const SUMMARY_STEP_IDS = new Set([
 const TOOLS_WITH_APPLY_HANDLER: ReadonlySet<ToolType> = new Set<ToolType>([
   'dynamic-swot',
   'market-forces',
+  'value-chain',
+  'capability-mapper',
+  'ambition-decomposer',
+  'focus-tradeoff',
+  'narrative-engine',
   'growth-paths',
   'portfolio-priority',
   'risk-uncertainty',
+  // operational/digital tools deepened with the generic operational AI handler
+  'sop-builder',
+  'a3-problem-solving',
+  'smed-planner',
+  'dms-builder',
+  'inventory-autopilot',
+  'ai-discovery',
+  'pain-explorer',
+  'rpa-scanner',
+  'process-automation',
 ]);
 
 export function getToolPhaseAiActions(
@@ -92,6 +107,36 @@ export function getToolPhaseAiActions(
       title: 'Turn accepted signals into Ansoff growth options',
       titlePl: 'Zamień zaakceptowane sygnały w opcje wzrostu Ansoffa',
     },
+    'value-chain': {
+      label: 'Build Chain',
+      labelPl: 'Buduj łańcuch',
+      title: 'Turn accepted signals into scored value-chain activities',
+      titlePl: 'Zamień zaakceptowane sygnały w ocenione aktywności łańcucha wartości',
+    },
+    'capability-mapper': {
+      label: 'Build Map',
+      labelPl: 'Buduj mapę',
+      title: 'Turn accepted signals into scored capabilities',
+      titlePl: 'Zamień zaakceptowane sygnały w ocenione kompetencje',
+    },
+    'ambition-decomposer': {
+      label: 'Build Themes',
+      labelPl: 'Buduj tematy',
+      title: 'Decompose the ambition into strategic themes with targets',
+      titlePl: 'Rozłóż ambicję na tematy strategiczne z celami',
+    },
+    'focus-tradeoff': {
+      label: 'Score Priorities',
+      labelPl: 'Oceń priorytety',
+      title: 'Score competing priorities on value, effort, and fit',
+      titlePl: 'Oceń konkurujące priorytety wg wartości, wysiłku i dopasowania',
+    },
+    'narrative-engine': {
+      label: 'Build Pillars',
+      labelPl: 'Buduj filary',
+      title: 'Turn accepted signals into narrative pillars with proof',
+      titlePl: 'Zamień zaakceptowane sygnały w filary narracji z dowodami',
+    },
     'portfolio-priority': {
       label: 'Build Portfolio',
       labelPl: 'Buduj portfolio',
@@ -109,6 +154,11 @@ export function getToolPhaseAiActions(
   const analysisStepIds: Partial<Record<ToolType, string>> = {
     'dynamic-swot': 'swot',
     'market-forces': 'forces',
+    'value-chain': 'activities',
+    'capability-mapper': 'capabilities',
+    'ambition-decomposer': 'themes',
+    'focus-tradeoff': 'priorities',
+    'narrative-engine': 'pillars',
     'growth-paths': 'options',
     'portfolio-priority': 'items',
     'risk-uncertainty': 'assumptions',

@@ -107,6 +107,13 @@ import { CreateAnalysisModal } from './modals/CreateAnalysisModal';
 import { CreateBudgetModal } from './modals/CreateBudgetModal';
 import { CreateModelModal } from './modals/CreateModelModal';
 import { CreateValuationModal } from './modals/CreateValuationModal';
+import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
+import { isFinanceFlagEnabled } from './financeFeatureFlags';
+import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
+import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
+import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
+import { ValueOfficePanel } from './panels/ValueOfficePanel';
+import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
 
 function isInvestmentAnalysisType(value: unknown): boolean {
   const normalized = String(value || '')
@@ -151,6 +158,7 @@ export const FinanceHub: React.FC = () => {
   // ---- Modal visibility ----
   const [showCreateModelModal, setShowCreateModelModal] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showLinkInitiativeModal, setShowLinkInitiativeModal] = useState(false);
   const [showAnalysisCreateModal, setShowAnalysisCreateModal] = useState(false);
   const [showPredictionCreateModal, setShowPredictionCreateModal] = useState(false);
   const [showValuationCreateModal, setShowValuationCreateModal] = useState(false);
@@ -1179,7 +1187,7 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 transition-colors duration-150 active:scale-[0.97]"
+        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-bg hover:opacity-90 transition-colors duration-150 active:scale-[0.97]"
       >
         <span>{labels[currentKind] || labels.models}</span>
       </button>
@@ -1689,13 +1697,18 @@ export const FinanceHub: React.FC = () => {
           {isFinanceRuntimeV8 && v8Dashboard && (
             <>
               <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-              <div className={MENU_3_CHIP_INACTIVE}>
+              <button
+                type="button"
+                onClick={() => setShowLinkInitiativeModal(true)}
+                className={`${MENU_3_CHIP_INACTIVE} hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors`}
+                title={t('finance.v8.linkHint', 'Click to link an initiative to finance')}
+              >
                 <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-danger-400" />
                 <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
                 <span className={MENU_3_BADGE_INACTIVE}>
                   {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
                 </span>
-              </div>
+              </button>
               <div className={MENU_3_CHIP_INACTIVE}>
                 <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-amber-400" />
                 <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
@@ -1983,7 +1996,8 @@ export const FinanceHub: React.FC = () => {
       );
     if (!activeDocumentId && activeTab === 'investment' && filteredRows.length === 0)
       return (
-        <div className="flex items-center justify-center h-full p-6">
+        <>
+          <div className="flex items-center justify-center p-6">
           <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
             <div className="flex items-start gap-4">
               <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-300">
@@ -2018,11 +2032,16 @@ export const FinanceHub: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+          {isFinanceFlagEnabled('investmentAppraisal') && (
+            <div className="px-6 pb-6"><InvestmentAppraisalPanel /></div>
+          )}
+        </>
       );
     if (!activeDocumentId && activeTab === 'models' && filteredRows.length === 0)
       return (
-        <div className="flex items-center justify-center h-full p-6">
+        <>
+          <div className="flex items-center justify-center p-6">
           <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
             <div className="flex items-start gap-4">
               <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
@@ -2076,11 +2095,37 @@ export const FinanceHub: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+          {isFinanceFlagEnabled('valueOffice') && (
+            <div className="px-6 pb-4"><ValueOfficePanel /></div>
+          )}
+          {isFinanceFlagEnabled('driverPlanner') && (
+            <div className="px-6 pb-6"><DriverPlannerPanel /></div>
+          )}
+        </>
       );
     if (activeDocumentId && activeDocument) return fullView;
-    if (viewMode === 'grid') return gridView;
-    return tableWithPreview;
+    const _baseView = viewMode === 'grid' ? gridView : tableWithPreview;
+    const _showInvest = isFinanceFlagEnabled('investmentAppraisal') && activeTab === 'investment';
+    const _showValue = isFinanceFlagEnabled('valueOffice') && activeTab === 'models';
+    const _showDriver = isFinanceFlagEnabled('driverPlanner') && activeTab === 'models';
+    const _showVariance = isFinanceFlagEnabled('varianceBridge') && activeTab === 'prediction';
+    const _showValVis = isFinanceFlagEnabled('valuationVisuals') && activeTab === 'valuation';
+    if (_showInvest || _showValue || _showDriver || _showVariance || _showValVis) {
+      return (
+        <div className="flex flex-col">
+          {_baseView}
+          <div className="flex flex-col gap-4 px-4 pb-6">
+            {_showInvest && <InvestmentAppraisalPanel />}
+            {_showValue && <ValueOfficePanel />}
+            {_showDriver && <DriverPlannerPanel />}
+            {_showVariance && <VarianceBridgePanel />}
+            {_showValVis && <ValuationVisualsPanel valuation={selectedItem as any} />}
+          </div>
+        </div>
+      );
+    }
+    return _baseView;
   }, [
     loadingTab,
     loadError,
@@ -2091,6 +2136,7 @@ export const FinanceHub: React.FC = () => {
     openChatWithContext,
     activeDocumentId,
     activeDocument,
+    selectedItem,
     fullView,
     viewMode,
     gridView,
@@ -2356,6 +2402,16 @@ export const FinanceHub: React.FC = () => {
             setValuationInitialSource({});
             setValuationInitialTitle('');
             handleOpenFull(row);
+          }}
+        />
+      )}
+
+      {showLinkInitiativeModal && (
+        <LinkInitiativeModal
+          onClose={() => setShowLinkInitiativeModal(false)}
+          onLinked={() => {
+            setShowLinkInitiativeModal(false);
+            lane.refreshLane?.();
           }}
         />
       )}

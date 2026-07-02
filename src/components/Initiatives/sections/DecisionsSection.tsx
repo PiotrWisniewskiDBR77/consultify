@@ -347,6 +347,17 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     [decisions]
   );
 
+  // Gate-blocking decisions: PENDING Go/No-Go decisions are the gate-blocking
+  // calls that must be resolved before the initiative can be promoted past its
+  // next gate (see docs/product/INITIATIVE_STATUS_ROLE_CTA_MATRIX.md).
+  const gateBlockingDecisions = useMemo(
+    () =>
+      sortedDecisions.filter(
+        (d) => d.type === 'GO_NO_GO' && normalizeStatus(d.status) === 'PENDING'
+      ),
+    [sortedDecisions]
+  );
+
   const closeMenu = useCallback(() => setMenuDecisionId(null), []);
 
   // Close menu on outside click
@@ -1294,9 +1305,46 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         </div>
       )}
 
+      {/* Gate-blocking decisions banner — PENDING Go/No-Go calls block promotion */}
+      {gateBlockingDecisions.length > 0 && (
+        <div className="rounded-xl border border-amber-300/60 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 px-3.5 py-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Scale size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+              {isPolish
+                ? 'Decyzja bramki — wymagana przed promocją'
+                : 'Gate decision — required before promotion'}
+            </span>
+          </div>
+          <ul className="space-y-1.5">
+            {gateBlockingDecisions.map((decision) => {
+              const statusConfig =
+                DECISION_STATUS_CONFIG[normalizeStatus(decision.status)] ||
+                DECISION_STATUS_CONFIG.PENDING;
+              return (
+                <li key={decision.id} className="flex items-center gap-2 min-w-0">
+                  <button
+                    onClick={() => onOpenDecision?.(decision.id)}
+                    className="text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors truncate"
+                  >
+                    {decision.title || t('initiatives.decisionsSection.untitled')}
+                  </button>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] border border-slate-200/70 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 flex-shrink-0">
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor}`} />
+                    {isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       {/* Table */}
       <div className="overflow-x-auto overflow-y-visible rounded-xl border border-slate-200 dark:border-navy-700/40">
-        <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
+        <table
+          /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-sm"
+        >
           <thead className="sticky top-0 z-10">
             <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-left py-2.5 pl-3 pr-2">

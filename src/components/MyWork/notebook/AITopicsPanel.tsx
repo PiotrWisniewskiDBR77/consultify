@@ -195,7 +195,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
   return (
     <div className="w-72 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-navy-950 flex flex-col">
       <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200/60 dark:border-white/[0.06]">
-        <div className="flex items-center gap-2 text-sm font-semibold text-primary-700 dark:text-primary-300">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
           <Sparkles size={16} />
           <span>{isPl ? 'Tematy do analizy' : 'Topics to analyze'}</span>
         </div>
@@ -204,7 +204,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
             <button
               onClick={() => fetchTopics()}
               disabled={loading}
-              className="p-1.5 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 disabled:opacity-50"
+              className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-500/10 disabled:opacity-50"
               title={isPl ? 'Generuj sugestie' : 'Generate suggestions'}
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
@@ -231,7 +231,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {loading && topics.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <Loader2 size={20} className="animate-spin text-primary-500" />
+            <Loader2 size={20} className="animate-spin text-slate-500" />
             <span className="text-xs text-slate-500 dark:text-slate-400">
               {isPl ? 'AI analizuje notatkę...' : 'AI analyzing note...'}
             </span>
@@ -251,7 +251,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
             <button
               onClick={() => fetchTopics()}
               disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 text-primary-700 dark:text-primary-300 text-xs font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
               {isPl ? 'Generuj' : 'Generate'}
@@ -276,7 +276,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
                     <div className="mt-2 flex items-center gap-2">
                       <button
                         onClick={handleSaveEdit}
-                        className="flex items-center justify-center gap-1 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 text-primary-700 dark:text-primary-300 px-2.5 py-1 text-[11px] font-medium transition-colors"
+                        className="flex items-center justify-center gap-1 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 text-slate-700 dark:text-slate-300 px-2.5 py-1 text-[11px] font-medium transition-colors"
                       >
                         {isPl ? 'Zapisz' : 'Save'}
                       </button>

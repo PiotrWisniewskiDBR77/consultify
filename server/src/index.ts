@@ -922,10 +922,20 @@ app.use(correlationMiddleware);
 // Since `express.json()` consumes the stream, we conditionally route body parsing.
 const jsonParser = express.json({ limit: '10mb' });
 const stripeRawParser = express.raw({ type: 'application/json' });
+// Slack (Slack Command Center, F2) signs the *exact* raw request body
+// (`v0:{timestamp}:{rawBody}` HMAC-SHA256). Re-serializing a JSON-parsed body
+// would break the signature, so — like Stripe — we hand these endpoints the
+// untouched bytes as a Buffer and parse them ourselves inside the route.
+// `type: '*/*'` because interactions arrive as x-www-form-urlencoded and the
+// Events API as application/json.
+const slackRawParser = express.raw({ type: '*/*', limit: '1mb' });
 app.use((req: Request, res: Response, next: NextFunction) => {
   const path = req.path;
   if (path === '/api/webhooks/stripe' || path === '/api/token-billing/webhook') {
     return stripeRawParser(req, res, next);
+  }
+  if (path === '/api/slack/events' || path === '/api/slack/interactions') {
+    return slackRawParser(req, res, next);
   }
   return jsonParser(req, res, next);
 });

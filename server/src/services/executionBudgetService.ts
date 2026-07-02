@@ -267,6 +267,34 @@ export async function getInitiativeBudgetSummary(
   };
 }
 
+/**
+ * M14/F2 — actual cost (entry_type='ACTUAL') per initiative in ONE query, for the
+ * portfolio EVM roll-up (avoids N+1 getInitiativeBudgetSummary calls). Returns a
+ * Map<initiativeId, actualTotal>; missing initiatives simply absent.
+ */
+export async function getActualCostByInitiative(
+  organizationId: string,
+  initiativeIds: string[]
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (!initiativeIds.length) return map;
+  const placeholders = initiativeIds.map(() => '?').join(', ');
+  const rows = ((await dbAll(
+    `SELECT initiative_id, SUM(amount) as actual_total
+     FROM budget_entries
+     WHERE organization_id = ? AND entry_type = 'ACTUAL'
+       AND initiative_id IN (${placeholders})
+     GROUP BY initiative_id`,
+    [organizationId, ...initiativeIds]
+  )) || []) as Array<Record<string, unknown>>;
+  for (const r of rows) {
+    const id = r.initiative_id != null ? String(r.initiative_id) : '';
+    const total = Number(r.actual_total) || 0;
+    if (id) map.set(id, total);
+  }
+  return map;
+}
+
 // ── Portfolio-Level Budget Dashboard ───────────────────────────
 
 export async function getPortfolioBudgetSummary(

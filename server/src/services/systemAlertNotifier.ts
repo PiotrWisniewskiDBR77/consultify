@@ -1,5 +1,5 @@
 import logger from '../utils/Logger.js';
-import slackService from './slackService.js';
+import { routeToSlack } from './slack/slackRouter.js';
 import { SlackServiceClass } from './slackService.js';
 import WhatsAppService from './WhatsAppService.js';
 
@@ -51,10 +51,23 @@ export async function sendSystemAlert(input: SystemAlertInput): Promise<void> {
   const sourceKey = String(input.source || '')
     .trim()
     .toUpperCase();
-  const slackTarget =
-    (sourceKey === 'LLM' || sourceKey === 'AI') && aiSlack ? aiSlack : slackService;
+  const isAiSource = sourceKey === 'LLM' || sourceKey === 'AI';
+
+  // Slack egress now goes through the central slackRouter (Filar 1). AI/LLM
+  // alerts keep their dedicated ai_ops webhook (unchanged behaviour); everything
+  // else routes to the #alerts channel. Throttle above + WhatsApp below stay.
+  const slackSend = isAiSource && aiSlack
+    ? aiSlack.sendSystemAlert(title, input.message, input.severity)
+    : routeToSlack({
+        channel: 'alerts',
+        severity: input.severity,
+        title,
+        text: `*${title}*\n${input.message}`,
+        dedupeKey: input.throttleKey || `${input.severity}:${input.source || 'system'}:${input.title}`,
+      }).then(() => undefined);
+
   const results = await Promise.allSettled([
-    slackTarget.sendSystemAlert(title, input.message, input.severity),
+    slackSend,
     WhatsAppService.sendSystemAlert({
       title,
       message: input.message,

@@ -35,6 +35,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
@@ -522,12 +523,8 @@ const DecisionTableRow: React.FC<{
       onClick={() => onClick?.(decision.id, decision)}
       onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
-        group relative cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
-        ${
-          isSelected
-            ? 'bg-primary-500/8 dark:bg-primary-500/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary-500'
-            : ''
-        }
+        group relative cursor-pointer border-b border-c-border-subtle
+        ${isSelected ? SELECTED_ROW_CLASS : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
@@ -543,8 +540,8 @@ const DecisionTableRow: React.FC<{
             h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-navy-900 border-navy-900 text-white opacity-100'
-                : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
+                ? 'bg-c-text border-c-text text-c-surface opacity-100'
+                : 'border-c-border-strong bg-white/80 text-transparent opacity-0 hover:border-c-border-strong group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
             }
           `}
         >
@@ -555,11 +552,11 @@ const DecisionTableRow: React.FC<{
       {/* Decision Title */}
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <span className="text-sm font-semibold text-c-text">
             {decision.title}
           </span>
           {showRowDescription && decision.description ? (
-            <span className="mt-0.5 block truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+            <span className="mt-0.5 block truncate text-[11px] leading-4 text-c-text-muted">
               {decision.description}
             </span>
           ) : null}
@@ -612,12 +609,12 @@ const DecisionTableRow: React.FC<{
       {!hiddenColumns?.has('project') && (
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.project }}>
           {decision.projectName ? (
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs text-c-text-secondary">
               <FolderKanban size={12} />
               <span className="truncate max-w-[120px]">{decision.projectName}</span>
             </div>
           ) : (
-            <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+            <span className="text-xs text-c-text-muted">—</span>
           )}
         </td>
       )}
@@ -800,12 +797,8 @@ const AwaitingDecisionTableRow: React.FC<{
       onClick={() => onClick?.(decision.id, decision)}
       onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
-        group relative cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
-        ${
-          isSelected
-            ? 'bg-primary-500/8 dark:bg-primary-500/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary-500'
-            : ''
-        }
+        group relative cursor-pointer border-b border-c-border-subtle
+        ${isSelected ? SELECTED_ROW_CLASS : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
@@ -820,8 +813,8 @@ const AwaitingDecisionTableRow: React.FC<{
             h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-navy-900 border-navy-900 text-white opacity-100'
-                : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
+                ? 'bg-c-text border-c-text text-c-surface opacity-100'
+                : 'border-c-border-strong bg-white/80 text-transparent opacity-0 hover:border-c-border-strong group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
             }
           `}
         >
@@ -831,11 +824,11 @@ const AwaitingDecisionTableRow: React.FC<{
 
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <span className="text-sm font-semibold text-c-text">
             {decision.title}
           </span>
           {showRowDescription && decision.description ? (
-            <span className="mt-0.5 block truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+            <span className="mt-0.5 block truncate text-[11px] leading-4 text-c-text-muted">
               {decision.description}
             </span>
           ) : null}
@@ -883,19 +876,19 @@ const AwaitingDecisionTableRow: React.FC<{
       {!hiddenColumns?.has('project') && (
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.project }}>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
+            <div className="w-7 h-7 rounded-full border border-c-border-subtle bg-c-surface-raised flex items-center justify-center text-xs font-medium text-c-text-secondary">
               {getInitials(decision.ownerName)}
             </div>
             <div className="flex min-w-0 flex-col text-left">
-              <span className="text-xs text-slate-900 dark:text-white truncate">
+              <span className="text-xs text-c-text truncate">
                 {decision.ownerName || (
-                  <span className="italic text-slate-500 dark:text-slate-400">
+                  <span className="italic text-c-text-muted">
                     {isPolish ? 'Nieprzypisany' : 'Unassigned'}
                   </span>
                 )}
               </span>
               {decision.ownerRole && (
-                <span className="text-[10px] text-slate-500 truncate">{decision.ownerRole}</span>
+                <span className="text-[10px] text-c-text-muted truncate">{decision.ownerRole}</span>
               )}
             </div>
           </div>
@@ -1765,7 +1758,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
       <div className="flex-1 min-h-0">
         <TableWithPreviewLayout<Decision>
           selectedId={previewDecisionId}
@@ -1788,7 +1781,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
             const decisionData = (previewDecision || (item as any)) as DecisionPreviewData;
             if (previewLoading) {
               return (
-                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-c-text-muted">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
                 </div>
@@ -1878,10 +1871,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
           }}
         >
           <div className="p-4 pt-3">
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
+            <div className="bg-c-surface border border-c-border-subtle rounded-xl">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
                 <thead>
-                  <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-navy-900/60 sticky top-0 z-10">
+                  <tr className="border-b border-c-border-subtle bg-c-surface sticky top-0 z-10">
                     {/* Select All */}
                     <th className="w-10 px-2 py-2">
                       <button
@@ -1890,10 +1883,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                           h-4 w-4 rounded-[4px] border flex items-center justify-center transition-colors
                           ${
                             allSelected
-                              ? 'bg-navy-900 border-navy-900 text-white'
+                              ? 'bg-c-text border-c-text text-c-surface'
                               : someSelected
-                                ? 'bg-primary-500/50 border-primary-500 text-white'
-                                : 'border-slate-300 dark:border-white/[0.10] hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
+                                ? 'bg-c-text/60 border-c-text text-c-surface'
+                                : 'border-c-border hover:border-c-border-strong text-transparent hover:text-c-text-muted'
                           }
                         `}
                       >
@@ -1908,7 +1901,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                     </th>
 
                     <th
-                      className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                      className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                       style={{ width: columnWidths.title }}
                     >
                       {isPolish ? 'Decyzja' : 'Decision'}
@@ -1923,7 +1916,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('type') && (
                       <th
-                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.type }}
                       >
                         <span>{isPolish ? 'Typ' : 'Type'}</span>
@@ -1939,13 +1932,13 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('status') && (
                       <th
-                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.status }}
                       >
                         <div className="flex items-center gap-1">
                           <span
                             className={
-                              (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                              (tableFilters.status as string[])?.length ? 'text-c-text-secondary' : ''
                             }
                           >
                             {isPolish ? 'Status' : 'Status'}
@@ -1973,13 +1966,13 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('priority') && (
                       <th
-                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.priority }}
                       >
                         <div className="flex items-center gap-1">
                           <span
                             className={
-                              (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
+                              (tableFilters.priority as string[])?.length ? 'text-c-text-secondary' : ''
                             }
                           >
                             {isPolish ? 'Priorytet' : 'Priority'}
@@ -2007,7 +2000,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('date') && (
                       <th
-                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.date }}
                       >
                         <span>{isPolish ? 'Termin' : 'Due date'}</span>
@@ -2023,7 +2016,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('project') && (
                       <th
-                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.project }}
                       >
                         <span>
@@ -2047,7 +2040,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('actions') && (
                       <th
-                        className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                        className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                         style={{ width: columnWidths.actions }}
                       >
                         <div ref={viewSettingsRef} className="flex items-center justify-end">
@@ -2058,7 +2051,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                               event.stopPropagation();
                               setIsViewSettingsOpen((open) => !open);
                             }}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.06]"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-c-text-muted transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                             aria-label={
                               isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
                             }
@@ -2084,14 +2077,14 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                         ? 'translateY(-100%)'
                                         : undefined,
                                   }}
-                                  className="z-[60] flex flex-col overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                                  className="z-[60] flex flex-col overflow-y-auto rounded-2xl border border-c-border bg-c-surface-raised p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:shadow-black/35"
                                   onClick={(event) => event.stopPropagation()}
                                 >
                                   <div className="px-2 pb-2 pt-1">
-                                    <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                                    <div className="text-[12px] font-semibold text-c-text">
                                       {isPolish ? 'Ustawienia widoku' : 'View settings'}
                                     </div>
-                                    <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                    <div className="mt-0.5 text-[11px] font-medium leading-4 text-c-text-muted">
                                       {isPolish
                                         ? 'Wybierz widoczne kolumny.'
                                         : 'Choose visible columns.'}
@@ -2133,7 +2126,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                         return (
                                           <label
                                             key={col.id}
-                                            className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
+                                            className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.055] ${
                                               alwaysVisible ? 'opacity-55' : 'cursor-pointer'
                                             }`}
                                           >
@@ -2159,13 +2152,13 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                                   return next;
                                                 });
                                               }}
-                                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                              className="h-3.5 w-3.5 rounded border-c-border text-c-text focus:ring-c-focus"
                                             />
-                                            <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                            <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                               {label}
                                             </span>
                                             {alwaysVisible ? (
-                                              <span className="text-[10px] font-medium text-slate-600">
+                                              <span className="text-[10px] font-medium text-c-text-muted">
                                                 {isPolish ? 'Wymagane' : 'Required'}
                                               </span>
                                             ) : null}
@@ -2174,17 +2167,17 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                       }
                                     )}
                                   </div>
-                                  <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                                    <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
+                                  <div className="mt-2 border-t border-c-border-subtle pt-2">
+                                    <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.055]">
                                       <input
                                         type="checkbox"
                                         checked={showRowDescription}
                                         onChange={(event) =>
                                           updateRowDescriptionSetting(event.target.checked)
                                         }
-                                        className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                        className="h-3.5 w-3.5 rounded border-c-border text-c-text focus:ring-c-focus"
                                       />
-                                      <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                      <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                         {isPolish
                                           ? 'Pokaż opis / uzasadnienie'
                                           : 'Show row description'}

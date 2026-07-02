@@ -213,6 +213,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           Description <span className="text-danger-500">*</span>
         </span>
         <textarea
+          data-testid="docstudio-intake-input"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={5}
@@ -337,7 +338,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       ) : null}
 
       <div className="flex items-center justify-end gap-2 pt-2">
-        <Button type="submit" variant="primary" disabled={!isValid}>
+        <Button type="submit" variant="primary" disabled={!isValid} data-testid="docstudio-generate-btn">
           {loading ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />

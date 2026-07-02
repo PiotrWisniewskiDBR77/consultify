@@ -1,0 +1,32 @@
+{
+  "provider": "z_ai",
+  "model": "glm-4.6",
+  "ranAt": "2026-06-23T19:54:35.105Z",
+  "avgScorePct": 42,
+  "rows": [
+    {
+      "module": "deck",
+      "id": "M19.S06",
+      "scorePct": 75,
+      "fallbackUsed": true,
+      "tierUsed": "PREMIUM",
+      "sec": "174.1s"
+    },
+    {
+      "module": "doc",
+      "id": "M18.S06",
+      "scorePct": 50,
+      "structureFallback": true,
+      "types": 2,
+      "sec": "391.9s"
+    },
+    {
+      "module": "table",
+      "id": "M20.S06",
+      "scorePct": 0,
+      "fallbackUsed": true,
+      "tierUsed": "STANDARD",
+      "sec": "276.6s"
+    }
+  ]
+}

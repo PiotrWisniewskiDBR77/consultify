@@ -198,6 +198,10 @@ type ModuleTab =
 // other change required. While disabled, the home tab is removed from the nav and
 // HomeView is never mounted (so its scanning hooks never run).
 const RADAR_ENABLED = false;
+// N2 (Notebook redesign): the legacy 3-icon topbar strip (Tools / Context / AI
+// suggestions) is redundant — those panels now live inside the notebook window
+// (NotebookRightRail). Hidden by default; flip to `true` to restore the topbar strip.
+const SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP = false;
 const MY_WORK_FALLBACK_TAB: ModuleTab = 'inbox';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
@@ -535,7 +539,7 @@ const BUTTON_ACTIVE = MENU_2_TAB_ACTIVE;
 
 // Topbar pills (filters / view tool) — keep consistent with BUTTON_* but smaller text.
 const TOPBAR_PILL_BASE =
-  'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
 // Canon §15.2/§19.1: kontrolki Menu 2 = h-9 rounded-full (jeden family z pillami topbara).
@@ -730,7 +734,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [notebookCreateNotebookReqId, setNotebookCreateNotebookReqId] = useState(0);
   // Menu 3 (Command Row) page-status presets for the open notebook (L2).
   const [notebookPageStatusFilter, setNotebookPageStatusFilter] = useState<
-    'all' | 'inbox' | 'active' | 'today'
+    'all' | 'inbox' | 'active'
   >('all');
   // Menu 3 (Command Row) scope presets for the notebook library (L1).
   const [notebookScopeFilter, setNotebookScopeFilter] = useState<'all' | 'personal' | 'team'>(
@@ -2533,8 +2537,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // Notebook L2 (open notebook, no open page): breadcrumb back + page-status
     // filters in ONE Command Row (S1-U2b/c — no drill-down trap, no extra rows).
     if (activeTab === 'notebook' && notebookOpenId && !notebookOpenPageId) {
+      // NOTE: the old "Today" preset was superseded on HEAD by the N5 view
+      // lenses (Pinned/Recent/To review/Fresh) inside the notebook column.
       const statusPresets: Array<{
-        id: 'all' | 'inbox' | 'active' | 'today';
+        id: 'all' | 'inbox' | 'active';
         label: string;
         icon: React.ReactNode;
       }> = [
@@ -2552,11 +2558,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           id: 'active',
           label: isPolish ? 'Aktywne' : 'Active',
           icon: <Sparkles size={14} className="text-c-text-muted" />,
-        },
-        {
-          id: 'today',
-          label: isPolish ? 'Dziś' : 'Today',
-          icon: <CalendarDays size={14} className="text-c-text-muted" />,
         },
       ];
       return (
@@ -3004,7 +3005,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (ideasBulkUi?.selectedCount) {
         const bulk = ideasBulkActionsRef.current;
         const bulkGhostPill =
-          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-navy-800 dark:ring-offset-navy-900';
+          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-navy-800 dark:ring-offset-navy-900';
 
         return (
           <div className={menu3RowClass}>
@@ -3626,7 +3627,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Search Toggle */}
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                 showSearch
                   ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-200'
                   : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
@@ -3792,7 +3793,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       <button
                         key={id}
                         onClick={() => setTasksViewMode(id)}
-                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                           isActive
                             ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
@@ -3839,7 +3840,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       <button
                         key={id}
                         onClick={() => setDecisionsViewMode(id)}
-                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                           isActive
                             ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
@@ -3865,7 +3866,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 >
                   <button
                     onClick={() => setInboxViewMode('flat')}
-                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                       inboxViewMode === 'flat'
                         ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
@@ -3878,7 +3879,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </button>
                   <button
                     onClick={() => setInboxViewMode('sections')}
-                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                       inboxViewMode === 'sections'
                         ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
@@ -3928,7 +3929,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     <button
                       key={id}
                       onClick={() => setIdeasViewMode(id)}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                         ideasViewMode === id
                           ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
@@ -3944,8 +3945,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               )}
 
               {/* Workspace 3-tools strip — Notebook only (when the editor is shown,
-                  i.e. inside an open notebook or on a deep-linked page) */}
-              {activeTab === 'notebook' &&
+                  i.e. inside an open notebook or on a deep-linked page).
+                  N2 redesign: redundant — Tools/Context/AI panels now live inside the
+                  notebook window (NotebookRightRail). Hidden behind a reversible flag;
+                  flip SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP back to `true` to restore. */}
+              {SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP &&
+                activeTab === 'notebook' &&
                 !activeDocumentId &&
                 (notebookOpenId || notebookOpenPageId) && (
                   <WorkspacePanelStrip

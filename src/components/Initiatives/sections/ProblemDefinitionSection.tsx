@@ -14,6 +14,9 @@ import { useTranslation } from 'react-i18next';
 
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 
+import { CardBlockRenderer } from '../cards/CardBlockRenderer';
+import { buildProblemCardSpec } from '../cards/cardSpecBuilders';
+
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -46,6 +49,19 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
 
   const filledCount = [symptom, rootCause, costOfInaction].filter(Boolean).length;
 
+  // F3 (D11) proof-of-pattern: declarative display layer via the generic
+  // CardBlockRenderer. ADDITIVE — rendered as a read-only preview below the
+  // structured edit fields. Built from the live edit state so it stays in sync.
+  const problemCardSpec = buildProblemCardSpec(
+    { symptom, rootCause, costOfInaction },
+    {
+      title: t('initiatives.problemDefinitionSection.problemDefinition'),
+      symptomHeading: t('initiatives.problemDefinitionSection.symptomTitle'),
+      rootCauseHeading: t('initiatives.problemDefinitionSection.rootCause'),
+      costOfInactionTitle: t('initiatives.problemDefinitionSection.costOfInaction'),
+    }
+  );
+
   return (
     <CollapsibleSection
       id="problemDefinition"
@@ -56,7 +72,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
       onToggle={onToggle}
       badge={
         filledCount > 0 ? (
-          <span className="text-xs text-slate-600">{filledCount}/3</span>
+          <span className="text-xs text-c-text-secondary">{filledCount}/3</span>
         ) : undefined
       }
       actions={
@@ -76,7 +92,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             }
           }}
           disabled={isGeneratingAI === 'problemDefinition'}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-surface-raised text-c-info hover:bg-c-surface text-xs font-medium transition-all disabled:opacity-50"
         >
           {isGeneratingAI === 'problemDefinition' ? (
             <Loader2 size={14} className="animate-spin" />
@@ -88,12 +104,12 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
       }
     >
       {filledCount === 0 && (
-        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl mb-4">
-          <AlertTriangle size={32} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+        <div className="text-center py-6 border-2 border-dashed border-c-border rounded-xl mb-4">
+          <AlertTriangle size={32} className="mx-auto mb-3 text-c-text-secondary" />
+          <p className="text-sm font-medium text-c-text-secondary">
             {t('initiatives.problemDefinitionSection.noProblemDefinitionYet')}
           </p>
-          <p className="text-xs text-slate-600 mt-1 max-w-xs mx-auto">
+          <p className="text-xs text-c-text-secondary mt-1 max-w-xs mx-auto">
             {t('initiatives.problemDefinitionSection.describeOrUseAi')}
           </p>
           <motion.button
@@ -112,7 +128,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
               }
             }}
             disabled={isGeneratingAI === 'problemDefinition'}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-sm font-medium transition-all disabled:opacity-50"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-c-surface-raised text-c-info hover:bg-c-surface text-sm font-medium transition-all disabled:opacity-50"
           >
             {isGeneratingAI === 'problemDefinition' ? (
               <Loader2 size={16} className="animate-spin" />
@@ -130,7 +146,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             <div className="w-6 h-6 rounded-full bg-danger-500/20 flex items-center justify-center text-xs font-bold text-danger-500">
               1
             </div>
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <span className="text-sm font-semibold text-c-text-secondary">
               {t('initiatives.problemDefinitionSection.symptomTitle')}
             </span>
             <div className="ml-auto">
@@ -145,14 +161,14 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
               />
             </div>
           </label>
-          <p className="text-xs text-slate-600 mb-2">
+          <p className="text-xs text-c-text-secondary mb-2">
             {t('initiatives.problemDefinitionSection.symptomHint')}
           </p>
           <textarea
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-danger-400 focus:ring-2 focus:ring-danger-500/10 resize-none transition-all text-sm"
+            className="w-full px-3 py-2.5 rounded-xl bg-c-surface-raised border border-c-border text-c-text-secondary placeholder:text-c-text-muted focus:outline-none focus:border-danger-400 focus:ring-2 focus:ring-danger-500/10 resize-none transition-all text-sm"
             placeholder={t('initiatives.problemDefinitionSection.symptomPlaceholder')}
           />
         </div>
@@ -163,7 +179,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-500">
               2
             </div>
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <span className="text-sm font-semibold text-c-text-secondary">
               {t('initiatives.problemDefinitionSection.rootCause')}
             </span>
             <div className="ml-auto">
@@ -178,14 +194,14 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
               />
             </div>
           </label>
-          <p className="text-xs text-slate-600 mb-2">
+          <p className="text-xs text-c-text-secondary mb-2">
             {t('initiatives.problemDefinitionSection.rootCauseHint')}
           </p>
           <textarea
             value={rootCause}
             onChange={(e) => setRootCause(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 resize-none transition-all text-sm"
+            className="w-full px-3 py-2.5 rounded-xl bg-c-surface-raised border border-c-border text-c-text-secondary placeholder:text-c-text-muted focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 resize-none transition-all text-sm"
             placeholder={t('initiatives.problemDefinitionSection.rootCausePlaceholder')}
           />
         </div>
@@ -196,7 +212,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             <div className="w-6 h-6 rounded-full bg-danger-500/20 flex items-center justify-center text-xs font-bold text-danger-500">
               3
             </div>
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <span className="text-sm font-semibold text-c-text-secondary">
               {t('initiatives.problemDefinitionSection.costOfInaction')}
             </span>
             <div className="ml-auto">
@@ -211,29 +227,29 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
               />
             </div>
           </label>
-          <p className="text-xs text-slate-600 mb-2">
+          <p className="text-xs text-c-text-secondary mb-2">
             {t('initiatives.problemDefinitionSection.costOfInactionHint')}
           </p>
           <textarea
             value={costOfInaction}
             onChange={(e) => setCostOfInaction(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-danger-400 focus:ring-2 focus:ring-danger-500/10 resize-none transition-all text-sm"
+            className="w-full px-3 py-2.5 rounded-xl bg-c-surface-raised border border-c-border text-c-text-secondary placeholder:text-c-text-muted focus:outline-none focus:border-danger-400 focus:ring-2 focus:ring-danger-500/10 resize-none transition-all text-sm"
             placeholder={t('initiatives.problemDefinitionSection.costOfInactionPlaceholder')}
           />
         </div>
 
         {/* Completeness indicator */}
-        <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+        <div className="pt-3 border-t border-c-border">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-c-text-muted">
               {t('initiatives.problemDefinitionSection.definitionCompleteness')}
             </span>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            <span className="text-xs font-medium text-c-text-secondary">
               {Math.round((filledCount / 3) * 100)}%
             </span>
           </div>
-          <div className="h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+          <div className="h-1.5 rounded-full bg-c-surface-raised overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(filledCount / 3) * 100}%` }}
@@ -241,6 +257,18 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             />
           </div>
         </div>
+
+        {/* F3 (D11) display layer — generic CardBlockRenderer preview.
+            ADDITIVE: a read-only "as it reads" view built from the same data,
+            shown only once there is content. Does not replace the edit fields. */}
+        {filledCount > 0 && (
+          <div className="pt-3 border-t border-c-border">
+            <div className="text-xs font-medium uppercase tracking-wide text-c-text-muted mb-2">
+              {t('initiatives.problemDefinitionSection.problemDefinition')}
+            </div>
+            <CardBlockRenderer spec={problemCardSpec} showTitle={false} />
+          </div>
+        )}
       </div>
     </CollapsibleSection>
   );

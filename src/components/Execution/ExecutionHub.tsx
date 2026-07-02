@@ -88,6 +88,7 @@ import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilo
 import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 
 import { useAppStore } from '../../store/useAppStore';
+import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import {
@@ -132,6 +133,9 @@ import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './Execut
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
 import { RolloutTab } from './RolloutTab';
+import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
+import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
@@ -276,7 +280,7 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-500/40 transition-colors cursor-grab active:cursor-grabbing ${
+      className={`p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-primary-500/40 transition-colors cursor-grab active:cursor-grabbing ${
         isDragging ? 'shadow-lg ring-2 ring-primary-500/50' : ''
       }`}
       {...attributes}
@@ -285,7 +289,7 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <GripVertical size={14} className="text-slate-500 flex-shrink-0" />
-          <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
+          <h4 className="text-sm font-medium text-c-text line-clamp-2">
             {task.title}
           </h4>
         </div>
@@ -296,11 +300,11 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
         )}
       </div>
       {task.initiativeName && (
-        <div className="text-xs text-slate-500 dark:text-slate-400 mb-2 ml-6">
+        <div className="text-xs text-c-text-muted mb-2 ml-6">
           {task.initiativeName}
         </div>
       )}
-      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 ml-6">
+      <div className="flex items-center justify-between text-xs text-c-text-muted ml-6">
         <span className="capitalize">{task.priority}</span>
         {task.dueDate && (
           <span className="flex items-center gap-1">
@@ -341,18 +345,18 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     <div
       ref={setNodeRef}
       className={`flex-1 min-w-[260px] bg-white/80 dark:bg-navy-900/50 rounded-xl border transition-colors ${
-        isOver ? 'border-primary-500 bg-primary-500/5' : 'border-slate-200 dark:border-navy-700'
+        isOver ? 'border-primary-500 bg-primary-500/5' : 'border-c-border-subtle'
       }`}
       data-testid={`kanban-column-${id}`}
     >
       <div
-        className={`flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700 ${accent}`}
+        className={`flex items-center justify-between px-3 py-2 border-b border-c-border-subtle ${accent}`}
       >
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
           {icon}
           {label}
         </div>
-        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-c-text-muted bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
           {tasks.length}
         </span>
       </div>
@@ -367,7 +371,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
               isOver
                 ? 'border-primary-500/50 text-primary-400'
-                : 'border-slate-300 dark:border-navy-700 text-slate-500 dark:text-slate-400'
+                : 'border-slate-300 dark:border-navy-700 text-c-text-muted'
             }`}
           >
             {isOver ? t('execution.kanban.dropHere') : t('execution.kanban.noTasks')}
@@ -625,6 +629,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [initiativeHealthMap, setInitiativeHealthMap] = useState<
     Map<string, { health: string; whyRed?: any }>
   >(new Map());
+  // M14/F1 — single source of truth for portfolio health. The authoritative
+  // score + breakdown come from GET /execution/:id/health (ExecutionController).
+  // The cockpit consumes THIS instead of recomputing client-side, so the number
+  // on screen always equals the API value. Client computation stays only as a
+  // degraded fallback when the endpoint fails (executiveHealthFailed).
+  const [executionHealth, setExecutionHealth] = useState<{
+    healthScore?: number;
+    breakdown?: { execution: number; decisions: number; capacity: number; risk: number };
+  } | null>(null);
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
   const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
@@ -710,6 +723,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const queueExecutionTruthRefresh = useCallback(() => {
     setExecutionTruthRefreshKey((prev) => prev + 1);
   }, []);
+
+  // F4.2 — globalny sygnał z useInitiativeRefreshStore (bumped przez każdą mutację)
+  const sharedInitiativeRefreshVersion = useInitiativeRefreshStore((s) => s.version);
+  useEffect(() => {
+    if (sharedInitiativeRefreshVersion > 0) {
+      setExecutionTruthRefreshKey((k) => k + 1);
+    }
+  }, [sharedInitiativeRefreshVersion]);
 
   useEffect(() => {
     if (deepLinkHandled) return;
@@ -1306,6 +1327,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const loadExecutionHealth = async () => {
       try {
         const data = await Api.get(`/execution/${currentProjectId}/health`);
+        // F1 SSOT: capture the authoritative portfolio score + breakdown.
+        setExecutionHealth(
+          typeof (data as any)?.healthScore === 'number'
+            ? { healthScore: (data as any).healthScore, breakdown: (data as any).breakdown }
+            : null
+        );
         const items = (data as any)?.initiativeHealth as Array<{
           id: string;
           health: string;
@@ -1322,6 +1349,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         }
       } catch {
         setInitiativeHealthMap(new Map());
+        setExecutionHealth(null);
         setExecutiveHealthFailed(true);
       }
     };
@@ -1968,7 +1996,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.table.initiative', 'Initiative'),
         render: (row) => (
           <span
-            className="text-sm text-slate-900 dark:text-white font-medium truncate block"
+            className="text-sm text-c-text font-medium truncate block"
             title={String(row.name || '')}
           >
             {row.name}
@@ -1985,7 +2013,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           return (
             <div className="flex items-center gap-2">
               <Target size={14} className="text-blue-400" />
-              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span className="font-mono text-xs font-bold text-c-text-secondary">
                 {code}
               </span>
             </div>
@@ -2052,11 +2080,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             );
           return (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-600 dark:text-white">
+              <div className="w-6 h-6 rounded-full bg-c-surface-raised flex items-center justify-center text-xs text-c-text-secondary">
                 {owner.firstName?.[0]}
                 {owner.lastName?.[0]}
               </div>
-              <span className="text-sm text-slate-700 dark:text-slate-300">
+              <span className="text-sm text-c-text-secondary">
                 {owner.firstName} {owner.lastName}
               </span>
             </div>
@@ -2082,13 +2110,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               : 'bg-blue-500';
           return (
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-c-border-subtle rounded-full overflow-hidden">
                 <div
                   className={`h-full ${color} rounded-full transition-all`}
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-right">
+              <span className="text-xs text-c-text-muted w-8 text-right">
                 {progress}%
               </span>
             </div>
@@ -2105,7 +2133,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         render: (row) => {
           const deadline = row.plannedEndDate || row.slaDeadline;
           if (!deadline) {
-            return <span className="text-xs text-slate-400 dark:text-slate-500">—</span>;
+            return <span className="text-xs text-c-text-muted">—</span>;
           }
           const terminal = row.status === InitiativeStatus.DONE;
           return (
@@ -2199,7 +2227,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             (task) => normalizeTaskStatus(task.status) === 'done'
           ).length;
           return (
-            <span className="text-xs text-slate-700 dark:text-slate-300">
+            <span className="text-xs text-c-text-secondary">
               {doneCount}/{initiativeTasks.length}
             </span>
           );
@@ -2236,8 +2264,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }}
           className={`h-8 px-3 rounded-full text-[11px] font-semibold transition-colors ${
             scope === opt.id
-              ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
-              : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
+              ? 'bg-white/80 dark:bg-navy-900/70 text-c-text-secondary shadow-sm'
+              : 'text-c-text-muted hover:bg-white/60 dark:hover:bg-navy-900/50'
           }`}
           title={
             opt.id === 'active'
@@ -2258,10 +2286,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <button
           type="button"
           onClick={() => setActiveTab('list' as ModuleTab)}
-          className="h-9 px-3 rounded-lg flex items-center gap-2 border border-slate-200/60 dark:border-navy-700/60 bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-navy-900/50 transition-colors"
+          className="h-9 px-3 rounded-lg flex items-center gap-2 border border-slate-200/60 dark:border-navy-700/60 bg-slate-100 dark:bg-navy-800 text-c-text-secondary hover:bg-white/60 dark:hover:bg-navy-900/50 transition-colors"
           title={t('execution.execSnapshot.title', 'Executive snapshot')}
         >
-          <span className="text-[10px] font-mono uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <span className="text-[10px] font-mono uppercase tracking-wide text-c-text-muted">
             exec v2{execSnapshotSource ? ` · ${execSnapshotSource}` : ''}
           </span>
           <span className="text-[11px] font-semibold tabular-nums text-emerald-500">
@@ -2273,7 +2301,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <span className="text-[11px] font-semibold tabular-nums text-amber-500">
             {execTopline.pendingDecisions}
           </span>
-          <span className="text-[11px] font-semibold tabular-nums text-primary-500">
+          <span className="text-[11px] font-semibold tabular-nums text-c-warning">
             {execTopline.overdueTasks}
           </span>
         </button>
@@ -2350,18 +2378,30 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (budgetPairs.length > 0) {
       const totalBudget = budgetPairs.reduce((sum, pair) => sum + pair.budget, 0);
       const totalActual = budgetPairs.reduce((sum, pair) => sum + pair.actual, 0);
-      budgetHealth = Math.max(0, Math.round(100 - (totalActual / totalBudget) * 100));
+      // Budget health penalises OVERRUN, not consumption. The old formula
+      // (100 − consumed%) inverted the meaning: 100% spent at 100% delivered
+      // showed 0% "health", and underspend (often a delay signal) scored high.
+      // Within budget ⇒ 100; over budget ⇒ drops by the overrun %. (Full EVM
+      // CPI lands in F2 — this stops the tile from lying.)
+      const overrunPct =
+        totalBudget > 0 ? Math.max(0, ((totalActual - totalBudget) / totalBudget) * 100) : 0;
+      budgetHealth = Math.max(0, Math.min(100, Math.round(100 - overrunPct)));
     }
 
+    // F1 SSOT: prefer the authoritative BE score/breakdown (GET /execution/health);
+    // the client computation above is the degraded fallback used only when that
+    // endpoint failed. This guarantees the cockpit number == the API value.
+    const ssot = !executiveHealthFailed && executionHealth ? executionHealth : null;
     return {
-      healthScore,
+      healthScore: ssot?.healthScore ?? healthScore,
+      healthScoreSource: ssot ? 'server' : 'client',
       avgProgress,
       overdueDecisions,
       totalDecisions,
       blockedCount,
       onTrackCount: Math.max(totalInitiatives - blockedCount, 0),
       budgetHealth,
-      breakdown: {
+      breakdown: ssot?.breakdown ?? {
         execution: avgProgress,
         decisions: decisionHealth,
         capacity: capacityHealth,
@@ -2371,7 +2411,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       stageGate: healthSnapshot?.stageGate || null,
       isHealthLoading: isLoadingHealth,
     };
-  }, [initiatives, decisions, tasks, stats, healthSnapshot, isLoadingHealth, capacityAlerts]);
+  }, [
+    initiatives,
+    decisions,
+    tasks,
+    stats,
+    healthSnapshot,
+    isLoadingHealth,
+    capacityAlerts,
+    executionHealth,
+    executiveHealthFailed,
+  ]);
 
   const handleExport = useCallback(() => {
     const headers = ['Name', 'Status', 'Owner', 'Progress', 'Planned Start', 'Planned End'];
@@ -2755,7 +2805,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <GripVertical size={14} className="text-primary-400" />
-                  <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
+                  <h4 className="text-sm font-medium text-c-text line-clamp-2">
                     {activeTask.title}
                   </h4>
                 </div>
@@ -2763,7 +2813,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               {activeTask.initiativeName && (
                 <div className="text-xs text-slate-600 mb-2 ml-6">{activeTask.initiativeName}</div>
               )}
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 ml-6">
+              <div className="flex items-center justify-between text-xs text-c-text-muted ml-6">
                 <span className="capitalize">{activeTask.priority}</span>
                 {activeTask.dueDate && (
                   <span className="flex items-center gap-1">
@@ -2976,78 +3026,78 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         loading={portfolioMetrics.isHealthLoading}
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              <p className="text-xs text-c-text-muted uppercase tracking-wide">
                 {t('execution.portfolio.onTrack')}
               </p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              <p className="text-2xl font-semibold text-c-text">
                 {portfolioMetrics.onTrackCount}
               </p>
             </div>
             <CheckCircle2 className="text-emerald-400" />
           </div>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              <p className="text-xs text-c-text-muted uppercase tracking-wide">
                 {t('execution.portfolio.blocked')}
               </p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              <p className="text-2xl font-semibold text-c-text">
                 {portfolioMetrics.blockedCount}
               </p>
             </div>
             <AlertTriangle className="text-danger-400" />
           </div>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              <p className="text-xs text-c-text-muted uppercase tracking-wide">
                 {t('execution.portfolio.overdueDecisions')}
               </p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              <p className="text-2xl font-semibold text-c-text">
                 {portfolioMetrics.overdueDecisions}
               </p>
             </div>
             <Scale className="text-amber-400" />
           </div>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              <p className="text-xs text-c-text-muted uppercase tracking-wide">
                 {t('execution.portfolio.avgProgress')}
               </p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              <p className="text-2xl font-semibold text-c-text">
                 {portfolioMetrics.avgProgress}%
               </p>
             </div>
             <Target className="text-blue-400" />
           </div>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              <p className="text-xs text-c-text-muted uppercase tracking-wide">
                 {t('execution.portfolio.budgetHealth')}
               </p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              <p className="text-2xl font-semibold text-c-text">
                 {portfolioMetrics.budgetHealth === null ? '—' : `${portfolioMetrics.budgetHealth}%`}
               </p>
             </div>
-            <LayoutDashboard className="text-primary-400" />
+            <LayoutDashboard className="text-c-text-secondary" />
           </div>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              <p className="text-xs text-c-text-muted uppercase tracking-wide">
                 {t('execution.portfolio.decisionSla')}
               </p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              <p className="text-2xl font-semibold text-c-text">
                 {portfolioMetrics.totalDecisions === 0
                   ? '—'
                   : `${portfolioMetrics.totalDecisions - portfolioMetrics.overdueDecisions}/${portfolioMetrics.totalDecisions}`}
@@ -3056,9 +3106,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <Clock className="text-amber-400" />
           </div>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 sm:col-span-2 lg:col-span-3">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4 sm:col-span-2 lg:col-span-3">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+            <p className="text-xs text-c-text-muted uppercase tracking-wide">
               {t('execution.portfolio.escalationsGates')}
             </p>
             <span className="text-xs text-slate-500">
@@ -3067,7 +3117,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             </span>
           </div>
           {portfolioMetrics.blockers.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('execution.portfolio.noActiveEscalations')}
             </p>
           ) : (
@@ -3075,7 +3125,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               {portfolioMetrics.blockers.slice(0, 4).map((blocker, idx) => (
                 <div
                   key={`${blocker.type}-${idx}`}
-                  className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
+                  className="flex items-start gap-2 text-sm text-c-text-secondary"
                 >
                   <AlertTriangle className="text-danger-400 mt-0.5" size={14} />
                   <span>{blocker.message}</span>
@@ -3187,18 +3237,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }
             toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
-          className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
+          className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
           title={t('execution.tasks.openInitiative', 'Open related initiative')}
         >
           <div className="min-w-0">
-            <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+            <div className="text-sm font-medium text-c-text truncate">
               {task.title}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+            <div className="text-xs text-c-text-muted truncate mt-0.5">
               {task.initiativeName || '—'}
             </div>
           </div>
-          <div className="text-right text-xs text-slate-500 dark:text-slate-400 shrink-0">
+          <div className="text-right text-xs text-c-text-muted shrink-0">
             <div>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</div>
             {overdue ? <div className="text-danger-400">{t('execution.badges.overdue')}</div> : null}
           </div>
@@ -3211,16 +3261,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       accent,
       tasks,
     }) => (
-      <div className="min-w-[280px] flex-1 bg-white/70 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700">
+      <div className="min-w-[280px] flex-1 bg-white/70 dark:bg-navy-900/50 rounded-xl border border-c-border-subtle overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
           <div className={`text-xs font-semibold uppercase tracking-wide ${accent}`}>{title}</div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-c-text-muted bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
             {tasks.length}
           </span>
         </div>
         <div className="p-3 space-y-3 max-h-[520px] overflow-y-auto">
           {tasks.length === 0 ? (
-            <div className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">
+            <div className="text-xs text-c-text-muted text-center py-6">
               {t('execution.kanban.noTasks', 'No tasks')}
             </div>
           ) : (
@@ -3249,20 +3299,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             )}
           </Callout>
         )}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <div className="text-sm font-semibold text-c-text">
                 {t('execution.tabs.tasks', 'Tasks')}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-muted">
                 {t(
                   'execution.tasks.subtitle',
                   'Overdue, due soon, and upcoming tasks for initiatives in execution.'
                 )}
               </div>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs text-c-text-muted">
               {taskBuckets.overdue.length} {t('execution.badges.overdue')} ·{' '}
               {taskBuckets.dueSoon.length} {t('execution.attention.dueSoonTasks', 'Due soon')}
             </div>
@@ -3271,7 +3321,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
         <div className="space-y-2">
           {listItems.length === 0 ? (
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 text-center text-sm text-slate-500 dark:text-slate-400">
+            <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 text-center text-sm text-c-text-muted">
               {t('execution.empty.noDeadlines')}
             </div>
           ) : (
@@ -3376,16 +3426,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }
             toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
-          className="w-full text-left p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
+          className="w-full text-left p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
           title={t('execution.decisionsBuckets.openInitiative', 'Open related initiative')}
         >
-          <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+          <div className="text-sm font-medium text-c-text truncate">
             {d.title}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+          <div className="text-xs text-c-text-muted truncate mt-0.5">
             {d.relatedObjectName || '—'}
           </div>
-          <div className="flex items-center justify-between mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between mt-2 text-[11px] text-c-text-muted">
             <span>{d.ownerName || '—'}</span>
             <span className={overdue ? 'text-danger-400' : undefined}>
               {dueStr ? new Date(dueStr).toLocaleDateString() : '—'}
@@ -3400,16 +3450,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       accent,
       items,
     }) => (
-      <div className="min-w-[280px] flex-1 bg-white/70 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700">
+      <div className="min-w-[280px] flex-1 bg-white/70 dark:bg-navy-900/50 rounded-xl border border-c-border-subtle overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
           <div className={`text-xs font-semibold uppercase tracking-wide ${accent}`}>{title}</div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-c-text-muted bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
             {items.length}
           </span>
         </div>
         <div className="p-3 space-y-3 max-h-[560px] overflow-y-auto">
           {items.length === 0 ? (
-            <div className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">—</div>
+            <div className="text-xs text-c-text-muted text-center py-6">—</div>
           ) : (
             items.slice(0, 30).map((d) => <DecisionRow key={d.id} d={d} />)
           )}
@@ -3430,11 +3480,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             )}
           </Callout>
         )}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+          <div className="text-sm font-semibold text-c-text">
             {t('execution.tabs.decisions', 'Decisions')}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <div className="text-xs text-c-text-muted mt-0.5">
             {t(
               'execution.decisionsBuckets.subtitle',
               'Buckets by due horizon to keep governance fast and explicit.'
@@ -3518,11 +3568,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (activeTab === 'reports') {
       const reportPresets = [
         { id: 'all' as const, label: t('common.all', 'ALL'), count: 11 },
-        { id: 'weekly' as const, label: 'Weekly', count: 4 },
-        { id: 'monthly' as const, label: 'Monthly', count: 4 },
-        { id: 'bi-weekly' as const, label: 'Bi-weekly', count: 2 },
-        { id: 'on-demand' as const, label: 'On demand', count: 2 },
-        { id: 'sponsor' as const, label: 'Sponsor', count: 5 },
+        { id: 'weekly' as const, label: t('execution.reports.preset.weekly', 'Weekly'), count: 4 },
+        {
+          id: 'monthly' as const,
+          label: t('execution.reports.preset.monthly', 'Monthly'),
+          count: 4,
+        },
+        {
+          id: 'bi-weekly' as const,
+          label: t('execution.reports.preset.biweekly', 'Bi-weekly'),
+          count: 2,
+        },
+        {
+          id: 'on-demand' as const,
+          label: t('execution.reports.preset.onDemand', 'On demand'),
+          count: 2,
+        },
+        {
+          id: 'sponsor' as const,
+          label: t('execution.reports.preset.sponsor', 'Sponsor'),
+          count: 5,
+        },
       ];
       return (
         <div className={MENU_3_LEFT_CLASS}>
@@ -3732,17 +3798,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               key={row.id}
               type="button"
               onClick={row.onClick}
-              className="text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 hover:border-primary-500/40 transition-colors"
+              className="text-left rounded-xl border border-c-border-subtle bg-c-surface p-3 hover:border-primary-500/40 transition-colors"
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {row.label}
                 </div>
-                <span className="text-xs font-semibold rounded-full bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 px-2 py-0.5">
+                <span className="text-xs font-semibold rounded-full bg-slate-100 dark:bg-navy-800 text-c-text-secondary px-2 py-0.5">
                   {row.count}
                 </span>
               </div>
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="mt-2 text-xs text-c-text-muted leading-relaxed">
                 {row.description}
               </p>
             </button>
@@ -3961,7 +4027,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Redistribute idle capacity',
           'Flag resource gaps to hiring',
         ],
-        icon: <Users size={18} className="text-primary-500" />,
+        icon: <Users size={18} className="text-c-text-secondary" />,
         highlights: [{ label: 'Tasks', value: totalTasks }],
       },
       {
@@ -4310,10 +4376,10 @@ Please return:
                 {r.icon}
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                <div className="text-sm font-medium text-c-text truncate">
                   {r.title}
                 </div>
-                <div className="text-[10px] text-slate-600 dark:text-slate-500 truncate">
+                <div className="text-[10px] text-c-text-muted truncate">
                   {r.audience}
                 </div>
               </div>
@@ -4333,7 +4399,7 @@ Please return:
           { value: 'On demand', label: t('execution.reportCatalog.cadence.onDemand', 'On demand') },
         ],
         render: (row: any) => (
-          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
             {(row as ReportDef).cadence}
           </span>
         ),
@@ -4354,7 +4420,7 @@ Please return:
                       ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                       : h.variant === 'warn'
                         ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                        : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                        : 'bg-slate-100 dark:bg-navy-800 text-c-text-secondary'
                   }`}
                 >
                   {h.label}: {h.value}
@@ -4369,7 +4435,7 @@ Please return:
         label: t('execution.reportCatalog.col.sections', 'Sections'),
         width: '60px',
         render: (row: any) => (
-          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <span className="text-xs text-c-text-muted tabular-nums">
             {(row as ReportDef).sections.length}
           </span>
         ),
@@ -4406,7 +4472,7 @@ Please return:
 
           {/* Configuration / methodology descriptor */}
           <div className="px-4 pb-2 pt-1">
-            <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-500 font-medium border-t border-slate-100 dark:border-navy-800 pt-3">
+            <div className="text-[10px] uppercase tracking-wider text-c-text-muted font-medium border-t border-slate-100 dark:border-navy-800 pt-3">
               {t('execution.reportPanel.methodology', 'Report configuration & methodology')}
             </div>
           </div>
@@ -4420,7 +4486,7 @@ Please return:
                   <RagIcon size={10} className="inline mr-1 -mt-0.5" />
                   {ragConf.label}
                 </div>
-                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                   {report.cadence}
                 </span>
               </div>
@@ -4429,10 +4495,10 @@ Please return:
                   {report.icon}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <div className="text-sm font-semibold text-c-text">
                     {report.title}
                   </div>
-                  <div className="text-[10px] text-slate-600 dark:text-slate-500">
+                  <div className="text-[10px] text-c-text-muted">
                     {report.audience}
                   </div>
                 </div>
@@ -4450,7 +4516,7 @@ Please return:
                         ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                         : h.variant === 'warn'
                           ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                          : 'bg-slate-100 dark:bg-navy-800 text-c-text-secondary'
                     }`}
                   >
                     {h.label}: {h.value}
@@ -4461,24 +4527,24 @@ Please return:
 
             {/* Scope */}
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+              <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 Scope
               </div>
-              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+              <p className="text-xs text-c-text-secondary leading-relaxed">
                 {report.scope}
               </p>
             </div>
 
             {/* Data sources */}
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+              <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 Data Sources
               </div>
               <div className="flex flex-wrap gap-1">
                 {report.dataSources.map((ds) => (
                   <span
                     key={ds}
-                    className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
+                    className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-c-text-secondary"
                   >
                     {ds}
                   </span>
@@ -4487,14 +4553,14 @@ Please return:
             </div>
 
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+              <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 AI Executive Readout
               </div>
               <div className="space-y-1.5">
                 {report.aiExecutiveReadout.slice(0, 3).map((line) => (
                   <div
                     key={line}
-                    className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
+                    className="rounded-lg border border-c-border-subtle px-3 py-2 text-[11px] text-c-text-secondary"
                   >
                     {line}
                   </div>
@@ -4504,12 +4570,12 @@ Please return:
 
             {/* Mandatory sections */}
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+              <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 Mandatory Sections
               </div>
               <ol className="space-y-0.5 list-decimal list-inside">
                 {report.sections.map((s) => (
-                  <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">
+                  <li key={s} className="text-[11px] text-c-text-secondary">
                     {s}
                   </li>
                 ))}
@@ -4518,17 +4584,17 @@ Please return:
 
             {/* RAG logic */}
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+              <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 RAG / Confidence Logic
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="text-[11px] text-c-text-secondary leading-relaxed">
                 {report.ragLogic}
               </p>
             </div>
 
             {/* Follow-up actions */}
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+              <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 Expected Follow-up Actions
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -4544,11 +4610,11 @@ Please return:
             </div>
 
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+              <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 Data Quality
               </div>
               <div className="flex flex-wrap gap-1.5">
-                <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-c-text-secondary">
                   {report.dataQuality.confidence}
                 </span>
                 {report.degradedFlags.map((flag) => (
@@ -4600,7 +4666,7 @@ Please return:
               exportReportPDF(report, rag);
               toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
             }}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             PDF
           </button>
@@ -4625,7 +4691,7 @@ Please return:
                 () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
               );
             }}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {t('execution.reportPanel.copy', 'Copy')}
           </button>
@@ -4741,10 +4807,10 @@ Please return:
       <div className="p-4 space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-base font-semibold text-c-text">
               {t('execution.reports.title', 'Execution reports')}
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-xs text-c-text-muted">
               {t(
                 'execution.reportCatalog.subheading',
                 'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.'
@@ -4754,7 +4820,7 @@ Please return:
           <button
             type="button"
             onClick={() => navigate('/reports')}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {t('execution.reportCatalog.openGlobal', 'Global Reports →')}
           </button>
@@ -4774,11 +4840,11 @@ Please return:
 
         {renderActionCenter()}
 
-        <details className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
-          <summary className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <details className="rounded-xl border border-c-border-subtle bg-c-surface">
+          <summary className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             {t('execution.reports.workloadPreview', 'Workload preview')}
           </summary>
-          <div className="border-t border-slate-200 dark:border-navy-700">
+          <div className="border-t border-c-border-subtle">
             <ExecutionWorkloadView
               initiatives={dashboardBaseInitiatives as FullInitiative[]}
               onInitiativeClick={handleOpenSidePanel}
@@ -4795,7 +4861,7 @@ Please return:
                 key={report.id}
                 type="button"
                 onClick={() => handleOpenReport(report)}
-                className="group rounded-xl border bg-white dark:bg-navy-900 transition-all text-left border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:shadow-sm dark:hover:border-primary-400/30"
+                className="group rounded-xl border bg-c-surface transition-all text-left border-c-border-subtle hover:border-primary-500/40 hover:shadow-sm dark:hover:border-primary-400/30"
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3 mb-2">
@@ -4804,15 +4870,15 @@ Please return:
                         {report.icon}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
+                        <div className="text-sm font-semibold text-c-text leading-tight">
                           {report.title}
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                             {report.cadence}
                           </span>
-                          <span className="text-[10px] text-slate-600 dark:text-slate-400">·</span>
-                          <span className="text-[10px] text-slate-600 dark:text-slate-500">
+                          <span className="text-[10px] text-c-text-secondary">·</span>
+                          <span className="text-[10px] text-c-text-muted">
                             {report.audience}
                           </span>
                         </div>
@@ -4820,7 +4886,7 @@ Please return:
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-slate-600 dark:text-slate-400 transition-transform group-hover:text-primary-500"
+                      className="text-c-text-secondary transition-transform group-hover:text-c-text"
                     />
                   </div>
 
@@ -4834,7 +4900,7 @@ Please return:
                               ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                               : h.variant === 'warn'
                                 ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                                : 'bg-slate-100 dark:bg-navy-800 text-c-text-secondary'
                           }`}
                         >
                           {h.label}: {h.value}
@@ -4888,12 +4954,12 @@ Please return:
       return (
         <div className="flex h-full flex-col items-center justify-center p-8 text-center">
           <AlertTriangle className="mb-4 h-12 w-12 text-danger-500" />
-          <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+          <h3 className="mb-2 text-lg font-semibold text-c-text">
             {isTransportBlock
               ? t('execution.hub.transportBlockedTitle', 'Requests temporarily blocked')
               : t('execution.hub.loadErrorTitle', 'Failed to load implementation data')}
           </h3>
-          <p className="mb-6 max-w-md text-sm text-slate-500 dark:text-slate-400">
+          <p className="mb-6 max-w-md text-sm text-c-text-muted">
             {initiativesLoadError}
           </p>
           <button
@@ -5030,7 +5096,22 @@ Please return:
       const itemIds = summaryInitiatives.map((i) => i.id);
 
       return (
-        <div className="h-full overflow-hidden">
+        <div className="flex h-full flex-col overflow-hidden">
+          {isExecutionFlagEnabled('intelligence') && (
+            <div className="shrink-0 px-4 pt-3">
+              <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
+            </div>
+          )}
+          {isExecutionFlagEnabled('whatIfSandbox') && (
+            <div className="shrink-0 px-4 pt-3">
+              <ExecutionWhatIfSandbox
+                baseline={{
+                  healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
+                }}
+              />
+            </div>
+          )}
+          <div className="min-h-0 flex-1">
           <TableWithPreviewLayout<PreviewItem>
             selectedId={summaryPreviewInitiativeId}
             selectedItem={selectedItem}
@@ -5075,7 +5156,7 @@ Please return:
                   exists. */}
               {summarySelectedIds.size > 0 && (
                 <div className="flex flex-wrap items-center gap-2 px-4 pt-2">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 select-none">
+                  <span className="text-xs font-medium text-c-text-muted select-none">
                     {t('execution.table.selectedCount', '{{count}} selected', {
                       count: summarySelectedIds.size,
                     })}
@@ -5083,7 +5164,7 @@ Please return:
                   {!isPilotParticipant && bulkStatusTargets.length > 0 && (
                     <>
                       <span className="text-xs text-slate-300 dark:text-slate-600 select-none">·</span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 select-none">
+                      <span className="text-xs text-c-text-muted select-none">
                         {t('execution.bulk.setStatus', 'Zmień status:')}
                       </span>
                       {bulkStatusTargets.map((tg) => (
@@ -5091,7 +5172,7 @@ Please return:
                           key={tg.targetStatus}
                           type="button"
                           onClick={() => void handleBulkStatusChange(tg.targetStatus)}
-                          className="rounded-md border border-slate-200 dark:border-navy-600 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                          className="rounded-md border border-c-border px-2 py-0.5 text-xs font-medium text-c-text-secondary hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                         >
                           {tg.label}
                         </button>
@@ -5099,7 +5180,7 @@ Please return:
                     </>
                   )}
                   {!isPilotParticipant && bulkStatusTargets.length === 0 && (
-                    <span className="text-xs text-slate-400 dark:text-slate-500 select-none">
+                    <span className="text-xs text-c-text-muted select-none">
                       {t(
                         'execution.bulk.noCommonStatus',
                         'Brak wspólnej akcji statusu dla zaznaczenia'
@@ -5109,7 +5190,7 @@ Please return:
                   <button
                     type="button"
                     onClick={clearSummarySelection}
-                    className="ml-auto text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                    className="ml-auto text-xs font-medium text-c-text-muted hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   >
                     {t('common.clear', 'Clear')}
                   </button>
@@ -5149,6 +5230,7 @@ Please return:
               </div>
             </div>
           </TableWithPreviewLayout>
+          </div>
         </div>
       );
     }

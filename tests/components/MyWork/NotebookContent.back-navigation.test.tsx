@@ -132,6 +132,7 @@ vi.mock('../../../src/components/MyWork/notebook/extensions', () => ({
   DetailsSummaryNode: {},
   EmbeddedRefNode: {},
   NOTEBOOK_CODE_LANGUAGES: [],
+  NotebookBookmark: { configure: () => ({}) },
   NotebookCodeBlock: {},
   NotebookImage: { configure: () => ({}) },
 }));
@@ -171,9 +172,8 @@ describe('NotebookContent back navigation (S1-U2)', () => {
     );
 
     await waitFor(() => expect(apiMock.getNotebookPages).toHaveBeenCalled());
-    // The old second chip line rendered an "Active" tab button in the sidebar.
+    // The old second chip line rendered an "Active" tab button in the sidebar;
+    // the status axis (All/Inbox/Active) is owned by Menu 3 in the hub now.
     expect(screen.queryByRole('button', { name: /^Active$/ })).not.toBeInTheDocument();
-    // Filters toggle survived the absorption (moved into the header row).
-    expect(screen.getByTitle('Filters')).toBeInTheDocument();
   });
 });

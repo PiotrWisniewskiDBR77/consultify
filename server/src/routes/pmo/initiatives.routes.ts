@@ -82,12 +82,7 @@ function buildPmoInitiativesFailClosedError(
  * leaky raw value for a stable generic message + code, and logs the real error
  * server-side instead of returning it.
  */
-function failInitiative500(
-  res: Response,
-  errorLabel: string,
-  code: string,
-  err: unknown
-) {
+function failInitiative500(res: Response, errorLabel: string, code: string, err: unknown) {
   logger.error(`[M13 Initiatives] ${errorLabel} (${code})`, err);
   return res.status(500).json({
     error: errorLabel,
@@ -1042,6 +1037,11 @@ router.get('/', InitiativeController.getInitiatives);
  *
  * Note: This intentionally duplicates only the main `initiatives` row and does not clone
  * deep project-management sub-entities (tasks, RAID, etc.). Those can be re-generated later.
+ *
+ * USPOJNIENIE A3: ŚWIADOMY WYJĄTEK od „jeden lejek". Duplikacja kopiuje wszystkie
+ * kolumny istniejącego rekordu (nie jest świeżym tworzeniem z walidacją) i SAMA
+ * wymusza status startowy `DRAFT` + nowy UUID + org-scope + created_by (niżej).
+ * Przejście przez createInitiativeService zgubiłoby skopiowane pola/lineage.
  */
 router.post('/:id/duplicate', async (req: any, res: any) => {
   try {
@@ -1108,7 +1108,12 @@ router.post('/:id/duplicate', async (req: any, res: any) => {
 
     return res.status(201).json({ id: newId });
   } catch (err: any) {
-    return failInitiative500(res, 'Failed to duplicate initiative', 'INITIATIVE_DUPLICATE_FAILED', err);
+    return failInitiative500(
+      res,
+      'Failed to duplicate initiative',
+      'INITIATIVE_DUPLICATE_FAILED',
+      err
+    );
   }
 });
 
@@ -1871,7 +1876,12 @@ router.get('/section-types', async (req: any, res: any) => {
     if (isMissingInitiativeSectionTypesTable(err)) {
       return res.json([]);
     }
-    return failInitiative500(res, 'Failed to fetch section types', 'SECTION_TYPES_FETCH_FAILED', err);
+    return failInitiative500(
+      res,
+      'Failed to fetch section types',
+      'SECTION_TYPES_FETCH_FAILED',
+      err
+    );
   }
 });
 
@@ -1913,7 +1923,12 @@ router.post('/section-types', async (req: any, res: any) => {
     });
     return res.status(201).json(created);
   } catch (err: any) {
-    return failInitiative500(res, 'Failed to create section type', 'SECTION_TYPE_CREATE_FAILED', err);
+    return failInitiative500(
+      res,
+      'Failed to create section type',
+      'SECTION_TYPE_CREATE_FAILED',
+      err
+    );
   }
 });
 
@@ -1944,7 +1959,12 @@ router.put('/section-types/:id', async (req: any, res: any) => {
     if (err.message?.includes('system')) {
       return res.status(403).json({ error: err.message });
     }
-    return failInitiative500(res, 'Failed to update section type', 'SECTION_TYPE_UPDATE_FAILED', err);
+    return failInitiative500(
+      res,
+      'Failed to update section type',
+      'SECTION_TYPE_UPDATE_FAILED',
+      err
+    );
   }
 });
 
@@ -1975,7 +1995,12 @@ router.delete('/section-types/:id', async (req: any, res: any) => {
     if (err.message?.includes('system')) {
       return res.status(403).json({ error: err.message });
     }
-    return failInitiative500(res, 'Failed to delete section type', 'SECTION_TYPE_DELETE_FAILED', err);
+    return failInitiative500(
+      res,
+      'Failed to delete section type',
+      'SECTION_TYPE_DELETE_FAILED',
+      err
+    );
   }
 });
 
@@ -2035,9 +2060,10 @@ router.post('/generate-section', requireInitiativeWriteAccess(), async (req: any
       sectionKey,
       { ...context, language: context.language || 'en' },
       String(orgId),
-      // ADVISORY only: when the client opts in, attach a §B4/§B6 quality verdict
-      // to the response. Never auto-rejects — the human still reviews and saves.
-      { withReview: withReview === true }
+      // F3.8 — reviewer §B4 DEFAULT ON (uspójnienie). Pass withReview:false to
+      // opt out; any other value (including absent) enables the advisory verdict.
+      // Never auto-rejects — the human still reviews and saves.
+      { withReview: withReview !== false }
     );
 
     return res.json(result);
@@ -2435,14 +2461,15 @@ router.get('/:id/capacity', async (req: any, res: any) => {
     const capacity = await getInitiativeCapacity(String(orgId), String(req.params.id));
     return res.json(capacity);
   } catch (err: any) {
-    logger.error('[M13 Initiatives] Failed to fetch initiative capacity (INITIATIVE_CAPACITY_FETCH_FAILED)', err);
-    return res
-      .status(500)
-      .json({
-        error: 'Failed to fetch initiative capacity',
-        message: 'An internal error occurred. Please try again later.',
-        code: 'INITIATIVE_CAPACITY_FETCH_FAILED',
-      });
+    logger.error(
+      '[M13 Initiatives] Failed to fetch initiative capacity (INITIATIVE_CAPACITY_FETCH_FAILED)',
+      err
+    );
+    return res.status(500).json({
+      error: 'Failed to fetch initiative capacity',
+      message: 'An internal error occurred. Please try again later.',
+      code: 'INITIATIVE_CAPACITY_FETCH_FAILED',
+    });
   }
 });
 
@@ -2453,14 +2480,15 @@ router.get('/:id/capacity/timeline', async (req: any, res: any) => {
     const timeline = await getCapacityTimeline(String(orgId), String(req.params.id));
     return res.json({ weeks: timeline });
   } catch (err: any) {
-    logger.error('[M13 Initiatives] Failed to fetch capacity timeline (CAPACITY_TIMELINE_FETCH_FAILED)', err);
-    return res
-      .status(500)
-      .json({
-        error: 'Failed to fetch capacity timeline',
-        message: 'An internal error occurred. Please try again later.',
-        code: 'CAPACITY_TIMELINE_FETCH_FAILED',
-      });
+    logger.error(
+      '[M13 Initiatives] Failed to fetch capacity timeline (CAPACITY_TIMELINE_FETCH_FAILED)',
+      err
+    );
+    return res.status(500).json({
+      error: 'Failed to fetch capacity timeline',
+      message: 'An internal error occurred. Please try again later.',
+      code: 'CAPACITY_TIMELINE_FETCH_FAILED',
+    });
   }
 });
 
@@ -2751,6 +2779,12 @@ router.get('/:id/task-dependencies', InitiativeController.getInitiativeTaskDepen
 
 router.get('/:id/gate-roles', InitiativeController.getGateRoles);
 router.put('/:id/gate-roles', InitiativeController.updateGateRoles);
+router.post('/similar-check', InitiativeController.checkSimilarInitiatives);
+router.post('/validate-card', InitiativeController.validateCard);
+router.post('/:id/gate-ai-check', InitiativeController.getGateAiCheck);
+router.get('/:id/linked-items', InitiativeController.getLinkedItems);
+router.post('/:id/linked-items', InitiativeController.addLinkedItem);
+router.delete('/:id/linked-items/:linkId', InitiativeController.removeLinkedItem);
 router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);
 router.get('/:id/status-history', InitiativeController.getStatusHistory);
 

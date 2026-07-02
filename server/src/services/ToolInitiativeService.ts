@@ -8,6 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { AIPipeline } from './ai/AIPipeline.js';
+import { CARD_CONTENT_FORMULA_A3_LITE } from './initiative/cardContentFormulaPrompt.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
 type ToolSessionRow = {
   id: string;
@@ -123,6 +125,7 @@ ${JSON.stringify(answers)}
 Context (JSON):
 ${JSON.stringify(context)}
 ${buildInterviewFindingsSection(context)}
+${CARD_CONTENT_FORMULA_A3_LITE}
 Return ONLY valid JSON in this format:
 {"initiatives":[{"title":"...","description":"...","category":"Strategy|Operations|Digital|Process Auto","priority":"P1|P2|P3","risk":"Low|Medium|High"}]}`;
 };
@@ -261,35 +264,63 @@ export class ToolInitiativeService {
           : initiative.priority?.toUpperCase() === 'P2'
             ? 2
             : 3;
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (
-          id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
-          priority_order, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          initiativeId,
+      const axis = (initiative.category || 'Operations').toLowerCase();
+      // Uspójnienie F1.8 — per-record przez kanoniczny lejek (DRAFT + name/title + lineage).
+      let effectiveInitiativeId = initiativeId;
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
           toolSession.organization_id,
-          toolSession.project_id || null,
-          initiative.title,
-          initiative.description,
-          'DRAFT',
-          (initiative.category || 'Operations').toLowerCase(),
-          'tool',
-          toolSession.id,
-          priorityOrder,
-          now,
-          now,
-        ]
-      );
+          {
+            title: initiative.title,
+            projectId: toolSession.project_id || null,
+            summary: initiative.description,
+            axis,
+            sourceType: 'tool',
+            sourceId: toolSession.id,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        effectiveInitiativeId = __r.id;
+        // Extra column not set by the funnel — post-create UPDATE (best-effort).
+        try {
+          await queryHelpers.queryRun(
+            `UPDATE initiatives SET priority_order = ? WHERE id = ? AND organization_id = ?`,
+            [priorityOrder, effectiveInitiativeId, toolSession.organization_id]
+          );
+        } catch {
+          // priority_order column may be absent on legacy schemas
+        }
+      } else {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (
+            id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
+            priority_order, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            initiativeId,
+            toolSession.organization_id,
+            toolSession.project_id || null,
+            initiative.title,
+            initiative.description,
+            'DRAFT',
+            axis,
+            'tool',
+            toolSession.id,
+            priorityOrder,
+            now,
+            now,
+          ]
+        );
+      }
 
       await queryHelpers.queryRun(
         `INSERT INTO tool_initiative_links (
           id, tool_session_id, batch_id, initiative_id, created_at
         ) VALUES (?, ?, ?, ?, ?)`,
-        [uuidv4(), toolSession.id, batchId, initiativeId, now]
+        [uuidv4(), toolSession.id, batchId, effectiveInitiativeId, now]
       );
 
-      created.push({ id: initiativeId, title: initiative.title, status: 'DRAFT' });
+      created.push({ id: effectiveInitiativeId, title: initiative.title, status: 'DRAFT' });
     }
 
     // Audit log (simple insert into audit_log if exists)

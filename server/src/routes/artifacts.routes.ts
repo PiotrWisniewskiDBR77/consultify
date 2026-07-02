@@ -329,6 +329,21 @@ async function buildArtifactTrustPayload(params: {
   };
 }
 
+/**
+ * Resolve the draft-visibility mode for the Outputs listing (M17 junk filter, S6.3).
+ * Default is 'exclude' (only real/final artifacts). Callers opt into drafts via:
+ *   ?include=drafts | ?drafts=include  → real + drafts (mixed)
+ *   ?view=drafts    | ?drafts=only     → drafts only (the "Robocze" view)
+ *   ?drafts=exclude                    → explicit default
+ */
+function resolveDraftMode(req: Request): 'exclude' | 'include' | 'only' {
+  const drafts = String(req.query.drafts || '').toLowerCase();
+  if (drafts === 'include' || drafts === 'only' || drafts === 'exclude') return drafts;
+  if (req.query.view === 'drafts') return 'only';
+  if (String(req.query.include || '').toLowerCase() === 'drafts') return 'include';
+  return 'exclude';
+}
+
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
@@ -338,6 +353,8 @@ router.get(
       userId,
       roleKey,
       filters: {
+        drafts: resolveDraftMode(req),
+        dedupe: String(req.query.dedupe || '').toLowerCase() !== 'false',
         outputType:
           req.query.outputType === 'report' ||
           req.query.outputType === 'presentation' ||

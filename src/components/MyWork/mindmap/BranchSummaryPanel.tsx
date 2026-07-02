@@ -173,7 +173,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
     <div className="fixed inset-y-0 right-0 z-50 flex">
       <div className="w-[380px] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-white/10 shadow-2xl flex flex-col rounded-l-2xl">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-white/10">
-          <FileText size={16} className="text-primary-500 shrink-0" />
+          <FileText size={16} className="text-slate-500 shrink-0" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white truncate flex-1">
             {branchLabel || (isPl ? 'Podsumowanie gałęzi' : 'Branch Summary')}
           </h3>
@@ -189,7 +189,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 size={24} className="animate-spin text-primary-500" />
+              <Loader2 size={24} className="animate-spin text-slate-500" />
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 {isPl ? 'Generowanie podsumowania…' : 'Generating summary…'}
               </span>

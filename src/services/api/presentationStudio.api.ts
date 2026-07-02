@@ -494,13 +494,15 @@ export const PresentationStudioApi = {
   },
 
   /**
-   * E3 — Per-slide AI regeneration. Uses saved ContextPack snapshot (narrative slides)
-   * or rebuilds from existing unified_json. Does NOT touch other slides.
+   * E3 / R4 — Per-slide AI regeneration. Uses saved ContextPack snapshot
+   * (narrative slides) or rebuilds from existing unified_json. Does NOT touch
+   * other slides. Pass `instruction` for a free-text rewrite of any slide;
+   * the server returns the rebuilt FE-shaped `card` for in-place `updateCard`.
    */
-  regenerateSlide: (deckId: string, slideIndex: number) =>
-    studioPostTyped<{ slide: Record<string, unknown> }>(
+  regenerateSlide: (deckId: string, slideIndex: number, instruction?: string) =>
+    studioPostTyped<{ slide: Record<string, unknown>; card?: Record<string, unknown> }>(
       `/decks/${encodeURIComponent(deckId)}/slides/${encodeURIComponent(String(slideIndex))}/regenerate`,
-      {}
+      instruction && instruction.trim().length > 0 ? { instruction: instruction.trim() } : {}
     ),
 };
 

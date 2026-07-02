@@ -1,4 +1,6 @@
 /**
+ * @vitest-environment node
+ *
  * M19 Presentations (Presentation Studio / DeckBuilder) — cross-org IDOR
  * contract tests (adversarial sweep, wave 6 follow-up).
  *

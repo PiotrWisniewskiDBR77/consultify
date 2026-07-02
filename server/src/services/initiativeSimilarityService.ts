@@ -21,6 +21,7 @@ import { InitiativeStatus } from '../constants/initiativeStatuses.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { EmbeddingService } from './ai/embeddingService.js';
+import { jaccardSimilarity } from './initiative/similarityPrimitives.js';
 
 const embeddingService = new EmbeddingService();
 
@@ -182,16 +183,8 @@ function tokenize(text: string): Set<string> {
   return new Set(tokens);
 }
 
-function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 || b.size === 0) return 0;
-  let intersection = 0;
-  for (const tok of a) {
-    if (b.has(tok)) intersection++;
-  }
-  const union = a.size + b.size - intersection;
-  if (union === 0) return 0;
-  return intersection / union;
-}
+// jaccardSimilarity is shared with the C1 portfolio-dedup service via
+// ./initiative/similarityPrimitives.js (imported above) — identical behavior.
 
 // ---------------------------------------------------------------------------
 // Data access

@@ -948,6 +948,41 @@ async function exportDocxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
 }
 
 async function exportXlsxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
+  // W4/B4 (premium) — flag-gated, FAIL-OPEN. Gdy ENABLE_DELIVERABLES_PREMIUM
+  // jest ON i draft niesie typowany schemat B4 w provenance (zapisany przez
+  // startSheet), eksportujemy go realnym builderem exceljs (style/CF/kolory
+  // singleSelect) zamiast fasady SheetJS. Każdy błąd / brak schematu / flaga OFF
+  // ⇒ ścieżka legacy poniżej (zachowanie byte-identyczne jak dziś).
+  try {
+    const provenance = (draft.provenance || {}) as Record<string, any>;
+    const tableSchemaB4 = provenance?.deliverablesGeneration?.tableSchemaB4;
+    if (tableSchemaB4 && typeof tableSchemaB4 === 'object') {
+      const { resolveDeliverableTier } = await import(
+        '../services/deliverableGenerationTier.js'
+      );
+      if (resolveDeliverableTier({ preferPremium: true }) === 'PREMIUM') {
+        const { tableSchemaToWorkbook, buildWorkbookBuffer } = await import(
+          '../services/workbook/WorkbookBuilder.js'
+        );
+        const wbSchema = tableSchemaToWorkbook(tableSchemaB4 as any, {
+          title: draft.title,
+          author: 'Business Work Canvas',
+        });
+        const buffer = await buildWorkbookBuffer(wbSchema);
+        logger.info('[work-canvas] xlsx export via premium B4 workbook', {
+          draftId: draft.id,
+          sheets: wbSchema.sheets?.length ?? 0,
+        });
+        return buffer;
+      }
+    }
+  } catch (premiumErr) {
+    logger.warn('[work-canvas] premium xlsx export failed, falling back to legacy', {
+      draftId: draft.id,
+      error: premiumErr instanceof Error ? premiumErr.message : String(premiumErr),
+    });
+  }
+
   // XLSX renders a two-cell footer (`['Source Canvas', <id>]`), so the raw draft
   // id is passed as sourceLabel here (not the prefixed `Source Canvas: <id>`
   // label used by PDF/DOCX/PPTX), keeping the spreadsheet byte-for-byte.
@@ -4466,6 +4501,36 @@ router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res
       },
     });
 
+    // X6 — W5 Transactional Outputs Registry: fire-and-forget parallel call to
+    // ensure both v8_output_artifacts + v8_artifact_origin_links are registered
+    // atomically. Runs alongside the existing registerArtifactOrigin path (additive,
+    // idempotent). Fail-open: errors are swallowed so the primary response is unaffected.
+    import('../services/v8/outputsTransactionalRegistry.js')
+      .then(({ registerOutputArtifactTransactional }) =>
+        registerOutputArtifactTransactional({
+          organizationId,
+          outputType: 'report',
+          artifactFamily: 'document',
+          originRuntime: 'native_artifact',
+          originRecordId: draft.id,
+          titleSnapshot: title,
+          ownerUserId: userId,
+          createdBy: userId,
+          projectId: draft.projectId || null,
+          originSummary: {
+            sourceType: 'work_canvas',
+            sourceTable: 'work_canvas_drafts',
+            contentMdLength: (draft.contentMd || '').length,
+          },
+        })
+      )
+      .catch((x6Err: unknown) => {
+        logger.warn('[work-canvas] X6 registerOutputArtifactTransactional failed (non-blocking)', {
+          draftId: draft.id,
+          error: x6Err instanceof Error ? x6Err.message : String(x6Err),
+        });
+      });
+
     const previousLinks =
       draft.provenance?.linkedWorkspaceResources &&
       typeof draft.provenance.linkedWorkspaceResources === 'object'
@@ -4634,6 +4699,7 @@ router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest,
 router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const { organizationId, userId } = authContext(req);
   const artifactId = `artifact-${randomUUID()}`;
   const artifactRunId = `run-${randomUUID()}`;
   const now = new Date().toISOString();
@@ -4685,6 +4751,26 @@ router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) =
     ],
     { fallback: false }
   );
+
+  // X5 — W5 Unified Doc Entity: commit draft → wave5_artifacts transactionally.
+  // Fail-open: if commitDraftToArtifact throws, the draft UPDATE above already
+  // succeeded so the canvas is still saved; we just won't have a wave5_artifacts row.
+  try {
+    const { commitDraftToArtifact } = await import(
+      '../services/deliverables/unifiedDocEntityService.js'
+    );
+    await commitDraftToArtifact({
+      organizationId,
+      draftId: draft.id,
+      committedBy: userId,
+    });
+  } catch (x5Err) {
+    logger.warn('[work-canvas] X5 commitDraftToArtifact failed (non-blocking)', {
+      draftId: draft.id,
+      error: x5Err instanceof Error ? x5Err.message : String(x5Err),
+    });
+  }
+
   const readBack = {
     target: 'artifact',
     targetObjectId: artifactId,

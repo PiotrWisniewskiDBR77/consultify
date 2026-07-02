@@ -27,6 +27,9 @@ vi.mock('../../../../server/src/controllers/ToolController.js', () => ({
     retryFromFailure: (_req: any, res: any) => res.status(200).json({}),
     generateInitiatives: (_req: any, res: any) => res.status(200).json({}),
     getGeneratedInitiatives: (_req: any, res: any) => res.status(200).json({}),
+    listComments: (_req: any, res: any) => res.status(200).json({ comments: [] }),
+    addComment: (_req: any, res: any) => res.status(201).json({}),
+    deleteComment: (_req: any, res: any) => res.status(204).end(),
   },
 }));
 

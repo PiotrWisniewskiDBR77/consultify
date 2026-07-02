@@ -7,6 +7,15 @@
 import * as DbPromise from '../utils/DbPromise.js';
 import aiLogger from './ai/logger.js';
 
+// Opt-in isolation seam for non-server harness scripts (deliverables live pilots
+// under `node --import tsx`). When SKIP_DB_INIT=1, circuit-breaker persistence
+// becomes in-memory only so the harness never opens a DB pool (no prod risk, no
+// schema-check stall). No-op for normal app boot: flag unset → unchanged behavior.
+const SKIP_DB_PERSIST =
+  process.env.SKIP_DB_INIT === '1' ||
+  process.env.SKIP_DB_INIT === 'true' ||
+  process.env.SKIP_DB_INIT === 'yes';
+
 type AlertsModule = {
   alerts?: {
     circuitClosed?: (name: string) => void;
@@ -369,6 +378,7 @@ export class CircuitBreaker {
   }
 
   async _persistState(): Promise<void> {
+    if (SKIP_DB_PERSIST) return; // harness mode: in-memory only, never touch DB
     try {
       if (circuitBreakerHasServiceColumn === null) {
         try {
@@ -658,6 +668,10 @@ export const CircuitBreakerService = {
 
   restoreStates: async (): Promise<void> => {
     if (stateRestored) return;
+    if (SKIP_DB_PERSIST) {
+      stateRestored = true; // harness mode: nothing persisted, start from in-memory defaults
+      return;
+    }
 
     try {
       // Check if table exists first to avoid error logs

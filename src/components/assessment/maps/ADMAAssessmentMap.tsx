@@ -36,6 +36,7 @@ import {
   getAllPillarIds,
   getPillarRadarData,
 } from '../../../services/admaStructure';
+import { ADMA_DEFAULT_PEER_SCORES } from '../../../services/admaTransformations';
 
 // ============================================
 // TYPES
@@ -46,6 +47,10 @@ interface ADMAAssessmentMapProps {
   onChange?: (data: ADMAAssessmentData) => void;
   readOnly?: boolean;
   showLegalNotice?: boolean;
+  /** "Average Scan Responses" peer benchmark per pillar axis. Defaults to seed example values. */
+  averagePeerScores?: number[];
+  /** Factory of the Future constant benchmark per axis (default 4.0). */
+  fofBenchmark?: number;
 }
 
 // ============================================
@@ -60,7 +65,9 @@ const ADMAPentagonRadar: React.FC<{
   current: number[];
   target: number[];
   maxValue?: number;
-}> = ({ labels, current, target, maxValue = 5 }) => {
+  fofBenchmark?: number;
+  averageScores?: number[];
+}> = ({ labels, current, target, maxValue = 5, fofBenchmark = 4.0, averageScores }) => {
   const size = 280;
   const center = size / 2;
   const radius = size * 0.4;
@@ -124,11 +131,33 @@ const ADMAPentagonRadar: React.FC<{
         );
       })}
 
+      {/* Factory of the Future benchmark (constant fofBenchmark on every axis) — green */}
+      {Number.isFinite(fofBenchmark) && (
+        <path
+          d={createPath(labels.map(() => fofBenchmark))}
+          fill="none"
+          stroke="rgb(34, 197, 94)"
+          strokeWidth="2"
+          strokeDasharray="2 2"
+        />
+      )}
+
+      {/* Average Scan Responses (peers) — amber */}
+      {averageScores && averageScores.length === labels.length && (
+        <path
+          d={createPath(averageScores)}
+          fill="none"
+          stroke="rgb(186, 117, 23)"
+          strokeWidth="2"
+          strokeDasharray="3 3"
+        />
+      )}
+
       {/* Target area */}
       <path
         d={createPath(target)}
-        fill="rgba(34, 197, 94, 0.15)"
-        stroke="rgb(34, 197, 94)"
+        fill="rgba(29, 158, 117, 0.15)"
+        stroke="rgb(29, 158, 117)"
         strokeWidth="2"
         strokeDasharray="4 4"
       />
@@ -348,6 +377,8 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
   onChange,
   readOnly = false,
   showLegalNotice = true,
+  averagePeerScores = ADMA_DEFAULT_PEER_SCORES,
+  fofBenchmark = 4.0,
 }) => {
   const { t } = useTranslation();
 
@@ -499,18 +530,38 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
               labels={radarData.labels}
               current={radarData.current}
               target={radarData.target}
+              fofBenchmark={fofBenchmark}
+              averageScores={averagePeerScores}
             />
           </div>
-          <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-4 text-sm">
             <span className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
               Current
             </span>
             <span className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-dashed border-green-600"></div>
+              <div className="w-3 h-3 bg-teal-500 rounded-full border-2 border-dashed border-teal-600"></div>
               Target
             </span>
+            <span className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-dashed border-green-600"></div>
+              Factory of the Future ({fofBenchmark.toFixed(1)})
+            </span>
+            {averagePeerScores && averagePeerScores.length === radarData.labels.length && (
+              <span className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full border-2 border-dashed"
+                  style={{ backgroundColor: 'rgb(186, 117, 23)', borderColor: 'rgb(186, 117, 23)' }}
+                ></div>
+                Średnia (peers)
+              </span>
+            )}
           </div>
+          {averagePeerScores === ADMA_DEFAULT_PEER_SCORES && (
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
+              Średnia (peers) — dane przykładowe
+            </p>
+          )}
         </div>
 
         {/* Pillars */}

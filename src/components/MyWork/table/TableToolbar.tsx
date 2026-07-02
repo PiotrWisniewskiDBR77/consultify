@@ -100,7 +100,7 @@ function ToolbarIconButton({
       disabled={disabled}
       className={`p-1.5 rounded-lg transition-colors ${
         active
-          ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
+          ? 'text-slate-700 dark:text-slate-300 bg-slate-500/10'
           : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${className ?? ''}`}
       title={title}
@@ -387,7 +387,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 }}
                 className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                   activeViewId === v.id
-                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                    ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
                     : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
               >
@@ -402,7 +402,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               setSaveViewName('');
               setShowSaveViewDialog(true);
             }}
-            className="p-1 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+            className="p-1 rounded-lg text-slate-600 hover:text-slate-500 hover:bg-slate-500/10 transition-colors"
             title={isPl ? 'Zapisz widok' : 'Save view'}
           >
             <Plus size={12} />
@@ -534,7 +534,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           onClick={() => setShowFilterPanel(!showFilterPanel)}
           className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
             filters.rules.length > 0
-              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+              ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
           }`}
         >
@@ -587,7 +587,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         onClick={() => setGroupBy(groupBy ? null : 'status')}
         className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
           groupBy
-            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+            ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300'
             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
         }`}
         title={isPl ? 'Grupuj' : 'Group'}
@@ -602,7 +602,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           <button
             key={v.id}
             onClick={() => setViewLayout(v.id)}
-            className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-slate-500/10 text-slate-700 dark:text-slate-300' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
             title={v.label}
           >
             <v.icon size={12} />
@@ -1109,7 +1109,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
               >
                 {col.visible ? (
-                  <Eye size={12} className="text-primary-500" />
+                  <Eye size={12} className="text-slate-500" />
                 ) : (
                   <EyeOff size={12} className="text-slate-600" />
                 )}
@@ -1123,7 +1123,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   setShowColumnConfig(false);
                   uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: true });
                 }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-500/10 transition-colors"
               >
                 <Plus size={12} /> {isPl ? 'Nowa kolumna' : 'New column'}
               </button>
@@ -1169,7 +1169,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {/* Bulk actions */}
       {selectedRowIds.size > 0 && (
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-lg">
+          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-500/10 px-2 py-0.5 rounded-lg">
             {selectedRowIds.size} {isPl ? 'zaznaczonych' : 'selected'}
           </span>
           {!locked && (
@@ -1219,6 +1219,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
           <button
             onClick={handleAddRow}
+            data-testid="table-add-row"
             className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
           >

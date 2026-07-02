@@ -45,7 +45,7 @@ const Btn: React.FC<ToolbarBtnProps> = ({ icon: Icon, onClick, isActive, disable
     title={title}
     className={`p-1.5 rounded-md transition-all duration-100 ${
       isActive
-        ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
+        ? 'bg-slate-500/15 text-slate-600 dark:text-slate-400'
         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
     } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
   >

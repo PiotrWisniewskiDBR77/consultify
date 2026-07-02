@@ -166,3 +166,88 @@ R1 wejścia (karta+INV_E+uwaga #1+weryfikacja per-DAO) · R2 zero sierot · R3 s
 - **Template Architect View (Mode2)** — plan/approve/deprecate szablonów firmowych; lista szablonów = FilterableTable (§27) + EntityStatusChip + RowActionsMenu; silent-fail → `templatesError` — `src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx`
 
 *(Powierzchnie współdzielone/programowe: deliverable „z czatu zrób doc" montowany w canvasie przez `WorkCanvasDocumentPanel` (SPEC_01, poza katalogiem M18); publiczny share-link viewer = sanitizowany render BE, brak osobnego komponentu FE w tym katalogu.)*
+
+---
+
+## Generatory Deliverable — premium DOC (B3 + content-gen) — 2026-06-23
+
+> **Sekcja NOWA, dołożona obok istniejącej teczki (persystencja/security/kanon, wyżej, 9/9 zamknięte).** Pokrywa warstwę **„Generatory Deliverable"** (fala W4 — mózg premium) dla typu DOC: AI-struktura bloków (B3) + content-gen treści. To NIE jest re-audyt istniejącego Document Studio — to nakładka jakościowa nad nim.
+> **SSOT produktowy:** [`docs/product/DELIVERABLES_GENERATORS_SPEC.md`](../../docs/product/DELIVERABLES_GENERATORS_SPEC.md) · pamięć [[project_deliverables_generators]], [[finding_deliverables_ft6_pilot_blocker]], [[finding_deliverables_connection_model]].
+> **Rubryka jakości (SSOT):** [`DELIVERABLES_QUALITY_RUBRIC.md`](DELIVERABLES_QUALITY_RUBRIC.md) §3 (RAPORT/doc, benchmark Kimi/Claude) · parametry liczbowe grafiki [`DELIVERABLES_GRAPHIC_PARAMETERS.md`](DELIVERABLES_GRAPHIC_PARAMETERS.md).
+> **Plany testów:** [`docs/qa/deliverables/test-plan/B-series.md`](../../docs/qa/deliverables/test-plan/B-series.md) (B3), [`R-series.md`](../../docs/qa/deliverables/test-plan/R-series.md) (R1-R3), [`X-series.md`](../../docs/qa/deliverables/test-plan/X-series.md) (X1/X3) · scenariusze [`scenarios/M18_REPORTS.md`](../../docs/qa/deliverables/scenarios/M18_REPORTS.md) (30 doc-quality), [`scenarios/VTS_GOLDEN.md`](../../docs/qa/deliverables/scenarios/VTS_GOLDEN.md) (head-to-head).
+
+### A' · INTENCJA (premium DOC)
+- **Job-to-be-done:** z intentu + outline + (opcjonalnie) źródła zbudować **raport doradczy poziomu Kimi/Claude** — nie ścianę prozy, lecz bogatą strukturę bloków (KPI-strip, callouty, tabele, wykresy, listy) wypełnioną realną treścią, z groundingiem ze źródeł (cytowania) i poprawnym PL/EN.
+- **Delta vs Mode1/Mode3 (wyżej):** klasyczny Document Studio (Mode1 `useLlm:true`) generuje sekcje + prozę. Premium DOC dokłada warstwę **B3 (documentStructureGenerator)** = LLM dobiera TYPY bloków per sekcja, oraz **content-gen (documentBlockContentGenerator)** = LLM wypełnia każdy blok treścią. Cel: dorównać Kimi-Claude na bogactwie bloków, nie tylko na prozie.
+
+### B' · UX DOCELOWE (premium DOC)
+- **Powierzchnie render bloków (FE, istnieją):** `DocTableBlock` (`.doc-table-block` → `<table>` z ramkami), `DocChartBlock` (recharts `BarChart`/`LineChart`/`PieChart` w `ResponsiveContainer`), `DocKpiStrip` (`.doc-kpi-strip__card` z label/value/delta), callout — w `DocumentTipTapEditor` (`data-testid="document-tiptap-editor"`).
+- **Inline-AI (R2):** `DocumentInlineAIMenu` + `useDocumentInlineAI` — 5 akcji (`shorten`/`expand`/`improve`/`formal`/`explain`, `inlineActionPrompts.ts`), trigger „Popraw z Teresa". Brak `data-testid` (do dodania, patrz R-series).
+- **STAN UI:** intake żywego Document Studio mówi literalnie **„deterministic first draft"** — premium NIE jest wpięte w żywy pipeline UI. Jakość premium mierzona przez harness/flagę, nie przez kliknięcie w UI (patrz G'/Status).
+
+### C' · DANE + REGUŁY (premium DOC)
+- **Flaga tieru:** `ENABLE_DELIVERABLES_PREMIUM` (`server/src/services/deliverableGenerationTier.ts`, **default OFF** — `resolveDeliverableTier` fail-open → `STANDARD` przy braku flagi/błędzie). `VITE_ENABLE_DELIVERABLES_LIGHT` (build-time Vite) steruje ścieżką generacji R w FE; OFF na Railway = „nigdy nie działało" ([[finding_deliverables_vite_flag_deploy]]).
+- **Block types (kanon `documentStudioTypes.ts`):** `text`/`heading`/`bulletList`/`numberedList`/`quote`/`callout`/`chart`(bar/line/pie/donut/scatter/area)/`table`/`kpi`/`image`/`divider`.
+- **Bramki B3 (quality-gate struktury):** ≥1 typed block (nie sama proza) · ≥1 `heading` per dokument >1 strona · `citations[]`/`source_refs[]` osobno od prozy.
+- **Renderer eksportu (X-series):** X1 `playwrightPdfRenderer.ts` (`renderHtmlToPdf`/`renderHtmlToPng`, typed-result, no-throw); X3 rasteryzacja wykresów `documentChartRasterizer.ts` (`chartjs-node-canvas`, 6 typów, fallback `null`); DOCX/PDF `documentDocxRenderer.ts`/`documentPdfRenderer.ts`.
+
+### D' · AI — generatory (kręgosłup premium DOC)
+- **B3 struktura:** `server/src/services/documentStudio/documentStructureGenerator.ts` — LLM dobiera typy bloków per sekcja (kpi/callout/table/chart/…), kalibracja liczby bloków per tier/typ dokumentu.
+- **content-gen treść:** `server/src/services/documentStudio/documentBlockContentGenerator.ts` — LLM wypełnia bloki treścią per sekcja.
+- **Runner FT-6 (plain-node, NIE vitest):** `scripts/deliverables/live-pilot-ft6.mts` (SDK structured pada pod vitest). Scoring `scoreDoc` (`tests/integration/deliverables/scoring/docScoring.ts`).
+
+### F' · EPIKI → STORIES → ZADANIA (premium DOC, traceable do B3/R1-R3/X1/X3)
+
+- **EPIK-G1 — B3 struktura premium (mózg):** [B3-S01..S08, B-series]
+  - Story G1.1: LLM dobiera bogate typy bloków per sekcja (≥5 distinct block types w raporcie wielosekcyjnym). Gherkin: *dany* intent raportu diagnostycznego 8 sekcji · *gdy* B3 planuje strukturę · *wtedy* schema zawiera ≥1 `kpi`+`table`+`chart`+`callout`+`bulletList`. [→ B3-S02]
+  - Story G1.2: kalibracja liczby bloków (memo nie nad/niedoprodukowane). [→ B3-S03, **bug-2 fixed**]
+  - Story G1.3: kontrakt Zod — każdy `block.type ∈ DocBlockType` (11), brak nieznanych. [→ B3-S08]
+- **EPIK-G2 — content-gen treść (jakość, nie tylko struktura):** [B3-S01/S04]
+  - Story G2.1: content-gen wypełnia KAŻDY blok realną treścią — **0 placeholderów** („awaiting content"/`[TODO]`). Gherkin: *dany* raport ≥6 sekcji · *gdy* content-gen kończy · *wtedy* żaden blok nie ma treści-zaślepki. [→ B3-S01, **bug-1 fixed**]
+  - Story G2.2: jakość prozy domenowa (`anyTextContains` + ocena ekspercka ≥4/5, brak „wody"/halucynacji). [→ B3-S04]
+- **EPIK-G3 — grounding + i18n:** [B3-S05/S06]
+  - Story G3.1: cytowania wskazują dostarczone źródło (nie zmyślone), `citations[]` osobno. [→ B3-S05]
+  - Story G3.2: nagłówki/treść w żądanym języku PL/EN. [→ B3-S06]
+- **EPIK-G4 — render bloków w jakości docelowej (R1-R3):** [R-series]
+  - Story G4.1: tabela/wykres(recharts)/KPI-strip/callout renderują się wizualnie, spójne dark/light. [→ R1-S03..S06, R3-S01..S06]
+- **EPIK-G5 — parytet eksportu (X1/X3):** [X-series]
+  - Story G5.1: DOCX/PDF NIESIE wykresy/tabele/kolory (nie degradacja do tekstu); wykresy rasteryzowane (X3). Gherkin: *dany* raport z wykresem · *gdy* export PDF · *wtedy* PNG wykresu osadzony, nie pominięty. [→ X1-S0x, X3, rubryka G8]
+- **EPIK-G6 — head-to-head vs Kimi/Claude (FT-7):** [MQ-R11, VTS_GOLDEN doc]
+  - Story G6.1: na złotym temacie VTS (diagnoza gotowości AI) nasz doc ≥ referencja na każdym wymiarze 3C. [→ MQ-R11]
+- **EPIK-G7 — wpięcie premium w żywy UI:** [BLOCKED]
+  - Story G7.1: flaga `ENABLE_DELIVERABLES_PREMIUM` ON na Railway + premium wpięte w intake/canvas/studio + deploy + live-verify. **NIE wykonane** — patrz Status.
+
+### G' · JAKOŚĆ / DoD (premium DOC — 7 kryteriów globalnych + bramka FT-6 ≥85%)
+
+| # | Kryterium (DoD globalny) | Stan premium DOC | Dowód |
+|---|---|---|---|
+| 1 | Front↔back (feature działa, kontrakt) | 🟡 **kod-side TAK / UI NIE** — B3+content-gen działają w runnerze; w żywym UI intake = „deterministic first draft" (premium niewpięte) | `scripts/deliverables/live-pilot-ft6.mts`; B-series §0 |
+| 2 | Bezpieczeństwo / fail-open | 🟢 `resolveDeliverableTier` fail-open → STANDARD (no-throw); runner `DOTENV_IGNORE_LOCAL=1` (nie dotyka PROD) | `deliverableGenerationTier.ts:67`; B-series §0 |
+| 3 | i18n PL/EN treści | 🟡 mierzone B3-S06 (heurystyka językowa); golden doc PL | scenariusze M18_REPORTS |
+| 4 | Render/grafika (recharts + export parytet) | 🟡 render R1-R3 + parytet X1/X3 — **manual-pending** (UI niewpięte do live-verify) | R-series, X-series |
+| 5 | §27 / kanon | N/D dla generatora (edytor 3-szynowy) | — |
+| 6 | E2E w gate | 🟡 Scoring-auto (FT-6 runner) działa; Manual-UI BLOCKED do wpięcia | B-series §8 |
+| 7 | **Bramka jakości FT-6 ≥85% (Q1)** | 🟢 **SPEŁNIONA na próbce golden** — patrz niżej | `runs/2026-06-23-…sonnet46.json` |
+
+**Bramka FT-6 (Q1 = ≥85% wszystkich formatów; rubryka §1):**
+- **DOC avg = 92%** na próbce 3 golden (Sonnet 4.6, PREMIUM, `fallbackUsed=false`):
+  - **S06 [Med] = 100% PASS** (4 sekcje, 30 bloków, 9 distinct block types: heading/text/kpi/callout/numberedList/table/chart/bulletList/quote).
+  - **S16 [Lrg] = 100% PASS** (8 sekcji, 68 bloków, 9 distinct typów + image).
+  - **S01 [Sml] = 75%** (jedyny fail: 11 bloków vs oczekiwane 5-7 — over-production na memo, miękki sygnał kalibracji, nie placeholder).
+- **Skok jakości:** doc poszedł **32% → ~100%** na realistycznych wejściach (S01/S06/S16/S19 100% w sesji 2026-06-22). 32% w poprzednim pilocie to była PODŁOGA (content-gen timeout), nie miara mózgu — patrz [[finding_deliverables_ft6_pilot_blocker]].
+- **Caveat wydajność:** duże dokumenty wolne — **S16 ~226s, S19 ~267s** (kończą się, ale minuty latencji). Decyzje jakości: Q1=≥85% wszystkie formaty · Q3=VTS golden topic · Q5=Unsplash.
+- **Sample VTS (McKinsey-grade, realny):** [`docs/qa/deliverables/runs/2026-06-22-VTS-generated.md`](../../docs/qa/deliverables/runs/2026-06-22-VTS-generated.md).
+
+### H' · GOVERNANCE (premium DOC) — 2 zamaskowane bugi NAPRAWIONE
+
+| ID | Opis | Dowód / mechanizm | Klasa | Status |
+|----|------|--------------------|-------|--------|
+| GL-01 | **Per-section content schema `z.record` niespełnialny dla strict Anthropic `generateObject`** na bogatych sekcjach → 4 retry → circuit-breaker OPEN → reszta dokumentu kaskadowo PLACEHOLDER, **podczas gdy structural scorer dalej czytał 100%** (maskowanie: struktura zielona, treść pusta) | naprawione: schema na **JSON-string + tolerant parser**; content-gen przepisany per-sekcja (247s→27s) | P0-jakość | **ZAMKNIĘTA 2026-06-22** |
+| GL-02 | **B3 block-count miscalibration** — memo nad/niedoprodukowane (zła liczba bloków per tier/typ) | kalibracja liczby bloków w B3; rezydualny miękki sygnał: S01 11 bloków vs 5-7 (B3-S03) | P1-jakość | **ZAMKNIĘTA (rezydualnie miękka na Sml)** 2026-06-22 |
+
+> **Dlaczego GL-01 jest ważny:** to klasyczny „zielony scorer maskuje martwy mózg" — bramka strukturalna mówiła 100%, a treść była zaślepką. Naprawa = bramka FT-6 zaczęła mierzyć REALNY mózg. Bez tej naprawy avg „32%" wyglądało jak słaby model, a faktycznie był to circuit-breaker. Reużywalna lekcja: **scorer strukturalny ≠ scorer treści — placeholder-cascade trzeba wykrywać osobno** (patrz testy manualne MQ-R, krok „NO placeholder cascade").
+
+### Status premium DOC (uczciwie — 2026-06-23)
+- **Jakość premium UDOWODNIONA kod-side: ~100%** na golden (S06/S16 100% PASS, avg 92%, PREMIUM bez fallbacku). 2 zamaskowane bugi (GL-01 schema-cascade, GL-02 block-count) **naprawione**.
+- **NIE wpięte w żywy UI** — intake Document Studio = „deterministic first draft"; flaga `ENABLE_DELIVERABLES_PREMIUM` default OFF + niewpięte w chat→canvas→studio. Manual-UI/head-to-head/render-parytet = **BLOCKED do wpięcia + deploy** (EPIK-G7). Nie wolno raportować „jakość UI potwierdzona" dopóki nie ma żywego LLM przez UI ([[rule_verify_before_claiming]]).
+- **NEXT (kolejność):** odblokować EPIK-G7 (flaga Railway + wpięcie + deploy) → live-verify R1-R3 render + X1/X3 parytet → MQ-R head-to-head vs Kimi/Claude na VTS golden → karty odbioru §6 rubryki.

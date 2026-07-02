@@ -376,18 +376,89 @@ export async function triggerAlert(alertId: string): Promise<TriggerAlertResult>
   return { triggered: true, alertId };
 }
 
+interface OrgAdminRow {
+  id: string;
+}
+
 /**
- * Send alert via configured channels
+ * Send alert via configured channels.
+ *
+ * Filar 5 (Slack Command Center): previously a log-only stub. Now emits:
+ *  (1) Slack via the central slackRouter (#alerts channel), and
+ *  (2) in-app notifications to org admins via NotificationService (when
+ *      notify_admins is set), mirroring feedback.routes' escalation pattern.
+ * Fully fail-soft: never throws; always returns { sent: true } so trigger
+ * bookkeeping is not rolled back by a downstream notification failure.
  */
 export async function sendAlert(alert: AdminAlert): Promise<SendAlertResult> {
-  // In a full implementation, this would:
-  // 1. Send email if email_enabled
-  // 2. Send Slack webhook if slack_webhook_url set
-  // 3. Send custom webhook if webhook_url set
-  // 4. Create notifications for admins if notify_admins
-
-  // For now, just log
   logger.info(`[Admin Alert] ${alert.alertType} triggered for org ${alert.organization_id}`);
+
+  const severityMap: Record<Severity, 'INFO' | 'WARNING' | 'CRITICAL'> = {
+    low: 'INFO',
+    medium: 'WARNING',
+    high: 'WARNING',
+    critical: 'CRITICAL',
+  };
+  const severity = severityMap[alert.severity || 'medium'] || 'WARNING';
+  const title = `Billing alert: ${alert.alertType}`;
+  const body = `Alert "${alert.alertType}" (severity ${alert.severity || 'medium'}) triggered for organization ${alert.organization_id}.`;
+
+  // (1) Slack — central router, fail-soft.
+  try {
+    const { routeToSlack } = await import('./slack/slackRouter.js');
+    await routeToSlack({
+      channel: 'alerts',
+      severity,
+      title,
+      text: `*${title}*\n${body}`,
+      dedupeKey: `admin-alert:${alert.id}:${alert.alertType}`,
+    });
+  } catch (err) {
+    logger.warn(
+      '[AdminAlertService] Slack routing failed (fail-soft):',
+      err instanceof Error ? err.message : String(err)
+    );
+  }
+
+  // (2) In-app notifications to org admins, mirroring feedback.routes pattern.
+  if (alert.notifyAdmins !== false && alert.organization_id) {
+    try {
+      const { default: NotificationService } = await import('./notificationService.js');
+      const admins = await DbPromise.all<OrgAdminRow>(
+        db,
+        `SELECT id FROM users
+          WHERE organization_id = ?
+            AND lower(coalesce(role, '')) IN ('admin', 'owner', 'org_admin', 'superadmin', 'super_admin')`,
+        [alert.organization_id]
+      );
+
+      await Promise.allSettled(
+        (admins || []).map((admin) =>
+          NotificationService.send({
+            userId: String(admin.id),
+            organizationId: alert.organization_id,
+            type: 'AI_RISK',
+            severity,
+            title,
+            body,
+            message: body,
+            relatedObjectType: 'BILLING_ALERT',
+            relatedObjectId: alert.id,
+            isActionable: false,
+            channels: ['in_app'],
+            bypassPreferences: true,
+            bypassQuietHours: true,
+          })
+        )
+      );
+    } catch (err) {
+      logger.warn(
+        '[AdminAlertService] In-app notification failed (fail-soft):',
+        err instanceof Error ? err.message : String(err)
+      );
+    }
+  }
+
   return { sent: true };
 }
 

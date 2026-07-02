@@ -6,7 +6,7 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
-import { generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
+import { asSchema, generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
 import { createHash } from 'crypto';
 import { z } from 'zod';
 
@@ -302,6 +302,11 @@ function getProviderSync(modelConfig: ModelConfig) {
       }
       return createAnthropic({
         apiKey: envAnthropic || effectiveApiKey,
+        // @ai-sdk/anthropic v3 default base URL omits the `/v1` segment, so
+        // env-key calls hit https://api.anthropic.com/messages → 404 → the SDK
+        // surfaces it as "Invalid JSON response". Pin the correct base (honoring
+        // a DB/endpoint override) the same way deepseek/zai/qwen do below.
+        baseURL: normalizedBaseUrl || 'https://api.anthropic.com/v1',
       });
     }
     case 'deepseek':
@@ -376,7 +381,13 @@ function getModel(modelConfig: ModelConfig) {
   const providerName = String(modelConfig.provider || '').toLowerCase();
 
   if (CHAT_COMPLETIONS_ONLY_PROVIDERS.has(providerName) && typeof provider.chat === 'function') {
-    return provider.chat(modelId);
+    // @ai-sdk/openai chat models default to structuredOutputs:true, which forces OpenAI STRICT
+    // json_schema (every nested object must list `required` for ALL properties + additionalProperties
+    // false). Zod→json_schema conversion does not satisfy strict for nested arrays/objects, so the
+    // upstream (OpenAI/Azure via OpenRouter) rejects it with code 400 "Invalid schema for
+    // response_format" → surfaced as a generic "Provider returned error". Disable strict structured
+    // outputs so generateObject uses the compatible json_object path (still Zod-validated by us).
+    return provider.chat(modelId, { structuredOutputs: false });
   }
   return provider(modelId);
 }
@@ -1050,6 +1061,9 @@ export class LLMService {
     // Reasoning models (deepseek-reasoner) don't support tools, so AIPipeline
     // only passes tools when reasoning is OFF — guarded again here for safety.
     let streamToolDefinitions: Record<string, ReturnType<typeof tool>> | undefined;
+    // Captured when a tool runs successfully: its user-facing confirmation, used
+    // to rescue a post-tool empty stream (see firstChunk.done branch).
+    let lastToolMessage: string | undefined;
     if (params.tools?.length && !wantsReasoning) {
       const mcpModule = await import('./mcpServer.js');
       const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
@@ -1059,7 +1073,33 @@ export class LLMService {
         streamToolDefinitions[def.name] = tool({
           description: def.description,
           inputSchema: jsonSchema(def.parameters as any),
-          execute: async (args: unknown) => mcpServer.execute(def.name, args, params.context as any),
+          execute: async (args: unknown) => {
+            const r = await mcpServer.execute(def.name, args, params.context as any);
+            // Remember a successful tool's user-facing confirmation. Some
+            // providers/routes (e.g. gpt-4o via OpenRouter) invoke a tool but then
+            // emit NO text on the post-tool step, which looks like an empty stream
+            // (see the firstChunk.done branch below). Surfacing this message there
+            // gives the user a result AND stops a successful tool turn from being
+            // misread as a failure that triggers duplicate-causing retries.
+            // NOTE: mcpServer.execute wraps the handler result as
+            // `{ status: 'SUCCESS', data: <handlerResult> }`, so the confirmation
+            // lives at r.data.message — NOT r.message.
+            try {
+              const wrapped = r as { status?: string; data?: { ok?: unknown; message?: unknown } };
+              const m = wrapped?.data?.message;
+              if (
+                wrapped?.status === 'SUCCESS' &&
+                wrapped?.data?.ok !== false &&
+                typeof m === 'string' &&
+                m.trim()
+              ) {
+                lastToolMessage = m;
+              }
+            } catch {
+              /* never let result inspection break tool execution */
+            }
+            return r;
+          },
         } as any);
       }
     }
@@ -1124,7 +1164,19 @@ export class LLMService {
           // invoked for any side-channel consumers. Reasoning OFF: legacy
           // textStream — string-for-string identical, never yields objects.
           type StreamItem = string | { reasoning: string };
-          const rawIterator: AsyncIterator<StreamItem> = wantsReasoning
+          // Use the reasoning-aware fullStream iterator whenever reasoning is
+          // requested OR tools are present. Reasoning models (e.g. Z.ai GLM-4.6
+          // via OpenRouter) emit a reasoning block around their content + tool
+          // calls; the plain textStream path mishandled that and produced
+          // EMPTY_STREAM. `surfaceReasoning` controls whether internal reasoning
+          // is forwarded to the user — only when they asked (showReasoning);
+          // otherwise it is consumed SILENTLY so a tool-calling model's thinking
+          // never leaks into the visible answer. text-delta + tool execution flow
+          // identically for non-reasoning models (e.g. gpt-4o), so their path is
+          // unchanged in practice.
+          const useFullStream = wantsReasoning || !!streamToolDefinitions;
+          const surfaceReasoning = wantsReasoning;
+          const rawIterator: AsyncIterator<StreamItem> = useFullStream
             ? (function () {
                 const fs = result.fullStream[Symbol.asyncIterator]();
                 return {
@@ -1142,7 +1194,7 @@ export class LLMService {
                       if (p?.type === 'reasoning-delta') {
                         // Native reasoning channel: Anthropic extended thinking,
                         // OpenAI Responses API reasoning summaries, etc.
-                        if (typeof p.text === 'string' && p.text.length > 0) {
+                        if (surfaceReasoning && typeof p.text === 'string' && p.text.length > 0) {
                           try {
                             onReasoning?.(p.text);
                           } catch {
@@ -1161,7 +1213,9 @@ export class LLMService {
                         // We recover them from the raw chunk and yield inline so
                         // they reach the FE in real time. text-delta still carries
                         // the visible answer below.
-                        const reasoningChunk = extractReasoningFromRawChunk(p.rawValue);
+                        const reasoningChunk = surfaceReasoning
+                          ? extractReasoningFromRawChunk(p.rawValue)
+                          : '';
                         if (reasoningChunk) {
                           try {
                             onReasoning?.(reasoningChunk);
@@ -1198,6 +1252,22 @@ export class LLMService {
           // without producing any tokens (e.g. blocked/empty completion). Treat this as
           // a failure so AIPipeline can try its cross-provider fallback chain.
           if (firstChunk.done) {
+            // RESCUE: the model invoked a tool that SUCCEEDED (we captured its
+            // confirmation) but then streamed no text — common for gpt-4o via
+            // OpenRouter on the post-tool step. Surface the tool's message as the
+            // answer instead of throwing. This both shows the user a result and
+            // stops AIPipeline from retrying a successful tool turn with the next
+            // candidate model — those retries re-ran the tool and created
+            // duplicate initiatives (verified on demo 2026-06-28).
+            if (lastToolMessage) {
+              const toolMsg = lastToolMessage;
+              async function* toolOnlyStream(): AsyncGenerator<StreamItem> {
+                yield toolMsg;
+              }
+              await circuitBreaker.recordSuccess(providerId);
+              const usagePromise = buildStreamUsagePromise(result);
+              return { stream: toolOnlyStream(), usagePromise };
+            }
             const emptyErr: any = new Error(
               `LLM stream ended immediately without output (${providerId}/${String(modelConfig.id)}).`
             );
@@ -1210,11 +1280,32 @@ export class LLMService {
           // may yield `{ reasoning }` objects interleaved with text strings (in
           // arrival order); with reasoning OFF only strings flow (unchanged).
           async function* prependedStream(): AsyncGenerator<StreamItem> {
-            if (firstChunk.value !== undefined) yield firstChunk.value;
+            let emittedText = false;
+            const track = (v: StreamItem) => {
+              if (typeof v === 'string' && v.trim().length > 0) emittedText = true;
+            };
+            if (firstChunk.value !== undefined) {
+              track(firstChunk.value);
+              yield firstChunk.value;
+            }
             while (true) {
               const next = await rawIterator.next();
               if (next.done) break;
-              if (next.value !== undefined) yield next.value;
+              if (next.value !== undefined) {
+                track(next.value);
+                yield next.value;
+              }
+            }
+            // END-OF-STREAM RESCUE: a reasoning model can call a tool successfully
+            // and emit NO meaningful visible text (e.g. GLM-4.6 finishes on the
+            // tool-call step with only whitespace). The firstChunk.done rescue
+            // above only fires when the FIRST pull is already done; here we also
+            // cover the case where some whitespace/reasoning flowed first. If the
+            // turn produced a successful tool message but no real answer text,
+            // surface that message so the user sees a confirmation (and the turn
+            // is not perceived as empty).
+            if (!emittedText && lastToolMessage) {
+              yield lastToolMessage;
             }
           }
 
@@ -1276,6 +1367,69 @@ export class LLMService {
       ...messages.filter((m) => m.role !== 'system'),
     ];
 
+    // Honor an explicit per-call timeout (large deliverables — e.g. an 8-section
+    // report structure or rich per-section content — legitimately exceed 60s).
+    // Default unchanged at 60s when the caller does not override.
+    const structuredTimeoutMs =
+      typeof params.timeoutMs === 'number' && params.timeoutMs > 0 ? params.timeoutMs : 60000;
+
+    // OpenRouter (and other OpenAI-compatible aggregators) route to upstream providers
+    // (Azure/OpenAI/Google) whose STRICT json_schema mode — which @ai-sdk/openai v3 +
+    // ai v6's generateObject force and won't disable via mode/structuredOutputs — rejects
+    // any schema with an OPTIONAL field (OpenAI strict requires EVERY property in `required`),
+    // returning code 400 "Invalid schema for response_format" → surfaced as "Provider returned
+    // error". For these providers, skip generateObject's json_schema entirely: ask for raw JSON
+    // via generateText, then parse + Zod-validate ourselves (same guarantee, no strict schema).
+    const JSON_MODE_PROVIDERS = new Set(['openrouter', 'ollama']);
+
+    if (JSON_MODE_PROVIDERS.has(providerId.toLowerCase())) {
+      let schemaHint = '';
+      try {
+        const js = (asSchema(zodSchema as any) as any)?.jsonSchema;
+        if (js) schemaHint = `\n\nThe JSON MUST conform exactly to this JSON Schema (produce every required field):\n${JSON.stringify(js)}`;
+      } catch {
+        /* schema introspection best-effort */
+      }
+      const jsonMessages: LLMMessage[] = [
+        {
+          role: 'system',
+          content: `${systemPrompt || ''}\n\nYou MUST respond with a SINGLE valid JSON object only — no prose, no markdown fences.${schemaHint}`,
+        },
+        ...messages.filter((m) => m.role !== 'system'),
+      ];
+      const textResult = await withGuards(
+        providerId,
+        async () =>
+          generateText({
+            model,
+            messages: jsonMessages as any,
+            abortSignal: AbortSignal.timeout(structuredTimeoutMs),
+          }),
+        {
+          timeout: structuredTimeoutMs,
+          onRetry: (attempt: number) =>
+            aiLogger.info('LLMService', `Retrying structured(text) call to ${providerId} (attempt ${attempt})`),
+        }
+      );
+      const raw = String((textResult as any)?.text || '').trim();
+      // Strip accidental ```json fences and isolate the outermost JSON object.
+      const unfenced = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+      const start = unfenced.indexOf('{');
+      const end = unfenced.lastIndexOf('}');
+      const candidate = start >= 0 && end > start ? unfenced.slice(start, end + 1) : unfenced;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(candidate);
+      } catch {
+        throw new Error(`Structured(text) parse failed for ${providerId}: non-JSON response`);
+      }
+      const validated = (zodSchema as z.ZodSchema<unknown>).parse(parsed);
+      return {
+        object: validated as Record<string, unknown>,
+        usage: normalizeTokenUsage((textResult as any)?.usage),
+      };
+    }
+
     const result = await withGuards(
       providerId,
       async () =>
@@ -1283,10 +1437,10 @@ export class LLMService {
           model,
           schema: zodSchema,
           messages: formattedMessages as any,
-          abortSignal: AbortSignal.timeout(60000),
+          abortSignal: AbortSignal.timeout(structuredTimeoutMs),
         }),
       {
-        timeout: 60000,
+        timeout: structuredTimeoutMs,
         onRetry: (attempt: number) => {
           aiLogger.info(
             'LLMService',

@@ -102,13 +102,13 @@ interface KpiCardProps {
 }
 
 const KpiCard: React.FC<KpiCardProps> = ({ label, value, icon, accent, teresaHint }) => (
-  <div className="relative flex-1 min-w-[200px] rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-800 p-5 shadow-sm">
+  <div className="relative flex-1 min-w-[200px] rounded-2xl border border-c-border dark:border-c-border/60 bg-white dark:bg-c-surface-raised p-5 shadow-sm">
     <div className="flex items-start justify-between">
       <div
         className={`flex h-10 w-10 items-center justify-center rounded-xl ${
           accent
             ? 'bg-crimson-50 text-crimson-600 dark:bg-crimson-500/10 dark:text-crimson-400'
-            : 'bg-slate-100 text-slate-500 dark:bg-navy-700 dark:text-slate-300'
+            : 'bg-c-surface-raised text-c-text-muted dark:bg-c-surface-raised dark:text-c-text-secondary'
         }`}
       >
         {icon}
@@ -124,12 +124,12 @@ const KpiCard: React.FC<KpiCardProps> = ({ label, value, icon, accent, teresaHin
     <div className="mt-4">
       <div
         className={`text-2xl font-bold ${
-          accent ? 'text-crimson-600 dark:text-crimson-400' : 'text-navy-900 dark:text-white'
+          accent ? 'text-crimson-600 dark:text-crimson-400' : 'text-c-text dark:text-white'
         }`}
       >
         {value}
       </div>
-      <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="mt-1 text-sm text-c-text-muted dark:text-c-text-muted">{label}</div>
     </div>
   </div>
 );
@@ -231,10 +231,10 @@ export const FullROIView: React.FC = () => {
   };
 
   const renderTable = () => (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-800">
+    <div className="overflow-x-auto rounded-xl border border-c-border dark:border-c-border/60 bg-white dark:bg-c-surface-raised">
       <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="min-w-full text-sm" data-testid="roi-table">
         <thead>
-          <tr className="border-b border-slate-200 dark:border-navy-700/60 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <tr className="border-b border-c-border dark:border-c-border/60 text-left text-xs uppercase tracking-wide text-c-text-muted dark:text-c-text-muted">
             <th className="px-4 py-3 font-medium">
               {t('initiatives.roi.table.analysis', 'Analysis')}
             </th>
@@ -258,29 +258,29 @@ export const FullROIView: React.FC = () => {
               return (
                 <tr
                   key={a.id}
-                  className="border-b border-slate-200 dark:border-navy-700/40 transition-colors hover:bg-slate-50 dark:hover:bg-navy-700/40"
+                  className="border-b border-c-border dark:border-c-border/40 transition-colors hover:bg-c-surface-raised dark:hover:bg-c-surface-raised/40"
                 >
-                  <td className="px-4 py-3 font-medium text-navy-900 dark:text-white">{a.name}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                  <td className="px-4 py-3 font-medium text-c-text dark:text-white">{a.name}</td>
+                  <td className="px-4 py-3 text-c-text-secondary dark:text-c-text-secondary">
                     {a.initiativeName || (
-                      <span className="text-slate-600 dark:text-slate-500">
+                      <span className="text-c-text-secondary dark:text-c-text-muted">
                         {t('initiatives.roi.table.unlinked', 'Not linked')}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-navy-900 dark:text-white">
+                  <td className="px-4 py-3 text-right tabular-nums text-c-text dark:text-white">
                     {formatCurrency(a.npv)}
                   </td>
                   <td
                     className={`px-4 py-3 text-right tabular-nums font-semibold ${
                       roiPct != null && roiPct >= 0
                         ? 'text-crimson-600 dark:text-crimson-400'
-                        : 'text-slate-500 dark:text-slate-400'
+                        : 'text-c-text-muted dark:text-c-text-muted'
                     }`}
                   >
                     {formatPercent(roiPct)}
                   </td>
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                  <td className="px-4 py-3 text-c-text-muted dark:text-c-text-muted">
                     {a.status || '—'}
                   </td>
                 </tr>
@@ -295,7 +295,7 @@ export const FullROIView: React.FC = () => {
     const selected = analyses.filter((a) => selectedForCompare.includes(a.id));
     return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted dark:text-c-text-muted">
           {t(
             'initiatives.roi.compare.hint',
             'Pick two or more analyses to compare NPV and ROI side by side.'
@@ -313,7 +313,7 @@ export const FullROIView: React.FC = () => {
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   checked
                     ? 'border-crimson-400 dark:border-crimson-500/60 bg-crimson-50/40 dark:bg-crimson-500/10'
-                    : 'border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-800 hover:border-slate-300 dark:hover:border-navy-600'
+                    : 'border-c-border dark:border-c-border/60 bg-white dark:bg-c-surface-raised hover:border-c-border-strong dark:hover:border-c-border-strong'
                 }`}
               >
                 {isBest && (
@@ -321,15 +321,15 @@ export const FullROIView: React.FC = () => {
                     {t('initiatives.roi.compare.best', 'Best NPV')}
                   </span>
                 )}
-                <div className="font-medium text-navy-900 dark:text-white">{a.name}</div>
+                <div className="font-medium text-c-text dark:text-white">{a.name}</div>
                 <div className="mt-2 flex items-center gap-4 text-sm">
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="text-c-text-muted dark:text-c-text-muted">
                     {t('initiatives.roi.table.npv', 'NPV')}:{' '}
-                    <span className="font-semibold text-navy-900 dark:text-white">
+                    <span className="font-semibold text-c-text dark:text-white">
                       {formatCurrency(a.npv)}
                     </span>
                   </span>
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="text-c-text-muted dark:text-c-text-muted">
                     {t('initiatives.roi.table.roi', 'ROI %')}:{' '}
                     <span className="font-semibold text-crimson-600 dark:text-crimson-400">
                       {formatPercent(normaliseRoiPercent(a.roi))}
@@ -341,7 +341,7 @@ export const FullROIView: React.FC = () => {
           })}
         </div>
         {selected.length < 2 && (
-          <p className="text-xs text-slate-600 dark:text-slate-500">
+          <p className="text-xs text-c-text-secondary dark:text-c-text-muted">
             {t('initiatives.roi.compare.empty', 'Select at least two analyses above to compare.')}
           </p>
         )}
@@ -357,7 +357,7 @@ export const FullROIView: React.FC = () => {
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="flex-1 min-w-[200px] rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-800 p-5"
+                className="flex-1 min-w-[200px] rounded-2xl border border-c-border dark:border-c-border/60 bg-white dark:bg-c-surface-raised p-5"
               >
                 <LoadingState variant="pulse" rows={2} />
               </div>
@@ -440,7 +440,7 @@ export const FullROIView: React.FC = () => {
         </div>
 
         <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-c-text-muted dark:text-c-text-muted">
             {activeTab === 'roi_analysis'
               ? t('initiatives.roi.compare.title', 'Scenario comparison')
               : t('initiatives.roi.table.title', 'ROI by analysis')}

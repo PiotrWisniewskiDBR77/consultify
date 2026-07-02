@@ -937,31 +937,24 @@ export async function persistComputeResult(
   await dbRun(`DELETE FROM financial_model_validations WHERE model_id = ?`, [modelId]);
 
   // Save outputs
+  let outputsInserted = 0;
+  let outputsFailed = 0;
+  let firstOutputError: string | null = null;
   for (const period of result.periods) {
     for (const [type, lines] of [
       ['P&L', period.pl],
       ['BS', period.bs],
       ['CF', period.cf],
     ] as const) {
-      const isEstimated = type === 'CF';
       for (const [code, value] of Object.entries(lines)) {
         try {
-          await dbRun(
-            `INSERT INTO financial_model_outputs (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario, is_estimated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              uuidv4(),
-              modelId,
-              period.date,
-              period.label,
-              type,
-              code,
-              LINE_NAMES[code] || code,
-              round2(value as number),
-              scenario,
-              isEstimated,
-            ]
-          );
-        } catch {
+          // NOTE: neither migration (571 / 20260228) defines an `is_estimated`
+          // column, so the previous primary INSERT (which listed it) failed on
+          // EVERY row. Under Postgres that aborts the surrounding transaction,
+          // making the catch-fallback AND every later insert (incl. validations)
+          // silently no-op → compute "succeeded" but financial_model_outputs and
+          // financial_model_validations stayed empty (hollow 200). Insert only
+          // real columns; no per-row is_estimated.
           await dbRun(
             `INSERT INTO financial_model_outputs (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
@@ -976,10 +969,23 @@ export async function persistComputeResult(
               scenario,
             ]
           );
+          outputsInserted++;
+        } catch (err) {
+          outputsFailed++;
+          if (!firstOutputError) firstOutputError = err instanceof Error ? err.message : String(err);
         }
       }
     }
   }
+
+  logger.info('[financialModeling] persistComputeResult outputs', {
+    modelId,
+    scenario,
+    periods: result.periods.length,
+    outputsInserted,
+    outputsFailed,
+    firstOutputError,
+  });
 
   // Save validations
   for (const v of result.validations) {

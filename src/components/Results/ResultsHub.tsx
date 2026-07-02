@@ -1,4 +1,4 @@
-import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucide-react';
+import { BarChart3, BrainCircuit, DollarSign, FileText, Layers, ListChecks, Plus, Target } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +46,13 @@ import type { SignalSheetRecord } from './kpiSignalSheetTypes';
 import { KpiSignalSheetView } from './KpiSignalSheetView';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 import { ResultsInitiativesView } from './ResultsInitiativesView';
+import M14HandoffInbox from './M14HandoffInbox';
+import TransformationScorecard from './TransformationScorecard';
+import ValueDriverTree from './ValueDriverTree';
+import StrategicLayerPanel from './StrategicLayerPanel';
+import AIInsightsPanel from './AIInsightsPanel';
+import PortfolioInsightsPanel from './PortfolioInsightsPanel';
+import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
 import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
@@ -118,7 +125,7 @@ const ResultsControlSelect: React.FC<ResultsControlSelectProps> = ({
       aria-label={ariaLabel}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-9 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] px-3 pr-8 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+      className="h-9 rounded-full border border-c-border bg-c-surface px-3 pr-8 text-sm text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
@@ -135,6 +142,8 @@ const VALID_TABS: ModuleTab[] = [
   'results_reports' as ModuleTab,
   'roi' as ModuleTab,
   'roi_analysis' as ModuleTab,
+  'results_strategic' as ModuleTab,
+  'results_ai' as ModuleTab,
 ];
 const VALID_KPI_MODES = ['overview', 'queue', 'catalog', 'scorecards'] as const;
 const VALID_REPORT_MODES = ['tracked', 'reports', 'schedules', 'wallboards', 'connectors'] as const;
@@ -406,6 +415,16 @@ export const ResultsHub: React.FC = () => {
         label: t('results.tabs.roiAnalysis', 'ROI Analysis'),
         icon: <DollarSign size={16} />,
       },
+      ...(isResultsFlagEnabled('strategicLayer') ? [{
+        id: 'results_strategic' as ModuleTab,
+        label: t('results.tabs.strategic', 'Strategic'),
+        icon: <Layers size={16} />,
+      }] : []),
+      ...(isResultsFlagEnabled('aiInsights') || isResultsFlagEnabled('portfolioInsights') ? [{
+        id: 'results_ai' as ModuleTab,
+        label: t('results.tabs.ai', 'AI + Portfolio'),
+        icon: <BrainCircuit size={16} />,
+      }] : []),
     ],
     [t, kpis.length, trackedInitiatives.length]
   );
@@ -935,7 +954,7 @@ export const ResultsHub: React.FC = () => {
         <ResultsRuntimeChip
           label={t('results.runtime.realizedRoi', 'Realized ROI')}
           value={runtimeSnapshot.roiDashboard.totalRealized.toLocaleString()}
-          dotClassName="bg-primary-400"
+          dotClassName="bg-emerald-400"
         />
         <ResultsRuntimeChip
           label={t('results.runtime.reconciliation', 'Reconciliation')}
@@ -1473,15 +1492,78 @@ export const ResultsHub: React.FC = () => {
             }}
           />
         ) : activeTab === 'results_initiatives' ? (
-          <ResultsInitiativesView
-            initiatives={filteredInitiatives}
-            onOpenInitiativeKpis={openInitiativeKpiLane}
-            onOpenInitiativeReports={openInitiativeReportsLane}
-            onOpenInitiativeDocument={openInitiativeDocument}
-            onChangeInitiativeStatus={handleInitiativeStatusChange}
-          />
+          isResultsFlagEnabled('transformationScorecard') ||
+          isResultsFlagEnabled('m14Handoff') ? (
+            <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto">
+              {isResultsFlagEnabled('transformationScorecard') && (
+                <div className="shrink-0 px-1 pt-1">
+                  <TransformationScorecard projectId="all" />
+                </div>
+              )}
+              {isResultsFlagEnabled('m14Handoff') && (
+                <div className="shrink-0 px-1">
+                  <M14HandoffInbox />
+                </div>
+              )}
+              {isResultsFlagEnabled('valueDriverTree') && (
+                <div className="shrink-0 px-1">
+                  <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/40 dark:bg-white/[0.02] p-4">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                      {t('results.driverTree.title', 'Value Driver Tree')}
+                    </h3>
+                    <ValueDriverTree projectId="all" />
+                  </div>
+                </div>
+              )}
+              <div className="min-h-0 flex-1">
+                <ResultsInitiativesView
+                  initiatives={filteredInitiatives}
+                  onOpenInitiativeKpis={openInitiativeKpiLane}
+                  onOpenInitiativeReports={openInitiativeReportsLane}
+                  onOpenInitiativeDocument={openInitiativeDocument}
+                  onChangeInitiativeStatus={handleInitiativeStatusChange}
+                />
+              </div>
+            </div>
+          ) : (
+            <ResultsInitiativesView
+              initiatives={filteredInitiatives}
+              onOpenInitiativeKpis={openInitiativeKpiLane}
+              onOpenInitiativeReports={openInitiativeReportsLane}
+              onOpenInitiativeDocument={openInitiativeDocument}
+              onChangeInitiativeStatus={handleInitiativeStatusChange}
+            />
+          )
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
+        ) : activeTab === 'results_strategic' ? (
+          <div className="p-4 overflow-auto space-y-6">
+            {isResultsFlagEnabled('strategicLayer') ? (
+              <StrategicLayerPanel projectId="all" />
+            ) : (
+              <div className="text-sm text-slate-400 py-8 text-center">
+                {t('results.strategic.disabled', 'Warstwa strategiczna wyłączona — włącz flagę ff_strategicLayer.')}
+              </div>
+            )}
+            {isResultsFlagEnabled('valueDriverTree') && (
+              <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/40 dark:bg-white/[0.02] p-4">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                  {t('results.driverTree.title', 'Value Driver Tree')}
+                </h3>
+                <ValueDriverTree projectId="all" />
+              </div>
+            )}
+          </div>
+        ) : activeTab === 'results_ai' ? (
+          <div className="p-4 overflow-auto space-y-6">
+            {isResultsFlagEnabled('aiInsights') && <AIInsightsPanel projectId="all" />}
+            {isResultsFlagEnabled('portfolioInsights') && <PortfolioInsightsPanel projectId="all" />}
+            {!isResultsFlagEnabled('aiInsights') && !isResultsFlagEnabled('portfolioInsights') && (
+              <div className="text-sm text-slate-400 py-8 text-center">
+                {t('results.ai.disabled', 'Panel AI/Portfolio wyłączony — włącz ff_aiInsights lub ff_portfolioInsights.')}
+              </div>
+            )}
+          </div>
         ) : activeTab === 'results_reports' ? (
           reportWorkspaceMode === 'tracked' ? (
             <ResultsKpisTableV3

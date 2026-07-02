@@ -552,7 +552,7 @@ const ProgramDashboard: React.FC<{
       <div>
         <h3 className="font-semibold text-slate-900 dark:text-white">{program.name}</h3>
         {preset && (
-          <p className="text-xs text-primary-600 dark:text-primary-300">
+          <p className="text-xs text-c-text-muted">
             {isPolish ? preset.label.pl : preset.label.en}
           </p>
         )}

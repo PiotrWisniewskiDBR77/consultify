@@ -564,7 +564,8 @@
       "searchArtifacts": "Szukaj projektu, badania, raportu, inicjatywy...",
       "loadingArtifacts": "Ładowanie artefaktów...",
       "noArtifacts": "Nie znaleziono jeszcze żadnych zarejestrowanych artefaktów. Możesz nadal wybrać typ źródła poniżej, aby utworzyć roboczą prezentację.",
-      "selectedEvidence": "Wybrane dowody"
+      "selectedEvidence": "Wybrane dowody",
+      "showDrafts": "Pokaż robocze"
     },
     "setup": {
       "title": "Skonfiguruj swój deck",
@@ -869,6 +870,8 @@
       "alternativeLayout": "Alternatywny układ",
       "regenerateSlide": "Wygeneruj slajd ponownie",
       "regenerating": "Generowanie ponowne…",
+      "rewritePlaceholder": "Przerób ten slajd…",
+      "rewriteSlide": "Przerób",
       "notesPlaceholder": "Notatki prelegenta do tego slajdu..."
     },
     "agent": {
@@ -2146,6 +2149,48 @@
     }
   },
   "initiatives": {
+    "gateAi": {
+      "pill": {
+        "ariaReady": "Gotowość AI: gotowe, wynik {{score}} na 100",
+        "ariaBelow": "Gotowość AI: poniżej progu, wynik {{score}} na 100",
+        "ariaLoading": "Ocena gotowości AI w toku",
+        "loading": "Ocena…",
+        "label": "Gotowość AI",
+        "scoreSuffix": "/100"
+      },
+      "panel": {
+        "title": "Gotowość do bramki — analiza AI",
+        "readyTitle": "Inicjatywa gotowa do przejścia",
+        "readyDescription": "Wszystkie wymagane sekcje spełniają próg i nie wykryto blokad na linii czasu.",
+        "scoreLabel": "Wynik gotowości",
+        "thresholdLabel": "Próg",
+        "gapsTitle": "Braki merytoryczne",
+        "gapSectionScore": "wynik {{score}}/100",
+        "fixesTitle": "Sugerowane naprawy",
+        "timelineTitle": "Sygnały na linii czasu",
+        "timelineBlock": "Blokada",
+        "timelineWarn": "Ostrzeżenie",
+        "timelineKind": {
+          "dependency": "Zależność",
+          "date_conflict": "Konflikt dat",
+          "resource_conflict": "Konflikt zasobów"
+        },
+        "noTimeline": "Brak analizy linii czasu dla tej bramki.",
+        "emptyTitle": "Brak danych gotowości",
+        "emptyDescription": "Ocena AI nie jest dostępna dla tej bramki."
+      },
+      "override": {
+        "title": "Przejście poniżej progu gotowości",
+        "description": "Inicjatywa nie spełnia progu gotowości AI. Możesz przejść mimo to — podaj uzasadnienie, które zostanie zapisane.",
+        "summaryScore": "Wynik {{score}}/100 (próg {{threshold}})",
+        "gapsTitle": "Główne braki",
+        "timelineTitle": "Blokady na linii czasu",
+        "reasonLabel": "Uzasadnienie (wymagane)",
+        "reasonPlaceholder": "Opisz, dlaczego przechodzisz mimo braków…",
+        "confirm": "Przejdź mimo to",
+        "cancel": "Anuluj"
+      }
+    },
     "roi": {
       "title": "Realizacja wartości i ROI",
       "subtitle": "Analizy ekonomiczne powiązane z inicjatywami",
@@ -2356,7 +2401,10 @@
     },
     "tabs": {
       "portfolio": "Portfolio",
-      "analysis": "Analiza"
+      "analysis": "Analiza",
+      "observability": "Obserwowalność",
+      "candidates": "Kandydaci",
+      "portfolioHealth": "Zdrowie portfela"
     },
     "analysis": {
       "resources": {
@@ -3797,7 +3845,8 @@
     },
     "linkedItemsSection": {
       "itemLinked": "Element powiązany",
-      "linkRemoved": "Powiązanie usunięte"
+      "linkRemoved": "Powiązanie usunięte",
+      "linkError": "Nie udało się zapisać powiązania"
     },
     "tagsSection": {
       "tags": "Tagi",
@@ -4097,10 +4146,45 @@
     "archive": {
       "hint": "Zakończ lub anuluj najpierw"
     },
+    "archiveAction": "Archiwizuj",
+    "calendarView": {
+      "month": "Miesiąc",
+      "week": "Tydzień",
+      "today": "Dziś",
+      "prev": "Poprzedni",
+      "next": "Następny",
+      "allStatuses": "Wszystkie statusy",
+      "undated": "Bez daty",
+      "loading": "Ładowanie…",
+      "empty": "Brak zadań i kamieni z datą.",
+      "show": "Pokaż kalendarz",
+      "hide": "Ukryj kalendarz",
+      "calendar": "Kalendarz",
+      "gantt": "Gantt"
+    },
     "confirmDelete": "Trwale usunąć „{{name}}\"? Tej operacji nie można cofnąć.",
     "thisInitiative": "tę inicjatywę",
     "card": {
       "nextStep": "Następny krok"
+    },
+    "observability": {
+      "funnelTitle": "Lejek konwersji portfela",
+      "lineageTitle": "Łańcuch pochodzenia inicjatywy",
+      "created": "Utworzone",
+      "inExecution": "W wykonaniu",
+      "tracking": "Rezultaty",
+      "conversion": "Konwersja",
+      "byStatus": "Wg statusu",
+      "bySource": "Wg źródła",
+      "source": "Źródło",
+      "sourceManual": "ręczne",
+      "initiative": "Inicjatywa",
+      "execution": "Wykonanie",
+      "results": "Rezultaty",
+      "kpiCount": "{{count}} KPI",
+      "pickInitiative": "Wybierz inicjatywę",
+      "empty": "Brak danych obserwowalności.",
+      "noLineage": "Brak łańcucha dla wybranej inicjatywy."
     }
   },
   "execution": {
@@ -4369,6 +4453,13 @@
       "summarizePrompt": "Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki."
     },
     "reports": {
+      "preset": {
+        "weekly": "Tygodniowy",
+        "monthly": "Miesięczny",
+        "biweekly": "Dwutygodniowy",
+        "onDemand": "Na żądanie",
+        "sponsor": "Sponsorski"
+      },
       "title": "Raporty realizacji",
       "subtitle": "Generuj prosty pakiet tygodniowy i raporty pogłębione bez dokładania narzutu procesowego.",
       "open": "Otwórz Raporty",
@@ -12944,6 +13035,108 @@
       "total": "Łącznie",
       "active": "Aktywny",
       "empty": "Brak prezentacji."
+    },
+    "strategic": {
+      "bsc": "Balanced Scorecard",
+      "bscHealth": "zdrowie",
+      "bscUnbalanced": "Scorecard niezrównoważony — brakuje KPI w co najmniej jednej perspektywie.",
+      "bscNoData": "Brak KPI — dodaj KPI i powiąż je z inicjatywami.",
+      "perspectiveNoKpi": "Brak KPI",
+      "bdn": "Benefits Dependency Network",
+      "bdnBenefits": "Korzyści",
+      "bdnEnablers": "Enablerzy",
+      "bdnLinks": "Powiązania",
+      "adoption": "Adopcja → ryzyko korzyści",
+      "adoptionSourceCm": "Dane: zarządzanie zmianą (ADKAR)",
+      "adoptionSourceProxy": "Dane: proxy z realizacji (v1)",
+      "adoptionOk": "Brak inicjatyw zagrożonych słabą adopcją.",
+      "adoptionScore": "Adopcja",
+      "sentiment": "Nastrój",
+      "championCoverage": "Liderzy zmiany",
+      "riskReasons": "Powody ryzyka",
+      "adoptionProxyMore": "+{{count}} oznaczonych z danych proxy (bez sygnału nastroju)",
+      "benefitProfiles": "Profil korzyści",
+      "benefitProfilesSummary": "{{total}} korzyści · {{financial}} finansowa · {{withTarget}} z celem",
+      "disBenefits": "{{count}} dis-korzyść",
+      "benefitProfilesNoData": "Brak profili korzyści — zdefiniuj KPI z typem i celem.",
+      "disBenefitTag": "dis-korzyść",
+      "benefitNoTarget": "brak celu",
+      "okr": "OKR — kaskada celów",
+      "okrAvg": "śr.",
+      "okrOnTrack": "na torze",
+      "okrAtRisk": "zagrożone",
+      "okrOffTrack": "poza torem",
+      "okrNoData": "Brak zdefiniowanych OKR",
+      "sustainment": "Utrzymanie wartości",
+      "narrative": "Narracja zarządcza"
+    },
+    "ai": {
+      "narrative": "Narracja wartości",
+      "noNarrative": "Brak danych do narracji — dodaj cele ROI dla inicjatyw.",
+      "counterfactual": "Atrybucja — co bez inicjatywy?",
+      "realized": "Zrealizowane",
+      "counterfactualProjected": "Bez inicjatywy (proj.)",
+      "attributableDelta": "Atrybucja do inicjatywy",
+      "confidence": "pewność",
+      "noCounterfactual": "Brak historycznych pomiarów do analizy kontrfaktycznej.",
+      "anomalyTitle": "Wykrywanie anomalii KPI",
+      "premiumBadge": "AI premium",
+      "anomalyCopy": "Automatyczne wykrywanie punktów odstających w szeregu pomiarów KPI — metodą z-score (|z| > 2) oraz IQR (poza Q1−1.5·IQR / Q3+1.5·IQR). Punkt wskazany przez obie metody lub przy |z| ≥ 3 oznaczany jest jako poważny (severe).",
+      "anomalySevere": "Poważne",
+      "anomalyMild": "Łagodne",
+      "anomalyMinPoints": "Wymaga min. 6 pomiarów na KPI",
+      "anomalyServerNote": "Anomalie liczone po stronie serwera (silnik kpiAnomalyService) — wynik pojawi się tu po podpięciu endpointu pomiarów KPI.",
+      "forecastTitle": "Prognoza trajektorii KPI",
+      "forecastCopy": "Regresja liniowa (least squares) na historii pomiarów każdego KPI: prognoza wartości, szacowany termin osiągnięcia celu (ETA) oraz alert wyprzedzający, gdy trend nie trafia w cel przed deadline.",
+      "forecastOnTrack": "Na trajektorii do celu",
+      "forecastAtRisk": "Cel zagrożony",
+      "forecastConfidence": "Pewność: low / medium / high (z liczby pomiarów + dopasowania R²)",
+      "forecastMinPoints": "Wymaga min. 6 pomiarów na KPI. Silnik kpiForecastService — dostępne po konfiguracji AI premium.",
+      "rcaTitle": "Sugestia RCA / akcji naprawczej",
+      "rcaCopy": "Dla każdego odchylenia KPI heurystyczny silnik (bez LLM, deterministyczny) generuje hipotezy przyczyn źródłowych na podstawie sygnałów: odchylenie, trend, adopcja, świeżość danych, zmiana zakresu, przeciążenie zasobów — i mapuje je na konkretne akcje naprawcze z właścicielem.",
+      "rcaServerNote": "Sugestie liczone po stronie serwera (silnik deviationRcaSuggestService) — pojawią się tu dla wykrytych odchyleń po podpięciu endpointu RCA."
+    },
+    "portfolio": {
+      "funnelStageIdeas": "Pomysły",
+      "funnelStageValidated": "Zwalidowane",
+      "funnelStageInflight": "W realizacji",
+      "funnelStageRealized": "Zrealizowane",
+      "funnel": "Lejek wartości portfela",
+      "funnelInitiatives": "inicjatyw",
+      "funnelRiskAdjusted": "po ryzyku",
+      "funnelLeakage": "wyciek",
+      "funnelValueAtRisk": "Wartość zagrożona",
+      "signals": "Sygnały do M14 Wdrożenie",
+      "goToM14": "Przejdź do M14 Wdrożenie",
+      "runRate": "Run-rate vs in-year",
+      "annualizedRunRate": "Run-rate annualizowany",
+      "projectedFullYear": "Prognoza do końca roku",
+      "alreadyRealized": "Zrealizowane",
+      "runRateAssumed": "założenie: 6 mies. okno pomiaru",
+      "runRateMeasured": "okno pomiaru: {{months}} mies. (z danych)",
+      "reallocation": "Rekomendowane przesunięcia zasobów",
+      "reallocCapacityAssumed": "pojemność FTE = założenie (brak danych kadrowych)",
+      "scenarios": "Scenariusze + IRR",
+      "scenario": "Scenariusz",
+      "scenariosAssumptionNote": "IRR / cashflow — model i założenia v1",
+      "financeLink": "Spięcie z Finansami (M16)",
+      "noFinanceLink": "Brak mapowań KPI→Finanse. Skonfiguruj w module Finanse (M16) — tabela kpi_financial_mappings.",
+      "positiveImpact": "Pozytywny wpływ",
+      "negativeImpact": "Negatywny wpływ",
+      "netImpact": "Wpływ netto",
+      "boardPack": "Board-pack / Auto-narracja wartości",
+      "boardPackDesc": "Eksportuj raport PDF / deck / tabelę przez generatory M17–M20. Dostępne po konfiguracji Deliverables.",
+      "boardPackGo": "Przejdź do Outputs →"
+    },
+    "driverTree": {
+      "error": "Nie udało się załadować drzewa.",
+      "noData": "Brak danych drzewa wartości.",
+      "stats": {
+        "kpis": "KPI",
+        "initiatives": "Inicjatywy",
+        "nodes": "Węzły"
+      },
+      "noLinks": "Brak powiązań KPI z inicjatywami. Połącz KPI z inicjatywami w zakładce KPI."
     }
   },
   "traceability": {
@@ -12983,7 +13176,8 @@
       "documents": "Dokumenty",
       "mine": "Moje",
       "needsReview": "Wymaga przeglądu",
-      "sheets": "Arkusze"
+      "sheets": "Arkusze",
+      "data": "Dane"
     },
     "columns": {
       "name": "Nazwa",
@@ -13017,7 +13211,8 @@
         "exported": "Wyeksportowany",
         "shared": "Udostępniony",
         "deprecated": "Wycofany"
-      }
+      },
+      "showDrafts": "Pokaż robocze"
     },
     "actions": {
       "newTemplate": "Nowy wzorzec",
@@ -13100,6 +13295,47 @@
       "retry": "Spróbuj ponownie"
     },
     "outputs": {
+      "launcher": {
+        "title": "Nowy output",
+        "subtitle": "Wybierz, co chcesz utworzyć",
+        "report": "Raport",
+        "reportHint": "Dokument doradczy — Teresa pomoże go napisać",
+        "presentation": "Prezentacja",
+        "presentationHint": "Slajdy w jakości Gamma — układ i grafika",
+        "table": "Tabela",
+        "tableHint": "Otypowany arkusz z formatami — styl Airtable/Excel",
+        "chooseTemplate": "Wybierz szablon",
+        "templateSubtitle": "Zacznij od zera lub z szablonu",
+        "back": "Wstecz",
+        "suggestPlaceholder": "Opisz, czego potrzebujesz…",
+        "suggestBtn": "Teresa zaproponuje",
+        "suggestDefaultIntent": "dobierz dla mnie najlepszy szablon",
+        "suggestResult": "Teresa rekomenduje",
+        "suggestAccept": "Użyj tego szablonu",
+        "bundle": "Komplet AI",
+        "bundleHint": "Jeden brief → DOCX + XLSX + PPTX pobrane jako ZIP",
+        "bundleTitle": "Komplet AI — brief",
+        "bundleSubtitle": "Opisz swoją firmę, produkt, rynek i ask w jednym akapicie. AI wygeneruje DOCX + XLSX + PPTX i pobierze je jako ZIP.",
+        "bundleGenerating": "Generowanie…",
+        "bundleGenerate": "Generuj i pobierz ZIP",
+        "bundleBriefTooShort": "Brief musi mieć co najmniej 20 znaków",
+        "bundleError": "Generowanie nie powiodło się — spróbuj ponownie",
+        "phase0": "Analiza briefu i ekstrakcja KPI…",
+        "phase1": "Budowanie modelu finansowego…",
+        "phase2": "Pisanie sekcji raportu…",
+        "phase3": "Komponowanie deck'u…",
+        "phase4": "Renderowanie DOCX + XLSX + PPTX…",
+        "phaseEstimateNote": "Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.",
+        "tpl": {
+          "blank": "Pusty",
+          "auditReport": "Raport audytowy",
+          "execMemo": "Memo zarządcze",
+          "boardDeck": "Deck zarządczy",
+          "diagnostic": "Read-out diagnostyczny",
+          "riskRegister": "Rejestr ryzyk",
+          "kpiDashboard": "KPI Dashboard"
+        }
+      },
       "kind": {
         "presentation": "Prezentacja",
         "sheet": "Tabela",
@@ -13187,6 +13423,24 @@
       "breadcrumb": {
         "library": "Biblioteka"
       }
+    },
+    "bundles": {
+      "title": "Komplet AI — historia generacji",
+      "empty": "Brak wygenerowanych materiałów",
+      "loading": "Ładowanie historii…",
+      "qualityOk": "Jakość OK",
+      "qualityIssues": "Problemy z jakością",
+      "qualityUnknown": "Jakość nieznana",
+      "statusDraft": "Szkic",
+      "statusGenerating": "Generowanie",
+      "statusReady": "Gotowy",
+      "statusError": "Błąd",
+      "detailTitle": "Szczegóły wiązki",
+      "detailClose": "Zamknij",
+      "redownload": "Pobierz ponownie",
+      "redownloadUnavailable": "Ponowne pobranie niedostępne (brak zapisanego briefu)",
+      "showHistory": "Historia generacji Komplet AI",
+      "hideHistory": "Ukryj historię"
     },
     "errors": {
       "realReportsTitle": "Źródło rzeczywistych raportów wymaga uwagi",

@@ -321,11 +321,15 @@ describe('v8Auth.middleware', () => {
   });
 
   it('attachV8Context does not call next or attach context when inbound connection is already closed', () => {
+    // Use socket.destroyed (actual network state), NOT req.destroyed: the JSON
+    // body-parser marks req.destroyed=true after consuming a POST/PATCH body while
+    // the socket is still open. Gating on req.destroyed here would hang every
+    // v8 mutation (see isConnectionClosed comment in v8Auth.middleware.ts).
     const req: any = {
       organizationId: 'org-1',
       userId: 'user-1',
       userRole: 'ADMIN',
-      destroyed: true,
+      socket: { destroyed: true },
     };
     const res = makeRes();
     const next = vi.fn();
@@ -335,6 +339,25 @@ describe('v8Auth.middleware', () => {
     expect(next).not.toHaveBeenCalled();
     expect(req.v8Context).toBeUndefined();
     expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('attachV8Context DOES call next when req.destroyed is true but socket is open (POST body consumed)', () => {
+    // Regression guard: body-parser sets req.destroyed on POST/PATCH; this must
+    // NOT short-circuit the v8 mutation pipeline. Broke demo via commit 46a1674000.
+    const req: any = {
+      organizationId: 'org-1',
+      userId: 'user-1',
+      userRole: 'ADMIN',
+      destroyed: true,
+      socket: { destroyed: false },
+    };
+    const res = makeRes();
+    const next = vi.fn();
+
+    attachV8Context(req, res as any, next as any);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.v8Context).toBeDefined();
   });
 
   it('attachV8Context sets empty userRole when role contains only control chars', () => {

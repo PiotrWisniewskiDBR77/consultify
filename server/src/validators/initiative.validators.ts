@@ -51,7 +51,7 @@ const DateOnlyOrDateTimeString = z
 // ==========================================
 
 export const SourceTypeEnum = z
-  .enum(['manual', 'tool', 'assessment', 'assessment_report', 'financial_analysis'])
+  .enum(['manual', 'tool', 'assessment', 'assessment_report', 'financial_analysis', 'audit'])
   .or(z.string().max(50));
 
 const InitiativePayloadBaseSchema = z.object({

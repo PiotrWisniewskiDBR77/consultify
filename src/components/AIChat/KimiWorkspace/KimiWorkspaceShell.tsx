@@ -39,7 +39,6 @@ import type {
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
 
-import { UnifiedChatPanel } from '../UnifiedChatPanel';
 import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
 
 export type KimiLane = 'wordy' | 'excele' | 'prezentacje' | 'tabele';
@@ -287,7 +286,12 @@ function ArtifactPreviewPane({
   const { t } = useTranslation();
   const config = LANE_CONFIG[lane];
   const Icon = config.icon;
-  const usesChatOnlyStart = lane === 'tabele';
+  // Tabele was chat-only (start via the Teresa side-panel) — but that path
+  // navigated back to the gallery instead of generating, leaving the table
+  // impossible to create from the workspace. All other lanes use the center
+  // "Generate" affordance wired to the SAME pipeline.startGeneration, which
+  // works. Give tabele the same working center input + Generate button.
+  const usesChatOnlyStart = false;
   const [activeSheet, setActiveSheet] = useState(0);
   const [goalInput, setGoalInput] = React.useState('');
   const [isStarting, setIsStarting] = React.useState(false);
@@ -413,7 +417,9 @@ function ArtifactPreviewPane({
                   ? t('kimi.generateDoc', 'Generate Document')
                   : lane === 'excele'
                     ? t('kimi.generateSheet', 'Generate Spreadsheet')
-                    : t('kimi.generateDeck', 'Generate Presentation')}
+                    : lane === 'tabele'
+                      ? t('kimi.generateTable', 'Generate Table')
+                      : t('kimi.generateDeck', 'Generate Presentation')}
               </button>
             </div>
           )}
@@ -802,35 +808,27 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
   }, [workspaceContext, setWorkspaceContext, setDisplayMode]);
 
   return (
-    <div className="flex flex-col lg:flex-row w-full h-full min-h-0 overflow-hidden bg-slate-50 dark:bg-navy-950">
-      {/* Left: Chat panel */}
-      <div className="w-full lg:w-[420px] h-[45vh] lg:h-auto shrink-0 flex flex-col bg-white dark:bg-navy-900 border-b lg:border-b-0 lg:border-r border-slate-200/60 dark:border-white/5">
-        <div className="flex-1 min-h-0">
-          <UnifiedChatPanel
-            mode="split"
-            workspaceContext={workspaceContext}
-            showModeToggle={false}
-            showHistoryTrigger={true}
-            showFocusMode={false}
-            systemPrompt={chatSystemPrompt}
-          />
-        </div>
+    <div className="flex flex-col w-full h-full min-h-0 overflow-hidden bg-slate-50 dark:bg-navy-950">
+      {/*
+       * No embedded chat panel in the Studio. Teresa is the single chat surface
+       * (main chat / Canvas) — a duplicate chat per Studio is redundant. The
+       * Studio is purely the artifact preview (full width) + the center Generate
+       * input. The slim progress bar stays at the top so generation feedback is
+       * still visible without a chat rail.
+       */}
+      {(isGenerating || isCompleted || taskSteps.length > 0) && (
+        <TaskProgressBar
+          steps={taskSteps}
+          total={totalSteps}
+          completed={completedSteps}
+          isGenerating={isGenerating}
+          isCompleted={isCompleted}
+          onReplay={onReplay}
+          onRemix={onRemix}
+        />
+      )}
 
-        {/* Task progress bar at bottom of chat */}
-        {(isGenerating || isCompleted || taskSteps.length > 0) && (
-          <TaskProgressBar
-            steps={taskSteps}
-            total={totalSteps}
-            completed={completedSteps}
-            isGenerating={isGenerating}
-            isCompleted={isCompleted}
-            onReplay={onReplay}
-            onRemix={onRemix}
-          />
-        )}
-      </div>
-
-      {/* Right: Artifact preview */}
+      {/* Artifact preview (full width) */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Module header / breadcrumb strip */}
         <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-navy-900 shrink-0">

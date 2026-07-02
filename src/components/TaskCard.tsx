@@ -13,7 +13,7 @@ const getStatusColor = (status: string) => {
   switch (normalizedStatus) {
     case 'todo':
     case 'backlog':
-      return 'border-slate-500 text-slate-500 dark:text-slate-400';
+      return 'border-slate-500 text-c-text-muted';
     case 'in_progress':
     case 'review':
       return 'border-blue-500 text-blue-500';
@@ -22,7 +22,7 @@ const getStatusColor = (status: string) => {
     case 'done':
       return 'border-green-500 text-green-500';
     case 'cancelled':
-      return 'border-slate-400 text-slate-600 dark:text-slate-500';
+      return 'border-c-border-strong text-c-text-secondary';
     default:
       return 'border-slate-500';
   }
@@ -42,7 +42,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     <div
       onClick={onClick}
       className={`
-        bg-white dark:bg-navy-900 border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all group shadow-sm dark:shadow-none
+        bg-c-surface border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all group shadow-sm dark:shadow-none
         ${getStatusColor(task.status).split(' ')[0]} border-opacity-30 hover:border-opacity-100
       `}
     >
@@ -62,7 +62,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                   ? 'border-amber-500 text-amber-500 bg-amber-500/10'
                   : task.priority === 'medium'
                     ? 'border-blue-500 text-blue-500 bg-blue-500/10'
-                    : 'border-slate-500 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800/300/10'
+                    : 'border-c-border-strong text-c-text-muted bg-c-surface-raised'
             }`}
           >
             {task.priority || 'Normal'}
@@ -71,17 +71,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         {task.priority === 'urgent' && <AlertCircle size={14} className="text-danger-500" />}
       </div>
 
-      <h4 className="text-navy-900 dark:text-white text-sm font-medium mb-1 line-clamp-2">
+      <h4 className="text-c-text text-sm font-medium mb-1 line-clamp-2">
         {task.title}
       </h4>
 
       {task.why && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 italic mb-3 line-clamp-2">
+        <p className="text-xs text-c-text-muted italic mb-3 line-clamp-2">
           "{task.why}"
         </p>
       )}
 
-      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-500 mt-3">
+      <div className="flex items-center justify-between text-xs text-c-text-secondary mt-3">
         <div className="flex items-center gap-2">
           {task.assignee ? (
             <div
@@ -96,7 +96,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
               <span className="max-w-[60px] truncate">{task.assignee.lastName}</span>
             </div>
           ) : (
-            <span className="text-slate-600 dark:text-slate-500 flex items-center gap-1">
+            <span className="text-c-text-secondary flex items-center gap-1">
               <User size={12} /> Unassigned
             </span>
           )}
@@ -119,18 +119,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
       {(totalChecks > 0 || (task.progress || 0) > 0) && (
         <div className="mt-3 flex items-center gap-2">
-          <div className="flex-1 h-1 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
+          <div className="flex-1 h-1 bg-c-border-subtle rounded-full overflow-hidden">
             <div
               className={`h-full ${task.status === 'blocked' ? 'bg-danger-500' : 'bg-blue-500'}`}
               style={{ width: `${task.progress || (completedChecks / (totalChecks || 1)) * 100}%` }}
             ></div>
           </div>
           {totalChecks > 0 ? (
-            <span className="text-[10px] text-slate-500 dark:text-slate-400">
+            <span className="text-[10px] text-c-text-muted">
               {completedChecks}/{totalChecks}
             </span>
           ) : (
-            <span className="text-[10px] text-slate-500 dark:text-slate-400">{task.progress}%</span>
+            <span className="text-[10px] text-c-text-muted">{task.progress}%</span>
           )}
         </div>
       )}

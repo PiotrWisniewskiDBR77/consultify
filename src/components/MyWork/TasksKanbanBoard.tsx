@@ -93,9 +93,9 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     statuses: ['todo', 'pending', 'new'],
     apiStatus: 'TODO',
     icon: <Circle size={14} />,
-    headerColor: 'text-slate-500 dark:text-slate-400',
-    dotColor: 'bg-slate-400',
-    dropHighlight: 'ring-slate-400/40 bg-slate-400/5',
+    headerColor: 'text-c-text-muted',
+    dotColor: 'bg-c-border-strong',
+    dropHighlight: 'ring-c-border-strong/40 bg-c-surface-raised',
   },
   {
     id: 'in_progress',
@@ -235,23 +235,23 @@ const KanbanCardContent: React.FC<{
       className={`
         rounded-lg p-3 select-none
         ${priorityStyle.border} ${priorityStyle.bg}
-        border border-slate-200/50 dark:border-navy-600/50
+        border border-c-border-subtle
         ${isDragging ? 'opacity-30 scale-[0.98]' : ''}
-        ${isOverlay ? 'shadow-2xl shadow-black/25 rotate-[3deg] scale-105 border-primary-500/50 ring-2 ring-primary-500/30' : ''}
+        ${isOverlay ? 'shadow-hig-lg rotate-[3deg] scale-105 ring-1 ring-c-border-strong' : ''}
         transition-all duration-150
       `}
     >
       <div className="flex items-start gap-1.5">
-        <div className="mt-0.5 text-slate-700 dark:text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
+        <div className="mt-0.5 text-c-text-muted group-hover:text-c-text-secondary transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical size={14} />
         </div>
-        <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug flex-1">
+        <h4 className="text-sm font-medium text-c-text mb-2 line-clamp-2 leading-snug flex-1">
           {task.title || 'Untitled task'}
         </h4>
       </div>
 
       {task.description && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed pl-5">
+        <p className="text-xs text-c-text-muted mb-3 line-clamp-2 leading-relaxed pl-5">
           {task.description}
         </p>
       )}
@@ -264,7 +264,7 @@ const KanbanCardContent: React.FC<{
           {priorityStyle.label}
         </span>
         {task.projectName && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-slate-500/10 truncate max-w-[120px]">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised text-c-text-secondary border border-c-border-subtle truncate max-w-[120px]">
             {task.projectName}
           </span>
         )}
@@ -274,7 +274,7 @@ const KanbanCardContent: React.FC<{
         {dueLabel ? (
           <span
             className={`flex items-center gap-1 text-[11px] font-medium ${
-              overdue ? 'text-danger-400' : 'text-slate-500 dark:text-slate-400'
+              overdue ? 'text-danger-400' : 'text-c-text-muted'
             }`}
           >
             <Calendar size={11} />
@@ -292,14 +292,14 @@ const KanbanCardContent: React.FC<{
                 className="w-5 h-5 rounded-full object-cover ring-1 ring-white/20"
               />
             ) : (
-              <div className="w-5 h-5 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-[10px] font-bold ring-1 ring-white/10">
+              <div className="w-5 h-5 rounded-full bg-c-surface-raised text-c-text-secondary flex items-center justify-center text-[10px] font-bold ring-1 ring-c-border-subtle">
                 {assigneeInitial}
               </div>
             )}
           </div>
         ) : (
-          <div className="w-5 h-5 rounded-full bg-slate-500/10 flex items-center justify-center">
-            <User size={10} className="text-slate-500 dark:text-slate-400" />
+          <div className="w-5 h-5 rounded-full bg-c-surface-raised flex items-center justify-center">
+            <User size={10} className="text-c-text-muted" />
           </div>
         )}
       </div>
@@ -366,15 +366,15 @@ const DroppableColumn: React.FC<{
       className={`w-72 flex-shrink-0 flex flex-col rounded-xl border transition-all duration-200 ${
         isOver
           ? `ring-2 ${column.dropHighlight} border-transparent scale-[1.01]`
-          : 'bg-slate-50/50 dark:bg-navy-900/30 border-slate-200/50 dark:border-navy-700/30'
+          : 'bg-c-surface border-c-border-subtle'
       }`}
     >
       {/* Column header */}
-      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200/50 dark:border-navy-700/30">
+      <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${column.dotColor}`} />
           <span className={`text-sm font-semibold ${column.headerColor}`}>{column.label}</span>
-          <span className="ml-1 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-navy-700/50 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+          <span className="ml-1 text-xs font-medium text-c-text-muted bg-c-surface-raised rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
             {taskIds.length}
           </span>
         </div>
@@ -384,7 +384,7 @@ const DroppableColumn: React.FC<{
               e.stopPropagation();
               onCreateTask();
             }}
-            className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 transition-colors"
+            className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
             title="Add task"
           >
             <Plus size={14} />
@@ -411,7 +411,7 @@ const DroppableColumn: React.FC<{
         {taskIds.length === 0 && !isOver && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-c-text-muted">
               No tasks
             </p>
           </div>
@@ -805,18 +805,18 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
         <div className="flex-1 overflow-x-auto p-4">
           <div className="flex gap-4 min-w-max">
             {KANBAN_COLUMNS.map((col) => (
               <div
                 key={col.id}
-                className="w-72 flex-shrink-0 bg-slate-50 dark:bg-navy-900/50 rounded-xl p-3 animate-pulse"
+                className="w-72 flex-shrink-0 bg-c-surface rounded-xl p-3 animate-pulse"
               >
-                <div className="h-5 bg-slate-200 dark:bg-navy-700 rounded w-24 mb-4" />
+                <div className="h-5 bg-c-surface-raised rounded w-24 mb-4" />
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 bg-slate-200 dark:bg-navy-700 rounded-lg" />
+                    <div key={i} className="h-24 bg-c-surface-raised rounded-lg" />
                   ))}
                 </div>
               </div>
@@ -829,17 +829,17 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
 
   if (tasks.length === 0) {
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
         <div className="flex-1 p-4">
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
-            <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
+          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+            <CheckCircle2 size={48} className="text-c-text-muted mb-4" />
+            <h3 className="text-lg font-medium text-c-text-secondary mb-2">
               No tasks yet
             </h3>
-            <p className="text-sm text-slate-500 mb-4">Create your first task to get started</p>
+            <p className="text-sm text-c-text-muted mb-4">Create your first task to get started</p>
             <button
               onClick={onCreateTask}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 border border-blue-500/50 rounded-lg hover:bg-blue-500/10 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-c-text text-c-surface rounded-lg hover:opacity-90 transition-opacity"
             >
               <Plus size={16} />
               Create Task
@@ -851,7 +851,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
       <div className="flex-1 overflow-x-auto p-4">
         <DndContext
           sensors={sensors}

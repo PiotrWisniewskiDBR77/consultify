@@ -23,6 +23,7 @@ import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
 import NotificationService from '../services/notificationService.js';
@@ -5917,27 +5918,43 @@ router.post(
 
     if (target === 'initiative') {
       if (!(await requireTables(res, ['initiatives']))) return;
-      const cols = await getTableColumns('initiatives');
-      entityId = uuidv4();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [entityId];
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-      add('organization_id', orgId);
-      add('name', safeTitle);
-      add('summary', (safeExpansion || safeBody).slice(0, 5000) || null);
-      add('owner_execution_id', userId);
-      add('source_type', 'tool');
-      add('source_id', toolSessionId);
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
+      // Uspójnienie F1.5 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          orgId,
+          {
+            title: safeTitle,
+            summary: (safeExpansion || safeBody).slice(0, 5000) || null,
+            ownerExecutionId: userId,
+            sourceType: 'tool',
+            sourceId: toolSessionId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        entityId = __r.id;
+      } else {
+        const cols = await getTableColumns('initiatives');
+        entityId = uuidv4();
+        const insertCols: string[] = ['id'];
+        const insertVals: string[] = ['?'];
+        const insertParams: any[] = [entityId];
+        const add = (col: string, val: any) => {
+          if (!cols.has(col)) return;
+          insertCols.push(col);
+          insertVals.push('?');
+          insertParams.push(val);
+        };
+        add('organization_id', orgId);
+        add('name', safeTitle);
+        add('summary', (safeExpansion || safeBody).slice(0, 5000) || null);
+        add('owner_execution_id', userId);
+        add('source_type', 'tool');
+        add('source_id', toolSessionId);
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+          insertParams
+        );
+      }
     } else if (target === 'decision') {
       if (!(await requireTables(res, ['decisions']))) return;
       const cols = await getTableColumns('decisions');
@@ -6187,21 +6204,6 @@ router.post(
           .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
       }
 
-      const initiativeId = uuidv4();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [initiativeId];
-
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-
-      add('organization_id', orgId);
-      add('name', safeTitle.slice(0, 255));
-
       // V51-15: When nodeIds provided, enrich summary with selected node labels
       // P14 integration: prepend process flow readback when converting from PF
       let initSummary = (safeExpansion || safeBody).slice(0, 5000) || null;
@@ -6234,18 +6236,64 @@ router.post(
           /* best-effort */
         }
       }
-      add('summary', initSummary);
-      add('area', idea?.area ? String(idea.area).slice(0, 120) : null);
-      add('owner_execution_id', userId);
-      add('owner_business_id', userId);
-      add('sponsor_id', userId);
-      add('source_type', 'tool');
-      add('source_id', toolSessionId);
+      const initArea = idea?.area ? String(idea.area).slice(0, 120) : null;
 
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
+      // Uspójnienie F1.5 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+      let initiativeId: string;
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          orgId,
+          {
+            title: safeTitle.slice(0, 255),
+            summary: initSummary,
+            area: initArea,
+            ownerExecutionId: userId,
+            ownerBusinessId: userId,
+            sourceType: 'tool',
+            sourceId: toolSessionId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        initiativeId = __r.id;
+        // Funnel does not set `sponsor_id` — post-create UPDATE for the extra column.
+        if (cols.has('sponsor_id')) {
+          try {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET sponsor_id = ? WHERE id = ? AND organization_id = ?`,
+              [userId, initiativeId, orgId]
+            );
+          } catch {
+            /* sponsor_id column may be absent on some schemas */
+          }
+        }
+      } else {
+        initiativeId = uuidv4();
+        const insertCols: string[] = ['id'];
+        const insertVals: string[] = ['?'];
+        const insertParams: any[] = [initiativeId];
+
+        const add = (col: string, val: any) => {
+          if (!cols.has(col)) return;
+          insertCols.push(col);
+          insertVals.push('?');
+          insertParams.push(val);
+        };
+
+        add('organization_id', orgId);
+        add('name', safeTitle.slice(0, 255));
+        add('summary', initSummary);
+        add('area', initArea);
+        add('owner_execution_id', userId);
+        add('owner_business_id', userId);
+        add('sponsor_id', userId);
+        add('source_type', 'tool');
+        add('source_id', toolSessionId);
+
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+          insertParams
+        );
+      }
 
       await promote('initiative', initiativeId);
 

@@ -41,7 +41,14 @@ test.describe('M06 §15 — Persystencja i konflikt wersji', () => {
     }
     expect(resp.status(), 'POST /map/sync returns 200').toBe(200);
     // Verify baseVersion is present in request body.
-    const body = await resp.request().postDataJSON().catch(() => null);
+    // playwright's postDataJSON() is synchronous (returns object|null), not a promise —
+    // do NOT await/.catch it (that throws "catch is not a function").
+    let body: { baseVersion?: unknown } | null = null;
+    try {
+      body = resp.request().postDataJSON();
+    } catch {
+      body = null;
+    }
     if (body) {
       expect(typeof body.baseVersion, 'POST /map/sync body includes baseVersion').toBe('number');
     }

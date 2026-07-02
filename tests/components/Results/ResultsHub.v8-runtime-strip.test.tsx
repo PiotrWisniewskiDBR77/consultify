@@ -4,7 +4,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockNavigate = vi.fn();
 
@@ -21,6 +21,7 @@ vi.mock('react-i18next', () => ({
     t: (_key: string, fallback?: string) => fallback || _key,
     i18n: { language: 'en' },
   }),
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub/ModuleHub', () => ({
