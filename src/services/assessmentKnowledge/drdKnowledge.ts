@@ -11,6 +11,7 @@
  * - You can override specific area+level entries in DRD_KNOWLEDGE_OVERRIDES over time.
  */
 import { DRD_STRUCTURE, DRDArea, DRDLevel } from '@/services/drdStructure';
+import { DRD_OVERRIDES_AXIS_1_2 } from './drdKnowledgeOverridesAxis1And2';
 
 export type DRDLevelKnowledge = {
   questions: [string, string, string];
@@ -131,9 +132,10 @@ const TECH_RULES: Array<{ keyword: RegExp; tech: string[] }> = [
   { keyword: /\bMachine Learning\b|\bML\b/i, tech: ['ML Models', 'MLOps', 'Model Monitoring'] },
 ];
 
+// Oxford O1 — partia 1: osie 1 i 2 (kuratorowane pytania behawioralne)
+// Dodatkowe osie będą dokładane w kolejnych partiach.
 const DRD_KNOWLEDGE_OVERRIDES: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
-  // Example override:
-  // '1A#1': { questions: ['...', '...', '...'], example: '...', suggestedTechnologies: ['...'] },
+  ...DRD_OVERRIDES_AXIS_1_2,
 };
 
 function normalizeWhitespace(s: string): string {
