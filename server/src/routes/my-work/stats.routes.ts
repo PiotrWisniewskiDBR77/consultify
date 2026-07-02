@@ -173,6 +173,7 @@ router.get(
         tasksCompleted: completedMap.get(user.userId) || 0,
         capacityHours: user.capacityHours,
         allocatedHours: user.allocatedHours,
+        backlogHours: user.backlogHours,
         overloaded: user.overloaded,
       }))
     );

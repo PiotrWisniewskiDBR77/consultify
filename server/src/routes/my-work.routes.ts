@@ -8082,8 +8082,11 @@ router.get(
         capacity: {
           totalTeamCapacityHours: totalCapacity,
           totalRequiredHours: totalRequired,
+          totalBacklogHours: Number(capacityOverview.summary.totalBacklog || 0),
           shortfallHours: Math.max(0, Math.round((totalRequired - totalCapacity) * 10) / 10),
           avgUtilization: capacityOverview.summary.avgUtilization,
+          windowStart: capacityOverview.windowStart,
+          windowEnd: capacityOverview.windowEnd,
         },
         initiatives: {
           total: Number(initiativeSummary?.total || 0),
@@ -8109,6 +8112,7 @@ router.get(
         overloads: overloads.map((row) => ({
           userId: row.userId,
           assignedHours: row.allocatedHours,
+          backlogHours: row.backlogHours,
           capacityHours: row.capacityHours,
           overloadHours: row.overloadHours,
           severity: row.severity,
