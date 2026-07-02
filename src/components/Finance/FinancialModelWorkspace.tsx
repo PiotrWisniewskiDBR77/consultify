@@ -33,6 +33,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { EmptyState as SharedEmptyState } from '@/components/shared/states';
+
 import Api from '../../services/api';
 import {
   shouldFallbackToLegacyFinance,
@@ -729,11 +731,21 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
       {/* ── Main area ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {!selectedModel ? (
-          <div className="flex-1 flex items-center justify-center text-slate-600">
-            <div className="text-center">
-              <FileText size={40} className="mx-auto mb-3 opacity-40" />
-              <p>{t('finance.model.selectOrCreate', 'Select or create a model')}</p>
-            </div>
+          <div className="flex-1 flex items-center justify-center">
+            <SharedEmptyState
+              variant="new"
+              icon={FileText}
+              title={t('finance.model.emptyTitle', 'No model selected')}
+              description={t(
+                'finance.model.emptyDesc',
+                'Pick a financial model from the list, or create a new one to start forecasting.'
+              )}
+              primaryAction={{
+                label: t('finance.model.createModel', 'Create Financial Model'),
+                onClick: () => setShowCreate(true),
+                icon: Plus,
+              }}
+            />
           </div>
         ) : (
           <>

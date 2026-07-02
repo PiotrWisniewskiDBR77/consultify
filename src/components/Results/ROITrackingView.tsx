@@ -26,6 +26,8 @@ import {
   type V8ResultsRoiPortfolioSummary,
 } from '@/services/api/v8/results';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ReconciliationPanel } from './ReconciliationPanel';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
@@ -355,11 +357,8 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-c-text-secondary">
-          <BarChart3 size={20} className="animate-pulse" />
-          <span className="text-sm">{t('common.loading', 'Loading...')}</span>
-        </div>
+      <div className="p-4">
+        <SharedLoadingState template="list" rows={6} />
       </div>
     );
   }
