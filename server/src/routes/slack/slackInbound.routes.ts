@@ -437,15 +437,10 @@ export async function handleViewSubmission(payload: any): Promise<void> {
     const result = await createFeedbackInternal(intake, {});
     feedbackId = result.feedbackId;
     taskId = result.taskId;
-    // Race fix (live E2E finding): dispatchFeedbackEscalation persists its
-    // alertDispatch summary into metadata_json with a read-modify-write of the
-    // WHOLE object. If we anchor slack_thread_ts while escalation is still in
-    // flight, its later write clobbers the anchor (observed on demo: router had
-    // ts, DB had no thread_ts). Wait for escalation (bounded) before anchoring.
-    await Promise.race([
-      result.escalationPromise.catch(() => {}),
-      new Promise((r) => setTimeout(r, 8000)),
-    ]);
+    // No wait needed: the escalation's metadata persist ('alertDispatch') and
+    // this anchor ('slack_thread_ts') both use atomic per-key jsonb_set writes
+    // (see updateFeedbackMetadataKey / anchorSlackThread), so they commute
+    // regardless of completion order — the earlier read-modify-write race is gone.
   } catch (err) {
     logger.error('[SlackInbound] createFeedbackInternal failed', {
       error: err instanceof Error ? err.message : String(err),

@@ -366,6 +366,50 @@ async function updateFeedbackMetadata(
   ]);
 }
 
+/**
+ * Atomically set ONE key inside metadata_json (Postgres jsonb_set) without a
+ * read-modify-write of the whole object. Critical for concurrency: the async
+ * escalation persist ('alertDispatch') and the Slack thread anchor
+ * ('slack_thread_ts', written later by the inbound handler for source=slack)
+ * would otherwise clobber each other — a whole-object writer using a stale
+ * snapshot erases the other's key. Per-key jsonb_set makes both writes commute.
+ * Falls back to read-modify-write on engines without jsonb (mock-DB/sqlite).
+ */
+async function updateFeedbackMetadataKey(
+  feedbackId: string,
+  key: string,
+  value: unknown
+): Promise<void> {
+  const feedbackCols = await getTableColumns('feedback_items');
+  if (!feedbackCols.has('metadata_json')) return;
+  const touchUpdated = feedbackCols.has('updated_at') ? ', updated_at = CURRENT_TIMESTAMP' : '';
+  try {
+    await dbRun(
+      `UPDATE feedback_items
+       SET metadata_json = jsonb_set(COALESCE(metadata_json, '{}')::jsonb, ARRAY[?]::text[], ?::jsonb, true)::text${touchUpdated}
+       WHERE id = ?`,
+      [key, JSON.stringify(value ?? null), feedbackId]
+    );
+    return;
+  } catch {
+    // Non-jsonb engine (mock-DB / sqlite): fall back to read-modify-write.
+    try {
+      const row = await dbGet<{ metadata_json?: string | null }>(
+        `SELECT metadata_json FROM feedback_items WHERE id = ?`,
+        [feedbackId]
+      );
+      const meta = safeJsonParse<Record<string, unknown>>(row?.metadata_json ?? null, {});
+      meta[key] = value;
+      await updateFeedbackMetadata(feedbackId, meta);
+    } catch (err) {
+      logger.warn('[Feedback] updateFeedbackMetadataKey fallback failed', {
+        key,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+}
+
 function stripJsonFences(raw: string): string {
   return String(raw || '')
     .replace(/```json/gi, '')
@@ -719,7 +763,18 @@ async function dispatchFeedbackEscalation(input: {
     }
   }
 
-  if (uniqueChannels.includes('slack')) {
+  // Slack-sourced feedback is already posted to #cf-feedback by the inbound
+  // handler via slackRouter (with thread anchoring). Posting again here through
+  // the legacy webhook path would duplicate the message → skip for source=slack.
+  const isSlackSourced =
+    (input.metadata as { source?: unknown } | undefined)?.source === 'slack';
+  if (uniqueChannels.includes('slack') && isSlackSourced) {
+    dispatchSummary.results.slack = {
+      status: 'skipped',
+      attemptedAt: new Date().toISOString(),
+      detail: 'source=slack — posted via slackRouter (inbound), avoiding duplicate',
+    };
+  } else if (uniqueChannels.includes('slack')) {
     try {
       await slackService.sendNewFeedbackAlert({
         type: input.feedbackType === 'PULSE' ? 'IDEA' : input.feedbackType,
@@ -1419,8 +1474,9 @@ export async function createFeedbackInternal(
           taskId: escalationSnapshot.linkedTaskId,
           metadata: escalationSnapshot.metadata,
         });
-        const persisted = { ...escalationSnapshot.metadata, alertDispatch };
-        await updateFeedbackMetadata(feedbackId, persisted);
+        // Atomic per-key write — must NOT clobber slack_thread_ts/source that a
+        // concurrent Slack anchor may have written after this snapshot was taken.
+        await updateFeedbackMetadataKey(feedbackId, 'alertDispatch', alertDispatch);
       } catch (dispatchErr) {
         logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
       }
