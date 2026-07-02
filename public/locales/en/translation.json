@@ -2939,6 +2939,48 @@
     }
   },
   "initiatives": {
+    "gateAi": {
+      "pill": {
+        "ariaReady": "AI readiness: ready, score {{score}} out of 100",
+        "ariaBelow": "AI readiness: below threshold, score {{score}} out of 100",
+        "ariaLoading": "AI readiness assessment in progress",
+        "loading": "Assessing…",
+        "label": "AI readiness",
+        "scoreSuffix": "/100"
+      },
+      "panel": {
+        "title": "Gate readiness — AI analysis",
+        "readyTitle": "Initiative ready to advance",
+        "readyDescription": "All required sections meet the threshold and no timeline blockers were detected.",
+        "scoreLabel": "Readiness score",
+        "thresholdLabel": "Threshold",
+        "gapsTitle": "Content gaps",
+        "gapSectionScore": "score {{score}}/100",
+        "fixesTitle": "Suggested fixes",
+        "timelineTitle": "Timeline signals",
+        "timelineBlock": "Block",
+        "timelineWarn": "Warning",
+        "timelineKind": {
+          "dependency": "Dependency",
+          "date_conflict": "Date conflict",
+          "resource_conflict": "Resource conflict"
+        },
+        "noTimeline": "No timeline analysis for this gate.",
+        "emptyTitle": "No readiness data",
+        "emptyDescription": "AI assessment is not available for this gate."
+      },
+      "override": {
+        "title": "Advance below readiness threshold",
+        "description": "This initiative does not meet the AI readiness threshold. You can proceed anyway — provide a reason that will be logged.",
+        "summaryScore": "Score {{score}}/100 (threshold {{threshold}})",
+        "gapsTitle": "Top gaps",
+        "timelineTitle": "Timeline blockers",
+        "reasonLabel": "Reason (required)",
+        "reasonPlaceholder": "Explain why you are proceeding despite the gaps…",
+        "confirm": "Proceed anyway",
+        "cancel": "Cancel"
+      }
+    },
     "roi": {
       "title": "Value Realization & ROI",
       "subtitle": "Economic analyses linked to your initiatives",
@@ -3149,7 +3191,10 @@
     },
     "tabs": {
       "portfolio": "Portfolio",
-      "analysis": "Analysis"
+      "analysis": "Analysis",
+      "observability": "Observability",
+      "candidates": "Candidates",
+      "portfolioHealth": "Portfolio health"
     },
     "analysis": {
       "resources": {
@@ -4033,7 +4078,8 @@
       "intangiblesToAdd": "Intangibles — to add",
       "noAdditionsForTable": "AI suggested no additions for this table.",
       "noMissingResources": "AI suggested no missing resources to add.",
-      "invalidAiFormat": "AI response has invalid format (cannot apply)."
+      "invalidAiFormat": "AI response has invalid format (cannot apply).",
+      "english": "English"
     },
     "timelinePlanner": {
       "initiativeStart": "Initiative Start",
@@ -4290,7 +4336,8 @@
       "requiredApproval": "Required approval",
       "requiredApprovalsForStatus": "Required approvals for status",
       "notRequested": "Not requested",
-      "allGatesPassed": "All gates passed!"
+      "allGatesPassed": "All gates passed!",
+      "english": "English"
     },
     "tasksMilestonesSection": {
       "aiReturnedNoTaskTitle": "AI returned no task title",
@@ -4358,7 +4405,8 @@
       "none": "— None —",
       "creating": "Creating...",
       "createTask": "Create task",
-      "done": "done"
+      "done": "done",
+      "english": "English"
     },
     "decisionsSection": {
       "missingInitiativeId": "Missing initiative ID",
@@ -4424,7 +4472,9 @@
       "none": "— None —",
       "creating": "Creating...",
       "createDecision": "Create decision",
-      "approved": "approved"
+      "approved": "approved",
+      "english": "English",
+      "gateDecisionRequiredBeforePromotion": "Gate decision — required before promotion"
     },
     "kpisSection": {
       "failedToLoadKpis": "Failed to load KPIs",
@@ -4477,7 +4527,8 @@
       "noKpisDefined": "No KPIs defined yet",
       "addFirstKpi": "Add your first KPI for this initiative.",
       "newKpi": "New KPI",
-      "noKpis": "No KPIs"
+      "noKpis": "No KPIs",
+      "english": "English"
     },
     "overviewSection": {
       "initiativeDescription": "Initiative Description",
@@ -4567,7 +4618,8 @@
       "control": "Control",
       "currentModule": "Current Module",
       "goTo": "Go to →",
-      "priority": "Priority"
+      "priority": "Priority",
+      "owner": "Owner"
     },
     "raidSection": {
       "convertedFrom": "Converted from {{type}}: {{title}}",
@@ -4590,7 +4642,8 @@
     },
     "linkedItemsSection": {
       "itemLinked": "Item linked",
-      "linkRemoved": "Link removed"
+      "linkRemoved": "Link removed",
+      "linkError": "Could not save the link"
     },
     "tagsSection": {
       "tags": "Tags",
@@ -4632,7 +4685,8 @@
       "addSuccessCriteriaPlaceholder": "Add success criteria...",
       "deliverablesDescription": "Specific outputs and results to be delivered",
       "deliverablesListLabel": "Deliverables — list",
-      "addDeliverablePlaceholder": "Add deliverable..."
+      "addDeliverablePlaceholder": "Add deliverable...",
+      "english": "English"
     },
     "initiativeGatesWorkflowTable": {
       "stage": "Stage",
@@ -4693,7 +4747,8 @@
       "noAdditionsProposed": "No additions proposed.",
       "applyApiNote": "On apply we will add/remove the selected dependency links via API (no new tasks invented).",
       "cancel": "Cancel",
-      "apply": "Apply"
+      "apply": "Apply",
+      "english": "English"
     },
     "scopeSection": {
       "scopeAndKillCriteria": "Scope & Kill Criteria",
@@ -4890,10 +4945,64 @@
     "archive": {
       "hint": "Finish or cancel it first"
     },
+    "archiveAction": "Archive",
+    "calendarView": {
+      "month": "Month",
+      "week": "Week",
+      "today": "Today",
+      "prev": "Previous",
+      "next": "Next",
+      "allStatuses": "All statuses",
+      "undated": "Undated",
+      "loading": "Loading…",
+      "empty": "No dated tasks or milestones.",
+      "show": "Show calendar",
+      "hide": "Hide calendar",
+      "calendar": "Calendar",
+      "gantt": "Gantt"
+    },
     "confirmDelete": "Permanently delete \"{{name}}\"? This cannot be undone.",
     "thisInitiative": "this initiative",
     "card": {
       "nextStep": "Next step"
+    },
+    "observability": {
+      "funnelTitle": "Portfolio conversion funnel",
+      "lineageTitle": "Initiative lineage chain",
+      "created": "Created",
+      "inExecution": "In execution",
+      "tracking": "Results",
+      "conversion": "Conversion",
+      "byStatus": "By status",
+      "bySource": "By source",
+      "source": "Source",
+      "sourceManual": "manual",
+      "initiative": "Initiative",
+      "execution": "Execution",
+      "results": "Results",
+      "kpiCount": "{{count}} KPI",
+      "pickInitiative": "Select initiative",
+      "empty": "No observability data.",
+      "noLineage": "No lineage for the selected initiative."
+    },
+    "initiativeDocumentView": {
+      "less": "Less",
+      "more": "More",
+      "creatingMaterial": "Creating material…",
+      "materialReady": "Material ready",
+      "failedToCreateMaterial": "Failed to create material"
+    },
+    "initiativePreviewV3": {
+      "linkedFinanceModels": "Linked finance models",
+      "openInFinance": "Open in Finance",
+      "generate3QuickHintsWhatTo": "Generate 3 quick hints (what to do / risks / how to measure).",
+      "source": "Source",
+      "tasks": "Tasks",
+      "helpMeRefineThisInitiativeMissing": "Help me refine this initiative: missing fields, risks, KPIs, and next steps.",
+      "open": "Open",
+      "inModule": "In module",
+      "chat": "Chat",
+      "copyLink": "Copy link"
     }
   },
   "execution": {
@@ -5162,6 +5271,13 @@
       "summarizePrompt": "Summarize this initiative in 5 bullets and propose 3 next steps."
     },
     "reports": {
+      "preset": {
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "biweekly": "Bi-weekly",
+        "onDemand": "On demand",
+        "sponsor": "Sponsor"
+      },
       "title": "Execution reports",
       "subtitle": "Generate a simple weekly pack and deep-dive reports without adding process overhead.",
       "open": "Open Reports",
@@ -10638,6 +10754,8 @@
       "alternativeLayout": "Alternative layout",
       "regenerateSlide": "Regenerate slide",
       "regenerating": "Regenerating…",
+      "rewritePlaceholder": "Rewrite this slide…",
+      "rewriteSlide": "Rewrite",
       "notesPlaceholder": "Speaker notes for this slide..."
     },
     "governance": {
@@ -10698,7 +10816,8 @@
       "searchArtifacts": "Search project, study, report, initiative...",
       "loadingArtifacts": "Loading artifacts...",
       "noArtifacts": "No registered artifacts found yet. You can still choose a source type below for a draft deck.",
-      "selectedEvidence": "Selected evidence"
+      "selectedEvidence": "Selected evidence",
+      "showDrafts": "Show drafts"
     },
     "exportBlocked": "Export blocked by quality gates. Open the deck to review blockers.",
     "openInBuilder": "Open this deck in the full editor to view and edit slides.",
@@ -12352,6 +12471,108 @@
       "total": "Total",
       "active": "Active",
       "empty": "No presentations yet."
+    },
+    "strategic": {
+      "bsc": "Balanced Scorecard",
+      "bscHealth": "health",
+      "bscUnbalanced": "Scorecard unbalanced — KPIs missing in at least one perspective.",
+      "bscNoData": "No KPIs — add KPIs and link them to initiatives.",
+      "perspectiveNoKpi": "No KPIs",
+      "bdn": "Benefits Dependency Network",
+      "bdnBenefits": "Benefits",
+      "bdnEnablers": "Enablers",
+      "bdnLinks": "Links",
+      "adoption": "Adoption → benefit risk",
+      "adoptionSourceCm": "Data: change management (ADKAR)",
+      "adoptionSourceProxy": "Data: realization proxy (v1)",
+      "adoptionOk": "No initiatives at risk from weak adoption.",
+      "adoptionScore": "Adoption",
+      "sentiment": "Sentiment",
+      "championCoverage": "Change champions",
+      "riskReasons": "Risk reasons",
+      "adoptionProxyMore": "+{{count}} flagged from proxy data (no sentiment signal)",
+      "benefitProfiles": "Benefit profile",
+      "benefitProfilesSummary": "{{total}} benefits · {{financial}} financial · {{withTarget}} with target",
+      "disBenefits": "{{count}} dis-benefit",
+      "benefitProfilesNoData": "No benefit profiles — define KPIs with a type and target.",
+      "disBenefitTag": "dis-benefit",
+      "benefitNoTarget": "no target",
+      "okr": "OKR — objective cascade",
+      "okrAvg": "avg",
+      "okrOnTrack": "on track",
+      "okrAtRisk": "at risk",
+      "okrOffTrack": "off track",
+      "okrNoData": "No OKRs defined",
+      "sustainment": "Value sustainment",
+      "narrative": "Management narrative"
+    },
+    "ai": {
+      "narrative": "Value narrative",
+      "noNarrative": "No data for narrative — add ROI targets for initiatives.",
+      "counterfactual": "Attribution — what without the initiative?",
+      "realized": "Realized",
+      "counterfactualProjected": "Without initiative (proj.)",
+      "attributableDelta": "Attribution to initiative",
+      "confidence": "confidence",
+      "noCounterfactual": "No historical measurements for counterfactual analysis.",
+      "anomalyTitle": "KPI anomaly detection",
+      "premiumBadge": "AI premium",
+      "anomalyCopy": "Automatic detection of outliers in the KPI measurement series — via z-score (|z| > 2) and IQR (outside Q1−1.5·IQR / Q3+1.5·IQR). A point flagged by both methods or at |z| ≥ 3 is marked severe.",
+      "anomalySevere": "Severe",
+      "anomalyMild": "Mild",
+      "anomalyMinPoints": "Requires min. 6 measurements per KPI",
+      "anomalyServerNote": "Anomalies are computed server-side (kpiAnomalyService engine) — results appear here once the KPI measurement endpoint is wired.",
+      "forecastTitle": "KPI trajectory forecast",
+      "forecastCopy": "Linear regression (least squares) on each KPI's measurement history: value forecast, estimated time to target (ETA) and a leading alert when the trend misses target before the deadline.",
+      "forecastOnTrack": "On track to target",
+      "forecastAtRisk": "Target at risk",
+      "forecastConfidence": "Confidence: low / medium / high (from measurement count + R² fit)",
+      "forecastMinPoints": "Requires min. 6 measurements per KPI. kpiForecastService engine — available after AI premium configuration.",
+      "rcaTitle": "RCA / corrective action suggestion",
+      "rcaCopy": "For each KPI deviation a heuristic engine (no LLM, deterministic) generates root-cause hypotheses from signals: deviation, trend, adoption, data freshness, scope change, resource overload — and maps them to concrete corrective actions with an owner.",
+      "rcaServerNote": "Suggestions are computed server-side (deviationRcaSuggestService engine) — they appear here for detected deviations once the RCA endpoint is wired."
+    },
+    "portfolio": {
+      "funnelStageIdeas": "Ideas",
+      "funnelStageValidated": "Validated",
+      "funnelStageInflight": "In-flight",
+      "funnelStageRealized": "Realized",
+      "funnel": "Portfolio value funnel",
+      "funnelInitiatives": "initiatives",
+      "funnelRiskAdjusted": "risk-adjusted",
+      "funnelLeakage": "leakage",
+      "funnelValueAtRisk": "Value at risk",
+      "signals": "Signals to M14 Implementation",
+      "goToM14": "Go to M14 Implementation",
+      "runRate": "Run-rate vs in-year",
+      "annualizedRunRate": "Annualized run-rate",
+      "projectedFullYear": "Full-year projection",
+      "alreadyRealized": "Realized",
+      "runRateAssumed": "assumption: 6-month measurement window",
+      "runRateMeasured": "measurement window: {{months}} mo (from data)",
+      "reallocation": "Recommended resource shifts",
+      "reallocCapacityAssumed": "FTE capacity = assumption (no staffing data)",
+      "scenarios": "Scenarios + IRR",
+      "scenario": "Scenario",
+      "scenariosAssumptionNote": "IRR / cashflow — model and assumptions v1",
+      "financeLink": "Finance link (M16)",
+      "noFinanceLink": "No KPI→Finance mappings. Configure in the Finance module (M16) — kpi_financial_mappings table.",
+      "positiveImpact": "Positive impact",
+      "negativeImpact": "Negative impact",
+      "netImpact": "Net impact",
+      "boardPack": "Board-pack / Auto value narrative",
+      "boardPackDesc": "Export PDF report / deck / table via M17–M20 generators. Available after Deliverables configuration.",
+      "boardPackGo": "Go to Outputs →"
+    },
+    "driverTree": {
+      "error": "Failed to load the tree.",
+      "noData": "No value tree data.",
+      "stats": {
+        "kpis": "KPIs",
+        "initiatives": "Initiatives",
+        "nodes": "Nodes"
+      },
+      "noLinks": "No KPI–initiative links. Link KPIs to initiatives in the KPI tab."
     }
   },
   "traceability": {
@@ -12391,7 +12612,8 @@
       "documents": "Documents",
       "mine": "Mine",
       "needsReview": "Needs review",
-      "sheets": "Sheets"
+      "sheets": "Sheets",
+      "data": "Data"
     },
     "columns": {
       "name": "Name",
@@ -12425,7 +12647,8 @@
         "exported": "Exported",
         "shared": "Shared",
         "deprecated": "Deprecated"
-      }
+      },
+      "showDrafts": "Show drafts"
     },
     "actions": {
       "newTemplate": "New template",
@@ -12508,6 +12731,47 @@
       "retry": "Retry"
     },
     "outputs": {
+      "launcher": {
+        "title": "New output",
+        "subtitle": "Pick what you want to create",
+        "report": "Report",
+        "reportHint": "Advisory document — Teresa helps you write it",
+        "presentation": "Presentation",
+        "presentationHint": "Gamma-grade slides with layout and visuals",
+        "table": "Table",
+        "tableHint": "Typed, formatted sheet — Airtable/Excel style",
+        "chooseTemplate": "Choose a template",
+        "templateSubtitle": "Start blank or from a template",
+        "back": "Back",
+        "suggestPlaceholder": "Describe what you need…",
+        "suggestBtn": "Teresa suggests",
+        "suggestDefaultIntent": "choose the best template for me",
+        "suggestResult": "Teresa recommends",
+        "suggestAccept": "Use this template",
+        "bundle": "AI Bundle",
+        "bundleHint": "One brief → DOCX + XLSX + PPTX downloaded as ZIP",
+        "bundleTitle": "AI Bundle — brief",
+        "bundleSubtitle": "Describe your company, product, market, and ask in one paragraph. The AI will produce DOCX + XLSX + PPTX and download them as a ZIP.",
+        "bundleGenerating": "Generating…",
+        "bundleGenerate": "Generate & download ZIP",
+        "bundleBriefTooShort": "Brief must be at least 20 characters",
+        "bundleError": "Generation failed — please try again",
+        "phase0": "Analyzing brief & extracting KPIs…",
+        "phase1": "Building financial model…",
+        "phase2": "Writing report sections…",
+        "phase3": "Composing slide deck…",
+        "phase4": "Rendering DOCX + XLSX + PPTX…",
+        "phaseEstimateNote": "Estimated progress — generation usually takes 1–2 min; the download starts once it's done.",
+        "tpl": {
+          "blank": "Blank",
+          "auditReport": "Audit report",
+          "execMemo": "Executive memo",
+          "boardDeck": "Board deck",
+          "diagnostic": "Diagnostic read-out",
+          "riskRegister": "Risk register",
+          "kpiDashboard": "KPI dashboard"
+        }
+      },
       "kind": {
         "presentation": "Presentation",
         "sheet": "Sheet",
@@ -12595,6 +12859,24 @@
       "breadcrumb": {
         "library": "Library"
       }
+    },
+    "bundles": {
+      "title": "AI Bundle — generation history",
+      "empty": "No bundles generated yet",
+      "loading": "Loading history…",
+      "qualityOk": "Quality OK",
+      "qualityIssues": "Quality issues",
+      "qualityUnknown": "Quality unknown",
+      "statusDraft": "Draft",
+      "statusGenerating": "Generating",
+      "statusReady": "Ready",
+      "statusError": "Error",
+      "detailTitle": "Bundle details",
+      "detailClose": "Close",
+      "redownload": "Re-download",
+      "redownloadUnavailable": "Re-download unavailable (brief not stored)",
+      "showHistory": "AI Bundle generation history",
+      "hideHistory": "Hide history"
     },
     "errors": {
       "realReportsTitle": "Real reports source needs attention",
@@ -13752,7 +14034,9 @@
       "fresh": "fresh",
       "notTracked": "not tracked",
       "error": "Error",
-      "noRunsYet": "No runs yet."
+      "noRunsYet": "No runs yet.",
+      "accessRevoked": "; access revoked",
+      "accessRevokedWithReason": "; access revoked ({{reason}})"
     },
     "unknown": "unknown",
     "tokenExpiry": "token expiry",
@@ -13850,7 +14134,11 @@
       "runFinalAcceptance": "Run final acceptance",
       "decision": "Decision",
       "linkedRuns": "Linked runs",
-      "none": "none"
+      "none": "none",
+      "reportTypeClientReady": "Client ready",
+      "reportTypeInvestorReady": "Investor ready",
+      "reportTypeSteeringCommittee": "Steering committee",
+      "reportTypeCisoSecurity": "CISO / Security"
     },
     "confidence": "confidence"
   },
