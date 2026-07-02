@@ -1,156 +1,195 @@
-/**
- * M15/W1 (G1) — M14 → M15 handoff inbox.
- *
- * Closes the chain gap: benefits handed off from M14 closure land in
- * `benefits_register` but the live ResultsHub reads `initiative_kpis` and never
- * showed them. This panel surfaces the handoff inbox and lets the user PROMOTE a
- * benefit into a tracked KPI (POST /benefits-register/benefits/:id/promote → the
- * bridge into the M15 canonical engine). Behind the `m14Handoff` flag (default
- * OFF). Read-mostly, fails soft.
- */
+import { Inbox, Check, X, ArrowRight, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
+import { V8ResultsApi, type V8ResultsClosureBenefit } from '@/services/api/v8/results';
 
-const HANDOFF_SOURCE = 'M14_CLOSURE_HANDOFF';
-
-interface Benefit {
-  id: string;
-  name: string;
-  kpi_name: string | null;
-  owner_id: string | null;
-  baseline_value: number | null;
-  target_value: number | null;
-  current_value: number | null;
-  cadence: string | null;
-  status: string;
-  source: string | null;
-  initiative_id: string | null;
-  promoted_kpi_id?: string | null;
-}
-
-const fmt = (v: number | null): string => (v === null || v === undefined ? '—' : String(v));
-
-interface Props {
-  onPromoted?: () => void;
-}
-
-export const M14HandoffInbox: React.FC<Props> = ({ onPromoted }) => {
-  const [benefits, setBenefits] = useState<Benefit[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+/**
+ * M14 → M15 closure-handoff inbox (Decision B1b).
+ *
+ * Reader for benefits materialized by the closure handoff
+ * (`initiative_benefits.source_tag = 'M14_CLOSURE_HANDOFF'`). Lists each
+ * incoming benefit with its source KPI, owning initiative, target and closure
+ * date, and lets the user promote it into a tracked sustainment KPI or dismiss
+ * it. Deliberately a single, self-contained section — no page reload.
+ */
+export const M14HandoffInbox: React.FC<{ onPromoted?: () => void }> = ({ onPromoted }) => {
+  const { t } = useTranslation();
+  const [items, setItems] = useState<V8ResultsClosureBenefit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = (await Api.get('/benefits-register/benefits')) as { benefits?: Benefit[] };
-      setBenefits(Array.isArray(res?.benefits) ? res.benefits : []);
-      setFailed(false);
+      const res = await V8ResultsApi.getClosureBenefitsInbox();
+      setItems(res?.items ?? []);
     } catch {
-      setFailed(true);
+      setError(t('results.handoffInbox.loadError', 'Failed to load incoming benefits.'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const promote = async (id: string) => {
-    setBusy(id);
-    try {
-      await Api.post(`/benefits-register/benefits/${id}/promote`, {});
-      await load();
-      onPromoted?.();
-    } catch {
-      setFailed(true);
-    } finally {
-      setBusy(null);
-    }
+  const handlePromote = useCallback(
+    async (benefit: V8ResultsClosureBenefit) => {
+      setBusyId(benefit.id);
+      try {
+        await V8ResultsApi.promoteClosureBenefit(benefit.id);
+        setItems((prev) => prev.filter((b) => b.id !== benefit.id));
+        toast.success(
+          t('results.handoffInbox.promoted', 'Promoted to tracked KPI: {{name}}', {
+            name: benefit.kpiName,
+          })
+        );
+        onPromoted?.();
+      } catch {
+        toast.error(t('results.handoffInbox.promoteError', 'Could not promote benefit.'));
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [t, onPromoted]
+  );
+
+  const handleDismiss = useCallback(
+    async (benefit: V8ResultsClosureBenefit) => {
+      setBusyId(benefit.id);
+      try {
+        await V8ResultsApi.dismissClosureBenefit(benefit.id);
+        setItems((prev) => prev.filter((b) => b.id !== benefit.id));
+        toast.success(t('results.handoffInbox.dismissed', 'Benefit dismissed.'));
+      } catch {
+        toast.error(t('results.handoffInbox.dismissError', 'Could not dismiss benefit.'));
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [t]
+  );
+
+  const formatDate = (iso: string | null): string => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
   };
 
-  const handoffCount = benefits.filter((b) => b.source === HANDOFF_SOURCE).length;
+  const formatTarget = (benefit: V8ResultsClosureBenefit): string => {
+    if (benefit.targetValue == null) return '—';
+    return benefit.unit ? `${benefit.targetValue} ${benefit.unit}` : String(benefit.targetValue);
+  };
 
   return (
-    <section
-      className="rounded-xl border border-gray-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900"
-      data-testid="m14-handoff-inbox"
-    >
-      <div className="mb-3 flex items-center justify-between">
+    <section className="p-4" aria-label={t('results.handoffInbox.title', 'Incoming benefits')}>
+      <header className="mb-4 flex items-center gap-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-c-accent-soft text-c-accent">
+          <Inbox size={16} />
+        </span>
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">
-            Skrzynka z wdrożenia (M14 → Rezultaty)
-          </h3>
-          <p className="text-xs text-gray-400">
-            Korzyści przekazane przy zamknięciu inicjatyw — promuj do śledzonych KPI.
+          <h2 className="text-sm font-semibold text-c-text">
+            {t('results.handoffInbox.title', 'Incoming benefits')}
+          </h2>
+          <p className="text-xs text-c-text-secondary">
+            {t(
+              'results.handoffInbox.subtitle',
+              'Benefits handed off from closed initiatives (M14 → M15).'
+            )}
           </p>
         </div>
-        <span className="text-xs text-gray-400" data-testid="m14-handoff-count">
-          {handoffCount} z M14 · {benefits.length} łącznie
-        </span>
-      </div>
+      </header>
 
-      {failed && (
-        <p className="mb-2 text-xs text-amber-600">Nie udało się załadować/zmienić skrzynki.</p>
-      )}
-      {loading && <p className="text-sm text-gray-400">Ładowanie…</p>}
-
-      {!loading && benefits.length === 0 ? (
-        <p className="text-sm text-gray-400" data-testid="m14-handoff-empty">
-          Brak przekazanych korzyści — pojawią się tu przy zamknięciu inicjatyw w module Wdrożenie.
-        </p>
+      {loading ? (
+        <div className="flex items-center gap-2 py-12 text-sm text-c-text-secondary">
+          <Loader2 size={16} className="animate-spin" />
+          {t('common.loading', 'Loading...')}
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-c-danger/40 bg-c-danger/5 p-4 text-sm text-c-danger">
+          {error}
+          <button
+            type="button"
+            className="ml-3 underline"
+            onClick={() => {
+              void load();
+            }}
+          >
+            {t('results.hub.retry', 'Retry')}
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-c-border-subtle py-16 text-center">
+          <Inbox size={28} className="text-c-text-secondary/60" />
+          <p className="text-sm text-c-text-secondary">
+            {t(
+              'results.handoffInbox.empty',
+              'No new benefits from closed initiatives.'
+            )}
+          </p>
+        </div>
       ) : (
-        <ul className="flex flex-col gap-2" data-testid="m14-handoff-list">
-          {benefits.map((b) => {
-            const promoted = !!b.promoted_kpi_id || b.status === 'promoted';
-            return (
-              <li
-                key={b.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 p-2 dark:border-navy-700"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium text-gray-900 dark:text-slate-100">
-                      {b.kpi_name || b.name}
-                    </span>
-                    {b.source === HANDOFF_SOURCE && (
-                      <span className="shrink-0 rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
-                        z M14
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-gray-500">
-                    <span>owner: {b.owner_id || '—'}</span>
-                    <span>
-                      {fmt(b.baseline_value)} → {fmt(b.target_value)}
-                      {b.current_value != null ? ` (teraz ${b.current_value})` : ''}
-                    </span>
-                    <span>cadence: {b.cadence || '—'}</span>
-                  </div>
-                </div>
-                {promoted ? (
-                  <span
-                    className="shrink-0 rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
-                    data-testid="m14-handoff-tracked"
-                  >
-                    śledzone ✓
+        <ul className="flex flex-col gap-2">
+          {items.map((benefit) => (
+            <li
+              key={benefit.id}
+              className="flex flex-col gap-3 rounded-lg border border-c-border bg-c-surface-raised p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <ArrowRight size={14} className="shrink-0 text-c-accent" />
+                  <span className="truncate text-sm font-medium text-c-text">
+                    {benefit.kpiName}
                   </span>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={busy === b.id}
-                    onClick={() => void promote(b.id)}
-                    data-testid="m14-handoff-promote"
-                    className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
-                  >
-                    {busy === b.id ? '…' : 'Śledź jako KPI →'}
-                  </button>
-                )}
-              </li>
-            );
-          })}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-c-text-secondary">
+                  <span>
+                    {t('results.handoffInbox.initiative', 'Initiative')}:{' '}
+                    {benefit.initiativeName || '—'}
+                  </span>
+                  <span>
+                    {t('results.handoffInbox.target', 'Target')}: {formatTarget(benefit)}
+                  </span>
+                  <span>
+                    {t('results.handoffInbox.closedAt', 'Closed')}: {formatDate(benefit.closedAt)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  disabled={busyId === benefit.id}
+                  onClick={() => {
+                    void handlePromote(benefit);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-c-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  {busyId === benefit.id ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Check size={13} />
+                  )}
+                  {t('results.handoffInbox.promote', 'Promote to tracked KPI')}
+                </button>
+                <button
+                  type="button"
+                  disabled={busyId === benefit.id}
+                  onClick={() => {
+                    void handleDismiss(benefit);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface disabled:opacity-50"
+                >
+                  <X size={13} />
+                  {t('results.handoffInbox.dismiss', 'Dismiss')}
+                </button>
+              </div>
+            </li>
+          ))}
         </ul>
       )}
     </section>

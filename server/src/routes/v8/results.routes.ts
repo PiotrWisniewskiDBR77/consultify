@@ -2576,6 +2576,249 @@ router.post(
   })
 );
 
+// ============================================================================
+// M14 → M15 closure-handoff benefits inbox (Decision B1b).
+//
+// The write side (InitiativeController.updateInitiativeStatus →
+// executionResultsBridge.handoffFromClosure) materializes an initiative's
+// planned KPIs into `initiative_benefits` tagged
+// `source_tag = 'M14_CLOSURE_HANDOFF'` when the initiative closes (→ DONE).
+// This is the M15 READER: it surfaces those benefits in the Results UI and
+// lets a KPI owner either promote a benefit into a tracked sustainment KPI or
+// dismiss it.
+//
+// Inbox lifecycle uses `initiative_benefits.status`:
+//   'tracking'  → new / awaiting triage (shown in the inbox)
+//   'promoted'  → converted into a sustainment KPI (leaves the inbox)
+//   'dismissed' → rejected (leaves the inbox)
+// ============================================================================
+
+/** Value written to `initiative_benefits.source_tag` by the M14 closure handoff. */
+const CLOSURE_HANDOFF_SOURCE = 'M14_CLOSURE_HANDOFF';
+
+/** Benefit statuses that keep a closure benefit in the inbox (awaiting triage). */
+const INBOX_OPEN_BENEFIT_STATUSES: readonly string[] = ['tracking', 'not_started'];
+
+interface ClosureBenefitRow {
+  id: string;
+  initiative_id: string;
+  name: string;
+  description: string | null;
+  kpi_id: string | null;
+  target_value: number | null;
+  status: string | null;
+  created_at: string | null;
+  initiative_name: string | null;
+  initiative_closed_at: string | null;
+  source_kpi_unit: string | null;
+}
+
+/**
+ * GET /api/v8/results/benefits/inbox
+ * Org-scoped list of closure-handoff benefits awaiting triage
+ * (`source_tag = 'M14_CLOSURE_HANDOFF'`, still in an open status). Each row
+ * carries the source KPI name, owning initiative, target and the initiative's
+ * closure date so M15 can render the "incoming benefits" inbox.
+ */
+router.get(
+  '/benefits/inbox',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+
+    const placeholders = INBOX_OPEN_BENEFIT_STATUSES.map(() => '?').join(', ');
+    let rows: ClosureBenefitRow[] = [];
+    try {
+      rows = (await dbAll<ClosureBenefitRow>(
+        `SELECT b.id, b.initiative_id, b.name, b.description, b.kpi_id,
+                b.target_value, b.status, b.created_at,
+                COALESCE(i.title, i.name) AS initiative_name,
+                i.completed_at AS initiative_closed_at,
+                k.unit AS source_kpi_unit
+           FROM initiative_benefits b
+           LEFT JOIN initiatives i ON i.id = b.initiative_id
+           LEFT JOIN initiative_kpis k ON k.id = b.kpi_id
+          WHERE b.organization_id = ?
+            AND b.source_tag = ?
+            AND (b.status IS NULL OR b.status IN (${placeholders}))
+          ORDER BY b.created_at DESC`,
+        [organizationId, CLOSURE_HANDOFF_SOURCE, ...INBOX_OPEN_BENEFIT_STATUSES],
+        { fallback: true }
+      )) as ClosureBenefitRow[];
+    } catch (err) {
+      logger.error(`[V8:Results] Closure-benefit inbox read failed: ${String(err)}`);
+      return res.status(500).json({
+        error: 'Failed to load closure-handoff benefits',
+        code: 'RESULTS_BENEFITS_INBOX_READ_FAILED',
+      });
+    }
+
+    const items = (rows || []).map((row) => ({
+      id: row.id,
+      initiativeId: row.initiative_id,
+      initiativeName: row.initiative_name || null,
+      kpiName: row.name,
+      sourceKpiId: row.kpi_id || null,
+      unit: row.source_kpi_unit || null,
+      description: row.description || null,
+      targetValue: row.target_value ?? null,
+      status: row.status || 'tracking',
+      closedAt: row.initiative_closed_at || null,
+      createdAt: row.created_at || null,
+    }));
+
+    return res.json({ data: { items }, meta: resultsMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/results/benefits/:benefitId/promote
+ * Promote a closure-handoff benefit into a tracked sustainment KPI
+ * (`initiative_kpis`), then mark the benefit `promoted` so it leaves the inbox.
+ *
+ * Dedup: if the benefit is already `promoted` (or a sustainment KPI derived
+ * from this benefit already exists) the call is idempotent and re-returns the
+ * existing KPI id rather than creating a duplicate.
+ */
+router.post(
+  '/benefits/:benefitId/promote',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
+    const { organizationId } = getV8Context(req);
+    const benefitId = typeof req.params.benefitId === 'string' ? req.params.benefitId.trim() : '';
+    if (!benefitId) {
+      return res.status(400).json({
+        error: 'benefitId is required',
+        code: 'RESULTS_BENEFIT_ID_REQUIRED',
+      });
+    }
+
+    const benefit = await dbGet<{
+      id: string;
+      initiative_id: string;
+      name: string;
+      description: string | null;
+      kpi_id: string | null;
+      target_value: number | null;
+      status: string | null;
+      source_tag: string | null;
+    }>(
+      `SELECT id, initiative_id, name, description, kpi_id, target_value, status, source_tag
+         FROM initiative_benefits
+        WHERE id = ? AND organization_id = ?`,
+      [benefitId, organizationId],
+      { fallback: true }
+    );
+
+    if (!benefit?.id || benefit.source_tag !== CLOSURE_HANDOFF_SOURCE) {
+      return res.status(404).json({
+        error: `Closure-handoff benefit ${benefitId} not found`,
+        code: 'RESULTS_BENEFIT_NOT_FOUND',
+      });
+    }
+
+    // Dedup 1: benefit already promoted — return its sustainment KPI if we can
+    // find one, otherwise just acknowledge idempotently.
+    if (String(benefit.status || '').toLowerCase() === 'promoted') {
+      const existing = await dbGet<{ id: string }>(
+        `SELECT id FROM initiative_kpis
+          WHERE organization_id = ? AND initiative_id = ? AND name = ?
+          ORDER BY created_at DESC LIMIT 1`,
+        [organizationId, benefit.initiative_id, benefit.name],
+        { fallback: true }
+      );
+      return res.status(200).json({
+        data: { kpiId: existing?.id || null, alreadyPromoted: true },
+        meta: resultsWriteMeta(),
+      });
+    }
+
+    // Dedup 2: a sustainment KPI with the same name already exists for this
+    // initiative (e.g. promoted then benefit reverted) — reuse it.
+    const dup = await dbGet<{ id: string }>(
+      `SELECT id FROM initiative_kpis
+        WHERE organization_id = ? AND initiative_id = ? AND name = ?
+        ORDER BY created_at DESC LIMIT 1`,
+      [organizationId, benefit.initiative_id, benefit.name],
+      { fallback: true }
+    );
+
+    let kpiId = dup?.id || null;
+    if (!kpiId) {
+      kpiId = uuidv4().replace(/-/g, '');
+      await dbRun(
+        `INSERT INTO initiative_kpis (
+           id, initiative_id, organization_id,
+           name, description, target_value,
+           measurement_frequency, alert_direction,
+           created_at, updated_at
+         )
+         VALUES (?, ?, ?, ?, ?, ?, 'MONTHLY', 'BELOW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          kpiId,
+          benefit.initiative_id,
+          organizationId,
+          benefit.name,
+          benefit.description ?? null,
+          benefit.target_value ?? null,
+        ]
+      );
+    }
+
+    await dbRun(
+      `UPDATE initiative_benefits
+          SET status = 'promoted', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND organization_id = ?`,
+      [benefitId, organizationId]
+    );
+
+    return res.status(201).json({
+      data: { kpiId, alreadyPromoted: false },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+/**
+ * POST /api/v8/results/benefits/:benefitId/dismiss
+ * Reject a closure-handoff benefit — marks it `dismissed` so it leaves the inbox.
+ */
+router.post(
+  '/benefits/:benefitId/dismiss',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
+    const { organizationId } = getV8Context(req);
+    const benefitId = typeof req.params.benefitId === 'string' ? req.params.benefitId.trim() : '';
+    if (!benefitId) {
+      return res.status(400).json({
+        error: 'benefitId is required',
+        code: 'RESULTS_BENEFIT_ID_REQUIRED',
+      });
+    }
+
+    const benefit = await dbGet<{ id: string; source_tag: string | null }>(
+      `SELECT id, source_tag FROM initiative_benefits
+        WHERE id = ? AND organization_id = ?`,
+      [benefitId, organizationId],
+      { fallback: true }
+    );
+    if (!benefit?.id || benefit.source_tag !== CLOSURE_HANDOFF_SOURCE) {
+      return res.status(404).json({
+        error: `Closure-handoff benefit ${benefitId} not found`,
+        code: 'RESULTS_BENEFIT_NOT_FOUND',
+      });
+    }
+
+    await dbRun(
+      `UPDATE initiative_benefits
+          SET status = 'dismissed', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND organization_id = ?`,
+      [benefitId, organizationId]
+    );
+
+    return res.json({ data: { success: true }, meta: resultsWriteMeta() });
+  })
+);
+
 // P04-B: KPI Workflow Status (degraded states)
 
 router.get(

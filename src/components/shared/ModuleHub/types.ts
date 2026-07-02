@@ -38,6 +38,7 @@ export type ModuleTab =
   | 'results_initiatives'
   | 'results_kpi'
   | 'results_reports'
+  | 'results_benefits_inbox'
   | 'roi'
   | 'all_kpis'
   | 'by_initiative'
