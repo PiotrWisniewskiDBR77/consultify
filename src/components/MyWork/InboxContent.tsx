@@ -580,6 +580,10 @@ const typeLabel: Record<InboxItemType, string> = {
   project_update: 'project',
 };
 
+// S1-U3b: cards view — max cards visible per section before "show more (N)".
+// 6 = two full rows on xl (3-col grid), one clean row on sm.
+const SECTION_CARD_LIMIT = 6;
+
 // ── Section config for smart grouping ──
 const SMART_SECTIONS: {
   id: InboxSection;
@@ -689,8 +693,7 @@ const AGING_STYLES = {
 const slaPill = (
   sla: InboxItem['sla']
 ): { label: string; className: string; dot: string; title?: string } => {
-  if (!sla)
-    return { label: '-', className: 'text-c-text-secondary', dot: 'bg-slate-400' };
+  if (!sla) return { label: '-', className: 'text-c-text-secondary', dot: 'bg-slate-400' };
   const abs = Math.abs(sla.remainingMs);
   const days = Math.floor(abs / 86400000);
   const hours = Math.floor((abs % 86400000) / 3600000);
@@ -1237,6 +1240,9 @@ const PreviewPane: React.FC<{
       : []),
   ];
 
+  // S1-U3a + Artifact Anatomy §9.2① — ONE primary action per panel
+  // ("Today" = the next-best triage), everything else secondary/neutral.
+  // Never a color-per-button rainbow (Today green / Save yellow / Done green…).
   const actionRows: ActionRow[] = [
     {
       buttons: [
@@ -1244,7 +1250,7 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Dziś' : 'Today',
           icon: Zap,
           onClick: () => onTriage('accept_today'),
-          colorScheme: 'emerald',
+          colorScheme: 'primary',
           flex: true,
           shortcut: 'T',
         },
@@ -1252,7 +1258,7 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Tydzień' : 'Week',
           icon: CalendarClock,
           onClick: () => onTriage('accept_week'),
-          colorScheme: 'blue',
+          colorScheme: 'neutral',
           flex: true,
           shortcut: 'W',
         },
@@ -1273,14 +1279,14 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Gotowe' : 'Done',
           icon: CheckCircle2,
           onClick: () => onTriage('done'),
-          colorScheme: 'green',
+          colorScheme: 'neutral',
           shortcut: 'D',
         },
         {
           label: isPolish ? 'Zapisz' : 'Save',
           icon: Bookmark,
           onClick: () => onTriage('save'),
-          colorScheme: 'amber',
+          colorScheme: 'neutral',
           shortcut: 'S',
         },
         ...(onSaveAsNote
@@ -1443,7 +1449,6 @@ const AIHintStrip: React.FC<{
   } | null;
   onClear: () => void;
 }> = ({ item, isPolish, loading, onRun, onApplyAction, result, onClear }) => {
-
   const hints = useMemo(() => {
     const isCritical = item.urgency === 'critical' || item.urgency === 'high';
     const isDecision = String(item._key || '').startsWith('decision:');
@@ -1535,7 +1540,9 @@ const AIHintStrip: React.FC<{
                       if (result) {
                         navigator.clipboard
                           .writeText(
-                            [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join('\n')
+                            [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join(
+                              '\n'
+                            )
                           )
                           .then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied'));
                       }
@@ -1692,6 +1699,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // Collapsed sections (for smart sections view)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+  // S1-U3b: sections view is capped per section ("wall of 152 cards" fix) —
+  // sections show up to SECTION_CARD_LIMIT cards + a "show more (N)" control.
+  const [uncappedSections, setUncappedSections] = useState<Set<string>>(new Set());
 
   // Preview pane (A3)
   const [previewItem, setPreviewItem] = useState<InboxItem | null>(null);
@@ -2444,10 +2455,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {/* Title */}
         <td className="px-3 py-3" style={{ width: columnWidths.title }}>
           <div className="flex items-center gap-2">
-            <span
-              className="text-sm font-semibold text-c-text truncate block"
-              title={item.title}
-            >
+            <span className="text-sm font-semibold text-c-text truncate block" title={item.title}>
               {item.title}
             </span>
             {item.suggestedAction && (
@@ -2771,9 +2779,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const hasFilter = isFilterable && col.filterOptions?.length;
           const isResizable = Boolean(col.resizable);
           // Canon §3.3: chip/text columns left-aligned (status/urgency/type/section/source).
-          const leftAligned = ['status', 'urgency', 'type', 'section', 'source', 'received'].includes(
-            colId
-          );
+          const leftAligned = [
+            'status',
+            'urgency',
+            'type',
+            'section',
+            'source',
+            'received',
+          ].includes(colId);
           // Canon §5/§27.O: every column except SLA is sortable (sla has no stable order).
           const isSortable = colId !== 'sla';
           return (
@@ -2798,7 +2811,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   </button>
                 ) : (
                   <span
-                    className={(tableFilters[colId] as string[])?.length ? 'text-c-text-secondary' : ''}
+                    className={
+                      (tableFilters[colId] as string[])?.length ? 'text-c-text-secondary' : ''
+                    }
                   >
                     {getColumnLabel(colId)}
                   </span>
@@ -2917,7 +2932,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           onClick={() => preview(item)}
           onDoubleClick={() => open(item)}
         >
-          <div className="p-3 flex flex-col gap-2.5">
+          <div className="p-2.5 flex flex-col gap-2">
             {/* Row 1: Title + actions */}
             <div className="flex items-start gap-2">
               <button
@@ -2940,7 +2955,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-1.5">
                   <h3
-                    className="text-[13px] font-semibold text-c-text leading-snug line-clamp-2"
+                    className="text-[13px] font-semibold text-c-text leading-snug line-clamp-1"
                     title={item.title}
                   >
                     {item.title}
@@ -3032,13 +3047,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
             {/* Row 2: Brief */}
             {showRowDescription && cardBriefText ? (
-              <p className="-mt-0.5 line-clamp-2 text-[11px] leading-4 text-c-text-muted">
+              <p className="-mt-0.5 line-clamp-1 text-[11px] leading-4 text-c-text-muted">
                 {cardBriefText}
               </p>
             ) : null}
 
-            {/* Row 3: Meta pills */}
+            {/* Row 3: Meta pills (incl. status — no reserved hover row, S1-U3b) */}
             <div className="flex flex-wrap items-center gap-1.5">
+              {renderStatusPill(item)}
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${kindCfg.pill}`}
               >
@@ -3103,40 +3119,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               </div>
             ) : null}
 
-            {/* Row 5: Quick actions (visible on hover) */}
-            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity -mt-0.5">
-              {renderStatusPill(item)}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  triage(item, 'accept_today');
-                }}
-                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-emerald-300/40 dark:border-emerald-500/20 bg-transparent text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
-              >
-                <Zap size={10} />
-                {isPolish ? 'Dziś' : 'Today'}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  triage(item, 'done');
-                }}
-                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-emerald-300/40 dark:border-emerald-500/20 bg-transparent text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
-              >
-                <CheckCircle2 size={10} />
-                {isPolish ? 'Gotowe' : 'Done'}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  triage(item, 'dismiss');
-                }}
-                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-c-border-subtle bg-transparent text-c-text-muted hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors"
-              >
-                <Archive size={10} />
-                {isPolish ? 'Odłóż' : 'Dismiss'}
-              </button>
-            </div>
+            {/* S1-U3b: no reserved hover-actions row — triage lives in the
+                kebab + preview panel; status pill moved into the meta row.
+                Cards stay compact so sections fit the viewport. */}
           </div>
         </div>
       );
@@ -3180,23 +3165,67 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 </button>
               </div>
 
-              {!isCollapsed && (
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {sectionData.flatMap((group) => {
+              {!isCollapsed &&
+                (() => {
+                  // S1-U3b: flatten groups, then cap the section height —
+                  // max SECTION_CARD_LIMIT cards + "show more (N)" instead of
+                  // an unbounded vertical wall.
+                  const flatCards = sectionData.flatMap((group) => {
                     const itemsToRender =
                       group.count > 1 && expandedGroups.has(group.key)
                         ? group.items
                         : [group.representative];
-                    return itemsToRender.map((it, idx) =>
-                      renderCard(
-                        it,
-                        idx === 0 ? group.count : undefined,
-                        idx === 0 ? group.key : undefined
-                      )
-                    );
-                  })}
-                </div>
-              )}
+                    return itemsToRender.map((it, idx) => ({
+                      it,
+                      groupCount: idx === 0 ? group.count : undefined,
+                      groupKey: idx === 0 ? group.key : undefined,
+                    }));
+                  });
+                  const isUncapped = uncappedSections.has(section.id);
+                  const visibleCards = isUncapped
+                    ? flatCards
+                    : flatCards.slice(0, SECTION_CARD_LIMIT);
+                  const hiddenCount = flatCards.length - visibleCards.length;
+                  const toggleCap = () =>
+                    setUncappedSections((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(section.id)) next.delete(section.id);
+                      else next.add(section.id);
+                      return next;
+                    });
+
+                  return (
+                    <>
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                        {visibleCards.map(({ it, groupCount, groupKey }) =>
+                          renderCard(it, groupCount, groupKey)
+                        )}
+                      </div>
+                      {hiddenCount > 0 ? (
+                        <button
+                          type="button"
+                          onClick={toggleCap}
+                          data-testid={`inbox-section-show-more-${section.id}`}
+                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                        >
+                          <ChevronDown size={12} />
+                          {isPolish
+                            ? `Pokaż więcej (${hiddenCount})`
+                            : `Show more (${hiddenCount})`}
+                        </button>
+                      ) : isUncapped && flatCards.length > SECTION_CARD_LIMIT ? (
+                        <button
+                          type="button"
+                          onClick={toggleCap}
+                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                        >
+                          <ChevronUp size={12} />
+                          {isPolish ? 'Pokaż mniej' : 'Show less'}
+                        </button>
+                      ) : null}
+                    </>
+                  );
+                })()}
             </div>
           );
         })}
@@ -3233,10 +3262,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // Render
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div
-      className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg"
-      ref={tableRef}
-    >
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg" ref={tableRef}>
       {/* Main content + Preview pane */}
       <div className="flex-1 flex min-h-0 gap-1.5">
         {/* Table content */}
@@ -3299,10 +3325,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Preview Pane (A3) */}
         {previewItem && (
-          <div
-            className="shrink-0 bg-c-bg p-3"
-            style={{ width: 'clamp(340px, 28%, 480px)' }}
-          >
+          <div className="shrink-0 bg-c-bg p-3" style={{ width: 'clamp(340px, 28%, 480px)' }}>
             <PreviewPane
               item={previewItem}
               isPolish={isPolish}

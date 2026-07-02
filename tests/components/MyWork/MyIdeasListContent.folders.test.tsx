@@ -7,22 +7,23 @@
  *           and must offer a clear way back to "All ideas" (no folder trap).
  */
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── i18n: force English so assertions are stable ──
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string, fallback?: unknown) => {
-      if (typeof fallback === 'string') return fallback;
-      if (fallback && typeof fallback === 'object' && 'defaultValue' in (fallback as any)) {
-        return String((fallback as any).defaultValue);
-      }
-      return key;
-    },
-    i18n: { language: 'en' },
-  }),
-}));
+vi.mock('react-i18next', () => {
+  // Stable identities: a fresh `t` per render churns useCallback deps inside
+  // MyIdeasListContent (fetchIdeas → fetch effect) into a render loop.
+  const t = (key: string, fallback?: unknown) => {
+    if (typeof fallback === 'string') return fallback;
+    if (fallback && typeof fallback === 'object' && 'defaultValue' in (fallback as any)) {
+      return String((fallback as any).defaultValue);
+    }
+    return key;
+  };
+  const bundle = { t, i18n: { language: 'en' } };
+  return { useTranslation: () => bundle };
+});
 
 // ── network-touching primitives / hooks stubbed to no-ops ──
 vi.mock('react-hot-toast', () => ({
@@ -151,25 +152,40 @@ describe('MyIdeasListContent — folders (H2.1 / H2.2)', () => {
 
   it('BUG 2: an empty folder shows a folder-scoped empty state + a back-to-all exit, NOT the global Idea Garden', async () => {
     // 110 ideas exist globally, but none in FOLDER → folder view is empty.
+    // S1-U1: the in-content folder pill bar is gone — folder selection lives in
+    // the hub's Command Row (Menu 3) and is driven via the home-shell payload.
     getMyIdeasMock.mockResolvedValue(makeIdeas(110, null));
-    renderList();
 
-    // Enter the folder via its pill (folder bar renders once folders load).
-    const pill = await screen.findByText('Roadmap');
-    fireEvent.click(pill);
+    let shell: import('../../../src/components/MyWork/myIdeasTypes').IdeasHomeShellPayload | null =
+      null;
+    render(
+      <MyIdeasListContent
+        viewMode="table"
+        searchQuery=""
+        stageFilter="all"
+        onIdeaClick={vi.fn()}
+        onCreateIdea={vi.fn()}
+        onCountsChange={vi.fn()}
+        onHomeShellChange={(p) => {
+          shell = p;
+        }}
+      />
+    );
+
+    // Home-shell publishes once folders load — then enter the folder like the
+    // hub's Folder ▾ dropdown would.
+    await waitFor(() => expect(shell?.foldersAvailable).toBe(true));
+    act(() => shell!.selectFolder('fold-1'));
 
     // Folder-scoped empty state — NOT the misleading global CTA.
     const emptyPanel = await screen.findByTestId('ideas-folder-empty');
     expect(within(emptyPanel).getByText('This folder is empty')).toBeTruthy();
     expect(screen.queryByText('Your Idea Garden awaits')).toBeNull();
 
-    // A clear way out of the folder must exist (both the empty-state button and the breadcrumb).
-    expect(screen.getByTestId('ideas-folder-empty-back')).toBeTruthy();
-    const breadcrumbBack = screen.getByTestId('ideas-folder-breadcrumb-back');
-    expect(breadcrumbBack).toBeTruthy();
-
-    // Clicking back returns to the full list (no longer empty).
-    fireEvent.click(breadcrumbBack);
+    // A clear way out of the folder must exist (the empty-state back button;
+    // the hub Folder chip is the second exit, outside this component).
+    const backBtn = screen.getByTestId('ideas-folder-empty-back');
+    fireEvent.click(backBtn);
     await waitFor(() => expect(screen.queryByTestId('ideas-folder-empty')).toBeNull());
   });
 });

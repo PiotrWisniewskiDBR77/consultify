@@ -41,6 +41,11 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  FOCUSED_ROW_CLASS,
+  PREVIEW_SELECTED_ROW_CLASS,
+  SELECTED_ROW_CLASS,
+} from '@/components/shared/selectionTokens';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
@@ -55,7 +60,6 @@ import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import type { IdeaConvertTarget as SsotConvertTarget } from './ideaConvertTargets';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
-import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS, FOCUSED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
 // Narrowed subset of the SSOT convert union (ideaConvertTargets.ts) — the row kebab
 // offers only these four live targets.
@@ -198,8 +202,7 @@ const TOOL_META: Record<
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
     icon: Network,
-    badge:
-      'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconClass: 'text-primary-600 dark:text-primary-300',
     iconColorVar: 'var(--c-accent)',
   },
@@ -207,8 +210,7 @@ const TOOL_META: Record<
     label: 'Table',
     labelPl: 'Tabela',
     icon: Table2,
-    badge:
-      'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconClass: 'text-sky-600 dark:text-sky-300',
     iconColorVar: 'var(--c-info)',
   },
@@ -216,8 +218,7 @@ const TOOL_META: Record<
     label: 'Process Flow',
     labelPl: 'Proces',
     icon: Workflow,
-    badge:
-      'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconClass: 'text-emerald-600 dark:text-emerald-300',
     iconColorVar: 'var(--c-success)',
   },
@@ -225,8 +226,7 @@ const TOOL_META: Record<
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
     icon: PenTool,
-    badge:
-      'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconClass: 'text-amber-600 dark:text-amber-300',
     iconColorVar: 'var(--c-warning)',
   },
@@ -554,9 +554,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
     const metaTrailing = (
       <div className="flex flex-wrap items-center justify-end gap-1.5">
-        <span className="text-[11px] font-medium text-c-text-muted">
-          {formatIdeaDate(idea)}
-        </span>
+        <span className="text-[11px] font-medium text-c-text-muted">{formatIdeaDate(idea)}</span>
       </div>
     );
 
@@ -688,7 +686,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         renderPreview={renderPreview}
         renderPreviewFooter={renderPreviewFooter}
       >
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ 
+        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */
           className="w-full table-fixed bg-c-bg"
           style={{ minWidth: tableMinWidth }}
         >
@@ -1132,7 +1130,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   }`}
                 >
                   <td
-                    className="relative px-2 py-3 align-middle"
+                    className="relative px-2 py-2.5 align-middle"
                     style={{ width: columnWidths.select }}
                   >
                     {rowAccentClass ? (
@@ -1157,7 +1155,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       />
                     </label>
                   </td>
-                  <td className="px-3 py-3 align-middle" style={{ width: columnWidths.title }}>
+                  <td className="px-3 py-2.5 align-middle" style={{ width: columnWidths.title }}>
                     <div className="flex items-center gap-1.5">
                       {onToggleFavorite ? (
                         <button
@@ -1196,7 +1194,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   </td>
                   {isColumnVisible('stage') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.stage }}
                     >
                       {renderStageBadge(idea.stage)}
@@ -1204,7 +1202,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('tags') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.tags }}
                     >
                       {renderTagBadges(idea.tags)}
@@ -1212,7 +1210,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('tool') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.tool }}
                     >
                       {renderToolBadge(idea.preferredTool)}
@@ -1220,14 +1218,14 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('date') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle text-[11px] font-medium leading-5 text-c-text-muted group-hover:text-c-text-secondary"
+                      className="px-3 py-2.5 text-left align-middle text-[11px] font-medium leading-5 text-c-text-muted group-hover:text-c-text-secondary"
                       style={{ width: columnWidths.date }}
                     >
                       {formatIdeaDate(idea)}
                     </td>
                   ) : null}
                   <td
-                    className="px-3 py-3 text-right align-middle"
+                    className="px-3 py-2.5 text-right align-middle"
                     style={{ width: columnWidths.actions }}
                     onClick={(event) => event.stopPropagation()}
                   >

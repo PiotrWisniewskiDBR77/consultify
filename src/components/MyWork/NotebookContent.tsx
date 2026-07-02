@@ -21,9 +21,9 @@ import {
   Clock,
   FileText,
   History,
-  MoreHorizontal,
   Layers,
   Lightbulb,
+  MoreHorizontal,
   Network,
   Paperclip,
   Pen,
@@ -76,28 +76,34 @@ import {
   NotebookImage,
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
-import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
-import {
-  NotebookHamburgerMenu,
-  type NotebookConvertTarget,
-} from './notebook/NotebookHamburgerMenu';
 import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
+import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
+import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
+import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
+import { NotebookExportMenu } from './notebook/NotebookExportMenu';
+import { NotebookGraphView } from './notebook/NotebookGraphView';
+import {
+  type NotebookConvertTarget,
+  NotebookHamburgerMenu,
+} from './notebook/NotebookHamburgerMenu';
 import {
   detectMentionTrigger,
   INITIAL_MENTION_STATE,
   type MentionEntity,
-  type MentionMenuState,
   mentionEntityToEmbedRef,
+  type MentionMenuState,
   NotebookMentionMenu,
 } from './notebook/NotebookMentionMenu';
 import { NotebookProgressChip } from './notebook/NotebookProgressChip';
+import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
-import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
-import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
-import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
+import { NotebookTopicChips } from './notebook/NotebookTopicChips';
+import { NotebookTopicView } from './notebook/NotebookTopicView';
+import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
+import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import {
   detectSlashTrigger,
   INITIAL_SLASH_STATE,
@@ -105,12 +111,6 @@ import {
   type SlashMenuState,
 } from './notebook/SlashMenu';
 import { buildAskAIMessage } from './shared/askAiHelper';
-import { NotebookExportMenu } from './notebook/NotebookExportMenu';
-import { NotebookGraphView } from './notebook/NotebookGraphView';
-import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
-import { NotebookTopicChips } from './notebook/NotebookTopicChips';
-import { NotebookTopicView } from './notebook/NotebookTopicView';
-import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
 
 interface NotebookContentProps {
   projectId?: string | null;
@@ -1133,8 +1133,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   );
   // A page is "to review" when its knowledge is disputed/stale or still in inbox.
   const isToReviewPage = useCallback(
-    (p: NotebookPage) =>
-      p.verificationStatus === 'disputed' || !!p.staleAt || p.status === 'inbox',
+    (p: NotebookPage) => p.verificationStatus === 'disputed' || !!p.staleAt || p.status === 'inbox',
     []
   );
   // "Fresh" = arrived via a capture source (quick-capture, email, file, canvas).
@@ -1877,10 +1876,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`,
-          { headers: getHeaders() }
-        );
+        const res = await fetch(`${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`, {
+          headers: getHeaders(),
+        });
         if (!res.ok || cancelled) return;
         const json = await res.json();
         if (!cancelled) setCoverUrl(json?.data?.coverUrl ?? null);
@@ -1902,14 +1900,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       const { API_URL, getHeaders } = apiModule;
       if (typeof getHeaders !== 'function' || !API_URL) return;
       try {
-        const res = await fetch(
-          `${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`,
-          {
-            method: 'PUT',
-            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ coverUrl: nextCover }),
-          }
-        );
+        const res = await fetch(`${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`, {
+          method: 'PUT',
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coverUrl: nextCover }),
+        });
         if (!res.ok) throw new Error(String(res.status));
       } catch {
         setCoverUrl(previous); // rollback
@@ -1925,7 +1920,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     (file: File) => {
       if (!file.type.startsWith('image/')) return;
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(isPolish ? 'Okładka jest zbyt duża (max 5 MB)' : 'Cover is too large (max 5 MB)');
+        toast.error(
+          isPolish ? 'Okładka jest zbyt duża (max 5 MB)' : 'Cover is too large (max 5 MB)'
+        );
         return;
       }
       const reader = new FileReader();
@@ -2186,9 +2183,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       navigate(chatUrl);
     } catch (error: any) {
       console.error('Failed to expand note into Canvas document', error);
-      toast.error(
-        isPolish ? 'Nie udało się utworzyć dokumentu' : 'Failed to create the document'
-      );
+      toast.error(isPolish ? 'Nie udało się utworzyć dokumentu' : 'Failed to create the document');
     } finally {
       setIsExpandingToDocument(false);
     }
@@ -2449,8 +2444,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               {(() => {
                 // A lens/filter is narrowing an otherwise non-empty notebook →
                 // say "no matches", not "create your first page".
-                const isFiltered =
-                  statusTab !== 'all' || scopeLens !== 'all' || viewLens !== 'all';
+                const isFiltered = statusTab !== 'all' || scopeLens !== 'all' || viewLens !== 'all';
                 const hasAnyPages = pages.length > 0;
                 if (isFiltered && hasAnyPages) {
                   return (
@@ -2507,16 +2501,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       }}
                       className="w-full text-left px-3 py-2.5"
                     >
+                      {/* S1-U2a: Ideas-list row anatomy — leading signal dot
+                          ("szyna skanu" §14.2), L2 title, L5 meta, neutral
+                          chip shells with color only in the dot. */}
                       <div className="flex items-start gap-2">
-                        <span className="text-lg leading-none mt-0.5 shrink-0">
-                          {p.icon && /\p{Emoji}/u.test(p.icon) ? p.icon : matCfg.icon}
-                        </span>
+                        {p.icon && /\p{Emoji}/u.test(p.icon) ? (
+                          <span className="text-sm leading-none mt-0.5 shrink-0">{p.icon}</span>
+                        ) : null}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot}`} />
-                            {p.pinned && <Pin size={9} className="text-amber-500 shrink-0" />}
+                            {p.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
                             {p.visibility === 'project' && (
-                              <Users size={9} className="text-blue-400 shrink-0" />
+                              <Users size={10} className="text-c-text-muted shrink-0" />
                             )}
                             <span
                               className={`font-semibold text-[13px] truncate flex-1 ${
@@ -2528,7 +2525,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                             </span>
                             {timeAgo && (
-                              <span className="text-[9px] text-slate-600 dark:text-slate-500 shrink-0 tabular-nums">
+                              <span className="text-[10px] text-c-text-muted shrink-0 tabular-nums">
                                 {timeAgo}
                               </span>
                             )}
@@ -2541,9 +2538,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           )}
 
                           <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                            <span
-                              className={`inline-flex items-center gap-0.5 rounded-md ${matCfg.bg} ${matCfg.text} px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide`}
-                            >
+                            <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
                               <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
                               {isPolish ? matCfg.labelPl : matCfg.label}
                             </span>
@@ -2703,7 +2698,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           ) : !activePage && pagesError ? (
             <div className="flex h-full items-center justify-center p-8">
               <div className="text-center">
-                <AlertTriangle size={36} className="mx-auto mb-3 text-slate-400 dark:text-slate-500" />
+                <AlertTriangle
+                  size={36}
+                  className="mx-auto mb-3 text-slate-400 dark:text-slate-500"
+                />
                 <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
                   {isPolish ? 'Nie udało się wczytać notatek.' : 'Failed to load notes.'}
                 </p>
@@ -2982,8 +2980,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           value={activePage.icon ?? null}
                           fallback={
                             (
-                              MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] ||
-                              MATURITY_CONFIG.seed
+                              MATURITY_CONFIG[
+                                (activePage.maturity as NotebookMaturity) || 'seed'
+                              ] || MATURITY_CONFIG.seed
                             ).icon
                           }
                           onChange={handleChangeIcon}
@@ -3504,11 +3503,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <X size={13} />
               </button>
             </div>
-            <NotebookGraphView
-              pageId={activePage.id}
-              pageTitle={title}
-              isPolish={isPolish}
-            />
+            <NotebookGraphView pageId={activePage.id} pageTitle={title} isPolish={isPolish} />
           </div>
         )}
 
@@ -3522,18 +3517,23 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           allPages={pages}
           editor={editor}
           noteTitle={title}
-          noteContent={activePage ? (activePage.contentText || extractText(activePage.contentJson)) : ''}
+          noteContent={
+            activePage ? activePage.contentText || extractText(activePage.contentJson) : ''
+          }
           noteTags={pageTags}
           notePage={
             activePage
               ? {
                   id: activePage.id,
-                  maturity: (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
+                  maturity:
+                    (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
                   summary: activePage.summary,
                   updatedAt: activePage.updatedAt,
                   visibility: (activePage.visibility as NotebookVisibility) || 'private',
                   projectId: activePage.projectId,
-                  wordCount: wordCount(activePage.contentText || extractText(activePage.contentJson)),
+                  wordCount: wordCount(
+                    activePage.contentText || extractText(activePage.contentJson)
+                  ),
                 }
               : undefined
           }

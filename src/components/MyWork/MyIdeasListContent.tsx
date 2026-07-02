@@ -10,7 +10,6 @@ import {
   Flower2,
   Folder,
   FolderMinus,
-  FolderPlus,
   GitBranch,
   Lightbulb,
   Link2,
@@ -66,6 +65,7 @@ import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './
 import { IdeasTableContent } from './IdeasTableContent';
 import type {
   IdeasBulkBarPayload,
+  IdeasHomeShellPayload,
   IdeaStage,
   IdeasViewMode,
   MyIdea,
@@ -103,6 +103,11 @@ interface MyIdeasListContentProps {
     promoted: number;
   }) => void;
   onBulkBarChange?: (payload: IdeasBulkBarPayload | null) => void;
+  /**
+   * S1-U1: publishes folders/starred/recents state UP so the hub's Command Row
+   * absorbs them as dropdown chips (single dynamic line, no extra rows).
+   */
+  onHomeShellChange?: (payload: IdeasHomeShellPayload | null) => void;
   refreshTrigger?: number;
 }
 
@@ -155,7 +160,8 @@ const STAGE_CONFIG: Record<
     color: 'text-danger-500',
     bgColor: 'bg-danger-500/10 dark:bg-danger-500/15',
     borderColor: 'border-danger-400/30 dark:border-danger-500/20',
-    badgeBg: 'border border-danger-200/70 bg-danger-50 dark:border-danger-300/15 dark:bg-danger-300/10',
+    badgeBg:
+      'border border-danger-200/70 bg-danger-50 dark:border-danger-300/15 dark:bg-danger-300/10',
     badgeText: 'text-danger-800 dark:text-danger-200',
   },
 };
@@ -180,8 +186,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-blue-400/30',
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
-    badgeClass:
-      'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-primary-600 dark:text-primary-300',
   },
   table: {
@@ -191,8 +196,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-sky-400/30',
     label: 'Table',
     labelPl: 'Tabela',
-    badgeClass:
-      'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-sky-600 dark:text-sky-300',
   },
   process_flow: {
@@ -202,8 +206,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-emerald-400/30',
     label: 'Process Flow',
     labelPl: 'Proces',
-    badgeClass:
-      'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   whiteboard: {
@@ -213,8 +216,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-amber-400/30',
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
-    badgeClass:
-      'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-amber-600 dark:text-amber-300',
   },
 };
@@ -342,6 +344,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   onCreateIdea,
   onCountsChange,
   onBulkBarChange,
+  onHomeShellChange,
   refreshTrigger,
 }) => {
   const { t, i18n } = useTranslation();
@@ -510,136 +513,50 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     [activeFolderId, fetchIdeas, isPolish]
   );
 
-  // M2/C: home-shell bar (folders + starred + recents) shared across the
-  // table / grid / garden views so the home is consistent everywhere.
-  const activeFolderInBar = activeFolderId
-    ? folders.find((f) => f.id === activeFolderId)
-    : null;
-
-  const homeShellBar = (
-    <>
-      {/* Folder breadcrumb / back — the explicit way OUT of a folder. Without this,
-          entering a folder is a trap (the top breadcrumb only shows My Work › Ideas). */}
-      {foldersAvailable && activeFolderInBar && (
-        <div
-          className="flex items-center gap-2 px-4 pt-3 text-xs"
-          data-testid="ideas-folder-breadcrumb"
-        >
-          <button
-            type="button"
-            onClick={() => setActiveFolderId(null)}
-            data-testid="ideas-folder-breadcrumb-back"
-            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800"
-          >
-            <ChevronLeft size={13} />
-            {isPolish ? 'Wszystkie pomysły' : 'All ideas'}
-          </button>
-          <ChevronRight size={13} className="text-slate-400 dark:text-slate-600" />
-          <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-200">
-            <Folder size={13} />
-            <span className="max-w-[220px] truncate">{activeFolderInBar.name}</span>
-          </span>
-        </div>
-      )}
-      {/* folders bar (only once the folders endpoint is live) */}
-      {foldersAvailable && (
-        <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
-          <button
-            type="button"
-            onClick={() => setActiveFolderId(null)}
-            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-              !activeFolderId
-                ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
-                : 'border-c-border bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
-            }`}
-          >
-            {isPolish ? 'Wszystkie' : 'All'}
-          </button>
-          {folders.map((f) => (
-            <span key={f.id} className="inline-flex items-center">
-              <button
-                type="button"
-                onClick={() => setActiveFolderId(f.id)}
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                  activeFolderId === f.id
-                    ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
-                    : 'border-c-border bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
-                }`}
-              >
-                <Folder size={12} />
-                <span className="max-w-[140px] truncate">{f.name}</span>
-              </button>
-              {activeFolderId === f.id && (
-                <button
-                  type="button"
-                  onClick={() => handleDeleteFolder(f.id)}
-                  title={isPolish ? 'Usuń folder' : 'Delete folder'}
-                  aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
-                  className="ml-0.5 rounded-full p-0.5 text-c-text-muted hover:text-c-danger"
-                >
-                  <X size={12} />
-                </button>
-              )}
-            </span>
-          ))}
-          <button
-            type="button"
-            onClick={handleCreateFolder}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-c-border px-2.5 py-1 text-xs font-medium text-c-text-muted hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-          >
-            <FolderPlus size={12} />
-            {isPolish ? 'Nowy folder' : 'New folder'}
-          </button>
-        </div>
-      )}
-      {/* "Starred only" filter toggle (shown once anything is starred) */}
-      {(showStarredOnly || ideas.some((i) => isFavorite(i.id))) && (
-        <div className="px-4 pt-3">
-          <button
-            type="button"
-            onClick={() => setShowStarredOnly((v) => !v)}
-            aria-pressed={showStarredOnly}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              showStarredOnly
-                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
-                : 'border-c-border bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
-            }`}
-          >
-            <Star size={13} className={showStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
-            {isPolish ? 'Tylko oznaczone' : 'Starred only'}
-          </button>
-        </div>
-      )}
-      {/* "Recently opened" rail (localStorage-backed, per device) */}
-      {recentIdeas.length > 0 && (
-        <div className="px-4 pt-3" data-testid="ideas-recents-rail">
-          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-            {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {recentIdeas.map((idea) => {
-              const tc = getToolConfig(idea.preferredTool);
-              const ToolIcon = tc.icon;
-              return (
-                <button
-                  key={idea.id}
-                  type="button"
-                  onClick={() => openIdea(idea.id, idea)}
-                  title={idea.title || ''}
-                  className="flex shrink-0 items-center gap-1.5 rounded-xl border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text-secondary shadow-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                >
-                  <ToolIcon size={13} className="text-c-text-muted" />
-                  <span className="max-w-[160px] truncate">
-                    {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </>
+  // S1-U1: folders + starred + recents are NOT extra rows above the table any
+  // more — the state is published UP to the hub, which absorbs it into the
+  // single Command Row (Menu 3) as dropdown chips.
+  const starredCount = useMemo(
+    () => ideas.reduce((acc, i) => acc + (isFavorite(i.id) ? 1 : 0), 0),
+    [ideas, isFavorite]
   );
+
+  useEffect(() => {
+    if (!onHomeShellChange) return;
+    onHomeShellChange({
+      foldersAvailable,
+      folders,
+      activeFolderId,
+      starredCount,
+      showStarredOnly,
+      recents: recentIdeas.map((idea) => ({
+        id: idea.id,
+        title: idea.title || (isPolish ? 'Bez tytułu' : 'Untitled'),
+      })),
+      selectFolder: (folderId) => setActiveFolderId(folderId),
+      createFolder: handleCreateFolder,
+      deleteFolder: handleDeleteFolder,
+      toggleStarredOnly: () => setShowStarredOnly((v) => !v),
+      openRecent: (ideaId) => {
+        const idea = ideas.find((i) => i.id === ideaId);
+        if (idea) openIdea(idea.id, idea);
+      },
+    });
+    return () => onHomeShellChange(null);
+  }, [
+    onHomeShellChange,
+    foldersAvailable,
+    folders,
+    activeFolderId,
+    starredCount,
+    showStarredOnly,
+    recentIdeas,
+    ideas,
+    isPolish,
+    handleCreateFolder,
+    handleDeleteFolder,
+    openIdea,
+  ]);
 
   useEffect(() => {
     const counts = {
@@ -852,7 +769,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     setSelectedIds((prev) => {
       const next = new Set<string>();
       for (const id of prev) if (visibleIdeaIds.has(id)) next.add(id);
-      return next;
+      // Keep the previous identity when nothing was pruned — a fresh Set every
+      // pass re-renders and can loop when upstream memo identities are unstable.
+      return next.size === prev.size ? prev : next;
     });
   }, [visibleIdeaIds]);
 
@@ -1696,7 +1615,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   // Empty state is context-aware: an empty *folder* must NOT show the global
   // "Idea Garden awaits" CTA (misleading when ALL=110). It shows a folder-scoped
   // message plus a clear way back to "All".
-  const activeFolder = activeFolderInBar;
+  const activeFolder = activeFolderId
+    ? (folders.find((f) => f.id === activeFolderId) ?? null)
+    : null;
 
   const renderEmpty = () => {
     if (activeFolder) {
@@ -1766,7 +1687,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           {convertModal}
           {tagModal}
           {confirmDialog}
-          {homeShellBar}
           <div className="mt-4 px-4 pb-4">{renderEmpty()}</div>
         </div>
       );
@@ -1777,7 +1697,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
-        {homeShellBar}
         {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
         <div className="flex flex-col flex-1 min-h-0">
           <IdeasTableContent
@@ -1842,7 +1761,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           {convertModal}
           {tagModal}
           {confirmDialog}
-          {homeShellBar}
           <div className="mt-4 px-4 pb-4">{renderEmpty()}</div>
         </div>
       );
@@ -1853,7 +1771,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
-        {homeShellBar}
         <div className="flex flex-col flex-1 min-h-0">
           <TableWithPreviewLayout<MyIdea>
             selectedId={previewIdeaId}
@@ -1897,7 +1814,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         'border border-c-border-subtle',
                         'bg-c-surface',
                         'hover:shadow-md hover:-translate-y-px transition-all duration-150',
-                        isPreviewSelected || isSelected ? 'ring-2 ring-c-border-strong dark:ring-white/20' : '',
+                        isPreviewSelected || isSelected
+                          ? 'ring-2 ring-c-border-strong dark:ring-white/20'
+                          : '',
                       ].join(' ')}
                     >
                       {/* Zone 1 — Badge row (stage · tool) + kebab */}
@@ -1943,9 +1862,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
                       {/* Zone 3 — Description (when available) */}
                       {idea.body && (
-                        <p className="mt-1 text-xs text-c-text-muted line-clamp-2">
-                          {idea.body}
-                        </p>
+                        <p className="mt-1 text-xs text-c-text-muted line-clamp-2">{idea.body}</p>
                       )}
 
                       {/* Zone 4 — Stats footer: tags · updated date */}
@@ -1988,7 +1905,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
-        {homeShellBar}
         <div className="p-4">{renderEmpty()}</div>
       </div>
     );
@@ -1999,7 +1915,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       {convertModal}
       {tagModal}
       {confirmDialog}
-      {homeShellBar}
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-primary-400/20 dark:from-amber-500/15 dark:to-primary-500/15">
@@ -2020,10 +1935,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {tagGroups.map(([tag, groupIdeas]) => {
           const isCollapsed = collapsedTags.has(tag);
           return (
-            <div
-              key={tag}
-              className="rounded-xl border border-c-border-subtle overflow-hidden"
-            >
+            <div key={tag} className="rounded-xl border border-c-border-subtle overflow-hidden">
               <button
                 onClick={() => toggleTagCollapse(tag)}
                 className="w-full flex items-center gap-2.5 px-4 py-3 bg-c-surface-raised hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors text-left"
@@ -2034,9 +1946,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   <ChevronDown size={14} className="text-c-text-muted" />
                 )}
                 <Tag size={14} className="text-amber-500" />
-                <span className="text-sm font-semibold text-c-text-secondary">
-                  {tag}
-                </span>
+                <span className="text-sm font-semibold text-c-text-secondary">{tag}</span>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
                   {groupIdeas.length}
                 </span>
