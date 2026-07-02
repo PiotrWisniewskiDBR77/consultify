@@ -348,7 +348,7 @@ export function InitiativesGenerationWizardModal(props: {
         {/* Header */}
         <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <div className="p-2 rounded-xl bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
@@ -406,7 +406,7 @@ export function InitiativesGenerationWizardModal(props: {
                       className={cn(
                         'p-3 rounded-xl border text-left transition-all',
                         mode === opt.value
-                          ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/30'
+                          ? 'border-slate-400 bg-slate-100 ring-1 ring-slate-300/60 dark:border-white/[0.25] dark:bg-white/[0.08] dark:ring-white/[0.10]'
                           : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600'
                       )}
                     >
@@ -414,7 +414,7 @@ export function InitiativesGenerationWizardModal(props: {
                         className={cn(
                           'text-sm font-medium',
                           mode === opt.value
-                            ? 'text-emerald-700 dark:text-emerald-300'
+                            ? 'text-slate-900 dark:text-white'
                             : 'text-slate-900 dark:text-white'
                         )}
                       >
@@ -446,7 +446,7 @@ export function InitiativesGenerationWizardModal(props: {
                       'w-full h-11 px-4 rounded-xl border text-sm',
                       'border-slate-200 bg-white text-slate-900',
                       'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
-                      'focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/40'
+                      'focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid'
                     )}
                   >
                     <option value="">— wybierz ocenę —</option>
@@ -482,7 +482,7 @@ export function InitiativesGenerationWizardModal(props: {
                         'w-full h-11 px-4 rounded-xl border text-sm',
                         'border-slate-200 bg-white text-slate-900',
                         'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
-                        'focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/40'
+                        'focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid'
                       )}
                     >
                       <option value="">— wybierz raport —</option>
@@ -519,7 +519,7 @@ export function InitiativesGenerationWizardModal(props: {
                       'w-full h-11 px-4 rounded-xl border text-sm',
                       'border-slate-200 bg-white text-slate-900',
                       'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
-                      'focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/40'
+                      'focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid'
                     )}
                   >
                     <option value="">— wybierz template —</option>
@@ -552,7 +552,7 @@ export function InitiativesGenerationWizardModal(props: {
                       'w-full h-11 px-4 rounded-xl border text-sm',
                       'border-slate-200 bg-white text-slate-900',
                       'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
-                      'focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/40'
+                      'focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid'
                     )}
                   >
                     <option value="impact-feasibility">Impact × Feasibility</option>
@@ -585,7 +585,7 @@ export function InitiativesGenerationWizardModal(props: {
                         'flex-1 h-11 px-3 text-center rounded-xl border text-sm',
                         'border-slate-200 bg-white text-slate-900',
                         'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
-                        'focus:outline-none focus:ring-2 focus:ring-emerald-500/25'
+                        'focus:outline-none focus:ring-2 focus:ring-c-focus'
                       )}
                     />
                     <button
@@ -621,7 +621,7 @@ export function InitiativesGenerationWizardModal(props: {
                         type="checkbox"
                         checked={includeChatContext}
                         onChange={(e) => setIncludeChatContext(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        className="w-4 h-4 rounded border-slate-300 text-navy-900 focus:ring-c-focus"
                       />
                       <span className="text-sm text-slate-700 dark:text-slate-200">
                         Uwzględnij kontekst czatu
@@ -651,9 +651,9 @@ export function InitiativesGenerationWizardModal(props: {
           ) : phase === 'running' ? (
             <div className="py-10 flex flex-col items-center justify-center text-center">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full border-4 border-emerald-200 dark:border-emerald-800" />
-                <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-                <Sparkles size={24} className="absolute inset-0 m-auto text-emerald-500" />
+                <div className="w-16 h-16 rounded-full border-4 border-slate-200 dark:border-white/[0.12]" />
+                <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-navy-900 dark:border-slate-100 border-t-transparent animate-spin" />
+                <Sparkles size={24} className="absolute inset-0 m-auto text-slate-500 dark:text-slate-300" />
               </div>
               <div className="mt-4 text-base font-semibold text-slate-900 dark:text-white">
                 Generowanie inicjatyw…
@@ -744,7 +744,7 @@ export function InitiativesGenerationWizardModal(props: {
                 type="button"
                 disabled={!canStart || starting}
                 onClick={startRun}
-                className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
+                className="px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-navy-950 text-sm font-medium transition-colors inline-flex items-center gap-2"
               >
                 {starting ? (
                   <>
@@ -804,7 +804,7 @@ export function InitiativesGenerationWizardModal(props: {
                   onCompleted?.();
                   onClose();
                 }}
-                className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors"
+                className="px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-medium transition-colors"
               >
                 Zamknij
               </button>
