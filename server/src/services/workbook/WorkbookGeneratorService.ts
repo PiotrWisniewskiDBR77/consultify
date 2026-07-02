@@ -715,7 +715,15 @@ class WorkbookGeneratorService {
 
     let buffer: Buffer;
     try {
-      buffer = await buildWorkbookBuffer(schema!);
+      buffer = await buildWorkbookBuffer(schema!, {
+        // Consultant styling layer runs by default; surface provenance on the
+        // Info sheet (org name resolution is intentionally deferred — the UUID
+        // is not user-facing).
+        meta: {
+          source: 'Consultify — Intelligent Workbook Generator',
+          generatedAt: new Date().toISOString().slice(0, 10),
+        },
+      });
     } catch (buildError) {
       const classified = classifyBuildError(buildError);
       classifiedErrors.push(classified);
