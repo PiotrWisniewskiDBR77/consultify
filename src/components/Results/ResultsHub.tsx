@@ -1,4 +1,4 @@
-import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucide-react';
+import { DollarSign, FileText, ListChecks, Plus, Target } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 
 import { Banner } from '../shared/Banner';
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+
 import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
@@ -1433,13 +1435,8 @@ export const ResultsHub: React.FC = () => {
         {activeDocumentId ? (
           <Suspense
             fallback={
-              <div className="flex items-center justify-center py-24">
-                <div className="flex items-center gap-3 text-slate-600">
-                  <BarChart3 size={20} className="animate-pulse" />
-                  <span className="text-sm text-slate-500 dark:text-slate-300">
-                    {t('common.loading', 'Loading...')}
-                  </span>
-                </div>
+              <div className="p-4">
+                <SharedLoadingState template="panel" />
               </div>
             }
           >
@@ -1527,13 +1524,8 @@ export const ResultsHub: React.FC = () => {
         ) : activeTab === 'roi' ? (
           <ROITrackingView refreshNonce={roiRefreshNonce} />
         ) : loading ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="flex items-center gap-3 text-slate-600">
-              <BarChart3 size={20} className="animate-pulse" />
-              <span className="text-sm text-slate-500 dark:text-slate-300">
-                {t('common.loading', 'Loading...')}
-              </span>
-            </div>
+          <div className="p-4">
+            <SharedLoadingState template="list" rows={6} />
           </div>
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'overview' ? (
           <KpiOverviewView

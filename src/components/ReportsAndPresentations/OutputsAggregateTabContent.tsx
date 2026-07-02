@@ -30,7 +30,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button, ErrorState, LoadingState } from '@/components/ui/primitives';
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { Button, ErrorState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
@@ -718,7 +719,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const itemIds = filteredData.map((i) => i.id);
 
   if (loading) {
-    return <LoadingState variant="spinner" className="h-64" />;
+    return (
+      <div className="p-4">
+        <SharedLoadingState template="card" count={6} />
+      </div>
+    );
   }
 
   // L-08: ENABLE_V8_GLOBAL OFF → registry 404. Dedicated "module disabled"

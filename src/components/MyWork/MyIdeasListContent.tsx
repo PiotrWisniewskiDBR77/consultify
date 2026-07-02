@@ -48,7 +48,8 @@ import {
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { ErrorState } from '@/components/ui/primitives';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
@@ -1493,8 +1494,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full flex items-center justify-center" style={{ minHeight: 300 }}>
-        <LoadingState variant="spinner" />
+      <div className="w-full p-4" style={{ minHeight: 300 }}>
+        <SharedLoadingState template="list" rows={6} />
       </div>
     );
   }

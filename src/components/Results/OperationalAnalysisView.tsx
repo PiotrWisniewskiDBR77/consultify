@@ -8,6 +8,7 @@ import { ArrowDown, ArrowRight, ArrowUp, BarChart3, Target, TrendingUp } from 'l
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -174,11 +175,8 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
 
   if (effectiveLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-slate-600">
-          <BarChart3 size={20} className="animate-pulse" />
-          <span className="text-sm">{t('common.loading', 'Loading...')}</span>
-        </div>
+      <div className="p-4">
+        <SharedLoadingState template="list" rows={6} />
       </div>
     );
   }

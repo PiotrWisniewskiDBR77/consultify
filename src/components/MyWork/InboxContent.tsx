@@ -46,7 +46,6 @@ import {
   Inbox,
   Layers,
   Lightbulb,
-  Loader2,
   type LucideIcon,
   MessageSquare,
   Minus,
@@ -88,6 +87,10 @@ import {
   PREVIEW_SELECTED_ROW_CLASS,
   SELECTED_ROW_CLASS,
 } from '@/components/shared/selectionTokens';
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 import { ErrorState } from '@/components/ui/primitives';
 import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
@@ -3242,12 +3245,20 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {/* Table content */}
         <div className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200">
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
-              <Loader2 className="animate-spin mr-2" size={18} />
-              {isPolish ? 'Ładowanie...' : 'Loading...'}
-            </div>
+            <SharedLoadingState template="list" rows={6} />
           ) : loadError ? (
             <ErrorState message={loadError} retry={() => void fetchInbox()} />
+          ) : filteredItems.length === 0 &&
+            ((searchQuery || '').trim().length > 0 || actionRequiredOnly) ? (
+            <SharedEmptyState
+              variant="filter"
+              title={isPolish ? 'Nic nie pasuje do filtra' : 'Nothing matches this filter'}
+              description={
+                isPolish
+                  ? 'Zmień wyszukiwanie lub wyłącz filtr „wymaga działania”, aby zobaczyć więcej.'
+                  : 'Change your search or turn off the “action required” filter to see more.'
+              }
+            />
           ) : filteredItems.length === 0 ? (
             <div className="py-16 text-center text-slate-600 dark:text-slate-300">
               {statusTab === 'done' ? (
