@@ -1,0 +1,175 @@
+/**
+ * @vitest-environment jsdom
+ *
+ * Regression tests for the two confirmed Ideas folder bugs (H2.1 / H2.2):
+ *   BUG 1 — assigning an idea to a folder must persist (Api.setIdeaFolder called).
+ *   BUG 2 — an empty folder must NOT show the global "Idea Garden" empty state,
+ *           and must offer a clear way back to "All ideas" (no folder trap).
+ */
+import React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// ── i18n: force English so assertions are stable ──
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: unknown) => {
+      if (typeof fallback === 'string') return fallback;
+      if (fallback && typeof fallback === 'object' && 'defaultValue' in (fallback as any)) {
+        return String((fallback as any).defaultValue);
+      }
+      return key;
+    },
+    i18n: { language: 'en' },
+  }),
+}));
+
+// ── network-touching primitives / hooks stubbed to no-ops ──
+vi.mock('react-hot-toast', () => ({
+  default: { success: vi.fn(), error: vi.fn() },
+}));
+
+const setIdeaFolderMock = vi.fn().mockResolvedValue(undefined);
+const getMyIdeaFoldersMock = vi.fn();
+const getMyIdeasMock = vi.fn();
+
+vi.mock('@/services/api', () => ({
+  Api: {
+    getMyIdeas: (...a: unknown[]) => getMyIdeasMock(...a),
+    getMyIdeaFolders: (...a: unknown[]) => getMyIdeaFoldersMock(...a),
+    getMyIdeaMapMetrics: vi.fn().mockResolvedValue({ metrics: {} }),
+    setIdeaFolder: (...a: unknown[]) => setIdeaFolderMock(...a),
+    createMyIdeaFolder: vi.fn(),
+    deleteMyIdeaFolder: vi.fn(),
+    updateMyIdea: vi.fn(),
+    deleteMyIdea: vi.fn(),
+    convertMyIdea: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/funnelAnalytics', () => ({ trackFunnelEvent: vi.fn() }));
+vi.mock('@/services/tokenService', () => ({
+  tokenService: { getToken: () => null, decodeToken: () => null },
+}));
+vi.mock('@/hooks/useOpenChatWithContext', () => ({
+  useOpenChatWithContext: () => vi.fn(),
+}));
+
+// The favorites/recents hooks hit storage/network — stub them.
+vi.mock('../../../src/components/MyWork/hooks/useFavoriteIdeas', () => ({
+  useFavoriteIdeas: () => ({
+    isFavorite: () => false,
+    toggleFavorite: vi.fn(),
+    hydrateFromServer: vi.fn(),
+  }),
+}));
+vi.mock('../../../src/components/MyWork/hooks/useRecentIdeas', () => ({
+  useRecentIdeas: () => ({ recentIds: [], record: vi.fn() }),
+}));
+vi.mock('../../../src/components/MyWork/hooks/useKeyboardShortcuts', () => ({
+  useKeyboardShortcuts: () => ({ showHelp: false, setShowHelp: vi.fn() }),
+}));
+
+// Heavy children replaced by light doubles. The table double is a faithful proxy
+// of the real row-menu wiring: it invokes the same `onMoveToFolder(idea, folderId)`
+// prop the production ⋮ menu calls, so BUG 1 is exercised at the container boundary.
+vi.mock('../../../src/components/MyWork/IdeasTableContent', () => ({
+  IdeasTableContent: ({ ideas, folders, onMoveToFolder }: any) => (
+    <div data-testid="ideas-table-double">
+      {(folders || []).map((f: any) => (
+        <button
+          key={f.id}
+          type="button"
+          data-testid={`assign-${f.id}`}
+          onClick={() => onMoveToFolder?.(ideas[0], f.id)}
+        >
+          Assign to {f.name}
+        </button>
+      ))}
+    </div>
+  ),
+}));
+vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
+  TableWithPreviewLayout: ({ children }: any) => <div>{children}</div>,
+}));
+vi.mock('../../../src/components/MyWork/shared/KeyboardShortcutsHelp', () => ({
+  KeyboardShortcutsHelp: () => null,
+}));
+
+import { MyIdeasListContent } from '../../../src/components/MyWork/MyIdeasListContent';
+
+const FOLDER = { id: 'fold-1', name: 'Roadmap' };
+
+function makeIdeas(count: number, folderId: string | null = null) {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `idea-${i}`,
+    title: `Idea ${i}`,
+    body: '',
+    tags: [],
+    stage: 'spark',
+    preferredTool: 'mindmap',
+    folderId,
+    createdAt: '2026-06-01T00:00:00Z',
+    updatedAt: '2026-06-01T00:00:00Z',
+  }));
+}
+
+function renderList() {
+  return render(
+    <MyIdeasListContent
+      viewMode="table"
+      searchQuery=""
+      stageFilter="all"
+      onIdeaClick={vi.fn()}
+      onCreateIdea={vi.fn()}
+      onCountsChange={vi.fn()}
+    />
+  );
+}
+
+describe('MyIdeasListContent — folders (H2.1 / H2.2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setIdeaFolderMock.mockResolvedValue(undefined);
+    getMyIdeaFoldersMock.mockResolvedValue([FOLDER]);
+  });
+
+  it('BUG 1: assigning an idea to a folder calls Api.setIdeaFolder(id, folderId)', async () => {
+    // All ideas are unfiled; the row ⋮ menu offers "move to folder".
+    getMyIdeasMock.mockResolvedValue(makeIdeas(3, null));
+    renderList();
+
+    // The table double receives `folders` + `onMoveToFolder` from the container
+    // only when foldersAvailable — assert both the wiring and the persisted call.
+    const assignBtn = await screen.findByTestId('assign-fold-1');
+    fireEvent.click(assignBtn);
+
+    await waitFor(() =>
+      expect(setIdeaFolderMock).toHaveBeenCalledWith('idea-0', 'fold-1')
+    );
+  });
+
+  it('BUG 2: an empty folder shows a folder-scoped empty state + a back-to-all exit, NOT the global Idea Garden', async () => {
+    // 110 ideas exist globally, but none in FOLDER → folder view is empty.
+    getMyIdeasMock.mockResolvedValue(makeIdeas(110, null));
+    renderList();
+
+    // Enter the folder via its pill (folder bar renders once folders load).
+    const pill = await screen.findByText('Roadmap');
+    fireEvent.click(pill);
+
+    // Folder-scoped empty state — NOT the misleading global CTA.
+    const emptyPanel = await screen.findByTestId('ideas-folder-empty');
+    expect(within(emptyPanel).getByText('This folder is empty')).toBeTruthy();
+    expect(screen.queryByText('Your Idea Garden awaits')).toBeNull();
+
+    // A clear way out of the folder must exist (both the empty-state button and the breadcrumb).
+    expect(screen.getByTestId('ideas-folder-empty-back')).toBeTruthy();
+    const breadcrumbBack = screen.getByTestId('ideas-folder-breadcrumb-back');
+    expect(breadcrumbBack).toBeTruthy();
+
+    // Clicking back returns to the full list (no longer empty).
+    fireEvent.click(breadcrumbBack);
+    await waitFor(() => expect(screen.queryByTestId('ideas-folder-empty')).toBeNull());
+  });
+});

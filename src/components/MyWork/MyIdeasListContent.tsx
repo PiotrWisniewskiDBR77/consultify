@@ -3,6 +3,7 @@ import {
   Bot,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Edit2,
   ExternalLink,
@@ -511,8 +512,35 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // M2/C: home-shell bar (folders + starred + recents) shared across the
   // table / grid / garden views so the home is consistent everywhere.
+  const activeFolderInBar = activeFolderId
+    ? folders.find((f) => f.id === activeFolderId)
+    : null;
+
   const homeShellBar = (
     <>
+      {/* Folder breadcrumb / back — the explicit way OUT of a folder. Without this,
+          entering a folder is a trap (the top breadcrumb only shows My Work › Ideas). */}
+      {foldersAvailable && activeFolderInBar && (
+        <div
+          className="flex items-center gap-2 px-4 pt-3 text-xs"
+          data-testid="ideas-folder-breadcrumb"
+        >
+          <button
+            type="button"
+            onClick={() => setActiveFolderId(null)}
+            data-testid="ideas-folder-breadcrumb-back"
+            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800"
+          >
+            <ChevronLeft size={13} />
+            {isPolish ? 'Wszystkie pomysły' : 'All ideas'}
+          </button>
+          <ChevronRight size={13} className="text-slate-400 dark:text-slate-600" />
+          <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-200">
+            <Folder size={13} />
+            <span className="max-w-[220px] truncate">{activeFolderInBar.name}</span>
+          </span>
+        </div>
+      )}
       {/* folders bar (only once the folders endpoint is live) */}
       {foldersAvailable && (
         <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
@@ -1665,28 +1693,65 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // ── Empty state ──
 
-  const renderEmpty = () => (
-    <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
-      <div className="relative mb-4">
-        <Flower2 size={48} className="text-amber-400" />
-        <Sparkles size={16} className="absolute -top-1 -right-1 text-amber-500 animate-pulse" />
+  // Empty state is context-aware: an empty *folder* must NOT show the global
+  // "Idea Garden awaits" CTA (misleading when ALL=110). It shows a folder-scoped
+  // message plus a clear way back to "All".
+  const activeFolder = activeFolderInBar;
+
+  const renderEmpty = () => {
+    if (activeFolder) {
+      return (
+        <div
+          className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl"
+          data-testid="ideas-folder-empty"
+        >
+          <div className="relative mb-4">
+            <Folder size={44} className="text-c-text-muted" />
+          </div>
+          <h3 className="text-lg font-medium text-c-text-secondary mb-2">
+            {isPolish ? 'Ten folder jest pusty' : 'This folder is empty'}
+          </h3>
+          <p className="text-sm text-c-text-muted mb-4 max-w-md">
+            {isPolish
+              ? `Nie przypisano jeszcze żadnych pomysłów do „${activeFolder.name}". Przypisz istniejące pomysły z menu ⋮ albo wróć do wszystkich.`
+              : `No ideas assigned to "${activeFolder.name}" yet. Assign existing ideas from the ⋮ menu, or go back to all.`}
+          </p>
+          <button
+            type="button"
+            onClick={() => setActiveFolderId(null)}
+            data-testid="ideas-folder-empty-back"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
+          >
+            <ChevronLeft size={15} />
+            {isPolish ? 'Wróć do wszystkich' : 'Back to all ideas'}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+        <div className="relative mb-4">
+          <Flower2 size={48} className="text-amber-400" />
+          <Sparkles size={16} className="absolute -top-1 -right-1 text-amber-500 animate-pulse" />
+        </div>
+        <h3 className="text-lg font-medium text-c-text-secondary mb-2">
+          {isPolish ? 'Twój ogród pomysłów czeka' : 'Your Idea Garden awaits'}
+        </h3>
+        <p className="text-sm text-c-text-muted mb-4 max-w-md">
+          {isPolish
+            ? 'Zasiej pierwszy pomysł — AI pomoże go rozwinąć, zbada kontekst i zaproponuje kreatywne warianty.'
+            : 'Plant your first idea — AI will help it grow, research context, and propose creative variants.'}
+        </p>
+        <button
+          onClick={onCreateIdea}
+          className="inline-flex h-9 items-center justify-center rounded-full border border-primary-500/30 bg-primary-600 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500"
+        >
+          {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
+        </button>
       </div>
-      <h3 className="text-lg font-medium text-c-text-secondary mb-2">
-        {isPolish ? 'Twój ogród pomysłów czeka' : 'Your Idea Garden awaits'}
-      </h3>
-      <p className="text-sm text-c-text-muted mb-4 max-w-md">
-        {isPolish
-          ? 'Zasiej pierwszy pomysł — AI pomoże go rozwinąć, zbada kontekst i zaproponuje kreatywne warianty.'
-          : 'Plant your first idea — AI will help it grow, research context, and propose creative variants.'}
-      </p>
-      <button
-        onClick={onCreateIdea}
-        className="inline-flex h-9 items-center justify-center rounded-full border border-primary-500/30 bg-primary-600 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500"
-      >
-        {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
-      </button>
-    </div>
-  );
+    );
+  };
 
   // ── Sort indicator ──
 
@@ -1701,7 +1766,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           {convertModal}
           {tagModal}
           {confirmDialog}
-          <div className="mt-4">{renderEmpty()}</div>
+          {homeShellBar}
+          <div className="mt-4 px-4 pb-4">{renderEmpty()}</div>
         </div>
       );
     }
@@ -1775,7 +1841,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
           {convertModal}
           {tagModal}
-          <div className="mt-4">{renderEmpty()}</div>
+          {confirmDialog}
+          {homeShellBar}
+          <div className="mt-4 px-4 pb-4">{renderEmpty()}</div>
         </div>
       );
     }
@@ -1919,7 +1987,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
         {convertModal}
         {tagModal}
-        {renderEmpty()}
+        {confirmDialog}
+        {homeShellBar}
+        <div className="p-4">{renderEmpty()}</div>
       </div>
     );
   }
