@@ -1,4 +1,4 @@
-import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucide-react';
+import { BarChart3, DollarSign, FileText, Inbox, ListChecks, Plus, Target } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +40,7 @@ import {
   type ResultsTrackedInitiative,
 } from './kpiDomain';
 import { KpiOverviewView } from './KpiOverviewView';
+import { M14HandoffInbox } from './M14HandoffInbox';
 import { KpiQueueView } from './KpiQueueView';
 import { loadResultsKpis } from './kpiRuntime';
 import type { SignalSheetRecord } from './kpiSignalSheetTypes';
@@ -133,6 +134,7 @@ const VALID_TABS: ModuleTab[] = [
   'results_initiatives' as ModuleTab,
   'results_kpi' as ModuleTab,
   'results_reports' as ModuleTab,
+  'results_benefits_inbox' as ModuleTab,
   'roi' as ModuleTab,
   'roi_analysis' as ModuleTab,
 ];
@@ -395,6 +397,11 @@ export const ResultsHub: React.FC = () => {
         id: 'results_reports' as ModuleTab,
         label: t('results.tabs.kpiReports', 'Reports'),
         icon: <FileText size={16} />,
+      },
+      {
+        id: 'results_benefits_inbox' as ModuleTab,
+        label: t('results.tabs.benefitsInbox', 'Incoming benefits'),
+        icon: <Inbox size={16} />,
       },
       {
         id: 'roi' as ModuleTab,
@@ -1482,6 +1489,8 @@ export const ResultsHub: React.FC = () => {
           />
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
+        ) : activeTab === 'results_benefits_inbox' ? (
+          <M14HandoffInbox onPromoted={() => void refreshResultsTruth()} />
         ) : activeTab === 'results_reports' ? (
           reportWorkspaceMode === 'tracked' ? (
             <ResultsKpisTableV3
