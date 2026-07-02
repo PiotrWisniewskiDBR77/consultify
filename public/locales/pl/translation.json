@@ -564,7 +564,8 @@
       "searchArtifacts": "Szukaj projektu, badania, raportu, inicjatywy...",
       "loadingArtifacts": "Ładowanie artefaktów...",
       "noArtifacts": "Nie znaleziono jeszcze żadnych zarejestrowanych artefaktów. Możesz nadal wybrać typ źródła poniżej, aby utworzyć roboczą prezentację.",
-      "selectedEvidence": "Wybrane dowody"
+      "selectedEvidence": "Wybrane dowody",
+      "showDrafts": "Pokaż robocze"
     },
     "setup": {
       "title": "Skonfiguruj swój deck",
@@ -13210,7 +13211,8 @@
         "exported": "Wyeksportowany",
         "shared": "Udostępniony",
         "deprecated": "Wycofany"
-      }
+      },
+      "showDrafts": "Pokaż robocze"
     },
     "actions": {
       "newTemplate": "Nowy wzorzec",

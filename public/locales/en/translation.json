@@ -10788,7 +10788,8 @@
       "searchArtifacts": "Search project, study, report, initiative...",
       "loadingArtifacts": "Loading artifacts...",
       "noArtifacts": "No registered artifacts found yet. You can still choose a source type below for a draft deck.",
-      "selectedEvidence": "Selected evidence"
+      "selectedEvidence": "Selected evidence",
+      "showDrafts": "Show drafts"
     },
     "exportBlocked": "Export blocked by quality gates. Open the deck to review blockers.",
     "openInBuilder": "Open this deck in the full editor to view and edit slides.",
@@ -12618,7 +12619,8 @@
         "exported": "Exported",
         "shared": "Shared",
         "deprecated": "Deprecated"
-      }
+      },
+      "showDrafts": "Show drafts"
     },
     "actions": {
       "newTemplate": "New template",
