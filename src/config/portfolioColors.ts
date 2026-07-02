@@ -4,42 +4,47 @@
  * Centralized color definitions for portfolio views (Kanban, Timeline, Matrix, List)
  */
 
-// Axis colors for DRD framework
+// Axis colors for DRD framework — kolory DANYCH kategorycznych (per oś) → paleta c-tag-*.
+// Przypisanie po STABILNYM indeksie (kolejność w mapie). NIGDY crimson jako dana
+// (digital/ai były bg-/text-primary-* = crimson-leak → usunięte).
+// `.bg` = solidny fill kropki/belki kategorii (konsumenci: grid w-1.5 pasek, matrix <circle>).
+// UWAGA §15.1: 7 osi > 5 serii widocznych — łamie limit czytelności; do decyzji Piotra
+// o grupowaniu osi (zalogowane w RAPORCIE Fala 4). Ten config = wyłącznie klaster Portfolio.
 export const AXIS_COLORS = {
   processes: {
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-200 dark:border-blue-800',
+    bg: 'bg-c-tag-1',
+    text: 'text-c-tag-1',
+    border: 'border-c-tag-1',
   },
   digital: {
-    bg: 'bg-primary-50 dark:bg-primary-900/20',
-    text: 'text-primary-700 dark:text-primary-300',
-    border: 'border-primary-200 dark:border-primary-800',
+    bg: 'bg-c-tag-2',
+    text: 'text-c-tag-2',
+    border: 'border-c-tag-2',
   },
   models: {
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800',
+    bg: 'bg-c-tag-3',
+    text: 'text-c-tag-3',
+    border: 'border-c-tag-3',
   },
   data: {
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-200 dark:border-amber-800',
+    bg: 'bg-c-tag-4',
+    text: 'text-c-tag-4',
+    border: 'border-c-tag-4',
   },
   culture: {
-    bg: 'bg-danger-50 dark:bg-danger-900/20',
-    text: 'text-danger-700 dark:text-danger-300',
-    border: 'border-danger-200 dark:border-danger-800',
+    bg: 'bg-c-tag-5',
+    text: 'text-c-tag-5',
+    border: 'border-c-tag-5',
   },
   cybersecurity: {
-    bg: 'bg-danger-50 dark:bg-danger-900/20',
-    text: 'text-danger-700 dark:text-danger-300',
-    border: 'border-danger-200 dark:border-danger-800',
+    bg: 'bg-c-tag-6',
+    text: 'text-c-tag-6',
+    border: 'border-c-tag-6',
   },
   ai: {
-    bg: 'bg-primary-50 dark:bg-primary-900/20',
-    text: 'text-primary-700 dark:text-primary-300',
-    border: 'border-primary-200 dark:border-primary-800',
+    bg: 'bg-c-tag-7',
+    text: 'text-c-tag-7',
+    border: 'border-c-tag-7',
   },
 } as const;
 
@@ -136,14 +141,16 @@ export const STATUS_COLORS = {
     borderDark: 'dark:border-emerald-700',
     indicator: 'bg-emerald-500',
   },
+  // SCHEDULED = status → semantyczny, ale NIGDY crimson (§9.1). primary-* (crimson-leak)
+  // → indigo (neutralny „zaplanowane", odróżnia od blue EXECUTING/amber REVIEW).
   SCHEDULED: {
-    bg: 'bg-primary-100 dark:bg-primary-900/30',
-    bgDark: 'dark:bg-primary-900/30',
-    text: 'text-primary-700 dark:text-primary-300',
-    textDark: 'dark:text-primary-300',
-    border: 'border-primary-300',
-    borderDark: 'dark:border-primary-700',
-    indicator: 'bg-navy-900',
+    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+    bgDark: 'dark:bg-indigo-900/30',
+    text: 'text-indigo-700 dark:text-indigo-300',
+    textDark: 'dark:text-indigo-300',
+    border: 'border-indigo-300',
+    borderDark: 'dark:border-indigo-700',
+    indicator: 'bg-indigo-500',
   },
   EXECUTING: {
     bg: 'bg-blue-100 dark:bg-blue-900/30',
@@ -217,7 +224,7 @@ export const KANBAN_COLUMN_COLORS = {
   PROMOTED: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
   PLANNING: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800',
   APPROVED: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800',
-  SCHEDULED: 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800',
+  SCHEDULED: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800',
   EXECUTING: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
   BLOCKED: 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-800',
   DONE: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
