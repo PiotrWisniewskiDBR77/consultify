@@ -263,6 +263,27 @@ export type PorterForceId =
   | 'buyerPower'
   | 'supplierPower';
 
+/** K1/K2/K3 staircase for a single Porter force (see config/porter/porterInsightStaircase). */
+export interface PorterForceStaircaseData {
+  fact: string;
+  factRefs: string[];
+  interpretation: string;
+  implication: string;
+}
+
+/** Structural driver behind a force intensity (see config/porter/porterInsightStaircase). */
+export interface PorterForceDriverData {
+  dimension: 'concentration' | 'switching-costs' | 'barriers' | 'scale-economics';
+  finding: string;
+}
+
+/** One laddered answer captured while walking the Porter question bank. */
+export interface PorterForceLadderAnswerData {
+  questionId: string;
+  answerKey: string;
+  note?: string;
+}
+
 export interface ForceData {
   id: string;
   name: string;
@@ -273,6 +294,14 @@ export interface ForceData {
   evidence?: string[];
   implication?: string;
   confidence?: number;
+  /** Deterministic intensity verdict synthesized from the ladder (config/porter). */
+  intensity?: 'low' | 'medium' | 'high';
+  /** K1/K2/K3 staircase backing the intensity verdict. */
+  staircase?: PorterForceStaircaseData;
+  /** Dominant structural driver(s) — required for high/medium forces. */
+  structuralDrivers?: PorterForceDriverData[];
+  evidenceStatus?: 'confirmed' | 'declared';
+  ladderAnswers?: PorterForceLadderAnswerData[];
   proposalStatus?: ProposalStatus;
   userComment?: string;
 }
@@ -316,8 +345,19 @@ export interface PorterMove {
   riskLevel: 'high' | 'medium' | 'low';
   confidence?: number;
   firstStep?: string;
+  /** CONCLUSION_LAYER W2: mandatory trade-off (chosen / deferred / cost). */
+  tradeoff?: { chosen: string; deferred: string; cost: string };
+  /** CONCLUSION_LAYER W2: the alternative considered and why it was dropped. */
+  rejectedAlternative?: { option: string; reason: string };
   proposalStatus?: ProposalStatus;
   userComment?: string;
+}
+
+/** Synthesized industry-attractiveness verdict (see config/porter/porterSynthesisEngine). */
+export interface PorterProfitabilityMap {
+  attractiveness: 'structurally-unattractive' | 'mixed' | 'structurally-attractive';
+  dominantForces: PorterForceId[];
+  verdict: string;
 }
 
 export interface PorterOutputCandidate extends ConsultingOutputCandidateBase {
@@ -353,6 +393,8 @@ export interface PorterData {
   recommendedMoves: PorterMove[];
   outputCandidates: PorterOutputCandidate[];
   overallAttractiveness?: number;
+  /** Deterministic industry-attractiveness synthesis (config/porter/porterSynthesisEngine). */
+  profitabilityMap?: PorterProfitabilityMap;
   summary?: ConsultingSummarySnapshot & {
     proposalId?: string;
     proposalStatus?: ProposalStatus;
