@@ -1179,7 +1179,7 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 transition-colors duration-150 active:scale-[0.97]"
+        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-bg hover:opacity-90 transition-colors duration-150 active:scale-[0.97]"
       >
         <span>{labels[currentKind] || labels.models}</span>
       </button>
@@ -1984,7 +1984,7 @@ export const FinanceHub: React.FC = () => {
     if (!activeDocumentId && activeTab === 'investment' && filteredRows.length === 0)
       return (
         <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
             <div className="flex items-start gap-4">
               <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-300">
                 <Target size={20} />
@@ -2023,7 +2023,7 @@ export const FinanceHub: React.FC = () => {
     if (!activeDocumentId && activeTab === 'models' && filteredRows.length === 0)
       return (
         <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
             <div className="flex items-start gap-4">
               <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
                 <Calculator size={20} />

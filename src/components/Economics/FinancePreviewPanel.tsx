@@ -111,7 +111,7 @@ function PackValidationsSection({
       {validations.length > 3 && (
         <button
           type="button"
-          className="text-[10px] font-medium text-primary-500 hover:text-primary-600 mt-1 transition-colors"
+          className="text-[10px] font-medium text-c-info hover:underline mt-1 transition-colors"
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? 'Show less' : `Show all ${validations.length} validations`}
@@ -245,7 +245,7 @@ export function useFinancePreview({
               className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                 selectedVariant === variant
                   ? 'bg-blue-600 text-white'
-                  : 'bg-white/80 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300'
+                  : 'bg-c-surface text-c-text-secondary'
               }`}
             >
               {variantLabels[variant]}
@@ -261,7 +261,7 @@ export function useFinancePreview({
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                 selectedStatement === statement
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                  : 'bg-white/80 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300'
+                  : 'bg-c-surface text-c-text-secondary'
               }`}
             >
               {statementLabels[statement]}
@@ -497,7 +497,7 @@ export function useFinancePreview({
               {statementPreviewDetail ? (
                 <>
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                    <div className="rounded-md bg-c-surface p-2">
                       <div className="text-slate-500 dark:text-slate-400">
                         {t('finance.statements.mappedLines', 'Mapped lines')}
                       </div>
@@ -505,7 +505,7 @@ export function useFinancePreview({
                         {statementPreviewDetail.mappedLineCount}
                       </div>
                     </div>
-                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                    <div className="rounded-md bg-c-surface p-2">
                       <div className="text-slate-500 dark:text-slate-400">
                         {t('finance.statements.validation', 'Pack status')}
                       </div>
@@ -513,7 +513,7 @@ export function useFinancePreview({
                         {statementPreviewDetail.validationStatus}
                       </div>
                     </div>
-                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                    <div className="rounded-md bg-c-surface p-2">
                       <div className="text-slate-500 dark:text-slate-400">
                         {isPl ? 'Nieprzypisane' : 'Unmapped'}
                       </div>
@@ -521,7 +521,7 @@ export function useFinancePreview({
                         {statementPreviewDetail.unmappedLineCount || 0}
                       </div>
                     </div>
-                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                    <div className="rounded-md bg-c-surface p-2">
                       <div className="text-slate-500 dark:text-slate-400">
                         {isPl ? 'Wszystkie linie' : 'Total lines'}
                       </div>
@@ -662,7 +662,7 @@ export function useFinancePreview({
                 efficiency: {
                   en: 'Efficiency',
                   pl: 'Efektywność',
-                  color: 'text-primary-600 dark:text-primary-400',
+                  color: 'text-violet-600 dark:text-violet-400',
                 },
                 investment: {
                   en: 'Investment',
@@ -756,7 +756,7 @@ export function useFinancePreview({
                       (row as FinanceValuationRow).sourceType === 'financial_model'
                         ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                         : (row as FinanceValuationRow).sourceType === 'budget'
-                          ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                           : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300'
                     }`}
                   >
@@ -854,7 +854,7 @@ export function useFinancePreview({
                           </span>
                         </div>
                         <button
-                          className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
+                          className="text-[10px] text-c-info hover:underline"
                           onClick={() => handleOpenFull(row)}
                         >
                           {isPl ? 'Zobacz wszystkie' : 'View all'}
