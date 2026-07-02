@@ -67,3 +67,21 @@ P1 = Chat + Materiały (deck/doc/table, golden-path). P2 = Report/Presentation b
 - **NIE DOTYKANE (pre-existing TS):** `DocumentStudio/editor/DocumentTipTapEditor.tsx`, `DocumentStudio/editor/tipTapToSchema.ts`.
 - **Deck Builder reszta (~24 plików, ~360 hitów):** DeckAuditLogModal, ShareModal, DeckQualityGatesPanel, ThemeSwitcher, VersionHistoryPanel, PresentMode, SlideSorter, CommandPalette, BlockToolbar, CardFloatingToolbar, EditCardPopup, MediaLibraryBrowser, ShareAnalyticsPanel, DeckGovernanceCardModal, AgentActivityPanel, DeckBuilder(main), EditableBlock, TipTapEditor, PresenceIndicators, SourceTraceability, DeckThemeContext, DeckBuilderMelsView — modale/panele głębsze poza golden-path. Budżet ~10 plików wyczerpany na najwyżej-widocznych powierzchniach (Chat + DocStudio + shell decka). → Fala 2-cont / kolejna sesja A5.
 - **Inverse primary** wciąż ad-hoc `bg-c-text text-c-surface hover:opacity-90` (brak wariantu w `ui/primitives/Button`) — kandydat na wariant współdzielony (przeniesione z Fali 1).
+
+### RAPORT 2026-07-02 · Fala 3 · INSTRUMENTY §15 + trzecia paleta (branch `reskin/A5/wave-3` od `wave-2`)
+**Zakres:** Studio (trzecia paleta ujednolicona do `c.*`) · MessageRenderer AI-widgets chrome · PresentationStudio preview surface.
+
+**Pliki (9):**
+1. `src/views/StudioView.tsx` — `bg-slate-950`→`bg-c-bg`; header `bg-slate-900/50`→`c.surface`, `border-white/10`→`c.border-subtle`; ikony/przyciski slate→`c.text-muted/c.text`; blue accent (badge typu, toggle chat, focus)→`c.accent`/`c.accent-soft`/`c.focus`; unsaved-dot→`c.warning`.
+2. `src/components/Studio/StudioCanvas.tsx` — ReactFlow `bg-slate-950`→`bg-c-bg`; Panel/Controls/MiniMap `slate-800/90`+`white/10`→`c.surface-raised`/`c.border-subtle`; toggle grid/lock/snapshot/export→`c.*`; lock-banner amber=semantyczny (`c.warning`).
+3. `src/components/Studio/StudioToolbar.tsx` — dock+tooltip+node-chipy→`c.*`; „More" blue→`c.accent`.
+4. `src/components/Studio/StudioSidebar.tsx` — kontener→`c.surface`; search/lista/zaznaczenie blue→`c.accent`/`c.focus`; naprawiony zepsuty fallback `bg-navy-800/300/20`→`c.surface-raised`.
+5. `src/components/Studio/StudioChat.tsx` — SPEC-K §16: bąble AI/user→`c.surface-raised`/`c.text` (avatar AI był crimson `primary-500/20`→neutral); input/send/quick-actions/typing-dots→`c.*`; brand Sparkles ZOSTAWIONY; suggestions amber=semantyczny.
+6. `src/components/Studio/StudioExportModal.tsx` — modal+format-picker+toggle+quality→`c.*`; `#020617` w `toPng/toSvg` = wartość eksportu (JS, poza CSS) zostawiona.
+7. `src/components/Studio/StudioLinkModal.tsx` — modal+taby+search+checkbox+footer→`c.*`; header icon `primary-*`(crimson)→`c.accent`.
+8. `src/components/PresentationStudio/PresentationStudioPage.tsx` — light+dark slate/navy chrome (32 miejsc)→`c.*`; primary CTA `bg-navy-900...dark:bg-[#F4F7FB]`→`c.accent`; StatusBadge tone `slate`→`c.surface-raised`; amber „request approval"=semantyczny.
+9. `src/components/AIChat/MessageRenderer.tsx` — proposal/deep-thinking/citation chrome (~90 miejsc) slate/navy/blue→`c.*`; `focus:ring-blue-500`→`c.focus`; navy secondary CTA→`c.accent`; state-chip: done=green/error=danger ZOSTAWIONE, active blue→`c.info`, idle→neutral; `primary-*` brand outline CTA ZOSTAWIONE (baza→`c.surface`); Sparkles+gradienty amber/emerald ZOSTAWIONE; struktura widżetów NIETKNIĘTA.
+
+**DoD:** `c.*` (zero navy/slate/hex-class w chrome) ✅ · `tsc --noEmit` exit 0 / zero błędów w moich plikach ✅ · `build:shared` tsc ✅ · light+dark theme-aware ✅ · semantyka (success/warning/danger/info+brand) zachowana ✅.
+**Weryfikacja wizualna:** NIE — worktree bez `node_modules` (vite niedostępne w izolacji). Wymaga preview/screenshot przy odbiorze.
+**DEFER:** Chat SPEC-K ramka (layout/Piotr) · kolory DANYCH (`StudioCanvas` edge-stroke/minimap hex-JS, `StudioSidebar.getTypeColor`, `PresentationsHub SOURCE_TYPE_META.upload=slate`) · `tipTapToSchema` (pre-existing) · `ui/**`/`shared/**` nietknięte · zero npm/`-A`/merge.
