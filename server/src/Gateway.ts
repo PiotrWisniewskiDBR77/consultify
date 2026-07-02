@@ -15,6 +15,7 @@ import effectiveAccessRoutes from './routes/access.routes.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
+import healthPanelAdminRoutes from './routes/admin/health-panel.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
@@ -538,6 +539,7 @@ export class ApiGateway {
       app.use('/api/superadmin', superAdminRoutes);
       app.use('/api/superadmin', resourceManagementRoutes);
       app.use('/api/admin/ai-observability', aiObservabilityAdminRoutes);
+      app.use('/api/admin/health-panel', healthPanelAdminRoutes);
 
       // Test support (hard-gated: NODE_ENV=test + ENABLE_TEST_SUPPORT=true + secret key)
       app.use('/api/test-support', testSupportRoutes);

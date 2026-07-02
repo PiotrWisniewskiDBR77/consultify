@@ -8518,6 +8518,37 @@ export const Api = {
     return handleResponse(res, 'Failed to save collaboration controls');
   },
 
+  // ── Health Panel (internal "dowody działania" proof-of-life probes) ──
+  getHealthPanelProbes: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/probes`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load health probes');
+  },
+
+  runHealthPanelProbes: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/run`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run health probes');
+  },
+
+  runHealthPanelProbe: async (probeId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/run/${encodeURIComponent(probeId)}`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run health probe');
+  },
+
+  getHealthPanelSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/summary`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load health summary');
+  },
+
   getTenantAdminAuditLogs: async (filters?: any): Promise<any> => {
     const params = new URLSearchParams();
     if (filters?.actionType) params.set('actionType', String(filters.actionType));
