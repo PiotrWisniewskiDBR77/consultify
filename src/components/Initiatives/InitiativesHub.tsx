@@ -2343,7 +2343,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       type="button"
                       onClick={() => setNewLevel(level.id)}
                       className={`
-                        relative p-3 rounded-lg border text-left transition-all
+                        relative p-3 rounded-lg border text-left transition-[background-color,border-color,box-shadow] duration-200
                         ${
                           newLevel === level.id
                             ? `${level.color} border-current ring-1 ring-current/30`

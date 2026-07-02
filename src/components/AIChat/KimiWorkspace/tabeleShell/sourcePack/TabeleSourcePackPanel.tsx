@@ -18,6 +18,7 @@
 import { Loader2, RefreshCw, Save, Search, ShieldCheck, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   createSourcePack,
@@ -58,6 +59,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
   testInitialCandidates,
   testInitialPacks,
 }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [recencyDays, setRecencyDays] = useState<number | null>(null);
@@ -136,11 +138,13 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
   const handleSavePack = useCallback(async () => {
     if (!tableId) return;
     if (!packName.trim()) {
-      toast.error('Pack name is required');
+      toast.error(t('tabele.rightRail.sourcePack.nameRequired', 'Pack name is required'));
       return;
     }
     if (selected.size === 0) {
-      toast.error('Add at least one record to the pack');
+      toast.error(
+        t('tabele.rightRail.sourcePack.needOneRecord', 'Add at least one record to the pack')
+      );
       return;
     }
     setSavingPack(true);
@@ -210,7 +214,10 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search records by content"
+            placeholder={t(
+              'tabele.rightRail.sourcePack.searchPlaceholder',
+              'Search records by content'
+            )}
             className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 py-1.5 pl-7 pr-2 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
             data-testid="source-pack-search-input"
             aria-label="Search records"
@@ -283,7 +290,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             type="text"
             value={packName}
             onChange={(e) => setPackName(e.target.value)}
-            placeholder="Pack name"
+            placeholder={t('tabele.rightRail.sourcePack.namePlaceholder', 'Pack name')}
             maxLength={200}
             className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-slate-800 dark:text-slate-100"
             data-testid="source-pack-name-input"

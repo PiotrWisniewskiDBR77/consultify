@@ -9,6 +9,7 @@
 
 import { Loader2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Button from '@/components/ui/primitives/Button';
 
@@ -77,6 +78,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
   approvedTemplates,
   templatesNotice,
 }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [documentType, setDocumentType] = useState<DocumentTypeKey | ''>('');
@@ -302,7 +304,10 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           type="text"
           value={audience}
           onChange={(e) => setAudience(e.target.value)}
-          placeholder="e.g., CEO, CFO, Transformation Officer"
+          placeholder={t(
+            'documentStudio.intakeForm.audiencePlaceholder',
+            'e.g., CEO, CFO, Transformation Officer'
+          )}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
         />
       </label>

@@ -21,6 +21,7 @@
 import { Loader2, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   dismissQaSuggestion,
@@ -49,6 +50,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
   onOpenInAiEditor,
   testInitialReport,
 }) => {
+  const { t } = useTranslation();
   const [report, setReport] = useState<QaReport | null>(testInitialReport ?? null);
   const [loading, setLoading] = useState(testInitialReport === undefined);
   const [computing, setComputing] = useState(false);
@@ -79,7 +81,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
       const fresh = await recomputeQaReport(tableId, 'on_demand');
       setReport(fresh);
       setOptimisticDismissed(new Set());
-      toast.success('QA report refreshed');
+      toast.success(t('tabele.rightRail.qa.reportRefreshed', 'QA report refreshed'));
     } catch (e) {
       toast.error(`Failed to recompute: ${(e as Error)?.message ?? 'unknown error'}`);
     } finally {
@@ -97,7 +99,9 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
           return next;
         });
         await dismissQaSuggestion(tableId, s.id, s.fingerprint);
-        toast.success('Suggestion marked not applicable');
+        toast.success(
+          t('tabele.rightRail.qa.suggestionDismissed', 'Suggestion marked not applicable')
+        );
       } catch (e) {
         // Rollback on error.
         setOptimisticDismissed((prev) => {
@@ -119,7 +123,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-qa-panel"
-      aria-label="Tabele QA report"
+      aria-label={t('tabele.rightRail.qa.panelAria', 'Tabele QA report')}
     >
       <header className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">QA Report</h3>

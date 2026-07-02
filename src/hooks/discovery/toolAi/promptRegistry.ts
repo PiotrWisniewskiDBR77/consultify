@@ -23,6 +23,9 @@ import {
 } from '@/config/sopbuilder';
 import { buildStaircasePromptRules } from '@/config/swot/swotInsightStaircase';
 import { buildValueChainStaircasePromptRules } from '@/config/valuechain/valueChainInsightStaircase';
+import { buildPorterConclusionPrompt } from '@/config/porter/conclusionPrompts';
+import { buildValueChainConclusionPrompt } from '@/config/valuechain/conclusionPrompts';
+import { buildPortfolioConclusionPrompt } from '@/config/portfolio/conclusionPrompts';
 import {
   buildValueChainMovePromptRules,
   deriveLeverCandidates,
@@ -62,6 +65,17 @@ const humanizeStepId = (stepId: string): string =>
   stepId
     .replace(/[-_]/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
+
+/**
+ * Best-effort language detection for the grounded conclusion prompts, mirroring
+ * the heuristic in the toolAi handlers (growthPaths etc.): Polish diacritics in
+ * the mission goal/scope mean the session — and thus the conclusion — is Polish.
+ */
+const detectIsPolish = (data: unknown): boolean => {
+  const ctx = (data as { context?: { goal?: string; scope?: string } } | undefined)?.context;
+  const text = `${ctx?.goal || ''} ${ctx?.scope || ''}`;
+  return /[ąćęłńóśźż]/i.test(text);
+};
 
 export function getToolSuggestionPrompt(
   toolType: ToolType,
@@ -752,6 +766,12 @@ Return as JSON:
 
   if (toolType === 'market-forces') {
     const porterData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the industry-
+    // profitability verdict + move rules from the synthesis engine. Falls through
+    // to the generic summary below when no force is scored yet (returns null).
+    const grounded = buildPorterConclusionPrompt(porterData, detectIsPolish(porterData));
+    if (grounded) return grounded;
+
     const forcesSummary = Object.entries(porterData?.forces || {})
       .map(([, force]: [string, any]) => `- ${force.name}: ${force.score}/5 (${force.trend})`)
       .join('\n');
@@ -780,6 +800,12 @@ Return as JSON:
 
   if (toolType === 'value-chain') {
     const vcData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the margin map +
+    // lever candidates + move rules from the margin engine. Falls through to the
+    // generic summary below when no activity is scored yet (returns null).
+    const grounded = buildValueChainConclusionPrompt(vcData, detectIsPolish(vcData));
+    if (grounded) return grounded;
+
     const activitiesSummary = Object.entries(vcData?.activities || {})
       .map(
         ([, a]: [string, any]) =>
@@ -977,6 +1003,13 @@ Return JSON:
 
   if (toolType === 'portfolio-priority') {
     const portfolio = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the 2x2
+    // classification + dependency/budget-aware funding sequence from the matrix
+    // engine. Falls through to the generic summary below when no accepted item is
+    // scored yet (returns null).
+    const grounded = buildPortfolioConclusionPrompt(portfolio, detectIsPolish(portfolio));
+    if (grounded) return grounded;
+
     const itemsSummary = (portfolio?.initiatives || [])
       .map(
         (item: any) =>

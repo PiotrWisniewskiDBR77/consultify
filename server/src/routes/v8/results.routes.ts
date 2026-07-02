@@ -29,6 +29,7 @@ import {
 } from '../../services/v8/resultsROIService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -2626,13 +2627,25 @@ router.get(
     const { organizationId } = getV8Context(req);
 
     const placeholders = INBOX_OPEN_BENEFIT_STATUSES.map(() => '?').join(', ');
+    // Schema drift guard: `initiatives.completed_at` is absent on older
+    // deployments — a hardcoded reference 42703s the whole inbox read and the
+    // M14→M15 handoff surfaces as silently empty. Fall back through the other
+    // closure timestamps, else NULL.
+    const initiativeColumns = await getTableColumns('initiatives');
+    const closedAtExpr = initiativeColumns.has('completed_at')
+      ? 'i.completed_at'
+      : initiativeColumns.has('done_at')
+        ? 'i.done_at'
+        : initiativeColumns.has('updated_at')
+          ? 'i.updated_at'
+          : 'NULL';
     let rows: ClosureBenefitRow[] = [];
     try {
       rows = (await dbAll<ClosureBenefitRow>(
         `SELECT b.id, b.initiative_id, b.name, b.description, b.kpi_id,
                 b.target_value, b.status, b.created_at,
                 COALESCE(i.title, i.name) AS initiative_name,
-                i.completed_at AS initiative_closed_at,
+                ${closedAtExpr} AS initiative_closed_at,
                 k.unit AS source_kpi_unit
            FROM initiative_benefits b
            LEFT JOIN initiatives i ON i.id = b.initiative_id

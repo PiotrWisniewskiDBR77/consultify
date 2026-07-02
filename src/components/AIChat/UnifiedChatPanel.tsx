@@ -5439,9 +5439,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           {isRehydratingConversation ? (
             /* Loading state — conversation selected but messages still loading */
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-3" />
+              <div className="w-8 h-8 border-2 border-c-accent border-t-transparent rounded-full animate-spin mb-3" />
               <p
-                className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}
+                className={`${isCompact ? 'text-xs' : 'text-sm'} text-c-text-secondary`}
               >
                 {t('aiChat.loadingConversation', 'Loading conversation…')}
               </p>
@@ -5452,17 +5452,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center"
             >
               <h3
-                className={`${isCompact ? 'text-2xl' : 'text-[32px]'} leading-tight font-semibold text-navy-900 dark:text-white`}
+                className={`${isCompact ? 'text-2xl' : 'text-[32px]'} leading-tight font-semibold text-c-text`}
               >
                 {t('aiChat.teresaWelcome', "Let's start your transformation")}
                 {currentUser?.firstName && (
-                  <span className="text-primary-600 dark:text-primary-400">
+                  <span className="text-c-accent">
                     , {currentUser.firstName}
                   </span>
                 )}
               </h3>
               <p
-                className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-slate-600 dark:text-slate-300`}
+                className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-c-text-secondary`}
               >
                 {t(
                   'aiChat.teresaWelcomeSubtitle',
@@ -5475,7 +5475,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   type="button"
                   onClick={() => void teresaVoice.handleVoiceToggle()}
                   data-testid="welcome-voice-cta"
-                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-crimson-600 px-3.5 py-1.5 text-xs font-medium text-white shadow-sm shadow-crimson-600/20 transition-all hover:bg-crimson-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/40 active:scale-95"
+                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-crimson-600 px-3.5 py-1.5 text-xs font-medium text-white shadow-sm shadow-crimson-600/20 transition-colors duration-200 hover:bg-crimson-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/40"
                 >
                   {teresaVoice.voiceStatus === 'connecting' ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -5651,16 +5651,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     key={cap.label}
                     type="button"
                     onClick={() => handleModeTile(cap.preset, cap.prompt)}
-                    className="group flex flex-col items-start gap-1.5 rounded-lg border border-slate-200/60 bg-white/60 p-2.5 text-left transition-all duration-200 hover:border-slate-300 hover:bg-white dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/10 dark:hover:bg-white/5"
+                    className="group flex flex-col items-start gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface/60 p-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-c-border hover:bg-c-surface"
                   >
                     <div className={`rounded-md p-1.5 ${cap.bg}`}>
                       <cap.icon size={15} className={cap.color} />
                     </div>
                     <div>
-                      <div className="text-[11px] font-semibold text-navy-900 transition-colors group-hover:text-c-text dark:text-white dark:group-hover:text-c-text">
+                      <div className="text-[11px] font-semibold text-c-text">
                         {cap.label}
                       </div>
-                      <div className="mt-0.5 text-[9px] leading-tight text-slate-700 dark:text-slate-400">
+                      <div className="mt-0.5 text-[9px] leading-tight text-c-text-secondary">
                         {cap.desc}
                       </div>
                     </div>
@@ -5860,7 +5860,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     <button
                       key={prompt}
                       onClick={() => handleSendMessage(prompt)}
-                      className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised hover:border-c-border dark:hover:border-c-border hover:text-c-text dark:hover:text-c-text transition-all"
+                      className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:border-c-border-strong hover:text-c-text transition-colors duration-200"
                     >
                       {prompt}
                     </button>

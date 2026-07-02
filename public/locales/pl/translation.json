@@ -14099,7 +14099,27 @@
       }
     },
     "rightRail": {
-      "search": "Wyszukiwanie"
+      "search": "Wyszukiwanie",
+      "aiEditor": {
+        "promptRequired": "Polecenie jest wymagane",
+        "proposalRejected": "Propozycja odrzucona",
+        "panelAria": "Edytor AI Tabele"
+      },
+      "qa": {
+        "reportRefreshed": "Odświeżono raport QA",
+        "suggestionDismissed": "Sugestię oznaczono jako nieadekwatną",
+        "panelAria": "Raport QA Tabele"
+      },
+      "sourcePack": {
+        "nameRequired": "Nazwa paczki jest wymagana",
+        "needOneRecord": "Dodaj co najmniej jeden rekord do paczki",
+        "searchPlaceholder": "Szukaj rekordów wg treści",
+        "namePlaceholder": "Nazwa paczki"
+      },
+      "share": {
+        "conversionFailed": "Konwersja nie powiodła się. Zobacz ostatnie konwersje po szczegóły.",
+        "panelAria": "Udostępnianie i konwersje Tabele"
+      }
     },
     "back": "Wstecz",
     "leftRail": {
@@ -15647,7 +15667,11 @@
       "reject": "Odrzuć"
     },
     "editor": {
-      "teresaWriting": "Teresa pisze..."
+      "teresaWriting": "Teresa pisze...",
+      "toolbar": {
+        "insertTable": "Wstaw tabelę",
+        "insertLink": "Wstaw link"
+      }
     },
     "versionHistory": {
       "justNow": "przed chwilą",
@@ -15742,7 +15766,11 @@
       },
       "export": {
         "saving": "Zapisywanie…",
-        "saveToOutputs": "Zapisz do Outputs"
+        "saveToOutputs": "Zapisz do Outputs",
+        "saveMarkdown": "Zapisz Markdown",
+        "downloadMarkdown": "Pobierz Markdown",
+        "downloadWord": "Pobierz Word (.docx)",
+        "downloadPowerPoint": "Pobierz PowerPoint (.pptx)"
       },
       "mdProps": {
         "title": "Właściwości pliku MD",
@@ -15764,7 +15792,11 @@
       },
       "source": {
         "note": "Źródło: notatka"
-      }
+      },
+      "newCanvas": "Nowy Canvas",
+      "menuAria": "Menu Canvas",
+      "save": "Zapisz",
+      "companyAiChat": "Firmowy czat AI"
     }
   },
   "chatProposal": {
@@ -15972,6 +16004,28 @@
     "editor": {
       "target": "cel",
       "reject": "Odrzuć"
+    },
+    "documentPanel": {
+      "commentAdded": "Dodano komentarz",
+      "shareLinkCreated": "Utworzono link do udostępnienia",
+      "approvalRequested": "Wysłano prośbę o zatwierdzenie",
+      "approvalDecisionRecorded": "Zapisano decyzję zatwierdzenia",
+      "approvalCancelled": "Anulowano zatwierdzenie",
+      "actionDownload": "Pobierz",
+      "actionEdit": "Edytuj",
+      "reviewNamePlaceholder": "Przegląd klienta",
+      "reviewerCommentPlaceholder": "Opcjonalny komentarz recenzenta",
+      "outlineAria": "Konspekt dokumentu"
+    },
+    "view": {
+      "title": "Consultify Document Studio"
+    },
+    "templateArchitect": {
+      "namePlaceholder": "np. Szablon memo kwartalnego dla zarządu",
+      "audiencePlaceholder": "np. Zarząd, CEO, CFO"
+    },
+    "intakeForm": {
+      "audiencePlaceholder": "np. CEO, CFO, Dyrektor ds. Transformacji"
     }
   },
   "priority": {

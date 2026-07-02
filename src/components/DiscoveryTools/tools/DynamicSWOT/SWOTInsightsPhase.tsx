@@ -14,7 +14,9 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
+import { Api } from '@/services/api';
 import {
   ProposalCardType,
   SWOTCorrelation,
@@ -1316,7 +1318,8 @@ export function SWOTInsightsPhase({
     [strengths, weaknesses, opportunities, threats, correlations, isPolish]
   );
 
-  const handleCreateInitiative = (rec: DerivedRecommendation) => {
+  const handleCreateInitiative = async (rec: DerivedRecommendation) => {
+    // Local session copy first (offline-safe; drives the "generated initiatives" list).
     addInitiative({
       title: rec.title,
       description: rec.description,
@@ -1327,6 +1330,30 @@ export function SWOTInsightsPhase({
       estimatedEffort: rec.estimatedEffort,
       rationale: rec.rationale,
     });
+    // S6.2 Tools→Initiatives handoff: persist to the real initiatives backbone
+    // (M13) with tool provenance. Fail-safe: a backend error keeps the local
+    // draft and surfaces a toast instead of breaking the tool flow.
+    try {
+      await Api.createInitiative({
+        title: rec.title,
+        description: rec.description,
+        summary: rec.description,
+        impact: rec.estimatedImpact,
+        effort: rec.estimatedEffort,
+        sourceType: 'tool',
+        sourceId: session.id,
+      });
+      toast.success(
+        isPolish ? 'Inicjatywa utworzona w module Inicjatywy' : 'Initiative created in Initiatives'
+      );
+    } catch (err) {
+      console.error('[DynamicSWOT] initiative handoff failed:', err);
+      toast.error(
+        isPolish
+          ? 'Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia'
+          : 'Could not save the initiative to the Initiatives module — draft kept in the tool session'
+      );
+    }
   };
 
   return (

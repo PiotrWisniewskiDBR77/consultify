@@ -6,7 +6,15 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
-import { asSchema, generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
+import {
+  asSchema,
+  generateObject,
+  generateText,
+  jsonSchema,
+  stepCountIs,
+  streamText,
+  tool,
+} from 'ai';
 import { createHash } from 'crypto';
 import { z } from 'zod';
 
@@ -855,7 +863,10 @@ export class LLMService {
           model,
           messages: formattedMessages as any,
           tools: toolDefinitions,
-          maxSteps: maxIterations,
+          // ai v6 removed `maxSteps`; multi-step tool loops now use
+          // `stopWhen: stepCountIs(n)`. Without this the SDK stops after the
+          // first step (the tool call) and never generates the follow-up text.
+          stopWhen: stepCountIs(maxIterations),
         } as any),
       {
         onRetry: (attempt: number, delay: number, error: Error) => {
@@ -939,7 +950,9 @@ export class LLMService {
             model,
             messages: formattedMessages as any,
             tools: toolDefinitions,
-            maxSteps: maxIterations,
+            // ai v6: `maxSteps` is gone; use `stopWhen: stepCountIs(n)` so the
+            // SDK continues past the tool call to stream the confirmation turn.
+            stopWhen: stepCountIs(maxIterations),
             abortSignal: AbortSignal.timeout(60000),
           } as any);
 
@@ -1128,13 +1141,17 @@ export class LLMService {
             ...(typeof params.temperature === 'number' ? { temperature: params.temperature } : {}),
             ...(typeof params.maxTokens === 'number' ? { maxOutputTokens: params.maxTokens } : {}),
             ...(providerOptions ? { providerOptions: providerOptions as any } : {}),
-            // SPEC_01 (Tryb A): function-calling on streaming chat. maxSteps lets
-            // the SDK continue generating a confirmation turn AFTER the tool runs
-            // (without it the stream could end on the tool call with no text →
-            // EMPTY_STREAM). Only set when tools are present — normal chat path
-            // is byte-for-byte unchanged.
+            // SPEC_01 (Tryb A): function-calling on streaming chat. In ai v6,
+            // `maxSteps` was removed — the multi-step loop is driven by
+            // `stopWhen: stepCountIs(n)`. It lets the SDK continue generating a
+            // confirmation turn AFTER the tool runs (without it the stream could
+            // end on the tool call with no text → EMPTY_STREAM). Only set when
+            // tools are present — normal chat path is byte-for-byte unchanged.
             ...(streamToolDefinitions
-              ? { tools: streamToolDefinitions, maxSteps: params.maxIterations ?? 4 }
+              ? {
+                  tools: streamToolDefinitions,
+                  stopWhen: stepCountIs(params.maxIterations ?? 4),
+                }
               : {}),
             // Reasoning ON: include raw provider chunks so we can read OpenAI-
             // compatible reasoning fields the SDK chat parser drops. DeepSeek-R1

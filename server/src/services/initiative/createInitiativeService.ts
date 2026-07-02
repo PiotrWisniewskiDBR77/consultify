@@ -256,6 +256,20 @@ export async function createInitiative(
     /* title column may be absent on legacy schemas */
   }
 
+  // Ownership: neither insert variant writes `created_by` (column set differs per
+  // schema generation), yet delete/edit permission checks treat the creator as
+  // owner. Best-effort post-create UPDATE mirrors the title-alias pattern above.
+  if (options.actor?.id) {
+    try {
+      await queryHelpers.queryRun(
+        `UPDATE initiatives SET created_by = ? WHERE id = ? AND organization_id = ? AND created_by IS NULL`,
+        [String(options.actor.id), id, orgId]
+      );
+    } catch {
+      /* created_by column may be absent on legacy schemas */
+    }
+  }
+
   if (options.emitAudit !== false) {
     try {
       await auditEventsService.log({

@@ -948,7 +948,7 @@ export const ResultsHub: React.FC = () => {
             dotClassName="bg-amber-400"
           />
         )}
-        <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+        <div className="mx-1 h-5 w-px shrink-0 bg-c-border-subtle" />
         <ResultsRuntimeChip
           label={t('results.runtime.governedKpis', 'Governed KPIs')}
           value={String(runtimeSnapshot.kpiScorecard.totalKpis || 0)}
@@ -1510,8 +1510,8 @@ export const ResultsHub: React.FC = () => {
               )}
               {isResultsFlagEnabled('valueDriverTree') && (
                 <div className="shrink-0 px-1">
-                  <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/40 dark:bg-white/[0.02] p-4">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                  <div className="rounded-xl border border-c-border-subtle bg-c-surface/40 p-4">
+                    <h3 className="text-sm font-semibold text-c-text mb-3">
                       {t('results.driverTree.title', 'Value Driver Tree')}
                     </h3>
                     <ValueDriverTree projectId="all" />
@@ -1546,13 +1546,13 @@ export const ResultsHub: React.FC = () => {
             {isResultsFlagEnabled('strategicLayer') ? (
               <StrategicLayerPanel projectId="all" />
             ) : (
-              <div className="text-sm text-slate-400 py-8 text-center">
+              <div className="text-sm text-c-text-muted py-8 text-center">
                 {t('results.strategic.disabled', 'Warstwa strategiczna wyłączona — włącz flagę ff_strategicLayer.')}
               </div>
             )}
             {isResultsFlagEnabled('valueDriverTree') && (
-              <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/40 dark:bg-white/[0.02] p-4">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface/40 p-4">
+                <h3 className="text-sm font-semibold text-c-text mb-3">
                   {t('results.driverTree.title', 'Value Driver Tree')}
                 </h3>
                 <ValueDriverTree projectId="all" />
@@ -1564,7 +1564,7 @@ export const ResultsHub: React.FC = () => {
             {isResultsFlagEnabled('aiInsights') && <AIInsightsPanel projectId="all" />}
             {isResultsFlagEnabled('portfolioInsights') && <PortfolioInsightsPanel projectId="all" />}
             {!isResultsFlagEnabled('aiInsights') && !isResultsFlagEnabled('portfolioInsights') && (
-              <div className="text-sm text-slate-400 py-8 text-center">
+              <div className="text-sm text-c-text-muted py-8 text-center">
                 {t('results.ai.disabled', 'Panel AI/Portfolio wyłączony — włącz ff_aiInsights lub ff_portfolioInsights.')}
               </div>
             )}

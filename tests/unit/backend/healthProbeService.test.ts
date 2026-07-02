@@ -23,6 +23,7 @@ vi.mock('../../../server/src/services/AuditLogger.js', () => ({
 }));
 vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   listArtifactsForUser: vi.fn(),
+  getRecentArtifactRefsForOrg: vi.fn(),
 }));
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   get: vi.fn(),
@@ -39,8 +40,14 @@ vi.mock('../../../server/src/routes/financial-modeling.routes.js', () => ({
   createModelSchema: { safeParse: () => ({ success: true }) },
   default: {},
 }));
+// The DRD golden-path probe dynamically imports the assessment-reports route to
+// assert the endpoint module still loads. Stub it so runAllProbes stays hermetic.
+vi.mock('../../../server/src/routes/assessment-reports.routes.js', () => ({
+  default: {},
+}));
 
 import * as resultsROIService from '../../../server/src/services/v8/resultsROIService.js';
+import { getRecentArtifactRefsForOrg } from '../../../server/src/services/v8/artifactRegistryService.js';
 import { getAuditLogger } from '../../../server/src/services/AuditLogger.js';
 import * as DbPromise from '../../../server/src/utils/DbPromise.js';
 import {
@@ -148,24 +155,99 @@ describe('isHealthPanelAllowedEnv', () => {
 });
 
 describe('registry', () => {
-  it('exposes all six probes with unique ids', () => {
+  it('exposes every probe with unique ids (original + golden-path)', () => {
     const ids = HEALTH_PROBES.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toEqual(
       expect.arrayContaining([
+        // original six
         'm15_kpi_round_trip',
         'm15_roi_round_trip',
         'm16_statements_grounding',
         'm24_member_validate_audit',
         'm17_artifacts_draft_filter',
         'm14_m15_handoff',
+        // golden-path liveness probes (Runda3 #6)
+        'gp_interview_insights_live',
+        'gp_initiatives_list_live',
+        'gp_assessment_to_initiatives_live',
+        'gp_tools_to_initiatives_live',
+        'gp_initiatives_to_execution_live',
+        'gp_execution_to_results_live',
+        'gp_assessments_list_live',
+        'gp_drd_report_live',
+        'gp_m17_register_read_live',
       ])
     );
   });
 
+  it('every probe has the required shape (id/module/title/description/run)', () => {
+    for (const p of HEALTH_PROBES) {
+      expect(typeof p.id).toBe('string');
+      expect(p.id.length).toBeGreaterThan(0);
+      expect(typeof p.module).toBe('string');
+      expect(typeof p.title).toBe('string');
+      expect(typeof p.description).toBe('string');
+      expect(typeof p.run).toBe('function');
+    }
+  });
+
   it('getProbeById resolves and rejects unknown', () => {
     expect(getProbeById('m15_kpi_round_trip')).toBeDefined();
+    expect(getProbeById('gp_interview_insights_live')).toBeDefined();
     expect(getProbeById('nope')).toBeUndefined();
+  });
+});
+
+describe('golden-path probes — read-only liveness', () => {
+  it('interview-insights probe runs the org-scoped query and returns a count (empty allowed)', async () => {
+    (DbPromise.all as any).mockResolvedValue([]);
+    const result = await runProbe(getProbeById('gp_interview_insights_live')!, CTX);
+    expect(result.status).toBe('pass');
+    expect(result.detail).toEqual({ insightCount: 0 });
+    // Assert the query was org-scoped against interview_insights.
+    expect(DbPromise.all).toHaveBeenCalledWith(
+      expect.stringContaining('FROM interview_insights'),
+      [CTX.organizationId],
+      { fallback: true }
+    );
+  });
+
+  it('initiatives→execution probe reports task + initiative-link counts', async () => {
+    (DbPromise.all as any).mockResolvedValue([
+      { id: 't1', initiative_id: 'i1' },
+      { id: 't2', initiative_id: null },
+    ]);
+    const result = await runProbe(getProbeById('gp_initiatives_to_execution_live')!, CTX);
+    expect(result.status).toBe('pass');
+    expect(result.detail).toEqual({ taskCount: 2, linkedToInitiative: 1 });
+    expect(DbPromise.all).toHaveBeenCalledWith(
+      expect.stringContaining('FROM tasks'),
+      [CTX.organizationId],
+      { fallback: true }
+    );
+  });
+
+  it('M17 register-read probe passes when the service returns an array', async () => {
+    (getRecentArtifactRefsForOrg as any).mockResolvedValue([{ artifactId: 'a1' }]);
+    const result = await runProbe(getProbeById('gp_m17_register_read_live')!, CTX);
+    expect(result.status).toBe('pass');
+    expect(result.detail).toEqual({ refCount: 1 });
+    expect(getRecentArtifactRefsForOrg).toHaveBeenCalledWith(CTX.organizationId, 10);
+  });
+
+  it('M17 register-read probe FAILS (fail-soft) when the service returns a non-array', async () => {
+    (getRecentArtifactRefsForOrg as any).mockResolvedValue(null);
+    const result = await runProbe(getProbeById('gp_m17_register_read_live')!, CTX);
+    expect(result.status).toBe('fail');
+    expect(result.errorMessage).toMatch(/did not return an array/i);
+  });
+
+  it('DRD probe passes when the report route module imports and the query runs', async () => {
+    (DbPromise.all as any).mockResolvedValue([]);
+    const result = await runProbe(getProbeById('gp_drd_report_live')!, CTX);
+    expect(result.status).toBe('pass');
+    expect(result.detail).toMatchObject({ reportCount: 0, routeLoaded: true });
   });
 });
 

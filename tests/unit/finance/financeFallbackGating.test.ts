@@ -6,9 +6,10 @@
  *  1. shouldFallbackToLegacyFinance (src/services/api/v8/finance.ts) — the v8→legacy
  *     fallback decision: true only for "v8 endpoint not available" statuses
  *     [400, 404, 405, 501], false otherwise (so real errors surface).
- *  2. Beta gating (src/utils/betaAccess.ts) — MODULE_ECONOMICS (Finance) is a
+ *  2. Beta gating (src/utils/betaAccess.ts) — MODULE_MEETING (Meeting) is a
  *     'closed' beta, locked for regular users; admins/owners/superadmins are exempt
- *     while BETA_ADMINS_EXEMPT is true.
+ *     while BETA_ADMINS_EXEMPT is true. MODULE_ECONOMICS (Finance) moved to GA
+ *     ('open') per D-A GA-set (M16 now open) — 2026-07 beta-gating consistency pass.
  *
  * All assertions exercise the REAL exported functions — no re-implementation.
  */
@@ -59,17 +60,17 @@ describe('shouldFallbackToLegacyFinance (src/services/api/v8/finance.ts)', () =>
   });
 });
 
-describe('beta gating — MODULE_ECONOMICS (Finance) is closed (src/utils/betaAccess.ts)', () => {
-  it('MODULE_ECONOMICS is registered as a closed beta in the SSOT', () => {
-    expect(BETA_MENU_STATUS.MODULE_ECONOMICS).toBe('closed');
-    expect(getBetaStatus('MODULE_ECONOMICS')).toBe('closed');
-    expect(isBetaModule('MODULE_ECONOMICS')).toBe(true);
-    expect(isBetaClosed('MODULE_ECONOMICS')).toBe(true);
+describe('beta gating — MODULE_MEETING (Meeting) is closed (src/utils/betaAccess.ts)', () => {
+  it('MODULE_MEETING is registered as a closed beta in the SSOT', () => {
+    expect(BETA_MENU_STATUS.MODULE_MEETING).toBe('closed');
+    expect(getBetaStatus('MODULE_MEETING')).toBe('closed');
+    expect(isBetaModule('MODULE_MEETING')).toBe(true);
+    expect(isBetaClosed('MODULE_MEETING')).toBe(true);
   });
 
   it('trims whitespace around the module id when resolving status', () => {
-    expect(getBetaStatus('  MODULE_ECONOMICS  ')).toBe('closed');
-    expect(isBetaClosed('  MODULE_ECONOMICS  ')).toBe(true);
+    expect(getBetaStatus('  MODULE_MEETING  ')).toBe('closed');
+    expect(isBetaClosed('  MODULE_MEETING  ')).toBe(true);
   });
 
   it('unknown / empty ids are not beta and not closed', () => {
@@ -78,6 +79,15 @@ describe('beta gating — MODULE_ECONOMICS (Finance) is closed (src/utils/betaAc
     expect(isBetaModule('')).toBe(false);
     expect(isBetaModule(null)).toBe(false);
     expect(isBetaModule(undefined)).toBe(false);
+  });
+});
+
+describe('beta gating — MODULE_ECONOMICS (Finance) is GA / open (M16 per D-A GA-set)', () => {
+  it('MODULE_ECONOMICS is registered as an open beta (badge only, not locked)', () => {
+    expect(BETA_MENU_STATUS.MODULE_ECONOMICS).toBe('open');
+    expect(getBetaStatus('MODULE_ECONOMICS')).toBe('open');
+    expect(isBetaModule('MODULE_ECONOMICS')).toBe(true);
+    expect(isBetaClosed('MODULE_ECONOMICS')).toBe(false);
   });
 });
 
@@ -105,26 +115,29 @@ describe('beta gating — role exemption (admins/owners exempt while BETA_ADMINS
   });
 });
 
-describe('lockClosedBetaModules — decorates Finance menu item with the locked plate', () => {
+describe('lockClosedBetaModules — decorates Meeting menu item with the locked plate', () => {
   const buildMenu = () => [
-    { id: 'MODULE_ECONOMICS', label: 'Finance' },
+    { id: 'MODULE_MEETING', label: 'Meeting' },
+    { id: 'MODULE_ECONOMICS', label: 'Finance' }, // GA / open beta — must stay untouched
     { id: 'MODULE_PRESENTATIONS', label: 'Documents' }, // open beta — must stay untouched
     {
       id: 'PARENT',
       label: 'Parent',
-      subItems: [{ id: 'MODULE_ECONOMICS', label: 'Nested Finance' }],
+      subItems: [{ id: 'MODULE_MEETING', label: 'Nested Meeting' }],
     },
   ] as any;
 
-  it('locks MODULE_ECONOMICS for a regular USER with BETA_LOCKED code + message', () => {
+  it('locks MODULE_MEETING for a regular USER with BETA_LOCKED code + message', () => {
     const locked = lockClosedBetaModules(buildMenu(), 'USER', 'Access restricted');
 
-    const finance = locked.find((m: any) => m.id === 'MODULE_ECONOMICS');
-    expect(finance.isLocked).toBe(true);
-    expect(finance.lockedCode).toBe(BETA_LOCKED_CODE);
-    expect(finance.lockedMessage).toBe('Access restricted');
+    const meeting = locked.find((m: any) => m.id === 'MODULE_MEETING');
+    expect(meeting.isLocked).toBe(true);
+    expect(meeting.lockedCode).toBe(BETA_LOCKED_CODE);
+    expect(meeting.lockedMessage).toBe('Access restricted');
 
-    // open beta is left fully accessible
+    // GA (open) modules are left fully accessible
+    const finance = locked.find((m: any) => m.id === 'MODULE_ECONOMICS');
+    expect(finance.isLocked).toBeUndefined();
     const docs = locked.find((m: any) => m.id === 'MODULE_PRESENTATIONS');
     expect(docs.isLocked).toBeUndefined();
 
@@ -140,6 +153,6 @@ describe('lockClosedBetaModules — decorates Finance menu item with the locked 
 
     // admin path short-circuits to the same menu reference, nothing locked
     expect(result).toBe(menu);
-    expect(result.find((m: any) => m.id === 'MODULE_ECONOMICS').isLocked).toBeUndefined();
+    expect(result.find((m: any) => m.id === 'MODULE_MEETING').isLocked).toBeUndefined();
   });
 });

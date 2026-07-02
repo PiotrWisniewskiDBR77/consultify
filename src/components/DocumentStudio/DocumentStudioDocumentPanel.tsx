@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   ExecutiveModuleShell,
@@ -319,6 +320,7 @@ function OutlinePanel({
   sourceCount: number;
   assumptionCount: number;
 }): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
       <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900">
@@ -329,7 +331,7 @@ function OutlinePanel({
           {sourceCount} sources · {assumptionCount} assumptions
         </div>
       </div>
-      <nav aria-label="Document outline">
+      <nav aria-label={t('documentStudio.documentPanel.outlineAria', 'Document outline')}>
         <ol className="space-y-1.5">
           {sections.map((section, index) => (
             <li key={section.sectionId}>
@@ -419,6 +421,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
 }
 
 function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [threads, setThreads] = useState<DocumentCommentThread[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
@@ -453,7 +456,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         })
       );
       setDraft('');
-      toast.success('Comment added');
+      toast.success(t('documentStudio.documentPanel.commentAdded', 'Comment added'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add comment');
     } finally {
@@ -527,6 +530,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
 }
 
 function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [links, setLinks] = useState<DocumentShareLink[]>([]);
   const [scope, setScope] = useState<DocumentShareLinkAccessScope>('read');
   const [label, setLabel] = useState('');
@@ -562,7 +566,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       });
       setCreatedToken(link.token);
       setLinks(await listDocumentStudioShareLinks(artifactId));
-      toast.success('Share link created');
+      toast.success(t('documentStudio.documentPanel.shareLinkCreated', 'Share link created'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create share link');
     } finally {
@@ -585,7 +589,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
             value={label}
             onChange={(event) => setLabel(event.target.value)}
             className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
-            placeholder="Client review"
+            placeholder={t('documentStudio.documentPanel.reviewNamePlaceholder', 'Client review')}
           />
         </label>
         <label className="mb-3 block text-xs text-slate-600 dark:text-slate-300">
@@ -597,8 +601,10 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
           >
             <option value="read">Read</option>
             <option value="comment">Comment</option>
-            <option value="download">Download</option>
-            <option value="edit">Edit</option>
+            <option value="download">
+              {t('documentStudio.documentPanel.actionDownload', 'Download')}
+            </option>
+            <option value="edit">{t('documentStudio.documentPanel.actionEdit', 'Edit')}</option>
           </select>
         </label>
         <Button type="button" size="sm" onClick={createLink} disabled={submitting}>
@@ -936,6 +942,7 @@ function ManifestGatePanel(): React.ReactElement {
 }
 
 function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [approvals, setApprovals] = useState<DocumentApprovalRequest[]>([]);
   const [participantInput, setParticipantInput] = useState('');
   const [reason, setReason] = useState('');
@@ -985,7 +992,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       ]);
       setParticipantInput('');
       setReason('');
-      toast.success('Approval requested');
+      toast.success(t('documentStudio.documentPanel.approvalRequested', 'Approval requested'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to request approval');
     } finally {
@@ -1008,7 +1015,9 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         current.map((item) => (item.approvalId === approval.approvalId ? approval : item))
       );
       setDecisionComment('');
-      toast.success('Approval decision recorded');
+      toast.success(
+        t('documentStudio.documentPanel.approvalDecisionRecorded', 'Approval decision recorded')
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to record decision');
     } finally {
@@ -1028,7 +1037,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       setApprovals((current) =>
         current.map((item) => (item.approvalId === approval.approvalId ? approval : item))
       );
-      toast.success('Approval cancelled');
+      toast.success(t('documentStudio.documentPanel.approvalCancelled', 'Approval cancelled'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel approval');
     } finally {
@@ -1091,7 +1100,10 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
           value={decisionComment}
           onChange={(event) => setDecisionComment(event.target.value)}
           className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
-          placeholder="Optional reviewer comment"
+          placeholder={t(
+            'documentStudio.documentPanel.reviewerCommentPlaceholder',
+            'Optional reviewer comment'
+          )}
         />
       </label>
       {error ? (

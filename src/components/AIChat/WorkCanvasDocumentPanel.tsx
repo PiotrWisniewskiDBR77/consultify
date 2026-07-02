@@ -2843,9 +2843,9 @@ function WorkCanvasMarkdownDocumentPanel({
                 setIsDiagnosticsOpen(false);
               }}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
-              aria-label="New Canvas"
+              aria-label={t('canvas.panel.newCanvas', 'New Canvas')}
               aria-expanded={isNewCanvasMenuOpen}
-              title="New Canvas"
+              title={t('canvas.panel.newCanvas', 'New Canvas')}
             >
               <Plus size={15} />
             </button>
@@ -2923,9 +2923,9 @@ function WorkCanvasMarkdownDocumentPanel({
                 }
                 void openVersionHistory();
               }}
-              aria-label="Historia wersji"
+              aria-label={t('canvas.versionHistory.title', 'Version history')}
               aria-expanded={isHistoryOpen}
-              title="Historia wersji"
+              title={t('canvas.versionHistory.title', 'Version history')}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
             >
               <History size={15} />
@@ -3000,9 +3000,9 @@ function WorkCanvasMarkdownDocumentPanel({
                 setIsDiagnosticsOpen((open) => !open);
               }}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
-              aria-label="Canvas menu"
+              aria-label={t('canvas.panel.menuAria', 'Canvas menu')}
               aria-expanded={isDiagnosticsOpen}
-              title="Canvas menu"
+              title={t('canvas.panel.menuAria', 'Canvas menu')}
             >
               <MoreHorizontal size={15} />
             </button>
@@ -3471,7 +3471,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Save size={14} />
-                    <span>Save Markdown</span>
+                    <span>{t('canvas.panel.export.saveMarkdown', 'Save Markdown')}</span>
                   </button>
                   <button
                     type="button"
@@ -3489,7 +3489,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Download Markdown</span>
+                    <span>{t('canvas.panel.export.downloadMarkdown', 'Download Markdown')}</span>
                   </button>
                   <button
                     type="button"
@@ -3562,7 +3562,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Download Word (.docx)</span>
+                    <span>{t('canvas.panel.export.downloadWord', 'Download Word (.docx)')}</span>
                   </button>
                   {/* M-4 — XLSX only makes sense when the Canvas has a typed table
                       (kind='table'); for narrative drafts the spreadsheet would
@@ -3588,7 +3588,9 @@ function WorkCanvasMarkdownDocumentPanel({
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
-                    <span>Download PowerPoint (.pptx)</span>
+                    <span>
+                      {t('canvas.panel.export.downloadPowerPoint', 'Download PowerPoint (.pptx)')}
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -3627,7 +3629,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         <strong className="font-semibold">Markdown canonical</strong>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Save</span>
+                        <span>{t('canvas.panel.save', 'Save')}</span>
                         <strong
                           className="font-semibold"
                           data-testid="canvas-diagnostics-save-state"

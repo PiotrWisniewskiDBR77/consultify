@@ -12,6 +12,7 @@
 
 import { Layers, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
@@ -34,6 +35,7 @@ type Phase = 'intake' | 'outline' | 'document';
 type Tab = 'generate' | 'templates';
 
 export const DocumentStudioView: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { artifactId: artifactIdFromUrl } = useParams<{ artifactId?: string }>();
 
@@ -231,7 +233,7 @@ export const DocumentStudioView: React.FC = () => {
       {showDocumentShell ? null : (
         <TopBar
           moduleLabel="Document Studio"
-          title="Consultify Document Studio"
+          title={t('documentStudio.view.title', 'Consultify Document Studio')}
           chips={tabChips}
           respectMelsOrder={false}
           presenceSlot={

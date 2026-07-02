@@ -6033,7 +6033,7 @@ export const InterviewHub: React.FC = () => {
           <div
             key={session.id}
             onClick={() => (onCardClick ? onCardClick(session.id) : handleViewSession(session))}
-            className="group relative bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.08] overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30 transition duration-200"
+            className="group relative bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-border-strong transition duration-200"
           >
             {/* Header */}
             <div className="p-4 pb-2">
@@ -7275,11 +7275,11 @@ export const InterviewHub: React.FC = () => {
               <tr>
                 <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center">
-                    <Lightbulb className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-c-text-muted text-sm mb-4">
+                    <Lightbulb className="w-6 h-6 text-c-text-muted mb-3" />
+                    <p className="text-c-text text-sm font-semibold mb-1">
                       {isPolish ? 'Brak wniosków' : 'No insights yet'}
                     </p>
-                    <p className="text-xs text-slate-500 mb-4 max-w-md">
+                    <p className="text-xs text-c-text-muted mb-4 max-w-md">
                       {isPolish
                         ? 'Wnioski są generowane automatycznie przez AI na podstawie zakończonych wywiadów. Kliknij "Nowy Insight" aby wygenerować wnioski z wybranych sesji.'
                         : 'Insights are generated automatically by AI based on completed interviews. Click "New Insight" to generate insights from selected sessions.'}
@@ -8220,14 +8220,19 @@ export const InterviewHub: React.FC = () => {
               <tr>
                 <td colSpan={colSpan} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center">
-                    <FileText className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-c-text-muted text-sm mb-4">
+                    <FileText className="w-6 h-6 text-c-text-muted mb-3" />
+                    <p className="text-c-text text-sm font-semibold mb-1">
                       {isPolish ? 'Brak szablonów' : 'No templates yet'}
+                    </p>
+                    <p className="text-xs text-c-text-muted mb-4 max-w-md">
+                      {isPolish
+                        ? 'Utwórz szablon, aby przyspieszyć kolejne wywiady.'
+                        : 'Create a template to speed up your next interviews.'}
                     </p>
                     {canAssign && (
                       <button
                         onClick={handleNewTemplate}
-                        className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                        className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                       >
                         <FilePlus size={16} />
                         {isPolish ? 'Nowy szablon' : 'New template'}
@@ -10342,10 +10347,10 @@ Return ONLY the answer text (no markdown fences).`;
             }}
             className={[
               'group relative bg-c-surface rounded-xl border overflow-hidden cursor-pointer transition duration-200',
-              'hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30',
+              'hover:shadow-lg hover:border-c-border-strong',
               previewAssignmentId === assignment.id
-                ? 'border-primary-500/40'
-                : 'border-slate-200/60 dark:border-white/[0.08]',
+                ? 'border-c-accent bg-c-accent-soft'
+                : 'border-c-border-subtle',
             ].join(' ')}
           >
             {/* Header */}

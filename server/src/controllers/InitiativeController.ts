@@ -3564,9 +3564,11 @@ export class InitiativeController {
         .filter(Boolean)
         .map((v) => String(v));
       const isOwner = !!userId && ownerIds.includes(String(userId));
-      const isAdmin = String(role || '')
-        .toUpperCase()
-        .includes('ADMIN');
+      // Privileged roles: any *ADMIN* variant plus the organization OWNER —
+      // OWNER outranks ADMIN but does not contain the substring, so a plain
+      // `.includes('ADMIN')` locked org owners out of deleting initiatives.
+      const upperRole = String(role || '').toUpperCase();
+      const isAdmin = upperRole.includes('ADMIN') || upperRole === 'OWNER';
       if (!isOwner && !isAdmin) {
         res.status(403).json({
           error: 'Only the initiative owner or an organization admin can delete it',

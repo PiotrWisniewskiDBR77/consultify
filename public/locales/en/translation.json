@@ -13467,7 +13467,27 @@
       }
     },
     "rightRail": {
-      "search": "Search"
+      "search": "Search",
+      "aiEditor": {
+        "promptRequired": "Prompt is required",
+        "proposalRejected": "Proposal rejected",
+        "panelAria": "Tabele AI Editor"
+      },
+      "qa": {
+        "reportRefreshed": "QA report refreshed",
+        "suggestionDismissed": "Suggestion marked not applicable",
+        "panelAria": "Tabele QA report"
+      },
+      "sourcePack": {
+        "nameRequired": "Pack name is required",
+        "needOneRecord": "Add at least one record to the pack",
+        "searchPlaceholder": "Search records by content",
+        "namePlaceholder": "Pack name"
+      },
+      "share": {
+        "conversionFailed": "Conversion failed. See recent conversions for details.",
+        "panelAria": "Tabele share and conversions"
+      }
     },
     "back": "Back",
     "leftRail": {
@@ -14594,7 +14614,11 @@
       "reject": "Reject"
     },
     "editor": {
-      "teresaWriting": "Teresa is writing..."
+      "teresaWriting": "Teresa is writing...",
+      "toolbar": {
+        "insertTable": "Insert table",
+        "insertLink": "Insert link"
+      }
     },
     "versionHistory": {
       "justNow": "just now",
@@ -14689,7 +14713,11 @@
       },
       "export": {
         "saving": "Saving…",
-        "saveToOutputs": "Save to Outputs"
+        "saveToOutputs": "Save to Outputs",
+        "saveMarkdown": "Save Markdown",
+        "downloadMarkdown": "Download Markdown",
+        "downloadWord": "Download Word (.docx)",
+        "downloadPowerPoint": "Download PowerPoint (.pptx)"
       },
       "mdProps": {
         "title": "MD file properties",
@@ -14711,7 +14739,11 @@
       },
       "source": {
         "note": "Source: note"
-      }
+      },
+      "newCanvas": "New Canvas",
+      "menuAria": "Canvas menu",
+      "save": "Save",
+      "companyAiChat": "Company AI Chat"
     }
   },
   "chatProposal": {
@@ -14919,6 +14951,28 @@
     "editor": {
       "target": "target",
       "reject": "Reject"
+    },
+    "documentPanel": {
+      "commentAdded": "Comment added",
+      "shareLinkCreated": "Share link created",
+      "approvalRequested": "Approval requested",
+      "approvalDecisionRecorded": "Approval decision recorded",
+      "approvalCancelled": "Approval cancelled",
+      "actionDownload": "Download",
+      "actionEdit": "Edit",
+      "reviewNamePlaceholder": "Client review",
+      "reviewerCommentPlaceholder": "Optional reviewer comment",
+      "outlineAria": "Document outline"
+    },
+    "view": {
+      "title": "Consultify Document Studio"
+    },
+    "templateArchitect": {
+      "namePlaceholder": "e.g., Quarterly Board Memo template",
+      "audiencePlaceholder": "e.g., Board, CEO, CFO"
+    },
+    "intakeForm": {
+      "audiencePlaceholder": "e.g., CEO, CFO, Transformation Officer"
     }
   },
   "priority": {

@@ -17,7 +17,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { createKPI, getKPI, recordROIRealization, getROIByInitiative } from '../v8/resultsROIService.js';
 import { getAuditLogger } from '../AuditLogger.js';
-import { listArtifactsForUser } from '../v8/artifactRegistryService.js';
+import {
+  listArtifactsForUser,
+  getRecentArtifactRefsForOrg,
+} from '../v8/artifactRegistryService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -413,6 +416,183 @@ const probeM14M15Handoff: HealthProbe = {
   },
 };
 
+// ===========================================================================
+// GOLDEN-PATH probes (Runda3 #6) — lightweight, READ-ONLY liveness checks.
+//
+// Each of these asserts that a golden-path transition surface (or an otherwise
+// unprobed module) is ALIVE: the org-scoped list query runs and returns without
+// error. They mutate NOTHING (no seeds, no cleanup) and are fully fail-soft —
+// every query uses `{ fallback: true }`, so a legitimately-empty org is a PASS
+// and a missing/renamed table degrades to `unknown`/`fail` without wedging the
+// panel. A THROW = a real broken surface (e.g. table gone, column renamed).
+// ===========================================================================
+
+/** Small helper: run one org-scoped SELECT and return the row count. Throws only
+ *  if the query itself blows up (a genuinely broken surface). Empty = fine. */
+async function countOrgScoped(sql: string, params: unknown[]): Promise<number> {
+  const rows = await dbAll<{ id: string }>(sql, params, { fallback: true });
+  return Array.isArray(rows) ? rows.length : 0;
+}
+
+/** (g) Wywiad → Insights — interview insights surface is alive (org-scoped). */
+const probeInterviewInsights: HealthProbe = {
+  id: 'gp_interview_insights_live',
+  module: 'Wywiad→Insights',
+  title: 'Interview insights surface live',
+  description: 'Runs the org-scoped interview_insights list query (empty allowed) to prove the surface is alive.',
+  run: async ({ organizationId }) => {
+    const count = await countOrgScoped(
+      `SELECT id FROM interview_insights WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
+      [organizationId]
+    );
+    return { insightCount: count };
+  },
+};
+
+/** (h) Insights → Inicjatywy — the M13 initiatives list surface is alive. */
+const probeInitiativesList: HealthProbe = {
+  id: 'gp_initiatives_list_live',
+  module: 'M13',
+  title: 'Initiatives list surface live',
+  description: 'Runs the org-scoped initiatives list query (the Insights→Initiative landing surface).',
+  run: async ({ organizationId }) => {
+    const count = await countOrgScoped(
+      `SELECT id FROM initiatives WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
+      [organizationId]
+    );
+    return { initiativeCount: count };
+  },
+};
+
+/** (i) Assessment → Inicjatywy — assessment-sourced generated initiatives read. */
+const probeAssessmentToInitiatives: HealthProbe = {
+  id: 'gp_assessment_to_initiatives_live',
+  module: 'Assessment→M13',
+  title: 'Assessment → generated initiatives live',
+  description:
+    'Reads generated_initiatives org-scoped (the Assessment→Initiative handoff sink), assessment-source slice.',
+  run: async ({ organizationId }) => {
+    const count = await countOrgScoped(
+      `SELECT id FROM generated_initiatives
+        WHERE organization_id = ? AND source = 'assessment'
+        ORDER BY created_at DESC LIMIT 25`,
+      [organizationId]
+    );
+    return { assessmentSourcedCount: count };
+  },
+};
+
+/** (j) Tools → Inicjatywy — tools-sourced generated initiatives read. Same sink
+ *  table as (i) but the tools-source slice, so a source-column regression on
+ *  either handoff is caught independently. */
+const probeToolsToInitiatives: HealthProbe = {
+  id: 'gp_tools_to_initiatives_live',
+  module: 'Tools→M13',
+  title: 'Tools → generated initiatives live',
+  description: 'Reads generated_initiatives org-scoped (tools-source slice) to prove the Tools→Initiative sink is alive.',
+  run: async ({ organizationId }) => {
+    const count = await countOrgScoped(
+      `SELECT id FROM generated_initiatives
+        WHERE organization_id = ? AND source = 'tools'
+        ORDER BY created_at DESC LIMIT 25`,
+      [organizationId]
+    );
+    return { toolsSourcedCount: count };
+  },
+};
+
+/** (k) Inicjatywy → Execution (M14) — the tasks/execution surface is alive and
+ *  its initiative linkage column is intact (org-scoped). */
+const probeInitiativesToExecution: HealthProbe = {
+  id: 'gp_initiatives_to_execution_live',
+  module: 'M13→M14',
+  title: 'Initiative → Execution tasks live',
+  description:
+    'Runs the org-scoped tasks list query selecting the initiative_id linkage (the Execution handoff surface).',
+  run: async ({ organizationId }) => {
+    const rows = await dbAll<{ id: string; initiative_id: string | null }>(
+      `SELECT id, initiative_id FROM tasks WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
+      [organizationId],
+      { fallback: true }
+    );
+    const taskCount = Array.isArray(rows) ? rows.length : 0;
+    const linkedToInitiative = (rows || []).filter((r) => r.initiative_id != null).length;
+    return { taskCount, linkedToInitiative };
+  },
+};
+
+/** (l) Execution → Rezultaty (M15) — the benefits register surface is alive
+ *  with its initiative linkage (the M14→M15 benefit sink). */
+const probeExecutionToResults: HealthProbe = {
+  id: 'gp_execution_to_results_live',
+  module: 'M14→M15',
+  title: 'Execution → benefits register live',
+  description:
+    'Runs the org-scoped benefits_register list query with initiative linkage (the Results benefit sink surface).',
+  run: async ({ organizationId }) => {
+    const rows = await dbAll<{ id: string; initiative_id: string | null }>(
+      `SELECT id, initiative_id FROM benefits_register WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
+      [organizationId],
+      { fallback: true }
+    );
+    const benefitCount = Array.isArray(rows) ? rows.length : 0;
+    const linkedToInitiative = (rows || []).filter((r) => r.initiative_id != null).length;
+    return { benefitCount, linkedToInitiative };
+  },
+};
+
+/** (m) Assessment module (M12) — the assessments list surface is alive. */
+const probeAssessmentsList: HealthProbe = {
+  id: 'gp_assessments_list_live',
+  module: 'Assessment',
+  title: 'Assessments list surface live',
+  description: 'Runs the org-scoped assessments list query to prove the Assessment module surface is alive.',
+  run: async ({ organizationId }) => {
+    const count = await countOrgScoped(
+      `SELECT id FROM assessments WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
+      [organizationId]
+    );
+    return { assessmentCount: count };
+  },
+};
+
+/** (n) DRD report endpoint — the assessment_reports surface is alive AND the
+ *  DRD report route module still loads (the endpoint backing the report). */
+const probeDrdReport: HealthProbe = {
+  id: 'gp_drd_report_live',
+  module: 'DRD',
+  title: 'DRD report surface + route live',
+  description:
+    'Reads assessment_reports org-scoped and asserts the assessment-reports route module still imports (DRD endpoint alive).',
+  run: async ({ organizationId }) => {
+    const reportCount = await countOrgScoped(
+      `SELECT id FROM assessment_reports WHERE organization_id = ? ORDER BY created_at DESC LIMIT 25`,
+      [organizationId]
+    );
+    // Endpoint liveness: the route module must still import without throwing.
+    let routeLoaded = false;
+    const mod = await import('../../routes/assessment-reports.routes.js').catch(() => null);
+    routeLoaded = mod != null;
+    if (!routeLoaded) throw new Error('assessment-reports route module failed to import (DRD endpoint dead)');
+    return { reportCount, routeLoaded };
+  },
+};
+
+/** (o) M17 register round-trip — the outputs registry read path is alive via the
+ *  canonical service (getRecentArtifactRefsForOrg), the register→chat surface. */
+const probeM17RegisterRead: HealthProbe = {
+  id: 'gp_m17_register_read_live',
+  module: 'M17',
+  title: 'Outputs register read live',
+  description:
+    'Calls getRecentArtifactRefsForOrg (the register→chat read path) and asserts it returns an array org-scoped.',
+  run: async ({ organizationId }) => {
+    const refs = await getRecentArtifactRefsForOrg(organizationId, 10);
+    if (!Array.isArray(refs)) throw new Error('Outputs register read did not return an array');
+    return { refCount: refs.length };
+  },
+};
+
 /** THE REGISTRY. Order = display order. */
 export const HEALTH_PROBES: readonly HealthProbe[] = [
   probeM15KpiRoundTrip,
@@ -421,6 +601,16 @@ export const HEALTH_PROBES: readonly HealthProbe[] = [
   probeM24MemberAudit,
   probeM17ArtifactsFilter,
   probeM14M15Handoff,
+  // ── Golden-path liveness probes (read-only) ──
+  probeInterviewInsights,
+  probeInitiativesList,
+  probeAssessmentToInitiatives,
+  probeToolsToInitiatives,
+  probeInitiativesToExecution,
+  probeExecutionToResults,
+  probeAssessmentsList,
+  probeDrdReport,
+  probeM17RegisterRead,
 ];
 
 export function getProbeById(probeId: string): HealthProbe | undefined {

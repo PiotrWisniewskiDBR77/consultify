@@ -340,8 +340,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onClick={() => setShowDrafts((v) => !v)}
         className={`${chipBase} ${
           showDrafts
-            ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-            : 'bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 border-slate-200/70 dark:border-white/[0.08] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+            ? 'bg-c-accent-soft text-c-text border-c-border'
+            : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
         }`}
         title={t('rap.filters.showDrafts', 'Pokaż robocze')}
         aria-pressed={showDrafts}
@@ -537,7 +537,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 }
                 className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                   checked
-                    ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                    ? 'bg-c-accent-soft text-c-text border-c-border'
                     : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                 }`}
                 title={label}
@@ -559,7 +559,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           onClick={() => setFiltersOpen((v) => !v)}
           className={`${chipBase} ${
             activeCount > 0
-              ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+              ? 'bg-c-accent-soft text-c-text border-c-border'
               : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
           }`}
           title={t('common.filters', 'Filters')}
@@ -607,7 +607,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             onClick={() => toggleFilter('status', o.value, o.label, o.dotColor)}
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
-                                ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                                ? 'bg-c-accent-soft text-c-text border-c-border'
                                 : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
@@ -635,7 +635,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             activeFilters.some(
                               (f) => f.column === 'outputKind' && f.value === o.value
                             )
-                              ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                              ? 'bg-c-accent-soft text-c-text border-c-border'
                               : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                           }`}
                         >
@@ -665,7 +665,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             }
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
-                                ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                                ? 'bg-c-accent-soft text-c-text border-c-border'
                                 : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
@@ -696,7 +696,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             }
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
-                                ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                                ? 'bg-c-accent-soft text-c-text border-c-border'
                                 : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
@@ -725,7 +725,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             onClick={() => toggleFilter('sourceType', o.value, o.label)}
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
-                                ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                                ? 'bg-c-accent-soft text-c-text border-c-border'
                                 : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
@@ -1190,7 +1190,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           {/* Section header with collapse toggle */}
           <button
             onClick={() => setBundleHistoryOpen((v) => !v)}
-            className="flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left text-sm font-semibold text-slate-700 transition-colors hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            className="flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left text-sm font-semibold text-c-text-secondary transition-colors hover:text-c-text"
             aria-expanded={bundleHistoryOpen}
             data-testid="bundle-history-toggle"
           >
@@ -1199,9 +1199,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               {t('rap.bundles.sectionTitle', 'Komplet AI — historia generacji')}
             </span>
             {bundleHistoryOpen ? (
-              <ChevronUp className="h-4 w-4 text-slate-400" />
+              <ChevronUp className="h-4 w-4 text-c-text-muted" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-slate-400" />
+              <ChevronDown className="h-4 w-4 text-c-text-muted" />
             )}
           </button>
 
