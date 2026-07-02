@@ -16,6 +16,18 @@ import type {
   ConditionalFormattingRule,
   WorkbookSchema,
 } from './WorkbookSchema.js';
+import {
+  addInfoSheet,
+  addSubtleColorScale,
+  alignmentForType,
+  colLetter as colLetterLocal,
+  colorScaleColumns,
+  currencyFormat,
+  HEADER_NAVY_HEX,
+  inferCurrency,
+  type StyleContext,
+  ZEBRA_HEX,
+} from './WorkbookStyler.js';
 
 // ---------------------------------------------------------------------------
 // Style mapping
@@ -238,7 +250,30 @@ function cellTextWidth(value: unknown): number {
 // Builder
 // ---------------------------------------------------------------------------
 
-export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffer> {
+export interface BuildOptions {
+  /**
+   * Consultant styling layer (default true): navy header default, locale-aware
+   * currency (zł/€/$), per-type alignment (numbers/dates right), default banded
+   * rows, subtle color scales on %/score columns, and a leading "Info"
+   * metadata sheet. Set false for raw schema-only rendering (e.g. golden-file
+   * tests of the builder core).
+   */
+  applyConsultantStyling?: boolean;
+  /** Metadata surfaced on the Info sheet. */
+  meta?: {
+    organizationName?: string;
+    source?: string;
+    generatedAt?: string;
+  };
+}
+
+export async function buildWorkbookBuffer(
+  schema: WorkbookSchema,
+  options: BuildOptions = {}
+): Promise<Buffer> {
+  const applyStyling = options.applyConsultantStyling !== false;
+  const styleCtx: StyleContext = { currency: inferCurrency(schema) };
+
   const wb = new ExcelJS.Workbook();
   wb.creator = schema.author || 'Consultify';
   wb.created = new Date();
@@ -272,17 +307,22 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
       width: col.width ?? 16,
     }));
 
-    // Style header row
+    // Style header row — brand navy default (crimson NEVER as a fill).
     const headerRow = ws.getRow(1);
     const defaultHeaderStyle: CellStyle = sheetDef.headerStyle ?? {
       bold: true,
       fontColor: 'FFFFFF',
-      bgColor: '4472C4',
+      bgColor: applyStyling ? HEADER_NAVY_HEX : '4472C4',
       alignment: 'center',
       border: 'thin',
     };
-    headerRow.eachCell((cell) => applyStyle(cell, defaultHeaderStyle));
+    headerRow.eachCell((cell) => applyStyle(cell, { wrapText: true, ...defaultHeaderStyle }));
     headerRow.height = 24;
+
+    // Default banded rows (zebra) when the schema didn't specify one — this is
+    // exactly the "brak formatowania" gap the LLM leaves.
+    const effectiveAlternate =
+      sheetDef.alternateRowColor ?? (applyStyling ? ZEBRA_HEX : undefined);
 
     // Data rows
     for (let rowIdx = 0; rowIdx < sheetDef.rows.length; rowIdx++) {
@@ -325,11 +365,15 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
           if (vw > prev) colWidths.set(col.key, vw);
         }
 
-        // Number format: cell-level > column-level > type default
-        const numFmt =
-          cellDef.style?.numberFormat ||
-          col.numberFormat ||
-          (col.type ? TYPE_FORMATS[col.type] : undefined);
+        // Number format: cell-level > column-level > (locale-aware) type default.
+        // When styling is on, currency columns get the locale format (zł/€/$).
+        const typeDefaultFmt =
+          applyStyling && col.type === 'currency'
+            ? currencyFormat(styleCtx.currency)
+            : col.type
+              ? TYPE_FORMATS[col.type]
+              : undefined;
+        const numFmt = cellDef.style?.numberFormat || col.numberFormat || typeDefaultFmt;
         if (numFmt) cell.numFmt = numFmt;
 
         // Cell style
@@ -338,6 +382,16 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
         // Column-level style (if no cell style)
         if (!cellDef.style && col.style) {
           applyStyle(cell, col.style);
+        }
+
+        // Per-type alignment (numbers/dates right, text left) — only fills the
+        // gap where neither cell nor column style set an explicit alignment.
+        if (applyStyling && !cellDef.style?.alignment && !col.style?.alignment) {
+          cell.alignment = {
+            vertical: 'middle',
+            ...(cell.alignment ?? {}),
+            horizontal: cell.alignment?.horizontal ?? alignmentForType(col.type),
+          };
         }
 
         if (cellDef.comment) {
@@ -369,13 +423,16 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
         }
       }
 
-      // Alternating row colors (banded rows)
-      if (sheetDef.alternateRowColor && rowIdx % 2 === 1 && !rowDef.isHeader && !rowDef.isSummary) {
-        excelRow.eachCell((cell) => {
+      // Alternating row colors (banded rows). Uses the schema's color when set,
+      // otherwise the consultant default (fills the "brak formatowania" gap).
+      // Bands every column in the row (not only populated cells) for a clean grid.
+      if (effectiveAlternate && rowIdx % 2 === 1 && !rowDef.isHeader && !rowDef.isSummary) {
+        for (const col of sheetDef.columns) {
+          const cell = excelRow.getCell(col.key);
           if (!cell.fill || (cell.fill as any).pattern === 'none') {
-            applyStyle(cell, { bgColor: sheetDef.alternateRowColor });
+            applyStyle(cell, { bgColor: effectiveAlternate });
           }
-        });
+        }
       }
 
       excelRow.commit();
@@ -409,6 +466,41 @@ export async function buildWorkbookBuffer(schema: WorkbookSchema): Promise<Buffe
     // X2 — Conditional Formatting (dataBar/colorScale/iconSet/cellIs)
     if (sheetDef.conditionalFormatting && sheetDef.conditionalFormatting.length > 0) {
       applyConditionalFormatting(ws, sheetDef.conditionalFormatting);
+    }
+
+    // Consultant default: subtle teal color scale on %/score columns that the
+    // schema didn't already decorate with its own CF. Skips columns whose A1
+    // range already appears in an explicit CF block.
+    if (applyStyling) {
+      const explicitCfRefs = (sheetDef.conditionalFormatting ?? [])
+        .map((b) => b.ref.toUpperCase())
+        .join(' ');
+      for (const colIdx of colorScaleColumns(sheetDef)) {
+        const colL = colLetterLocal(colIdx);
+        // Cheap guard: if any explicit CF ref mentions this column letter, skip.
+        if (explicitCfRefs.includes(`${colL}2`) || explicitCfRefs.includes(`${colL}$`)) continue;
+        addSubtleColorScale(ws, colIdx, sheetDef.rows.length);
+      }
+    }
+  }
+
+  // Trailing "Info" metadata sheet (branding band + source/date/org + sheet
+  // inventory). Appended LAST so data sheets keep their sheet1..N file order
+  // (existing golden tests + formula/cross-sheet references are unaffected).
+  // Fully additive — never shifts data rows.
+  if (applyStyling) {
+    try {
+      addInfoSheet(wb, {
+        title: schema.title || 'Workbook',
+        description: schema.description,
+        organizationName: options.meta?.organizationName,
+        source: options.meta?.source,
+        generatedAt: options.meta?.generatedAt || new Date().toISOString().slice(0, 10),
+        author: schema.author || 'Consultify',
+        sheetNames: schema.sheets.map((s) => s.name),
+      });
+    } catch (infoErr) {
+      logger.warn('[WorkbookBuilder] Info sheet creation failed', infoErr);
     }
   }
 
