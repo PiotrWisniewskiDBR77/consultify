@@ -503,13 +503,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                     'reportType',
                     checked ? null : code,
                     `${code} · ${label}`,
-                    'bg-primary-400'
+                    'bg-slate-400'
                   )
                 }
                 className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                   checked
-                    ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-                    : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                    ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                    : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                 }`}
                 title={label}
               >
@@ -529,17 +529,15 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           onClick={() => setFiltersOpen((v) => !v)}
           className={`${chipBase} ${
             activeCount > 0
-              ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-              : 'bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 border-slate-200/70 dark:border-white/[0.08] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+              ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+              : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
           }`}
           title={t('common.filters', 'Filters')}
         >
           <Filter size={16} />
           <span>{t('common.filters', 'Filters')}</span>
           {activeCount > 0 ? (
-            <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-primary-500/30 text-primary-600 dark:text-primary-300 font-semibold tabular-nums leading-none">
-              {activeCount}
-            </span>
+            <span className={MENU_3_BADGE_ACTIVE}>{activeCount}</span>
           ) : null}
         </button>
 
@@ -551,12 +549,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               onClick={() => setFiltersOpen(false)}
               aria-label={t('common.close', 'Close')}
             />
-            <div className="absolute right-0 mt-2 z-50 w-[320px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl overflow-hidden">
-              <div className="p-3 border-b border-slate-200 dark:border-navy-700">
-                <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            <div className="absolute right-0 mt-2 z-50 w-[320px] rounded-xl border border-c-border bg-c-surface shadow-xl overflow-hidden">
+              <div className="p-3 border-b border-c-border-subtle">
+                <div className="text-xs font-semibold text-c-text">
                   {t('common.filters', 'Filters')}
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <div className="text-[11px] text-c-text-muted mt-0.5">
                   {t('rap.filters.hint', 'Pick statuses and (optionally) sources.')}
                 </div>
               </div>
@@ -564,7 +562,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               <div className="p-3 space-y-4 max-h-[360px] overflow-y-auto">
                 {statusOptions.length > 0 ? (
                   <div>
-                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
                       {t('rap.filters.status', 'Status')}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -579,8 +577,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             onClick={() => toggleFilter('status', o.value, o.label, o.dotColor)}
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
-                                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-                                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                                ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                                : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
                             <span className={`w-2 h-2 rounded-full ${o.dotColor}`} />
@@ -594,7 +592,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
                 {kindOptions.length > 0 ? (
                   <div>
-                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
                       {t('rap.outputs.filters.kind', 'Output type')}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -607,8 +605,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             activeFilters.some(
                               (f) => f.column === 'outputKind' && f.value === o.value
                             )
-                              ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-                              : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                              ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                              : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                           }`}
                         >
                           <span className={`text-[11px] font-semibold ${o.color}`}>{o.label}</span>
@@ -620,7 +618,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
                 {visibilityOptions.length > 0 ? (
                   <div>
-                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
                       {t('rap.outputs.columns.visibility', 'Visibility')}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -637,8 +635,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             }
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
-                                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-                                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                                ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                                : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
                             <span className="truncate">{o.label}</span>
@@ -651,7 +649,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
                 {reviewStateOptions.length > 0 ? (
                   <div>
-                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
                       {t('rap.outputs.columns.review', 'Review')}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -668,8 +666,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             }
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
-                                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-                                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                                ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                                : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
                             <span className="truncate">{o.label}</span>
@@ -682,7 +680,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
                 {sourceOptions.length > 0 ? (
                   <div>
-                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
                       {t('rap.filters.source', 'Source')}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -697,8 +695,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             onClick={() => toggleFilter('sourceType', o.value, o.label)}
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
-                                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-                                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                                ? 'bg-c-accent-soft text-c-text border-primary-500/40'
+                                : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
                             <span className={`text-[11px] font-semibold ${o.color}`}>
@@ -712,18 +710,18 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 ) : null}
               </div>
 
-              <div className="p-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div className="p-3 border-t border-c-border-subtle flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setActiveFilters([])}
-                  className="text-[11px] text-slate-500 hover:text-primary-400 transition-colors"
+                  className="text-[11px] text-c-text-muted hover:text-c-text transition-colors"
                 >
                   {t('common.clearAll', 'Clear all')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(false)}
-                  className="h-8 px-3 rounded-full text-[11px] font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
+                  className="h-8 px-3 rounded-full text-[11px] font-medium bg-c-text text-c-surface hover:opacity-90 transition-opacity"
                 >
                   {t('common.done', 'Done')}
                 </button>
