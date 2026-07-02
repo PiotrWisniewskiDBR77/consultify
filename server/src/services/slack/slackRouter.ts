@@ -53,6 +53,8 @@ export interface RouteToSlackEvent {
 /** Real Unicode emoji per category — render on watch/phone, unlike `:codes:`. */
 function categoryEmoji(category: string | undefined, severity?: SlackSeverity): string {
   const c = (category || '').toLowerCase();
+  if (c.includes('wdroż') || c.includes('wdroz') || c.includes('deploy') || c.includes('release'))
+    return '🚀';
   if (c.includes('pilne') || c.includes('awaria') || c.includes('crash')) return '🚨';
   if (c.includes('ostrzeż') || c.includes('ostrze')) return '⚠️';
   if (c.includes('rozlicz') || c.includes('billing') || c.includes('płat')) return '💳';

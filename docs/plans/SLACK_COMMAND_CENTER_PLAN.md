@@ -120,8 +120,25 @@ Jedna aplikacja Slack (Events API na publiczny URL Railway; weryfikacja `SLACK_S
 
 **Estymata: ~3,5–4 dni kodu (Cloud) + 30 min konfiguracji Piotra.** PROD nietknięty do osobnej zgody (najpierw demo).
 
-## 6. Decyzje Piotra (przed F1)
-1. **Kanały:** 4 jak w §3, czy mniej? Nazwy?
-2. **Slack App (F0):** tworzysz w swoim workspace (poprowadzę krok-po-kroku)? Bot token = warunek wątków.
+## 6. Decyzje Piotra (przed F1) — ZAMKNIĘTE 2026-07-02
+1. ~~Kanały: 4 jak w §3, czy mniej? Nazwy?~~ → **decyzja: zostają 4, patrz §7** (Piotr: „nie pytaj jak, wiesz lepiej").
+2. ~~Slack App (F0)~~ → zrealizowane (appka „Consultify" istniejąca od marca rozbudowana o slash+shortcut+bot, patrz F0 w journal poniżej).
+
+## 7. Kanały — decyzja finalna (2026-07-02)
+
+**Zostaje przy 4 kanałach z §3** (nie mnożymy — rozproszenie = szum, którego nikt nie czyta; dowód a contrario: legacy `#all-dbr77` na PROD, gdzie wszystko leci w jedno miejsce i ginie w powtórkach). Każdy kanał odpowiada na jedno pytanie:
+
+| Kanał | Pytanie | Powiadomienia (telefon) |
+|---|---|---|
+| **#cf-alerts** | Czy coś jest zepsute *teraz*? | zawsze on |
+| **#cf-feedback** | Co zgłoszono i na jakim jest etapie? | on (nowe + wątki własnych zgłoszeń) |
+| **#cf-progress** | Co dzieje się w pracy zespołu? | off / batch (15 min + digest 8:00) |
+| **#cf-ai-ops** | Ile to kosztuje, czy AI działa? | off / przegląd dzienny |
+
+**Dodana kategoria: 🚀 Wdrożenie → #cf-progress, natychmiastowa (nie batchowana).** Luka: deploye nie miały żadnego sygnału w Slacku (weryfikacja = ręczne odpytywanie `/api/health`). `announceDeploy()` w `server/src/index.ts` (po `server.listen`) ogłasza `env (branch) — gitSha` + commit message, dedup po `env:gitSha` (restart bez nowego kodu nie spamuje). Fail-soft: brak `gitSha`-env (lokalny dev) = cicho nic.
+
+**Znany, celowo nietknięty problem: PROD (`consultify.ai`) ma STARY, sprzed-programu alerting** (`slackService.ts`, format „SYSTEM ALERT:", webhook → `#all-dbr77`, brak dedupu → duplikaty co ~3 min przy degradacji). To NIE jest część tego systemu (który działa tylko na `demo`) — zgodnie z regułą PROD-nietknięty-bez-zgody. Migracja PROD na `slackRouter` = osobna decyzja + jawna zgoda (wymieni webhook-do-`#all-dbr77` na bot-do-`#cf-alerts` + naprawi brak dedupu przy okazji). Do backlogu, nie pilne (alert sam w sobie jest degradacją schematu DB na prod, warty odrębnego sprawdzenia — nie robię tego bez pytania, bo to ingerencja w prod diagnostykę).
+
+**Stara druga appka Slack** (`DBR77_Consulting_Notifi…`, A0A68HE3JUD) — widoczna w workspace, nieużywana przez ten program, nieznana mi jej funkcja. Nie ruszona.
 3. **Progress feed — zakres:** taski+inicjatywy+decyzje+rejestracje (rekomendacja) czy węziej na start?
 4. **Batch:** 15 min / 30 min / tylko digest dzienny?

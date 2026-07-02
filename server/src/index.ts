@@ -1811,7 +1811,49 @@ function startHttpListener(): void {
     logger.info('✅ Server running on http://0.0.0.0:' + PORT);
     logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
     logger.info(`[Server] ✅ Server started on port ${PORT}`);
+    void announceDeploy();
   });
+}
+
+/**
+ * Slack Command Center — announce a completed deploy on #cf-progress ("🚀
+ * Wdrożenie"). Gives the real-time "what shipped, when" visibility that was
+ * missing (deploys previously had no Slack signal at all). Dedup'd by
+ * env+gitSha (router's 30-min window) so a crash-loop restart on the SAME
+ * commit doesn't spam; a genuinely new deploy always gets a fresh sha. No-op
+ * fail-soft when gitSha/Slack env aren't configured (e.g. local dev).
+ */
+async function announceDeploy(): Promise<void> {
+  if (isTest) return;
+  try {
+    const gitSha =
+      process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.GIT_SHA;
+    if (!gitSha) return; // local dev / unconfigured — nothing to announce
+    const shortSha = gitSha.slice(0, 10);
+    const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
+    const branch =
+      process.env.RAILWAY_GIT_BRANCH || process.env.GITHUB_REF_NAME || process.env.GIT_BRANCH;
+    const commitMsg = (
+      process.env.RAILWAY_GIT_COMMIT_MESSAGE ||
+      process.env.GITHUB_HEAD_COMMIT_MESSAGE ||
+      ''
+    )
+      .split('\n')[0]
+      .slice(0, 200);
+    const { routeToSlack } = await import('./services/slack/slackRouter.js');
+    await routeToSlack({
+      channel: 'progress',
+      severity: 'INFO',
+      category: 'Wdrożenie',
+      title: `${env}${branch ? ` (${branch})` : ''} — ${shortSha}`,
+      text: commitMsg || 'Nowa wersja wdrożona.',
+      dedupeKey: `deploy:${env}:${shortSha}`,
+    });
+  } catch (err) {
+    logger.warn('[Server] announceDeploy failed (non-fatal):', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 if (startServer && shouldStartHttpServer) {
