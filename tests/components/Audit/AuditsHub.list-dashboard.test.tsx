@@ -4,6 +4,15 @@
  * T6 — AuditsHub: lista programów + panel dashboardu.
  * Weryfikuje: loading state, empty state, lista z kartami, wybór programu,
  * obsługa błędu ładowania, otwieranie kreatora, kasowanie programu.
+ *
+ * i18n NOTE: this suite renders with the app's real i18n instance, which uses
+ * i18next-http-backend (loadPath /locales/{lng}/{ns}.json). Under jsdom there is
+ * no HTTP backend to fetch those JSON bundles, so t('audit.foo') renders the RAW
+ * KEY ('audit.foo'), not the translated string. Assertions that target UI copy
+ * therefore match against the key (e.g. 'audit.noAuditProgramsYet') — that is
+ * what the component actually renders in this environment. Fixture literals
+ * (program names, objectives, counts) are unaffected. Keep this in mind when
+ * adding assertions: use the key, not the Polish/English text.
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -191,7 +200,8 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
     renderHub();
     await waitFor(() => {
-      expect(screen.getByText(/brak programów audytu|no audit programs yet/i)).toBeInTheDocument();
+      // i18n unresolved under jsdom → the empty message renders as its raw key.
+      expect(screen.getByText('audit.noAuditProgramsYet')).toBeInTheDocument();
     });
   });
 
@@ -257,7 +267,7 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     renderHub();
     await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
 
-    const newBtn = screen.getByRole('button', { name: /new audit program|nowy program audytu/i });
+    const newBtn = screen.getByRole('button', { name: 'audit.newAuditProgram' });
     fireEvent.click(newBtn);
 
     await waitFor(() => {
@@ -270,7 +280,7 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     renderHub();
     await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
 
-    const isoBtn = screen.getByRole('button', { name: /iso 27001/i });
+    const isoBtn = screen.getByRole('button', { name: 'audit.iso27001' });
     fireEvent.click(isoBtn);
 
     await waitFor(() => {
@@ -283,7 +293,7 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     renderHub();
     await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
 
-    fireEvent.click(screen.getByRole('button', { name: /new audit program|nowy program audytu/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'audit.newAuditProgram' }));
     await waitFor(() => screen.getByTestId('audit-wizard'));
 
     fireEvent.click(screen.getByText('close-wizard'));
@@ -301,8 +311,8 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     renderHub();
     await waitFor(() => screen.getByText('To Delete'));
 
-    // Delete button: aria-label="Delete" (EN) / "Usuń" (PL)
-    const delBtn = screen.getByRole('button', { name: /^delete$|^usuń$/i });
+    // Delete row action: aria-label is t('audit.delete') → raw key under jsdom.
+    const delBtn = screen.getByRole('button', { name: 'audit.delete' });
     fireEvent.click(delBtn);
 
     await waitFor(() => {
@@ -347,12 +357,11 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     });
     renderHub();
     await waitFor(() => {
-      // The generated count text (0 from fixture creation.created=undefined → 0)
-      // or the send icon badge — find the aria-label
-      const genBtn = screen.getByRole('button', {
-        name: /surveys generated|ankiety wygenerowane/i,
-      });
+      // The generate row action flips its label to t('audit.surveysGenerated')
+      // once surveys exist (and is disabled). Raw key under jsdom.
+      const genBtn = screen.getByRole('button', { name: 'audit.surveysGenerated' });
       expect(genBtn).toBeInTheDocument();
+      expect(genBtn).toBeDisabled();
     });
   });
 });
