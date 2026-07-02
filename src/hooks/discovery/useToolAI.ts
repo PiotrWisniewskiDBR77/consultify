@@ -27,6 +27,7 @@ import {
 
 import {
   applyDynamicSwotPendingAction,
+  buildDynamicSwotConversationProtocol,
   buildDynamicSwotCorrelationsPrompt,
   buildDynamicSwotFullSessionPrompt,
   buildDynamicSwotRethinkPrompt,
@@ -169,6 +170,12 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         const stepContext = currentStepDef
           ? `\n\nCURRENT STEP: ${currentStepDef.name}\nSTEP DESCRIPTION: ${currentStepDef.description}`
           : '';
+        // Dynamic SWOT: the chat mentor interviews with the laddered question bank
+        // (same source of truth as the wizard) during the SWOT step.
+        const interviewProtocol =
+          toolType === 'dynamic-swot'
+            ? buildDynamicSwotConversationProtocol(currentStepDef?.id)
+            : '';
 
         await startStream(
           message,
@@ -176,7 +183,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
             role: m.role,
             content: m.content,
           })) || [],
-          systemPrompt + stepContext
+          systemPrompt + stepContext + interviewProtocol
         );
       } catch (e) {
         setError('Failed to send message');
@@ -184,7 +191,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         console.error('[useToolAI] Error sending message:', e);
       }
     },
-    [currentSession, currentStepDef, getSystemPrompt, startStream]
+    [currentSession, currentStepDef, getSystemPrompt, startStream, toolType]
   );
 
   // Request AI suggestions for current step

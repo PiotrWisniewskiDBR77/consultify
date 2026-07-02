@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { computeTensionCoverage, validateMoveSet } from '@/config/swot/swotTensionEngine';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
@@ -260,7 +261,30 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       });
       if (!accepted(data.tensions).length && !accepted(data.correlations).length)
         gaps.push('Missing strategic tensions');
+      else {
+        // OXFORD O3: tension coverage is enforced — types formable from accepted
+        // items must exist (SO/WO/ST/WT), structurally empty types are excused.
+        const coverage = computeTensionCoverage(data.items || [], data.tensions || []);
+        if (coverage.missing.length > 0) {
+          gaps.push(`Missing tension types: ${coverage.missing.join(', ')}`);
+        }
+      }
       if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      else {
+        // OXFORD O3 / CONCLUSION_LAYER W2: every move needs a trade-off and a
+        // rejected alternative — a recommendation without them is a list, not a decision.
+        const moveVerdict = validateMoveSet(
+          data.recommendedMoves || [],
+          data.items || [],
+          data.tensions || []
+        );
+        moveVerdict.perMove
+          .filter((m) => m.issues.length > 0)
+          .forEach((m) => {
+            const codes = Array.from(new Set(m.issues.map((issue) => issue.code))).join(', ');
+            gaps.push(`Move "${m.title}" fails W2 (${codes})`);
+          });
+      }
       if (
         !data.summary?.executiveSummary ||
         ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)

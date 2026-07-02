@@ -1,5 +1,11 @@
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
-import type { SWOTData, SWOTItem, ToolType } from '@/store/useToolStore';
+import { buildStaircasePromptRules } from '@/config/swot/swotInsightStaircase';
+import {
+  buildMoveConclusionPromptRules,
+  deriveTensionCandidates,
+} from '@/config/swot/swotTensionEngine';
+import { buildSwotFactsBlock } from '@/hooks/discovery/toolAi/dynamicSwot';
+import type { SWOTData, ToolType } from '@/store/useToolStore';
 
 const OPERATIONAL_TOOL_TYPES: ToolType[] = [
   'sop-builder',
@@ -236,33 +242,39 @@ Return JSON:
 {"mission": {"goal": "...", "scope": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
     }
     if (stepId === 'input') {
-      return `Act as an AI strategy mentor. Based on the mission and organization context, propose 4-6 high-value signals for the Input & Exploration phase.
+      return `You are a partner at a consulting firm (HBS, MBA, 10 years of practice) preparing the evidence base for a Dynamic SWOT. Based on the mission and organization context, propose 4-6 high-value signals for the Input & Exploration phase.
 
 Mission:
 - Strategic question: ${swotData?.context?.goal || 'missing'}
 - Scope: ${swotData?.context?.scope || 'missing'}
 - Success signal: ${swotData?.context?.successSignal || 'missing'}
 
+EVIDENCE DISCIPLINE:
+- Each signal is a FACT CANDIDATE — concrete, checkable, tied to a source. "The market is growing" is not a signal; "client X asked for Y in the Q2 tender" is.
+- Mark evidenceType honestly: "fact" only for verifiable statements; unverified beliefs are "observation" or "hypothesis".
+- Do not invent numbers. If a number would help, propose WHERE to get it as the signal content.
+- Respond in the user's language (Polish or English).
+
 Return JSON:
-{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["..."], "evidenceType": "fact|observation|hypothesis", "state": "accepted|proposed|needs-evidence", "provenance": "..."}]}`;
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["..."], "evidenceType": "fact|observation|hypothesis", "state": "proposed|needs-evidence", "provenance": "..."}]}`;
     }
     if (stepId === 'swot') {
-      const signalsSummary = (swotData?.signals || [])
-        .slice(0, 20)
-        .map((signal) => `- [${signal.type}] ${signal.content}`)
-        .join('\n');
-      return `Act as an AI strategy mentor. Turn the following signals into candidate SWOT items.
+      return `You are a partner at a consulting firm (HBS, MBA, 10 years of practice). Turn the session evidence below into candidate SWOT items your client's board would accept as findings, not opinions.
 
-${signalsSummary || '- no explicit signals provided yet'}
+${swotData ? buildSwotFactsBlock(swotData) : '- no session facts yet'}
 
-Rules:
-- keep items concrete
-- avoid duplicates
-- separate internal vs external
-- classify each item into strengths, weaknesses, opportunities, or threats
+RULES:
+- Items derive from the EVIDENCE block only — every item's staircase.factRefs must point at signal ids listed above. An item with no supporting signal gets factRefs=[] and evidenceStatus="declared" (explicitly "declared, unconfirmed").
+- Keep items concrete and falsifiable; no phrases that fit any company. Separate internal (S/W) from external (O/T).
+- Strengths: classify each — "core-competency" (externally validated + broad + durable), "niche-strength" (validated but segment-bound), "claimed-strength" (no external proof), "table-stakes" (real but every serious competitor has it).
+- Weaknesses: umbrella claims ("lack of agility", "poor communication", "culture") MUST include decomposition into process / tools / skills / incentives — each root demands a different move.
+- Respond in the user's language (Polish or English).
+
+${buildStaircasePromptRules('en')}
 
 Return JSON:
-{"items": [{"text": "...", "impact": "high|medium|low", "quadrant": "strengths|weaknesses|opportunities|threats", "confidence": 1-5, "status": "accepted|proposed"}]}`;
+{"items": [{"text": "...", "impact": "high|medium|low", "quadrant": "strengths|weaknesses|opportunities|threats", "confidence": 1-5, "status": "proposed", "staircase": {"fact": "...", "factRefs": ["signal-id"], "interpretation": "...", "implication": "..."}, "decomposition": [{"dimension": "process|tools|skills|incentives", "finding": "..."}], "evidenceStatus": "confirmed|declared", "classification": "core-competency|niche-strength|claimed-strength|table-stakes"}]}
+("decomposition" only for umbrella claims; "classification" only for strengths.)`;
     }
   }
 
@@ -272,41 +284,74 @@ Return JSON:
 export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): string {
   if (toolType === 'dynamic-swot') {
     const swotData = inputData as SWOTData | undefined;
-    const itemsSummary = (swotData?.items || [])
-      .map((item: SWOTItem) => `- ${item.quadrant.toUpperCase()}: ${item.text}`)
-      .join('\n');
+    const tensionCandidates = swotData
+      ? deriveTensionCandidates(
+          (swotData.items || []).filter(
+            (item) =>
+              item.proposalStatus !== 'rejected' && item.proposalStatus !== 'rethinking'
+          ),
+          2
+        )
+      : [];
+    const candidateLines =
+      tensionCandidates.length > 0
+        ? tensionCandidates
+            .map((c) => `- ${c.type} [${c.linkedItemIds[0]} x ${c.linkedItemIds[1]}] (weight ${c.weight})`)
+            .join('\n')
+        : '- (no accepted item pairs available)';
 
-    return `Based on this completed SWOT analysis, produce a consulting-grade finish:
+    return `You are a partner at a consulting firm (HBS, MBA, 10 years of practice). You sign this conclusion with your own name in front of the client's board. Produce the finishing block of this Dynamic SWOT session per CONCLUSION_LAYER_STANDARD variant W2.
 
-${itemsSummary}
+=== SESSION FACTS (the ONLY admissible source of facts and numbers) ===
+${swotData ? buildSwotFactsBlock(swotData) : '- empty session'}
+=== END FACTS ===
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Key Insights
-3. Applied Conclusions: what this means, what to do, what not to do, what to validate next
-4. 3-5 Recommended Strategic Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+TENSION PAIRS COMPUTED FROM ACCEPTED ITEMS (link moves to these, not to invented pairs):
+${candidateLines}
 
-The executive summary should function as the final source summary for downstream outputs.
+W2 STRUCTURE (mandatory):
+1. "verdict" — answer-first, 1-2 sentences: what this analysis means for the client's DECISION. A thesis, not a topic.
+2. "verdictRationale" — why, referencing concrete session elements via factRefs (ids from the facts block).
+3. "tradeoffs" — >= 1 at recommendation level: what we choose AT THE COST of what; which option was rejected and why. No trade-off = no decision, only a list.
+4. Moves (3-5) — each is a decision, not a bullet.
+5. "expectedEffect" — measurable or behaviorally observable, WITH a time horizon; no amounts absent from the facts.
+
+${buildMoveConclusionPromptRules('en')}
+
+QUALITY BARS:
+- Numbers exclusively from the facts block; evidence marked "declared" must be flagged "as declared, to be confirmed".
+- Zero filler phrases; every sentence falsifiable — with opposite data it would read differently.
+- Applied conclusions: what this means / what to do / what NOT to do / what to validate next.
+- Respond in the user's language (Polish or English), active voice, partner tone.
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
+- After generating, run a self-check and return "selfCheck" per point: signature test, formula complete, numbers from facts, falsifiability, causality (factRefs), trade-off present, effect has horizon.
 
 Return as JSON:
 {
-  "summary": "executive summary text",
-  "insights": ["insight 1", "insight 2", "insight 3"],
-  "appliedConclusions": [
-    "practical implication 1",
-    "practical implication 2"
-  ],
+  "summary": {
+    "verdict": "...",
+    "verdictRationale": {"text": "...", "factRefs": ["..."]},
+    "tradeoffs": [{"chosen": "...", "rejected": "...", "why": "..."}],
+    "expectedEffect": {"text": "...", "horizon": "..."},
+    "executiveSummary": "3-4 sentences, answer-first",
+    "keyInsights": ["insight 1", "insight 2", "insight 3"],
+    "appliedConclusions": ["practical implication 1", "practical implication 2"]
+  },
   "moves": [{
     "title": "Move name",
     "category": "quick-win|big-bet|defensive-move|capability-build",
-    "rationale": "Why this matters",
-    "linkedItemIds": ["item1"],
+    "rationale": "why — anchored in listed element ids",
+    "linkedItemIds": ["item-id"],
+    "linkedTensionIds": ["tension-id"],
+    "tradeoff": {"chosen": "...", "deferred": "...", "cost": "..."},
+    "rejectedAlternative": {"option": "...", "reason": "..."},
+    "whyFirst": "why this order (impact x effort, prerequisites)",
+    "ownerRole": "accountable role",
     "expectedImpact": "high|medium|low",
     "estimatedEffort": "high|medium|low",
     "riskLevel": "high|medium|low",
     "confidence": 4,
-    "firstStep": "first action"
+    "firstStep": "verb + artifact + role"
   }],
   "initiatives": [{
     "title": "Initiative Name",
@@ -315,16 +360,17 @@ Return as JSON:
     "estimatedImpact": "high|medium|low",
     "estimatedEffort": "high|medium|low",
     "rationale": "Why this matters",
-    "linkedItems": ["item1"]
+    "linkedItems": ["item-id"]
   }],
   "outputCandidates": [{
     "outputType": "initiative|report|presentation|idea",
     "title": "Output title",
     "description": "What should be created",
-    "linkedItemIds": ["item1"],
+    "linkedItemIds": ["item-id"],
     "rationale": "Why this output now",
     "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"
-  }]
+  }],
+  "selfCheck": {"signature": "pass|fail", "formulaComplete": "pass|fail", "numbersFromFacts": "pass|fail", "falsifiable": "pass|fail", "causality": "pass|fail", "tradeoffPresent": "pass|fail", "effectHasHorizon": "pass|fail"}
 }`;
   }
 

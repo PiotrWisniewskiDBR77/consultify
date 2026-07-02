@@ -127,6 +127,30 @@ export interface ToolStep {
 }
 
 // SWOT-specific types
+export interface SWOTInsightStaircase {
+  /** K1 — observable fact from the session (never invented by the LLM). */
+  fact: string;
+  /** Signal ids / fact keys backing the fact. Empty = declared, unconfirmed. */
+  factRefs: string[];
+  /** K2 — what the fact means for THIS organization. */
+  interpretation: string;
+  /** K3 seed — what follows for the decision (feeds tensions/moves). */
+  implication: string;
+}
+
+export interface SWOTDecomposition {
+  dimension: 'process' | 'tools' | 'skills' | 'incentives';
+  finding: string;
+}
+
+export type SWOTItemEvidenceStatus = 'confirmed' | 'declared' | 'missing';
+
+export type SWOTStrengthClassification =
+  | 'core-competency'
+  | 'niche-strength'
+  | 'claimed-strength'
+  | 'table-stakes';
+
 export interface SWOTItem {
   id: string;
   text: string;
@@ -138,6 +162,18 @@ export interface SWOTItem {
   linkedSignalIds?: string[];
   proposalStatus?: ProposalStatus;
   userComment?: string;
+  /** Insight staircase: fact -> interpretation -> implication (CONCLUSION_LAYER K1-K3). */
+  staircase?: SWOTInsightStaircase;
+  /** Umbrella claims (e.g. "lack of agility") decomposed into actionable roots. */
+  decomposition?: SWOTDecomposition[];
+  /** Stamped on accept by the evidence gate (confirmed vs declared-unconfirmed). */
+  evidenceStatus?: SWOTItemEvidenceStatus;
+  /** Free-text evidence note when no signal is linked. */
+  evidenceNote?: string;
+  /** Strengths only — outcome of the laddered q-bank (niche vs core competency). */
+  classification?: SWOTStrengthClassification;
+  /** Answers captured while walking the laddered question bank. */
+  ladderAnswers?: { questionId: string; answerKey: string; note?: string }[];
 }
 
 export interface SWOTCorrelation {
@@ -177,6 +213,14 @@ export interface SWOTMove {
   firstStep?: string;
   proposalStatus?: ProposalStatus;
   userComment?: string;
+  /** W2 mandatory trade-off: what we choose / what we defer / at what cost. */
+  tradeoff?: { chosen: string; deferred: string; cost: string };
+  /** W2 mandatory rejected alternative with the reason it was dropped. */
+  rejectedAlternative?: { option: string; reason: string };
+  /** Ordering justification ("first X, because it blocks Y"). */
+  whyFirst?: string;
+  /** Accountable role for the first step (K3 owner, never "the organization"). */
+  ownerRole?: string;
 }
 
 export interface SWOTOutputCandidate extends ConsultingOutputCandidateBase {
@@ -200,6 +244,14 @@ export interface SWOTData {
     proposalStatus?: ProposalStatus;
     userComment?: string;
     recommendedInitiatives: InitiativeDraft[];
+    /** W2 answer-first verdict (1-2 sentences): what this analysis means for the decision. */
+    verdict?: string;
+    /** W2 rationale with references to session element ids (traceability). */
+    verdictRationale?: { text: string; factRefs: string[] };
+    /** W2 mandatory trade-offs at the recommendation level (>= 1). */
+    tradeoffs?: { chosen: string; rejected: string; why: string }[];
+    /** K4 — expected effect with an explicit time horizon. */
+    expectedEffect?: { text: string; horizon: string };
   };
 }
 
@@ -3500,8 +3552,25 @@ export const useToolStore = create<ToolStoreState>()(
           );
         const updated: Partial<SWOTData> = {};
         if (cardType === 'signal') updated.signals = update(swotData.signals);
-        else if (cardType === 'item') updated.items = update(swotData.items);
-        else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
+        else if (cardType === 'item') {
+          // Evidence gate (OXFORD O3): accepting an item stamps its evidence status —
+          // linked signals / evidence note / staircase factRefs => confirmed, otherwise
+          // explicitly 'declared' ("Deklaracja — niepotwierdzone"). Honest, never blocking.
+          updated.items = swotData.items.map((item) =>
+            item.id === cardId
+              ? {
+                  ...item,
+                  proposalStatus: 'accepted' as ProposalStatus,
+                  evidenceStatus:
+                    (item.linkedSignalIds && item.linkedSignalIds.length > 0) ||
+                    (item.evidenceNote && item.evidenceNote.trim().length > 0) ||
+                    (item.staircase?.factRefs && item.staircase.factRefs.length > 0)
+                      ? ('confirmed' as SWOTItemEvidenceStatus)
+                      : ('declared' as SWOTItemEvidenceStatus),
+                }
+              : item
+          );
+        } else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
         else if ((cardType as ProposalCardType) === 'output-candidate')
