@@ -211,13 +211,13 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
 
   // Toolbar (zoom + status filter) — rendered above the grid in all states.
   const toolbar = (
-    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-100 dark:border-navy-800">
+    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-c-border-subtle">
       {statuses.length > 0 && (
         <select
           aria-label={t('initiatives.calendarView.allStatuses', 'All statuses')}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-[11px] rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-1.5 py-0.5 text-slate-600 dark:text-slate-300"
+          className="text-[11px] rounded border border-c-border bg-c-surface px-1.5 py-0.5 text-c-text-secondary"
         >
           <option value="all">{t('initiatives.calendarView.allStatuses', 'All statuses')}</option>
           {statuses.map((s) => (
@@ -228,7 +228,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
         </select>
       )}
       <div className="flex-1" />
-      <div className="inline-flex rounded border border-slate-200 dark:border-navy-700 overflow-hidden">
+      <div className="inline-flex rounded border border-c-border overflow-hidden">
         {(['day', 'week', 'month'] as GanttZoom[]).map((z) => (
           <button
             key={z}
@@ -237,8 +237,8 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
             onClick={() => setZoom(z)}
             className={`text-[11px] px-2 py-0.5 ${
               zoom === z
-                ? 'bg-primary-500/15 text-primary-600 dark:text-primary-300'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
+                ? 'bg-c-surface-raised text-c-text'
+                : 'text-c-text-muted hover:bg-c-surface-raised'
             }`}
           >
             {t(`initiatives.gantt.zoom.${z}`, z === 'day' ? 'Day' : z === 'week' ? 'Week' : 'Month')}
@@ -250,9 +250,9 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+      <div className="rounded-xl border border-c-border bg-c-surface">
         {toolbar}
-        <div className="px-3 py-6 text-center text-sm text-slate-400">
+        <div className="px-3 py-6 text-center text-sm text-c-text-muted">
           {t('initiatives.calendarView.loading')}
         </div>
       </div>
@@ -260,9 +260,9 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   }
   if (!range) {
     return (
-      <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+      <div className="rounded-xl border border-c-border bg-c-surface">
         {toolbar}
-        <div className="px-3 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+        <div className="px-3 py-8 text-center text-sm text-c-text-muted">
           {t('initiatives.calendarView.empty')}
         </div>
       </div>
@@ -325,18 +325,18 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   }>;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 select-none">
+    <div className="rounded-xl border border-c-border bg-c-surface select-none">
       {toolbar}
       <div className="overflow-x-auto">
         {/* Time header */}
         <div
-          className="relative flex border-b border-slate-100 dark:border-navy-800"
+          className="relative flex border-b border-c-border-subtle"
           style={{ minWidth: gridMinWidth }}
         >
           {cols.map((c) => (
             <div
               key={c.ms}
-              className="flex-1 px-2 py-1.5 text-[10px] text-slate-400 dark:text-slate-500 border-r border-slate-100 dark:border-navy-800 whitespace-nowrap"
+              className="flex-1 px-2 py-1.5 text-[10px] text-c-text-muted border-r border-c-border-subtle whitespace-nowrap"
             >
               {c.label}
             </div>
@@ -347,7 +347,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
         <div ref={gridRef} className="relative" style={{ minWidth: gridMinWidth }}>
           {todayInRange && (
             <div
-              className="absolute top-0 bottom-0 w-px bg-primary-500/60 z-10 pointer-events-none"
+              className="absolute top-0 bottom-0 w-px bg-c-accent z-10 pointer-events-none"
               style={{ left: pct(todayMs) }}
               aria-hidden
             />
@@ -375,7 +375,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
                     key={i}
                     d={d}
                     fill="none"
-                    stroke={edge.critical ? '#f43f5e' : '#94a3b8'}
+                    stroke={edge.critical ? 'var(--c-danger)' : 'var(--c-border-strong)'}
                     strokeWidth={edge.critical ? 0.06 : 0.04}
                     vectorEffect="non-scaling-stroke"
                     strokeDasharray={edge.critical ? undefined : '0.4 0.3'}
@@ -397,11 +397,11 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
             return (
               <div
                 key={item.id}
-                className="relative h-8 border-b border-slate-50 dark:border-navy-800/60"
+                className="relative h-8 border-b border-c-border-subtle"
               >
                 <div
                   className={`absolute top-1.5 h-5 rounded flex items-center px-1.5 transition-opacity ${TYPE_BAR[item.type]} ${saving ? 'opacity-60' : ''} ${
-                    isCritical ? 'ring-2 ring-rose-400 ring-offset-1 dark:ring-offset-navy-900' : ''
+                    isCritical ? 'ring-2 ring-c-danger ring-offset-1 ring-offset-c-surface' : ''
                   }`}
                   style={{ left, width, minWidth: '8px' }}
                   title={`${item.title}${isCritical ? ' • critical path' : ''}${saving ? ' (saving…)' : ''}`}
@@ -420,17 +420,17 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
       </div>
 
       {undated.length > 0 && (
-        <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700">
-          <div className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mb-1">
+        <div className="px-3 py-2 border-t border-c-border">
+          <div className="text-[11px] font-medium text-c-text-muted mb-1">
             {t('initiatives.calendarView.undated')} ({undated.length})
           </div>
           <div className="flex flex-wrap gap-1.5">
             {undated.map((it) => (
               <span
                 key={it.id}
-                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-slate-100 dark:bg-navy-800 text-[11px] text-slate-600 dark:text-slate-300"
+                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-c-surface-raised text-[11px] text-c-text-secondary"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                <span className="w-1.5 h-1.5 rounded-full bg-c-text-muted" />
                 {it.title}
               </span>
             ))}
