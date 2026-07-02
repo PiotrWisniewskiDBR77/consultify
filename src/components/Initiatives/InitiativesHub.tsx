@@ -152,7 +152,7 @@ const ALLOWED_STATUSES: InitiativeStatus[] =
 
 // Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
 const COMING_SOON_BADGE =
-  'ml-1.5 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-500 dark:bg-white/[0.06] dark:text-slate-400';
+  'ml-1.5 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-c-text-muted dark:bg-white/[0.06]';
 
 // D1.1: Initiative type/level — determines governance complexity
 // Downgrade blocked, upgrade possible
@@ -183,7 +183,7 @@ export const INITIATIVE_LEVELS: {
     id: 'strategic',
     label: 'Strategic Program',
     description: 'Cross-functional program. 3-12 months, multiple teams, executive sponsor.',
-    color: 'text-primary-500 bg-primary-500/10 border-primary-500/30',
+    color: 'text-violet-500 bg-violet-500/10 border-violet-500/30',
     icon: '🎯',
   },
   {
@@ -1552,11 +1552,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     if (initiatives.length === 0) {
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
+        <div className="flex items-center justify-center h-full text-c-text-muted">
           <div className="text-center">
-            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-primary-400/50" />
-            <p className="text-lg text-slate-900 dark:text-white">{t('initiatives.empty.title')}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-c-text-muted/50" />
+            <p className="text-lg text-c-text">{t('initiatives.empty.title')}</p>
+            <p className="text-sm text-c-text-muted mt-2">
               {t('initiatives.empty.description')}
             </p>
             {!isPilotParticipant && (
@@ -1691,7 +1691,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <button
             type="button"
             onClick={() => navigate(buildInitiativeDeepLink(item.id, { module: 'economics', tab: 'models' }))}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition"
           >
             {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
           </button>
@@ -1766,7 +1766,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   ))}
                 </div>
                 {searchedInitiatives.length === 0 && (
-                  <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center justify-center h-64 text-c-text-muted">
                     {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
                   </div>
                 )}
@@ -1827,7 +1827,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Active / All scope toggle (matches agreed UI spec)
   const scopeToggle = (
     <div
-      className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+      className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-surface-raised p-0.5"
       role="radiogroup"
       aria-label={t('initiatives.scope.label', 'Scope')}
     >
@@ -1842,10 +1842,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
             scope === opt.id
-              ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-              : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+              ? 'bg-c-surface text-c-text shadow-sm border border-c-border-subtle'
+              : 'text-c-text-secondary hover:bg-white/60 dark:hover:bg-white/[0.06]'
           }`}
           title={
             opt.id === 'active'
@@ -1901,7 +1901,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       <button
         type="button"
         onClick={() => navigate(ROUTES.ROI)}
-        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
         title={i18n.language?.startsWith('pl') ? 'Widok ROI i realizacji wartości' : 'ROI & Value Realization'}
       >
         <TrendingUp size={13} />
@@ -1933,7 +1933,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     {
       id: 'resources',
       labelKey: 'initiatives.analysis.resources.title',
-      icon: <Users size={14} className="text-primary-400" />,
+      icon: <Users size={14} className="text-c-text-secondary" />,
     },
     {
       id: 'feasibility',
@@ -2026,7 +2026,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const bulkBarContent = (
     <div className="flex items-center justify-between gap-2">
       <div className="inline-flex items-center gap-2">
-        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+        <span className="text-xs font-semibold text-c-text-secondary">
           {t('initiatives.bulk.selected', {
             count: selectedIds.size,
             defaultValue: '{{count}} selected',
@@ -2035,7 +2035,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <button
           type="button"
           onClick={handleClearSelection}
-          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-white/60 dark:hover:bg-white/[0.06]"
         >
           <X className="h-3.5 w-3.5" />
           {t('common.clear', 'Clear')}
@@ -2290,20 +2290,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold text-c-text mb-4">
               {t('initiatives.form.createNew')}
             </h2>
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.titleRequired')}
                 </label>
                 <input
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                   placeholder={t('initiatives.form.titlePlaceholder')}
                   autoFocus
                 />
@@ -2311,7 +2311,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* D1.1: Initiative Type/Level selector */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2">
+                <label className="block text-xs text-c-text-muted mb-2">
                   Initiative Type / Level *
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -2325,7 +2325,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                         ${
                           newLevel === level.id
                             ? `${level.color} border-current ring-1 ring-current/30`
-                            : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-slate-500'
+                            : 'bg-c-bg border-c-border-subtle text-c-text-muted hover:border-c-border-strong'
                         }
                       `}
                     >
@@ -2344,13 +2344,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* Axis */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.axis')}
                 </label>
                 <select
                   value={newAxis}
                   onChange={(e) => setNewAxis(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="operational">{t('initiatives.axis.operational')}</option>
                   <option value="strategic">{t('initiatives.axis.strategic')}</option>
@@ -2361,13 +2361,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* Summary */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.summary')}
                 </label>
                 <textarea
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white resize-none"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text resize-none"
                   rows={3}
                   placeholder={t('initiatives.form.summaryPlaceholder')}
                 />
@@ -2375,13 +2375,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* D1.1: Level info callout */}
               {newLevel && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-c-surface-raised border border-c-border">
                   <Shield
                     size={14}
-                    className="text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0"
+                    className="text-c-text-muted mt-0.5 flex-shrink-0"
                   />
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                  <div className="text-xs text-c-text-muted">
+                    <span className="font-medium text-c-text-secondary">
                       {INITIATIVE_LEVELS.find((l) => l.id === newLevel)?.label}
                     </span>
                     {' — '}
@@ -2393,7 +2393,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     {newLevel === 'transformation' &&
                       'Board-level governance. Full charter, steering committee, gate reviews.'}
                     <br />
-                    <span className="text-slate-500 italic">
+                    <span className="text-c-text-muted italic">
                       Level can be upgraded later but not downgraded.
                     </span>
                   </div>
@@ -2485,14 +2485,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setIsCreating(false);
                 }
               }}
-              className="w-full mt-6 py-2 text-sm text-slate-900 dark:text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors rounded-lg disabled:opacity-50"
+              className="w-full mt-6 py-2 text-sm text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors rounded-lg disabled:opacity-50"
             >
               {isCreating ? t('initiatives.form.creating') : t('initiatives.form.create')}
             </button>
             <button
               disabled={isCreating}
               onClick={() => setShowNewModal(false)}
-              className="w-full mt-2 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-300 dark:border-navy-600 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-50"
+              className="w-full mt-2 py-2 text-sm text-c-text-muted hover:text-c-text transition-colors border border-c-border rounded-lg hover:bg-c-surface-raised disabled:opacity-50"
             >
               {t('initiatives.form.cancel')}
             </button>
@@ -2502,22 +2502,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       {showBulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-lg">
+            <h2 className="text-lg font-semibold text-c-text mb-4">
               {t('initiatives.bulkEdit.title')}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-c-text-muted mb-4">
               {t('initiatives.bulkEdit.selectedCount', { count: selectedIds.size })}
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.status')}
                 </label>
                 <select
                   value={bulkStatus}
                   onChange={(e) => setBulkStatus(e.target.value as InitiativeStatus)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {ALLOWED_STATUSES.map((s) => (
@@ -2528,13 +2528,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.priority')}
                 </label>
                 <select
                   value={bulkPriority}
                   onChange={(e) => setBulkPriority(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   <option value="CRITICAL">{t('initiatives.priority.critical')}</option>
@@ -2544,13 +2544,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.businessOwner')}
                 </label>
                 <select
                   value={bulkOwnerBusinessId}
                   onChange={(e) => setBulkOwnerBusinessId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {users.map((user) => (
@@ -2561,13 +2561,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.executionOwner')}
                 </label>
                 <select
                   value={bulkOwnerExecutionId}
                   onChange={(e) => setBulkOwnerExecutionId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {users.map((user) => (
@@ -2581,13 +2581,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowBulkModal(false)}
-                className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text"
               >
                 {t('initiatives.form.cancel')}
               </button>
               <button
                 onClick={handleBulkApply}
-                className="px-4 py-2 text-sm text-slate-900 dark:text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg"
+                className="px-4 py-2 text-sm text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg"
               >
                 {t('initiatives.bulkEdit.applyChanges')}
               </button>
