@@ -5169,9 +5169,9 @@ export const InterviewHub: React.FC = () => {
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      ? 'border-navy-900 bg-navy-900 opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne sesje' : 'Select visible sessions'}
@@ -5351,7 +5351,7 @@ export const InterviewHub: React.FC = () => {
                       });
                       setIsSessionsViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isSessionsViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -5405,7 +5405,7 @@ export const InterviewHub: React.FC = () => {
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span>{col.label}</span>
                               </label>
@@ -5423,7 +5423,7 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -5487,10 +5487,10 @@ export const InterviewHub: React.FC = () => {
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                         'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
                         'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                        'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-focus-solid',
                         isSessionSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          ? 'border-navy-900 bg-navy-900 opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz sesję' : 'Select session'}
@@ -6579,9 +6579,9 @@ export const InterviewHub: React.FC = () => {
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      ? 'border-navy-900 bg-navy-900 opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne wnioski' : 'Select visible insights'}
@@ -6792,7 +6792,7 @@ export const InterviewHub: React.FC = () => {
                       });
                       setIsInsightsViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isInsightsViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -6851,7 +6851,7 @@ export const InterviewHub: React.FC = () => {
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span>{column.label}</span>
                               </label>
@@ -6869,7 +6869,7 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -6949,11 +6949,11 @@ export const InterviewHub: React.FC = () => {
               // rows are clean — status now lives in the StatusPill, not a left bar.
               const rowAccentClass =
                 isSelected || isInsightSelected
-                  ? 'shadow-[inset_4px_0_0_theme(colors.primary.500)]'
+                  ? 'shadow-[inset_4px_0_0_var(--c-info)]'
                   : '';
               const rowToneClass =
                 isSelected || isInsightSelected
-                  ? 'bg-primary-50 dark:bg-primary-500/[0.14]'
+                  ? 'bg-slate-100 dark:bg-white/[0.08]'
                   : 'hover:bg-slate-50 dark:hover:bg-white/[0.045]';
               const rowDescription = String(
                 insight.description || insight.content || insight.sourceQuote || ''
@@ -6987,10 +6987,10 @@ export const InterviewHub: React.FC = () => {
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                         'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
                         'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                        'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-focus-solid',
                         isInsightSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          ? 'border-navy-900 bg-navy-900 opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz wniosek' : 'Select insight'}
@@ -7658,9 +7658,9 @@ export const InterviewHub: React.FC = () => {
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      ? 'border-navy-900 bg-navy-900 opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne szablony' : 'Select visible templates'}
@@ -7877,7 +7877,7 @@ export const InterviewHub: React.FC = () => {
                       });
                       setIsTemplatesViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isTemplatesViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -7955,7 +7955,7 @@ export const InterviewHub: React.FC = () => {
                                         return next;
                                       });
                                     }}
-                                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                                   />
                                   <span className="flex-1 text-c-text-secondary">
                                     {col.label}
@@ -7981,7 +7981,7 @@ export const InterviewHub: React.FC = () => {
                                   event.target.checked
                                 );
                               }}
-                              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-c-focus"
                             />
                             <span className="text-c-text-secondary">
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -8025,7 +8025,7 @@ export const InterviewHub: React.FC = () => {
                   onDoubleClick={openFull}
                   className={`group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 ${
                     isSelected || isTemplateSelected
-                      ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
+                      ? 'bg-slate-100 dark:bg-white/[0.08] shadow-[inset_4px_0_0_var(--c-info)] ring-1 ring-slate-300/60 ring-inset dark:ring-white/[0.10]'
                       : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
                   }`}
                   role="button"
@@ -8063,9 +8063,9 @@ export const InterviewHub: React.FC = () => {
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                         'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                         isTemplateSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          ? 'border-navy-900 bg-navy-900 opacity-100'
                           : isSelected
                             ? 'opacity-100'
                             : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
@@ -8323,9 +8323,9 @@ export const InterviewHub: React.FC = () => {
                   opts?.onOpenFull?.(template.id);
                 }
               }}
-              className={`group relative flex flex-col text-left rounded-2xl border transition hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
+              className={`group relative flex flex-col text-left rounded-2xl border transition hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 selectedTemplateId === template.id
-                  ? 'border-primary-500/40 bg-primary-500/5 dark:bg-primary-500/10 shadow-md'
+                  ? 'border-slate-300 bg-slate-50 shadow-md dark:border-white/[0.18] dark:bg-white/[0.06]'
                   : 'border-slate-200/60 dark:border-navy-700/60 bg-c-surface hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >
@@ -9676,9 +9676,9 @@ Return ONLY the answer text (no markdown fences).`;
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      ? 'border-navy-900 bg-navy-900 opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne wiersze' : 'Select visible rows'}
@@ -9876,7 +9876,7 @@ Return ONLY the answer text (no markdown fences).`;
                       setAssignmentsViewSettingsShowAssignee(showAssignee);
                       setIsAssignmentsViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isAssignmentsViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -9982,7 +9982,7 @@ Return ONLY the answer text (no markdown fences).`;
                                       return next;
                                     });
                                   }}
-                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                                 />
                                 <span className="flex-1">{col.label}</span>
                                 {alwaysVisible ? (
@@ -10001,7 +10001,7 @@ Return ONLY the answer text (no markdown fences).`;
                               onChange={(event) =>
                                 updateAssignmentsViewShowRowDescription(event.target.checked)
                               }
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
                             <span>
                               {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
@@ -10073,10 +10073,10 @@ Return ONLY the answer text (no markdown fences).`;
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                         'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
                         'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                        'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-focus-solid',
                         isAssignmentSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          ? 'border-navy-900 bg-navy-900 opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz wiersz' : 'Select row'}
@@ -11278,7 +11278,7 @@ Return ONLY the answer text (no markdown fences).`;
                             className={[
                               'group relative flex flex-col gap-2.5 rounded-xl border p-4 cursor-pointer transition duration-150',
                               isSelected
-                                ? 'border-primary-400/60 bg-primary-500/5 dark:bg-primary-500/10 shadow-sm'
+                                ? 'border-slate-300 bg-slate-50 shadow-sm dark:border-white/[0.18] dark:bg-white/[0.06]'
                                 : 'border-slate-200/60 dark:border-white/[0.06] bg-c-surface hover:shadow-md hover:-translate-y-px',
                             ].join(' ')}
                             onClick={() =>
@@ -11488,9 +11488,9 @@ Return ONLY the answer text (no markdown fences).`;
                               className={[
                                 'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                                 'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                                 allVisibleSelected || someVisibleSelected
-                                  ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                                  ? 'border-navy-900 bg-navy-900 opacity-100'
                                   : 'opacity-70',
                               ].join(' ')}
                               aria-label={
@@ -11657,7 +11657,7 @@ Return ONLY the answer text (no markdown fences).`;
                                   });
                                   setIsInitiativesViewSettingsOpen((open) => !open);
                                 }}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                                 aria-label={
                                   isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
                                 }
@@ -11735,7 +11735,7 @@ Return ONLY the answer text (no markdown fences).`;
                                                     return next;
                                                   });
                                                 }}
-                                                className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                                className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-navy-700"
                                               />
                                               <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                                 {column.label}
@@ -11761,7 +11761,7 @@ Return ONLY the answer text (no markdown fences).`;
                                                 event.target.checked
                                               );
                                             }}
-                                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-c-focus dark:border-navy-700"
                                           />
                                           <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                             {isPolish
@@ -11801,7 +11801,7 @@ Return ONLY the answer text (no markdown fences).`;
                               key={initiative.id}
                               className={`group cursor-pointer border-b border-slate-200/70 transition-colors last:border-0 dark:border-white/[0.06] ${
                                 isSelected || isInitiativeSelected
-                                  ? `${INTERVIEW_TABLE_SELECTED_ROW_CLASS} shadow-[inset_4px_0_0_theme(colors.primary.500)]`
+                                  ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
                                   : INTERVIEW_TABLE_HOVER_ROW_CLASS
                               }`}
                               onClick={() => setSelectedInterviewInitiativeId(initiative.id)}
@@ -11827,10 +11827,10 @@ Return ONLY the answer text (no markdown fences).`;
                                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
                                     'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                                    'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                                    'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                                    'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                                    'group-focus-within:opacity-100 group-focus-within:border-c-focus-solid',
                                     isInitiativeSelected
-                                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                                      ? 'border-navy-900 bg-navy-900 opacity-100'
                                       : 'opacity-0',
                                   ].join(' ')}
                                   aria-label={isPolish ? 'Zaznacz inicjatywę' : 'Select initiative'}
@@ -12732,7 +12732,7 @@ Return ONLY the answer text (no markdown fences).`;
     const viewSegmentClass =
       'inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5';
     const viewButtonClass = (active: boolean) =>
-      `inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+      `inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
         active
           ? 'border border-slate-200/70 bg-white/80 text-slate-900 dark:border-white/[0.06] dark:bg-navy-800 dark:text-slate-100'
           : 'text-slate-600 hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]'
@@ -12785,7 +12785,7 @@ Return ONLY the answer text (no markdown fences).`;
                             checked ? prev.filter((item) => item !== tag) : [...prev, tag]
                           )
                         }
-                        className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                        className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
                       />
                       <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
                     </label>
@@ -13400,7 +13400,7 @@ Return ONLY the answer text (no markdown fences).`;
                 placeholder={
                   isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
                 }
-                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-c-text placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition resize-none"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-c-text placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition resize-none"
               />
               <div className="flex gap-3 mt-4">
                 <button
@@ -13605,7 +13605,7 @@ Return ONLY the answer text (no markdown fences).`;
                 type="date"
                 value={dueDateDraft}
                 onChange={(e) => setDueDateDraft(e.target.value)}
-                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               />
               <div className="flex gap-3">
                 <button
