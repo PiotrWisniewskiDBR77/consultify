@@ -32,6 +32,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ErrorState } from '@/components/ui/primitives';
+import {
+  MetaChip,
+  PriorityChip,
+  type PriorityLevel,
+  StatusChip,
+  type StatusTone,
+} from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -576,18 +583,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
         value: key,
         label: meta.shortName,
-        color: 'bg-slate-500',
+        color: 'bg-c-text-muted',
       })),
       render: (row) => {
         const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
         if (!meta)
-          return (
-            <span className="text-xs text-slate-500 dark:text-slate-400">{row.framework}</span>
-          );
+          return <span className="text-xs text-c-text-muted">{row.framework}</span>;
         return (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 dark:text-slate-400">{meta.icon}</span>
-            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+            <span className="text-c-text-muted">{meta.icon}</span>
+            <span className="font-mono text-xs font-bold text-c-text-secondary">
               {meta.shortName}
             </span>
           </div>
@@ -599,13 +604,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       label: 'Name',
       render: (row) => (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
-          {row._isImported && (
-            <span className="inline-flex items-center gap-1 rounded border border-slate-300/80 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-300">
-              <Upload size={10} />
-              PDF import
-            </span>
-          )}
+          <span className="text-sm font-semibold text-c-text">{row.name}</span>
+          {row._isImported && <MetaChip icon={Upload} label="PDF import" />}
         </div>
       ),
     };
@@ -633,48 +633,18 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           })),
           render: (row) => {
             if (row._isImported) {
-              const importStatusConfig: Record<string, { label: string; color: string }> = {
-                pending: {
-                  label: 'Uploaded',
-                  color: 'bg-slate-500/15 text-slate-600 border-slate-500/20',
-                },
-                detecting: {
-                  label: 'Detecting...',
-                  color: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-                },
-                extracting: {
-                  label: 'Extracting...',
-                  color: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-                },
-                ready_for_review: {
-                  label: 'Ready for review',
-                  color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-                },
-                assessment_created: {
-                  label: 'Assessment created',
-                  color: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-                },
-                initiatives_created: {
-                  label: 'Initiatives created',
-                  color: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-                },
-                completed: {
-                  label: 'Completed',
-                  color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-                },
-                failed: {
-                  label: 'Failed',
-                  color: 'bg-danger-500/15 text-danger-400 border-danger-500/20',
-                },
+              const importStatusConfig: Record<string, { label: string; tone: StatusTone }> = {
+                pending: { label: 'Uploaded', tone: 'neutral' },
+                detecting: { label: 'Detecting...', tone: 'warning' },
+                extracting: { label: 'Extracting...', tone: 'warning' },
+                ready_for_review: { label: 'Ready for review', tone: 'success' },
+                assessment_created: { label: 'Assessment created', tone: 'info' },
+                initiatives_created: { label: 'Initiatives created', tone: 'info' },
+                completed: { label: 'Completed', tone: 'success' },
+                failed: { label: 'Failed', tone: 'danger' },
               };
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
-              return (
-                <span
-                  className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium border ${cfg.color}`}
-                >
-                  {cfg.label}
-                </span>
-              );
+              return <StatusChip label={cfg.label} tone={cfg.tone} />;
             }
             return undefined;
           },
@@ -694,7 +664,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           width: '200px',
           render: (row) => (
             <span
-              className="text-xs text-slate-500 dark:text-slate-400 truncate block max-w-[180px]"
+              className="text-xs text-c-text-muted truncate block max-w-[180px]"
               title={row.sourceReport || ''}
             >
               {row.sourceReport || '—'}
@@ -707,7 +677,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           width: '140px',
           filterable: true,
           filterOptions: [
-            { value: 'DRAFT', label: 'Draft', color: 'bg-slate-500' },
+            { value: 'DRAFT', label: 'Draft', color: 'bg-c-text-muted' },
             { value: 'REVIEW', label: 'In Review', color: 'bg-amber-500' },
             { value: 'PLANNING', label: 'Planning', color: 'bg-blue-500' },
             { value: 'APPROVED', label: 'Approved', color: 'bg-emerald-500' },
@@ -724,22 +694,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             { value: 'critical', label: 'Critical', color: 'bg-danger-500' },
             { value: 'high', label: 'High', color: 'bg-amber-500' },
             { value: 'medium', label: 'Medium', color: 'bg-blue-500' },
-            { value: 'low', label: 'Low', color: 'bg-slate-500' },
+            { value: 'low', label: 'Low', color: 'bg-c-text-muted' },
           ],
           render: (row) => {
-            const dots: Record<string, string> = {
-              critical: 'bg-danger-500',
-              high: 'bg-amber-500',
-              medium: 'bg-blue-500',
-              low: 'bg-slate-400',
+            const levels: Record<string, PriorityLevel> = {
+              critical: 'urgent',
+              high: 'high',
+              medium: 'medium',
+              low: 'low',
             };
-            const dot = dots[row.priority] || dots.medium;
-            return (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-200">
-                <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-                {row.priority || 'medium'}
-              </span>
-            );
+            const level = levels[row.priority] || 'medium';
+            return <PriorityChip level={level} label={row.priority || 'medium'} />;
           },
         },
         updatedCol,

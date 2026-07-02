@@ -757,18 +757,18 @@ function normalizeInterviewSessionRecord(session: InterviewSession): InterviewSe
 type OpenDocument = SharedOpenDocument;
 
 const INTERVIEW_TABLE_SELECTED_ROW_CLASS =
-  'bg-slate-100 dark:bg-white/10 shadow-[inset_2px_0_0_var(--c-info)]';
-const INTERVIEW_TABLE_HOVER_ROW_CLASS = 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]';
+  'bg-c-accent-soft shadow-[inset_2px_0_0_var(--c-info)]';
+const INTERVIEW_TABLE_HOVER_ROW_CLASS = 'hover:bg-c-surface-raised';
 const INTERVIEW_TABLE_ICON_SURFACE_CLASS =
-  'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-300/80 bg-slate-100 text-slate-500 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-300';
+  'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-c-border bg-c-surface-raised text-c-text-muted';
 const INTERVIEW_META_CHIP_CLASS =
-  'inline-flex items-center rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200';
+  'inline-flex items-center rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary';
 const INTERVIEW_STATUS_CHIP_BASE_CLASS =
   'inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium';
 const INTERVIEW_DUE_CHIP_BASE_CLASS =
   'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium';
 const INTERVIEW_PROGRESS_TRACK_CLASS =
-  'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-700';
+  'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-c-border-subtle';
 const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-c-success transition';
 
 // V-A S5 — canonical template-status chip. The real status enum is
@@ -5122,7 +5122,7 @@ export const InterviewHub: React.FC = () => {
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
         {activeSessionFilterChips.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.06]">
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-c-border-subtle px-3 py-2">
             <span className="text-[11px] font-medium uppercase tracking-wider text-c-text-muted">
               {isPolish ? 'Filtry' : 'Filters'}
             </span>
@@ -5138,7 +5138,7 @@ export const InterviewHub: React.FC = () => {
                     ),
                   }))
                 }
-                className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-600 transition-colors hover:bg-primary-500/20 dark:text-primary-300"
+                className="inline-flex items-center gap-1 rounded-full border border-transparent bg-c-accent-soft px-2 py-0.5 text-[11px] font-medium text-c-accent transition-colors hover:bg-c-accent-soft"
               >
                 <span className="max-w-[200px] truncate">{chip.label}</span>
                 <X size={11} />
@@ -5147,7 +5147,7 @@ export const InterviewHub: React.FC = () => {
             <button
               type="button"
               onClick={() => setSessionsTableFilters({})}
-              className="ml-1 text-[11px] font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+              className="ml-1 text-[11px] font-medium text-c-text-muted underline-offset-2 hover:text-c-text-secondary hover:underline"
             >
               {isPolish ? 'Wyczyść wszystkie' : 'Clear all'}
             </button>
@@ -5158,8 +5158,8 @@ export const InterviewHub: React.FC = () => {
             menus, progress bars) are tightly coupled to local state and cannot be
             lifted into FilterableTable without a full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-c-surface border-b border-slate-200/60 dark:border-white/[0.06]">
-            <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
+          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
+            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
               <th className="px-3 py-2 text-left" style={{ width: sessionsColumnWidths.select }}>
                 <button
                   type="button"
@@ -5169,10 +5169,10 @@ export const InterviewHub: React.FC = () => {
                   }}
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
+                    'border-c-border bg-c-surface text-white hover:border-c-info',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-navy-900 bg-navy-900 opacity-100'
+                      ? 'border-c-info bg-c-info opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne sesje' : 'Select visible sessions'}
@@ -5190,7 +5190,7 @@ export const InterviewHub: React.FC = () => {
                     has its own dedicated column (below). */}
                 <div className="flex items-center gap-1">
                   <span
-                    className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                    className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                     onClick={() => toggleSessionSort('name')}
                   >
                     {isPolish ? 'Nazwa' : 'Name'}
@@ -5227,7 +5227,7 @@ export const InterviewHub: React.FC = () => {
                     <span
                       className={
                         (sessionsTableFilters.assignee as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : ''
                       }
                     >
@@ -5257,9 +5257,9 @@ export const InterviewHub: React.FC = () => {
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (sessionsTableFilters.status as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleSessionSort('status')}
@@ -5299,7 +5299,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('due') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: sessionsColumnWidths.due }}
                   onClick={() => toggleSessionSort('due')}
                 >
@@ -5315,7 +5315,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('submitted') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: sessionsColumnWidths.submitted }}
                   onClick={() => toggleSessionSort('submitted')}
                 >
@@ -5470,7 +5470,7 @@ export const InterviewHub: React.FC = () => {
                       : handleViewSession(session)
                   }
                   className={[
-                    'group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0',
+                    'group cursor-pointer transition-colors border-b border-c-border-subtle last:border-0',
                     isSelected || isSessionSelected
                       ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
                       : INTERVIEW_TABLE_HOVER_ROW_CLASS,
@@ -5486,12 +5486,11 @@ export const InterviewHub: React.FC = () => {
                       }}
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                        'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
+                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
                         'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                        'group-focus-within:opacity-100 group-focus-within:border-c-focus-solid',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
                         isSessionSelected
-                          ? 'border-navy-900 bg-navy-900 opacity-100'
+                          ? 'border-c-info bg-c-info opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz sesję' : 'Select session'}
@@ -5506,11 +5505,11 @@ export const InterviewHub: React.FC = () => {
                         <Brain size={15} />
                       </div>
                       <div className="min-w-0">
-                        <span className="text-sm text-c-text font-medium block truncate">
+                        <span className="text-sm font-semibold text-c-text block truncate">
                           {session.name || 'Discovery Interview'}
                         </span>
                         {showSessionRowDescription ? (
-                          <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+                          <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-c-text-muted">
                             {isPolish ? 'Szablon' : 'Template'}: {secondaryMeta}
                           </span>
                         ) : null}
@@ -5596,11 +5595,11 @@ export const InterviewHub: React.FC = () => {
                       style={{ width: sessionsColumnWidths.submitted }}
                     >
                       {session.submittedAt ? (
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
+                        <span className="text-xs text-c-text-secondary">
                           {new Date(session.submittedAt).toLocaleDateString()}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-xs text-c-text-muted">—</span>
                       )}
                     </td>
                   )}
@@ -5804,8 +5803,8 @@ export const InterviewHub: React.FC = () => {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={visibleColumns.length} className="px-4 py-12">
-                  <div className="mx-auto max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center">
-                    <div className="mb-3 flex items-center justify-center gap-2 text-crimson-700 dark:text-crimson-300">
+                  <div className="mx-auto max-w-md rounded-2xl border border-c-border bg-c-surface p-8 text-center">
+                    <div className="mb-3 flex items-center justify-center gap-2 text-c-accent">
                       <TeresaMark size={18} />
                       <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
                     </div>
@@ -5833,7 +5832,7 @@ export const InterviewHub: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setShowAssignModal(true)}
-                          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-4 text-xs font-semibold text-c-text-secondary transition hover:bg-c-surface-raised"
                         >
                           <UserPlus size={14} />
                           {isPolish ? 'Nowa sesja' : 'New session'}
@@ -6568,8 +6567,8 @@ export const InterviewHub: React.FC = () => {
             chips, status pills, action menus) are tightly coupled to local state and
             cannot be lifted into FilterableTable without a full re-architecture. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-c-surface border-b border-slate-200/60 dark:border-white/[0.06]">
-            <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
+          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
+            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
               <th className="px-3 py-2 text-left" style={{ width: insightColumnWidths.select }}>
                 <button
                   type="button"
@@ -6579,10 +6578,10 @@ export const InterviewHub: React.FC = () => {
                   }}
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
+                    'border-c-border bg-c-surface text-white hover:border-c-info',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-navy-900 bg-navy-900 opacity-100'
+                      ? 'border-c-info bg-c-info opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne wnioski' : 'Select visible insights'}
@@ -6593,7 +6592,7 @@ export const InterviewHub: React.FC = () => {
                 </button>
               </th>
               <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                 style={{ width: insightColumnWidths.title }}
                 onClick={() => toggleInsightSort('title')}
               >
@@ -6623,9 +6622,9 @@ export const InterviewHub: React.FC = () => {
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (insightTableFilters.type as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleInsightSort('type')}
@@ -6662,9 +6661,9 @@ export const InterviewHub: React.FC = () => {
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (insightTableFilters.status as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleInsightSort('status')}
@@ -6702,7 +6701,7 @@ export const InterviewHub: React.FC = () => {
                     <span
                       className={
                         (insightTableFilters.source as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : ''
                       }
                     >
@@ -6733,7 +6732,7 @@ export const InterviewHub: React.FC = () => {
                     <span
                       className={
                         (insightTableFilters.exports as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : ''
                       }
                     >
@@ -6757,7 +6756,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('date') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: insightColumnWidths.date }}
                   onClick={() => toggleInsightSort('date')}
                 >
@@ -6986,12 +6985,11 @@ export const InterviewHub: React.FC = () => {
                       }}
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                        'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
+                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
                         'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                        'group-focus-within:opacity-100 group-focus-within:border-c-focus-solid',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
                         isInsightSelected
-                          ? 'border-navy-900 bg-navy-900 opacity-100'
+                          ? 'border-c-info bg-c-info opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz wniosek' : 'Select insight'}
@@ -7647,8 +7645,8 @@ export const InterviewHub: React.FC = () => {
             are tightly coupled to local state; FilterableTable migration requires
             full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-c-surface border-b border-slate-200/60 dark:border-white/[0.06]">
-            <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40 sticky top-0 z-10">
+          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
+            <tr className="border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
               <th className="px-3 py-2 text-left" style={{ width: templatesColumnWidths.select }}>
                 <button
                   type="button"
@@ -7658,10 +7656,10 @@ export const InterviewHub: React.FC = () => {
                   }}
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
+                    'border-c-border bg-c-surface text-white hover:border-c-info',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-navy-900 bg-navy-900 opacity-100'
+                      ? 'border-c-info bg-c-info opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne szablony' : 'Select visible templates'}
@@ -7677,7 +7675,7 @@ export const InterviewHub: React.FC = () => {
               >
                 <div className="flex items-center gap-1">
                   <span
-                    className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                    className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                     onClick={() => toggleTemplateSort('name')}
                   >
                     {isPolish ? 'Nazwa' : 'Name'}
@@ -7700,9 +7698,9 @@ export const InterviewHub: React.FC = () => {
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (templatesTableFilters.category as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleTemplateSort('category')}
@@ -7739,7 +7737,7 @@ export const InterviewHub: React.FC = () => {
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span
-                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                       onClick={() => toggleTemplateSort('questions')}
                     >
                       {isPolish ? 'Pytania' : 'Questions'}
@@ -7763,7 +7761,7 @@ export const InterviewHub: React.FC = () => {
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span
-                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                       onClick={() => toggleTemplateSort('usage')}
                     >
                       {isPolish ? 'Użycia' : 'Usage'}
@@ -7800,7 +7798,7 @@ export const InterviewHub: React.FC = () => {
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span
-                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="cursor-pointer select-none transition-colors hover:text-c-text-secondary"
                       onClick={() => toggleTemplateSort('lastUsed')}
                     >
                       {isPolish ? 'Ostatnio użyty' : 'Last used'}
@@ -7824,9 +7822,9 @@ export const InterviewHub: React.FC = () => {
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (templatesTableFilters.status as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleTemplateSort('status')}
@@ -8063,10 +8061,10 @@ export const InterviewHub: React.FC = () => {
                       }}
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'border-c-border bg-c-surface text-white hover:border-c-info',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                         isTemplateSelected
-                          ? 'border-navy-900 bg-navy-900 opacity-100'
+                          ? 'border-c-info bg-c-info opacity-100'
                           : isSelected
                             ? 'opacity-100'
                             : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
@@ -9665,8 +9663,8 @@ Return ONLY the answer text (no markdown fences).`;
             flows, action menus, expand/collapse) are tightly coupled to local state;
             FilterableTable migration requires full re-architecture of this tab. */}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead className="sticky top-0 z-20 bg-c-surface border-b border-slate-200/60 dark:border-white/[0.06]">
-            <tr className="border-b border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-navy-900/40">
+          <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
+            <tr className="border-b border-c-border-subtle bg-c-surface-raised">
               <th className="px-3 py-2 text-left" style={{ width: columnWidths.select }}>
                 <button
                   type="button"
@@ -9676,10 +9674,10 @@ Return ONLY the answer text (no markdown fences).`;
                   }}
                   className={[
                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
+                    'border-c-border bg-c-surface text-white hover:border-c-info',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                     allVisibleSelected || someVisibleSelected
-                      ? 'border-navy-900 bg-navy-900 opacity-100'
+                      ? 'border-c-info bg-c-info opacity-100'
                       : 'opacity-70',
                   ].join(' ')}
                   aria-label={isPolish ? 'Zaznacz widoczne wiersze' : 'Select visible rows'}
@@ -9697,7 +9695,7 @@ Return ONLY the answer text (no markdown fences).`;
                   <span
                     className={
                       (tableFilters.template as string[] | undefined)?.length
-                        ? 'text-primary-500'
+                        ? 'text-c-accent'
                         : ''
                     }
                   >
@@ -9727,7 +9725,7 @@ Return ONLY the answer text (no markdown fences).`;
                     <span
                       className={
                         (tableFilters.assignee as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : ''
                       }
                     >
@@ -9757,9 +9755,9 @@ Return ONLY the answer text (no markdown fences).`;
                   <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
-                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        'cursor-pointer select-none transition-colors hover:text-c-text-secondary',
                         (tableFilters.status as string[] | undefined)?.length
-                          ? 'text-primary-500'
+                          ? 'text-c-accent'
                           : '',
                       ].join(' ')}
                       onClick={() => toggleAssignmentSort('status')}
@@ -9790,7 +9788,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {!hiddenSet.has('progress') && (
                 <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: columnWidths.progress }}
                   onClick={() => toggleAssignmentSort('progress')}
                 >
@@ -9806,7 +9804,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {!hiddenSet.has('due') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider cursor-pointer select-none hover:text-c-text-secondary transition-colors"
                   style={{ width: columnWidths.due }}
                   onClick={() => toggleAssignmentSort('dueAt')}
                 >
@@ -10038,9 +10036,9 @@ Return ONLY the answer text (no markdown fences).`;
                     void openInterviewAssignmentFull(assignment, showAssignee);
                   }}
                   className={[
-                    'group transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 cursor-pointer',
+                    'group transition-colors border-b border-c-border-subtle last:border-0 cursor-pointer',
                     INTERVIEW_TABLE_HOVER_ROW_CLASS,
-                    'active:bg-slate-100 dark:active:bg-navy-700/50',
+                    'active:bg-c-surface-raised',
                     previewAssignmentId === assignment.id || isAssignmentSelected
                       ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
                       : '',
@@ -10072,12 +10070,11 @@ Return ONLY the answer text (no markdown fences).`;
                       }}
                       className={[
                         'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                        'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
+                        'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
                         'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                        'group-focus-within:opacity-100 group-focus-within:border-c-focus-solid',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
                         isAssignmentSelected
-                          ? 'border-navy-900 bg-navy-900 opacity-100'
+                          ? 'border-c-info bg-c-info opacity-100'
                           : 'opacity-0',
                       ].join(' ')}
                       aria-label={isPolish ? 'Zaznacz wiersz' : 'Select row'}
@@ -10094,14 +10091,14 @@ Return ONLY the answer text (no markdown fences).`;
                       <div className="min-w-0 flex flex-col">
                         <div className="flex items-center gap-2 min-w-0">
                           <span
-                            className="text-sm text-c-text font-medium truncate min-w-0"
+                            className="text-sm font-semibold text-c-text truncate min-w-0"
                             title={assignment.template?.name || 'Interview'}
                           >
                             {assignment.template?.name || 'Interview'}
                           </span>
                           {assignment.template?.category ? (
                             <span
-                              className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300"
+                              className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary"
                               title={assignment.template.category}
                             >
                               {categoryTone(assignment.template.category) ? (
@@ -10119,7 +10116,7 @@ Return ONLY the answer text (no markdown fences).`;
                         </div>
                         {showRowDescription && rowDescription ? (
                           <span
-                            className="mt-0.5 max-w-[620px] truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
+                            className="mt-0.5 max-w-[620px] truncate text-[11px] font-normal leading-4 text-c-text-muted"
                             title={rowDescription}
                           >
                             {rowDescription}
@@ -10200,11 +10197,11 @@ Return ONLY the answer text (no markdown fences).`;
                           className="inline-flex items-center gap-1 text-xs text-c-text-secondary"
                           title={new Date(assignment.submittedAt).toLocaleString()}
                         >
-                          <Send size={11} className="text-slate-400" />
+                          <Send size={11} className="text-c-text-muted" />
                           {new Date(assignment.submittedAt).toLocaleDateString()}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-c-text-muted">—</span>
                       )}
                     </td>
                   )}
@@ -10216,14 +10213,14 @@ Return ONLY the answer text (no markdown fences).`;
                       {(() => {
                         const score = assignment.aiReview?.overallScore;
                         if (typeof score !== 'number') {
-                          return <span className="text-xs text-slate-400">—</span>;
+                          return <span className="text-xs text-c-text-muted">—</span>;
                         }
                         const pct = Math.round(score <= 1 ? score * 100 : score);
                         const tone =
                           pct >= 75
-                            ? 'text-emerald-600 dark:text-emerald-300'
+                            ? 'text-c-success'
                             : pct >= 50
-                              ? 'text-amber-600 dark:text-amber-300'
+                              ? 'text-c-warning'
                               : 'text-c-danger';
                         return (
                           <span
@@ -10257,7 +10254,7 @@ Return ONLY the answer text (no markdown fences).`;
                             (isPolish ? 'Eskalowano' : 'Escalated')}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-c-text-muted">—</span>
                       )}
                     </td>
                   )}
@@ -10293,7 +10290,7 @@ Return ONLY the answer text (no markdown fences).`;
                   className="px-4 py-12 text-center"
                 >
                   <div className="flex flex-col items-center">
-                    <Inbox className="w-12 h-12 text-slate-600 mb-3" />
+                    <Inbox className="w-12 h-12 text-c-text-muted mb-3" />
                     <p className="text-c-text-muted text-sm">
                       {isPolish ? 'Brak przydziałów' : 'No assignments'}
                     </p>
@@ -11486,7 +11483,7 @@ Return ONLY the answer text (no markdown fences).`;
                       className="w-full table-fixed rounded-xl"
                       style={{ minWidth: tableMinWidth }}
                     >
-                      <thead className="sticky top-0 z-20 bg-c-surface border-b border-slate-200/60 dark:border-white/[0.06]">
+                      <thead className="sticky top-0 z-20 bg-c-surface border-b border-c-border-subtle">
                         <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
                           <th
                             className="px-3 py-2 text-left"
@@ -11500,10 +11497,10 @@ Return ONLY the answer text (no markdown fences).`;
                               }}
                               className={[
                                 'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                                'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                                'border-c-border bg-c-surface text-white hover:border-c-info',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                                 allVisibleSelected || someVisibleSelected
-                                  ? 'border-navy-900 bg-navy-900 opacity-100'
+                                  ? 'border-c-info bg-c-info opacity-100'
                                   : 'opacity-70',
                               ].join(' ')}
                               aria-label={
@@ -11533,7 +11530,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 <span
                                   className={
                                     (initiativeTableFilters.status as string[] | undefined)?.length
-                                      ? 'text-primary-500'
+                                      ? 'text-c-accent'
                                       : ''
                                   }
                                 >
@@ -11570,7 +11567,7 @@ Return ONLY the answer text (no markdown fences).`;
                                   className={
                                     (initiativeTableFilters.priority as string[] | undefined)
                                       ?.length
-                                      ? 'text-primary-500'
+                                      ? 'text-c-accent'
                                       : ''
                                   }
                                 >
@@ -11606,7 +11603,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 <span
                                   className={
                                     (initiativeTableFilters.source as string[] | undefined)?.length
-                                      ? 'text-primary-500'
+                                      ? 'text-c-accent'
                                       : ''
                                   }
                                 >
@@ -11838,12 +11835,11 @@ Return ONLY the answer text (no markdown fences).`;
                                   }}
                                   className={[
                                     'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
-                                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                                    'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                                    'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
-                                    'group-focus-within:opacity-100 group-focus-within:border-c-focus-solid',
+                                    'border-c-border bg-c-surface text-white hover:border-c-info group-hover:opacity-100',
+                        'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
+                        'group-focus-within:opacity-100 group-focus-within:border-c-info',
                                     isInitiativeSelected
-                                      ? 'border-navy-900 bg-navy-900 opacity-100'
+                                      ? 'border-c-info bg-c-info opacity-100'
                                       : 'opacity-0',
                                   ].join(' ')}
                                   aria-label={isPolish ? 'Zaznacz inicjatywę' : 'Select initiative'}
@@ -12760,7 +12756,7 @@ Return ONLY the answer text (no markdown fences).`;
             className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-c-text-secondary hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
             title={isPolish ? 'Obszar pytań' : 'Question area'}
           >
-            <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
+            <span className={templateAreaTagFilter.length > 0 ? 'text-c-accent' : ''}>
               {templateAreaTagFilter.length > 0
                 ? `${isPolish ? 'Obszar' : 'Area'}: ${templateAreaTagFilter.length}`
                 : isPolish
