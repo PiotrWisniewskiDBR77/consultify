@@ -263,8 +263,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
             <FileText className="w-8 h-8 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-navy-900 dark:text-white">My Assessments</h1>
-            <p className="text-slate-500 dark:text-slate-400">
+            <h1 className="text-2xl font-bold text-c-text">My Assessments</h1>
+            <p className="text-c-text-muted">
               {assessments.length} assessments total
             </p>
           </div>
@@ -299,7 +299,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search assessments..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-c-surface border border-c-border-subtle rounded-lg text-c-text placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
 
@@ -322,7 +322,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
+        <div className="p-4 bg-c-surface border border-c-border-subtle rounded-xl">
           <div className="flex flex-wrap gap-4">
             {/* Status Filter */}
             <div>
@@ -332,7 +332,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as WorkflowState | 'ALL')}
-                className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="ALL">All</option>
                 <option value="DRAFT">Draft</option>
@@ -352,7 +352,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="ALL">All</option>
                 <option value="DRD">DRD</option>
@@ -391,7 +391,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
       {filteredAssessments.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-c-text-muted">
             {searchQuery || statusFilter !== 'ALL' || typeFilter !== 'ALL'
               ? 'No assessments match your criteria'
               : "You don't have any assessments yet"}
@@ -407,9 +407,9 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           )}
         </div>
       ) : (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50 dark:bg-navy-950/50 border-b border-slate-200 dark:border-navy-700 text-sm font-medium text-slate-500 dark:text-slate-400">
+          <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50 dark:bg-navy-950/50 border-b border-c-border-subtle text-sm font-medium text-c-text-muted">
             <div
               className="col-span-4 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-200"
               onClick={() => handleSort('name')}
@@ -451,8 +451,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                 >
                   {/* Name */}
                   <div className="col-span-4">
-                    <p className="font-medium text-navy-900 dark:text-white">{assessment.name}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="font-medium text-c-text">{assessment.name}</p>
+                    <p className="text-sm text-c-text-muted">
                       {assessment.projectName} • {assessment.type}
                     </p>
                   </div>
@@ -476,21 +476,21 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                           style={{ width: `${progress}%` }}
                         />
                       </div>
-                      <span className="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+                      <span className="text-sm text-c-text-muted tabular-nums">
                         {progress}%
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-c-text-muted mt-1">
                       {assessment.completedAxes}/{assessment.totalAxes} axes
                     </p>
                   </div>
 
                   {/* Updated */}
                   <div className="col-span-2">
-                    <p className="text-sm text-navy-900 dark:text-white">
+                    <p className="text-sm text-c-text">
                       {getTimeAgo(assessment.updatedAt)}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-c-text-muted">
                       {formatDate(assessment.createdAt)}
                     </p>
                   </div>
@@ -527,7 +527,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                       </button>
 
                       {openMenuId === assessment.id && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg z-10 py-1">
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface border border-c-border-subtle rounded-lg shadow-lg z-10 py-1">
                           <button
                             onClick={() => {
                               onExportAssessment?.(assessment.id, 'pdf');
@@ -558,7 +558,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                             <Copy className="w-4 h-4" />
                             Duplicate
                           </button>
-                          <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                          <div className="border-t border-c-border-subtle my-1" />
                           <button
                             onClick={() => {
                               setDeleteConfirmId(assessment.id);
@@ -583,12 +583,12 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+          <div className="bg-c-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
                 <AlertCircle className="w-6 h-6 text-danger-600 dark:text-danger-400" />
               </div>
-              <h3 className="text-lg font-bold text-navy-900 dark:text-white">Confirm Deletion</h3>
+              <h3 className="text-lg font-bold text-c-text">Confirm Deletion</h3>
             </div>
             <p className="text-slate-600 dark:text-slate-300 mb-6">
               Are you sure you want to delete this assessment? This action cannot be undone.
