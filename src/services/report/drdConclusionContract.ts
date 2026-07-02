@@ -16,10 +16,15 @@
  * read-only context. The LLM only produces prose.
  *
  * The default implementation here is a DETERMINISTIC STUB (no LLM call). It renders
- * grounded prose from the engine facts. To wire a real LLM:
- *   - server-side: `import('../ai/llmService.js')` → `llmService.call({ type: 'text', ... })`
- *     (see `server/src/routes/assessment-reports.routes.ts` generate route for the pattern).
- *   - pass `narrator` into `buildDrdReportModel` — see TODO markers below.
+ * grounded prose from the engine facts and is used as the fail-safe fallback.
+ *
+ * A live LLM narrator IS wired: see `drdLlmNarrator.ts` (`makeLlmNarrator`). It
+ * builds a grounded prompt from this ConclusionInput, calls `llmService`
+ * (`type: 'text'`, `timeoutMs` ~120s override), and validates the output with the
+ * `numbers_from_engine` (hard) + `evidence_link` validators (CONCLUSION_LAYER
+ * STANDARD §4.4); on failure it retries once, then falls back to this stub with
+ * `narrative: 'deterministic'`. Wire it via
+ * `generateDrdReport(scores, meta, { llm: llmService })`.
  */
 
 /** Confidence levels — aligned with ConclusionService.normalizeConfidence(). */
@@ -66,6 +71,13 @@ export interface ConclusionOutput {
   evidence: ConclusionEvidenceRef[];
   /** Whether this was produced by an LLM (false = deterministic stub). */
   aiGenerated: boolean;
+  /**
+   * Provenance of the prose — 'llm' when a validated model wrote it,
+   * 'deterministic' when it came from the stub (either by default or via the
+   * LLM fallback path). Surfaced in the report so a deterministic run is never
+   * silently passed off as authored analysis (CONCLUSION_LAYER_STANDARD §2 R2).
+   */
+  narrative: 'llm' | 'deterministic';
 }
 
 /**
@@ -79,12 +91,9 @@ export type DrdNarrator = (input: ConclusionInput) => ConclusionOutput | Promise
  *
  * It composes grounded prose purely from `input.facts` (which are engine outputs).
  * This keeps the report fully renderable and testable offline. The prose is
- * intentionally plain; a real LLM narrator (TODO) would elevate the style while
- * still being forbidden from touching the numbers.
- *
- * TODO(LLM): replace/augment with a real narrator that calls `llmService.call({
- *   type: 'text', systemPrompt: '<numbers are read-only>', messages: [...] })`.
- *   Wire it by passing the async narrator into `buildDrdReportModel({ narrator })`.
+ * intentionally plain; the live LLM narrator (`drdLlmNarrator.ts`) elevates the
+ * style while still being forbidden from touching the numbers, and falls back to
+ * this stub whenever its output fails validation or the provider errors.
  */
 export const deterministicNarrator: DrdNarrator = (input) => {
   const isPL = input.language === 'pl';
@@ -123,6 +132,7 @@ export const deterministicNarrator: DrdNarrator = (input) => {
         : 'Interpretation based on assessment data; workshop validation with the client team is recommended before execution.',
       evidence: input.evidence,
       aiGenerated: false,
+      narrative: 'deterministic',
     };
   }
 
@@ -158,6 +168,7 @@ export const deterministicNarrator: DrdNarrator = (input) => {
         : 'The gap card describes the engine-measured level difference; detailed scope requires refinement.',
       evidence: input.evidence,
       aiGenerated: false,
+      narrative: 'deterministic',
     };
   }
 
@@ -182,5 +193,6 @@ export const deterministicNarrator: DrdNarrator = (input) => {
       : 'The axis description aggregates area results from the assessment engine.',
     evidence: input.evidence,
     aiGenerated: false,
+      narrative: 'deterministic',
   };
 };

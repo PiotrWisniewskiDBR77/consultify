@@ -77,6 +77,7 @@ interface Strings {
   medium: string;
   high: string;
   eightDNote: string;
+  narrativeDeterministic: string;
 }
 
 const STR: Record<'pl' | 'en', Strings> = {
@@ -124,6 +125,8 @@ const STR: Record<'pl' | 'en', Strings> = {
     high: 'wysoki',
     eightDNote:
       'Radar komunikuje 7 mierzonych osi transformacji (wynik silnika). Warstwa komunikacyjna 8D (MAP-1.0) zostanie uzupełniona po dostarczeniu kanonu DRD.',
+    narrativeDeterministic:
+      'Narracja deterministyczna (bez modelu językowego). Liczby pochodzą z silnika oceny; interpretacje zostaną wzbogacone po podłączeniu narratora LLM.',
   },
   en: {
     reportTitle: 'Digital Readiness Diagnosis Report',
@@ -169,6 +172,8 @@ const STR: Record<'pl' | 'en', Strings> = {
     high: 'high',
     eightDNote:
       'The radar communicates the 7 measured transformation axes (engine output). The 8D communication layer (MAP-1.0) will be completed once the DRD canon is delivered.',
+    narrativeDeterministic:
+      'Deterministic narrative (no language model). Numbers come from the assessment engine; interpretations will be enriched once the LLM narrator is connected.',
   },
 };
 
@@ -323,6 +328,7 @@ export function buildDrdReportHtml(model: DrdReportModel): string {
     .chapter__head { display:flex; justify-content: space-between; align-items:baseline; border-bottom:1px solid var(--grid); padding-bottom:4px; margin-bottom: 8px; }
     .chapter__score { font-variant-numeric: tabular-nums; color: var(--actual); font-weight:600; }
     .note { font-size: 11px; color: var(--muted); border-left: 3px solid var(--grid); padding-left: 10px; margin-top: 10px; }
+    .narrative-flag { font-size: 11px; color: var(--target); border: 1px solid var(--grid); border-left: 3px solid var(--target); border-radius: 6px; padding: 8px 10px; margin: 0 0 12px; background: #f0f9ff; }
     .foot { position:absolute; bottom: 12mm; left: 20mm; right: 20mm; display:flex; justify-content: space-between; font-size: 10px; color: var(--muted); border-top:1px solid var(--grid); padding-top: 5px; }
     @page { size: A4; margin: 16mm; @bottom-center { content: counter(page); } }
     @media print {
@@ -365,6 +371,11 @@ export function buildDrdReportHtml(model: DrdReportModel): string {
       <span class="muted">→ ${s.target} ${model.overall.targetPercent}%</span>
       <span class="stage">${s.stage}: ${esc(model.overall.maturityStage)}</span>
     </div>
+    ${
+      model.executiveSummary.narrative === 'deterministic'
+        ? `<p class="narrative-flag">${esc(s.narrativeDeterministic)}</p>`
+        : ''
+    }
     ${model.executiveSummary.paragraphs.map((p) => `<p>${esc(p)}</p>`).join('')}
     <p class="note">${esc(model.executiveSummary.limits)}</p>
     ${foot(2)}

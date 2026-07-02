@@ -13,6 +13,11 @@
 
 import { buildDrdReportHtml } from './drdReportHtml';
 import {
+  makeLlmNarrator,
+  type DrdLlmNarratorOptions,
+  type LlmLike,
+} from './drdLlmNarrator';
+import {
   buildDrdReportModel,
   type AreaScores,
   type DrdReportMeta,
@@ -25,13 +30,33 @@ export interface GenerateDrdReportResult {
   model: DrdReportModel;
 }
 
+export interface GenerateDrdReportOptions extends DrdReportOptions {
+  /**
+   * Optional LLM client. When supplied (server-side), the report narrative is
+   * authored by a validated, fail-safe LLM narrator (numbers-from-engine +
+   * factRefs, retry-once-then-stub). When omitted, the deterministic stub is
+   * used. Explicit `narrator` in DrdReportOptions still wins over this.
+   */
+  llm?: LlmLike;
+  /** Extra LLM narrator tuning (model tier, timeout, temperature, logger). */
+  llmOptions?: Omit<DrdLlmNarratorOptions, 'llm'>;
+}
+
 /** Build the full DRD report (model + HTML) from engine scores and meta. */
 export async function generateDrdReport(
   areaScores: AreaScores,
   meta: DrdReportMeta,
-  options: DrdReportOptions = {}
+  options: GenerateDrdReportOptions = {}
 ): Promise<GenerateDrdReportResult> {
-  const model = await buildDrdReportModel(areaScores, meta, options);
+  // Prefer an explicit narrator; otherwise build the LLM narrator when an llm
+  // client is provided; otherwise fall back to the deterministic stub (default
+  // inside buildDrdReportModel). LLM failures never break generation — the
+  // narrator itself is fail-safe.
+  const narrator =
+    options.narrator ??
+    (options.llm ? makeLlmNarrator({ llm: options.llm, ...(options.llmOptions || {}) }) : undefined);
+
+  const model = await buildDrdReportModel(areaScores, meta, { narrator });
   const html = buildDrdReportHtml(model);
   return { html, model };
 }
@@ -40,3 +65,4 @@ export * from './drdReportModel';
 export * from './drdReportSvg';
 export * from './drdReportHtml';
 export * from './drdConclusionContract';
+export * from './drdLlmNarrator';
