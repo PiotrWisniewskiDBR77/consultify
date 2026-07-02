@@ -103,13 +103,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         render: (row: TemplateItem) => (
           <div className="flex items-center gap-2 min-w-0">
             {row.type === 'report' ? (
-              <FileText size={14} className="text-blue-400 shrink-0" />
+              <FileText size={14} className="text-c-text-muted shrink-0" />
             ) : row.type === 'sheet' ? (
-              <FileSpreadsheet size={14} className="text-emerald-400 shrink-0" />
+              <FileSpreadsheet size={14} className="text-c-text-muted shrink-0" />
             ) : (
-              <Presentation size={14} className="text-blue-400 shrink-0" />
+              <Presentation size={14} className="text-c-text-muted shrink-0" />
             )}
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+            <span className="text-sm font-medium text-c-text truncate">
               {row.title}
             </span>
           </div>
@@ -132,9 +132,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         render: (row: TemplateItem) => {
           const meta = TEMPLATE_TYPE_META[row.type];
           return (
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-500/10">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-c-surface-raised">
               <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              <span className="text-xs font-medium text-c-text-secondary">
                 {isPolish ? meta.labelPl : meta.label}
               </span>
             </div>
@@ -159,7 +159,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           { value: 'custom', label: 'Custom' },
         ],
         render: (row: TemplateItem) => (
-          <span className="text-sm text-slate-600 dark:text-slate-300">{row.category}</span>
+          <span className="text-sm text-c-text-secondary">{row.category}</span>
         ),
       },
       {
@@ -173,7 +173,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           { value: 'organization', label: t('reports.organization') },
         ],
         render: (row: TemplateItem) => (
-          <span className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="text-sm text-c-text-secondary">
             {row.scope === 'application'
               ? t('reports.application')
               : row.scope === 'personal'
@@ -214,7 +214,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         render: (row: TemplateItem) => {
           const d = new Date(row.updatedAt);
           return (
-            <span className="text-sm text-slate-500 dark:text-slate-400">
+            <span className="text-sm text-c-text-muted">
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                 day: 'numeric',
                 month: 'short',
@@ -329,11 +329,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     return (
       <div className="flex items-center justify-center h-full p-6">
         <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
-          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="text-lg font-semibold text-c-text">
             {t('rap.errors.realTemplatesTitle', 'Real templates source needs attention')}
           </div>
-          <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
-          <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="mt-2 text-sm text-c-text-secondary">{error}</div>
+          <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
             {t(
               'rap.errors.realSourceHint',
               'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
@@ -368,11 +368,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
 
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 max-w-2xl mx-auto">
-        <BookTemplate size={40} className="text-slate-600 dark:text-slate-400 mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+        <BookTemplate size={40} className="text-c-text-muted mb-4" />
+        <h3 className="text-lg font-semibold text-c-text mb-1">
           {t('rap.empty.templatesOnboarding', 'Biblioteka wzorców')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-6">
+        <p className="text-sm text-c-text-muted text-center mb-6">
           {t(
             'rap.empty.templatesOnboardingDesc',
             'Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.'
@@ -382,17 +382,17 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           {families.map((f) => (
             <div
               key={f.key}
-              className="rounded-xl border border-slate-200/70 dark:border-navy-700/50 bg-white/60 dark:bg-navy-800/40 p-4"
+              className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
             >
-              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <h4 className="text-sm font-semibold text-c-text">
                 {f.title}
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{f.desc}</p>
+              <p className="text-xs text-c-text-muted mt-1">{f.desc}</p>
               <div className="flex gap-1 mt-2">
                 {f.categories.map((c) => (
                   <span
                     key={c}
-                    className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300"
+                    className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-secondary"
                   >
                     {c}
                   </span>
