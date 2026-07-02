@@ -209,6 +209,33 @@ export function validateEnv(): ValidationResult {
     warnings.push('No AI provider API key configured. AI features will not work.');
   }
 
+  // Speech-to-text (Interview voice answers). STT works with a native OpenAI /
+  // Groq Whisper key OR the Gemini/Google key that also powers Teresa's voice.
+  // If none is set, voice answers still SAVE (browser transcript fallback in the
+  // Interview UI), but server-side transcription is disabled — flag it loudly so
+  // demo/staging can be verified without guessing.
+  const openaiStt = (process.env.OPENAI_API_KEY || '').trim();
+  const hasWhisperKey =
+    (openaiStt.length > 0 &&
+      !openaiStt.startsWith('sk-or-') &&
+      !openaiStt.startsWith('sk-test')) ||
+    !!(process.env.GROQ_API_KEY || '').trim();
+  const geminiStt = (
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_AI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    ''
+  ).trim();
+  const hasSttProvider =
+    hasWhisperKey || (geminiStt.length > 0 && geminiStt !== 'YOUR_GEMINI_API_KEY_HERE');
+  if (!hasSttProvider) {
+    warnings.push(
+      'No speech-to-text provider configured. Interview voice answers will fall back to the ' +
+        'browser transcript (still saved) but server transcription is OFF. ' +
+        'Set one of: OPENAI_API_KEY, GROQ_API_KEY, GEMINI_API_KEY, GOOGLE_AI_API_KEY, GOOGLE_API_KEY.'
+    );
+  }
+
   // Check database configuration - PostgreSQL required when not using mock
   const useMockDb =
     process.env.NODE_ENV === 'test' &&
