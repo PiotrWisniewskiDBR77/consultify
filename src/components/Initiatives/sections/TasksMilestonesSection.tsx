@@ -1470,13 +1470,63 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
             </AnimatePresence>
             {filteredTasks.length === 0 && (
               <tr>
-                <td
-                  colSpan={8}
-                  className="py-8 text-center text-sm text-slate-500 dark:text-slate-400"
-                >
-                  {tasks.length === 0
-                    ? t('initiatives.tasksMilestonesSection.noTasksYet')
-                    : t('initiatives.tasksMilestonesSection.noResultsForFilters')}
+                <td colSpan={8} className="py-8">
+                  {tasks.length === 0 ? (
+                    // M13 flow redesign — a fresh DRAFT has no tasks, so the
+                    // plan (and the Gantt) is empty. Explain it and offer the
+                    // two consultant moves instead of a bare "no tasks" line.
+                    <div data-testid="tasks-empty-state" className="mx-auto max-w-md text-center">
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t(
+                          'initiatives.tasksMilestonesSection.emptyPlanTitle',
+                          'Ta inicjatywa nie ma jeszcze planu'
+                        )}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {t(
+                          'initiatives.tasksMilestonesSection.emptyPlanHint',
+                          'Zadania zasilają harmonogram (Gantt) i postęp inicjatywy. Dodaj pierwsze zadanie albo pozwól AI zaproponować kompletny plan.'
+                        )}
+                      </p>
+                      {!readonly && (
+                        <div className="mt-4 flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            data-testid="tasks-empty-add"
+                            onClick={() => setShowCreateModal(true)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300/70 dark:border-navy-600 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                          >
+                            <Plus size={13} />
+                            {t(
+                              'initiatives.tasksMilestonesSection.emptyPlanAddFirst',
+                              'Dodaj pierwsze zadanie'
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            data-testid="tasks-empty-ai"
+                            disabled={isAIProposing}
+                            onClick={() => void proposeTasksWithAI('generate')}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-teal-700 transition-colors disabled:opacity-50"
+                          >
+                            {isAIProposing ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={13} />
+                            )}
+                            {t(
+                              'initiatives.tasksMilestonesSection.emptyPlanGenerateAi',
+                              'Wygeneruj plan z AI'
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+                      {t('initiatives.tasksMilestonesSection.noResultsForFilters')}
+                    </p>
+                  )}
                 </td>
               </tr>
             )}
