@@ -68,3 +68,28 @@ P1 = Results + Finance (golden-path). P2 = Settings + Admin. P3 = SuperAdmin (24
 - **Fala 3 instrumenty:** `Results/OperationalAnalysisView.tsx` (rose-*→`c-danger`), Value Driver Tree, StatusDashboard, Capacity Heatmap, Finance ROIPaybackChart.
 - **NIE DOTKNIĘTE (zakaz — pre-existing błędy TS):** `Results/PortfolioInsightsPanel.tsx`, `Results/ValueDriverTree.tsx`.
 - Serie/wykresy: brak plików danych-serii do przemapowania na `c-tag-*` w tej porcji (KPICreateModal category-map obsłużony punktowo→violet).
+
+### RAPORT — Fala 4 · Kolory danych KATEGORYCZNE (serie/kategorie → c-tag-*) (2026-07-02, branch `reskin/A4/wave-4`)
+**Baza:** `reskin/A4/wave-2` (A4 nie miał wave-3). Worktree `agent-a94a1c10374616e84`, NIE zmergowane.
+**Commity:** `00abf4e05f` (AnalysisCompareView), `43827e31ce` (KPIAttributionPanel), `c4c5e7d24c` (OperationalAnalysisView). Per-ścieżka, zero `-A`.
+
+**Zakres = kategoryczne palety serii/kategorii → `c-tag-*` (§15.1: serie=c-tag, crimson NIGDY jako dana).**
+
+**Pliki zmienione (3):**
+- `Economics/AnalysisCompareView.tsx` — `ANALYSIS_COLORS` (paleta per-analiza, indeksowana `index % len`, użyta jako radar-series color + pasek + wartość). Było `['#A51C30' Harvard Crimson, '#6578B4', '#52A52E', '#E87D1E']` → `var(--c-tag-1..4)`. **Crimson jako pierwsza seria danych = bezpośrednie złamanie §15.1④, usunięte.**
+- `Benefits/KPIAttributionPanel.tsx` — `COLORS` (per-inicjatywa contribution color: stacked-bar segmenty + legenda kropek). Było 8× hex z **duplikatami** (`#3b82f6` i `#f59e0b` po dwa razy) → `var(--c-tag-1..8)` (8 distinct). Legenda z etykietami istnieje (§15.1⑤ OK).
+- `Results/OperationalAnalysisView.tsx` — mini-series bar (prev vs latest value) `bg-primary-500/30` (crimson jako dana!) → inline `backgroundColor: color-mix(in srgb, var(--c-tag-1) 40%, transparent)`. Użyto color-mix bo `--c-tag-N` = plain hex (Tailwind alpha `/40` na `var()` niepewne). STATUS_STYLES i sort-pill selection NIE ruszone (patrz DEFER).
+
+**DoD:** zmiany = wyłącznie wartości/klasy kolorów (git diff: 19+/15−, zero logiki). Grep sanity: 0× hex/crimson w samych tablicach palet (pozostały `#A51C30` = tylko komentarz „Was …"). `npm run build` NIE odpalony (zlecenie: zero npm) — Strateg przed merge.
+
+**>5 serii naraz (§15.1 łamane — zalogowane):**
+- `KPIAttributionPanel` stacked-bar: liczba kategorii = data-driven (`attribution.contributions`, jedna na inicjatywę kontrybuującą). Może przekroczyć 5 (paleta cyklowana do 8 nim się powtarza). Ma legendę, więc czytelne, ale przy wielu inicjatywach łamie zalecany cap ≤5 → do rozważenia grupowanie „Top-5 + Inne" (poza skórą, decyzja produktowa).
+
+**DEFER (kategoryczne-graniczne / semantyczne / poza zakresem — NIE dotknięte, zalogowane):**
+- **STATUS/próg (semantyczne, wg zlecenia NIE zmieniać):** `Economics/charts/SCurve.tsx` + `BulletChart.tsx` — `positive/warning/negative/target/baseline/forecast` = kodowanie stanu/progu (nad/pod targetem), NIE kategoria. Poprawnie semantyczne (choć wyrażone hex — to Fala 3 instrument-chrome, nie Fala 4).
+- `Results/OperationalAnalysisView.tsx` `STATUS_STYLES` (on-target/below/no-data = emerald/rose/slate) = STATUS, nie kategoria → semantyczny, ZOSTAWIONY. Sort-pill `bg-primary-500/20` (aktywny sort) = selection/accent chrome (SYS-1 crimson-as-selection), nie dana → poza Fala 4 (Fala 1/SYS).
+- **Skale sekwencyjne / mieszane sign-convention + osie (Fala 3 / paleta Piotra):** `Economics/CashFlowChart.tsx` (costs=rose / benefits=emerald = konwencja znaku finansowego semantyczna + cash-flow blue/indigo neutral + osie slate hex) i `Economics/BenefitsTrackingDashboard.tsx` (analogicznie) — mieszanka semantyki znaku + chrome osi = instrument §15, nie czysta paleta kategoryczna. NIE ruszone.
+- **Value Driver Tree / Sankey (defer-lista):** `Economics/charts/GoldenThreadSankey.tsx` — `COLUMN_COLORS` (typ węzła per-kolumna = kategoryczne) ALE spleciony z `ORPHAN_AMBER/ROSE` (semantyczne stany odpięcia) i wiąże się z „FINANCE_VISUAL_CANON §1" (osobny kanon palety). Rodzina Value Driver Tree = defer wg zlecenia → NIE ruszone, do decyzji palety.
+- `SensitivityChart.tsx`, `charts/FootballField.tsx`, `charts/PortfolioBubble.tsx` — brak hex/crimson serii (renderują przez theme/child/currentColor); nic do zmapowania.
+- `PortfolioInsightsPanel.tsx` / `ValueDriverTree.tsx` — pre-existing TS, zakaz zlecenia. NIE dotknięte.
+- `ui/**` / `shared/**` — poza zakresem.
