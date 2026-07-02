@@ -37,7 +37,13 @@ import {
   IDEA_STAGES_V5,
   normalizeStageToV5,
 } from './ideaEntryTypes';
-import { IDEA_CONVERT_TARGETS, type IdeaConvertTarget } from './ideaConvertTargets';
+import {
+  IDEA_CONVERT_GROUP_LABELS,
+  IDEA_CONVERT_GROUP_ORDER,
+  IDEA_CONVERT_TARGETS,
+  type IdeaConvertGroup,
+  type IdeaConvertTarget,
+} from './ideaConvertTargets';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindmapInspector } from './mindmap/MindmapInspector';
@@ -271,12 +277,19 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   const convertActions = IDEA_CONVERT_TARGETS.map((t) => ({
     id: t.id,
     status: t.status,
+    group: t.group,
     labelPl: t.labelPl,
     labelEn: t.labelEn,
     descPl: t.descPl,
     descEn: t.descEn,
     ...CONVERT_VISUALS[t.id],
   }));
+  // UI-L9: cluster the flat list into 3 legible groups (working actions · doc generators · AI models)
+  const convertGroups = IDEA_CONVERT_GROUP_ORDER.map((g: IdeaConvertGroup) => ({
+    group: g,
+    label: isPl ? IDEA_CONVERT_GROUP_LABELS[g].pl : IDEA_CONVERT_GROUP_LABELS[g].en,
+    items: convertActions.filter((a) => a.group === g),
+  })).filter((g) => g.items.length > 0);
 
   if (!open) return null;
 
@@ -467,46 +480,71 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               : `Convert selection (${selection.count})`}
           </div>
         )}
-        <div className="grid grid-cols-1 gap-1.5">
-          {convertActions.map(
-            ({ id, status, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => {
-              const isSoon = status === 'soon';
-              // `soon` targets have no server handler — keep them visible but inert so we never
-              // fire a request that returns a raw 400 (CANON §4). `live` targets convert for real.
-              return (
-                <button
-                  key={id}
-                  onClick={() => !isSoon && onConvert(id)}
-                  disabled={isDraft || isSoon}
-                  aria-disabled={isDraft || isSoon}
-                  title={isSoon ? (isPl ? 'Wkrótce' : 'Coming soon') : undefined}
-                  className="group relative flex items-center gap-2.5 px-3 py-2 rounded-xl overflow-hidden transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-100 group-hover:opacity-80 transition-opacity`}
-                  />
-                  <div
-                    className={`relative w-6 h-6 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
-                  >
-                    <Icon size={12} />
-                  </div>
-                  <div className="relative flex-1 min-w-0 text-left">
-                    <div className={`text-[11px] font-semibold ${textColor} flex items-center gap-1.5`}>
-                      {isPl ? labelPl : labelEn}
-                      {isSoon && (
-                        <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-navy-700 rounded px-1 py-px">
-                          {isPl ? 'Wkrótce' : 'Soon'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[9px] text-slate-600 dark:text-slate-500">
-                      {isPl ? descPl : descEn}
-                    </div>
-                  </div>
-                </button>
-              );
-            }
-          )}
+        <div className="space-y-3">
+          {convertGroups.map(({ group, label, items }) => (
+            <div key={group}>
+              {/* Group separator + label */}
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {label}
+                </span>
+                <span className="h-px flex-1 bg-slate-200/60 dark:bg-white/[0.05]" />
+              </div>
+              <div className="grid grid-cols-1 gap-1.5">
+                {items.map(
+                  ({
+                    id,
+                    status,
+                    icon: Icon,
+                    labelPl,
+                    labelEn,
+                    descPl,
+                    descEn,
+                    gradient,
+                    textColor,
+                  }) => {
+                    const isSoon = status === 'soon';
+                    // `soon` targets have no server handler — keep them visible but inert so we never
+                    // fire a request that returns a raw 400 (CANON §4). `live` targets convert for real.
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => !isSoon && onConvert(id)}
+                        disabled={isDraft || isSoon}
+                        aria-disabled={isDraft || isSoon}
+                        title={isSoon ? (isPl ? 'Wkrótce' : 'Coming soon') : undefined}
+                        className="group relative flex items-center gap-2.5 px-3 py-2 rounded-xl overflow-hidden transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-100 group-hover:opacity-80 transition-opacity`}
+                        />
+                        <div
+                          className={`relative w-6 h-6 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
+                        >
+                          <Icon size={12} />
+                        </div>
+                        <div className="relative flex-1 min-w-0 text-left">
+                          <div
+                            className={`text-[11px] font-semibold ${textColor} flex items-center gap-1.5`}
+                          >
+                            {isPl ? labelPl : labelEn}
+                            {isSoon && (
+                              <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-navy-700 rounded px-1 py-px">
+                                {isPl ? 'Wkrótce' : 'Soon'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[9px] text-slate-600 dark:text-slate-500">
+                            {isPl ? descPl : descEn}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </Section>
 

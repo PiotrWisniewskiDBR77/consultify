@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   Loader2,
   MessageSquare,
+  MoreHorizontal,
   Plus,
   Redo2,
   Rocket,
@@ -13,7 +14,7 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
@@ -26,6 +27,17 @@ export const FLOW_MODE_LABELS: Record<ProcessFlowMode, { en: string; pl: string 
   classic: { en: 'Classic Flow', pl: 'Klasyczny przepływ' },
   automation: { en: 'Automation', pl: 'Automatyzacja' },
   vsm: { en: 'Value Stream', pl: 'Strumień wartości' },
+};
+
+/**
+ * Human-readable label for the semantic kit chip. `classic/automation/vsm` mirror the
+ * flow mode (so we don't surface them as a redundant "Kit" pill — only the specialised
+ * kits, which are set from chat via IDEA_WORKSPACE_FLOW_SEMANTIC_EVENT, get a chip).
+ */
+export const SEMANTIC_KIT_LABELS: Record<string, { en: string; pl: string }> = {
+  bpmn: { en: 'BPMN notation', pl: 'Notacja BPMN' },
+  system: { en: 'System map', pl: 'Mapa systemowa' },
+  org: { en: 'Org / RACI', pl: 'Organizacja / RACI' },
 };
 
 export const FLOW_MODE_GUIDANCE: Record<
@@ -143,6 +155,9 @@ export interface ProcessFlowToolbarProps {
 const BTN =
   'inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40';
 
+const OVERFLOW_ITEM =
+  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-40';
+
 export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   isPl,
   locked,
@@ -182,32 +197,79 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   guidance,
   onOpenChat,
   onConvert,
-}) => (
+}) => {
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const overflowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!overflowOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
+        setOverflowOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [overflowOpen]);
+
+  // UI-L13: the specialised semantic kits (bpmn/system/org) are set from chat and
+  // change the shape palette; classic/automation/vsm mirror the flow mode, so we only
+  // surface a "kit" chip for the specialised ones — no redundant second mode row.
+  const kitLabel =
+    semanticKit && SEMANTIC_KIT_LABELS[semanticKit]
+      ? isPl
+        ? SEMANTIC_KIT_LABELS[semanticKit].pl
+        : SEMANTIC_KIT_LABELS[semanticKit].en
+      : null;
+
+  return (
   <div className="border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
     <div className="px-4 py-3 flex flex-col gap-3">
       {/* ── Header row ─────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-[240px]">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-            Workspace / Process Flow
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* UI-L13: ONE segmented mode control (was two redundant rows) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+            {isPl ? 'Tryb' : 'Mode'}
+          </span>
+          <div
+            role="tablist"
+            aria-label={isPl ? 'Tryb przepływu' : 'Flow mode'}
+            className="flex items-center gap-0.5 rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5"
+          >
+            {(['classic', 'automation', 'vsm'] as ProcessFlowMode[]).map((mode) => {
+              const g = FLOW_MODE_GUIDANCE[mode];
+              const tooltip = `${isPl ? FLOW_MODE_LABELS[mode].pl : FLOW_MODE_LABELS[mode].en} — ${
+                isPl ? g.pl : g.en
+              }`;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  role="tab"
+                  aria-selected={flowMode === mode}
+                  onClick={() => setFlowMode(mode)}
+                  title={tooltip}
+                  aria-label={tooltip}
+                  className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
+                    flowMode === mode
+                      ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {isPl ? FLOW_MODE_LABELS[mode].pl : FLOW_MODE_LABELS[mode].en}
+                </button>
+              );
+            })}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {isPl ? 'Nawigacja procesu' : 'Process navigation'}
-            </div>
-            <span className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-primary-600 dark:text-primary-300">
-              {isPl ? FLOW_MODE_LABELS[flowMode].pl : FLOW_MODE_LABELS[flowMode].en}
+          {kitLabel && (
+            <span
+              className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-300"
+              title={isPl ? 'Zestaw notacji ustawiony z czatu' : 'Notation kit set from chat'}
+            >
+              {kitLabel}
             </span>
-            <span className="inline-flex items-center rounded-full bg-slate-200/70 dark:bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
-              {isPl ? guidance.stagePl : guidance.stageEn}
-            </span>
-            <span className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-300">
-              Kit {semanticKit}
-            </span>
-          </div>
-          <p className="mt-1 max-w-2xl text-[11px] text-slate-600 dark:text-slate-300">
-            {isPl ? guidance.pl : guidance.en}
-          </p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -235,31 +297,13 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
         </div>
       </div>
 
+      {/* Mode guidance line (single, contextual — replaces the redundant stage badge) */}
+      <p className="-mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+        {isPl ? guidance.pl : guidance.en}
+      </p>
+
       {/* ── Toolbar sections ───────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3">
-        {/* Flow mode pills */}
-        <div className="min-w-[250px] rounded-xl border border-slate-200/70 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-2.5">
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-            {isPl ? 'Tryb flow' : 'Flow mode'}
-          </div>
-          <div className="flex flex-wrap items-center gap-1 rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5">
-            {(['classic', 'automation', 'vsm'] as ProcessFlowMode[]).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setFlowMode(mode)}
-                className={`px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                  flowMode === mode
-                    ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
-              >
-                {isPl ? FLOW_MODE_LABELS[mode].pl : FLOW_MODE_LABELS[mode].en}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Build flow */}
         <div className="flex-1 min-w-[320px] rounded-xl border border-slate-200/70 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-2.5">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
@@ -388,12 +432,31 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           </div>
         </div>
 
-        {/* Manage canvas */}
+        {/* Manage canvas — command-row hierarchy: primary (max 4) · secondary · overflow "…" */}
         <div className="flex-1 min-w-[280px] rounded-xl border border-slate-200/70 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-2.5">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
             {isPl ? 'Zarządzanie canvasem' : 'Manage canvas'}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
+            {/* Primary: Save (strongest action) */}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || locked}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
+                saving || locked
+                  ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
+                  : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
+              }`}
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
+            </button>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">{syncLabel}</span>
+
+            <div className="mx-1 h-5 w-px bg-slate-200 dark:bg-navy-700" />
+
+            {/* Secondary: undo / redo / auto-layout */}
             <button
               type="button"
               onClick={undo}
@@ -424,99 +487,111 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               <LayoutGrid size={14} />
               Auto
             </button>
-            <button
-              type="button"
-              onClick={duplicateSelected}
-              disabled={locked}
-              className={BTN}
-              title={isPl ? 'Duplikuj (Ctrl+D)' : 'Duplicate (Ctrl+D)'}
-            >
-              <Copy size={14} />
-              {isPl ? 'Duplikuj' : 'Duplicate'}
-            </button>
-            <button
-              type="button"
-              onClick={deleteSelected}
-              disabled={locked}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors disabled:opacity-40"
-              title={isPl ? 'Usuń zaznaczone' : 'Delete selected'}
-            >
-              <Trash2 size={14} />
-              {isPl ? 'Usuń' : 'Delete'}
-            </button>
+
             <div className="ml-auto" />
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || locked}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                saving || locked
-                  ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
-                  : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
-              }`}
-            >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
-            </button>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">{syncLabel}</span>
-            {onOpenChat && (
+
+            {/* Overflow "…" — duplicate / delete / ask AI / convert */}
+            <div className="relative" ref={overflowRef}>
               <button
                 type="button"
-                onClick={onOpenChat}
-                className={BTN}
-                title={isPl ? 'Zapytaj AI o ten proces' : 'Ask AI about this process'}
+                onClick={() => setOverflowOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={overflowOpen}
+                className={`${BTN} ${overflowOpen ? 'bg-slate-100 dark:bg-navy-800' : ''}`}
+                title={isPl ? 'Więcej akcji' : 'More actions'}
+                aria-label={isPl ? 'Więcej akcji' : 'More actions'}
               >
-                <MessageSquare size={14} />
-                {isPl ? 'Zapytaj AI' : 'Ask AI'}
+                <MoreHorizontal size={16} />
               </button>
-            )}
-            {onConvert && (
-              <div className="relative group">
-                <button
-                  type="button"
-                  className={BTN}
-                  title={isPl ? 'Konwertuj proces' : 'Convert process'}
+              {overflowOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-1 z-50 flex w-48 flex-col rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-xl py-1"
                 >
-                  <Rocket size={14} />
-                  {isPl ? 'Konwertuj' : 'Convert'}
-                </button>
-                <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col w-44 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-xl py-1 z-50">
                   <button
                     type="button"
-                    onClick={() => onConvert('pf_convert_initiative')}
-                    className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+                    role="menuitem"
+                    onClick={() => {
+                      duplicateSelected();
+                      setOverflowOpen(false);
+                    }}
+                    disabled={locked}
+                    className={OVERFLOW_ITEM}
                   >
-                    {isPl ? 'Inicjatywa' : 'Initiative'}
+                    <Copy size={14} />
+                    {isPl ? 'Duplikuj (Ctrl+D)' : 'Duplicate (Ctrl+D)'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => onConvert('pf_convert_task_set')}
-                    className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+                    role="menuitem"
+                    onClick={() => {
+                      deleteSelected();
+                      setOverflowOpen(false);
+                    }}
+                    disabled={locked}
+                    className={`${OVERFLOW_ITEM} text-danger-600 dark:text-danger-400`}
                   >
-                    {isPl ? 'Zadania' : 'Task set'}
+                    <Trash2 size={14} />
+                    {isPl ? 'Usuń zaznaczone' : 'Delete selected'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => onConvert('pf_convert_report')}
-                    className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-                  >
-                    {isPl ? 'Raport' : 'Report'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onConvert('pf_convert_analysis')}
-                    className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
-                  >
-                    {isPl ? 'Analiza' : 'Analysis'}
-                  </button>
+                  {onOpenChat && (
+                    <>
+                      <div className="my-1 h-px bg-slate-100 dark:bg-navy-800" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          onOpenChat();
+                          setOverflowOpen(false);
+                        }}
+                        className={OVERFLOW_ITEM}
+                      >
+                        <MessageSquare size={14} />
+                        {isPl ? 'Zapytaj AI o ten proces' : 'Ask AI about this process'}
+                      </button>
+                    </>
+                  )}
+                  {onConvert && (
+                    <>
+                      <div className="my-1 h-px bg-slate-100 dark:bg-navy-800" />
+                      <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        <span className="inline-flex items-center gap-1">
+                          <Rocket size={11} />
+                          {isPl ? 'Konwertuj' : 'Convert'}
+                        </span>
+                      </div>
+                      {(
+                        [
+                          ['pf_convert_initiative', isPl ? 'Inicjatywa' : 'Initiative'],
+                          ['pf_convert_task_set', isPl ? 'Zadania' : 'Task set'],
+                          ['pf_convert_report', isPl ? 'Raport' : 'Report'],
+                          ['pf_convert_analysis', isPl ? 'Analiza' : 'Analysis'],
+                        ] as [string, string][]
+                      ).map(([action, label]) => (
+                        <button
+                          key={action}
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            onConvert(action);
+                            setOverflowOpen(false);
+                          }}
+                          className={OVERFLOW_ITEM}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default ProcessFlowToolbar;
