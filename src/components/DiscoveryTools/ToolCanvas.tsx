@@ -149,7 +149,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   const renderStepContent = () => {
     if (!stepDefinition) {
       return (
-        <div className="flex items-center justify-center h-full text-slate-600">
+        <div className="flex items-center justify-center h-full text-c-text-secondary">
           Loading step...
         </div>
       );
@@ -1065,11 +1065,11 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     // We still render a graceful, on-brand panel rather than a blank/error.
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <div className="max-w-md rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center dark:border-white/[0.08] dark:bg-white/[0.04]">
-          <p className="text-base font-medium text-slate-700 dark:text-slate-200">
+        <div className="max-w-md rounded-2xl border border-dashed border-c-border-subtle bg-c-surface-raised p-8 text-center">
+          <p className="text-base font-medium text-c-text-secondary">
             {isPolish ? 'Ten krok jest w przygotowaniu' : 'This step is being prepared'}
           </p>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-c-text-muted">
             {isPolish
               ? 'Wróć do podsumowania, aby kontynuować i wygenerować inicjatywy.'
               : 'Head back to the summary to continue and generate initiatives.'}
