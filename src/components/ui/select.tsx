@@ -56,10 +56,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           className={cn(
             'flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white',
             'ring-offset-background placeholder:text-slate-500',
-            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
+            'focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:placeholder:text-slate-400',
-            'dark:focus:ring-primary/30 dark:focus:border-primary',
+            'dark:focus:ring-c-focus',
             'appearance-none cursor-pointer',
             sizeClasses[size],
             fullWidth && 'w-full',
@@ -97,7 +97,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
       className={cn(
         'flex h-10 w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm',
         'ring-offset-background placeholder:text-slate-500',
-        'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
+        'focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'dark:border-navy-600 dark:bg-navy-800 dark:text-white',
         className
