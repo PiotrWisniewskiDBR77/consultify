@@ -54,5 +54,24 @@ Przetestowano wszystkie ścieżki na demo; znalezione bugi naprawione u źródł
 
 **Drobiazgi (polish, nie-blokery):** permalink shortcutu wymaga `chat.getPermalink` (jest tylko msg_ts); priorytet HIGH→medium na staging (env-downgrade, severity zachowany); FEATURE→IDEA (schemat BUG/IDEA).
 
+## Runda 3 — czytelne powiadomienia (2026-07-02, `95631c45e3`)
+
+Piotr: powiadomienia na zegarku/telefonie nie mówiły o czym są. **Router buduje teraz front-loaded pierwszą linię** `<emoji> <Kategoria> · <PRIO> · <temat>` (prawdziwe emoji Unicode — renderują na zegarku, w przeciwieństwie do `:kodów:`; strip markdown/emoji-codes z tytułu). Opt-in przez `category` (bez niej tekst verbatim — back-compat). Wpięte we wszystkie typy:
+
+| Typ | Nagłówek na zegarku |
+|---|---|
+| Zgłoszenie błędu | `🐛 Błąd · HIGH · M15 Rezultaty: wykresy nie renderują się` |
+| Pomysł / Funkcja | `💡 Pomysł · …` / `✨ Funkcja · …` |
+| Awaria / ostrzeżenie | `🚨 Awaria · DB: niedostępna` / `⚠️ Ostrzeżenie · …` |
+| Postęp / pilne | `📊 Postęp · Postępy (15 min)` / `🚨 Pilne · …` |
+| Rejestracja | `🙋 Rejestracja · Jan Kowalski (DBR77)` |
+| Raport dzienny | `📋 Raport dzienny · …` |
+| Rozliczenia | `💳 Rozliczenia · …` |
+| Wątek: status/workflow/odpowiedź | `🔧 Status: NEW → IN_PROGRESS · zmienił(a): Piotr` / `⚙️ Workflow` / `💬 Odpowiedź zespołu` |
+
+Test routera 14/14 (nowe: headline-build strip markdown, verbatim-bez-category).
+
+**Sprzątanie:** 7 zmyślonych zgłoszeń testowych (AAAA/`<script>`/puste/E2E-retesty/fake-CRITICAL) → status ARCHIVED (odwracalne); realne obserwacje M15/M14 zostawione na aktywnej liście.
+
 ## PROD
 Nietknięty (D-G=NIE). Całość na demo; promocja na prod = osobna jawna zgoda.
