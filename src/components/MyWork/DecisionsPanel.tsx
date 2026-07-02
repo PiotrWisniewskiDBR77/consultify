@@ -239,21 +239,21 @@ const NewDecisionModal: React.FC<{
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-xl p-6 m-4 border border-slate-200 dark:border-navy-700 max-h-[90vh] overflow-y-auto"
+        className="relative bg-c-surface rounded-xl shadow-2xl w-full max-w-xl p-6 m-4 border border-c-border-subtle max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center">
               <FileQuestion size={20} className="text-white" />
             </div>
-            <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+            <h3 className="text-lg font-bold text-c-text">
               {t('decisions.newDecision', 'New Decision Request')}
             </h3>
           </div>
           <button
             onClick={onClose}
             aria-label={t('common.close', 'Close')}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-500"
+            className="p-2 rounded-lg hover:bg-c-surface-raised text-c-text-muted"
           >
             <X size={20} />
           </button>
@@ -262,7 +262,7 @@ const NewDecisionModal: React.FC<{
         <div className="space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('decisions.field.title', 'Title')} *
             </label>
             <input
@@ -270,13 +270,13 @@ const NewDecisionModal: React.FC<{
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('decisions.field.titlePlaceholder', 'What needs to be decided?')}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('decisions.field.description', 'Description')}
             </label>
             <textarea
@@ -284,20 +284,20 @@ const NewDecisionModal: React.FC<{
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('decisions.field.descriptionPlaceholder', 'Add context or details...')}
               rows={3}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
             />
           </div>
 
           {/* Type & Priority Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 {t('decisions.field.type', 'Type')}
               </label>
               <select
                 value={decisionType}
                 onChange={(e) => setDecisionType(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="GENERAL">📋 General</option>
                 <option value="INITIATIVE_APPROVAL">🎯 Initiative Approval</option>
@@ -308,7 +308,7 @@ const NewDecisionModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 {t('decisions.field.priority', 'Priority')}
               </label>
               <select
@@ -316,7 +316,7 @@ const NewDecisionModal: React.FC<{
                 onChange={(e) =>
                   setPriority(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')
                 }
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="LOW">🟢 Low</option>
                 <option value="MEDIUM">🟡 Medium</option>
@@ -328,7 +328,7 @@ const NewDecisionModal: React.FC<{
 
           {/* Due Date */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               <span className="flex items-center gap-2">
                 <CalendarClock size={14} />
                 {t('decisions.field.dueDate', 'Decision Needed By')}
@@ -339,16 +339,16 @@ const NewDecisionModal: React.FC<{
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               min={today}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
-            <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+            <p className="text-xs text-c-text-muted mt-1">
               {t('decisions.field.dueDateHint', 'Leave empty if no specific deadline')}
             </p>
           </div>
 
           {/* Assignee */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               <span className="flex items-center gap-2">
                 <User size={14} />
                 {t('decisions.field.assignee', 'Decision Maker (optional)')}
@@ -362,7 +362,7 @@ const NewDecisionModal: React.FC<{
                 'decisions.field.assigneePlaceholder',
                 'Enter email or leave empty for auto-assign'
               )}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
         </div>
@@ -385,14 +385,14 @@ const NewDecisionModal: React.FC<{
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 font-medium transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised font-medium transition-colors"
           >
             {t('decisions.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={submitting || !title.trim()}
-            className="flex-1 px-4 py-2.5 rounded-lg text-white dark:text-navy-950 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2.5 rounded-lg bg-c-text text-c-surface hover:opacity-90 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
             {t('decisions.create', 'Create')}
@@ -454,29 +454,29 @@ const DelegateModal: React.FC<{
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md p-6 m-4 border border-slate-200 dark:border-navy-700"
+        className="relative bg-c-surface rounded-xl shadow-2xl w-full max-w-md p-6 m-4 border border-c-border-subtle"
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <UserPlus size={20} className="text-primary-500" />
+          <h3 className="text-lg font-bold text-c-text flex items-center gap-2">
+            <UserPlus size={20} className="text-c-text-secondary" />
             {t('decisions.delegate', 'Delegate Decision')}
           </h3>
           <button
             onClick={onClose}
             aria-label={t('common.close', 'Close')}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-500"
+            className="p-2 rounded-lg hover:bg-c-surface-raised text-c-text-muted"
           >
             <X size={20} />
           </button>
         </div>
 
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-secondary mb-4">
           {t('decisions.delegatingDecision', 'Delegating')}: <strong>{decision.title}</strong>
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('decisions.delegateTo', 'Delegate to')} *
             </label>
             <input
@@ -484,12 +484,12 @@ const DelegateModal: React.FC<{
               value={toUserId}
               onChange={(e) => setToUserId(e.target.value)}
               placeholder={t('decisions.enterUserId', 'Enter user email or ID')}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               {t('decisions.note', 'Note (optional)')}
             </label>
             <textarea
@@ -497,7 +497,7 @@ const DelegateModal: React.FC<{
               onChange={(e) => setNote(e.target.value)}
               placeholder={t('decisions.notePlaceholder', 'Add a message for the new assignee...')}
               rows={2}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
             />
           </div>
         </div>
@@ -505,14 +505,14 @@ const DelegateModal: React.FC<{
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 font-medium transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised font-medium transition-colors"
           >
             {t('decisions.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleDelegate}
             disabled={submitting || !toUserId.trim()}
-            className="flex-1 px-4 py-2.5 rounded-lg text-white dark:text-navy-950 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2.5 rounded-lg bg-c-text text-c-surface hover:opacity-90 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {submitting ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
             {t('decisions.delegateBtn', 'Delegate')}
@@ -641,7 +641,7 @@ const StatusTimeline: React.FC<{
   }
 
   return (
-    <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400">
+    <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-c-surface-raised text-c-text-muted">
       <Clock size={14} />
       <span className="text-xs">{formatDate(createdAt)}</span>
     </div>
@@ -676,22 +676,22 @@ const DecisionCard: React.FC<{
     } else if (isOverdue) {
       return 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-white dark:from-amber-900/20 dark:to-navy-900';
     } else if (decision.priority === 'CRITICAL') {
-      return 'border-l-danger-500 bg-white dark:bg-navy-900';
+      return 'border-l-danger-500 bg-c-surface';
     } else if (decision.priority === 'HIGH') {
-      return 'border-l-amber-500 bg-white dark:bg-navy-900';
+      return 'border-l-amber-500 bg-c-surface';
     }
-    return 'border-l-primary-500 bg-white dark:bg-navy-900';
+    return 'border-l-c-border-strong bg-c-surface';
   };
 
   const getTypeLabel = (decisionType: string) => {
     const types: Record<string, { icon: string; label: string; color: string }> = {
       INITIATIVE_APPROVAL: { icon: '🎯', label: 'Initiative', color: 'text-blue-600' },
-      PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'text-primary-600' },
+      PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'text-c-text-secondary' },
       UNBLOCK: { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
       CANCEL: { icon: '❌', label: 'Cancel', color: 'text-danger-600' },
       BUDGET: { icon: '💰', label: 'Budget', color: 'text-amber-600' },
       SCOPE_CHANGE: { icon: '📐', label: 'Scope', color: 'text-blue-600' },
-      GENERAL: { icon: '📋', label: 'General', color: 'text-slate-600 dark:text-slate-400' },
+      GENERAL: { icon: '📋', label: 'General', color: 'text-c-text-secondary' },
     };
     return types[decisionType] || types['GENERAL'];
   };
@@ -704,7 +704,7 @@ const DecisionCard: React.FC<{
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className={`rounded-xl border border-slate-200 dark:border-navy-700 border-l-4 ${getCardStyle()} cursor-pointer hover:shadow-lg transition-all overflow-hidden`}
+      className={`rounded-xl border border-c-border-subtle border-l-4 ${getCardStyle()} cursor-pointer hover:shadow-lg transition-all overflow-hidden`}
     >
       {/* Main Content */}
       <div className="p-4" onClick={() => onClick?.(decision.id)}>
@@ -713,7 +713,7 @@ const DecisionCard: React.FC<{
           <div className="flex items-center gap-2 flex-wrap">
             {/* Type Badge */}
             <span
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-white/10 ${typeInfo.color} dark:text-slate-200`}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-c-surface-raised ${typeInfo.color}`}
             >
               <span>{typeInfo.icon}</span>
               {typeInfo.label}
@@ -734,13 +734,13 @@ const DecisionCard: React.FC<{
         </div>
 
         {/* Title */}
-        <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2 line-clamp-2">
+        <h4 className="text-sm font-semibold text-c-text mb-2 line-clamp-2">
           {decision.title}
         </h4>
 
         {/* Description */}
         {decision.description && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
+          <p className="text-xs text-c-text-muted line-clamp-2 mb-3">
             {decision.description}
           </p>
         )}
@@ -750,11 +750,11 @@ const DecisionCard: React.FC<{
           {/* Project */}
           {decision.projectName && (
             <div className="flex items-center gap-2 text-xs">
-              <div className="w-6 h-6 rounded-md bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
-                <FolderKanban size={12} className="text-primary-600 dark:text-primary-400" />
+              <div className="w-6 h-6 rounded-md bg-c-surface-raised flex items-center justify-center shrink-0">
+                <FolderKanban size={12} className="text-c-text-secondary" />
               </div>
               <span
-                className="text-slate-700 dark:text-slate-300 truncate"
+                className="text-c-text-secondary truncate"
                 title={decision.projectName}
               >
                 {decision.projectName}
@@ -769,7 +769,7 @@ const DecisionCard: React.FC<{
                 <MapPin size={12} className="text-blue-600 dark:text-blue-400" />
               </div>
               <span
-                className="text-slate-700 dark:text-slate-300 truncate"
+                className="text-c-text-secondary truncate"
                 title={decision.locationName}
               >
                 {decision.locationName}
@@ -780,10 +780,10 @@ const DecisionCard: React.FC<{
           {/* Owner/Assignee */}
           {viewMode === 'awaiting' && decision.ownerName && (
             <div className="flex items-center gap-2 text-xs">
-              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+              <div className="w-6 h-6 rounded-full bg-c-surface-raised flex items-center justify-center shrink-0 text-[10px] font-bold text-c-text-secondary">
                 {decision.ownerName.charAt(0).toUpperCase()}
               </div>
-              <span className="text-slate-700 dark:text-slate-300 truncate">
+              <span className="text-c-text-secondary truncate">
                 {decision.ownerName}
               </span>
             </div>
@@ -803,14 +803,14 @@ const DecisionCard: React.FC<{
         </div>
 
         {/* Waiting Time Bar */}
-        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
-          <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-500 mb-1">
+        <div className="mt-2 pt-2 border-t border-c-border-subtle">
+          <div className="flex items-center justify-between text-[10px] text-c-text-muted mb-1">
             <span>{t('decisions.waitingFor', 'Waiting for')}</span>
             <span className="font-medium">
               {decision.daysWaiting || 0} {t('decisions.days', 'days')}
             </span>
           </div>
-          <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-c-surface-raised rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(100, ((decision.daysWaiting || 0) / 14) * 100)}%` }}
@@ -831,7 +831,7 @@ const DecisionCard: React.FC<{
         className={`px-4 py-3 border-t flex items-center gap-2 ${
           isOverdue
             ? 'bg-danger-50/50 dark:bg-danger-900/10 border-danger-100 dark:border-danger-500/10'
-            : 'bg-slate-50/50 dark:bg-white/5 border-slate-200 dark:border-navy-700'
+            : 'bg-c-surface-raised border-c-border-subtle'
         }`}
       >
         {viewMode === 'my' ? (
@@ -864,7 +864,7 @@ const DecisionCard: React.FC<{
                 e.stopPropagation();
                 onDelegate(decision);
               }}
-              className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+              className="px-3 py-2 rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
               title={t('decisions.delegate', 'Delegate')}
             >
               <UserPlus size={14} />
@@ -875,7 +875,7 @@ const DecisionCard: React.FC<{
             {/* View Details */}
             <button
               onClick={() => onClick?.(decision.id)}
-              className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+              className="flex-1 px-3 py-2 rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
             >
               {t('decisions.viewDetails', 'View Details')}
               <ChevronRight size={14} />
@@ -1214,7 +1214,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               id: 'other',
               label: t('decisions.other', 'Other'),
               items: rest,
-              accentColor: 'text-slate-600',
+              accentColor: 'text-c-text-secondary',
             },
           ]
         : []),
@@ -1228,7 +1228,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
   if (loading) {
     return (
       <div
-        className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8"
+        className="bg-c-surface rounded-xl border border-c-border-subtle p-8"
         data-testid="decisions-list"
       >
         <LoadingState variant="spinner" />
@@ -1238,21 +1238,21 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
 
   return (
     <div
-      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm h-full flex flex-col"
+      className="bg-c-surface rounded-xl border border-c-border-subtle shadow-sm h-full flex flex-col"
       data-testid="decisions-list"
     >
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-navy-700">
+      <div className="p-4 border-b border-c-border-subtle">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-primary-500 to-crimson-600 text-white rounded-lg shadow-sm">
               <FileQuestion size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-navy-900 dark:text-white">
+              <h3 className="font-bold text-c-text">
                 {t('decisions.title', 'Decisions')}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {myDecisionsCount + awaitingCount} {t('decisions.pending', 'pending')}
                 {urgentCount > 0 && (
                   <span className="text-danger-500 ml-1">• {urgentCount} urgent</span>
@@ -1264,7 +1264,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
           {/* New Button */}
           <button
             onClick={openCreateModal}
-            className="px-4 py-2 rounded-lg text-white dark:text-navy-950 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] transition-colors font-medium text-sm flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-c-text text-c-surface hover:opacity-90 transition-colors font-medium text-sm flex items-center gap-2"
           >
             <Plus size={16} />
             {t('decisions.new', 'New')}
@@ -1272,13 +1272,13 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
         </div>
 
         {/* View Toggle */}
-        <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
+        <div className="flex items-center gap-2 p-1 bg-c-surface-raised rounded-lg">
           <button
             onClick={() => setViewMode('my')}
             className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
               viewMode === 'my'
-                ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                ? 'bg-c-surface text-c-text shadow-sm'
+                : 'text-c-text-secondary hover:text-c-text'
             }`}
           >
             <User size={16} />
@@ -1286,8 +1286,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
             <span
               className={`px-2 py-0.5 rounded-full text-xs ${
                 viewMode === 'my'
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                  : 'bg-slate-200 dark:bg-white/10'
+                  ? 'bg-c-info/15 text-c-info'
+                  : 'bg-c-surface-raised text-c-text-secondary'
               }`}
             >
               {myDecisionsCount}
@@ -1297,8 +1297,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
             onClick={() => setViewMode('awaiting')}
             className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
               viewMode === 'awaiting'
-                ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                ? 'bg-c-surface text-c-text shadow-sm'
+                : 'text-c-text-secondary hover:text-c-text'
             }`}
           >
             <Hourglass size={16} />
@@ -1306,8 +1306,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
             <span
               className={`px-2 py-0.5 rounded-full text-xs ${
                 viewMode === 'awaiting'
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                  : 'bg-slate-200 dark:bg-white/10'
+                  ? 'bg-c-info/15 text-c-info'
+                  : 'bg-c-surface-raised text-c-text-secondary'
               }`}
             >
               {awaitingCount}
@@ -1321,14 +1321,14 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
           <div className="flex-1 relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
             />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('decisions.search', 'Search...')}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-c-border bg-c-surface text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
@@ -1338,8 +1338,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               onClick={() => setShowFilters(!showFilters)}
               className={`px-3 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-colors ${
                 filterType !== 'all'
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                  : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                  ? 'border-c-border-strong bg-c-surface-raised text-c-text'
+                  : 'border-c-border text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
               <Filter size={16} />
@@ -1357,8 +1357,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
             </button>
 
             {showFilters && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-20">
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
+              <div className="absolute right-0 top-full mt-1 w-52 bg-c-surface-raised rounded-lg shadow-lg border border-c-border py-1 z-20">
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
                   {t('decisions.filterByStatus', 'By Status')}
                 </div>
                 {(['all', 'overdue', 'thisWeek', 'blocking'] as FilterType[]).map((filter) => (
@@ -1368,10 +1368,10 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                       setFilterType(filter);
                       setShowFilters(false);
                     }}
-                    className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
+                    className={`w-full px-4 py-2 text-left text-sm hover:bg-c-surface flex items-center gap-2 ${
                       filterType === filter
-                        ? 'text-primary-600 dark:text-primary-400 font-medium'
-                        : 'text-slate-700 dark:text-slate-300'
+                        ? 'text-c-text font-medium'
+                        : 'text-c-text-secondary'
                     }`}
                   >
                     {filter === 'all' && <Tag size={14} />}
@@ -1387,8 +1387,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                           : t('decisions.filterBlocking', 'Blocking Items')}
                   </button>
                 ))}
-                <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
+                <div className="border-t border-c-border-subtle my-1" />
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
                   {t('decisions.filterByPriority', 'By Priority')}
                 </div>
                 {(['critical', 'high'] as FilterType[]).map((filter) => (
@@ -1398,10 +1398,10 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                       setFilterType(filter);
                       setShowFilters(false);
                     }}
-                    className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
+                    className={`w-full px-4 py-2 text-left text-sm hover:bg-c-surface flex items-center gap-2 ${
                       filterType === filter
-                        ? 'text-primary-600 dark:text-primary-400 font-medium'
-                        : 'text-slate-700 dark:text-slate-300'
+                        ? 'text-c-text font-medium'
+                        : 'text-c-text-secondary'
                     }`}
                   >
                     {filter === 'critical' && <Zap size={14} className="text-danger-500" />}
@@ -1419,7 +1419,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-3 py-2 rounded-lg border border-c-border bg-c-surface text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="newest">↓ {t('decisions.sortNewest', 'Newest')}</option>
             <option value="oldest">↑ {t('decisions.sortOldest', 'Oldest')}</option>
@@ -1475,7 +1475,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-12 text-slate-600 dark:text-slate-500"
+                className="text-center py-12 text-c-text-muted"
               >
                 {viewMode === 'my' ? (
                   <>
@@ -1489,7 +1489,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                   <>
                     <Hourglass
                       size={32}
-                      className="mx-auto mb-2 text-slate-600 dark:text-slate-500"
+                      className="mx-auto mb-2 text-c-text-muted"
                     />
                     <p className="text-sm font-medium">
                       {t('decisions.noAwaitingOthers', 'No decisions pending from others')}
