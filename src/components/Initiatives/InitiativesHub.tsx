@@ -2272,7 +2272,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             );
             setScope(revealState.scope);
             setActiveStatusFilter(revealState.activeStatusFilter);
-            setPreviewInitiativeId(first.id);
+            if (created.length === 1) {
+              // M13 flow redesign: a single freshly created initiative opens
+              // straight in its DOCUMENT (not just the list preview).
+              handleOpenInitiativeDocument(first);
+            } else {
+              setPreviewInitiativeId(first.id);
+            }
           }
         }}
       />
@@ -2467,7 +2473,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                           fetchData(true);
                         }
 
-                        handleInitiativeClick(normalized);
+                        // M13 flow redesign: land in the initiative DOCUMENT
+                        // right after creation (draft with clear next steps).
+                        handleOpenInitiativeDocument(normalized);
                       } else {
                         fetchData(true);
                       }
