@@ -140,16 +140,16 @@ export const DiscoveryToolsView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-navy-950">
+    <div className="min-h-full bg-c-bg">
       {/* Header */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+      <div className="bg-c-surface border-b border-c-border-subtle">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center gap-4 mb-4">
             <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl">
               <Wrench className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-c-text">
                 {t('discoveryTools.title', 'Discovery Tools')}
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
@@ -222,12 +222,12 @@ export const DiscoveryToolsView: React.FC = () => {
                       className={`w-6 h-6 ${iconColorClasses[category.color as keyof typeof iconColorClasses]}`}
                     />
                   </div>
-                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <span className="text-sm font-medium text-c-text-muted">
                     {category.toolCount} {category.toolCount === 1 ? 'tool' : 'tools'}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                <h3 className="text-lg font-semibold text-c-text mb-2">
                   {isPolish ? category.titlePl : category.title}
                 </h3>
 
@@ -262,8 +262,8 @@ export const DiscoveryToolsView: React.FC = () => {
         </div>
 
         {/* How it works */}
-        <div className="mt-12 p-6 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <div className="mt-12 p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+          <h2 className="text-lg font-semibold text-c-text mb-4">
             {t('discoveryTools.howItWorks.title', 'How Discovery Tools Work')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -304,7 +304,7 @@ export const DiscoveryToolsView: React.FC = () => {
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-medium text-slate-900 dark:text-white">
+                  <h3 className="font-medium text-c-text">
                     {isPolish ? item.titlePl : item.title}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
