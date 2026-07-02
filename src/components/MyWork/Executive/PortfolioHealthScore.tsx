@@ -328,6 +328,30 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 </>
               )}
             </div>
+
+            {/* Score legend — makes the ring's color coding readable.
+                Colors match ScoreRing thresholds; crimson (primary) is never
+                used as a data color here. */}
+            {hasData && (
+              <div className="mt-3 flex items-center justify-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  {t('executive.health.legendHealthy', '80+')}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                  {t('executive.health.legendGood', '60–79')}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  {t('executive.health.legendWatch', '40–59')}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-danger-500" />
+                  {t('executive.health.legendCritical', '<40')}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Breakdown Grid – A1.1: only show bars that have real data (>0) */}
