@@ -53,6 +53,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<RoleOption>('MEMBER');
   const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null);
   const [generatedInviteCode, setGeneratedInviteCode] = useState<string | null>(null);
   const [generatedInviteRole, setGeneratedInviteRole] = useState<RoleOption>('MEMBER');
   const [generatedInviteMaxUses, setGeneratedInviteMaxUses] = useState(50);
@@ -61,12 +63,24 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
   const orgId = currentOrganization?.id;
   const viewerMembership = useMemo(
-    () => members.find((member) => member.user_id === currentUser?.id),
+    () =>
+      members.find(
+        (member) =>
+          String(member.user_id ?? member.id ?? '') === String(currentUser?.id ?? '')
+      ),
     [members, currentUser?.id]
   );
-  const canManageTeam = ['OWNER', 'ADMIN'].includes(
-    String(viewerMembership?.role || '').toUpperCase()
+  // Org membership role is authoritative when present. When the viewer's own
+  // membership row is not in the loaded list yet (or the list is empty), fall
+  // back to the platform role so a real admin/owner is never blocked with a
+  // silent no-op. The server remains the final authority (requireRole + controller).
+  const platformRole = String(currentUser?.role || '').toUpperCase();
+  const platformCanManage = ['OWNER', 'ADMIN', 'SUPERADMIN', 'SUPER_ADMIN'].includes(
+    platformRole
   );
+  const canManageTeam =
+    ['OWNER', 'ADMIN'].includes(String(viewerMembership?.role || '').toUpperCase()) ||
+    platformCanManage;
 
   const loadMembers = useCallback(async () => {
     if (!orgId) {
@@ -91,29 +105,60 @@ export const AdminMembersRolesPanel: React.FC = () => {
     void loadMembers();
   }, [loadMembers]);
 
+  // RFC-lite email check — mirrors the server-side z.string().email() so we fail
+  // fast with a visible, field-level message instead of a silent round-trip.
+  const isValidEmail = (value: string): boolean =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
   const handleInvite = async () => {
-    if (!orgId) return;
+    setInviteNotice(null);
+    setInviteError(null);
+
+    if (!orgId) {
+      setInviteError('No active organization — reload the page and try again.');
+      return;
+    }
     if (!canManageTeam) {
-      toast.error('Only a team owner or admin can add members');
+      const msg = 'Only a team owner or admin can add members.';
+      setInviteError(msg);
+      toast.error(msg);
       return;
     }
     if (inviteRole === 'OWNER') {
-      toast.error('Owner changes must use the ownership transfer flow');
+      const msg = 'Owner changes must use the ownership transfer flow.';
+      setInviteError(msg);
+      toast.error(msg);
       return;
     }
-    if (!inviteEmail.trim()) {
-      toast.error('Enter an email address before adding a member');
+
+    const email = inviteEmail.trim();
+    if (!email) {
+      setInviteError('Enter an email address before adding a member.');
       return;
     }
+    if (!isValidEmail(email)) {
+      setInviteError('Enter a valid email address (e.g. member@company.com).');
+      return;
+    }
+
     try {
       setInviting(true);
-      await Api.addOrganizationMember(orgId, inviteEmail.trim(), inviteRole);
+      await Api.addOrganizationMember(orgId, email, inviteRole);
+      const msg = `${email} added to the workspace.`;
+      setInviteNotice(msg);
       toast.success('Member added to workspace');
       setInviteEmail('');
       setInviteRole('MEMBER');
       await loadMembers();
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to add member');
+      // Surface the concrete server reason (e.g. USER_NOT_FOUND, MEMBER_ALREADY_EXISTS)
+      // both inline and as a toast so it is never a silent no-op.
+      const raw = String(error?.message || '');
+      const friendly = /not\s*found/i.test(raw)
+        ? 'No account exists for that email yet. Use the Team Invite Code below so they can self-register, or create the account first.'
+        : raw || 'Failed to add member.';
+      setInviteError(friendly);
+      toast.error(friendly);
     } finally {
       setInviting(false);
     }
@@ -293,7 +338,11 @@ export const AdminMembersRolesPanel: React.FC = () => {
             <input
               type="email"
               value={inviteEmail}
-              onChange={(event) => setInviteEmail(event.target.value)}
+              onChange={(event) => {
+                setInviteEmail(event.target.value);
+                if (inviteError) setInviteError(null);
+                if (inviteNotice) setInviteNotice(null);
+              }}
               placeholder="member@company.com"
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
             />
@@ -307,7 +356,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
               <option value="GUEST">Guest</option>
             </select>
             <button
-              onClick={handleInvite}
+              type="button"
+              onClick={() => void handleInvite()}
               disabled={inviting}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
             >
@@ -320,6 +370,23 @@ export const AdminMembersRolesPanel: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {inviteError && (
+          <div
+            role="alert"
+            className="mt-4 rounded-lg border border-c-danger/40 bg-c-danger/10 px-3 py-2 text-sm text-c-danger"
+          >
+            {inviteError}
+          </div>
+        )}
+        {inviteNotice && (
+          <div
+            role="status"
+            className="mt-4 rounded-lg border border-c-success/40 bg-c-success/10 px-3 py-2 text-sm text-c-success"
+          >
+            {inviteNotice}
+          </div>
+        )}
 
         {loading ? (
           <div className="mt-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
