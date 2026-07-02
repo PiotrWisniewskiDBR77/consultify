@@ -26,6 +26,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { MENU_3_CHIP_ACTIVE, MENU_3_CHIP_INACTIVE, Menu3Badge } from '@/components/shared/ModuleMenu3';
 import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
@@ -70,7 +71,7 @@ const STATUS_CONFIG: Record<
   },
   AWAITING_APPROVAL: {
     label: 'Awaiting Approval',
-    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     icon: <AlertCircle size={14} />,
   },
   APPROVED: {
@@ -182,11 +183,11 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+      <div className="shrink-0 px-6 py-4 border-b border-c-border-subtle">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-navy-900 dark:text-white">Assessments</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <h2 className="text-xl font-bold text-c-text">Assessments</h2>
+            <p className="text-sm text-c-text-muted">
               Manage your digital maturity assessments
             </p>
           </div>
@@ -199,32 +200,27 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-6 mt-4">
-          <button
-            onClick={() => setFilterStatus('all')}
-            className={`text-sm ${filterStatus === 'all' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
-          >
-            All ({stats.total})
-          </button>
-          <button
-            onClick={() => setFilterStatus('draft')}
-            className={`text-sm ${filterStatus === 'draft' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
-          >
-            Draft ({stats.draft})
-          </button>
-          <button
-            onClick={() => setFilterStatus('in_review')}
-            className={`text-sm ${filterStatus === 'in_review' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
-          >
-            In Review ({stats.inReview})
-          </button>
-          <button
-            onClick={() => setFilterStatus('approved')}
-            className={`text-sm ${filterStatus === 'approved' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
-          >
-            Approved ({stats.approved})
-          </button>
+        {/* Stats — Menu 3 counter-chips (SPEC-L §14.1 F1, SSOT ModuleMenu3) */}
+        <div className="flex items-center gap-1 mt-4">
+          {(
+            [
+              { id: 'all', label: 'All', count: stats.total },
+              { id: 'draft', label: 'Draft', count: stats.draft },
+              { id: 'in_review', label: 'In Review', count: stats.inReview },
+              { id: 'approved', label: 'Approved', count: stats.approved },
+            ] as const
+          ).map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => setFilterStatus(chip.id)}
+              className={filterStatus === chip.id ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+              aria-pressed={filterStatus === chip.id}
+            >
+              <span>{chip.label}</span>
+              <Menu3Badge count={chip.count} active={filterStatus === chip.id} />
+            </button>
+          ))}
         </div>
 
         {/* Search & Filter */}
@@ -239,7 +235,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search assessments..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-c-border-subtle bg-white dark:bg-navy-950 text-c-text"
             />
           </div>
           <button
@@ -259,7 +255,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
         ) : filteredAssessments.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <FileOutput className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-c-text-muted mb-4">
               {searchQuery
                 ? t('assessment.emptyState.noMatch', 'No assessments match your search')
                 : t('assessment.emptyState.title', 'No assessments yet')}
@@ -275,23 +271,23 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
             )}
           </div>
         ) : (
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden">
             <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
               <thead className="bg-slate-50 dark:bg-navy-900/50 sticky top-0">
                 <tr>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     {t('assessment.table.assessment', 'Assessment')}
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     {t('assessment.table.status', 'Status')}
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     {t('assessment.table.progress', 'Progress')}
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     {t('assessment.table.updated', 'Updated')}
                   </th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     {t('assessment.table.actions', 'Actions')}
                   </th>
                 </tr>
@@ -307,10 +303,10 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                     >
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-navy-900 dark:text-white">
+                          <p className="font-medium text-c-text">
                             {assessment.name}
                           </p>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                          <p className="text-sm text-c-text-muted">
                             {assessment.projectName}
                           </p>
                         </div>
@@ -326,10 +322,10 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                       <td className="px-6 py-4">
                         <div className="w-32">
                           <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-slate-500 dark:text-slate-400">
+                            <span className="text-c-text-muted">
                               {assessment.completedAxes}/{assessment.totalAxes} axes
                             </span>
-                            <span className="font-medium text-navy-900 dark:text-white">
+                            <span className="font-medium text-c-text">
                               {assessment.progress}%
                             </span>
                           </div>
@@ -341,7 +337,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                      <td className="px-6 py-4 text-sm text-c-text-muted">
                         {formatDate(assessment.updatedAt)}
                       </td>
                       <td className="px-6 py-4">
@@ -349,7 +345,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                           {/* Open in Map */}
                           <button
                             onClick={() => onOpenInMap(assessment.id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-c-text-secondary hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                           >
                             <Map size={14} />
                             {assessment.status === 'DRAFT' ? 'Edit' : 'View'}
@@ -380,7 +376,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                             </button>
 
                             {activeRowMenu === assessment.id && (
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-10">
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface rounded-lg shadow-lg border border-c-border-subtle py-1 z-10">
                                 <button
                                   onClick={() => {
                                     onOpenInMap(assessment.id);

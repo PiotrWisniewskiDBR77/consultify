@@ -215,13 +215,13 @@ export const DigitalToolsView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-navy-950">
+    <div className="min-h-full bg-c-bg">
       {/* Header */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+      <div className="bg-c-surface border-b border-c-border-subtle">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 mb-4"
+            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.back', 'Back to Discovery Tools')}
@@ -232,7 +232,7 @@ export const DigitalToolsView: React.FC = () => {
               <Cpu className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-c-text">
                 {t('discoveryTools.digital.title', 'Digital Transformation Tools')}
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
@@ -261,7 +261,7 @@ export const DigitalToolsView: React.FC = () => {
                   ${
                     isSelected
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300'
+                      : 'border-c-border-subtle bg-c-surface hover:border-primary-300'
                   }
                 `}
                 onClick={() => handleStartTool(tool.id)}
@@ -281,7 +281,7 @@ export const DigitalToolsView: React.FC = () => {
                       </span>
                     </div>
 
-                    <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
+                    <h3 className="font-semibold text-c-text mb-1">
                       {isPolish ? tool.namePl : tool.name}
                     </h3>
 
