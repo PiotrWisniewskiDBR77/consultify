@@ -131,9 +131,11 @@ const TECH_RULES: Array<{ keyword: RegExp; tech: string[] }> = [
   { keyword: /\bMachine Learning\b|\bML\b/i, tech: ['ML Models', 'MLOps', 'Model Monitoring'] },
 ];
 
+// Oxford O1 — partia 2: osie 3 i 4 (kuratorowane pytania behawioralne)
+import { DRD_OVERRIDES_AXIS_3_4 } from './drdKnowledgeOverridesAxis3And4';
+
 const DRD_KNOWLEDGE_OVERRIDES: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
-  // Example override:
-  // '1A#1': { questions: ['...', '...', '...'], example: '...', suggestedTechnologies: ['...'] },
+  ...DRD_OVERRIDES_AXIS_3_4,
 };
 
 function normalizeWhitespace(s: string): string {
