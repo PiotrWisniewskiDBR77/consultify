@@ -13,6 +13,7 @@
 import { DRD_STRUCTURE, DRDArea, DRDLevel } from '@/services/drdStructure';
 import { DRD_OVERRIDES_AXIS_1_2 } from './drdKnowledgeOverridesAxis1And2';
 import { DRD_OVERRIDES_AXIS_3_4 } from './drdKnowledgeOverridesAxis3And4';
+import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 } from './drdKnowledgeOverridesAxis5To7';
 
 export type DRDLevelKnowledge = {
   questions: [string, string, string];
@@ -138,6 +139,8 @@ const TECH_RULES: Array<{ keyword: RegExp; tech: string[] }> = [
 const DRD_KNOWLEDGE_OVERRIDES: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
   ...DRD_OVERRIDES_AXIS_1_2,
   ...DRD_OVERRIDES_AXIS_3_4,
+  // Partia 3: Oś 5 (Kultura), 6 (Cyber), 7 (AI)
+  ...DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7,
 };
 
 function normalizeWhitespace(s: string): string {
