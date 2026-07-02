@@ -13,7 +13,7 @@ OXFORD = ✅ gdy: DRD + SIRI + ADMA + **top-5 tooli** + analiza finansowa + 3-pa
 | Element | DRD (flagowiec) | SIRI | ADMA |
 |---|---|---|---|
 | Kanon (wymiary/poziomy — dokument) | 🟡 **`DRD_CANON.md` v1.0 GOTOWY** (Fable 2026-07-01: 7 osi×39 obszarów pomiar / 8D komunikacja, skala I-V behawioralna, 32 ścieżki N→N+1, scoring jawny, profile ref. 3 branż; rozstrzygnięte 2 rozjechane mapy → SSOT=FE+2 korekty; +`DRD_REPORT_SPEC.md` 8 sekcji HTML→PDF; **5 decyzji P1-P5 czeka na Piotra**; qbank potwierdzony jako wydmuszka 0/39 → plan ~690 pytań) — czeka odbiór | ✅ (16D, fidelity) | ✅ (7T) |
-| Q-bank z mapowaniem pytanie→wymiar→poziom | 🟡 | ✅ | ✅ |
+| Q-bank z mapowaniem pytanie→wymiar→poziom | 🟡 **KOMPLET 7 OSI ZBUDOWANY 2026-07-02 (3 partie Sonnet): 699 pytań behawioralnych z dowodami** (osie 1-2: 264 · 3-4: 180 · 5-7: 255; testy strukturalne 190+523+272) — z wydmuszki 0/39 do pełnego frameworka w jeden dzień; czeka merge+przegląd Fable+odbiór | ✅ | ✅ |
 | Scoring/agregacja | 🟡 | ✅ | ✅ |
 | Benchmark (BIC/FoF/własny) | ⬜ | ✅ | 🟡 (próg FoF do potwierdzenia) |
 | **Raport (wnioskowy!)** | 🟡 **GENERATOR ZBUDOWANY** (`25d794e314`, 17/17 testów): pipeline scores→model→SVG→HTML A4 print-CSS, radar+macierz 39 obszarów, karty luk wg formuły, zero crimson, przycisk w DRDAuditReportView; **próbka `docs/qa/deliverables/runs/DRD-REPORT-SAMPLE.html`** (zweryfikowana wizualnie+PDF). TODO jawne: narrator LLM (kontrakt gotowy, stub deterministyczny) · 8. wymiar po decyzji P1 — czeka merge+odbiór Piotra | 🟡 (opisowy→wnioskowy) | 🟡 (opisowy→wnioskowy) |
@@ -27,7 +27,7 @@ OXFORD = ✅ gdy: DRD + SIRI + ADMA + **top-5 tooli** + analiza finansowa + 3-pa
 | # | Element | Stan |
 |---|---|---|
 | 1 | SSOT standardu: „co jest → co znaczy → co robić najpierw (impact×effort) → jaki efekt" (rodzeństwo CARD_CONTENT_FORMULA) | 🟡 **`docs/standards/CONCLUSION_LAYER_STANDARD.md` v1.0 GOTOWY** (Fable: formuła K1-K4, reguły R1-R6 z falsyfikowalnością, warianty W1-W5, kontrakt prompt-ready z 12 walidatorami maszynowymi, DoD „test podpisu partnera", 3 przykłady before/after na realnych powierzchniach) — czeka na zatwierdzenie Piotra |
-| 2 | Wdrożenie: raporty assessmentów ×3 | ⬜ |
+| 2 | Wdrożenie: raporty assessmentów ×3 | 🟡 SIRI+ADMA ZBUDOWANE (`0211daa262`, 19/19): exec summary z werdyktem K1-K4 („Connectivity hamuje przejście — sufit bloku Technologia"), karty top-3 luk, **ADMA: pasek „Droga do FoF≥4"** (które T poniżej progu i o ile); deterministyczne, liczby z silnika, zero crimson. DRD = własny generator (osobna pozycja). Czeka merge+odbiór |
 | 3 | Wdrożenie: outputy tooli (szablon executive summary z rationale) | ⬜ |
 | 4 | Wdrożenie: analizy finansowe (interpretacje→wnioski z driverami i trendem) | ⬜ |
 | 5 | Wdrożenie: raport/deck generatorów (narracja, nie sklejka sekcji) | ⬜ |
@@ -38,14 +38,14 @@ Wzorzec: drabinka poziomów z rozgałęzieniami + dyscyplina dowodów + „insig
 | Tool | Stan | Tool | Stan |
 |---|---|---|---|
 | Dynamic SWOT (WZORZEC) | 🟡 **ZBUDOWANY** (Fable `2626347b33`, 42/42 testów): q-bank drabinkowy 4-poziomowy z rozgałęzieniami (niszowa siła vs core-competency) · insight staircase z wymuszoną dekompozycją tez parasolowych · napięcia SO/WO/ST/WT liczone deterministycznie z zaakceptowanych elementów · ruchy z obowiązkowym trade-offem i wariantem odrzuconym (W2) · bramka dowodowa („Deklaracja—niepotwierdzone") · 3 decyzje dla Piotra — czeka merge+odbiór | SOP Builder | ⬜ |
-| Market Forces (Porter) | ⬜ | A3 Problem Solving | ⬜ |
-| Value Chain | ⬜ | SMED Planner | ⬜ |
+| Market Forces (Porter) | 🟡 ZBUDOWANY (`fe3944f74f`, 29 testów, wzorzec SWOT zaadaptowany: drabinki per siła z intensityDelta · staircase ze sterownikami · silnik syntezy 5-sił→werdykt branży · W2 trade-offy; lekcje adaptacji spisane — W2-walidator = przenośny klocek na resztę top-5) | A3 Problem Solving | ⬜ |
+| Value Chain | 🟡 ZBUDOWANY (`d7229f5d76`, 39/39): drabinka koszt/wartość per ogniwo (dowód MUSI nazwać obie strony: duży-koszt-mała-wartość=tnij ≠ mały-koszt-duża-wartość=chroń) · silnik mapy marży + ranking dźwigni (koszt×dojrzałość×wpływ) · W2 wyspecjalizowany (outsource bez nazwania oddanej kontroli = fail) · integracja wstecznie-kompatybilna | SMED Planner | ⬜ |
 | Capability Mapper | ⬜ | DMS Builder | ⬜ |
 | Ambition Decomposer | ⬜ | Inventory Autopilot | ⬜ |
 | Focus & Trade-offs | ⬜ | AI Discovery | ⬜ |
 | Narrative Engine | ⬜ | Pain Explorer | ⬜ |
-| Growth Paths (Ansoff) | ⬜ | RPA Scanner | ⬜ |
-| Portfolio Priority | ⬜ | Process Automation | ⬜ |
+| Growth Paths (Ansoff) | 🟡 ZBUDOWANY (`3fbb3af7b0`, 14/14): drabinka 4-szczeblowa per ćwiartka · silnik atrakcyjność×wykonalność → ranking+sekwencja („najpierw penetracja, dywersyfikacja odroczona KOSZTEM tempa") · W2-walidator · integracja wstecznie-kompatybilna z żywym runtime. Ustanawia wzorzec `src/config/<metoda>/` (SWOT-kanon = kandydat na wsteczny refactor) | RPA Scanner | ⬜ |
+| Portfolio Priority | 🟡 ZBUDOWANY (`c40afe5ce3`, 40/40): drabinka z wymuszonym źródłem · guard „invented-number" (30% bez dowodu=flaga) · macierz 2×2 + sekwencja topologiczna zależności + budżet-cap z kosztem alternatywnym · W2 · import realnych inicjatyw orga | Process Automation | ⬜ |
 | Risk & Uncertainty | ⬜ | | |
 **Licznik O3: 0/19 ✅** · Kolejność: wzorzec SWOT → top-5 (SWOT, Porter, Ansoff, Value Chain, Portfolio Priority — **wybór CTO, do potwierdzenia/zmiany przez Piotra**) → reszta.
 
@@ -75,7 +75,7 @@ Wzorzec: drabinka poziomów z rozgałęzieniami + dyscyplina dowodów + „insig
 ## O6 — BENCHMARKI I PROFILE BRANŻOWE
 | # | Element | Stan |
 |---|---|---|
-| 1 | Profile referencyjne DRD (min. 3 branże: automotive/produkcja/usługi) | ⬜ |
+| 1 | Profile referencyjne DRD (min. 3 branże: automotive/produkcja/usługi) | 🟡 ZBUDOWANE (Sonnet, worktree a322b4, 7/7 testów): 3 branże × 8 wymiarów {typical, leader} + narrative PL/EN + disclaimer „expert-hypothesis-v1, kalibracja od n≥10"; smaczki: D7-usługi typical II („tajemnica zawodowa chroniona antywirusem i dobrymi chęciami"), D6-procesowa sufit III („nie dotykaj działającej instalacji"). NIE wpięte w raport — czeka decyzja P3 Piotra |
 | 2 | Benchmark finansowy per branża (zakresy wskaźników zamiast uniwersalnych ±15%) | ⬜ |
 | 3 | Źródła i aktualizacja (skąd dane, kto odświeża) | ⬜ |
 **Licznik O6: 0/3 ✅**

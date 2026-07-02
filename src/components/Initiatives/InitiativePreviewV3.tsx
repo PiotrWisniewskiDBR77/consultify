@@ -322,6 +322,7 @@ function getLinkageTypeLabel(
  * card stays clean for initiatives without a finance link.
  */
 const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId }) => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = i18n.language === 'pl';
@@ -351,7 +352,7 @@ const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId 
       <div className="flex items-center gap-2 mb-2">
         <Link2 size={12} className="text-c-text-muted shrink-0" />
         <span className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
-          {isPolish ? 'Powiązane modele finansowe' : 'Linked finance models'}
+          {t('initiatives.initiativePreviewV3.linkedFinanceModels')}
         </span>
         <span className="text-[10px] text-c-text-muted">({links.length})</span>
       </div>
@@ -369,7 +370,7 @@ const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId 
                 )
               }
               className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-c-surface-raised transition group"
-              title={isPolish ? 'Otwórz w module Finanse' : 'Open in Finance'}
+              title={t('initiatives.initiativePreviewV3.openInFinance')}
             >
               <ExternalLink size={12} className="text-c-info shrink-0" />
               <span className="flex-1 min-w-0">
@@ -464,6 +465,7 @@ export const InitiativePreviewV3Footer: React.FC<{
   extraActionsSlot,
   extraActionsAfterSlot,
 }) => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -500,9 +502,7 @@ export const InitiativePreviewV3Footer: React.FC<{
   const handleRegenerate = useCallback(
     () =>
       onOpenChat?.(
-        isPolish
-          ? 'Wygeneruj 3 szybkie hinty (co zrobić / na co uważać / jak mierzyć).'
-          : 'Generate 3 quick hints (what to do / risks / how to measure).'
+        t('initiatives.initiativePreviewV3.generate3QuickHintsWhatTo')
       ),
     [isPolish, onOpenChat]
   );
@@ -510,22 +510,20 @@ export const InitiativePreviewV3Footer: React.FC<{
   const relationItems: RelationItem[] = useMemo(() => {
     const items: RelationItem[] = [
       {
-        label: `${isPolish ? 'Źródło' : 'Source'}: ${sourceLabel}`,
+        label: `${t('initiatives.initiativePreviewV3.source')}: ${sourceLabel}`,
         tone: 'text-c-text-secondary',
       },
     ];
     if (typeof tasksCount === 'number') {
       items.push({
-        label: `${isPolish ? 'Zadania' : 'Tasks'}: ${tasksCount}`,
+        label: `${t('initiatives.initiativePreviewV3.tasks')}: ${tasksCount}`,
         tone: 'text-c-text-secondary',
       });
     }
     return items;
   }, [isPolish, sourceLabel, tasksCount]);
 
-  const chatPrompt = isPolish
-    ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
-    : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.';
+  const chatPrompt = t('initiatives.initiativePreviewV3.helpMeRefineThisInitiativeMissing');
 
   const actionRows: ActionRow[] = useMemo(() => {
     if (extraActionsSlot) return [];
@@ -533,7 +531,7 @@ export const InitiativePreviewV3Footer: React.FC<{
       ...(onOpenFull
         ? [
             {
-              label: isPolish ? 'Otwórz' : 'Open',
+              label: t('initiatives.initiativePreviewV3.open'),
               icon: ExternalLink,
               onClick: onOpenFull,
               colorScheme: 'primary' as const,
@@ -544,7 +542,7 @@ export const InitiativePreviewV3Footer: React.FC<{
       ...(onOpenInModule
         ? [
             {
-              label: isPolish ? 'W module' : 'In module',
+              label: t('initiatives.initiativePreviewV3.inModule'),
               icon: ChevronRight,
               onClick: onOpenInModule,
               colorScheme: 'neutral' as const,
@@ -555,7 +553,7 @@ export const InitiativePreviewV3Footer: React.FC<{
       ...(onOpenChat
         ? [
             {
-              label: isPolish ? 'Czat' : 'Chat',
+              label: t('initiatives.initiativePreviewV3.chat'),
               icon: MessageSquare,
               onClick: () => onOpenChat(chatPrompt),
               colorScheme: 'neutral' as const,
@@ -566,7 +564,7 @@ export const InitiativePreviewV3Footer: React.FC<{
       ...(onCopyLink
         ? [
             {
-              label: isPolish ? 'Kopiuj link' : 'Copy link',
+              label: t('initiatives.initiativePreviewV3.copyLink'),
               icon: Link2,
               onClick: async () => onCopyLink(),
               colorScheme: 'neutral' as const,
