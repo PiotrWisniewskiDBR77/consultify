@@ -1883,7 +1883,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           type="button"
           onClick={() => void handleMaterializePortfolio('deck')}
           disabled={isMaterializing}
-          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           title={
             i18n.language?.startsWith('pl')
               ? 'Zrób materiał z portfela (prezentacja)'
