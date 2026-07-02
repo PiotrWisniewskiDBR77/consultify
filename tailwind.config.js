@@ -56,6 +56,20 @@ export default {
           warning: 'var(--c-warning)',
           danger: 'var(--c-danger)',
           info: 'var(--c-info)',
+          // Identity palette (12) — kolory DANYCH/kategorii/serii (NIGDY crimson jako dana).
+          // Vars zdefiniowane w src/index.css (:root light + .dark). Reguła §15.1: ≤5 serii widocznych.
+          'tag-1': 'var(--c-tag-1)',
+          'tag-2': 'var(--c-tag-2)',
+          'tag-3': 'var(--c-tag-3)',
+          'tag-4': 'var(--c-tag-4)',
+          'tag-5': 'var(--c-tag-5)',
+          'tag-6': 'var(--c-tag-6)',
+          'tag-7': 'var(--c-tag-7)',
+          'tag-8': 'var(--c-tag-8)',
+          'tag-9': 'var(--c-tag-9)',
+          'tag-10': 'var(--c-tag-10)',
+          'tag-11': 'var(--c-tag-11)',
+          'tag-12': 'var(--c-tag-12)',
         },
         // ========================================
         // DBR77 COLOR SYSTEM STANDARD
