@@ -1530,8 +1530,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
   if (!assessmentId || !framework) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="text-center text-slate-500 dark:text-slate-400">
+      <div className="h-full flex items-center justify-center bg-c-bg">
+        <div className="text-center text-c-text-muted">
           Invalid assessment URL.
         </div>
       </div>
@@ -1540,8 +1540,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+      <div className="h-full flex items-center justify-center bg-c-bg">
+        <div className="flex items-center gap-3 text-c-text-muted">
           <Loader2 className="w-5 h-5 animate-spin" />
           Loading assessment…
         </div>
@@ -1551,7 +1551,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
+      <div className="h-full flex items-center justify-center bg-c-bg">
         <div className="max-w-md text-center">
           <div className="text-danger-500 font-medium mb-2">{error}</div>
           <button
@@ -1703,11 +1703,11 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
     return (
       <div className="p-6">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-          <div className="text-slate-600 dark:text-slate-300 font-medium mb-1">
+        <div className="bg-white dark:bg-navy-900 border border-c-border rounded-xl p-6">
+          <div className="text-c-text-secondary font-medium mb-1">
             Editor not available yet
           </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-c-text-muted">
             Framework: {(framework as string)?.toUpperCase()}
           </div>
         </div>
@@ -1716,15 +1716,15 @@ export const AssessmentSessionEditorView: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
+    <div className="h-full flex flex-col bg-c-bg">
       {/* Top Header (compact, ClickUp-like) */}
-      <div className="flex flex-col border-b border-slate-200 dark:border-navy-800 bg-white/80 dark:bg-navy-950/70 backdrop-blur">
+      <div className="flex flex-col border-b border-c-border bg-white/80 dark:bg-navy-950/70 backdrop-blur">
         {/* Topbar */}
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => navigate('/assessment/overview')}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-c-border-subtle bg-white/70 dark:bg-navy-900/50 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
               aria-label="Back to Assessment"
               type="button"
             >
@@ -1733,7 +1733,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
             <div className="min-w-0">
               {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2 text-[11px] text-c-text-muted">
                 <span className="truncate">Assessment</span>
                 <span className="text-slate-600 dark:text-navy-700">/</span>
                 <span className="truncate">{framework?.toUpperCase()}</span>
@@ -1745,7 +1745,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   <input
                     value={nameDraft}
                     onChange={(e) => setNameDraft(e.target.value)}
-                    className="h-9 w-[min(520px,55vw)] px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-navy-900 dark:text-white text-sm font-semibold"
+                    className="h-9 w-[min(520px,55vw)] px-3 rounded-lg border border-c-border bg-white/70 dark:bg-navy-900/40 text-c-text text-sm font-semibold"
                     placeholder="Assessment name…"
                     autoFocus
                     onKeyDown={async (e) => {
@@ -1775,7 +1775,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsRenaming(true)}
-                    className="truncate text-base font-semibold text-navy-900 dark:text-white hover:underline text-left"
+                    className="truncate text-base font-semibold text-c-text hover:underline text-left"
                     title="Rename assessment"
                   >
                     {title}
@@ -1794,7 +1794,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                       ? 'bg-green-100/60 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200/60 dark:border-green-900/30'
                       : String(status).toUpperCase().includes('REVIEW')
                         ? 'bg-amber-100/60 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-900/30'
-                        : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-navy-700'
+                        : 'bg-slate-100 dark:bg-navy-800 text-c-text-secondary border-c-border'
                   }`}
                 >
                   {String(status).toUpperCase()}
@@ -1815,7 +1815,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsInfoOpen((v) => !v)}
-              className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
+              className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-c-border-subtle bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-c-text-secondary hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
               title="Info"
             >
               <Info className="w-4 h-4" />
@@ -1831,8 +1831,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 }}
                 className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
                   leftWorkspace === 'manage'
-                    ? 'border-primary-200/60 dark:border-primary-900/30 bg-primary-50/70 dark:bg-primary-900/10 text-primary-700 dark:text-primary-200'
-                    : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
+                    ? 'border-c-border bg-c-accent-soft text-c-text'
+                    : 'border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
                 }`}
                 title="Manage assessment"
               >
@@ -1854,10 +1854,10 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 }}
                 className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
                   !canEditEffective
-                    ? 'border-slate-200/80 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/30 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 cursor-pointer'
+                    ? 'border-c-border-subtle bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised cursor-pointer'
                     : isLocked
-                      ? 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
-                      : 'border-primary-200/60 dark:border-primary-900/30 bg-primary-50/70 dark:bg-primary-900/10 text-primary-700 dark:text-primary-200 hover:bg-primary-100/60 dark:hover:bg-primary-900/20'
+                      ? 'border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
+                      : 'border-c-border bg-c-accent-soft text-c-text hover:bg-c-accent-soft'
                 }`}
                 title={
                   !canEditEffective
@@ -1884,7 +1884,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             <button
               onClick={handleExitClick}
               disabled={isExiting}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-navy-900 hover:bg-navy-800 disabled:opacity-50 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold transition-colors"
               title="Save and exit"
               type="button"
             >
@@ -1903,12 +1903,12 @@ export const AssessmentSessionEditorView: React.FC = () => {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               {framework === 'drd' && drdPositionLabel && (
-                <div className="inline-flex items-center gap-2 text-[11px] px-2 py-1 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-300 truncate">
+                <div className="inline-flex items-center gap-2 text-[11px] px-2 py-1 rounded-lg border border-c-border-subtle bg-white/60 dark:bg-navy-900/40 text-c-text-secondary truncate">
                   <span className="truncate">{drdPositionLabel}</span>
                 </div>
               )}
               {editedMeta && (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                <div className="text-[11px] text-c-text-muted truncate">
                   {editedMeta}
                 </div>
               )}
@@ -1923,20 +1923,20 @@ export const AssessmentSessionEditorView: React.FC = () => {
                       style={{ width: `${overallProgress}%` }}
                     />
                   </div>
-                  <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 tabular-nums">
+                  <div className="text-[11px] font-semibold text-c-text-secondary tabular-nums">
                     {Math.round(overallProgress)}%
                   </div>
                 </div>
               )}
               {framework === 'drd' && drdMetrics && (
-                <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-                  <span className="px-2 py-1 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 tabular-nums">
+                <div className="hidden sm:flex items-center gap-2 text-[11px] text-c-text-secondary">
+                  <span className="px-2 py-1 rounded-lg border border-c-border-subtle bg-white/60 dark:bg-navy-900/40 tabular-nums">
                     Areas {drdMetrics.answeredAreas}/{drdMetrics.totalAreas}
                   </span>
-                  <span className="px-2 py-1 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 tabular-nums">
+                  <span className="px-2 py-1 rounded-lg border border-c-border-subtle bg-white/60 dark:bg-navy-900/40 tabular-nums">
                     Axis {drdMetrics.axisProgress.completed}/{drdMetrics.axisProgress.total}
                   </span>
-                  <span className="px-2 py-1 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 tabular-nums">
+                  <span className="px-2 py-1 rounded-lg border border-c-border-subtle bg-white/60 dark:bg-navy-900/40 tabular-nums">
                     Path {drdMetrics.stepsDone}/{drdMetrics.stepsTotal}
                   </span>
                 </div>
@@ -1953,13 +1953,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
         {sessionAiPanel ? (
           <div className="px-6 pt-4">
-            <div className="rounded-xl border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-4">
+            <div className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/50 p-4">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                     {sessionAiPanel === 'triage' ? 'AI Triage' : 'Interpretation Draft'}
                   </div>
-                  <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">
+                  <div className="mt-1 text-sm text-c-text-secondary">
                     {sessionAiPanel === 'triage'
                       ? 'Use this lane to close the most important gaps first and move the assessment toward review-ready state.'
                       : 'This lane keeps interpretation explicit: review the current run state, then jump to the workbench proposal and approval flow.'}
@@ -1969,14 +1969,14 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   <button
                     type="button"
                     onClick={scrollWorkbenchIntoView}
-                    className="h-9 rounded-full border border-slate-200 dark:border-navy-700 px-4 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    className="h-9 rounded-full border border-c-border px-4 text-sm font-medium text-c-text-secondary hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                   >
                     Open Workbench
                   </button>
                   <button
                     type="button"
                     onClick={() => setSessionAiPanel(null)}
-                    className="h-9 rounded-full border border-slate-200 dark:border-navy-700 px-4 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    className="h-9 rounded-full border border-c-border px-4 text-sm font-medium text-c-text-secondary hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                   >
                     Close
                   </button>
@@ -1985,7 +1985,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
               <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                     What to do next
                   </div>
                   <div className="mt-2 space-y-2">
@@ -2002,7 +2002,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                     ).map((step) => (
                       <div
                         key={step}
-                        className="rounded-lg bg-slate-50 dark:bg-navy-950/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+                        className="rounded-lg bg-c-surface-raised px-3 py-2 text-sm text-c-text-secondary"
                       >
                         {step}
                       </div>
@@ -2011,28 +2011,28 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                     Recommended moves
                   </div>
                   <div className="mt-2 space-y-2">
                     <button
                       type="button"
                       onClick={() => void handleOpenChat()}
-                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                      className="w-full rounded-lg border border-c-border px-3 py-2 text-left text-sm text-c-text-secondary hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                     >
                       Continue in Chat with the same assessment context
                     </button>
                     <button
                       type="button"
                       onClick={handleOpenReportWorkflow}
-                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                      className="w-full rounded-lg border border-c-border px-3 py-2 text-left text-sm text-c-text-secondary hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                     >
                       Prepare a report from this run
                     </button>
                     <button
                       type="button"
                       onClick={handleOpenInitiativesWorkflow}
-                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                      className="w-full rounded-lg border border-c-border px-3 py-2 text-left text-sm text-c-text-secondary hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                     >
                       Build a bounded initiative pack
                     </button>
@@ -2041,20 +2041,20 @@ export const AssessmentSessionEditorView: React.FC = () => {
               </div>
 
               {sessionPromotionContract?.supportedHandoffs?.length ? (
-                <div className="mt-4 border-t border-slate-200/80 dark:border-navy-700 pt-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                <div className="mt-4 border-t border-c-border-subtle pt-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                     Bounded downstream contract
                   </div>
                   <div className="mt-2 grid gap-2 md:grid-cols-2">
                     {sessionPromotionContract.supportedHandoffs.map((handoff) => (
                       <div
                         key={handoff.targetKind}
-                        className="rounded-lg bg-slate-50 dark:bg-navy-950/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+                        className="rounded-lg bg-c-surface-raised px-3 py-2 text-sm text-c-text-secondary"
                       >
                         <div className="font-medium">
                           {handoff.targetKind} {'->'} {handoff.targetRefOwner}
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="text-xs text-c-text-muted">
                           {handoff.purpose}
                         </div>
                       </div>
@@ -2085,12 +2085,12 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
         {isInfoOpen && (
           <div className="px-6 pb-4">
-            <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4 text-sm text-slate-700 dark:text-slate-200">
+            <div className="rounded-xl border border-c-border bg-white/60 dark:bg-navy-900/40 p-4 text-sm text-c-text-secondary">
               {/* Workflow Status Banner */}
-              <div className="mb-4 p-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/40">
+              <div className="mb-4 p-3 rounded-lg border border-c-border-subtle bg-c-surface-raised">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div>
-                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                       Workflow Status
                     </span>
                     <div className="mt-1 flex items-center gap-2">
@@ -2124,7 +2124,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-4 text-xs text-c-text-muted">
                     <div className="flex items-center gap-1.5">
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${overallProgress >= 80 ? 'bg-emerald-400' : 'bg-slate-400'}`}
@@ -2142,7 +2142,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
               <div className="grid md:grid-cols-2 gap-x-6 gap-y-2">
                 <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     Created
                   </span>
                   <div className="mt-1 text-sm">
@@ -2152,7 +2152,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     Updated
                   </span>
                   <div className="mt-1 text-sm">
@@ -2162,19 +2162,19 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     Completion
                   </span>
                   <div className="mt-1 text-sm tabular-nums">{Math.round(overallProgress)}%</div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     Mode
                   </span>
                   <div className="mt-1 text-sm">{isLocked ? 'Read-only' : 'Editing enabled'}</div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     Confidence
                   </span>
                   <div className="mt-1 text-sm tabular-nums">
@@ -2182,7 +2182,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     Needs work
                   </span>
                   <div className="mt-1 text-sm">
@@ -2195,7 +2195,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                               className="flex items-center justify-between gap-3"
                             >
                               <span className="truncate">{ax.axisName}</span>
-                              <span className="tabular-nums text-slate-600 dark:text-slate-300">
+                              <span className="tabular-nums text-c-text-secondary">
                                 {ax.percent}%
                               </span>
                             </div>
@@ -2203,7 +2203,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                         )}
                       </div>
                     ) : (
-                      <span className="text-slate-500 dark:text-slate-400">—</span>
+                      <span className="text-c-text-muted">—</span>
                     )}
                   </div>
                 </div>
@@ -2241,13 +2241,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
             className="absolute inset-0 bg-black/40"
             onClick={() => !chatAttaching && setIsChatContextOpen(false)}
           />
-          <div className="relative w-[min(860px,calc(100vw-32px))] max-h-[min(720px,calc(100vh-32px))] overflow-hidden rounded-2xl bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 shadow-2xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="relative w-[min(860px,calc(100vw-32px))] max-h-[min(720px,calc(100vh-32px))] overflow-hidden rounded-2xl bg-c-surface border border-c-border shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
               <div>
-                <div className="text-base font-semibold text-navy-900 dark:text-white">
+                <div className="text-base font-semibold text-c-text">
                   Attach context from general chat
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-c-text-muted">
                   This will store a reference + last messages in assessment context.
                 </div>
               </div>
@@ -2267,7 +2267,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   value={chatSearch}
                   onChange={(e) => setChatSearch(e.target.value)}
                   placeholder="Search conversations…"
-                  className="flex-1 h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-sm"
+                  className="flex-1 h-10 px-3 rounded-lg border border-c-border bg-white dark:bg-navy-900 text-c-text text-sm"
                 />
                 <button
                   type="button"
@@ -2319,18 +2319,18 @@ export const AssessmentSessionEditorView: React.FC = () => {
                       setChatAttaching(false);
                     }
                   }}
-                  className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
+                  className="h-10 px-4 rounded-lg bg-navy-900 hover:bg-navy-800 disabled:opacity-50 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold"
                 >
                   {chatAttaching ? 'Attaching…' : 'Attach'}
                 </button>
               </div>
 
-              <div className="mt-4 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+              <div className="mt-4 rounded-xl border border-c-border overflow-hidden">
                 <div className="max-h-[420px] overflow-auto">
                   {chatLoading ? (
-                    <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Loading…</div>
+                    <div className="p-6 text-sm text-c-text-muted">Loading…</div>
                   ) : chatConversations.length === 0 ? (
-                    <div className="p-6 text-sm text-slate-500 dark:text-slate-400">
+                    <div className="p-6 text-sm text-c-text-muted">
                       No conversations found.
                     </div>
                   ) : (
@@ -2343,18 +2343,18 @@ export const AssessmentSessionEditorView: React.FC = () => {
                             type="button"
                             key={id}
                             onClick={() => setSelectedConversationId(id)}
-                            className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-900/60 ${
+                            className={`w-full text-left px-4 py-3 hover:bg-c-surface-raised ${
                               isSelected
-                                ? 'bg-primary-50 dark:bg-primary-900/10'
-                                : 'bg-white dark:bg-navy-950'
+                                ? 'bg-slate-50 dark:bg-white/[0.06] border-l-2 border-c-info'
+                                : 'bg-c-surface'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-3">
                               <div className="min-w-0">
-                                <div className="truncate text-sm font-semibold text-navy-900 dark:text-white">
+                                <div className="truncate text-sm font-semibold text-c-text">
                                   {String(c?.title || 'Conversation')}
                                 </div>
-                                <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                <div className="truncate text-xs text-c-text-muted">
                                   {String(c?.last_message_preview || '')}
                                 </div>
                               </div>
@@ -2381,9 +2381,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
             className="absolute inset-0 bg-black/40"
             onClick={() => !isExiting && setShowExitConfirm(false)}
           />
-          <div className="relative w-[min(420px,calc(100vw-32px))] overflow-hidden rounded-2xl bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 shadow-2xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
-              <div className="text-base font-semibold text-navy-900 dark:text-white">
+          <div className="relative w-[min(420px,calc(100vw-32px))] overflow-hidden rounded-2xl bg-c-surface border border-c-border shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
+              <div className="text-base font-semibold text-c-text">
                 Exit Assessment
               </div>
               <button
@@ -2397,7 +2397,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             </div>
 
             <div className="p-5">
-              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
+              <p className="text-sm text-c-text-secondary mb-6">
                 Do you want to save your changes before exiting?
               </p>
 
@@ -2406,7 +2406,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   type="button"
                   onClick={handleExitWithoutSave}
                   disabled={isExiting}
-                  className="flex-1 h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                  className="flex-1 h-10 px-4 rounded-lg border border-c-border bg-white dark:bg-navy-900 text-c-text-secondary text-sm font-medium hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                 >
                   Exit without saving
                 </button>
@@ -2414,7 +2414,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   type="button"
                   onClick={handleSaveAndExit}
                   disabled={isExiting}
-                  className="flex-1 h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2"
+                  className="flex-1 h-10 px-4 rounded-lg bg-navy-900 hover:bg-navy-800 disabled:opacity-50 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2"
                 >
                   {isExiting ? (
                     <>
