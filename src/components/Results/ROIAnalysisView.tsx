@@ -537,37 +537,66 @@ export const ROIAnalysisView: React.FC = () => {
 
       {/* Waterfall/bar chart - initiative contributions sorted by variance */}
       {filteredItems.length > 0 && (
-        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
-          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
+        <div className="rounded-xl bg-white dark:bg-c-surface border border-slate-200/70 dark:border-c-border p-4">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-c-text-secondary mb-3">
             {t('results.roiAnalysis.contributionsChart', 'Initiative Contributions to ROI')}
           </h3>
-          <div className="flex items-end gap-1 h-32">
-            {[...filteredItems]
+          {(() => {
+            const chartItems = [...filteredItems]
               .sort((a, b) => a.variance - b.variance)
-              .slice(0, 10)
-              .map((item, idx) => {
-                const maxAbs = Math.max(...filteredItems.map((i) => Math.abs(i.variance)), 1);
-                const h = (Math.abs(item.variance) / maxAbs) * 100;
-                const isNeg = item.variance < 0;
-                return (
-                  <div
-                    key={item.initiativeId}
-                    className="flex-1 flex flex-col items-center group"
-                    title={`${item.initiativeName}: ${formatCurrency(item.variance)}`}
-                  >
+              .slice(0, 10);
+            // Diverging bars around a zero baseline: positive variance grows up,
+            // negative grows down. Height is proportional to |variance| against the
+            // largest magnitude, so equal-sign values no longer collapse into flat
+            // full-height bars (H2.6). Series colors use c-tag tokens.
+            const maxAbs = Math.max(...chartItems.map((i) => Math.abs(i.variance)), 1);
+            return (
+              <div className="relative h-32 flex items-stretch gap-1">
+                {/* zero baseline */}
+                <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-slate-200 dark:bg-c-border" />
+                {chartItems.map((item) => {
+                  const isNeg = item.variance < 0;
+                  // Half-height track above and below the baseline.
+                  const h = (Math.abs(item.variance) / maxAbs) * 50;
+                  return (
                     <div
-                      className={`w-full min-h-[4px] rounded-t transition-all ${
-                        isNeg ? 'bg-danger-500' : 'bg-emerald-500'
-                      }`}
-                      style={{ height: `${Math.max(h, 4)}%` }}
-                    />
-                    <span className="text-[10px] text-slate-500 truncate max-w-full mt-1 opacity-0 group-hover:opacity-100">
-                      {item.initiativeName?.slice(0, 8)}
-                    </span>
-                  </div>
-                );
-              })}
-          </div>
+                      key={item.initiativeId}
+                      className="relative flex-1 flex flex-col group"
+                      title={`${item.initiativeName}: ${formatCurrency(item.variance)}`}
+                    >
+                      {/* upper half — positive bars anchored to baseline */}
+                      <div className="flex-1 flex items-end">
+                        {!isNeg && (
+                          <div
+                            className="w-full min-h-[3px] rounded-t transition-all"
+                            style={{
+                              height: `${Math.max(h, 3)}%`,
+                              backgroundColor: 'var(--c-tag-12)',
+                            }}
+                          />
+                        )}
+                      </div>
+                      {/* lower half — negative bars hang from baseline */}
+                      <div className="flex-1 flex items-start">
+                        {isNeg && (
+                          <div
+                            className="w-full min-h-[3px] rounded-b transition-all"
+                            style={{
+                              height: `${Math.max(h, 3)}%`,
+                              backgroundColor: 'var(--c-tag-4)',
+                            }}
+                          />
+                        )}
+                      </div>
+                      <span className="absolute -bottom-1 inset-x-0 text-center text-[10px] text-slate-500 dark:text-c-text-muted truncate opacity-0 group-hover:opacity-100">
+                        {item.initiativeName?.slice(0, 8)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 

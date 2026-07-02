@@ -671,13 +671,22 @@ export interface ReconciliationVarianceItem {
   reconciliationId: string;
   kpiId: string;
   kpiName: string | null;
+  /**
+   * KPI unit (e.g. '%', '€', 'szt.'). Drives display formatting and whether a
+   * monetary variance is meaningful. Null when the KPI has no unit.
+   */
+  unit: string | null;
   initiativeId: string | null;
   financeRef: string;
   reconciliationStatus: ReconciliationStatus;
   initiatedBy: ReconciliationInitiator;
   /** KPI target_value — the projected benefit. Null when the KPI has no target. */
   projectedValue: number | null;
-  /** Sum of ROI realization entries for this KPI. Null when none recorded. */
+  /**
+   * Sum of ROI realization entries (currency deltas) for this KPI. Null when none
+   * recorded, or when the KPI unit is non-monetary (so the sum is not comparable
+   * to a percentage/count target).
+   */
   realizedValue: number | null;
   /** realizedValue − projectedValue; null when either side is missing. */
   varianceAbsolute: number | null;

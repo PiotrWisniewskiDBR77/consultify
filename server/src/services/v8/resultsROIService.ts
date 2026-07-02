@@ -1592,7 +1592,7 @@ export async function getResultsKpiCatalog(
     `SELECT
        m.id,
        m.initiative_id,
-       i.name AS initiative_name,
+       COALESCE(NULLIF(i.name, ''), NULLIF(i.title, '')) AS initiative_name,
        i.status AS initiative_status,
        m.kpi_id,
        ik.name AS kpi_name,
@@ -2065,8 +2065,26 @@ interface ReconciliationVarianceRow {
   updated_at: string;
   kpi_name: string | null;
   initiative_id: string | null;
+  unit: string | null;
   projected_value: number | null;
   realized_value: number | null;
+}
+
+/**
+ * A KPI unit is *monetary* when its target_value and the summed
+ * `v8_roi_realization_entries` (which record currency deltas/savings) share a
+ * comparable basis. Percentage / ratio / count units do NOT — comparing an OEE
+ * target of 85 (%) against a summed monetary realized value of €138,000 yields a
+ * nonsensical +162252% variance. For non-monetary units we still surface the
+ * projected value but suppress the fabricated monetary variance/mismatch.
+ */
+const NON_MONETARY_UNIT_RE =
+  /^\s*(%|percent|percentage|pct|pp|ppt|pts?|points?|ratio|score|index|nps|csat|days?|day|hrs?|hours?|months?|weeks?|szt\.?|pcs?|count|qty|units?|x)\s*$/i;
+
+export function isMonetaryUnit(unit: string | null | undefined): boolean {
+  const u = (unit ?? '').trim();
+  if (!u) return true; // no unit → assume monetary (legacy default)
+  return !NON_MONETARY_UNIT_RE.test(u);
 }
 
 /** Rounds to 2 decimals; treats |x| < 1e-9 as 0 to avoid float noise. */
@@ -2117,6 +2135,7 @@ export async function getReconciliationOverview(
        r.updated_at,
        k.name AS kpi_name,
        k.initiative_id AS initiative_id,
+       k.unit AS unit,
        k.target_value AS projected_value,
        (
          SELECT SUM(e.realized_value)
@@ -2136,13 +2155,20 @@ export async function getReconciliationOverview(
   let mismatchCount = 0;
 
   const items: ReconciliationVarianceItem[] = (rows || []).map((row) => {
+    const unit = row.unit != null && String(row.unit).trim() ? String(row.unit).trim() : null;
+    const monetary = isMonetaryUnit(unit);
     const projectedValue = row.projected_value != null ? Number(row.projected_value) : null;
-    const realizedValue = row.realized_value != null ? Number(row.realized_value) : null;
+    // The realized side sums `v8_roi_realization_entries` (currency deltas), so it
+    // is only comparable to `target_value` when the KPI is measured in money.
+    const realizedValue =
+      monetary && row.realized_value != null ? Number(row.realized_value) : null;
 
     let varianceAbsolute: number | null = null;
     let variancePercent: number | null = null;
     let hasMismatch = false;
-    if (projectedValue != null && realizedValue != null) {
+    // Only compute a variance when both sides share a monetary basis. A percentage
+    // KPI (e.g. OEE 85%) vs a summed €-realized value is not a real variance.
+    if (monetary && projectedValue != null && realizedValue != null) {
       varianceAbsolute = round2(realizedValue - projectedValue);
       variancePercent =
         projectedValue !== 0
@@ -2161,6 +2187,7 @@ export async function getReconciliationOverview(
       reconciliationId: row.reconciliation_id,
       kpiId: row.kpi_id,
       kpiName: row.kpi_name ?? null,
+      unit,
       initiativeId: row.initiative_id ?? null,
       financeRef: row.finance_ref,
       reconciliationStatus: status,
