@@ -384,15 +384,17 @@ export const KPIAttributionPanel: React.FC = () => {
   );
 };
 
+// Categorical series palette — per-driver color (Artifact Anatomy §15.1: serie=c-tag-*).
+// Was hardcoded hex (with duplicates #3b82f6/#f59e0b); now 8 distinct tags.
 const COLORS = [
-  '#6366f1',
-  '#3b82f6',
-  '#f59e0b',
-  '#f43f5e',
-  '#22c55e',
-  '#ec4899',
-  '#3b82f6',
-  '#f59e0b',
+  'var(--c-tag-1)',
+  'var(--c-tag-2)',
+  'var(--c-tag-3)',
+  'var(--c-tag-4)',
+  'var(--c-tag-5)',
+  'var(--c-tag-6)',
+  'var(--c-tag-7)',
+  'var(--c-tag-8)',
 ];
 
 const MetricCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({
