@@ -8,8 +8,8 @@
 ## POSTĘP FAL
 | Fala | Zakres | Stan |
 |------|--------|------|
-| **0 Fundament** | tokeny+40 komponentów+powłoka+editor-shell+fixy systemowe | 🟨 w toku (noc) |
-| 1 Listy | ~25 tabel | ⬜ |
+| **0 Fundament** | 6 fixów współdzielonych (Edit Columns/Badge/shell/select+Dropdown focus) | ✅ ZMERGOWANE (e1722ac3b8; G0 = dyrektywa Piotra „dopruwać plan do końca 5 agentami") |
+| **1 Listy** | ~25 tabel — **5 agentów RÓWNOLEGLE** (worktree, branche `reskin/A1-A5/wave-1`) | 🟨 W TOKU (wystrzelone 2026-07-01) |
 | 2 Artefakty | ~35 artefaktów | ⬜ |
 | 3 Instrumenty+Huby+Chat | ~45 | ⬜ |
 | 4 Hartowanie | perf/copy/sygnatura | ⬜ |
