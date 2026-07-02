@@ -141,11 +141,21 @@ async function resolveActorLabel(reqUser: unknown): Promise<string> {
   if (u.email && u.email.trim()) return u.email.trim();
   if (u.id) {
     try {
-      const row = await dbGet<{ name?: string; email?: string }>(
-        `SELECT name, email FROM users WHERE id = ?`,
-        [u.id]
-      );
-      if (row?.name && String(row.name).trim()) return String(row.name).trim();
+      // users has display_name / first_name / last_name / email (NO `name` column).
+      const row = await dbGet<{
+        display_name?: string;
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+      }>(`SELECT display_name, first_name, last_name, email FROM users WHERE id = ?`, [u.id]);
+      const dn = String(row?.display_name || '').trim();
+      if (dn) return dn;
+      const full = [row?.first_name, row?.last_name]
+        .map((s) => String(s || '').trim())
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      if (full) return full;
       if (row?.email && String(row.email).trim()) return String(row.email).trim();
     } catch {
       /* fall through */
