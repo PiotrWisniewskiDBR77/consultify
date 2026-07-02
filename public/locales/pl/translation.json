@@ -1623,7 +1623,9 @@
         "bgGrid": "Siatka",
         "bgLines": "Linie",
         "bgBlank": "Puste",
-        "saving": "Zapisuję…"
+        "saving": "Zapisuję…",
+        "more": "Więcej",
+        "follow": "Śledź"
       },
       "selectionBar": {
         "ariaLabel": "Akcje zaznaczenia",
