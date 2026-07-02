@@ -1980,18 +1980,38 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   );
 
   const openTabAiContext = useCallback(
-    async (tab: 'inbox' | 'tasks') => {
+    async (tab: 'inbox' | 'tasks' | 'decisions') => {
       const isInbox = tab === 'inbox';
+      const isDecisions = tab === 'decisions';
+      const entityType = isInbox ? 'notification' : isDecisions ? 'decision' : 'task';
+      const entityId = isInbox
+        ? 'my-work-inbox'
+        : isDecisions
+          ? 'my-work-decisions'
+          : 'my-work-tasks';
+      const entityName = isInbox
+        ? isPolish
+          ? 'Skrzynka'
+          : 'Inbox'
+        : isDecisions
+          ? isPolish
+            ? 'Decyzje'
+            : 'Decisions'
+          : isPolish
+            ? 'Zadania'
+            : 'Tasks';
       await openChatWithContext({
-        entityType: isInbox ? 'notification' : 'task',
-        entityId: isInbox ? 'my-work-inbox' : 'my-work-tasks',
-        entityName: isInbox ? (isPolish ? 'Skrzynka' : 'Inbox') : isPolish ? 'Zadania' : 'Tasks',
+        entityType,
+        entityId,
+        entityName,
         contextData: {
           module: 'my_work',
           tab,
           inboxStatusTab: isInbox ? inboxStatusTab : undefined,
-          taskFilter: !isInbox ? taskFilter : undefined,
-          tasksViewMode: !isInbox ? tasksViewMode : undefined,
+          taskFilter: tab === 'tasks' ? taskFilter : undefined,
+          tasksViewMode: tab === 'tasks' ? tasksViewMode : undefined,
+          decisionFilter: isDecisions ? decisionFilter : undefined,
+          decisionPriorityFilter: isDecisions ? decisionPriorityFilter : undefined,
           source: 'menu3',
         },
       });
@@ -2000,15 +2020,21 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           ? isPolish
             ? 'Przeanalizuj moją skrzynkę i zaproponuj kolejną najlepszą akcję.'
             : 'Analyze my inbox and propose the next best action.'
-          : isPolish
-            ? 'Przeanalizuj moje zadania i zaproponuj priorytety na dziś.'
-            : 'Analyze my tasks and propose priorities for today.'
+          : isDecisions
+            ? isPolish
+              ? 'Przeanalizuj moje decyzje i zaproponuj, które podjąć w pierwszej kolejności.'
+              : 'Analyze my decisions and propose which to make first.'
+            : isPolish
+              ? 'Przeanalizuj moje zadania i zaproponuj priorytety na dziś.'
+              : 'Analyze my tasks and propose priorities for today.'
       );
       if (isChatCollapsed) {
         toggleChatCollapse();
       }
     },
     [
+      decisionFilter,
+      decisionPriorityFilter,
       inboxStatusTab,
       isChatCollapsed,
       isPolish,
@@ -2877,7 +2903,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
-    // Decisions: filters live in Command Row (chips). Topbar keeps only ONE select (priority).
+    // Decisions: filters live in Command Row (chips). Priority filter lives in the
+    // SAME row as a Menu-3 dropdown chip (S1-U1: single dynamic line — no extra
+    // topbar select above the table).
     if (activeTab === 'decisions' && !activeDocumentId && !decisionsBulkUi?.selectedCount) {
       const chipBase = MENU_3_CHIP_BASE;
       const chipInactive = MENU_3_CHIP_INACTIVE;
@@ -2885,6 +2913,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const badgeBase = MENU_3_BADGE_BASE;
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
+
+      const priorityOptions: Array<{ id: DecisionPriorityFilter; label: string }> = [
+        { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
+        { id: 'CRITICAL', label: isPolish ? 'Krytyczne' : 'Critical' },
+        { id: 'HIGH', label: isPolish ? 'Wysoki' : 'High' },
+        { id: 'MEDIUM', label: isPolish ? 'Średni' : 'Medium' },
+        { id: 'LOW', label: isPolish ? 'Niski' : 'Low' },
+      ];
+      const activePriority = priorityOptions.find((p) => p.id === decisionPriorityFilter);
+      const priorityActive = decisionPriorityFilter !== 'all';
 
       return (
         <div className={MENU_3_ROW_CLASS}>
@@ -2910,6 +2948,37 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </button>
                 );
               })}
+            </div>
+            <div className={MENU_3_RIGHT_CLASS}>
+              <Menu3DropdownChip
+                data-testid="mywork-decisions-priority-chip"
+                icon={<Flag size={14} className="text-c-text-muted" />}
+                label={
+                  priorityActive && activePriority
+                    ? `${isPolish ? 'Priorytet' : 'Priority'}: ${activePriority.label}`
+                    : isPolish
+                      ? 'Priorytet'
+                      : 'Priority'
+                }
+                active={priorityActive}
+                ariaLabel={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
+                align="right"
+                items={priorityOptions.map((p) => ({
+                  id: p.id,
+                  label: p.label,
+                  active: decisionPriorityFilter === p.id,
+                  trailing: decisionPriorityFilter === p.id ? '✓' : undefined,
+                  onSelect: () => setDecisionPriorityFilter(p.id),
+                }))}
+              />
+              <button
+                onClick={() => void openTabAiContext('decisions')}
+                className={MENU_3_ACTION_NEUTRAL}
+                type="button"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'AI Decyzje' : 'AI Decisions'}
+              </button>
             </div>
           </div>
         </div>
@@ -3716,47 +3785,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </div>
               )}
 
-              {/* Decisions: Priority filter */}
-              {activeTab === 'decisions' && !activeDocumentId && (
-                <div className="relative">
-                  <select
-                    value={decisionPriorityFilter}
-                    onChange={(e) =>
-                      setDecisionPriorityFilter(e.target.value as DecisionPriorityFilter)
-                    }
-                    className="
-                    appearance-none h-9 pl-3 pr-9 rounded-full text-xs font-medium
-                    bg-white/70 dark:bg-white/[0.04]
-                    border border-slate-200/70 dark:border-white/[0.06]
-                    text-slate-700 dark:text-slate-200
-                    hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
-                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
-                    transition-colors duration-150
-                    cursor-pointer min-w-[170px]
-                  "
-                    aria-label={isPolish ? 'Priorytet' : 'Priority'}
-                    title={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
-                  >
-                    <option value="all">
-                      {isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}
-                    </option>
-                    <option value="CRITICAL">
-                      {isPolish ? 'Priorytet: krytyczne' : 'Priority: critical'}
-                    </option>
-                    <option value="HIGH">
-                      {isPolish ? 'Priorytet: wysoki' : 'Priority: high'}
-                    </option>
-                    <option value="MEDIUM">
-                      {isPolish ? 'Priorytet: średni' : 'Priority: medium'}
-                    </option>
-                    <option value="LOW">{isPolish ? 'Priorytet: niski' : 'Priority: low'}</option>
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
-                  />
-                </div>
-              )}
+              {/* Decisions: priority filter moved INTO the Command Row (Menu-3
+                  dropdown chip) — S1-U1 single dynamic line, no topbar select. */}
 
               {/* View tools */}
               {/* Tasks View Mode Toggle (icons; no dropdown) */}

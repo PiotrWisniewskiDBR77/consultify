@@ -35,7 +35,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
-import { SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
+import { PREVIEW_SELECTED_ROW_CLASS, SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
@@ -383,6 +383,7 @@ const getDefaultColumnWidths = (): ColumnWidths =>
 const DecisionTableRow: React.FC<{
   decision: Decision;
   isSelected: boolean;
+  isPreviewed?: boolean;
   onSelect: (id: string) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
@@ -396,6 +397,7 @@ const DecisionTableRow: React.FC<{
 }> = ({
   decision,
   isSelected,
+  isPreviewed,
   onSelect,
   onApprove,
   onReject,
@@ -524,7 +526,7 @@ const DecisionTableRow: React.FC<{
       onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
         group relative cursor-pointer border-b border-c-border-subtle
-        ${isSelected ? SELECTED_ROW_CLASS : ''}
+        ${isSelected ? SELECTED_ROW_CLASS : isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
@@ -641,6 +643,7 @@ const DecisionTableRow: React.FC<{
 const AwaitingDecisionTableRow: React.FC<{
   decision: Decision;
   isSelected: boolean;
+  isPreviewed?: boolean;
   onSelect: (id: string) => void;
   onRemind: (id: string) => void;
   onEscalate: (id: string) => void;
@@ -654,6 +657,7 @@ const AwaitingDecisionTableRow: React.FC<{
 }> = ({
   decision,
   isSelected,
+  isPreviewed,
   onSelect,
   onRemind,
   onEscalate,
@@ -798,7 +802,7 @@ const AwaitingDecisionTableRow: React.FC<{
       onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
         group relative cursor-pointer border-b border-c-border-subtle
-        ${isSelected ? SELECTED_ROW_CLASS : ''}
+        ${isSelected ? SELECTED_ROW_CLASS : isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
@@ -2201,6 +2205,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                           key={decision.id}
                           decision={decision}
                           isSelected={selectedIds.has(decision.id)}
+                          isPreviewed={previewDecisionId === decision.id}
                           onSelect={handleSelectDecision}
                           onRemind={handleRemind}
                           onEscalate={handleEscalate}
@@ -2220,6 +2225,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                           key={decision.id}
                           decision={decision}
                           isSelected={selectedIds.has(decision.id)}
+                          isPreviewed={previewDecisionId === decision.id}
                           onSelect={handleSelectDecision}
                           onApprove={handleApprove}
                           onReject={handleReject}
