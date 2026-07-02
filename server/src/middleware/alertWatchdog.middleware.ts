@@ -43,6 +43,20 @@ interface RequestRecord {
   timestamp: number;
   statusCode: number;
   durationMs: number;
+  route?: string;
+}
+
+/** Cap route strings so an adversarial URL cannot bloat memory. */
+const MAX_ROUTE_LEN = 120;
+
+function safeRoute(req: Request): string | undefined {
+  try {
+    const raw = String((req as any).route?.path || req.path || req.originalUrl || '').split('?')[0];
+    if (!raw) return undefined;
+    return raw.length > MAX_ROUTE_LEN ? `${raw.slice(0, MAX_ROUTE_LEN)}…` : raw;
+  } catch {
+    return undefined;
+  }
 }
 
 const records: RequestRecord[] = [];
@@ -139,14 +153,28 @@ function checkThresholds(config: WatchdogConfig): void {
   if (records.length === 0) return;
 
   try {
-    const fiveXxInWindow = records.filter((r) => r.statusCode >= 500 && r.statusCode <= 599).length;
+    const fiveXxRecords = records.filter((r) => r.statusCode >= 500 && r.statusCode <= 599);
+    const fiveXxInWindow = fiveXxRecords.length;
     if (fiveXxInWindow >= config.fiveXxThreshold && shouldAlert('5xx_spike', config)) {
+      // Cheap context enrichment: top offending routes in the window so the
+      // #alerts message is actionable rather than a bare count.
+      const routeCounts = new Map<string, number>();
+      for (const r of fiveXxRecords) {
+        const key = r.route || 'unknown';
+        routeCounts.set(key, (routeCounts.get(key) || 0) + 1);
+      }
+      const topRoutes = [...routeCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([r, c]) => `${r} (${c})`)
+        .join(', ');
       logger.error(
         `[AlertWatchdog] 5xx SPIKE: ${fiveXxInWindow} errors in ${config.windowMs / 1000}s window`
       );
       void notifyAlert(
         'api_5xx_spike_detected',
-        `5xx spike: ${fiveXxInWindow} errors in ${config.windowMs / 60000}min`
+        `5xx spike: ${fiveXxInWindow} errors in ${config.windowMs / 60000}min` +
+          (topRoutes ? ` — top routes: ${topRoutes}` : '')
       );
     }
   } catch {
@@ -240,6 +268,7 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
 
   const startWall = nowMs();
   const startMonotonic = nowMonotonicMs();
+  const route = safeRoute(req);
 
   const originalEndFn = (() => {
     try {
@@ -304,7 +333,7 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
         totalRequests += 1;
         if (statusCode >= 500 && statusCode <= 599) totalFiveXx += 1;
 
-        records.push({ timestamp: nowMs(), statusCode, durationMs });
+        records.push({ timestamp: nowMs(), statusCode, durationMs, route });
         while (records.length > RUNTIME_CONFIG.maxRecords) {
           records.shift();
         }

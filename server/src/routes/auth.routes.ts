@@ -1819,6 +1819,28 @@ router.post(
           logger.warn('[Auth] Failed to send APLIX registration Slack alert:', slackErr);
         }
 
+        // Slack Command Center (Filar 5): alert #cf-progress for EVERY signup,
+        // not just APLIX. The dedicated APLIX alert above is unchanged.
+        try {
+          const { routeToSlack } = await import('../services/slack/slackRouter.js');
+          const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || email;
+          const orgLabel = joiningExistingOrg
+            ? `existing org ${orgId}`
+            : companyName || 'new organization';
+          await _withTimeout(
+            routeToSlack({
+              channel: 'progress',
+              severity: 'INFO',
+              title: 'Nowa rejestracja',
+              text: `:wave: *Nowa rejestracja*\n*Imię:* ${fullName}\n*Email:* ${email}\n*Organizacja:* ${orgLabel}\n*Rola:* ${effectiveRole}`,
+              dedupeKey: `registration:${userId}`,
+            }).then(() => undefined),
+            1500
+          );
+        } catch (progressErr) {
+          logger.warn('[Auth] Failed to send progress registration Slack alert:', progressErr);
+        }
+
         return res.json({
           user: {
             id: userId,
