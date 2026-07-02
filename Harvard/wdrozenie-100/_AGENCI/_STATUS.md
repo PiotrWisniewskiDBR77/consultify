@@ -10,7 +10,8 @@
 |------|--------|------|
 | **0 Fundament** | 6 fixów współdzielonych (Edit Columns/Badge/shell/select+Dropdown focus) | ✅ ZMERGOWANE (e1722ac3b8; G0 = dyrektywa Piotra „dopruwać plan do końca 5 agentami") |
 | **1 Listy** | ~50 plików, 5 agentów — ZMERGOWANE (A1-A5) | ✅ BRAMKA PRZESZŁA (type-check 11=baseline, 0 nowych błędów; ~50 plików czysto) |
-| 2 Artefakty | ~35 artefaktów — SPLIT: mechaniczne (token-sweep edytorów) vs design (Tool detail/DRD map/Chat SPEC-K/M15 IA → wymagają Piotra) | 🟨 START |
+| 2 Artefakty | ~45 plików (Initiative doc 10.5k, Chat bąble, Assessment/Interview editory, Decision/Task modale, ROI/Valuation, Document/Deck) | ✅ BRAMKA PRZESZŁA (11=baseline, 0 nowych; A1-A5 zmergowane) |
+| 3 Instrumenty+Huby | mechaniczne (kanban/gantt/dashboard/heatmap chrome + crimson-in-data→c-tag) vs design (M15 IA/DRD map build/Tool detail → Piotr) | 🟨 START |
 
 **DECYZJE FUNDAMENTU (czekają na słowo Piotra):**
 1. **Menu 2 pill vs underline** — KONFLIKT: `VISUAL_STANDARD §5.5` (underline, w kodzie ModuleNavBar) vs uwaga Piotra + TABLE_CANON + spec §9.2③ (pill jak My Work). NIE flipuję app-wide udokumentowanego standardu bez zgody. „pill wszędzie" = 5-min fix w `ModuleNavBar.tsx`.
