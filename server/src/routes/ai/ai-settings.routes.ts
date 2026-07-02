@@ -281,6 +281,23 @@ router.put(
         userAgent
       );
 
+      // Mirror the change into the admin audit surface (H2.12). Fail-safe: an
+      // audit-write failure must never block the settings update.
+      try {
+        const { default: adminAuditService } = await import(
+          '../../services/adminAuditService.js'
+        );
+        await adminAuditService.logAction({
+          adminId: actorId,
+          organizationId: orgId,
+          actionType: 'ai_settings_update',
+          resourceType: 'ai_settings',
+          details: { orgId, isSensitive: true, scope: 'organization' },
+        });
+      } catch {
+        /* best-effort */
+      }
+
       return res.json(updated);
     } catch (error: any) {
       logger.error('[AI Settings] Error updating org settings:', error);
@@ -560,11 +577,20 @@ router.get(
         offset: parseInt(offset as string),
       };
 
-      if (userRole === 'superadmin' || userRole === 'SUPERADMIN') {
+      const normalizedRole = String(userRole || '')
+        .trim()
+        .toLowerCase();
+      const isSuperAdmin = normalizedRole === 'superadmin' || normalizedRole === 'super_admin';
+      // Org admins/owners may read their own org's AI-settings audit trail.
+      // Previously only exact `admin`/`ADMIN` passed, so org OWNERs got a 403 and
+      // the AI Controls → Audit Log tab surfaced "Failed to fetch audit log".
+      const isOrgAdmin = ['owner', 'admin', 'administrator'].includes(normalizedRole);
+
+      if (isSuperAdmin) {
         if (level) filters.level = level as string;
         if (targetId) filters.targetId = targetId as string;
-      } else if (userRole === 'admin' || userRole === 'ADMIN') {
-        // Admins see only their org
+      } else if (isOrgAdmin) {
+        // Non-superadmins are scoped to their own organization.
         filters.targetId = organizationId;
         if (level) filters.level = level as string;
       } else {
@@ -572,7 +598,14 @@ router.get(
       }
 
       const auditLog = await AISettingsService.getAuditLog(filters);
-      return res.json(auditLog);
+      // The FE (AISettings/AuditLogViewer) expects an array of entries. The
+      // service returns { total, rows, entries }, so hand back the entries array
+      // while keeping the paging metadata available via headers for callers that want it.
+      const entries = Array.isArray(auditLog)
+        ? auditLog
+        : auditLog?.entries || auditLog?.rows || [];
+      res.setHeader('X-Total-Count', String(auditLog?.total ?? entries.length));
+      return res.json(entries);
     } catch (error: any) {
       logger.error('[AI Settings] Error getting audit log:', error);
       return res.status(500).json({
@@ -603,13 +636,17 @@ router.get(
       const userRole = req.user?.role;
       const userOrgId = req.user?.organizationId || req.user?.organization_id;
 
-      // Access: superadmin, OR admin of THIS org. Same-org non-admins and
-      // cross-org admins are both denied (matches canonical gate at :689-692).
-      const isAuthorized =
-        userRole === 'superadmin' ||
-        userRole === 'SUPERADMIN' ||
-        (userOrgId === orgId && (userRole === 'admin' || userRole === 'ADMIN'));
-      if (!isAuthorized) {
+      // Access: superadmin, OR an admin/owner of THIS org. Same-org non-admins
+      // and cross-org admins are both denied (IDOR guard). Owners were previously
+      // rejected here, which surfaced "Failed to fetch audit log" for org owners.
+      const normalizedRole = String(userRole || '')
+        .trim()
+        .toLowerCase();
+      const isSuperAdmin = normalizedRole === 'superadmin' || normalizedRole === 'super_admin';
+      const isSameOrgAdmin =
+        userOrgId === orgId &&
+        ['owner', 'admin', 'administrator'].includes(normalizedRole);
+      if (!isSuperAdmin && !isSameOrgAdmin) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -619,7 +656,11 @@ router.get(
         offset: parseInt(offset as string),
       });
 
-      return res.json(auditLog);
+      const entries = Array.isArray(auditLog)
+        ? auditLog
+        : auditLog?.entries || auditLog?.rows || [];
+      res.setHeader('X-Total-Count', String(auditLog?.total ?? entries.length));
+      return res.json(entries);
     } catch (error: any) {
       logger.error('[AI Settings] Error getting org audit log:', error);
       return res.status(500).json({
