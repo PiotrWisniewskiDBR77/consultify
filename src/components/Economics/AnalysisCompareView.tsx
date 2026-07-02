@@ -38,13 +38,13 @@ const AXIS_ICONS: Record<string, any> = {
   cybersecurity: Shield,
 };
 
-// Default color palette for analyses — Harvard categorical (HBS complementary).
-// was ['#3b82f6','#6366f1','#f59e0b','#10b981'].
+// Categorical series palette — per-analysis color (Artifact Anatomy §15.1: serie=c-tag-*,
+// crimson NIGDY jako dana). Was ['#A51C30','#6578B4','#52A52E','#E87D1E'].
 const ANALYSIS_COLORS = [
-  '#A51C30', // Harvard Crimson
-  '#6578B4', // HBS Blue 2
-  '#52A52E', // HBS Green 2
-  '#E87D1E', // HBS Orange 2
+  'var(--c-tag-1)',
+  'var(--c-tag-2)',
+  'var(--c-tag-3)',
+  'var(--c-tag-4)',
 ];
 
 export const AnalysisCompareView: React.FC = () => {
