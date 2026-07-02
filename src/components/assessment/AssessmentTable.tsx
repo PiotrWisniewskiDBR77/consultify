@@ -26,6 +26,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { MENU_3_CHIP_ACTIVE, MENU_3_CHIP_INACTIVE, Menu3Badge } from '@/components/shared/ModuleMenu3';
 import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
@@ -70,7 +71,7 @@ const STATUS_CONFIG: Record<
   },
   AWAITING_APPROVAL: {
     label: 'Awaiting Approval',
-    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     icon: <AlertCircle size={14} />,
   },
   APPROVED: {
@@ -199,32 +200,27 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-6 mt-4">
-          <button
-            onClick={() => setFilterStatus('all')}
-            className={`text-sm ${filterStatus === 'all' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
-          >
-            All ({stats.total})
-          </button>
-          <button
-            onClick={() => setFilterStatus('draft')}
-            className={`text-sm ${filterStatus === 'draft' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
-          >
-            Draft ({stats.draft})
-          </button>
-          <button
-            onClick={() => setFilterStatus('in_review')}
-            className={`text-sm ${filterStatus === 'in_review' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
-          >
-            In Review ({stats.inReview})
-          </button>
-          <button
-            onClick={() => setFilterStatus('approved')}
-            className={`text-sm ${filterStatus === 'approved' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
-          >
-            Approved ({stats.approved})
-          </button>
+        {/* Stats — Menu 3 counter-chips (SPEC-L §14.1 F1, SSOT ModuleMenu3) */}
+        <div className="flex items-center gap-1 mt-4">
+          {(
+            [
+              { id: 'all', label: 'All', count: stats.total },
+              { id: 'draft', label: 'Draft', count: stats.draft },
+              { id: 'in_review', label: 'In Review', count: stats.inReview },
+              { id: 'approved', label: 'Approved', count: stats.approved },
+            ] as const
+          ).map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => setFilterStatus(chip.id)}
+              className={filterStatus === chip.id ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+              aria-pressed={filterStatus === chip.id}
+            >
+              <span>{chip.label}</span>
+              <Menu3Badge count={chip.count} active={filterStatus === chip.id} />
+            </button>
+          ))}
         </div>
 
         {/* Search & Filter */}
@@ -349,7 +345,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                           {/* Open in Map */}
                           <button
                             onClick={() => onOpenInMap(assessment.id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-c-text-secondary hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                           >
                             <Map size={14} />
                             {assessment.status === 'DRAFT' ? 'Edit' : 'View'}
