@@ -127,6 +127,7 @@ vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
 // EntityStatusChip: render label as text.
 vi.mock('../../../src/components/ui/primitives/chips', () => ({
   EntityStatusChip: ({ label }: any) => <span data-testid="status-chip">{label}</span>,
+  MetaChip: ({ label }: any) => <span data-testid="meta-chip">{label}</span>,
 }));
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
