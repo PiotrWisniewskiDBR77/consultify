@@ -1527,7 +1527,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       );
                     }
                   }}
-                  className="px-2 py-0.5 text-xs font-semibold rounded bg-primary-500/20 text-primary-700 hover:bg-primary-500/30"
+                  className="px-2 py-0.5 text-xs font-semibold rounded bg-c-info/15 text-c-info hover:bg-c-info/25"
                 >
                   {isPolish ? 'Konwertuj' : 'Convert'}
                 </button>
@@ -2555,7 +2555,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <button
                   type="button"
                   onClick={() => void fetchPages()}
-                  className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+                  className="text-sm font-medium text-c-info hover:underline"
                 >
                   {isPolish ? 'Spróbuj ponownie' : 'Retry'}
                 </button>
@@ -3260,13 +3260,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         }}
                         className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
                           codeLangMenu.current === lang.id
-                            ? 'bg-primary-500/10 text-primary-700 dark:text-primary-300'
-                            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]'
+                            ? 'bg-c-surface-raised text-c-text'
+                            : 'text-c-text-secondary hover:bg-c-surface-raised'
                         }`}
                       >
                         {lang.label}
                         {codeLangMenu.current === lang.id ? (
-                          <CheckCircle2 size={13} className="text-primary-500" />
+                          <CheckCircle2 size={13} className="text-c-info" />
                         ) : null}
                       </button>
                     ))}
