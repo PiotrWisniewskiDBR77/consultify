@@ -11,10 +11,22 @@
 
 import { createRequire } from 'node:module';
 import logger from '../../utils/Logger.js';
-import { resolveTheme, PPT_TYPE_SCALE } from './themeRegistry.js';
+import { PPT_TYPE_SCALE } from './themeRegistry.js';
 import { seriesPalette, readableTextOn } from './paletteLibrary.js';
 import { computeMarimekkoLayout, computeHarveyBalls } from './advancedCharts.js';
 import { chartAltText, imageAltText } from './deckAltText.js';
+import {
+  resolveDeckStyle,
+  renderCover,
+  renderContentChrome,
+  renderBullets,
+  fitProse,
+  pushNote,
+  IMAGE_PANEL,
+  DECK_GRID,
+  CONTENT_W,
+  type PptxSlide,
+} from './DeckStyler.js';
 
 const require = createRequire(import.meta.url);
 
@@ -45,6 +57,11 @@ export interface DeckPlanSlide {
   } | null;
   /** W1.7 — URL obrazu stockowego (T0 Unsplash/Pexels) dla slajdów z needsProductGraphic. */
   imageUrl?: string | null;
+  /**
+   * Fala 6 (DeckStyler) — opcjonalne punkty do dyscypliny bullet (max 5×8 słów;
+   * nadmiar → notatki prelegenta). Gdy brak, renderer używa key-message jako prozy.
+   */
+  bullets?: string[] | null;
 }
 
 export interface DeckPptxOptions {
@@ -55,6 +72,8 @@ export interface DeckPptxOptions {
   company?: string;
   /** 'pl' | 'en' — etykiety. */
   language?: string;
+  /** Data na slajdzie tytułowym / stopce (domyślnie dziś, format ISO PL). */
+  date?: string;
   /** Opcjonalny override brandu klienta (F8.1). Nadpisuje fonty/paletę motywu bazowego. */
   brandOverride?: { fontPair?: Partial<{ heading: string; body: string }>; palette?: Partial<{ dominant: string; supporting: string; accent: string; neutralText: string }> };
 }
@@ -244,13 +263,15 @@ export async function deckPlansToPptxBuffer(
   try {
     if (!plans || plans.length === 0) return null;
 
-    const theme = resolveTheme(opts.themeId, opts.brandOverride);
+    // Fala 6 — DeckStyler: gwarantowana warstwa wizualna (paleta/fonty/siatka/chrome).
+    const style = resolveDeckStyle(opts.themeId, opts.brandOverride);
+    const theme = style.theme;
     const isPolish = (opts.language ?? 'pl') !== 'en';
-    const headingFont = theme.fontPair.heading;
-    const bodyFont = theme.fontPair.body;
-    const dominant = hex(theme.palette.dominant);
-    const accent = hex(theme.palette.accent);
-    const neutral = hex(theme.palette.neutralText);
+    const bodyFont = style.bodyFont;
+    const accent = style.accent;
+    const neutral = style.neutral;
+    const deckTitle = opts.title || (isPolish ? 'Prezentacja' : 'Presentation');
+    const deckDate = opts.date || new Date().toISOString().slice(0, 10);
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const PptxGenJS: any = require('pptxgenjs');
@@ -258,24 +279,18 @@ export async function deckPlansToPptxBuffer(
     pptx.layout = 'LAYOUT_16x9'; // 10 × 5.625 in
     pptx.author = 'Consultify';
     pptx.company = opts.company || 'Organization';
-    pptx.title = opts.title || (isPolish ? 'Prezentacja' : 'Presentation');
+    pptx.title = deckTitle;
 
-    // ── Slajd tytułowy: dominant bg, heading font ──
-    const title = pptx.addSlide();
-    title.background = { color: dominant };
-    title.addText(opts.title || (isPolish ? 'Prezentacja' : 'Presentation'), {
-      x: 0.6, y: 2.1, w: 8.8, h: 1.3,
-      fontFace: headingFont, fontSize: PPT_TYPE_SCALE.coverTitle, bold: true, color: 'FFFFFF',
-      align: 'left', valign: 'middle',
+    // ── Slajd tytułowy (DeckStyler.renderCover — spójna tożsamość talii) ──
+    const cover = pptx.addSlide() as PptxSlide;
+    renderCover(cover, style, {
+      title: deckTitle,
+      company: opts.company,
+      date: deckDate,
+      isPolish,
     });
-    if (opts.company) {
-      title.addText(opts.company, {
-        x: 0.6, y: 3.5, w: 8.8, h: 0.6,
-        fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.body, color: 'FFFFFF', align: 'left',
-      });
-    }
 
-    // ── Slajdy treści: action-title + key-message ──
+    // ── Slajdy treści: teza (action-title) + treść wg kompozycji ──
     const contentPlans = plans
       .slice()
       .sort((a, b) => a.slideIndex - b.slideIndex);
@@ -284,80 +299,77 @@ export async function deckPlansToPptxBuffer(
     for (const plan of contentPlans) {
       const heading = (plan.title ?? '').trim();
       const message = (plan.keyMessage ?? '').trim();
-      // Pomijamy puste slajdy (brak i tytułu, i message).
-      if (!heading && !message) continue;
+      const bullets = (plan.bullets ?? []).filter((b) => (b ?? '').trim().length > 0);
+      // Pomijamy puste slajdy (brak tytułu, message i bulletów).
+      if (!heading && !message && bullets.length === 0) continue;
       n++;
 
-      const slide = pptx.addSlide();
-      slide.background = { color: 'FFFFFF' };
-
-      // Akcentowy pasek u góry.
-      slide.addShape(pptx.ShapeType.rect, {
-        x: 0, y: 0, w: 10, h: 0.12, fill: { color: accent },
+      const slide = pptx.addSlide() as PptxSlide;
+      // Chrome: pasek akcentowy + teza-tytuł (shrink-fit) + hairline + stopka (nr/branding).
+      const { contentTop } = renderContentChrome(slide, style, {
+        title: heading || (isPolish ? `Slajd ${n}` : `Slide ${n}`),
+        company: opts.company,
+        pageNumber: n,
+        isPolish,
       });
 
       // W2.3 — section chip (prawy górny róg, beat Gamma "punchy chipy sekcji").
       addSectionChip(slide, plan.layoutIntent, { accent, bodyFont, isPolish });
 
-      // Action-title.
-      slide.addText(heading || (isPolish ? `Slajd ${n}` : `Slide ${n}`), {
-        x: 0.6, y: 0.5, w: 8.8, h: 1.0,
-        fontFace: headingFont, fontSize: PPT_TYPE_SCALE.slideTitle, bold: true, color: dominant,
-        align: 'left', valign: 'top',
-      });
-
-      // W1.7 — image panel (right side, 38% width) gdy slide ma imageUrl.
+      // W1.7 — image panel (prawa strona) — clampowany do siatki (IMAGE_PANEL).
       const hasImage = !!plan.imageUrl;
       if (hasImage) {
         try {
-          // Półprzezroczysty akcentowy panel pod obraz.
           slide.addShape(pptx.ShapeType.rect, {
-            x: 6.4, y: 0.5, w: 3.3, h: 4.85,
+            x: IMAGE_PANEL.x, y: IMAGE_PANEL.y, w: IMAGE_PANEL.w, h: IMAGE_PANEL.h,
             fill: { color: accent, transparency: 92 },
             line: { color: accent, transparency: 80, width: 1 },
           });
-          slide.addImage({ path: plan.imageUrl, x: 6.4, y: 0.5, w: 3.3, h: 4.85, sizing: { type: 'cover', w: 3.3, h: 4.85 }, altText: imageAltText({ title: plan.title, keyMessage: plan.keyMessage }) });
+          (slide as unknown as { addImage: (o: Record<string, unknown>) => void }).addImage({
+            path: plan.imageUrl, x: IMAGE_PANEL.x, y: IMAGE_PANEL.y, w: IMAGE_PANEL.w, h: IMAGE_PANEL.h,
+            sizing: { type: 'cover', w: IMAGE_PANEL.w, h: IMAGE_PANEL.h },
+            altText: imageAltText({ title: plan.title, keyMessage: plan.keyMessage }),
+          });
         } catch {
           // fail-soft — pptxgenjs addImage może nie obsługiwać wszystkich URL-i
         }
       }
-      const textW = hasImage ? 5.5 : 8.8;
+      const textW = hasImage ? 5.5 : CONTENT_W;
 
       // W1.5 — chart rendering: gdy jest chartSpec, chart zastępuje/uzupełnia key-message.
       const chartRendered = renderChartOnSlide(slide, pptx, plan.chartSpec ?? null, { accent, neutral, bodyFont, isPolish, themeId: opts.themeId });
-      // Key-message (proza pod tytułem) — skrócone gdy chart zajmuje dolną część.
-      if (message && !chartRendered) {
-        slide.addText(message, {
-          x: 0.6, y: 1.7, w: textW, h: 3.0,
-          fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.body, color: neutral,
+
+      if (bullets.length > 0 && !chartRendered) {
+        // Dyscyplina bullet: ≤5×8 słów na slajdzie, nadmiar → notatki prelegenta.
+        renderBullets(slide, style, bullets, { x: DECK_GRID.marginX, y: contentTop, w: textW, h: 3.3 });
+        if (message) pushNote(slide, message);
+      } else if (message && !chartRendered) {
+        // Proza pod tytułem — twardy guard: auto-shrink + przelew do notatek.
+        const fit = fitProse(message, textW, 3.3, PPT_TYPE_SCALE.body, 14);
+        slide.addText(fit.text, {
+          x: DECK_GRID.marginX, y: contentTop, w: textW, h: 3.3,
+          fontFace: bodyFont, fontSize: fit.fontSize, color: neutral,
           align: 'left', valign: 'top',
         });
+        if (fit.overflowNote) pushNote(slide, fit.overflowNote);
       } else if (message && chartRendered) {
-        // Key-message jako krótka podpis ponad wykresem.
+        // Key-message jako krótki podpis ponad wykresem.
         slide.addText(message, {
-          x: 0.6, y: 1.55, w: textW, h: 0.45,
+          x: DECK_GRID.marginX, y: 1.6, w: textW, h: 0.45,
           fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.caption, color: neutral,
           align: 'left', valign: 'top',
         });
+        if (bullets.length > 0) pushNote(slide, bullets.map((b) => `• ${b}`).join('\n'));
       }
-
-      // Stopka: firma + numer.
-      slide.addText(`${opts.company || ''}`.trim(), {
-        x: 0.6, y: 5.25, w: 6, h: 0.3,
-        fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.caption, color: '999999', align: 'left',
-      });
-      slide.addText(String(n), {
-        x: 9.0, y: 5.25, w: 0.6, h: 0.3,
-        fontFace: bodyFont, fontSize: PPT_TYPE_SCALE.caption, color: '999999', align: 'right',
-      });
     }
 
-    // ── Slajd zamknięcia ──
-    const closing = pptx.addSlide();
-    closing.background = { color: dominant };
-    closing.addText(isPolish ? 'Dziękujemy' : 'Thank you', {
-      x: 0.6, y: 2.3, w: 8.8, h: 1.0,
-      fontFace: headingFont, fontSize: PPT_TYPE_SCALE.coverTitle, bold: true, color: 'FFFFFF', align: 'left',
+    // ── Slajd zamknięcia (bookend spójny z okładką) ──
+    const closing = pptx.addSlide() as PptxSlide;
+    renderCover(closing, style, {
+      title: isPolish ? 'Dziękujemy' : 'Thank you',
+      company: opts.company,
+      date: deckDate,
+      isPolish,
     });
 
     const buffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
