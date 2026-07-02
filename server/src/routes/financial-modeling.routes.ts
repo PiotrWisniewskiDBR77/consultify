@@ -87,7 +87,9 @@ const GRANULARITIES = ['monthly', 'quarterly', 'annual'] as const;
 
 const jsonRecordSchema = z.record(z.string(), z.unknown());
 
-const createModelSchema = z
+// Exported for the Health Panel model-grounding probe (asserts sourceStatementId
+// stays an accepted field). See services/health/healthProbeService.ts.
+export const createModelSchema = z
   .object({
     name: z.string().trim().min(1).max(200),
     startDate: z.string().trim().min(1).max(40),

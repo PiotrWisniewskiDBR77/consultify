@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
 import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
+import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import { AdminSecurityIdentityPanel } from '../../components/Admin/AdminSecurityIdentityPanel';
 import {
@@ -24,7 +25,14 @@ interface AdminSettingsModuleProps {
   currentUser: User;
 }
 
-const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people', 'billing', 'ai', 'security', 'audit'];
+const PRIMARY_SECTIONS: AdminSettingsSection[] = [
+  'people',
+  'billing',
+  'ai',
+  'security',
+  'audit',
+  'health',
+];
 
 const SECTION_META: Record<
   AdminSettingsSection,
@@ -63,6 +71,13 @@ const SECTION_META: Record<
     subtitleKey: 'admin.section.audit.subtitle',
     subtitleDefault: 'High-risk admin events, risk posture, and compliance evidence.',
   },
+  health: {
+    titleKey: 'admin.section.health.title',
+    titleDefault: 'Health',
+    subtitleKey: 'admin.section.health.subtitle',
+    subtitleDefault:
+      'Proof-of-life probes — round-trips against our own API and DB across critical flows.',
+  },
 };
 
 const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
@@ -89,6 +104,9 @@ const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
   audit: 'audit',
   'audit-log': 'audit',
   compliance: 'audit',
+  health: 'health',
+  probes: 'health',
+  diagnostics: 'health',
 };
 
 function resolveAdminState(
@@ -151,6 +169,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         return <AdminSecurityIdentityPanel />;
       case 'audit':
         return <AdminAuditLogPanel />;
+      case 'health':
+        return <AdminHealthPanel />;
       default:
         return <AdminMembersRolesPanel />;
     }
