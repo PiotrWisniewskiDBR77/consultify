@@ -40,7 +40,7 @@ Branch kodu: `reskin/wave-0-foundation`. Weryfikacja: `type-check` — moje 4 pl
 ## INWENTARZ POKRYCIA (każdy ekran = wiersz; ✅ dopiero gdy build+DoD)
 
 ### A1 · My Work (P1)
-⬜ MyWorkHub HUB · ⬜ Tasks table LISTA · ⬜ Decisions table LISTA · ⬜ Notebook list LISTA · ⬜ Ideas list LISTA · ⬜ Inbox LISTA · ⬜ Notifications LISTA · ⬜ Notatka ARTEFAKT · ⬜ Task/Decision drawer ARTEFAKT · ⬜ MindMap A · ⬜ ProcessFlow A · ⬜ Whiteboard A · ⬜ Idea Table D · ⬜ Tasks/Decisions/Notifications Kanban INSTR · ⬜ Table Platform (Workspaces/Detail/Kanban/Gantt/Grid/Calendar) · ⬜ Public form/JWT/shared
+⬜ MyWorkHub HUB · ✅ Tasks table LISTA · ✅ Decisions table LISTA · ✅ Notebook list LISTA · ✅ Ideas list LISTA (tabela+pool) · ✅ Inbox LISTA · ✅ Notifications LISTA · ⬜ Notatka ARTEFAKT · ⬜ Task/Decision drawer ARTEFAKT · ⬜ MindMap A · ⬜ ProcessFlow A · ⬜ Whiteboard A · ⬜ Idea Table D · ⬜ Tasks/Decisions/Notifications Kanban INSTR · ⬜ Table Platform (Workspaces/Detail/Kanban/Gantt/Grid/Calendar) · ⬜ Public form/JWT/shared
 
 ### A2 · Interview+Tools+Assessment+Audits (P1)
 ⬜ Interview Hub · ⬜ Discovery Consultant KONW · ⬜ Interview Sesje/Inbox/Assigned/Templates LISTA · ⬜ Discovery Tools Hub · ⬜ Tools Library (strategic/operational/digital/automation) · ⬜ **Tool detail page (ZAPROJEKTOWAĆ OD ZERA)** A · ⬜ Megatrends Workspace INSTR · ⬜ Assessment Hub · ⬜ Assessment Session Editor (macierz DRD/SIRI/ADMA) D · ⬜ Assessment Table LISTA · ⬜ **DRDReportTemplate podłączyć + DRDAssessmentMap zbudować** · ⬜ Assessment Report B · ⬜ Audits Hub · ⬜ Audit Report B
