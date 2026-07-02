@@ -259,7 +259,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           />
           <AIFreezeBanner />
 
-          <div className="h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
+          <div className="relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
             <div className="flex items-center gap-3">
               <button
                 type="button"

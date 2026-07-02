@@ -1339,14 +1339,21 @@ router.get(
         t.completed_at as "completedAt"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-        AND lower(coalesce(t.task_type,'')) = 'personal'
       LIMIT 1
     `,
       [id, orgId, ...ownerScope.params]
     );
 
     if (!row) {
-      res.status(404).json({ error: 'Not found' });
+      // The personal-tasks LIST endpoint returns every owner-scoped task in the
+      // org (personal-sorted first), but historically this detail lookup added a
+      // hard `task_type='personal'` filter. Any non-personal owned task (e.g. an
+      // initiative/project task, or one with a null/other task_type) therefore
+      // appeared in the list yet 404'd on open → the "Failed to load task" toast
+      // over a blank form. Scope now matches the list (org + owner) so those
+      // rows load. A 404 here now means a genuinely missing/foreign task, which
+      // the client renders as an explicit "not found" state.
+      res.status(404).json({ error: 'Not found', code: 'TASK_NOT_FOUND' });
       return;
     }
 

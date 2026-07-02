@@ -209,6 +209,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string>('');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
@@ -742,6 +743,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const loadTask = async (id: string) => {
     try {
       setLoading(true);
+      setNotFound(false);
       const task = await Api.getPersonalTask(id);
       setTitle(task.title || '');
       setDescription(task.description || '');
@@ -796,7 +798,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       }
     } catch (error) {
       console.error('Failed to load task', error);
-      toast.error(isPolish ? 'Nie udało się załadować zadania' : 'Failed to load task');
+      // A 404 means the task no longer exists (or isn't visible to this user):
+      // render an explicit "not found" state instead of a blank form + toast.
+      const status = (error as { status?: number } | null)?.status;
+      if (status === 404) {
+        setNotFound(true);
+      } else {
+        toast.error(isPolish ? 'Nie udało się załadować zadania' : 'Failed to load task');
+      }
     } finally {
       setLoading(false);
     }
@@ -3504,6 +3513,35 @@ Return ONLY the final comment text.`;
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
         <LoadingState variant="spinner" />
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 bg-white dark:bg-navy-950 p-8 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-navy-800">
+          <AlertCircle size={26} className="text-slate-400 dark:text-slate-500" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Nie znaleziono zadania' : 'Task not found'}
+          </h3>
+          <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'To zadanie zostało usunięte lub nie jest już dla Ciebie dostępne. Odśwież listę zadań.'
+              : 'This task has been deleted or is no longer available to you. Refresh your task list.'}
+          </p>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-1 rounded-lg border border-slate-200 dark:border-navy-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
+          >
+            {isPolish ? 'Zamknij' : 'Close'}
+          </button>
+        )}
       </div>
     );
   }
