@@ -180,7 +180,7 @@ const TOOL_CONFIG: Record<
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
     badgeClass:
-      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+      'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-primary-600 dark:text-primary-300',
   },
   table: {
@@ -191,7 +191,7 @@ const TOOL_CONFIG: Record<
     label: 'Table',
     labelPl: 'Tabela',
     badgeClass:
-      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+      'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-sky-600 dark:text-sky-300',
   },
   process_flow: {
@@ -202,7 +202,7 @@ const TOOL_CONFIG: Record<
     label: 'Process Flow',
     labelPl: 'Proces',
     badgeClass:
-      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+      'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   whiteboard: {
@@ -213,7 +213,7 @@ const TOOL_CONFIG: Record<
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
     badgeClass:
-      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+      'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-amber-600 dark:text-amber-300',
   },
 };
@@ -522,7 +522,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
               !activeFolderId
                 ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+                : 'border-c-border bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
             }`}
           >
             {isPolish ? 'Wszystkie' : 'All'}
@@ -535,7 +535,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
                   activeFolderId === f.id
                     ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+                    : 'border-c-border bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                 }`}
               >
                 <Folder size={12} />
@@ -547,7 +547,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   onClick={() => handleDeleteFolder(f.id)}
                   title={isPolish ? 'Usuń folder' : 'Delete folder'}
                   aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
-                  className="ml-0.5 rounded-full p-0.5 text-slate-600 hover:text-danger-500"
+                  className="ml-0.5 rounded-full p-0.5 text-c-text-muted hover:text-c-danger"
                 >
                   <X size={12} />
                 </button>
@@ -557,7 +557,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <button
             type="button"
             onClick={handleCreateFolder}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-navy-600 dark:text-slate-400 dark:hover:bg-navy-800"
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-c-border px-2.5 py-1 text-xs font-medium text-c-text-muted hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           >
             <FolderPlus size={12} />
             {isPolish ? 'Nowy folder' : 'New folder'}
@@ -574,7 +574,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               showStarredOnly
                 ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+                : 'border-c-border bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
             }`}
           >
             <Star size={13} className={showStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
@@ -585,7 +585,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       {/* "Recently opened" rail (localStorage-backed, per device) */}
       {recentIdeas.length > 0 && (
         <div className="px-4 pt-3" data-testid="ideas-recents-rail">
-          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
             {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -598,9 +598,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   type="button"
                   onClick={() => openIdea(idea.id, idea)}
                   title={idea.title || ''}
-                  className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
+                  className="flex shrink-0 items-center gap-1.5 rounded-xl border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text-secondary shadow-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                 >
-                  <ToolIcon size={13} className="text-slate-600" />
+                  <ToolIcon size={13} className="text-c-text-muted" />
                   <span className="max-w-[160px] truncate">
                     {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                   </span>
@@ -1217,7 +1217,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       { label: isPolish ? tc.labelPl : tc.label, icon: tc.icon },
     ];
     const metaTrailing = (
-      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+      <span className="text-[11px] font-medium text-c-text-muted">
         {idea.updatedAt
           ? new Date(idea.updatedAt).toLocaleDateString()
           : idea.createdAt
@@ -1249,7 +1249,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     if ((idea as any).sourceType) {
       relationItems.push({
         label: `${isPolish ? 'Źródło' : 'Source'}: ${(idea as any).sourceType}`,
-        tone: 'text-slate-600 dark:text-slate-400',
+        tone: 'text-c-text-secondary',
       });
     }
     const actionRows: ActionRow[] = [
@@ -1280,12 +1280,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="space-y-0">
         <PreviewAIHintStrip hints={aiHints} />
-        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        <div className="border-t border-c-border-subtle my-3" />
         <PreviewRelations
           items={relationItems}
           emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
         />
-        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        <div className="border-t border-c-border-subtle my-3" />
         <PreviewActionBar rows={actionRows} />
         <div className="mt-2">
           <ConvertToOutputMenu
@@ -1517,26 +1517,26 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       onClick={() => !converting && setConvertIdea(null)}
     >
       <div
-        className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 shadow-2xl"
+        className="w-full max-w-xl overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-primary-500" />
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="text-sm font-semibold text-c-text">
               {isPolish ? 'Konwertuj pomysł' : 'Convert idea'}
             </div>
           </div>
           <button
             onClick={() => setConvertIdea(null)}
             disabled={converting}
-            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+            className="p-1 rounded-md text-c-text-muted hover:text-c-text-secondary transition-colors disabled:opacity-50"
           >
             <X size={16} />
           </button>
         </div>
         <div className="px-5 py-4 space-y-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400">{convertIdea.title}</div>
+          <div className="text-xs text-c-text-muted">{convertIdea.title}</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {[
               {
@@ -1572,27 +1572,27 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 key={target}
                 onClick={() => handleConvert(target)}
                 disabled={converting}
-                className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                className="text-left p-3 rounded-xl border border-c-border hover:bg-black/[0.04] dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
               >
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                <div className="flex items-center gap-2 text-sm font-semibold text-c-text-secondary">
                   <Icon size={16} className={color} />
                   {label}
                 </div>
-                <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{desc}</div>
+                <div className="mt-1 text-[11px] text-c-text-muted">{desc}</div>
               </button>
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle bg-c-surface-raised">
           <button
             onClick={() => setConvertIdea(null)}
             disabled={converting}
-            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors disabled:opacity-50"
           >
             {isPolish ? 'Zamknij' : 'Close'}
           </button>
           {converting && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-c-text-muted">
               <Loader2 size={14} className="animate-spin" />
               {isPolish ? 'Tworzę…' : 'Creating…'}
             </div>
@@ -1610,26 +1610,26 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       onClick={() => !bulkBusy && setTagModalOpen(false)}
     >
       <div
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 shadow-2xl"
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Tag size={16} className="text-amber-500" />
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="text-sm font-semibold text-c-text">
               {isPolish ? 'Dodaj tag' : 'Add tag'}
             </div>
           </div>
           <button
             onClick={() => setTagModalOpen(false)}
             disabled={bulkBusy}
-            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+            className="p-1 rounded-md text-c-text-muted hover:text-c-text-secondary transition-colors disabled:opacity-50"
           >
             <X size={16} />
           </button>
         </div>
         <div className="px-5 py-4 space-y-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-xs text-c-text-muted">
             {isPolish
               ? `Zostanie dodany do ${selectedIds.size} pomysłów`
               : `Will be added to ${selectedIds.size} ideas`}
@@ -1638,15 +1638,15 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             placeholder={isPolish ? 'np. backlog' : 'e.g. backlog'}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            className="w-full h-10 px-3 rounded-xl border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             autoFocus
           />
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle bg-c-surface-raised">
           <button
             onClick={() => setTagModalOpen(false)}
             disabled={bulkBusy}
-            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors disabled:opacity-50"
           >
             {isPolish ? 'Anuluj' : 'Cancel'}
           </button>
@@ -1666,15 +1666,15 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   // ── Empty state ──
 
   const renderEmpty = () => (
-    <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
+    <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
       <div className="relative mb-4">
         <Flower2 size={48} className="text-amber-400" />
         <Sparkles size={16} className="absolute -top-1 -right-1 text-amber-500 animate-pulse" />
       </div>
-      <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
+      <h3 className="text-lg font-medium text-c-text-secondary mb-2">
         {isPolish ? 'Twój ogród pomysłów czeka' : 'Your Idea Garden awaits'}
       </h3>
-      <p className="text-sm text-slate-500 mb-4 max-w-md">
+      <p className="text-sm text-c-text-muted mb-4 max-w-md">
         {isPolish
           ? 'Zasiej pierwszy pomysł — AI pomoże go rozwinąć, zbada kontekst i zaproponuje kreatywne warianty.'
           : 'Plant your first idea — AI will help it grow, research context, and propose creative variants.'}
@@ -1697,7 +1697,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   if (viewMode === 'table') {
     if (sortedIdeas.length === 0) {
       return (
-        <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
+        <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
           {convertModal}
           {tagModal}
           {confirmDialog}
@@ -1707,7 +1707,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
 
     return (
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg">
         {convertModal}
         {tagModal}
         {confirmDialog}
@@ -1772,7 +1772,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   if (viewMode === 'grid') {
     if (sortedIdeas.length === 0) {
       return (
-        <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
+        <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
           {convertModal}
           {tagModal}
           <div className="mt-4">{renderEmpty()}</div>
@@ -1781,7 +1781,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
 
     return (
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg">
         {convertModal}
         {tagModal}
         {confirmDialog}
@@ -1826,10 +1826,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       }}
                       className={[
                         'group relative cursor-pointer rounded-xl p-4 text-left',
-                        'border border-slate-200/60 dark:border-white/[0.06]',
-                        'bg-white dark:bg-navy-900',
+                        'border border-c-border-subtle',
+                        'bg-c-surface',
                         'hover:shadow-md hover:-translate-y-px transition-all duration-150',
-                        isPreviewSelected || isSelected ? 'ring-2 ring-slate-400/50 dark:ring-white/20' : '',
+                        isPreviewSelected || isSelected ? 'ring-2 ring-c-border-strong dark:ring-white/20' : '',
                       ].join(' ')}
                     >
                       {/* Zone 1 — Badge row (stage · tool) + kebab */}
@@ -1850,7 +1850,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             className={`rounded p-0.5 transition-opacity ${
                               isFavorite(idea.id)
                                 ? 'text-amber-400 opacity-100'
-                                : 'text-slate-600 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-400'
+                                : 'text-c-text-muted opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100'
                             }`}
                           >
                             <Star
@@ -1867,7 +1867,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
                       {/* Zone 2 — Title */}
                       <h4
-                        className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug"
+                        className="font-semibold text-sm text-c-text line-clamp-2 leading-snug"
                         title={idea.title || ''}
                       >
                         {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
@@ -1875,18 +1875,18 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
                       {/* Zone 3 — Description (when available) */}
                       {idea.body && (
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                        <p className="mt-1 text-xs text-c-text-muted line-clamp-2">
                           {idea.body}
                         </p>
                       )}
 
                       {/* Zone 4 — Stats footer: tags · updated date */}
-                      <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-white/[0.05] mt-3 pt-3">
+                      <div className="flex items-center justify-between gap-2 text-[11px] text-c-text-muted border-t border-c-border-subtle mt-3 pt-3">
                         <div className="min-w-0 flex-1">
                           {(idea.tags || []).length > 0 ? (
                             renderTagBadges(idea.tags, 2)
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500">—</span>
+                            <span className="text-c-text-muted">—</span>
                           )}
                         </div>
                         <span className="shrink-0">
@@ -1916,7 +1916,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   if (sortedIdeas.length === 0) {
     return (
-      <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
+      <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
         {convertModal}
         {tagModal}
         {renderEmpty()}
@@ -1925,7 +1925,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+    <div className="w-full h-full overflow-y-auto bg-c-bg">
       {convertModal}
       {tagModal}
       {confirmDialog}
@@ -1936,10 +1936,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             <Tag size={20} className="text-amber-500" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-sm font-semibold text-c-text">
               {isPolish ? 'Pomysły wg tagów' : 'Ideas by Tags'}
             </h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-c-text-muted">
               {isPolish
                 ? `${tagGroups.length} grup · ${sortedIdeas.length} pomysłów`
                 : `${tagGroups.length} groups · ${sortedIdeas.length} ideas`}
@@ -1952,19 +1952,19 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           return (
             <div
               key={tag}
-              className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 overflow-hidden"
+              className="rounded-xl border border-c-border-subtle overflow-hidden"
             >
               <button
                 onClick={() => toggleTagCollapse(tag)}
-                className="w-full flex items-center gap-2.5 px-4 py-3 bg-slate-50/80 dark:bg-navy-900/50 hover:bg-slate-100/80 dark:hover:bg-navy-800/50 transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-4 py-3 bg-c-surface-raised hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors text-left"
               >
                 {isCollapsed ? (
-                  <ChevronRight size={14} className="text-slate-600" />
+                  <ChevronRight size={14} className="text-c-text-muted" />
                 ) : (
-                  <ChevronDown size={14} className="text-slate-600" />
+                  <ChevronDown size={14} className="text-c-text-muted" />
                 )}
                 <Tag size={14} className="text-amber-500" />
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-sm font-semibold text-c-text-secondary">
                   {tag}
                 </span>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
@@ -1973,7 +1973,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               </button>
 
               {!isCollapsed && (
-                <div className="divide-y divide-slate-200 dark:divide-navy-800/50">
+                <div className="divide-y divide-c-border-subtle">
                   {groupIdeas.map((idea) => {
                     const stage = (idea.stage || 'spark') as IdeaStage;
                     const tc = getToolConfig(idea.preferredTool);
@@ -1991,13 +1991,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             openIdea(idea.id, idea);
                           }
                         }}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 dark:hover:bg-navy-800/30 cursor-pointer transition-colors"
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/70 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
                       >
                         <div className={`flex-shrink-0 p-1.5 rounded-lg ${tc.bgColor}`}>
                           <ToolIcon size={14} className={tc.color} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                          <div className="text-sm font-medium text-c-text truncate">
                             {idea.title}
                           </div>
                         </div>
@@ -2013,7 +2013,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             className={`rounded p-0.5 transition-colors ${
                               isFavorite(idea.id)
                                 ? 'text-amber-400'
-                                : 'text-slate-600 hover:text-amber-400 dark:text-slate-400'
+                                : 'text-c-text-muted hover:text-amber-400'
                             }`}
                           >
                             <Star
@@ -2035,7 +2035,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             <Workflow size={10} />
                             Flow
                           </button>
-                          <span className="text-[10px] text-slate-600 whitespace-nowrap">
+                          <span className="text-[10px] text-c-text-muted whitespace-nowrap">
                             {idea.updatedAt
                               ? new Date(idea.updatedAt).toLocaleDateString()
                               : idea.createdAt
