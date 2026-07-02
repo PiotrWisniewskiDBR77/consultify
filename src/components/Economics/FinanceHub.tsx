@@ -1968,7 +1968,115 @@ export const FinanceHub: React.FC = () => {
     handleCreateAnalysisFromStatements,
   ]);
 
+  const handleImportWizardComplete = useCallback(
+    async (statementId: string) => {
+      setShowImportWizard(false);
+      let statementDetail: any = null;
+      try {
+        const data = await V8FinanceApi.getStatement(statementId);
+        statementDetail = data?.statement ?? null;
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        statementDetail = (await Api.get(`/api/finance-statements/${statementId}`)) as any;
+      }
+      const statementPackId = String(
+        statementDetail.statement_pack_id || statementDetail.statementPackId || ''
+      );
+      let packs: any[] = [];
+      try {
+        const data = await V8FinanceApi.getStatementPacks();
+        packs = Array.isArray(data?.statementPacks) ? data.statementPacks : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        const data = await Api.get('/api/finance-statements/packs');
+        packs = Array.isArray(data) ? data : [];
+      }
+      await refreshFinanceTruth(['statements']);
+      const pack = Array.isArray(packs)
+        ? packs.find((item: any) => String(item.id) === statementPackId)
+        : null;
+      const statementRow: FinanceStatementRow = pack
+        ? {
+            id: String(pack.id),
+            title: String(pack.entity_name || pack.period_label || pack.id),
+            kind: 'statements',
+            status:
+              String(pack.pack_readiness_status || '').toLowerCase() === 'ready'
+                ? 'APPROVED'
+                : String(pack.pack_readiness_status || '').toLowerCase() === 'recoverable'
+                  ? 'REVIEW'
+                  : 'DRAFT',
+            statementType: 'PACK',
+            statementPackId: String(pack.id),
+            entityName: String(pack.entity_name || ''),
+            periodStart: String(pack.period_start || ''),
+            periodEnd: String(pack.period_end || ''),
+            periodLabel: String(pack.period_label || ''),
+            currency: String(pack.currency || 'PLN'),
+            scaling: String(pack.scaling || 'units'),
+            sourceFileName: '',
+            validationStatus: String(pack.pack_status || 'pending'),
+            mappedLineCount: 0,
+            totalLineCount: 0,
+            unmappedLineCount: 0,
+            sourceStatementCount: Number(pack.source_statement_count ?? 0),
+            statementIds: [],
+            missingStatementTypes:
+              typeof pack.missing_statement_types === 'string' &&
+              pack.missing_statement_types.trim().startsWith('[')
+                ? JSON.parse(pack.missing_statement_types)
+                : Array.isArray(pack.missing_statement_types)
+                  ? pack.missing_statement_types
+                  : [],
+            completenessLabel: '',
+            childStatements: [],
+            overallConfidence: 0,
+            rawStatus: String(pack.pack_status || 'draft'),
+            readinessStatus: String(pack.pack_readiness_status || 'pending'),
+            readinessScore: Number(pack.pack_readiness_score ?? 0),
+            readinessSummary: String(pack.pack_quality_summary || ''),
+            readinessReasonCodes: [],
+            isWorkable: String(pack.pack_readiness_status || '').toLowerCase() === 'ready',
+            updatedAt: String(pack.updated_at || new Date().toISOString()),
+          }
+        : statementRows.find((row) => row.id === statementPackId) || statementRows[0];
+      if (!statementRow) return;
+      setActiveTab('statements');
+      focusStatementQueue(statementRow.status);
+      handleOpenFull(statementRow);
+      toast.success(
+        statementRow.isWorkable
+          ? t('finance.importWizard.completed', 'Completed')
+          : statementRow.readinessStatus === 'rejected'
+            ? t(
+                'finance.importWizard.rejected',
+                'Import finished, but the file was rejected and requires another attempt.'
+              )
+            : t(
+                'finance.importWizard.requiresReview',
+                'Import finished. The statement went to the recovery queue and requires quality closure.'
+              )
+      );
+    },
+    [refreshFinanceTruth, statementRows, setActiveTab, focusStatementQueue, handleOpenFull, t]
+  );
+
   const content = useMemo(() => {
+    // Import wizard renders INSIDE the ModuleHub shell (sidebar + topbar stay
+    // visible) as an instrument-archetype panel — not a viewport overlay that
+    // hides the app navigation. See H2.9 / H2.10.
+    if (showImportWizard)
+      return (
+        <FinancialStatementImportWizard
+          embedded
+          onClose={() => setShowImportWizard(false)}
+          onComplete={handleImportWizardComplete}
+        />
+      );
     if (loadingTab)
       return (
         <div className="flex items-center justify-center h-full py-24">
@@ -2141,6 +2249,8 @@ export const FinanceHub: React.FC = () => {
     viewMode,
     gridView,
     tableWithPreview,
+    showImportWizard,
+    handleImportWizardComplete,
   ]);
 
   // ---- Render ----
@@ -2246,107 +2356,6 @@ export const FinanceHub: React.FC = () => {
             handleOpenFull(row);
           }}
         />
-      )}
-
-      {showImportWizard && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40">
-          <FinancialStatementImportWizard
-            onClose={() => setShowImportWizard(false)}
-            onComplete={async (statementId) => {
-              setShowImportWizard(false);
-              let statementDetail: any = null;
-              try {
-                const data = await V8FinanceApi.getStatement(statementId);
-                statementDetail = data?.statement ?? null;
-              } catch (error) {
-                if (!shouldFallbackToLegacyFinance(error)) {
-                  throw error;
-                }
-                statementDetail = (await Api.get(`/api/finance-statements/${statementId}`)) as any;
-              }
-              const statementPackId = String(
-                statementDetail.statement_pack_id || statementDetail.statementPackId || ''
-              );
-              let packs: any[] = [];
-              try {
-                const data = await V8FinanceApi.getStatementPacks();
-                packs = Array.isArray(data?.statementPacks) ? data.statementPacks : [];
-              } catch (error) {
-                if (!shouldFallbackToLegacyFinance(error)) {
-                  throw error;
-                }
-                const data = await Api.get('/api/finance-statements/packs');
-                packs = Array.isArray(data) ? data : [];
-              }
-              await refreshFinanceTruth(['statements']);
-              const pack = Array.isArray(packs)
-                ? packs.find((item: any) => String(item.id) === statementPackId)
-                : null;
-              const statementRow: FinanceStatementRow = pack
-                ? {
-                    id: String(pack.id),
-                    title: String(pack.entity_name || pack.period_label || pack.id),
-                    kind: 'statements',
-                    status:
-                      String(pack.pack_readiness_status || '').toLowerCase() === 'ready'
-                        ? 'APPROVED'
-                        : String(pack.pack_readiness_status || '').toLowerCase() === 'recoverable'
-                          ? 'REVIEW'
-                          : 'DRAFT',
-                    statementType: 'PACK',
-                    statementPackId: String(pack.id),
-                    entityName: String(pack.entity_name || ''),
-                    periodStart: String(pack.period_start || ''),
-                    periodEnd: String(pack.period_end || ''),
-                    periodLabel: String(pack.period_label || ''),
-                    currency: String(pack.currency || 'PLN'),
-                    scaling: String(pack.scaling || 'units'),
-                    sourceFileName: '',
-                    validationStatus: String(pack.pack_status || 'pending'),
-                    mappedLineCount: 0,
-                    totalLineCount: 0,
-                    unmappedLineCount: 0,
-                    sourceStatementCount: Number(pack.source_statement_count ?? 0),
-                    statementIds: [],
-                    missingStatementTypes:
-                      typeof pack.missing_statement_types === 'string' &&
-                      pack.missing_statement_types.trim().startsWith('[')
-                        ? JSON.parse(pack.missing_statement_types)
-                        : Array.isArray(pack.missing_statement_types)
-                          ? pack.missing_statement_types
-                          : [],
-                    completenessLabel: '',
-                    childStatements: [],
-                    overallConfidence: 0,
-                    rawStatus: String(pack.pack_status || 'draft'),
-                    readinessStatus: String(pack.pack_readiness_status || 'pending'),
-                    readinessScore: Number(pack.pack_readiness_score ?? 0),
-                    readinessSummary: String(pack.pack_quality_summary || ''),
-                    readinessReasonCodes: [],
-                    isWorkable: String(pack.pack_readiness_status || '').toLowerCase() === 'ready',
-                    updatedAt: String(pack.updated_at || new Date().toISOString()),
-                  }
-                : statementRows.find((row) => row.id === statementPackId) || statementRows[0];
-              if (!statementRow) return;
-              setActiveTab('statements');
-              focusStatementQueue(statementRow.status);
-              handleOpenFull(statementRow);
-              toast.success(
-                statementRow.isWorkable
-                  ? t('finance.importWizard.completed', 'Completed')
-                  : statementRow.readinessStatus === 'rejected'
-                    ? t(
-                        'finance.importWizard.rejected',
-                        'Import finished, but the file was rejected and requires another attempt.'
-                      )
-                    : t(
-                        'finance.importWizard.requiresReview',
-                        'Import finished. The statement went to the recovery queue and requires quality closure.'
-                      )
-              );
-            }}
-          />
-        </div>
       )}
 
       {showAnalysisCreateModal && (

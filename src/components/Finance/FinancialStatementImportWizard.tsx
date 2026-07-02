@@ -109,6 +109,13 @@ type WizardStep = 'upload' | 'detect' | 'map' | 'confirm';
 interface Props {
   onClose?: () => void;
   onComplete?: (statementId: string) => void;
+  /**
+   * When true, the wizard renders as an in-layout instrument panel inside the
+   * finance shell (sidebar + topbar stay visible) instead of a full-screen
+   * overlay. Adds a `‹ Finance / Import` breadcrumb and drops the oversized
+   * page title that previously collided with the app logo (H2.9 / H2.10).
+   */
+  embedded?: boolean;
 }
 
 async function detectStatementWithFallback(statementId: string, body: Record<string, unknown>) {
@@ -197,7 +204,11 @@ async function uploadAndAnalyzeWithFallback(formData: FormData) {
 // Component
 // ---------------------------------------------------------------------------
 
-export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onComplete }) => {
+export const FinancialStatementImportWizard: React.FC<Props> = ({
+  onClose,
+  onComplete,
+  embedded = false,
+}) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -545,23 +556,61 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
   const isReadyForConfirm = readiness?.readinessStatus === 'ready';
 
   return (
-    <div className="min-h-full bg-white dark:bg-navy-950 p-6 pb-10">
-      {/* Header */}
+    <div
+      className={
+        embedded
+          ? 'h-full overflow-y-auto bg-white dark:bg-navy-950 p-6 pb-10'
+          : 'min-h-full bg-white dark:bg-navy-950 p-6 pb-10'
+      }
+    >
+      {/* Header — in embedded mode a breadcrumb replaces the oversized page
+          title that collided with the app logo (H2.10). */}
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {t('finance.importWizard.title', 'Import Financial Statement')}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t(
-              'finance.importWizard.subtitle',
-              'Upload a PDF to extract and standardize financial data'
-            )}
-          </p>
+        <div className="min-w-0">
+          {embedded ? (
+            <>
+              <button
+                onClick={handleDismiss}
+                className="group inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <ChevronLeft
+                  size={16}
+                  className="transition-transform group-hover:-translate-x-0.5"
+                />
+                <span>{t('finance.importWizard.breadcrumbFinance', 'Finance')}</span>
+                <span className="text-slate-300 dark:text-slate-600">/</span>
+                <span className="text-slate-800 dark:text-slate-200">
+                  {t('finance.importWizard.breadcrumbImport', 'Import')}
+                </span>
+              </button>
+              <h2 className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+                {t('finance.importWizard.title', 'Import Financial Statement')}
+              </h2>
+              <p className="text-sm text-slate-500 mt-0.5">
+                {t(
+                  'finance.importWizard.subtitle',
+                  'Upload a PDF to extract and standardize financial data'
+                )}
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                {t('finance.importWizard.title', 'Import Financial Statement')}
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
+                {t(
+                  'finance.importWizard.subtitle',
+                  'Upload a PDF to extract and standardize financial data'
+                )}
+              </p>
+            </>
+          )}
         </div>
         {onClose && (
           <button
             onClick={handleDismiss}
+            aria-label={isPl ? 'Zamknij import' : 'Close import'}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <X size={20} className="text-slate-500" />
