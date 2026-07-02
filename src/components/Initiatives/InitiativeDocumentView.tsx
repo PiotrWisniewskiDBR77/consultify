@@ -155,6 +155,7 @@ import {
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { upsertFinancialBlock } from './financialNarrativeBlocks';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
+import { draftJourneyDismissKey, InitiativeDraftJourney } from './InitiativeDraftJourney';
 import {
   extractInitiativeKpiRows,
   type InitiativeKpiEditorRow,
@@ -588,6 +589,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Slot 9 — canonical artifact-level AI Consultant right panel (POZIOM 3).
   // Toggled by the solid-teal toolbar button; replaces the old one-shot generate.
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+
+  // M13 flow redesign — DRAFT journey strip ("co dalej") dismissal, per initiative.
+  const [draftJourneyDismissed, setDraftJourneyDismissed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(draftJourneyDismissKey(initiativeId)) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const dismissDraftJourney = useCallback(() => {
+    setDraftJourneyDismissed(true);
+    try {
+      window.localStorage.setItem(draftJourneyDismissKey(initiativeId), '1');
+    } catch {
+      /* storage unavailable — session-only dismissal */
+    }
+  }, [initiativeId]);
 
   // Present mode (Phase A3) — fullscreen card-by-card walk of the canonical sections.
   const [presentOpen, setPresentOpen] = useState(false);
@@ -9775,6 +9793,37 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     {t('initiatives.thisViewUsesNormalizedStatusAligned2')}
                   </Callout>
                 ) : null}
+
+                {/* M13 flow redesign — DRAFT "co dalej" journey strip. */}
+                {status === InitiativeStatus.DRAFT && !draftJourneyDismissed && (
+                  <InitiativeDraftJourney
+                    hasContent={!!(summary?.trim() || description?.trim() || symptomDraft?.trim())}
+                    taskCount={tasks.length}
+                    advanceActionLabel={
+                      stripStatusActions[0]
+                        ? isPolish
+                          ? stripStatusActions[0].labelPl || stripStatusActions[0].label
+                          : stripStatusActions[0].label
+                        : null
+                    }
+                    onFillWithAi={() => setAiPanelOpen(true)}
+                    onPlanTasks={() => {
+                      setHiddenSectionIds((prev) => {
+                        if (!prev.has('tasks')) return prev;
+                        const next = new Set(prev);
+                        next.delete('tasks');
+                        return next;
+                      });
+                      setActiveNSection('tasks');
+                    }}
+                    onAdvance={
+                      stripStatusActions[0]
+                        ? () => void handleStatusAction(stripStatusActions[0])
+                        : undefined
+                    }
+                    onDismiss={dismissDraftJourney}
+                  />
+                )}
 
                 {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
                     Container matches the shared NModeShell action-bar standard (slate, borderless)
