@@ -1554,7 +1554,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       return (
         <div className="flex items-center justify-center h-full text-c-text-muted">
           <div className="text-center">
-            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-c-text-muted/50" />
+            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-c-text-muted opacity-50" />
             <p className="text-lg text-c-text">{t('initiatives.empty.title')}</p>
             <p className="text-sm text-c-text-muted mt-2">
               {t('initiatives.empty.description')}
