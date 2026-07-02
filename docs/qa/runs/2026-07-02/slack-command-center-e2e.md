@@ -30,5 +30,29 @@ Data: 2026-07-02 · Środowisko: **demo** (`demo.consultify.ai`, gitSha `ca81a12
 - Modal `FEATURE` normalizowany do `IDEA` (schemat zna BUG/IDEA) — typ oryginalny w `metadata.slack_modal_type`.
 - Pierwsza żywa emisja digestu/progress-feed do potwierdzenia po naturalnych zdarzeniach (wiersz 9).
 
+## Runda 2 — testy adversarialne + symulacja błędów (2026-07-02, nadzorca)
+
+Przetestowano wszystkie ścieżki na demo; znalezione bugi naprawione u źródła i re-zweryfikowane.
+
+| Test | Wynik |
+|---|---|
+| `/consultify` Bug/Pomysł/Feature + priorytety LOW/MED/HIGH/CRITICAL | ✅ typ+severity+task poprawne |
+| **message shortcut** „Zgłoś do Consultify" (⋯ na wiadomości) | ✅ ticket `bc023216`, treść→opis, `slack_source_message_ts` zapisany |
+| Puste pola | ✅ graceful fallback „Zgłoszenie ze Slacka", brak crasha |
+| Znaki specjalne / `<script>` / SQL `OR 1=1` / emoji | ✅ zapisane jako TEKST (escaped), zero injection |
+| Bardzo długi tytuł/opis | ✅ tytuł→120, opis→1999 |
+| **Zły podpis HMAC** | ✅ **401 Invalid Slack signature** (bezpieczeństwo) |
+| Panel Super Admin (`GET /api/feedback`) | ✅ 9/9 zgłoszeń ze Slacka, kategorie BUG/IDEA, severity, statusy, taski |
+| Zmiana statusu → reply w wątku | ✅ (F4) |
+
+**Bugi znalezione żywym testowaniem i naprawione:**
+1. 🔴→✅ **Duplikat postu** #cf-feedback (legacy eskalacja + router) — pomijam legacy dla source=slack (`dcc873ce47`).
+2. 🔴→✅ **thread_ts kasowany dla HIGH/CRITICAL** — whole-object write eskalacji nadpisywał kotwicę; fix: atomowy `jsonb_set` per-klucz (`dcc873ce47`); zweryfikowane: thread_ts trwa dla CRITICAL.
+3. 🔴→✅ **Reply pokazywał surowy UUID** aktora gdy token bez email/name — `resolveActorLabel` dociąga z users (`0883e8aa2f`).
+
+**Fałszywe alarmy (błędne klucze w moich zapytaniach diagnostycznych, dane OK):** obszar/moduł = `metadata.area`; msg_ts shortcutu = `slack_source_message_ts`.
+
+**Drobiazgi (polish, nie-blokery):** permalink shortcutu wymaga `chat.getPermalink` (jest tylko msg_ts); priorytet HIGH→medium na staging (env-downgrade, severity zachowany); FEATURE→IDEA (schemat BUG/IDEA).
+
 ## PROD
 Nietknięty (D-G=NIE). Całość na demo; promocja na prod = osobna jawna zgoda.
