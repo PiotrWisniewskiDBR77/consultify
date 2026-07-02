@@ -26,8 +26,11 @@ import {
   FileText,
   Flag,
   Flame,
+  Folder,
+  FolderPlus,
   GanttChart,
   GitBranch,
+  History,
   Home,
   Hourglass,
   Inbox,
@@ -44,6 +47,7 @@ import {
   Search,
   Sparkles,
   Sprout,
+  Star,
   Tag,
   Target,
   Trash2,
@@ -60,6 +64,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
+import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import {
   MENU_2_TAB_ACTIVE,
   MENU_2_TAB_INACTIVE,
@@ -89,7 +94,6 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
-import { resolveOpenItemRoute } from './openItemRouting';
 import {
   dispatchBetaAccessBlocked,
   isBetaLockedForRole,
@@ -129,10 +133,11 @@ import {
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
-import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
+import type { IdeasBulkBarPayload, IdeasHomeShellPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
+import { resolveOpenItemRoute } from './openItemRouting';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -965,7 +970,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           },
         });
         if (res.ok) setContextSummary(await res.json());
-
       } catch {
         /* ignore — partial enrichment is fine */
       }
@@ -1915,6 +1919,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     };
   }, []);
 
+  // S1-U1: home-shell (folders + starred + recents) published by the Ideas
+  // list; rendered as dropdown chips inside the single Command Row.
+  const [ideasHomeShell, setIdeasHomeShell] = useState<IdeasHomeShellPayload | null>(null);
+  const handleIdeasHomeShellChange = useCallback((payload: IdeasHomeShellPayload | null) => {
+    setIdeasHomeShell(payload);
+  }, []);
+
   const handleNotebookCountsChange = useCallback((counts: { total: number }) => {
     setTabCounts((prev) => ({ ...prev, notebook: counts.total }));
   }, []);
@@ -2024,6 +2035,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setIdeasBulkUi(null);
       ideasBulkActionsRef.current = null;
       setIdeaStageFilter('all');
+      setIdeasHomeShell(null);
     }
   }, [activeTab]);
 
@@ -3035,6 +3047,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         },
       ];
 
+      // S1-U1: folders + starred + recents live in THIS row as dropdown/toggle
+      // chips (right cluster) — never as extra rows above the table.
+      const shell = ideasHomeShell;
+      const activeFolder = shell?.folders.find((f) => f.id === shell.activeFolderId) || null;
+      const showStarChip = Boolean(shell && (shell.starredCount > 0 || shell.showStarredOnly));
+
       return (
         <div className={menu3RowClass}>
           <div className={menu3InnerClass}>
@@ -3055,6 +3073,91 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </button>
                 );
               })}
+            </div>
+            <div className={MENU_3_RIGHT_CLASS}>
+              {shell?.foldersAvailable ? (
+                <Menu3DropdownChip
+                  data-testid="ideas-folder-chip"
+                  icon={<Folder size={14} className="text-c-text-muted" />}
+                  label={activeFolder ? activeFolder.name : isPolish ? 'Folder' : 'Folder'}
+                  active={Boolean(activeFolder)}
+                  ariaLabel={isPolish ? 'Filtruj wg folderu' : 'Filter by folder'}
+                  align="right"
+                  items={[
+                    {
+                      id: 'all',
+                      label: isPolish ? 'Wszystkie pomysły' : 'All ideas',
+                      icon: <Layers size={14} />,
+                      active: !activeFolder,
+                      onSelect: () => shell.selectFolder(null),
+                    },
+                    ...shell.folders.map((f) => ({
+                      id: f.id,
+                      label: f.name,
+                      icon: <Folder size={14} />,
+                      active: shell.activeFolderId === f.id,
+                      trailing: shell.activeFolderId === f.id ? '✓' : undefined,
+                      onSelect: () => shell.selectFolder(f.id),
+                    })),
+                    {
+                      id: 'new-folder',
+                      label: isPolish ? 'Nowy folder…' : 'New folder…',
+                      icon: <FolderPlus size={14} />,
+                      dividerBefore: true,
+                      onSelect: () => shell.createFolder(),
+                    },
+                    ...(activeFolder
+                      ? [
+                          {
+                            id: 'delete-folder',
+                            label: isPolish ? 'Usuń ten folder' : 'Delete this folder',
+                            icon: <Trash2 size={14} />,
+                            danger: true,
+                            onSelect: () => shell.deleteFolder(activeFolder.id),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              ) : null}
+              {showStarChip && shell ? (
+                <button
+                  type="button"
+                  data-testid="ideas-starred-chip"
+                  onClick={() => shell.toggleStarredOnly()}
+                  aria-pressed={shell.showStarredOnly}
+                  title={isPolish ? 'Tylko oznaczone gwiazdką' : 'Starred only'}
+                  className={shell.showStarredOnly ? chipActive : chipInactive}
+                >
+                  <Star
+                    size={14}
+                    className={
+                      shell.showStarredOnly ? 'fill-amber-400 text-amber-400' : 'text-c-text-muted'
+                    }
+                  />
+                  <span>{isPolish ? 'Oznaczone' : 'Starred'}</span>
+                  <span
+                    className={`${badgeBase} ${shell.showStarredOnly ? badgeActive : badgeInactive}`}
+                  >
+                    {shell.starredCount}
+                  </span>
+                </button>
+              ) : null}
+              {shell && shell.recents.length > 0 ? (
+                <Menu3DropdownChip
+                  data-testid="ideas-recent-chip"
+                  icon={<History size={14} className="text-c-text-muted" />}
+                  label={isPolish ? 'Ostatnie' : 'Recent'}
+                  ariaLabel={isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
+                  align="right"
+                  items={shell.recents.map((r) => ({
+                    id: r.id,
+                    label: r.title,
+                    icon: <Lightbulb size={14} />,
+                    onSelect: () => shell.openRecent(r.id),
+                  }))}
+                />
+              ) : null}
             </div>
           </div>
         </div>
@@ -3338,6 +3441,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onCreateIdea={handleCreateIdea}
             onCountsChange={handleIdeaCountsChange}
             onBulkBarChange={handleIdeasBulkBarChange}
+            onHomeShellChange={handleIdeasHomeShellChange}
             refreshTrigger={refreshTrigger}
           />
         );

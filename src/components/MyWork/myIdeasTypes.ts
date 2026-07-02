@@ -53,3 +53,23 @@ export type IdeasBulkBarPayload = {
 
 export type SortField = 'title' | 'stage' | 'tool' | 'date' | 'tags';
 export type SortDir = 'asc' | 'desc';
+
+/**
+ * S1-U1 — home-shell state (folders + starred + recents) published UP to the
+ * hub so the Command Row (Menu 3) absorbs it as dropdown chips instead of
+ * rendering 3-4 extra rows above the table.
+ */
+export type IdeasHomeShellPayload = {
+  foldersAvailable: boolean;
+  folders: Array<{ id: string; name: string }>;
+  activeFolderId: string | null;
+  /** Number of currently starred ideas (chip hidden when 0 and toggle off). */
+  starredCount: number;
+  showStarredOnly: boolean;
+  recents: Array<{ id: string; title: string }>;
+  selectFolder: (folderId: string | null) => void;
+  createFolder: () => void;
+  deleteFolder: (folderId: string) => void;
+  toggleStarredOnly: () => void;
+  openRecent: (ideaId: string) => void;
+};

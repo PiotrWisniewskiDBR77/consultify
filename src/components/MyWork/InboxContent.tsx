@@ -1237,6 +1237,9 @@ const PreviewPane: React.FC<{
       : []),
   ];
 
+  // S1-U3a + Artifact Anatomy §9.2① — ONE primary action per panel
+  // ("Today" = the next-best triage), everything else secondary/neutral.
+  // Never a color-per-button rainbow (Today green / Save yellow / Done green…).
   const actionRows: ActionRow[] = [
     {
       buttons: [
@@ -1244,7 +1247,7 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Dziś' : 'Today',
           icon: Zap,
           onClick: () => onTriage('accept_today'),
-          colorScheme: 'emerald',
+          colorScheme: 'primary',
           flex: true,
           shortcut: 'T',
         },
@@ -1252,7 +1255,7 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Tydzień' : 'Week',
           icon: CalendarClock,
           onClick: () => onTriage('accept_week'),
-          colorScheme: 'blue',
+          colorScheme: 'neutral',
           flex: true,
           shortcut: 'W',
         },
@@ -1273,14 +1276,14 @@ const PreviewPane: React.FC<{
           label: isPolish ? 'Gotowe' : 'Done',
           icon: CheckCircle2,
           onClick: () => onTriage('done'),
-          colorScheme: 'green',
+          colorScheme: 'neutral',
           shortcut: 'D',
         },
         {
           label: isPolish ? 'Zapisz' : 'Save',
           icon: Bookmark,
           onClick: () => onTriage('save'),
-          colorScheme: 'amber',
+          colorScheme: 'neutral',
           shortcut: 'S',
         },
         ...(onSaveAsNote
@@ -1443,7 +1446,6 @@ const AIHintStrip: React.FC<{
   } | null;
   onClear: () => void;
 }> = ({ item, isPolish, loading, onRun, onApplyAction, result, onClear }) => {
-
   const hints = useMemo(() => {
     const isCritical = item.urgency === 'critical' || item.urgency === 'high';
     const isDecision = String(item._key || '').startsWith('decision:');
@@ -1535,7 +1537,9 @@ const AIHintStrip: React.FC<{
                       if (result) {
                         navigator.clipboard
                           .writeText(
-                            [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join('\n')
+                            [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join(
+                              '\n'
+                            )
                           )
                           .then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied'));
                       }
@@ -2771,9 +2775,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const hasFilter = isFilterable && col.filterOptions?.length;
           const isResizable = Boolean(col.resizable);
           // Canon §3.3: chip/text columns left-aligned (status/urgency/type/section/source).
-          const leftAligned = ['status', 'urgency', 'type', 'section', 'source', 'received'].includes(
-            colId
-          );
+          const leftAligned = [
+            'status',
+            'urgency',
+            'type',
+            'section',
+            'source',
+            'received',
+          ].includes(colId);
           // Canon §5/§27.O: every column except SLA is sortable (sla has no stable order).
           const isSortable = colId !== 'sla';
           return (
