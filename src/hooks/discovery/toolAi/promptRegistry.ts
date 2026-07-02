@@ -1,5 +1,10 @@
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { buildStaircasePromptRules } from '@/config/swot/swotInsightStaircase';
+import { buildValueChainStaircasePromptRules } from '@/config/valuechain/valueChainInsightStaircase';
+import {
+  buildValueChainMovePromptRules,
+  deriveLeverCandidates,
+} from '@/config/valuechain/valueChainMarginEngine';
 import {
   buildMoveConclusionPromptRules,
   deriveTensionCandidates,
@@ -156,8 +161,10 @@ Rules:
 - separate drivers from evidence; make implications concrete for margin and positioning
 - also return a positioningVerdict (cost-advantage | differentiation | stuck-in-the-middle) with a one-line summary
 
-Return JSON:
-{"activities": {"inboundLogistics": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "operations": {"...": "..."}, "outboundLogistics": {"...": "..."}, "marketingSales": {"...": "..."}, "service": {"...": "..."}, "infrastructure": {"...": "..."}, "hrManagement": {"...": "..."}, "technology": {"...": "..."}, "procurement": {"...": "..."}}, "positioningVerdict": {"positioning": "cost-advantage|differentiation|stuck-in-the-middle", "summary": "..."}}`;
+${buildValueChainStaircasePromptRules('en')}
+
+Return JSON (each activity carries the full "staircase" and an "evidenceStatus"):
+{"activities": {"inboundLogistics": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5, "staircase": {"surface": "...", "costValueProof": "...", "proofRefs": ["signal-id"], "benchmark": "...", "potential": "..."}, "evidenceStatus": "confirmed|declared"}, "operations": {"...": "..."}, "outboundLogistics": {"...": "..."}, "marketingSales": {"...": "..."}, "service": {"...": "..."}, "infrastructure": {"...": "..."}, "hrManagement": {"...": "..."}, "technology": {"...": "..."}, "procurement": {"...": "..."}}, "positioningVerdict": {"positioning": "cost-advantage|differentiation|stuck-in-the-middle", "summary": "..."}}`;
     }
     return '';
   }
@@ -673,24 +680,40 @@ Return as JSON:
       )
       .join('\n');
 
+    const leverCandidates = deriveLeverCandidates(vcData?.activities || {}, 3);
+    const candidateLines =
+      leverCandidates.length > 0
+        ? leverCandidates
+            .map(
+              (c) =>
+                `- [${c.activityId}] pole=${c.pole}, leverScore=${c.leverScore}, suggested=${c.suggestedLeverType} — ${c.rationaleEn}`
+            )
+            .join('\n')
+        : '- (no scored activities to pre-compute lever candidates)';
+
     return `Based on this Value Chain analysis, create a consulting-grade final summary:
 
 ${activitiesSummary}
 ${vcData?.positioningVerdict ? `Positioning verdict: ${vcData.positioningVerdict.positioning} — ${vcData.positioningVerdict.summary}` : ''}
 
+PRE-COMPUTED LEVER CANDIDATES (high cost x low maturity x value impact — link moves to these):
+${candidateLines}
+
 Provide:
 1. Executive Summary (3-4 sentences)
-2. Top 3 Margin Levers (where cost can fall or value can rise)
+2. Top 3 Margin Levers (where cost can fall or value can rise) — anchored in the candidate activities above
 3. Applied Conclusions: where to cut cost, where to invest for differentiation, what to validate next
-4. 3-5 Recommended Strategic Moves
+4. 3-5 Recommended Strategic Moves, each a decision (improve/automate/outsource/integrate) with a trade-off
 5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+${buildValueChainMovePromptRules('en')}
 
 Return as JSON:
 {
   "summary": "executive summary",
   "insights": ["insight 1", "insight 2"],
   "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","linkedActivityIds":["operations"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","linkedActivityIds":["operations"],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["operations"]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedActivityIds": ["operations"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;

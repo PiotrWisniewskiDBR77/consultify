@@ -1,3 +1,13 @@
+import { buildValueChainStaircasePromptRules } from '@/config/valuechain/valueChainInsightStaircase';
+import {
+  buildValueChainMovePromptRules,
+  computeMarginMap,
+  deriveLeverCandidates,
+} from '@/config/valuechain/valueChainMarginEngine';
+import {
+  buildActivityLadderPromptBlock,
+  VALUE_CHAIN_ACTIVITIES,
+} from '@/config/valuechain/valueChainQuestionBank';
 import type {
   InitiativeDraft,
   ValueActivityId,
@@ -37,6 +47,30 @@ interface ApplyValueChainPendingActionOptions {
   actions: ValueChainActionHandlers;
 }
 
+/**
+ * Conversation-layer protocol appended to the system prompt for the value-chain
+ * "activities" step: the mentor in chat interviews with the SAME laddered question
+ * bank as the wizard (single source of truth), one activity at a time, walking the
+ * 4-rung ladder (surface -> cost/value -> benchmark -> potential) and branching on
+ * answers. Returns '' for other steps so it is a no-op there.
+ */
+export function buildValueChainConversationProtocol(
+  stepId: string | undefined,
+  language: 'pl' | 'en' = 'en'
+): string {
+  if (stepId !== 'activities') return '';
+  const ladders = VALUE_CHAIN_ACTIVITIES.map(
+    (meta) =>
+      `--- ${(language === 'pl' ? meta.namePl : meta.nameEn).toUpperCase()} (${meta.id}, ${meta.kind}) ---\n${buildActivityLadderPromptBlock(meta.id, language)}`
+  ).join('\n');
+  return `
+
+INTERVIEW PROTOCOL (laddered value-chain question bank — the single source of truth for this step):
+When the user explores an activity, walk its ladder. Ask ONE question at a time; classify the answer into a branch key and follow the branch. Vague answer -> use the probe. Do not accept a score without the cost-value proof; an activity with no session evidence is "declared, unconfirmed". When a ladder path completes, propose the scored activity with its full insight staircase.
+
+${ladders}`;
+}
+
 export function buildValueChainFullSessionPrompt(
   valueChainData: ValueChainData | undefined,
   orgContext: string
@@ -65,14 +99,23 @@ initiatives. Ground every claim in the organization context above. Explicitly fl
 assumption you cannot ground in the context (label it as a hypothesis) — do NOT invent specific
 numbers or external benchmarks you cannot support.
 
+${buildValueChainStaircasePromptRules('en')}
+
+${buildValueChainMovePromptRules('en')}
+
+Attach a "staircase" {surface, costValueProof, proofRefs, benchmark, potential} to every scored
+activity, and set "evidenceStatus" to "confirmed" only when proofRefs point at a real signal,
+otherwise "declared". Focus the levers and moves on the 2-3 activities where high cost meets low
+maturity meets impact on customer value (the margin map's leak/creator gradient).
+
 Return one JSON object with this exact structure:
 {
   "signals": [
     {"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["operations"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}
   ],
   "activities": {
-    "inboundLogistics": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5},
-    "operations": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5},
+    "inboundLogistics": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5, "staircase": {"surface": "...", "costValueProof": "...", "proofRefs": ["signal-id"], "benchmark": "...", "potential": "..."}, "evidenceStatus": "confirmed|declared"},
+    "operations": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5, "staircase": {"surface": "...", "costValueProof": "...", "proofRefs": ["signal-id"], "benchmark": "...", "potential": "..."}, "evidenceStatus": "confirmed|declared"},
     "outboundLogistics": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5},
     "marketingSales": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5},
     "service": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5},
@@ -86,7 +129,7 @@ Return one JSON object with this exact structure:
     {"title": "...", "activityIds": ["operations"], "insight": "...", "leverType": "cost-reduction|value-enhancement|linkage-optimization|outsource|integrate", "marginImpact": "high|medium|low", "urgency": "high|medium|low", "recommendation": "...", "confidence": 1-5}
   ],
   "moves": [
-    {"title": "...", "category": "cost-advantage|differentiation|linkage-optimization|capability-build|restructure", "rationale": "...", "linkedLeverIds": [], "linkedActivityIds": ["operations"], "expectedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "riskLevel": "high|medium|low", "confidence": 1-5, "firstStep": "..."}
+    {"title": "...", "category": "cost-advantage|differentiation|linkage-optimization|capability-build|restructure", "rationale": "...", "linkedLeverIds": [], "linkedActivityIds": ["operations"], "tradeoff": {"chosen": "...", "deferred": "...", "cost": "..."}, "rejectedAlternative": {"option": "...", "reason": "..."}, "expectedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "riskLevel": "high|medium|low", "confidence": 1-5, "firstStep": "..."}
   ],
   "outputCandidates": [
     {"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "rationale": "...", "linkedActivityIds": ["operations"], "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}
@@ -113,14 +156,42 @@ export function buildValueChainLeversPrompt(valueChainData: ValueChainData): str
 
   if (!activities.trim()) return null;
 
+  // Deterministic synthesis first: margin map (creators vs drains) and the 2-3
+  // lever activities, computed from the SCORED activities — not from the LLM.
+  const marginMap = computeMarginMap(valueChainData.activities);
+  const candidates = deriveLeverCandidates(valueChainData.activities, 3);
+  const mapLine =
+    marginMap.entries.length > 0
+      ? `- creators (build margin): ${marginMap.creators.join(', ') || 'none'}\n- drains (erode margin): ${marginMap.drains.join(', ') || 'none'}\n- cost concentrated in drains: ${marginMap.costInDrains} vs in creators: ${marginMap.costInCreators}`
+      : '- (no scored activities yet — score activities before synthesizing levers)';
+  const candidateLines =
+    candidates.length > 0
+      ? candidates
+          .map(
+            (c) =>
+              `- [${c.activityId}] pole=${c.pole}, leverScore=${c.leverScore}, suggested=${c.suggestedLeverType} — ${c.rationaleEn}`
+          )
+          .join('\n')
+      : '- (not enough scored activities to pre-compute lever candidates)';
+
   return `Act as a strategy consultant. Convert this Porter Value Chain scorecard (9 activities scored on cost contribution, value contribution, and margin role) into margin levers and strategic moves.
 
 ${activities}
 
+MARGIN MAP (computed from the scores — where value is created vs where it leaks):
+${mapLine}
+
+PRE-COMPUTED LEVER CANDIDATES (high cost x low maturity x value impact — your working set):
+${candidateLines}
+
+You NARRATE levers on top of the candidate activities that verifiably exist in the scorecard — you do not invent activities. Suggested lever types are a hypothesis; confirm or override with reasoning.
+
+${buildValueChainMovePromptRules('en')}
+
 Return JSON:
 {
   "levers": [{"title":"...","activityIds":["operations"],"insight":"...","leverType":"cost-reduction|value-enhancement|linkage-optimization|outsource|integrate","marginImpact":"high|medium|low","urgency":"high|medium|low","recommendation":"...","confidence":4}],
-  "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","linkedLeverIds":[],"linkedActivityIds":["operations"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}]
+  "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","linkedLeverIds":[],"linkedActivityIds":["operations"],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}]
 }`;
 }
 
@@ -175,6 +246,39 @@ const cleanActivityIds = (value: unknown): ValueActivityId[] =>
     : [];
 
 const proposalStatus: ProposalStatus = 'ai-proposed';
+
+function normalizeStaircase(raw: any): ValueChainData['activities'][ValueActivityId]['staircase'] {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const surface = typeof raw.surface === 'string' ? raw.surface : '';
+  const costValueProof = typeof raw.costValueProof === 'string' ? raw.costValueProof : '';
+  const benchmark = typeof raw.benchmark === 'string' ? raw.benchmark : '';
+  const potential = typeof raw.potential === 'string' ? raw.potential : '';
+  if (!surface && !costValueProof && !benchmark && !potential) return undefined;
+  return {
+    surface,
+    costValueProof,
+    proofRefs: Array.isArray(raw.proofRefs) ? raw.proofRefs.filter(Boolean).map(String) : [],
+    benchmark,
+    potential,
+  };
+}
+
+function normalizeTradeoff(raw: any): { chosen: string; deferred: string; cost: string } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const chosen = typeof raw.chosen === 'string' ? raw.chosen : '';
+  const deferred = typeof raw.deferred === 'string' ? raw.deferred : '';
+  const cost = typeof raw.cost === 'string' ? raw.cost : '';
+  if (!chosen && !deferred && !cost) return undefined;
+  return { chosen, deferred, cost };
+}
+
+function normalizeRejectedAlternative(raw: any): { option: string; reason: string } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const option = typeof raw.option === 'string' ? raw.option : '';
+  const reason = typeof raw.reason === 'string' ? raw.reason : '';
+  if (!option && !reason) return undefined;
+  return { option, reason };
+}
 
 export function applyValueChainPendingAction({
   pendingAction,
@@ -269,6 +373,23 @@ export function applyValueChainPendingAction({
             ? activity.implication
             : nextActivities[activityId].implication,
         confidence: typeof activity.confidence === 'number' ? activity.confidence : 3,
+        ...(() => {
+          const staircase = normalizeStaircase(activity.staircase);
+          const evidenceStatus =
+            activity.evidenceStatus === 'confirmed' ||
+            activity.evidenceStatus === 'declared' ||
+            activity.evidenceStatus === 'missing'
+              ? activity.evidenceStatus
+              : staircase
+                ? staircase.proofRefs.length > 0
+                  ? 'confirmed'
+                  : 'declared'
+                : nextActivities[activityId].evidenceStatus;
+          return {
+            ...(staircase ? { staircase } : {}),
+            ...(evidenceStatus ? { evidenceStatus } : {}),
+          };
+        })(),
         proposalStatus,
       };
     });
@@ -327,8 +448,18 @@ export function applyValueChainPendingAction({
                 title: move.title,
                 category: move.category || 'cost-advantage',
                 rationale: move.rationale || '',
-                linkedLeverIds: [],
+                linkedLeverIds: Array.isArray(move.linkedLeverIds)
+                  ? move.linkedLeverIds.filter(Boolean).map(String)
+                  : [],
                 linkedActivityIds: cleanActivityIds(move.linkedActivityIds),
+                ...(() => {
+                  const tradeoff = normalizeTradeoff(move.tradeoff);
+                  const rejectedAlternative = normalizeRejectedAlternative(move.rejectedAlternative);
+                  return {
+                    ...(tradeoff ? { tradeoff } : {}),
+                    ...(rejectedAlternative ? { rejectedAlternative } : {}),
+                  };
+                })(),
                 expectedImpact: move.expectedImpact || 'medium',
                 estimatedEffort: move.estimatedEffort || 'medium',
                 riskLevel: move.riskLevel || 'medium',

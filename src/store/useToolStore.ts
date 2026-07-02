@@ -432,6 +432,20 @@ export interface ValueActivity {
   evidence?: string[];
   implication?: string;
   confidence?: number;
+  /**
+   * Deepening insight staircase (config/valuechain/valueChainInsightStaircase):
+   * surface -> cost/value proof -> benchmark -> potential. Optional for
+   * backward compatibility with sessions scored before the ladder existed.
+   */
+  staircase?: {
+    surface: string;
+    costValueProof: string;
+    proofRefs: string[];
+    benchmark: string;
+    potential: string;
+  };
+  /** 'confirmed' only when the cost-value proof cites session evidence. */
+  evidenceStatus?: 'confirmed' | 'declared' | 'missing';
   proposalStatus?: ProposalStatus;
   userComment?: string;
 }
@@ -482,6 +496,9 @@ export interface ValueChainMove {
   rationale: string;
   linkedLeverIds: string[];
   linkedActivityIds: ValueActivityId[];
+  /** CONCLUSION_LAYER_STANDARD W2 — mandatory in new moves, optional in legacy ones. */
+  tradeoff?: { chosen: string; deferred: string; cost: string };
+  rejectedAlternative?: { option: string; reason: string };
   expectedImpact: 'high' | 'medium' | 'low';
   estimatedEffort: 'high' | 'medium' | 'low';
   riskLevel: 'high' | 'medium' | 'low';
