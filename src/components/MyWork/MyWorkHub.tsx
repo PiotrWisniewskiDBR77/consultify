@@ -730,7 +730,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [notebookCreateNotebookReqId, setNotebookCreateNotebookReqId] = useState(0);
   // Menu 3 (Command Row) page-status presets for the open notebook (L2).
   const [notebookPageStatusFilter, setNotebookPageStatusFilter] = useState<
-    'all' | 'inbox' | 'active'
+    'all' | 'inbox' | 'active' | 'today'
   >('all');
   // Menu 3 (Command Row) scope presets for the notebook library (L1).
   const [notebookScopeFilter, setNotebookScopeFilter] = useState<'all' | 'personal' | 'team'>(
@@ -1926,6 +1926,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setIdeasHomeShell(payload);
   }, []);
 
+  // S1-U2b: single SSOT for leaving an open notebook — used by BOTH the
+  // Command-Row breadcrumb and NotebookContent's sidebar back button.
+  const handleNotebookBackToLibrary = useCallback(() => {
+    setNotebookOpenId(null);
+    setNotebookOpenTitle('');
+    setNotebookOpenPageId(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete('notebook');
+    next.delete('note');
+    setSearchParams(next, { replace: false });
+  }, [searchParams, setSearchParams]);
+
   const handleNotebookCountsChange = useCallback((counts: { total: number }) => {
     setTabCounts((prev) => ({ ...prev, notebook: counts.total }));
   }, []);
@@ -2518,10 +2530,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
-    // Notebook L2 (open notebook, no open page): page-status filters.
+    // Notebook L2 (open notebook, no open page): breadcrumb back + page-status
+    // filters in ONE Command Row (S1-U2b/c — no drill-down trap, no extra rows).
     if (activeTab === 'notebook' && notebookOpenId && !notebookOpenPageId) {
       const statusPresets: Array<{
-        id: 'all' | 'inbox' | 'active';
+        id: 'all' | 'inbox' | 'active' | 'today';
         label: string;
         icon: React.ReactNode;
       }> = [
@@ -2533,18 +2546,41 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {
           id: 'inbox',
           label: isPolish ? 'Inbox' : 'Inbox',
-          icon: <Inbox size={12} />,
+          icon: <Inbox size={14} className="text-c-text-muted" />,
         },
         {
           id: 'active',
           label: isPolish ? 'Aktywne' : 'Active',
-          icon: <Sparkles size={12} />,
+          icon: <Sparkles size={14} className="text-c-text-muted" />,
+        },
+        {
+          id: 'today',
+          label: isPolish ? 'Dziś' : 'Today',
+          icon: <CalendarDays size={14} className="text-c-text-muted" />,
         },
       ];
       return (
         <div className={MENU_3_ROW_CLASS}>
           <div className={MENU_3_INNER_CLASS}>
             <div className={MENU_3_LEFT_CLASS}>
+              {/* Breadcrumb — always-visible way OUT of the notebook (S1-U2b). */}
+              <button
+                type="button"
+                data-testid="notebook-breadcrumb-back"
+                onClick={handleNotebookBackToLibrary}
+                className={MENU_3_CHIP_INACTIVE}
+                title={isPolish ? 'Wróć do listy notatników' : 'Back to notebooks'}
+              >
+                <ChevronDown size={14} className="rotate-90 text-c-text-muted" />
+                {isPolish ? 'Notatniki' : 'Notebooks'}
+              </button>
+              <span className="px-0.5 text-[11px] text-c-text-muted" aria-hidden="true">
+                /
+              </span>
+              <span className="max-w-[180px] truncate text-[12px] font-semibold text-c-text">
+                {notebookOpenTitle || (isPolish ? 'Notatnik' : 'Notebook')}
+              </span>
+              <span className="mx-1.5 h-4 w-px shrink-0 bg-c-border-subtle" aria-hidden="true" />
               {statusPresets.map((p) => {
                 const isActive = notebookPageStatusFilter === p.id;
                 return (
@@ -3018,31 +3054,31 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {
           id: 'spark',
           label: isPolish ? 'Iskra' : 'Spark',
-          icon: <Lightbulb size={14} className="text-amber-400" />,
+          icon: <Lightbulb size={14} className="text-amber-600 dark:text-amber-300" />,
           count: ideasStageCounts.spark,
         },
         {
           id: 'incubating',
           label: isPolish ? 'Rośnie' : 'Growing',
-          icon: <Sprout size={14} className="text-emerald-400" />,
+          icon: <Sprout size={14} className="text-emerald-600 dark:text-emerald-300" />,
           count: ideasStageCounts.incubating,
         },
         {
           id: 'shaping',
           label: isPolish ? 'Kształtuje' : 'Shaping',
-          icon: <TreePine size={14} className="text-blue-400" />,
+          icon: <TreePine size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.shaping,
         },
         {
           id: 'ready',
           label: isPolish ? 'Gotowy' : 'Ready',
-          icon: <CheckCircle2 size={14} className="text-blue-400" />,
+          icon: <CheckCircle2 size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.ready,
         },
         {
           id: 'promoted',
           label: isPolish ? 'Promowany' : 'Promoted',
-          icon: <Rocket size={14} className="text-fuchsia-400" />,
+          icon: <Rocket size={14} className="text-primary-600 dark:text-primary-300" />,
           count: ideasStageCounts.promoted,
         },
       ];
@@ -3475,15 +3511,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               projectId={null}
               notebookId={notebookOpenId}
               notebookTitle={notebookOpenTitle}
-              onBackToLibrary={() => {
-                setNotebookOpenId(null);
-                setNotebookOpenTitle('');
-                setNotebookOpenPageId(null);
-                const next = new URLSearchParams(searchParams);
-                next.delete('notebook');
-                next.delete('note');
-                setSearchParams(next, { replace: false });
-              }}
+              onBackToLibrary={handleNotebookBackToLibrary}
               searchQuery={searchQuery}
               openPageId={notebookOpenPageId}
               pageStatusFilter={notebookPageStatusFilter}

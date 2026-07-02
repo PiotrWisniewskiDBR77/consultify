@@ -1132,7 +1132,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   }`}
                 >
                   <td
-                    className="relative px-2 py-3 align-middle"
+                    className="relative px-2 py-2.5 align-middle"
                     style={{ width: columnWidths.select }}
                   >
                     {rowAccentClass ? (
@@ -1157,7 +1157,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       />
                     </label>
                   </td>
-                  <td className="px-3 py-3 align-middle" style={{ width: columnWidths.title }}>
+                  <td className="px-3 py-2.5 align-middle" style={{ width: columnWidths.title }}>
                     <div className="flex items-center gap-1.5">
                       {onToggleFavorite ? (
                         <button
@@ -1196,7 +1196,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   </td>
                   {isColumnVisible('stage') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.stage }}
                     >
                       {renderStageBadge(idea.stage)}
@@ -1204,7 +1204,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('tags') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.tags }}
                     >
                       {renderTagBadges(idea.tags)}
@@ -1212,7 +1212,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('tool') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.tool }}
                     >
                       {renderToolBadge(idea.preferredTool)}
@@ -1220,14 +1220,14 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('date') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle text-[11px] font-medium leading-5 text-slate-500 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400"
+                      className="px-3 py-2.5 text-left align-middle text-[11px] font-medium leading-5 text-slate-500 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400"
                       style={{ width: columnWidths.date }}
                     >
                       {formatIdeaDate(idea)}
                     </td>
                   ) : null}
                   <td
-                    className="px-3 py-3 text-right align-middle"
+                    className="px-3 py-2.5 text-right align-middle"
                     style={{ width: columnWidths.actions }}
                     onClick={(event) => event.stopPropagation()}
                   >
