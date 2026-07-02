@@ -92,6 +92,7 @@ import {
 } from './toolAi/capabilityMapper';
 import {
   applyValueChainPendingAction,
+  buildValueChainConversationProtocol,
   buildValueChainFullSessionPrompt,
   buildValueChainLeversPrompt,
   buildValueChainRethinkPrompt,
@@ -236,7 +237,9 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         const interviewProtocol =
           toolType === 'dynamic-swot'
             ? buildDynamicSwotConversationProtocol(currentStepDef?.id)
-            : '';
+            : toolType === 'value-chain'
+              ? buildValueChainConversationProtocol(currentStepDef?.id)
+              : '';
 
         await startStream(
           message,
