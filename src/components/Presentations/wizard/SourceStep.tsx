@@ -58,11 +58,19 @@ function mapArtifactToSource(row: any): SourceArtifact {
         ? 'tool_session'
         : String(row?.outputType || row?.artifactFamily || 'report');
 
+  const dupCount = Number(row?.duplicateCount || 1);
+  const baseLabel = String(
+    row?.resolvedTitle || row?.titleSnapshot || row?.title || row?.name || type.replace(/_/g, ' ')
+  );
+
   return {
     type,
     id: recordId || String(row?.artifactId || row?.id || ''),
     artifactId: String(row?.artifactId || row?.id || recordId),
-    label: String(row?.titleSnapshot || row?.title || row?.name || type.replace(/_/g, ' ')),
+    // Presentational dedup: show a "· N wersji" hint so the user knows older
+    // versions were collapsed (server keeps them; only one row is shown).
+    label: dupCount > 1 ? `${baseLabel} · ${dupCount} wersje` : baseLabel,
+    isDraft: Boolean(row?.isDraft),
     confidence:
       typeof row?.trustScore === 'number'
         ? row.trustScore
@@ -101,12 +109,16 @@ export const SourceStep: React.FC<SourceStepProps> = ({
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [visibleCount, setVisibleCount] = useState(12);
+  // M17 junk filter (S6.3): default picker shows only real/final artifacts.
+  // The "Pokaż robocze" toggle asks the server to include drafts.
+  const [showDrafts, setShowDrafts] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoadingArtifacts(true);
     setArtifactError(null);
-    Api.get('/artifacts?limit=80')
+    // Server excludes drafts + dedupes by default; opt into drafts explicitly.
+    Api.get(`/artifacts?limit=80${showDrafts ? '&include=drafts' : ''}`)
       .then((res) => {
         const data = unwrap<any>(res);
         const rows = Array.isArray(data?.items)
@@ -132,7 +144,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [t, showDrafts]);
 
   const artifactTypes = useMemo(
     () => [
@@ -186,7 +198,21 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               )}
             </p>
           </div>
-          {loadingArtifacts && <Loader2 className="h-5 w-5 animate-spin text-primary-500" />}
+          <div className="flex items-center gap-3">
+            {loadingArtifacts && <Loader2 className="h-5 w-5 animate-spin text-primary-500" />}
+            <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={showDrafts}
+                onChange={(event) => {
+                  setShowDrafts(event.target.checked);
+                  setVisibleCount(12);
+                }}
+                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/40 dark:border-navy-600"
+              />
+              {t('presentations.sources.showDrafts', 'Pokaż robocze')}
+            </label>
+          </div>
         </div>
 
         <div className="mt-4 grid gap-2 md:grid-cols-[1fr_180px]">

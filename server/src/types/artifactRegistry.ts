@@ -106,6 +106,8 @@ export interface ArtifactRecord {
   sourceInitiativeId: string | null;
   aiGovernancePresetRef: string | null;
   originSummary: Record<string, unknown> | null;
+  /** Presentational draft/junk flag. true = throwaway/test/draft, hidden from default listings. */
+  isDraft: boolean;
   createdBy: string;
   createdAt: string;
   lastTransitionAt: string;
@@ -147,6 +149,14 @@ export interface ArtifactListItem extends ArtifactRecord {
   publishReviewers: string[];
   reviewGateCount: number;
   ownerName: string | null;
+  /**
+   * Presentational dedup metadata. When identical name+type+origin artifacts
+   * collapse into one list row, the newest is kept and this reports how many
+   * older versions it stands in for (1 = unique, no duplicates hidden).
+   */
+  duplicateCount: number;
+  /** Artifact IDs of the older duplicates collapsed under this row (newest→oldest). */
+  duplicateArtifactIds: string[];
 }
 
 export interface ArtifactListFilters {
@@ -159,6 +169,18 @@ export interface ArtifactListFilters {
   limit?: number;
   onlyMine?: boolean;
   reviewSharedForUserId?: string;
+  /**
+   * Draft handling for the M17 junk filter (S6.3):
+   *   - undefined / 'exclude' → only real/final artifacts (default listing).
+   *   - 'include'             → real + drafts (for the "Robocze" view).
+   *   - 'only'                → drafts only.
+   */
+  drafts?: 'exclude' | 'include' | 'only';
+  /**
+   * Collapse identical name+type+origin duplicates into a single newest row
+   * with a version count. Presentational only — no data is mutated. Defaults on.
+   */
+  dedupe?: boolean;
 }
 
 export interface RegisterArtifactOriginParams {

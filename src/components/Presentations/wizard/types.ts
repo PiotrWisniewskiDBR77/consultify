@@ -516,6 +516,8 @@ export interface SourceArtifact {
     recordId?: string;
     family?: string;
   };
+  /** Draft/throwaway flag (M17 junk filter). Hidden from the default picker. */
+  isDraft?: boolean;
   data?: unknown;
 }
 

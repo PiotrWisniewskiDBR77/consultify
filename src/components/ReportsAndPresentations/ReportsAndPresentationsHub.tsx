@@ -87,6 +87,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  // M17 junk filter (S6.3): OFF by default so the hub shows only real/final
+  // outputs (server excludes drafts + dedupes). Toggle surfaces the "Robocze" set.
+  const [showDrafts, setShowDrafts] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search || '');
@@ -140,6 +143,16 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   } = useSheetOutputs();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Re-pull the active list whenever the "Pokaż robocze" toggle flips. Each
+  // fetcher accepts includeDrafts and appends ?include=drafts server-side.
+  useEffect(() => {
+    void refetchArtifactOutputs(showDrafts);
+    void fetchReports(showDrafts);
+    void fetchPresentations(showDrafts);
+    void fetchSheets(showDrafts);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDrafts]);
 
   const tabs = useMemo(
     () => [
@@ -273,8 +286,24 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
     const activeCount = activeFilters.length;
 
+    const draftsToggle = (
+      <button
+        type="button"
+        onClick={() => setShowDrafts((v) => !v)}
+        className={`${chipBase} ${
+          showDrafts
+            ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
+            : 'bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 border-slate-200/70 dark:border-white/[0.08] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+        }`}
+        title={t('rap.filters.showDrafts', 'Pokaż robocze')}
+        aria-pressed={showDrafts}
+      >
+        <span>{t('rap.filters.showDrafts', 'Pokaż robocze')}</span>
+      </button>
+    );
+
     if (activeTab === 'outputs_sheets') {
-      return <div className="relative flex items-center" />;
+      return <div className="relative flex items-center gap-2">{draftsToggle}</div>;
     }
 
     const isAggregateTab =
@@ -474,7 +503,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       ) : null;
 
     return (
-      <div className="relative flex items-center">
+      <div className="relative flex items-center gap-2">
+        {draftsToggle}
         {reportCanon}
         <button
           type="button"
@@ -685,7 +715,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         )}
       </div>
     );
-  }, [activeFilters, activeTab, filtersOpen, setSinglePreset, t, toggleFilter]);
+  }, [activeFilters, activeTab, filtersOpen, setSinglePreset, showDrafts, t, toggleFilter]);
 
   const commandRowLeftSlot = useMemo(() => {
     const chipBase = '';
