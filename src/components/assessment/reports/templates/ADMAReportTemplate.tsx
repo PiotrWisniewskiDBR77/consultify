@@ -30,6 +30,12 @@ import {
 } from '../../../../services/admaStructure';
 import { computeADMATransformationScores } from '../../../../services/admaTransformations';
 import { ADMAAssessmentData, ADMAPillarId } from '../../../../types';
+import { buildADMAConclusionModel } from '../../../../services/report/admaConclusion';
+import {
+  ConclusionExecutiveSummary,
+  ConclusionGapCards,
+  FoFRoadBar,
+} from '../ConclusionSummary';
 
 interface ADMAReportTemplateProps {
   data: ADMAAssessmentData;
@@ -101,6 +107,32 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
     fofBenchmark: 4.0,
   });
 
+  // Conclusion layer (WNIOSKOWA) — deterministic, engine-grounded (OXFORD O2.2).
+  const conclusion = buildADMAConclusionModel(data, 'pl', 4.0);
+  const execVM = {
+    headline: conclusion.executiveSummary.headline,
+    k1_state: conclusion.executiveSummary.k1_state,
+    k2_meaning: conclusion.executiveSummary.k2_meaning,
+    k3_threeGaps: conclusion.executiveSummary.k3_threeGaps,
+    k4_whatFirst: conclusion.executiveSummary.k4_whatFirst,
+    k5_effect: conclusion.executiveSummary.k5_effect,
+    confidence: conclusion.executiveSummary.confidence,
+  };
+  const gapCardVMs = conclusion.gapCards.map((c) => ({
+    title: `${c.dimensionName} (${c.pillarName})`,
+    badge: `${c.current} → ${c.target} · luka ${c.gap}`,
+    whatIs: c.whatIs,
+    whatItMeans: c.whatItMeans,
+    whatToDo: c.whatToDo,
+    effect: c.effect,
+  }));
+  const fofItemVMs = conclusion.fofRoad.all.map((t) => ({
+    name: t.name,
+    current: t.current,
+    gapToFoF: t.gapToFoF,
+    atOrAboveFoF: t.atOrAboveFoF,
+  }));
+
   return (
     <div className="bg-white dark:bg-navy-950 min-h-full p-8 print:p-0">
       {/* Header */}
@@ -138,11 +170,45 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
         </div>
       )}
 
-      {/* Executive Summary */}
+      {/* Executive Summary — WNIOSKOWA (answer-first verdict, K1→K2→K3→K4) */}
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={20} />
           Podsumowanie Wykonawcze
+        </h2>
+        <ConclusionExecutiveSummary vm={execVM} language="pl" />
+      </section>
+
+      {/* Road to Factory of the Future (FoF≥4) — explicit bar */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <TrendingUp size={20} />
+          Droga do Factory of the Future (FoF ≥ 4)
+        </h2>
+        <FoFRoadBar
+          benchmark={conclusion.fofRoad.benchmark}
+          items={fofItemVMs}
+          summary={conclusion.fofRoad.summary}
+          language="pl"
+        />
+      </section>
+
+      {/* Key Gaps — co jest → co znaczy → co robić → efekt */}
+      {gapCardVMs.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+            <TrendingUp size={20} />
+            Kluczowe Luki — Priorytety
+          </h2>
+          <ConclusionGapCards cards={gapCardVMs} language="pl" />
+        </section>
+      )}
+
+      {/* Score Snapshot (supporting evidence for the verdict above) */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <BarChart3 size={20} />
+          Wyniki (dowód)
         </h2>
         <div className="grid grid-cols-6 gap-4">
           {/* Overall Score */}
