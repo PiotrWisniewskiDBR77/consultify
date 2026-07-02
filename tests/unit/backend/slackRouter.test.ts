@@ -97,7 +97,7 @@ describe('slackRouter.routeToSlack', () => {
     expect(body.text).toBe('Database unreachable');
   });
 
-  it('builds a watch/phone-friendly headline when category is provided', async () => {
+  it('builds a natural PREVIEW (text) + Block Kit when category is provided', async () => {
     process.env.SLACK_BOT_TOKEN = 'xoxb-test';
     process.env.SLACK_CHANNEL_FEEDBACK_ID = 'C_FB';
     const fetchMock = mockFetchOk({ ok: true, ts: '1.2', channel: 'C_FB' });
@@ -107,16 +107,21 @@ describe('slackRouter.routeToSlack', () => {
       category: 'Błąd',
       priorityLabel: 'HIGH',
       // Title carries Slack markup + :emoji: codes that must be stripped from the
-      // notification line so the watch preview is clean.
+      // notification preview so the phone reads it cleanly.
       title: ':bug: *M15 Rezultaty: wykresy nie renderują się*',
       text: 'Szczegóły zgłoszenia w treści',
     });
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    // Front-loaded, scannable, no markdown/emoji-codes in the title part.
+    // `text` = the notification PREVIEW the phone reads: a natural sentence
+    // (emoji + category (priority): title — body snippet), no markdown/codes.
     expect(body.text).toBe(
-      '🐛 Błąd · HIGH · M15 Rezultaty: wykresy nie renderują się\nSzczegóły zgłoszenia w treści'
+      '🐛 Błąd (HIGH): M15 Rezultaty: wykresy nie renderują się — Szczegóły zgłoszenia w treści'
     );
+    // Visual Block Kit is auto-built (header + title + body) for Slack itself.
+    expect(Array.isArray(body.blocks)).toBe(true);
+    expect(body.blocks[0].type).toBe('header');
+    expect(String(body.blocks[0].text.text)).toContain('Błąd');
   });
 
   it('sends the caller text verbatim when no category (back-compat)', async () => {

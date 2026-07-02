@@ -71,20 +71,46 @@ function categoryEmoji(category: string | undefined, severity?: SlackSeverity): 
   return '🔔';
 }
 
-/**
- * Build the front-loaded notification line. Strips Slack `:emoji:` codes and
- * bold `*markers*` from the incoming title so the phone/watch preview is clean.
- */
-function buildHeadline(event: RouteToSlackEvent): string {
-  const emoji = categoryEmoji(event.category, event.severity);
-  const cleanTitle = String(event.title || '')
+/** Remove Slack `:codes:` and markdown markers so a preview reads cleanly aloud. */
+function stripForPreview(s: string): string {
+  return String(s || '')
     .replace(/:[a-z0-9_+-]+:/gi, '')
-    .replace(/[*_`]/g, '')
+    .replace(/[*_`>]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
-  const parts = [event.category?.trim(), event.priorityLabel?.trim(), cleanTitle].filter(
-    (p) => p && p.length > 0
-  );
-  return `${emoji} ${parts.join(' · ')}`.trim();
+}
+
+/**
+ * Push-notification PREVIEW text — this is what a phone reads out / shows on the
+ * lock screen (Slack uses the message `text` field as the notification fallback,
+ * not the blocks). A natural sentence, not `·`-separated fragments, so TTS is
+ * legible: `🐛 Błąd (HIGH): <tytuł> — <pierwsze zdanie opisu>`.
+ */
+function buildPreview(event: RouteToSlackEvent, body: string): string {
+  const emoji = categoryEmoji(event.category, event.severity);
+  const cat = stripForPreview(event.category || '');
+  const prio = stripForPreview(event.priorityLabel || '');
+  const title = stripForPreview(event.title || '');
+  const snippet = stripForPreview(body).slice(0, 140);
+  const head = `${cat}${prio ? ` (${prio})` : ''}${title ? `: ${title}` : ''}`.trim();
+  return `${emoji} ${head}${snippet && snippet !== title ? ` — ${snippet}` : ''}`.trim();
+}
+
+/** Visual Block Kit for Slack itself (header + body). Preview stays in `text`. */
+function buildAutoBlocks(event: RouteToSlackEvent, body: string): unknown[] {
+  const emoji = categoryEmoji(event.category, event.severity);
+  const cat = stripForPreview(event.category || '');
+  const prio = stripForPreview(event.priorityLabel || '');
+  const title = stripForPreview(event.title || '');
+  const headerText = `${emoji} ${cat}${prio ? ` · ${prio}` : ''}`.trim().slice(0, 150);
+  const blocks: unknown[] = [
+    { type: 'header', text: { type: 'plain_text', text: headerText || 'Consultify', emoji: true } },
+  ];
+  if (title) blocks.push({ type: 'section', text: { type: 'mrkdwn', text: `*${title}*` } });
+  if (body && body.trim()) {
+    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: body.slice(0, 2900) } });
+  }
+  return blocks;
 }
 
 export interface RouteToSlackResult {
@@ -272,13 +298,20 @@ async function postViaWebhook(
  */
 export async function routeToSlack(rawEvent: RouteToSlackEvent): Promise<RouteToSlackResult> {
   try {
-    // Compose a watch/phone-friendly outgoing text: a scannable headline
-    // (category · priority · title) followed by the detail body. When no
-    // category is given, the caller's text is sent verbatim (back-compat).
+    // Compose message. When a `category` is given we split the payload:
+    //  - `text`  = natural-language PREVIEW (what the phone reads / shows on the
+    //              lock screen — Slack uses `text` as the notification fallback),
+    //  - `blocks` = pretty Block Kit for Slack itself (unless the caller passed
+    //               its own blocks). This is what makes notifications legible on
+    //               a watch/phone. Without a category the caller's text/blocks
+    //               are sent verbatim (back-compat).
     const event: RouteToSlackEvent = rawEvent.category
       ? {
           ...rawEvent,
-          text: `${buildHeadline(rawEvent)}${rawEvent.text ? `\n${rawEvent.text}` : ''}`,
+          text: buildPreview(rawEvent, rawEvent.text || ''),
+          blocks: Array.isArray(rawEvent.blocks)
+            ? rawEvent.blocks
+            : buildAutoBlocks(rawEvent, rawEvent.text || ''),
         }
       : rawEvent;
 
