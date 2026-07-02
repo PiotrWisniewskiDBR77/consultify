@@ -254,10 +254,10 @@ export const MeetingHub: React.FC = () => {
         width: '280px',
         render: (row: MeetingItem) => (
           <div className="min-w-0">
-            <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+            <div className="text-sm font-medium text-c-text-secondary truncate">
               {row.title}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+            <div className="text-xs text-c-text-muted truncate">
               {row.location || (t('meeting.noLocation2'))}
             </div>
           </div>
@@ -269,7 +269,7 @@ export const MeetingHub: React.FC = () => {
         width: '180px',
         sortable: true,
         render: (row: MeetingItem) => (
-          <span className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="text-sm text-c-text-secondary">
             {formatDateTime(row.startAt, isPolish)}
           </span>
         ),
@@ -279,7 +279,7 @@ export const MeetingHub: React.FC = () => {
         label: t('meeting.columns.attendees', 'Attendees'),
         width: '120px',
         render: (row: MeetingItem) => (
-          <span className="text-sm text-slate-600 dark:text-slate-300">{row.attendees.length}</span>
+          <span className="text-sm text-c-text-secondary">{row.attendees.length}</span>
         ),
       },
       {
@@ -316,7 +316,7 @@ export const MeetingHub: React.FC = () => {
         label: t('meeting.columns.followUps', 'Follow-ups'),
         width: '110px',
         render: (row: MeetingItem) => (
-          <span className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="text-sm text-c-text-secondary">
             {row.followUps.filter((item) => item.status === 'open').length}
           </span>
         ),
@@ -633,7 +633,7 @@ export const MeetingHub: React.FC = () => {
           </button>
         }
         rightControls={
-          <div className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] px-3 h-9 text-xs text-slate-500 dark:text-slate-400">
+          <div className="inline-flex items-center rounded-full border border-c-border-subtle px-3 h-9 text-xs text-c-text-muted">
             {loading ? (
               <>
                 <Loader2 size={12} className="mr-2 animate-spin" />
@@ -765,22 +765,22 @@ export const MeetingHub: React.FC = () => {
 
       {showCreateModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-c-border-subtle">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                <div className="text-sm font-semibold text-c-text">
                   {editingId
                     ? t('meeting.modal.editTitle', 'Edit meeting')
                     : t('meeting.modal.title', 'Create meeting')}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-c-text-muted">
                   {t('meeting.modal.subtitle', 'Agenda + pre-read + follow-up workspace')}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={closeMeetingModal}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                className="p-2 rounded-lg hover:bg-c-surface-raised"
               >
                 <X size={16} />
               </button>
@@ -789,14 +789,14 @@ export const MeetingHub: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
               <Field label={t('meeting.fields.title', 'Title')}>
                 <input
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={draft.title}
                   onChange={(e) => setDraft((prev) => ({ ...prev, title: e.target.value }))}
                 />
               </Field>
               <Field label={t('meeting.fields.location', 'Location / link')}>
                 <input
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={draft.location}
                   onChange={(e) => setDraft((prev) => ({ ...prev, location: e.target.value }))}
                 />
@@ -804,7 +804,7 @@ export const MeetingHub: React.FC = () => {
               <Field label={t('meeting.fields.start', 'Start')}>
                 <input
                   type="datetime-local"
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={draft.startAt}
                   onChange={(e) => setDraft((prev) => ({ ...prev, startAt: e.target.value }))}
                 />
@@ -812,21 +812,21 @@ export const MeetingHub: React.FC = () => {
               <Field label={t('meeting.fields.end', 'End')}>
                 <input
                   type="datetime-local"
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={draft.endAt}
                   onChange={(e) => setDraft((prev) => ({ ...prev, endAt: e.target.value }))}
                 />
               </Field>
               <Field label={t('meeting.fields.attendees', 'Attendees, one per line')}>
                 <textarea
-                  className="min-h-28 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="min-h-28 w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={draft.attendees}
                   onChange={(e) => setDraft((prev) => ({ ...prev, attendees: e.target.value }))}
                 />
               </Field>
               <Field label={t('meeting.fields.preRead', 'Pre-read links, one per line')}>
                 <textarea
-                  className="min-h-28 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="min-h-28 w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={draft.preRead}
                   onChange={(e) => setDraft((prev) => ({ ...prev, preRead: e.target.value }))}
                 />
@@ -834,7 +834,7 @@ export const MeetingHub: React.FC = () => {
               <div className="md:col-span-2">
                 <Field label={t('meeting.fields.agenda', 'Agenda items, one per line')}>
                   <textarea
-                    className="min-h-32 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                    className="min-h-32 w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                     value={draft.agenda}
                     onChange={(e) => setDraft((prev) => ({ ...prev, agenda: e.target.value }))}
                   />
@@ -842,15 +842,15 @@ export const MeetingHub: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between px-5 py-4 border-t border-slate-200 dark:border-navy-700">
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between px-5 py-4 border-t border-c-border-subtle">
+              <div className="text-xs text-c-text-muted">
                 {t('meeting.modal.note', 'Meeting details are stored in the shared workspace.')}
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={closeMeetingModal}
-                  className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+                  className="h-9 px-4 rounded-full border border-c-border text-sm"
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>
@@ -870,20 +870,20 @@ export const MeetingHub: React.FC = () => {
       ) : null}
       {showDecisionModal && activeMeeting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-c-border-subtle">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                <div className="text-sm font-semibold text-c-text">
                   {t('meeting.decisions.title', 'Add decision')}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-c-text-muted">
                   {activeMeeting.title}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowDecisionModal(false)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                className="p-2 rounded-lg hover:bg-c-surface-raised"
               >
                 <X size={16} />
               </button>
@@ -891,17 +891,17 @@ export const MeetingHub: React.FC = () => {
             <div className="space-y-4 p-5">
               <Field label={t('meeting.decisions.fields.value', 'Decision')}>
                 <textarea
-                  className="min-h-32 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="min-h-32 w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={decisionDraft}
                   onChange={(e) => setDecisionDraft(e.target.value)}
                 />
               </Field>
             </div>
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
               <button
                 type="button"
                 onClick={() => setShowDecisionModal(false)}
-                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+                className="h-9 px-4 rounded-full border border-c-border text-sm"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -918,20 +918,20 @@ export const MeetingHub: React.FC = () => {
       ) : null}
       {showFollowUpModal && activeMeeting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-c-border-subtle">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                <div className="text-sm font-semibold text-c-text">
                   {t('meeting.followUp.title', 'Add follow-up')}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-c-text-muted">
                   {activeMeeting.title}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowFollowUpModal(false)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                className="p-2 rounded-lg hover:bg-c-surface-raised"
               >
                 <X size={16} />
               </button>
@@ -939,24 +939,24 @@ export const MeetingHub: React.FC = () => {
             <div className="space-y-4 p-5">
               <Field label={t('meeting.followUp.fields.title', 'Action item')}>
                 <input
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={followUpDraft.title}
                   onChange={(e) => setFollowUpDraft((prev) => ({ ...prev, title: e.target.value }))}
                 />
               </Field>
               <Field label={t('meeting.followUp.fields.owner', 'Owner')}>
                 <input
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                   value={followUpDraft.owner}
                   onChange={(e) => setFollowUpDraft((prev) => ({ ...prev, owner: e.target.value }))}
                 />
               </Field>
             </div>
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
               <button
                 type="button"
                 onClick={() => setShowFollowUpModal(false)}
-                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+                className="h-9 px-4 rounded-full border border-c-border text-sm"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -973,21 +973,21 @@ export const MeetingHub: React.FC = () => {
       ) : null}
       {showNotesModal && activeMeeting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-c-border-subtle max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white inline-flex items-center gap-2">
-                  <Sparkles size={16} className="text-primary-600" />
+                <div className="text-sm font-semibold text-c-text inline-flex items-center gap-2">
+                  <Sparkles size={16} className="text-c-text-secondary" />
                   {t('meeting.aiMeetingNotes2')}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-c-text-muted">
                   {activeMeeting.title}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowNotesModal(false)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                className="p-2 rounded-lg hover:bg-c-surface-raised"
               >
                 <X size={16} />
               </button>
@@ -998,7 +998,7 @@ export const MeetingHub: React.FC = () => {
                   label={t('meeting.pasteTheMeetingTranscript2')}
                 >
                   <textarea
-                    className="w-full min-h-[180px] rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                    className="w-full min-h-[180px] rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
                     placeholder={
                       t('meeting.pasteTheTranscriptTeresaWillExtract2')
                     }
@@ -1017,19 +1017,19 @@ export const MeetingHub: React.FC = () => {
                     </div>
                   )}
                   <div>
-                    <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                    <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
                       {t('meeting.summary2')}
                     </div>
-                    <p className="text-sm text-slate-700 dark:text-slate-200">
+                    <p className="text-sm text-c-text-secondary">
                       {generatedNote.summary}
                     </p>
                   </div>
                   {Array.isArray(generatedNote.keyPoints) && generatedNote.keyPoints.length > 0 && (
                     <div>
-                      <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                      <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
                         {t('meeting.keyPoints2')}
                       </div>
-                      <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                      <ul className="list-disc pl-5 text-sm text-c-text-secondary space-y-1">
                         {generatedNote.keyPoints.map((kp: string, i: number) => (
                           <li key={i}>{kp}</li>
                         ))}
@@ -1038,10 +1038,10 @@ export const MeetingHub: React.FC = () => {
                   )}
                   {Array.isArray(generatedNote.decisions) && generatedNote.decisions.length > 0 && (
                     <div>
-                      <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                      <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
                         {t('meeting.decisionsSaved2')}
                       </div>
-                      <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                      <ul className="list-disc pl-5 text-sm text-c-text-secondary space-y-1">
                         {generatedNote.decisions.map((d: any, i: number) => (
                           <li key={i}>{d?.decision || String(d)}</li>
                         ))}
@@ -1051,15 +1051,15 @@ export const MeetingHub: React.FC = () => {
                   {Array.isArray(generatedNote.actionItems) &&
                     generatedNote.actionItems.length > 0 && (
                       <div>
-                        <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                        <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
                           {t('meeting.actionItemsSavedAsFollowUps2')}
                         </div>
-                        <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                        <ul className="list-disc pl-5 text-sm text-c-text-secondary space-y-1">
                           {generatedNote.actionItems.map((a: any, i: number) => (
                             <li key={i}>
                               {a?.task || String(a)}
                               {a?.owner ? (
-                                <span className="text-slate-600 dark:text-slate-400">
+                                <span className="text-c-text-secondary">
                                   {' '}
                                   — {a.owner}
                                 </span>
@@ -1072,11 +1072,11 @@ export const MeetingHub: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
               <button
                 type="button"
                 onClick={() => setShowNotesModal(false)}
-                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+                className="h-9 px-4 rounded-full border border-c-border text-sm"
               >
                 {generatedNote ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
               </button>
@@ -1099,27 +1099,27 @@ export const MeetingHub: React.FC = () => {
       ) : null}
       {deleteTarget ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
-            <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl bg-c-surface border border-c-border-subtle">
+            <div className="px-5 py-4 border-b border-c-border-subtle">
+              <div className="text-sm font-semibold text-c-text">
                 {t('meeting.delete.title', 'Delete meeting')}
               </div>
             </div>
-            <div className="px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
+            <div className="px-5 py-4 text-sm text-c-text-secondary">
               {t(
                 'meeting.delete.confirm',
                 'This permanently removes the meeting, its decisions, and follow-ups. This cannot be undone.'
               )}
-              <div className="mt-2 font-medium text-slate-900 dark:text-white">
+              <div className="mt-2 font-medium text-c-text">
                 {deleteTarget.title}
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}
-                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm disabled:opacity-60"
+                className="h-9 px-4 rounded-full border border-c-border text-sm disabled:opacity-60"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -1142,7 +1142,7 @@ export const MeetingHub: React.FC = () => {
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <label className="block">
-    <div className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">{label}</div>
+    <div className="mb-1.5 text-xs font-medium text-c-text-muted">{label}</div>
     {children}
   </label>
 );
@@ -1181,16 +1181,16 @@ const MeetingDetailView: React.FC<{
   const { t } = useTranslation();
   return (
   <div className="p-4 lg:p-6">
-    <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200/70 dark:border-white/[0.08]">
+    <div className="rounded-2xl border border-c-border-subtle bg-white/80 dark:bg-white/[0.04] overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
         <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
             {t('meeting.meetingLabel')}
           </div>
-          <div className="text-lg font-semibold text-slate-900 dark:text-white truncate">
+          <div className="text-lg font-semibold text-c-text truncate">
             {meeting.title}
           </div>
-          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <div className="mt-1 text-sm text-c-text-muted">
             {formatDateTime(meeting.startAt, isPolish)}
           </div>
         </div>
@@ -1198,7 +1198,7 @@ const MeetingDetailView: React.FC<{
           <button
             type="button"
             onClick={onEdit}
-            className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm font-medium"
+            className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
           >
             {t('meeting.edit2')}
           </button>
@@ -1212,7 +1212,7 @@ const MeetingDetailView: React.FC<{
           <button
             type="button"
             onClick={onToggleStatus}
-            className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm font-medium"
+            className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
           >
             {meeting.status === 'completed'
               ? t('meeting.markScheduled')
@@ -1221,7 +1221,7 @@ const MeetingDetailView: React.FC<{
           <button
             type="button"
             onClick={onAddDecision}
-            className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm font-medium"
+            className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
           >
             {t('meeting.addDecision2')}
           </button>
@@ -1244,7 +1244,7 @@ const MeetingDetailView: React.FC<{
           <button
             type="button"
             onClick={onBack}
-            className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+            className="h-9 px-4 rounded-full border border-c-border text-sm"
           >
             {t('meeting.backToList')}
           </button>
@@ -1283,8 +1283,8 @@ const MeetingDetailView: React.FC<{
           items={meeting.decisions}
           emptyLabel={t('meeting.noDecisionsYet')}
         />
-        <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3 lg:col-span-2">
-          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-white/[0.04] p-3 lg:col-span-2">
+          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             <CheckSquare2 size={14} />
             <span>{t('meeting.followUps2')}</span>
           </div>
@@ -1295,14 +1295,14 @@ const MeetingDetailView: React.FC<{
                   key={item.id}
                   type="button"
                   onClick={() => onToggleFollowUpStatus(item.id)}
-                  className="w-full rounded-xl border border-slate-200/70 dark:border-white/[0.08] px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                  className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left hover:bg-c-surface-raised"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      <div className="text-sm font-medium text-c-text truncate">
                         {item.title}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">{item.owner}</div>
+                      <div className="text-xs text-c-text-muted">{item.owner}</div>
                     </div>
                     <StatusChip
                       tone={item.status === 'done' ? 'success' : 'warning'}
@@ -1317,7 +1317,7 @@ const MeetingDetailView: React.FC<{
               ))}
             </div>
           ) : (
-            <div className="text-sm text-slate-600">
+            <div className="text-sm text-c-text-muted">
               {t('meeting.noFollowUpsYet')}
             </div>
           )}
@@ -1349,7 +1349,7 @@ const MeetingPreview: React.FC<{
   const pills: MetaPill[] = [
     {
       label: formatDateTime(meeting.startAt, isPolish),
-      className: 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300',
+      className: 'bg-slate-100 dark:bg-white/[0.06] text-c-text-secondary',
     },
   ];
 
@@ -1420,14 +1420,14 @@ const MeetingOperatorBriefCard: React.FC<{
   const { t } = useTranslation();
   return (
   <div
-    className={`rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-navy-900/40 p-3 ${className}`.trim()}
+    className={`rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 ${className}`.trim()}
   >
-    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
       <Sparkles size={14} />
       <span>{'Operator brief'}</span>
     </div>
     {loading ? (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="text-sm text-c-text-muted">
         {t('meeting.preparingMeetingBrief')}
       </div>
     ) : error ? (
@@ -1439,7 +1439,7 @@ const MeetingOperatorBriefCard: React.FC<{
           <button
             type="button"
             onClick={onRetry}
-            className="text-xs font-medium text-slate-600 dark:text-slate-300 underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
+            className="text-xs font-medium text-c-text-secondary underline underline-offset-2 hover:text-c-text"
           >
             {t('common.retry', 'Retry')}
           </button>
@@ -1447,16 +1447,16 @@ const MeetingOperatorBriefCard: React.FC<{
       </div>
     ) : brief ? (
       <div className="space-y-2">
-        <div className="text-sm text-slate-700 dark:text-slate-200">{brief.prepSummary}</div>
+        <div className="text-sm text-c-text-secondary">{brief.prepSummary}</div>
         {Array.isArray(brief.agendaGaps) && brief.agendaGaps.length ? (
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-xs text-c-text-muted">
             {(brief.agendaGaps as string[]).slice(0, 2).join(' • ')}
           </div>
         ) : null}
         {Array.isArray(brief.followUpSuggestions) && brief.followUpSuggestions.length ? (
           <div className="space-y-1">
             {(brief.followUpSuggestions as string[]).slice(0, 3).map((item) => (
-              <div key={item} className="text-xs text-slate-600 dark:text-slate-300">
+              <div key={item} className="text-xs text-c-text-secondary">
                 {item}
               </div>
             ))}
@@ -1464,7 +1464,7 @@ const MeetingOperatorBriefCard: React.FC<{
         ) : null}
       </div>
     ) : (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="text-sm text-c-text-muted">
         {t('meeting.noOperatorBrief')}
       </div>
     )}
@@ -1478,21 +1478,21 @@ const PreviewSection: React.FC<{
   items: string[];
   emptyLabel: string;
 }> = ({ icon, title, items, emptyLabel }) => (
-  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+  <div className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-white/[0.04] p-3">
+    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
       {icon}
       <span>{title}</span>
     </div>
     {items.length ? (
       <div className="space-y-1.5">
         {items.map((item, idx) => (
-          <div key={`${title}-${idx}`} className="text-sm text-slate-700 dark:text-slate-200">
+          <div key={`${title}-${idx}`} className="text-sm text-c-text-secondary">
             {item}
           </div>
         ))}
       </div>
     ) : (
-      <div className="text-sm text-slate-600">{emptyLabel}</div>
+      <div className="text-sm text-c-text-muted">{emptyLabel}</div>
     )}
   </div>
 );
@@ -1560,7 +1560,7 @@ const MeetingCalendarView: React.FC<{
   return (
     <div className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-sm font-semibold capitalize text-slate-900 dark:text-white">
+        <div className="text-sm font-semibold capitalize text-c-text">
           {monthLabel}
         </div>
         <div className="flex items-center gap-1.5">
@@ -1568,14 +1568,14 @@ const MeetingCalendarView: React.FC<{
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
             aria-label={t('meeting.previousMonth')}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-c-border text-c-text-muted hover:bg-c-surface-raised"
           >
             <ChevronLeft size={16} />
           </button>
           <button
             type="button"
             onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
-            className="h-8 rounded-full border border-slate-200 px-3 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
+            className="h-8 rounded-full border border-c-border px-3 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised"
           >
             {t('meeting.today')}
           </button>
@@ -1583,7 +1583,7 @@ const MeetingCalendarView: React.FC<{
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
             aria-label={t('meeting.nextMonth')}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-c-border text-c-text-muted hover:bg-c-surface-raised"
           >
             <ChevronRight size={16} />
           </button>
@@ -1594,14 +1594,14 @@ const MeetingCalendarView: React.FC<{
         {weekdayLabels.map((label) => (
           <div
             key={label}
-            className="px-2 py-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500"
+            className="px-2 py-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-c-text-muted"
           >
             {label}
           </div>
         ))}
       </div>
 
-      <div className="grid flex-1 grid-cols-7 grid-rows-6 gap-px overflow-auto rounded-xl border border-slate-200 bg-slate-200 dark:border-white/[0.08] dark:bg-white/[0.06]">
+      <div className="grid flex-1 grid-cols-7 grid-rows-6 gap-px overflow-auto rounded-xl border border-c-border-subtle bg-c-border-subtle">
         {weeks.flat().map((date) => {
           const key = dayKey(date);
           const inMonth = date.getMonth() === cursor.getMonth();
@@ -1611,7 +1611,7 @@ const MeetingCalendarView: React.FC<{
             <div
               key={key}
               className={`min-h-[88px] p-1.5 ${
-                inMonth ? 'bg-white dark:bg-navy-900' : 'bg-slate-50 dark:bg-white/[0.02]'
+                inMonth ? 'bg-c-surface' : 'bg-c-bg'
               }`}
             >
               <div className="mb-1 flex items-center justify-between">
@@ -1620,8 +1620,8 @@ const MeetingCalendarView: React.FC<{
                     isToday
                       ? 'bg-navy-900 font-semibold text-white dark:bg-slate-100 dark:text-navy-950'
                       : inMonth
-                        ? 'text-slate-600 dark:text-slate-300'
-                        : 'text-slate-600 dark:text-slate-400'
+                        ? 'text-c-text-secondary'
+                        : 'text-c-text-secondary'
                   }`}
                 >
                   {date.getDate()}
@@ -1648,7 +1648,7 @@ const MeetingCalendarView: React.FC<{
                   </button>
                 ))}
                 {dayMeetings.length > 3 ? (
-                  <div className="px-1.5 text-[10px] text-slate-600 dark:text-slate-500">
+                  <div className="px-1.5 text-[10px] text-c-text-muted">
                     +{dayMeetings.length - 3} {t('meeting.more')}
                   </div>
                 ) : null}
