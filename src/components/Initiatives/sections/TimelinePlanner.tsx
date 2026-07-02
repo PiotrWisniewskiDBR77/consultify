@@ -162,7 +162,7 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
     icon: PauseCircle,
     label: 'Pause',
     labelPl: 'Pauza',
-    color: 'text-slate-500',
+    color: 'text-c-text-muted',
     bgTint: 'bg-slate-500/4',
     shortLabel: 'P',
   },
@@ -953,7 +953,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 8, scale: 0.98 }}
         transition={{ duration: 0.16 }}
-        className="w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-xl overflow-hidden"
+        className="w-full max-w-2xl rounded-2xl border border-c-border dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">
@@ -961,12 +961,12 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
           {step === 1 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                <span className="text-xs font-medium text-c-text-secondary">
                   {t('initiatives.timelinePlanner.whatToAdd')}
                 </span>
                 <button
                   onClick={onClose}
-                  className="text-slate-600 hover:text-slate-600 transition-colors"
+                  className="text-c-text-secondary hover:text-c-text-secondary transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -983,10 +983,10 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     >
                       <Icon size={16} className={`${meta.color} mt-0.5 flex-shrink-0`} />
                       <div className="min-w-0">
-                        <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <div className="text-xs font-medium text-c-text-secondary">
                           {isPolish ? at.labelPl : at.label}
                         </div>
-                        <div className="text-[9px] text-slate-600 mt-0.5">
+                        <div className="text-[9px] text-c-text-secondary mt-0.5">
                           {isPolish ? at.descPl : at.desc}
                         </div>
                       </div>
@@ -1004,11 +1004,11 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setStep(1)}
-                    className="text-[10px] text-slate-600 hover:text-slate-600 transition-colors"
+                    className="text-[10px] text-c-text-secondary hover:text-c-text-secondary transition-colors"
                   >
                     ← {t('initiatives.timelinePlanner.back')}
                   </button>
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                  <span className="text-xs font-medium text-c-text-secondary">
                     {isPolish
                       ? ROW_TYPE_META[selectedType].labelPl
                       : ROW_TYPE_META[selectedType].label}
@@ -1016,7 +1016,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 </div>
                 <button
                   onClick={onClose}
-                  className="text-slate-600 hover:text-slate-600 transition-colors"
+                  className="text-c-text-secondary hover:text-c-text-secondary transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -1024,7 +1024,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
 
               {/* Name */}
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
+                <label className="text-[10px] text-c-text-muted block mb-1">
                   {t('initiatives.timelinePlanner.name')} *
                 </label>
                 <input
@@ -1033,7 +1033,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t('initiatives.timelinePlanner.itemNamePlaceholder')}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
                   autoFocus
                 />
               </div>
@@ -1041,7 +1041,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {/* Source selectors */}
               {selectedType === 'task' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.selectTaskFromList')} *
                   </label>
                   <select
@@ -1055,7 +1055,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         if (t.estimatedHours != null) setEstimatedHours(String(t.estimatedHours));
                       }
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectTask')} —</option>
                     {taskOptions.map((t) => (
@@ -1069,7 +1069,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
 
               {selectedType === 'decision' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.selectDecisionFromList')} *
                   </label>
                   <select
@@ -1080,7 +1080,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       const d = decisionOptions.find((x) => x.id === id);
                       if (d) setName(d.title);
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectDecision')} —</option>
                     {decisionOptions.map((d) => (
@@ -1094,7 +1094,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
 
               {selectedType === 'milestone' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.selectMilestoneFromList')} *
                   </label>
                   <select
@@ -1108,7 +1108,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         if (!fixedDate) setFixedDate(toISO(m.date));
                       }
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectMilestone')} —</option>
                     {milestoneOptions.map((m) => (
@@ -1122,7 +1122,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
 
               {/* Scheduling mode */}
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1.5">
+                <label className="text-[10px] text-c-text-muted block mb-1.5">
                   {t('initiatives.timelinePlanner.startTrigger')}
                 </label>
                 <div className="flex gap-2">
@@ -1134,7 +1134,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'dependency'
                         ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                        : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
+                        : 'border-c-border text-c-text-muted hover:border-c-border'
                     }`}
                   >
                     {t('initiatives.timelinePlanner.fromDependencySystem')}
@@ -1147,7 +1147,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'date'
                         ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                        : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
+                        : 'border-c-border text-c-text-muted hover:border-c-border'
                     }`}
                   >
                     {t('initiatives.timelinePlanner.manualDate')}
@@ -1160,7 +1160,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'event'
                         ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                        : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
+                        : 'border-c-border text-c-text-muted hover:border-c-border'
                     }`}
                   >
                     {t('initiatives.timelinePlanner.eventTrigger')}
@@ -1171,13 +1171,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {/* Dependency select (after_previous) */}
               {startTriggerType === 'dependency' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.dependsOn')}
                   </label>
                   <select
                     value={dependsOnId}
                     onChange={(e) => setDependsOnId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     {depOptions.map((o) => (
                       <option key={o.id} value={o.id}>
@@ -1191,20 +1191,20 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {/* Fixed date picker */}
               {startTriggerType === 'date' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.date')}
                   </label>
                   <input
                     type="date"
                     value={fixedDate}
                     onChange={(e) => setFixedDate(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
               {startTriggerType === 'event' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.eventName')}
                   </label>
                   <input
@@ -1212,7 +1212,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     value={startTriggerEvent}
                     onChange={(e) => setStartTriggerEvent(e.target.value)}
                     placeholder={t('initiatives.timelinePlanner.placeholderGateApproval')}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -1222,7 +1222,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 selectedType === 'pause' ||
                 selectedType === 'meeting') && (
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-500 block">
+                  <label className="text-[10px] text-c-text-muted block">
                     {t('initiatives.timelinePlanner.endTrigger')}
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1232,7 +1232,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'from_duration'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                          : 'border-c-border text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.fromDuration')}
@@ -1243,7 +1243,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'manual_date'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                          : 'border-c-border text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.manualDate')}
@@ -1254,7 +1254,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'from_successor'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                          : 'border-c-border text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.fromSuccessor')}
@@ -1265,14 +1265,14 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       type="date"
                       value={manualEndDate}
                       onChange={(e) => setManualEndDate(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                     />
                   )}
                   {endSchedulingMode === 'from_successor' && (
                     <select
                       value={successorId}
                       onChange={(e) => setSuccessorId(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">
                         — {t('initiatives.timelinePlanner.selectSuccessor')} —
@@ -1292,7 +1292,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <div className="space-y-1.5">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-[10px] text-c-text-muted block mb-1">
                         {t('initiatives.timelinePlanner.calendarWindowDays')}
                       </label>
                       <input
@@ -1301,11 +1301,11 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={durationDays}
                         onChange={(e) => setDurationDays(e.target.value)}
                         placeholder="—"
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-[10px] text-c-text-muted block mb-1">
                         {t('initiatives.timelinePlanner.teamEffortHours')}
                       </label>
                       <input
@@ -1315,11 +1315,11 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={estimatedHours}
                         onChange={(e) => setEstimatedHours(e.target.value)}
                         placeholder="—"
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-600">
+                  <p className="text-[10px] text-c-text-secondary">
                     {t('initiatives.timelinePlanner.calendarWindowHelp')}
                   </p>
                 </div>
@@ -1328,13 +1328,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {/* Decision-specific */}
               {selectedType === 'decision' && (
                 <div className="flex items-center gap-3">
-                  <label className="text-[10px] text-slate-500">
+                  <label className="text-[10px] text-c-text-muted">
                     {t('initiatives.timelinePlanner.blocksNextTasks')}
                   </label>
                   <button
                     onClick={() => setDecisionBlocks(!decisionBlocks)}
                     className={`relative w-9 h-5 rounded-full transition-colors ${
-                      decisionBlocks ? 'bg-blue-500' : 'bg-slate-300 dark:bg-navy-600'
+                      decisionBlocks ? 'bg-blue-500' : 'bg-c-border-strong '
                     }`}
                   >
                     <div
@@ -1351,7 +1351,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <div className="space-y-2">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-[10px] text-c-text-muted block mb-1">
                         {t('initiatives.timelinePlanner.eventMode')}
                       </label>
                       <select
@@ -1361,7 +1361,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                             e.target.value as 'cyclical' | 'specific_date' | 'after_event'
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                       >
                         <option value="cyclical">
                           {t('initiatives.timelinePlanner.cyclicalMeeting')}
@@ -1376,13 +1376,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </div>
                     {infoEventMode === 'cyclical' && (
                       <div>
-                        <label className="text-[10px] text-slate-500 block mb-1">
+                        <label className="text-[10px] text-c-text-muted block mb-1">
                           {t('initiatives.timelinePlanner.cadence')}
                         </label>
                         <select
                           value={infoEventCadence}
                           onChange={(e) => setInfoEventCadence(e.target.value as any)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                           <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -1398,7 +1398,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     )}
                     {infoEventMode === 'after_event' && (
                       <div className="sm:col-span-2">
-                        <label className="text-[10px] text-slate-500 block mb-1">
+                        <label className="text-[10px] text-c-text-muted block mb-1">
                           {t('initiatives.timelinePlanner.afterWhichEvent')}
                         </label>
                         <input
@@ -1406,7 +1406,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           value={infoEventReferenceEvent}
                           onChange={(e) => setInfoEventReferenceEvent(e.target.value)}
                           placeholder={t('initiatives.timelinePlanner.placeholderAfterGoGate')}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                         />
                         {submitAttempted && !infoEventReferenceEventValid && (
                           <p className="mt-1 text-[10px] text-danger-500">
@@ -1422,7 +1422,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </p>
                   )}
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.audience')}
                     </label>
                     <input
@@ -1430,12 +1430,12 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={audience}
                       onChange={(e) => setAudience(e.target.value)}
                       placeholder={t('initiatives.timelinePlanner.placeholderSteeringCommittee')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-[10px] text-c-text-muted block mb-1">
                         {t('initiatives.timelinePlanner.whoShouldAttend')}
                       </label>
                       <select
@@ -1443,7 +1443,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         onChange={(e) =>
                           setInfoEventParticipantMode(e.target.value as 'person' | 'group')
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                       >
                         <option value="group">{t('initiatives.timelinePlanner.group')}</option>
                         <option value="person">{t('initiatives.timelinePlanner.person')}</option>
@@ -1463,7 +1463,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                                 | 'custom_group'
                             )
                           }
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                             <option key={g.key} value={g.key}>
@@ -1475,7 +1475,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         <select
                           value={infoEventParticipantUserId}
                           onChange={(e) => setInfoEventParticipantUserId(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
                             — {t('initiatives.timelinePlanner.selectPerson')} —
@@ -1497,13 +1497,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.materialSourceRequired')}
                     </label>
                     <select
                       value={infoAssetType}
                       onChange={(e) => setInfoAssetType(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="internal_report">
                         {t('initiatives.timelinePlanner.internalReport')}
@@ -1530,7 +1530,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
 
                   {infoAssetType === 'internal_report' && (
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-[10px] text-c-text-muted block mb-1">
                         {t('initiatives.timelinePlanner.selectReport')}
                       </label>
                       <select
@@ -1541,7 +1541,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           const found = availableReports.find((x) => x.id === id);
                           if (found) setInfoAssetLabel(found.title);
                         }}
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                       >
                         <option value="">
                           — {t('initiatives.timelinePlanner.selectReport')} —
@@ -1557,7 +1557,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
 
                   {infoAssetType === 'external_link' && (
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-[10px] text-c-text-muted block mb-1">
                         {t('initiatives.timelinePlanner.materialUrl')}
                       </label>
                       <input
@@ -1565,14 +1565,14 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={infoAssetUrl}
                         onChange={(e) => setInfoAssetUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   )}
 
                   {(infoAssetType === 'generated_presentation' || infoAssetType === 'other') && (
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-[10px] text-c-text-muted block mb-1">
                         {t('initiatives.timelinePlanner.materialLabel')}
                       </label>
                       <input
@@ -1580,7 +1580,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={infoAssetLabel}
                         onChange={(e) => setInfoAssetLabel(e.target.value)}
                         placeholder={t('initiatives.timelinePlanner.placeholderDeckSprintReview')}
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   )}
@@ -1591,7 +1591,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {selectedType === 'notification' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="sm:col-span-2">
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.templates')}
                     </label>
                     <div className="flex flex-wrap gap-1.5">
@@ -1607,7 +1607,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                               setName(isPolish ? preset.labelPl : preset.label);
                             }
                           }}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-primary-500 border border-slate-200/70 dark:border-navy-700/70 hover:border-primary-400/40 transition-colors"
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-muted hover:text-c-text border border-slate-200/70 dark:border-navy-700/70 hover:border-c-border-strong transition-colors"
                         >
                           {isPolish ? preset.labelPl : preset.label}
                         </button>
@@ -1615,7 +1615,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.recipientType')}
                     </label>
                     <select
@@ -1623,7 +1623,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onChange={(e) =>
                         setNotificationRecipientMode(e.target.value as 'person' | 'group')
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="group">{t('initiatives.timelinePlanner.group')}</option>
                       <option value="person">{t('initiatives.timelinePlanner.person')}</option>
@@ -1632,7 +1632,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   <div>
                     {notificationRecipientMode === 'group' ? (
                       <>
-                        <label className="text-[10px] text-slate-500 block mb-1">
+                        <label className="text-[10px] text-c-text-muted block mb-1">
                           {t('initiatives.timelinePlanner.selectGroup')}
                         </label>
                         <select
@@ -1647,7 +1647,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                                 | 'custom_group'
                             )
                           }
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                             <option key={g.key} value={g.key}>
@@ -1658,13 +1658,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       </>
                     ) : (
                       <>
-                        <label className="text-[10px] text-slate-500 block mb-1">
+                        <label className="text-[10px] text-c-text-muted block mb-1">
                           {t('initiatives.timelinePlanner.selectPerson')}
                         </label>
                         <select
                           value={notificationRecipientUserId}
                           onChange={(e) => setNotificationRecipientUserId(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
                             — {t('initiatives.timelinePlanner.selectPerson')} —
@@ -1681,7 +1681,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     )}
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.notificationMode')}
                     </label>
                     <select
@@ -1689,7 +1689,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onChange={(e) =>
                         setNotificationTriggerMode(e.target.value as 'event_based' | 'cyclical')
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="event_based">
                         {t('initiatives.timelinePlanner.eventBased')}
@@ -1699,7 +1699,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   </div>
                   {notificationTriggerMode === 'event_based' && (
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-[10px] text-c-text-muted block mb-1">
                         {t('initiatives.timelinePlanner.eventTriggerLabel')}
                       </label>
                       <select
@@ -1713,7 +1713,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                               | 'manual_gate'
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                       >
                         <option value="on_start">{t('initiatives.timelinePlanner.onStart')}</option>
                         <option value="on_complete">
@@ -1731,7 +1731,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   {notificationTriggerMode === 'event_based' &&
                     notificationTriggerEvent === 'before_next_action' && (
                       <div>
-                        <label className="text-[10px] text-slate-500 block mb-1">
+                        <label className="text-[10px] text-c-text-muted block mb-1">
                           {t('initiatives.timelinePlanner.leadTimeDays')}
                         </label>
                         <input
@@ -1739,18 +1739,18 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           min={0}
                           value={notificationLeadDays}
                           onChange={(e) => setNotificationLeadDays(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                     )}
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.cadence')}
                     </label>
                     <select
                       value={notificationCadence}
                       onChange={(e) => setNotificationCadence(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                       <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -1760,13 +1760,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.channel')}
                     </label>
                     <select
                       value={notificationChannel}
                       onChange={(e) => setNotificationChannel(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="email">Email</option>
                       <option value="slack">Slack</option>
@@ -1776,7 +1776,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </select>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.communicationRule')}
                     </label>
                     <input
@@ -1784,11 +1784,11 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={notificationRule}
                       onChange={(e) => setNotificationRule(e.target.value)}
                       placeholder={t('initiatives.timelinePlanner.placeholderCommunicationRule')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.notificationContent')} *
                     </label>
                     <textarea
@@ -1796,19 +1796,19 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onChange={(e) => setNotificationMessage(e.target.value)}
                       rows={2}
                       placeholder={t('initiatives.timelinePlanner.placeholderNotificationContent')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2 space-y-1.5">
                     <div className="flex items-center gap-3">
-                      <label className="text-[10px] text-slate-500">
+                      <label className="text-[10px] text-c-text-muted">
                         {t('initiatives.timelinePlanner.aiAutoSendNotification')}
                       </label>
                       <button
                         type="button"
                         onClick={() => setNotificationAiAutoSend(!notificationAiAutoSend)}
                         className={`relative w-9 h-5 rounded-full transition-colors ${
-                          notificationAiAutoSend ? 'bg-blue-500' : 'bg-slate-300 dark:bg-navy-600'
+                          notificationAiAutoSend ? 'bg-blue-500' : 'bg-c-border-strong '
                         }`}
                       >
                         <div
@@ -1824,7 +1824,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         onChange={(e) => setNotificationAiInstruction(e.target.value)}
                         rows={2}
                         placeholder={t('initiatives.timelinePlanner.placeholderAiInstruction')}
-                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                       />
                     )}
                   </div>
@@ -1835,13 +1835,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {selectedType === 'meeting' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.meetingCadence')}
                     </label>
                     <select
                       value={meetingCadence}
                       onChange={(e) => setMeetingCadence(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                     >
                       <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                       <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -1851,13 +1851,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.meetingChannel')}
                     </label>
                     <select
                       value={meetingChannel}
                       onChange={(e) => setMeetingChannel(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                     >
                       <option value="online">Online</option>
                       <option value="onsite">{t('initiatives.timelinePlanner.onsite')}</option>
@@ -1865,7 +1865,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </select>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.meetingAgenda')}
                     </label>
                     <textarea
@@ -1873,7 +1873,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={meetingAgenda}
                       onChange={(e) => setMeetingAgenda(e.target.value)}
                       placeholder={t('initiatives.timelinePlanner.placeholderMeetingAgenda')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1883,7 +1883,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {selectedType === 'pause' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.calendarWindowDays')}
                     </label>
                     <input
@@ -1892,11 +1892,11 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={durationDays}
                       onChange={(e) => setDurationDays(e.target.value)}
                       placeholder="—"
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
+                    <label className="text-[10px] text-c-text-muted block mb-1">
                       {t('initiatives.timelinePlanner.pauseReason')}
                     </label>
                     <input
@@ -1904,9 +1904,9 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={pauseReason}
                       onChange={(e) => setPauseReason(e.target.value)}
                       placeholder={t('initiatives.timelinePlanner.placeholderPauseReason')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
-                    <p className="mt-1 text-[10px] text-slate-600">
+                    <p className="mt-1 text-[10px] text-c-text-secondary">
                       {t('initiatives.timelinePlanner.pauseHelp')}
                     </p>
                   </div>
@@ -1916,13 +1916,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {/* Escalation: level */}
               {selectedType === 'escalation' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.escalationLevel')}
                   </label>
                   <select
                     value={escalationLevel}
                     onChange={(e) => setEscalationLevel(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.select')} —</option>
                     <option value="Sponsor">Sponsor</option>
@@ -1937,7 +1937,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               <div className="flex items-center justify-end gap-2 pt-1">
                 <button
                   onClick={onClose}
-                  className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
                 >
                   {t('initiatives.timelinePlanner.cancel')}
                 </button>
@@ -2234,13 +2234,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon size={14} className={meta.color} />
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-medium text-c-text-secondary">
               {t('initiatives.timelinePlanner.editItem')}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-600 hover:text-slate-600 transition-colors"
+            className="text-c-text-secondary hover:text-c-text-secondary transition-colors"
           >
             <X size={14} />
           </button>
@@ -2248,14 +2248,14 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
 
         {/* Name */}
         <div>
-          <label className="text-[10px] text-slate-500 block mb-1">
+          <label className="text-[10px] text-c-text-muted block mb-1">
             {t('initiatives.timelinePlanner.name')}
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
+            className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
             autoFocus
           />
         </div>
@@ -2263,7 +2263,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {/* Source selectors */}
         {row.type === 'task' && (
           <div>
-            <label className="text-[10px] text-slate-500 block mb-1">
+            <label className="text-[10px] text-c-text-muted block mb-1">
               {t('initiatives.timelinePlanner.sourceTask')}
             </label>
             <select
@@ -2277,7 +2277,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   if (t.estimatedHours != null) setEstimatedHours(String(t.estimatedHours));
                 }
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">— {t('initiatives.timelinePlanner.selectTask')} —</option>
               {taskOptions.map((t) => (
@@ -2291,7 +2291,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
 
         {row.type === 'decision' && (
           <div>
-            <label className="text-[10px] text-slate-500 block mb-1">
+            <label className="text-[10px] text-c-text-muted block mb-1">
               {t('initiatives.timelinePlanner.sourceDecision')}
             </label>
             <select
@@ -2302,7 +2302,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 const d = decisionOptions.find((x) => x.id === id);
                 if (d) setName(d.title);
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">— {t('initiatives.timelinePlanner.selectDecision')} —</option>
               {decisionOptions.map((d) => (
@@ -2316,7 +2316,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
 
         {row.type === 'milestone' && (
           <div>
-            <label className="text-[10px] text-slate-500 block mb-1">
+            <label className="text-[10px] text-c-text-muted block mb-1">
               {t('initiatives.timelinePlanner.sourceMilestone')}
             </label>
             <select
@@ -2330,7 +2330,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   setFixedDate(toISO(m.date));
                 }
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">— {t('initiatives.timelinePlanner.selectMilestone')} —</option>
               {milestoneOptions.map((m) => (
@@ -2344,7 +2344,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
 
         {/* Start trigger */}
         <div>
-          <label className="text-[10px] text-slate-500 block mb-1.5">
+          <label className="text-[10px] text-c-text-muted block mb-1.5">
             {t('initiatives.timelinePlanner.startTrigger')}
           </label>
           <div className="flex gap-2">
@@ -2356,7 +2356,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'dependency'
                   ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                  : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                  : 'border-c-border text-c-text-muted'
               }`}
             >
               {t('initiatives.timelinePlanner.fromDependencySystem')}
@@ -2369,7 +2369,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'date'
                   ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                  : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                  : 'border-c-border text-c-text-muted'
               }`}
             >
               {t('initiatives.timelinePlanner.manualDate')}
@@ -2382,7 +2382,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'event'
                   ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                  : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                  : 'border-c-border text-c-text-muted'
               }`}
             >
               {t('initiatives.timelinePlanner.eventTrigger')}
@@ -2392,13 +2392,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
 
         {startTriggerType === 'dependency' && (
           <div>
-            <label className="text-[10px] text-slate-500 block mb-1">
+            <label className="text-[10px] text-c-text-muted block mb-1">
               {t('initiatives.timelinePlanner.dependsOn')}
             </label>
             <select
               value={dependsOnId}
               onChange={(e) => setDependsOnId(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">—</option>
               {depOptions.map((o) => (
@@ -2412,21 +2412,21 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
 
         {startTriggerType === 'date' && (
           <div>
-            <label className="text-[10px] text-slate-500 block mb-1">
+            <label className="text-[10px] text-c-text-muted block mb-1">
               {t('initiatives.timelinePlanner.date')}
             </label>
             <input
               type="date"
               value={fixedDate}
               onChange={(e) => setFixedDate(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
             />
           </div>
         )}
 
         {startTriggerType === 'event' && (
           <div>
-            <label className="text-[10px] text-slate-500 block mb-1">
+            <label className="text-[10px] text-c-text-muted block mb-1">
               {t('initiatives.timelinePlanner.eventName')}
             </label>
             <input
@@ -2434,35 +2434,35 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               value={startTriggerEvent}
               onChange={(e) => setStartTriggerEvent(e.target.value)}
               placeholder={t('initiatives.timelinePlanner.placeholderGateApproval')}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
             />
           </div>
         )}
 
         {(row.type === 'task' || row.type === 'pause' || row.type === 'meeting') && (
           <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 block">
+            <label className="text-[10px] text-c-text-muted block">
               {t('initiatives.timelinePlanner.endTrigger')}
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('from_duration')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_duration' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_duration' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border text-c-text-muted'}`}
               >
                 {t('initiatives.timelinePlanner.fromDuration')}
               </button>
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('manual_date')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'manual_date' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'manual_date' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border text-c-text-muted'}`}
               >
                 {t('initiatives.timelinePlanner.manualDate')}
               </button>
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('from_successor')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_successor' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_successor' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border text-c-text-muted'}`}
               >
                 {t('initiatives.timelinePlanner.fromSuccessor')}
               </button>
@@ -2472,14 +2472,14 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 type="date"
                 value={manualEndDate}
                 onChange={(e) => setManualEndDate(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               />
             )}
             {endSchedulingMode === 'from_successor' && (
               <select
                 value={successorId}
                 onChange={(e) => setSuccessorId(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="">— {t('initiatives.timelinePlanner.selectSuccessor')} —</option>
                 {successorOptions.map((o) => (
@@ -2497,7 +2497,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           <div className="space-y-1.5">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
+                <label className="text-[10px] text-c-text-muted block mb-1">
                   {t('initiatives.timelinePlanner.windowDays')}
                 </label>
                 <input
@@ -2506,11 +2506,11 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={durationDays}
                   onChange={(e) => setDurationDays(e.target.value)}
                   placeholder="—"
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">Effort (h)</label>
+                <label className="text-[10px] text-c-text-muted block mb-1">Effort (h)</label>
                 <input
                   type="number"
                   min={0}
@@ -2518,11 +2518,11 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={estimatedHours}
                   onChange={(e) => setEstimatedHours(e.target.value)}
                   placeholder="—"
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                 />
               </div>
             </div>
-            <p className="text-[10px] text-slate-600">
+            <p className="text-[10px] text-c-text-secondary">
               {t('initiatives.timelinePlanner.calendarWindowHelp')}
             </p>
           </div>
@@ -2532,12 +2532,12 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {row.type === 'decision' && (
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <label className="text-[10px] text-slate-500">
+              <label className="text-[10px] text-c-text-muted">
                 {t('initiatives.timelinePlanner.blocksNext')}
               </label>
               <button
                 onClick={() => setDecisionBlocks(!decisionBlocks)}
-                className={`relative w-9 h-5 rounded-full transition-colors ${decisionBlocks ? 'bg-blue-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+                className={`relative w-9 h-5 rounded-full transition-colors ${decisionBlocks ? 'bg-blue-500' : 'bg-c-border-strong '}`}
               >
                 <div
                   className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${decisionBlocks ? 'translate-x-4' : 'translate-x-0.5'}`}
@@ -2545,7 +2545,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </button>
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.decisionOutcome')}
               </label>
               <div className="flex gap-1.5">
@@ -2553,7 +2553,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <button
                     key={val ?? 'pending'}
                     onClick={() => setDecisionOutcome(val)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${decisionOutcome === val ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${decisionOutcome === val ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-c-border text-c-text-muted'}`}
                   >
                     {val === null
                       ? t('initiatives.timelinePlanner.pending')
@@ -2574,7 +2574,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           <div className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
+                <label className="text-[10px] text-c-text-muted block mb-1">
                   {t('initiatives.timelinePlanner.eventMode')}
                 </label>
                 <select
@@ -2582,7 +2582,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) =>
                     setInfoEventMode(e.target.value as 'cyclical' | 'specific_date' | 'after_event')
                   }
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="cyclical">
                     {t('initiatives.timelinePlanner.cyclicalMeeting')}
@@ -2595,13 +2595,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </div>
               {infoEventMode === 'cyclical' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.cadence')}
                   </label>
                   <select
                     value={infoEventCadence}
                     onChange={(e) => setInfoEventCadence(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                     <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -2613,7 +2613,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               )}
               {infoEventMode === 'after_event' && (
                 <div className="sm:col-span-2">
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.afterWhichEvent')}
                   </label>
                   <input
@@ -2621,7 +2621,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     value={infoEventReferenceEvent}
                     onChange={(e) => setInfoEventReferenceEvent(e.target.value)}
                     placeholder={t('initiatives.timelinePlanner.placeholderAfterGoGate')}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                   />
                   {submitAttempted && !infoEventReferenceEventValid && (
                     <p className="mt-1 text-[10px] text-danger-500">
@@ -2637,7 +2637,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </p>
             )}
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.audience')}
               </label>
               <input
@@ -2645,12 +2645,12 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={audience}
                 onChange={(e) => setAudience(e.target.value)}
                 placeholder={t('initiatives.timelinePlanner.placeholderSteeringCommittee')}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
+                <label className="text-[10px] text-c-text-muted block mb-1">
                   {t('initiatives.timelinePlanner.whoShouldAttend')}
                 </label>
                 <select
@@ -2658,7 +2658,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) =>
                     setInfoEventParticipantMode(e.target.value as 'person' | 'group')
                   }
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="group">{t('initiatives.timelinePlanner.group')}</option>
                   <option value="person">{t('initiatives.timelinePlanner.person')}</option>
@@ -2669,7 +2669,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={infoEventParticipantGroupKey}
                     onChange={(e) => setInfoEventParticipantGroupKey(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                   >
                     {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                       <option key={g.key} value={g.key}>
@@ -2681,7 +2681,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={infoEventParticipantUserId}
                     onChange={(e) => setInfoEventParticipantUserId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectPerson')} —</option>
                     {users.map((u) => (
@@ -2699,13 +2699,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </div>
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.materialSourceRequired')}
               </label>
               <select
                 value={infoAssetType}
                 onChange={(e) => setInfoAssetType(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="internal_report">
                   {t('initiatives.timelinePlanner.internalReport')}
@@ -2731,7 +2731,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             </div>
             {infoAssetType === 'internal_report' && (
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
+                <label className="text-[10px] text-c-text-muted block mb-1">
                   {t('initiatives.timelinePlanner.selectReport')}
                 </label>
                 <select
@@ -2742,7 +2742,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     const found = availableReports.find((x) => x.id === id);
                     if (found) setInfoAssetLabel(found.title);
                   }}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">— {t('initiatives.timelinePlanner.selectReport')} —</option>
                   {availableReports.map((r) => (
@@ -2755,7 +2755,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             )}
             {infoAssetType === 'external_link' && (
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
+                <label className="text-[10px] text-c-text-muted block mb-1">
                   {t('initiatives.timelinePlanner.materialUrl')}
                 </label>
                 <input
@@ -2763,13 +2763,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={infoAssetUrl}
                   onChange={(e) => setInfoAssetUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                 />
               </div>
             )}
             {(infoAssetType === 'generated_presentation' || infoAssetType === 'other') && (
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
+                <label className="text-[10px] text-c-text-muted block mb-1">
                   {t('initiatives.timelinePlanner.materialLabel')}
                 </label>
                 <input
@@ -2777,7 +2777,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={infoAssetLabel}
                   onChange={(e) => setInfoAssetLabel(e.target.value)}
                   placeholder={t('initiatives.timelinePlanner.placeholderDeckSprintReview')}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                 />
               </div>
             )}
@@ -2787,7 +2787,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {row.type === 'notification' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="sm:col-span-2">
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.templates')}
               </label>
               <div className="flex flex-wrap gap-1.5">
@@ -2803,7 +2803,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                         setName(isPolish ? preset.labelPl : preset.label);
                       }
                     }}
-                    className="px-2 py-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-primary-500 border border-slate-200/70 dark:border-navy-700/70 hover:border-primary-400/40 transition-colors"
+                    className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-muted hover:text-c-text border border-slate-200/70 dark:border-navy-700/70 hover:border-c-border-strong transition-colors"
                   >
                     {isPolish ? preset.labelPl : preset.label}
                   </button>
@@ -2811,13 +2811,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </div>
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.cadence')}
               </label>
               <select
                 value={notificationCadence}
                 onChange={(e) => setNotificationCadence(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                 <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -2827,13 +2827,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </select>
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.recipientType')}
               </label>
               <select
                 value={notificationRecipientMode}
                 onChange={(e) => setNotificationRecipientMode(e.target.value as 'person' | 'group')}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="group">{t('initiatives.timelinePlanner.group')}</option>
                 <option value="person">{t('initiatives.timelinePlanner.person')}</option>
@@ -2842,13 +2842,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             <div className="sm:col-span-2">
               {notificationRecipientMode === 'group' ? (
                 <>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.selectGroup')}
                   </label>
                   <select
                     value={notificationRecipientGroupKey}
                     onChange={(e) => setNotificationRecipientGroupKey(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                   >
                     {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                       <option key={g.key} value={g.key}>
@@ -2859,13 +2859,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 </>
               ) : (
                 <>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.selectPerson')}
                   </label>
                   <select
                     value={notificationRecipientUserId}
                     onChange={(e) => setNotificationRecipientUserId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectPerson')} —</option>
                     {users.map((u) => (
@@ -2878,7 +2878,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               )}
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.notificationMode')}
               </label>
               <select
@@ -2886,7 +2886,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 onChange={(e) =>
                   setNotificationTriggerMode(e.target.value as 'event_based' | 'cyclical')
                 }
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="event_based">{t('initiatives.timelinePlanner.eventBased')}</option>
                 <option value="cyclical">{t('initiatives.timelinePlanner.cyclical')}</option>
@@ -2894,13 +2894,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             </div>
             {notificationTriggerMode === 'event_based' && (
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
+                <label className="text-[10px] text-c-text-muted block mb-1">
                   {t('initiatives.timelinePlanner.eventTriggerLabel')}
                 </label>
                 <select
                   value={notificationTriggerEvent}
                   onChange={(e) => setNotificationTriggerEvent(e.target.value as any)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="on_start">{t('initiatives.timelinePlanner.onStart')}</option>
                   <option value="on_complete">{t('initiatives.timelinePlanner.onComplete')}</option>
@@ -2916,7 +2916,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             {notificationTriggerMode === 'event_based' &&
               notificationTriggerEvent === 'before_next_action' && (
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-1">
+                  <label className="text-[10px] text-c-text-muted block mb-1">
                     {t('initiatives.timelinePlanner.leadTimeDays')}
                   </label>
                   <input
@@ -2924,18 +2924,18 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     min={0}
                     value={notificationLeadDays}
                     onChange={(e) => setNotificationLeadDays(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.channel')}
               </label>
               <select
                 value={notificationChannel}
                 onChange={(e) => setNotificationChannel(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="email">Email</option>
                 <option value="slack">Slack</option>
@@ -2945,7 +2945,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </select>
             </div>
             <div className="sm:col-span-2">
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.communicationRule')}
               </label>
               <input
@@ -2953,11 +2953,11 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={notificationRule}
                 onChange={(e) => setNotificationRule(e.target.value)}
                 placeholder={t('initiatives.timelinePlanner.placeholderCommunicationRule')}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.notificationContent')}
               </label>
               <textarea
@@ -2965,18 +2965,18 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 onChange={(e) => setNotificationMessage(e.target.value)}
                 rows={2}
                 placeholder={t('initiatives.timelinePlanner.placeholderMessageContentShort')}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2 space-y-1.5">
               <div className="flex items-center gap-3">
-                <label className="text-[10px] text-slate-500">
+                <label className="text-[10px] text-c-text-muted">
                   {t('initiatives.timelinePlanner.aiAutoSend')}
                 </label>
                 <button
                   type="button"
                   onClick={() => setNotificationAiAutoSend(!notificationAiAutoSend)}
-                  className={`relative w-9 h-5 rounded-full transition-colors ${notificationAiAutoSend ? 'bg-blue-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+                  className={`relative w-9 h-5 rounded-full transition-colors ${notificationAiAutoSend ? 'bg-blue-500' : 'bg-c-border-strong '}`}
                 >
                   <div
                     className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${notificationAiAutoSend ? 'translate-x-4' : 'translate-x-0.5'}`}
@@ -2989,7 +2989,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) => setNotificationAiInstruction(e.target.value)}
                   rows={2}
                   placeholder={t('initiatives.timelinePlanner.placeholderAiInstructionShort')}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                 />
               )}
             </div>
@@ -2999,13 +2999,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {row.type === 'meeting' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.meetingCadence')}
               </label>
               <select
                 value={meetingCadence}
                 onChange={(e) => setMeetingCadence(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                 <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -3015,13 +3015,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </select>
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.meetingChannel')}
               </label>
               <select
                 value={meetingChannel}
                 onChange={(e) => setMeetingChannel(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="online">Online</option>
                 <option value="onsite">{t('initiatives.timelinePlanner.onsite')}</option>
@@ -3029,7 +3029,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </select>
             </div>
             <div className="sm:col-span-2">
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.meetingAgenda')}
               </label>
               <textarea
@@ -3037,7 +3037,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={meetingAgenda}
                 onChange={(e) => setMeetingAgenda(e.target.value)}
                 placeholder={t('initiatives.timelinePlanner.placeholderMeetingAgenda')}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
             </div>
           </div>
@@ -3046,7 +3046,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {row.type === 'pause' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.days')}
               </label>
               <input
@@ -3055,11 +3055,11 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={durationDays}
                 onChange={(e) => setDurationDays(e.target.value)}
                 placeholder="—"
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
+              <label className="text-[10px] text-c-text-muted block mb-1">
                 {t('initiatives.timelinePlanner.pauseReason')}
               </label>
               <input
@@ -3067,9 +3067,9 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={pauseReason}
                 onChange={(e) => setPauseReason(e.target.value)}
                 placeholder={t('initiatives.timelinePlanner.placeholderPauseReasonShort')}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
-              <p className="mt-1 text-[10px] text-slate-600">
+              <p className="mt-1 text-[10px] text-c-text-secondary">
                 {t('initiatives.timelinePlanner.pauseHelp')}
               </p>
             </div>
@@ -3079,13 +3079,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {/* Escalation */}
         {row.type === 'escalation' && (
           <div>
-            <label className="text-[10px] text-slate-500 block mb-1">
+            <label className="text-[10px] text-c-text-muted block mb-1">
               {t('initiatives.timelinePlanner.level')}
             </label>
             <select
               value={escalationLevel}
               onChange={(e) => setEscalationLevel(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">—</option>
               <option value="Sponsor">Sponsor</option>
@@ -3100,7 +3100,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
           >
             {t('initiatives.timelinePlanner.cancel')}
           </button>
@@ -3218,7 +3218,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   return (
     <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-[52px_28px_1fr_82px_82px_42px_50px_70px_30px] gap-0 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40">
+      <div className="grid grid-cols-[52px_28px_1fr_82px_82px_42px_50px_70px_30px] gap-0 text-[10px] uppercase tracking-wide text-c-text-muted border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40">
         <div className="px-1 py-2.5 text-center">#</div>
         <div className="px-0.5 py-2.5 text-center">Typ</div>
         <div className="px-2 py-2.5">{t('initiatives.timelinePlanner.name')}</div>
@@ -3282,12 +3282,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               {canEdit ? (
                 <GripVertical
                   size={11}
-                  className="text-slate-600 cursor-grab active:cursor-grabbing"
+                  className="text-c-text-secondary cursor-grab active:cursor-grabbing"
                 />
               ) : (
                 <span className="w-[11px]" />
               )}
-              <span className="text-[10px] text-slate-600">{idx + 1}</span>
+              <span className="text-[10px] text-c-text-secondary">{idx + 1}</span>
             </div>
 
             {/* Type icon */}
@@ -3337,16 +3337,16 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     if (e.key === 'Enter') commitNameEdit(row.id);
                     if (e.key === 'Escape') setEditingName(null);
                   }}
-                  className="flex-1 px-1.5 py-0.5 rounded bg-white dark:bg-navy-900 border border-blue-500 text-xs text-slate-700 dark:text-slate-300 focus:outline-none"
+                  className="flex-1 px-1.5 py-0.5 rounded bg-c-surface border border-blue-500 text-xs text-c-text-secondary focus:outline-none"
                 />
               ) : (
                 <span
                   className={`text-xs truncate ${
                     isStart || isFinish
-                      ? 'font-semibold text-slate-700 dark:text-slate-200'
+                      ? 'font-semibold text-c-text'
                       : row.name
-                        ? 'text-slate-700 dark:text-slate-300'
-                        : 'text-slate-600 italic'
+                        ? 'text-c-text-secondary'
+                        : 'text-c-text-secondary italic'
                   } ${canEdit ? 'cursor-text' : ''}`}
                   onClick={() => startNameEdit(row)}
                 >
@@ -3435,12 +3435,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 </span>
               )}
               {row.pauseReason && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-slate-500/10 text-slate-500 truncate max-w-[70px]">
+                <span className="text-[8px] px-1 py-0.5 rounded bg-slate-500/10 text-c-text-muted truncate max-w-[70px]">
                   {row.pauseReason}
                 </span>
               )}
               {row.assigneeName && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-500 truncate max-w-[60px]">
+                <span className="text-[8px] px-1 py-0.5 rounded bg-c-surface-raised text-c-text-muted truncate max-w-[60px]">
                   {row.assigneeName}
                 </span>
               )}
@@ -3467,7 +3467,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       ? 'bg-blue-500/10 text-blue-600'
                       : mode === 'event'
                         ? 'bg-amber-500/10 text-amber-600'
-                        : 'bg-slate-500/10 text-slate-500';
+                        : 'bg-slate-500/10 text-c-text-muted';
                   return (
                     <span
                       className={`inline-flex items-center rounded px-1 py-0.5 text-[8px] font-medium ${tone}`}
@@ -3488,10 +3488,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     type="date"
                     value={toISO(row.startDate)}
                     onChange={(e) => onUpdateStart(e.target.value || null)}
-                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-600 dark:text-slate-400 focus:outline-none"
+                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border dark:hover:border-c-border focus:border-blue-500 text-c-text-muted focus:outline-none"
                   />
                 ) : row.schedulingMode === 'after_previous' && row.dependsOnId ? (
-                  <span className="text-[10px] text-slate-600 italic">
+                  <span className="text-[10px] text-c-text-secondary italic">
                     {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
                   </span>
                 ) : editable && canEdit ? (
@@ -3499,10 +3499,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     type="date"
                     value={toISO(row.startDate)}
                     onChange={(e) => onUpdateRow(row.id, { startDate: e.target.value || null })}
-                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-600 dark:text-slate-400 focus:outline-none"
+                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border dark:hover:border-c-border focus:border-blue-500 text-c-text-muted focus:outline-none"
                   />
                 ) : (
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px] text-c-text-muted">
                     {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
                   </span>
                 )}
@@ -3512,7 +3512,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       setMenuOpenId(null);
                       setStartMenuOpenId((curr) => (curr === row.id ? null : row.id));
                     }}
-                    className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    className="inline-flex items-center justify-center w-4 h-4 rounded text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                     aria-label={t('initiatives.timelinePlanner.startSettings')}
                   >
                     <MoreVertical size={10} />
@@ -3520,8 +3520,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 )}
               </div>
               {canEdit && startMenuOpenId === row.id && (
-                <div className="absolute left-1 top-6 z-20 w-[200px] rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-lg p-2 space-y-2 text-left">
-                  <div className="text-[10px] text-slate-500">
+                <div className="absolute left-1 top-6 z-20 w-[200px] rounded-lg border border-c-border dark:border-navy-700/60 bg-c-surface shadow-lg p-2 space-y-2 text-left">
+                  <div className="text-[10px] text-c-text-muted">
                     {t('initiatives.timelinePlanner.howToDetermineStart')}
                   </div>
                   <div className="grid grid-cols-3 gap-1">
@@ -3540,7 +3540,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         row.startTriggerType === 'dependency' ||
                         row.schedulingMode === 'after_previous'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600'
-                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                          : 'border-c-border text-c-text-muted'
                       }`}
                     >
                       Dependency
@@ -3558,7 +3558,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       className={`px-1 py-1 rounded text-[9px] border transition-colors ${
                         row.startTriggerType === 'date'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600'
-                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                          : 'border-c-border text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.date')}
@@ -3576,7 +3576,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       className={`px-1 py-1 rounded text-[9px] border transition-colors ${
                         row.startTriggerType === 'event'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600'
-                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                          : 'border-c-border text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.event')}
@@ -3593,7 +3593,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           schedulingMode: 'after_previous',
                         })
                       }
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">
                         — {t('initiatives.timelinePlanner.selectDependency')} —
@@ -3619,7 +3619,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         })
                       }
                       placeholder={t('initiatives.timelinePlanner.eventNamePlaceholder')}
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border text-c-text-muted placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   )}
                   {row.startTriggerType === 'date' && (
@@ -3633,7 +3633,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           schedulingMode: 'fixed_date',
                         })
                       }
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   )}
                 </div>
@@ -3643,9 +3643,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             {/* End date */}
             <div className="px-0.5 py-1.5 text-center">
               {isPointType(row.type) || isStart ? (
-                <span className="text-[10px] text-slate-600">—</span>
+                <span className="text-[10px] text-c-text-secondary">—</span>
               ) : isFinish ? (
-                <span className="text-[10px] text-slate-500">
+                <span className="text-[10px] text-c-text-muted">
                   {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
                 </span>
               ) : editable && canEdit ? (
@@ -3653,10 +3653,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   type="date"
                   value={toISO(row.endDate)}
                   onChange={(e) => onUpdateRow(row.id, { endDate: e.target.value || null })}
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-600 dark:text-slate-400 focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border dark:hover:border-c-border focus:border-blue-500 text-c-text-muted focus:outline-none"
                 />
               ) : (
-                <span className="text-[10px] text-slate-500">
+                <span className="text-[10px] text-c-text-muted">
                   {fmtDate(row.endDate, isPolish ? 'pl' : 'en')}
                 </span>
               )}
@@ -3674,11 +3674,11 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       durationDays: e.target.value ? parseInt(e.target.value, 10) : null,
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 focus:border-blue-500 text-slate-500 text-center focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border focus:border-blue-500 text-c-text-muted text-center focus:outline-none"
                   placeholder="—"
                 />
               ) : (
-                <span className="text-[10px] text-slate-600">
+                <span className="text-[10px] text-c-text-secondary">
                   {hasDuration(row.type) && (row.durationDays || days)
                     ? row.durationDays || days
                     : '—'}
@@ -3699,11 +3699,11 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       estimatedHours: e.target.value ? parseFloat(e.target.value) : null,
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 focus:border-blue-500 text-slate-500 text-center focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border focus:border-blue-500 text-c-text-muted text-center focus:outline-none"
                   placeholder="—"
                 />
               ) : (
-                <span className="text-[10px] text-slate-600">
+                <span className="text-[10px] text-c-text-secondary">
                   {row.estimatedHours ? `${row.estimatedHours}h` : '—'}
                 </span>
               )}
@@ -3720,7 +3720,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       schedulingMode: e.target.value ? 'after_previous' : 'fixed_date',
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-500 focus:outline-none appearance-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border dark:hover:border-c-border focus:border-blue-500 text-c-text-muted focus:outline-none appearance-none"
                 >
                   <option value="">—</option>
                   {depOptions
@@ -3732,7 +3732,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     ))}
                 </select>
               ) : (
-                <span className="text-[10px] text-slate-600">{depLabel || '—'}</span>
+                <span className="text-[10px] text-c-text-secondary">{depLabel || '—'}</span>
               )}
             </div>
 
@@ -3748,19 +3748,19 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       setStartMenuOpenId(null);
                       setMenuOpenId((curr) => (curr === row.id ? null : row.id));
                     }}
-                    className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-md text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                     aria-label={t('initiatives.timelinePlanner.rowOptions')}
                   >
                     <MoreVertical size={13} />
                   </button>
                   {menuOpenId === row.id && (
-                    <div className="absolute right-1 top-8 z-20 min-w-[126px] rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-lg overflow-hidden">
+                    <div className="absolute right-1 top-8 z-20 min-w-[126px] rounded-lg border border-c-border dark:border-navy-700/60 bg-c-surface shadow-lg overflow-hidden">
                       <button
                         onClick={() => {
                           setEditingRowId(row.id);
                           setMenuOpenId(null);
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                       >
                         <Pencil size={12} />
                         {t('initiatives.timelinePlanner.edit')}
@@ -3770,7 +3770,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           onDuplicateRow(row.id);
                           setMenuOpenId(null);
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                       >
                         <Copy size={12} />
                         {t('initiatives.timelinePlanner.copy')}
@@ -3789,7 +3789,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   )}
                 </>
               ) : (
-                <span className="text-[10px] text-slate-600">—</span>
+                <span className="text-[10px] text-c-text-secondary">—</span>
               )}
             </div>
           </div>
@@ -3805,7 +3805,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-4"
           >
-            <div className="w-full max-w-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-xl overflow-hidden">
+            <div className="w-full max-w-xl rounded-2xl border border-c-border dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-xl overflow-hidden">
               <EditRowPanel
                 row={editingRow}
                 rows={rows}
@@ -3881,7 +3881,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   const shapeColor: Record<TimelineRowType, string> = {
     start: 'bg-emerald-500',
     finish: 'bg-danger-500',
-    milestone: 'bg-navy-900',
+    milestone: 'bg-c-surface',
     decision: 'bg-amber-500',
     info_event: 'bg-blue-500',
     notification: 'bg-indigo-500',
@@ -3897,7 +3897,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
         {/* Left: labels */}
         <div className="flex-shrink-0 w-[180px] border-r border-slate-200/40 dark:border-navy-700/40">
           <div className="h-7 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40 flex items-center px-2">
-            <span className="text-[10px] uppercase tracking-wide text-slate-500">
+            <span className="text-[10px] uppercase tracking-wide text-c-text-muted">
               {t('initiatives.timelinePlanner.name')}
             </span>
           </div>
@@ -3910,7 +3910,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                 className="h-9 flex items-center gap-1.5 px-2 border-b border-slate-200/20 dark:border-navy-700/20"
               >
                 <Icon size={11} className={meta.color} />
-                <span className="text-[10px] text-slate-600 dark:text-slate-400 truncate">
+                <span className="text-[10px] text-c-text-muted truncate">
                   {row.name || '—'}
                 </span>
               </div>
@@ -3928,7 +3928,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                 style={{ left: `${m.pct}%` }}
               >
                 <div className="w-px h-full bg-slate-200/40 dark:bg-navy-700/40" />
-                <span className="text-[8px] text-slate-600 pl-1 whitespace-nowrap">{m.label}</span>
+                <span className="text-[8px] text-c-text-secondary pl-1 whitespace-nowrap">{m.label}</span>
               </div>
             ))}
           </div>
@@ -4181,8 +4181,8 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
           onClick={() => setView('table')}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
             view === 'table'
-              ? 'bg-white dark:bg-navy-700 text-slate-700 dark:text-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              ? 'bg-white  text-c-text-secondary dark:text-white shadow-sm'
+              : 'text-c-text-muted hover:text-c-text-secondary '
           }`}
         >
           <Table2 size={13} />
@@ -4192,8 +4192,8 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
           onClick={() => setView('gantt')}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
             view === 'gantt'
-              ? 'bg-white dark:bg-navy-700 text-slate-700 dark:text-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              ? 'bg-white  text-c-text-secondary dark:text-white shadow-sm'
+              : 'text-c-text-muted hover:text-c-text-secondary '
           }`}
         >
           <BarChart3 size={13} />
@@ -4264,7 +4264,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
       </AnimatePresence>
 
       {/* Budget summary bar */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-1 text-[10px] text-slate-600">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-1 text-[10px] text-c-text-secondary">
         <span className="flex items-center gap-1">
           <Play size={10} className="text-blue-500" />
           {stats.tasks} {t('initiatives.timelinePlanner.tasksLabel')}
@@ -4295,13 +4295,13 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
         )}
         {stats.pauses > 0 && (
           <span className="flex items-center gap-1">
-            <PauseCircle size={10} className="text-slate-500" />
+            <PauseCircle size={10} className="text-c-text-muted" />
             {stats.pauses} {t('initiatives.timelinePlanner.pausesLabel')}
           </span>
         )}
         {stats.totalHours > 0 && (
           <span className="flex items-center gap-1">
-            <Clock size={10} className="text-slate-600" />
+            <Clock size={10} className="text-c-text-secondary" />
             {stats.totalHours}h {t('initiatives.timelinePlanner.planned')}
           </span>
         )}
