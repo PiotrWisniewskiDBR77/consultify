@@ -4286,7 +4286,11 @@ export const Api = {
 
   getPersonalTask: async (id: string): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch personal task');
+    if (!res.ok) {
+      const err = new Error('Failed to fetch personal task') as Error & { status?: number };
+      err.status = res.status;
+      throw err;
+    }
     return res.json();
   },
 
