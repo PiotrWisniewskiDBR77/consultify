@@ -120,6 +120,7 @@ import {
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
+import { getHandoffLandingPath } from '@/utils/initiativeLinks';
 
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
@@ -2373,11 +2374,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             const initiativeId = res?.initiative?.id;
             const linkedLabel =
               mode === 'link' ? targetInitiativeName : initiativeId ? `${initiativeId}` : '';
-            toast.success(
-              isPolish
-                ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${linkedLabel ? ` (${linkedLabel})` : ''}`
-                : `Initiative ${mode === 'create' ? 'created' : 'linked'}${linkedLabel ? ` (${linkedLabel})` : ''}`
-            );
+            // M13 flow redesign: creating a NEW initiative lands the user in
+            // its document immediately (Interview staging stays a source view).
+            const landingPath = getHandoffLandingPath({
+              mode,
+              initiativeId,
+              resultType: res?.initiative?.type,
+            });
+            if (landingPath) {
+              toast.success(
+                isPolish
+                  ? 'Inicjatywa utworzona — otwieram jej dokument'
+                  : 'Initiative created — opening its document'
+              );
+              navigate(landingPath);
+            } else {
+              toast.success(
+                isPolish
+                  ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${linkedLabel ? ` (${linkedLabel})` : ''}`
+                  : `Initiative ${mode === 'create' ? 'created' : 'linked'}${linkedLabel ? ` (${linkedLabel})` : ''}`
+              );
+            }
             return;
           } catch (err: unknown) {
             lastError = err;
@@ -2438,6 +2455,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       handoffTargetInitiativeId,
       handoffInitiatives,
       isPolish,
+      navigate,
     ]
   );
 
