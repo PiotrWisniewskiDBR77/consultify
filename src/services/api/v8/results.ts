@@ -84,6 +84,8 @@ export interface V8ResultsReconciliationItem {
   reconciliationId: string;
   kpiId: string;
   kpiName: string | null;
+  /** KPI unit (e.g. '%', '€', 'szt.') — drives value formatting. */
+  unit: string | null;
   initiativeId: string | null;
   financeRef: string;
   reconciliationStatus: V8ReconciliationStatus;
