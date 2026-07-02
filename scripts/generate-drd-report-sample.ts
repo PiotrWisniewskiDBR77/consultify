@@ -5,6 +5,14 @@
  *   docs/qa/deliverables/runs/DRD-REPORT-SAMPLE.html
  * using deterministic seed scores (numbers-from-engine).
  *
+ * NARRATIVE: this sample runs with NO `llm` injected, so the report is authored
+ * by the deterministic stub and carries the "narrative: deterministic" flag in
+ * the executive summary. In the app, a server caller passes the real narrator:
+ *   generateDrdReport(scores, meta, { llm: llmService, llmOptions: { timeoutMs: 120000 } })
+ * which produces validated (numbers-from-engine + factRefs) LLM prose and falls
+ * back to this same stub on any failure. Wiring is covered by the mocked-llm
+ * tests in tests/unit/services/drdLlmNarrator.test.ts.
+ *
  * Run:  npx tsx scripts/generate-drd-report-sample.ts
  */
 
