@@ -11,7 +11,26 @@ import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { send as sendEmail } from './emailService.js';
+import { enqueueProgressEvent } from './slack/progressFeed.js';
 import { SlackServiceClass } from './slackService.js';
+
+// ==========================================
+// PROGRESS FEED (Slack Command Center, Filar 4 / F3)
+// ==========================================
+//
+// Work notifications (task/initiative/decision/gate) additionally feed the
+// GLOBAL, batched #cf-progress feed. This is orthogonal to the existing
+// in_app/email/per-org-slack routing — it never replaces or gates those.
+
+/** Coarse bucket for a work-type notification, or null if not a work type. */
+function progressKindForType(type: string): 'TASK' | 'INITIATIVE' | 'DECISION' | 'GATE' | null {
+  const t = String(type || '').toUpperCase();
+  if (t.startsWith('TASK_') || t === 'TASK') return 'TASK';
+  if (t.startsWith('INITIATIVE_') || t === 'INITIATIVE') return 'INITIATIVE';
+  if (t.startsWith('DECISION_') || t === 'DECISION') return 'DECISION';
+  if (t.startsWith('GATE_') || t === 'GATE') return 'GATE';
+  return null;
+}
 
 // ==========================================
 // TYPES
@@ -316,6 +335,28 @@ class NotificationService {
       bypassPreferences,
       bypassQuietHours,
     });
+
+    // Additionally feed the GLOBAL batched #cf-progress feed for work events
+    // (task/initiative/decision/gate). Fail-soft — never affects the send.
+    try {
+      const kind = progressKindForType(input.type);
+      if (kind) {
+        const t = String(input.type || '').toUpperCase();
+        const urgent = severity === 'CRITICAL' || t.includes('BLOCKED');
+        enqueueProgressEvent({
+          kind,
+          title: input.title || input.body || input.type,
+          detail:
+            input.body && input.body !== input.title
+              ? String(input.body).slice(0, 200)
+              : undefined,
+          orgId: input.organizationId,
+          urgent,
+        });
+      }
+    } catch (feedErr) {
+      logger.warn('[NotificationService] progress feed enqueue failed (non-fatal):', feedErr);
+    }
 
     logger.info(
       `[NotificationService] Sent notification ${id} type=${input.type} severity=${severity} to user=${input.userId}`

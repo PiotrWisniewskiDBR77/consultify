@@ -1839,6 +1839,16 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Feedback digest cron not started:', err?.message);
     }
 
+    // Slack Command Center progress feed (Filar 4 / F3): batched #cf-progress
+    // flush every 15 min. Fail-soft; sends nothing when the buffer is empty or
+    // Slack is unconfigured.
+    try {
+      const { startProgressFeed } = await import('./services/slack/progressFeed.js');
+      startProgressFeed();
+    } catch (err: any) {
+      logger.warn('[Server] Slack progress feed not started:', err?.message);
+    }
+
     // V4-IDEA-02: Idea collab WebSocket /ws/collab/:ideaId (native ws for CollaborationOverlay)
     try {
       const { attachIdeaCollabWs } = await import('./gateways/ideaCollabWs.gateway.js');
