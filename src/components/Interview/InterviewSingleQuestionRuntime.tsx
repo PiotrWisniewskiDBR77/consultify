@@ -973,9 +973,15 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 isPolish ? 'Transkrypcja dodana (przeglądarka).' : 'Transcript added (browser).'
               );
             } else {
+              // Nothing to save: server STT failed AND the browser produced no
+              // transcript (no speech captured, or Web Speech unsupported). No
+              // data is lost here — there simply was no text. Tell the user
+              // plainly so they type the answer instead of assuming it vanished.
               console.error('[InterviewSingleQuestionRuntime] Voice transcription failed:', error);
               toast.error(
-                isPolish ? 'Nie udało się przetworzyć nagrania.' : 'Failed to process recording.'
+                isPolish
+                  ? 'Nie rozpoznano mowy w nagraniu. Wpisz odpowiedź ręcznie lub nagraj ponownie.'
+                  : 'No speech was recognised. Type the answer manually or record again.'
               );
             }
           } finally {
