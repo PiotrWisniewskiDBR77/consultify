@@ -2364,7 +2364,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (openDocuments.length === 0) return null;
 
     const isListActive = activeDocumentId === null;
-    const showIdeasDetailAiAction = activeTab === 'ideas' && !!activeDocumentId;
 
     return (
       <div className={MENU_3_ROW_CLASS}>
@@ -2427,20 +2426,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             })}
           </div>
 
-          {showIdeasDetailAiAction ? (
-            <div className={MENU_3_RIGHT_CLASS}>
-              <button
-                onClick={() => toggleChatCollapse()}
-                className={MENU_3_ACTION_NEUTRAL}
-                type="button"
-                aria-label={isPolish ? 'AI Kontekst' : 'AI Context'}
-                data-testid="mywork-area-ai-button"
-              >
-                <Sparkles size={14} />
-                {isPolish ? 'AI Kontekst' : 'AI Context'}
-              </button>
-            </div>
-          ) : null}
+          {/*
+           * UI-L12 (Editor Shell Canon §2 GÓRNA): removed the "AI Kontekst" button.
+           * It was a duplicate entry into Teresa — the canvas command-row already
+           * exposes "Omów z Teresą / Discuss with Teresa" (IdeaWorkspaceToolbar).
+           * One AI entry per shell; no double doors.
+           */}
         </div>
       </div>
     );

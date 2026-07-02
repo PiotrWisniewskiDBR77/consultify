@@ -58,6 +58,14 @@ interface CanvasLeftToolbarProps {
   onOpenChat: () => void;
   onApplyTemplate: (templateId: string) => void;
   onOpenTemplateGallery: () => void;
+  /**
+   * UI-L1 (Editor Shell Canon §2 LEWA): the rail must float on the *canvas* edge,
+   * not the viewport edge. The toolbar is portaled to `document.body` for z-index
+   * safety, so a bare `fixed left-3` lands on top of the app sidebar and clips its
+   * nav labels. We anchor the rail to this container's left edge instead, so it
+   * behaves like Miro/Figma (tools belong to the canvas, not the app chrome).
+   */
+  canvasContainerRef?: React.RefObject<HTMLElement | null>;
 }
 
 type IconComponent = React.ComponentType<{ size?: number; className?: string }>;
@@ -221,11 +229,36 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   onOpenChat,
   onApplyTemplate,
   onOpenTemplateGallery,
+  canvasContainerRef,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [openPopover, setOpenPopover] = useState<PopoverId>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+
+  // UI-L1: track the canvas container's left edge so the portaled rail floats on the
+  // canvas — not on the app sidebar. Falls back to viewport edge when no ref is given.
+  const [railLeftPx, setRailLeftPx] = useState<number | null>(null);
+  useEffect(() => {
+    const el = canvasContainerRef?.current;
+    if (!el || typeof window === 'undefined') {
+      setRailLeftPx(null);
+      return;
+    }
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      // +12px inset (Tailwind left-3) from the canvas's own left edge.
+      setRailLeftPx(rect.left + 12);
+    };
+    measure();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (ro) ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [canvasContainerRef]);
 
   const contextSlots = CONTEXT_SLOTS[activeTool] || MM_CONTEXT_SLOTS;
 
@@ -391,7 +424,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarNode = (
     <div
       ref={toolbarRef}
-      className="fixed left-3 top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter"
+      className={`fixed top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
+        railLeftPx == null ? ' left-3' : ''
+      }`}
+      style={railLeftPx == null ? undefined : { left: `${railLeftPx}px` }}
     >
       {SHARED_TOP.map(renderSlot)}
 

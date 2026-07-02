@@ -2759,12 +2759,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               {draftSavedLabel}
             </span>
           </div>
-          <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-            {title || safeTitleFromSeed(seedText, isPolish)}
-          </div>
-          <div className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
-            {workspaceNextStepLabel}
-          </div>
+          {/*
+           * UI-L14 (Editor Shell Canon §2 GÓRNA): the title already lives in the
+           * breadcrumb above, so we no longer repeat it as a heading. The next-step
+           * hint is an empty-state affordance — it only helps before there's a graph,
+           * so we hide it once the canvas has content instead of hovering over the work.
+           */}
+          {!mapHasNodes && (
+            <div className="mt-2 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+              {workspaceNextStepLabel}
+            </div>
+          )}
         </div>
 
         {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
@@ -2984,6 +2989,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           selection={selection}
           isAccepted={isAccepted}
           ideaId={realId}
+          canvasContainerRef={canvasContainerRef}
           canUndo={mmCanUndo}
           canRedo={mmCanRedo}
           onAction={(action) => handleQuickAction(action)}
