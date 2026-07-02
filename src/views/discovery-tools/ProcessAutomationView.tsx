@@ -139,7 +139,7 @@ export const ProcessAutomationView: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-6">
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 mb-4"
+            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.back', 'Back to Discovery Tools')}
@@ -320,7 +320,7 @@ export const ProcessAutomationView: React.FC = () => {
                         value={step.name}
                         onChange={(e) => updateStep(step.id, { name: e.target.value })}
                         placeholder={isPolish ? 'Nazwa kroku...' : 'Step name...'}
-                        className="w-full px-2 py-1 text-sm border border-transparent hover:border-slate-200 dark:hover:border-navy-600 rounded bg-transparent text-c-text focus:border-primary-500 focus:outline-none"
+                        className="w-full px-2 py-1 text-sm border border-transparent hover:border-slate-200 dark:hover:border-navy-600 rounded bg-transparent text-c-text focus:border-c-focus-solid focus:outline-none"
                       />
                     </td>
                     <td className="px-4 py-3">
