@@ -69,3 +69,8 @@ Branch kodu: `reskin/wave-0-foundation`. Weryfikacja: `type-check` — moje 4 pl
 - 2026-07-01: scaffold `_AGENCI/` utworzony (protokół + 5 zleceń + ta tablica). Inwentarz ze skanu routingu (~115 ekranów).
 - 2026-07-01 noc: Fala 0 — 4 fixy na `reskin/wave-0-foundation` (ColumnSelector, badge, MainLayout, ModuleHub). Type-check: moje pliki czyste; 12 błędów pre-existing (cudze). Raport: `../_RAPORT_NOCNY_2026-07-01.md`.
 - Wstrzymano dalszy grind: skala=115 ekranów, praca modułowa wymaga odbioru Piotra (G0). Maszyna gotowa do wypuszczenia 5 agentów.
+
+## WERYFIKACJA (2026-07-02)
+- **Type-check bramki:** F0, F1, F2, F3 — wszystkie 11 błędów = baseline pre-existing, ZERO nowych. ~116 plików src.
+- **Wizualna (preview :3012, local FE→demo BE):** ✅ app kompiluje+renderuje bez błędów konsoli; ✅ landing+login renderują; ✅ **foundation token `c-bg` dark renderuje się poprawnie** (#0a0f1e). ❌ ekrany ZA LOGINEM niezweryfikowane — login failed (dane demo niepewne / proxy). → wymaga: poprawne dane demo LUB demo-deploy (zgoda Piotra).
+- **Design-gated (blokuje 100%, wymaga Piotra):** M15 IA · DRD map build · Tool detail build · Chat SPEC-K ramka · Menu 2 pill werdykt · palety danych (dodać `c-tag-*` do tailwind.config).
