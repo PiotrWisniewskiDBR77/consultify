@@ -18,6 +18,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api, api } from '@/services/api';
+import {
+  areaScoresFromAxisData,
+  openDrdReportForPrint,
+} from '@/services/report/drdReportClient';
 
 import { ReportBuilder } from '../components/Reports/ReportBuilder';
 import TeresaMark from '../components/shared/TeresaMark';
@@ -250,7 +254,7 @@ interface DRDAuditReportViewProps {
 export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
   reportId: propReportId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { addChatMessage, setIsBotTyping, currentReportId, setCurrentView, setCurrentReport } =
     useAppStore();
 
@@ -455,6 +459,26 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
       document.body.removeChild(a);
     } catch (err) {
       console.error('Failed to export PDF:', err);
+    }
+  };
+
+  // Generate the publishing-grade DRD client report (HTML → print → PDF).
+  // Numbers-from-engine: derived from the report's per-axis assessment data.
+  const handleGenerateClientReport = async () => {
+    if (!report) return;
+    try {
+      const areaScores = areaScoresFromAxisData(report.axisData || {});
+      await openDrdReportForPrint(
+        areaScores,
+        {
+          organizationName: report.organizationName || report.name || 'Organizacja',
+          language: (i18n.language === 'en' ? 'en' : 'pl') as 'pl' | 'en',
+          assessmentName: report.assessmentName,
+        },
+        { autoPrint: false }
+      );
+    } catch (err) {
+      console.error('Failed to generate DRD client report:', err);
     }
   };
 
@@ -685,6 +709,15 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
             title={t('reports.regenerate', 'Regenerate Report')}
           >
             <RefreshCw className={`w-5 h-5 ${generating ? 'animate-spin' : ''}`} />
+          </button>
+
+          <button
+            onClick={handleGenerateClientReport}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors text-sm font-medium"
+            title={t('reports.generateClientReport', 'Generate DRD client report (print/PDF)')}
+          >
+            <FileText className="w-4 h-4" />
+            {t('reports.clientReport', 'Raport DRD')}
           </button>
 
           <button
