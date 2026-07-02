@@ -408,9 +408,11 @@ export async function sendAlert(alert: AdminAlert): Promise<SendAlertResult> {
     const { routeToSlack } = await import('./slack/slackRouter.js');
     await routeToSlack({
       channel: 'alerts',
+      // Headline (watch/phone): `💳 Rozliczenia · Billing alert: <typ>`.
+      category: 'Rozliczenia',
       severity,
       title,
-      text: `*${title}*\n${body}`,
+      text: body,
       dedupeKey: `admin-alert:${alert.id}:${alert.alertType}`,
     });
   } catch (err) {

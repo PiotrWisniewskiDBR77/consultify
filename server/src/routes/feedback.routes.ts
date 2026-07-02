@@ -1730,7 +1730,7 @@ router.patch(
         const actor = await resolveActorLabel((req as any).user);
         await notifySlackThread(
           { metadata_json: metaSnapshot },
-          `:wrench: Status: ${from} → ${to} (przez ${actor})${note ? `\n_${String(note).slice(0, 200)}_` : ''}`
+          `🔧 Status: ${from} → ${to} · zmienił(a): ${actor}${note ? `\n_${String(note).slice(0, 200)}_` : ''}`
         );
       })();
     }
@@ -1954,7 +1954,7 @@ router.patch(
       if (parts.length > 0) {
         void notifySlackThread(
           { metadata_json: row.metadata_json },
-          `:gear: Workflow: ${parts.join(' · ')}`
+          `⚙️ Workflow: ${parts.join(' · ')}`
         );
       }
     }
@@ -2081,7 +2081,7 @@ router.post(
       const summary = String(response).slice(0, 200);
       void notifySlackThread(
         { metadata_json: feedback.metadata_json },
-        `:speech_balloon: Odpowiedź od zespołu: ${summary}${String(response).length > 200 ? '…' : ''}`
+        `💬 Odpowiedź zespołu: ${summary}${String(response).length > 200 ? '…' : ''}`
       );
     }
 

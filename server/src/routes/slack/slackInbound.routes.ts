@@ -457,6 +457,8 @@ export async function handleViewSubmission(payload: any): Promise<void> {
   // Post the ticket into #cf-feedback via the router → capture ts + channelId
   // and anchor them on the ticket. This is the anchor for the F3 thread loop.
   try {
+    const categoryLabel =
+      values.rawType === 'BUG' ? 'Błąd' : values.rawType === 'FEATURE' ? 'Funkcja' : 'Pomysł';
     const routed = await routeToSlack({
       channel: 'feedback',
       severity:
@@ -465,8 +467,11 @@ export async function handleViewSubmission(payload: any): Promise<void> {
           : values.severity === 'HIGH'
             ? 'WARNING'
             : 'INFO',
+      // Headline (watch/phone): `🐛 Błąd · HIGH · <tytuł>` — self-describing.
+      category: categoryLabel,
+      priorityLabel: values.severity !== 'MEDIUM' ? values.severity : undefined,
       title: values.title || description.slice(0, 80),
-      text: `:inbox_tray: *${values.rawType}* — ${values.title || description.slice(0, 80)}\n${description.slice(0, 500)}\n_zgłoszone przez ${slackUsername || slackUserId || 'Slack'} · ticket ${feedbackId}${taskId ? ` · task ${taskId}` : ''}_`,
+      text: `${description.slice(0, 500)}\n_zgłosił(a) ${slackUsername || slackUserId || 'Slack'} · ticket ${feedbackId}${taskId ? ` · task ${taskId}` : ''}_`,
     });
 
     if (routed.ok && routed.ts && feedbackId) {

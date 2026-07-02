@@ -143,8 +143,10 @@ async function sendUrgent(event: ProgressEvent): Promise<void> {
     await routeToSlack({
       channel: 'progress',
       severity: 'CRITICAL',
+      // Headline (watch/phone): `🚨 Pilne · <kind> · <title>`.
+      category: `Pilne · ${event.kind}`,
       title: event.title,
-      text: `:rotating_light: *${event.kind}* — ${event.title}${detail}`,
+      text: detail.trim() || event.title,
     });
   } catch (err) {
     logger.warn('[ProgressFeed] urgent send failed (fail-soft)', {
@@ -166,6 +168,8 @@ export async function flushProgressNow(): Promise<void> {
     await routeToSlack({
       channel: 'progress',
       severity: 'INFO',
+      // Headline (watch/phone): `📊 Postęp · Postępy (15 min)`.
+      category: 'Postęp',
       title,
       text,
     });

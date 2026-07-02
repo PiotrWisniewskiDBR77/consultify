@@ -381,6 +381,8 @@ export async function runFeedbackDigestOnce(): Promise<number> {
     await routeToSlack({
       channel: 'progress',
       severity,
+      // Headline (watch/phone): `📋 Raport dzienny · <podsumowanie>`.
+      category: 'Raport dzienny',
       title: payload.title,
       text: payload.body,
     });

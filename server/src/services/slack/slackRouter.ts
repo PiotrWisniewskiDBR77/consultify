@@ -35,6 +35,56 @@ export interface RouteToSlackEvent {
   threadTs?: string;
   /** When set, identical dedupeKeys are suppressed for DEDUPE_WINDOW_MS. */
   dedupeKey?: string;
+  /**
+   * Human category for the push notification headline (watch/phone), e.g.
+   * "Błąd", "Pomysł", "Awaria", "Postęp", "Rejestracja". When set (with title),
+   * the router builds a scannable first line `<emoji> <Kategoria> · <PRIO> · <title>`
+   * so the notification is self-describing without opening Slack.
+   */
+  category?: string;
+  /** Short priority/severity tag for the headline, e.g. "HIGH", "CRITICAL". */
+  priorityLabel?: string;
+}
+
+// ==========================================
+// NOTIFICATION HEADLINE (watch/phone friendly)
+// ==========================================
+
+/** Real Unicode emoji per category — render on watch/phone, unlike `:codes:`. */
+function categoryEmoji(category: string | undefined, severity?: SlackSeverity): string {
+  const c = (category || '').toLowerCase();
+  if (c.includes('pilne') || c.includes('awaria') || c.includes('crash')) return '🚨';
+  if (c.includes('ostrzeż') || c.includes('ostrze')) return '⚠️';
+  if (c.includes('rozlicz') || c.includes('billing') || c.includes('płat')) return '💳';
+  if (c.includes('błąd') || c.includes('blad') || c.includes('bug')) return '🐛';
+  if (c.includes('pomysł') || c.includes('pomysl') || c.includes('idea')) return '💡';
+  if (c.includes('feature') || c.includes('funkcj')) return '✨';
+  if (c.includes('postęp') || c.includes('postep') || c.includes('progress')) return '📊';
+  if (c.includes('rejestr') || c.includes('user') || c.includes('signup')) return '🙋';
+  if (c.includes('status') || c.includes('workflow') || c.includes('wątek')) return '🔧';
+  if (c.includes('odpowied') || c.includes('reply')) return '💬';
+  if (c.includes('digest') || c.includes('raport')) return '📋';
+  if (c.includes('ai') || c.includes('koszt')) return '🤖';
+  // Fall back to severity signal.
+  if (severity === 'CRITICAL') return '🚨';
+  if (severity === 'WARNING') return '⚠️';
+  return '🔔';
+}
+
+/**
+ * Build the front-loaded notification line. Strips Slack `:emoji:` codes and
+ * bold `*markers*` from the incoming title so the phone/watch preview is clean.
+ */
+function buildHeadline(event: RouteToSlackEvent): string {
+  const emoji = categoryEmoji(event.category, event.severity);
+  const cleanTitle = String(event.title || '')
+    .replace(/:[a-z0-9_+-]+:/gi, '')
+    .replace(/[*_`]/g, '')
+    .trim();
+  const parts = [event.category?.trim(), event.priorityLabel?.trim(), cleanTitle].filter(
+    (p) => p && p.length > 0
+  );
+  return `${emoji} ${parts.join(' · ')}`.trim();
 }
 
 export interface RouteToSlackResult {
@@ -220,8 +270,18 @@ async function postViaWebhook(
  * Route a single event to Slack. Bot-first, webhook fallback. Fail-soft.
  * Never throws — on any failure returns { ok: false, ... }.
  */
-export async function routeToSlack(event: RouteToSlackEvent): Promise<RouteToSlackResult> {
+export async function routeToSlack(rawEvent: RouteToSlackEvent): Promise<RouteToSlackResult> {
   try {
+    // Compose a watch/phone-friendly outgoing text: a scannable headline
+    // (category · priority · title) followed by the detail body. When no
+    // category is given, the caller's text is sent verbatim (back-compat).
+    const event: RouteToSlackEvent = rawEvent.category
+      ? {
+          ...rawEvent,
+          text: `${buildHeadline(rawEvent)}${rawEvent.text ? `\n${rawEvent.text}` : ''}`,
+        }
+      : rawEvent;
+
     if (isDuplicate(event.dedupeKey)) {
       logger.debug('[SlackRouter] Deduped (within 30m window)', {
         channel: event.channel,

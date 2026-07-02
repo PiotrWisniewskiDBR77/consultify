@@ -1831,8 +1831,10 @@ router.post(
             routeToSlack({
               channel: 'progress',
               severity: 'INFO',
-              title: 'Nowa rejestracja',
-              text: `:wave: *Nowa rejestracja*\n*Imię:* ${fullName}\n*Email:* ${email}\n*Organizacja:* ${orgLabel}\n*Rola:* ${effectiveRole}`,
+              // Headline (watch/phone): `🙋 Rejestracja · <imię> (<organizacja>)`.
+              category: 'Rejestracja',
+              title: `${fullName} (${orgLabel})`,
+              text: `Email: ${email} · Rola: ${effectiveRole}`,
               dedupeKey: `registration:${userId}`,
             }).then(() => undefined),
             1500

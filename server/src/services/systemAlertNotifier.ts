@@ -60,9 +60,12 @@ export async function sendSystemAlert(input: SystemAlertInput): Promise<void> {
     ? aiSlack.sendSystemAlert(title, input.message, input.severity)
     : routeToSlack({
         channel: 'alerts',
+        // Headline (watch/phone): `🚨 Awaria · <źródło: tytuł>` for CRITICAL,
+        // `⚠️ Ostrzeżenie · …` for WARNING — instantly recognisable.
+        category: input.severity === 'CRITICAL' ? 'Awaria' : 'Ostrzeżenie',
         severity: input.severity,
         title,
-        text: `*${title}*\n${input.message}`,
+        text: input.message,
         dedupeKey: input.throttleKey || `${input.severity}:${input.source || 'system'}:${input.title}`,
       }).then(() => undefined);
 

@@ -97,6 +97,36 @@ describe('slackRouter.routeToSlack', () => {
     expect(body.text).toBe('Database unreachable');
   });
 
+  it('builds a watch/phone-friendly headline when category is provided', async () => {
+    process.env.SLACK_BOT_TOKEN = 'xoxb-test';
+    process.env.SLACK_CHANNEL_FEEDBACK_ID = 'C_FB';
+    const fetchMock = mockFetchOk({ ok: true, ts: '1.2', channel: 'C_FB' });
+
+    await routeToSlack({
+      channel: 'feedback',
+      category: 'Błąd',
+      priorityLabel: 'HIGH',
+      // Title carries Slack markup + :emoji: codes that must be stripped from the
+      // notification line so the watch preview is clean.
+      title: ':bug: *M15 Rezultaty: wykresy nie renderują się*',
+      text: 'Szczegóły zgłoszenia w treści',
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    // Front-loaded, scannable, no markdown/emoji-codes in the title part.
+    expect(body.text).toBe(
+      '🐛 Błąd · HIGH · M15 Rezultaty: wykresy nie renderują się\nSzczegóły zgłoszenia w treści'
+    );
+  });
+
+  it('sends the caller text verbatim when no category (back-compat)', async () => {
+    process.env.SLACK_BOT_TOKEN = 'xoxb-test';
+    process.env.SLACK_CHANNEL_ALERTS_ID = 'C_ALERTS';
+    const fetchMock = mockFetchOk({ ok: true, ts: '1.2', channel: 'C_ALERTS' });
+    await routeToSlack({ channel: 'alerts', title: 'x', text: 'raw body only' });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).text).toBe('raw body only');
+  });
+
   it('passes thread_ts to the bot API when threadTs is provided', async () => {
     process.env.SLACK_BOT_TOKEN = 'xoxb-test';
     process.env.SLACK_CHANNEL_FEEDBACK_ID = 'C_FB';
