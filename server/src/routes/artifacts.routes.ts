@@ -442,6 +442,82 @@ router.get(
   })
 );
 
+/**
+ * DEC-1 (Harvard R1 #8) — Chat deliverable registry with back-reference.
+ *
+ * Every deck/doc/sheet produced from the chat is registered in the M17 Outputs
+ * library (v8_output_artifacts) with a back-reference to its source, so Materiały
+ * shows the artifact and can link back to the conversation that produced it. This
+ * fixes the "split-brain" where `registerChatDeliverable` only wrote to a local
+ * (localStorage) store and the artifact never reached M17 — Teresa "lied about
+ * location" because the deliverable was nowhere the user could find it.
+ *
+ * The back-reference lives in two places (mirrors work-canvas register-in-outputs):
+ *  - origin link: originRuntime + originRecordId (= the generationId), idempotent
+ *  - originSummary: { sourceType: 'chat', sourceId: conversationId, kind }
+ *
+ * Registration is idempotent per (org, originRuntime, generationId): re-posting the
+ * same generation updates the title/metadata instead of duplicating — one
+ * deliverable, zero duplicates.
+ */
+router.post(
+  '/register-chat',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req);
+    const body = (req.body || {}) as Record<string, unknown>;
+
+    const rawKind = String(body.kind || '').toLowerCase();
+    const generationId = String(body.generationId || '').trim();
+    const title = String(body.title || '').trim() || null;
+    const conversationId = String(body.conversationId || '').trim() || null;
+
+    if (rawKind !== 'deck' && rawKind !== 'doc' && rawKind !== 'sheet') {
+      return res.status(400).json({ error: 'Invalid kind (expected deck | doc | sheet)' });
+    }
+    if (!generationId) {
+      return res.status(400).json({ error: 'generationId is required' });
+    }
+
+    // Map chat kind → registry taxonomy (mirrors DocumentStudio/Presentations conventions).
+    const mapping =
+      rawKind === 'deck'
+        ? { outputType: 'presentation' as const, artifactFamily: 'presentation' as const, originRuntime: 'presentation' as const }
+        : rawKind === 'sheet'
+          ? { outputType: 'sheet' as const, artifactFamily: 'sheet' as const, originRuntime: 'sheet' as const }
+          : { outputType: 'report' as const, artifactFamily: 'document' as const, originRuntime: 'native_artifact' as const };
+
+    const artifact = await artifactRegistryService.registerArtifactOrigin({
+      organizationId,
+      outputType: mapping.outputType,
+      artifactFamily: mapping.artifactFamily,
+      originRuntime: mapping.originRuntime,
+      originRecordId: generationId,
+      titleSnapshot: title,
+      ownerUserId: userId,
+      createdBy: userId,
+      visibilityScope: undefined,
+      originSummary: {
+        sourceType: 'chat',
+        sourceId: conversationId,
+        sourceTable: 'conversations',
+        kind: rawKind,
+        generationId,
+      },
+    });
+
+    return res.json({
+      data: artifact,
+      readBack: {
+        target: 'outputs_library',
+        artifactId: artifact?.artifactId || null,
+        sourceType: 'chat',
+        sourceId: conversationId,
+        status: artifact ? 'registered' : 'skipped',
+      },
+    });
+  })
+);
+
 router.get(
   '/wave5/schema',
   asyncHandler(async (_req: Request, res: Response) =>

@@ -53,6 +53,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { ErrorState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -591,6 +592,7 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
   // Raw decision data from API
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // DnD state
   const [activeDecision, setActiveDecision] = useState<Decision | null>(null);
@@ -615,11 +617,13 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
   const fetchDecisions = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getDecisions();
       setDecisions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch decisions:', error);
       toast.error('Failed to load decisions');
+      setLoadError('Failed to load decisions');
     } finally {
       setLoading(false);
     }
@@ -862,6 +866,16 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
               </div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+        <div className="flex-1 p-4">
+          <ErrorState message={loadError} retry={fetchDecisions} />
         </div>
       </div>
     );

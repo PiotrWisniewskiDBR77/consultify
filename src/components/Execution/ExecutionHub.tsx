@@ -280,15 +280,15 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-primary-500/40 transition-colors cursor-grab active:cursor-grabbing ${
-        isDragging ? 'shadow-lg ring-2 ring-primary-500/50' : ''
+      className={`p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-border-strong transition-colors cursor-grab active:cursor-grabbing ${
+        isDragging ? 'shadow-lg ring-2 ring-c-accent/40' : ''
       }`}
       {...attributes}
       {...listeners}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
-          <GripVertical size={14} className="text-slate-500 flex-shrink-0" />
+          <GripVertical size={14} className="text-c-text-muted flex-shrink-0" />
           <h4 className="text-sm font-medium text-c-text line-clamp-2">
             {task.title}
           </h4>
@@ -344,8 +344,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[260px] bg-white/80 dark:bg-navy-900/50 rounded-xl border transition-colors ${
-        isOver ? 'border-primary-500 bg-primary-500/5' : 'border-c-border-subtle'
+      className={`flex-1 min-w-[260px] bg-c-surface/80 rounded-xl border transition-colors ${
+        isOver ? 'border-c-accent bg-c-accent-soft' : 'border-c-border-subtle'
       }`}
       data-testid={`kanban-column-${id}`}
     >
@@ -356,7 +356,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           {icon}
           {label}
         </div>
-        <span className="text-xs text-c-text-muted bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
           {tasks.length}
         </span>
       </div>
@@ -370,8 +370,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           <div
             className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
               isOver
-                ? 'border-primary-500/50 text-primary-400'
-                : 'border-slate-300 dark:border-navy-700 text-c-text-muted'
+                ? 'border-c-accent/50 text-c-accent'
+                : 'border-c-border text-c-text-muted'
             }`}
           >
             {isOver ? t('execution.kanban.dropHere') : t('execution.kanban.noTasks')}
@@ -2076,11 +2076,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const owner = row.ownerBusiness || row.ownerTechnical;
           if (!owner)
             return (
-              <span className="text-slate-500 text-sm">{t('execution.table.unassigned')}</span>
+              <span className="text-c-text-muted text-sm">{t('execution.table.unassigned')}</span>
             );
           return (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-c-surface-raised flex items-center justify-center text-xs text-c-text-secondary">
+              <div className="w-6 h-6 rounded-full bg-c-border-subtle flex items-center justify-center text-xs text-c-text">
                 {owner.firstName?.[0]}
                 {owner.lastName?.[0]}
               </div>
@@ -2221,7 +2221,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         render: (row) => {
           const initiativeTasks = tasksByInitiative[row.id] || [];
           if (initiativeTasks.length === 0) {
-            return <span className="text-xs text-slate-500">-</span>;
+            return <span className="text-xs text-c-text-muted">-</span>;
           }
           const doneCount = initiativeTasks.filter(
             (task) => normalizeTaskStatus(task.status) === 'done'
@@ -2241,8 +2241,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     <div
       className="
         flex items-center gap-1 p-0.5 rounded-full h-9
-        bg-slate-100 dark:bg-navy-800
-        border border-slate-200/60 dark:border-navy-700/60
+        bg-c-surface-raised
+        border border-c-border-subtle
       "
       role="radiogroup"
       aria-label={t('execution.scope.aria', 'Scope')}
@@ -2264,8 +2264,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           }}
           className={`h-8 px-3 rounded-full text-[11px] font-semibold transition-colors ${
             scope === opt.id
-              ? 'bg-white/80 dark:bg-navy-900/70 text-c-text-secondary shadow-sm'
-              : 'text-c-text-muted hover:bg-white/60 dark:hover:bg-navy-900/50'
+              ? 'bg-c-surface/80 text-c-text-secondary shadow-sm'
+              : 'text-c-text-muted hover:bg-c-surface/60'
           }`}
           title={
             opt.id === 'active'
@@ -2286,7 +2286,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <button
           type="button"
           onClick={() => setActiveTab('list' as ModuleTab)}
-          className="h-9 px-3 rounded-lg flex items-center gap-2 border border-slate-200/60 dark:border-navy-700/60 bg-slate-100 dark:bg-navy-800 text-c-text-secondary hover:bg-white/60 dark:hover:bg-navy-900/50 transition-colors"
+          className="h-9 px-3 rounded-lg flex items-center gap-2 border border-c-border-subtle bg-c-surface-raised text-c-text-secondary hover:bg-c-surface/60 transition-colors"
           title={t('execution.execSnapshot.title', 'Executive snapshot')}
         >
           <span className="text-[10px] font-mono uppercase tracking-wide text-c-text-muted">
@@ -2301,7 +2301,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <span className="text-[11px] font-semibold tabular-nums text-amber-500">
             {execTopline.pendingDecisions}
           </span>
-          <span className="text-[11px] font-semibold tabular-nums text-c-warning">
+          <span className="text-[11px] font-semibold tabular-nums text-c-danger">
             {execTopline.overdueTasks}
           </span>
         </button>
@@ -2745,7 +2745,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {
           id: 'todo',
           label: t('execution.kanban.toDo'),
-          accent: 'text-slate-600',
+          accent: 'text-c-text-muted',
           icon: <ClipboardList size={14} />,
         },
         {
@@ -2801,17 +2801,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {/* Drag overlay for smooth dragging experience */}
         <DragOverlay>
           {activeTask ? (
-            <div className="p-3 bg-white dark:bg-navy-800 border-2 border-primary-500 rounded-lg shadow-xl w-[240px]">
+            <div className="p-3 bg-c-surface border-2 border-c-accent rounded-lg shadow-xl w-[240px]">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <GripVertical size={14} className="text-primary-400" />
+                  <GripVertical size={14} className="text-c-text-muted" />
                   <h4 className="text-sm font-medium text-c-text line-clamp-2">
                     {activeTask.title}
                   </h4>
                 </div>
               </div>
               {activeTask.initiativeName && (
-                <div className="text-xs text-slate-600 mb-2 ml-6">{activeTask.initiativeName}</div>
+                <div className="text-xs text-c-text-muted mb-2 ml-6">{activeTask.initiativeName}</div>
               )}
               <div className="flex items-center justify-between text-xs text-c-text-muted ml-6">
                 <span className="capitalize">{activeTask.priority}</span>
@@ -3088,7 +3088,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 {portfolioMetrics.budgetHealth === null ? '—' : `${portfolioMetrics.budgetHealth}%`}
               </p>
             </div>
-            <LayoutDashboard className="text-c-text-secondary" />
+            <LayoutDashboard className="text-c-text-muted" />
           </div>
         </div>
         <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
@@ -3111,7 +3111,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <p className="text-xs text-c-text-muted uppercase tracking-wide">
               {t('execution.portfolio.escalationsGates')}
             </p>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-c-text-muted">
               {portfolioMetrics.stageGate?.gateType ||
                 t('execution.portfolio.noGateInfo', 'No gate info')}
             </span>
@@ -3237,7 +3237,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }
             toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
-          className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
+          className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle hover:border-c-border-strong hover:bg-c-surface/60 transition-colors"
           title={t('execution.tasks.openInitiative', 'Open related initiative')}
         >
           <div className="min-w-0">
@@ -3261,10 +3261,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       accent,
       tasks,
     }) => (
-      <div className="min-w-[280px] flex-1 bg-white/70 dark:bg-navy-900/50 rounded-xl border border-c-border-subtle overflow-hidden">
+      <div className="min-w-[280px] flex-1 bg-c-surface/70 rounded-xl border border-c-border-subtle overflow-hidden">
         <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
           <div className={`text-xs font-semibold uppercase tracking-wide ${accent}`}>{title}</div>
-          <span className="text-xs text-c-text-muted bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
             {tasks.length}
           </span>
         </div>
@@ -3426,7 +3426,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }
             toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
-          className="w-full text-left p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
+          className="w-full text-left p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle hover:border-c-border-strong hover:bg-c-surface/60 transition-colors"
           title={t('execution.decisionsBuckets.openInitiative', 'Open related initiative')}
         >
           <div className="text-sm font-medium text-c-text truncate">
@@ -3450,10 +3450,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       accent,
       items,
     }) => (
-      <div className="min-w-[280px] flex-1 bg-white/70 dark:bg-navy-900/50 rounded-xl border border-c-border-subtle overflow-hidden">
+      <div className="min-w-[280px] flex-1 bg-c-surface/70 rounded-xl border border-c-border-subtle overflow-hidden">
         <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
           <div className={`text-xs font-semibold uppercase tracking-wide ${accent}`}>{title}</div>
-          <span className="text-xs text-c-text-muted bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
             {items.length}
           </span>
         </div>
@@ -3515,7 +3515,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           />
           <Bucket
             title={t('execution.decisionsBuckets.more', '30d+ / No date')}
-            accent="text-slate-600"
+            accent="text-c-text-muted"
             items={decisionBuckets.more}
           />
         </div>
@@ -3557,7 +3557,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 ? 'text-danger-500'
                 : attention === 'due_soon_tasks'
                   ? 'text-blue-500'
-                  : 'text-slate-500',
+                  : 'text-c-text-muted',
         },
       ]);
     },
@@ -3798,13 +3798,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               key={row.id}
               type="button"
               onClick={row.onClick}
-              className="text-left rounded-xl border border-c-border-subtle bg-c-surface p-3 hover:border-primary-500/40 transition-colors"
+              className="text-left rounded-xl border border-c-border-subtle bg-c-surface p-3 hover:border-c-border-strong transition-colors"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {row.label}
                 </div>
-                <span className="text-xs font-semibold rounded-full bg-slate-100 dark:bg-navy-800 text-c-text-secondary px-2 py-0.5">
+                <span className="text-xs font-semibold rounded-full bg-c-surface-raised text-c-text-secondary px-2 py-0.5">
                   {row.count}
                 </span>
               </div>
@@ -4027,7 +4027,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Redistribute idle capacity',
           'Flag resource gaps to hiring',
         ],
-        icon: <Users size={18} className="text-c-text-secondary" />,
+        icon: <Users size={18} className="text-c-text-muted" />,
         highlights: [{ label: 'Tasks', value: totalTasks }],
       },
       {
@@ -4106,7 +4106,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Decouple tightly coupled work',
           'Add buffers to critical chains',
         ],
-        icon: <GripVertical size={18} className="text-slate-500" />,
+        icon: <GripVertical size={18} className="text-c-text-muted" />,
         highlights: [{ label: 'Initiatives', value: totalInitiatives }],
       },
       {
@@ -4372,7 +4372,7 @@ Please return:
           const r = row as ReportDef;
           return (
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
+              <div className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-c-surface-raised">
                 {r.icon}
               </div>
               <div className="min-w-0">
@@ -4420,7 +4420,7 @@ Please return:
                       ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                       : h.variant === 'warn'
                         ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                        : 'bg-slate-100 dark:bg-navy-800 text-c-text-secondary'
+                        : 'bg-c-surface-raised text-c-text-muted'
                   }`}
                 >
                   {h.label}: {h.value}
@@ -4472,7 +4472,7 @@ Please return:
 
           {/* Configuration / methodology descriptor */}
           <div className="px-4 pb-2 pt-1">
-            <div className="text-[10px] uppercase tracking-wider text-c-text-muted font-medium border-t border-slate-100 dark:border-navy-800 pt-3">
+            <div className="text-[10px] uppercase tracking-wider text-c-text-muted font-medium border-t border-c-border-subtle pt-3">
               {t('execution.reportPanel.methodology', 'Report configuration & methodology')}
             </div>
           </div>
@@ -4491,7 +4491,7 @@ Please return:
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
-                <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
+                <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-c-surface-raised">
                   {report.icon}
                 </div>
                 <div>
@@ -4516,7 +4516,7 @@ Please return:
                         ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                         : h.variant === 'warn'
                           ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                          : 'bg-slate-100 dark:bg-navy-800 text-c-text-secondary'
+                          : 'bg-c-surface-raised text-c-text-muted'
                     }`}
                   >
                     {h.label}: {h.value}
@@ -4544,7 +4544,7 @@ Please return:
                 {report.dataSources.map((ds) => (
                   <span
                     key={ds}
-                    className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-c-text-secondary"
+                    className="inline-block px-1.5 py-0.5 rounded bg-c-surface-raised text-[10px] text-c-text-muted"
                   >
                     {ds}
                   </span>
@@ -4575,7 +4575,7 @@ Please return:
               </div>
               <ol className="space-y-0.5 list-decimal list-inside">
                 {report.sections.map((s) => (
-                  <li key={s} className="text-[11px] text-c-text-secondary">
+                  <li key={s} className="text-[11px] text-c-text-muted">
                     {s}
                   </li>
                 ))}
@@ -4587,7 +4587,7 @@ Please return:
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
                 RAG / Confidence Logic
               </div>
-              <p className="text-[11px] text-c-text-secondary leading-relaxed">
+              <p className="text-[11px] text-c-text-muted leading-relaxed">
                 {report.ragLogic}
               </p>
             </div>
@@ -4601,7 +4601,7 @@ Please return:
                 {report.followUpActions.map((a) => (
                   <span
                     key={a}
-                    className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
+                    className="inline-block rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary"
                   >
                     {a}
                   </span>
@@ -4614,13 +4614,13 @@ Please return:
                 Data Quality
               </div>
               <div className="flex flex-wrap gap-1.5">
-                <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-c-text-secondary">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-c-surface-raised text-[10px] text-c-text-muted">
                   {report.dataQuality.confidence}
                 </span>
                 {report.degradedFlags.map((flag) => (
                   <span
                     key={flag}
-                    className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
+                    className="inline-block rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-muted"
                   >
                     {flag}
                   </span>
@@ -4645,7 +4645,7 @@ Please return:
     (report: ReportDef) => {
       const rag = computeRAG(report);
       return (
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-200 dark:border-navy-800">
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-c-border-subtle">
           <button
             type="button"
             onClick={() => handleGenerateReport(report)}
@@ -4666,7 +4666,7 @@ Please return:
               exportReportPDF(report, rag);
               toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
             }}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised transition-colors"
           >
             PDF
           </button>
@@ -4691,7 +4691,7 @@ Please return:
                 () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
               );
             }}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised transition-colors"
           >
             {t('execution.reportPanel.copy', 'Copy')}
           </button>
@@ -4820,7 +4820,7 @@ Please return:
           <button
             type="button"
             onClick={() => navigate('/reports')}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {t('execution.reportCatalog.openGlobal', 'Global Reports →')}
           </button>
@@ -4861,12 +4861,12 @@ Please return:
                 key={report.id}
                 type="button"
                 onClick={() => handleOpenReport(report)}
-                className="group rounded-xl border bg-c-surface transition-all text-left border-c-border-subtle hover:border-primary-500/40 hover:shadow-sm dark:hover:border-primary-400/30"
+                className="group rounded-xl border bg-c-surface transition-all text-left border-c-border-subtle hover:border-c-border-strong hover:shadow-sm"
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2.5">
-                      <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
+                      <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-c-surface-raised group-hover:bg-c-surface-raised transition-colors">
                         {report.icon}
                       </div>
                       <div>
@@ -4877,7 +4877,7 @@ Please return:
                           <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                             {report.cadence}
                           </span>
-                          <span className="text-[10px] text-c-text-secondary">·</span>
+                          <span className="text-[10px] text-c-text-muted">·</span>
                           <span className="text-[10px] text-c-text-muted">
                             {report.audience}
                           </span>
@@ -4886,7 +4886,7 @@ Please return:
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-c-text-secondary transition-transform group-hover:text-c-text"
+                      className="text-c-text-muted transition-transform group-hover:text-c-text-secondary"
                     />
                   </div>
 
@@ -4900,7 +4900,7 @@ Please return:
                               ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
                               : h.variant === 'warn'
                                 ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                                : 'bg-slate-100 dark:bg-navy-800 text-c-text-secondary'
+                                : 'bg-c-surface-raised text-c-text-muted'
                           }`}
                         >
                           {h.label}: {h.value}
@@ -5163,7 +5163,7 @@ Please return:
                   </span>
                   {!isPilotParticipant && bulkStatusTargets.length > 0 && (
                     <>
-                      <span className="text-xs text-slate-300 dark:text-slate-600 select-none">·</span>
+                      <span className="text-xs text-c-text-muted select-none">·</span>
                       <span className="text-xs text-c-text-muted select-none">
                         {t('execution.bulk.setStatus', 'Zmień status:')}
                       </span>
@@ -5172,7 +5172,7 @@ Please return:
                           key={tg.targetStatus}
                           type="button"
                           onClick={() => void handleBulkStatusChange(tg.targetStatus)}
-                          className="rounded-md border border-c-border px-2 py-0.5 text-xs font-medium text-c-text-secondary hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                          className="rounded-md border border-c-border-subtle px-2 py-0.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                         >
                           {tg.label}
                         </button>
@@ -5190,7 +5190,7 @@ Please return:
                   <button
                     type="button"
                     onClick={clearSummarySelection}
-                    className="ml-auto text-xs font-medium text-c-text-muted hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                    className="ml-auto text-xs font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
                   >
                     {t('common.clear', 'Clear')}
                   </button>

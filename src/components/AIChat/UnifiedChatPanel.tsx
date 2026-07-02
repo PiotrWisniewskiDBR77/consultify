@@ -512,6 +512,15 @@ const registerChatDeliverable = (
     createdAt: new Date(),
     metadata: { deliverable: { kind, generationId, title } },
   } as Artifact);
+
+  // DEC-1 (Harvard R1 #8): register the artifact in the M17 Outputs library with a
+  // back-reference (sourceType=chat, sourceId=conversationId) so the deliverable
+  // actually lands in Materiały — the local store above only feeds the in-canvas
+  // artifact switcher. Fire-and-forget + fail-soft: a non-v8 org (404) or any
+  // registry error must never break the chat flow.
+  void Api.post('/artifacts/register-chat', { kind, generationId, title, conversationId }).catch(
+    () => undefined
+  );
 };
 
 /**
@@ -5425,7 +5434,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           aria-label="Conversation"
           className={`flex-1 ${showWorkPanelEmptyState ? 'overflow-hidden' : 'overflow-y-auto'} ${
             isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'
-          }`}
+          } ${isStreaming ? 'chat-streaming-frame' : ''}`}
         >
           {isRehydratingConversation ? (
             /* Loading state — conversation selected but messages still loading */
@@ -5806,10 +5815,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   className="text-c-text-secondary"
                 />
               </div>
-              <div className="bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl rounded-tl-none px-3 py-2 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
-                <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-100"></span>
-                <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-200"></span>
+              <div className="bg-c-surface-raised border border-c-border rounded-xl rounded-tl-none px-3 py-2 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-c-text-muted rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-c-text-muted rounded-full animate-bounce delay-100"></span>
+                <span className="w-1.5 h-1.5 bg-c-text-muted rounded-full animate-bounce delay-200"></span>
               </div>
             </div>
           )}

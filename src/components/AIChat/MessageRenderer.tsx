@@ -980,7 +980,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             code: ({ inline, className: codeClassName, children }: any) => {
                               if (inline) {
                                 return (
-                                  <code className="px-1 py-0.5 bg-c-surface-raised rounded text-primary-600 dark:text-primary-400 text-xs font-mono">
+                                  <code className="px-1 py-0.5 bg-c-surface-raised border border-c-border rounded text-c-text text-xs font-mono">
                                     {children}
                                   </code>
                                 );
@@ -997,7 +997,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary-600 hover:text-primary-700 underline"
+                                className="text-c-accent hover:opacity-80 underline underline-offset-2"
                               >
                                 {children}
                               </a>

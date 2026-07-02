@@ -22,6 +22,7 @@ import { Api, api } from '@/services/api';
 import {
   areaScoresFromAxisData,
   openDrdReportForPrint,
+  openHtmlForPrint,
 } from '@/services/report/drdReportClient';
 
 import { ReportBuilder } from '../components/Reports/ReportBuilder';
@@ -466,14 +467,25 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
   // Generate the publishing-grade DRD client report (HTML → print → PDF).
   // Numbers-from-engine: derived from the report's per-axis assessment data.
   const handleGenerateClientReport = async () => {
-    if (!report) return;
+    if (!report || !reportId) return;
+    const lang = (i18n.language === 'en' ? 'en' : 'pl') as 'pl' | 'en';
+    // Prefer the server route: it wires the live LLM narrator (AI-authored
+    // executive summary + narratives) with a deterministic fallback. If it is
+    // unavailable, fall back to the fully client-side generator (deterministic).
+    try {
+      const { html } = await api.getDrdReportHtml(reportId, { lang });
+      openHtmlForPrint(html, { autoPrint: false });
+      return;
+    } catch (err) {
+      console.warn('DRD server report unavailable, falling back to client generator:', err);
+    }
     try {
       const areaScores = areaScoresFromAxisData(report.axisData || {});
       await openDrdReportForPrint(
         areaScores,
         {
           organizationName: report.organizationName || report.name || 'Organizacja',
-          language: (i18n.language === 'en' ? 'en' : 'pl') as 'pl' | 'en',
+          language: lang,
           assessmentName: report.assessmentName,
         },
         { autoPrint: false }

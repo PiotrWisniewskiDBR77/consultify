@@ -37,6 +37,16 @@ export function areaScoresFromAxisData(
   return scores;
 }
 
+/** Open an already-generated HTML document string in a new print-ready window. */
+export function openHtmlForPrint(html: string, { autoPrint = false }: { autoPrint?: boolean } = {}): void {
+  const win = window.open('', '_blank');
+  if (!win) return;
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  if (autoPrint) win.setTimeout(() => win.print(), 400);
+}
+
 /**
  * Generate the DRD report HTML and open it in a new window ready to print.
  * Returns the generated HTML (also useful for tests / download).

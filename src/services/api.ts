@@ -8996,6 +8996,21 @@ export const Api = {
   },
 
   /**
+   * Generate the publishing-grade DRD client report HTML on the server (with the
+   * live LLM narrator). Returns the standalone HTML string ready to open + print.
+   */
+  getDrdReportHtml: async (
+    reportId: string,
+    opts?: { lang?: 'pl' | 'en' }
+  ): Promise<{ html: string; narrative: 'llm' | 'deterministic' }> => {
+    const qs = new URLSearchParams({ format: 'json', ...(opts?.lang ? { lang: opts.lang } : {}) });
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/drd-report?${qs.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to generate DRD report');
+  },
+
+  /**
    * Generate full report with all sections from template
    */
   generateReport: async (

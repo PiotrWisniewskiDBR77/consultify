@@ -1,4 +1,18 @@
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
+import {
+  A3_SECTIONS,
+  buildA3ConclusionPrompt,
+  buildA3DeepenPrompt,
+  type A3SectionId,
+} from '@/config/a3problemsolving';
+import { buildDmsConclusionPrompt, toDmsSession } from '@/config/dmsbuilder';
+import { buildSmedConclusionPrompt, toSmedSession } from '@/config/smedplanner';
+import {
+  SOP_SECTIONS,
+  buildSopConclusionPrompt,
+  buildSopDeepenPrompt,
+  type SopSectionId,
+} from '@/config/sopbuilder';
 import { buildStaircasePromptRules } from '@/config/swot/swotInsightStaircase';
 import { buildValueChainStaircasePromptRules } from '@/config/valuechain/valueChainInsightStaircase';
 import {
@@ -10,7 +24,7 @@ import {
   deriveTensionCandidates,
 } from '@/config/swot/swotTensionEngine';
 import { buildSwotFactsBlock } from '@/hooks/discovery/toolAi/dynamicSwot';
-import type { SWOTData, ToolType } from '@/store/useToolStore';
+import type { OperationalToolData, SWOTData, ToolType } from '@/store/useToolStore';
 
 const OPERATIONAL_TOOL_TYPES: ToolType[] = [
   'sop-builder',
@@ -467,6 +481,42 @@ Return JSON:
     return '';
   }
 
+  // Grounded deepening overrides for A3 / SOP analytical sections (backward-compatible:
+  // falls through to the generic operational prompt above when no override applies).
+  if (toolType === 'a3-problem-solving' && A3_SECTIONS.includes(stepId as A3SectionId)) {
+    const deepen = buildA3DeepenPrompt(stepId as A3SectionId, 'evidence', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner running an A3. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item traces down the staircase: a countermeasure names the root cause it removes; a root cause names the problem gap it explains.
+- Prefer measurable items (set target/threshold/durationMinutes where the fact exists); do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'sop-builder' && SOP_SECTIONS.includes(stepId as SopSectionId)) {
+    const deepen = buildSopDeepenPrompt(stepId as SopSectionId, 'quantification', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner building an SOP. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Standards are pass/fail boundaries with a measurable threshold; checklist items are verifications (pass/fail), not actions.
+- Set threshold/target/durationMinutes where a measurable criterion exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
   const swotData = inputData as SWOTData | undefined;
   if (toolType === 'dynamic-swot') {
     if (stepId === 'mission') {
@@ -522,6 +572,21 @@ Return JSON:
 }
 
 export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): string {
+  // SMED Planner and DMS Builder carry a grounded W2 conclusion layer
+  // (src/config/smedplanner, src/config/dmsbuilder). Prefer the fact-seeded
+  // prompt; fall through to the generic operational summary when the session is
+  // too empty to synthesize (builder returns null).
+  if (toolType === 'smed-planner') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildSmedConclusionPrompt(toSmedSession(op?.sections), false);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'dms-builder') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildDmsConclusionPrompt(toDmsSession(op?.sections), false);
+    if (prompt) return prompt;
+  }
+
   if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
     const opData = inputData as any;
     const sectionsSummary = Object.entries(opData?.sections || {})
@@ -925,6 +990,19 @@ Return JSON:
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": []}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedRiskIds": [], "linkedScenarioIds": [], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
+  }
+
+  // Grounded W2 conclusion overrides for A3 / SOP (CONCLUSION_LAYER variant W2).
+  // Backward-compatible: falls through to the generic operational summary below
+  // when the engine has nothing yet (returns null).
+  if (toolType === 'a3-problem-solving') {
+    const grounded = buildA3ConclusionPrompt(inputData as OperationalToolData, false);
+    if (grounded) return grounded;
+  }
+
+  if (toolType === 'sop-builder') {
+    const grounded = buildSopConclusionPrompt(inputData as OperationalToolData, false);
+    if (grounded) return grounded;
   }
 
   if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {

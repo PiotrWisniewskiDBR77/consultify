@@ -110,10 +110,11 @@ const STATUS_COLORS: Record<
     progress: 'bg-emerald-500',
   },
   [InitiativeStatus.SCHEDULED]: {
-    bg: 'bg-slate-500/20',
-    border: 'border-slate-500/50',
-    text: 'text-slate-500 dark:text-slate-400',
-    progress: 'bg-slate-500',
+    // §9.2④ crimson is NEVER a status — use info/blue-violet, not primary(=crimson)
+    bg: 'bg-indigo-500/20',
+    border: 'border-indigo-500/50',
+    text: 'text-indigo-500 dark:text-indigo-400',
+    progress: 'bg-indigo-500',
   },
   [InitiativeStatus.EXECUTING]: {
     bg: 'bg-blue-500/20',
@@ -142,7 +143,7 @@ const STATUS_COLORS: Record<
   [InitiativeStatus.DRAFT]: {
     bg: 'bg-slate-500/20',
     border: 'border-slate-500/50',
-    text: 'text-slate-500 dark:text-slate-400',
+    text: 'text-c-text-muted',
     progress: 'bg-slate-500',
   },
   [InitiativeStatus.PLANNING]: {
@@ -166,7 +167,7 @@ const STATUS_COLORS: Record<
   [InitiativeStatus.ARCHIVED]: {
     bg: 'bg-slate-500/20',
     border: 'border-slate-500/50',
-    text: 'text-slate-500 dark:text-slate-400',
+    text: 'text-c-text-muted',
     progress: 'bg-slate-500',
   },
 };
@@ -531,7 +532,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
           className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center z-20"
           title={warningMessage}
         >
-          <AlertTriangle size={10} className="text-c-text dark:text-white" />
+          <AlertTriangle size={10} className="text-c-text" />
         </div>
       )}
       {hasRiskSignal && (
@@ -609,7 +610,7 @@ const WarningsStrip: React.FC<{
   };
 
   return (
-    <div className="shrink-0 px-4 py-2 border-b border-c-border bg-amber-50/50 dark:bg-amber-900/10">
+    <div className="shrink-0 px-4 py-2 border-b border-c-border-subtle bg-amber-50/50 dark:bg-amber-900/10">
       <div className="flex items-center gap-2 mb-1.5">
         <AlertTriangle size={14} className="text-amber-500" />
         <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
@@ -673,12 +674,12 @@ const FilterBar: React.FC<{
   }, [initiatives]);
 
   return (
-    <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-c-border bg-c-surface">
-      <Filter size={14} className="text-c-text-secondary shrink-0" />
+    <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-c-border-subtle bg-c-surface">
+      <Filter size={14} className="text-c-text-muted shrink-0" />
       <select
         value={filters.status}
         onChange={(e) => onChange({ ...filters, status: e.target.value })}
-        className="text-xs bg-c-bg border border-c-border rounded px-2 py-1.5 text-c-text-secondary"
+        className="text-xs bg-c-surface-raised border border-c-border-subtle rounded px-2 py-1.5 text-c-text-secondary"
       >
         <option value="">{t('execution.timeline.allStatuses')}</option>
         {statuses.map((s) => (
@@ -690,7 +691,7 @@ const FilterBar: React.FC<{
       <select
         value={filters.priority}
         onChange={(e) => onChange({ ...filters, priority: e.target.value })}
-        className="text-xs bg-c-bg border border-c-border rounded px-2 py-1.5 text-c-text-secondary"
+        className="text-xs bg-c-surface-raised border border-c-border-subtle rounded px-2 py-1.5 text-c-text-secondary"
       >
         <option value="">{t('execution.timeline.allPriorities')}</option>
         {['Critical', 'High', 'Medium', 'Low'].map((p) => (
@@ -703,7 +704,7 @@ const FilterBar: React.FC<{
         <select
           value={filters.owner}
           onChange={(e) => onChange({ ...filters, owner: e.target.value })}
-          className="text-xs bg-c-bg border border-c-border rounded px-2 py-1.5 text-c-text-secondary"
+          className="text-xs bg-c-surface-raised border border-c-border-subtle rounded px-2 py-1.5 text-c-text-secondary"
         >
           <option value="">{t('execution.timeline.allOwners')}</option>
           {owners.map(([id, name]) => (
@@ -714,18 +715,18 @@ const FilterBar: React.FC<{
         </select>
       )}
       <div className="relative ml-auto">
-        <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary" />
+        <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-muted" />
         <input
           type="text"
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
           placeholder={t('execution.timeline.searchPlaceholder')}
-          className="text-xs bg-c-bg border border-c-border rounded pl-7 pr-7 py-1.5 w-48 text-c-text-secondary placeholder:text-c-text-muted"
+          className="text-xs bg-c-surface-raised border border-c-border-subtle rounded pl-7 pr-7 py-1.5 w-48 text-c-text-secondary placeholder:text-c-text-muted"
         />
         {filters.search && (
           <button
             onClick={() => onChange({ ...filters, search: '' })}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-c-text-muted"
           >
             <X size={12} />
           </button>
@@ -1092,29 +1093,29 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   return (
     <div className="h-full flex flex-col bg-c-bg">
       {/* Controls */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-c-border bg-c-surface">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-c-border-subtle bg-c-surface">
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateTimeline('prev')}
-            className="p-1.5 text-c-text-muted hover:text-c-text hover:bg-white/10 rounded transition-colors"
+            className="p-1.5 text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised rounded transition-colors"
           >
             <ChevronLeft size={18} />
           </button>
           <button
             onClick={goToToday}
-            className="px-3 py-1 text-xs font-medium text-c-text-secondary hover:text-c-text dark:hover:text-white hover:bg-white/10 rounded transition-colors"
+            className="px-3 py-1 text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-white/10 rounded transition-colors"
           >
             {t('execution.timeline.today')}
           </button>
           <button
             onClick={() => navigateTimeline('next')}
-            className="p-1.5 text-c-text-muted hover:text-c-text hover:bg-white/10 rounded transition-colors"
+            className="p-1.5 text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised rounded transition-colors"
           >
             <ChevronRight size={18} />
           </button>
           {depWarnings.length > 0 && (
             <>
-              <div className="w-px h-4 bg-c-surface-raised mx-1" />
+              <div className="w-px h-4 bg-c-border-subtle mx-1" />
               <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-400">
                 <AlertTriangle size={11} />
                 {depWarnings.length}{' '}
@@ -1126,7 +1127,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           )}
           {riskSignals && riskSignals.length > 0 && (
             <>
-              <div className="w-px h-4 bg-c-surface-raised mx-1" />
+              <div className="w-px h-4 bg-c-border-subtle mx-1" />
               <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-danger-900/30 text-danger-400">
                 <Shield size={11} /> {riskSignals.length}{' '}
                 {t('execution.riskSignals.title').toLowerCase()}
@@ -1137,7 +1138,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setDepsOpen(true)}
-            className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
+            className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised"
             title={t('execution.timeline.deps.manage', 'Manage dependencies')}
             data-testid="timeline-deps-button"
           >
@@ -1145,7 +1146,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           </button>
           <button
             onClick={() => setShowFilters((v) => !v)}
-            className={`p-1.5 rounded-lg transition-colors ${showFilters || activeFilters ? 'bg-blue-900/30 text-blue-400' : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'}`}
+            className={`p-1.5 rounded-lg transition-colors ${showFilters || activeFilters ? 'bg-blue-900/30 text-blue-400' : 'text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised'}`}
             title={
               showFilters
                 ? t('execution.timeline.filters.hide', 'Hide filters')
@@ -1156,7 +1157,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           </button>
           <button
             onClick={() => setShowCriticalPath((v) => !v)}
-            className={`p-1.5 rounded-lg transition-colors ${showCriticalPath ? 'bg-danger-900/30 text-danger-400' : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'}`}
+            className={`p-1.5 rounded-lg transition-colors ${showCriticalPath ? 'bg-danger-900/30 text-danger-400' : 'text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised'}`}
             title={
               showCriticalPath
                 ? t('execution.timeline.hideCriticalPath')
@@ -1165,13 +1166,13 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           >
             <Route size={16} />
           </button>
-          <div className="w-px h-4 bg-c-surface-raised" />
-          <div className="flex items-center gap-1 bg-c-bg rounded-lg p-1 border border-c-border">
+          <div className="w-px h-4 bg-c-border-subtle" />
+          <div className="flex items-center gap-1 bg-c-surface-raised rounded-lg p-1 border border-c-border-subtle">
             {[8, 12, 16, 24].map((w) => (
               <button
                 key={w}
                 onClick={() => setViewWeeks(w)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${viewWeeks === w ? 'bg-blue-500/20 text-blue-400' : 'text-c-text-muted hover:text-c-text'}`}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${viewWeeks === w ? 'bg-blue-500/20 text-blue-400' : 'text-c-text-muted hover:text-c-text-secondary'}`}
               >
                 {w}W
               </button>
@@ -1210,19 +1211,19 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.12 }}
-              className="w-full max-w-2xl rounded-xl bg-c-surface border border-c-border shadow-2xl"
+              className="w-full max-w-2xl rounded-xl bg-c-surface border border-c-border-subtle shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-4 py-3 border-b border-c-border">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
                 <div className="flex items-center gap-2">
                   <Route size={16} className="text-blue-500" />
-                  <span className="text-sm font-semibold text-c-text dark:text-white">
+                  <span className="text-sm font-semibold text-c-text">
                     {t('execution.timeline.deps.title', 'Dependencies')}
                   </span>
                 </div>
                 <button
                   onClick={() => setDepsOpen(false)}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised"
+                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised"
                 >
                   <X size={16} />
                 </button>
@@ -1237,7 +1238,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                     <select
                       value={newDepFrom}
                       onChange={(e) => setNewDepFrom(e.target.value)}
-                      className="w-full text-xs bg-c-bg border border-c-border rounded px-2 py-2 text-c-text"
+                      className="w-full text-xs bg-c-surface-raised border border-c-border-subtle rounded px-2 py-2 text-c-text-secondary"
                       data-testid="timeline-deps-from"
                     >
                       <option value="">{t('execution.timeline.deps.select', 'Select')}</option>
@@ -1255,7 +1256,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                     <select
                       value={newDepTo}
                       onChange={(e) => setNewDepTo(e.target.value)}
-                      className="w-full text-xs bg-c-bg border border-c-border rounded px-2 py-2 text-c-text"
+                      className="w-full text-xs bg-c-surface-raised border border-c-border-subtle rounded px-2 py-2 text-c-text-secondary"
                       data-testid="timeline-deps-to"
                     >
                       <option value="">{t('execution.timeline.deps.select', 'Select')}</option>
@@ -1276,11 +1277,11 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                   </button>
                 </div>
 
-                <div className="rounded-lg border border-c-border overflow-hidden">
-                  <div className="px-3 py-2 bg-c-bg text-[11px] font-semibold text-c-text-secondary">
+                <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+                  <div className="px-3 py-2 bg-c-surface-raised text-[11px] font-semibold text-c-text-secondary">
                     {t('execution.timeline.deps.current', 'Current dependencies')}
                   </div>
-                  <div className="divide-y divide-c-border">
+                  <div className="divide-y divide-c-border-subtle">
                     {depsLoading ? (
                       <div className="p-3 text-sm text-c-text-muted">
                         {t('execution.timeline.deps.loading', 'Loading...')}
@@ -1329,24 +1330,24 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       {/* Timeline Content */}
       <div ref={containerRef} className="flex-1 overflow-auto">
         <div className="min-w-[800px]">
-          <div className="sticky top-0 z-20 flex bg-c-surface border-b border-c-border">
+          <div className="sticky top-0 z-20 flex bg-c-surface border-b border-c-border-subtle">
             {months.map((m, idx) => (
               <div
                 key={`${m.month}-${m.year}-${idx}`}
-                className="text-center py-2 border-r border-c-border last:border-r-0"
+                className="text-center py-2 border-r border-c-border-subtle last:border-r-0"
                 style={{ width: `${(m.span / viewWeeks) * 100}%` }}
               >
-                <span className="text-sm font-semibold text-c-text dark:text-white">
+                <span className="text-sm font-semibold text-c-text">
                   {m.month} {m.year}
                 </span>
               </div>
             ))}
           </div>
-          <div className="sticky top-[40px] z-10 flex bg-c-bg border-b border-c-border">
+          <div className="sticky top-[40px] z-10 flex bg-c-surface-raised border-b border-c-border-subtle">
             {weeks.map((week, idx) => (
               <div
                 key={`week-${idx}`}
-                className="flex-1 px-1 py-2 text-center border-r border-c-border last:border-r-0"
+                className="flex-1 px-1 py-2 text-center border-r border-c-border-subtle last:border-r-0"
               >
                 <div className="text-xs font-medium text-c-text-muted">
                   {week.label}
@@ -1495,7 +1496,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-c-border bg-c-surface text-xs flex-wrap">
+      <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-c-border-subtle bg-c-surface text-xs flex-wrap">
         <div className="flex items-center gap-4">
           {[
             { status: InitiativeStatus.APPROVED, label: 'Ready' },
