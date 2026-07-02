@@ -37,6 +37,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { SELECTED_ROW_CLASS } from '@/components/shared/selectionTokens';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
 import {
@@ -149,8 +150,8 @@ const TIME_GROUP_LABELS: Record<TimeGroup, { en: string; pl: string }> = {
 
 // Get notification type config — neutral monochromatic (type is a label, not a status)
 const NEUTRAL_TYPE_STYLE = {
-  color: 'text-slate-600 dark:text-slate-400',
-  bg: 'bg-slate-100 dark:bg-navy-800/60',
+  color: 'text-c-text-secondary',
+  bg: 'bg-c-surface-raised',
 };
 
 const getTypeConfig = (type: string) => {
@@ -211,8 +212,8 @@ const getSeverityConfig = (severity: string) => {
     default:
       return {
         label: 'Info',
-        color: 'text-slate-600 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        color: 'text-c-text-secondary',
+        bg: 'bg-c-surface-raised',
         dot: 'bg-slate-400 dark:bg-slate-500',
         icon: Info,
       };
@@ -364,13 +365,9 @@ const NotificationTableRow: React.FC<{
         onClick(notification);
       }}
       className={`
-        group relative cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+        group relative cursor-pointer border-b border-c-border-subtle
         transition-colors duration-150
-        ${
-          isSelected
-            ? 'bg-primary-500/8 dark:bg-primary-500/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary-500'
-            : ''
-        }
+        ${isSelected ? SELECTED_ROW_CLASS : ''}
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
     >
@@ -385,8 +382,8 @@ const NotificationTableRow: React.FC<{
             h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-primary-500 border-primary-500 text-white opacity-100'
-                : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035]'
+                ? 'bg-c-text border-c-text text-c-surface opacity-100'
+                : 'border-c-border-strong bg-white/80 text-transparent opacity-0 hover:border-c-border-strong group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035]'
             }
           `}
         >
@@ -432,14 +429,14 @@ const NotificationTableRow: React.FC<{
           <span
             className={`text-sm ${
               isRead
-                ? 'text-slate-600 dark:text-slate-400'
-                : 'text-slate-900 dark:text-white font-medium'
+                ? 'text-c-text-secondary'
+                : 'text-c-text font-medium'
             }`}
           >
             {notification.title}
           </span>
           {notification.message && (
-            <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+            <span className="text-xs text-c-text-muted mt-0.5 line-clamp-1">
               {notification.message}
             </span>
           )}
@@ -449,23 +446,23 @@ const NotificationTableRow: React.FC<{
       {/* Source/Context */}
       <td className="px-3 py-2.5" style={{ width: columnWidths.source }}>
         {sourceConfig ? (
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-1.5 text-xs text-c-text-secondary">
             <sourceConfig.icon size={12} />
             <span className="truncate">{sourceConfig.label}</span>
           </div>
         ) : notification.projectName ? (
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-1.5 text-xs text-c-text-secondary">
             <FolderOpen size={12} />
             <span className="truncate max-w-[80px]">{notification.projectName}</span>
           </div>
         ) : (
-          <span className="text-xs text-slate-500 dark:text-slate-400">-</span>
+          <span className="text-xs text-c-text-muted">-</span>
         )}
       </td>
 
       {/* Time */}
       <td className="px-3 py-2.5" style={{ width: columnWidths.time }}>
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1.5 text-xs text-c-text-muted">
           <Clock size={12} />
           <span>{formatRelativeTime(notification.createdAt)}</span>
         </div>
@@ -491,7 +488,7 @@ const NotificationTableRow: React.FC<{
                   e.stopPropagation();
                   onOpenChat(notification);
                 }}
-                className="p-1.5 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="p-1.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-c-text-muted hover:text-c-text transition-colors"
                 title={isPolish ? 'Czat' : 'Chat'}
               >
                 <MessageSquare size={14} />
@@ -506,7 +503,7 @@ const NotificationTableRow: React.FC<{
                     e.stopPropagation();
                     setShowSnoozeMenu(!showSnoozeMenu);
                   }}
-                  className="p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                  className="p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-c-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                   title={isPolish ? 'Odłóż' : 'Snooze'}
                 >
                   <Clock size={14} />
@@ -514,7 +511,7 @@ const NotificationTableRow: React.FC<{
                 {showSnoozeMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowSnoozeMenu(false)} />
-                    <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 min-w-[100px]">
+                    <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-c-surface-raised rounded-lg shadow-lg border border-c-border min-w-[100px]">
                       {[
                         { preset: '1h' as SnoozePreset, label: isPolish ? '1 godz.' : '1 hour' },
                         { preset: '4h' as SnoozePreset, label: isPolish ? '4 godz.' : '4 hours' },
@@ -534,7 +531,7 @@ const NotificationTableRow: React.FC<{
                             onSnooze(notification.id, preset);
                             setShowSnoozeMenu(false);
                           }}
-                          className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                          className="w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                         >
                           {label}
                         </button>
@@ -552,7 +549,7 @@ const NotificationTableRow: React.FC<{
                   e.stopPropagation();
                   onMarkRead(notification.id);
                 }}
-                className="p-1.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                className="p-1.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-c-text-muted hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 title={isPolish ? 'Oznacz jako przeczytane' : 'Mark as read'}
               >
                 <Check size={14} />
@@ -566,7 +563,7 @@ const NotificationTableRow: React.FC<{
               e.stopPropagation();
               onClick(notification);
             }}
-            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="p-1.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-c-text-muted hover:text-c-text transition-colors"
             title={isPolish ? 'Zobacz' : 'View'}
           >
             <Eye size={14} />
@@ -1062,35 +1059,35 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden">
           {/* Session-muted types (lightweight control) */}
           {mutedTypes.length > 0 && (
-            <div className="flex items-center justify-end px-3 py-2 border-b border-slate-200 dark:border-navy-700/50 bg-slate-50/50 dark:bg-navy-900/40">
+            <div className="flex items-center justify-end px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised">
               <div className="relative" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => setMutedTypesOpen((v) => !v)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                   title={isPolish ? 'Wyciszone typy (sesja)' : 'Muted types (session)'}
                 >
-                  <BellOff size={13} className="text-slate-500 dark:text-slate-400" />
+                  <BellOff size={13} className="text-c-text-muted" />
                   {isPolish ? 'Wyciszone' : 'Muted'} ({mutedTypes.length})
                 </button>
 
                 {mutedTypesOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setMutedTypesOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl overflow-hidden">
-                      <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700/60 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-c-surface-raised border border-c-border shadow-xl overflow-hidden">
+                      <div className="px-3 py-2 border-b border-c-border-subtle flex items-center justify-between">
+                        <span className="text-xs font-semibold text-c-text-secondary">
                           {isPolish ? 'Wyciszone typy (sesja)' : 'Muted types (session)'}
                         </span>
                         <button
                           onClick={() => setMutedTypesOpen(false)}
-                          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                          className="p-1 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                         >
-                          <X size={14} className="text-slate-500 dark:text-slate-400" />
+                          <X size={14} className="text-c-text-muted" />
                         </button>
                       </div>
 
@@ -1098,14 +1095,14 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                         {mutedTypes.map((t) => (
                           <div
                             key={t}
-                            className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-800/60"
+                            className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                           >
-                            <span className="text-xs text-slate-600 dark:text-slate-300 truncate">
+                            <span className="text-xs text-c-text-secondary truncate">
                               {t.replace(/_/g, ' ')}
                             </span>
                             <button
                               onClick={() => unmuteNotificationTypeForSession(t)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-c-border text-c-text-muted hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                             >
                               {isPolish ? 'Odblokuj' : 'Unmute'}
                             </button>
@@ -1113,10 +1110,10 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                         ))}
                       </div>
 
-                      <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/60 flex justify-end">
+                      <div className="px-3 py-2 border-t border-c-border-subtle flex justify-end">
                         <button
                           onClick={() => clearMutedNotificationTypesForSession()}
-                          className="text-[11px] font-medium text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
+                          className="text-[11px] font-medium text-c-text-muted hover:text-c-text"
                         >
                           {isPolish ? 'Wyczyść wszystko' : 'Clear all'}
                         </button>
@@ -1129,7 +1126,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
           )}
           <table className="w-full table-fixed" style={{ minWidth: 800 }}>
             <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+              <tr className="border-b border-c-border-subtle bg-c-surface sticky top-0 z-10">
                 {/* Select All */}
                 <th className="w-10 px-2 py-2">
                   <button
@@ -1138,10 +1135,10 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                       h-4 w-4 rounded-[4px] border flex items-center justify-center transition-colors
                       ${
                         allSelected
-                          ? 'bg-primary-500 border-primary-500 text-white'
+                          ? 'bg-c-text border-c-text text-c-surface'
                           : someSelected
-                            ? 'bg-primary-500/50 border-primary-500 text-white'
-                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
+                            ? 'bg-c-text/60 border-c-text text-c-surface'
+                            : 'border-c-border hover:border-c-border-strong text-transparent hover:text-c-text-muted'
                       }
                     `}
                   >
@@ -1157,13 +1154,13 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
 
                 {/* Severity with Filter */}
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.severity }}
                 >
                   <div className="flex items-center gap-1">
                     <span
                       className={
-                        (tableFilters.severity as string[])?.length ? 'text-primary-500' : ''
+                        (tableFilters.severity as string[])?.length ? 'text-c-text-secondary' : ''
                       }
                     >
                       Severity
@@ -1190,12 +1187,12 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
 
                 {/* Type with Filter */}
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.type }}
                 >
                   <div className="flex items-center gap-1">
                     <span
-                      className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}
+                      className={(tableFilters.type as string[])?.length ? 'text-c-text-secondary' : ''}
                     >
                       Type
                     </span>
@@ -1217,11 +1214,11 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   />
                 </th>
 
-                <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-full">
+                <th className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider w-full">
                   Notification
                 </th>
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.source }}
                 >
                   <span>Source</span>
@@ -1234,7 +1231,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   />
                 </th>
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.time }}
                 >
                   <span>Time</span>
@@ -1247,7 +1244,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   />
                 </th>
                 <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                   style={{ width: columnWidths.actions }}
                 >
                   Actions
@@ -1265,13 +1262,13 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                       return (
                         <React.Fragment key={group}>
                           {/* Group header */}
-                          <tr className="bg-slate-100/50 dark:bg-navy-800/50">
+                          <tr className="bg-c-surface-raised">
                             <td colSpan={7} className="px-4 py-2">
-                              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                              <span className="text-xs font-semibold text-c-text-secondary uppercase tracking-wider">
                                 {isPolish
                                   ? TIME_GROUP_LABELS[group].pl
                                   : TIME_GROUP_LABELS[group].en}
-                                <span className="ml-2 text-slate-500 dark:text-slate-400 dark:text-slate-500 font-normal">
+                                <span className="ml-2 text-c-text-muted font-normal">
                                   ({groupNotifications.length})
                                 </span>
                               </span>
