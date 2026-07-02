@@ -100,14 +100,18 @@ const generateMonths = (startYear: number, numMonths: number) => {
 };
 
 // Axis colors
+// Kolory DANYCH (kategoryczne, per oś transformacji) → paleta c-tag-* (§15.1).
+// Przypisanie po STABILNYM indeksie (kolejność w mapie). NIGDY crimson jako dana.
+// UWAGA §15.1: 7 osi > 5 serii widocznych — łamie limit czytelności; do decyzji Piotra
+// o grupowaniu osi (zalogowane w RAPORCIE Fala 4).
 const AXIS_COLORS: Record<string, string> = {
-  processes: 'bg-blue-500',
-  digitalProducts: 'bg-sky-500',
-  dataManagement: 'bg-blue-500',
-  culture: 'bg-amber-500',
-  aiMaturity: 'bg-emerald-500',
-  businessModels: 'bg-indigo-500',
-  cybersecurity: 'bg-danger-500',
+  processes: 'bg-c-tag-1',
+  digitalProducts: 'bg-c-tag-2',
+  dataManagement: 'bg-c-tag-3',
+  culture: 'bg-c-tag-4',
+  aiMaturity: 'bg-c-tag-5',
+  businessModels: 'bg-c-tag-6',
+  cybersecurity: 'bg-c-tag-7',
 };
 
 // Status colors

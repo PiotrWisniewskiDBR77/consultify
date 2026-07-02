@@ -119,11 +119,14 @@ const ROW_TYPE_META: Record<TimelineRowType, RowMeta> = {
     shortLabel: 'T',
   },
   milestone: {
+    // Typ kategoryczny → paleta danych c-tag-* (§15.1). NIGDY crimson jako dana
+    // (było text-primary-500 = crimson-leak). c-tag-3 = violet (odróżnia od blue task/info).
+    // bgTint pusty: c-tag-* to var() bez <alpha-value>, modyfikator /3 nie działa (jak `task`).
     icon: Flag,
     label: 'Milestone',
     labelPl: 'Kamień milowy',
-    color: 'text-primary-500',
-    bgTint: 'bg-primary-500/3',
+    color: 'text-c-tag-3',
+    bgTint: '',
     shortLabel: 'M',
   },
   decision: {
@@ -3961,8 +3964,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                     <path
                       d={`M ${srcX}% ${srcY} C ${srcX + 3}% ${srcY}, ${tgtX - 3}% ${tgtY}, ${tgtX}% ${tgtY}`}
                       fill="none"
-                      stroke="currentColor"
-                      className="text-primary-400/50 dark:text-primary-500/40"
+                      stroke="var(--c-border-strong)"
                       strokeWidth="1.5"
                       strokeDasharray="4 2"
                     />
@@ -4271,7 +4273,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
         </span>
         {stats.milestones > 0 && (
           <span className="flex items-center gap-1">
-            <Flag size={10} className="text-primary-500" />
+            <Flag size={10} className="text-c-tag-3" />
             {stats.milestones} {t('initiatives.timelinePlanner.milestonesLabel')}
           </span>
         )}

@@ -133,3 +133,43 @@
 
 **Weryfikacja:** brak `node_modules` (zero npm) → sanity: (a) GLOBALNY skan: 0 nieznanych klas `c-*` (wszystkie 1:1 na `tailwind.config.js`; `border-l-c-focus-solid` = poprawny kierunkowy border-color TW3.4); (b) 0 markerów konfliktu; (c) każdy z 11 plików `git diff --numstat` add==del (czysty class-swap, zero zmian JSX/logiki); (d) 0 uszkodzonych stringów klas (0 podwójnych spacji w `className`, 0 malformed `/NN /NN` po naprawie alpha-safe); (e) 0 collapse wcięć. Build vite + screenshoty light/dark instrumentów — wymagane przed merge (Strateg; worktree bez preview).
 **Commity:** `b03f0f773d`→`f30cac283e` (12 fix, per ścieżka, bez `-A`).
+
+---
+
+### RAPORT — Fala 4 (KOLORY DANYCH — kategoryczne → `c-tag-*`) · 2026-07-02 · branch `reskin/A3/wave-4` (baza z `reskin/A3/wave-3`)
+
+**Cel:** kategoryczne mapy kolorów danych (osie/typy/workstream) z DEFER-listy Fali 3 → paleta `c-tag-*` (tokeny 1..12 ISTNIEJĄ teraz w `tailwind.config.js` `c.tag-*` = `var(--c-tag-N)` + zmienne light/dark w `index.css`). Reguła §15.1: serie=`c-tag-*`, ≤5 widocznych, **crimson NIGDY jako dana**. Kolory STATUS/severity NIE ruszane (zostają semantyczne). Alpha-modyfikatory na `c-tag-*` NIE działają (var() bez `<alpha-value>`) → fille solidne, tinty puste.
+
+**Zakres wykonany (4 pliki, 4 commity `10354d0d53`→`d224d96fa7`, wyłącznie klasy/wartości kolorów; zero zmian logiki/JSX poza swapem klas + komentarze):**
+
+| Mapa kategoryczna | Plik | Co zrobione |
+|---|---|---|
+| `AXIS_COLORS` (7 osi Gantt belki) | `RoadmapGantt.tsx` | `bg-blue/sky/amber/emerald/indigo/danger-500` (+ crimson-leak w `dataManagement`=blue) → `bg-c-tag-1..7` po stabilnym indeksie (kolejność w mapie). Legenda `.slice(0,5)` już ogranicza widoczne do 5; belki renderują wszystkie 7. |
+| `TYPE_BAR` (3 typy pozycji harmonogramu) | `Initiatives/gantt/InitiativeGantt.tsx` | `task: bg-primary-500/80` (**crimson jako dana** — usunięte) / `milestone: amber-500` / `phase: emerald-500/70` → `bg-c-tag-1/2/3`; alpha `/80 /70` skasowane (solid), hover `bg-primary-500`/`bg-amber-400`/`bg-emerald-500` → `hover:opacity-90`. ≤5 serii = OK. |
+| `AXIS_COLORS` config (7 osi: processes/digital/models/data/culture/cybersecurity/ai) | `config/portfolioColors.ts` | trio `bg/text/border` z tint-scale (`-50/-700/-200`) + **crimson-leak** (`digital`+`ai` = `primary-*`) → `bg-/text-/border-c-tag-1..7` po stabilnym indeksie. `.bg` = solidny fill kropki/belki (konsumenci Portfolio: grid `w-1.5` pasek, matrix `<circle>`, timeline pasek). **Config konsumowany WYŁĄCZNIE przez klaster Portfolio** (zweryfikowane grep — `AxisCommentsPanel`/`GeneratedInitiativeCard` mają własne lokalne `AXIS_COLORS`). |
+| `SCHEDULED` status (crimson-leak) | `config/portfolioColors.ts` | `STATUS_COLORS.SCHEDULED` + `KANBAN_COLUMN_COLORS.SCHEDULED` = `primary-*` (crimson na STATUSIE, §9.1 zakaz) → `indigo-*` (semantyczny „zaplanowane", odróżnia od blue EXECUTING / amber REVIEW). Status pozostaje semantyczny — to NIE tag, to crimson-removal ze statusu. |
+| `ROW_TYPE_META.milestone` TYPE (crimson-leak) | `Initiatives/sections/TimelinePlanner.tsx` | `color: text-primary-500` + `bgTint: bg-primary-500/3` (**crimson jako dana typu**) → `text-c-tag-3` (violet) + `bgTint: ''` (alpha nie działa). Legenda stats-bar `<Flag> text-primary-500` → `text-c-tag-3` (spójność z typem). Connector zależności `stroke=currentColor text-primary-400/50` → `stroke=var(--c-border-strong)` (konektor = chrome neutralny, nie dana). Pozostałe 9 typów `ROW_TYPE_META` NIE ruszane — czytają się semantycznie (start=emerald/finish=danger/escalation=amber/pause=muted); zamiana na czyste tagi zniszczyłaby te sygnały (patrz DEFER). |
+
+**Mapowanie indeksów (stabilne, kolejność w mapie) — do audytu spójności:**
+- `RoadmapGantt.AXIS_COLORS`: processes=1, digitalProducts=2, dataManagement=3, culture=4, aiMaturity=5, businessModels=6, cybersecurity=7.
+- `portfolioColors.AXIS_COLORS`: processes=1, digital=2, models=3, data=4, culture=5, cybersecurity=6, ai=7. **UWAGA: dwie różne mapy osi (RoadmapGantt vs config) używają RÓŻNYCH kluczy** (camelCase 7-osiowy DRD vs skróty) → indeksy tagów NIE są 1:1 semantycznie między nimi (np. `culture` = tag-4 w RoadmapGantt, tag-5 w config). Ujednolicenie kluczy osi = decyzja produktowa poza re-skinem; zalogowane.
+- `InitiativeGantt.TYPE_BAR`: task=1, milestone=2, phase=3.
+
+**GDZIE >5 SERII WIDOCZNYCH (łamie §15.1 — do decyzji Piotra o grupowaniu):**
+1. **`RoadmapGantt.AXIS_COLORS` = 7 osi** — belki gantta kodują wszystkie 7 równocześnie (legenda ograniczona do 5, ale belki nie). >5 rozróżnialnych serii.
+2. **`portfolioColors.AXIS_COLORS` = 7 osi** — kropki/belki osi w Portfolio grid/matrix/timeline. >5 serii.
+   → Rekomendacja do decyzji: albo zredukować widoczne osie (grupowanie 7→5, np. scalić data+processes, culture+ai), albo zaakceptować 7-tag jako świadome odstępstwo dla domeny DRD (7 osi transformacji = model biznesowy, nie dowolna kategoria). NIE rozstrzygam — logbook.
+
+**Crimson-removal (kategoryczne dane) — filar Fali 4:** usunięte WSZYSTKIE wystąpienia crimson (`primary-*`) użytego JAKO dana/kategoria/belka: `InitiativeGantt.TYPE_BAR.task`, `portfolioColors.AXIS_COLORS.digital`+`.ai`, `TimelinePlanner` milestone TYPE (×2: meta + legenda). Dodatkowo crimson na STATUSIE (`SCHEDULED` ×2 w config) → indigo. Weryfikacja: `grep primary-` w 4 plikach = 0 realnych klas (tylko komentarze wyjaśniające).
+
+**DEFER (NIE RUSZANE, zalogowane — wg zlecenia):**
+- **`PortfolioMatrixView.MATRIX_QUADRANT_COLORS`** (`config/portfolioColors.ts` + view) = kwadranty impact/effort (quickWins/majorInvest/niceToHave/avoid + high-high…low-low) — **SKALA semantyczna wartość/ryzyko**, nie kategorie serii. Sekwencyjno-semantyczne → wybór palety Piotra. NIE tag.
+- **`TIMELINE_COLORS`** (`config/portfolioColors.ts`: past/current/future/milestone) = **SEKWENCJA temporalna** (przeszłość→teraz→przyszłość), nie kategorie. past/current/future = skala; milestone=marker. Sekwencyjne → DEFER.
+- **`ROW_TYPE_META` pozostałe 9 typów** (`TimelinePlanner`) = start/task/decision/info_event/notification/meeting/pause/escalation/finish. HYBRYDA typ+semantyka: start=emerald, finish=danger, escalation=amber, pause=muted czytają się jako status/severity — zamiana na czyste `c-tag-*` zniszczyłaby te sygnały. Tknięto WYŁĄCZNIE `milestone` (jawny crimson-leak). Reszta = decyzja: czy to seria kategoryczna (→ pełny c-tag-1..10, ale 10>5 §15.1) czy semantyczna (zostaje). Do rozstrzygnięcia Piotra.
+- **Mapy STATUS/priority/severity** (`STATUS_COLORS`, `PRIORITY_COLORS`, `KANBAN_COLUMN_COLORS` w config — poza usuniętym crimson SCHEDULED; `TimelinePlanner.STATUS_COLORS`; `DECISION_OUTCOME_STYLES` GO/NO_GO/ESCALATE) = **semantyczne dane statusu** — zostają wg zlecenia (kolor=status → NIE tag).
+- **Pliki pre-existing-TS / poza klastrem** — nie dotykane: `PortfolioInsightsPanel`, `ValueDriverTree`, `ui/**`, `shared/**`.
+
+**Niespójność zalogowana (do Fundamentu/produktu):** dwie mapy osi DRD (`RoadmapGantt` camelCase 7 vs `portfolioColors` skróty 7) mają rozjechane klucze i różne indeksy tagów dla „tej samej" osi — brak SSOT osi transformacji. Re-skin nie ujednolica (to redesign danych, nie kolor). 
+
+**Weryfikacja:** brak `node_modules` w worktree (zero npm wg zlecenia) → grep sanity: (a) wszystkie użyte klasy `c-tag-1..7` zmapowane 1:1 na `tailwind.config.js` `c.tag-*` (0 nieznanych, 0 indeksu >12); (b) 0 alpha-modyfikatorów na `c-tag-*` (`grep 'c-tag-[0-9]*/'` = 0 — brak martwego `/NN`); (c) 0 pozostałego `primary-*` jako klasa (tylko komentarze); (d) 0 markerów konfliktu; (e) każdy plik = czysty color-swap (delty linii = dodane komentarze wyjaśniające, zero zmian JSX/logiki — zweryfikowane `git diff`). Build vite + screenshoty light/dark (Gantt/Timeline/Matrix, oba tryby) — WYMAGANE przed merge (Strateg; worktree bez preview/node_modules).
+**Commity:** `10354d0d53`→`d224d96fa7` (4 fix, per ścieżka, bez `-A`).
