@@ -152,16 +152,25 @@ describe('W2.3 — section chips renderowane w PPTX', () => {
   });
 
   it('slajd bez pasującego layoutIntent → brak chipa (nie crashuje)', async () => {
-    const shapesBefore = mockAddShape.mock.calls.length;
     await deckPlansToPptxBuffer([{
       slideIndex: 0,
       layoutIntent: 'unknown_intent_xyz',
       title: 'Slajd',
       keyMessage: 'Treść',
     }]);
-    // Tylko pasek akcentowy (1 rect) — brak chipa
-    const shapesAfter = mockAddShape.mock.calls.length - shapesBefore;
-    expect(shapesAfter).toBe(1); // tylko accent bar
+    // Brak chipa = żadna etykieta sekcji (EXEC SUMMARY / RISK / …) nie trafia do addText.
+    // Uwaga: DeckStyler (Fala 6) dodaje gwarantowaną warstwę wizualną (siatka/chrome),
+    // więc liczba kształtów > 1 — kontraktem jest BRAK CHIPA, nie dokładna liczba shape'ów.
+    const CHIP_LABELS = [
+      'EXEC SUMMARY', 'PROBLEM', 'ROZWIĄZANIE', 'SOLUTION', 'FINANSE', 'FINANCIALS',
+      'KPI', 'KPIs', 'RYNEK', 'MARKET', 'GTM', 'ASK', 'UNIT ECONOMICS',
+      'ROADMAPA', 'ROADMAP', 'RYZYKO', 'RISK',
+    ];
+    const textCalls = mockAddText.mock.calls.map((c) => c[0]);
+    const chipRendered = textCalls.some(
+      (t: unknown) => typeof t === 'string' && CHIP_LABELS.some((lbl) => t.includes(lbl)),
+    );
+    expect(chipRendered).toBe(false);
   });
 
   it('slajd recommendation_single → chip ASK', async () => {
