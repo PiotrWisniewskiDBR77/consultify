@@ -129,6 +129,31 @@ export async function notifySlackThread(
   }
 }
 
+/**
+ * Human-friendly label for the actor behind a triage action, for Slack thread
+ * replies. Prefers the JWT's name/email; if only an id is present (e.g. a token
+ * without profile claims), resolves name/email from the users table so the
+ * thread never shows a raw UUID. Fail-soft → 'zespół'.
+ */
+async function resolveActorLabel(reqUser: unknown): Promise<string> {
+  const u = (reqUser || {}) as { email?: string; name?: string; id?: string };
+  if (u.name && u.name.trim()) return u.name.trim();
+  if (u.email && u.email.trim()) return u.email.trim();
+  if (u.id) {
+    try {
+      const row = await dbGet<{ name?: string; email?: string }>(
+        `SELECT name, email FROM users WHERE id = ?`,
+        [u.id]
+      );
+      if (row?.name && String(row.name).trim()) return String(row.name).trim();
+      if (row?.email && String(row.email).trim()) return String(row.email).trim();
+    } catch {
+      /* fall through */
+    }
+  }
+  return 'zespół';
+}
+
 type TicketStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
 type TicketPriority = 'low' | 'medium' | 'high' | 'critical';
 type FeedbackAlertChannel = 'in_app' | 'slack' | 'email' | 'whatsapp';
@@ -1688,14 +1713,16 @@ router.patch(
     // F3: reply the status change into the ticket's Slack thread (Slack-sourced
     // tickets only). Fire-and-forget, fail-soft.
     {
-      const actor =
-        (req as any).user?.email || (req as any).user?.name || (req as any).user?.id || 'zespół';
       const from = (fromStatus || 'NEW').toUpperCase();
       const to = status.toUpperCase();
-      void notifySlackThread(
-        { metadata_json: current?.metadata_json ?? null },
-        `:wrench: Status: ${from} → ${to} (przez ${actor})${note ? `\n_${String(note).slice(0, 200)}_` : ''}`
-      );
+      const metaSnapshot = current?.metadata_json ?? null;
+      void (async () => {
+        const actor = await resolveActorLabel((req as any).user);
+        await notifySlackThread(
+          { metadata_json: metaSnapshot },
+          `:wrench: Status: ${from} → ${to} (przez ${actor})${note ? `\n_${String(note).slice(0, 200)}_` : ''}`
+        );
+      })();
     }
 
     return res.json({ success: true });
