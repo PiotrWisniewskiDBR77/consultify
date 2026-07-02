@@ -9,8 +9,16 @@
 | Fala | Zakres | Stan |
 |------|--------|------|
 | **0 Fundament** | 6 fixów współdzielonych (Edit Columns/Badge/shell/select+Dropdown focus) | ✅ ZMERGOWANE (e1722ac3b8; G0 = dyrektywa Piotra „dopruwać plan do końca 5 agentami") |
-| **1 Listy** | ~25 tabel — **5 agentów RÓWNOLEGLE** (worktree, branche `reskin/A1-A5/wave-1`) | 🟨 W TOKU (wystrzelone 2026-07-01) |
-| 2 Artefakty | ~35 artefaktów | ⬜ |
+| **1 Listy** | ~50 plików, 5 agentów — ZMERGOWANE (A1-A5) | ✅ BRAMKA PRZESZŁA (type-check 11=baseline, 0 nowych błędów; ~50 plików czysto) |
+| 2 Artefakty | ~35 artefaktów — SPLIT: mechaniczne (token-sweep edytorów) vs design (Tool detail/DRD map/Chat SPEC-K/M15 IA → wymagają Piotra) | 🟨 START |
+
+**DECYZJE FUNDAMENTU (czekają na słowo Piotra):**
+1. **Menu 2 pill vs underline** — KONFLIKT: `VISUAL_STANDARD §5.5` (underline, w kodzie ModuleNavBar) vs uwaga Piotra + TABLE_CANON + spec §9.2③ (pill jak My Work). NIE flipuję app-wide udokumentowanego standardu bez zgody. „pill wszędzie" = 5-min fix w `ModuleNavBar.tsx`.
+2. **ModuleMenu3 active chip crimson** — zgodne ze spec §9.2② (brand accent); agenci przeflagowali; zostaje do decyzji.
+3. Alpha na tokenach (`c-*/70`) nie działa (brak `<alpha-value>`) — translucent surfaces zostają slate; do decyzji.
+4. Wariant „primary inverse" w Button (dziś ad-hoc `bg-c-text text-c-surface`) — dodać do fundamentu.
+
+**Zdiagnozowane bugi (nie-CSS, do osobnej pracy):** badge Wstrzymaj/Zatrzymaj (R-4) = z DANYCH nie kodu · demo-dane hardcoded (`resultsShowcaseData.ts`) · multi-select bulk-bar wymaga API bulk (Meeting/Reports/Tools/Assessment) · Execution Workstreams = pusty stub.
 | 3 Instrumenty+Huby+Chat | ~45 | ⬜ |
 | 4 Hartowanie | perf/copy/sygnatura | ⬜ |
 | 5 Light mode | wszystkie klastry | ⬜ |
