@@ -349,13 +349,13 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
 
   return (
     <V8UnavailableBanner moduleName="Manager Cockpit">
-    <div className="h-full flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
+    <div className="h-full flex flex-col bg-c-bg overflow-hidden">
       {/* ─── Body: Table + Preview ─── */}
       <div className="flex-1 flex overflow-hidden">
         {/* Table (left) */}
         <div
           className={`flex-1 min-w-0 ${
-            selectedProblem || workspaceMode ? 'border-r border-slate-200 dark:border-navy-700' : ''
+            selectedProblem || workspaceMode ? 'border-r border-c-border-subtle' : ''
           }`}
         >
           <ProblemTable
@@ -388,7 +388,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
               }
             />
             {/* AI Suggest button at bottom of preview */}
-            <div className="shrink-0 border-t border-slate-200 dark:border-navy-700 px-3 py-2">
+            <div className="shrink-0 border-t border-c-border-subtle px-3 py-2">
               <button
                 type="button"
                 onClick={() => toggleAiRecommend(selectedProblem.id)}
@@ -404,7 +404,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
         )}
 
         {workspaceMode && (
-          <div className="w-[460px] shrink-0 min-w-0 border-l border-slate-200 dark:border-navy-700">
+          <div className="w-[460px] shrink-0 min-w-0 border-l border-c-border-subtle">
             <AiRecommendationPanel
               isOpen={Boolean(workspaceMode)}
               onClose={closeWorkspacePanel}
