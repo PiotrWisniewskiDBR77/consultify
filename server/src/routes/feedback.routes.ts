@@ -985,53 +985,79 @@ async function createTaskForFeedback(params: {
   return id;
 }
 
-/**
- * POST /api/feedback
- * Submit new feedback
- */
-router.post(
-  '/',
-  optionalVerifyToken,
-  apiAuthRateLimiter,
-  feedbackRateLimiter,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    await ensureFeedbackSchema();
-    const parsed = reportFeedbackSchema.safeParse(req.body || {});
-    if (!parsed.success) {
-      return res.status(400).json({
-        error: 'Invalid feedback payload',
-        details: parsed.error.flatten(),
-      });
-    }
-    const {
-      userId,
-      userEmail,
-      userName,
-      type,
-      message,
-      severity,
-      metadata,
-      title: parsedTitle,
-      description: parsedDescription,
-      routePath,
-      deviceType,
-      screenSize,
-      uiLanguage,
-      uiTheme,
-      workspaceContext,
-      clientEnv,
-      signatureHash,
-      appContext,
-      consoleLogs,
-      networkErrors,
-      breadcrumbs,
-      lastUncaughtError,
-      screenshot,
-    } = parsed.data;
+/** Validated feedback payload (mirror of `reportFeedbackSchema` output). */
+export type FeedbackIntakeInput = z.infer<typeof reportFeedbackSchema>;
 
-    const appEnv = getAppEnv();
-    const { actualUserId, actualUserEmail, actualUserName } = resolveFeedbackActor({
-      reqUser: req.user,
+/**
+ * Actor / request context for a feedback intake. When the caller has a JWT
+ * (in-app widget), `reqUser` carries the resolved actor. Slack (F2) has no JWT,
+ * so it passes an already-resolved actor via `userId`/`userEmail`/`userName`
+ * inside the payload and leaves `reqUser` undefined.
+ */
+export interface FeedbackIntakeContext {
+  reqUser?: AuthRequest['user'];
+}
+
+export interface FeedbackIntakeResult {
+  feedbackId: string;
+  taskId: string | null;
+  priority: TicketPriority;
+  metadataJson: Record<string, unknown>;
+  appEnv: string;
+  organizationId: string | null;
+  /**
+   * Best-effort notification fan-out (Slack/email/WhatsApp) runs detached so
+   * the HTTP response is not blocked. Awaitable for tests / callers that need
+   * to be sure the dispatch metadata was persisted before continuing.
+   */
+  escalationPromise: Promise<void>;
+}
+
+/**
+ * Core feedback intake — the SINGLE source of truth for turning a validated
+ * feedback payload into a `feedback_items` row + auto-task + escalation.
+ *
+ * Extracted from the `POST /api/feedback` handler so that the Slack Command
+ * Center inbound (F2, `slackInbound.routes.ts`) reuses EXACTLY the same
+ * pipeline (feedback_items -> createTaskForFeedback -> dispatchFeedbackEscalation)
+ * instead of copy-pasting ~300 lines or calling the HTTP endpoint on itself.
+ * The HTTP route below is now a thin wrapper: validate -> call -> respond, so
+ * its externally observable behaviour is unchanged.
+ */
+export async function createFeedbackInternal(
+  data: FeedbackIntakeInput,
+  ctx: FeedbackIntakeContext = {}
+): Promise<FeedbackIntakeResult> {
+  await ensureFeedbackSchema();
+  const {
+    userId,
+    userEmail,
+    userName,
+    type,
+    message,
+    severity,
+    metadata,
+    title: parsedTitle,
+    description: parsedDescription,
+    routePath,
+    deviceType,
+    screenSize,
+    uiLanguage,
+    uiTheme,
+    workspaceContext,
+    clientEnv,
+    signatureHash,
+    appContext,
+    consoleLogs,
+    networkErrors,
+    breadcrumbs,
+    lastUncaughtError,
+    screenshot,
+  } = data;
+  const reqUser = ctx.reqUser;
+
+  const { actualUserId, actualUserEmail, actualUserName } = resolveFeedbackActor({
+      reqUser,
       userId,
       userEmail,
       userName,
@@ -1040,8 +1066,8 @@ router.post(
     // Resolve organizationId when possible
     let organizationId: string | null = null;
     try {
-      if ((req as any).user?.organizationId) {
-        organizationId = String((req as any).user.organizationId);
+      if ((reqUser as any)?.organizationId) {
+        organizationId = String((reqUser as any).organizationId);
       } else if (actualUserId) {
         const userRow = await dbGet<{ organization_id?: string }>(
           `SELECT organization_id FROM users WHERE id = ?`,
@@ -1335,7 +1361,38 @@ router.post(
     // `logger.error`.
     escalationPromise.catch(() => {});
 
-    return res.json({ success: true, id: feedbackId, taskId: linkedTaskId });
+    return {
+      feedbackId,
+      taskId: linkedTaskId,
+      priority,
+      metadataJson,
+      appEnv,
+      organizationId,
+      escalationPromise,
+    };
+}
+
+/**
+ * POST /api/feedback
+ * Submit new feedback
+ */
+router.post(
+  '/',
+  optionalVerifyToken,
+  apiAuthRateLimiter,
+  feedbackRateLimiter,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const parsed = reportFeedbackSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid feedback payload',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const result = await createFeedbackInternal(parsed.data, { reqUser: req.user });
+
+    return res.json({ success: true, id: result.feedbackId, taskId: result.taskId });
   })
 );
 

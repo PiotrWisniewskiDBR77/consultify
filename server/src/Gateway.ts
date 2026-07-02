@@ -311,6 +311,7 @@ import wave8AgentsRoutes from './routes/wave8-agents.routes.js';
 import wave9OutcomesRoutes from './routes/wave9-outcomes.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
+import slackInboundRoutes from './routes/slack/slackInbound.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
 import workCanvasRoutes from './routes/work-canvas.routes.js';
 import workbookRoutes from './routes/workbook.routes.js';
@@ -684,6 +685,11 @@ export class ApiGateway {
       app.use('/api/access', effectiveAccessRoutes);
       mountStub('/api/permission-requests', permissionRequestsRoutes, 'permissionRequestsRoutes');
       app.use('/api/admin/integrations', adminIntegrationsRoutes);
+
+      // Slack Command Center inbound (F2) — signature-verified, no JWT
+      // (Slack carries no bearer token; the route verifies SLACK_SIGNING_SECRET).
+      // Mounted against the raw-body parser configured in index.ts.
+      app.use('/api/slack', slackInboundRoutes);
 
       // Webhook routes (stripe webhook is handled by webhookRoutes)
       app.use('/api/webhooks', sellixInboundWebhookRoutes);
