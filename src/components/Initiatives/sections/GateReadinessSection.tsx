@@ -485,21 +485,21 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
         `Schema:`,
         `{`,
-        `  "initiative": { "update"?: { "ownerId"?: string, "sponsorId"?: string, "plannedEndDate"?: "YYYY-MM-DD", "priority"?: "critical"|"high"|"medium"|"low", "reason": string } },`,
-        `  "gateRoles": {`,
-        `    "add": [ { "gateRole": string, "userId": string, "reason": string } ],`,
-        `    "remove": [ { "gateRole": string, "userId": string, "reason": string } ]`,
-        `  },`,
-        `  "gateDecisions": {`,
-        `    "update": [ { "decisionId": string, "decisionOwnerId"?: string, "dueDate"?: "YYYY-MM-DD", "description"?: string, "reason": string } ]`,
-        `  },`,
-        `  "tasks": {`,
-        `    "update": [ { "taskId": string, "assigneeId"?: string, "dueDate"?: "YYYY-MM-DD", "status"?: "TODO"|"IN_PROGRESS"|"BLOCKED"|"DONE", "reason": string } ]`,
-        `  },`,
-        `  "raid": {`,
-        `    "update": [ { "raidId": string, "severity"?: "LOW"|"MEDIUM"|"HIGH"|"CRITICAL", "status"?: string, "ownerId"?: string, "dueDate"?: "YYYY-MM-DD", "title"?: string, "description"?: string, "reason": string } ]`,
-        `  },`,
-        `  "note"?: string`,
+        `"initiative": { "update"?: { "ownerId"?: string, "sponsorId"?: string, "plannedEndDate"?: "YYYY-MM-DD", "priority"?: "critical"|"high"|"medium"|"low", "reason": string } },`,
+        `"gateRoles": {`,
+        `"add": [ { "gateRole": string, "userId": string, "reason": string } ],`,
+        `"remove": [ { "gateRole": string, "userId": string, "reason": string } ]`,
+        `},`,
+        `"gateDecisions": {`,
+        `"update": [ { "decisionId": string, "decisionOwnerId"?: string, "dueDate"?: "YYYY-MM-DD", "description"?: string, "reason": string } ]`,
+        `},`,
+        `"tasks": {`,
+        `"update": [ { "taskId": string, "assigneeId"?: string, "dueDate"?: "YYYY-MM-DD", "status"?: "TODO"|"IN_PROGRESS"|"BLOCKED"|"DONE", "reason": string } ]`,
+        `},`,
+        `"raid": {`,
+        `"update": [ { "raidId": string, "severity"?: "LOW"|"MEDIUM"|"HIGH"|"CRITICAL", "status"?: string, "ownerId"?: string, "dueDate"?: "YYYY-MM-DD", "title"?: string, "description"?: string, "reason": string } ]`,
+        `},`,
+        `"note"?: string`,
         `}`,
       ].join('\n');
 
@@ -1013,7 +1013,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       id="gateReadiness"
       title={t('initiatives.gateReadinessSection.gateReadinessTimeline')}
       icon={<Flag size={18} className="text-indigo-500 dark:text-indigo-400" />}
-      iconBg="bg-gradient-to-br from-crimson-500/10 to-primary-500/10 dark:from-crimson-500/20 dark:to-primary-500/20"
+      iconBg="bg-c-surface-raised"
       expanded={expanded}
       onToggle={onToggle}
       badge={
@@ -1047,7 +1047,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 );
               }}
               disabled={isMutating}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-c-border text-c-text-muted hover:text-c-text hover:border-c-border-strong text-xs font-medium transition-colors disabled:opacity-50"
             >
               <Send size={14} />
               <span>{t('initiatives.gateReadinessSection.request')}</span>
@@ -1069,7 +1069,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 ? t('initiatives.gateReadinessSection.aiNotAvailableForStatus')
                 : undefined
             }
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-c-border text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {gatesAiRequest ? (
               <Loader2 size={14} className="animate-spin" />
@@ -1096,21 +1096,21 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500/10 to-primary-500/10 dark:from-primary-500/20 dark:to-primary-500/20 flex items-center justify-center">
-                  <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+                <div className="w-8 h-8 rounded-xl bg-c-surface-raised flex items-center justify-center">
+                  <Sparkles size={16} className="text-c-info" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <div className="text-sm font-semibold text-c-text">
                     {t('initiatives.gateReadinessSection.aiGatesReview')}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-c-text-muted">
                     {t('initiatives.gateReadinessSection.nothingAppliedAutomatically')}
                   </div>
                 </div>
               </div>
               <button
                 onClick={closeAIModal}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
+                className="p-2 rounded-xl hover:bg-c-surface-raised text-c-text-muted"
               >
                 <X size={18} />
               </button>
@@ -1126,7 +1126,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               {/* Initiative top-bar updates */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="text-xs font-semibold text-c-text">
                     {t('initiatives.gateReadinessSection.initiativeTopBar')}
                   </span>
                 </div>
@@ -1206,10 +1206,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             className="mt-1"
                           />
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                            <div className="text-xs font-semibold text-c-text truncate">
                               {it.label}: {it.value}
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <div className="text-[11px] text-c-text-muted mt-0.5">
                               {u.reason}
                             </div>
                           </div>
@@ -1223,7 +1223,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               {/* Gate roles */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="text-xs font-semibold text-c-text">
                     {t('initiatives.gateReadinessSection.gateRoles')}
                   </span>
                 </div>
@@ -1240,7 +1240,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     {/* Adds */}
                     <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 p-3 bg-slate-50/60 dark:bg-navy-800/40">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-c-text-secondary uppercase tracking-wider">
                           {t('initiatives.gateReadinessSection.toAdd')} (
                           {aiProposal.gateRoles.add.length})
                         </span>
@@ -1253,14 +1253,14 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                 ) as Record<number, boolean>
                               )
                             }
-                            className="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                            className="text-[11px] font-medium text-c-info hover:underline"
                           >
                             {t('initiatives.gateReadinessSection.selectAll')}
                           </button>
                         )}
                       </div>
                       {aiProposal.gateRoles.add.length === 0 ? (
-                        <div className="text-xs text-slate-500 dark:text-slate-400">—</div>
+                        <div className="text-xs text-c-text-muted">—</div>
                       ) : (
                         <div className="space-y-1.5">
                           {aiProposal.gateRoles.add.map((a, idx) => {
@@ -1286,10 +1286,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                   className="mt-0.5"
                                 />
                                 <div className="min-w-0">
-                                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                                  <div className="text-xs font-semibold text-c-text truncate">
                                     {a.gateRole} → {name}
                                   </div>
-                                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  <div className="text-[11px] text-c-text-muted">
                                     {a.reason}
                                   </div>
                                 </div>
@@ -1303,7 +1303,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     {/* Removes */}
                     <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 p-3 bg-slate-50/60 dark:bg-navy-800/40">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-c-text-secondary uppercase tracking-wider">
                           {t('initiatives.gateReadinessSection.toRemove')} (
                           {aiProposal.gateRoles.remove.length})
                         </span>
@@ -1319,14 +1319,14 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                 ) as Record<string, boolean>
                               )
                             }
-                            className="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                            className="text-[11px] font-medium text-c-info hover:underline"
                           >
                             {t('initiatives.gateReadinessSection.selectAll')}
                           </button>
                         )}
                       </div>
                       {aiProposal.gateRoles.remove.length === 0 ? (
-                        <div className="text-xs text-slate-500 dark:text-slate-400">—</div>
+                        <div className="text-xs text-c-text-muted">—</div>
                       ) : (
                         <div className="space-y-1.5">
                           {aiProposal.gateRoles.remove.map((r) => {
@@ -1353,10 +1353,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                   className="mt-0.5"
                                 />
                                 <div className="min-w-0">
-                                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                                  <div className="text-xs font-semibold text-c-text truncate">
                                     {r.gateRole} → {name}
                                   </div>
-                                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  <div className="text-[11px] text-c-text-muted">
                                     {r.reason}
                                   </div>
                                 </div>
@@ -1373,7 +1373,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               {/* Gate decision updates */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="text-xs font-semibold text-c-text">
                     {t('initiatives.gateReadinessSection.gateDecisions')}
                   </span>
                 </div>
@@ -1417,23 +1417,23 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             className="mt-1"
                           />
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                            <div className="text-xs font-semibold text-c-text truncate">
                               {title}
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <div className="text-[11px] text-c-text-muted mt-0.5">
                               {u.reason}
                             </div>
-                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-c-text-secondary">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Owner:</span>{' '}
+                                <span className="text-c-text-muted">Owner:</span>{' '}
                                 <span className="font-medium">{ownerName || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Due:</span>{' '}
+                                <span className="text-c-text-muted">Due:</span>{' '}
                                 <span className="font-medium">{u.dueDate || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Note:</span>{' '}
+                                <span className="text-c-text-muted">Note:</span>{' '}
                                 <span className="font-medium">{u.description ? '✓' : '—'}</span>
                               </div>
                             </div>
@@ -1448,7 +1448,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               {/* Task updates */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="text-xs font-semibold text-c-text">
                     {t('initiatives.gateReadinessSection.tasks')}
                   </span>
                 </div>
@@ -1492,23 +1492,23 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             className="mt-1"
                           />
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                            <div className="text-xs font-semibold text-c-text truncate">
                               {title}
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <div className="text-[11px] text-c-text-muted mt-0.5">
                               {u.reason}
                             </div>
-                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-c-text-secondary">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Owner:</span>{' '}
+                                <span className="text-c-text-muted">Owner:</span>{' '}
                                 <span className="font-medium">{assigneeName || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Due:</span>{' '}
+                                <span className="text-c-text-muted">Due:</span>{' '}
                                 <span className="font-medium">{u.dueDate || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Status:</span>{' '}
+                                <span className="text-c-text-muted">Status:</span>{' '}
                                 <span className="font-medium">{u.status || '—'}</span>
                               </div>
                             </div>
@@ -1523,7 +1523,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               {/* RAID updates */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="text-xs font-semibold text-c-text">
                     RAID
                   </span>
                 </div>
@@ -1567,39 +1567,39 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             className="mt-1"
                           />
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                            <div className="text-xs font-semibold text-c-text truncate">
                               {title}
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <div className="text-[11px] text-c-text-muted mt-0.5">
                               {u.reason}
                             </div>
-                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-c-text-secondary">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">
+                                <span className="text-c-text-muted">
                                   Severity:
                                 </span>{' '}
                                 <span className="font-medium">{u.severity || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Status:</span>{' '}
+                                <span className="text-c-text-muted">Status:</span>{' '}
                                 <span className="font-medium">{u.status || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Owner:</span>{' '}
+                                <span className="text-c-text-muted">Owner:</span>{' '}
                                 <span className="font-medium">{ownerName || '—'}</span>
                               </div>
                             </div>
-                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-c-text-secondary">
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Due:</span>{' '}
+                                <span className="text-c-text-muted">Due:</span>{' '}
                                 <span className="font-medium">{u.dueDate || '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Title:</span>{' '}
+                                <span className="text-c-text-muted">Title:</span>{' '}
                                 <span className="font-medium">{u.title ? '✓' : '—'}</span>
                               </div>
                               <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
-                                <span className="text-slate-500 dark:text-slate-400">Desc:</span>{' '}
+                                <span className="text-c-text-muted">Desc:</span>{' '}
                                 <span className="font-medium">{u.description ? '✓' : '—'}</span>
                               </div>
                             </div>
@@ -1624,14 +1624,14 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                   >
                     <thead className="bg-slate-50/80 dark:bg-navy-800/60">
                       <tr>
-                        <th className="text-left px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th className="text-left px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                           {t('initiatives.gateReadinessSection.analysisResult')}
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-4 py-3 text-sm text-c-text-secondary">
                           {t('initiatives.gateReadinessSection.aiDidNotProposeChanges')}
                         </td>
                       </tr>
@@ -1645,7 +1645,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               <button
                 onClick={closeAIModal}
                 disabled={isAIProposing}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors disabled:opacity-50"
               >
                 {t('initiatives.gateReadinessSection.close')}
               </button>
@@ -1660,7 +1660,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     aiProposal.tasks.update.length === 0 &&
                     aiProposal.raid.update.length === 0)
                 }
-                className="px-5 py-2 rounded-xl bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-40 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                className="px-5 py-2 rounded-xl bg-c-surface hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-40 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
               >
                 {isAIProposing ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -1706,14 +1706,14 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       {/* Gate Timeline Visual */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+          <span className="text-xs font-semibold text-c-text-muted uppercase">
             {t('initiatives.gateReadinessSection.gateTimeline')}
           </span>
         </div>
         <div className="relative">
-          <div className="absolute top-4 left-0 right-0 h-1 bg-slate-200 dark:bg-navy-700 rounded-full" />
+          <div className="absolute top-4 left-0 right-0 h-1 bg-slate-200 rounded-full" />
           <div
-            className="absolute top-4 left-0 h-1 bg-gradient-to-r from-emerald-500 to-primary-500 rounded-full transition-all duration-500"
+            className="absolute top-4 left-0 h-1 bg-gradient-to-r from-emerald-500 to-c-info rounded-full transition-all duration-500"
             style={{
               width: `${(() => {
                 const gateOrder = ['PROMOTE', 'APPROVE', 'SCHEDULE', 'COMPLETE', 'START_TRACKING'];
@@ -1744,8 +1744,8 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                         isPast
                           ? 'bg-emerald-500 border-emerald-500 text-white'
                           : isCurrent
-                            ? 'bg-navy-900 border-navy-900 text-white shadow-lg shadow-primary-500/40'
-                            : 'bg-white dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-600'
+                            ? 'bg-c-text border-c-text text-c-bg shadow-lg'
+                            : 'bg-c-surface border-c-border text-c-text-secondary'
                       }`}
                     >
                       {isPast ? (
@@ -1758,7 +1758,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     </motion.div>
                     <div className={`mt-2 text-center ${isCurrent ? 'font-semibold' : ''}`}>
                       <p
-                        className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-600'}`}
+                        className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-c-text dark:text-white font-semibold' : 'text-c-text-secondary'}`}
                       >
                         {isPolish ? config.namePl.split(' ')[0] : config.name.split(' ')[0]}
                       </p>
@@ -1775,15 +1775,15 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         <div className="mb-4 p-4 rounded-xl bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary-500/20">
-                <Flag size={16} className="text-primary-500" />
+              <div className="p-2 rounded-lg bg-c-surface-raised">
+                <Flag size={16} className="text-c-info" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <h4 className="text-sm font-semibold text-c-text-secondary">
                   {t('initiatives.gateReadinessSection.currentGate')}:{' '}
                   {isPolish ? nextGateConfig.namePl : nextGateConfig.name}
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-c-text-muted">
                   {isPolish ? nextGateConfig.descriptionPl : nextGateConfig.description}
                 </p>
               </div>
@@ -1794,7 +1794,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           {backendReadiness.length > 0 && (
             <div className="space-y-2 mb-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                <span className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wide">
                   {t('initiatives.gateReadinessSection.readinessSystem')}
                 </span>
                 {blockingMissing.length > 0 ? (
@@ -1846,7 +1846,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+                          <span className="text-xs font-medium text-c-text truncate">
                             {r.label}
                           </span>
                           <span
@@ -1862,13 +1862,13 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                           </span>
                         </div>
                         {!r.pass && r.suggestedAction && (
-                          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          <div className="mt-1 text-[11px] text-c-text-muted">
                             <span className="font-medium">
                               {t('initiatives.gateReadinessSection.suggestedAction')}:
                             </span>{' '}
                             {r.suggestedAction}
                             {r.suggestedActor && (
-                              <span className="ml-2 text-slate-600 dark:text-slate-500">
+                              <span className="ml-2 text-c-text-secondary dark:text-c-text-muted">
                                 ({r.suggestedActor})
                               </span>
                             )}
@@ -1879,7 +1879,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                         <button
                           type="button"
                           onClick={() => handleFix(r.key)}
-                          className="px-2 py-1 rounded-md text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors shrink-0"
+                          className="px-2 py-1 rounded-md text-[11px] font-semibold text-c-info hover:bg-c-surface-raised transition-colors shrink-0"
                           title={
                             !canEditCards
                               ? t('initiatives.gateReadinessSection.viewOnlyNoEditPermission')
@@ -1899,13 +1899,13 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           {/* AI Readiness Analysis */}
           <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              <span className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wide">
                 {t('initiatives.gateReadinessSection.aiReadinessAnalysis')}
               </span>
               <button
                 onClick={requestAIReadiness}
                 disabled={isAIReadinessLoading}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium text-primary-600 dark:text-primary-400 border border-primary-400/40 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium text-c-info border border-c-border hover:bg-c-surface-raised transition-colors disabled:opacity-50"
               >
                 {isAIReadinessLoading ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -1917,9 +1917,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
             </div>
 
             {isAIReadinessLoading && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary-500/5 border border-primary-500/20">
-                <Loader2 size={14} className="animate-spin text-primary-500" />
-                <span className="text-xs text-primary-600 dark:text-primary-400">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-c-surface-raised border border-c-border">
+                <Loader2 size={14} className="animate-spin text-c-info" />
+                <span className="text-xs text-c-info">
                   {t('initiatives.gateReadinessSection.aiAnalyzingReadiness')}
                 </span>
               </div>
@@ -1927,20 +1927,20 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
 
             {aiReadinessResult && !isAIReadinessLoading && (
               <div className="space-y-2">
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-primary-500/5 border border-primary-500/20">
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-c-surface-raised border border-c-border">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                    <div className="text-2xl font-bold text-c-text">
                       {aiReadinessResult.overallScore}%
                     </div>
-                    <div className="text-[10px] text-primary-500">
+                    <div className="text-[10px] text-c-text-muted">
                       {t('initiatives.gateReadinessSection.score')}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                    <div className="text-[10px] font-semibold text-c-text-muted uppercase mb-1">
                       {t('initiatives.gateReadinessSection.summary')}
                     </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300">
+                    <p className="text-xs text-c-text-secondary">
                       {aiReadinessResult.summary}
                     </p>
                   </div>
@@ -1948,7 +1948,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
 
                 {aiReadinessResult.findings.length > 0 ? (
                   <div className="space-y-1">
-                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <span className="text-[10px] font-semibold text-c-text-muted uppercase">
                       {t('initiatives.gateReadinessSection.aiFindings')}
                     </span>
                     {aiReadinessResult.findings.map((f: any, idx: number) => (
@@ -1979,17 +1979,17 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                            <div className="text-xs font-medium text-c-text">
                               {f.message}
                             </div>
                             {f.suggestedAction && (
-                              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                              <div className="mt-1 text-[11px] text-c-text-muted">
                                 <span className="font-medium">
                                   {t('initiatives.gateReadinessSection.action')}:
                                 </span>{' '}
                                 {f.suggestedAction}
                                 {f.suggestedActor && (
-                                  <span className="ml-1.5 text-slate-600 dark:text-slate-500">
+                                  <span className="ml-1.5 text-c-text-secondary dark:text-c-text-muted">
                                     ({f.suggestedActor})
                                   </span>
                                 )}
@@ -2001,7 +2001,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-500 dark:text-slate-400 italic p-2">
+                  <div className="text-xs text-c-text-muted italic p-2">
                     {t('initiatives.gateReadinessSection.aiFoundNoAdditionalIssues')}
                   </div>
                 )}
@@ -2011,7 +2011,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
 
           {/* Requirements Checklist */}
           <div className="space-y-2 mb-4">
-            <span className="text-[10px] font-semibold text-slate-500 uppercase">
+            <span className="text-[10px] font-semibold text-c-text-muted uppercase">
               {t('initiatives.gateReadinessSection.requirementsChecklist')}
             </span>
             <div className="grid grid-cols-2 gap-2">
@@ -2023,11 +2023,11 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     className={`flex items-center gap-2 p-2 rounded-lg ${
                       hasReq
                         ? 'bg-emerald-500/10 border border-emerald-500/20'
-                        : 'bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700'
+                        : 'bg-c-surface-raised border border-c-border'
                     }`}
                   >
                     <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center ${hasReq ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+                      className={`w-5 h-5 rounded-full flex items-center justify-center ${hasReq ? 'bg-emerald-500' : 'bg-c-border-strong '}`}
                     >
                       {hasReq ? (
                         <Check size={12} className="text-white" />
@@ -2036,7 +2036,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                       )}
                     </div>
                     <span
-                      className={`text-xs ${hasReq ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}
+                      className={`text-xs ${hasReq ? 'text-emerald-600 dark:text-emerald-400' : 'text-c-text-muted'}`}
                     >
                       {isPolish ? reqLabels[req]?.pl : reqLabels[req]?.en || req}
                     </span>
@@ -2049,17 +2049,17 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           {/* Readiness Score */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-c-text-muted">
                 {t('initiatives.gateReadinessSection.readiness')}
               </span>
-              <span className="text-xs font-semibold text-primary-500">{readinessPercent}%</span>
+              <span className="text-xs font-semibold text-c-text">{readinessPercent}%</span>
             </div>
-            <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${readinessPercent}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="h-full bg-gradient-to-r from-primary-500 to-crimson-500 rounded-full"
+                className="h-full bg-c-info rounded-full"
               />
             </div>
           </div>
@@ -2067,19 +2067,19 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           {/* Approver Info */}
           <div className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
             <div className="flex items-center gap-2">
-              <User size={14} className="text-slate-600" />
-              <span className="text-xs text-slate-500">
+              <User size={14} className="text-c-text-secondary" />
+              <span className="text-xs text-c-text-muted">
                 {t('initiatives.gateReadinessSection.requiredApproval')}:
               </span>
-              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <span className="text-xs font-medium text-c-text-secondary">
                 {getRoleLabel(nextGateConfig.requiredRole, isPolish)}
               </span>
             </div>
             {nextGateConfig.requiredRole === 'sponsor' && sponsorId && (
-              <span className="text-xs text-primary-500">{getUserDisplayName(sponsorId)}</span>
+              <span className="text-xs text-c-text">{getUserDisplayName(sponsorId)}</span>
             )}
             {nextGateConfig.requiredRole === 'owner' && ownerId && (
-              <span className="text-xs text-primary-500">{getUserDisplayName(ownerId)}</span>
+              <span className="text-xs text-c-text">{getUserDisplayName(ownerId)}</span>
             )}
           </div>
         </div>
@@ -2088,7 +2088,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       {/* All Gates Status */}
       {requiredGates.length > 0 && (
         <div className="space-y-2">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase block mb-2">
+          <span className="text-xs font-semibold text-c-text-muted uppercase block mb-2">
             {t('initiatives.gateReadinessSection.requiredApprovalsForStatus')}
           </span>
           {requiredGates.map((g) => {
@@ -2101,7 +2101,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center ${ok ? 'bg-emerald-500' : gs === 'PENDING' ? 'bg-amber-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+                    className={`w-6 h-6 rounded-full flex items-center justify-center ${ok ? 'bg-emerald-500' : gs === 'PENDING' ? 'bg-amber-500' : 'bg-c-border-strong '}`}
                   >
                     {ok ? (
                       <Check size={12} className="text-white" />
@@ -2111,10 +2111,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                       <X size={12} className="text-white" />
                     )}
                   </div>
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{g.label}</span>
+                  <span className="text-sm text-c-text-secondary">{g.label}</span>
                 </div>
                 <span
-                  className={`px-2 py-0.5 text-[10px] font-medium rounded ${ok ? 'bg-emerald-500/20 text-emerald-400' : gs === 'PENDING' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-600'}`}
+                  className={`px-2 py-0.5 text-[10px] font-medium rounded ${ok ? 'bg-emerald-500/20 text-emerald-400' : gs === 'PENDING' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-c-text-secondary'}`}
                 >
                   {gs === 'MISSING' ? t('initiatives.gateReadinessSection.notRequested') : gs}
                 </span>
@@ -2125,9 +2125,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       )}
 
       {!nextGateConfig && requiredGates.length === 0 && (
-        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+        <div className="text-center py-6 border-2 border-dashed border-c-border rounded-xl">
           <CheckCircle2 size={24} className="mx-auto mb-2 text-emerald-500" />
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-c-text-muted">
             {t('initiatives.gateReadinessSection.allGatesPassed')}
           </p>
         </div>
