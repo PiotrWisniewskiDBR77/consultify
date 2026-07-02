@@ -437,6 +437,15 @@ export async function handleViewSubmission(payload: any): Promise<void> {
     const result = await createFeedbackInternal(intake, {});
     feedbackId = result.feedbackId;
     taskId = result.taskId;
+    // Race fix (live E2E finding): dispatchFeedbackEscalation persists its
+    // alertDispatch summary into metadata_json with a read-modify-write of the
+    // WHOLE object. If we anchor slack_thread_ts while escalation is still in
+    // flight, its later write clobbers the anchor (observed on demo: router had
+    // ts, DB had no thread_ts). Wait for escalation (bounded) before anchoring.
+    await Promise.race([
+      result.escalationPromise.catch(() => {}),
+      new Promise((r) => setTimeout(r, 8000)),
+    ]);
   } catch (err) {
     logger.error('[SlackInbound] createFeedbackInternal failed', {
       error: err instanceof Error ? err.message : String(err),
@@ -497,6 +506,26 @@ async function anchorSlackThread(
   try {
     const cols = await getTableColumns('feedback_items');
     if (!cols.has('metadata_json')) return;
+
+    // Preferred path: atomic per-key JSON patch (Postgres jsonb_set) so a
+    // concurrent whole-object writer (e.g. escalation's alertDispatch persist)
+    // cannot clobber the anchor via read-modify-write. Falls through to the
+    // legacy read-modify-write below on engines without jsonb (mock-DB/sqlite).
+    try {
+      await dbRun(
+        `UPDATE feedback_items
+         SET metadata_json = jsonb_set(
+               jsonb_set(COALESCE(metadata_json, '{}')::jsonb, '{slack_thread_ts}', to_jsonb(?::text), true),
+               '{slack_channel_id}', to_jsonb(?::text), true
+             )::text
+         WHERE id = ?`,
+        [threadTs, channelId ?? '', feedbackId]
+      );
+      return;
+    } catch {
+      // fall through to read-modify-write
+    }
+
     const row = await dbGet<{ metadata_json?: string }>(
       `SELECT metadata_json FROM feedback_items WHERE id = ?`,
       [feedbackId]

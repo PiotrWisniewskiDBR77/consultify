@@ -304,8 +304,11 @@ describe('POST /api/slack/interactions — view_submission', () => {
       String(c[0]).includes('UPDATE feedback_items')
     );
     expect(updateCall).toBeTruthy();
-    const persistedMeta = JSON.parse(String(updateCall![1][0]));
-    expect(persistedMeta.slack_thread_ts).toBe('1700000000.000100');
-    expect(persistedMeta.slack_channel_id).toBe('C_FEEDBACK');
+    // Anchor is an atomic per-key jsonb_set patch (race fix: escalation's
+    // whole-object metadata persist must not clobber the thread anchor).
+    // Params: [threadTs, channelId, feedbackId].
+    expect(String(updateCall![0])).toContain('jsonb_set');
+    expect(updateCall![1][0]).toBe('1700000000.000100');
+    expect(updateCall![1][1]).toBe('C_FEEDBACK');
   });
 });
