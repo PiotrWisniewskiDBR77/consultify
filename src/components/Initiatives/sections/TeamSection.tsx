@@ -32,24 +32,24 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
       id="team"
       title={t('initiatives.teamSection.team')}
       icon={<Users size={18} className="text-indigo-500 dark:text-indigo-400" />}
-      iconBg="bg-gradient-to-br from-crimson-500/10 to-primary-500/10 dark:from-crimson-500/20 dark:to-primary-500/20"
+      iconBg="bg-c-surface-raised"
       expanded={expanded}
       onToggle={onToggle}
     >
       <div className="space-y-4">
         {/* Owner */}
-        <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
+        <div className="p-3 rounded-xl bg-c-surface-raised border border-c-border">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-blue-500/10">
                 <User size={14} className="text-blue-500" />
               </div>
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
+              <span className="text-xs font-semibold text-c-text-secondary uppercase">
                 {t('initiatives.teamSection.owner')}
               </span>
             </div>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+          <p className="text-xs text-c-text-muted mb-2">
             {t('initiatives.teamSection.ownerDescription')}
           </p>
           <select
@@ -58,7 +58,7 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
             onChange={(e) => setOwnerId(e.target.value)}
             disabled={!canEditOwner}
             title={!canEditOwner ? t('initiatives.teamSection.cannotEditOwner') : undefined}
-            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+            className="w-full px-3 py-2 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-secondary focus:outline-none focus:border-blue-400"
           >
             <option value="">{t('initiatives.teamSection.selectOwner')}</option>
             {users.map((user) => (
@@ -69,18 +69,18 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
           </select>
         </div>
         {/* Sponsor */}
-        <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
+        <div className="p-3 rounded-xl bg-c-surface-raised border border-c-border">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-primary-500/10">
-                <Target size={14} className="text-primary-500" />
+              <div className="p-1.5 rounded-lg bg-c-surface-raised">
+                <Target size={14} className="text-c-info" />
               </div>
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
+              <span className="text-xs font-semibold text-c-text-secondary uppercase">
                 Sponsor
               </span>
             </div>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+          <p className="text-xs text-c-text-muted mb-2">
             {t('initiatives.teamSection.sponsorDescription')}
           </p>
           <select
@@ -89,7 +89,7 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
             onChange={(e) => setSponsorId(e.target.value)}
             disabled={!canEditOwner}
             title={!canEditOwner ? t('initiatives.teamSection.cannotEditSponsor') : undefined}
-            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+            className="w-full px-3 py-2 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-secondary focus:outline-none focus:border-c-focus-solid"
           >
             <option value="">{t('initiatives.teamSection.selectSponsor')}</option>
             {users.map((user) => (
@@ -101,22 +101,22 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
         </div>
         {/* Summary */}
         {(ownerName || sponsorName) && (
-          <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="pt-3 border-t border-c-border">
             <div className="flex items-center gap-4 text-xs">
               {ownerName && (
                 <div className="flex items-center gap-1.5">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
                     <User size={12} className="text-blue-500" />
                   </div>
-                  <span className="text-slate-600 dark:text-slate-400">{ownerName}</span>
+                  <span className="text-c-text-secondary">{ownerName}</span>
                 </div>
               )}
               {sponsorName && (
                 <div className="flex items-center gap-1.5">
-                  <div className="w-6 h-6 rounded-full bg-primary-500/20 flex items-center justify-center">
-                    <Target size={12} className="text-primary-500" />
+                  <div className="w-6 h-6 rounded-full bg-c-surface-raised flex items-center justify-center">
+                    <Target size={12} className="text-c-info" />
                   </div>
-                  <span className="text-slate-600 dark:text-slate-400">{sponsorName}</span>
+                  <span className="text-c-text-secondary">{sponsorName}</span>
                 </div>
               )}
             </div>

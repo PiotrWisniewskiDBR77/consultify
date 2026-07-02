@@ -55,3 +55,44 @@
 
 **Weryfikacja:** brak `node_modules` w worktree (zero npm wg zlecenia) → grep sanity: wszystkie użyte klasy `c-*` zmapowane 1:1 na tokeny z `tailwind.config.js`; 0 literówek; 0 markerów konfliktu po rebase. Build vite NIE odpalony — wymagane przed merge (Strateg).
 **Commity:** `be7d3c92b7`→`86c534f510` (10), per ścieżka, bez `-A`.
+
+---
+
+### RAPORT — Fala 2 (Artefakty §11.2+§13) · 2026-07-02 · branch `reskin/A3/wave-2` (baza z `reskin/A3/wave-1` = Fala 0+1)
+
+**Metoda:** mechaniczny token-sweep (skrypt Python, per-linia, `light dark:` collapse → jeden token `c-*` bo var() sam obsługuje dark) + ręczne dopięcie crimson-removal i przypadków semantycznych. TYLKO klasy CSS — dla każdego pliku zweryfikowane, że liczba linii dodanych == usuniętych (zero zmian JSX/logiki) i zero linii diffa bez tokenu klasy.
+
+**Uwaga o ścieżce:** zlecenie wskazywało `src/components/InitiativeDetailModal.tsx` — TAKI PLIK NIE ISTNIEJE. Kanoniczny pełny artefakt Initiative (C-L, ~10 zakładek) to **`src/components/Initiatives/InitiativeDocumentView.tsx`** (10 550 linii, `index.ts` „canonical full view", live w M13/Results/Execution hubach). Preview pane §13 = `InitiativePreviewV3.tsx`. Oba w moim klastrze.
+
+**Zakres wykonany (10 plików, 7 commitów `76756c5871`→`815ddc3a59`):**
+
+| Artefakt | Plik | Co zrobione |
+|---|---|---|
+| Task card (C-S, embedded) | `TaskCard.tsx` | tekst 3 role; surface; status border neutral (todo/cancelled slate→`c-border-strong`/`c-text-*`); progress track→`c-border-subtle`; fix malformed `bg-navy-800/300/10` |
+| Task board (Kanban lekki) | `InitiativeTaskBoard.tsx` | tekst/surface/border/hover-text/divider→c.*; primary CTA (navy) + translucent lanes zostawione |
+| Task tab (lista C-S) | `InitiativeTasksTab.tsx` | tekst/surface/hover; crimson-removal (spinner+weight badge→`c-info`; TODO dot + status bar neutral→`c-border-strong`) |
+| Task drawer (C-S, `⑯`) | `TaskDetailModal.tsx` | tekst/surface/border/placeholder/hover; crimson-removal (AI-Insight panel + Task-Weight panel + focus ring→`c-info`/neutral/blue focus); **fix realny bug: ikona na `bg-blue-600` chipie miała `text-slate-900` (mangled→`c-text`=ciemny na niebieskim) → `text-white`**; scrim + selected-navy toggle sanctioned |
+| Preview pane (`⑬` §13) | `Initiatives/InitiativePreviewV3.tsx` | tekst/surface/border/hover; crimson-removal (insight-lineage panel + link-ikony→`c-info`/neutral); pille neutral |
+| **Artefakt Initiative (C-L, ~10 zakładek)** | `Initiatives/InitiativeDocumentView.tsx` | **654→38 leftover.** tekst 3 role; surface/border/placeholder/hover; collapse par translucent-border→`c-border`; **crimson-removal 23→0**: focus→`c-focus-solid` (blue), AI-proposal/source/link chip + activity-event category→`c-info`/neutral (kategorie/dane nigdy crimson §11.3); status/priority dots + neutral badge→`c-border-strong`/`surface-raised`; hero gradient→`bg-c-bg`. 254 linii zmienionych = 254 dodanych |
+| Sekcja Przegląd | `Initiatives/sections/OverviewSection.tsx` | tekst/input/focus/AI-btn→c.* (0 leftover) |
+| Sekcja Definicja | `Initiatives/sections/ProblemDefinitionSection.tsx` | tekst/inputy/AI-btny→c.* (0 leftover) |
+| Sekcja Cel (Target State) | `Initiatives/sections/TargetStateSection.tsx` | tekst/inputy/karty/AI-proposal→c.*; translucent bg-white/navy zostawione |
+| Sekcja Zespół | `Initiatives/sections/TeamSection.tsx` | tekst/surface; crimson→primary icon-gradient→`surface-raised` (0 leftover) |
+
+**Crimson-removal (najważniejsze — filar re-skinu):** WSZYSTKIE `primary-*` (=crimson w tailwind) usunięte z artefaktu Initiative i rodziny Task. Zasada zastosowana: focus ring→`c-focus-solid` (niebieski), kategorie/dane/AI-akcje→`c-info` lub neutral (`surface-raised`/`border`), NIGDY crimson na status/fokus/dana (§9.1/§11.3). AI-sloty (sparkles) zneutralizowane do `c-info` — jeśli Piotr chce brand-crimson na AI-moment to świadoma decyzja do zgłoszenia, nie leak.
+
+**Świadomie ZOSTAWIONE (sanctioned / inna fala) — nie ruszać bez decyzji:**
+- **Translucent surfaces** `bg-white/60..95 dark:bg-navy-900/xx (+backdrop-blur)` — DOMINUJĄCY leftover (InitiativeDocumentView ~34, TargetState ~11, PreviewV3 1). Tokeny `c-*` = `var()` bez `<alpha-value>` → modyfikator `/70` nie działa. **Blokada Fundamentu** (identyczna z Fali 1). Bordery translucent DAŁO SIĘ scalić (→`c-border`, bo krawędź czyta się dobrze).
+- **Primary CTA / selected-toggle** `bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950` — zgodny ze spec §9.2① (2× w InitiativeDocumentView weight-toggle, 1× InitiativeTaskBoard generate, TaskDetailModal weight-toggle). Hex w dark CTA = wzorzec, zalogowane.
+- **Overlay scrim** `bg-slate-900/50 backdrop-blur` (TaskDetailModal modal) — scrim, celowe.
+- **Hex** `#ffffff`/`#0f172a`/`#e2e8f0` (InitiativeDocumentView linie 10498-10518) — blok `#initiative-export-printable` (off-screen, PDF/print = zawsze light) — sanctioned, nie powierzchnia UI.
+- **Broken class strings ze spacjami** `px - 3 py - 1.5` (InitiativeTasksTab AI-btn, ~L192) — PRE-EXISTING korupcja (dead classes), nie moja, nie w zakresie re-skinu — zalogowane.
+
+**DEFER (wg zlecenia — Fala 3 Instrumenty / inne):**
+- **RAID/Gate/RACI głębokie widżety governance** = Fala 3: `GateReadinessSection` (294 taint), `InitiativeGatesWorkflowTable` (155), `RaciEscalationSection`, `InitiativeStatusPipeline` (39).
+- **Kanban/Gantt/Timeline** = Fala 3: `TimelinePlanner` (626), `TimelineSection` (319), `ResourcesSection` (314), `DependenciesSection` (106).
+- **Sekcje detalu jeszcze nietknięte** (budżet ~10 plików wyczerpany): `TasksMilestonesSection` (207), `DecisionsSection` (188 — decision drawer C-S, kandydat Fala 2 kontynuacja), `KpisSection` (129), `InitiativeTeamComposerModal` (173), `ScopeSection`/`ControlSection`/`PilotSection`/`FinancialImpactSection`/`FinancialAnalysisSection`/`SkillsGapSection`/`CompetencyRequirementsSection` (małe, do domknięcia w kontynuacji Fali 2). `StakeholdersSection`/`RemindersSection`/`RaciEscalationSection`/`AttachmentsSection` = 0 taint (już czyste).
+- **Report Builder (PMO ReportEditor)** — NIE ruszany: (1) `src/components/ReportBuilder/**` poza moim klastrem wyłącznym; (2) oznaczony do przeniesienia do Materiały (koordynacja A5). Zgodnie ze zleceniem.
+
+**Weryfikacja:** brak `node_modules` w worktree (zero npm) → sanity: (a) wszystkie 12 użytych klas `c-*` zmapowane 1:1 na `tailwind.config.js` (0 nieznanych); (b) 0 markerów konfliktu; (c) każdy plik: `git diff --numstat` add==del (czysty class-swap); (d) 0 duplikatów tokenów po scaleniu par; (e) wszystkie zmiany w klastrze (Initiatives/ + root Task*/InitiativeTask* wg zlecenia). Build vite + screenshoty light/dark — wymagane przed merge (Strateg; worktree bez preview).
+**Commity:** `76756c5871`→`815ddc3a59` (7 fix, per ścieżka, bez `-A`).
