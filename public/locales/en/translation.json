@@ -2416,7 +2416,9 @@
         "bgGrid": "Grid",
         "bgLines": "Lines",
         "bgBlank": "Blank",
-        "saving": "Saving…"
+        "saving": "Saving…",
+        "more": "More",
+        "follow": "Follow"
       },
       "selectionBar": {
         "ariaLabel": "Selection actions",
@@ -10011,6 +10013,18 @@
     "researching": "Researching"
   },
   "admin": {
+    "health": {
+      "title": "Health — proof of life",
+      "subtitle": "Internal probes that prove each subsystem actually works end-to-end.",
+      "passing": "Passing",
+      "failing": "Failing",
+      "notRun": "Not run",
+      "runAll": "Run all",
+      "envDisabled": "Health probes are disabled in this environment.",
+      "empty": "No probes registered.",
+      "lastRun": "Last run",
+      "rerun": "Re-run"
+    },
     "strategicProfile": {
       "industryCode": "Industry Code ({{system}})",
       "annualRevenue": "Annual Revenue ({{currency}})",

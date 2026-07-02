@@ -1626,7 +1626,9 @@
         "bgGrid": "Siatka",
         "bgLines": "Linie",
         "bgBlank": "Puste",
-        "saving": "Zapisuję…"
+        "saving": "Zapisuję…",
+        "more": "Więcej",
+        "follow": "Śledź"
       },
       "selectionBar": {
         "ariaLabel": "Akcje zaznaczenia",
@@ -10637,6 +10639,18 @@
     "researching": "Badanie"
   },
   "admin": {
+    "health": {
+      "title": "Health — dowody działania",
+      "subtitle": "Wewnętrzne probe'y, które potwierdzają, że każdy podsystem realnie działa end-to-end.",
+      "passing": "Zielone",
+      "failing": "Czerwone",
+      "notRun": "Nie uruchomiono",
+      "runAll": "Uruchom wszystkie",
+      "envDisabled": "Probe'y health są wyłączone w tym środowisku.",
+      "empty": "Brak zarejestrowanych probe'ów.",
+      "lastRun": "Ostatnie uruchomienie",
+      "rerun": "Uruchom ponownie"
+    },
     "strategicProfile": {
       "industryCode": "Kod branżowy ({{system}})",
       "annualRevenue": "Roczny przychód ({{currency}})",
