@@ -34,6 +34,7 @@ import {
   coerceInitiativeStatusForWrite,
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
+import { handoffFromClosure } from '../services/executionResultsBridge.js';
 import notificationService from '../services/notificationService.js';
 import {
   calculateRiskScore,
@@ -1965,6 +1966,22 @@ export class InitiativeController {
         );
       } catch {
         // best-effort
+      }
+
+      // M14 → M15 closure handoff (Decision B1b): on close (→ DONE), materialize
+      // the initiative's planned KPIs into the M15-readable benefits register.
+      // Fail-safe: a handoff error must NEVER block the status change (log + go).
+      // Idempotent inside the service, so a repeat DONE (or DONE→revert→DONE)
+      // does not create duplicate benefits.
+      if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
+        try {
+          await handoffFromClosure(orgId, id, actorId || null);
+        } catch (handoffErr) {
+          logger.warn(
+            `[Initiative] M14→M15 closure handoff failed for ${id} — status change not blocked`,
+            handoffErr
+          );
+        }
       }
 
       // Emit notifications (best-effort)
