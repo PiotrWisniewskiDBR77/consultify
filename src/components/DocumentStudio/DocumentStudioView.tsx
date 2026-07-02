@@ -235,7 +235,7 @@ export const DocumentStudioView: React.FC = () => {
           chips={tabChips}
           respectMelsOrder={false}
           presenceSlot={
-            <span className="hidden text-[11px] text-slate-500 dark:text-slate-400 lg:inline">
+            <span className="hidden text-[11px] text-c-text-muted lg:inline">
               Modes 1, 2, 3 · Word/PDF artifact runtime
             </span>
           }
@@ -275,7 +275,7 @@ export const DocumentStudioView: React.FC = () => {
             onSchemaUpdated={setSchema}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+          <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
             {error ?? 'No document loaded.'}
           </div>
         )}

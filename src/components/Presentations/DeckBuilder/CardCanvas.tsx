@@ -64,7 +64,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-hidden flex flex-col bg-slate-100 dark:bg-navy-950">
+    <div className="flex-1 overflow-hidden flex flex-col bg-c-bg">
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
         {cards.map((card, index) => (
           <React.Fragment key={card.card_id}>
@@ -73,14 +73,14 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
               <div className="flex items-center justify-center gap-2 py-1 opacity-0 hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => onAddCard(index)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-600 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
                 >
                   <Plus size={10} />
                   {t('presentations.builder.addBlank', 'Blank')}
                 </button>
                 <button
                   onClick={() => onAddCard(index)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-600 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
                 >
                   <Sparkles size={10} />
                   {t('presentations.builder.addAi', 'AI')}
@@ -114,7 +114,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                       }}
                       disabled={regeneratingIndex === index}
                       title={t('presentations.builder.regenerateSlide', 'Regenerate slide')}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-c-text text-c-surface hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
                     >
                       <RefreshCw
                         size={11}
@@ -177,8 +177,8 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
 
       {/* Speaker Notes */}
       {showNotes && (
-        <div className="h-32 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 overflow-y-auto">
-          <p className="text-[10px] font-medium text-slate-600 uppercase mb-1">
+        <div className="h-32 border-t border-c-border bg-c-surface p-3 overflow-y-auto">
+          <p className="text-[10px] font-medium text-c-text-secondary uppercase mb-1">
             {t('presentations.builder.bottomBar.notes', 'Speaker Notes')}
           </p>
           <textarea
@@ -188,7 +188,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
               'presentations.builder.notesPlaceholder',
               'Speaker notes for this slide...'
             )}
-            className="w-full text-sm text-slate-700 dark:text-slate-300 bg-transparent border-none outline-none focus:ring-1 focus:ring-primary-500/20 resize-none"
+            className="w-full text-sm text-c-text-secondary bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus resize-none"
             rows={4}
           />
         </div>

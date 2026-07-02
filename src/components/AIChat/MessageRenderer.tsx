@@ -532,9 +532,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           className={`relative ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed ${
             msg.role === 'user'
               ? // User: subtle rounded bubble (the one place where a bubble is
-                // still useful — it says "this is what *you* said"). Crimson
-                // tint + soft border, fully rounded (ChatGPT/Claude/Gemini).
-                'rounded-2xl px-4 py-2.5 shadow-sm bg-primary-50 text-primary-900 border border-primary-100 dark:bg-primary-900/25 dark:text-primary-50 dark:border-primary-800/40'
+                // still useful — it says "this is what *you* said"). Neutral
+                // surface + soft border, fully rounded (ChatGPT/Claude/Gemini).
+                // NON-crimson per SPEC-K §16 (walkthrough: "red AI bubbles").
+                'rounded-2xl px-4 py-2.5 shadow-sm bg-c-surface-raised text-c-text border border-c-border'
               : // Teresa: NO bubble — answer flows as document-style text on
                 // the page background. This is how ChatGPT, Claude, Grok and
                 // Gemini all render the assistant turn. No bg, no border, no
