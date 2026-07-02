@@ -29,6 +29,7 @@ import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { ActionRequiredStrip } from './ActionRequiredStrip';
 import { AIOperatorOverviewCard } from './AIOperatorOverviewCard';
+import { dedupeActionItems } from './executiveData';
 import { DecisionQueuePreview } from './DecisionQueuePreview';
 import { KPIGrid } from './KPIGrid';
 import { PortfolioHealthScore } from './PortfolioHealthScore';
@@ -228,7 +229,13 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       trend: TrendDir;
     } | null;
     decisions: { pending: number; avgWaitDays: number; critical: number; trend: TrendDir } | null;
-    team: { avgCapacity: number; overloaded: number; available: number; trend: TrendDir } | null;
+    team: {
+      avgCapacity: number;
+      overloaded: number;
+      available: number;
+      trend: TrendDir;
+      memberCount: number;
+    } | null;
     risk: { level: RiskLevel; blockers: number; escalations: number; trend: TrendDir } | null;
   }>({
     tasks: null,
@@ -416,10 +423,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 (d.priority || '').toUpperCase() === 'CRITICAL' ||
                 (d.priority || '').toUpperCase() === 'HIGH'
             )
-            .slice(0, 3)
             .map((d: any) => ({
               id: d.id,
-              type: 'decision',
+              type: 'decision' as const,
               title: d.title,
               urgency: (d.priority || '').toUpperCase() === 'CRITICAL' ? 'critical' : 'high',
               projectName: d.projectName,
@@ -427,7 +433,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               daysOverdue: Math.max(0, (d.daysWaiting || 0) - 7),
             }));
 
-          setActionItems(urgentItems);
+          setActionItems(dedupeActionItems(urgentItems).slice(0, 3));
         }
 
         // --- Process team data ---
@@ -468,6 +474,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               overloaded: overloadedCount,
               available: availableCount,
               trend: overloadedCount > 2 ? 'down' : 'stable',
+              memberCount: teamRes.value.length,
             },
           }));
         }
@@ -499,7 +506,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             },
           }));
 
-          const overdueTaskItems = overdueTasks.slice(0, 3).map((task: any) => {
+          const overdueTaskItems = overdueTasks.map((task: any) => {
             const daysOverdue = Math.floor(
               (Date.now() - new Date(task.dueDate).getTime()) / (1000 * 60 * 60 * 24)
             );
@@ -509,6 +516,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               title: task.title,
               urgency: daysOverdue > 7 ? 'critical' : daysOverdue > 3 ? 'high' : 'medium',
               projectName: task.projectName || task.initiativeName,
+              initiativeName: task.initiativeName,
               owner: task.assigneeName,
               daysOverdue,
             };
@@ -516,7 +524,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
           setActionItems((prev) => {
             const decisionItems = prev.filter((i) => i.type === 'decision');
-            return [...decisionItems, ...overdueTaskItems].slice(0, 5);
+            // A3: de-duplicate by title+initiative so the same recurring action
+            // (e.g. "Submit Compliance Documentation") is not shown 3× as
+            // separate cards. Dedup BEFORE slicing so distinct actions survive.
+            return dedupeActionItems([...decisionItems, ...overdueTaskItems]).slice(0, 5);
           });
         }
 
@@ -543,6 +554,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           setInitiatives(progressItems);
 
           if (analytics?.capacity?.avgUtilization != null) {
+            const analyticsMemberCount =
+              teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)
+                ? teamRes.value.length
+                : (Array.isArray(analytics.overloads) ? analytics.overloads.length : 0);
             setKpiData((prev) => ({
               ...prev,
               team: {
@@ -556,6 +571,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                   (Array.isArray(analytics.overloads) && analytics.overloads.length > 0)
                     ? 'down'
                     : 'stable',
+                memberCount: prev.team?.memberCount ?? analyticsMemberCount,
               },
             }));
           }
