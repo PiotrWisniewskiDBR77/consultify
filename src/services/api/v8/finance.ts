@@ -509,6 +509,12 @@ export const V8FinanceApi = {
     v8Post<V8FinanceModelComputeResult>(`/finance/models/${modelId}/compute`, {}),
   approveModel: (modelId: string) =>
     v8Post<V8FinanceModelApproveResult>(`/finance/models/${modelId}/approve`, {}),
+  refreshModelSource: (modelId: string) =>
+    v8Post<{
+      success: boolean;
+      seededFrom: 'statement' | 'statement_pack';
+      missingBaselineLines: string[];
+    }>(`/finance/models/${modelId}/refresh-source`, {}),
   addModelEvent: (modelId: string, body: V8FinanceModelEventCreatePayload) =>
     v8Post<{ success: boolean; id: string }>(`/finance/models/${modelId}/events`, body),
   deleteModelEvent: (eventId: string) =>

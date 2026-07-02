@@ -47,6 +47,7 @@ import {
   listEvents,
   listModels,
   persistComputeResult,
+  reseedModelFromSource,
   updateModel,
 } from '../../services/financialModelingService.js';
 import {
@@ -489,6 +490,32 @@ router.post(
       data: { success: true, status: 'approved' },
       meta: financeMeta(),
     });
+  })
+);
+
+router.post(
+  '/models/:modelId/refresh-source',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    try {
+      const result = await reseedModelFromSource(modelId, organizationId);
+      return res.json({
+        data: { success: true, ...result },
+        meta: financeMeta(),
+      });
+    } catch (e: any) {
+      const message = String(e?.message || 'Refresh from source failed');
+      if (/not found/i.test(message)) {
+        return res.status(404).json({ error: message });
+      }
+      return res.status(400).json({ error: message });
+    }
   })
 );
 

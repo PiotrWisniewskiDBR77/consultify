@@ -17,6 +17,7 @@ import {
   DollarSign,
   Edit3,
   FileText,
+  Link2,
   Loader2,
   Lock,
   Play,
@@ -59,6 +60,7 @@ interface Model {
   version: number;
   assumptions_json: Record<string, any>;
   source_statement_id?: string | null;
+  source_statement_pack_id?: string | null;
   source_statement?: {
     id: string;
     statement_type: string;
@@ -179,6 +181,21 @@ async function approveModelWithFallback(modelId: string) {
       throw error;
     }
     return await Api.post(`/api/financial-modeling/models/${modelId}/approve`, {});
+  }
+}
+
+async function refreshModelSourceWithFallback(modelId: string) {
+  try {
+    return await V8FinanceApi.refreshModelSource(modelId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return (await Api.post(`/api/financial-modeling/models/${modelId}/refresh-source`, {})) as {
+      success: boolean;
+      seededFrom: string;
+      missingBaselineLines: string[];
+    };
   }
 }
 
@@ -321,6 +338,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   const [activeTab, setActiveTab] = useState<Tab>('inputs');
   const [loading, setLoading] = useState(false);
   const [computing, setComputing] = useState(false);
+  const [refreshingSource, setRefreshingSource] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Create modal
@@ -540,6 +558,21 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     setLoading(false);
   };
 
+  // ── Refresh from source (S6.4d) ──
+  const handleRefreshSource = async () => {
+    if (!selectedModel) return;
+    setRefreshingSource(true);
+    setError(null);
+    try {
+      await refreshModelSourceWithFallback(selectedModel.id);
+      await selectModel(selectedModel.id);
+      onModelChanged?.(selectedModel.id);
+    } catch (e: any) {
+      setError(e?.response?.data?.error || e?.message || String(e));
+    }
+    setRefreshingSource(false);
+  };
+
   // ── Save assumptions ──
   const handleSaveAssumptions = async () => {
     if (!selectedModel) return;
@@ -599,8 +632,19 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   const missingBaselineLines: string[] = Array.isArray(seedStatus?.missingBaselineLines)
     ? seedStatus.missingBaselineLines
     : [];
+  // A model is "grounded" when it was seeded from a statement OR a statement
+  // pack. Both carry historical lines; the badge must reflect either (S6.4c).
+  const isGrounded =
+    seedSource?.type === 'statement' ||
+    seedSource?.type === 'statement_pack' ||
+    Boolean(selectedModel?.source_statement || selectedModel?.source_statement_id);
+  const groundedLabel: string =
+    selectedModel?.source_statement?.period_label ||
+    seedSource?.periodLabel ||
+    (seedSource?.sourceFileName ? String(seedSource.sourceFileName) : '') ||
+    '';
   const seededInputKeys = new Set(
-    seedSource?.type === 'statement'
+    isGrounded
       ? [
           'initialCash',
           'initialEquity',
@@ -751,34 +795,27 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
               </div>
             </div>
 
-            {(selectedModel.source_statement || seedSource) && (
+            {isGrounded ? (
               <div className="mx-6 mt-4 rounded-2xl border border-blue-200/70 dark:border-blue-700/40 bg-blue-50/70 dark:bg-blue-900/10 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300">
-                      {t('finance.model.sourceStatement', 'Source statement')}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                      <Link2 size={12} />
+                      {t('finance.model.groundedBadgeLabel', 'Grounded on')}
                     </div>
                     <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                      {selectedModel.source_statement?.period_label ||
-                        seedSource?.periodLabel ||
-                        t('finance.model.manualSeed', 'Manual / zero-seeded model')}
+                      {groundedLabel ||
+                        t('finance.model.groundedGenericSource', 'Approved statement')}
                     </div>
                     <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                       {selectedModel.source_statement
                         ? `${selectedModel.source_statement.statement_type} • ${selectedModel.source_statement.currency} • ${selectedModel.source_statement.status}`
-                        : seedSource?.type === 'statement'
-                          ? t('finance.model.seededFromStatement', 'Seeded from imported statement')
-                          : t('finance.model.seededManually', 'Created without source statement')}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300">
-                      {t('finance.model.seedStatus', 'Seed status')}
-                    </div>
-                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                      {seedSource?.type === 'statement'
-                        ? t('finance.model.seedReady', 'Seeded from statement')
-                        : t('finance.model.seededManually', 'Manual')}
+                        : seedSource?.type === 'statement_pack'
+                          ? t('finance.model.seededFromPack', 'Seeded from approved statement pack')
+                          : t(
+                              'finance.model.seededFromStatement',
+                              'Seeded from imported statement'
+                            )}
                     </div>
                     {missingBaselineLines.length > 0 && (
                       <div className="mt-1 text-xs text-amber-700 dark:text-amber-300">
@@ -787,6 +824,42 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       </div>
                     )}
                   </div>
+                  {selectedModel.status !== 'approved' && (
+                    <button
+                      onClick={handleRefreshSource}
+                      disabled={refreshingSource}
+                      className="flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-300/70 bg-white px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 dark:border-blue-700/50 dark:bg-navy-800 dark:text-blue-300 dark:hover:bg-navy-700"
+                      title={
+                        t(
+                          'finance.model.refreshSourceHint',
+                          'Re-pull historical lines from the source statement'
+                        ) as string
+                      }
+                    >
+                      <RefreshCw
+                        size={14}
+                        className={refreshingSource ? 'animate-spin' : undefined}
+                      />
+                      {refreshingSource
+                        ? t('finance.model.refreshingSource', 'Refreshing…')
+                        : t('finance.model.refreshSource', 'Refresh from source')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="mx-6 mt-4 rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] p-4">
+                <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('finance.model.seedStatus', 'Seed status')}
+                </div>
+                <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('finance.model.seededManually', 'Manual / zero-seeded')}
+                </div>
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  {t(
+                    'finance.model.notGroundedHint',
+                    'This model was created without a source statement. Opening balances start at zero.'
+                  )}
                 </div>
               </div>
             )}
@@ -844,7 +917,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         {t('finance.model.seedInputs', 'Seed source and baseline')}
                       </h3>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {seedSource?.type === 'statement'
+                        {isGrounded
                           ? t('finance.model.seededFromStatement', 'Seeded from statement')
                           : t('finance.model.seededManually', 'Manual / zero-seeded')}
                       </span>
@@ -939,7 +1012,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     <div className="text-center py-12 text-slate-600">
                       <Calendar size={32} className="mx-auto mb-3 opacity-40" />
                       <p>
-                        {seedSource?.type === 'statement'
+                        {isGrounded
                           ? t(
                               'finance.model.noEventsSeeded',
                               'No forecast events yet. This model already has a seeded baseline; add events to project changes on top of it.'
@@ -1184,7 +1257,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     <div className="text-center py-12 text-slate-600">
                       <BarChart3 size={32} className="mx-auto mb-3 opacity-40" />
                       <p>
-                        {seedSource?.type === 'statement'
+                        {isGrounded
                           ? t(
                               'finance.model.noOutputsSeeded',
                               'Statement connected but compute not run yet. Run compute to generate forecast outputs.'
@@ -1200,7 +1273,9 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-sm border-collapse">
+                      <table
+                        /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-sm border-collapse"
+                      >
                         <thead>
                           <tr className="bg-slate-50 dark:bg-navy-800">
                             <th className="text-left px-3 py-2 font-medium text-slate-500 sticky left-0 bg-slate-50 dark:bg-navy-800 z-10 border-r border-slate-200 dark:border-navy-700 min-w-[180px]">
@@ -1416,7 +1491,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   )}
                   {validations.length === 0 && (
                     <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6 text-sm text-slate-500 dark:text-slate-400">
-                      {seedSource?.type === 'statement'
+                      {isGrounded
                         ? t(
                             'finance.model.validationSeededEmpty',
                             'Statement connected but compute not run yet. Run compute to generate validation checks.'

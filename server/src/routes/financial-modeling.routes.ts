@@ -10,6 +10,7 @@
  *   POST   /models/:id/compute        — Compute outputs + validations
  *   POST   /models/:id/approve        — Approve model (requires passing validations)
  *   POST   /models/:id/submit-review  — Submit for review
+ *   POST   /models/:id/refresh-source — Re-pull historical lines from bound source (S6.4d)
  *
  *   POST   /models/:id/events         — Add economic event
  *   PUT    /events/:eventId           — Update event
@@ -42,6 +43,7 @@ import {
   listEvents,
   listModels,
   persistComputeResult,
+  reseedModelFromSource,
   updateEvent,
   updateModel,
 } from '../services/financialModelingService.js';
@@ -335,6 +337,53 @@ router.put(
 
     await updateModel(modelId, req.body);
     res.json({ success: true });
+  })
+);
+
+// S6.4d — Refresh a grounded model's assumptions from its bound source
+// statement / pack (re-pull historical lines). No body.
+router.post(
+  '/models/:id/refresh-source',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const modelId = String(req.params.id);
+    const traceId = getFinanceTraceId((req as any).correlationId);
+
+    try {
+      const result = await reseedModelFromSource(modelId, orgId);
+      logFinanceEvent('model.refreshSource.completed', {
+        traceId,
+        modelId,
+        organizationId: orgId,
+        userId,
+        seededFrom: result.seededFrom,
+      });
+      res.json({ success: true, ...result });
+    } catch (e: any) {
+      logFinanceError('model.refreshSource.failed', e, {
+        traceId,
+        modelId,
+        organizationId: orgId,
+        userId,
+      });
+      const message = String(e?.message || 'Refresh from source failed');
+      if (/not found/i.test(message)) {
+        return res.status(404).json({ error: message });
+      }
+      if (
+        message.includes('no source') ||
+        message.includes('approved') ||
+        message.includes('critical lines') ||
+        message.includes('statement-ready')
+      ) {
+        return res.status(400).json({ error: message });
+      }
+      throw e;
+    }
   })
 );
 
