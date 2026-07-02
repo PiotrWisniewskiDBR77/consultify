@@ -324,13 +324,11 @@ const probeM17ArtifactsFilter: HealthProbe = {
       if (!seeded.some((a) => a.artifactId === readyId)) {
         throw new Error('Ready artifact missing from list');
       }
-      // Default-view rule: hide work-in-progress drafts.
-      const defaultView = seeded.filter((a) => String(a.deliveryState) !== 'draft');
-      if (defaultView.some((a) => a.artifactId === draftId)) {
-        throw new Error('Default view leaked a draft artifact');
-      }
-      if (!defaultView.some((a) => a.artifactId === readyId)) {
-        throw new Error('Default view dropped the ready artifact');
+      // S6.3 default-view rule: the LIST QUERY ITSELF (filters:{}) must drop drafts —
+      // assert on the raw service result, not a re-filtered copy, so a regression in
+      // the query-level exclusion (not just the render guard) fails this probe.
+      if (seeded.some((a) => a.artifactId === draftId)) {
+        throw new Error('Default view (filters:{}) leaked a draft artifact');
       }
       return { seededDraft: draftId, seededReady: readyId, listedCount: listed.length };
     } finally {
