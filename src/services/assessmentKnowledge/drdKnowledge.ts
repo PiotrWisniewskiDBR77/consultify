@@ -11,6 +11,7 @@
  * - You can override specific area+level entries in DRD_KNOWLEDGE_OVERRIDES over time.
  */
 import { DRD_STRUCTURE, DRDArea, DRDLevel } from '@/services/drdStructure';
+import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 } from './drdKnowledgeOverridesAxis5To7';
 
 export type DRDLevelKnowledge = {
   questions: [string, string, string];
@@ -134,6 +135,9 @@ const TECH_RULES: Array<{ keyword: RegExp; tech: string[] }> = [
 const DRD_KNOWLEDGE_OVERRIDES: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
   // Example override:
   // '1A#1': { questions: ['...', '...', '...'], example: '...', suggestedTechnologies: ['...'] },
+
+  // Partia 3: Oś 5 (Kultura), 6 (Cyber), 7 (AI) — kuratowane pytania behawioralne
+  ...DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7,
 };
 
 function normalizeWhitespace(s: string): string {
