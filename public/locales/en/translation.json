@@ -8502,6 +8502,14 @@
       "personal": "Personal",
       "status": "Status",
       "connected": "Connected"
+    },
+    "chat": {
+      "comingSoonTitle": "Coming soon",
+      "comingSoonDesc": "Exporting and clearing your full conversation history is not available yet. You can delete individual conversations from the chat itself in the meantime.",
+      "title": "Chat History",
+      "desc": "Manage your conversation history and data retention.",
+      "export": "Export History",
+      "clear": "Clear All History"
     }
   },
   "showcase": {

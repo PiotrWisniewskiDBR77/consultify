@@ -6,7 +6,15 @@ import {
   type A3SectionId,
 } from '@/config/a3problemsolving';
 import { buildDmsConclusionPrompt, toDmsSession } from '@/config/dmsbuilder';
+import {
+  buildProcessAutomationConclusionPrompt,
+  toAutomationSession,
+} from '@/config/processautomation';
+import { buildInventoryConclusionPrompt, toInventorySession } from '@/config/inventoryautopilot';
+import { buildAiDiscoveryConclusionPrompt, toDiscoverySession } from '@/config/aidiscovery';
 import { buildSmedConclusionPrompt, toSmedSession } from '@/config/smedplanner';
+import { buildPainConclusionPrompt, toPainSession } from '@/config/painexplorer';
+import { buildRpaConclusionPrompt, toRpaSession } from '@/config/rpascanner';
 import {
   SOP_SECTIONS,
   buildSopConclusionPrompt,
@@ -584,6 +592,40 @@ export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): st
   if (toolType === 'dms-builder') {
     const op = inputData as OperationalToolData | undefined;
     const prompt = buildDmsConclusionPrompt(toDmsSession(op?.sections), false);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'inventory-autopilot') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildInventoryConclusionPrompt(toInventorySession(op?.sections), false);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'ai-discovery') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildAiDiscoveryConclusionPrompt(toDiscoverySession(op?.sections), false);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'pain-explorer') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildPainConclusionPrompt(toPainSession(op?.sections), false);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'rpa-scanner') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildRpaConclusionPrompt(toRpaSession(op?.sections), false);
+    if (prompt) return prompt;
+  }
+
+  // Process Automation carries a grounded W2 conclusion layer
+  // (src/config/processautomation). It reads the operational `sections`
+  // (automation candidates) plus the quantitative `flow.processAutomation`
+  // baseline. Falls through to the generic operational summary when the session
+  // has no candidates yet (builder returns null).
+  if (toolType === 'process-automation') {
+    const op = inputData as (OperationalToolData & { flow?: { processAutomation?: unknown } }) | undefined;
+    const prompt = buildProcessAutomationConclusionPrompt(
+      toAutomationSession(op?.sections, (op?.flow?.processAutomation as any) ?? undefined),
+      false
+    );
     if (prompt) return prompt;
   }
 

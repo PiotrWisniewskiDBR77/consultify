@@ -1265,7 +1265,32 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     ))}
                   </div>
 
-                  {Object.keys(outputs).length === 0 ? (
+                  {computing && Object.keys(outputs).length === 0 ? (
+                    // Loading-state fix (finding baseclient_20s_timeout / staging_db_perf):
+                    // compute + outputs + validations fetch can take 5-30s. Previously the
+                    // Outputs tab kept showing the stale "compute not run yet" empty state
+                    // during this window, reading as a hang. Show an explicit "what's
+                    // happening" message plus a skeleton table so the wait is legible.
+                    <div className="py-8" aria-busy="true" aria-live="polite">
+                      <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>
+                          {t(
+                            'finance.model.computing',
+                            'Computing forecast — running the model, generating outputs and validations. This can take up to 30 seconds…'
+                          )}
+                        </span>
+                      </div>
+                      <div className="space-y-2 max-w-3xl mx-auto">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-8 rounded-md bg-slate-100 dark:bg-navy-800 animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : Object.keys(outputs).length === 0 ? (
                     <div className="text-center py-12 text-slate-600">
                       <BarChart3 size={32} className="mx-auto mb-3 opacity-40" />
                       <p>

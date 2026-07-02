@@ -53,6 +53,10 @@ import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
+import {
+  type FrameworkId,
+  isFrameworkComingSoon,
+} from '@/services/frameworkRegistry';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -117,6 +121,10 @@ import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -2230,6 +2238,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         .toUpperCase();
       if (!assessmentType) return;
 
+      // Honest gate (decision D-B): coming-soon frameworks (CMMI/LEAN) must never
+      // start a session — this is the single choke point for every assessment
+      // start path in the library, so no path can bypass it.
+      if (isFrameworkComingSoon(assessmentType as FrameworkId)) {
+        toast(
+          isPolish
+            ? 'Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji.'
+            : 'This framework is coming soon — a session cannot be started yet.',
+          { icon: '🔜' }
+        );
+        return;
+      }
+
       try {
         const sessionName =
           String(params.name || '').trim() ||
@@ -2518,7 +2539,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         icon: null,
         isLicensed: true,
         isActive: true,
-        isComingSoon: false,
+        // Honest gate (decision D-B): reflect the framework registry so the
+        // picker cannot claim CMMI/LEAN are startable.
+        isComingSoon: isFrameworkComingSoon(fw as FrameworkId),
         sortOrder: 900 + idx,
         createdAt: null,
         license: 'licensed',
@@ -3308,40 +3331,31 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (activeTab === 'library') {
       if (isKnownToolsLoading && knownTools.length === 0) {
         return (
-          <div className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-3 text-c-text-muted">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <span>
-                {isPolish ? 'Ładowanie biblioteki narzędzi...' : 'Loading tools library...'}
-              </span>
-            </div>
+          <div className="h-full overflow-auto p-6">
+            <SharedLoadingState
+              template="card"
+              count={6}
+              label={isPolish ? 'Ładowanie biblioteki narzędzi…' : 'Loading tools library…'}
+            />
           </div>
         );
       }
 
       if (knownToolsError && knownTools.length === 0) {
         return (
-          <div className="flex items-center justify-center h-full px-6">
-            <div className="max-w-lg w-full rounded-2xl border border-amber-200/70 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/20 p-6 text-center">
-              <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-amber-500" />
-              <h3 className="text-sm font-semibold text-c-text">
-                {isPolish ? 'Biblioteka nie została załadowana' : 'Library failed to load'}
-              </h3>
-              <p className="mt-2 text-sm text-c-text-secondary">{knownToolsError}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  // IMPACT-TR-002: clear any latched guard before retrying.
-                  clearGlobalTransportFailure();
-                  resetAuthLoopGuard();
-                  void fetchKnownTools();
-                }}
-                className="mt-4 inline-flex items-center justify-center h-9 px-4 rounded-full border border-c-border dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.06] text-sm font-medium text-slate-700  hover:bg-slate-100 dark:hover:bg-white/[0.1]"
-              >
-                {isPolish ? 'Spróbuj ponownie' : 'Try again'}
-              </button>
-            </div>
-          </div>
+          <SharedEmptyState
+            variant="error"
+            title={
+              isPolish ? 'Biblioteka nie została załadowana' : 'Library failed to load'
+            }
+            description={knownToolsError}
+            onRetry={() => {
+              // IMPACT-TR-002: clear any latched guard before retrying.
+              clearGlobalTransportFailure();
+              resetAuthLoopGuard();
+              void fetchKnownTools();
+            }}
+          />
         );
       }
 
@@ -3354,21 +3368,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         : null;
       const itemIds = filteredLibraryItems.map((d) => d.id);
       const renderLibrarySearchEmptyState = () => (
-        <div className="flex h-full items-center justify-center px-6 py-12">
-          <div
-            className="max-w-xl rounded-2xl border border-c-border bg-slate-50/80 px-6 py-7 text-center text-sm text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300"
-            data-testid="tools-library-search-empty-state"
-          >
-            <Library className="mx-auto mb-3 h-8 w-8 text-slate-600 dark:text-c-text-muted" />
-            <p className="font-medium text-c-text">{libraryEmptyMessage}</p>
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="mt-4 inline-flex h-9 items-center justify-center rounded-full border border-c-border bg-white px-4 text-xs font-medium text-c-text-secondary transition-colors hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06]  dark:hover:bg-white/[0.1]"
-            >
-              {isPolish ? 'Wyczyść wyszukiwanie' : 'Clear search'}
-            </button>
-          </div>
+        <div data-testid="tools-library-search-empty-state" className="h-full">
+          <SharedEmptyState
+            variant="filter"
+            icon={Library}
+            title={libraryEmptyMessage}
+            description={
+              isPolish
+                ? 'Zmień frazę wyszukiwania lub wyczyść filtry, aby zobaczyć więcej narzędzi.'
+                : 'Try a different phrase or clear the search to see more tools.'
+            }
+            primaryAction={{
+              label: isPolish ? 'Wyczyść wyszukiwanie' : 'Clear search',
+              onClick: () => setSearchQuery(''),
+            }}
+          />
         </div>
       );
 

@@ -76,12 +76,15 @@ import { PortfolioListView } from '../Portfolio/PortfolioListView';
 // ModuleHub components
 import {
   FilterChip,
-  HubWorkAreaLoading,
   ModuleHub,
   ModuleTab,
   OpenDocument,
   ViewMode,
 } from '../shared/ModuleHub';
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { Banner } from '../shared/Banner';
 import {
@@ -1547,29 +1550,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
 
     if (isLoading) {
-      return <HubWorkAreaLoading />;
+      return (
+        <div className="p-6">
+          <SharedLoadingState template="list" rows={6} />
+        </div>
+      );
     }
 
     if (initiatives.length === 0) {
       return (
-        <div className="flex items-center justify-center h-full text-c-text-muted">
-          <div className="text-center">
-            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-c-text-muted opacity-50" />
-            <p className="text-lg text-c-text">{t('initiatives.empty.title')}</p>
-            <p className="text-sm text-c-text-muted mt-2">
-              {t('initiatives.empty.description')}
-            </p>
-            {!isPilotParticipant && (
-              <button
-                onClick={() => setShowNewModal(true)}
-                className="mt-6 px-4 py-2 bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors duration-150"
-              >
-                <Plus size={14} className="inline mr-2" />
-                {t('initiatives.form.newInitiative')}
-              </button>
-            )}
-          </div>
-        </div>
+        <SharedEmptyState
+          variant="new"
+          icon={Lightbulb}
+          title={t('initiatives.empty.title')}
+          description={t('initiatives.empty.description')}
+          primaryAction={
+            isPilotParticipant
+              ? undefined
+              : {
+                  label: t('initiatives.form.newInitiative'),
+                  onClick: () => setShowNewModal(true),
+                  icon: Plus,
+                }
+          }
+        />
       );
     }
 
@@ -1766,9 +1770,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   ))}
                 </div>
                 {searchedInitiatives.length === 0 && (
-                  <div className="flex items-center justify-center h-64 text-c-text-muted">
-                    {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
-                  </div>
+                  <SharedEmptyState
+                    variant="filter"
+                    title={t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
+                    description={t(
+                      'initiatives.hub.noInitiativesFoundDesc',
+                      'No initiatives match the current filters. Try widening the search or clearing filters.'
+                    )}
+                    primaryAction={{
+                      label: t('common.clearFilters', 'Clear filters'),
+                      onClick: () => {
+                        setSearchQuery('');
+                        setActiveStatusFilter(null);
+                      },
+                    }}
+                  />
                 )}
               </div>
             </TableWithPreviewLayout>

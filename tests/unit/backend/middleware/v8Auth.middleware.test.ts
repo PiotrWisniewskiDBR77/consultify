@@ -360,6 +360,29 @@ describe('v8Auth.middleware', () => {
     expect(req.v8Context).toBeDefined();
   });
 
+  it('requireV8OrgContext DOES call next when req.destroyed is true but socket is open (POST body consumed)', () => {
+    // Regression guard (sibling of the attachV8Context case above):
+    // requireV8OrgContext is the FIRST gate on v8 mutation routers, so a
+    // req.destroyed short-circuit here hangs the request before attachV8Context
+    // even runs. body-parser sets req.destroyed=true after consuming a POST/PATCH
+    // body while the socket stays open — the gate must ignore req.destroyed and
+    // only consider socket.destroyed. Regression was re-introduced 2× (46a1674000);
+    // pin BOTH v8 gates so a future "make the test pass" edit can't silently break
+    // every v8 mutation on demo again. See isConnectionClosed() in v8Auth.middleware.ts.
+    const req: any = {
+      organizationId: 'org-1',
+      destroyed: true,
+      socket: { destroyed: false },
+    };
+    const res = makeRes();
+    const next = vi.fn();
+
+    requireV8OrgContext(req, res as any, next as any);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('attachV8Context sets empty userRole when role contains only control chars', () => {
     const req: any = {
       organizationId: 'org-1',

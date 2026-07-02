@@ -8,12 +8,23 @@
  * See docs/product/NOTEBOOK_STRUCTURE_SSOT.md.
  */
 
-import { Archive, BookOpen, ChevronRight, Globe, Lock, Pencil, Trash2, Users } from 'lucide-react';
+import {
+  Archive,
+  BookOpen,
+  ChevronRight,
+  Globe,
+  Lock,
+  Pencil,
+  Plus,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { EmptyState as SharedEmptyState } from '@/components/shared/states';
 import {
   type ColumnDef,
   type ColumnWidths,
@@ -337,31 +348,44 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
             ))}
           </ResizableTable>
         ) : error ? (
-          <div className="text-center py-16">
-            <p className="text-c-text-muted mb-3">
-              {pl ? 'Nie udało się wczytać notatników.' : 'Failed to load notebooks.'}
-            </p>
-            <button
-              type="button"
-              onClick={() => void load()}
-              className="text-sm text-slate-600 hover:underline"
-            >
-              {pl ? 'Spróbuj ponownie' : 'Retry'}
-            </button>
-          </div>
+          <SharedEmptyState
+            variant="error"
+            title={pl ? 'Nie udało się wczytać notatników' : 'Failed to load notebooks'}
+            description={
+              pl
+                ? 'Sprawdź połączenie i spróbuj ponownie.'
+                : 'Check your connection and try again.'
+            }
+            onRetry={() => void load()}
+          />
         ) : rows.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen size={40} className="mx-auto text-c-text-muted mb-3" />
-            <p className="text-c-text-secondary font-medium">
-              {searchQuery || scopeFilter !== 'all' || Object.keys(tableFilters).length
-                ? pl
-                  ? 'Brak notatników pasujących do filtrów'
-                  : 'No notebooks match your filters'
-                : pl
-                  ? 'Nie masz jeszcze żadnego notatnika'
-                  : 'No notebooks yet'}
-            </p>
-          </div>
+          searchQuery || scopeFilter !== 'all' || Object.keys(tableFilters).length ? (
+            <SharedEmptyState
+              variant="filter"
+              title={pl ? 'Brak notatników pasujących do filtrów' : 'No notebooks match your filters'}
+              description={
+                pl
+                  ? 'Zmień frazę wyszukiwania lub zakres, aby zobaczyć więcej.'
+                  : 'Try a different search or scope to see more.'
+              }
+            />
+          ) : (
+            <SharedEmptyState
+              variant="new"
+              icon={BookOpen}
+              title={pl ? 'Nie masz jeszcze żadnego notatnika' : 'No notebooks yet'}
+              description={
+                pl
+                  ? 'Utwórz pierwszy notatnik, aby zbierać notatki, wiedzę i ustalenia zespołu.'
+                  : 'Create your first notebook to collect notes, knowledge and team decisions.'
+              }
+              primaryAction={{
+                label: pl ? 'Nowy notatnik' : 'New notebook',
+                onClick: () => setModal({ mode: 'create' }),
+                icon: Plus,
+              }}
+            />
+          )
         ) : (
           <ResizableTable
             columns={columns}

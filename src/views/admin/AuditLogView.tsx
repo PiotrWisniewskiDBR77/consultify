@@ -31,6 +31,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
@@ -442,8 +446,8 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
+      <div className={`space-y-6 ${className}`}>
+        <SharedLoadingState template="list" rows={8} />
       </div>
     );
   }
@@ -669,10 +673,24 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
           <DegradedState title="Audit activity unavailable" description={loadError} />
         </div>
       ) : filteredLogs.length === 0 ? (
-        <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-          <History className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Activity Found</h3>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">No logs match your filters</p>
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <SharedEmptyState
+            variant="filter"
+            icon={History}
+            title={t('admin.audit.noActivity', 'No activity found')}
+            description={t(
+              'admin.audit.noActivityDesc',
+              'No audit entries match the current filters. Try a wider action type or clear the search.'
+            )}
+            primaryAction={{
+              label: t('common.clearFilters', 'Clear filters'),
+              onClick: () => {
+                setSearchTerm('');
+                setActionFilter('all');
+                setResourceFilter('all');
+              },
+            }}
+          />
         </div>
       ) : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">

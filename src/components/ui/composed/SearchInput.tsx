@@ -219,7 +219,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         <AnimatePresence>
           {showDropdown && hasDropdownContent && (
             <motion.div
-              className="absolute top-full left-0 right-0 mt-2 py-2 bg-white dark:bg-navy-900 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-navy-700 overflow-hidden z-50"
+              className="absolute top-full left-0 right-0 mt-2 py-2 bg-white dark:bg-navy-900 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-navy-700 overflow-hidden z-dropdown"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}

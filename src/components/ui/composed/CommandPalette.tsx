@@ -424,7 +424,7 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-start justify-center pt-[15vh]"
+          className="fixed inset-0 z-modal flex items-start justify-center pt-[15vh]"
           initial="hidden"
           animate="visible"
           exit="hidden"

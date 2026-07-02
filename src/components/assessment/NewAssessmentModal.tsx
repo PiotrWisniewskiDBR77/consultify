@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { isFrameworkComingSoon } from '@/services/frameworkRegistry';
 import { useAppStore } from '@/store/useAppStore';
 
 // Types
@@ -26,8 +27,10 @@ interface NewAssessmentModalProps {
   onSuccess?: (assessment: NewAssessmentData) => void;
 }
 
-// Framework metadata
-const FRAMEWORKS: {
+// Framework metadata. `comingSoon` is NOT hardcoded here — it is derived from
+// the framework registry (src/services/frameworkRegistry.ts) so this picker can
+// never drift from / lie about what is actually startable (decision D-B).
+type FrameworkCardMeta = {
   value: AssessmentFramework;
   name: string;
   shortName: string;
@@ -37,7 +40,10 @@ const FRAMEWORKS: {
   border: string;
   textColor: string;
   comingSoon?: boolean;
-}[] = [
+};
+
+const FRAMEWORKS: FrameworkCardMeta[] = (
+  [
   {
     value: 'DRD',
     name: 'Digital Readiness Diagnosis',
@@ -79,7 +85,6 @@ const FRAMEWORKS: {
     gradient: 'from-amber-500/20 to-amber-600/10',
     border: 'border-amber-500/30 hover:border-amber-500/60',
     textColor: 'text-amber-400',
-    comingSoon: true,
   },
   {
     value: 'LEAN',
@@ -90,9 +95,9 @@ const FRAMEWORKS: {
     gradient: 'from-green-500/20 to-green-600/10',
     border: 'border-green-500/30 hover:border-green-500/60',
     textColor: 'text-green-400',
-    comingSoon: true,
   },
-];
+] as FrameworkCardMeta[]
+).map((f) => ({ ...f, comingSoon: isFrameworkComingSoon(f.value) }));
 
 export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
   isOpen,
@@ -154,6 +159,12 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
 
   // Handle framework selection
   const handleFrameworkSelect = useCallback((framework: AssessmentFramework) => {
+    // Honest gate (decision D-B): coming-soon frameworks (CMMI/LEAN) never start
+    // a session, even if the disabled card is bypassed.
+    if (isFrameworkComingSoon(framework)) {
+      toast('This framework is coming soon.', { icon: '🔜' });
+      return;
+    }
     setSelectedFramework(framework);
     // Auto-generate a default name
     const frameworkData = FRAMEWORKS.find((f) => f.value === framework);
@@ -180,6 +191,13 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
 
       if (!selectedFramework) {
         setError('Please select a framework');
+        return;
+      }
+
+      // Honest gate (decision D-B): never create a session for a coming-soon
+      // framework, even if selection state was set out-of-band.
+      if (isFrameworkComingSoon(selectedFramework)) {
+        setError('This framework is coming soon and cannot be started yet.');
         return;
       }
 

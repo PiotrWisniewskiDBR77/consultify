@@ -28,6 +28,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '../../services/api';
@@ -396,8 +397,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-slate-400 dark:text-slate-500">
-        {t('common.loading', 'Loading...')}
+      <div className={`space-y-6 ${className}`}>
+        <SharedLoadingState template="card" count={4} />
       </div>
     );
   }

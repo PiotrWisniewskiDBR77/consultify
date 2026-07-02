@@ -2,6 +2,7 @@ import { ArrowRight, Check, Coins, Edit2, Package, Plus, Star, Trash2, X } from 
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
@@ -51,7 +52,11 @@ export const AdminTokenPackages = () => {
   };
 
   if (loading && !packages.length)
-    return <div className="text-slate-600 dark:text-white/60 p-6">Loading packages...</div>;
+    return (
+      <div className="p-6">
+        <SharedLoadingState template="card" count={3} />
+      </div>
+    );
 
   return (
     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-lg p-6 relative">

@@ -14,6 +14,9 @@ import { DRD_STRUCTURE, DRDArea, DRDLevel } from '@/services/drdStructure';
 import { DRD_OVERRIDES_AXIS_1_2 } from './drdKnowledgeOverridesAxis1And2';
 import { DRD_OVERRIDES_AXIS_3_4 } from './drdKnowledgeOverridesAxis3And4';
 import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 } from './drdKnowledgeOverridesAxis5To7';
+import { DRD_OVERRIDES_AXIS_1_2_EN } from './drdKnowledgeOverridesAxis1And2.en';
+import { DRD_OVERRIDES_AXIS_3_4_EN } from './drdKnowledgeOverridesAxis3And4.en';
+import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7_EN } from './drdKnowledgeOverridesAxis5To7.en';
 
 export type DRDLevelKnowledge = {
   questions: [string, string, string];
@@ -143,6 +146,15 @@ const DRD_KNOWLEDGE_OVERRIDES: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelK
   ...DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7,
 };
 
+// English override bank (mirrors the PL structure axis-by-axis). Only consumed
+// when getDRDKnowledge is called with lang='en'; PL remains the default so
+// existing call sites are unaffected.
+const DRD_KNOWLEDGE_OVERRIDES_EN: Partial<Record<DRDAreaLevelKey, Partial<DRDLevelKnowledge>>> = {
+  ...DRD_OVERRIDES_AXIS_1_2_EN,
+  ...DRD_OVERRIDES_AXIS_3_4_EN,
+  ...DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7_EN,
+};
+
 function normalizeWhitespace(s: string): string {
   return String(s || '')
     .replace(/\s+/g, ' ')
@@ -256,7 +268,11 @@ function defaultExample(area: DRDArea, level: DRDLevel): string {
   return `Example: in "${areaName}", we provide a concrete artifact confirming level ${lvl} (e.g. screenshot, report, system log, procedure, instruction, KPI).`;
 }
 
-export function getDRDKnowledge(areaId: string, levelNumber: number): DRDLevelKnowledge {
+export function getDRDKnowledge(
+  areaId: string,
+  levelNumber: number,
+  lang: 'pl' | 'en' = 'pl'
+): DRDLevelKnowledge {
   const area = DRD_STRUCTURE.flatMap((a) => a.areas).find((ar) => ar.id === areaId);
   const lvl = area?.levels?.find((l) => l.level === levelNumber);
 
@@ -280,12 +296,25 @@ export function getDRDKnowledge(areaId: string, levelNumber: number): DRDLevelKn
   };
 
   const key: DRDAreaLevelKey = `${areaId}#${levelNumber}`;
-  const override = DRD_KNOWLEDGE_OVERRIDES[key];
+  const plOverride = DRD_KNOWLEDGE_OVERRIDES[key];
+  // For EN, prefer the EN override but fall back to the PL override (then base)
+  // per-field, so a missing EN key never yields an empty result.
+  const enOverride = lang === 'en' ? DRD_KNOWLEDGE_OVERRIDES_EN[key] : undefined;
+  const override = lang === 'en' ? enOverride ?? plOverride : plOverride;
   if (!override) return base;
 
   return {
-    questions: (override.questions as any) || base.questions,
-    example: override.example || base.example,
-    suggestedTechnologies: override.suggestedTechnologies || base.suggestedTechnologies,
+    questions:
+      (override.questions as any) ||
+      (lang === 'en' ? (plOverride?.questions as any) : undefined) ||
+      base.questions,
+    example:
+      override.example ||
+      (lang === 'en' ? plOverride?.example : undefined) ||
+      base.example,
+    suggestedTechnologies:
+      override.suggestedTechnologies ||
+      (lang === 'en' ? plOverride?.suggestedTechnologies : undefined) ||
+      base.suggestedTechnologies,
   };
 }

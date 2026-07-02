@@ -7769,6 +7769,14 @@
       "personal": "Osobisty",
       "status": "Status",
       "connected": "Połączony"
+    },
+    "chat": {
+      "comingSoonTitle": "Wkrótce",
+      "comingSoonDesc": "Eksport i wyczyszczenie całej historii rozmów nie są jeszcze dostępne. W międzyczasie możesz usuwać pojedyncze rozmowy bezpośrednio z czatu.",
+      "title": "Historia czatu",
+      "desc": "Zarządzaj historią rozmów i przechowywaniem danych.",
+      "export": "Eksportuj historię",
+      "clear": "Wyczyść całą historię"
     }
   },
   "showcase": {

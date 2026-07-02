@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ErrorState } from '@/components/ui/primitives';
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   MetaChip,
   PriorityChip,
@@ -1374,7 +1375,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   onClick={handleShowList}
                   className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
                 >
-                  <FileText className="w-5 h-5 text-slate-500" />
+                  <FileText className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 </button>
                 <div>
                   <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
@@ -1656,11 +1657,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-slate-500 dark:text-slate-400">Loading assessments...</p>
-        </div>
+      <div className="p-6">
+        <SharedLoadingState template="list" rows={6} />
       </div>
     );
   }
@@ -1811,7 +1809,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   }}
                 />
               ) : (
-                <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
+                <div className="flex items-center justify-center h-32 text-slate-500 dark:text-slate-400 text-sm">
                   No report selected
                 </div>
               )}
@@ -2034,7 +2032,7 @@ const ReportSlideOverContent: React.FC<{
 
   if (!report) {
     return (
-      <div className="text-center text-slate-500 py-8">
+      <div className="text-center text-slate-500 dark:text-slate-400 py-8">
         <p className="text-sm">Report not found or could not be loaded.</p>
       </div>
     );
@@ -2077,7 +2075,7 @@ const ReportSlideOverContent: React.FC<{
         )}
         <div>
           <span className={`text-sm font-semibold ${statusCfg.color}`}>{statusCfg.label}</span>
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             {statusKey === 'DRAFT' && 'Report is being prepared'}
             {statusKey === 'GENERATING' && 'AI is generating report content'}
             {statusKey === 'FINAL' && 'Report content is finalized'}
@@ -2093,7 +2091,7 @@ const ReportSlideOverContent: React.FC<{
       <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl border border-slate-200/60 dark:border-navy-700/60 divide-y divide-slate-200/40 dark:divide-navy-700/40">
         {templateId && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500">Template</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Template</span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
               {templateId}
             </span>
@@ -2101,7 +2099,7 @@ const ReportSlideOverContent: React.FC<{
         )}
         {report.assessmentName && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500">Source Assessment</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Source Assessment</span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate max-w-[180px]">
               {report.assessmentName}
             </span>
@@ -2109,14 +2107,14 @@ const ReportSlideOverContent: React.FC<{
         )}
         {sectionCount > 0 && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500">Sections</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Sections</span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
               {sectionCount}
             </span>
           </div>
         )}
         <div className="flex items-center justify-between px-3.5 py-2.5">
-          <span className="text-xs text-slate-500 flex items-center gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
             <Calendar size={11} /> Created
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
@@ -2124,7 +2122,7 @@ const ReportSlideOverContent: React.FC<{
           </span>
         </div>
         <div className="flex items-center justify-between px-3.5 py-2.5">
-          <span className="text-xs text-slate-500 flex items-center gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
             <Clock size={11} /> Last updated
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
@@ -2136,7 +2134,7 @@ const ReportSlideOverContent: React.FC<{
       {/* Generated Reports / Exports */}
       <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
         <div className="px-3.5 py-2.5 border-b border-slate-200/40 dark:border-navy-700/40">
-          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+          <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
             <Download size={11} />
             Generated Reports
           </h5>
@@ -2144,7 +2142,7 @@ const ReportSlideOverContent: React.FC<{
 
         {exportsLoading ? (
           <div className="flex items-center justify-center py-6">
-            <Loader2 size={16} className="animate-spin text-slate-500" />
+            <Loader2 size={16} className="animate-spin text-slate-500 dark:text-slate-400" />
           </div>
         ) : exports.length > 0 ? (
           <div className="divide-y divide-slate-200/30 dark:divide-navy-700/30">
@@ -2168,7 +2166,7 @@ const ReportSlideOverContent: React.FC<{
                     <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
                       {cfg.label}
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
                       {exportDate
                         ? new Date(exportDate).toLocaleDateString('pl-PL', {
                             day: '2-digit',
@@ -2183,7 +2181,7 @@ const ReportSlideOverContent: React.FC<{
                   </div>
                   <div className="shrink-0">
                     {downloadingId === fmt ? (
-                      <Loader2 size={14} className="animate-spin text-slate-500" />
+                      <Loader2 size={14} className="animate-spin text-slate-500 dark:text-slate-400" />
                     ) : (
                       <Download
                         size={14}
@@ -2198,7 +2196,7 @@ const ReportSlideOverContent: React.FC<{
         ) : (
           /* Quick-generate buttons when no exports exist */
           <div className="p-3.5">
-            <p className="text-[11px] text-slate-500 mb-3">No exports yet. Generate now:</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">No exports yet. Generate now:</p>
             <div className="grid grid-cols-3 gap-2">
               {(['pdf', 'pptx', 'docx'] as const).map((fmt) => {
                 const cfg = EXPORT_FORMAT_CONFIG[fmt];
@@ -2241,7 +2239,7 @@ const ReportSlideOverContent: React.FC<{
               <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 Web Preview
               </div>
-              <div className="text-[10px] text-slate-500">Open in editor</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">Open in editor</div>
             </div>
             <ArrowRight
               size={14}
@@ -2254,7 +2252,7 @@ const ReportSlideOverContent: React.FC<{
       {/* Executive Summary — truncated */}
       {report.executiveSummary && (
         <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl p-3.5 border border-slate-200/60 dark:border-navy-700/60">
-          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">
+          <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1.5">
             Executive Summary
           </h5>
           <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-4">
@@ -2266,7 +2264,7 @@ const ReportSlideOverContent: React.FC<{
       {/* Sections overview — compact list */}
       {sectionCount > 0 && (
         <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl p-3.5 border border-slate-200/60 dark:border-navy-700/60">
-          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+          <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-2">
             Report Scope
           </h5>
           <div className="space-y-1">
@@ -2287,7 +2285,7 @@ const ReportSlideOverContent: React.FC<{
               );
             })}
             {sectionCount > 6 && (
-              <span className="text-[11px] text-slate-500 pl-6">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 pl-6">
                 +{sectionCount - 6} more sections
               </span>
             )}

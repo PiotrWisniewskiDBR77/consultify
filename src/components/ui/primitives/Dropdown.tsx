@@ -276,7 +276,7 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({
           ref={contentRef}
           role="menu"
           className={`
-            fixed z-[9999]
+            fixed z-dropdown
             min-w-[180px]
             py-1
             bg-white dark:bg-navy-900

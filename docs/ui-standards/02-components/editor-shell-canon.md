@@ -36,6 +36,17 @@ Każdy edytor = **canvas/treść w centrum** + 3 strefy chrome. Reguły twarde:
 
 ## 3. Reguły przekrojowe (cały shell)
 - **Z-INDEX:** chrome aplikacji (dropdown profilu, modale) **zawsze nad** elementami canvasu; **context menu portaled do `body`** (z-index > wszystkiego). Dziś: command-row nad panelem profilu (**UI-L5**); context menu pod węzłem (**UI-L15**). → reguła warstw: `app-chrome > overlay-menu > canvas-nodes > canvas-bg`.
+  - **KANONICZNA SKALA Z-INDEX** (SSOT: `tailwind.config.js → theme.extend.zIndex`; używaj tokenów, NIE surowych `z-[9999]`):
+    | token | wartość | warstwa |
+    |---|---|---|
+    | `z-canvas` | 10 | węzły canvasu / raised in-flow |
+    | `z-sticky` | 20 | sticky headers, command-row, chrome bars |
+    | `z-dropdown` | 40 | dropdown / popover / select / tooltip (menu nad chrome) |
+    | `z-overlay` | 50 | scrim (backdrop) modala/drawera |
+    | `z-modal` | 60 | panel dialogu / drawera / sheeta (nad scrimem) |
+    | `z-toast` | 100 | toasty (nad modalami) |
+    | `z-context-menu` | 120 | context menu portaled do `body` (nad wszystkim) |
+    - Zmigrowane prymitywy `ui/*` i `ui/primitives/*` (dialog, sheet, popover, tooltip, select, dropdown-menu, toast, Dropdown, Tooltip, Toast, Drawer, CommandPalette). Nowe overlaye MUSZĄ używać tych tokenów.
 - **MOTYW: jeden, spójny.** Wszystkie edytory respektują ten sam motyw (ciemny domyślny wg [[VISUAL_STANDARD]]); **ZAKAZ wysp jasnych** (M15 renderuje się jasny vs reszta ciemna — i nawet wewnątrz M15 rozjazd). → naprawia **M15-UI1/UI6** (theming sweep).
 - **Język ikon:** jeden zestaw (lucide outline), spójne rozmiary; ikona+tooltip dla akcji bez etykiety (wzorzec N4 Notatnika).
 - **Klasa wizualna „2026":** monochrome chrome (slate/navy), budżet czerwieni ([[finding_ui_primary_is_crimson]] — `primary`=crimson, NIE nadużywać), flat surfaces, oddech. Koniec z „grafiką sprzed 10 lat / nie tech 2026 / 3 z minusem".

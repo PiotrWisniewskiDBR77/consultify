@@ -14,6 +14,7 @@ import {
   Menu,
   MessageSquare,
   Paperclip,
+  Sparkles,
   Target,
   User,
   X,
@@ -23,7 +24,9 @@ import React, { useMemo, useRef, useState } from 'react';
 import { AssessmentToolShell } from '@/components/assessment/AssessmentToolShell';
 import { LevelAttachments } from '@/components/assessment/LevelAttachments';
 import { getDRDKnowledge } from '@/services/assessmentKnowledge/drdKnowledge';
-import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE, DRDArea, DRDAxis } from '@/services/drdStructure';
+import { getAssessmentGuidanceLive } from '@/services/assessmentKnowledge/assessmentGuidanceRuntime';
+import type { AssessmentGuidanceOutput } from '@/services/assessmentKnowledge/assessmentGuidanceService';
+import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE, DRDArea, DRDAxis, DRDLevel } from '@/services/drdStructure';
 
 type AreaState = {
   achievedLevel: number; // 0..levelCount
@@ -141,6 +144,11 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   const [linkDraft, setLinkDraft] = useState('');
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
 
+  // Per-question AI guidance (canon-grounded; keyed by "areaId#level").
+  const [guidance, setGuidance] = useState<
+    Record<string, { loading: boolean; data?: AssessmentGuidanceOutput }>
+  >({});
+
   // Matrix cell popup state
   const [popupCell, setPopupCell] = useState<{ areaId: string; level: number } | null>(null);
   const [popupPosition, setPopupPosition] = useState<{
@@ -256,6 +264,29 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   const levelCount = selectedAxis?.levelCount || 5;
   const state = getAreaState(value, areaId, levelCount);
   const axisKey = getAxisKey(selectedAxis?.id || 1);
+
+  // Fetch canon-grounded AI guidance for one area×level (cached, non-blocking).
+  const requestGuidance = React.useCallback(
+    (area: DRDArea, level: DRDLevel) => {
+      const key = `${area.id}#${level.level}`;
+      setGuidance((prev) => {
+        if (prev[key]?.loading || prev[key]?.data) return prev;
+        return { ...prev, [key]: { loading: true } };
+      });
+      void getAssessmentGuidanceLive({
+        framework: 'DRD',
+        dimensionId: area.id,
+        dimensionName: area.namePL || area.name,
+        levelNumber: level.level,
+        levelTitle: level.title,
+        levelDescription: level.description,
+        language: 'pl',
+      })
+        .then((data) => setGuidance((prev) => ({ ...prev, [key]: { loading: false, data } })))
+        .catch(() => setGuidance((prev) => ({ ...prev, [key]: { loading: false } })));
+    },
+    []
+  );
 
   // When area changes, default focus to "next likely" level (achieved+1), unless controlled externally.
   React.useEffect(() => {
@@ -1597,6 +1628,64 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 </li>
                               ))}
                             </ul>
+
+                            {/* Per-question AI guidance (canon-grounded, non-blocking) */}
+                            {(() => {
+                              const gKey = `${areaId}#${lvl.level}`;
+                              const g = guidance[gKey];
+                              if (!g) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (selectedArea) requestGuidance(selectedArea, lvl);
+                                    }}
+                                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                                  >
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                    Podpowiedź AI (dlaczego to ważne + jak oceniać)
+                                  </button>
+                                );
+                              }
+                              if (g.loading) {
+                                return (
+                                  <div className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+                                    Generuję podpowiedź…
+                                  </div>
+                                );
+                              }
+                              if (!g.data) return null;
+                              return (
+                                <div className="mt-3 rounded-lg border border-primary-200/60 dark:border-primary-900/40 bg-primary-50/40 dark:bg-primary-950/20 p-3 space-y-2 text-sm">
+                                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">
+                                    <Sparkles className="w-3 h-3" />
+                                    Podpowiedź konsultanta
+                                    <span className="ml-auto font-normal normal-case text-slate-400">
+                                      {g.data.source === 'llm' ? 'AI' : 'kanon'}
+                                    </span>
+                                  </div>
+                                  <p className="text-slate-800 dark:text-slate-200">
+                                    <span className="font-semibold">Dlaczego to ważne: </span>
+                                    {g.data.whyItMatters}
+                                  </p>
+                                  <p className="text-slate-700 dark:text-slate-300">
+                                    <span className="font-semibold">Jak oceniać poziom: </span>
+                                    {g.data.levelInterpretation}
+                                  </p>
+                                  <p className="text-slate-600 dark:text-slate-400 text-xs">
+                                    <span className="font-semibold">Kanon: </span>
+                                    {g.data.canonContext}
+                                  </p>
+                                  {g.data.pitfalls.length > 0 && (
+                                    <p className="text-slate-600 dark:text-slate-400 text-xs">
+                                      <span className="font-semibold">Uważaj na: </span>
+                                      {g.data.pitfalls.join(' · ')}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
 
