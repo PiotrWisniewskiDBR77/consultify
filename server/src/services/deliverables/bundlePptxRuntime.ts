@@ -18,6 +18,7 @@ import { chartAltText, imageAltText } from './deckAltText.js';
 import {
   resolveDeckStyle,
   renderCover,
+  renderClosing,
   renderContentChrome,
   renderBullets,
   fitProse,
@@ -76,6 +77,13 @@ export interface DeckPptxOptions {
   date?: string;
   /** Opcjonalny override brandu klienta (F8.1). Nadpisuje fonty/paletę motywu bazowego. */
   brandOverride?: { fontPair?: Partial<{ heading: string; body: string }>; palette?: Partial<{ dominant: string; supporting: string; accent: string; neutralText: string }> };
+  /**
+   * CONCLUSION_LAYER §W5 — closing slide is a DECISION bookend, not "Thank you".
+   * When omitted, the runtime derives the ask/outcome from the last content
+   * slide (which by W5 discipline already carries K3/K4). Override to pin them.
+   */
+  closingAsk?: string;
+  closingOutcome?: string;
 }
 
 /** #RRGGBB → RRGGBB (pptxgenjs chce hex bez #). */
@@ -363,10 +371,22 @@ export async function deckPlansToPptxBuffer(
       }
     }
 
-    // ── Slajd zamknięcia (bookend spójny z okładką) ──
+    // ── Slajd zamknięcia (DECISION bookend — CONCLUSION_LAYER §W5, NIE "Dziękujemy") ──
+    // Ask/outcome domyślnie z ostatniego slajdu treści (który wg dyscypliny W5
+    // niesie K3/K4); override przez opts.closingAsk / opts.closingOutcome.
+    const lastPlan = contentPlans[contentPlans.length - 1];
+    const derivedAsk =
+      (opts.closingAsk ?? '').trim() ||
+      (lastPlan?.title ?? '').trim() ||
+      (isPolish ? 'Co robić najpierw' : 'What to do first');
+    const derivedOutcome =
+      (opts.closingOutcome ?? '').trim() ||
+      (lastPlan?.keyMessage ?? '').trim() ||
+      undefined;
     const closing = pptx.addSlide() as PptxSlide;
-    renderCover(closing, style, {
-      title: isPolish ? 'Dziękujemy' : 'Thank you',
+    renderClosing(closing, style, {
+      ask: derivedAsk,
+      outcome: derivedOutcome,
       company: opts.company,
       date: deckDate,
       isPolish,

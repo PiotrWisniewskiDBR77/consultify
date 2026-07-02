@@ -471,6 +471,74 @@ export function renderBullets(
 }
 
 /**
+ * Renders the CLOSING slide as a DECISION bookend, not a valediction.
+ *
+ * CONCLUSION_LAYER §W5 is explicit: a management deck ends on "what to do first"
+ * (K3) + "what to expect" (K4), NEVER on a bare "Thank you" slide. This keeps
+ * the cover-style dominant bookend (visual symmetry with renderCover) but fills
+ * it with the ask + the expected outcome so the last thing on screen is a
+ * decision, not a courtesy. The `ask`/`outcome` default to the deck's own
+ * closing thesis when the caller does not override them.
+ */
+export function renderClosing(
+  slide: PptxSlide,
+  style: DeckStyle,
+  opts: { ask: string; outcome?: string; company?: string; date?: string; isPolish: boolean }
+): void {
+  slide.background = { color: style.dominant };
+  const LEFT = 0.85;
+  const TEXT_W = 8.3;
+
+  // Left accent spine (mirrors the cover).
+  slide.addShape('rect', {
+    x: 0, y: 0, w: 0.16, h: DECK_GRID.slideH,
+    fill: { color: style.accent }, line: { color: style.accent, width: 0 },
+  });
+
+  // Eyebrow — this is the ASK, not a thank-you.
+  slide.addText(opts.isPolish ? 'DECYZJA' : 'THE ASK', {
+    x: LEFT, y: 1.15, w: TEXT_W, h: 0.32,
+    fontFace: style.bodyFont, fontSize: 12, bold: true,
+    color: style.accent, charSpacing: 2, align: 'left', valign: 'middle', margin: 0,
+  });
+
+  // K3 — what to do first (thesis scale, shrink-fit).
+  slide.addText(opts.ask, {
+    x: LEFT, y: 1.55, w: TEXT_W, h: 1.5,
+    fontFace: style.headingFont, fontSize: 30, bold: true,
+    color: style.onDominant, align: 'left', valign: 'top',
+    lineSpacingMultiple: 1.0, fit: 'shrink',
+  });
+
+  // Accent rule.
+  slide.addShape('line', {
+    x: LEFT + 0.02, y: 3.2, w: 1.7, h: 0, line: { color: style.accent, width: 3 },
+  });
+
+  // K4 — what to expect.
+  if (opts.outcome) {
+    slide.addText((opts.isPolish ? 'Czego oczekiwać: ' : 'What to expect: ') + opts.outcome, {
+      x: LEFT, y: 3.42, w: TEXT_W, h: 1.3,
+      fontFace: style.bodyFont, fontSize: 15, color: style.onDominant,
+      align: 'left', valign: 'top', lineSpacingMultiple: 1.05, fit: 'shrink',
+    });
+  }
+
+  if (opts.date) {
+    slide.addText(opts.date, {
+      x: LEFT, y: 4.92, w: 6.0, h: 0.4,
+      fontFace: style.bodyFont, fontSize: 13, bold: true,
+      color: style.onDominant, align: 'left', valign: 'middle', margin: 0,
+    });
+  }
+  slide.addText('CONSULTIFY', {
+    x: 7.0, y: 4.92, w: 2.65, h: 0.4,
+    fontFace: style.bodyFont, fontSize: 11, bold: true,
+    color: style.onDominant, charSpacing: 3, align: 'right', valign: 'middle', margin: 0,
+  });
+}
+
+/**
  * Appends text to the speaker notes (fail-soft — no-op when addNotes absent).
  * Used to demote overflow prose so the slide surface stays clean.
  */
