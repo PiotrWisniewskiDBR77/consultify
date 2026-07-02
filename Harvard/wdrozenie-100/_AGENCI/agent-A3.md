@@ -96,3 +96,40 @@
 
 **Weryfikacja:** brak `node_modules` w worktree (zero npm) → sanity: (a) wszystkie 12 użytych klas `c-*` zmapowane 1:1 na `tailwind.config.js` (0 nieznanych); (b) 0 markerów konfliktu; (c) każdy plik: `git diff --numstat` add==del (czysty class-swap); (d) 0 duplikatów tokenów po scaleniu par; (e) wszystkie zmiany w klastrze (Initiatives/ + root Task*/InitiativeTask* wg zlecenia). Build vite + screenshoty light/dark — wymagane przed merge (Strateg; worktree bez preview).
 **Commity:** `76756c5871`→`815ddc3a59` (7 fix, per ścieżka, bez `-A`).
+
+---
+
+### RAPORT — Fala 3 (Instrumenty §15) · 2026-07-02 · branch `reskin/A3/wave-3` (baza z `reskin/A3/wave-2`)
+
+**Metoda:** dla instrumentów małych/średnich — ręczny per-element chrome-swap; dla dużych governance (Timeline/Resources/Gate) — mechaniczny **alpha-safe** token-sweep (Python, negative-lookahead `(?![/\w-])` żeby NIE dotykać translucentnych `.../NN`), collapse par `light dark:`→`c-*`, potem crimson-removal ręczny. Doktryna §15.1: cicha rama (chrome→`c.*` neutralne), głośne dane (status/RAID/oś/priorytet/severity = zostają semantyczne). **Crimson nigdy jako dana/status/fokus.** Linia „dziś"→`c-accent` (§15.2/§15.4). Zaznaczenie/linking→`c-accent-soft` (§15.3). Fokus→`c-focus`. Konektory/arrowheady SVG: hex→`var(--c-*)` (normal=`--c-border-strong`, warning=`--c-warning`, critical=`--c-danger`).
+
+**Zakres wykonany (11 plików, 12 commitów `b03f0f773d`→`f30cac283e`, wyłącznie klasy CSS; każdy plik `git diff --numstat` add==del = czysty class-swap, zero zmian JSX/logiki):**
+
+| Instrument | Plik | Co zrobione |
+|---|---|---|
+| Portfolio Kanban | `Portfolio/PortfolioKanbanView.tsx` | karty/kolumny/nagłówki/licznik/owner/next-gate→`c.*`; drop-zone crimson ring→`c-focus` (priorytet/status/health dot = dane) |
+| Portfolio Timeline (Gantt) | `Portfolio/PortfolioTimelineView.tsx` | kontrolki/zoom/osie/grid/wiersze/legenda/tooltip→`c.*`; linia+dot „dziś" danger→`c-accent`; zoom-toggle crimson→neutral; progress overlay crimson→neutral (`bg-black/10 dark:bg-white/10`) |
+| Portfolio Matrix | `Portfolio/PortfolioMatrixView.tsx` | kontener/osie/linie/legenda/filtry→`c.*`; bubble fill crimson→`c-focus-solid`/`c-info`; tooltip navy→`c-surface` (fill-/stroke-c-*); **DEFER: `MATRIX_QUADRANT_COLORS` = dane kwadrantów (impact/effort)** |
+| Roadmap Kanban | `RoadmapKanban.tsx` | karty/kolumny/kwartały/nagłówki/placeholder/drag-overlay navy→`c.*`; hover blue→`c-focus` (priorytet border/badge, EXECUTING dot, effort-bar = dane) |
+| Initiative Gantt | `Initiatives/gantt/InitiativeGantt.tsx` | kontener/toolbar/select/zoom/osie/wiersze/undated→`c.*`; linia „dziś" crimson→`c-accent`; konektory hex→`var`; critical ring rose→`c-danger`; **DEFER: `TYPE_BAR.task` crimson = paleta belki per typ** |
+| Execution Initiatives Kanban | `Execution/ExecutionInitiativesKanbanView.tsx` | bliźniak PortfolioKanban — te same swapy; drop-zone crimson→`c-focus` |
+| Roadmap Gantt (duży) | `RoadmapGantt.tsx` | toolbar/nagłówki/osie/grid/wiersze/legenda/footer→`c.*`; arrowheady+stroke hex→`var`; **status active/EXECUTING crimson→`c-focus-solid`** (crimson≠status); linking bg→`c-accent-soft`; zoom/link-toggle navy→`bg-c-text text-c-bg`; **DEFER: `AXIS_COLORS` = paleta belek per oś** |
+| Execution Timeline (duży) | `Execution/ExecutionTimelineView.tsx` | alpha-safe sweep slate/navy→`c.*` (toolbar/filtry/osie/wiersze/legenda); linia „dziś" danger→`c-accent`; konektory+arrowheady hex→`var`; **SCHEDULED status crimson→neutral** (mapy STATUS/severity reszta = dane) |
+| Gate Readiness (governance) | `Initiatives/sections/GateReadinessSection.tsx` | sweep neutralny chrome→`c.*`; crimson-removal: AI/Sparkles/link→`c-info`, przyciski→neutral, progress/readiness bar crimson→`c-info`, selected step navy→`c-text/bg`, sponsor/owner→`c-text`, primary CTA→`bg-c-text text-c-bg`, progress track slate→`c-border-subtle` |
+| Resources (governance) | `Initiatives/sections/ResourcesSection.tsx` | sweep neutralny→`c.*`; crimson-removal: focus-ring→`c-focus`, ikony/skill (GraduationCap)→`c-info`, przyciski akcji→neutral, koszt/badge→`c-text`/neutral, add-row highlight→`c-accent-soft` |
+| Timeline Planner (governance, 4316 l.) | `Initiatives/sections/TimelinePlanner.tsx` | sweep neutralny chrome→`c.*` (nagłówki/wiersze/osie/siatka); add-button crimson hover→neutral; **DEFER: milestone TYPE color (`text-primary-500`/tint) = paleta typu** |
+
+**Crimson-removal (filar):** wszystkie `primary-*` (=crimson) na fokus/status/selection/AI/progress USUNIĘTE z instrumentów i governance. Zasada: fokus→`c-focus`(-solid), status „active/scheduled"→neutral/blue (crimson≠status §9.1), AI-sloty (Sparkles/Loader)→`c-info`, progress/readiness NIGDY crimson→`c-info`/neutral (§14.2), kategorie/skille→`c-info`. Pozostałe `primary-*` (5×) = wyłącznie **DEFER paleta belek** (patrz niżej).
+
+**DEFER (wg zlecenia — decyzja palety, Fala 3-DATA; zalogowane, NIE ruszane):**
+- **Kolor BELEK gantta per oś/typ/workstream** = docelowo `c-tag-*` (tokeny `c-tag-*` **jeszcze nie istnieją** w `tailwind.config.js` → blokada Fundamentu). Wystąpienia: `RoadmapGantt.AXIS_COLORS` (7 osi), `InitiativeGantt.TYPE_BAR.task` (crimson), `TimelinePlanner` milestone/event TYPE colors (`STATUS_COLORS`, event-type map), `PortfolioTimelineView.TIMELINE_COLORS`/`getStatusColors`/`getAxisColor` (config `portfolioColors`).
+- **Komórki macierzy Portfolio** (`MATRIX_QUADRANT_COLORS` = impact/effort/wartość-ryzyko) = dane, DEFER.
+- **Mapy status/priority/severity** (`ExecutionTimelineView.STATUS_COLORS` 12 statusów + `sevColors`; `RoadmapGantt.STATUS_COLORS`; `RoadmapKanban` priorytet; `ResourcesSection.statusDotClass`; `TimelinePlanner.STATUS_COLORS`) = semantyczne dane statusu — zostają (poza usuniętym crimsonem SCHEDULED/active).
+
+**Świadomie ZOSTAWIONE (sanctioned / blokada Fundamentu):**
+- **Translucent surfaces** `bg-white/60..95` + `dark:bg-navy-xxx/NN` + `border-slate-200/NN dark:border-navy-700/NN` (+`backdrop-blur`) — DOMINUJĄCY leftover w governance (Gate/Resources/TimelinePlanner ~90 szt./plik). Tokeny `c-*` = `var()` bez `<alpha-value>` → modyfikator `/70` nie działa. **Blokada Fundamentu** (identyczna z Fali 1/2). Alpha-safe sweep celowo ich NIE dotknął (negative-lookahead).
+- **Semantyczne warstwy danych na instrumentach:** critical path (danger/rose ring), warning strip (amber), status/priority chipy — zostają (dane/semantyka, nie chrome).
+- **Bar text `text-white`** na kolorowych belkach — czytelny, zostaje.
+
+**Weryfikacja:** brak `node_modules` (zero npm) → sanity: (a) GLOBALNY skan: 0 nieznanych klas `c-*` (wszystkie 1:1 na `tailwind.config.js`; `border-l-c-focus-solid` = poprawny kierunkowy border-color TW3.4); (b) 0 markerów konfliktu; (c) każdy z 11 plików `git diff --numstat` add==del (czysty class-swap, zero zmian JSX/logiki); (d) 0 uszkodzonych stringów klas (0 podwójnych spacji w `className`, 0 malformed `/NN /NN` po naprawie alpha-safe); (e) 0 collapse wcięć. Build vite + screenshoty light/dark instrumentów — wymagane przed merge (Strateg; worktree bez preview).
+**Commity:** `b03f0f773d`→`f30cac283e` (12 fix, per ścieżka, bez `-A`).
