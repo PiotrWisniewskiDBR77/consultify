@@ -1660,7 +1660,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     aiProposal.tasks.update.length === 0 &&
                     aiProposal.raid.update.length === 0)
                 }
-                className="px-5 py-2 rounded-xl bg-c-surface hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-40 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                className="px-5 py-2 rounded-xl bg-c-text text-c-bg hover:opacity-90 disabled:opacity-40 text-sm font-semibold transition-opacity inline-flex items-center gap-2"
               >
                 {isAIProposing ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -1711,7 +1711,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           </span>
         </div>
         <div className="relative">
-          <div className="absolute top-4 left-0 right-0 h-1 bg-slate-200 rounded-full" />
+          <div className="absolute top-4 left-0 right-0 h-1 bg-c-border-subtle rounded-full" />
           <div
             className="absolute top-4 left-0 h-1 bg-gradient-to-r from-emerald-500 to-c-info rounded-full transition-all duration-500"
             style={{
@@ -2054,7 +2054,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               </span>
               <span className="text-xs font-semibold text-c-text">{readinessPercent}%</span>
             </div>
-            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="h-2 bg-c-border-subtle rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${readinessPercent}%` }}

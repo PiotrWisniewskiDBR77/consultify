@@ -1937,7 +1937,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               <div className="flex items-center justify-end gap-2 pt-1">
                 <button
                   onClick={onClose}
-                  className="px-3 py-1.5 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised transition-colors"
                 >
                   {t('initiatives.timelinePlanner.cancel')}
                 </button>
@@ -3100,7 +3100,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised transition-colors"
           >
             {t('initiatives.timelinePlanner.cancel')}
           </button>
@@ -3992,7 +3992,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                     >
                       {isDecision ? (
                         <div
-                          className={`w-4 h-4 ${row.decisionOutcome === 'GO' ? 'bg-emerald-500' : row.decisionOutcome === 'NO_GO' ? 'bg-danger-500' : 'bg-amber-500'} rounded-sm rotate-45 border-2 border-white dark:border-navy-900`}
+                          className={`w-4 h-4 ${row.decisionOutcome === 'GO' ? 'bg-emerald-500' : row.decisionOutcome === 'NO_GO' ? 'bg-danger-500' : 'bg-amber-500'} rounded-sm rotate-45 border-2 border-white`}
                         />
                       ) : isEsc ? (
                         <AlertTriangle size={14} className="text-amber-500 fill-amber-500/20" />
