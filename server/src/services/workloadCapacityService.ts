@@ -22,7 +22,8 @@ interface UserCapacityRow {
 
 interface TaskAllocationRow {
   user_id: string;
-  allocated_hours: number;
+  window_hours: number;
+  backlog_hours: number;
 }
 
 interface TimeEntryRow {
@@ -34,7 +35,17 @@ export interface CapacityOverviewUser {
   userId: string;
   name: string;
   capacityHours: number;
+  /**
+   * Estimated hours of OPEN tasks whose due_date falls inside the current
+   * capacity window (this Monday..Sunday). Comparable to capacityHours (one week).
+   */
   allocatedHours: number;
+  /**
+   * Estimated hours of OPEN tasks WITHOUT a due_date (unscheduled backlog).
+   * Reported ALONGSIDE utilization — deliberately NOT folded into allocatedHours
+   * so that utilizationPercent stays unit-consistent with the one-week window.
+   */
+  backlogHours: number;
   actualHours: number;
   utilizationPercent: number;
   overloaded: boolean;
@@ -45,8 +56,12 @@ export interface CapacityOverview {
   summary: {
     totalCapacity: number;
     totalAllocated: number;
+    totalBacklog: number;
     avgUtilization: number;
   };
+  /** ISO date (YYYY-MM-DD) of the capacity window the allocation is measured against. */
+  windowStart: string;
+  windowEnd: string;
 }
 
 export interface WeekForecast {
@@ -69,6 +84,8 @@ export interface OverloadAlert {
   name: string;
   capacityHours: number;
   allocatedHours: number;
+  /** Unscheduled backlog hours (no due_date), scaled to the same window. Informational. */
+  backlogHours: number;
   overloadHours: number;
   severity: 'warning' | 'critical';
   suggestion: string;
@@ -116,22 +133,46 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
     }
   }
 
+  // Capacity window = current ISO week (Monday..Sunday). allocatedHours is measured
+  // against THIS window so it is unit-consistent with capacityHours (one week).
+  const windowStartDate = getMonday(new Date());
+  const windowEndDate = new Date(windowStartDate.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const windowStart = formatDate(windowStartDate);
+  const windowEnd = formatDate(windowEndDate);
+
   const userIds = [...userCapMap.keys()];
   if (userIds.length === 0) {
-    return { users: [], summary: { totalCapacity: 0, totalAllocated: 0, avgUtilization: 0 } };
+    return {
+      users: [],
+      summary: { totalCapacity: 0, totalAllocated: 0, totalBacklog: 0, avgUtilization: 0 },
+      windowStart,
+      windowEnd,
+    };
   }
 
   const placeholders = userIds.map(() => '?').join(',');
 
+  // Split open-task estimates into:
+  //  - window_hours: tasks with a due_date inside [windowStart, windowEnd]
+  //  - backlog_hours: tasks with NO due_date (unscheduled) — reported separately
+  // Tasks due in other weeks belong to those weeks' windows and are excluded here.
   const allocRows = await DbPromise.all<TaskAllocationRow>(
-    `SELECT assignee_id as user_id, COALESCE(SUM(estimated_hours), 0) as allocated_hours
+    `SELECT assignee_id as user_id,
+            COALESCE(SUM(CASE
+              WHEN due_date IS NOT NULL
+                AND date(due_date) >= date(?) AND date(due_date) <= date(?)
+              THEN estimated_hours ELSE 0 END), 0) as window_hours,
+            COALESCE(SUM(CASE
+              WHEN due_date IS NULL
+              THEN estimated_hours ELSE 0 END), 0) as backlog_hours
      FROM tasks
      WHERE assignee_id IN (${placeholders}) AND organization_id = ?
        AND lower(coalesce(status,'')) NOT IN ('done','completed','validated','cancelled')
      GROUP BY assignee_id`,
-    [...userIds, orgId]
+    [windowStart, windowEnd, ...userIds, orgId]
   );
-  const allocMap = new Map(allocRows.map((r) => [r.user_id, Number(r.allocated_hours)]));
+  const allocMap = new Map(allocRows.map((r) => [r.user_id, Number(r.window_hours)]));
+  const backlogMap = new Map(allocRows.map((r) => [r.user_id, Number(r.backlog_hours)]));
 
   let actualMap = new Map<string, number>();
   try {
@@ -151,10 +192,12 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
   const users: CapacityOverviewUser[] = [];
   let totalCapacity = 0;
   let totalAllocated = 0;
+  let totalBacklog = 0;
 
   for (const [userId, info] of userCapMap) {
     const cap = round1(info.capacityHours);
     const alloc = round1(allocMap.get(userId) || 0);
+    const backlog = round1(backlogMap.get(userId) || 0);
     const actual = round1(actualMap.get(userId) || 0);
     const util = cap > 0 ? Math.round((alloc / cap) * 100) : 0;
 
@@ -163,6 +206,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
       name: info.name,
       capacityHours: cap,
       allocatedHours: alloc,
+      backlogHours: backlog,
       actualHours: actual,
       utilizationPercent: util,
       overloaded: alloc > cap * 1.1,
@@ -170,6 +214,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
 
     totalCapacity += cap;
     totalAllocated += alloc;
+    totalBacklog += backlog;
   }
 
   const avgUtilization = totalCapacity > 0 ? Math.round((totalAllocated / totalCapacity) * 100) : 0;
@@ -179,8 +224,11 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
     summary: {
       totalCapacity: round1(totalCapacity),
       totalAllocated: round1(totalAllocated),
+      totalBacklog: round1(totalBacklog),
       avgUtilization,
     },
+    windowStart,
+    windowEnd,
   };
 }
 
@@ -259,8 +307,11 @@ export async function getOverloadAlerts(
   const mult = WINDOW_MULTIPLIER[window];
 
   for (const user of overview.users) {
+    // user.allocatedHours / capacityHours are already one-week ('week') values.
+    // Scale to the requested window for day/month approximations.
     const windowCapacity = round1(user.capacityHours * mult);
     const windowAllocated = round1(user.allocatedHours * mult);
+    const windowBacklog = round1(user.backlogHours * mult);
 
     if (windowAllocated > windowCapacity * 1.1) {
       const overloadHours = round1(windowAllocated - windowCapacity);
@@ -275,6 +326,7 @@ export async function getOverloadAlerts(
         name: user.name,
         capacityHours: windowCapacity,
         allocatedHours: windowAllocated,
+        backlogHours: windowBacklog,
         overloadHours,
         severity,
         suggestion,
