@@ -48,6 +48,7 @@ import {
   inferPriorityForPipeline as inferFeedbackPriority,
 } from '../services/feedbackTriage.js';
 import NotificationService from '../services/notificationService.js';
+import { routeToSlack } from '../services/slack/slackRouter.js';
 import slackService from '../services/slackService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -62,6 +63,70 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 
 function isUuidLike(value: unknown): value is string {
   return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+/**
+ * Slack Command Center (Filar 3 / F3): reply the lifecycle of a feedback ticket
+ * into its originating Slack thread. A ticket carries `slack_thread_ts` (and
+ * `slack_channel_id`) in metadata_json only when it was reported from Slack
+ * (see slackInbound.routes.ts `anchorSlackThread`). For app-reported tickets
+ * there is no thread → this is a silent no-op.
+ *
+ * Fire-and-forget + fail-soft: it re-reads metadata_json from a row snapshot or
+ * fetches it, and NEVER throws to the HTTP handler.
+ *
+ * `feedbackRowOrMeta` may be a row with `metadata_json`, an already-parsed
+ * metadata object, or a feedback id string (in which case we fetch the row).
+ */
+export async function notifySlackThread(
+  feedbackRowOrMeta:
+    | { metadata_json?: string | Record<string, unknown> | null }
+    | Record<string, unknown>
+    | string
+    | null
+    | undefined,
+  text: string
+): Promise<void> {
+  try {
+    if (!text || !text.trim()) return;
+
+    let meta: Record<string, unknown> | null = null;
+
+    if (typeof feedbackRowOrMeta === 'string') {
+      const row = await dbGet<{ metadata_json?: string | null }>(
+        `SELECT metadata_json FROM feedback_items WHERE id = ?`,
+        [feedbackRowOrMeta]
+      );
+      meta = safeJsonParse<Record<string, unknown>>(row?.metadata_json ?? null, {});
+    } else if (feedbackRowOrMeta && typeof feedbackRowOrMeta === 'object') {
+      const rawMeta = (feedbackRowOrMeta as { metadata_json?: unknown }).metadata_json;
+      if (rawMeta !== undefined) {
+        meta =
+          typeof rawMeta === 'string'
+            ? safeJsonParse<Record<string, unknown>>(rawMeta, {})
+            : ((rawMeta as Record<string, unknown>) ?? {});
+      } else {
+        // Assume the object itself is the parsed metadata.
+        meta = feedbackRowOrMeta as Record<string, unknown>;
+      }
+    }
+
+    const threadTs =
+      meta && typeof meta.slack_thread_ts === 'string' ? meta.slack_thread_ts : null;
+    if (!threadTs) return; // not a Slack-sourced ticket → nothing to do
+
+    await routeToSlack({
+      channel: 'feedback',
+      severity: 'INFO',
+      title: 'Aktualizacja zgłoszenia',
+      text,
+      threadTs,
+    });
+  } catch (err) {
+    logger.warn('[Feedback] notifySlackThread failed (non-fatal):', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 type TicketStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
@@ -1055,6 +1120,10 @@ export async function createFeedbackInternal(
     screenshot,
   } = data;
   const reqUser = ctx.reqUser;
+  // Fix (F2 extraction): appEnv was resolved in the old route handler scope and
+  // the reference survived the createFeedbackInternal extraction without its
+  // definition → ReferenceError "appEnv is not defined" on every intake.
+  const appEnv = getAppEnv();
 
   const { actualUserId, actualUserEmail, actualUserName } = resolveFeedbackActor({
       reqUser,
@@ -1525,8 +1594,8 @@ router.patch(
         );
     }
 
-    const current = await dbGet<{ status: string }>(
-      `SELECT status FROM feedback_items WHERE id = ?`,
+    const current = await dbGet<{ status: string; metadata_json?: string | null }>(
+      `SELECT status, metadata_json FROM feedback_items WHERE id = ?`,
       [id]
     );
     const fromStatus = current?.status || null;
@@ -1558,6 +1627,19 @@ router.patch(
       );
     } catch {
       /* History table may not exist yet */
+    }
+
+    // F3: reply the status change into the ticket's Slack thread (Slack-sourced
+    // tickets only). Fire-and-forget, fail-soft.
+    {
+      const actor =
+        (req as any).user?.email || (req as any).user?.name || (req as any).user?.id || 'zespół';
+      const from = (fromStatus || 'NEW').toUpperCase();
+      const to = status.toUpperCase();
+      void notifySlackThread(
+        { metadata_json: current?.metadata_json ?? null },
+        `:wrench: Status: ${from} → ${to} (przez ${actor})${note ? `\n_${String(note).slice(0, 200)}_` : ''}`
+      );
     }
 
     return res.json({ success: true });
@@ -1765,6 +1847,25 @@ router.patch(
         );
     }
 
+    // F3: reply the meaningful workflow changes into the Slack thread. Only the
+    // fields Piotr tracks in the command center, and only when they changed.
+    {
+      const parts: string[] = [];
+      if (owner !== undefined && nextWorkflow.owner) parts.push(`owner: ${nextWorkflow.owner}`);
+      if (branch !== undefined && nextWorkflow.branch) parts.push(`branch: ${nextWorkflow.branch}`);
+      if (prUrl !== undefined && nextWorkflow.prUrl) parts.push(`PR: ${nextWorkflow.prUrl}`);
+      if (deployStatus !== undefined && nextWorkflow.deployStatus)
+        parts.push(`deploy: ${nextWorkflow.deployStatus}`);
+      if (resolution !== undefined && nextResolution.summary)
+        parts.push(`rozwiązanie: ${String(nextResolution.summary).slice(0, 200)}`);
+      if (parts.length > 0) {
+        void notifySlackThread(
+          { metadata_json: row.metadata_json },
+          `:gear: Workflow: ${parts.join(' · ')}`
+        );
+      }
+    }
+
     return res.json({
       success: true,
       workflow: nextWorkflow,
@@ -1880,6 +1981,15 @@ router.post(
       } catch (noteErr) {
         logger.error('Failed to create response notification:', noteErr);
       }
+    }
+
+    // F3: mirror the team's reply into the Slack thread (Slack-sourced tickets).
+    if (feedback) {
+      const summary = String(response).slice(0, 200);
+      void notifySlackThread(
+        { metadata_json: feedback.metadata_json },
+        `:speech_balloon: Odpowiedź od zespołu: ${summary}${String(response).length > 200 ? '…' : ''}`
+      );
     }
 
     return res.json({ success: true });
