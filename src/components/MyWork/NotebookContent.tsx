@@ -34,7 +34,6 @@ import {
   Plus,
   RefreshCw,
   Sparkles,
-  Sun,
   Tag,
   Trash2,
   Type,
@@ -78,14 +77,21 @@ import {
   NotebookImage,
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
-import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
-import { NotebookProgressChip } from './notebook/NotebookProgressChip';
-import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
+import { NotebookExportMenu } from './notebook/NotebookExportMenu';
+import { NotebookGraphView } from './notebook/NotebookGraphView';
+import { NotebookProgressChip } from './notebook/NotebookProgressChip';
+import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
+import { NotebookRightRail } from './notebook/NotebookRightRail';
+import { NotebookTodayView } from './notebook/NotebookTodayView';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
+import { NotebookTopicChips } from './notebook/NotebookTopicChips';
+import { NotebookTopicView } from './notebook/NotebookTopicView';
+import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
+import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import {
   detectSlashTrigger,
   INITIAL_SLASH_STATE,
@@ -93,13 +99,6 @@ import {
   type SlashMenuState,
 } from './notebook/SlashMenu';
 import { buildAskAIMessage } from './shared/askAiHelper';
-import { NotebookExportMenu } from './notebook/NotebookExportMenu';
-import { NotebookGraphView } from './notebook/NotebookGraphView';
-import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
-import { NotebookTodayView } from './notebook/NotebookTodayView';
-import { NotebookTopicChips } from './notebook/NotebookTopicChips';
-import { NotebookTopicView } from './notebook/NotebookTopicView';
-import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
 
 interface NotebookContentProps {
   projectId?: string | null;
@@ -120,8 +119,8 @@ interface NotebookContentProps {
   /** Return to the notebook library (L1). When set, a back button is shown. */
   onBackToLibrary?: () => void;
   /** External page-status filter driven by Menu 3 in MyWorkHub (L2). */
-  pageStatusFilter?: 'all' | 'inbox' | 'active';
-  onPageStatusFilterChange?: (filter: 'all' | 'inbox' | 'active') => void;
+  pageStatusFilter?: 'all' | 'inbox' | 'active' | 'today';
+  onPageStatusFilterChange?: (filter: 'all' | 'inbox' | 'active' | 'today') => void;
 }
 
 type NotebookAIProposal = {
@@ -1048,9 +1047,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [maturityFilter, setMaturityFilter] = useState<NotebookMaturity | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  const inboxCount = useMemo(() => pages.filter((p) => p.status === 'inbox').length, [pages]);
-  const activeCount = useMemo(() => pages.filter((p) => p.status === 'active').length, [pages]);
-
   const filteredPages = useMemo(() => {
     let result = [...pages];
 
@@ -1678,10 +1674,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`,
-          { headers: getHeaders() }
-        );
+        const res = await fetch(`${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`, {
+          headers: getHeaders(),
+        });
         if (!res.ok || cancelled) return;
         const json = await res.json();
         if (!cancelled) setCoverUrl(json?.data?.coverUrl ?? null);
@@ -1703,14 +1698,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       const { API_URL, getHeaders } = apiModule;
       if (typeof getHeaders !== 'function' || !API_URL) return;
       try {
-        const res = await fetch(
-          `${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`,
-          {
-            method: 'PUT',
-            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ coverUrl: nextCover }),
-          }
-        );
+        const res = await fetch(`${API_URL}/v8/notebook/pages/${encodeURIComponent(id)}/cover`, {
+          method: 'PUT',
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coverUrl: nextCover }),
+        });
         if (!res.ok) throw new Error(String(res.status));
       } catch {
         setCoverUrl(previous); // rollback
@@ -1726,7 +1718,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     (file: File) => {
       if (!file.type.startsWith('image/')) return;
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(isPolish ? 'Okładka jest zbyt duża (max 5 MB)' : 'Cover is too large (max 5 MB)');
+        toast.error(
+          isPolish ? 'Okładka jest zbyt duża (max 5 MB)' : 'Cover is too large (max 5 MB)'
+        );
         return;
       }
       const reader = new FileReader();
@@ -1987,9 +1981,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       navigate(chatUrl);
     } catch (error: any) {
       console.error('Failed to expand note into Canvas document', error);
-      toast.error(
-        isPolish ? 'Nie udało się utworzyć dokumentu' : 'Failed to create the document'
-      );
+      toast.error(isPolish ? 'Nie udało się utworzyć dokumentu' : 'Failed to create the document');
     } finally {
       setIsExpandingToDocument(false);
     }
@@ -2134,7 +2126,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </TooltipContent>
                 </Tooltip>
               ) : (
-                <div className="w-7 h-7 shrink-0 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shadow-sm">
+                <div className="w-7 h-7 shrink-0 rounded-lg bg-navy-900 dark:bg-white/[0.1] flex items-center justify-center shadow-sm">
                   <BookOpen size={14} className="text-white" />
                 </div>
               )}
@@ -2147,18 +2139,33 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 </div>
               </div>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setTemplateModalOpen(true)}
-                  data-testid="notebook-new-page-button"
-                  className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-                >
-                  <Plus size={16} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
-            </Tooltip>
+            <div className="flex items-center gap-1">
+              {/* S1-U2c: filters toggle lives in the header row (the old
+                  Inbox/Active/All/Today tab bar moved to the Command Row). */}
+              <button
+                onClick={() => setShowFilters((v) => !v)}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  showFilters
+                    ? 'bg-c-accent-soft text-c-text'
+                    : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
+                }`}
+                title={isPolish ? 'Filtry' : 'Filters'}
+              >
+                <Filter size={14} />
+              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setTemplateModalOpen(true)}
+                    data-testid="notebook-new-page-button"
+                    className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
 
           {/* Maturity distribution mini-bar */}
@@ -2183,69 +2190,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           )}
         </div>
 
-        {/* Inbox/Active/All/Today tab bar */}
-        <div className="flex items-center border-b border-slate-200/60 dark:border-white/[0.06] px-2">
-          {[
-            { key: 'inbox' as const, label: 'Inbox', count: inboxCount, icon: <Inbox size={12} /> },
-            {
-              key: 'active' as const,
-              label: isPolish ? 'Aktywne' : 'Active',
-              count: activeCount,
-              icon: <Play size={12} />,
-            },
-            {
-              key: 'all' as const,
-              label: isPolish ? 'Wszystkie' : 'All',
-              count: pages.length,
-              icon: <FileText size={12} />,
-            },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => {
-                setSidebarTab(tab.key);
-                onPageStatusFilterChange?.(tab.key);
-              }}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-semibold transition-all border-b-2 ${
-                sidebarTab === tab.key
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-              {tab.count > 0 && (
-                <span
-                  className={`ml-0.5 px-1 py-0 rounded-full text-[9px] ${
-                    sidebarTab === tab.key
-                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                      : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600'
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-          <button
-            onClick={() => setSidebarTab('today')}
-            className={`flex items-center justify-center gap-1 px-2 py-2 text-[10px] font-semibold transition-all border-b-2 ${
-              sidebarTab === 'today'
-                ? 'border-amber-500 text-amber-600 dark:text-amber-400'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-            }`}
-            title={isPolish ? 'Widok dnia' : "Today's view"}
-          >
-            <Sun size={12} />
-          </button>
-          <button
-            onClick={() => setShowFilters((v) => !v)}
-            className={`p-1.5 rounded-md ml-1 transition-colors ${showFilters ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
-            title={isPolish ? 'Filtry' : 'Filters'}
-          >
-            <Filter size={12} />
-          </button>
-        </div>
+        {/* S1-U2c: the duplicated Inbox/Active/All/Today tab bar is GONE —
+            page-status presets live in the single Command Row (Menu 3 L2,
+            MyWorkHub). This sidebar keeps only search/filters + the list. */}
 
         {/* Filter bar (collapsible) */}
         {showFilters && (
@@ -2293,6 +2240,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               onOpenNote={(id) => {
                 void flushPendingSave().then(() => setActiveId(id));
                 setSidebarTab('all');
+                onPageStatusFilterChange?.('all');
               }}
               captureSlot={
                 <NotebookQuickCapture
@@ -2352,16 +2300,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       }}
                       className="w-full text-left px-3 py-2.5"
                     >
+                      {/* S1-U2a: Ideas-list row anatomy — leading signal dot
+                          ("szyna skanu" §14.2), L2 title, L5 meta, neutral
+                          chip shells with color only in the dot. */}
                       <div className="flex items-start gap-2">
-                        <span className="text-lg leading-none mt-0.5 shrink-0">
-                          {p.icon && /\p{Emoji}/u.test(p.icon) ? p.icon : matCfg.icon}
-                        </span>
+                        {p.icon && /\p{Emoji}/u.test(p.icon) ? (
+                          <span className="text-sm leading-none mt-0.5 shrink-0">{p.icon}</span>
+                        ) : null}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot}`} />
-                            {p.pinned && <Pin size={9} className="text-amber-500 shrink-0" />}
+                            {p.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
                             {p.visibility === 'project' && (
-                              <Users size={9} className="text-blue-400 shrink-0" />
+                              <Users size={10} className="text-c-text-muted shrink-0" />
                             )}
                             <span
                               className={`font-semibold text-[13px] truncate flex-1 ${
@@ -2373,7 +2324,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                             </span>
                             {timeAgo && (
-                              <span className="text-[9px] text-slate-600 dark:text-slate-500 shrink-0 tabular-nums">
+                              <span className="text-[10px] text-c-text-muted shrink-0 tabular-nums">
                                 {timeAgo}
                               </span>
                             )}
@@ -2386,9 +2337,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           )}
 
                           <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                            <span
-                              className={`inline-flex items-center gap-0.5 rounded-md ${matCfg.bg} ${matCfg.text} px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide`}
-                            >
+                            <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-c-text-secondary">
                               <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
                               {isPolish ? matCfg.labelPl : matCfg.label}
                             </span>
@@ -2548,7 +2497,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           ) : !activePage && pagesError ? (
             <div className="flex h-full items-center justify-center p-8">
               <div className="text-center">
-                <AlertTriangle size={36} className="mx-auto mb-3 text-slate-400 dark:text-slate-500" />
+                <AlertTriangle
+                  size={36}
+                  className="mx-auto mb-3 text-slate-400 dark:text-slate-500"
+                />
                 <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
                   {isPolish ? 'Nie udało się wczytać notatek.' : 'Failed to load notes.'}
                 </p>
@@ -2803,8 +2755,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           value={activePage.icon ?? null}
                           fallback={
                             (
-                              MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] ||
-                              MATURITY_CONFIG.seed
+                              MATURITY_CONFIG[
+                                (activePage.maturity as NotebookMaturity) || 'seed'
+                              ] || MATURITY_CONFIG.seed
                             ).icon
                           }
                           onChange={handleChangeIcon}
@@ -3292,11 +3245,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <X size={13} />
               </button>
             </div>
-            <NotebookGraphView
-              pageId={activePage.id}
-              pageTitle={title}
-              isPolish={isPolish}
-            />
+            <NotebookGraphView pageId={activePage.id} pageTitle={title} isPolish={isPolish} />
           </div>
         )}
 
@@ -3310,18 +3259,23 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           allPages={pages}
           editor={editor}
           noteTitle={title}
-          noteContent={activePage ? (activePage.contentText || extractText(activePage.contentJson)) : ''}
+          noteContent={
+            activePage ? activePage.contentText || extractText(activePage.contentJson) : ''
+          }
           noteTags={pageTags}
           notePage={
             activePage
               ? {
                   id: activePage.id,
-                  maturity: (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
+                  maturity:
+                    (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
                   summary: activePage.summary,
                   updatedAt: activePage.updatedAt,
                   visibility: (activePage.visibility as NotebookVisibility) || 'private',
                   projectId: activePage.projectId,
-                  wordCount: wordCount(activePage.contentText || extractText(activePage.contentJson)),
+                  wordCount: wordCount(
+                    activePage.contentText || extractText(activePage.contentJson)
+                  ),
                 }
               : undefined
           }

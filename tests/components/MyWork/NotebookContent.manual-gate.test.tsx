@@ -126,6 +126,18 @@ vi.mock('../../../src/components/MyWork/notebook/SlashMenu', () => ({
 vi.mock('../../../src/components/MyWork/shared/askAiHelper', () => ({
   buildAskAIMessage: () => 'ask-ai',
 }));
+// TipTap extension module pulls in lowlight/highlight.js which does not
+// resolve in the vitest environment — the editor is mocked anyway.
+vi.mock('../../../src/components/MyWork/notebook/extensions', () => ({
+  CalloutNode: {},
+  DetailsContentNode: {},
+  DetailsNode: {},
+  DetailsSummaryNode: {},
+  EmbeddedRefNode: {},
+  NOTEBOOK_CODE_LANGUAGES: [],
+  NotebookCodeBlock: {},
+  NotebookImage: { configure: () => ({}) },
+}));
 
 describe('NotebookContent manual gate regressions', () => {
   beforeEach(() => {

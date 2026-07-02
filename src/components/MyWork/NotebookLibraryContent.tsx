@@ -382,14 +382,28 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                   if (e.key === 'Enter') onOpenNotebook(nb);
                 }}
                 tabIndex={0}
-                className="group border-b border-slate-200 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors outline-none"
+                className="group cursor-pointer border-b border-slate-200/95 bg-white outline-none transition-colors hover:bg-slate-100/80 hover:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.22)] dark:border-white/[0.085] dark:bg-navy-950 dark:hover:bg-white/[0.04] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]"
               >
+                {/* S1-U2a: Ideas-row anatomy — neutral icon tile + L2 title +
+                    L5 meta subtitle (no oversized emoji as identity). */}
                 <td style={{ width: columnWidths.title }} className="px-3 py-2.5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-lg leading-none shrink-0">{nb.icon || '📓'}</span>
-                    <span className="font-medium text-slate-800 dark:text-slate-100 truncate">
-                      {nb.title}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-c-border-subtle bg-c-surface-raised">
+                      {nb.icon && /\p{Emoji}/u.test(nb.icon) ? (
+                        <span className="text-sm leading-none">{nb.icon}</span>
+                      ) : (
+                        <BookOpen size={14} className="text-c-text-muted" />
+                      )}
                     </span>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {nb.title}
+                      </div>
+                      <div className="truncate text-[11px] leading-4 text-c-text-muted">
+                        {nb.pageCount} {pl ? 'notatek' : 'notes'} ·{' '}
+                        {formatRelative(nb.updatedAt, pl)}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td style={{ width: columnWidths.scope }} className="px-3 py-2.5 text-left">
