@@ -325,8 +325,10 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
                     return bars.map((v, idx) => (
                       <div
                         key={idx}
-                        className="flex-1 rounded-sm bg-primary-500/30 min-h-[4px]"
+                        className="flex-1 rounded-sm min-h-[4px]"
                         style={{
+                          // Categorical mini-series bar — c-tag palette (§15.1: crimson nigdy jako dana).
+                          backgroundColor: 'color-mix(in srgb, var(--c-tag-1) 40%, transparent)',
                           height: `${Math.max(15, Math.round((Math.abs(v) / base) * 100))}%`,
                         }}
                       />
