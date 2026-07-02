@@ -4358,7 +4358,11 @@
       "none": "— None —",
       "creating": "Creating...",
       "createTask": "Create task",
-      "done": "done"
+      "done": "done",
+      "emptyPlanTitle": "This initiative has no plan yet",
+      "emptyPlanHint": "Tasks feed the schedule (Gantt) and initiative progress. Add the first task or let AI propose a complete plan.",
+      "emptyPlanAddFirst": "Add the first task",
+      "emptyPlanGenerateAi": "Generate a plan with AI"
     },
     "decisionsSection": {
       "missingInitiativeId": "Missing initiative ID",
@@ -4894,6 +4898,16 @@
     "thisInitiative": "this initiative",
     "card": {
       "nextStep": "Next step"
+    },
+    "draftJourney": {
+      "badge": "Draft",
+      "headline": "This is the initiative working document — three steps to launch",
+      "contentTitle": "Document content",
+      "contentCta": "Fill with AI",
+      "planTitle": "Plan & tasks",
+      "planCta": "Plan the tasks",
+      "advanceTitle": "Next in the process",
+      "advanceCta": "Submit for review"
     }
   },
   "execution": {

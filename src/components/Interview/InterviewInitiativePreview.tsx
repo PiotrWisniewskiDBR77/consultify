@@ -86,10 +86,12 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
     ...(onOpenInModule
       ? [
           {
-            label: isPolish ? 'Otwórz w module Initiatives' : 'Open in Initiatives',
+            // M13 flow redesign: the DOCUMENT is the working surface — for a
+            // DRAFT this is the primary move (staging stays a source view).
+            label: isPolish ? 'Otwórz dokument inicjatywy' : 'Open initiative document',
             icon: ExternalLink,
             onClick: onOpenInModule,
-            colorScheme: 'neutral' as const,
+            colorScheme: isDraft ? ('primary' as const) : ('neutral' as const),
           },
         ]
       : []),

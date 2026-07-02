@@ -3565,7 +3565,11 @@
       "none": "— Brak —",
       "creating": "Tworzenie...",
       "createTask": "Utwórz task",
-      "done": "ukończone"
+      "done": "ukończone",
+      "emptyPlanTitle": "Ta inicjatywa nie ma jeszcze planu",
+      "emptyPlanHint": "Zadania zasilają harmonogram (Gantt) i postęp inicjatywy. Dodaj pierwsze zadanie albo pozwól AI zaproponować kompletny plan.",
+      "emptyPlanAddFirst": "Dodaj pierwsze zadanie",
+      "emptyPlanGenerateAi": "Wygeneruj plan z AI"
     },
     "decisionsSection": {
       "missingInitiativeId": "Brak ID inicjatywy",
@@ -4101,6 +4105,16 @@
     "thisInitiative": "tę inicjatywę",
     "card": {
       "nextStep": "Następny krok"
+    },
+    "draftJourney": {
+      "badge": "Szkic",
+      "headline": "To jest dokument roboczy inicjatywy — trzy kroki do startu",
+      "contentTitle": "Treść dokumentu",
+      "contentCta": "Wypełnij z AI",
+      "planTitle": "Plan i zadania",
+      "planCta": "Zaplanuj zadania",
+      "advanceTitle": "Dalej w procesie",
+      "advanceCta": "Prześlij do przeglądu"
     }
   },
   "execution": {
