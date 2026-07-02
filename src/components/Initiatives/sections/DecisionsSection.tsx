@@ -566,7 +566,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     setAiNoSuggestionsMessage(null);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.decisionsSection.english');
       const existingCompact = decisions
         .map((d) => ({
           id: String(d.id),
@@ -687,7 +687,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     setAiNoSuggestionsMessage(null);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.english');
       const existingIds = new Set(decisions.map((d) => String(d.id)));
       const existingNormTitles = new Set(
         decisions.map((d) => normalizeDecisionTitleForDedupe(String(d.title || ''))).filter(Boolean)
@@ -1311,9 +1311,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
           <div className="flex items-center gap-2 mb-2">
             <Scale size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
             <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-              {isPolish
-                ? 'Decyzja bramki — wymagana przed promocją'
-                : 'Gate decision — required before promotion'}
+              {t('initiatives.decisionsSection.gateDecisionRequiredBeforePromotion')}
             </span>
           </div>
           <ul className="space-y-1.5">

@@ -266,6 +266,7 @@ const ExpandableNarrativeField: React.FC<ExpandableNarrativeFieldProps> = ({
   placeholder,
   isPolish,
 }) => {
+    const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -316,7 +317,7 @@ const ExpandableNarrativeField: React.FC<ExpandableNarrativeFieldProps> = ({
           className="absolute -bottom-4 right-4 inline-flex items-center gap-1 px-1 py-0.5 text-[10px] font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
         >
           {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-          {isExpanded ? (isPolish ? 'Mniej' : 'Less') : isPolish ? 'Więcej' : 'More'}
+          {isExpanded ? (t('initiatives.initiativeDocumentView.less')) : t('initiatives.initiativeDocumentView.more')}
         </button>
       )}
     </div>
@@ -9113,7 +9114,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       if (materializingFormat) return;
       setShowMaterializeMenu(false);
       setMaterializingFormat(format);
-      const loadingLabel = isPolish ? 'Tworzę materiał…' : 'Creating material…';
+      const loadingLabel = t('initiatives.initiativeDocumentView.creatingMaterial');
       const toastId = toast.loading(loadingLabel);
       try {
         const res = await fetch(`${API_URL}/initiatives/${initiativeId}/materialize`, {
@@ -9146,12 +9147,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         anchor.click();
         anchor.remove();
         window.URL.revokeObjectURL(objectUrl);
-        toast.success(isPolish ? 'Materiał gotowy' : 'Material ready', { id: toastId });
+        toast.success(t('initiatives.initiativeDocumentView.materialReady'), { id: toastId });
       } catch (err) {
         toast.error(
-          isPolish
-            ? 'Nie udało się utworzyć materiału'
-            : 'Failed to create material',
+          t('initiatives.initiativeDocumentView.failedToCreateMaterial'),
           { id: toastId }
         );
         // eslint-disable-next-line no-console

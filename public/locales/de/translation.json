@@ -811,6 +811,47 @@
       "standard": "Standard approval flow. Requires owner + deadline + tasks.",
       "strategic": "Executive approval required. Full charter + RAID analysis.",
       "transformation": "Board-level governance. Full charter, steering committee, gate reviews."
+    },
+    "initiativeDocumentView": {
+      "less": "Less",
+      "more": "More",
+      "creatingMaterial": "Creating material…",
+      "materialReady": "Material ready",
+      "failedToCreateMaterial": "Failed to create material"
+    },
+    "initiativePreviewV3": {
+      "linkedFinanceModels": "Linked finance models",
+      "openInFinance": "Open in Finance",
+      "generate3QuickHintsWhatTo": "Generate 3 quick hints (what to do / risks / how to measure).",
+      "source": "Source",
+      "tasks": "Tasks",
+      "helpMeRefineThisInitiativeMissing": "Help me refine this initiative: missing fields, risks, KPIs, and next steps.",
+      "open": "Open",
+      "inModule": "In module",
+      "chat": "Chat",
+      "copyLink": "Copy link"
+    },
+    "controlSection": {
+      "owner": "Owner"
+    },
+    "decisionsSection": {
+      "english": "English",
+      "gateDecisionRequiredBeforePromotion": "Gate decision — required before promotion"
+    },
+    "gateReadinessSection": {
+      "english": "English"
+    },
+    "kpisSection": {
+      "english": "English"
+    },
+    "resourcesSection": {
+      "english": "English"
+    },
+    "targetStateSection": {
+      "english": "English"
+    },
+    "tasksMilestonesSection": {
+      "english": "English"
     }
   },
   "execution": {
@@ -3019,6 +3060,18 @@
       "startTrial": "Registrieren Sie sich und starten Sie die Testphase",
       "subtitle": "Ihr eigener Arbeitsbereich, 7 Tage kostenlos",
       "title": "Starten Sie Ihre 7-tägige Testphase"
+    }
+  },
+  "aios": {
+    "wave7ConnectorAdminPanel": {
+      "accessRevoked": "; access revoked",
+      "accessRevokedWithReason": "; access revoked ({{reason}})"
+    },
+    "wave9OutcomeAIOpsPanel": {
+      "reportTypeClientReady": "Client ready",
+      "reportTypeInvestorReady": "Investor ready",
+      "reportTypeSteeringCommittee": "Steering committee",
+      "reportTypeCisoSecurity": "CISO / Security"
     }
   }
 }

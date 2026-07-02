@@ -164,7 +164,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
     setIsAIProposing(true);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.dependenciesSection.english');
       const allowedTypes = ['FS', 'SS', 'FF', 'SF'].join(', ');
 
       const existingDepsCompact = Array.from(edgeById.values())

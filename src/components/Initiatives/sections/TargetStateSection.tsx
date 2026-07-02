@@ -373,7 +373,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
     setAiNoSuggestionsMessage(null);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.targetStateSection.english');
 
       const sc = (successCriteriaItems || []).map((i) => ({
         id: String(i.id),

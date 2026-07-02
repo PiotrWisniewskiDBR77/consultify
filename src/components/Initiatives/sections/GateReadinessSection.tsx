@@ -457,7 +457,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         : null;
 
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.gateReadinessSection.english');
       const systemInstruction = [
         `You are a senior PMO governance lead.`,
         `Your goal is to review the Initiative's gate workflow governance and propose high-signal improvements.`,

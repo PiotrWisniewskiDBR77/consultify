@@ -342,7 +342,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     setAiNoSuggestionsMessage(null);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.tasksMilestonesSection.english');
       const existingTitles = tasks
         .map((t) => String(t.title || '').trim())
         .filter(Boolean)
@@ -422,7 +422,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       setAiMode(mode);
       try {
         const aiLanguage = isPolish ? 'pl' : 'en';
-        const targetLanguageName = isPolish ? 'Polish' : 'English';
+        const targetLanguageName = t('initiatives.english');
         const removalCandidates = mode === 'review' ? buildRemovalCandidates(tasks) : [];
         const existingTasksCompact = tasks.map((t) => ({
           id: String(t.id),

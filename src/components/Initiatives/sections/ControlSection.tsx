@@ -61,7 +61,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
       moduleLabel: t('initiatives.controlSection.currentModule'),
       statusLabel: 'Status',
       priorityLabel: t('initiatives.controlSection.priority'),
-      ownerLabel: isPolish ? 'Właściciel' : 'Owner',
+      ownerLabel: t('initiatives.controlSection.owner'),
     }
   );
 

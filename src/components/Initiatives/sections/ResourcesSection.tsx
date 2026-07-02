@@ -274,7 +274,7 @@ export const ResourcesSection: React.FC = () => {
   } = useInitiativeContext();
 
   const aiLanguage = isPolish ? 'pl' : 'en';
-  const targetLanguageName = isPolish ? 'Polish' : 'English';
+  const targetLanguageName = t('initiatives.resourcesSection.english');
 
   const [aiBusy, setAiBusy] = useState(false);
   const [aiProposal, setAiProposal] = useState<ResourcesAiProposal | null>(null);

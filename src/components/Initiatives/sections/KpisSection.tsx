@@ -198,7 +198,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
     setIsAIProposing(true);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.kpisSection.english');
       const existingKpisCompact = kpis.slice(0, 80).map((k) => ({
         id: String(k.id),
         name: String(k.name || ''),

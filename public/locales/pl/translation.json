@@ -3288,7 +3288,8 @@
       "intangiblesToAdd": "Licencje/szkolenia — do dodania",
       "noAdditionsForTable": "AI nie zaproponowało dodatków dla tej tabeli.",
       "noMissingResources": "AI nie zaproponowało brakujących zasobów do dodania.",
-      "invalidAiFormat": "Odpowiedź AI ma nieprawidłowy format (nie można zastosować)."
+      "invalidAiFormat": "Odpowiedź AI ma nieprawidłowy format (nie można zastosować).",
+      "english": "Polish"
     },
     "timelinePlanner": {
       "initiativeStart": "Start inicjatywy",
@@ -3545,7 +3546,8 @@
       "requiredApproval": "Wymagana aprobata",
       "requiredApprovalsForStatus": "Wymagane zatwierdzenia dla statusu",
       "notRequested": "Nie zgłoszono",
-      "allGatesPassed": "Wszystkie bramki przejdzone!"
+      "allGatesPassed": "Wszystkie bramki przejdzone!",
+      "english": "Polish"
     },
     "tasksMilestonesSection": {
       "aiReturnedNoTaskTitle": "AI nie zwróciło tytułu taska",
@@ -3613,7 +3615,8 @@
       "none": "— Brak —",
       "creating": "Tworzenie...",
       "createTask": "Utwórz task",
-      "done": "ukończone"
+      "done": "ukończone",
+      "english": "Polish"
     },
     "decisionsSection": {
       "missingInitiativeId": "Brak ID inicjatywy",
@@ -3679,7 +3682,9 @@
       "none": "— Brak —",
       "creating": "Tworzenie...",
       "createDecision": "Utwórz decyzję",
-      "approved": "zatwierdzonych"
+      "approved": "zatwierdzonych",
+      "english": "Polish",
+      "gateDecisionRequiredBeforePromotion": "Decyzja bramki — wymagana przed promocją"
     },
     "kpisSection": {
       "failedToLoadKpis": "Nie udało się pobrać KPI",
@@ -3732,7 +3737,8 @@
       "noKpisDefined": "Brak zdefiniowanych KPI",
       "addFirstKpi": "Dodaj pierwszy KPI dla tej inicjatywy.",
       "newKpi": "Nowy KPI",
-      "noKpis": "Brak KPI"
+      "noKpis": "Brak KPI",
+      "english": "Polish"
     },
     "overviewSection": {
       "initiativeDescription": "Opis inicjatywy",
@@ -3822,7 +3828,8 @@
       "control": "Sterowanie",
       "currentModule": "Aktualny moduł",
       "goTo": "Przejdź →",
-      "priority": "Priorytet"
+      "priority": "Priorytet",
+      "owner": "Właściciel"
     },
     "raidSection": {
       "convertedFrom": "Konwersja z {{type}}: {{title}}",
@@ -3888,7 +3895,8 @@
       "addSuccessCriteriaPlaceholder": "Dodaj kryterium sukcesu...",
       "deliverablesDescription": "Konkretne produkty i rezultaty do dostarczenia",
       "deliverablesListLabel": "Produkty — lista",
-      "addDeliverablePlaceholder": "Dodaj produkt..."
+      "addDeliverablePlaceholder": "Dodaj produkt...",
+      "english": "Polish"
     },
     "initiativeGatesWorkflowTable": {
       "stage": "Etap",
@@ -3949,7 +3957,8 @@
       "noAdditionsProposed": "Brak propozycji do dodania.",
       "applyApiNote": "Po akceptacji dodamy/usuniemy wybrane zależności przez API (bez wymyślania nowych zadań).",
       "cancel": "Anuluj",
-      "apply": "Zastosuj"
+      "apply": "Zastosuj",
+      "english": "Polish"
     },
     "scopeSection": {
       "scopeAndKillCriteria": "Zakres i kryteria rezygnacji",
@@ -4185,6 +4194,25 @@
       "pickInitiative": "Wybierz inicjatywę",
       "empty": "Brak danych obserwowalności.",
       "noLineage": "Brak łańcucha dla wybranej inicjatywy."
+    },
+    "initiativeDocumentView": {
+      "less": "Mniej",
+      "more": "Więcej",
+      "creatingMaterial": "Tworzę materiał…",
+      "materialReady": "Materiał gotowy",
+      "failedToCreateMaterial": "Nie udało się utworzyć materiału"
+    },
+    "initiativePreviewV3": {
+      "linkedFinanceModels": "Powiązane modele finansowe",
+      "openInFinance": "Otwórz w module Finanse",
+      "generate3QuickHintsWhatTo": "Wygeneruj 3 szybkie hinty (co zrobić / na co uważać / jak mierzyć).",
+      "source": "Źródło",
+      "tasks": "Zadania",
+      "helpMeRefineThisInitiativeMissing": "Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.",
+      "open": "Otwórz",
+      "inModule": "W module",
+      "chat": "Czat",
+      "copyLink": "Kopiuj link"
     }
   },
   "execution": {
@@ -15059,7 +15087,9 @@
       "fresh": "aktualne",
       "notTracked": "nie śledzono",
       "error": "Błąd",
-      "noRunsYet": "Brak uruchomień."
+      "noRunsYet": "Brak uruchomień.",
+      "accessRevoked": "; dostęp cofnięty",
+      "accessRevokedWithReason": "; dostęp cofnięty ({{reason}})"
     },
     "unknown": "nieznana",
     "tokenExpiry": "wygaśnięcie tokenu",
@@ -15157,7 +15187,11 @@
       "runFinalAcceptance": "Uruchom akceptację końcową",
       "decision": "Decyzja",
       "linkedRuns": "Powiązane przebiegi",
-      "none": "brak"
+      "none": "brak",
+      "reportTypeClientReady": "Dla klienta",
+      "reportTypeInvestorReady": "Dla inwestora",
+      "reportTypeSteeringCommittee": "Dla komitetu sterującego",
+      "reportTypeCisoSecurity": "CISO / Bezpieczeństwo"
     },
     "confidence": "pewność"
   },

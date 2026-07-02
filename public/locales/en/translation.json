@@ -4078,7 +4078,8 @@
       "intangiblesToAdd": "Intangibles — to add",
       "noAdditionsForTable": "AI suggested no additions for this table.",
       "noMissingResources": "AI suggested no missing resources to add.",
-      "invalidAiFormat": "AI response has invalid format (cannot apply)."
+      "invalidAiFormat": "AI response has invalid format (cannot apply).",
+      "english": "English"
     },
     "timelinePlanner": {
       "initiativeStart": "Initiative Start",
@@ -4335,7 +4336,8 @@
       "requiredApproval": "Required approval",
       "requiredApprovalsForStatus": "Required approvals for status",
       "notRequested": "Not requested",
-      "allGatesPassed": "All gates passed!"
+      "allGatesPassed": "All gates passed!",
+      "english": "English"
     },
     "tasksMilestonesSection": {
       "aiReturnedNoTaskTitle": "AI returned no task title",
@@ -4403,7 +4405,8 @@
       "none": "— None —",
       "creating": "Creating...",
       "createTask": "Create task",
-      "done": "done"
+      "done": "done",
+      "english": "English"
     },
     "decisionsSection": {
       "missingInitiativeId": "Missing initiative ID",
@@ -4469,7 +4472,9 @@
       "none": "— None —",
       "creating": "Creating...",
       "createDecision": "Create decision",
-      "approved": "approved"
+      "approved": "approved",
+      "english": "English",
+      "gateDecisionRequiredBeforePromotion": "Gate decision — required before promotion"
     },
     "kpisSection": {
       "failedToLoadKpis": "Failed to load KPIs",
@@ -4522,7 +4527,8 @@
       "noKpisDefined": "No KPIs defined yet",
       "addFirstKpi": "Add your first KPI for this initiative.",
       "newKpi": "New KPI",
-      "noKpis": "No KPIs"
+      "noKpis": "No KPIs",
+      "english": "English"
     },
     "overviewSection": {
       "initiativeDescription": "Initiative Description",
@@ -4612,7 +4618,8 @@
       "control": "Control",
       "currentModule": "Current Module",
       "goTo": "Go to →",
-      "priority": "Priority"
+      "priority": "Priority",
+      "owner": "Owner"
     },
     "raidSection": {
       "convertedFrom": "Converted from {{type}}: {{title}}",
@@ -4678,7 +4685,8 @@
       "addSuccessCriteriaPlaceholder": "Add success criteria...",
       "deliverablesDescription": "Specific outputs and results to be delivered",
       "deliverablesListLabel": "Deliverables — list",
-      "addDeliverablePlaceholder": "Add deliverable..."
+      "addDeliverablePlaceholder": "Add deliverable...",
+      "english": "English"
     },
     "initiativeGatesWorkflowTable": {
       "stage": "Stage",
@@ -4739,7 +4747,8 @@
       "noAdditionsProposed": "No additions proposed.",
       "applyApiNote": "On apply we will add/remove the selected dependency links via API (no new tasks invented).",
       "cancel": "Cancel",
-      "apply": "Apply"
+      "apply": "Apply",
+      "english": "English"
     },
     "scopeSection": {
       "scopeAndKillCriteria": "Scope & Kill Criteria",
@@ -4975,6 +4984,25 @@
       "pickInitiative": "Select initiative",
       "empty": "No observability data.",
       "noLineage": "No lineage for the selected initiative."
+    },
+    "initiativeDocumentView": {
+      "less": "Less",
+      "more": "More",
+      "creatingMaterial": "Creating material…",
+      "materialReady": "Material ready",
+      "failedToCreateMaterial": "Failed to create material"
+    },
+    "initiativePreviewV3": {
+      "linkedFinanceModels": "Linked finance models",
+      "openInFinance": "Open in Finance",
+      "generate3QuickHintsWhatTo": "Generate 3 quick hints (what to do / risks / how to measure).",
+      "source": "Source",
+      "tasks": "Tasks",
+      "helpMeRefineThisInitiativeMissing": "Help me refine this initiative: missing fields, risks, KPIs, and next steps.",
+      "open": "Open",
+      "inModule": "In module",
+      "chat": "Chat",
+      "copyLink": "Copy link"
     }
   },
   "execution": {
@@ -14006,7 +14034,9 @@
       "fresh": "fresh",
       "notTracked": "not tracked",
       "error": "Error",
-      "noRunsYet": "No runs yet."
+      "noRunsYet": "No runs yet.",
+      "accessRevoked": "; access revoked",
+      "accessRevokedWithReason": "; access revoked ({{reason}})"
     },
     "unknown": "unknown",
     "tokenExpiry": "token expiry",
@@ -14104,7 +14134,11 @@
       "runFinalAcceptance": "Run final acceptance",
       "decision": "Decision",
       "linkedRuns": "Linked runs",
-      "none": "none"
+      "none": "none",
+      "reportTypeClientReady": "Client ready",
+      "reportTypeInvestorReady": "Investor ready",
+      "reportTypeSteeringCommittee": "Steering committee",
+      "reportTypeCisoSecurity": "CISO / Security"
     },
     "confidence": "confidence"
   },

@@ -161,7 +161,7 @@ export const InitiativePreviewV3Body: React.FC<{
         : []),
       {
         id: 'copy',
-        label: isPolish ? 'Kopiuj' : t('common.copy', 'Copy'),
+        label: t('common.copy', 'Copy'),
         icon: Copy,
         onClick: async () => {
           await handleCopy();
