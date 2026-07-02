@@ -23,7 +23,8 @@ Branch kodu: `reskin/wave-0-foundation`. Weryfikacja: `type-check` — moje 4 pl
 | Badge default crimson→neutral | `ui/badge.tsx` | 🟦 staged |
 | Powłoka root | `layouts/MainLayout.tsx` → bg-c-bg | 🟦 staged |
 | Powłoka wrapper hubów | `shared/ModuleHub/ModuleHub.tsx` → bg-c-bg | 🟦 staged |
-| Sidebar → tokeny | `navigation/Sidebar` | ⬜ |
+| Focus rings crimson→niebieski | `ui/select.tsx` + `ui/primitives/Dropdown.tsx` | 🟦 staged |
+| Sidebar → tokeny | `navigation/Sidebar` | ⛔ POMINIĘTE (Piotr zaakceptował sidebar; logo „77"=brand) |
 | ESLint token gate | (nowa reguła) | ⬜ |
 | selection=neutral (SYS-1) | shared row/FilterableTable | ⬜ |
 | Menu 2 pill (A-2) | ModuleMenu3/tabs | ⬜ |
