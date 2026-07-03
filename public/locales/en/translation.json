@@ -1,4 +1,66 @@
 {
+  "conclusions": {
+    "title": "Conclusions",
+    "subtitle": "Governed conclusions from your tools and assessments — verdict, rationale and evidence in one place.",
+    "verdict": "Verdict",
+    "nextAction": "Recommended next action",
+    "evidence": "Evidence",
+    "evidenceCount": "{{count}} evidence",
+    "noEvidence": "No evidence attached to this conclusion yet.",
+    "limits": "Limits & caveats",
+    "sources": "Sources",
+    "viewSource": "Source",
+    "context": "Captured context",
+    "conversions": "Generated from this conclusion",
+    "backToList": "All conclusions",
+    "source": {
+      "tool": "Discovery tool",
+      "assessment": "Assessment",
+      "siri": "SIRI assessment",
+      "adma": "ADMA assessment",
+      "interview": "Interview",
+      "readout": "Readout",
+      "other": "Other"
+    },
+    "confidence": {
+      "high": "High confidence",
+      "medium": "Medium confidence",
+      "low": "Low confidence",
+      "insufficient": "Insufficient evidence",
+      "contradicted": "Contradicted"
+    },
+    "status": {
+      "candidate": "Candidate",
+      "needs_evidence": "Needs evidence",
+      "needs_review": "Needs review",
+      "ready_for_readout": "Ready for readout",
+      "published": "Published",
+      "converted": "Converted",
+      "rejected": "Rejected"
+    },
+    "filter": {
+      "all": "All",
+      "clear": "Show all"
+    },
+    "empty": {
+      "title": "No conclusions yet",
+      "description": "Run a discovery tool or an assessment — its verdict lands here as a governed conclusion.",
+      "cta": "Open Tools",
+      "ctaAssessment": "Open Assessment"
+    },
+    "filterEmpty": {
+      "title": "No conclusions match this filter",
+      "description": "Clear the filter to see all conclusions."
+    },
+    "listError": {
+      "title": "Could not load conclusions",
+      "description": "Something went wrong. Check your connection and try again."
+    },
+    "detailError": {
+      "title": "Could not load this conclusion",
+      "description": "Something went wrong loading the readout. Try again."
+    }
+  },
   "layout": {
     "aiPanel": {
       "open": "Open AI panel",
@@ -1816,6 +1878,7 @@
     "benefits": "Benefits",
     "results": "Results",
     "economics": "Finance",
+    "conclusions": "Conclusions",
     "reports": "Reports",
     "reportsBuilder": "Report Builder",
     "reportsManagement": "Management Reports",

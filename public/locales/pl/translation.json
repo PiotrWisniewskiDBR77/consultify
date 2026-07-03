@@ -1,4 +1,66 @@
 {
+  "conclusions": {
+    "title": "Wnioski",
+    "subtitle": "Ugruntowane wnioski z Twoich narzędzi i ocen — werdykt, uzasadnienie i dowody w jednym miejscu.",
+    "verdict": "Werdykt",
+    "nextAction": "Rekomendowane następne działanie",
+    "evidence": "Dowody",
+    "evidenceCount": "{{count}} dowodów",
+    "noEvidence": "Do tego wniosku nie dołączono jeszcze dowodów.",
+    "limits": "Ograniczenia i zastrzeżenia",
+    "sources": "Źródła",
+    "viewSource": "Źródło",
+    "context": "Zapisany kontekst",
+    "conversions": "Wygenerowane z tego wniosku",
+    "backToList": "Wszystkie wnioski",
+    "source": {
+      "tool": "Narzędzie",
+      "assessment": "Ocena",
+      "siri": "Ocena SIRI",
+      "adma": "Ocena ADMA",
+      "interview": "Wywiad",
+      "readout": "Readout",
+      "other": "Inne"
+    },
+    "confidence": {
+      "high": "Wysoka pewność",
+      "medium": "Średnia pewność",
+      "low": "Niska pewność",
+      "insufficient": "Niewystarczające dowody",
+      "contradicted": "Podważony"
+    },
+    "status": {
+      "candidate": "Kandydat",
+      "needs_evidence": "Wymaga dowodów",
+      "needs_review": "Do przeglądu",
+      "ready_for_readout": "Gotowy do readoutu",
+      "published": "Opublikowany",
+      "converted": "Przekształcony",
+      "rejected": "Odrzucony"
+    },
+    "filter": {
+      "all": "Wszystkie",
+      "clear": "Pokaż wszystkie"
+    },
+    "empty": {
+      "title": "Brak wniosków",
+      "description": "Uruchom narzędzie lub ocenę — jej werdykt pojawi się tutaj jako ugruntowany wniosek.",
+      "cta": "Otwórz Narzędzia",
+      "ctaAssessment": "Otwórz Ocenę"
+    },
+    "filterEmpty": {
+      "title": "Żaden wniosek nie pasuje do filtra",
+      "description": "Wyczyść filtr, aby zobaczyć wszystkie wnioski."
+    },
+    "listError": {
+      "title": "Nie udało się wczytać wniosków",
+      "description": "Coś poszło nie tak. Sprawdź połączenie i spróbuj ponownie."
+    },
+    "detailError": {
+      "title": "Nie udało się wczytać tego wniosku",
+      "description": "Coś poszło nie tak podczas wczytywania readoutu. Spróbuj ponownie."
+    }
+  },
   "layout": {
     "aiPanel": {
       "open": "Otwórz panel AI",
@@ -1031,6 +1093,7 @@
     "benefits": "Korzyści",
     "results": "Resultaty",
     "economics": "Finanse",
+    "conclusions": "Wnioski",
     "reports": "Raporty",
     "reportsBuilder": "Kreator raportów",
     "reportsManagement": "Raporty zarządcze",

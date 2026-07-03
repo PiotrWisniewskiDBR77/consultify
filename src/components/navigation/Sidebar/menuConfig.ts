@@ -22,6 +22,7 @@ import {
   Factory,
   FileText,
   FolderOutput,
+  Gavel,
   GitBranch,
   LayoutDashboard,
   Lightbulb,
@@ -105,6 +106,16 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       label: t('sidebar.results', 'Results'),
       icon: React.createElement(TrendingUp, { size: 20 }),
       viewId: AppView.BENEFITS_REALIZATION,
+      badge: 'beta',
+    },
+    // 7.5 Wnioski (Conclusions) — governed conclusions layer. Sits after Results
+    // because conclusions are the answer-first verdicts (verdict/rationale/evidence)
+    // distilled from tools + assessments that feed readouts and downstream results.
+    {
+      id: 'MODULE_CONCLUSIONS',
+      label: t('sidebar.conclusions', 'Conclusions'),
+      icon: React.createElement(Gavel, { size: 20 }),
+      viewId: AppView.CONCLUSIONS,
       badge: 'beta',
     },
     // 8. Finanse - Financial Analysis v3
@@ -274,6 +285,7 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.MY_WORK]: t('myWork.title', 'My Work'),
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
+    [AppView.CONCLUSIONS]: t('sidebar.conclusions', 'Conclusions'),
     [AppView.PRESENTATIONS]: t('sidebar.materialy', 'Materiały'),
     [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentation Studio'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
