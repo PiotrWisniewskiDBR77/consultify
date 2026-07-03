@@ -40,6 +40,7 @@ import { StatusChip } from '../ui/primitives';
 import { BenefitsTrackingDashboard } from './BenefitsTrackingDashboard';
 import { BusinessCaseGenerator } from './BusinessCaseGenerator';
 import { CashFlowChart } from './CashFlowChart';
+import { useFinanceChartColors } from './financeChartTokens';
 import { FinancialInputForm } from './FinancialInputForm';
 import { FinancialMetricsPanel } from './FinancialMetricsPanel';
 import { InitiativeLinkingPanel } from './InitiativeLinkingPanel';
@@ -103,6 +104,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
   onUpdate,
 }) => {
   const navigate = useNavigate();
+  const chart = useFinanceChartColors();
   const [financialData, setFinancialData] = useState<FinancialData | null>(null);
   const [calculatedMetrics, setCalculatedMetrics] = useState<CalculatedMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -418,31 +420,31 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         'Initial Investment',
         baseData.initialInvestment,
         (data, factor) => ({ ...data, initialInvestment: data.initialInvestment * factor }),
-        '#f43f5e'
+        chart.cost
       ),
       generateSensitivityData(
         'annualCostSavings',
         'Annual Savings',
         baseData.annualCostSavings,
         (data, factor) => ({ ...data, annualCostSavings: data.annualCostSavings * factor }),
-        '#10b981'
+        chart.benefit
       ),
       generateSensitivityData(
         'discountRate',
         'Stopa dyskontowa',
         baseData.discountRate,
         (data, factor) => ({ ...data, discountRate: data.discountRate * factor }),
-        '#3b82f6'
+        chart.net
       ),
       generateSensitivityData(
         'annualOperatingCost',
         'Roczne costs operacyjne',
         baseData.annualOperatingCost,
         (data, factor) => ({ ...data, annualOperatingCost: data.annualOperatingCost * factor }),
-        '#f59e0b'
+        chart.warning
       ),
     ];
-  }, [financialData, calculatedMetrics, calculateMetrics]);
+  }, [financialData, calculatedMetrics, calculateMetrics, chart]);
 
   const SectionHeader: React.FC<{
     title: string;
