@@ -6,6 +6,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 interface FocusTradeoffActionHandlers {
   updateInputData: (data: Partial<FocusTradeoffData>) => void;
@@ -313,6 +314,7 @@ export function applyFocusTradeoffPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'focus-tradeoff-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

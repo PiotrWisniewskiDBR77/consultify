@@ -81,24 +81,30 @@ ${scoreLines}
 ${seqLines}
 
 W2 STRUCTURE (mandatory):
-1. "verdict" — answer-first, 1-2 sentences: which theme to start FIRST and why the prerequisite gates the rest.
-2. "rationale" — why, anchored in the theme sequence and archetypes above (cite theme ids).
-3. "tradeoffs" — >= 1: what we start AT THE COST of what deferred theme; the canonical rejected alternative is "start the flashiest theme first -> it stalls on a missing prerequisite".
-4. "moves" (3-5) — each a sequencing DECISION (foundation/accelerator/bet/enabler/validate-first), each with tradeOff + rejectedVariant + firstStep, linked to theme ids.
-5. "expectedEffect" — ambition-progress outcome, behaviorally observable, WITH a time horizon; no target values absent from the facts.
+1. "summary.verdict" — answer-first, 1-2 sentences: which theme to start FIRST and why the prerequisite gates the rest.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the theme sequence and archetypes above (cite theme ids).
+3. "summary.tradeoffs" — >= 1: what we start AT THE COST of what deferred theme; the canonical rejected alternative is "start the flashiest theme first -> it stalls on a missing prerequisite".
+4. "moves" (3-5) — each a sequencing DECISION (foundation/accelerator/bet/enabler/quick-win), each with its trade-off (chosen at the cost of what) and rejected variant folded into "rationale", plus firstStep, linked to theme ids.
+5. "summary.expectedEffect" — ambition-progress outcome, behaviorally observable, WITH a time horizon; no target values absent from the facts.
 
 QUALITY BARS:
 - The order and archetypes are the engine's — do not override them; numbers only from the facts block.
-- Zero filler; every sentence falsifiable — with a different decomposition it would read differently.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion"); every sentence falsifiable — with a different decomposition it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
 
 Return JSON:
 {
-  "verdict": "answer-first: which theme first and why it gates the rest",
-  "rationale": "why — anchored in the theme sequence and archetypes above",
-  "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
-  "moves": [{"title":"...","category":"foundation|accelerator|bet|enabler|validate-first","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedThemeIds":["theme-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
-  "expectedEffect": {"text":"ambition-progress outcome, behaviorally observable","horizon":"..."},
+  "summary": {
+    "verdict": "answer-first: which theme first and why it gates the rest",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the theme sequence and archetypes above",
+    "keyInsights": ["3 insights, each tied to named session elements"],
+    "appliedConclusions": ["where to start", "what to enable next", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"ambition-progress outcome, behaviorally observable","horizon":"..."}
+  },
+  "moves": [{"title":"...","category":"foundation|accelerator|bet|enabler|quick-win","rationale":"why — anchored in listed element ids; MUST name the trade-off (chosen at the cost of what) and the rejected variant","linkedPriorityIds":[],"linkedThemeIds":["theme-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
+  "initiatives": [{"title":"...","description":"...","type":"strategic|operational|defensive|growth","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":["theme-id"]}],
+  "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedThemeIds":["theme-id"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}],
   "selfCheck": {"signature":"pass|fail","formulaComplete":"pass|fail","numbersFromFacts":"pass|fail","falsifiable":"pass|fail","tradeoffPresent":"pass|fail","effectHasHorizon":"pass|fail"}
 }`;
 }

@@ -6,6 +6,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 interface CapabilityMapperActionHandlers {
   updateInputData: (data: Partial<CapabilityMapperData>) => void;
@@ -321,6 +322,7 @@ export function applyCapabilityMapperPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'capability-mapper-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

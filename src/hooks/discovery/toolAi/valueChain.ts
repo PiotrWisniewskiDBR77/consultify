@@ -17,6 +17,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 const ACTIVITY_IDS: ValueActivityId[] = [
   'inboundLogistics',
@@ -480,6 +481,7 @@ export function applyValueChainPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'value-chain-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

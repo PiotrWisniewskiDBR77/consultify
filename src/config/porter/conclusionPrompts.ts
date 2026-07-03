@@ -111,24 +111,30 @@ ${forceLines}
 ${buildPorterMoveConclusionPromptRules(isPolish ? 'pl' : 'en')}
 
 W2 STRUCTURE (mandatory):
-1. "verdict" — answer-first, 1-2 sentences: what this five-forces structure means for the client's margin DECISION (where to defend, where to reposition). Lead with the dominant force, not an average.
-2. "rationale" — why, anchored in the dominant/favorable forces and their implications above.
-3. "tradeoffs" — >= 1 at recommendation level: what we choose AT THE COST of what; which option was rejected and why.
-4. "moves" (3-5) — each a strategic RESPONSE (defend/reposition/build-barrier/change-scope), each with tradeOff + rejectedVariant + firstStep.
-5. "expectedEffect" — margin/positioning change, behaviorally observable, WITH a time horizon; no amounts absent from the facts.
+1. "summary.verdict" — answer-first, 1-2 sentences: what this five-forces structure means for the client's margin DECISION (where to defend, where to reposition). Lead with the dominant force, not an average.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the dominant/favorable forces and their implications above.
+3. "summary.tradeoffs" — >= 1 at recommendation level: what we choose AT THE COST of what; which option was rejected and why.
+4. "moves" (3-5) — each a strategic RESPONSE (defend/reposition/build-barrier/change-scope), each with tradeoff {chosen, deferred, cost} + rejectedAlternative {option, reason} + firstStep.
+5. "summary.expectedEffect" — margin/positioning change, behaviorally observable, WITH a time horizon; no amounts absent from the facts.
 
 QUALITY BARS:
 - Numbers exclusively from the facts block; forces marked "declared" flagged "as declared, to be confirmed".
-- Zero filler; every sentence falsifiable — with opposite forces it would read differently.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion"); every sentence falsifiable — with opposite forces it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
 
 Return JSON:
 {
-  "verdict": "answer-first, 1-2 sentences: what this analysis means for the margin decision",
-  "rationale": "why — anchored in the dominant/favorable forces above",
-  "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
-  "moves": [{"title":"...","category":"defend-position|reposition|build-barrier|change-scope|partner","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedForceIds":["buyerPower"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
-  "expectedEffect": {"text":"margin/positioning change, behaviorally observable","horizon":"..."},
+  "summary": {
+    "verdict": "answer-first, 1-2 sentences: what this analysis means for the margin decision",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the dominant/favorable forces above",
+    "keyInsights": ["3 insights, each tied to named session elements"],
+    "appliedConclusions": ["where to defend margin", "where to reposition", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"margin/positioning change, behaviorally observable","horizon":"..."}
+  },
+  "moves": [{"title":"...","category":"positioning|pricing|partnership|capability-build|defensive-move","rationale":"why — anchored in the named forces","linkedForceIds":["buyerPower"],"linkedImplicationIds":[],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
+  "initiatives": [{"title":"...","description":"...","type":"strategic|defensive|growth","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":["buyerPower"]}],
+  "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedForceIds":["buyerPower"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}],
   "selfCheck": {"signature":"pass|fail","formulaComplete":"pass|fail","numbersFromFacts":"pass|fail","falsifiable":"pass|fail","tradeoffPresent":"pass|fail","effectHasHorizon":"pass|fail"}
 }`;
 }

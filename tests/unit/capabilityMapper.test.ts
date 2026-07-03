@@ -194,7 +194,7 @@ describe('Capability Mapper engine — conclusion bridge', () => {
     expect(prompt).toContain('W2 SOURCING SEQUENCE');
     expect(prompt).toContain('rejected variant');
     expect(prompt).toContain('"tradeoffs"');
-    expect(prompt).toContain('"rejectedVariant"');
+    expect(prompt).toContain('"initiatives"');
   });
 
   it('synthesizeCapabilityMap returns a consistent ranking + sequence', () => {

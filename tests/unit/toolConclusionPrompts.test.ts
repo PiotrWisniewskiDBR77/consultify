@@ -25,21 +25,27 @@ import type {
 } from '../../src/store/useToolStore';
 
 // --- W2 contract assertion shared across the three tools ---------------------
+// The W2 fields are nested under "summary" so the tool appliers actually
+// persist them (OXFORD #102: the old top-level verdict/tradeoffs were silently
+// dropped by every applier — the user saw an empty executive summary).
 const expectW2Prompt = (prompt: string | null) => {
   expect(prompt).toBeTruthy();
   const p = prompt as string;
-  // The four W2 fields the standard requires in the JSON contract.
+  // The W2 fields the standard requires, in the persisted (nested) contract.
+  expect(p).toContain('"summary"');
   expect(p).toContain('"verdict"');
+  expect(p).toContain('"executiveSummary"');
   expect(p).toContain('"tradeoffs"');
   expect(p).toContain('"moves"');
   expect(p).toContain('"expectedEffect"');
-  // Trade-off is mandatory in W2 (a recommendation without one is a list):
-  // the tradeoffs[] field plus a per-move tradeOff.
-  expect(p).toContain('tradeoffs');
-  expect(p).toContain('tradeOff');
-  // Each move must carry a first step + rejected variant.
+  // Downstream artifacts the appliers read on finalize.
+  expect(p).toContain('"initiatives"');
+  expect(p).toContain('"outputCandidates"');
+  // Each move must carry a first step + name its rejected alternative
+  // (structured object where the applier supports it, folded into the
+  // rationale otherwise).
   expect(p).toContain('firstStep');
-  expect(p).toContain('rejectedVariant');
+  expect(p).toMatch(/rejectedAlternative|rejected variant/);
   // Self-check (adversarial DoD) is emitted.
   expect(p).toContain('selfCheck');
 };
