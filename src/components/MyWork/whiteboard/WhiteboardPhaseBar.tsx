@@ -87,7 +87,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
                   isCurrent
                     ? 'bg-c-surface-raised text-c-text ring-1 ring-c-border-strong'
                     : isCompleted
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      ? 'bg-success-500/10 text-success-600 dark:text-success-400'
                       : 'text-c-text-muted hover:bg-c-surface-raised'
                 }`}
               >

@@ -6,8 +6,8 @@ import { DEFAULT_LANE_COLOR } from '../FlowNodeComponent';
 
 const STATUS_COLORS: Record<string, string> = {
   todo: "bg-c-border-strong",
-  in_progress: 'bg-blue-500',
-  done: 'bg-green-500',
+  in_progress: 'bg-c-info',
+  done: 'bg-success-500',
   blocked: 'bg-danger-500',
 };
 
@@ -61,9 +61,9 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
         <div
           className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black ${
             data.automationPotential === 'high'
-              ? 'bg-emerald-500 text-white'
+              ? 'bg-success-500 text-white'
               : data.automationPotential === 'medium'
-                ? 'bg-amber-500 text-white'
+                ? 'bg-warning-500 text-white'
                 : 'bg-c-text-muted text-white'
           }`}
           title={`Automation: ${data.automationPotential || 'low'}`}
@@ -82,7 +82,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-primary-400 w-full"
+          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
         />
       ) : (
         <div className="text-xs font-medium text-c-text text-center">
@@ -93,18 +93,21 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
       {hasMetrics && (
         <div className="flex items-center gap-1 mt-1">
           {data?.duration && (
-            <span className="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[8px] font-bold text-blue-700 dark:text-blue-300">
+            <span
+              className="px-1.5 py-0.5 rounded-full text-[8px] font-bold text-c-info"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--c-info) 16%, transparent)' }}
+            >
               {data.duration}
               {data.durationUnit || 'h'}
             </span>
           )}
           {data?.cost && (
-            <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[8px] font-bold text-emerald-700 dark:text-emerald-300">
+            <span className="px-1.5 py-0.5 rounded-full bg-success-100 dark:bg-success-900/40 text-[8px] font-bold text-success-700 dark:text-success-300">
               ${data.cost}
             </span>
           )}
           {data?.fteCount && (
-            <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-[8px] font-bold text-primary-700 dark:text-primary-300">
+            <span className="px-1.5 py-0.5 rounded-full bg-c-accent-soft text-[8px] font-bold text-c-accent">
               {data.fteCount} FTE
             </span>
           )}

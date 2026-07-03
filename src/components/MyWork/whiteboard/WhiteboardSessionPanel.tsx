@@ -82,7 +82,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
               : t('myWork.whiteboard.sessionPanel.followOff')}
           </span>
           {sessionState.spotlightNodeId && (
-            <span className="px-2 py-1 rounded-full bg-amber-500/10 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+            <span className="px-2 py-1 rounded-full bg-warning-500/10 text-[10px] font-medium text-warning-700 dark:text-warning-300">
               {t('myWork.whiteboard.sessionPanel.spotlightActive')}
             </span>
           )}

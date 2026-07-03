@@ -38,15 +38,15 @@ const panelShell =
 function stepIcon(type: ReadbackStep['type']) {
   switch (type) {
     case 'start':
-      return { Icon: Play, className: 'text-emerald-600 dark:text-emerald-400' };
+      return { Icon: Play, className: 'text-success-600 dark:text-success-400' };
     case 'end':
       return { Icon: Square, className: 'text-danger-600 dark:text-danger-400' };
     case 'decision':
-      return { Icon: GitBranch, className: 'text-amber-600 dark:text-amber-400' };
+      return { Icon: GitBranch, className: 'text-warning-600 dark:text-warning-400' };
     case 'parallel_split':
-      return { Icon: Split, className: 'text-primary-600 dark:text-primary-400' };
+      return { Icon: Split, className: 'text-c-accent' };
     case 'parallel_join':
-      return { Icon: Merge, className: 'text-primary-600 dark:text-primary-400' };
+      return { Icon: Merge, className: 'text-c-accent' };
     case 'step':
     default:
       return { Icon: ChevronRight, className: 'text-c-text-muted' };
@@ -131,7 +131,7 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
 
       {isLoading && !hasPaths ? (
         <div className="flex items-center justify-center gap-2 py-10 text-c-text-muted">
-          <Loader2 size={20} className="animate-spin text-primary-600 dark:text-primary-400" />
+          <Loader2 size={20} className="animate-spin text-c-accent" />
         </div>
       ) : null}
 
@@ -152,8 +152,8 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
       ) : null}
 
       {result?.warnings && result.warnings.length > 0 ? (
-        <div className="rounded-lg border border-amber-200/70 bg-amber-50/60 p-2.5 dark:border-amber-500/25 dark:bg-amber-950/20">
-          <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800 dark:text-amber-200">
+        <div className="rounded-lg border border-warning-200/70 bg-warning-50/60 p-2.5 dark:border-warning-500/25 dark:bg-warning-950/20">
+          <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-warning-800 dark:text-warning-200">
             <AlertTriangle size={12} />
             {t.warnings}
           </div>
@@ -161,7 +161,7 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
             {result.warnings.map((w, i) => (
               <li
                 key={i}
-                className="flex items-start gap-1.5 text-[11px] text-amber-900 dark:text-amber-100/90"
+                className="flex items-start gap-1.5 text-[11px] text-warning-900 dark:text-warning-100/90"
               >
                 <AlertTriangle size={12} className="mt-0.5 shrink-0 opacity-70" />
                 <span>{w}</span>

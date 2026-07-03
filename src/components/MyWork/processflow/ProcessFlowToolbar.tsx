@@ -261,7 +261,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   aria-label={tooltip}
                   className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
                     flowMode === mode
-                      ? 'bg-c-surface text-primary-600 dark:text-primary-400 shadow-sm'
+                      ? 'bg-c-surface text-c-accent shadow-sm'
                       : 'text-c-text-muted hover:text-c-text-secondary'
                   }`}
                 >
@@ -272,7 +272,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           </div>
           {kitLabel && (
             <span
-              className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-300"
+              className="inline-flex items-center rounded-full bg-c-accent-soft px-2 py-0.5 text-[10px] font-medium text-c-accent"
               title={isPl ? 'Zestaw notacji ustawiony z czatu' : 'Notation kit set from chat'}
             >
               {kitLabel}
@@ -290,8 +290,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           <span
             className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium ${
               warnings.length > 0
-                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
-                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                ? 'bg-warning-500/10 text-warning-600 dark:text-warning-300'
+                : 'bg-success-500/10 text-success-600 dark:text-success-300'
             }`}
           >
             {warnings.length > 0
@@ -380,7 +380,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               onClick={() => setShowKPIDashboard((v) => !v)}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                 showKPIDashboard
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                  ? 'text-c-accent bg-c-accent-soft'
                   : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
               title="KPI Dashboard"
@@ -393,8 +393,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               onClick={runValidation}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                 showWarnings
-                  ? 'text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-300'
-                  : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                  ? 'text-warning-700 bg-warning-50 dark:bg-warning-900/20 dark:text-warning-300'
+                  : 'text-warning-600 dark:text-warning-400 hover:bg-warning-50 dark:hover:bg-warning-900/20'
               }`}
               title={isPl ? 'Waliduj przepływ' : 'Validate flow'}
             >
@@ -407,8 +407,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={locked || coachLoading}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
                 showCoach
-                  ? 'text-primary-700 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-300'
-                  : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                  ? 'text-c-accent bg-c-accent-soft'
+                  : 'text-c-accent hover:bg-c-accent-soft dark:hover:brightness-110'
               }`}
               title="AI Coach"
             >
@@ -425,8 +425,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={locked || summaryLoading}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
                 showSummary
-                  ? 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-300'
-                  : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                  ? 'text-success-700 bg-success-50 dark:bg-success-900/20 dark:text-success-300'
+                  : 'text-success-600 dark:text-success-400 hover:bg-success-50 dark:hover:bg-success-900/20'
               }`}
               title={isPl ? 'Podsumowanie' : 'Summary'}
             >
@@ -442,7 +442,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 type="button"
                 onClick={onAIProposal}
                 disabled={locked}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-tag-2 hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                 title={isPl ? 'Propozycja AI — zmiany w przepływie' : 'AI Proposal — flow edits'}
               >
                 <Sparkles size={14} />
@@ -453,7 +453,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               <button
                 type="button"
                 onClick={onReadback}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-info hover:bg-c-surface-raised transition-colors"
                 title={isPl ? 'Odczyt semantyczny przepływu' : 'Semantic readback of the flow'}
               >
                 <ScanText size={14} />

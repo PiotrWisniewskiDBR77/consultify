@@ -108,7 +108,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
         >
           <Link2 size={14} />
           {linkCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full bg-indigo-500 text-white text-[8px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full bg-c-tag-2 text-white text-[8px] font-bold flex items-center justify-center">
               {linkCount}
             </span>
           )}

@@ -45,7 +45,7 @@ export const BPMNEndNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
       </svg>
 
       {selected && (
-        <div className="absolute inset-0 rounded-full ring-2 ring-primary-500/60 pointer-events-none" />
+        <div className="absolute inset-0 rounded-full ring-2 ring-c-accent pointer-events-none" />
       )}
 
       <div className="mt-1 min-w-[40px] text-center">
@@ -59,7 +59,7 @@ export const BPMNEndNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-primary-400 w-full"
+            className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
           />
         ) : (
           <span className="text-xs font-medium text-c-text">

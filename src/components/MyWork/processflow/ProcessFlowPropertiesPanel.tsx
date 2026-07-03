@@ -5,7 +5,7 @@ import type { Edge, Node } from 'reactflow';
 import { CONDITION_TYPES } from './FlowEdgeComponent';
 
 const inputClass =
-  'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:ring-2 focus:ring-blue-500/40 outline-none';
+  'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:ring-2 focus:ring-c-info outline-none';
 
 const sectionHeaderClass =
   'text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-2';
@@ -255,7 +255,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               <input
                 type="radio"
                 name="gateway-kind"
-                className="text-primary-600 focus:ring-blue-500/40"
+                className="text-c-accent focus:ring-c-info"
                 checked={gatewayKind === 'xor'}
                 disabled={locked}
                 onChange={() => onGatewayKindChange(selectedNode.id, 'xor')}
@@ -266,7 +266,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
               <input
                 type="radio"
                 name="gateway-kind"
-                className="text-primary-600 focus:ring-blue-500/40"
+                className="text-c-accent focus:ring-c-info"
                 checked={gatewayKind === 'and'}
                 disabled={locked}
                 onChange={() => onGatewayKindChange(selectedNode.id, 'and')}

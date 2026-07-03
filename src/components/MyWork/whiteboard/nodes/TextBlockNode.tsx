@@ -66,7 +66,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
         )}
         {Array.isArray(data?.artifactLinks) && data.artifactLinks.length > 0 && (
           <div
-            className="absolute -bottom-2 -left-2 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white text-[8px] font-bold shadow-sm cursor-pointer hover:bg-indigo-600 transition-colors"
+            className="absolute -bottom-2 -left-2 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-c-tag-2 text-white text-[8px] font-bold shadow-sm cursor-pointer hover:bg-c-tag-2 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               window.dispatchEvent(
@@ -82,7 +82,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
         )}
         {data?._converted && (
           <div
-            className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[8px] shadow-sm"
+            className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-success-500 text-white text-[8px] shadow-sm"
             title="Converted"
           >
             ✓

@@ -16,14 +16,14 @@ interface HealthMetric {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 50) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 80) return 'text-success-600 dark:text-success-400';
+  if (score >= 50) return 'text-warning-600 dark:text-warning-400';
   return 'text-danger-500 dark:text-danger-400';
 }
 
 function scoreBg(score: number): string {
-  if (score >= 80) return 'bg-emerald-500';
-  if (score >= 50) return 'bg-amber-500';
+  if (score >= 80) return 'bg-success-500';
+  if (score >= 50) return 'bg-warning-500';
   return 'bg-danger-500';
 }
 
@@ -189,9 +189,9 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
           {metrics.map((m) => (
             <div key={m.key} className="flex items-center gap-2">
               {m.score >= 80 ? (
-                <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" />
+                <CheckCircle2 size={12} className="text-success-500 flex-shrink-0" />
               ) : m.score >= 50 ? (
-                <Activity size={12} className="text-amber-500 flex-shrink-0" />
+                <Activity size={12} className="text-warning-500 flex-shrink-0" />
               ) : (
                 <AlertTriangle size={12} className="text-danger-500 flex-shrink-0" />
               )}

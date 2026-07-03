@@ -44,14 +44,15 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
               </button>
               <button
                 onClick={() => onSeedQuickStart('affinity')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all"
+                style={{ backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)' }}
               >
                 <Layers size={14} />
                 Affinity map
               </button>
               <button
                 onClick={() => onSeedQuickStart('workshop')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-warning-500/10 text-warning-600 dark:text-warning-400 hover:bg-warning-500/20 transition-colors"
               >
                 <LayoutGrid size={14} />
                 Workshop wall
@@ -59,7 +60,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
             </div>
             <button
               onClick={onAddSticky}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface dark:bg-[#F4F7FB] text-white hover:bg-c-surface-raised transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-accent text-white hover:brightness-110 transition-all"
             >
               <Plus size={14} />
               {t('myWork.whiteboard.empty.addSticky')}

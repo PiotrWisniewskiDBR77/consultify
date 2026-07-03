@@ -37,8 +37,10 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
     if (data?.onLabelChange && editValue !== data?.label) data.onLabelChange(editValue);
   };
 
-  const edgeColor = data?.color || (selected ? '#6366f1' : '#94a3b8');
-  const edgeColorEnd = data?.colorEnd || (selected ? '#6366f1' : '#cbd5e1');
+  // Selected edges use the periwinkle identity token; idle edges use neutral
+  // border tokens. CSS vars resolve inside SVG stroke/gradient, theme-aware.
+  const edgeColor = data?.color || (selected ? 'var(--c-tag-2)' : 'var(--c-border-strong)');
+  const edgeColorEnd = data?.colorEnd || (selected ? 'var(--c-tag-2)' : 'var(--c-border)');
   const gradientId = `edge-gradient-${id}`;
 
   return (

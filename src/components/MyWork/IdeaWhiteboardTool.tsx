@@ -383,7 +383,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         {...getIdeasToolInteractionProps('whiteboard', { locked })}
         deleteKeyCode={null}
         fitView
-        className="bg-c-surface-raised dark:bg-[#0b1020]"
+        className="bg-c-surface-raised"
         defaultEdgeOptions={{ type: 'labeled' }}
         onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
           onViewportChange?.(viewport)
@@ -414,23 +414,24 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
               if (n.type === 'kpiBadge') {
                 const s = n.data?.status;
                 return s === 'on_track'
-                  ? '#34d399'
+                  ? 'var(--c-success)'
                   : s === 'off_track'
-                    ? '#f87171'
+                    ? 'var(--c-danger)'
                     : s === 'at_risk'
-                      ? '#fbbf24'
-                      : '#94a3b8';
+                      ? 'var(--c-warning)'
+                      : 'var(--c-text-muted)';
               }
-              if (n.type === 'scoreNode') return '#6366f1';
-              if (n.type === 'progressNode') return '#60a5fa';
-              if (n.type === 'summaryCard') return '#a78bfa';
-              if (n.type === 'frameNode') return isDarkCanvas ? '#0f172a' : '#f1f5f9';
-              if (n.type === 'shapeNode') return n.data?.bgColor || '#e0e7ff';
-              if (n.type === 'groupNode') return isDarkCanvas ? '#1e1b4b' : '#f8fafc';
-              return isDarkCanvas ? '#1e293b' : '#e2e8f0';
+              if (n.type === 'scoreNode') return 'var(--c-tag-2)';
+              if (n.type === 'progressNode') return 'var(--c-info)';
+              if (n.type === 'summaryCard') return 'var(--c-tag-3)';
+              if (n.type === 'frameNode') return 'var(--c-surface-raised)';
+              if (n.type === 'shapeNode')
+                return n.data?.bgColor || 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)';
+              if (n.type === 'groupNode') return 'var(--c-surface)';
+              return 'var(--c-border-subtle)';
             }}
             maskColor={isDarkCanvas ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}
-            className="!bg-c-surface dark:!bg-c-surface !border-c-border-subtle dark:!border-white/[0.06] !rounded-xl"
+            className="!bg-c-surface !border-c-border-subtle !rounded-xl"
           />
         )}
         <CanvasZoomControls

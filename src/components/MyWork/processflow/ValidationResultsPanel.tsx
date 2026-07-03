@@ -42,7 +42,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
 
   const validBadge =
     result && result.valid ? (
-      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+      <span className="rounded-full bg-success-100 px-2 py-0.5 text-xs font-semibold text-success-800 dark:bg-success-900/40 dark:text-success-200">
         {isPl ? 'Poprawny' : 'Valid'}
       </span>
     ) : result && !result.valid ? (
@@ -84,7 +84,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
             {isPl ? 'Uruchom walidację, aby zobaczyć wyniki.' : 'Run validation to see results.'}
           </p>
         ) : result.issues.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-emerald-600 dark:text-emerald-400">
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-success-600 dark:text-success-400">
             <CheckCircle2 className="h-10 w-10" strokeWidth={1.5} />
             <p className="text-sm font-medium">{isPl ? 'Brak problemów' : 'No issues found'}</p>
             {result.validated_at && (
@@ -117,7 +117,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                       const iconClass =
                         issue.severity === 'error'
                           ? 'text-danger-500 dark:text-danger-400'
-                          : 'text-amber-500 dark:text-amber-400';
+                          : 'text-warning-500 dark:text-warning-400';
                       const rowClass = `flex w-full items-start gap-2 rounded-lg border border-transparent px-2 py-2 text-left text-xs ${
                         clickable
                           ? 'cursor-pointer hover:border-c-border-subtle hover:bg-c-surface-raised'

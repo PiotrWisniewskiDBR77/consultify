@@ -115,7 +115,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
                 if (e.key === 'Enter') commitEdit();
                 if (e.key === 'Escape') setEditing(false);
               }}
-              className="w-full text-[9px] font-medium text-center bg-c-surface border border-primary-400 rounded px-1 outline-none"
+              className="w-full text-[9px] font-medium text-center bg-c-surface border border-c-accent rounded px-1 outline-none"
             />
             <select
               value={conditionType}
@@ -134,7 +134,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
           </div>
         ) : (
           <div
-            className="text-[9px] font-medium text-c-text-secondary text-center cursor-pointer hover:text-primary-600 truncate"
+            className="text-[9px] font-medium text-c-text-secondary text-center cursor-pointer hover:text-c-accent truncate"
             onDoubleClick={(e) => {
               e.stopPropagation();
               if (edgeLocked) return;

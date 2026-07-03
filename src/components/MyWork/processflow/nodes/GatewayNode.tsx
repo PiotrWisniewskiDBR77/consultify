@@ -64,7 +64,7 @@ export const GatewayNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
 
       {selected && (
         <div
-          className="absolute top-0 left-0 w-[50px] h-[50px] ring-2 ring-primary-500/60 pointer-events-none"
+          className="absolute top-0 left-0 w-[50px] h-[50px] ring-2 ring-c-accent pointer-events-none"
           style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}
         />
       )}
@@ -80,7 +80,7 @@ export const GatewayNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-primary-400 w-full"
+            className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
           />
         ) : (
           <span className="text-xs font-medium text-c-text">

@@ -69,7 +69,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               disabled={isExporting}
               className="w-full justify-start gap-3 rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 hover:bg-c-surface-raised h-auto text-left"
             >
-              <div className="text-primary-500 flex-shrink-0">{f.icon}</div>
+              <div className="text-c-accent flex-shrink-0">{f.icon}</div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-c-text">
                   {f.title}

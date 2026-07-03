@@ -30,8 +30,13 @@ export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
             <div className="text-[10px] mt-1">{data?.label || 'Image'}</div>
           </div>
         )}
+        {/* Caption scrim sits over an arbitrary photo, so it stays a fixed
+            dark wash (theme-independent) with white text for legibility. */}
         {data?.label && imgSrc && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[10px] px-2 py-1 truncate">
+          <div
+            className="absolute bottom-0 left-0 right-0 text-white text-[10px] px-2 py-1 truncate"
+            style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+          >
             {data.label}
           </div>
         )}

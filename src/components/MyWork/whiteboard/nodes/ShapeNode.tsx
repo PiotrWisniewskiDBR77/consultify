@@ -6,8 +6,12 @@ import { darkenHex, hexToGlow, useIsDark } from './whiteboardNodeHelpers';
 export const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
   const isDark = useIsDark();
   const shape = data?.shape || 'rectangle';
-  const lightBg = data?.bgColor || '#e0e7ff';
-  const darkBg = data?.bgColor ? darkenHex(data.bgColor, 0.7) : '#1e1b4b';
+  // Default shape fill = periwinkle identity token (theme-aware); a user-picked
+  // data.bgColor is still a raw hex, darkened for dark mode via darkenHex.
+  const lightBg = data?.bgColor || 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)';
+  const darkBg = data?.bgColor
+    ? darkenHex(data.bgColor, 0.7)
+    : 'color-mix(in srgb, var(--c-tag-2) 24%, transparent)';
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const inputRef = React.useRef<HTMLInputElement>(null);
