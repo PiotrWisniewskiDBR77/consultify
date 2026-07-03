@@ -16,7 +16,6 @@ import {
   FolderOpen,
   GitCompare,
   History,
-  Loader2,
   Plus,
   Sparkles,
   Target,
@@ -26,6 +25,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 
 import {
@@ -456,8 +456,8 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     }
@@ -514,18 +514,15 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
 
       if (approvedAnalyses.length === 0) {
         return (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <BarChart3 className="w-16 h-16 text-c-text-muted mb-4" />
-            <h3 className="text-lg font-semibold text-c-text mb-2">
-              {t('economics.empty.noCompleted', 'No completed analyses')}
-            </h3>
-            <p className="text-sm text-c-text-muted mb-6">
-              {t(
-                'economics.empty.completeToSee',
-                'Complete analyses to see results and recommendations.'
-              )}
-            </p>
-          </div>
+          <EmptyState
+            variant="new"
+            icon={BarChart3}
+            title={t('economics.empty.noCompleted', 'No completed analyses')}
+            description={t(
+              'economics.empty.completeToSee',
+              'Complete analyses to see results and recommendations.'
+            )}
+          />
         );
       }
 
