@@ -25,8 +25,8 @@ import {
 } from '@/services/api/conclusions.api';
 
 import { ConclusionCard } from './ConclusionCard';
-import { ConclusionReadout } from './ConclusionReadout';
 import { sourceLabel } from './conclusionMeta';
+import { ConclusionReadout } from './ConclusionReadout';
 
 type LoadState = 'loading' | 'ready' | 'error';
 

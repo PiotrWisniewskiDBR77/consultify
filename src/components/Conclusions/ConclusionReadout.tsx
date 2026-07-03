@@ -26,9 +26,7 @@ import {
 } from './conclusionMeta';
 
 const Chip: React.FC<{ tone: string; children: React.ReactNode }> = ({ tone, children }) => (
-  <span
-    className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}
-  >
+  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}>
     {children}
   </span>
 );
@@ -119,7 +117,9 @@ export const ConclusionReadout: React.FC<{
       {/* Limits */}
       <div className="mt-4 rounded-xl border border-[var(--c-border-subtle)] bg-[var(--c-surface)] p-6">
         <SectionTitle>{t('conclusions.limits', 'Limits & caveats')}</SectionTitle>
-        <p className="text-sm leading-relaxed text-[var(--c-text-secondary)]">{conclusion.limits}</p>
+        <p className="text-sm leading-relaxed text-[var(--c-text-secondary)]">
+          {conclusion.limits}
+        </p>
       </div>
 
       {/* Source links */}
@@ -168,7 +168,9 @@ export const ConclusionReadout: React.FC<{
       {/* Downstream conversions */}
       {conversions.length > 0 && (
         <div className="mt-4 rounded-xl border border-[var(--c-border-subtle)] bg-[var(--c-surface)] p-6">
-          <SectionTitle>{t('conclusions.conversions', 'Generated from this conclusion')}</SectionTitle>
+          <SectionTitle>
+            {t('conclusions.conversions', 'Generated from this conclusion')}
+          </SectionTitle>
           <ul className="space-y-1.5">
             {conversions.map((conv) => (
               <li

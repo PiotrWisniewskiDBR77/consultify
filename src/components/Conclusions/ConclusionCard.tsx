@@ -25,9 +25,7 @@ import {
 } from './conclusionMeta';
 
 const Chip: React.FC<{ tone: string; children: React.ReactNode }> = ({ tone, children }) => (
-  <span
-    className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}
-  >
+  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}>
     {children}
   </span>
 );
