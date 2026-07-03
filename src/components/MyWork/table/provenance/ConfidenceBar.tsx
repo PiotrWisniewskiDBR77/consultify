@@ -37,11 +37,15 @@ function clamp01(n: number | null | undefined): number {
   return n;
 }
 
+function tint(varName: string): string {
+  return `color-mix(in srgb, var(${varName}) 18%, transparent)`;
+}
+
 function pickColor(score: number): { bg: string; fg: string } {
-  if (score < 0.4) return { bg: '#fee2e2', fg: '#b91c1c' };
-  if (score < 0.65) return { bg: '#fef3c7', fg: '#92400e' };
-  if (score < 0.85) return { bg: '#dcfce7', fg: '#166534' };
-  return { bg: '#bbf7d0', fg: '#14532d' };
+  if (score < 0.4) return { bg: tint('--c-danger'), fg: 'var(--c-danger)' };
+  if (score < 0.65) return { bg: tint('--c-warning'), fg: 'var(--c-warning)' };
+  if (score < 0.85) return { bg: tint('--c-success'), fg: 'var(--c-success)' };
+  return { bg: tint('--c-success'), fg: 'var(--c-success)' };
 }
 
 export const ConfidenceBar: React.FC<ConfidenceBarProps> = ({
@@ -55,7 +59,9 @@ export const ConfidenceBar: React.FC<ConfidenceBarProps> = ({
   const hasScore = score !== null && score !== undefined && Number.isFinite(score);
   const value = hasScore ? clamp01(score) : 0;
   const percent = hasScore ? Math.round(value * 100) : null;
-  const palette = hasScore ? pickColor(value) : { bg: '#e2e8f0', fg: '#64748b' };
+  const palette = hasScore
+    ? pickColor(value)
+    : { bg: 'var(--c-surface-raised)', fg: 'var(--c-text-muted)' };
 
   const ariaLabel = hasScore
     ? `${t('confidence.aria', { defaultValue: 'AI confidence' })}: ${percent}%`
@@ -108,7 +114,7 @@ export const ConfidenceBar: React.FC<ConfidenceBarProps> = ({
       <button
         type="button"
         onClick={onClick}
-        className="inline-flex items-center hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded-md"
+        className="inline-flex items-center hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-c-focus rounded-md"
         aria-label={ariaLabel}
         data-testid={`${testId}-button`}
       >
