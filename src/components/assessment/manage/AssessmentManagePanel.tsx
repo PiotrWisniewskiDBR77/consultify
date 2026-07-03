@@ -809,7 +809,7 @@ export function AssessmentManagePanel(props: {
                               setRequestBusyId(null);
                             }
                           }}
-                          className="h-8 px-3 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-[12px] font-semibold transition-colors"
+                          className="h-8 px-3 rounded-lg bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg text-[12px] font-semibold transition-colors"
                         >
                           {requestBusyId === r.id ? 'Working…' : 'Approve'}
                         </button>

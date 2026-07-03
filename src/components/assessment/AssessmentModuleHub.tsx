@@ -1090,7 +1090,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                     }
                                     ${
                                       isActive
-                                        ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20'
+                                        ? 'bg-c-text text-c-bg shadow-md shadow-black/10'
                                         : 'bg-white dark:bg-navy-900 text-c-text-secondary active:bg-slate-100 dark:active:bg-white/10 border border-c-border-subtle'
                                     }
                                 `}
@@ -1126,7 +1126,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                         ${isCompact ? 'px-2.5 py-1' : 'px-3 py-1'} text-xs
                                         ${
                                           selectedAxis === 'dashboard'
-                                            ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
+                                            ? 'bg-c-text text-c-bg shadow-sm shadow-black/10'
                                             : 'bg-white dark:bg-navy-900 text-c-text-secondary active:bg-primary-50 dark:active:bg-primary-900/20 border border-c-border-subtle'
                                         }
                                     `}
@@ -1163,7 +1163,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                                 ${isCompact ? 'px-2.5 py-1' : 'px-3 py-1'} text-xs
                                                 ${
                                                   isActive
-                                                    ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
+                                                    ? 'bg-c-text text-c-bg shadow-sm shadow-black/10'
                                                     : progressStatus === 'complete'
                                                       ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30'
                                                       : progressStatus === 'partial'

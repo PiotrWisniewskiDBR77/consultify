@@ -124,7 +124,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
         {selectedForCompare.length === 2 && onCompareVersions && (
           <button
             onClick={handleCompare}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-medium rounded-lg transition-colors"
           >
             <GitCompare className="w-4 h-4" />
             Compare selected
@@ -156,7 +156,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                     onClick={() => toggleCompareSelection(version.version)}
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                       isSelected
-                        ? 'bg-primary-600 border-primary-600 text-white'
+                        ? 'bg-c-text border-c-text text-c-bg'
                         : 'border-slate-300 dark:border-slate-600 hover:border-primary-400'
                     }`}
                   >

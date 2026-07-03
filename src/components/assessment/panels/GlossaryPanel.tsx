@@ -110,7 +110,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
               onClick={() => setActiveCategory('all')}
               className={`text-[11px] px-2.5 py-1 rounded-full border font-medium transition-colors ${
                 activeCategory === 'all'
-                  ? 'bg-primary-500 text-white border-primary-500'
+                  ? 'bg-c-text text-c-bg border-c-text'
                   : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10'
               }`}
             >
@@ -123,7 +123,7 @@ export const GlossaryPanel: React.FC<GlossaryPanelProps> = ({ isOpen, onClose })
                 onClick={() => setActiveCategory(cat)}
                 className={`text-[11px] px-2.5 py-1 rounded-full border font-medium transition-colors ${
                   activeCategory === cat
-                    ? 'bg-primary-500 text-white border-primary-500'
+                    ? 'bg-c-text text-c-bg border-c-text'
                     : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10'
                 }`}
               >

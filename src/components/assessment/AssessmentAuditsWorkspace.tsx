@@ -141,7 +141,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
                 </button>
                 <button
                   onClick={handleAdd}
-                  className="flex-1 px-3 py-2 rounded text-xs bg-primary-600 text-white font-bold hover:bg-primary-500"
+                  className="flex-1 px-3 py-2 rounded text-xs bg-c-text text-c-bg font-bold hover:bg-c-text-secondary"
                 >
                   Save
                 </button>

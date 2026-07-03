@@ -447,7 +447,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     </button>
                     <button
                       onClick={() => setReviewingReview(review)}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text-secondary text-c-bg font-medium rounded-lg transition-colors"
                     >
                       <FileEdit className="w-4 h-4" />
                       Submit Review

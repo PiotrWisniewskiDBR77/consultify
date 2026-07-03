@@ -272,7 +272,7 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
               });
               loadWorkflowData();
             }}
-            className="mt-3 px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700"
+            className="mt-3 px-4 py-2 bg-c-text text-c-bg text-sm rounded-lg hover:bg-c-text-secondary"
           >
             Initialize Workflow
           </button>
@@ -636,7 +636,7 @@ const VersionHistory: React.FC<{
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 version.version === currentVersion
-                  ? 'bg-primary-500 text-white'
+                  ? 'bg-c-text text-c-bg'
                   : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
               }`}
             >

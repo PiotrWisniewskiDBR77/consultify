@@ -399,7 +399,7 @@ const GenerateInitiativesModal: FC<{
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg text-sm font-semibold transition-colors flex items-center gap-2"
           >
             {generating ? (
               <>
@@ -1017,7 +1017,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               {canManage && (
                 <button
                   onClick={() => setShowManualModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500 hover:bg-primary-600 text-white transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-c-text hover:bg-c-text-secondary text-c-bg transition-colors"
                 >
                   <Plus size={16} />
                   New
@@ -1048,7 +1048,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       disabled={!isApproved}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                         isApproved
-                          ? 'bg-primary-500 hover:bg-primary-600 text-white'
+                          ? 'bg-c-text hover:bg-c-text-secondary text-c-bg'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                       }`}
                       title={
@@ -1242,7 +1242,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               {isApproved && canManage && canGenerateInitiatives && (
                 <button
                   onClick={() => setShowGenerateModal(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold transition-colors"
                 >
                   <Sparkles size={16} />
                   Generate Initiatives
@@ -1512,7 +1512,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       toast.error(e?.message || t('initiatives.form.createFailed'));
                     }
                   }}
-                  className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold"
+                  className="h-10 px-4 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold"
                 >
                   {t('initiatives.form.create')}
                 </button>
@@ -1622,7 +1622,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold"
+                  className="h-10 px-4 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold"
                 >
                   Save
                 </button>
