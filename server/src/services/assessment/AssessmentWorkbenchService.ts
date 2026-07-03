@@ -122,7 +122,13 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-/** Bounded preset for P28-B “one methodology” closure (DRD = document + interview artefakty jako evidence). */
+/**
+ * Bounded methodology presets (P28-B → H3 flagship trio per ASSESSMENT_CONCEPT_V4:
+ * aktywny zakres = DRD + SIRI + ADMA; CMMI/LEAN później).
+ * - DRD (nasze): dokumenty + notatki z wywiadów jako evidence.
+ * - SIRI (inspired-by INCIT): evidence per dimension — artefakty dokumentowe (pack V3 §evidence).
+ * - ADMA (EU, publiczny): evidence link/attachment wymagane dla audytowalności (pack V3 §2.3 MUST).
+ */
 export const P28_METHODOLOGY_PRESETS: Record<
   string,
   { requiredEvidenceKinds: EvidencePointer['kind'][]; label: string }
@@ -130,6 +136,14 @@ export const P28_METHODOLOGY_PRESETS: Record<
   DRD: {
     label: 'DRD maturity assessment (P28-B default)',
     requiredEvidenceKinds: ['document', 'interview_note'],
+  },
+  SIRI: {
+    label: 'SIRI-inspired smart industry readiness assessment',
+    requiredEvidenceKinds: ['document'],
+  },
+  ADMA: {
+    label: 'ADMA advanced manufacturing assessment',
+    requiredEvidenceKinds: ['document'],
   },
 };
 
