@@ -222,6 +222,16 @@ export default defineConfig({
       'src/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/components/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      // H6.6: these real vitest dirs were never in `include`, so vitest could
+      // not collect them regardless of invocation. `tests/component` (singular,
+      // distinct from `tests/components`), plus contexts/frontend/navigation/views.
+      // NOTE: `tests/visual` + `tests/visual-regression` are Playwright specs
+      // (import @playwright/test) — deliberately NOT added here.
+      'tests/component/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'tests/contexts/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'tests/frontend/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'tests/navigation/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'tests/views/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/hooks/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/store/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/backend/**/*.{test,spec}.{js,ts,jsx,tsx}',
@@ -301,6 +311,10 @@ export default defineConfig({
       'server/src/_backup/**',
       // Playwright spec files (not Vitest tests)
       'tests/accessibility/*.spec.ts',
+      // H6.6: Playwright-based visual tests (import @playwright/test) — must never
+      // be collected by vitest even if a path positional matches their dir.
+      'tests/visual/**',
+      'tests/visual-regression/**',
       // =====================================
       // EXCLUDED TESTS
       // Only truly problematic tests that need deeper investigation
