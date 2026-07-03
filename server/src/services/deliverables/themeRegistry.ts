@@ -145,16 +145,27 @@ export function isLibraryFont(font: string): boolean {
 // Konsumowane przez renderery: PPT przez bundlePptxRuntime, Word ma własną
 // (documentDocxStyles SIZING_BY_CLASS, spójną z tymi wartościami).
 export interface TypeScalePpt {
-  coverTitle: number; // slajd tytułowy / divider
-  slideTitle: number; // tytuł slajdu treści
+  coverTitle: number; // slajd tytułowy (thesis-scale)
+  sectionTitle: number; // divider — etykieta sekcji
+  slideTitle: number; // tytuł slajdu treści (action-title)
+  lead: number; // duża teza / lead-thesis w kompozycji
   body: number; // treść/bullety (min 18 do projekcji)
-  caption: number; // źródło/stopka
+  kicker: number; // eyebrow / kicker nad tytułem (UPPERCASE)
+  caption: number; // źródło/stopka/podpis
+  micro: number; // wordmark / chip / mikro-etykieta
 }
+// Skala zbudowana wg modularnej proporcji (~1.28) spójnej z DOCX SIZING_BY_CLASS
+// (executive: title 28pt / h1 17pt / h2 14pt / body 11pt). PPT skalowany do
+// projekcji: większy body (min 18pt) i wyraźniejsza hierarchia tytułów.
 export const PPT_TYPE_SCALE: TypeScalePpt = {
   coverTitle: 40,
-  slideTitle: 30,
-  body: 20,
+  sectionTitle: 32,
+  slideTitle: 28,
+  lead: 24,
+  body: 18,
+  kicker: 12,
   caption: 11,
+  micro: 9,
 };
 
 // ── §4 Markery punktowań i wyliczników (DELIVERABLE_FORMATTING_SPEC §4) ───────

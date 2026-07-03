@@ -28,10 +28,14 @@ import {
   pushNote,
   IMAGE_PANEL,
   DECK_GRID,
+  DECK_TOKENS,
   CONTENT_W,
   type PptxSlide,
   type KpiStat,
 } from './DeckStyler.js';
+
+/** Hairline grey for chart gridlines/axes (shared token — matches DOCX gridline). */
+const DECK_GRID_LINE = DECK_TOKENS.gridline;
 
 const require = createRequire(import.meta.url);
 
@@ -145,17 +149,17 @@ function addSectionChip(
   if (!chip) return;
   const label = opts.isPolish ? chip.pl : chip.en;
   // Tło chipa — accent color, prawy górny róg pod paskiem.
-  const w = Math.max(0.9, label.length * 0.082 + 0.2);
+  const w = Math.max(1.0, label.length * 0.095 + 0.26);
   slide.addShape('roundRect', {
-    x: 9.6 - w, y: 0.18, w, h: 0.26,
+    x: 9.6 - w, y: 0.22, w, h: 0.3,
     fill: { color: opts.accent },
     line: { color: opts.accent, width: 0 },
-    rectRadius: 0.04,
+    rectRadius: 0.05,
   });
   slide.addText(label, {
-    x: 9.6 - w, y: 0.18, w, h: 0.26,
-    fontFace: opts.bodyFont, fontSize: 7, bold: true, color: 'FFFFFF',
-    align: 'center', valign: 'middle',
+    x: 9.6 - w, y: 0.22, w, h: 0.3,
+    fontFace: opts.bodyFont, fontSize: 9, bold: true, color: 'FFFFFF',
+    charSpacing: 1, align: 'center', valign: 'middle',
   });
 }
 
@@ -179,36 +183,63 @@ function renderChartOnSlide(
         labels: spec.labels,
         values: s.values,
       }));
-      // W7.4 — dystynktywne kolory per seria (zamiast wszystkie=akcent gdy brak s.color).
+      // W7.4 — dystynktywne kolory per seria (blue-first z seriesPalette; NIGDY
+      // red-first). czerwień zarezerwowana dla negatywów, nie dla pierwszej serii.
       const palette = seriesPalette(spec.series.length, { themeId: ctx.themeId });
+      const multiSeries = spec.series.length > 1;
       slide.addChart('bar', data, {
         x: 0.6, y: 2.1, w: 8.8, h: 2.9,
         barDir: 'col',
         barGrouping: 'clustered',
         altText: chartAltText(spec), // W14.1 — a11y
         chartColors: spec.series.map((s, i) => hex(s.color ?? palette[i] ?? ctx.accent)),
-        showLegend: true,
+        // Premium chart chrome: subtelne poziome linie siatki (hairline grey),
+        // czyste osie bez ramki, spójna typografia etykiet (parity z DOCX/XLSX).
+        showLegend: multiSeries,
         legendPos: 'b',
-        legendFontSize: 9,
-        dataLabelFontSize: 9,
-        valAxisLabelFontSize: 9,
-        catAxisLabelFontSize: 9,
+        legendFontSize: 10,
+        legendColor: ctx.neutral,
         showValue: false,
+        showValAxisTitle: false,
+        catAxisLabelColor: ctx.neutral,
+        valAxisLabelColor: ctx.neutral,
+        catAxisLabelFontSize: 10,
+        valAxisLabelFontSize: 10,
+        catAxisLabelFontFace: ctx.bodyFont,
+        valAxisLabelFontFace: ctx.bodyFont,
+        valGridLine: { color: DECK_GRID_LINE, style: 'solid', size: 1 },
+        catGridLine: { style: 'none' },
+        valAxisLineColor: DECK_GRID_LINE,
+        catAxisLineColor: DECK_GRID_LINE,
+        barGapWidthPct: 60,
       });
       return true;
     }
     if (spec.type === 'rag') {
-      const RAG_COLORS: Record<string, string> = { green: '00A651', amber: 'FFC000', red: 'FF0000' };
+      // Status dots route through the shared semantic palette (softened crimson,
+      // not pure FF0000) — consistent with DOCX_TONE_COLOR, easy on the eye.
+      const RAG_COLORS: Record<string, string> = {
+        green: DECK_TOKENS.statusSuccess,
+        amber: DECK_TOKENS.statusWarning,
+        red: DECK_TOKENS.statusDanger,
+      };
       spec.items.slice(0, 7).forEach((item, i) => {
-        const y = 2.1 + i * 0.48;
-        slide.addShape(pptx.ShapeType.rect, {
-          x: 0.6, y, w: 0.35, h: 0.35,
-          fill: { color: RAG_COLORS[item.status] ?? 'CCCCCC' },
-          line: { color: RAG_COLORS[item.status] ?? 'CCCCCC', width: 0 },
+        const y = 2.1 + i * 0.5;
+        const dot = RAG_COLORS[item.status] ?? DECK_TOKENS.muted;
+        // Soft zebra row tint for legibility of a status list.
+        if (i % 2 === 1) {
+          slide.addShape(pptx.ShapeType.rect, {
+            x: 0.5, y: y - 0.05, w: 8.9, h: 0.44,
+            fill: { color: DECK_TOKENS.panelFill }, line: { color: DECK_TOKENS.panelFill, width: 0 },
+          });
+        }
+        slide.addShape(pptx.ShapeType.ellipse, {
+          x: 0.62, y: y + 0.03, w: 0.28, h: 0.28,
+          fill: { color: dot }, line: { color: dot, width: 0 },
         });
         slide.addText(item.label, {
-          x: 1.1, y, w: 7.5, h: 0.38,
-          fontFace: ctx.bodyFont, fontSize: 11, color: ctx.neutral,
+          x: 1.12, y, w: 8.1, h: 0.4,
+          fontFace: ctx.bodyFont, fontSize: 12, color: ctx.neutral,
           align: 'left', valign: 'middle',
         });
       });

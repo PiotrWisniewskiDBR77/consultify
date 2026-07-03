@@ -336,7 +336,8 @@ describe('DeckStyler — renderKpiBand (composition)', () => {
     const texts = slide.rec.texts.map((t) => t.text);
     expect(texts).toContain('440');
     expect(texts).toContain('14–22 M€');
-    expect(texts).toContain('Interviews');
+    // Label renders as an uppercase, tracked metric kicker (premium KPI card).
+    expect(texts).toContain('INTERVIEWS');
     expect(texts).toContain('22 personas'); // caption
     // Each card = panel rect + accent top rule → ≥2 shapes per card.
     expect(slide.rec.shapes.length).toBeGreaterThanOrEqual(4);
