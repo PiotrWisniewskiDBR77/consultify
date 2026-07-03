@@ -13350,6 +13350,7 @@
         "rejected": "Rejected",
         "caption": "Schema field rendered as an operational table document block",
         "proposalCaption": "Linked to schema proposal {{proposalId}}",
+        "typeCaption": "{{fieldType}} field",
         "unnamedField": "unnamed_field",
         "defaultType": "text"
       },
