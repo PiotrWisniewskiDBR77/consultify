@@ -867,7 +867,7 @@ export const Sidebar: React.FC = () => {
                 ${!showFull ? 'justify-center px-0' : 'px-3'} `}
               title={t('sidebar.logOut')}
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
               {showFull && <span>{t('sidebar.logOut')}</span>}
             </button>
           </div>
