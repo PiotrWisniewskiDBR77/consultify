@@ -5233,7 +5233,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   return (
     <div
       ref={splitShellRef}
-      className={`relative flex h-full overflow-hidden bg-slate-50 dark:bg-navy-950 ${
+      className={`relative flex h-full overflow-hidden bg-c-bg ${
         isPrivateMode
           ? 'ring-1 ring-primary-200/70 dark:ring-primary-800/45'
           : 'ring-1 ring-transparent'
@@ -5248,20 +5248,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {/* Skip links for keyboard users */}
         <a
           href="#chat-input"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-navy-900 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-overlay focus:bg-c-text focus:text-c-bg focus:px-4 focus:py-2 focus:rounded-lg"
         >
           {t('wcag.skipToInput', 'Skip to chat input')}
         </a>
 
         {/* Header — Tech Sexy (T104/T105) */}
         <div
-          className={`flex h-[42px] items-center justify-between ${isCompact ? 'px-3' : 'px-4'} border-b border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-white/[0.06] dark:bg-navy-950/60`}
+          className={`flex h-[42px] items-center justify-between ${isCompact ? 'px-3' : 'px-4'} border-b border-c-border-subtle bg-c-surface/50 backdrop-blur-sm`}
         >
           <div className="flex items-center gap-0.5">
             <button
               onClick={handleNewChat}
               data-testid="chat-new-button"
-              className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+              className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
               title={t('aiChat.newChat', 'New chat')}
               aria-label={t('aiChat.newChat', 'New chat')}
             >
@@ -5276,7 +5276,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 className={`p-1.5 rounded-lg transition-colors ${
                   isSidebarOpen
                     ? 'text-c-text bg-c-surface-raised'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                    : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
                 }`}
                 title={t('aiChat.history', 'History')}
                 aria-label={t('aiChat.history', 'Chat history')}
@@ -5296,13 +5296,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   onNavigateToActions();
                 }}
                 data-testid="chat-business-button"
-                className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+                className="relative p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
                 title={t('aiChat.business', 'Business actions')}
                 aria-label={t('aiChat.business', 'Business actions')}
               >
                 <Briefcase size={18} strokeWidth={1.75} />
                 {pendingActionsCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-navy-900 text-[10px] font-medium text-white px-1 leading-none">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-c-text text-[10px] font-medium text-c-bg px-1 leading-none">
                     {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
                   </span>
                 )}
@@ -5314,7 +5314,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <button
                 onClick={() => setSignalsOpen(true)}
                 data-testid="chat-signals-button"
-                className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+                className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
                 title={t('aiChat.signals.title', 'Important signals')}
                 aria-label={t('aiChat.signals.title', 'Important signals')}
               >
@@ -5348,7 +5348,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 className={`p-1.5 rounded-lg transition-colors ${
                   showWorkPanel
                     ? 'text-c-text bg-c-surface-raised'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                    : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
                 }`}
                 title={t('aiChat.workPanel.open', 'Open work panel')}
                 aria-label={t('aiChat.workPanel.open', 'Open work panel')}
@@ -5381,7 +5381,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 className={`p-1.5 rounded-lg transition-colors ${
                   autoReadEnabled
                     ? 'text-c-text bg-c-surface-raised'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                    : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
                 }`}
                 title={
                   voiceState.isSpeaking
@@ -5510,7 +5510,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       </button>
                       <button
                         onClick={() => clearLastError()}
-                        className="rounded-md bg-slate-50 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-slate-100 dark:bg-white/10 dark:text-amber-200 dark:hover:bg-white/15"
+                        className="rounded-md bg-c-surface-raised px-3 py-1 text-xs font-medium text-amber-800 hover:bg-c-border-subtle dark:text-amber-200"
                       >
                         {t('common.dismiss', 'Dismiss')}
                       </button>
@@ -5579,7 +5579,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     key={item.label}
                     type="button"
                     onClick={() => handleSendMessage(item.prompt)}
-                    className="rounded-full border border-slate-200/70 bg-white/60 px-3 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-c-border hover:bg-c-surface-raised hover:text-c-text dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:border-c-border dark:hover:bg-c-surface-raised dark:hover:text-c-text"
+                    className="rounded-full border border-c-border bg-c-surface px-3 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-border-strong hover:bg-c-surface-raised hover:text-c-text"
                   >
                     {item.label}
                   </button>
@@ -5668,7 +5668,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 ))}
               </div>
 
-              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-c-text-secondary">
                 <Sparkles size={11} />
                 {t(
                   'aiChat.onboarding.hint',
@@ -5677,10 +5677,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </p>
 
               <div className="mt-12 flex flex-col items-center gap-1.5 pointer-events-none select-none">
-                <p className="text-3xl font-semibold tracking-tight text-slate-900/70 dark:text-white/70">
+                <p className="text-3xl font-semibold tracking-tight text-c-text/70">
                   Consultify®
                 </p>
-                <p className="text-center text-[11px] uppercase tracking-[0.25em] text-slate-900/30 dark:text-white/30">
+                <p className="text-center text-[11px] uppercase tracking-[0.25em] text-c-text/30">
                   DBR77 Industrial Intelligence
                 </p>
               </div>
@@ -5692,11 +5692,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               data-testid="chat-compact-empty-state"
               className="flex min-h-full flex-col justify-end px-2 py-3"
             >
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left">
-                <div className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
+              <div className="rounded-2xl border border-c-border bg-c-surface-raised p-3 text-left">
+                <div className="inline-flex items-center rounded-full border border-c-border bg-c-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
                   Teresa
                 </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-2 text-xs leading-relaxed text-c-text-secondary">
                   {t(
                     'aiChat.sidebarEmptyHint',
                     'Ask Teresa from this side panel when you need quick context or next-step help.'
@@ -5752,9 +5752,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 </div>
               )}
               {_activeConversationState === 'permission_denied' && (
-                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
+                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-c-surface-raised border border-c-border flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0"
+                    className="w-4 h-4 text-c-text-muted shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -5766,7 +5766,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                     />
                   </svg>
-                  <span className="text-xs text-slate-700 dark:text-slate-300">
+                  <span className="text-xs text-c-text-secondary">
                     {_activeConversationStateMessage ||
                       t(
                         'aiChat.permissionDenied',
@@ -5776,9 +5776,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 </div>
               )}
               {_activeConversationState === 'not_found' && (
-                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
+                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-c-surface-raised border border-c-border flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
+                    className="w-4 h-4 text-c-text-muted shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -5790,7 +5790,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                  <span className="text-xs text-c-text-secondary">
                     {t(
                       'aiChat.notFound',
                       'This conversation does not exist or has been permanently removed.'
@@ -5830,7 +5830,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {!showFullWelcomeEmptyState && (
           <div
             id="chat-input"
-            className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} bg-slate-50 dark:bg-navy-950`}
+            className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} bg-c-bg`}
           >
             <div className="mx-auto w-full max-w-5xl">
               {!!lastError && !isStreaming && (
@@ -5847,7 +5847,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     </button>
                     <button
                       onClick={() => clearLastError()}
-                      className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-c-surface-raised hover:bg-c-border-subtle text-amber-800 dark:text-amber-200"
                     >
                       {t('common.dismiss', 'Dismiss')}
                     </button>
@@ -5924,7 +5924,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       {showWorkPanel && (
         <aside
           data-testid="chat-work-panel"
-          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-slate-50 shadow-2xl dark:bg-navy-950 lg:relative lg:z-auto lg:w-[var(--work-canvas-width)] lg:shadow-none"
+          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-c-bg shadow-2xl lg:relative lg:z-auto lg:w-[var(--work-canvas-width)] lg:shadow-none"
           aria-label={t('aiChat.workPanel.title', 'Canvas work area')}
         >
           <div
@@ -5941,7 +5941,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             onKeyDown={handleWorkCanvasEdgeKeyDown}
             className="group absolute inset-y-0 left-0 z-50 hidden w-4 -translate-x-1/2 cursor-col-resize touch-none outline-none lg:block"
           >
-            <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-300/45 transition-colors group-hover:bg-c-border-strong group-focus:bg-c-focus-solid dark:bg-white/10 dark:group-hover:bg-c-border-strong" />
+            <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-c-border transition-colors group-hover:bg-c-border-strong group-focus:bg-c-focus-solid" />
           </div>
           <div className="min-h-0 flex-1">
             <WorkCanvasDocumentPanel
