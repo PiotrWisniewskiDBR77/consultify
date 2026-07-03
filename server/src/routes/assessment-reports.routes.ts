@@ -1753,7 +1753,7 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
 
     const report = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT r.*, a.name as assessmentName
+        `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType
          FROM assessment_reports r
          LEFT JOIN assessments a ON r.assessment_id = a.id
          WHERE r.id = ? AND r.organization_id = ?`,
@@ -1771,6 +1771,13 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
 
     const detailed = safeJsonParse<DetailedAnalysis>(report.detailed_analysis, {});
     const recommendations = safeJsonParse<string[]>(report.recommendations, []);
+    // axis_data is stored at report-creation time by computeAxisDataFromAssessment:
+    //  - DRD:  { "1": {actual,target}, … } (numeric axis ids)
+    //  - SIRI: { _framework:'SIRI', block_*, dim_*, area_* }
+    //  - ADMA: { _framework:'ADMA', pillar_*, dim_* }
+    // Returning it (instead of {}) is what lets the report view mount the
+    // per-framework template (OXFORD #103/#104). Fail-soft: parse errors → {}.
+    const axisData = safeJsonParse<Record<string, any>>(report.axis_data, {});
 
     res.json({
       id: report.id,
@@ -1778,13 +1785,15 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
       status: (report.status || 'DRAFT').toUpperCase(),
       assessmentId: report.assessment_id,
       assessmentName: report.assessmentName || 'Assessment',
+      assessmentType: report.assessmentType || null,
+      projectId: report.project_id || null,
       content: {
         executiveSummary: report.executive_summary || '',
         keyFindings: detailed.keyFindings || [],
         recommendations,
         notes: detailed.notes || '',
       },
-      axisData: {},
+      axisData: axisData && typeof axisData === 'object' ? axisData : {},
       progress: 0,
       isComplete: false,
       createdAt: report.created_at,
