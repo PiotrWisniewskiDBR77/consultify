@@ -11,9 +11,12 @@ export const MENU_2_TAB_INACTIVE = cn(
   'dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.06]'
 );
 
+// Menu 2 (ModuleTabs) — decyzja Piotra 2026-07-03: pill z NEUTRALNYM aktywnym
+// (NIE crimson — `primary`=crimson to pułapka). Spójne z ModuleNavBar TAB_ACTIVE:
+// wypełniony pill na c-surface-raised + ramka c-border + c-text.
 export const MENU_2_TAB_ACTIVE = cn(
   MENU_2_TAB_BASE,
-  'border-primary-500/50 bg-primary-500/10 text-primary-800',
+  'border-c-border bg-c-surface-raised text-c-text',
   'dark:border-white/25 dark:bg-white/10 dark:text-slate-100'
 );
 
