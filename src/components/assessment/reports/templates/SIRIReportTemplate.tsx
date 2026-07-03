@@ -37,6 +37,7 @@ import {
   ConclusionExecutiveSummary,
   ConclusionGapCards,
 } from '../ConclusionSummary';
+import { MaturityPathwaySection } from '../MaturityPathwaySection';
 
 // ============================================
 // COLOR CLASSES HELPER (Tailwind requires full class names)
@@ -520,6 +521,17 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
             ))}
         </div>
       </section>
+
+      {/* Maturity Pathway (N → N+1) — co zrobić, by przejść wyżej */}
+      <MaturityPathwaySection
+        framework="siri"
+        language="pl"
+        dimensions={dimensionsWithGaps.map((d) => ({
+          dimensionId: d.id,
+          currentLevel: d.current,
+          targetLevel: d.target,
+        }))}
+      />
 
       {/* Key Strengths */}
       {(() => {

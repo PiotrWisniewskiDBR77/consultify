@@ -35,6 +35,24 @@ import {
   GapHeatmap,
   ScoreCardsGrid,
 } from '../AssessmentReportVisualizations';
+import { MaturityPathwaySection } from '../MaturityPathwaySection';
+
+/**
+ * Map DRD visualization axis ids (DRD_STRUCTURE axes 1..7, exposed by
+ * drdVizAdapter as string ids "1".."7") to the canonical DRD dimension ids
+ * ("D1".."D8", Canon §3.2) that `getMaturityPathway('drd', …)` expects. The
+ * axes align with the canon dimensions by subject; DRD_STRUCTURE has no
+ * dedicated "Technology & Infrastructure" (D5) axis, so that id is absent here.
+ */
+const DRD_AXIS_TO_CANON_DIMENSION: Record<string, string> = {
+  '1': 'D1', // Digital Processes
+  '2': 'D2', // Digital Products
+  '3': 'D3', // Digital Business Models
+  '4': 'D4', // Data Management → Data & Analytics
+  '5': 'D6', // Culture of Transformation → People & Culture
+  '6': 'D7', // Cybersecurity
+  '7': 'D8', // AI Maturity
+};
 
 interface DRDReportTemplateProps {
   /** Per-area actual/target levels keyed by area id (e.g. "1A"). */
@@ -83,6 +101,20 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
       .sort((a, b) => b.gap - a.gap)
       .slice(0, 5);
   }, [vizData.dimensions]);
+
+  // Maturity-pathway rows: below-target axes mapped to canon dimension ids so
+  // getMaturityPathway() returns the DRD Canon N→N+1 recipe (not a fallback).
+  const pathwayDimensions = useMemo(
+    () =>
+      vizData.dimensions
+        .filter((d) => d.current < d.target && DRD_AXIS_TO_CANON_DIMENSION[d.id])
+        .map((d) => ({
+          dimensionId: DRD_AXIS_TO_CANON_DIMENSION[d.id],
+          currentLevel: d.current,
+          targetLevel: d.target,
+        })),
+    [vizData.dimensions]
+  );
 
   const maturityVerdict = useMemo(() => {
     if (normalizedMaturityPercent >= 75) return isPolish ? 'wysoka' : 'high';
@@ -242,6 +274,15 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
           </div>
         )}
       </section>
+
+      {/* ====================================================== */}
+      {/* (d2) MATURITY PATHWAY (N → N+1)                         */}
+      {/* ====================================================== */}
+      <MaturityPathwaySection
+        framework="drd"
+        dimensions={pathwayDimensions}
+        language={isPolish ? 'pl' : 'en'}
+      />
 
       {/* ====================================================== */}
       {/* (e) PLACEHOLDERS: INITIATIVES + ECONOMIC EFFECTS (ROI) */}
