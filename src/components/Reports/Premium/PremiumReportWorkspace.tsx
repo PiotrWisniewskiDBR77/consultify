@@ -20,6 +20,9 @@ import {
   Settings,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/shared/states';
 
 import { PremiumReportEditor } from './Editor/PremiumReportEditor';
 
@@ -38,6 +41,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
   organizationName,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [reportContent, setReportContent] = useState<JSONContent | null>(null);
   const [reportMeta, setReportMeta] = useState<{
     name: string;
@@ -187,11 +191,11 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-navy-900">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="text-slate-500 dark:text-slate-400">Ładowanie raportu...</span>
-        </div>
+      <div className="flex items-center justify-center h-screen bg-[var(--c-surface)]">
+        <LoadingState
+          variant="progress"
+          label={t('premiumReport.loading', 'Loading report…')}
+        />
       </div>
     );
   }
