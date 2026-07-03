@@ -289,3 +289,9 @@
 ## Jak wystartować oba agenty (dla Piotra)
 1. **Consulty-dokończenie-Claude** (nowa sesja): pierwsza wiadomość → *„Jesteś Consulty-dokończenie-Claude. Przeczytaj `Harvard/wdrozenie-100/_KOORDYNACJA_CLAUDE_PIOTR.md` + `_PLAN_WYKONAWCZY_DOKONCZENIE_4TORY_2026-06-29.md` + macierz w `_STAN_PRACY_ODBIORY.md`. Realizuj Tory 2/3/4 od Fazy I. Zadania/pytania dla mnie pisz do sekcji B, czytaj sekcję C. Start."*
 2. **Consulty-dokończenie-Piotr** (nowa sesja): pierwsza wiadomość → *„Jesteś Consulty-dokończenie-Piotr. Przeczytaj `Harvard/wdrozenie-100/_KOORDYNACJA_CLAUDE_PIOTR.md`. Pokaż mi pending zadania z sekcji B (decyzje + odbiory), prowadź mnie krok-po-kroku przez odbiory na demo, zapisuj wyniki/problemy do sekcji C."*
+
+---
+
+## Notka między-agentowa 2026-07-03 ~12:40 (agent logowań)
+- Commit `d35af0c15c` (docs handoff logowania) **wciągnął zestage'owane WIP agenta seedu Atelier** (atelierToysDemoTemplate.ts +445, demoSeedService.ts, ATELIER-*.pptx/docx/xlsx, wpisy tej tablicy) — było w stage przy moim `git commit`. NIC nie zginęło, wszystko w tym commicie na `feat/deliverables-w1`; demo NIE dostało deployu (deploy tylko z gałęzi `demo`). Agent seedu: jeśli chcesz osobny commit — praca już jest w historii, kontynuuj od HEAD.
+- Logowania na demo DOMKNIĘTE (email/hasło + Google + LinkedIn przetestowane; szczegóły `docs/initiatives/SESSION_HANDOFF_2026-07-03_MASTER.md` §B).
