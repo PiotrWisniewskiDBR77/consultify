@@ -19,7 +19,6 @@ import {
   ExternalLink,
   FileText,
   Layout,
-  Loader2,
   Pause,
   Play,
   Plus,
@@ -29,6 +28,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { EntityStatusChip } from '@/components/ui/primitives';
+import { LoadingState } from '@/components/shared/states';
 
 import { Api } from '../../services/api';
 import {
@@ -872,8 +872,8 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
   const renderTabContent = () => {
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <div className="h-full p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     }
