@@ -215,8 +215,8 @@ describe('Narrative Engine engine — bridges', () => {
     expect(prompt).toContain('SCORED PILLARS');
     expect(prompt).toContain('W2 MOVE SEQUENCE');
     expect(prompt).toContain('rejected variant');
-    expect(prompt).toContain('"tradeOff"');
-    expect(prompt).toContain('"rejectedVariant"');
+    expect(prompt).toContain('"threads"');
+    expect(prompt).toContain('"initiatives"');
   });
 
   it('synthesizeNarrative returns a consistent ranking + sequence', () => {

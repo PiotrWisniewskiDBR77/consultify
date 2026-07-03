@@ -268,8 +268,8 @@ describe('Risk & Uncertainty engine — bridges', () => {
     expect(prompt).toContain('RISK EXPOSURE');
     expect(prompt).toContain('ASSUMPTION FRAGILITY');
     expect(prompt).toContain('W2 RESILIENCE MOVE SEQUENCE');
-    expect(prompt).toContain('"tradeOff"');
-    expect(prompt).toContain('"rejectedVariant"');
+    expect(prompt).toContain('"verdict"');
+    expect(prompt).toContain('"tradeoffs"');
     // exposure math surfaced in the grounded facts
     expect(prompt).toContain('25/25');
   });
