@@ -2819,7 +2819,9 @@ async function upsertIdeaWorkspaces(
     }
     if (mapColsSupport.schemaVersion) {
       mapCols.push('schema_version');
-      mapVals.push('v1');
+      // schema_version is an INTEGER column; the string 'v1' tripped
+      // `invalid input syntax for type integer` and dropped every idea map.
+      mapVals.push(1);
     }
 
     await DbPromise.run(
