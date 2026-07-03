@@ -316,7 +316,7 @@ const StatCard: React.FC<{
 }> = ({ label, value, icon: Icon, color }) => {
   const colors: Record<string, { bg: string; text: string }> = {
     blue: { bg: 'bg-blue-500/10', text: 'text-blue-500' },
-    purple: { bg: 'bg-primary-500/10', text: 'text-primary-500' },
+    purple: { bg: 'bg-violet-500/10', text: 'text-violet-500' },
     green: { bg: 'bg-green-500/10', text: 'text-green-500' },
     orange: { bg: 'bg-amber-500/10', text: 'text-amber-500' },
   };
