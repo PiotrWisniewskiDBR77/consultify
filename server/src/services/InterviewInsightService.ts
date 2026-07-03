@@ -11,6 +11,11 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 import { llmService } from './ai/llmService.js';
+import {
+  validateInsightCard,
+  buildRepairBriefFromVerdict,
+  type FormulaVerdict,
+} from './cardContentFormulaValidator.js';
 import { canonicalizeContextDocumentStatus } from './organizationContext/ContextDocumentService.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
 import { flagOn } from '../utils/pgFlags.js';
@@ -2167,10 +2172,88 @@ Rules:
           ? session.answers.map((answer: any) => String(answer.id || '').trim()).filter(Boolean)
           : []
       );
-      const { data: v6Data, result: evidenceValidation } = validateInsightEvidenceRefs(
-        parsedV6Data,
-        availableAnswerIds
-      );
+      const evidenceRun = validateInsightEvidenceRefs(parsedV6Data, availableAnswerIds);
+      let v6Data = evidenceRun.data;
+      let evidenceValidation = evidenceRun.result;
+
+      // CARD_CONTENT_FORMULA guardian (OXFORD O7.3) — score the generated insight
+      // against docs/standards/CARD_CONTENT_FORMULA.md. ADVISORY: violations trigger
+      // ONE auto-repair pass, never a hard block. Failures here must never break
+      // generation, so the whole guardian is wrapped and fail-soft.
+      let formulaVerdict: FormulaVerdict | undefined;
+      try {
+        const materialQualityPreview = this.buildMaterialQuality(sessionData, v6Data);
+        formulaVerdict = validateInsightCard({
+          title: v6Data.executive_summary ? (v6Data as any).title : undefined,
+          executive_summary: v6Data.executive_summary,
+          themes: v6Data.themes,
+          issues: v6Data.issues,
+          opportunities: v6Data.opportunities,
+          signals: v6Data.signals,
+          evidence_map: v6Data.evidence_map,
+          missing_data: v6Data.missing_data,
+          material_quality: materialQualityPreview,
+        });
+
+        if (!formulaVerdict.pass) {
+          logger.warn(
+            `[InterviewInsightService] Insight ${insightId} failed CARD_CONTENT_FORMULA ` +
+              `(score ${formulaVerdict.score}/100): ${formulaVerdict.violationCodes.join(', ')} — attempting 1 auto-repair pass.`
+          );
+          try {
+            const repairBrief = buildRepairBriefFromVerdict(formulaVerdict);
+            const repairResponse = await llmService.generateResponse({
+              prompt: `${repairBrief}\n\n--- POPRZEDNIA KARTA (JSON do poprawy) ---\n${JSON.stringify(
+                parsedV6Data
+              )}\n\nZwróć WYŁĄCZNIE poprawiony obiekt JSON w tym samym kontrakcie pól.`,
+              temperature: 0.2,
+              maxTokens: 4000,
+              model: 'standard',
+              systemPrompt,
+            });
+            const repairedRaw = String(
+              (repairResponse as any)?.content || (repairResponse as any)?.text || ''
+            );
+            const repairedParsed = this.parseV6Response(repairedRaw);
+            const repairedRun = validateInsightEvidenceRefs(repairedParsed, availableAnswerIds);
+            const repairedVerdict = validateInsightCard({
+              executive_summary: repairedRun.data.executive_summary,
+              themes: repairedRun.data.themes,
+              issues: repairedRun.data.issues,
+              opportunities: repairedRun.data.opportunities,
+              signals: repairedRun.data.signals,
+              evidence_map: repairedRun.data.evidence_map,
+              missing_data: repairedRun.data.missing_data,
+              material_quality: this.buildMaterialQuality(sessionData, repairedRun.data),
+            });
+            // Only accept the repair if it scored strictly better (guards against regressions).
+            if (repairedVerdict.score > formulaVerdict.score) {
+              v6Data = repairedRun.data;
+              evidenceValidation = repairedRun.result;
+              logger.info(
+                `[InterviewInsightService] Insight ${insightId} auto-repair improved score ` +
+                  `${formulaVerdict.score} → ${repairedVerdict.score}.`
+              );
+              formulaVerdict = repairedVerdict;
+            } else {
+              logger.warn(
+                `[InterviewInsightService] Insight ${insightId} auto-repair did not improve ` +
+                  `(${formulaVerdict.score} → ${repairedVerdict.score}); keeping original.`
+              );
+            }
+          } catch (repairErr: any) {
+            logger.warn(
+              `[InterviewInsightService] Insight ${insightId} auto-repair failed (fail-soft):`,
+              repairErr?.message || repairErr
+            );
+          }
+        }
+      } catch (formulaErr: any) {
+        logger.warn(
+          `[InterviewInsightService] CARD_CONTENT_FORMULA validation skipped (fail-soft):`,
+          formulaErr?.message || formulaErr
+        );
+      }
 
       // Render markdown for the legacy `content` column (backward compat)
       const markdownContent = this.renderV6ContentAsMarkdown(v6Data);
