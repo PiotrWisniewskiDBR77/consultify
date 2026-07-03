@@ -475,7 +475,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-primary-500/50 focus:border-transparent outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent outline-none transition-all"
             />
           </div>
 

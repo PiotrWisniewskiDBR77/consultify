@@ -280,7 +280,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       onChange={(e) =>
                         handleUpdateRule(rule.id, { [option.key]: e.target.checked })
                       }
-                      className="rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-primary-500"
+                      className="rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-[color:var(--c-focus)]"
                     />
                     <option.icon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -303,7 +303,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   onChange={(e) =>
                     handleUpdateRule(rule.id, { priority_filter: e.target.value as any })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-[color:var(--c-focus)]"
                 >
                   <option value="all">
                     {t('settings.notifications.rules.allPriorities', 'All priorities')}

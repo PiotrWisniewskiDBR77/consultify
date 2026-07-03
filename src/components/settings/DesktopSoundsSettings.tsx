@@ -355,7 +355,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                     }
                     className={cn(
                       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                      'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
+                      'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
                       prefs.soundEnabled ? 'bg-navy-900' : 'bg-white/10'
                     )}
                   >
@@ -387,7 +387,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                               soundPerType: { ...prev.soundPerType, [type.id]: e.target.value },
                             }))
                           }
-                          className="px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+                          className="px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
                         >
                           {SOUND_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>

@@ -98,7 +98,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
             onChange={handleQuietHoursToggle}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+          <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
         </label>
       </div>
 
@@ -114,7 +114,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
                 type="time"
                 value={localSchedule.quietHoursStart}
                 onChange={(e) => handleTimeChange('quietHoursStart', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
               />
             </div>
             <div>
@@ -125,7 +125,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
                 type="time"
                 value={localSchedule.quietHoursEnd}
                 onChange={(e) => handleTimeChange('quietHoursEnd', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
               />
             </div>
           </div>

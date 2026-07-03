@@ -159,7 +159,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
             disabled={saving || !isDirty}
             className={cn(
               'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
+              'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
               isDirty
                 ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                 : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
@@ -218,7 +218,7 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({ error, className, 
       className={cn(
         'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
         'placeholder:text-slate-400 transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+        'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
         error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
@@ -245,7 +245,7 @@ export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
       className={cn(
         'w-full px-4 py-3 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white resize-none',
         'placeholder:text-slate-400 transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+        'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
         error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
@@ -274,7 +274,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
       className={cn(
         'w-full px-4 py-2.5 bg-white dark:bg-navy-800 border rounded-lg text-slate-900 dark:text-white',
         'transition-all duration-200 cursor-pointer',
-        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+        'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
         error ? 'border-danger-500 focus:ring-danger-500' : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20',
         className
       )}
@@ -321,7 +321,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
       onClick={() => onChange(!checked)}
       className={cn(
         'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
+        'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
         checked ? 'bg-navy-900' : 'bg-slate-200 dark:bg-white/10',
         disabled && 'opacity-50 cursor-not-allowed'
       )}

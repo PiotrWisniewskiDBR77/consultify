@@ -125,7 +125,7 @@ export const AIPersonalitySettings: React.FC = () => {
           value={preferences.customInstructions}
           onChange={(e) => setPreferences({ ...preferences, customInstructions: e.target.value })}
           rows={8}
-          className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white p-4 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white p-4 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           placeholder={t(
             'settings.ai.personalityPlaceholder',
             'e.g., Friendly, concise, focus on practical solutions. Avoid long paragraphs.'

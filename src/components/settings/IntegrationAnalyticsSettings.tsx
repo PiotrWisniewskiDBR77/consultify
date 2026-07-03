@@ -274,7 +274,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
           <select
             value={selectedIntegration || ''}
             onChange={(e) => setSelectedIntegration(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand"
+            className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             {integrations.map((int) => (
               <option key={int.id} value={int.id}>
@@ -289,7 +289,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as any)}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand"
+            className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             <option value="1d">{t('settings.analytics.periods.1d', 'Last 24 hours')}</option>
             <option value="7d">{t('settings.analytics.periods.7d', 'Last 7 days')}</option>

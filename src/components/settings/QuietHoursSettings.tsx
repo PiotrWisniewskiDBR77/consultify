@@ -99,7 +99,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
   const sectionTitleClass =
     'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
   const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${

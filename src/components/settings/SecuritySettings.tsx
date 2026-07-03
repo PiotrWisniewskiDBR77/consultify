@@ -215,7 +215,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               <button
@@ -239,7 +239,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               <button
@@ -299,7 +299,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               {confirmPassword && (
