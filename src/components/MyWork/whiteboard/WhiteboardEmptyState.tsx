@@ -20,13 +20,13 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
       <div className="text-center pointer-events-auto">
-        <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-          <StickyNote size={24} className="text-slate-500 dark:text-slate-300" />
+        <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-c-surface-raised flex items-center justify-center">
+          <StickyNote size={24} className="text-c-text-muted" />
         </div>
-        <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
+        <div className="text-sm font-semibold text-c-text-secondary mb-1">
           {t('myWork.whiteboard.empty.title')}
         </div>
-        <div className="text-[11px] text-slate-600 dark:text-slate-500 mb-3 max-w-[200px]">
+        <div className="text-[11px] text-c-text-secondary mb-3 max-w-[200px]">
           {t('myWork.whiteboard.empty.subtitle')}
         </div>
         {!locked && (
@@ -37,21 +37,22 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
             >
               <button
                 onClick={() => onSeedQuickStart('brainstorm')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors"
               >
                 <Sparkles size={14} />
                 Brainstorm
               </button>
               <button
                 onClick={() => onSeedQuickStart('affinity')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all"
+                style={{ backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)' }}
               >
                 <Layers size={14} />
                 Affinity map
               </button>
               <button
                 onClick={() => onSeedQuickStart('workshop')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-warning-500/10 text-warning-600 dark:text-warning-400 hover:bg-warning-500/20 transition-colors"
               >
                 <LayoutGrid size={14} />
                 Workshop wall
@@ -59,12 +60,12 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
             </div>
             <button
               onClick={onAddSticky}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-slate-200 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-accent text-white hover:brightness-110 transition-all"
             >
               <Plus size={14} />
               {t('myWork.whiteboard.empty.addSticky')}
             </button>
-            <div className="text-[10px] text-slate-600 dark:text-slate-500 max-w-[260px]">
+            <div className="text-[10px] text-c-text-secondary max-w-[260px]">
               {t('myWork.whiteboard.emptyExtra.toolsHint')}
             </div>
           </div>

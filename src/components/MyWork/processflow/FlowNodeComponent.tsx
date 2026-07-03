@@ -89,9 +89,9 @@ export const SHAPE_CONFIG: Record<
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  todo: 'bg-slate-300',
-  in_progress: 'bg-blue-500',
-  done: 'bg-green-500',
+  todo: 'bg-c-border-strong',
+  in_progress: 'bg-c-info',
+  done: 'bg-success-500',
   blocked: 'bg-danger-500',
 };
 
@@ -133,54 +133,62 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
 
   const shapeStyles: Record<FlowShape, string> = {
     start:
-      'rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-900/30 dark:border-green-400',
+      'rounded-full border-2 border-success-500 bg-success-50 dark:bg-success-900/30 dark:border-success-400',
     end: 'rounded-full border-2 border-danger-500 bg-danger-50 dark:bg-danger-900/30 dark:border-danger-400',
-    action: 'rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800',
-    decision:
-      'rotate-45 border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
-    bpmn_event:
-      'rounded-full border-2 border-sky-500 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-400',
-    bpmn_task:
-      'rounded-xl border-2 border-sky-600 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-400',
-    bpmn_gateway:
-      'rotate-45 border-2 border-sky-600 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-400',
-    system_service:
-      'rounded-xl border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
-    system_db:
-      'rounded-2xl border-2 border-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
-    system_actor:
-      'rounded-xl border-2 border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-400',
-    org_role:
-      'rounded-xl border-2 border-primary-600 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400',
-    org_team:
-      'rounded-xl border-2 border-fuchsia-600 bg-fuchsia-50 dark:bg-fuchsia-900/30 dark:border-fuchsia-400',
-    org_handoff:
-      'rounded-lg border-2 border-primary-700 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400',
-    auto_trigger:
-      'rounded-xl border-2 border-dashed border-primary-500 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400',
-    auto_api:
-      'rounded-xl border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
-    auto_condition:
-      'rotate-45 border-2 border-dashed border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
-    vsm_process:
-      'rounded-lg border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
-    vsm_inventory:
-      'border-2 border-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
-    vsm_supplier:
-      'rounded-xl border-2 border-slate-600 bg-slate-50 dark:bg-slate-800 dark:border-slate-400',
-    vsm_customer:
-      'rounded-xl border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400',
-    vsm_kaizen:
-      'rounded-full border-2 border-danger-500 bg-danger-50 dark:bg-danger-900/30 dark:border-danger-400',
-    vsm_push_arrow:
-      'rounded-lg border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
-    vsm_pull_arrow:
-      'rounded-lg border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
-    vsm_supermarket:
-      'rounded-lg border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
-    vsm_fifo:
-      'rounded-lg border-2 border-primary-500 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400',
+    action: 'rounded-xl border border-c-border bg-c-surface',
+    // Category node types — shape/border-radius only. Border + soft fill come
+    // from the identity token map (SHAPE_TOKENS) applied via inline color-mix,
+    // so no forbidden alpha on c-* utilities. Blue-first categorical palette.
+    decision: 'rotate-45 border-2',
+    bpmn_event: 'rounded-full border-2',
+    bpmn_task: 'rounded-xl border-2',
+    bpmn_gateway: 'rotate-45 border-2',
+    system_service: 'rounded-xl border-2',
+    system_db: 'rounded-2xl border-2',
+    system_actor: 'rounded-xl border-2',
+    org_role: 'rounded-xl border-2',
+    org_team: 'rounded-xl border-2',
+    org_handoff: 'rounded-lg border-2',
+    auto_trigger: 'rounded-xl border-2 border-dashed',
+    auto_api: 'rounded-xl border-2',
+    auto_condition: 'rotate-45 border-2 border-dashed',
+    vsm_process: 'rounded-lg border-2',
+    vsm_inventory: 'border-2',
+    vsm_supplier: 'rounded-xl border-2 border-c-border-strong bg-c-surface-raised',
+    vsm_customer: 'rounded-xl border-2',
+    vsm_kaizen: 'rounded-full border-2',
+    vsm_push_arrow: 'rounded-lg border-2',
+    vsm_pull_arrow: 'rounded-lg border-2',
+    vsm_supermarket: 'rounded-lg border-2',
+    vsm_fifo: 'rounded-lg border-2',
   };
+
+  // Identity token per shape (CSS var name). Categorical, blue-first; explicit
+  // semantics kept for decision (warning) and kaizen (danger).
+  const SHAPE_TOKENS: Partial<Record<FlowShape, string>> = {
+    decision: '--c-warning',
+    bpmn_event: '--c-tag-1',
+    bpmn_task: '--c-tag-1',
+    bpmn_gateway: '--c-tag-1',
+    system_service: '--c-tag-10',
+    system_db: '--c-tag-10',
+    system_actor: '--c-tag-2',
+    org_role: '--c-tag-3',
+    org_team: '--c-tag-4',
+    org_handoff: '--c-tag-11',
+    auto_trigger: '--c-tag-3',
+    auto_api: '--c-tag-10',
+    auto_condition: '--c-warning',
+    vsm_process: '--c-tag-10',
+    vsm_inventory: '--c-warning',
+    vsm_customer: '--c-success',
+    vsm_kaizen: '--c-danger',
+    vsm_push_arrow: '--c-warning',
+    vsm_pull_arrow: '--c-tag-10',
+    vsm_supermarket: '--c-tag-10',
+    vsm_fifo: '--c-tag-3',
+  };
+  const shapeToken = SHAPE_TOKENS[shape];
 
   const innerRotate =
     shape === 'decision' || shape === 'auto_condition' || shape === 'bpmn_gateway'
@@ -189,11 +197,17 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''}`}
+      className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-c-border-strong' : ''}`}
       style={{
         borderLeftColor: laneColor,
         borderLeftWidth: shape === 'action' ? 4 : undefined,
-        backgroundColor: shape === 'action' ? `${laneColor}08` : undefined,
+        backgroundColor:
+          shape === 'action'
+            ? `${laneColor}08`
+            : shapeToken
+              ? `color-mix(in srgb, var(${shapeToken}) 12%, transparent)`
+              : undefined,
+        borderColor: shapeToken ? `var(${shapeToken})` : undefined,
       }}
       onDoubleClick={() => {
         if (isGhost) return;
@@ -212,7 +226,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         setShowTooltip(false);
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
 
       {/* Status dot */}
       {data?.status && data.status !== 'todo' && !isGhost && (
@@ -223,7 +237,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
 
       {/* Attachment badge */}
       {hasAttachments && !isGhost && (
-        <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-slate-100/80 dark:bg-navy-700/80 text-[7px] font-bold text-slate-500 dark:text-slate-400">
+        <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-c-surface-raised text-[7px] font-bold text-c-text-muted">
           📎 {data.attachments.length}
         </div>
       )}
@@ -236,7 +250,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
             e.stopPropagation();
             data?.onAcceptGhost?.(id);
           }}
-          className="absolute -top-2 -right-2 z-10 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md hover:bg-emerald-600 transition-colors text-[10px] font-bold"
+          className="absolute -top-2 -right-2 z-10 w-5 h-5 rounded-full bg-c-success text-white flex items-center justify-center shadow-md hover:brightness-110 transition-all text-[10px] font-bold"
           title="Accept"
         >
           +
@@ -253,11 +267,11 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className={`bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-slate-400 w-full ${innerRotate}`}
+          className={`bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-border-strong w-full ${innerRotate}`}
         />
       ) : (
         <div
-          className={`text-xs font-medium text-slate-800 dark:text-slate-200 text-center ${innerRotate}`}
+          className={`text-xs font-medium text-c-text text-center ${innerRotate}`}
         >
           {data?.label || shape}
         </div>
@@ -267,18 +281,27 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
       {hasMetrics && shape !== 'decision' && !isGhost && (
         <div className={`flex items-center gap-1 mt-1 ${innerRotate}`}>
           {data?.duration && (
-            <span className="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[8px] font-bold text-blue-700 dark:text-blue-300">
+            <span
+              className="px-1.5 py-0.5 rounded-full text-[8px] font-bold text-c-info"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--c-info) 16%, transparent)' }}
+            >
               {data.duration}
               {data.durationUnit || 'h'}
             </span>
           )}
           {data?.cost && (
-            <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[8px] font-bold text-emerald-700 dark:text-emerald-300">
+            <span
+              className="px-1.5 py-0.5 rounded-full text-[8px] font-bold text-c-success"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--c-success) 16%, transparent)' }}
+            >
               ${data.cost}
             </span>
           )}
           {data?.fteCount && (
-            <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-[8px] font-bold text-primary-700 dark:text-primary-300">
+            <span
+              className="px-1.5 py-0.5 rounded-full text-[8px] font-bold text-c-tag-3"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--c-tag-3) 16%, transparent)' }}
+            >
               {data.fteCount} FTE
             </span>
           )}
@@ -290,10 +313,10 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         <div
           className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black ${
             data.automationPotential === 'high'
-              ? 'bg-emerald-500 text-white'
+              ? 'bg-c-success text-white'
               : data.automationPotential === 'medium'
-                ? 'bg-amber-500 text-white'
-                : 'bg-slate-400 text-white'
+                ? 'bg-c-warning text-white'
+                : 'bg-c-text-muted text-white'
           }`}
           title={`Automation: ${data.automationPotential || 'low'}`}
         >
@@ -302,7 +325,8 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
       )}
       {data?.savingsEstimate && !isGhost && (
         <div
-          className={`px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[7px] font-bold text-emerald-700 dark:text-emerald-300 mt-0.5 ${innerRotate}`}
+          className={`px-1.5 py-0.5 rounded-full text-[7px] font-bold text-c-success mt-0.5 ${innerRotate}`}
+          style={{ backgroundColor: 'color-mix(in srgb, var(--c-success) 16%, transparent)' }}
         >
           {data.savingsEstimate}
         </div>
@@ -312,7 +336,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
       {shape === 'vsm_process' &&
         (data?.cycleTime || data?.changeoverTime || data?.uptimePercent) && (
           <div
-            className={`text-[8px] text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 ${innerRotate}`}
+            className={`text-[8px] text-c-text-muted mt-1 space-y-0.5 ${innerRotate}`}
           >
             {data.cycleTime && <div>C/T: {data.cycleTime}</div>}
             {data.changeoverTime && <div>C/O: {data.changeoverTime}</div>}
@@ -322,18 +346,18 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         )}
       {shape === 'vsm_inventory' && data?.inventory != null && (
         <div
-          className={`text-[8px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 ${innerRotate}`}
+          className={`text-[8px] font-bold text-c-warning mt-0.5 ${innerRotate}`}
         >
           {data.inventory} pcs
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
 
       {/* Context tooltip on hover */}
       {showTooltip && !editing && !isGhost && (data?.owner || data?.description || hasMetrics) && (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-50 pointer-events-none">
-          <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg px-2.5 py-1.5 shadow-lg text-[9px] max-w-[200px] whitespace-normal">
+          <div className="bg-c-text text-c-bg rounded-lg px-2.5 py-1.5 shadow-lg text-[9px] max-w-[200px] whitespace-normal">
             {data?.owner && (
               <div>
                 <span className="font-bold">Owner:</span> {data.owner}

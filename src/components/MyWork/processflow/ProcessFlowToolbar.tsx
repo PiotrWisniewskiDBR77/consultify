@@ -159,10 +159,10 @@ export interface ProcessFlowToolbarProps {
 // ── Component ────────────────────────────────────────────────────────────────
 
 const BTN =
-  'inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40';
+  'inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40';
 
 const OVERFLOW_ITEM =
-  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-40';
+  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40';
 
 export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   isPl,
@@ -231,19 +231,19 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
       : null;
 
   return (
-  <div className="border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
+  <div className="border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
     <div className="px-4 py-3 flex flex-col gap-3">
       {/* ── Header row ─────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* UI-L13: ONE segmented mode control (was two redundant rows) */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
             {isPl ? 'Tryb' : 'Mode'}
           </span>
           <div
             role="tablist"
             aria-label={isPl ? 'Tryb przepływu' : 'Flow mode'}
-            className="flex items-center gap-0.5 rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5"
+            className="flex items-center gap-0.5 rounded-lg bg-c-surface-raised p-0.5"
           >
             {(['classic', 'automation', 'vsm'] as ProcessFlowMode[]).map((mode) => {
               const g = FLOW_MODE_GUIDANCE[mode];
@@ -261,8 +261,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   aria-label={tooltip}
                   className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
                     flowMode === mode
-                      ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-c-surface text-c-accent shadow-sm'
+                      : 'text-c-text-muted hover:text-c-text-secondary'
                   }`}
                 >
                   {isPl ? FLOW_MODE_LABELS[mode].pl : FLOW_MODE_LABELS[mode].en}
@@ -272,7 +272,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
           </div>
           {kitLabel && (
             <span
-              className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-300"
+              className="inline-flex items-center rounded-full bg-c-accent-soft px-2 py-0.5 text-[10px] font-medium text-c-accent"
               title={isPl ? 'Zestaw notacji ustawiony z czatu' : 'Notation kit set from chat'}
             >
               {kitLabel}
@@ -281,17 +281,17 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-white/80 dark:bg-navy-900/40 px-2.5 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+          <span className="inline-flex items-center rounded-full bg-c-surface px-2.5 py-1 text-[10px] font-medium text-c-text-secondary">
             {isPl ? `Kroki ${stepCount}` : `Steps ${stepCount}`}
           </span>
-          <span className="inline-flex items-center rounded-full bg-white/80 dark:bg-navy-900/40 px-2.5 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+          <span className="inline-flex items-center rounded-full bg-c-surface px-2.5 py-1 text-[10px] font-medium text-c-text-secondary">
             {isPl ? `Lanes ${laneCount}` : `Lanes ${laneCount}`}
           </span>
           <span
             className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium ${
               warnings.length > 0
-                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
-                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                ? 'bg-warning-500/10 text-warning-600 dark:text-warning-300'
+                : 'bg-success-500/10 text-success-600 dark:text-success-300'
             }`}
           >
             {warnings.length > 0
@@ -306,15 +306,15 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
       </div>
 
       {/* Mode guidance line (single, contextual — replaces the redundant stage badge) */}
-      <p className="-mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+      <p className="-mt-1 text-[11px] text-c-text-secondary">
         {isPl ? guidance.pl : guidance.en}
       </p>
 
       {/* ── Toolbar sections ───────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3">
         {/* Build flow */}
-        <div className="flex-1 min-w-[320px] rounded-xl border border-slate-200/70 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-2.5">
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+        <div className="flex-1 min-w-[320px] rounded-xl border border-c-border-subtle bg-c-surface p-2.5">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
             {isPl ? 'Budowanie procesu' : 'Build flow'}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -335,7 +335,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 </button>
               );
             })}
-            <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-1" />
+            <div className="w-px h-5 bg-c-surface-raised mx-1" />
             <button
               type="button"
               onClick={addLane}
@@ -370,8 +370,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
         </div>
 
         {/* Analyze & validate */}
-        <div className="flex-1 min-w-[260px] rounded-xl border border-slate-200/70 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-2.5">
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+        <div className="flex-1 min-w-[260px] rounded-xl border border-c-border-subtle bg-c-surface p-2.5">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
             {isPl ? 'Analiza i walidacja' : 'Analyze and validate'}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -380,8 +380,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               onClick={() => setShowKPIDashboard((v) => !v)}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                 showKPIDashboard
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  ? 'text-c-accent bg-c-accent-soft'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
               title="KPI Dashboard"
             >
@@ -393,8 +393,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               onClick={runValidation}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
                 showWarnings
-                  ? 'text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-300'
-                  : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                  ? 'text-warning-700 bg-warning-50 dark:bg-warning-900/20 dark:text-warning-300'
+                  : 'text-warning-600 dark:text-warning-400 hover:bg-warning-50 dark:hover:bg-warning-900/20'
               }`}
               title={isPl ? 'Waliduj przepływ' : 'Validate flow'}
             >
@@ -407,8 +407,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={locked || coachLoading}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
                 showCoach
-                  ? 'text-primary-700 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-300'
-                  : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                  ? 'text-c-accent bg-c-accent-soft'
+                  : 'text-c-accent hover:bg-c-accent-soft dark:hover:brightness-110'
               }`}
               title="AI Coach"
             >
@@ -425,8 +425,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={locked || summaryLoading}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
                 showSummary
-                  ? 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-300'
-                  : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                  ? 'text-success-700 bg-success-50 dark:bg-success-900/20 dark:text-success-300'
+                  : 'text-success-600 dark:text-success-400 hover:bg-success-50 dark:hover:bg-success-900/20'
               }`}
               title={isPl ? 'Podsumowanie' : 'Summary'}
             >
@@ -442,7 +442,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 type="button"
                 onClick={onAIProposal}
                 disabled={locked}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-tag-2 hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                 title={isPl ? 'Propozycja AI — zmiany w przepływie' : 'AI Proposal — flow edits'}
               >
                 <Sparkles size={14} />
@@ -453,7 +453,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               <button
                 type="button"
                 onClick={onReadback}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-info hover:bg-c-surface-raised transition-colors"
                 title={isPl ? 'Odczyt semantyczny przepływu' : 'Semantic readback of the flow'}
               >
                 <ScanText size={14} />
@@ -464,8 +464,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
         </div>
 
         {/* Manage canvas — command-row hierarchy: primary (max 4) · secondary · overflow "…" */}
-        <div className="flex-1 min-w-[280px] rounded-xl border border-slate-200/70 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-2.5">
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+        <div className="flex-1 min-w-[280px] rounded-xl border border-c-border-subtle bg-c-surface p-2.5">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
             {isPl ? 'Zarządzanie canvasem' : 'Manage canvas'}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -476,23 +476,23 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={saving || locked}
               className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
                 saving || locked
-                  ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
-                  : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
+                  ? 'bg-c-surface-raised text-c-text-muted'
+                  : 'bg-c-accent text-white hover:brightness-110'
               }`}
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
             </button>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">{syncLabel}</span>
+            <span className="text-[11px] text-c-text-muted">{syncLabel}</span>
 
-            <div className="mx-1 h-5 w-px bg-slate-200 dark:bg-navy-700" />
+            <div className="mx-1 h-5 w-px bg-c-surface-raised" />
 
             {/* Secondary: undo / redo / auto-layout */}
             <button
               type="button"
               onClick={undo}
               disabled={!canUndo || locked}
-              className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-30"
+              className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-30"
               title={isPl ? 'Cofnij (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
               aria-label={isPl ? 'Cofnij' : 'Undo'}
             >
@@ -502,7 +502,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               type="button"
               onClick={redo}
               disabled={!canRedo || locked}
-              className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-30"
+              className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-30"
               title={isPl ? 'Ponów (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
               aria-label={isPl ? 'Ponów' : 'Redo'}
             >
@@ -528,7 +528,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 onClick={() => setOverflowOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={overflowOpen}
-                className={`${BTN} ${overflowOpen ? 'bg-slate-100 dark:bg-navy-800' : ''}`}
+                className={`${BTN} ${overflowOpen ? 'bg-c-surface-raised' : ''}`}
                 title={isPl ? 'Więcej akcji' : 'More actions'}
                 aria-label={isPl ? 'Więcej akcji' : 'More actions'}
               >
@@ -537,7 +537,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               {overflowOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-full mt-1 z-50 flex w-48 flex-col rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-xl py-1"
+                  className="absolute right-0 top-full mt-1 z-50 flex w-48 flex-col rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1"
                 >
                   <button
                     type="button"
@@ -567,7 +567,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   </button>
                   {onOpenChat && (
                     <>
-                      <div className="my-1 h-px bg-slate-100 dark:bg-navy-800" />
+                      <div className="my-1 h-px bg-c-surface-raised" />
                       <button
                         type="button"
                         role="menuitem"
@@ -584,8 +584,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   )}
                   {onConvert && (
                     <>
-                      <div className="my-1 h-px bg-slate-100 dark:bg-navy-800" />
-                      <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      <div className="my-1 h-px bg-c-surface-raised" />
+                      <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-muted">
                         <span className="inline-flex items-center gap-1">
                           <Rocket size={11} />
                           {isPl ? 'Konwertuj' : 'Convert'}

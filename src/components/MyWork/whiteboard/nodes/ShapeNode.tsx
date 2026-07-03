@@ -6,8 +6,12 @@ import { darkenHex, hexToGlow, useIsDark } from './whiteboardNodeHelpers';
 export const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
   const isDark = useIsDark();
   const shape = data?.shape || 'rectangle';
-  const lightBg = data?.bgColor || '#e0e7ff';
-  const darkBg = data?.bgColor ? darkenHex(data.bgColor, 0.7) : '#1e1b4b';
+  // Default shape fill = periwinkle identity token (theme-aware); a user-picked
+  // data.bgColor is still a raw hex, darkened for dark mode via darkenHex.
+  const lightBg = data?.bgColor || 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)';
+  const darkBg = data?.bgColor
+    ? darkenHex(data.bgColor, 0.7)
+    : 'color-mix(in srgb, var(--c-tag-2) 24%, transparent)';
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -34,7 +38,7 @@ export const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
         keepAspectRatio={isCircle}
       />
       <div
-        className={`relative flex items-center justify-center transition-all ${selected ? 'ring-2 ring-slate-500/60 shadow-lg' : 'shadow-md shadow-slate-300/40 dark:shadow-navy-900/40'}`}
+        className={`relative flex items-center justify-center transition-all ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : 'shadow-md'}`}
         style={{
           width: '100%',
           height: '100%',
@@ -62,7 +66,7 @@ export const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
           }
         }}
       >
-        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
+        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-border-strong !-top-1" />
         <div
           style={{ transform: isDiamond ? 'rotate(-45deg)' : undefined }}
           className="px-2 text-center w-full"
@@ -77,10 +81,10 @@ export const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
                 if (e.key === 'Enter') commitEdit();
                 if (e.key === 'Escape') setEditing(false);
               }}
-              className="w-full bg-transparent text-[11px] font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-slate-400 dark:border-slate-500"
+              className="w-full bg-transparent text-[11px] font-medium text-c-text text-center outline-none border-b border-c-border-strong"
             />
           ) : (
-            <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+            <div className="text-[11px] font-medium text-c-text truncate">
               {data?.label || ''}
             </div>
           )}
@@ -88,7 +92,7 @@ export const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
         <Handle
           type="source"
           position={Position.Bottom}
-          className="!w-2 !h-2 !bg-slate-400 !-bottom-1"
+          className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
         />
       </div>
     </>
