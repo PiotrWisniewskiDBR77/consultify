@@ -263,7 +263,7 @@ export const DocumentStudioView: React.FC = () => {
   return (
     <div
       data-testid="document-studio-view"
-      className="flex h-full min-h-0 flex-col bg-slate-50 dark:bg-navy-950"
+      className="flex h-full min-h-0 flex-col bg-c-surface-raised"
     >
       {showDocumentShell ? null : (
         <TopBar

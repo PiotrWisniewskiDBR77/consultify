@@ -84,7 +84,7 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
         'rounded-md border p-3 transition-colors',
         selected
           ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/60 dark:bg-emerald-950/20'
-          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900',
+          : 'border-c-border-subtle bg-c-surface',
       ].join(' ')}
       data-testid="source-candidate-card"
       data-record-id={candidate.recordId}
@@ -92,7 +92,7 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] uppercase tracking-wide text-c-text-secondary">
               {t('kimi.tabeleShell.sourcePack.score', {
                 defaultValue: 'score {{score}}',
                 score: formatScore(candidate.rankScore),
@@ -115,24 +115,24 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                   : status === 'rejected'
                     ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300'
-                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+                    : 'bg-c-surface-raised text-c-text-secondary',
               ].join(' ')}
             >
               {STATUS_LABEL_KEY[status] ? t(STATUS_LABEL_KEY[status], STATUS_LABEL[status] ?? status) : status}
             </span>
-            <span className="text-[11px] text-slate-600 dark:text-slate-500">
+            <span className="text-[11px] text-c-text-secondary">
               {formatRelative(candidate.updatedAt)}
             </span>
           </div>
           <h4
-            className="mt-0.5 truncate text-sm font-medium text-slate-800 dark:text-slate-100"
+            className="mt-0.5 truncate text-sm font-medium text-c-text"
             title={candidate.title}
           >
             {candidate.title}
           </h4>
           {candidate.preview && (
             <p
-              className="mt-1 line-clamp-2 text-xs text-slate-600 dark:text-slate-400"
+              className="mt-1 line-clamp-2 text-xs text-c-text-secondary"
               title={candidate.preview}
             >
               {candidate.preview}
@@ -147,7 +147,7 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
             'shrink-0 inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs',
             selected
               ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-              : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50',
+              : 'border-c-border bg-c-surface-raised text-c-text hover:bg-c-surface-raised disabled:opacity-50',
           ].join(' ')}
           data-testid="candidate-toggle"
           aria-pressed={selected}

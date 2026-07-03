@@ -46,9 +46,9 @@ const ACTION_CHIP: Record<string, { bg: string; text: string; ring: string }> = 
     ring: 'ring-1 ring-blue-500/30',
   },
   update: {
-    bg: 'bg-slate-500/15',
-    text: 'text-slate-700 dark:text-slate-300',
-    ring: 'ring-1 ring-slate-500/30',
+    bg: 'bg-c-surface-raised',
+    text: 'text-c-text',
+    ring: 'ring-1 ring-c-border',
   },
   delete: {
     bg: 'bg-danger-500/15',
@@ -71,9 +71,9 @@ const ACTION_CHIP: Record<string, { bg: string; text: string; ring: string }> = 
     ring: 'ring-1 ring-emerald-500/30',
   },
   reject: {
-    bg: 'bg-slate-500/15',
-    text: 'text-slate-700 dark:text-slate-300',
-    ring: 'ring-1 ring-slate-500/30',
+    bg: 'bg-c-surface-raised',
+    text: 'text-c-text',
+    ring: 'ring-1 ring-c-border',
   },
 };
 
@@ -94,8 +94,8 @@ const ACTOR_CHIP: Record<string, { bg: string; text: string; label: string }> = 
     label: 'AI Agent',
   },
   SYSTEM: {
-    bg: 'bg-slate-500/15',
-    text: 'text-slate-700 dark:text-slate-300',
+    bg: 'bg-c-surface-raised',
+    text: 'text-c-text',
     label: 'System',
   },
   CONSULTANT: {
@@ -131,9 +131,9 @@ function actionChipStyle(action: string): { bg: string; text: string; ring: stri
   const key = String(action || '').toLowerCase();
   return (
     ACTION_CHIP[key] || {
-      bg: 'bg-slate-500/15',
-      text: 'text-slate-700 dark:text-slate-300',
-      ring: 'ring-1 ring-slate-500/30',
+      bg: 'bg-c-surface-raised',
+      text: 'text-c-text',
+      ring: 'ring-1 ring-c-border',
     }
   );
 }
@@ -142,8 +142,8 @@ function actorChipStyle(actor: string): { bg: string; text: string; label: strin
   const key = String(actor || '').toUpperCase();
   return (
     ACTOR_CHIP[key] || {
-      bg: 'bg-slate-500/15',
-      text: 'text-slate-700 dark:text-slate-300',
+      bg: 'bg-c-surface-raised',
+      text: 'text-c-text',
       label: key || 'System',
     }
   );
@@ -237,9 +237,9 @@ const AuditEventRow: React.FC<{ event: PresentationAuditLogEvent }> = ({ event }
   const hasMetadata = event.metadata && Object.keys(event.metadata).length > 0;
 
   return (
-    <li className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-800/40">
+    <li className="px-4 py-3 hover:bg-c-surface-raised">
       <div className="flex items-start gap-3 flex-wrap">
-        <div className="flex-shrink-0 text-[11px] font-mono text-slate-500 dark:text-slate-400 min-w-[140px]">
+        <div className="flex-shrink-0 text-[11px] font-mono text-c-text-secondary min-w-[140px]">
           {formatTimestamp(event.timestamp)}
         </div>
         <span
@@ -253,18 +253,18 @@ const AuditEventRow: React.FC<{ event: PresentationAuditLogEvent }> = ({ event }
           {actorStyle.label}
         </span>
         {event.scope ? (
-          <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 text-[10px] italic text-slate-600 dark:text-slate-300">
+          <span className="inline-flex items-center rounded-md bg-c-surface-raised px-1.5 py-0.5 text-[10px] italic text-c-text-secondary">
             {event.scope}
           </span>
         ) : null}
-        <div className="min-w-0 flex-1 text-sm text-slate-700 dark:text-slate-200">
+        <div className="min-w-0 flex-1 text-sm text-c-text">
           {event.summary}
         </div>
         {hasMetadata ? (
           <button
             type="button"
             onClick={() => setDetailsOpen((v) => !v)}
-            className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
             aria-expanded={detailsOpen}
           >
             {detailsOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -273,7 +273,7 @@ const AuditEventRow: React.FC<{ event: PresentationAuditLogEvent }> = ({ event }
         ) : null}
       </div>
       {detailsOpen && hasMetadata ? (
-        <pre className="mt-2 ml-[140px] max-h-72 overflow-auto rounded-md border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-2 text-[11px] text-slate-600 dark:text-slate-300 whitespace-pre-wrap break-all">
+        <pre className="mt-2 ml-[140px] max-h-72 overflow-auto rounded-md border border-c-border-subtle bg-c-surface-raised p-2 text-[11px] text-c-text-secondary whitespace-pre-wrap break-all">
           {truncateJson(event.metadata)}
         </pre>
       ) : null}
@@ -742,8 +742,8 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
     if (status === 'loading') {
       return (
         <div className="flex flex-col items-center justify-center py-12">
-          <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full" />
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Loading audit log…</p>
+          <div className="animate-spin w-6 h-6 border-2 border-c-accent border-t-transparent rounded-full" />
+          <p className="mt-3 text-xs text-c-text-secondary">Loading audit log…</p>
         </div>
       );
     }
@@ -777,7 +777,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
               <button
                 type="button"
                 onClick={() => void loadInitial()}
-                className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 dark:border-amber-700/70 bg-white/70 dark:bg-amber-900/30 px-2.5 py-1 text-[11px] font-medium text-amber-800 dark:text-amber-200 hover:bg-white dark:hover:bg-amber-900/50"
+                className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 dark:border-amber-700/70 bg-c-surface dark:bg-amber-900/30 px-2.5 py-1 text-[11px] font-medium text-amber-800 dark:text-amber-200 hover:bg-c-surface dark:hover:bg-amber-900/50"
               >
                 <RefreshCw size={12} />
                 Retry
@@ -791,11 +791,11 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
     if (events.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <History size={20} className="text-slate-600" />
-          <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+          <History size={20} className="text-c-text-secondary" />
+          <p className="mt-2 text-sm font-medium text-c-text-secondary">
             No audit events yet
           </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs text-c-text-secondary">
             Activity for this deck will appear here once edits, shares, or AI proposals occur.
           </p>
         </div>
@@ -804,7 +804,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
 
     return (
       <>
-        <div className="mb-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-900/40 px-3 py-2.5">
+        <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2.5">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div className="flex items-center gap-1.5">
               <label className="sr-only" htmlFor="audit-actor-filter">
@@ -812,7 +812,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
               </label>
               <span
                 id="audit-actor-filter"
-                className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mr-1"
+                className="text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary mr-1"
               >
                 Actor
               </span>
@@ -828,8 +828,8 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                     aria-label={`Toggle ${label} filter`}
                     className={
                       selected
-                        ? 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-primary-500 text-white ring-1 ring-primary-500 hover:bg-primary-600'
-                        : 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-transparent text-slate-600 dark:text-slate-300 ring-1 ring-slate-300 dark:ring-navy-600 hover:bg-slate-100 dark:hover:bg-navy-800'
+                        ? 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-c-accent-soft0 text-c-text ring-1 ring-c-focus hover:bg-c-accent-soft'
+                        : 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-transparent text-c-text-secondary ring-1 ring-c-border hover:bg-c-surface-raised'
                     }
                   >
                     {label}
@@ -841,7 +841,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
             <div className="flex items-center gap-1.5">
               <label
                 htmlFor="audit-action-filter"
-                className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                className="text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary"
               >
                 Action
               </label>
@@ -850,7 +850,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
                 aria-label="Filter by action"
-                className="rounded-md border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               >
                 <option value="">All actions</option>
                 {uniqueActions.map((a) => (
@@ -864,7 +864,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
             <div className="flex items-center gap-1.5">
               <label
                 htmlFor="audit-date-from"
-                className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                className="text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary"
               >
                 From
               </label>
@@ -874,11 +874,11 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 aria-label="Filter from date"
-                className="rounded-md border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               />
               <label
                 htmlFor="audit-date-to"
-                className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                className="text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary"
               >
                 To
               </label>
@@ -888,7 +888,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 aria-label="Filter to date"
-                className="rounded-md border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               />
             </div>
 
@@ -898,7 +898,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                   <div className="flex items-center gap-1.5">
                     {activeView ? (
                       <span
-                        className="inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:text-primary-300 ring-1 ring-primary-500/30"
+                        className="inline-flex items-center gap-1 rounded-full bg-c-accent-soft0 px-2 py-0.5 text-[11px] font-medium text-c-accent ring-1 ring-c-focus"
                         aria-label={`Active saved view: ${activeView.name}${activeViewModified ? ' (modified)' : ''}`}
                       >
                         <Bookmark size={10} />
@@ -910,7 +910,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                           type="button"
                           onClick={() => setActiveView(null)}
                           aria-label="Clear active saved view"
-                          className="ml-0.5 rounded-full p-0.5 hover:bg-primary-500/20"
+                          className="ml-0.5 rounded-full p-0.5 hover:bg-c-accent-soft0"
                         >
                           <X size={10} />
                         </button>
@@ -925,7 +925,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                       aria-haspopup="menu"
                       aria-expanded={savedViewsOpen}
                       aria-label="Saved views"
-                      className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+                      className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface px-2 py-1 text-[11px] font-medium text-c-text hover:bg-c-surface-raised"
                     >
                       <Bookmark size={11} />
                       Saved views
@@ -935,13 +935,13 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                   {savedViewsOpen ? (
                     <div
                       role="menu"
-                      className="absolute right-0 top-full z-10 mt-1 w-72 rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg p-2 text-[12px] text-slate-700 dark:text-slate-200"
+                      className="absolute right-0 top-full z-10 mt-1 w-72 rounded-md border border-c-border-subtle bg-c-surface shadow-lg p-2 text-[12px] text-c-text"
                     >
                       {saveDraftOpen ? (
-                        <div className="border-b border-slate-200 dark:border-navy-800 pb-2 mb-2">
+                        <div className="border-b border-c-border-subtle pb-2 mb-2">
                           <label
                             htmlFor="audit-saved-view-name"
-                            className="block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1"
+                            className="block text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary mb-1"
                           >
                             View name
                           </label>
@@ -964,7 +964,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                                 setSaveDraftOpen(false);
                               }
                             }}
-                            className="w-full rounded-md border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 px-2 py-1 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            className="w-full rounded-md border border-c-border bg-c-surface px-2 py-1 text-[12px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
                             placeholder="e.g. AI activity, last 7 days"
                           />
                           {saveDraftError ? (
@@ -976,14 +976,14 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                             <button
                               type="button"
                               onClick={() => setSaveDraftOpen(false)}
-                              className="rounded-md px-2 py-1 text-[11px] text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+                              className="rounded-md px-2 py-1 text-[11px] text-c-text-secondary hover:bg-c-surface-raised"
                             >
                               Cancel
                             </button>
                             <button
                               type="button"
                               onClick={handleSaveDraftSubmit}
-                              className="rounded-md bg-primary-500 px-2 py-1 text-[11px] font-medium text-white hover:bg-primary-600"
+                              className="rounded-md bg-c-accent-soft0 px-2 py-1 text-[11px] font-medium text-c-text hover:bg-c-accent-soft"
                             >
                               Save
                             </button>
@@ -993,16 +993,16 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                         <button
                           type="button"
                           onClick={handleSaveCurrentClick}
-                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-navy-800"
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-c-surface-raised"
                         >
-                          <Bookmark size={11} className="text-primary-500" />
+                          <Bookmark size={11} className="text-c-accent" />
                           Save current as…
                         </button>
                       )}
 
                       <div className="max-h-48 overflow-y-auto">
                         {savedViews.length === 0 ? (
-                          <p className="px-2 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                          <p className="px-2 py-1.5 text-[11px] text-c-text-secondary">
                             No saved views yet.
                           </p>
                         ) : (
@@ -1012,13 +1012,13 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                               <div
                                 key={view.id}
                                 className={`group flex items-center gap-1 rounded-md px-1 ${
-                                  isActive ? 'bg-slate-200/70 dark:bg-white/[0.08]' : ''
+                                  isActive ? 'bg-c-border-subtle/[0.08]' : ''
                                 }`}
                               >
                                 <button
                                   type="button"
                                   onClick={() => applySavedView(view)}
-                                  className="flex-1 truncate rounded-md px-2 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-navy-800"
+                                  className="flex-1 truncate rounded-md px-2 py-1.5 text-left hover:bg-c-surface-raised"
                                   title={view.name}
                                 >
                                   {view.name}
@@ -1039,11 +1039,11 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                         )}
                       </div>
 
-                      <div className="mt-2 border-t border-slate-200 dark:border-navy-800 pt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                      <div className="mt-2 border-t border-c-border-subtle pt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
                         <button
                           type="button"
                           onClick={() => setSavedViewsManageOpen((v) => !v)}
-                          className="font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                          className="font-medium text-c-accent hover:underline"
                         >
                           {savedViewsManageOpen ? 'Done' : 'Manage'}
                         </button>
@@ -1051,14 +1051,14 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                           type="button"
                           onClick={handleExportViews}
                           disabled={savedViews.length === 0}
-                          className="text-slate-500 dark:text-slate-400 hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                          className="text-c-text-secondary hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
                         >
                           Export views
                         </button>
                         <button
                           type="button"
                           onClick={handleImportClick}
-                          className="text-slate-500 dark:text-slate-400 hover:underline"
+                          className="text-c-text-secondary hover:underline"
                         >
                           Import views
                         </button>
@@ -1086,7 +1086,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                   ) : null}
                 </div>
               ) : (
-                <span className="text-[10px] italic text-slate-600 dark:text-slate-500">
+                <span className="text-[10px] italic text-c-text-secondary">
                   Saved views require localStorage
                 </span>
               )}
@@ -1095,13 +1095,13 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 onClick={resetFilters}
                 disabled={!filtersActive}
                 aria-label="Reset filters"
-                className="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+                className="text-[11px] font-medium text-c-accent hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
               >
                 Reset filters
               </button>
             </div>
           </div>
-          <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="mt-1.5 text-[11px] text-c-text-secondary">
             Showing {filteredEvents.length} of {events.length}
             {total > events.length ? ` (loaded; ${total} total on server)` : ''}
           </p>
@@ -1109,21 +1109,21 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
 
         {filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <History size={20} className="text-slate-600" />
-            <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+            <History size={20} className="text-c-text-secondary" />
+            <p className="mt-2 text-sm font-medium text-c-text-secondary">
               No events match the current filters
             </p>
             <button
               type="button"
               onClick={resetFilters}
               aria-label="Reset filters"
-              className="mt-2 text-[12px] font-medium text-primary-600 dark:text-primary-400 hover:underline"
+              className="mt-2 text-[12px] font-medium text-c-accent hover:underline"
             >
               Reset filters
             </button>
           </div>
         ) : (
-          <ul className="divide-y divide-slate-200 dark:divide-navy-800 -mx-5">
+          <ul className="divide-y divide-c-border-subtle -mx-5">
             {filteredEvents.map((evt) => (
               <AuditEventRow key={evt.id} event={evt} />
             ))}
@@ -1143,21 +1143,21 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/40 px-4 py-8"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-c-surface-raised px-4 py-8"
       onClick={onClose}
     >
       <div
-        className="max-w-2xl w-full rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-xl flex flex-col max-h-[90vh] overflow-hidden"
+        className="max-w-2xl w-full rounded-xl bg-c-surface border border-c-border-subtle shadow-xl flex flex-col max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-navy-700">
+        <header className="flex items-center justify-between px-5 py-3 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
-            <History size={16} className="text-primary-500" />
-            <h2 id={titleId} className="text-sm font-semibold text-slate-800 dark:text-white">
+            <History size={16} className="text-c-accent" />
+            <h2 id={titleId} className="text-sm font-semibold text-c-text">
               Audit Log
             </h2>
             {status === 'ok' && events.length > 0 ? (
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] text-c-text-secondary">
                 {events.length}
                 {total > events.length ? ` of ${total}` : ''}
               </span>
@@ -1167,19 +1167,19 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-1 rounded-md text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised"
           >
             <X size={16} />
           </button>
         </header>
         <div className="flex-1 overflow-y-auto px-5 py-4">{renderBody()}</div>
         {showFooter ? (
-          <footer className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-900/60">
+          <footer className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle bg-c-surface-raised">
             <button
               type="button"
               onClick={handleCopyShareLink}
               aria-label="Copy a shareable link with the current filters"
-              className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+              className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised"
             >
               <Link2 size={12} />
               {shareCopied ? 'Link copied!' : 'Copy share link'}
@@ -1189,7 +1189,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
               onClick={handleExportCsv}
               disabled={exportDisabled}
               aria-label="Export filtered audit log as CSV"
-              className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download size={12} />
               Export CSV
@@ -1200,7 +1200,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 onClick={() => void loadMore()}
                 disabled={loadingMore}
                 aria-label="Load more events"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loadingMore ? (
                   <>

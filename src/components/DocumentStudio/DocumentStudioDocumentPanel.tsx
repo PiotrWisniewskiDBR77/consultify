@@ -180,10 +180,10 @@ function SourceListPanel({
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+        <h3 className="text-sm font-semibold text-c-text">
           {t('documentStudio.panel.sourcesTitle', 'Sources')}
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-c-text-secondary">
           {t('documentStudio.panel.sourcesSummary', {
             defaultValue: '{{attached}} attached · {{assumptions}} assumptions flagged',
             attached: sourceRefs.length,
@@ -201,10 +201,10 @@ function SourceListPanel({
         ].map(([label, value]) => (
           <div
             key={label}
-            className="rounded-lg border border-slate-200 bg-white p-2 dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-2"
           >
-            <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
-            <div className="mt-1 font-semibold text-navy-900 dark:text-slate-100">{value}</div>
+            <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">{label}</div>
+            <div className="mt-1 font-semibold text-c-text">{value}</div>
           </div>
         ))}
       </div>
@@ -220,12 +220,12 @@ function SourceListPanel({
           {sourceRows.map(({ ref, key, used, connector }, index) => (
             <li
               key={`${key}:${index}`}
-              className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+              className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
             >
-              <div className="font-medium text-navy-900 dark:text-slate-100">
+              <div className="font-medium text-c-text">
                 {ref.sourceTitle || ref.sourceId}
               </div>
-              <div className="mt-1 text-slate-500 dark:text-slate-400">
+              <div className="mt-1 text-c-text-secondary">
                 {ref.sourceType} · {ref.sourceId}
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -233,7 +233,7 @@ function SourceListPanel({
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                     used
                       ? 'bg-success-500/10 text-success-700 dark:text-emerald-300'
-                      : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
+                      : 'bg-c-surface-raised text-c-text-secondary'
                   }`}
                 >
                   {used
@@ -263,7 +263,7 @@ function SourceListPanel({
                       ? 'bg-success-500/10 text-success-700 dark:text-emerald-300'
                       : connector.tone === 'warning'
                         ? 'bg-warning-500/10 text-warning-700 dark:text-amber-300'
-                        : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
+                        : 'bg-c-surface-raised text-c-text-secondary'
                   }`}
                 >
                   {connector.label}
@@ -313,10 +313,10 @@ function PropertiesPanel({
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+        <h3 className="text-sm font-semibold text-c-text">
           {t('documentStudio.panel.propertiesTitle', 'Properties')}
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-c-text-secondary">
           {t(
             'documentStudio.panel.propertiesSubtitle',
             'Artifact metadata and template/source pointers.'
@@ -327,12 +327,12 @@ function PropertiesPanel({
         {rows.map(([label, value]) => (
           <div
             key={label}
-            className="rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3"
           >
-            <dt className="text-[10px] font-medium uppercase tracking-wide text-slate-600">
+            <dt className="text-[10px] font-medium uppercase tracking-wide text-c-text-secondary">
               {label}
             </dt>
-            <dd className="mt-1 break-words text-xs text-navy-900 dark:text-slate-100">{value}</dd>
+            <dd className="mt-1 break-words text-xs text-c-text">{value}</dd>
           </div>
         ))}
       </dl>
@@ -352,14 +352,14 @@ function OutlinePanel({
   const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900">
-        <div className="font-medium text-navy-900 dark:text-slate-100">
+      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs">
+        <div className="font-medium text-c-text">
           {t('documentStudio.panel.sectionsCount', {
             defaultValue: '{{count}} sections',
             count: sections.length,
           })}
         </div>
-        <div className="mt-1 text-slate-500 dark:text-slate-400">
+        <div className="mt-1 text-c-text-secondary">
           {t('documentStudio.panel.sourcesAssumptions', {
             defaultValue: '{{sources}} sources · {{assumptions}} assumptions',
             sources: sourceCount,
@@ -373,12 +373,12 @@ function OutlinePanel({
             <li key={section.sectionId}>
               <a
                 href={`#${section.sectionId}`}
-                className="block rounded-lg px-3 py-2 text-xs text-slate-700 transition-colors hover:bg-slate-100 hover:text-navy-900 dark:text-slate-300 dark:hover:bg-navy-800 dark:hover:text-slate-100"
+                className="block rounded-lg px-3 py-2 text-xs text-c-text transition-colors hover:bg-c-surface-raised hover:text-c-text"
               >
                 <span className="font-medium">
                   {index + 1}. {section.title}
                 </span>
-                <span className="mt-0.5 block text-[10px] text-slate-600">
+                <span className="mt-0.5 block text-[10px] text-c-text-secondary">
                   {t('documentStudio.panel.blocksCount', {
                     defaultValue: '{{count}} blocks',
                     count: section.blocks.length,
@@ -423,10 +423,10 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('documentStudio.panel.activityTitle', 'Activity')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary">
             {t(
               'documentStudio.panel.activitySubtitle',
               'Unified document, share-link and approval history.'
@@ -445,7 +445,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         </div>
       ) : null}
       {!loading && !error && entries.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.activityEmpty', 'No activity has been recorded yet.')}
         </div>
       ) : null}
@@ -453,15 +453,15 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         {entries.map((entry) => (
           <li
             key={entry.entryId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-navy-900 dark:text-slate-100">{entry.action}</div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+              <div className="font-medium text-c-text">{entry.action}</div>
+              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
                 {entry.source}
               </span>
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-c-text-secondary">
               {entry.actorId} · {new Date(entry.occurredAt).toLocaleString()}
             </div>
           </li>
@@ -527,10 +527,10 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('documentStudio.panel.commentsTitle', 'Comments')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary">
             {t(
               'documentStudio.panel.commentsSubtitle',
               'Document-level review threads. Block anchors stay visible in each thread.'
@@ -543,7 +543,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
             : t('documentStudio.panel.refresh', 'Refresh')}
         </Button>
       </div>
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
+      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
         <textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -551,7 +551,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
             'documentStudio.panel.commentPlaceholder',
             'Add document-level review comment…'
           )}
-          className="min-h-[80px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-navy-900 outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950 dark:text-slate-100"
+          className="min-h-[80px] w-full resize-y rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
         />
         <div className="mt-2 flex justify-end">
           <Button type="button" size="sm" onClick={submit} disabled={submitting || !draft.trim()}>
@@ -567,7 +567,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         </div>
       ) : null}
       {!loading && threads.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.commentsEmpty', 'No comments yet.')}
         </div>
       ) : null}
@@ -575,21 +575,21 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         {threads.map((thread) => (
           <li
             key={thread.threadId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-navy-900 dark:text-slate-100">
+              <div className="font-medium text-c-text">
                 {thread.root.body || t('documentStudio.panel.deletedComment', 'Deleted comment')}
               </div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
                 {thread.status}
               </span>
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-c-text-secondary">
               {formatAuthorLabel(thread.root.authorId)} · {thread.anchor.kind}
             </div>
             {thread.replies.length > 0 ? (
-              <div className="mt-2 border-l border-slate-200 pl-2 dark:border-navy-700">
+              <div className="mt-2 border-l border-c-border-subtle pl-2">
                 {t('documentStudio.panel.repliesCount', {
                   defaultValue: '{{count}} replies',
                   count: thread.replies.length,
@@ -659,32 +659,32 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+        <h3 className="text-sm font-semibold text-c-text">
           {t('documentStudio.panel.shareTitle', 'Share links')}
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-c-text-secondary">
           {t(
             'documentStudio.panel.shareSubtitle',
             'Create scoped links. The plaintext token is shown only after creation.'
           )}
         </p>
       </div>
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
-        <label className="mb-2 block text-xs text-slate-600 dark:text-slate-300">
+      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+        <label className="mb-2 block text-xs text-c-text-secondary">
           {t('documentStudio.panel.shareLabel', 'Label')}
           <input
             value={label}
             onChange={(event) => setLabel(event.target.value)}
-            className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
             placeholder={t('documentStudio.documentPanel.reviewNamePlaceholder', 'Client review')}
           />
         </label>
-        <label className="mb-3 block text-xs text-slate-600 dark:text-slate-300">
+        <label className="mb-3 block text-xs text-c-text-secondary">
           {t('documentStudio.panel.shareScope', 'Scope')}
           <select
             value={scope}
             onChange={(event) => setScope(event.target.value as DocumentShareLinkAccessScope)}
-            className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
           >
             <option value="read">{t('documentStudio.panel.scopeRead', 'Read')}</option>
             <option value="comment">{t('documentStudio.panel.scopeComment', 'Comment')}</option>
@@ -712,7 +712,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
         </div>
       ) : null}
       {!loading && links.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.shareEmpty', 'No share links yet.')}
         </div>
       ) : null}
@@ -720,17 +720,17 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
         {links.map((link) => (
           <li
             key={link.shareLinkId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-navy-900 dark:text-slate-100">
+              <div className="font-medium text-c-text">
                 {link.label || link.shareLinkId}
               </div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
                 {link.runtimeStatus?.effectiveStatus ?? link.status}
               </span>
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-c-text-secondary">
               {link.accessScope} ·{' '}
               {t('documentStudio.panel.shareUsedTimes', {
                 defaultValue: 'used {{count}} times',
@@ -797,10 +797,10 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+        <h3 className="text-sm font-semibold text-c-text">
           {t('documentStudio.panel.variantsTitle', 'Audience variants')}
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-c-text-secondary">
           {t(
             'documentStudio.panel.variantsSubtitle',
             'Render read-only projections for board, client, team, or custom audience profiles.'
@@ -818,7 +818,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
         </div>
       ) : null}
       {!loading && variants.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.variantsEmpty', 'No active audience profiles are available.')}
         </div>
       ) : null}
@@ -826,18 +826,18 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
         {variants.map((variant) => (
           <li
             key={variant.profile.profileId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
-            <div className="font-medium text-navy-900 dark:text-slate-100">
+            <div className="font-medium text-c-text">
               {variant.profile.name}
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-c-text-secondary">
               {variant.profile.audienceLabels.join(', ') ||
                 t('documentStudio.panel.inheritsAudience', 'inherits audience')}{' '}
               · v{variant.profile.version}
             </div>
             {variant.plan.length > 0 ? (
-              <ul className="mt-2 list-disc space-y-1 pl-4 text-slate-600 dark:text-slate-300">
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-c-text-secondary">
                 {variant.plan.slice(0, 3).map((item) => (
                   <li key={item}>{item}</li>
                 ))}
@@ -892,10 +892,10 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('documentStudio.panel.diffTitle', 'Schema diff')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary">
             {t(
               'documentStudio.panel.diffSubtitle',
               'Read-only comparison between live schema and the latest snapshot.'
@@ -915,9 +915,9 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
       ) : null}
       {result ? (
         <div className="space-y-3">
-          <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900">
-            <div className="font-medium text-navy-900 dark:text-slate-100">{result.summary}</div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+          <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs">
+            <div className="font-medium text-c-text">{result.summary}</div>
+            <div className="mt-1 text-c-text-secondary">
               {t('documentStudio.panel.diffBaseline', {
                 defaultValue: 'Baseline v{{version}}',
                 version: result.baseSnapshot.versionNumber,
@@ -934,10 +934,10 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="rounded-lg border border-slate-200 bg-white p-2 dark:border-navy-700 dark:bg-navy-900"
+                className="rounded-lg border border-c-border-subtle bg-c-surface p-2"
               >
-                <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
-                <div className="mt-1 font-semibold text-navy-900 dark:text-slate-100">{value}</div>
+                <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">{label}</div>
+                <div className="mt-1 font-semibold text-c-text">{value}</div>
               </div>
             ))}
           </div>
@@ -957,17 +957,17 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
                 return (
                   <li
                     key={section.sectionId}
-                    className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+                    className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-navy-900 dark:text-slate-100">
+                      <div className="font-medium text-c-text">
                         {section.afterTitle ?? section.beforeTitle ?? section.sectionId}
                       </div>
-                      <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:text-primary-300">
+                      <span className="rounded-full bg-c-accent-soft0 px-2 py-0.5 text-[10px] font-medium text-c-accent">
                         {section.kind}
                       </span>
                     </div>
-                    <div className="mt-1 text-slate-500 dark:text-slate-400">
+                    <div className="mt-1 text-c-text-secondary">
                       {t('documentStudio.panel.diffChangedBlocks', {
                         defaultValue: '{{count}} changed blocks',
                         count: changedBlocks.length,
@@ -976,12 +976,12 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
                     {changedBlocks.slice(0, 3).map((block) => (
                       <div
                         key={block.blockId}
-                        className="mt-2 rounded border border-slate-200 bg-slate-50 p-2 dark:border-navy-800 dark:bg-navy-950"
+                        className="mt-2 rounded border border-c-border-subtle bg-c-surface-raised p-2"
                       >
-                        <div className="font-medium text-slate-600 dark:text-slate-300">
+                        <div className="font-medium text-c-text-secondary">
                           {block.kind} · {block.blockType ?? 'unknown'}
                         </div>
-                        <div className="mt-1 line-clamp-2 text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 line-clamp-2 text-c-text-secondary">
                           {block.afterText ?? block.beforeText ?? block.blockId}
                         </div>
                       </div>
@@ -1028,10 +1028,10 @@ function ManifestGatePanel(): React.ReactElement {
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('documentStudio.panel.manifestTitle', 'Manifest gate')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary">
             {t(
               'documentStudio.panel.manifestSubtitle',
               'Server-side validation for DOC_BUILDER_MANIFEST.'
@@ -1076,12 +1076,12 @@ function ManifestGatePanel(): React.ReactElement {
               {[...result.mustViolations, ...result.shouldViolations].map((violation) => (
                 <li
                   key={`${violation.ruleId}:${violation.message}`}
-                  className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+                  className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
                 >
-                  <div className="font-medium text-navy-900 dark:text-slate-100">
+                  <div className="font-medium text-c-text">
                     {violation.ruleId} · {violation.severity.toUpperCase()}
                   </div>
-                  <p className="mt-1 text-slate-500 dark:text-slate-400">{violation.message}</p>
+                  <p className="mt-1 text-c-text-secondary">{violation.message}</p>
                 </li>
               ))}
             </ul>
@@ -1218,10 +1218,10 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('documentStudio.panel.approvalsTitle', 'Approvals')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary">
             {t(
               'documentStudio.panel.approvalsSubtitle',
               'Review tickets and quorum state for this document.'
@@ -1234,24 +1234,24 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
             : t('documentStudio.panel.refresh', 'Refresh')}
         </Button>
       </div>
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
-        <label className="mb-2 block text-xs text-slate-600 dark:text-slate-300">
+      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+        <label className="mb-2 block text-xs text-c-text-secondary">
           {t('documentStudio.panel.reviewersLabel', 'Reviewers (comma-separated user ids)')}
           <input
             value={participantInput}
             onChange={(event) => setParticipantInput(event.target.value)}
             placeholder="user-1,user-2"
-            className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
           />
         </label>
-        <label className="mb-2 block text-xs text-slate-600 dark:text-slate-300">
+        <label className="mb-2 block text-xs text-c-text-secondary">
           {t('documentStudio.panel.quorumLabel', 'Quorum')}
           <select
             value={quorumPolicy}
             onChange={(event) =>
               setQuorumPolicy(event.target.value as DocumentApprovalQuorumPolicy)
             }
-            className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
           >
             <option value="single_approval">
               {t('documentStudio.panel.quorumSingle', 'Single approval')}
@@ -1262,12 +1262,12 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
             </option>
           </select>
         </label>
-        <label className="mb-2 block text-xs text-slate-600 dark:text-slate-300">
+        <label className="mb-2 block text-xs text-c-text-secondary">
           {t('documentStudio.panel.reasonLabel', 'Reason')}
           <textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="mt-1 min-h-[64px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+            className="mt-1 min-h-[64px] w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm"
           />
         </label>
         <Button type="button" size="sm" onClick={requestApproval} disabled={submitting}>
@@ -1276,12 +1276,12 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
             : t('documentStudio.panel.requestApproval', 'Request approval')}
         </Button>
       </div>
-      <label className="mb-3 block text-xs text-slate-600 dark:text-slate-300">
+      <label className="mb-3 block text-xs text-c-text-secondary">
         {t('documentStudio.panel.decisionCommentLabel', 'Decision comment')}
         <input
           value={decisionComment}
           onChange={(event) => setDecisionComment(event.target.value)}
-          className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-950"
+          className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
           placeholder={t(
             'documentStudio.documentPanel.reviewerCommentPlaceholder',
             'Optional reviewer comment'
@@ -1294,7 +1294,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         </div>
       ) : null}
       {!loading && approvals.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.approvalsEmpty', 'No approval requests yet.')}
         </div>
       ) : null}
@@ -1302,17 +1302,17 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         {approvals.map((approval) => (
           <li
             key={approval.approvalId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-navy-900 dark:text-slate-100">
+              <div className="font-medium text-c-text">
                 {approval.reason || approval.approvalId}
               </div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+              <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-secondary">
                 {approval.status}
               </span>
             </div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-c-text-secondary">
               {t('documentStudio.panel.approvalMeta', {
                 defaultValue: '{{participants}} participants · {{quorum}} · {{decisions}} decisions',
                 participants: approval.participants.length,
@@ -1476,10 +1476,10 @@ function ContentLibraryPanel({
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('documentStudio.panel.libraryTitle', 'Content library')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary">
             {t(
               'documentStudio.panel.librarySubtitle',
               'Active reusable blocks matching this document type and language.'
@@ -1509,10 +1509,10 @@ function ContentLibraryPanel({
           </pre>
         </div>
       ) : null}
-      <label className="mb-3 block text-xs font-medium text-slate-600 dark:text-slate-300">
+      <label className="mb-3 block text-xs font-medium text-c-text-secondary">
         {t('documentStudio.panel.insertIntoSection', 'Insert into section')}
         <select
-          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-navy-900 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-100"
+          className="mt-1 w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
           value={targetSectionId}
           onChange={(event) => setTargetSectionId(event.target.value)}
         >
@@ -1524,7 +1524,7 @@ function ContentLibraryPanel({
         </select>
       </label>
       {!loading && blocks.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.libraryEmpty', 'No reusable blocks match this document yet.')}
         </div>
       ) : null}
@@ -1532,14 +1532,14 @@ function ContentLibraryPanel({
         {blocks.map((block) => (
           <li
             key={block.contentBlockId}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-xs dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
           >
-            <div className="font-medium text-navy-900 dark:text-slate-100">{block.name}</div>
-            <div className="mt-1 text-slate-500 dark:text-slate-400">
+            <div className="font-medium text-c-text">{block.name}</div>
+            <div className="mt-1 text-c-text-secondary">
               {block.languageScope} · v{block.version} · {block.block.type}
             </div>
             {block.description ? (
-              <p className="mt-2 text-slate-600 dark:text-slate-300">{block.description}</p>
+              <p className="mt-2 text-c-text-secondary">{block.description}</p>
             ) : null}
             <Button
               type="button"
@@ -1579,16 +1579,16 @@ function TeresaDrawerPanel({
   const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
-      <div className="mb-3 rounded-lg border border-primary-500/20 bg-primary-500/5 p-3">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-slate-100">Teresa</h3>
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+      <div className="mb-3 rounded-lg border border-c-accent bg-c-accent-soft0 p-3">
+        <h3 className="text-sm font-semibold text-c-text">Teresa</h3>
+        <p className="mt-1 text-xs text-c-text-secondary">
           {t(
             'documentStudio.panel.teresaSubtitle',
             'AI document co-editor. Use source/methodology prompts here for governed proposal flows; all changes still require review and approval before execution.'
           )}
         </p>
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-c-text-secondary">
         Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
       </p>
     </div>
@@ -2013,7 +2013,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     if (activeToolId === 'editor') {
       return (
         <div className="h-full overflow-y-auto p-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-secondary">
             Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
           </p>
         </div>
@@ -2060,13 +2060,13 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                   })}
                 </span>
               </div>
-              <ul className="mb-2 space-y-1 text-slate-700 dark:text-slate-200">
+              <ul className="mb-2 space-y-1 text-c-text">
                 {qaBlock.report.categories
                   .filter((c) => c.blocking)
                   .map((c) => (
                     <li key={c.category}>
                       <span className="font-medium uppercase tracking-wide">{c.category}</span>
-                      <span className="ml-2 text-slate-500 dark:text-slate-400">
+                      <span className="ml-2 text-c-text-secondary">
                         {t('documentStudio.panel.scoreFindings', {
                           defaultValue: 'score {{score}}/100 · {{count}} findings',
                           score: c.score,
@@ -2076,7 +2076,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                     </li>
                   ))}
               </ul>
-              <p className="mb-2 text-slate-600 dark:text-slate-300">
+              <p className="mb-2 text-c-text-secondary">
                 {t(
                   'documentStudio.panel.qaBlockedHint',
                   'Resolve the findings in the QA panel, or proceed with an audited override if the export is time-critical and you accept the risk.'
@@ -2109,7 +2109,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                     </span>
                   </Button>
                 ) : (
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] text-c-text-secondary">
                     {t(
                       'documentStudio.panel.overrideRequiresRole',
                       'Override requires admin or manager role'
@@ -2130,12 +2130,12 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       )}
 
       <div className="flex flex-col gap-3 overflow-y-auto p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-c-border-subtle bg-c-surface p-3">
           <div>
-            <h2 className="text-sm font-semibold text-navy-900 dark:text-slate-100">
+            <h2 className="text-sm font-semibold text-c-text">
               {t('documentStudio.panel.documentPreview', 'Document preview')}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-c-text-secondary">
               {schema.documentType} · {schema.language.toUpperCase()} · {schema.density} ·{' '}
               {schema.confidentiality}
             </p>
@@ -2223,7 +2223,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       backLabel={t('documentStudio.panel.startOver', 'Start over')}
       topBarChips={topBarChips}
       presenceSlot={
-        <div className="text-right text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="text-right text-[11px] text-c-text-secondary">
           <div>
             {schema.language.toUpperCase()} · {schema.confidentiality}
           </div>

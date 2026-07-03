@@ -131,8 +131,8 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                     className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[min(28rem,90%)] opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex items-center gap-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-lg px-2 py-1.5">
-                      <Sparkles size={13} className="text-primary-500 shrink-0" />
+                    <div className="flex items-center gap-1.5 bg-c-surface border border-c-border-subtle rounded-lg shadow-lg px-2 py-1.5">
+                      <Sparkles size={13} className="text-c-accent shrink-0" />
                       <input
                         type="text"
                         value={instructions[index] ?? ''}
@@ -151,7 +151,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                           'presentations.builder.rewritePlaceholder',
                           'Przerób ten slajd…'
                         )}
-                        className="flex-1 text-sm bg-transparent border-none outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 disabled:opacity-60"
+                        className="flex-1 text-sm bg-transparent border-none outline-none text-c-text placeholder:text-c-text-muted disabled:opacity-60"
                       />
                       <button
                         onClick={() => {
@@ -160,7 +160,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                         }}
                         disabled={regeneratingIndex === index || !(instructions[index] ?? '').trim()}
                         title={t('presentations.builder.rewriteSlide', 'Rewrite slide')}
-                        className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium bg-c-accent-soft0 text-c-text hover:bg-c-accent-soft disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {regeneratingIndex === index
                           ? t('presentations.builder.regenerating', 'Regenerating…')
