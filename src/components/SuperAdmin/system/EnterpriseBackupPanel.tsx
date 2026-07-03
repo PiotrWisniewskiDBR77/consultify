@@ -291,7 +291,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
           onClick={() => setShowCreateModal(true)}
           disabled={creating || Boolean(backupLoadError)}
           title={backupLoadError || undefined}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
         >
           {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           Create Backup
@@ -357,7 +357,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
             onClick={() => setActiveTab(id as typeof activeTab)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-c-surface-raised text-c-text border-b-2 border-primary-500'
+                ? 'bg-c-surface-raised text-c-text border-b-2 border-c-accent'
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
@@ -693,7 +693,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <button
                   disabled
                   title="Backup settings persistence is not connected"
-                  className="px-4 py-2 bg-navy-900 text-white rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                  className="px-4 py-2 bg-c-surface text-white rounded-lg transition-colors opacity-50 cursor-not-allowed"
                 >
                   Save Settings
                 </button>

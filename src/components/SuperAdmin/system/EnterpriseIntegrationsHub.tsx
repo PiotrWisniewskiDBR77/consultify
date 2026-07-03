@@ -524,7 +524,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                 </h3>
                 <button
                   onClick={() => setActiveTab('catalog')}
-                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add Integration
@@ -634,7 +634,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                 <button
                   disabled
                   title={loadErrors.webhooks || WEBHOOK_MUTATION_UNAVAILABLE}
-                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Create Webhook
@@ -827,8 +827,8 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <button
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               isConnected
-                                ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                                ? 'bg-c-surface  text-c-text-secondary '
+                                : 'bg-c-surface  text-c-text-muted  cursor-not-allowed'
                             }`}
                             disabled
                             title={isConnected ? 'Already connected' : CATALOG_CONNECT_UNAVAILABLE}
@@ -871,26 +871,26 @@ const DeliveriesModal: React.FC<{
   onClose: () => void;
 }> = ({ webhook, deliveries, loadError, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Webhook Deliveries</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-500">
+          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Webhook Deliveries</h3>
+          <p className="text-sm text-c-text-secondary">
             {asText(webhook.name, 'Unnamed webhook')}
           </p>
         </div>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+          className="p-2 hover:bg-c-surface dark:hover:bg-c-surface/40 rounded-lg"
         >
-          <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+          <X className="w-5 h-5 text-c-text-secondary" />
         </button>
       </div>
 
       {loadError ? (
         <DegradedState title="Webhook deliveries unavailable" description={loadError} />
       ) : deliveries.length === 0 ? (
-        <div className="text-center py-8 text-slate-600 dark:text-slate-500">
+        <div className="text-center py-8 text-c-text-secondary">
           <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No deliveries yet</p>
         </div>
@@ -899,7 +899,7 @@ const DeliveriesModal: React.FC<{
           {deliveries.map((delivery) => (
             <div
               key={delivery.id}
-              className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/10"
+              className="p-3 bg-c-surface/30 rounded-lg border border-c-border-subtle dark:border-white/10"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -910,7 +910,7 @@ const DeliveriesModal: React.FC<{
                   ) : (
                     <Clock className="w-4 h-4 text-amber-400" />
                   )}
-                  <span className="text-sm text-slate-900 dark:text-white">
+                  <span className="text-sm text-c-text-secondary dark:text-white">
                     {asText(delivery.event_type, 'unknown')}
                   </span>
                   {delivery.response_code && (
@@ -923,7 +923,7 @@ const DeliveriesModal: React.FC<{
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-c-text-muted">
                   {formatDateTime(delivery.created_at)}
                 </span>
               </div>

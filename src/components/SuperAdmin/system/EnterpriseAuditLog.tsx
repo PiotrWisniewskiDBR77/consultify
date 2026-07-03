@@ -500,7 +500,7 @@ export const EnterpriseAuditLog: React.FC = () => {
             disabled={!!loadError}
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
               showFilters
-                ? 'bg-navy-900 border-navy-900 text-white'
+                ? 'bg-c-surface border-c-border text-white'
                 : 'bg-c-surface-raised border-c-border text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
@@ -791,7 +791,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                               <div className="text-xs text-c-text-muted mb-2">
                                 Before
                               </div>
-                              <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-100 overflow-x-auto max-h-32">
+                              <pre className="p-2 bg-c-surface rounded-lg text-xs text-c-text overflow-x-auto max-h-32">
                                 {JSON.stringify(log.before_data, null, 2)}
                               </pre>
                             </div>
@@ -801,7 +801,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                               <div className="text-xs text-c-text-muted mb-2">
                                 After
                               </div>
-                              <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-100 overflow-x-auto max-h-32">
+                              <pre className="p-2 bg-c-surface rounded-lg text-xs text-c-text overflow-x-auto max-h-32">
                                 {JSON.stringify(log.after_data, null, 2)}
                               </pre>
                             </div>

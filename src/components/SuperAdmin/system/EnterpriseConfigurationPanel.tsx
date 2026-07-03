@@ -415,7 +415,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
           <button
             onClick={() => setShowAddModal(true)}
             disabled={!!loadError}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add Config
@@ -469,7 +469,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
               disabled={!!loadError}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedCategory === cat.id
-                  ? 'bg-navy-900 text-white'
+                  ? 'bg-c-surface text-white'
                   : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
@@ -812,7 +812,7 @@ const ConfigEditModal: React.FC<{
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Save Changes
@@ -866,14 +866,14 @@ const ConfigAddModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add Configuration</h3>
+          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Add Configuration</h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+            className="p-2 hover:bg-c-surface dark:hover:bg-c-surface/40 rounded-lg"
           >
-            <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+            <X className="w-5 h-5 text-c-text-secondary" />
           </button>
         </div>
 
@@ -888,7 +888,7 @@ const ConfigAddModal: React.FC<{
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Key *
             </label>
             <input
@@ -896,14 +896,14 @@ const ConfigAddModal: React.FC<{
               required
               value={formData.key}
               onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono"
+              className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white font-mono"
               placeholder="my_config_key"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Type
               </label>
               <select
@@ -911,7 +911,7 @@ const ConfigAddModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, type: e.target.value as ConfigItem['type'] })
                 }
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
               >
                 <option value="string">String</option>
                 <option value="number">Number</option>
@@ -921,13 +921,13 @@ const ConfigAddModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Category
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -939,14 +939,14 @@ const ConfigAddModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Value *
             </label>
             {formData.type === 'boolean' ? (
               <select
                 value={formData.value}
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
               >
                 <option value="">Select...</option>
                 <option value="true">True</option>
@@ -959,20 +959,20 @@ const ConfigAddModal: React.FC<{
                 value={formData.value}
                 aria-label="Configuration Value"
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
               />
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Description
             </label>
             <input
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+              className="w-full px-3 py-2 bg-c-surface/30 border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary dark:text-white"
               placeholder="Optional description"
             />
           </div>
@@ -982,9 +982,9 @@ const ConfigAddModal: React.FC<{
               type="checkbox"
               checked={formData.is_sensitive}
               onChange={(e) => setFormData({ ...formData, is_sensitive: e.target.checked })}
-              className="rounded border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-primary-600 dark:text-primary-400"
+              className="rounded border-c-border-subtle bg-c-surface text-c-accent dark:text-c-accent"
             />
-            <span className="text-sm text-slate-700 dark:text-slate-300">
+            <span className="text-sm text-c-text-secondary">
               Sensitive value (will be masked)
             </span>
           </label>
@@ -993,14 +993,14 @@ const ConfigAddModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              className="px-4 py-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Create
@@ -1021,24 +1021,24 @@ const ConfigHistoryModal: React.FC<{
   onClose: () => void;
 }> = ({ config, versions, loadError, onRollback, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Version History</h3>
-          <code className="text-sm text-primary-600 dark:text-primary-400">{config.key}</code>
+          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Version History</h3>
+          <code className="text-sm text-c-accent dark:text-c-accent">{config.key}</code>
         </div>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+          className="p-2 hover:bg-c-surface dark:hover:bg-c-surface/40 rounded-lg"
         >
-          <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+          <X className="w-5 h-5 text-c-text-secondary" />
         </button>
       </div>
 
       {loadError ? (
         <DegradedState title="Version history unavailable" description={loadError} />
       ) : versions.length === 0 ? (
-        <div className="text-center py-8 text-slate-600 dark:text-slate-500">
+        <div className="text-center py-8 text-c-text-secondary">
           <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No version history available</p>
         </div>
@@ -1047,50 +1047,50 @@ const ConfigHistoryModal: React.FC<{
           {versions.map((version, index) => (
             <div
               key={version.id}
-              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/10"
+              className="p-4 bg-c-surface/30 rounded-lg border border-c-border-subtle dark:border-white/10"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span
                     className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium ${
                       index === 0
-                        ? 'bg-primary-600/10 text-primary-700 dark:text-primary-300'
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                        ? 'bg-c-accent/10 text-c-accent dark:text-c-accent'
+                        : 'bg-c-surface  text-c-text-secondary '
                     }`}
                   >
                     {versions.length - index}
                   </span>
-                  <span className="text-sm text-slate-600 dark:text-slate-500">
+                  <span className="text-sm text-c-text-secondary">
                     {version.changed_by}
                   </span>
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-c-text-muted">
                   {formatDateTime(version.changed_at)}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-xs">Previous:</span>
+                  <span className="text-c-text-muted text-xs">Previous:</span>
                   <code className="block mt-1 text-danger-400 bg-danger-500/10 px-2 py-1 rounded">
                     {version.old_value}
                   </code>
                 </div>
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-xs">New:</span>
+                  <span className="text-c-text-muted text-xs">New:</span>
                   <code className="block mt-1 text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">
                     {version.new_value}
                   </code>
                 </div>
               </div>
               {version.reason && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                <p className="text-xs text-c-text-muted mt-2">
                   Reason: {version.reason}
                 </p>
               )}
               {index > 0 && (
                 <button
                   onClick={() => onRollback(version)}
-                  className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1"
+                  className="mt-2 text-xs text-c-accent dark:text-c-accent hover:text-c-accent dark:hover:text-c-accent flex items-center gap-1"
                 >
                   <RotateCcw className="w-3 h-3" />
                   Rollback to this version

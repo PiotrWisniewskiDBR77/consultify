@@ -205,7 +205,7 @@ export const LegalPanel: React.FC = () => {
             title={
               loadError ? 'Legal documents must load before publishing a new version.' : undefined
             }
-            className="flex items-center gap-2 px-3 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
             Publish Document
@@ -416,7 +416,7 @@ export const LegalPanel: React.FC = () => {
               <button
                 onClick={handlePublish}
                 disabled={publishing || !newDoc.title.trim()}
-                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center gap-2"
               >
                 {publishing && <Loader2 className="w-4 h-4 animate-spin" />}
                 Publish

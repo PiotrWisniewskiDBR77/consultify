@@ -103,8 +103,8 @@ const FLAG_TYPE_CONFIG = {
   percentage: { icon: Percent, color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Percentage' },
   targeting: {
     icon: Target,
-    color: 'text-primary-400',
-    bg: 'bg-primary-500/20',
+    color: 'text-c-accent',
+    bg: 'bg-c-accent/20',
     label: 'Targeting',
   },
   ab_test: { icon: Beaker, color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'A/B Test' },
@@ -113,8 +113,8 @@ const FLAG_TYPE_CONFIG = {
 const ENVIRONMENTS = ['development', 'staging', 'production'];
 const fallbackFlagTypeConfig = {
   icon: Flag,
-  color: 'text-slate-600',
-  bg: 'bg-slate-500/20',
+  color: 'text-c-text-secondary',
+  bg: 'bg-c-surface-raised/20',
   label: 'Unknown',
 };
 
@@ -402,7 +402,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         <button
           onClick={() => setShowCreateModal(true)}
           disabled={!!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
         >
           <Plus size={16} />
           Create Flag
@@ -735,7 +735,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       {/* Targeting Rules */}
                       {flag.flag_type === 'targeting' && flag.targeting_rules?.length > 0 && (
                         <div>
-                          <div className="text-sm text-slate-600 dark:text-slate-500 mb-2">
+                          <div className="text-sm text-c-text-secondary mb-2">
                             Targeting Rules
                           </div>
                           <div className="space-y-2">
@@ -744,24 +744,24 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                 key={rule.id || i}
                                 className={`p-2 rounded-lg ${
                                   rule.enabled
-                                    ? 'bg-primary-500/10 border border-primary-500/30'
-                                    : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent'
+                                    ? 'bg-c-accent/10 border border-c-accent/30'
+                                    : 'bg-c-surface  border border-c-border-subtle dark:border-transparent'
                                 }`}
                               >
                                 <div className="flex items-center gap-2 text-sm">
                                   <span
                                     className={
                                       rule.enabled
-                                        ? 'text-primary-400'
-                                        : 'text-slate-500 dark:text-slate-400'
+                                        ? 'text-c-accent'
+                                        : 'text-c-text-muted '
                                     }
                                   >
                                     {rule.type}
                                   </span>
-                                  <span className="text-slate-500 dark:text-slate-400">
+                                  <span className="text-c-text-muted">
                                     {rule.operator}
                                   </span>
-                                  <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-transparent">
+                                  <code className="text-xs bg-c-surface px-1 rounded text-c-text-secondary border border-c-border-subtle dark:border-transparent">
                                     {rule.values.join(', ')}
                                   </code>
                                 </div>
@@ -774,7 +774,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       {/* A/B Test Variants */}
                       {flag.flag_type === 'ab_test' && flag.variants && (
                         <div>
-                          <div className="text-sm text-slate-600 dark:text-slate-500 mb-2">
+                          <div className="text-sm text-c-text-secondary mb-2">
                             Variants
                           </div>
                           <div className="space-y-2">
@@ -784,7 +784,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                 className={`p-3 rounded-lg ${
                                   evaluation.variant === variant.name
                                     ? 'bg-amber-500/20 border border-amber-500/30'
-                                    : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent'
+                                    : 'bg-c-surface  border border-c-border-subtle dark:border-transparent'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
@@ -792,12 +792,12 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                     className={`font-medium ${
                                       evaluation.variant === variant.name
                                         ? 'text-amber-400'
-                                        : 'text-slate-900 dark:text-slate-100'
+                                        : 'text-c-text-secondary '
                                     }`}
                                   >
                                     {variant.name}
                                   </span>
-                                  <span className="text-sm text-slate-600 dark:text-slate-500">
+                                  <span className="text-sm text-c-text-secondary">
                                     {variant.weight}%
                                   </span>
                                 </div>
@@ -810,21 +810,21 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       {/* Metadata */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                         <div>
-                          <span className="text-slate-500 dark:text-slate-400">Created</span>
-                          <div className="text-slate-700 dark:text-slate-300">
+                          <span className="text-c-text-muted">Created</span>
+                          <div className="text-c-text-secondary">
                             {formatDate(flag.created_at)}
                           </div>
                         </div>
                         <div>
-                          <span className="text-slate-500 dark:text-slate-400">Updated</span>
-                          <div className="text-slate-700 dark:text-slate-300">
+                          <span className="text-c-text-muted">Updated</span>
+                          <div className="text-c-text-secondary">
                             {formatDate(flag.updated_at)}
                           </div>
                         </div>
                         {flag.organization_id && (
                           <div>
-                            <span className="text-slate-500 dark:text-slate-400">Org-specific</span>
-                            <div className="text-slate-700 dark:text-slate-300">
+                            <span className="text-c-text-muted">Org-specific</span>
+                            <div className="text-c-text-secondary">
                               {flag.organization_id.slice(0, 8)}...
                             </div>
                           </div>
@@ -915,16 +915,16 @@ const FeatureFlagModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          <h3 className="text-xl font-bold text-c-text-secondary">
             {flag ? 'Edit Feature Flag' : 'Create Feature Flag'}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+            className="p-2 hover:bg-c-surface dark:hover:bg-c-surface/40 rounded-lg"
           >
-            <X size={20} className="text-slate-600 dark:text-slate-500" />
+            <X size={20} className="text-c-text-secondary" />
           </button>
         </div>
 
@@ -940,7 +940,7 @@ const FeatureFlagModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Flag Key *
               </label>
               <input
@@ -953,12 +953,12 @@ const FeatureFlagModal: React.FC<{
                     flag_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
                   })
                 }
-                className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
                 placeholder="new_feature"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Name *
               </label>
               <input
@@ -967,26 +967,26 @@ const FeatureFlagModal: React.FC<{
                 aria-label="Flag Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
               rows={2}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Type *
               </label>
               <select
@@ -997,7 +997,7 @@ const FeatureFlagModal: React.FC<{
                     flag_type: e.target.value as FeatureFlag['flag_type'],
                   })
                 }
-                className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
               >
                 {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
                   <option key={key} value={key}>
@@ -1007,13 +1007,13 @@ const FeatureFlagModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Environment *
               </label>
               <select
                 value={formData.environment}
                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
               >
                 {ENVIRONMENTS.map((env) => (
                   <option key={env} value={env}>
@@ -1026,7 +1026,7 @@ const FeatureFlagModal: React.FC<{
 
           {formData.flag_type === 'percentage' && (
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Rollout Percentage: {formData.rollout_percentage}%
               </label>
               <input
@@ -1048,9 +1048,9 @@ const FeatureFlagModal: React.FC<{
               id="enabled"
               checked={formData.enabled}
               onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-              className="w-4 h-4 text-primary-600 bg-white dark:bg-navy-950/20 border-slate-300 dark:border-white/10 rounded"
+              className="w-4 h-4 text-c-accent bg-c-surface border-c-border-subtle dark:border-white/10 rounded"
             />
-            <label htmlFor="enabled" className="text-sm text-slate-700 dark:text-slate-300">
+            <label htmlFor="enabled" className="text-sm text-c-text-secondary">
               Enable flag immediately
             </label>
           </div>
@@ -1059,14 +1059,14 @@ const FeatureFlagModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
+              className="px-4 py-2 text-c-text-secondary hover:text-white transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {flag ? 'Update' : 'Create'}
@@ -1107,43 +1107,43 @@ const FlagHistoryModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-white/10 p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-white">Feature Flag History</h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+            className="p-2 hover:bg-c-surface dark:hover:bg-c-surface/40 rounded-lg"
           >
-            <X size={20} className="text-slate-600 dark:text-slate-500" />
+            <X size={20} className="text-c-text-secondary" />
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-c-text-secondary animate-spin" />
           </div>
         ) : loadError ? (
           <DegradedState title="Feature flag history unavailable" description={loadError} />
         ) : (
           <div className="space-y-2">
             {history.length === 0 ? (
-              <p className="text-slate-600 dark:text-slate-500 text-center py-8">
+              <p className="text-c-text-secondary text-center py-8">
                 No history available
               </p>
             ) : (
               history.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-white/10"
+                  className="p-3 bg-c-surface/30 rounded-lg border border-white/10"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-white">{item.change_type}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-muted">
                       {new Date(item.changed_at).toLocaleString()}
                     </span>
                   </div>
                   {item.changed_by && (
-                    <p className="text-xs text-slate-600 dark:text-slate-500">
+                    <p className="text-xs text-c-text-secondary">
                       Changed by: {item.changed_by}
                     </p>
                   )}

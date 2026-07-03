@@ -513,7 +513,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                             selected time period.
                           </p>
                           <div className="flex items-center gap-2">
-                            <button className="px-3 py-1.5 text-xs bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg">
+                            <button className="px-3 py-1.5 text-xs bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg">
                               PDF
                             </button>
                             <button className="px-3 py-1.5 text-xs bg-c-surface hover:bg-c-surface-raised text-c-text rounded-lg">
@@ -549,7 +549,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                 <button
                   disabled
                   title="Scheduled report creation requires an audited backend workflow"
-                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 text-white rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 bg-c-surface text-white rounded-lg hover:bg-c-surface dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Schedule Report
