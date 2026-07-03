@@ -5736,6 +5736,7 @@
     "saved": "Ustawienia zapisane",
     "saveError": "Nie udało się zapisać ustawień",
     "sectionNotFound": "Nie znaleziono sekcji",
+    "sectionNotFoundHint": "Ta sekcja ustawień nie istnieje. Wybierz inną z paska bocznego.",
     "taxonomy": {
       "badge": "Taksonomia ustawień",
       "title": "Jeden root ustawień z jasną odpowiedzialnością",

@@ -6521,6 +6521,7 @@
     "saved": "Settings saved",
     "saveError": "Failed to save settings",
     "sectionNotFound": "Section not found",
+    "sectionNotFoundHint": "This settings section does not exist. Pick another from the sidebar.",
     "taxonomy": {
       "badge": "Settings taxonomy",
       "title": "One settings root with clear ownership",
