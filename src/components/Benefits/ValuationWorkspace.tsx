@@ -98,7 +98,7 @@ const DEFAULT_MULTIPLES: MultiplesState = {
 type TranslateFn = (key: string, defaultValue: string) => string;
 
 /** Localized label for a valuation status enum (DRAFT / REVIEW / APPROVED). */
-function valuationStatusLabel(raw: unknown, t: TranslateFn): string {
+export function valuationStatusLabel(raw: unknown, t: TranslateFn): string {
   const s = String(raw ?? '')
     .trim()
     .toUpperCase();
@@ -109,7 +109,7 @@ function valuationStatusLabel(raw: unknown, t: TranslateFn): string {
 }
 
 /** Localized label for a valuation source type (budget / financial_model / manual). */
-function valuationSourceLabel(raw: unknown, t: TranslateFn): string {
+export function valuationSourceLabel(raw: unknown, t: TranslateFn): string {
   const s = String(raw ?? '')
     .trim()
     .toLowerCase();
