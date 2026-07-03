@@ -97,13 +97,13 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-[9998] animate-in fade-in"
+        className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-overlay animate-in fade-in"
         onClick={onClose}
       />
 
       {/* Tour Card */}
       <div
-        className="fixed z-[9999] animate-in fade-in slide-in-from-bottom-4"
+        className="fixed z-modal animate-in fade-in slide-in-from-bottom-4"
         style={{
           top: `${position.top}px`,
           left: `${position.left}px`,
