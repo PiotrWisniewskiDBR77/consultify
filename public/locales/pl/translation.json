@@ -133,7 +133,14 @@
     "none": "brak",
     "runNow": "Uruchom teraz",
     "organization": "Organizacja",
-    "loadMore": "Załaduj więcej"
+    "loadMore": "Załaduj więcej",
+    "clear": "Wyczyść",
+    "bulk": {
+      "selectedCount": "Zaznaczono: {{count}}",
+      "done": "{{count}} {{noun}}",
+      "processedNoun": "przetworzono",
+      "partial": "Wykonano {{success}}, błędów: {{failed}}"
+    }
   },
   "superadmin": {
     "confirm": {

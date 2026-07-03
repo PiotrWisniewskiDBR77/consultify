@@ -1448,7 +1448,14 @@
     "none": "none",
     "runNow": "Run now",
     "organization": "Organization",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "clear": "Clear",
+    "bulk": {
+      "selectedCount": "{{count}} selected",
+      "done": "{{count}} {{noun}}",
+      "processedNoun": "processed",
+      "partial": "{{success}} done, {{failed}} failed"
+    }
   },
   "superadmin": {
     "confirm": {
