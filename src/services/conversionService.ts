@@ -74,11 +74,17 @@ async function createTargetOutput(
   sourceTitle: string
 ): Promise<{ outputId: string }> {
   if (targetType === 'initiative') {
+    // Chain gap #5 (Ideas/MyWork → Inicjatywy): the live POST /api/initiatives is
+    // guarded by validateBody(CreateInitiativeSchema), which (a) REQUIRES `title`
+    // (`name` alone → 400) and (b) only knows camelCase `sourceType`/`sourceId` —
+    // snake_case keys were silently stripped, so the created initiative lost its
+    // back-reference to the source session (source_type fell back to 'manual').
     const created = await Api.createInitiative({
+      title: sourceTitle.slice(0, 255),
       name: sourceTitle.slice(0, 255),
       description: `Converted from MyWork session`,
-      source_type: 'tool_session',
-      source_id: sessionId,
+      sourceType: 'tool_session',
+      sourceId: sessionId,
     });
     return { outputId: String(created?.id ?? '') };
   }
