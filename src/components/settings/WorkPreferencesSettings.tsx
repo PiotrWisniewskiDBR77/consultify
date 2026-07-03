@@ -202,11 +202,11 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
         <InfoButton cardId="settings-work" position="top-right" />
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Target size={28} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <Target size={28} className="text-c-accent" />
             {t('settings.work.title', 'Work Preferences')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.work.description',
               'Customize how you view and manage your tasks and projects'
@@ -263,7 +263,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       case 'urgent':
         return 'bg-danger-500';
       default:
-        return 'bg-slate-400';
+        return 'bg-c-text-muted';
     }
   };
 
@@ -274,11 +274,11 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Target size={28} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <Target size={28} className="text-c-accent" />
             {t('settings.work.title', 'Work Preferences')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.work.description',
               'Customize how you view and manage your tasks and projects'
@@ -308,12 +308,12 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Default Project View */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <LayoutGrid size={20} className="text-primary-500" />
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
+          <LayoutGrid size={20} className="text-c-accent" />
           {t('settings.work.defaultView', 'Default Project View')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t(
             'settings.work.defaultViewDescription',
             'Choose how projects are displayed by default when you open them'
@@ -335,20 +335,20 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 }
                 className={`p-4 rounded-xl border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-[var(--c-info)]/50 dark:hover:border-[var(--c-info)]/30'
+                    ? 'border-[var(--c-info)] bg-c-surface-raised.08]'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-[var(--c-info)]/50 dark:hover:border-[var(--c-info)]/30'
                 }`}
               >
                 <Icon
                   size={24}
-                  className={isSelected ? 'text-[var(--c-info)]' : 'text-slate-600 dark:text-slate-500'}
+                  className={isSelected ? 'text-[var(--c-info)]' : 'text-c-text-secondary'}
                 />
                 <div
-                  className={`mt-2 font-medium ${isSelected ? 'text-[var(--c-info)]' : 'text-slate-700 dark:text-slate-300'}`}
+                  className={`mt-2 font-medium ${isSelected ? 'text-[var(--c-info)]' : 'text-c-text-secondary'}`}
                 >
                   {option.label}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <div className="text-xs text-c-text-muted mt-1">
                   {option.description}
                 </div>
               </button>
@@ -358,19 +358,19 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Task Defaults - NEW SECTION */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Flag size={20} className="text-amber-500" />
           {t('settings.work.taskDefaults', 'Task Defaults')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t('settings.work.taskDefaultsDescription', 'Set default values for new tasks')}
         </p>
 
         <div className="space-y-6">
           {/* Default Priority */}
           <div>
-            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-3">
+            <label className="block font-medium text-c-text-secondary mb-3">
               {t('settings.work.defaultPriority', 'Default Task Priority')}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -387,13 +387,13 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                     }
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                       isSelected
-                        ? 'border-[var(--c-info)] bg-slate-100 dark:bg-white/[0.08]'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-[var(--c-info)]/50'
+                        ? 'border-[var(--c-info)] bg-c-surface-raised.08]'
+                        : 'border-c-border-subtle dark:border-navy-700 hover:border-[var(--c-info)]/50'
                     }`}
                   >
                     <div className={`w-3 h-3 rounded-full ${getPriorityColor(option.value)}`} />
                     <span
-                      className={`text-sm font-medium ${isSelected ? 'text-[var(--c-info)]' : 'text-slate-700 dark:text-slate-300'}`}
+                      className={`text-sm font-medium ${isSelected ? 'text-[var(--c-info)]' : 'text-c-text-secondary'}`}
                     >
                       {t(`settings.work.priority.${option.value}`, option.label)}
                     </span>
@@ -404,14 +404,14 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Default Reminder */}
-          <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div className="flex items-center justify-between">
               <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <label className="block font-medium text-c-text-secondary flex items-center gap-2">
                   <Bell size={16} className="text-blue-500" />
                   {t('settings.work.defaultReminder', 'Default Reminder')}
                 </label>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   {t(
                     'settings.work.defaultReminderDescription',
                     'When to remind you before task due date'
@@ -426,7 +426,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                     e.target.value as WorkPreferences['defaultReminderBefore']
                   )
                 }
-                className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
               >
                 {REMINDER_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -440,8 +440,8 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Snooze & Focus Settings - NEW SECTION */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <AlarmClock size={20} className="text-indigo-500" />
           {t('settings.work.snoozeAndFocus', 'Snooze & Focus')}
         </h3>
@@ -450,10 +450,10 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           {/* Default Snooze Duration */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.work.defaultSnooze', 'Default Snooze Duration')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.work.defaultSnoozeDescription',
                   'How long to snooze notifications by default'
@@ -468,7 +468,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                   e.target.value as WorkPreferences['defaultSnoozeDuration']
                 )
               }
-              className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
             >
               {SNOOZE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -479,12 +479,12 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Auto-Snooze Overdue */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.work.autoSnoozeOverdue', 'Auto-Snooze Overdue Tasks')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.work.autoSnoozeOverdueDescription',
                   'Automatically snooze notifications for overdue tasks'
@@ -494,23 +494,23 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('autoSnoozeOverdue', !preferences.autoSnoozeOverdue)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.autoSnoozeOverdue ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.autoSnoozeOverdue ? 'bg-indigo-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.autoSnoozeOverdue ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.autoSnoozeOverdue ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* Focus Mode */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <label className="block font-medium text-c-text-secondary flex items-center gap-2">
                 <Zap size={16} className="text-yellow-500" />
                 {t('settings.work.enableFocusMode', 'Enable Focus Mode')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.work.enableFocusModeDescription',
                   'Allow activating focus mode for distraction-free work'
@@ -520,11 +520,11 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('enableFocusMode', !preferences.enableFocusMode)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.enableFocusMode ? 'bg-yellow-500' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.enableFocusMode ? 'bg-yellow-500' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.enableFocusMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.enableFocusMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
@@ -534,13 +534,13 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
               {/* Focus Mode Blocks Notifications */}
               <div className="flex items-center justify-between pl-6">
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300">
+                  <label className="block font-medium text-c-text-secondary">
                     {t(
                       'settings.work.focusBlocksNotifications',
                       'Block Notifications During Focus'
                     )}
                   </label>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t(
                       'settings.work.focusBlocksNotificationsDescription',
                       'Pause all notifications when focus mode is active'
@@ -557,11 +557,11 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     preferences.focusModeBlocksNotifications
                       ? 'bg-yellow-500'
-                      : 'bg-slate-200 dark:bg-slate-700'
+                      : 'bg-c-surface-raised'
                   }`}
                 >
                   <span
-                    className={`${preferences.focusModeBlocksNotifications ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                    className={`${preferences.focusModeBlocksNotifications ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
                   />
                 </button>
               </div>
@@ -569,10 +569,10 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
               {/* Default Focus Duration */}
               <div className="flex items-center justify-between pl-6">
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300">
+                  <label className="block font-medium text-c-text-secondary">
                     {t('settings.work.defaultFocusDuration', 'Default Focus Duration')}
                   </label>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t(
                       'settings.work.defaultFocusDurationDescription',
                       'Default timer length for focus sessions'
@@ -584,7 +584,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                   onChange={(e) =>
                     updatePreference('defaultFocusDuration', parseInt(e.target.value))
                   }
-                  className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                  className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
                 >
                   {FOCUS_DURATION_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -599,8 +599,8 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Task Sorting & Display */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <ArrowUpDown size={20} className="text-blue-500" />
           {t('settings.work.taskDisplay', 'Task Display & Sorting')}
         </h3>
@@ -609,10 +609,10 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           {/* Default Sort Order */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.work.defaultSort', 'Default Sort Order')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.work.defaultSortDescription',
                   'How tasks are sorted by default in lists'
@@ -627,7 +627,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                   e.target.value as WorkPreferences['defaultTaskSort']
                 )
               }
-              className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -638,22 +638,22 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Week Start Day */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.work.weekStart', 'Week Start Day')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.work.weekStartDescription', 'For calendar views and weekly reports')}
               </p>
             </div>
-            <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
+            <div className="flex bg-c-surface-raised p-1 rounded-lg">
               <button
                 onClick={() => updatePreference('weekStartDay', 'monday')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   preferences.weekStartDay === 'monday'
-                    ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+                    ? 'bg-c-surface shadow text-c-text'
+                    : 'text-c-text-muted hover:text-c-text-secondary'
                 }`}
               >
                 {t('settings.work.monday', 'Monday')}
@@ -662,8 +662,8 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 onClick={() => updatePreference('weekStartDay', 'sunday')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   preferences.weekStartDay === 'sunday'
-                    ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+                    ? 'bg-c-surface shadow text-c-text'
+                    : 'text-c-text-muted hover:text-c-text-secondary'
                 }`}
               >
                 {t('settings.work.sunday', 'Sunday')}
@@ -672,13 +672,13 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Show Completed Tasks */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <label className="block font-medium text-c-text-secondary flex items-center gap-2">
                 <CheckSquare size={16} className="text-green-500" />
                 {t('settings.work.showCompleted', 'Show Completed Tasks')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.work.showCompletedDescription',
                   'Display completed tasks in project views by default'
@@ -690,22 +690,22 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 updatePreference('showCompletedTasks', !preferences.showCompletedTasks)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showCompletedTasks ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showCompletedTasks ? 'bg-navy-900' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.showCompletedTasks ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.showCompletedTasks ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* Show Subtasks */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.work.showSubtasks', 'Show Subtasks by Default')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.work.showSubtasksDescription',
                   'Automatically expand subtasks in task lists'
@@ -715,11 +715,11 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('showSubtasks', !preferences.showSubtasks)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showSubtasks ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showSubtasks ? 'bg-navy-900' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.showSubtasks ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.showSubtasks ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
@@ -727,8 +727,8 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Automation Settings */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Archive size={20} className="text-amber-500" />
           {t('settings.work.automation', 'Automation & Defaults')}
         </h3>
@@ -737,10 +737,10 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           {/* Auto Archive */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.work.autoArchive', 'Auto-Archive Completed Tasks')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.work.autoArchiveDescription',
                   'Automatically archive tasks after completion'
@@ -750,7 +750,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <select
               value={preferences.autoArchiveDays}
               onChange={(e) => updatePreference('autoArchiveDays', parseInt(e.target.value))}
-              className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
             >
               <option value="0">{t('settings.work.never', 'Never')}</option>
               <option value="7">{t('settings.work.days', '{{count}} days', { count: 7 })}</option>
@@ -762,19 +762,19 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Default Due Days */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.work.defaultDue', 'Default Task Due Date')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.work.defaultDueDescription', 'Days from creation for new tasks')}
               </p>
             </div>
             <select
               value={preferences.taskDefaultDueDays}
               onChange={(e) => updatePreference('taskDefaultDueDays', parseInt(e.target.value))}
-              className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
             >
               <option value="0">{t('settings.work.noDueDate', 'No default')}</option>
               <option value="1">{t('settings.work.tomorrow', 'Tomorrow')}</option>
@@ -785,13 +785,13 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Time Tracking Mode */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <label className="block font-medium text-c-text-secondary flex items-center gap-2">
                 <Clock size={16} className="text-blue-500" />
                 {t('settings.work.timeTracking', 'Time Tracking Mode')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.work.timeTrackingDescription', 'Default time tracking behavior')}
               </p>
             </div>
@@ -803,7 +803,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                   e.target.value as WorkPreferences['defaultTimeTracking']
                 )
               }
-              className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
             >
               <option value="none">{t('settings.work.timeNone', 'Disabled')}</option>
               <option value="manual">{t('settings.work.timeManual', 'Manual Entry')}</option>

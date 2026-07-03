@@ -49,12 +49,12 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 
   return (
     <div
-      className={`bg-white dark:bg-navy-800 rounded-xl border transition-all ${
+      className={`bg-c-surface rounded-xl border transition-all ${
         isConnected
           ? 'border-green-200 dark:border-green-900/50'
           : needsReauth
             ? 'border-amber-200 dark:border-amber-900/50'
-            : 'border-slate-200 dark:border-navy-700'
+            : 'border-c-border-subtle dark:border-navy-700'
       }`}
     >
       <div className="p-5">
@@ -65,17 +65,17 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
               className={`p-3 rounded-xl ${
                 isConnected
                   ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                  : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                  : 'bg-c-surface-raised text-c-text-muted'
               }`}
             >
               <Icon />
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-c-text">
                 {provider.name}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-c-text-muted mt-0.5">
                 {provider.description}
               </p>
 
@@ -87,7 +87,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                     {t('settings.integrations.connected', 'Connected')}
                   </span>
                   {connection.externalWorkspaceName && (
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-muted">
                       as {connection.externalWorkspaceName}
                     </span>
                   )}
@@ -108,7 +108,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 
               {/* Last sync */}
               {connection?.lastSyncAt && (
-                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+                <p className="text-xs text-c-text-secondary mt-1">
                   {t('settings.integrations.lastSync', 'Last sync')}:{' '}
                   {new Date(connection.lastSyncAt).toLocaleString()}
                 </p>
@@ -124,7 +124,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                 <button
                   onClick={onTest}
                   disabled={isTesting}
-                  className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand transition-colors disabled:opacity-50"
+                  className="p-2 text-c-text-secondary hover:text-brand transition-colors disabled:opacity-50"
                   title={t('settings.integrations.testConnection', 'Test connection')}
                 >
                   {isTesting ? (
@@ -162,12 +162,12 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 
         {/* Features */}
         {provider.features.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="mt-4 pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div className="flex flex-wrap gap-2">
               {provider.features.map((feature, idx) => (
                 <span
                   key={idx}
-                  className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-700 px-2 py-1 rounded"
+                  className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-1 rounded"
                 >
                   {feature}
                 </span>

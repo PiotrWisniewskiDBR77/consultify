@@ -141,11 +141,11 @@ export const UserIntegrations: React.FC<UserIntegrationsProps> = ({ className = 
         <InfoButton cardId="settings-integrations" position="top-right" />
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-c-text flex items-center gap-2">
               <Plug size={24} />
               {t('settings.integrations.title', 'My Connected Apps')}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-c-text-muted mt-1">
               {t(
                 'settings.integrations.description',
                 'Connect your personal accounts to receive notifications and sync data.'
@@ -154,7 +154,7 @@ export const UserIntegrations: React.FC<UserIntegrationsProps> = ({ className = 
           </div>
           <button
             onClick={refresh}
-            className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand transition-colors"
+            className="p-2 text-c-text-secondary hover:text-brand transition-colors"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={20} />
@@ -224,7 +224,7 @@ export const UserIntegrations: React.FC<UserIntegrationsProps> = ({ className = 
       </div>
 
       {/* Help text */}
-      <div className="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800/50 rounded-lg p-4">
+      <div className="text-sm text-c-text-muted bg-c-surface-raised rounded-lg p-4">
         <p className="font-medium mb-2">{t('settings.integrations.note', 'Note:')}</p>
         <ul className="list-disc list-inside space-y-1">
           <li>
