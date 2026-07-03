@@ -19,6 +19,8 @@ import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
+
 interface GenericReportsWorkspaceProps {
   projectId?: string;
   organizationId: string;
@@ -254,13 +256,38 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
       {/* Reports List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
-          <div className="col-span-full text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+          <div className="col-span-full">
+            <LoadingState template="card" count={6} />
           </div>
         ) : filteredReports.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-            <p className="text-gray-500 dark:text-gray-400">No reports found</p>
+          <div className="col-span-full">
+            {searchQuery || filterType !== 'ALL' ? (
+              <EmptyState
+                variant="filter"
+                title={t('genericReports.empty.filterTitle', 'No reports match your filter')}
+                description={t(
+                  'genericReports.empty.filterDesc',
+                  'Try a different search term or report type.',
+                )}
+                primaryAction={{
+                  label: t('common.clearFilters', 'Clear filters'),
+                  onClick: () => {
+                    setSearchQuery('');
+                    setFilterType('ALL');
+                  },
+                }}
+              />
+            ) : (
+              <EmptyState
+                variant="new"
+                icon={FileText}
+                title={t('genericReports.empty.newTitle', 'No reports yet')}
+                description={t(
+                  'genericReports.empty.newDesc',
+                  'Drag and drop a file above to upload your first report.',
+                )}
+              />
+            )}
           </div>
         ) : (
           filteredReports.map((report) => (
