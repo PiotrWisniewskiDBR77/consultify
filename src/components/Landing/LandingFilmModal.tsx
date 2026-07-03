@@ -109,7 +109,7 @@ export const LandingFilmModal: React.FC<LandingFilmModalProps> = ({
                         onLaunchTrial();
                         onClose();
                       }}
-                      className="w-full md:w-auto px-6 py-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold shadow-lg shadow-primary-900/30 transition-colors"
+                      className="w-full md:w-auto px-6 py-3 rounded-xl bg-c-accent hover:opacity-90 text-white font-semibold shadow-lg shadow-c-accent/30 transition-opacity"
                     >
                       {t('landing.films.after.cta', 'Launch Free Trial')}
                     </button>

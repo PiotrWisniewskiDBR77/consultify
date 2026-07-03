@@ -48,7 +48,7 @@ export const ModelDeploymentSection: React.FC = () => {
   return (
     <section className="relative overflow-hidden px-6 py-24 md:py-32">
       <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#fdf2f3_42%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0F172A_0%,#0A0F1E_45%,#151E32_100%)]" />
-      <div className="absolute left-[8%] top-[10%] h-64 w-64 rounded-full bg-primary-500/10 blur-3xl dark:bg-primary-500/20" />
+      <div className="absolute left-[8%] top-[10%] h-64 w-64 rounded-full bg-c-accent/10 blur-3xl" />
       <div className="absolute bottom-[0%] right-[8%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/15" />
 
       <div className="relative mx-auto max-w-7xl">

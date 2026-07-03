@@ -613,7 +613,7 @@ export const InfoSections: React.FC = () => {
       <section className="px-6 relative z-10">
         <div className="max-w-6xl mx-auto bg-navy-950 rounded-[4rem] p-12 lg:p-24 relative overflow-hidden border border-navy-800 dark:border-white/10 shadow-3xl">
           {/* Background decoration */}
-          <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-primary-600/10 rounded-full blur-[120px] -mr-32 -mt-32" />
+          <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-c-accent/10 rounded-full blur-[120px] -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-indigo-600/5 rounded-full blur-[100px] -ml-20 -mb-20" />
 
           <div className="relative z-10 grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
