@@ -188,13 +188,13 @@ export const SecurityPoliciesPanel: React.FC = () => {
   };
 
   const renderPasswordPolicy = () => (
-    <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+    <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
           <Key size={20} className="text-primary-400" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Password Policy</h3>
+          <h3 className="text-lg font-semibold text-c-text">Password Policy</h3>
           <p className="text-sm text-slate-600 dark:text-slate-500">
             Configure password requirements
           </p>
@@ -210,7 +210,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={32}
             value={policy.passwordMinLength}
             onChange={(e) => updatePolicy('passwordMinLength', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
         </div>
         <div>
@@ -221,7 +221,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={24}
             value={policy.passwordHistoryCount}
             onChange={(e) => updatePolicy('passwordHistoryCount', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Prevent reuse of last N passwords
@@ -243,7 +243,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
                 type="checkbox"
                 checked={policy[key as keyof SecurityPolicy] as boolean}
                 onChange={(e) => updatePolicy(key as keyof SecurityPolicy, e.target.checked)}
-                className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 focus:ring-primary-500/30"
+                className="w-5 h-5 rounded border-slate-600 bg-c-surface-raised text-primary-500 focus:ring-primary-500/30"
               />
               <span className="text-slate-600 group-hover:text-white transition-colors">
                 {label}
@@ -263,7 +263,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
           max={365}
           value={policy.passwordExpiryDays}
           onChange={(e) => updatePolicy('passwordExpiryDays', parseInt(e.target.value))}
-          className="w-full max-w-xs px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+          className="w-full max-w-xs px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
         />
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Set to 0 to disable password expiration
@@ -273,13 +273,13 @@ export const SecurityPoliciesPanel: React.FC = () => {
   );
 
   const renderSessionPolicy = () => (
-    <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+    <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
           <Clock size={20} className="text-blue-400" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Session Policy</h3>
+          <h3 className="text-lg font-semibold text-c-text">Session Policy</h3>
           <p className="text-sm text-slate-600 dark:text-slate-500">Configure session management</p>
         </div>
       </div>
@@ -295,7 +295,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={1440}
             value={policy.sessionTimeoutMinutes}
             onChange={(e) => updatePolicy('sessionTimeoutMinutes', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {Math.round(policy.sessionTimeoutMinutes / 60)} hours
@@ -311,7 +311,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={10}
             value={policy.concurrentSessionsLimit}
             onChange={(e) => updatePolicy('concurrentSessionsLimit', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
         </div>
       </div>
@@ -322,7 +322,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             type="checkbox"
             checked={policy.requireSessionBinding}
             onChange={(e) => updatePolicy('requireSessionBinding', e.target.checked)}
-            className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 focus:ring-primary-500/30"
+            className="w-5 h-5 rounded border-slate-600 bg-c-surface-raised text-primary-500 focus:ring-primary-500/30"
           />
           <div>
             <span className="text-slate-600 group-hover:text-white transition-colors">
@@ -338,13 +338,13 @@ export const SecurityPoliciesPanel: React.FC = () => {
   );
 
   const renderLoginPolicy = () => (
-    <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+    <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
           <Lock size={20} className="text-amber-400" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Login Policy</h3>
+          <h3 className="text-lg font-semibold text-c-text">Login Policy</h3>
           <p className="text-sm text-slate-600 dark:text-slate-500">Configure login protection</p>
         </div>
       </div>
@@ -360,7 +360,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={10}
             value={policy.maxLoginAttempts}
             onChange={(e) => updatePolicy('maxLoginAttempts', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
         </div>
         <div>
@@ -373,7 +373,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={1440}
             value={policy.lockoutDurationMinutes}
             onChange={(e) => updatePolicy('lockoutDurationMinutes', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
         </div>
       </div>
@@ -381,13 +381,13 @@ export const SecurityPoliciesPanel: React.FC = () => {
   );
 
   const renderMFAPolicy = () => (
-    <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+    <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
           <Shield size={20} className="text-emerald-400" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Multi-Factor Authentication</h3>
+          <h3 className="text-lg font-semibold text-c-text">Multi-Factor Authentication</h3>
           <p className="text-sm text-slate-600 dark:text-slate-500">Configure MFA requirements</p>
         </div>
       </div>
@@ -398,7 +398,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             type="checkbox"
             checked={policy.mfaRequired}
             onChange={(e) => updatePolicy('mfaRequired', e.target.checked)}
-            className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 focus:ring-primary-500/30"
+            className="w-5 h-5 rounded border-slate-600 bg-c-surface-raised text-primary-500 focus:ring-primary-500/30"
           />
           <div>
             <span className="text-slate-600 group-hover:text-white transition-colors font-medium">
@@ -422,7 +422,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             ].map(({ id, label }) => (
               <label
                 key={id}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-900/50 rounded-lg cursor-pointer hover:bg-slate-900 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-c-surface/50 rounded-lg cursor-pointer hover:bg-c-surface transition-colors"
               >
                 <input
                   type="checkbox"
@@ -437,7 +437,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
                       );
                     }
                   }}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-primary-500"
+                  className="w-4 h-4 rounded border-slate-600 bg-c-surface-raised text-primary-500"
                 />
                 <span className="text-sm text-slate-600">{label}</span>
               </label>
@@ -455,7 +455,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             max={90}
             value={policy.mfaRememberDeviceDays}
             onChange={(e) => updatePolicy('mfaRememberDeviceDays', parseInt(e.target.value))}
-            className="w-full max-w-xs px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="w-full max-w-xs px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Set to 0 to always require MFA
@@ -481,7 +481,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none min-w-[200px]"
+            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none min-w-[200px]"
           >
             <option value="default">Platform Defaults</option>
             {organizations.map((org) => (
@@ -495,7 +495,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             <select
               value=""
               onChange={(e) => e.target.value && handleApplyPreset(e.target.value)}
-              className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+              className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
             >
               <option value="">Apply Preset...</option>
               {presets.map((preset) => (
@@ -510,7 +510,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => fetchPolicy(selectedOrgId)}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
             title="Refresh"
           >
             <RefreshCw

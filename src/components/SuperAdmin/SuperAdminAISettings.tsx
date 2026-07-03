@@ -422,7 +422,7 @@ export const SuperAdminAISettings: React.FC = () => {
             disabled={!hasChanges || saving}
             className={`flex items-center gap-2 p-4 py-2.5 rounded-xl font-medium transition-all ${
               hasChanges
-                ? 'bg-gradient-to-r from-c-accent to-c-accent text-white hover:shadow-lg hover:shadow-c-accent/25'
+                ? 'bg-gradient-to-r from-c-accent to-c-accent text-c-text hover:shadow-lg hover:shadow-c-accent/25'
                 : 'bg-c-surface-raised text-c-text-muted cursor-not-allowed'
             }`}
           >

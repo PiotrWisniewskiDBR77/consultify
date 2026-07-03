@@ -367,7 +367,7 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
           <button
             onClick={handleSave}
             disabled={saving || !form.name}
-            className="px-4 py-2.5 bg-c-accent hover:brightness-95 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+            className="px-4 py-2.5 bg-c-accent hover:brightness-95 disabled:opacity-50 text-c-text rounded-lg font-medium flex items-center gap-2"
           >
             {saving ? <RefreshCw size={16} className="animate-spin" /> : <Edit size={16} />}
             Save Changes
@@ -591,7 +591,7 @@ export const ModelCatalogTable: React.FC = () => {
             }}
             disabled={!!loadError}
             title={loadError || undefined}
-            className="flex items-center gap-2 px-4 h-9 bg-c-accent hover:brightness-95 text-white rounded-full text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 h-9 bg-c-accent hover:brightness-95 text-c-text rounded-full text-sm font-medium transition-colors disabled:opacity-50"
           >
             <Plus size={16} />
             {t('modelRegistry.catalog.addModel', 'Add Model')}
@@ -674,7 +674,7 @@ export const ModelCatalogTable: React.FC = () => {
               disabled={!!loadError}
               className={`flex items-center gap-2 px-3 h-9 border rounded-lg text-sm transition-colors ${
                 showFilters
-                  ? 'bg-c-accent border-c-accent text-white'
+                  ? 'bg-c-accent border-c-accent text-c-text'
                   : 'bg-c-surface border-c-border text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >

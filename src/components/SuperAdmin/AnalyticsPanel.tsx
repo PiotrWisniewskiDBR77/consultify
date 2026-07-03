@@ -41,7 +41,7 @@ export const AnalyticsPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">System Analytics</h2>
+          <h2 className="text-2xl font-bold text-c-text mb-2">System Analytics</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Monitor system performance and usage
           </p>
@@ -55,7 +55,7 @@ export const AnalyticsPanel: React.FC = () => {
               <Activity size={20} className="text-blue-400" />
               <span className="text-sm text-slate-400 dark:text-slate-500">API Requests</span>
             </div>
-            <div className="text-2xl font-bold text-white">{metrics.api?.total_requests || 0}</div>
+            <div className="text-2xl font-bold text-c-text">{metrics.api?.total_requests || 0}</div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {metrics.api?.requests_last_hour || 0} in last hour
             </div>
@@ -66,7 +66,7 @@ export const AnalyticsPanel: React.FC = () => {
               <BarChart3 size={20} className="text-green-400" />
               <span className="text-sm text-slate-400 dark:text-slate-500">AI Requests</span>
             </div>
-            <div className="text-2xl font-bold text-white">{metrics.ai?.total_requests || 0}</div>
+            <div className="text-2xl font-bold text-c-text">{metrics.ai?.total_requests || 0}</div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Avg latency: {metrics.ai?.avg_latency || 0}ms
             </div>
@@ -77,7 +77,7 @@ export const AnalyticsPanel: React.FC = () => {
               <TrendingUp size={20} className="text-primary-400" />
               <span className="text-sm text-slate-400 dark:text-slate-500">Database Queries</span>
             </div>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-c-text">
               {metrics.database?.total_queries || 0}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">

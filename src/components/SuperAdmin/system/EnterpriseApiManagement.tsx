@@ -498,7 +498,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                   Save this key now - it won't be shown again!
                 </p>
                 <div className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg">
-                  <code className="text-sm text-white font-mono flex-1 break-all">
+                  <code className="text-sm text-c-text font-mono flex-1 break-all">
                     {newKeyVisible.key}
                   </code>
                   <button
@@ -1170,7 +1170,7 @@ const ApiKeyModal: React.FC<{
                         onClick={() => toggleScope(scope.id)}
                         className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                           formData.scopes.includes(scope.id)
-                            ? 'bg-c-surface text-white'
+                            ? 'bg-c-surface text-c-text'
                             : 'bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
                         }`}
                       >

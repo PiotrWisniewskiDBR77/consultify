@@ -191,7 +191,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
 
   return (
     <div className="sticky bottom-4 z-50 mx-4">
-      <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+      <div className="bg-c-surface/95 backdrop-blur-xl border border-c-border rounded-xl shadow-2xl overflow-hidden">
         {/* Result Toast */}
         {result && (
           <div
@@ -227,7 +227,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
 
           {/* Selected Count */}
           <div className="flex items-center gap-2">
-            <span className="text-white font-medium">{selectedCount}</span>
+            <span className="text-c-text font-medium">{selectedCount}</span>
             <span className="text-slate-400 dark:text-slate-500">of {totalCount} selected</span>
             <button
               onClick={onDeselectAll}
@@ -237,7 +237,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             </button>
           </div>
 
-          <div className="w-px h-6 bg-slate-700" />
+          <div className="w-px h-6 bg-c-surface-raised" />
 
           {/* Quick Actions */}
           <div className="flex items-center gap-1">
@@ -307,14 +307,14 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               {showMoreActions && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowMoreActions(false)} />
-                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-20 py-1">
+                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-c-surface-raised border border-c-border rounded-xl shadow-xl z-20 py-1">
                     {onRemoveTags && availableTags.length > 0 && (
                       <button
                         onClick={() => {
                           setActiveMode('removeTags');
                           setShowMoreActions(false);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-c-surface-raised/50"
                       >
                         <Tag size={14} />
                         Remove Tags
@@ -326,13 +326,13 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                           setActiveMode('archive');
                           setShowMoreActions(false);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-c-surface-raised/50"
                       >
                         <Archive size={14} />
                         Archive
                       </button>
                     )}
-                    <hr className="my-1 border-slate-700" />
+                    <hr className="my-1 border-c-border" />
                     <button
                       onClick={() => {
                         setActiveMode('delete');
@@ -399,9 +399,9 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         )}
 
         {activeMode === 'addTags' && (
-          <div className="px-4 py-3 border-t border-slate-700/50 bg-slate-800/50">
+          <div className="px-4 py-3 border-t border-c-border/50 bg-c-surface-raised/50">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-white">Add Tags to {selectedCount} items</span>
+              <span className="font-medium text-c-text">Add Tags to {selectedCount} items</span>
               <button
                 onClick={() => {
                   setActiveMode(null);
@@ -461,9 +461,9 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         )}
 
         {activeMode === 'removeTags' && (
-          <div className="px-4 py-3 border-t border-slate-700/50 bg-slate-800/50">
+          <div className="px-4 py-3 border-t border-c-border/50 bg-c-surface-raised/50">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-white">Remove Tags from {selectedCount} items</span>
+              <span className="font-medium text-c-text">Remove Tags from {selectedCount} items</span>
               <button
                 onClick={() => {
                   setActiveMode(null);
@@ -523,9 +523,9 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         )}
 
         {activeMode === 'setCategory' && (
-          <div className="px-4 py-3 border-t border-slate-700/50 bg-slate-800/50">
+          <div className="px-4 py-3 border-t border-c-border/50 bg-c-surface-raised/50">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-white">Set Category for {selectedCount} items</span>
+              <span className="font-medium text-c-text">Set Category for {selectedCount} items</span>
               <button
                 onClick={() => {
                   setActiveMode(null);
@@ -539,7 +539,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             >
               <option value="">Select a category...</option>
               {availableCategories.map((cat) => (
@@ -594,7 +594,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   variant = 'default',
 }) => {
   const variantStyles = {
-    default: 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-700/50',
+    default: 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-c-surface-raised/50',
     success: 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10',
     danger: 'text-danger-400 hover:text-danger-300 hover:bg-danger-500/10',
     warning: 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10',
@@ -633,8 +633,8 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
 }) => {
   const variantStyles = {
     default: {
-      bg: 'bg-slate-800/50',
-      border: 'border-slate-700/50',
+      bg: 'bg-c-surface-raised/50',
+      border: 'border-c-border/50',
       button: 'bg-primary-500 hover:bg-primary-600',
       icon: <AlertTriangle size={16} className="text-slate-400 dark:text-slate-500" />,
     },
@@ -665,7 +665,7 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
       <div className="flex items-start gap-3">
         {styles.icon}
         <div className="flex-1">
-          <h4 className="font-medium text-white mb-1">{title}</h4>
+          <h4 className="font-medium text-c-text mb-1">{title}</h4>
           <p className="text-sm text-slate-400 dark:text-slate-500">{description}</p>
         </div>
         <div className="flex gap-2">

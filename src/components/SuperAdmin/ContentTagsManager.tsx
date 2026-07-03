@@ -187,8 +187,8 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Tag className="w-5 h-5 text-emerald-400" />
-          <h3 className="font-semibold text-white">Tags</h3>
-          <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
+          <h3 className="font-semibold text-c-text">Tags</h3>
+          <span className="px-2 py-0.5 bg-c-surface-raised text-slate-300 text-xs rounded-full">
             {tags.length}
           </span>
         </div>
@@ -212,13 +212,13 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tags..."
-          className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+          className="w-full pl-9 pr-4 py-2 bg-c-surface-raised/50 border border-c-border/50 rounded-lg text-c-text text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
         />
       </div>
 
       {/* New Tag Form */}
       {showNewForm && (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 space-y-4">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-lg p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
             <input
@@ -226,7 +226,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               placeholder="Tag name..."
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               onKeyPress={(e) => e.key === 'Enter' && handleCreate()}
             />
           </div>
@@ -287,13 +287,13 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
               return (
                 <div
                   key={tag.id}
-                  className="flex items-center gap-2 p-2 bg-slate-800/50 border border-slate-700/50 rounded-lg"
+                  className="flex items-center gap-2 p-2 bg-c-surface-raised/50 border border-c-border/50 rounded-lg"
                 >
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                    className="px-2 py-1 bg-slate-900 border border-slate-600 rounded text-white text-sm w-24 focus:outline-none"
+                    className="px-2 py-1 bg-primary-600 border border-slate-600 rounded text-white text-sm w-24 focus:outline-none"
                     autoFocus
                   />
                   <div className="flex gap-1">
@@ -363,13 +363,13 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
 
                 {/* Menu */}
                 {menuOpen === tag.id && (
-                  <div className="absolute left-0 top-full mt-1 w-32 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 py-1">
+                  <div className="absolute left-0 top-full mt-1 w-32 bg-c-surface-raised border border-c-border rounded-lg shadow-xl z-10 py-1">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         startEdit(tag);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-c-surface-raised/50"
                     >
                       <Edit size={12} />
                       Edit

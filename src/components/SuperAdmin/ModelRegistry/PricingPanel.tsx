@@ -213,7 +213,7 @@ export const PricingPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-2 px-4 h-9 bg-c-accent hover:brightness-95 text-white rounded-full text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 h-9 bg-c-accent hover:brightness-95 text-c-text rounded-full text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add Price Snapshot
@@ -256,7 +256,7 @@ export const PricingPanel: React.FC = () => {
             </h3>
             <button
               onClick={handleCreateSnapshot}
-              className="flex items-center gap-2 px-4 h-9 bg-c-success hover:brightness-95 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 h-9 bg-c-success hover:brightness-95 text-c-text rounded-lg text-sm font-medium transition-colors"
             >
               <Save size={16} />
               Create

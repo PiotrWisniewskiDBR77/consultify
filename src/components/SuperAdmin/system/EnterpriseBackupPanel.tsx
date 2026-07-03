@@ -693,7 +693,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <button
                   disabled
                   title="Backup settings persistence is not connected"
-                  className="px-4 py-2 bg-c-surface text-white rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                  className="px-4 py-2 bg-c-surface text-c-text rounded-lg transition-colors opacity-50 cursor-not-allowed"
                 >
                   Save Settings
                 </button>
@@ -724,7 +724,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     <button
                       disabled
                       title={destructiveBackupActionReason}
-                      className="flex items-center gap-2 px-4 py-2 bg-c-warning text-white rounded-lg opacity-50 cursor-not-allowed"
+                      className="flex items-center gap-2 px-4 py-2 bg-c-warning text-c-text rounded-lg opacity-50 cursor-not-allowed"
                     >
                       <Play className="w-4 h-4" />
                       Start DR Test

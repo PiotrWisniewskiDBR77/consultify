@@ -469,7 +469,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
               disabled={!!loadError}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedCategory === cat.id
-                  ? 'bg-c-surface text-white'
+                  ? 'bg-c-surface text-c-text'
                   : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >

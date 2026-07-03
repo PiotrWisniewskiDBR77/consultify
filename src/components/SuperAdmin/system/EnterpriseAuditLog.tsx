@@ -391,7 +391,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           <div className="relative group">
             <button
               disabled={exporting || !!loadError}
-              className="flex items-center gap-2 px-4 py-2 bg-c-success hover:bg-c-success/90 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-c-success hover:bg-c-success/90 text-c-text rounded-lg transition-colors disabled:opacity-50"
             >
               {exporting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -500,7 +500,7 @@ export const EnterpriseAuditLog: React.FC = () => {
             disabled={!!loadError}
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
               showFilters
-                ? 'bg-c-surface border-c-border text-white'
+                ? 'bg-c-surface border-c-border text-c-text'
                 : 'bg-c-surface-raised border-c-border text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >

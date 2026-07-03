@@ -215,7 +215,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
       <div key={category.id} style={{ marginLeft: depth * 20 }}>
         <div
           className={`flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/30 transition-colors ${
-            isEditing ? 'bg-slate-700/50' : ''
+            isEditing ? 'bg-c-surface-raised/50' : ''
           }`}
         >
           {/* Expand toggle */}
@@ -234,7 +234,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="flex-1 px-2 py-1 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="flex-1 px-2 py-1 bg-c-surface-raised border border-slate-600 rounded text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                 autoFocus
               />
               <div className="flex gap-1">
@@ -275,7 +275,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 >
                   <FolderOpen size={14} style={{ color: category.color }} />
                 </div>
-                <span className="text-white text-sm font-medium">{category.name}</span>
+                <span className="text-c-text text-sm font-medium">{category.name}</span>
                 {category.description && (
                   <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[150px]">
                     {category.description}
@@ -292,22 +292,22 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 </button>
 
                 {menuOpen === category.id && (
-                  <div className="absolute right-0 top-full mt-1 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 py-1">
+                  <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface-raised border border-c-border rounded-lg shadow-xl z-10 py-1">
                     <button
                       onClick={() => startEdit(category)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-c-surface-raised/50"
                     >
                       <Edit size={14} />
                       Edit
                     </button>
                     <button
                       onClick={() => startNewChild(category.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-c-surface-raised/50"
                     >
                       <Plus size={14} />
                       Add Subcategory
                     </button>
-                    <div className="border-t border-slate-700 my-1" />
+                    <div className="border-t border-c-border my-1" />
                     <button
                       onClick={() => handleDelete(category.id)}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-400 hover:bg-danger-500/10"
@@ -324,7 +324,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
 
         {/* Children */}
         {hasChildren && isExpanded && (
-          <div className="ml-2 border-l border-slate-700/50 pl-2">
+          <div className="ml-2 border-l border-c-border/50 pl-2">
             {category.children!.map((child) => renderCategory(child, depth + 1))}
           </div>
         )}
@@ -346,8 +346,8 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FolderOpen className="w-5 h-5 text-primary-400" />
-          <h3 className="font-semibold text-white">Categories</h3>
-          <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
+          <h3 className="font-semibold text-c-text">Categories</h3>
+          <span className="px-2 py-0.5 bg-c-surface-raised text-slate-300 text-xs rounded-full">
             {categories.length}
           </span>
         </div>
@@ -371,7 +371,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
 
       {/* New Category Form */}
       {showNewForm && (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 space-y-4">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-lg p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
@@ -380,7 +380,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="Category name..."
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
             <div>
@@ -390,7 +390,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Optional description..."
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
           </div>

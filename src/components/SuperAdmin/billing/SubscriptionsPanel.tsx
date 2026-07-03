@@ -223,14 +223,14 @@ export const SubscriptionsPanel: React.FC = () => {
               placeholder="Search subscriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
             />
           </div>
 
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -244,7 +244,7 @@ export const SubscriptionsPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchData}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <RefreshCw
               size={18}
@@ -274,15 +274,15 @@ export const SubscriptionsPanel: React.FC = () => {
       ) : (
         <div className="grid gap-4">
           {filteredSubscriptions.map((sub) => (
-            <div key={sub.id} className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
+            <div key={sub.id} className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-700 flex items-center justify-center">
-                    <CreditCard size={24} className="text-white" />
+                    <CreditCard size={24} className="text-c-text" />
                   </div>
                   <div>
                     <div className="flex items-center gap-3">
-                      <h3 className="font-semibold text-white">{sub.organization_name}</h3>
+                      <h3 className="font-semibold text-c-text">{sub.organization_name}</h3>
                       {getStatusBadge(sub.status, sub.cancel_at_period_end)}
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-sm text-slate-600 dark:text-slate-500">
@@ -316,7 +316,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setSelectedSubscription(sub)}
-                      className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                      className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                       title="Manage"
                     >
                       <Edit2 size={16} className="text-slate-600 dark:text-slate-500" />
@@ -341,8 +341,8 @@ export const SubscriptionsPanel: React.FC = () => {
       {/* Create Subscription Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-white mb-6">Create Subscription</h3>
+          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-c-text mb-6">Create Subscription</h3>
 
             <div className="space-y-4">
               <div>
@@ -354,7 +354,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -370,7 +370,7 @@ export const SubscriptionsPanel: React.FC = () => {
                 <select
                   value={createForm.planId}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, planId: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
                 >
                   <option value="">Select plan</option>
                   {plans
@@ -396,7 +396,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
                         createForm.billingCycle === cycle
                           ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
-                          : 'bg-slate-800 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                          : 'bg-c-surface-raised border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
                       }`}
                     >
                       {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
@@ -417,7 +417,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, trialDays: parseInt(e.target.value) || 0 }))
                   }
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
                 />
               </div>
             </div>
@@ -425,7 +425,7 @@ export const SubscriptionsPanel: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
+                className="px-4 py-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg text-slate-600 transition-colors"
               >
                 Cancel
               </button>
@@ -445,17 +445,17 @@ export const SubscriptionsPanel: React.FC = () => {
       {/* Manage Subscription Modal */}
       {selectedSubscription && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-lg">
-            <h3 className="text-lg font-semibold text-white mb-2">Manage Subscription</h3>
+          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-lg">
+            <h3 className="text-lg font-semibold text-c-text mb-2">Manage Subscription</h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mb-6">
               {selectedSubscription.organization_name}
             </p>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-c-surface-raised/50 rounded-lg">
                 <div>
                   <p className="text-sm text-slate-600 dark:text-slate-500">Current Plan</p>
-                  <p className="font-medium text-white">{selectedSubscription.plan_name}</p>
+                  <p className="font-medium text-c-text">{selectedSubscription.plan_name}</p>
                 </div>
                 <p className="text-lg font-semibold text-primary-400">
                   {formatCurrency(selectedSubscription.price_monthly)}/mo
@@ -471,7 +471,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       handleChangePlan(selectedSubscription.id, e.target.value);
                     }
                   }}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
                 >
                   {plans
                     .filter((p) => p.is_active)
@@ -514,7 +514,7 @@ export const SubscriptionsPanel: React.FC = () => {
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setSelectedSubscription(null)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
+                className="px-4 py-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg text-slate-600 transition-colors"
               >
                 Close
               </button>

@@ -765,7 +765,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             <button
                               onClick={() => handleResolveEvent(event.id)}
                               aria-label={`Resolve security event ${event.id}`}
-                              className="px-4 py-2 bg-c-success hover:bg-c-success/90 text-white text-sm rounded-lg transition-colors"
+                              className="px-4 py-2 bg-c-success hover:bg-c-success/90 text-c-text text-sm rounded-lg transition-colors"
                             >
                               Resolve
                             </button>
@@ -789,7 +789,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <button
                   disabled
                   title="Bulk session termination requires an audited backend workflow"
-                  className="px-4 py-2 bg-c-danger text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-c-danger text-c-text text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Terminate All
                 </button>

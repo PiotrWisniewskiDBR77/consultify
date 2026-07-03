@@ -1109,7 +1109,7 @@ const FlagHistoryModal: React.FC<{
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-c-surface rounded-xl border border-white/10 p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">Feature Flag History</h3>
+          <h3 className="text-xl font-bold text-c-text">Feature Flag History</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-c-surface dark:hover:bg-c-surface/40 rounded-lg"
@@ -1137,7 +1137,7 @@ const FlagHistoryModal: React.FC<{
                   className="p-3 bg-c-surface/30 rounded-lg border border-white/10"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-white">{item.change_type}</span>
+                    <span className="text-sm font-medium text-c-text">{item.change_type}</span>
                     <span className="text-xs text-c-text-muted">
                       {new Date(item.changed_at).toLocaleString()}
                     </span>

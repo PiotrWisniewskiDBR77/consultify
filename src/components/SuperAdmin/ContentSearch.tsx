@@ -183,7 +183,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
           className={`flex items-center bg-slate-800/80 border rounded-xl transition-all ${
             isFocused
               ? 'border-primary-500/50 ring-2 ring-primary-500/20'
-              : 'border-slate-700/50 hover:border-slate-600'
+              : 'border-c-border/50 hover:border-slate-600'
           }`}
         >
           <Search className="w-5 h-5 text-slate-400 dark:text-slate-500 ml-4" />
@@ -195,7 +195,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             placeholder={placeholder}
-            className="flex-1 px-3 py-3 bg-transparent text-white placeholder-slate-500 focus:outline-none"
+            className="flex-1 px-3 py-3 bg-transparent text-c-text placeholder-slate-500 focus:outline-none"
           />
 
           {/* Quick content type filter badges */}
@@ -252,7 +252,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
               className={`p-2 mr-2 rounded-lg transition-colors ${
                 hasActiveFilters || showFiltersPanel
                   ? 'bg-primary-500/20 text-primary-400'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-white hover:bg-c-surface-raised/50'
               }`}
             >
               <Filter size={16} />
@@ -266,10 +266,10 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
       {/* Dropdown Panel (suggestions/recent) */}
       {isFocused && showSuggestions && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-c-surface-raised border border-c-border rounded-xl shadow-2xl z-50 overflow-hidden">
           {/* Recent Searches */}
           {recentSearches.length > 0 && !query && (
-            <div className="p-3 border-b border-slate-700/50">
+            <div className="p-3 border-b border-c-border/50">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
                   <Clock size={14} />
@@ -287,7 +287,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                   <button
                     key={idx}
                     onClick={() => handleSelectRecent(search)}
-                    className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-slate-300 hover:bg-slate-700/50 rounded-lg"
+                    className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-slate-300 hover:bg-c-surface-raised/50 rounded-lg"
                   >
                     <Search size={12} className="text-slate-500 dark:text-slate-400" />
                     <span className="flex-1 truncate">{search.query}</span>
@@ -316,7 +316,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                     setQuery(suggestion);
                     onSearch(suggestion, filters);
                   }}
-                  className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-slate-300 hover:bg-slate-700/50 rounded-lg"
+                  className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-slate-300 hover:bg-c-surface-raised/50 rounded-lg"
                 >
                   <FileText size={12} className="text-slate-500 dark:text-slate-400" />
                   {suggestion}
@@ -346,9 +346,9 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
       {/* Advanced Filters Panel */}
       {showFiltersPanel && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-40 p-4">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-c-surface-raised border border-c-border rounded-xl shadow-2xl z-40 p-4">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-white">Filters</h4>
+            <h4 className="font-semibold text-c-text">Filters</h4>
             <button
               onClick={() =>
                 setFilters({
@@ -375,7 +375,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
               <select
                 value={filters.contentType}
                 onChange={(e) => handleFilterChange('contentType', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="ALL">All Types</option>
                 <option value="PLAYBOOK">Playbooks</option>
@@ -393,7 +393,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('status', e.target.value ? [e.target.value] : [])
                 }
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="">All Statuses</option>
                 <option value="DRAFT">Draft</option>
@@ -412,7 +412,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('sortBy', e.target.value as SearchFilters['sortBy'])
                 }
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="relevance">Relevance</option>
                 <option value="date">Date</option>
@@ -431,7 +431,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('sortOrder', e.target.value as SearchFilters['sortOrder'])
                 }
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-primary-600 border border-c-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="desc">Descending</option>
                 <option value="asc">Ascending</option>
@@ -441,7 +441,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
           {/* Active filters badges */}
           {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-700">
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-c-border">
               {filters.contentType && filters.contentType !== 'ALL' && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-500/20 text-primary-400 text-xs rounded-full">
                   {filters.contentType === 'PLAYBOOK' ? <Play size={10} /> : <Mail size={10} />}

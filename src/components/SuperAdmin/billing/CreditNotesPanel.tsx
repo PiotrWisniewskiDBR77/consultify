@@ -128,7 +128,7 @@ export const CreditNotesPanel: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-primary-300">Total Credits Issued</p>
-            <p className="text-3xl font-bold text-white mt-1">{formatCurrency(totalCredited)}</p>
+            <p className="text-3xl font-bold text-c-text mt-1">{formatCurrency(totalCredited)}</p>
             <p className="text-sm text-primary-400 mt-1">{creditNotes.length} credit notes</p>
           </div>
           <div className="w-16 h-16 rounded-xl bg-primary-500/20 flex items-center justify-center">
@@ -149,14 +149,14 @@ export const CreditNotesPanel: React.FC = () => {
             placeholder="Search credit notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
+            className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
           />
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={fetchCreditNotes}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <RefreshCw
               size={18}
@@ -184,7 +184,7 @@ export const CreditNotesPanel: React.FC = () => {
           <p>No credit notes found</p>
         </div>
       ) : (
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl overflow-hidden">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl overflow-hidden">
           <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06]">
@@ -210,19 +210,19 @@ export const CreditNotesPanel: React.FC = () => {
             </thead>
             <tbody>
               {filteredCreditNotes.map((cn) => (
-                <tr key={cn.id} className="border-b border-white/[0.04] hover:bg-slate-800/50">
+                <tr key={cn.id} className="border-b border-white/[0.04] hover:bg-c-surface-raised/50">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
                         <FileText size={16} className="text-primary-400" />
                       </div>
-                      <span className="font-medium text-white">{cn.note_number}</span>
+                      <span className="font-medium text-c-text">{cn.note_number}</span>
                     </div>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
                       <Building2 size={14} className="text-slate-600 dark:text-slate-500" />
-                      <span className="text-white">{cn.organization_name || 'Unknown'}</span>
+                      <span className="text-c-text">{cn.organization_name || 'Unknown'}</span>
                     </div>
                   </td>
                   <td className="p-4">
@@ -257,8 +257,8 @@ export const CreditNotesPanel: React.FC = () => {
       {/* Create Credit Note Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-white mb-6">Issue Credit Note</h3>
+          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-c-text mb-6">Issue Credit Note</h3>
 
             <div className="space-y-4">
               <div>
@@ -270,7 +270,7 @@ export const CreditNotesPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -297,7 +297,7 @@ export const CreditNotesPanel: React.FC = () => {
                     value={createForm.amount}
                     onChange={(e) => setCreateForm((prev) => ({ ...prev, amount: e.target.value }))}
                     placeholder="0.00"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                   />
                 </div>
               </div>
@@ -309,7 +309,7 @@ export const CreditNotesPanel: React.FC = () => {
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, reason: e.target.value }))}
                   placeholder="Enter reason for credit note..."
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none resize-none"
                 />
               </div>
             </div>
@@ -317,7 +317,7 @@ export const CreditNotesPanel: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
+                className="px-4 py-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg text-slate-600 transition-colors"
               >
                 Cancel
               </button>
