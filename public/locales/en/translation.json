@@ -62,6 +62,7 @@
     }
   },
   "layout": {
+    "openMenu": "Open menu",
     "aiPanel": {
       "open": "Open AI panel",
       "close": "Close AI panel"
@@ -1883,6 +1884,7 @@
     "useAiHints": "Use AI hints in the footer to generate a brief."
   },
   "sidebar": {
+    "mainNavigation": "Main navigation",
     "module3_1": "Initiatives",
     "dashboard": "Dashboard",
     "settings": "Settings",
@@ -3056,6 +3058,12 @@
     }
   },
   "initiatives": {
+    "card": {
+      "openInitiative": "Open initiative: {{title}}",
+      "advanceStatus": "Advance to next status",
+      "assignOwners": "Assign owners",
+      "flagForAttention": "Flag for attention"
+    },
     "gateAi": {
       "pill": {
         "ariaReady": "AI readiness: ready, score {{score}} out of 100",

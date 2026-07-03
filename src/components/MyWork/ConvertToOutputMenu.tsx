@@ -195,6 +195,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
               }`}
               aria-expanded={open}
               aria-haspopup="true"
+              aria-label={t('traceability.convertTo.title', 'Convert to output')}
               title={t('traceability.convertTo.title', 'Convert to output')}
             >
               <FileOutput size={compact ? 12 : 14} />

@@ -62,6 +62,7 @@
     }
   },
   "layout": {
+    "openMenu": "Otwórz menu",
     "aiPanel": {
       "open": "Otwórz panel AI",
       "close": "Zamknij panel AI"
@@ -1098,6 +1099,7 @@
     }
   },
   "sidebar": {
+    "mainNavigation": "Nawigacja główna",
     "module3_1": "Inicjatywy",
     "dashboard": "Panel",
     "settings": "Ustawienia",
@@ -2271,6 +2273,12 @@
     }
   },
   "initiatives": {
+    "card": {
+      "openInitiative": "Otwórz inicjatywę: {{title}}",
+      "advanceStatus": "Przejdź do następnego statusu",
+      "assignOwners": "Przypisz właścicieli",
+      "flagForAttention": "Oznacz do uwagi"
+    },
     "gateAi": {
       "pill": {
         "ariaReady": "Gotowość AI: gotowe, wynik {{score}} na 100",

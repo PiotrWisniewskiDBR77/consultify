@@ -275,7 +275,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                   type="button"
                   onClick={() => setIsSidebarOpen(true)}
                   className="lg:hidden text-navy-700 dark:text-white mr-2"
-                  aria-label="Open menu"
+                  aria-label={t('layout.openMenu', 'Open menu')}
                 >
                   <Menu />
                 </button>
