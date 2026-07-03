@@ -30,7 +30,7 @@ const SEVERITY_STYLES: Record<DocumentQaSeverity, string> = {
   high: 'border-danger-500/40 bg-danger-500/10 text-danger-700 dark:text-danger-300',
   medium:
     'border-amber-400/40 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-300',
-  low: 'border-slate-200 bg-slate-50 text-slate-700 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200',
+  low: 'border-c-border-subtle bg-c-surface-raised text-c-text',
 };
 
 function scoreColor(score: number): string {
@@ -48,7 +48,7 @@ function CategoryReportView({
 }): React.ReactElement {
   const { t } = useTranslation();
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900">
+    <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {report.blocking ? (
@@ -56,13 +56,13 @@ function CategoryReportView({
           ) : (
             <CheckCircle2 className="h-4 w-4 text-success-500" aria-hidden />
           )}
-          <h4 className="text-sm font-semibold text-navy-900 dark:text-white">{categoryLabel}</h4>
+          <h4 className="text-sm font-semibold text-c-text">{categoryLabel}</h4>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <span className={`text-base font-semibold ${scoreColor(report.score)}`}>
             {report.score}
           </span>
-          <span className="text-slate-600">/ 100</span>
+          <span className="text-c-text-secondary">/ 100</span>
           {report.blocking ? (
             <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
               {t('documentStudio.qa.blocking', 'blocking')}
@@ -70,7 +70,7 @@ function CategoryReportView({
           ) : null}
         </div>
       </div>
-      <p className="text-xs text-slate-600 dark:text-slate-300">{report.summary}</p>
+      <p className="text-xs text-c-text-secondary">{report.summary}</p>
       {report.findings.length > 0 ? (
         <ul className="mt-2 flex flex-col gap-1.5">
           {report.findings.map((finding: DocumentQaFinding) => (
@@ -79,13 +79,13 @@ function CategoryReportView({
               className={`rounded-md border px-2 py-1.5 text-xs ${SEVERITY_STYLES[finding.severity]}`}
             >
               <div className="flex items-start gap-2">
-                <span className="mt-0.5 inline-block rounded bg-white/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide dark:bg-white/10">
+                <span className="mt-0.5 inline-block rounded bg-c-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                   {finding.severity}
                 </span>
                 <div className="flex-1">
                   <div>{finding.message}</div>
                   {finding.sectionId || finding.blockId ? (
-                    <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                    <div className="mt-0.5 text-[10px] text-c-text-secondary">
                       {finding.sectionId ? `section: ${finding.sectionId}` : null}
                       {finding.sectionId && finding.blockId ? ' · ' : ''}
                       {finding.blockId ? `block: ${finding.blockId}` : null}
@@ -161,7 +161,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
       </div>
 
       {!report && !error && !loading ? (
-        <p className="text-xs text-slate-600 dark:text-slate-300">
+        <p className="text-xs text-c-text-secondary">
           {t(
             'documentStudio.qa.idleHint',
             'Run a deterministic check for banned phrases, register, language consistency, and density. Results are advisory; the export pipeline soft-blocks when a category goes blocking on documents that require approval.'
@@ -177,7 +177,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
 
       {report ? (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+          <div className="flex items-center justify-between text-xs text-c-text-secondary">
             <span>
               {t('documentStudio.qa.generatedAt', 'Generated at')}:{' '}
               {new Date(report.generatedAt).toLocaleString()}

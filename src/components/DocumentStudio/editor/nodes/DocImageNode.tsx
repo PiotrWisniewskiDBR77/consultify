@@ -25,8 +25,8 @@ const DocImageNodeComponent: React.FC<{
     <NodeViewWrapper
       data-doc-block="image"
       className={`my-3 rounded-lg border ${
-        selected ? 'border-primary-500 ring-1 ring-primary-500/40' : 'border-slate-200 dark:border-navy-700'
-      } bg-white p-3 dark:bg-navy-900`}
+        selected ? 'border-c-accent ring-1 ring-c-focus' : 'border-c-border-subtle'
+      } bg-c-surface p-3`}
     >
       {url ? (
         <figure className="m-0">
@@ -37,13 +37,13 @@ const DocImageNodeComponent: React.FC<{
             className="mx-auto max-h-[360px] rounded object-contain"
           />
           {payload?.caption ? (
-            <figcaption className="mt-2 text-center text-xs text-slate-500">
+            <figcaption className="mt-2 text-center text-xs text-c-text-secondary">
               {payload.caption}
             </figcaption>
           ) : null}
         </figure>
       ) : (
-        <pre className="whitespace-pre-wrap text-xs text-slate-500">
+        <pre className="whitespace-pre-wrap text-xs text-c-text-secondary">
           {JSON.stringify(payload, null, 2)}
         </pre>
       )}

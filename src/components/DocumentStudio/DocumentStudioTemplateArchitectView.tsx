@@ -270,10 +270,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6">
       <header>
-        <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-c-text">
           {t('documentStudio.templateArchitect.heading', 'Document Template Architect')}
         </h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-c-text-secondary">
           {t(
             'documentStudio.templateArchitect.subheading',
             'Design a reusable, governed Word/PDF template. Drafts must be approved before they can drive Mode 3 generation.'
@@ -281,13 +281,13 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         </p>
       </header>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
+      <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-sm">
+        <h3 className="text-sm font-semibold text-c-text">
           {t('documentStudio.templateArchitect.draftHeading', 'Draft a new template')}
         </h3>
         <form onSubmit={handleDraft} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-200">
+            <span className="font-medium text-c-text">
               {t('documentStudio.templateArchitect.templateName', 'Template name')}
             </span>
             <input
@@ -298,17 +298,17 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 'documentStudio.templateArchitect.templateNamePlaceholder',
                 'e.g., Quarterly Board Memo template'
               )}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-200">
+            <span className="font-medium text-c-text">
               {t('documentStudio.templateArchitect.documentType', 'Document type')}
             </span>
             <select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               {documentTypeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -318,7 +318,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             </select>
           </label>
           <label className="col-span-1 flex flex-col gap-1 text-sm sm:col-span-2">
-            <span className="font-medium text-slate-700 dark:text-slate-200">
+            <span className="font-medium text-c-text">
               {t('documentStudio.templateArchitect.purpose', 'Purpose')}{' '}
               <span className="text-danger-500">*</span>
             </span>
@@ -330,13 +330,13 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 'documentStudio.templateArchitect.purposePlaceholder',
                 'What kind of documents will this template produce, and for whom?'
               )}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
               minLength={8}
               required
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-200">
+            <span className="font-medium text-c-text">
               {t('documentStudio.templateArchitect.audience', 'Audience (comma-separated)')}
             </span>
             <input
@@ -344,37 +344,37 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
               placeholder={t('documentStudio.templateArchitect.audiencePlaceholder', 'e.g., Board, CEO, CFO')}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-200">
+            <span className="font-medium text-c-text">
               {t('documentStudio.templateArchitect.language', 'Language')}
             </span>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               <option value="pl">{t('documentStudio.templateArchitect.langPolish', 'Polish')}</option>
               <option value="en">{t('documentStudio.templateArchitect.langEnglish', 'English')}</option>
             </select>
           </label>
-          <label className="col-span-1 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950 sm:col-span-2">
+          <label className="col-span-1 flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm sm:col-span-2">
             <input
               type="checkbox"
               checked={useLlm}
               onChange={(e) => setUseLlm(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-c-focus-solid focus:ring-c-focus"
+              className="mt-0.5 h-4 w-4 rounded border-c-border text-c-focus-solid focus:ring-c-focus"
             />
             <span>
-              <span className="font-medium text-slate-700 dark:text-slate-200">
+              <span className="font-medium text-c-text">
                 {t(
                   'documentStudio.templateArchitect.refineWithAi',
                   'Refine with AI Template Architect (optional)'
                 )}
               </span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
+              <span className="block text-xs text-c-text-secondary">
                 {t(
                   'documentStudio.templateArchitect.refineWithAiHint',
                   'Allows AI to rewrite section purposes and propose a refined template name. Falls back silently to the deterministic blueprint if AI is unavailable. New / removed / renamed sections are rejected.'
@@ -383,7 +383,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             </span>
           </label>
           <div className="col-span-1 flex items-center justify-between gap-3 sm:col-span-2">
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs text-c-text-secondary">
               {lastDraftRefined === true
                 ? t('documentStudio.templateArchitect.refinedByAi', 'Last draft was refined by AI.')
                 : lastDraftRefined === false
@@ -424,9 +424,9 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+      <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
+          <h3 className="text-sm font-semibold text-c-text">
             {t('documentStudio.templateArchitect.registryHeading', 'Template registry')}
           </h3>
           <Button
@@ -459,17 +459,17 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         />
 
         {selectedTemplate ? (
-          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-navy-700 dark:bg-navy-950">
-            <div className="font-semibold text-navy-900 dark:text-white">
+          <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+            <div className="font-semibold text-c-text">
               {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
               {selectedTemplate.name}
             </div>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-slate-700 dark:text-slate-300">
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-c-text">
               {selectedTemplate.sectionBlueprint.map((section, idx) => (
                 <li key={`${selectedTemplate.templateId}-section-${idx}`}>
                   <span className="font-medium">{section.title}</span>
                   {section.purpose ? (
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-secondary">
                       {' '}
                       — {section.purpose}
                     </span>

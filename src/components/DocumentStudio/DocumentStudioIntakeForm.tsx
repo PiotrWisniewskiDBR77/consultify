@@ -173,12 +173,12 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6"
     >
       <div>
-        <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-c-text">
           {inTemplateMode
             ? t('documentStudio.intake.titleTemplateMode', 'Generate from approved template')
             : t('documentStudio.intake.titleFreeMode', 'Generate without template')}
         </h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-c-text-secondary">
           {inTemplateMode
             ? t(
                 'documentStudio.intake.subtitleTemplateMode',
@@ -202,13 +202,13 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
 
       {hasTemplates ? (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">
+          <span className="font-medium text-c-text">
             {t('documentStudio.intake.useTemplateLabel', 'Use approved template (optional)')}
           </span>
           <select
             value={selectedTemplateId}
             onChange={(e) => setSelectedTemplateId(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="">
               {t('documentStudio.intake.noTemplateOption', 'No template — Mode 1 (free generation)')}
@@ -220,7 +220,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             ))}
           </select>
           {selectedTemplate ? (
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-c-text-secondary">
               {t('documentStudio.intake.templateModeSummary', {
                 defaultValue: 'Mode 3 active. {{sections}} sections, {{confidentiality}} confidentiality.',
                 sections: selectedTemplate.sectionBlueprint.length,
@@ -239,7 +239,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
               'This template requires the following sources before it can generate'
             )}
           </div>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+          <p className="mt-1 text-xs text-c-text-secondary">
             {t(
               'documentStudio.intake.requiredSourcesHint',
               'Add matching items to the source pack of this run (or attach them upstream); the backend rejects generation if any of these is missing.'
@@ -249,7 +249,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             {selectedTemplate.requiredInputs.map((requirement) => (
               <li
                 key={requirement}
-                className="flex items-start gap-2 text-slate-700 dark:text-slate-200"
+                className="flex items-start gap-2 text-c-text"
               >
                 <span
                   aria-hidden
@@ -263,7 +263,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       ) : null}
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-slate-700 dark:text-slate-200">
+        <span className="font-medium text-c-text">
           {t('documentStudio.intake.descriptionLabel', 'Description')}{' '}
           <span className="text-danger-500">*</span>
         </span>
@@ -276,14 +276,14 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intake.descriptionPlaceholder',
             'e.g., Prepare an interview summary report for the client board: scope, key findings, risks, recommendations.'
           )}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+          className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           required
           minLength={10}
         />
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-slate-700 dark:text-slate-200">
+        <span className="font-medium text-c-text">
           {t('documentStudio.intake.titleLabel', 'Title (optional)')}
         </span>
         <input
@@ -294,19 +294,19 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intake.titlePlaceholder',
             'Auto-derived from description if empty'
           )}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+          className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
         />
       </label>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">
+          <span className="font-medium text-c-text">
             {t('documentStudio.intake.documentTypeLabel', 'Document type')}
           </span>
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey | '')}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {DOCUMENT_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -317,13 +317,13 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">
+          <span className="font-medium text-c-text">
             {t('documentStudio.intake.languageLabel', 'Language')}
           </span>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="pl">{t('documentStudio.intake.languagePolish', 'Polish')}</option>
             <option value="en">{t('documentStudio.intake.languageEnglish', 'English')}</option>
@@ -331,13 +331,13 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">
+          <span className="font-medium text-c-text">
             {t('documentStudio.intake.densityLabel', 'Density')}
           </span>
           <select
             value={density}
             onChange={(e) => setDensity(e.target.value as DocumentDensity)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {DENSITY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -348,13 +348,13 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">
+          <span className="font-medium text-c-text">
             {t('documentStudio.intake.goalLabel', 'Goal')}
           </span>
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value as DocumentGoal)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {GOAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -366,7 +366,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       </div>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-slate-700 dark:text-slate-200">
+        <span className="font-medium text-c-text">
           {t('documentStudio.intake.audienceLabel', 'Audience (comma-separated)')}
         </span>
         <input
@@ -377,23 +377,23 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intakeForm.audiencePlaceholder',
             'e.g., CEO, CFO, Transformation Officer'
           )}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+          className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
         />
       </label>
 
       {!inTemplateMode ? (
-        <label className="flex items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900">
+        <label className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm">
           <input
             type="checkbox"
             checked={useLlm}
             onChange={(e) => setUseLlm(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-c-focus-solid focus:ring-c-focus"
+            className="mt-0.5 h-4 w-4 rounded border-c-border text-c-focus-solid focus:ring-c-focus"
           />
           <span>
-            <span className="font-medium text-slate-700 dark:text-slate-200">
+            <span className="font-medium text-c-text">
               {t('documentStudio.intake.useLlmLabel', 'Refine outline with AI (optional)')}
             </span>
-            <span className="block text-xs text-slate-500 dark:text-slate-400">
+            <span className="block text-xs text-c-text-secondary">
               {t(
                 'documentStudio.intake.useLlmHint',
                 'Allows the planner to reorder sections and rewrite section purposes. Falls back silently to the deterministic outline if AI is unavailable. New or invented sections are rejected.'
