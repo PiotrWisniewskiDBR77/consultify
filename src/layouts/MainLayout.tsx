@@ -183,7 +183,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
       <div
         data-testid="global-fab-rail"
-        className={`fixed z-50 flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-4 top-[70%]'}`}
+        className={`fixed z-dropdown flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-4 top-[70%]'}`}
         style={
           mobileGlobalRailBottomOffset ? { bottom: `${mobileGlobalRailBottomOffset}px` } : undefined
         }
@@ -221,7 +221,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Impersonation Banner */}
       {currentUser?.impersonatorId && (
-        <div className="fixed top-0 left-0 right-0 h-10 bg-danger-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
+        <div className="fixed top-0 left-0 right-0 h-10 bg-danger-600 text-white z-toast flex items-center justify-center gap-4 text-sm font-medium shadow-md">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 bg-white dark:bg-navy-900 rounded-full animate-pulse"></span>
             Read-only impersonation mode
@@ -245,12 +245,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       >
         <a
           href="#app-main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-50 bg-white dark:bg-navy-900 text-slate-900 dark:text-white border border-slate-300 dark:border-navy-600 rounded px-3 py-2 text-sm"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-toast bg-white dark:bg-navy-900 text-slate-900 dark:text-white border border-slate-300 dark:border-navy-600 rounded px-3 py-2 text-sm"
         >
           {t('layout.skipToContent', 'Skip to main content')}
         </a>
         {/* Header */}
-        <div className="flex flex-col z-30 shrink-0">
+        <div className="flex flex-col z-sticky shrink-0">
           <DemoModeBanner />
           <GlobalAccessBanners
             onStartTrial={() => window.location.assign('/auth?action=trial')}

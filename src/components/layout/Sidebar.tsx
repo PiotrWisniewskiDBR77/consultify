@@ -145,7 +145,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
   return createPortal(
     <div
       ref={menuRef}
-      className={`fixed z-[9999] w-64 py-2 rounded-xl shadow-2xl border ${bgColor} ${borderColor} transition-opacity duration-200 ease-out ${isPositioned ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed z-context-menu w-64 py-2 rounded-xl shadow-2xl border ${bgColor} ${borderColor} transition-opacity duration-200 ease-out ${isPositioned ? 'opacity-100' : 'opacity-0'}`}
       style={{ top: position.top, left: position.left }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -757,7 +757,7 @@ export const Sidebar: React.FC = () => {
       {/* Mobile/Tablet Overlay - shown when sidebar is open on touch devices */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-overlay lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -766,7 +766,7 @@ export const Sidebar: React.FC = () => {
       <div
         data-tour="sidebar-nav"
         className={`
-          fixed inset-y-0 left-0 z-50
+          fixed inset-y-0 left-0 z-modal
           bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
           border-r border-slate-200 dark:border-navy-700 shadow-2xl
           flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
