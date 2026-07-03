@@ -21,6 +21,9 @@ import {
   listArtifactsForUser,
   getRecentArtifactRefsForOrg,
 } from '../v8/artifactRegistryService.js';
+import { createInitiative as createInitiativeViaFunnel } from '../initiative/createInitiativeService.js';
+import { handoffFromClosure, CLOSURE_HANDOFF_SOURCE } from '../executionResultsBridge.js';
+import { pullAndReconcileInitiative } from '../v8/resultsFinanceReconciliationService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -593,6 +596,304 @@ const probeM17RegisterRead: HealthProbe = {
   },
 };
 
+// ===========================================================================
+// GOLDEN-PATH ROUND-TRIP probes (Paczka1 #3) — create → save → reload proofs
+// for the chain transitions that previously had only read-only liveness checks.
+// Every probe seeds HEALTH-PROBE- prefixed rows, reads them back org-scoped,
+// asserts the transition's CONTRACT (not just table liveness), and hard-cleans
+// in `finally`.
+// ===========================================================================
+
+/** (p) Chain #4 Tools → Inicjatywy ROUND-TRIP — a tool result becomes a real
+ *  initiative WITH provenance back-ref (source_type='tool', source_id=session).
+ *  Goes through the canonical funnel (createInitiativeService), the same sink
+ *  the FE handoff (createInitiativeFromMove) hits via POST /api/initiatives. */
+const probeToolsToInitiativeRoundTrip: HealthProbe = {
+  id: 'gp4_tools_to_initiative_round_trip',
+  module: 'Tools→M13',
+  title: 'Tool result → initiative with back-ref',
+  description:
+    'Creates an initiative via the canonical funnel with sourceType=tool, reads it back org-scoped asserting the source back-reference persisted, then hard-deletes.',
+  run: async ({ organizationId }) => {
+    let initiativeId: string | null = null;
+    const sourceId = label('TOOL-SESSION');
+    try {
+      const created = await createInitiativeViaFunnel(
+        organizationId,
+        {
+          title: label('TOOL-INITIATIVE'),
+          summary: 'health probe — tools handoff round-trip',
+          sourceType: 'tool',
+          sourceId,
+        },
+        { emitAudit: false }
+      );
+      initiativeId = created.id;
+
+      const row = await dbGet<{ id: string; source_type: string | null; source_id: string | null }>(
+        `SELECT id, source_type, source_id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!row) throw new Error('Initiative not readable after tool handoff create');
+      if (String(row.source_type || '').toLowerCase() !== 'tool') {
+        throw new Error(`Tool provenance lost: source_type='${row.source_type}' (expected 'tool')`);
+      }
+      if (row.source_id !== sourceId) {
+        throw new Error('Tool back-reference lost: source_id does not match the tool session id');
+      }
+      return { initiativeId, sourceId };
+    } finally {
+      if (initiativeId) {
+        await dbRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          initiativeId,
+          organizationId,
+        ]).catch((e) => logger.warn(`${LOG_PREFIX} gp4 initiative cleanup failed`, e));
+      }
+    }
+  },
+};
+
+/** (q) Chain #5 Ideas/MyWork convert → Inicjatywy ROUND-TRIP — the ConvertTo
+ *  provenance contract (sourceType='tool_session') must survive the funnel, so
+ *  a converted idea keeps its back-ref to the materialized MyWork session. */
+const probeIdeasConvertToInitiativeRoundTrip: HealthProbe = {
+  id: 'gp5_ideas_convert_to_initiative_round_trip',
+  module: 'Ideas→M13',
+  title: 'Idea convert → initiative with back-ref',
+  description:
+    'Creates an initiative with the ConvertTo provenance (sourceType=tool_session), reads it back asserting the session back-reference persisted, then hard-deletes.',
+  run: async ({ organizationId }) => {
+    let initiativeId: string | null = null;
+    const sourceId = label('CONVERT-SESSION');
+    try {
+      const created = await createInitiativeViaFunnel(
+        organizationId,
+        {
+          title: label('CONVERTED-IDEA'),
+          summary: 'health probe — ideas convert round-trip',
+          sourceType: 'tool_session',
+          sourceId,
+        },
+        { emitAudit: false }
+      );
+      initiativeId = created.id;
+
+      const row = await dbGet<{ source_type: string | null; source_id: string | null }>(
+        `SELECT source_type, source_id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!row) throw new Error('Initiative not readable after convert create');
+      if (String(row.source_type || '').toLowerCase() !== 'tool_session') {
+        throw new Error(
+          `Convert provenance lost: source_type='${row.source_type}' (expected 'tool_session')`
+        );
+      }
+      if (row.source_id !== sourceId) {
+        throw new Error('Convert back-reference lost: source_id does not match the session id');
+      }
+      return { initiativeId, sourceId };
+    } finally {
+      if (initiativeId) {
+        await dbRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          initiativeId,
+          organizationId,
+        ]).catch((e) => logger.warn(`${LOG_PREFIX} gp5 initiative cleanup failed`, e));
+      }
+    }
+  },
+};
+
+/** (r) Chain #6 Inicjatywy → Execution ROUND-TRIP — a task created under an
+ *  initiative is readable back through the initiative_id linkage (the surface
+ *  ExecutionHub filters on). */
+const probeInitiativeToExecutionRoundTrip: HealthProbe = {
+  id: 'gp6_initiative_to_execution_round_trip',
+  module: 'M13→M14',
+  title: 'Initiative → execution task linkage',
+  description:
+    'Seeds an initiative + a task linked via initiative_id, reads the task back org-scoped through the linkage, then hard-deletes both.',
+  run: async ({ organizationId }) => {
+    const initiativeId = uuidv4();
+    const taskId = uuidv4();
+    const now = new Date().toISOString();
+    try {
+      await dbRun(
+        `INSERT INTO initiatives (
+           id, organization_id, project_id, title, summary, status, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [initiativeId, organizationId, null, label('EXEC-INITIATIVE'), 'health probe', 'IN_PROGRESS', now, now]
+      );
+      await dbRun(
+        `INSERT INTO tasks (
+           id, organization_id, title, status, initiative_id, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [taskId, organizationId, label('EXEC-TASK'), 'todo', initiativeId, now, now]
+      );
+
+      const row = await dbGet<{ id: string }>(
+        `SELECT id FROM tasks WHERE organization_id = ? AND initiative_id = ? AND id = ?`,
+        [organizationId, initiativeId, taskId],
+        { fallback: true }
+      );
+      if (!row) throw new Error('Task not readable back through initiative_id linkage');
+      return { initiativeId, taskId };
+    } finally {
+      await dbRun(`DELETE FROM tasks WHERE id = ? AND organization_id = ?`, [taskId, organizationId]).catch(
+        (e) => logger.warn(`${LOG_PREFIX} gp6 task cleanup failed`, e)
+      );
+      await dbRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
+        initiativeId,
+        organizationId,
+      ]).catch((e) => logger.warn(`${LOG_PREFIX} gp6 initiative cleanup failed`, e));
+    }
+  },
+};
+
+/** (s) Chain #7 Execution(DONE) → Rezultaty ROUND-TRIP — the REAL closure
+ *  writer (handoffFromClosure) materializes a planned KPI into
+ *  initiative_benefits tagged M14_CLOSURE_HANDOFF, and is idempotent on re-run. */
+const probeExecutionClosureToResultsRoundTrip: HealthProbe = {
+  id: 'gp7_execution_closure_to_results_round_trip',
+  module: 'M14→M15',
+  title: 'Closure handoff → benefit (idempotent)',
+  description:
+    'Seeds a DONE initiative + planned KPI, runs the real closure handoff, asserts an initiative_benefits row tagged M14_CLOSURE_HANDOFF exists and a re-run dedups, then hard-cleans.',
+  run: async ({ organizationId, userId }) => {
+    const initiativeId = uuidv4();
+    const kpiId = uuidv4();
+    const now = new Date().toISOString();
+    try {
+      await dbRun(
+        `INSERT INTO initiatives (
+           id, organization_id, project_id, title, summary, status, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [initiativeId, organizationId, null, label('CLOSURE-INITIATIVE'), 'health probe', 'DONE', now, now]
+      );
+      await dbRun(
+        `INSERT INTO initiative_kpis (id, initiative_id, name, target_value, unit, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [kpiId, initiativeId, label('PLANNED-KPI'), 100, '%', now, now]
+      );
+
+      const first = await handoffFromClosure(organizationId, initiativeId, userId);
+      if (!first || first.created !== 1) {
+        throw new Error(
+          `Closure handoff did not create the benefit (created=${first?.created}, considered=${first?.considered})`
+        );
+      }
+
+      const benefit = await dbGet<{ id: string }>(
+        `SELECT id FROM initiative_benefits
+          WHERE initiative_id = ? AND organization_id = ? AND source_tag = ?
+          LIMIT 1`,
+        [initiativeId, organizationId, CLOSURE_HANDOFF_SOURCE],
+        { fallback: true }
+      );
+      if (!benefit) throw new Error('Benefit row not readable after closure handoff');
+
+      // Idempotency contract: a repeat DONE must not duplicate the benefit.
+      const second = await handoffFromClosure(organizationId, initiativeId, userId);
+      if (!second || second.created !== 0 || second.skipped !== 1) {
+        throw new Error(
+          `Closure handoff re-run is not idempotent (created=${second?.created}, skipped=${second?.skipped})`
+        );
+      }
+      return { initiativeId, kpiId, benefitId: benefit.id };
+    } finally {
+      await dbRun(
+        `DELETE FROM initiative_benefits WHERE initiative_id = ? AND organization_id = ? AND source_tag = ?`,
+        [initiativeId, organizationId, CLOSURE_HANDOFF_SOURCE]
+      ).catch((e) => logger.warn(`${LOG_PREFIX} gp7 benefit cleanup failed`, e));
+      await dbRun(`DELETE FROM initiative_kpis WHERE id = ? AND initiative_id = ?`, [
+        kpiId,
+        initiativeId,
+      ]).catch((e) => logger.warn(`${LOG_PREFIX} gp7 kpi cleanup failed`, e));
+      await dbRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
+        initiativeId,
+        organizationId,
+      ]).catch((e) => logger.warn(`${LOG_PREFIX} gp7 initiative cleanup failed`, e));
+    }
+  },
+};
+
+/** (t) Chain #8 Rezultaty ↔ Finanse ROUND-TRIP — the reconciliation ENGINE
+ *  converts a %-denominated KPI onto the finance basis through the explicit
+ *  unit multiplier (the OEE-class unit bug guard) and persists the deviation. */
+const probeResultsFinanceReconciliationRoundTrip: HealthProbe = {
+  id: 'gp8_results_finance_reconciliation_round_trip',
+  module: 'M15↔M16',
+  title: 'KPI ↔ finance reconciliation (units)',
+  description:
+    'Seeds a %-metric KPI, reconciles it against a finance driver with an explicit unit multiplier, asserts the persisted deviation is unit-consistent, then hard-cleans.',
+  run: async ({ organizationId }) => {
+    const initiativeId = uuidv4();
+    let kpiId: string | null = null;
+    const driverKey = label('DRIVER');
+    try {
+      const kpi = await createKPI({
+        organizationId,
+        name: label('RECON-KPI'),
+        mode: 'initiative_linked',
+        metricType: 'percentage',
+        targetValue: 90,
+        currentValue: 72,
+        measurementCadence: 'monthly',
+        initiativeId,
+      });
+      kpiId = kpi.kpiId;
+
+      const result = await pullAndReconcileInitiative(organizationId, initiativeId, [
+        { kpiId, driverKey, unitMultiplier: 1000 },
+      ]);
+      if (!result || result.reconciledCount !== 1) {
+        throw new Error(`Reconciliation did not reconcile the KPI (count=${result?.reconciledCount})`);
+      }
+      const item = result.items[0];
+      // Unit-consistency contract (the OEE bug class): both sides must be on the
+      // finance basis — 72% × 1000 vs 90% × 1000, deviation −18000, NOT a raw
+      // %-vs-currency subtraction.
+      if (item.realizedValue !== 72000 || item.projectedValue !== 90000) {
+        throw new Error(
+          `Unit conversion broken: realized=${item.realizedValue} projected=${item.projectedValue} (expected 72000 / 90000)`
+        );
+      }
+      if (item.deviationAbsolute !== -18000) {
+        throw new Error(`Deviation not on finance basis: ${item.deviationAbsolute} (expected -18000)`);
+      }
+
+      // Reload: the persisted reconciliation row must carry the multiplier + deviation.
+      const row = await dbGet<{ unit_multiplier: number | string; deviation_absolute: number | string }>(
+        `SELECT unit_multiplier, deviation_absolute
+           FROM v8_kpi_finance_reconciliations
+          WHERE organization_id = ? AND kpi_id = ? AND driver_key = ?
+          LIMIT 1`,
+        [organizationId, kpiId, driverKey],
+        { fallback: true }
+      );
+      if (!row) throw new Error('Reconciliation row not readable after reconcile');
+      if (Number(row.unit_multiplier) !== 1000 || Number(row.deviation_absolute) !== -18000) {
+        throw new Error(
+          `Persisted reconciliation drifted: unit_multiplier=${row.unit_multiplier} deviation=${row.deviation_absolute}`
+        );
+      }
+      return { kpiId, driverKey, deviationAbsolute: item.deviationAbsolute };
+    } finally {
+      if (kpiId) {
+        await dbRun(
+          `DELETE FROM v8_kpi_finance_reconciliations WHERE organization_id = ? AND kpi_id = ?`,
+          [organizationId, kpiId]
+        ).catch((e) => logger.warn(`${LOG_PREFIX} gp8 reconciliation cleanup failed`, e));
+        await dbRun(`DELETE FROM v8_kpi_definitions WHERE kpi_id = ? AND organization_id = ?`, [
+          kpiId,
+          organizationId,
+        ]).catch((e) => logger.warn(`${LOG_PREFIX} gp8 kpi cleanup failed`, e));
+      }
+    }
+  },
+};
+
 /** THE REGISTRY. Order = display order. */
 export const HEALTH_PROBES: readonly HealthProbe[] = [
   probeM15KpiRoundTrip,
@@ -611,6 +912,12 @@ export const HEALTH_PROBES: readonly HealthProbe[] = [
   probeAssessmentsList,
   probeDrdReport,
   probeM17RegisterRead,
+  // ── Golden-path ROUND-TRIP probes (Paczka1 #3 — create→save→reload proofs) ──
+  probeToolsToInitiativeRoundTrip,
+  probeIdeasConvertToInitiativeRoundTrip,
+  probeInitiativeToExecutionRoundTrip,
+  probeExecutionClosureToResultsRoundTrip,
+  probeResultsFinanceReconciliationRoundTrip,
 ];
 
 export function getProbeById(probeId: string): HealthProbe | undefined {
